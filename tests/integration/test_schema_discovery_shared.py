@@ -15,7 +15,7 @@ import time
 
 import pytest
 from flext_ldif import FlextLdifModels
-from flext_ldif.constants import LdapServerType
+from flext_ldif.constants import FlextLdifConstants
 
 from flext_ldap import FlextLdapClients, FlextLdapModels, FlextLdapSchema
 
@@ -61,11 +61,11 @@ class TestSharedSchemaDiscovery:
         # Verify server type is detected (GENERIC is acceptable when specific detection fails)
         server_type = schema_result_obj.server_type
         expected_types = {
-            LdapServerType.OPENLDAP,
-            LdapServerType.GENERIC,
+            FlextLdifConstants.LdapServerType.OPENLDAP,
+            FlextLdifConstants.LdapServerType.GENERIC,
             # Also accept string values (Pydantic may serialize enums to strings)
-            LdapServerType.OPENLDAP.value,
-            LdapServerType.GENERIC.value,
+            FlextLdifConstants.LdapServerType.OPENLDAP.value,
+            FlextLdifConstants.LdapServerType.GENERIC.value,
         }
         assert server_type in expected_types, f"Unexpected server type: {server_type}"
 
@@ -135,7 +135,7 @@ class TestSharedSchemaDiscovery:
         server_type = quirks_detector.detect_server_type(
             schema_result_obj.server_info.model_dump()
         )
-        # Convert LdapServerType enum to string for get_server_quirks
+        # Convert FlextLdifConstants.LdapServerType enum to string for get_server_quirks
         server_type_str = server_type.value if server_type else None
         quirks = quirks_detector.get_server_quirks(server_type_str)
 

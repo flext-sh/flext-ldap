@@ -13,7 +13,7 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services import FlextLdifQuirksManager
+from flext_ldif.services.registry import FlextLdifRegistry
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
@@ -51,8 +51,8 @@ class FlextLdapServersFactory(FlextService[None]):
         """Initialize server operations factory with Phase 1 context enrichment."""
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._ldif = FlextLdif()
-        self._quirks_manager = FlextLdifQuirksManager()
+        self._ldif = FlextLdif.get_instance()
+        self._quirks_manager = FlextLdifRegistry.get_global_instance()
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
             FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
             FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,
@@ -160,7 +160,7 @@ class FlextLdapServersFactory(FlextService[None]):
         ldif_content = ldif_write_result.unwrap()
 
         # Use FlextLdif API to detect server type
-        api = FlextLdif()
+        api = FlextLdif.get_instance()
         detection_result = api.detect_server_type(ldif_content=ldif_content)
         if detection_result.is_failure:
             self.logger.debug(
@@ -216,7 +216,7 @@ class FlextLdapServersFactory(FlextService[None]):
             # Search for root DSE
             # Use '*' and '+' to get all attributes (standard and operational)
             # Avoids errors when requesting attributes that don't exist
-            success = connection.search(
+            search_result = connection.search(
                 search_base="",
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -229,7 +229,7 @@ class FlextLdapServersFactory(FlextService[None]):
                 ],  # Request all standard and operational attributes
             )
 
-            if not success or not connection.entries:
+            if not search_result or not connection.entries:
                 self.logger.debug("Root DSE query failed, unable to detect server type")
                 return FlextResult[str].ok(FlextLdapConstants.Defaults.SERVER_TYPE)
 

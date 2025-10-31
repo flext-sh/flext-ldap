@@ -50,7 +50,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         self._server_type = server_type or FlextLdapConstants.Defaults.SERVER_TYPE
         # Use flext-ldif services for DN, entry normalization, and ACL operations
         self._dn_service = FlextLdifDnService()
-        self._entry_quirks = FlextLdifEntrys()
+        self._entrys = FlextLdifEntrys()
         self._acl_service = FlextLdifAclService()
 
     def execute(self) -> FlextResult[None]:
@@ -130,13 +130,13 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
                 )
 
             # Search schema subentry for standard schema attributes
-            success = connection.search(
+            search_result = connection.search(
                 search_base=self.get_schema_dn(),
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 attributes=["objectClasses", "attributeTypes"],
             )
 
-            if not success or not connection.entries:
+            if not search_result or not connection.entries:
                 schema_result = FlextLdifModels.SchemaDiscoveryResult(
                     server_type=self.server_type,
                 )
@@ -545,9 +545,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         """
         # Use flext-ldif entry quirks for normalization
-        adapt_result = self._entry_quirks.adapt_entry(
+        adapt_result = self._entrys.adapt_entry(
             entry,
-            target_server=self._server_type,
+            self._server_type,
         )
         if adapt_result.is_failure:
             self.logger.warning(

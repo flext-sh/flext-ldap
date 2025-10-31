@@ -116,7 +116,7 @@ class TestGenericQuirksDetector:
         detector = FlextLdapSchema.GenericQuirksDetector()
         server_info = {"vendor_name": "Test Server"}
         result = detector.detect_server_type(server_info)
-        # Should return LdapServerType enum or string "generic"
+        # Should return FlextLdifConstants.LdapServerType enum or string "generic"
         assert result is not None
 
     @pytest.mark.unit

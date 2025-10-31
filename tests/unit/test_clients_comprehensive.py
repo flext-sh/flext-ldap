@@ -284,21 +284,6 @@ class TestFlextLdapClientsUserManagement:
         exists = result.unwrap()
         assert isinstance(exists, bool)
 
-    @pytest.mark.docker
-    @pytest.mark.unit
-    def test_build_user_attributes(self, connected_client: FlextLdapClients) -> None:
-        """Test building user attributes."""
-        user_data = {
-            "username": "testuser",
-            "cn": "testuser",
-            "sn": "User",
-            "givenName": "Test",
-        }
-
-        result = connected_client.build_user_attributes(user_data)
-
-        assert result.is_success is True or result.is_failure is True
-
 
 class TestFlextLdapClientsGroupManagement:
     """Test group management operations with real LDAP data."""

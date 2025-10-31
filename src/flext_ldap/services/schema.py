@@ -20,7 +20,7 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
-from flext_ldif.constants import LdapServerType
+from flext_ldif.constants import FlextLdifConstants
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -95,7 +95,7 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
         def detect_server_type(
             self,
             server_info: FlextLdapTypes.DictionaryTypes.ResponseDict | None,
-        ) -> LdapServerType | None:
+        ) -> FlextLdifConstants.LdapServerType | None:
             """Detect LDAP server type from server info.
 
             Args:
@@ -109,7 +109,7 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
                 return None
 
             # Generic detection - return a default type enum
-            return LdapServerType.GENERIC
+            return FlextLdifConstants.LdapServerType.GENERIC
 
         def get_server_quirks(
             self,
@@ -129,7 +129,7 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
 
             # Return generic quirks for any server type
             return FlextLdapModels.ServerQuirks(
-                server_type=LdapServerType.GENERIC,
+                server_type=FlextLdifConstants.LdapServerType.GENERIC,
                 case_sensitive_dns=True,
                 case_sensitive_attributes=True,
                 supports_paged_results=True,

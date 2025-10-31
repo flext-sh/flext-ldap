@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif.constants import LdapServerType
+from flext_ldif.constants import FlextLdifConstants
 
 from flext_ldap.services.schema import FlextLdapSchema
 
@@ -83,7 +83,7 @@ class TestGenericQuirksDetectorDetectServerType:
         server_type = detector.detect_server_type(server_info)
 
         assert server_type is not None
-        assert server_type == LdapServerType.GENERIC
+        assert server_type == FlextLdifConstants.LdapServerType.GENERIC
 
     @pytest.mark.unit
     def test_detect_server_type_with_none_info(self) -> None:
@@ -117,7 +117,7 @@ class TestGenericQuirksDetectorGetServerQuirks:
         quirks = detector.get_server_quirks("generic")
 
         assert quirks is not None
-        assert quirks.server_type == LdapServerType.GENERIC
+        assert quirks.server_type == FlextLdifConstants.LdapServerType.GENERIC
 
     @pytest.mark.unit
     def test_get_server_quirks_with_none_type(self) -> None:

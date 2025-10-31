@@ -882,7 +882,7 @@ class TestFlextLdapServersOpenLDAP2EntryNormalizationDetailed:
         )
 
         # target_server_type should be ignored
-        result = ops.normalize_entry_for_server(entry, target_server_type="ad")
+        result = ops.normalize_entry_for_server(entry, _target_server_type="ad")
         assert result.is_success  # Should still work for OpenLDAP 2.x
 
 

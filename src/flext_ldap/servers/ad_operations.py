@@ -181,7 +181,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Get nTSecurityDescriptor from AD entry."""
         try:
-            success = _connection.search(
+            search_result = _connection.search(
                 search_base=_dn,
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -191,7 +191,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
                 attributes=[FlextLdapConstants.AclAttributes.NT_SECURITY_DESCRIPTOR],
             )
 
-            if not success or not _connection.entries:
+            if not search_result or not _connection.entries:
                 return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
             # Return empty list - AD ACL parsing requires SDDL decoder in flext-ldif
@@ -278,7 +278,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
                 return FlextResult[dict[str, object]].fail(conn_check.error)
 
             # AD-specific: include operational attributes with "+"
-            success: bool = connection.search(
+            search_result = connection.search(
                 search_base="",
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -288,7 +288,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
                 attributes=["*", "+"],
             )
 
-            if not success or not connection.entries:
+            if not search_result or not connection.entries:
                 return FlextResult[dict[str, object]].fail("No Root DSE found")
 
             # Extract attributes from the first entry

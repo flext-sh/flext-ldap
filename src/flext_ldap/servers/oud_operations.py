@@ -105,7 +105,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                     conn_check.error,
                 )
 
-            success = connection.search(
+            search_result = connection.search(
                 search_base=self.get_schema_dn(),
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 attributes=[
@@ -115,7 +115,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 ],
             )
 
-            if not success or not connection.entries:
+            if not search_result or not connection.entries:
                 return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
                     "Schema discovery failed",
                 )
@@ -182,7 +182,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                     "Connection not bound",
                 )
 
-            success = _connection.search(
+            search_result = _connection.search(
                 search_base=_dn,
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -192,7 +192,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 attributes=[FlextLdapConstants.AclAttributes.DS_PRIVILEGE_NAME],
             )
 
-            if not success or not _connection.entries:
+            if not search_result or not _connection.entries:
                 return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
             # Return empty list - full ACL parsing requires server-specific parser in flext-ldif
@@ -260,9 +260,13 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             success = typed_conn.modify(_dn, mods)
 
             if not success:
-                error_msg = _connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                error_msg = (
+                    _connection.result.get(
+                        FlextLdapConstants.LdapDictKeys.DESCRIPTION,
+                        FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                    )
+                    if _connection.result
+                    else FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR
                 )
                 return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
 

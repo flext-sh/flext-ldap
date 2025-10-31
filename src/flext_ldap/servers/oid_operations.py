@@ -147,7 +147,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                     "Connection not bound",
                 )
 
-            success: bool = _connection.search(
+            search_result = _connection.search(
                 search_base=_dn,
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -157,7 +157,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 attributes=[FlextLdapConstants.AclAttributes.ORCLACI],
             )
 
-            if not success or not _connection.entries:
+            if not search_result or not _connection.entries:
                 return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
             # Return empty list - full ACL parsing requires server-specific parser in flext-ldif
@@ -216,9 +216,13 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             success = typed_conn.modify(_dn, mods)
 
             if not success:
-                error_msg = _connection.result.get(
-                    FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                    FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                error_msg = (
+                    _connection.result.get(
+                        FlextLdapConstants.LdapDictKeys.DESCRIPTION,
+                        FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                    )
+                    if _connection.result
+                    else FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR
                 )
                 return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
 

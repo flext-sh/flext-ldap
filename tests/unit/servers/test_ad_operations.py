@@ -526,11 +526,142 @@ class TestADOperationsServerDetectionLogic:
         assert result == FlextLdapConstants.Defaults.SERVER_TYPE
 
 
+class TestADOperationsExceptionHandlingAndEdgeCases:
+    """Test exception handling and edge cases in AD operations."""
+
+    @pytest.mark.unit
+    def test_get_acls_empty_result(self) -> None:
+        """Test get_acls returns empty list."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        result = ops.get_acls(mock_conn, "cn=test,dc=example,dc=com")
+        assert result.is_success
+        assert result.unwrap() == []
+
+    @pytest.mark.unit
+    def test_get_supported_controls_unbound_connection(self) -> None:
+        """Test get_supported_controls with unbound connection."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = False
+        result = ops.get_supported_controls(mock_conn)
+        assert result.is_failure
+        assert "not bound" in str(result.error).lower()
+
+    @pytest.mark.unit
+    def test_get_supported_controls_with_list(self) -> None:
+        """Test get_supported_controls returns list of strings."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = True
+        result = ops.get_supported_controls(mock_conn)
+        assert result.is_success
+        controls = result.unwrap()
+        assert isinstance(controls, list)
+
+    @pytest.mark.unit
+    def test_validate_entry_simple(self) -> None:
+        """Test validate_entry_for_server returns FlextResult."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        # Create entry using model_construct to avoid validation issues
+        from flext_ldif.models import FlextLdifModels as Models
+
+        entry = Models.Entry.model_construct(
+            dn=Models.DistinguishedName.model_construct(
+                value="cn=test,dc=example,dc=com"
+            ),
+            attributes=Models.LdifAttributes.model_construct(attrs={}),
+        )
+        result = ops.validate_entry_for_server(entry)
+        # Verify the method returns a FlextResult
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_validate_entry_with_objectclass(self) -> None:
+        """Test validate_entry_for_server with objectClass attribute."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        # Create entry using model_construct
+        from flext_ldif.models import FlextLdifModels as Models
+
+        attrs = Models.LdifAttributes.model_construct(
+            attrs={"objectClass": ["person"]},
+        )
+        entry = Models.Entry.model_construct(
+            dn=Models.DistinguishedName.model_construct(
+                value="cn=test,dc=example,dc=com"
+            ),
+            attributes=attrs,
+        )
+        result = ops.validate_entry_for_server(entry)
+        # Verify the method returns a FlextResult
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_normalize_entry_simple(self) -> None:
+        """Test normalize_entry_for_server returns entry."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        # Create entry using model_construct
+        from flext_ldif.models import FlextLdifModels as Models
+
+        entry = Models.Entry.model_construct(
+            dn=Models.DistinguishedName.model_construct(
+                value="cn=test,dc=example,dc=com"
+            ),
+            attributes=Models.LdifAttributes.model_construct(attrs={}),
+        )
+        result = ops.normalize_entry_for_server(entry)
+        # Verify it returns a FlextResult
+        assert isinstance(result, FlextResult)
+        if result.is_success:
+            normalized = result.unwrap()
+            assert normalized.dn is not None
+
+    @pytest.mark.unit
+    def test_normalize_attribute_name_basic(self) -> None:
+        """Test normalize_attribute_name preserves attribute name."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        name = ops.normalize_attribute_name("cn")
+        assert name == "cn"
+
+    @pytest.mark.unit
+    def test_normalize_dn_basic(self) -> None:
+        """Test normalize_dn returns normalized DN string."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        dn_str = "cn=test,dc=example,dc=com"
+        result = ops.normalize_dn(dn_str)
+        assert isinstance(result, str)
+        assert "cn=test" in result
+
+    @pytest.mark.unit
+    def test_parse_acl_basic(self) -> None:
+        """Test parse_acl returns FlextResult."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        # parse_acl parses ACL strings
+        result = ops.parse_acl("test_acl_string")
+        assert isinstance(result, FlextResult)
+
+    @pytest.mark.unit
+    def test_get_acl_attribute_name_returns_ntsecuritydescriptor(self) -> None:
+        """Test get_acl_attribute_name returns AD-specific ACL attribute."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        attr_name = ops.get_acl_attribute_name()
+        assert attr_name == "nTSecurityDescriptor"
+
+    @pytest.mark.unit
+    def test_get_acl_format_returns_sddl(self) -> None:
+        """Test get_acl_format returns SDDL format string."""
+        ops = FlextLdapServersActiveDirectoryOperations()
+        fmt = ops.get_acl_format()
+        # AD uses SDDL (Security Descriptor Definition Language) format
+        assert fmt == "sddl"
+
+
 __all__ = [
     "TestADOperationsACLMethods",
     "TestADOperationsACLOperations",
     "TestADOperationsBindMechanisms",
     "TestADOperationsEntryOperations",
+    "TestADOperationsExceptionHandlingAndEdgeCases",
     "TestADOperationsFunctionalLevels",
     "TestADOperationsInitialization",
     "TestADOperationsIntegration",

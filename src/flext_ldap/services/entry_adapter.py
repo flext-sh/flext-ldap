@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pathlib
-from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services import FlextLdifEntrys, FlextLdifQuirksManager
+from flext_ldif.services import FlextLdifEntrys
+from flext_ldif.services.registry import FlextLdifRegistry
 from ldap3 import Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
@@ -51,9 +51,9 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._ldif = FlextLdif()  # Direct instantiation without config
-        self._quirks_manager = FlextLdifQuirksManager(server_type=server_type)
-        self._entry_quirks = FlextLdifEntrys()
+        self._ldif = FlextLdif.get_instance()  # Use singleton instance
+        self._quirks_manager = FlextLdifRegistry.get_global_instance()
+        self._entrys = FlextLdifEntrys()
         self._detected_server_type = (
             server_type  # Private attribute to avoid Pydantic validation
         )
@@ -154,7 +154,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 f"LDIF parsing failed: {parse_result.error}",
             )
 
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def write_entries_to_ldif_file(
@@ -230,7 +230,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         ldif_content = ldif_write_result.unwrap()
 
         # Use new FlextLdif API to detect server type from LDIF content
-        api = FlextLdif()
+        api = FlextLdif.get_instance()
         detection_result = api.detect_server_type(ldif_content=ldif_content)
         if detection_result.is_failure:
             self.logger.debug(
@@ -278,9 +278,9 @@ class FlextLdapEntryAdapter(FlextService[None]):
             )
 
         # Delegate to FlextLdifEntrys for server-specific normalization
-        adapt_result = self._entry_quirks.adapt_entry(
+        adapt_result = self._entrys.adapt_entry(
             entry,
-            target_server=target_server_type,
+            target_server_type,
         )
         if adapt_result.is_failure:
             self.logger.warning(
@@ -333,8 +333,16 @@ class FlextLdapEntryAdapter(FlextService[None]):
             return FlextResult[bool].fail("Server type cannot be empty")
 
         # Get server quirks
-        quirks_result = self._quirks_manager.get_server_quirks(server_type)
-        if quirks_result.is_failure:
+        try:
+            quirks_dict = self._quirks_manager.get_all_quirks_for_server(server_type)
+            if not quirks_dict:
+                self.logger.debug(
+                    "Could not get server quirks for validation",
+                    extra={"server_type": server_type},
+                )
+                # Default to valid if we can't get quirks
+                return FlextResult[bool].ok(True)
+        except Exception:
             self.logger.debug(
                 "Could not get server quirks for validation",
                 extra={"server_type": server_type},
@@ -476,14 +484,17 @@ class FlextLdapEntryAdapter(FlextService[None]):
         FlextResult containing server-specific attribute information
 
         """
-        # Explicit FlextResult error handling - NO try/except
-        quirks_result = self._quirks_manager.get_server_quirks(server_type)
-        if quirks_result.is_failure:
+        # Get server quirks
+        try:
+            quirks = self._quirks_manager.get_all_quirks_for_server(server_type)
+            if not quirks:
+                return FlextResult[dict[str, object]].fail(
+                    f"Failed to get server quirks for type: {server_type}",
+                )
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to get server quirks: {quirks_result.error}",
+                f"Failed to get server quirks: {e}",
             )
-
-        quirks = quirks_result.unwrap()
 
         # Extract commonly used attributes
         server_attrs: dict[str, object] = {
