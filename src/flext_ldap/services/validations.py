@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 
 from flext_core import FlextExceptions, FlextResult
-from flext_ldif.services import FlextLdifDnService, FlextLdifValidationService
+from flext_ldif.services import FlextLdifDn, FlextLdifValidation
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -25,12 +25,12 @@ class FlextLdapValidations:
     duplication and follow SRP. LDAP-specific validations remain here.
     """
 
-    _dn_service = FlextLdifDnService()
-    _validation_service = FlextLdifValidationService()
+    _dn_service = FlextLdifDn()
+    _validation_service = FlextLdifValidation()
 
     @classmethod
     def validate_dn(cls, dn: str | None, context: str = "DN") -> FlextResult[bool]:
-        """Centralized DN validation - delegates to FlextLdifDnService."""
+        """Centralized DN validation - delegates to FlextLdifDn."""
         if dn is None:
             return FlextResult[bool].fail(f"{context} cannot be None")
         if not dn or not dn.strip():
@@ -39,7 +39,7 @@ class FlextLdapValidations:
         # Clean DN first to handle formatting issues
         cleaned_dn = cls._dn_service.clean_dn(dn.strip())
 
-        # Validate format using FlextLdifDnService
+        # Validate format using FlextLdifDn
         format_result = cls._dn_service.validate_format(cleaned_dn)
         if format_result.is_failure:
             return format_result.map(lambda _: False)
@@ -73,7 +73,7 @@ class FlextLdapValidations:
         cls,
         attributes: list[str] | None,
     ) -> FlextResult[bool]:
-        """Centralized LDAP attributes validation - delegates to FlextLdifValidationService."""
+        """Centralized LDAP attributes validation - delegates to FlextLdifValidation."""
         if attributes is None or not attributes:
             return FlextResult[bool].fail("Attributes list cannot be empty")
 
@@ -81,7 +81,7 @@ class FlextLdapValidations:
             if not attr or not attr.strip():
                 return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
 
-            # Use FlextLdifValidationService for RFC 4512 compliant validation
+            # Use FlextLdifValidation for RFC 4512 compliant validation
             attr_result = cls._validation_service.validate_attribute_name(attr.strip())
             if attr_result.is_failure or not attr_result.unwrap():
                 return FlextResult[bool].fail(f"Invalid attribute name: {attr}")
@@ -166,14 +166,14 @@ class FlextLdapValidations:
 
     @classmethod
     def validate_object_class(cls, object_class: str | None) -> FlextResult[bool]:
-        """Centralized LDAP object class validation - delegates to FlextLdifValidationService."""
+        """Centralized LDAP object class validation - delegates to FlextLdifValidation."""
         if object_class is None:
             return FlextResult[bool].fail("Object class cannot be None")
 
         if not object_class or not object_class.strip():
             return FlextResult[bool].fail("Object class cannot be empty")
 
-        # Use FlextLdifValidationService for RFC 4512 compliant validation
+        # Use FlextLdifValidation for RFC 4512 compliant validation
         oc_result = cls._validation_service.validate_objectclass_name(
             object_class.strip(),
         )

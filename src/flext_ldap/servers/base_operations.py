@@ -15,9 +15,8 @@ from typing import cast
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from flext_ldif.services import (
-    FlextLdifAclService,
-    FlextLdifDnService,
-    FlextLdifEntrys,
+    FlextLdifAcl,
+    FlextLdifDn,
 )
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 
@@ -48,10 +47,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         super().__init__()
         # logger inherited from FlextService
         self._server_type = server_type or FlextLdapConstants.Defaults.SERVER_TYPE
-        # Use flext-ldif services for DN, entry normalization, and ACL operations
-        self._dn_service = FlextLdifDnService()
-        self._entrys = FlextLdifEntrys()
-        self._acl_service = FlextLdifAclService()
+        # Use flext-ldif services for DN and ACL operations
+        self._dn_service = FlextLdifDn()
+        self._acl_service = FlextLdifAcl()
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService."""
@@ -276,9 +274,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         )
 
     def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
-        """Parse ACL string using FlextLdifAclService.
+        """Parse ACL string using FlextLdifAcl.
 
-        Delegates to FlextLdifAclService.parse() to eliminate duplication
+        Delegates to FlextLdifAcl.parse() to eliminate duplication
         and ensure RFC-compliant ACL parsing with server-specific quirks support.
 
         Args:
@@ -288,9 +286,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         FlextResult containing parsed ACL as Entry object
 
         """
-        # Use FlextLdifAclService for ACL parsing
+        # Use FlextLdifAcl for ACL parsing
         try:
-            # Parse ACL using FlextLdifAclService
+            # Parse ACL using FlextLdifAcl
             acl_result = self._acl_service.parse(acl_string, self.server_type)
             if acl_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
@@ -378,9 +376,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             return FlextResult[FlextLdifModels.Entry].fail(f"ACL parse failed: {e}")
 
     def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
-        """Format ACL Entry using FlextLdifAclService.
+        """Format ACL Entry using FlextLdifAcl.
 
-        Delegates to FlextLdifAclService when possible, falls back to raw attribute extraction.
+        Delegates to FlextLdifAcl when possible, falls back to raw attribute extraction.
 
         Args:
         acl_entry: ACL Entry object
@@ -394,7 +392,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         if raw_attr and len(raw_attr) > 0:
             return FlextResult[str].ok(raw_attr[0])
 
-        # Server-specific implementations should override this to use FlextLdifAclService
+        # Server-specific implementations should override this to use FlextLdifAcl
         # format capabilities when available
         return FlextResult[str].fail(
             f"ACL formatting requires raw ACL string (format: {self.get_acl_format()})",
@@ -532,9 +530,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         self,
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for this server type using FlextLdifEntrys.
+        """Normalize entry for this server type.
 
-        Default implementation: uses FlextLdifEntrys for server-agnostic normalization.
+        Default implementation: returns entry as-is for validation.
         Override for server-specific transformations.
 
         Args:
@@ -544,18 +542,11 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         FlextResult containing normalized entry
 
         """
-        # Use flext-ldif entry quirks for normalization
-        adapt_result = self._entrys.adapt_entry(
-            entry,
-            self._server_type,
+        self.logger.debug(
+            "Entry normalized for server type",
+            extra={"server_type": self._server_type},
         )
-        if adapt_result.is_failure:
-            self.logger.warning(
-                f"Entry normalization failed, returning original: {adapt_result.error}",
-                extra={"server_type": self._server_type},
-            )
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
-        return adapt_result
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
 
     # =========================================================================
     # SEARCH OPERATIONS
@@ -784,9 +775,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         return object_class.lower()
 
     def normalize_dn(self, dn: str) -> str:
-        """Normalize distinguished name using FlextLdifDnService (RFC 4514).
+        """Normalize distinguished name using FlextLdifDn (RFC 4514).
 
-        Delegates to FlextLdifDnService for RFC 4514 compliant normalization.
+        Delegates to FlextLdifDn for RFC 4514 compliant normalization.
 
         Args:
             dn: DN to normalize

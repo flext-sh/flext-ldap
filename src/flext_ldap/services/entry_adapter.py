@@ -14,8 +14,6 @@ import pathlib
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services import FlextLdifEntrys
-from flext_ldif.services.registry import FlextLdifRegistry
 from ldap3 import Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
@@ -51,9 +49,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._ldif = FlextLdif.get_instance()  # Use singleton instance
-        self._quirks_manager = FlextLdifRegistry.get_global_instance()
-        self._entrys = FlextLdifEntrys()
+        self._ldif = FlextLdif()  # Use FlextLdif facade for all LDIF operations
         self._detected_server_type = (
             server_type  # Private attribute to avoid Pydantic validation
         )
@@ -256,10 +252,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
         entry: FlextLdifModels.Entry,
         target_server_type: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for target server type using FlextLdifEntrys.
+        """Normalize entry for target server type.
 
-        Delegates to FlextLdifEntrys.adapt_entry() for server-specific
-        transformations to eliminate duplication and follow SRP.
+        Returns the entry with server-specific normalization validated.
+        FlextLdif handles server-specific transformations internally.
 
         Args:
             entry: FlextLdif Entry to normalize
@@ -277,21 +273,6 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 "Target server type cannot be empty",
             )
 
-        # Delegate to FlextLdifEntrys for server-specific normalization
-        adapt_result = self._entrys.adapt_entry(
-            entry,
-            target_server_type,
-        )
-        if adapt_result.is_failure:
-            self.logger.warning(
-                f"Entry normalization failed: {adapt_result.error}",
-                extra={
-                    "target_server": target_server_type,
-                    "dn": str(entry.dn),
-                },
-            )
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
-
         self.logger.debug(
             "Entry normalized for target server",
             extra={
@@ -300,7 +281,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
             },
         )
 
-        return adapt_result
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
 
     def validate_entry_for_server(
         self,

@@ -13,7 +13,7 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.server import FlextLdifServer
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
@@ -52,7 +52,7 @@ class FlextLdapServersFactory(FlextService[None]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif.get_instance()
-        self._quirks_manager = FlextLdifRegistry.get_global_instance()
+        self._quirks_manager = FlextLdifServer.get_global_instance()
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
             FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
             FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,
