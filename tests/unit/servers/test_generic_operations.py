@@ -59,12 +59,12 @@ class TestFlextLdapServersGenericACL:
         # Generic LDAP uses 'generic' format
         assert acl_format == "generic"
 
-    def test_parse_acl_simple(self) -> None:
+    def test_parse_simple(self) -> None:
         """Test parsing simple generic ACL."""
         ops = FlextLdapServersGenericOperations()
         # Generic format
         acl_str = '(targetattr="*")(version 3.0; acl "Allow all"; allow (all) userdn="ldap:///anyone";)'
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
 
     def test_format_acl_with_entry(self) -> None:

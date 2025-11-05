@@ -58,7 +58,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     # - get_acl_format(): Returns "oracle" (Oracle ACI format)
     # - get_acls(): OUD-specific ACL retrieval with ds-privilege-name
     # - set_acls(): OUD-specific ACL setting with ds-privilege-name
-    # - parse_acl(): OUD-specific ACL parsing with Oracle ACI
+    # - parse(): OUD-specific ACL parsing with Oracle ACI
     # - format_acl(): OUD-specific ACL formatting to Oracle ACI
     # - modify_entry(): OUD-specific entry modification (schema quirks)
     # - supports_vlv(): Returns True (OUD supports VLV)
@@ -277,7 +277,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse ds-privilege-name ACL string for Oracle OUD.
 
         Oracle OUD ACL format (ds-privilege-name):

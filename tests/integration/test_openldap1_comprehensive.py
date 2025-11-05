@@ -254,20 +254,20 @@ class TestOpenLDAP1ACLOperations:
         result = ops.get_acls(shared_ldap_client._connection, config_dn)
         assert result.is_success or result.is_failure
 
-    def test_parse_acl_basic(self) -> None:
+    def test_parse_basic(self) -> None:
         """Test parsing basic ACL."""
         ops = FlextLdapServersOpenLDAP1Operations()
 
         acl_string = "to * by * read"
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
         assert result.is_success or result.is_failure
 
-    def test_parse_acl_complex(self) -> None:
+    def test_parse_complex(self) -> None:
         """Test parsing complex ACL."""
         ops = FlextLdapServersOpenLDAP1Operations()
 
         acl_string = "to * by self write by * read"
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
         assert result.is_success or result.is_failure
 
     def test_format_acl(self) -> None:
@@ -342,7 +342,7 @@ class TestOpenLDAP1ErrorHandling:
     def test_parse_malformed_acl(self) -> None:
         """Test parsing malformed ACL."""
         ops = FlextLdapServersOpenLDAP1Operations()
-        result = ops.parse_acl("invalid {{{")
+        result = ops.parse("invalid {{{")
         assert result.is_success or result.is_failure
 
 

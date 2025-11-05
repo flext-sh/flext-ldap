@@ -223,10 +223,10 @@ class TestGenericACLOperations:
         )
         assert result.is_success or result.is_failure
 
-    def test_parse_acl(self) -> None:
+    def test_parse(self) -> None:
         """Test parsing ACL."""
         ops = FlextLdapServersGenericOperations()
-        result = ops.parse_acl("to * by * read")
+        result = ops.parse("to * by * read")
         assert result.is_success or result.is_failure
 
     def test_format_acl(self) -> None:
@@ -360,7 +360,7 @@ class TestGenericErrorHandling:
     def test_parse_empty_acl(self) -> None:
         """Test parsing empty ACL."""
         ops = FlextLdapServersGenericOperations()
-        result = ops.parse_acl("")
+        result = ops.parse("")
         assert result.is_success or result.is_failure
 
     def test_format_empty_acl_dict(self) -> None:

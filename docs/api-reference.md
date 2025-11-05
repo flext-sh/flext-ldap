@@ -64,7 +64,7 @@ server_type=None) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entry_for_s
         - [`get_acl_attribute_name() -> str`](#get_acl_attribute_name---str)
         - [`get_acl_format() -> str`](#get_acl_format---str)
         - [`get_acls(connection, dn) -> FlextResult[list[FlextTypes.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry) - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse_acl(acl_string) -> FlextResult[FlextTypes.Dict]`](#parse_aclacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - [Entry Operations](#entry-operations) - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - [Search Operations](#search-operations) - [`get_max_page_size() -> int`](#get_max_page_size---int) - [`supports_paged_results() -> bool`](#supports_paged_results---bool) - [`supports_vlv() -> bool`](#supports_vlv---bool) - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
+- [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry) - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[FlextTypes.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - [Entry Operations](#entry-operations) - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - [Search Operations](#search-operations) - [`get_max_page_size() -> int`](#get_max_page_size---int) - [`supports_paged_results() -> bool`](#supports_paged_results---bool) - [`supports_vlv() -> bool`](#supports_vlv---bool) - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
 page_size=100) -> FlextResult[list[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - [Server-Specific Implementations](#server-specific-implementations)
     - [OpenLDAP2Operations](#openldap2operations)
@@ -838,7 +838,7 @@ new_acls = [
 result = ops.set_acls(connection, dn, acls=new_acls)
 ```
 
-##### `parse_acl(acl_string) -> FlextResult[FlextTypes.Dict]`
+##### `parse(acl_string) -> FlextResult[FlextTypes.Dict]`
 
 Parse server-specific ACL string to dictionary.
 

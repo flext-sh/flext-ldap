@@ -85,20 +85,20 @@ class TestFlextLdapServersOIDACL:
         # Oracle OID uses 'oracle' format
         assert acl_format == "oracle"
 
-    def test_parse_acl_simple(self) -> None:
+    def test_parse_simple(self) -> None:
         """Test parsing simple Oracle OID ACL."""
         ops = FlextLdapServersOIDOperations()
         # Oracle OID format: access to entry|attr:<target> by <subject>:<permissions>
         acl_str = "access to entry by * : browse"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
         assert result.is_success
 
-    def test_parse_acl_with_attributes(self) -> None:
+    def test_parse_with_attributes(self) -> None:
         """Test parsing Oracle OID ACL with attribute target."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to attr:userPassword by self : write"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
         assert result.is_success
 
@@ -261,39 +261,39 @@ class TestFlextLdapServersOIDControls:
 class TestOIDAclParsingDetailed:
     """Detailed ACL parsing tests for Oracle OID."""
 
-    def test_parse_acl_entry_target(self) -> None:
+    def test_parse_entry_target(self) -> None:
         """Test parsing Oracle ACI with entry target."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to entry by * : browse"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_attr_target(self) -> None:
+    def test_parse_attr_target(self) -> None:
         """Test parsing Oracle ACI with attribute target."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to attr:userPassword by self : write"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_multi_attr(self) -> None:
+    def test_parse_multi_attr(self) -> None:
         """Test parsing ACI with multiple attribute targets."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to attr:userPassword,shadowPassword by self : write"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_with_group(self) -> None:
+    def test_parse_with_group(self) -> None:
         """Test parsing ACI with group subject."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to entry by group cn=REDACTED_LDAP_BIND_PASSWORDs : write"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_invalid(self) -> None:
+    def test_parse_invalid(self) -> None:
         """Test parsing invalid ACI format."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "invalid aci string"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
 
 
@@ -763,18 +763,18 @@ class TestOIDValidateEntryExceptionHandling:
 
 
 class TestOIDParseAclExceptionHandling:
-    """Test exception handling in parse_acl."""
+    """Test exception handling in parse."""
 
-    def test_parse_acl_empty_string(self) -> None:
-        """Test parse_acl with empty string."""
+    def test_parse_empty_string(self) -> None:
+        """Test parse with empty string."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.parse_acl("")
+        result = ops.parse("")
         assert isinstance(result, FlextResult)
 
-    def test_parse_acl_malformed_syntax(self) -> None:
-        """Test parse_acl with malformed syntax."""
+    def test_parse_malformed_syntax(self) -> None:
+        """Test parse with malformed syntax."""
         ops = FlextLdapServersOIDOperations()
-        result = ops.parse_acl("access to @#$%^")
+        result = ops.parse("access to @#$%^")
         assert isinstance(result, FlextResult)
 
 

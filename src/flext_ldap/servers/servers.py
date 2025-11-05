@@ -298,14 +298,14 @@ class FlextLdapServers(FlextService[None]):
             )
         return ops.set_acls(connection, dn, acls)
 
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse ACL string to Entry."""
         ops = self.operations
         if not ops:
             return FlextResult[FlextLdifModels.Entry].fail(
                 FlextLdapConstants.Messages.NO_SERVER_OPERATIONS_AVAILABLE,
             )
-        return ops.parse_acl(acl_string)
+        return ops.parse(acl_string)
 
     def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
         """Format ACL Entry to string."""

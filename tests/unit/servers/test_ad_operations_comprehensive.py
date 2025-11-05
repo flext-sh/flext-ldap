@@ -303,12 +303,12 @@ class TestFlextLdapActiveDirectoryEntry:
 
     @pytest.mark.docker
     @pytest.mark.unit
-    def test_ad_parse_acl_returns_result(
+    def test_ad_parse_returns_result(
         self, operations: FlextLdapServersActiveDirectoryOperations
     ) -> None:
         """Test parsing AD ACL returns FlextResult."""
         acl_string = "test_acl"
-        result = operations.parse_acl(acl_string)
+        result = operations.parse(acl_string)
 
         # Should return either success or failure
         assert result.is_success is True or result.is_failure is True

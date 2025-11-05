@@ -61,7 +61,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
     # - parse_attribute_type(): OID-specific attributeType parsing
     # - get_acl_attribute_name(): Returns "orclaci" (OID ACL attribute)
     # - get_acl_format(): Returns "oracle" (Oracle ACI format)
-    # - parse_acl(): OID-specific ACL parsing with Oracle ACI
+    # - parse(): OID-specific ACL parsing with Oracle ACI
     # - format_acl(): OID-specific ACL formatting to Oracle ACI
     # - normalize_entry(): OID-specific entry normalization
     # - supports_vlv(): Returns True (OID supports VLV)
@@ -233,7 +233,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse orclaci ACL string for Oracle OID.
 
         Oracle OID ACL format (orclaci):

@@ -49,7 +49,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     # - parse_attribute_type(): Generic attributeType parsing
     # - get_acls(): Generic ACL retrieval
     # - set_acls(): Generic ACL setting
-    # - parse_acl(): Generic ACL parsing
+    # - parse(): Generic ACL parsing
     # - format_acl(): Generic ACL formatting
     # - add_entry(): Generic entry addition
     # - modify_entry(): Generic entry modification
@@ -70,7 +70,7 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     # - get_acl_format(): Returns "ad" (Active Directory format)
     # - get_acls(): AD-specific ACL retrieval with nTSecurityDescriptor
     # - set_acls(): AD-specific ACL setting with nTSecurityDescriptor
-    # - parse_acl(): AD-specific ACL parsing with SDDL support
+    # - parse(): AD-specific ACL parsing with SDDL support
     # - supports_vlv(): Returns True (AD supports VLV)
     # - get_root_dse_attributes(): AD-specific Root DSE with operational attributes
     # - detect_server_type_from_root_dse(): AD server detection logic
@@ -226,10 +226,10 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             return FlextResult[bool].fail(f"AD ACL set failed: {e}")
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse SDDL ACL string to Entry format - enhanced with AD note."""
         try:
-            result = super().parse_acl(acl_string)
+            result = super().parse(acl_string)
             if not result.is_failure:
                 entry = result.unwrap()
                 # Add AD-specific note about SDDL parsing

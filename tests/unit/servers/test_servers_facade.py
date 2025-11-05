@@ -333,10 +333,10 @@ class TestFlextLdapServersFacadeEntryOperations:
 
     @pytest.mark.docker
     @pytest.mark.unit
-    def test_parse_acl_returns_result(self, servers_instance: FlextLdapServers) -> None:
-        """Test parse_acl returns FlextResult."""
+    def test_parse_returns_result(self, servers_instance: FlextLdapServers) -> None:
+        """Test parse returns FlextResult."""
         acl_string = "test_acl"
-        result = servers_instance.parse_acl(acl_string)
+        result = servers_instance.parse(acl_string)
         assert result.is_success is True or result.is_failure is True
 
     @pytest.mark.docker

@@ -220,7 +220,7 @@ class TestOpenLDAP2ACLOperations:
         result = ops.get_acls(shared_ldap_client._connection, config_dn)
         assert result.is_success or result.is_failure
 
-    def test_parse_acl_complex_format(self) -> None:
+    def test_parse_complex_format(self) -> None:
         """Test parsing complex ACL format."""
         ops = FlextLdapServersOpenLDAP2Operations()
 
@@ -229,7 +229,7 @@ class TestOpenLDAP2ACLOperations:
             'to * by self write by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com" write '
             'by dn.base="cn=config" manage by * read'
         )
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
         assert result.is_success or result.is_failure
 
     def test_format_acl_from_dict(self) -> None:
@@ -446,7 +446,7 @@ class TestServerOperationsErrorHandling:
     def test_parse_malformed_acl(self) -> None:
         """Test parsing malformed ACL string."""
         ops = FlextLdapServersOpenLDAP2Operations()
-        result = ops.parse_acl("invalid acl format {{{")
+        result = ops.parse("invalid acl format {{{")
         # Should handle gracefully
         assert result.is_success or result.is_failure
 

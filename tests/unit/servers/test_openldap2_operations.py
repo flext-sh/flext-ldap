@@ -91,12 +91,12 @@ class TestFlextLdapServersOpenLDAP2ACL:
         # OpenLDAP 2.x uses olcAccess format
         assert "openldap" in acl_format.lower() or "olc" in acl_format.lower()
 
-    def test_parse_acl_returns_dict(self) -> None:
-        """Test parse_acl returns dict."""
+    def test_parse_returns_dict(self) -> None:
+        """Test parse returns dict."""
         ops = FlextLdapServersOpenLDAP2Operations()
         # Sample olcAccess format ACL
         acl_str = "{0}to * by self write by users read"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, dict) or result is not None
 
     def test_format_acl_with_result(self) -> None:
@@ -445,44 +445,44 @@ class TestFlextLdapServersOpenLDAP2SetAclsDetailed:
 class TestFlextLdapServersOpenLDAP2AclParsingDetailed:
     """Test ACL parsing with detailed scenarios."""
 
-    def test_parse_acl_simple(self) -> None:
+    def test_parse_simple(self) -> None:
         """Test simple ACL parsing."""
         ops = FlextLdapServersOpenLDAP2Operations()
         acl_str = "{0}to * by self write"
 
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
         entry = result.unwrap()
         assert entry.dn.value == "cn=AclRule"
 
-    def test_parse_acl_with_index(self) -> None:
+    def test_parse_with_index(self) -> None:
         """Test ACL parsing with index."""
         ops = FlextLdapServersOpenLDAP2Operations()
         acl_str = "{2}to cn=* by users read"
 
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_complex(self) -> None:
+    def test_parse_complex(self) -> None:
         """Test complex ACL parsing."""
         ops = FlextLdapServersOpenLDAP2Operations()
         acl_str = "{0}to * by self write by anonymous auth by * read"
 
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_no_index(self) -> None:
+    def test_parse_no_index(self) -> None:
         """Test ACL parsing without index."""
         ops = FlextLdapServersOpenLDAP2Operations()
         acl_str = "to * by self write"
 
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_empty_string(self) -> None:
+    def test_parse_empty_string(self) -> None:
         """Test ACL parsing with empty string."""
         ops = FlextLdapServersOpenLDAP2Operations()
-        result = ops.parse_acl("")
+        result = ops.parse("")
         assert result.is_success or result.is_failure
 
 

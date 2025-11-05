@@ -356,7 +356,7 @@ sequenceDiagram
     Ops->>Ops: get_acl_attribute_name()
     Ops->>ldap3: search(dn, acl_attribute)
     ldap3-->>Ops: acl strings
-    Ops->>Ops: parse_acl(acl_string)
+    Ops->>Ops: parse(acl_string)
     Ops-->>Client: FlextResult[list[FlextTypes.Dict]]
 
     Client->>Ops: set_acls(connection, dn, acls)
