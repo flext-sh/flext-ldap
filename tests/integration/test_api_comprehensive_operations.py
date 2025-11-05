@@ -200,7 +200,7 @@ class TestFlextLdapExecute:
 class TestFlextLdapQuirksMode:
     """Test FlextLdap quirks mode."""
 
-    def test_quirks_mode_property(self) -> None:
+    def tests_mode_property(self) -> None:
         """Test quirks_mode property."""
         api = FlextLdap()
         quirks = api.quirks_mode

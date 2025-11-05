@@ -411,7 +411,7 @@ def demonstrate_server_specific_attributes(api: FlextLdap) -> None:
         logger.info(f"   • {attr}")
 
 
-def demonstrate_server_quirks_details(server_type: str | None) -> None:
+def demonstrate_servers_details(server_type: str | None) -> None:
     """Demonstrate detailed server quirks inspection.
 
     Args:
@@ -424,7 +424,7 @@ def demonstrate_server_quirks_details(server_type: str | None) -> None:
 
     logger.info(f"\n1. Getting quirks for server type: {server_type or 'generic'}")
 
-    result = quirks_integration.get_server_quirks(server_type)
+    result = quirks_integration.get_servers(server_type)
 
     if result.is_success:
         quirks = result.unwrap()
@@ -450,7 +450,7 @@ def demonstrate_server_quirks_details(server_type: str | None) -> None:
         logger.warning(f"   ⚠️  Failed to get quirks: {result.error}")
 
 
-def demonstrate_acl_quirks(_server_type: str | None) -> None:
+def demonstrate_acls(_server_type: str | None) -> None:
     """Demonstrate ACL-related quirks for different servers.
 
     Args:
@@ -482,7 +482,7 @@ def demonstrate_acl_quirks(_server_type: str | None) -> None:
             logger.info(f"   • {srv_type}: {acl_format}")
 
 
-def demonstrate_paging_quirks(_server_type: str | None) -> None:
+def demonstrate_pagings(_server_type: str | None) -> None:
     """Demonstrate paging and pagination quirks.
 
     Args:
@@ -504,7 +504,7 @@ def demonstrate_paging_quirks(_server_type: str | None) -> None:
             logger.info(f"   • {srv_type}: {max_size} entries")
 
 
-def demonstrate_timeout_quirks(_server_type: str | None) -> None:
+def demonstrate_timeouts(_server_type: str | None) -> None:
     """Demonstrate timeout quirks for different servers.
 
     Args:
@@ -526,7 +526,7 @@ def demonstrate_timeout_quirks(_server_type: str | None) -> None:
             logger.info(f"   • {srv_type}: {timeout}s")
 
 
-def demonstrate_operational_attributes_quirks(_server_type: str | None) -> None:
+def demonstrate_operational_attributess(_server_type: str | None) -> None:
     """Demonstrate operational attributes support quirks.
 
     Args:
@@ -549,7 +549,7 @@ def demonstrate_operational_attributes_quirks(_server_type: str | None) -> None:
             logger.info(f"   • {srv_type}: {status}")
 
 
-def demonstrate_connection_defaults_quirks(server_type: str | None) -> None:
+def demonstrate_connection_defaultss(server_type: str | None) -> None:
     """Demonstrate connection defaults quirks.
 
     Args:
@@ -609,12 +609,12 @@ def main() -> int:
             demonstrate_server_specific_attributes(api)
 
             # Quirks demonstrations
-            demonstrate_server_quirks_details(server_type)
-            demonstrate_acl_quirks(server_type)
-            demonstrate_paging_quirks(server_type)
-            demonstrate_timeout_quirks(server_type)
-            demonstrate_operational_attributes_quirks(server_type)
-            demonstrate_connection_defaults_quirks(server_type)
+            demonstrate_servers_details(server_type)
+            demonstrate_acls(server_type)
+            demonstrate_pagings(server_type)
+            demonstrate_timeouts(server_type)
+            demonstrate_operational_attributess(server_type)
+            demonstrate_connection_defaultss(server_type)
 
             logger.info(f"\n{'=' * 60}")
             logger.info("✅ All universal operations completed successfully!")

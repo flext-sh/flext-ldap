@@ -94,7 +94,7 @@ class TestSharedSchemaDiscovery:
                 attr_value = getattr(server_info, attr, None)
                 assert attr_value is not None
 
-    def test_get_server_quirks_with_shared_server(
+    def test_get_servers_with_shared_server(
         self,
         shared_ldap_client: FlextLdapClients,
     ) -> None:
@@ -109,14 +109,14 @@ class TestSharedSchemaDiscovery:
         assert isinstance(schema_result_obj, FlextLdifModels.SchemaDiscoveryResult)
 
         # Verify quirks are detected
-        quirks = schema_result_obj.server_quirks
+        quirks = schema_result_obj.servers
         assert isinstance(quirks, FlextLdapModels.ServerQuirks)
 
         # Should have quirks object
         assert quirks is not None
         assert quirks.server_type is not None
 
-    def test_quirks_detector_with_shared_server_info(
+    def tests_detector_with_shared_server_info(
         self,
         shared_ldap_client: FlextLdapClients,
     ) -> None:
@@ -135,9 +135,9 @@ class TestSharedSchemaDiscovery:
         server_type = quirks_detector.detect_server_type(
             schema_result_obj.server_info.model_dump()
         )
-        # Convert FlextLdifConstants.LdapServerType enum to string for get_server_quirks
+        # Convert FlextLdifConstants.LdapServerType enum to string for get_servers
         server_type_str = server_type.value if server_type else None
-        quirks = quirks_detector.get_server_quirks(server_type_str)
+        quirks = quirks_detector.get_servers(server_type_str)
 
         assert server_type is not None
         assert quirks is not None

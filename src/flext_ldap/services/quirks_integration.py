@@ -54,7 +54,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif()  # Use FlextLdif facade for all operations
         self._detected_server_type: str | None = server_type
-        self._quirks_cache: dict[str, object] = {}
+        self.s_cache: dict[str, object] = {}
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute method required by FlextService.
@@ -66,7 +66,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         return FlextResult[dict[str, object]].ok({
             "service": "FlextLdapQuirksAdapter",
             "server_type": self._detected_server_type,
-            "quirks_loaded": bool(self._quirks_cache),
+            "quirks_loaded": bool(self.s_cache),
         })
 
     @property
@@ -123,7 +123,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
 
         return FlextResult[str].ok(detected_type)
 
-    def get_server_quirks(
+    def get_servers(
         self,
         server_type: str | None = None,
     ) -> FlextResult[dict[str, object]]:
@@ -143,23 +143,23 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         )
 
         # Check cache first
-        if target_type in self._quirks_cache:
-            cached_quirks = self._quirks_cache[target_type]
-            if isinstance(cached_quirks, dict):
-                return FlextResult[dict[str, object]].ok(cached_quirks)
+        if target_type in self.s_cache:
+            cacheds = self.s_cache[target_type]
+            if isinstance(cacheds, dict):
+                return FlextResult[dict[str, object]].ok(cacheds)
             # Invalid cache entry, remove it
-            del self._quirks_cache[target_type]
+            del self.s_cache[target_type]
 
         # Return empty quirks for target server type
         # FlextLdif handles quirks internally
-        empty_quirks: dict[str, object] = {"server_type": target_type}
-        self._quirks_cache[target_type] = empty_quirks
+        emptys: dict[str, object] = {"server_type": target_type}
+        self.s_cache[target_type] = emptys
 
         self.logger.debug(
             "Server quirks retrieved",
             extra={"server_type": target_type},
         )
-        return FlextResult[dict[str, object]].ok(empty_quirks)
+        return FlextResult[dict[str, object]].ok(emptys)
 
     def get_acl_attribute_name(
         self,
@@ -174,7 +174,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing ACL attribute name
 
         """
-        quirks_result = self.get_server_quirks(server_type)
+        quirks_result = self.get_servers(server_type)
         if quirks_result.is_failure:
             return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
 
@@ -193,7 +193,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing ACL format string
 
         """
-        quirks_result = self.get_server_quirks(server_type)
+        quirks_result = self.get_servers(server_type)
         if quirks_result.is_failure:
             return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
 
@@ -215,7 +215,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing schema subentry DN
 
         """
-        quirks_result = self.get_server_quirks(server_type)
+        quirks_result = self.get_servers(server_type)
         if quirks_result.is_failure:
             return FlextResult[str].fail(quirks_result.error or "Failed to get quirks")
 
@@ -240,7 +240,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing boolean support indicator
 
         """
-        quirks_result = self.get_server_quirks(server_type)
+        quirks_result = self.get_servers(server_type)
         if quirks_result.is_failure:
             return FlextResult[bool].ok(True)  # Assume support by default
 
@@ -262,7 +262,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
             FlextResult containing max page size
 
         """
-        quirks_result = self.get_server_quirks(server_type)
+        quirks_result = self.get_servers(server_type)
         if quirks_result.is_failure:
             return FlextResult[int].ok(FlextLdapConstants.Defaults.DEFAULT_PAGE_SIZE)
 
@@ -292,7 +292,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing default timeout in seconds
 
         """
-        quirks_result = self.get_server_quirks(server_type)
+        quirks_result = self.get_servers(server_type)
         if quirks_result.is_failure:
             return FlextResult[int].ok(FlextLdapConstants.Defaults.DEFAULT_TIMEOUT)
 

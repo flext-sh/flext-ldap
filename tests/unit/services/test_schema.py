@@ -71,14 +71,14 @@ class TestGenericQuirksDetector:
     """Test the GenericQuirksDetector inner class."""
 
     @pytest.mark.unit
-    def test_generic_quirks_detector_can_be_instantiated(self) -> None:
+    def test_generics_detector_can_be_instantiated(self) -> None:
         """Test GenericQuirksDetector can be created."""
         detector = FlextLdapSchema.GenericQuirksDetector()
         assert detector is not None
         assert isinstance(detector, FlextLdapSchema.GenericQuirksDetector)
 
     @pytest.mark.unit
-    def test_generic_quirks_detector_has_logger(self) -> None:
+    def test_generics_detector_has_logger(self) -> None:
         """Test detector inherits logger from FlextHandlers."""
         detector = FlextLdapSchema.GenericQuirksDetector()
         assert hasattr(detector, "logger")
@@ -120,17 +120,17 @@ class TestGenericQuirksDetector:
         assert result is not None
 
     @pytest.mark.unit
-    def test_get_server_quirks_with_none_returns_none(self) -> None:
-        """Test get_server_quirks with None server type returns None."""
+    def test_get_servers_with_none_returns_none(self) -> None:
+        """Test get_servers with None server type returns None."""
         detector = FlextLdapSchema.GenericQuirksDetector()
-        result = detector.get_server_quirks(None)
+        result = detector.get_servers(None)
         assert result is None
 
     @pytest.mark.unit
-    def test_get_server_quirks_returns_quirks_object(self) -> None:
-        """Test get_server_quirks returns proper ServerQuirks object."""
+    def test_get_servers_returnss_object(self) -> None:
+        """Test get_servers returns proper ServerQuirks object."""
         detector = FlextLdapSchema.GenericQuirksDetector()
-        quirks = detector.get_server_quirks("generic")
+        quirks = detector.get_servers("generic")
         assert quirks is not None
         # Verify basic quirks properties
         assert hasattr(quirks, "case_sensitive_dns")
@@ -140,10 +140,10 @@ class TestGenericQuirksDetector:
         assert hasattr(quirks, "default_timeout")
 
     @pytest.mark.unit
-    def test_generic_quirks_detector_properties_valid(self) -> None:
+    def test_generics_detector_properties_valid(self) -> None:
         """Test generic quirks detector returns sensible quirks."""
         detector = FlextLdapSchema.GenericQuirksDetector()
-        quirks = detector.get_server_quirks("any-server")
+        quirks = detector.get_servers("any-server")
         assert quirks.supports_paged_results is True
         assert (
             quirks.max_page_size == FlextLdapConstants.Connection.MAX_PAGE_SIZE_GENERIC
@@ -273,13 +273,13 @@ class TestSchemaServiceIntegration:
         assert dn_result.is_success
 
     @pytest.mark.unit
-    def test_quirks_detector_and_discovery_independent(self) -> None:
+    def tests_detector_and_discovery_independent(self) -> None:
         """Test that QuirksDetector and Discovery are independent."""
         detector = FlextLdapSchema.GenericQuirksDetector()
         discovery = FlextLdapSchema.Discovery()
 
         # Both should work independently
-        quirks = detector.get_server_quirks("generic")
+        quirks = detector.get_servers("generic")
         dn = discovery.get_schema_subentry_dn("generic").unwrap()
 
         assert quirks is not None

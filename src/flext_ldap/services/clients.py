@@ -97,7 +97,7 @@ class FlextLdapClients(FlextService[None]):
 
         # Core configuration and logging
         self._ldap_config = config
-        self._quirks_mode: FlextLdapConstants.Types.QuirksMode = (
+        self.s_mode: FlextLdapConstants.Types.QuirksMode = (
             quirks_mode or FlextLdapConstants.Types.QuirksMode.AUTOMATIC
         )
 
@@ -155,7 +155,7 @@ class FlextLdapClients(FlextService[None]):
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
         """Get current quirks mode for LDAP operations."""
-        return self._quirks_mode
+        return self.s_mode
 
     @property
     def quirks_mode_description(self) -> str:
@@ -167,7 +167,7 @@ class FlextLdapClients(FlextService[None]):
             FlextLdapConstants.Types.QuirksMode.RELAXED: "Permissive mode, accept anything",
         }
         return descriptions.get(
-            self._quirks_mode,
+            self.s_mode,
             FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
         )
 
@@ -287,7 +287,7 @@ class FlextLdapClients(FlextService[None]):
 
             # Store quirks mode if provided, otherwise use default
             if quirks_mode is not None:
-                self._quirks_mode = quirks_mode
+                self.s_mode = quirks_mode
                 self.logger.debug("Quirks mode updated to: %s", quirks_mode)
 
             self.logger.debug("Connecting to LDAP server: %s", server_uri)
@@ -705,7 +705,7 @@ class FlextLdapClients(FlextService[None]):
 
         """
         # Use provided quirks_mode or fall back to instance quirks_mode
-        effective_quirks_mode = quirks_mode or self._quirks_mode
+        effectives_mode = quirks_mode or self.s_mode
 
         # Get or create searcher with FRESH connection context for each search
         # This ensures we always have the current connection state and prevents stale references
@@ -720,7 +720,7 @@ class FlextLdapClients(FlextService[None]):
                 list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None
             ].fail("No LDAP connection available for search operation")
 
-        searcher.set_quirks_mode(effective_quirks_mode)
+        searcher.sets_mode(effectives_mode)
 
         # Convert scope to lowercase for searcher compatibility
         normalized_scope_str = scope.lower() if isinstance(scope, str) else scope
@@ -787,11 +787,11 @@ class FlextLdapClients(FlextService[None]):
 
         """
         # Use provided quirks_mode or fall back to instance quirks_mode
-        effective_quirks_mode = quirks_mode or self._quirks_mode
+        effectives_mode = quirks_mode or self.s_mode
 
         # Pass quirks information to searcher
         searcher = self._get_searcher()
-        searcher.set_quirks_mode(effective_quirks_mode)
+        searcher.sets_mode(effectives_mode)
 
         if not self._connection:
             return FlextResult[FlextLdifModels.Entry | None].fail(
@@ -887,7 +887,7 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # Use provided quirks_mode or fall back to instance quirks_mode
-            effective_quirks_mode = quirks_mode or self._quirks_mode
+            effectives_mode = quirks_mode or self.s_mode
 
             # Extract dict from LdifAttributes if needed
             attrs_dict: dict[str, str | list[str]]
@@ -917,7 +917,7 @@ class FlextLdapClients(FlextService[None]):
             # Limit retries unless in "relaxed" mode
             max_retries = (
                 1
-                if effective_quirks_mode == FlextLdapConstants.Types.QuirksMode.RFC
+                if effectives_mode == FlextLdapConstants.Types.QuirksMode.RFC
                 else 20
             )
             retry_count = 0
@@ -925,7 +925,7 @@ class FlextLdapClients(FlextService[None]):
             self.logger.debug(
                 "Adding entry with quirks_mode: %s (effective: %s)",
                 quirks_mode,
-                effective_quirks_mode,
+                effectives_mode,
             )
 
             while not success and retry_count < max_retries:
@@ -1058,12 +1058,12 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # Use provided quirks_mode or fall back to instance quirks_mode
-            effective_quirks_mode = quirks_mode or self._quirks_mode
+            effectives_mode = quirks_mode or self.s_mode
 
             self.logger.debug(
                 "Modifying entry with quirks_mode: %s (effective: %s)",
                 quirks_mode,
-                effective_quirks_mode,
+                effectives_mode,
             )
 
             # Convert changes to ldap3 format
@@ -1203,12 +1203,12 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[bool].fail("LDAP connection not established")
 
             # Use provided quirks_mode or fall back to instance quirks_mode
-            effective_quirks_mode = quirks_mode or self._quirks_mode
+            effectives_mode = quirks_mode or self.s_mode
 
             self.logger.debug(
                 "Deleting entry with quirks_mode: %s (effective: %s)",
                 quirks_mode,
-                effective_quirks_mode,
+                effectives_mode,
             )
 
             # Cast to Protocol type for proper type checking with ldap3
@@ -1255,10 +1255,10 @@ class FlextLdapClients(FlextService[None]):
             FlextResult[bool]: Success if entry is valid
 
         """
-        effective_quirks_mode = quirks_mode or self._quirks_mode
+        effectives_mode = quirks_mode or self.s_mode
 
         # Basic validation (skip in relaxed mode)
-        if effective_quirks_mode != FlextLdapConstants.Types.QuirksMode.RELAXED:
+        if effectives_mode != FlextLdapConstants.Types.QuirksMode.RELAXED:
             if not entry.dn:
                 return FlextResult[bool].fail("Entry DN cannot be empty")
 
@@ -1486,7 +1486,7 @@ class FlextLdapClients(FlextService[None]):
         return getattr(self, "_session_id", None)
 
     @property
-    def server_quirks(self) -> FlextLdapModels.ServerQuirks | None:
+    def servers(self) -> FlextLdapModels.ServerQuirks | None:
         """Get server quirks for detected server type."""
         if not self._detected_server_type:
             return None

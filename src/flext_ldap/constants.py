@@ -320,7 +320,7 @@ class FlextLdapConstants(FlextLdifConstants):
         UNCHANGED: Final[str] = "unchanged"
         TOTAL: Final[str] = "total"
         ATTRIBUTE_COUNT: Final[str] = "attribute_count"
-        USED_QUIRKS: Final[str] = "used_quirks"
+        USEDS: Final[str] = "useds"
 
     # =========================================================================
     # DEFAULT VALUES

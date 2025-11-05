@@ -247,13 +247,13 @@ class TestOracleOUDOperations:
 class TestServerQuirksDetection:
     """Test server quirks auto-detection and handling."""
 
-    def test_detect_server_quirks(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_detect_servers(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test automatic server quirks detection."""
         # Server quirks should be detected from server type
         result = shared_ldap_client.discover_schema()
         assert result.is_success or result.is_failure
 
-    def test_handle_attribute_quirks(
+    def test_handle_attributes(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test handling of server-specific attribute quirks."""
@@ -264,7 +264,7 @@ class TestServerQuirksDetection:
         )
         assert result.is_success or result.is_failure
 
-    def test_handle_search_quirks(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_handle_searchs(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test handling of server-specific search quirks."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",

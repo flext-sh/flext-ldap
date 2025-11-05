@@ -315,7 +315,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         # Get server quirks
         try:
-            quirks_dict = self._quirks_manager.get_all_quirks_for_server(server_type)
+            quirks_dict = self.s_manager.get_alls_for_server(server_type)
             if not quirks_dict:
                 self.logger.debug(
                     "Could not get server quirks for validation",
@@ -467,7 +467,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """
         # Get server quirks
         try:
-            quirks = self._quirks_manager.get_all_quirks_for_server(server_type)
+            quirks = self.s_manager.get_alls_for_server(server_type)
             if not quirks:
                 return FlextResult[dict[str, object]].fail(
                     f"Failed to get server quirks for type: {server_type}",

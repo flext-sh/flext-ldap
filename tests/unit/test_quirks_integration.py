@@ -98,7 +98,7 @@ class TestFlextLdapQuirksIntegration:
         """Test server_type property access."""
         assert quirks_adapter_with_server_type.server_type == "openldap2"
 
-    def test_quirks_manager_property(
+    def tests_manager_property(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test quirks_manager property access."""
@@ -187,47 +187,47 @@ class TestFlextLdapQuirksIntegration:
             "active_directory",
         }
 
-    def test_get_server_quirks_with_explicit_type(
+    def test_get_servers_with_explicit_type(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test getting quirks for explicit server type."""
-        result = quirks_adapter.get_server_quirks("openldap2")
+        result = quirks_adapter.get_servers("openldap2")
         assert result.is_success
         quirks = result.unwrap()
         assert isinstance(quirks, dict)
 
-    def test_get_server_quirks_with_detected_type(
+    def test_get_servers_with_detected_type(
         self,
         quirks_adapter_with_server_type: FlextLdapQuirksIntegration,
     ) -> None:
         """Test getting quirks for detected server type."""
-        result = quirks_adapter_with_server_type.get_server_quirks()
+        result = quirks_adapter_with_server_type.get_servers()
         assert result.is_success
         quirks = result.unwrap()
         assert isinstance(quirks, dict)
 
-    def test_get_server_quirks_caches_results(
+    def test_get_servers_caches_results(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test that quirks are cached after first retrieval."""
         # First call
-        result1 = quirks_adapter.get_server_quirks("openldap2")
+        result1 = quirks_adapter.get_servers("openldap2")
         assert result1.is_success
 
         # Cache should now contain the type
-        assert "openldap2" in quirks_adapter._quirks_cache
+        assert "openldap2" in quirks_adapter.s_cache
 
         # Second call should use cache
-        result2 = quirks_adapter.get_server_quirks("openldap2")
+        result2 = quirks_adapter.get_servers("openldap2")
         assert result2.is_success
         assert result1.unwrap() == result2.unwrap()
 
-    def test_get_server_quirks_fallback_to_generic(
+    def test_get_servers_fallback_to_generic(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test fallback to generic quirks for unknown server type."""
         # Request quirks for non-existent server type
-        result = quirks_adapter.get_server_quirks("nonexistent_server")
+        result = quirks_adapter.get_servers("nonexistent_server")
         assert result.is_success
         quirks = result.unwrap()
         assert isinstance(quirks, dict)
@@ -477,43 +477,43 @@ class TestFlextLdapQuirksIntegration:
         # Should fall back to generic defaults
         assert defaults.port == FlextLdapConstants.Defaults.DEFAULT_PORT
 
-    def test_multiple_quirks_cache_entries(
+    def test_multiples_cache_entries(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test caching of multiple server type quirks."""
         # Request quirks for multiple server types
-        result1 = quirks_adapter.get_server_quirks("openldap2")
-        result2 = quirks_adapter.get_server_quirks("oid")
-        result3 = quirks_adapter.get_server_quirks("oud")
+        result1 = quirks_adapter.get_servers("openldap2")
+        result2 = quirks_adapter.get_servers("oid")
+        result3 = quirks_adapter.get_servers("oud")
 
         assert result1.is_success
         assert result2.is_success
         assert result3.is_success
 
         # All three should be cached
-        assert "openldap2" in quirks_adapter._quirks_cache
-        assert "oid" in quirks_adapter._quirks_cache
-        assert "oud" in quirks_adapter._quirks_cache
+        assert "openldap2" in quirks_adapter.s_cache
+        assert "oid" in quirks_adapter.s_cache
+        assert "oud" in quirks_adapter.s_cache
 
     def test_invalid_cache_entry_removal_and_reload(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test invalid cache entries are removed and reloaded."""
         # Manually add invalid cache entry
-        quirks_adapter._quirks_cache["openldap2"] = "invalid_string"
+        quirks_adapter.s_cache["openldap2"] = "invalid_string"
 
         # Getting quirks should remove invalid entry and reload
-        result = quirks_adapter.get_server_quirks("openldap2")
+        result = quirks_adapter.get_servers("openldap2")
         assert result.is_success
         quirks = result.unwrap()
         assert isinstance(quirks, dict)
 
-    def test_flext_result_error_handling_in_get_server_quirks(
+    def test_flext_result_error_handling_in_get_servers(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
-        """Test FlextResult error handling in get_server_quirks."""
+        """Test FlextResult error handling in get_servers."""
         # Even with unusual server types, should return success
-        result = quirks_adapter.get_server_quirks("very_unusual_server_type_xyz")
+        result = quirks_adapter.get_servers("very_unusual_server_type_xyz")
         assert result.is_success
 
     def test_all_server_types_supported(
@@ -534,7 +534,7 @@ class TestFlextLdapQuirksIntegration:
             result = quirks_adapter.get_connection_defaults(server_type)
             assert result.is_success, f"Failed for server type: {server_type}"
 
-    def test_quirks_integration_is_flext_service(
+    def tests_integration_is_flext_service(
         self, quirks_adapter: FlextLdapQuirksIntegration
     ) -> None:
         """Test that QuirksIntegration is a proper FlextService."""

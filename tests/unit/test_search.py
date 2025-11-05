@@ -88,31 +88,31 @@ class TestQuirksModeManagement:
     """Test quirks mode management."""
 
     @pytest.mark.unit
-    def test_set_quirks_mode_automatic(self) -> None:
+    def test_sets_mode_automatic(self) -> None:
         """Test setting quirks mode to automatic."""
         search = FlextLdapSearch()
-        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.AUTOMATIC)
+        search.sets_mode(FlextLdapConstants.Types.QuirksMode.AUTOMATIC)
         assert search is not None
 
     @pytest.mark.unit
-    def test_set_quirks_mode_server(self) -> None:
+    def test_sets_mode_server(self) -> None:
         """Test setting quirks mode to server."""
         search = FlextLdapSearch()
-        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.SERVER)
+        search.sets_mode(FlextLdapConstants.Types.QuirksMode.SERVER)
         assert search is not None
 
     @pytest.mark.unit
-    def test_set_quirks_mode_rfc(self) -> None:
+    def test_sets_mode_rfc(self) -> None:
         """Test setting quirks mode to rfc."""
         search = FlextLdapSearch()
-        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.RFC)
+        search.sets_mode(FlextLdapConstants.Types.QuirksMode.RFC)
         assert search is not None
 
     @pytest.mark.unit
-    def test_set_quirks_mode_relaxed(self) -> None:
+    def test_sets_mode_relaxed(self) -> None:
         """Test setting quirks mode to relaxed."""
         search = FlextLdapSearch()
-        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.RELAXED)
+        search.sets_mode(FlextLdapConstants.Types.QuirksMode.RELAXED)
         assert search is not None
 
 
@@ -308,7 +308,7 @@ class TestSearchIntegration:
         search.set_connection_context(None)
         assert search._connection is None
 
-        search.set_quirks_mode(FlextLdapConstants.Types.QuirksMode.RFC)
+        search.sets_mode(FlextLdapConstants.Types.QuirksMode.RFC)
         result = search.execute()
         assert result.is_success
 

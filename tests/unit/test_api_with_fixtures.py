@@ -430,13 +430,13 @@ class TestFlextLdapWithRealFixtures:
     # QUIRKS MODE BEHAVIOR TESTS
     # =========================================================================
 
-    def test_automatic_quirks_mode_default(self, api: FlextLdap) -> None:
+    def test_automatics_mode_default(self, api: FlextLdap) -> None:
         """Test that automatic quirks mode is the default."""
         # SETUP: Create new API instance
         # COMPARE: Verify default quirks mode
         assert api.quirks_mode == "automatic"
 
-    def test_rfc_quirks_mode_strict(self, api: FlextLdap) -> None:
+    def test_rfcs_mode_strict(self, api: FlextLdap) -> None:
         """Test RFC quirks mode enforces strict validation."""
         # SETUP: Create entry with fixture using helper method
         fixture = RFC_TEST_ENTRIES["person_example"]

@@ -157,7 +157,7 @@ class TestOIDOperationsFullCoverage:
         )
         assert isinstance(result, FlextResult)
 
-    def test_oid_search_with_quirks_mode(
+    def test_oid_search_withs_mode(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test OID search with quirks mode parameter."""
