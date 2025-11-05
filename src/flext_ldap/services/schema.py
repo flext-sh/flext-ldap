@@ -111,7 +111,7 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
             # Generic detection - return a default type enum
             return FlextLdifConstants.LdapServerType.GENERIC
 
-        def get_server_quirks(
+        def get_servers(
             self,
             server_type: str | None,
         ) -> FlextLdapModels.ServerQuirks | None:
@@ -175,7 +175,7 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
             )
             super().__init__(config=config)
             # Note: self.logger is provided by FlextService parent class
-            self._quirks_adapter = quirks_adapter or FlextLdapQuirksIntegration()
+            self.s_adapter = quirks_adapter or FlextLdapQuirksIntegration()
 
         @override
         def handle(

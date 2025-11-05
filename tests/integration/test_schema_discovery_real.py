@@ -41,7 +41,7 @@ class TestRealSchemaDiscovery:
         schema = result.value
         assert isinstance(schema, FlextLdifModels.SchemaDiscoveryResult)
         assert schema.server_type is not None
-        assert schema.server_quirks is not None
+        assert schema.servers is not None
 
     @pytest.mark.xfail(
         reason="Type mismatch in server type detection comparison",
@@ -99,7 +99,7 @@ class TestRealSchemaDiscovery:
         client.discover_schema()
 
         # Get quirks
-        quirks = client.server_quirks
+        quirks = client.servers
 
         # Schema discovery may fail but should return default quirks
         assert quirks is not None
@@ -113,7 +113,7 @@ class TestRealSchemaDiscovery:
 class TestRealServerQuirksDetection:
     """Test server quirks detection with real server."""
 
-    def test_quirks_detector_with_real_server_info(
+    def tests_detector_with_real_server_info(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """Test quirks detector with real server information."""
@@ -142,7 +142,7 @@ class TestRealServerQuirksDetection:
         assert isinstance(server_type, FlextLdifConstants.LdapServerType)
 
         # Get quirks for detected type
-        quirks = detector.get_server_quirks(str(server_type))
+        quirks = detector.get_servers(str(server_type))
         assert quirks is not None
         if isinstance(quirks, dict):
             assert quirks.get("server_type") == str(server_type)
@@ -162,7 +162,7 @@ class TestRealServerQuirksDetection:
         # Discover schema
         client.discover_schema()
 
-        quirks = client.server_quirks
+        quirks = client.servers
         assert quirks is not None
 
         # OpenLDAP typically has these characteristics

@@ -190,8 +190,8 @@ class FlextLdapModels(FlextModels):
         object_class_mappings: dict[str, str] = Field(default_factory=dict)
         dn_format_preferences: list[str] = Field(default_factory=list)
         search_scope_limitations: set[str] = Field(default_factory=set)
-        filter_syntax_quirks: list[str] = Field(default_factory=list)
-        modify_operation_quirks: list[str] = Field(default_factory=list)
+        filter_syntaxs: list[str] = Field(default_factory=list)
+        modify_operations: list[str] = Field(default_factory=list)
 
     class Base(FlextModels.ArbitraryTypesModel):
         """Base model - dynamic LDAP schema support.

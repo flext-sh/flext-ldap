@@ -52,7 +52,7 @@ class TestQuirksIntegrationInitialization:
         assert status["server_type"] == "openldap2"
         assert isinstance(status["quirks_loaded"], bool)
 
-    def test_execute_without_quirks_cache(self) -> None:
+    def test_execute_withouts_cache(self) -> None:
         """Test execute with empty quirks cache."""
         quirks = FlextLdapQuirksIntegration()
 
@@ -181,66 +181,66 @@ class TestServerTypeDetectionReal:
 class TestServerQuirksRetrieval:
     """Test server-specific quirks retrieval."""
 
-    def test_get_server_quirks_openldap2(self) -> None:
+    def test_get_servers_openldap2(self) -> None:
         """Test getting quirks for OpenLDAP 2.x."""
         quirks = FlextLdapQuirksIntegration(server_type="openldap2")
 
-        result = quirks.get_server_quirks()
+        result = quirks.get_servers()
 
         assert result.is_success
         quirks_dict = result.unwrap()
         assert isinstance(quirks_dict, dict)
 
-    def test_get_server_quirks_with_explicit_type(self) -> None:
+    def test_get_servers_with_explicit_type(self) -> None:
         """Test getting quirks with explicit server type parameter."""
         quirks = FlextLdapQuirksIntegration()
 
-        result = quirks.get_server_quirks(server_type="openldap1")
+        result = quirks.get_servers(server_type="openldap1")
 
         assert result.is_success
         quirks_dict = result.unwrap()
         assert isinstance(quirks_dict, dict)
 
-    def test_get_server_quirks_generic_fallback(self) -> None:
+    def test_get_servers_generic_fallback(self) -> None:
         """Test generic fallback when server type not found."""
         quirks = FlextLdapQuirksIntegration()
 
-        result = quirks.get_server_quirks(server_type="nonexistent_server")
+        result = quirks.get_servers(server_type="nonexistent_server")
 
         assert result.is_success
         quirks_dict = result.unwrap()
         assert isinstance(quirks_dict, dict)
 
-    def test_get_server_quirks_caching(self) -> None:
+    def test_get_servers_caching(self) -> None:
         """Test that quirks are cached after first retrieval."""
         quirks = FlextLdapQuirksIntegration(server_type="openldap2")
 
         # First call - populates cache
-        result1 = quirks.get_server_quirks()
+        result1 = quirks.get_servers()
         assert result1.is_success
 
         # Second call - should use cache
-        result2 = quirks.get_server_quirks()
+        result2 = quirks.get_servers()
         assert result2.is_success
 
         # Results should be identical
         assert result1.unwrap() == result2.unwrap()
 
-    def test_get_server_quirks_cache_invalidation(self) -> None:
+    def test_get_servers_cache_invalidation(self) -> None:
         """Test cache invalidation when requesting different server type."""
         quirks = FlextLdapQuirksIntegration(server_type="openldap2")
 
         # Get quirks for openldap2
-        result1 = quirks.get_server_quirks()
+        result1 = quirks.get_servers()
         assert result1.is_success
 
         # Get quirks for different server type
-        result2 = quirks.get_server_quirks(server_type="oud")
+        result2 = quirks.get_servers(server_type="oud")
         assert result2.is_success
 
         # Should have both in cache now
-        assert "openldap2" in quirks._quirks_cache
-        assert "oud" in quirks._quirks_cache
+        assert "openldap2" in quirks.s_cache
+        assert "oud" in quirks.s_cache
 
 
 @pytest.mark.integration
@@ -305,11 +305,11 @@ class TestAclAttributeRetrieval:
         assert isinstance(acl_attr, str)
         assert acl_attr == "aci"  # Generic default
 
-    def test_get_acl_attribute_name_quirks_failure(self) -> None:
+    def test_get_acl_attribute_names_failure(self) -> None:
         """Test ACL attribute name when quirks retrieval fails."""
         quirks = FlextLdapQuirksIntegration()
         # Force quirks manager to fail by corrupting cache
-        quirks._quirks_cache["test"] = "invalid_non_dict_value"
+        quirks.s_cache["test"] = "invalid_non_dict_value"
 
         result = quirks.get_acl_attribute_name(server_type="test")
 
@@ -408,7 +408,7 @@ class TestOperationalAttributesSupport:
             assert result.is_success
             assert isinstance(result.unwrap(), bool)
 
-    def test_supports_operational_attributes_quirks_failure(self) -> None:
+    def test_supports_operational_attributess_failure(self) -> None:
         """Test operational attributes when quirks fail."""
         quirks = FlextLdapQuirksIntegration()
 
@@ -452,7 +452,7 @@ class TestPageSizeRetrieval:
             assert page_size > 0
             assert page_size <= 10000  # Reasonable upper bound
 
-    def test_get_max_page_size_quirks_failure(self) -> None:
+    def test_get_max_page_sizes_failure(self) -> None:
         """Test max page size when quirks fail."""
         quirks = FlextLdapQuirksIntegration()
         quirks._detected_server_type = "invalid_server"
@@ -468,11 +468,11 @@ class TestPageSizeRetrieval:
         quirks = FlextLdapQuirksIntegration(server_type="generic")
 
         # Get quirks first to populate cache
-        quirks.get_server_quirks()
+        quirks.get_servers()
 
         # Corrupt cache with invalid value type
-        if "generic" in quirks._quirks_cache:
-            cache_entry = quirks._quirks_cache["generic"]
+        if "generic" in quirks.s_cache:
+            cache_entry = quirks.s_cache["generic"]
             if isinstance(cache_entry, dict):
                 cache_entry["max_page_size"] = "invalid_string_not_a_number"
 
@@ -513,7 +513,7 @@ class TestTimeoutRetrieval:
             assert timeout > 0
             assert timeout <= 300  # Reasonable upper bound (5 minutes)
 
-    def test_get_default_timeout_quirks_failure(self) -> None:
+    def test_get_default_timeouts_failure(self) -> None:
         """Test default timeout when quirks fail."""
         quirks = FlextLdapQuirksIntegration()
         quirks._detected_server_type = "invalid_server"
@@ -529,11 +529,11 @@ class TestTimeoutRetrieval:
         quirks = FlextLdapQuirksIntegration(server_type="generic")
 
         # Get quirks first to populate cache
-        quirks.get_server_quirks()
+        quirks.get_servers()
 
         # Corrupt cache with invalid value type
-        if "generic" in quirks._quirks_cache:
-            cache_entry = quirks._quirks_cache["generic"]
+        if "generic" in quirks.s_cache:
+            cache_entry = quirks.s_cache["generic"]
             if isinstance(cache_entry, dict):
                 cache_entry["default_timeout"] = "invalid_timeout"
 
@@ -690,7 +690,7 @@ class TestPropertyAccess:
         # Server type should be updated after detection
         assert quirks.server_type is not None
 
-    def test_quirks_manager_property(self) -> None:
+    def tests_manager_property(self) -> None:
         """Test quirks_manager property access."""
         quirks = FlextLdapQuirksIntegration()
 

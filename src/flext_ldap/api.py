@@ -71,7 +71,7 @@ class FlextLdap(FlextService[None]):
         )
         self._ldif: FlextLdif = FlextLdif.get_instance()  # Always use singleton
         self._entry_adapter: FlextLdapEntryAdapter | None = None
-        self._quirks_mode: FlextLdapConstants.Types.QuirksMode = (
+        self.s_mode: FlextLdapConstants.Types.QuirksMode = (
             FlextLdapConstants.Types.QuirksMode.AUTOMATIC
         )
 
@@ -185,7 +185,7 @@ class FlextLdap(FlextService[None]):
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
         """Get current quirks mode."""
-        return self._quirks_mode
+        return self.s_mode
 
     @override
     def execute(self) -> FlextResult[None]:
@@ -258,7 +258,7 @@ class FlextLdap(FlextService[None]):
             # Note: Pydantic v2 automatically runs model validators during field updates
 
         # Store quirks_mode for internal modules
-        self._quirks_mode = quirks_mode
+        self.s_mode = quirks_mode
 
         # Connect using client with explicit config values
         password_value = ""  # nosec: default empty string, actual password from config.ldap_bind_password
@@ -330,7 +330,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self._quirks_mode = quirks_mode
+            self.s_mode = quirks_mode
 
         result = self.client.search(base_dn, filter_str, attributes)
         if result.is_failure:
@@ -430,7 +430,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self._quirks_mode = quirks_mode
+            self.s_mode = quirks_mode
 
         if operation == "delete":
             if not dn:
@@ -518,7 +518,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self._quirks_mode = quirks_mode
+            self.s_mode = quirks_mode
 
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()
@@ -586,7 +586,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self._quirks_mode = quirks_mode
+            self.s_mode = quirks_mode
 
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()
@@ -657,7 +657,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self._quirks_mode = quirks_mode
+            self.s_mode = quirks_mode
 
         if direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
             if not data:
@@ -703,12 +703,12 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self._quirks_mode = quirks_mode
+            self.s_mode = quirks_mode
 
         info_dict: dict[str, object] = {
             FlextLdapConstants.ApiDictKeys.TYPE: self.servers.server_type,
             FlextLdapConstants.ApiDictKeys.CONNECTED: self.client.is_connected,
-            FlextLdapConstants.ApiDictKeys.QUIRKS_MODE: self._quirks_mode,
+            FlextLdapConstants.ApiDictKeys.QUIRKS_MODE: self.s_mode,
         }
 
         if detail_level in {
@@ -936,7 +936,7 @@ class FlextLdap(FlextService[None]):
             else None,
         )
 
-    def get_server_quirks_info(self) -> FlextResult[dict[str, object]]:
+    def get_servers_info(self) -> FlextResult[dict[str, object]]:
         """Get quirks information for the current LDAP server connection.
 
         Returns server-specific quirks information including special handling
@@ -954,7 +954,7 @@ class FlextLdap(FlextService[None]):
             ldap = FlextLdap(config)
             result = ldap.connect(...)
             if result.is_success:
-                quirks = ldap.get_server_quirks_info()
+                quirks = ldap.get_servers_info()
                 if quirks.is_success:
                     info = quirks.unwrap()
                     acl_attr = info.get("acl_attribute")
@@ -965,7 +965,7 @@ class FlextLdap(FlextService[None]):
                 return FlextResult[dict[str, object]].fail(
                     "Cannot get server quirks info: not connected to LDAP server",
                 )
-            return self.client.get_server_quirks_info()
+            return self.client.get_servers_info()
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to get server quirks information: {e}",

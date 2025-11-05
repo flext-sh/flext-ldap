@@ -235,7 +235,7 @@ class TestFlextLdapFacadeRealCoverage:
         assert server_ops is not None
         assert hasattr(server_ops, "execute")
 
-    def test_flext_ldap_quirks_mode_property(self, ldap: FlextLdap) -> None:
+    def test_flext_ldaps_mode_property(self, ldap: FlextLdap) -> None:
         """Test accessing quirks mode property."""
         quirks_mode = ldap.quirks_mode
         # Quirks mode property should be accessible

@@ -525,7 +525,7 @@ class TestFlextLdapServersOUDModifyEntryDetailed:
         )
         assert result.is_success
 
-    def test_modify_entry_schema_quirk(self) -> None:
+    def test_modify_entry_schema(self) -> None:
         """Test modification with OUD schema quirks."""
         ops = FlextLdapServersOUDOperations()
         mock_connection = MagicMock()

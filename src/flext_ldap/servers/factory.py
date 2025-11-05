@@ -52,7 +52,7 @@ class FlextLdapServersFactory(FlextService[None]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif.get_instance()
-        self._quirks_manager = FlextLdifServer.get_global_instance()
+        self.s_manager = FlextLdifServer.get_global_instance()
         self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
             FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
             FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,

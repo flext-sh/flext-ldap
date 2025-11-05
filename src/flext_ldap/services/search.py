@@ -66,7 +66,7 @@ class FlextLdapSearch(FlextService[None]):
         """
         self._connection = connection
 
-    def set_quirks_mode(self, quirks_mode: FlextLdapConstants.Types.QuirksMode) -> None:
+    def sets_mode(self, quirks_mode: FlextLdapConstants.Types.QuirksMode) -> None:
         """Set quirks mode for search operations.
 
         Args:
@@ -75,7 +75,7 @@ class FlextLdapSearch(FlextService[None]):
         """
         # For now, we store the quirks mode but don't use it in search operations
         # This method is provided for protocol compliance and future extensibility
-        self._quirks_mode = quirks_mode
+        self.s_mode = quirks_mode
 
     def search_one(
         self,

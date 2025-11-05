@@ -75,52 +75,52 @@ class TestQuirksIntegrationServerDetection:
 class TestQuirksIntegrationServerConfiguration:
     """Test server-specific quirks configuration retrieval."""
 
-    def test_get_server_quirks_openldap(self) -> None:
+    def test_get_servers_openldap(self) -> None:
         """Test getting quirks for OpenLDAP."""
         quirks = FlextLdapQuirksIntegration(server_type="openldap2")
-        result = quirks.get_server_quirks()
+        result = quirks.get_servers()
 
         assert result.is_success
         quirks_config = result.unwrap()
         assert isinstance(quirks_config, dict)
 
-    def test_get_server_quirks_oid(self) -> None:
+    def test_get_servers_oid(self) -> None:
         """Test getting quirks for Oracle OID."""
         quirks = FlextLdapQuirksIntegration(server_type="oid")
-        result = quirks.get_server_quirks()
+        result = quirks.get_servers()
 
         assert result.is_success
         quirks_config = result.unwrap()
         assert isinstance(quirks_config, dict)
 
-    def test_get_server_quirks_oud(self) -> None:
+    def test_get_servers_oud(self) -> None:
         """Test getting quirks for Oracle OUD."""
         quirks = FlextLdapQuirksIntegration(server_type="oud")
-        result = quirks.get_server_quirks()
+        result = quirks.get_servers()
 
         assert result.is_success
         quirks_config = result.unwrap()
         assert isinstance(quirks_config, dict)
 
-    def test_get_server_quirks_generic(self) -> None:
+    def test_get_servers_generic(self) -> None:
         """Test getting quirks for generic LDAP."""
         quirks = FlextLdapQuirksIntegration(server_type="generic")
-        result = quirks.get_server_quirks()
+        result = quirks.get_servers()
 
         assert result.is_success
         quirks_config = result.unwrap()
         assert isinstance(quirks_config, dict)
 
-    def test_get_server_quirks_caching(self) -> None:
+    def test_get_servers_caching(self) -> None:
         """Test that quirks are cached after first retrieval."""
         quirks = FlextLdapQuirksIntegration(server_type="openldap2")
 
         # First retrieval
-        result1 = quirks.get_server_quirks()
+        result1 = quirks.get_servers()
         assert result1.is_success
 
         # Second retrieval (from cache)
-        result2 = quirks.get_server_quirks()
+        result2 = quirks.get_servers()
         assert result2.is_success
 
         # Both should return same data
@@ -513,10 +513,10 @@ class TestQuirksIntegrationServiceExecution:
 class TestQuirksIntegrationErrorHandling:
     """Test error handling in quirks integration."""
 
-    def test_get_server_quirks_with_invalid_type(self) -> None:
+    def test_get_servers_with_invalid_type(self) -> None:
         """Test getting quirks with invalid server type."""
         quirks = FlextLdapQuirksIntegration()
-        result = quirks.get_server_quirks("nonexistent_server")
+        result = quirks.get_servers("nonexistent_server")
 
         # Should succeed but return generic quirks
         assert result.is_success

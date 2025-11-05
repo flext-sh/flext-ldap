@@ -26,7 +26,7 @@ class TestGenericQuirksDetectorInitialization:
         assert detector is not None
         assert hasattr(detector, "handle")
         assert hasattr(detector, "detect_server_type")
-        assert hasattr(detector, "get_server_quirks")
+        assert hasattr(detector, "get_servers")
 
     @pytest.mark.unit
     def test_detector_inherits_from_handlers(self) -> None:
@@ -107,32 +107,32 @@ class TestGenericQuirksDetectorDetectServerType:
 
 
 class TestGenericQuirksDetectorGetServerQuirks:
-    """Test GenericQuirksDetector.get_server_quirks() method."""
+    """Test GenericQuirksDetector.get_servers() method."""
 
     @pytest.mark.unit
-    def test_get_server_quirks_with_valid_type(self) -> None:
+    def test_get_servers_with_valid_type(self) -> None:
         """Test getting server quirks with valid server type."""
         detector = FlextLdapSchema.GenericQuirksDetector()
 
-        quirks = detector.get_server_quirks("generic")
+        quirks = detector.get_servers("generic")
 
         assert quirks is not None
         assert quirks.server_type == FlextLdifConstants.LdapServerType.GENERIC
 
     @pytest.mark.unit
-    def test_get_server_quirks_with_none_type(self) -> None:
+    def test_get_servers_with_none_type(self) -> None:
         """Test getting server quirks with None server type."""
         detector = FlextLdapSchema.GenericQuirksDetector()
 
-        quirks = detector.get_server_quirks(None)
+        quirks = detector.get_servers(None)
 
         assert quirks is None
 
     @pytest.mark.unit
-    def test_get_server_quirks_has_required_fields(self) -> None:
+    def test_get_servers_has_required_fields(self) -> None:
         """Test server quirks has all required fields."""
         detector = FlextLdapSchema.GenericQuirksDetector()
-        quirks = detector.get_server_quirks("generic")
+        quirks = detector.get_servers("generic")
 
         assert hasattr(quirks, "case_sensitive_dns")
         assert hasattr(quirks, "case_sensitive_attributes")
@@ -141,10 +141,10 @@ class TestGenericQuirksDetectorGetServerQuirks:
         assert hasattr(quirks, "default_timeout")
 
     @pytest.mark.unit
-    def test_get_server_quirks_values_correct(self) -> None:
+    def test_get_servers_values_correct(self) -> None:
         """Test server quirks values are correct for generic server."""
         detector = FlextLdapSchema.GenericQuirksDetector()
-        quirks = detector.get_server_quirks("openldap")
+        quirks = detector.get_servers("openldap")
 
         assert quirks.case_sensitive_dns is True
         assert quirks.case_sensitive_attributes is True
@@ -157,7 +157,7 @@ class TestSchemaDiscoveryInitialization:
     """Test FlextLdapSchema.Discovery initialization."""
 
     @pytest.mark.unit
-    def test_initialization_without_quirks_adapter(self) -> None:
+    def test_initialization_withouts_adapter(self) -> None:
         """Test Discovery initialization without quirks adapter."""
         discovery = FlextLdapSchema.Discovery()
         assert discovery is not None
@@ -165,7 +165,7 @@ class TestSchemaDiscoveryInitialization:
         assert hasattr(discovery, "get_schema_subentry_dn")
 
     @pytest.mark.unit
-    def test_initialization_with_quirks_adapter(self) -> None:
+    def test_initialization_withs_adapter(self) -> None:
         """Test Discovery initialization with quirks adapter."""
         from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
@@ -339,7 +339,7 @@ class TestFlextLdapSchemaIntegration:
         assert hasattr(FlextLdapSchema, "Discovery")
 
     @pytest.mark.unit
-    def test_quirks_detector_and_discovery_independence(self) -> None:
+    def tests_detector_and_discovery_independence(self) -> None:
         """Test that QuirksDetector and Discovery work independently."""
         detector = FlextLdapSchema.GenericQuirksDetector()
         discovery = FlextLdapSchema.Discovery()

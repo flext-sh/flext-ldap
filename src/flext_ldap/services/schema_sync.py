@@ -544,7 +544,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                     FlextLdapConstants.StatusKeys.ADDED: added_count,
                     FlextLdapConstants.StatusKeys.FAILED: failed_count,
                     FlextLdapConstants.StatusKeys.TOTAL: len(definitions),
-                    FlextLdapConstants.StatusKeys.USED_QUIRKS: True,
+                    FlextLdapConstants.StatusKeys.USEDS: True,
                 },
             )
 

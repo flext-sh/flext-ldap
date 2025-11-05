@@ -565,7 +565,7 @@ class FlextLdapProtocols(FlextProtocols):
                 """
                 ...
 
-            def set_quirks_mode(
+            def sets_mode(
                 self,
                 quirks_mode: FlextLdapConstants.Types.QuirksMode,
             ) -> None:

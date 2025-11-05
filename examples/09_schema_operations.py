@@ -145,7 +145,7 @@ def demonstrate_schema_discovery(server_type: str | None) -> None:
         logger.info("   ℹ Using default: cn=subschema (RFC 4512)")
 
 
-def demonstrate_quirks_detection(server_type: str | None) -> None:
+def demonstrates_detection(server_type: str | None) -> None:
     """Demonstrate server quirks detection and handling.
 
     Args:
@@ -161,28 +161,28 @@ def demonstrate_quirks_detection(server_type: str | None) -> None:
     logger.info(f"\n1. Detecting quirks for server type: {server_type or 'generic'}")
 
     # Get server quirks
-    server_quirks = detector.get_server_quirks(server_type)
+    servers = detector.get_servers(server_type)
 
-    if server_quirks:
+    if servers:
         logger.info("   ✅ Server quirks detected:")
-        logger.info(f"      Server type: {server_quirks.server_type}")
-        logger.info(f"      Case-sensitive DNs: {server_quirks.case_sensitive_dns}")
+        logger.info(f"      Server type: {servers.server_type}")
+        logger.info(f"      Case-sensitive DNs: {servers.case_sensitive_dns}")
         logger.info(
-            f"      Case-sensitive attributes: {server_quirks.case_sensitive_attributes}"
+            f"      Case-sensitive attributes: {servers.case_sensitive_attributes}"
         )
-        logger.info(f"      Paged results: {server_quirks.supports_paged_results}")
-        logger.info(f"      VLV support: {server_quirks.supports_vlv}")
-        logger.info(f"      Max page size: {server_quirks.max_page_size}")
-        logger.info(f"      Default timeout: {server_quirks.default_timeout}s")
-        logger.info(f"      StartTLS: {server_quirks.supports_start_tls}")
+        logger.info(f"      Paged results: {servers.supports_paged_results}")
+        logger.info(f"      VLV support: {servers.supports_vlv}")
+        logger.info(f"      Max page size: {servers.max_page_size}")
+        logger.info(f"      Default timeout: {servers.default_timeout}s")
+        logger.info(f"      StartTLS: {servers.supports_start_tls}")
         logger.info(
-            f"      Explicit bind required: {server_quirks.requires_explicit_bind}"
+            f"      Explicit bind required: {servers.requires_explicit_bind}"
         )
     else:
         logger.warning("   ⚠️  No quirks detected (using defaults)")
 
 
-def demonstrate_quirks_integration(server_type: str | None) -> None:
+def demonstrates_integration(server_type: str | None) -> None:
     """Demonstrate FlextLdapQuirksIntegration usage.
 
     Args:
@@ -393,10 +393,10 @@ def main() -> int:
             demonstrate_schema_discovery(server_type)
 
             # 4. Quirks Detection
-            demonstrate_quirks_detection(server_type)
+            demonstrates_detection(server_type)
 
             # 5. Quirks Integration
-            demonstrate_quirks_integration(server_type)
+            demonstrates_integration(server_type)
 
             # 6. Schema Search
             demonstrate_schema_search(client, server_type)

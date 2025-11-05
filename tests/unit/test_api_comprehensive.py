@@ -186,7 +186,7 @@ class TestFlextLdapConnection:
 
     @pytest.mark.docker
     @pytest.mark.unit
-    def test_connect_stores_quirks_mode(self) -> None:
+    def test_connect_storess_mode(self) -> None:
         """Test that connect stores quirks mode."""
         ldap = FlextLdap.create()
         from flext_ldap.constants import FlextLdapConstants
