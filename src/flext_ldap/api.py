@@ -824,7 +824,7 @@ class FlextLdap(FlextService[None]):
     ) -> FlextLdifModels.Entry:
         """Normalize entry for target server using FlextLdapEntryAdapter.
 
-        Delegates to FlextLdapEntryAdapter which uses FlextLdifEntrys.
+        Delegates to FlextLdapEntryAdapter for server-specific normalization.
         """
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()

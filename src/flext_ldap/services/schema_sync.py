@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import cast, override
 
 from flext_core import FlextResult, FlextService
-from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
@@ -74,7 +74,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         self._use_ssl = use_ssl
         self._connection: FlextLdapClients | None = None
         # Use flext-ldif schema parser to eliminate duplication
-        self._schema_parser = FlextLdifParserService()
+        self._schema_parser = FlextLdifParser()
 
     @override
     def execute(self) -> FlextResult[dict[str, object]]:
@@ -151,9 +151,9 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
     def _parse_schema_ldif(
         self,
     ) -> FlextResult[list[dict[str, object]]]:
-        """Parse schema LDIF file using FlextLdifParserService.
+        """Parse schema LDIF file using FlextLdifParser.
 
-        Delegates to FlextLdifParserService to eliminate duplication and
+        Delegates to FlextLdifParser to eliminate duplication and
         ensure RFC 4512 compliant parsing.
 
         Returns:

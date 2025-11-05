@@ -14,7 +14,7 @@ import re
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
-from flext_ldif.services import FlextLdifValidationService
+from flext_ldif.services import FlextLdifValidation
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -26,10 +26,10 @@ class DomainServices:
     user management, group operations, and identity validation according
     to domain requirements.
 
-    Uses FlextLdifValidationService for attribute validation to eliminate duplication.
+    Uses FlextLdifValidation for attribute validation to eliminate duplication.
     """
 
-    _validation_service = FlextLdifValidationService()
+    _validation_service = FlextLdifValidation()
 
     @staticmethod
     def calculate_user_display_name(user: FlextLdifModels.Entry) -> str:
@@ -208,7 +208,7 @@ class DomainServices:
         if not username:
             return FlextResult[str].fail("Base name contains no valid characters")
 
-        # Validate username format using FlextLdifValidationService (RFC 4512 compliant)
+        # Validate username format using FlextLdifValidation (RFC 4512 compliant)
         validation_result = DomainServices._validation_service.validate_attribute_name(
             username,
         )

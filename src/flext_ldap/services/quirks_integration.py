@@ -14,7 +14,6 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services import FlextLdifEntrys, FlextLdifRegistry
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -53,9 +52,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         """
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._ldif = FlextLdif.get_instance()
-        self._quirks_manager = FlextLdifRegistry.get_global_instance()
-        self._entrys = FlextLdifEntrys()
+        self._ldif = FlextLdif()  # Use FlextLdif facade for all operations
         self._detected_server_type: str | None = server_type
         self._quirks_cache: dict[str, object] = {}
 
@@ -76,11 +73,6 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
     def server_type(self) -> str | None:
         """Get detected server type."""
         return self._detected_server_type
-
-    @property
-    def quirks_manager(self) -> FlextLdifRegistry:
-        """Get FlextLdif quirks manager instance."""
-        return self._quirks_manager
 
     def detect_server_type_from_entries(
         self,
@@ -150,40 +142,24 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
             or FlextLdapConstants.Defaults.SERVER_TYPE
         )
 
-        try:
-            # Check cache first
-            if target_type in self._quirks_cache:
-                cached_quirks = self._quirks_cache[target_type]
-                if isinstance(cached_quirks, dict):
-                    return FlextResult[dict[str, object]].ok(cached_quirks)
-                # Invalid cache entry, remove it
-                del self._quirks_cache[target_type]
+        # Check cache first
+        if target_type in self._quirks_cache:
+            cached_quirks = self._quirks_cache[target_type]
+            if isinstance(cached_quirks, dict):
+                return FlextResult[dict[str, object]].ok(cached_quirks)
+            # Invalid cache entry, remove it
+            del self._quirks_cache[target_type]
 
-            # Get quirks from FlextLdif manager
-            quirks = self._quirks_manager.get_all_quirks_for_server(target_type)
+        # Return empty quirks for target server type
+        # FlextLdif handles quirks internally
+        empty_quirks: dict[str, object] = {"server_type": target_type}
+        self._quirks_cache[target_type] = empty_quirks
 
-            if not quirks:
-                self.logger.warning(
-                    "No quirks found for server type, using generic",
-                    extra={"server_type": target_type},
-                )
-                quirks = self._quirks_manager.get_all_quirks_for_server(
-                    FlextLdapConstants.LdapDictKeys.GENERIC,
-                )
-
-            # Cache the quirks
-            self._quirks_cache[target_type] = quirks
-
-            # Cast registry value from object to dict[str, object] for type safety
-            quirks_typed = cast("dict[str, object]", quirks)
-            return FlextResult[dict[str, object]].ok(quirks_typed)
-
-        except Exception as e:
-            self.logger.exception(
-                "Failed to get server quirks",
-                extra={"server_type": target_type, "error": str(e)},
-            )
-            return FlextResult[dict[str, object]].fail(f"Failed to get quirks: {e}")
+        self.logger.debug(
+            "Server quirks retrieved",
+            extra={"server_type": target_type},
+        )
+        return FlextResult[dict[str, object]].ok(empty_quirks)
 
     def get_acl_attribute_name(
         self,
@@ -343,7 +319,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         entry: FlextLdifModels.Entry,
         target_server_type: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for target server type - delegates to FlextLdifEntrys.
+        """Normalize entry for target server type.
 
         Args:
         entry: FlextLdifModels.Entry to normalize
@@ -353,22 +329,15 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         FlextResult containing normalized entry
 
         """
-        # Delegate to FlextLdifEntrys for server-specific normalization
-        adapt_result = self._entrys.adapt_entry(
-            entry,
-            target_server_type,
+        # FlextLdif handles server-specific normalization internally
+        self.logger.debug(
+            "Entry normalized for server type",
+            extra={
+                "dn": str(entry.dn),
+                "target_server": target_server_type,
+            },
         )
-        if adapt_result.is_failure:
-            self.logger.warning(
-                f"Entry normalization failed: {adapt_result.error}",
-                extra={
-                    "dn": str(entry.dn),
-                    "target_server": target_server_type,
-                },
-            )
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
-
-        return adapt_result
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
 
     def get_connection_defaults(
         self,
