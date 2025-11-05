@@ -66,7 +66,7 @@ def demonstrate_acl_parsing() -> None:
     logger.info(f"   ACL: {openldap_acl}")
 
     try:
-        result = ldif_client.parse_acl(openldap_acl, "openldap")
+        result = ldif_client.parse(openldap_acl, "openldap")
         if result.is_success:
             parsed = result.unwrap()
             logger.info("   ✅ SUCCESS: ACL parsed via flext-ldif")
@@ -88,7 +88,7 @@ def demonstrate_acl_parsing() -> None:
     logger.info(f"   ACI: {oracle_aci}")
 
     try:
-        result = ldif_client.parse_acl(oracle_aci, "oracle")
+        result = ldif_client.parse(oracle_aci, "oracle")
         if result.is_success:
             parsed = result.unwrap()
             logger.info("   ✅ SUCCESS: ACI parsed via flext-ldif")
@@ -109,7 +109,7 @@ def demonstrate_acl_parsing() -> None:
     logger.info(f"   ACI: {ds_aci}")
 
     try:
-        result = ldif_client.parse_acl(ds_aci, "aci")
+        result = ldif_client.parse(ds_aci, "aci")
         if result.is_success:
             parsed = result.unwrap()
             logger.info("   ✅ SUCCESS: DS ACI parsed via flext-ldif")

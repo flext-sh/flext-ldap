@@ -31,13 +31,13 @@ from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
 class TestAclFormatConversion:
     """ACL format conversion and management."""
 
-    def test_acl_manager_parse_acl_basic(
+    def test_acl_manager_parse_basic(
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
-        """Test ACL manager parse_acl with basic ACL."""
+        """Test ACL manager parse with basic ACL."""
         ldif_client = FlextLdif()
         acl_str = "access to * by * read"
-        result = ldif_client.parse_acl(acl_str, "openldap")
+        result = ldif_client.parse(acl_str, "openldap")
         assert isinstance(result, FlextResult)
 
     def test_acl_service_accessible(self, shared_ldap_client: FlextLdapClients) -> None:
@@ -46,14 +46,14 @@ class TestAclFormatConversion:
         acl_service = ldif_client.acl_service
         assert acl_service is not None
         # Test that we can access ACL parsing method
-        result = acl_service.parse_acl("access to * by * read", "openldap")
+        result = acl_service.parse("access to * by * read", "openldap")
         assert isinstance(result, FlextResult)
 
-    def test_acl_service_parse_acl(self, shared_ldap_client: FlextLdapClients) -> None:
-        """Test ACL service parse_acl through flext-ldif."""
+    def test_acl_service_parse(self, shared_ldap_client: FlextLdapClients) -> None:
+        """Test ACL service parse through flext-ldif."""
         ldif_client = FlextLdif()
         acl_service = ldif_client.acl_service
-        result = acl_service.parse_acl("access to * by * read", "openldap")
+        result = acl_service.parse("access to * by * read", "openldap")
         assert isinstance(result, FlextResult)
 
     def test_acl_service_multiple_formats(
@@ -64,12 +64,12 @@ class TestAclFormatConversion:
         acl_service = ldif_client.acl_service
 
         # Test OpenLDAP ACL
-        result_openldap = acl_service.parse_acl("access to * by * read", "openldap")
+        result_openldap = acl_service.parse("access to * by * read", "openldap")
         assert isinstance(result_openldap, FlextResult)
 
         # Test Oracle ACL
         oracle_acl = '(target="ldap:///ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "User Access"; allow (read,search,compare) groupdn="ldap:///cn=Admins,ou=Groups,dc=example,dc=com";)'
-        result_oracle = acl_service.parse_acl(oracle_acl, "oracle")
+        result_oracle = acl_service.parse(oracle_acl, "oracle")
         assert isinstance(result_oracle, FlextResult)
 
 

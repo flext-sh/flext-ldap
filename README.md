@@ -376,7 +376,7 @@ def manage_acls(connection, server_type):
 
         # Parse and convert
         for acl_string in acls:
-            parsed = parsers.parse_acl(acl_string, server_type)
+            parsed = parsers.parse(acl_string, server_type)
             ldif_format = converters.to_ldif_format(parsed)
             print(ldif_format)
 

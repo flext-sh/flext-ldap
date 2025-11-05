@@ -41,7 +41,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     # - parse_attribute_type(): Generic attributeType parsing
     # - get_acls(): Generic ACL retrieval
     # - set_acls(): Generic ACL setting
-    # - parse_acl(): Generic ACL parsing
+    # - parse(): Generic ACL parsing
     # - format_acl(): Generic ACL formatting
     # - add_entry(): Generic entry addition
     # - modify_entry(): Generic entry modification
@@ -94,7 +94,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
 
     # get_acls(), set_acls() - Use base implementations
 
-    # parse_acl() - Use base implementation
+    # parse() - Use base implementation
 
     # format_acl() - Use base implementation
 

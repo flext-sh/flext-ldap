@@ -235,16 +235,16 @@ class TestADOperationsACLMethods:
         assert callable(ops.set_acls)
 
     @pytest.mark.unit
-    def test_parse_acl_method_exists(self) -> None:
-        """Test parse_acl method exists."""
+    def test_parse_method_exists(self) -> None:
+        """Test parse method exists."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        assert callable(ops.parse_acl)
+        assert callable(ops.parse)
 
     @pytest.mark.unit
-    def test_parse_acl_with_sample_string(self) -> None:
-        """Test parse_acl with sample ACL string."""
+    def test_parse_with_sample_string(self) -> None:
+        """Test parse with sample ACL string."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        result = ops.parse_acl("sample_acl_string")
+        result = ops.parse("sample_acl_string")
         assert isinstance(result, FlextResult)
 
 
@@ -276,7 +276,7 @@ class TestADOperationsIntegration:
             "get_acl_format",
             "get_acls",
             "set_acls",
-            "parse_acl",
+            "parse",
             "supports_vlv",
             "get_root_dse_attributes",
             "detect_server_type_from_root_dse",
@@ -426,12 +426,12 @@ class TestADOperationsParseAclDetailed:
     """Test AD ACL parsing operations."""
 
     @pytest.mark.unit
-    def test_parse_acl_with_exception(self) -> None:
-        """Test parse_acl exception handling."""
+    def test_parse_with_exception(self) -> None:
+        """Test parse exception handling."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        with patch.object(ops.__class__.__bases__[0], "parse_acl") as mock_parse:
+        with patch.object(ops.__class__.__bases__[0], "parse") as mock_parse:
             mock_parse.side_effect = Exception("Parse error")
-            result = ops.parse_acl("invalid_sddl")
+            result = ops.parse("invalid_sddl")
             assert result.is_failure
 
 
@@ -633,11 +633,11 @@ class TestADOperationsExceptionHandlingAndEdgeCases:
         assert "cn=test" in result
 
     @pytest.mark.unit
-    def test_parse_acl_basic(self) -> None:
-        """Test parse_acl returns FlextResult."""
+    def test_parse_basic(self) -> None:
+        """Test parse returns FlextResult."""
         ops = FlextLdapServersActiveDirectoryOperations()
-        # parse_acl parses ACL strings
-        result = ops.parse_acl("test_acl_string")
+        # parse parses ACL strings
+        result = ops.parse("test_acl_string")
         assert isinstance(result, FlextResult)
 
     @pytest.mark.unit

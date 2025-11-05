@@ -91,7 +91,7 @@ api = FlextLdap()
 
 # Parse an OpenLDAP ACL
 openldap_acl = "access to attrs=userPassword by self write"
-result = api.parse_acl(openldap_acl, FlextLdapConstants.AclFormat.OPENLDAP)
+result = api.parse(openldap_acl, FlextLdapConstants.AclFormat.OPENLDAP)
 
 if result.is_success:
     unified_acl = result.unwrap()
@@ -333,7 +333,7 @@ FlextLdapConstants.SubjectType.ANYONE       # Anyone
 
 ```python
 # All operations return FlextResult for safe error handling
-result = api.parse_acl(acl_string, format_type)
+result = api.parse(acl_string, format_type)
 
 if result.is_failure:
     print(f"Error: {result.error}")
@@ -385,14 +385,14 @@ write_openldap_acls(converted_acls)
 
 ### FlextLdap ACL Methods
 
-- `parse_acl(acl_string, format_type)` - Parse ACL to unified model
+- `parse(acl_string, format_type)` - Parse ACL to unified model
 - `convert_acl(acl_string, source_format, target_format)` - Convert ACL between formats
 - `batch_convert_acls(acl_list, source_format, target_format)` - Batch conversion
 - `validate_acl_syntax(acl_string, format_type)` - Validate ACL syntax
 
 ### FlextLdapAclManager Methods
 
-- `parse_acl()` - Parse ACL to unified format
+- `parse()` - Parse ACL to unified format
 - `convert_acl()` - Convert between formats
 - `batch_convert()` - Batch conversion
 - `validate_acl_syntax()` - Syntax validation

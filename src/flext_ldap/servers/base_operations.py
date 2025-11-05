@@ -275,10 +275,10 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             f"ACL setting not supported for server type: {self.server_type}",
         )
 
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse ACL string using FlextLdifAclService.
 
-        Delegates to FlextLdifAclService.parse_acl() to eliminate duplication
+        Delegates to FlextLdifAclService.parse() to eliminate duplication
         and ensure RFC-compliant ACL parsing with server-specific quirks support.
 
         Args:
@@ -291,7 +291,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         # Use FlextLdifAclService for ACL parsing
         try:
             # Parse ACL using FlextLdifAclService
-            acl_result = self._acl_service.parse_acl(acl_string, self.server_type)
+            acl_result = self._acl_service.parse(acl_string, self.server_type)
             if acl_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"ACL parsing failed: {acl_result.error}",

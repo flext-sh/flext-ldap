@@ -167,11 +167,11 @@ class TestOIDServerDiscoveryCapabilities:
         acl_format = ops.get_acl_format()
         assert acl_format == "oracle"
 
-    def test_oid_parse_acl_valid(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oid_parse_valid(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OID parse valid ACL."""
         ops = FlextLdapServersOIDOperations()
         acl_str = "access to entry by * : browse"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
         acl = result.unwrap()
         assert acl["format"] == "oracle"
@@ -355,11 +355,11 @@ class TestOUDServerDiscoveryCapabilities:
         ops = FlextLdapServersOUDOperations()
         assert ops.server_type == "oud"
 
-    def test_oud_parse_acl_valid(self, shared_ldap_client: FlextLdapClients) -> None:
+    def test_oud_parse_valid(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test OUD parse valid ACL."""
         ops = FlextLdapServersOUDOperations()
         acl_str = "access to entry by * read"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
 
 

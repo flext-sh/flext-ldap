@@ -62,7 +62,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     # - get_acl_format(): Returns "openldap2" (OpenLDAP 2.x format)
     # - get_acls(): OpenLDAP-specific ACL retrieval with olcAccess
     # - set_acls(): OpenLDAP-specific ACL setting with olcAccess
-    # - parse_acl(): OpenLDAP 2.x-specific ACL parsing (olcAccess format)
+    # - parse(): OpenLDAP 2.x-specific ACL parsing (olcAccess format)
     # - format_acl(): OpenLDAP 2.x-specific ACL formatting (olcAccess format)
     # - get_root_dse_attributes(): OpenLDAP 2.x-specific Root DSE retrieval
     # - detect_server_type_from_root_dse(): OpenLDAP 2.x server detection logic
@@ -303,7 +303,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse olcAccess ACL string to Entry format.
 
         OpenLDAP 2.x ACL format:

@@ -57,20 +57,20 @@ class TestFlextLdapServersOpenLDAP1ACL:
         # OpenLDAP 1.x uses 'openldap1' format
         assert acl_format == "openldap1"
 
-    def test_parse_acl_simple(self) -> None:
+    def test_parse_simple(self) -> None:
         """Test parsing simple OpenLDAP 1.x ACL."""
         ops = FlextLdapServersOpenLDAP1Operations()
         # OpenLDAP 1.x format: access to <what> by <who> <access>
         acl_str = "access to * by self write by users read"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
         assert result.is_success
 
-    def test_parse_acl_with_attributes(self) -> None:
+    def test_parse_with_attributes(self) -> None:
         """Test parsing OpenLDAP 1.x ACL with attribute restrictions."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = "access to attrs=userPassword by self write by anonymous auth"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
         assert result.is_success
 
@@ -270,54 +270,54 @@ class TestFlextLdapServersOpenLDAP1InheritedMethods:
 class TestOpenLDAP1AclParsingDetailed:
     """Detailed ACL parsing tests for OpenLDAP 1.x."""
 
-    def test_parse_acl_standard_format(self) -> None:
+    def test_parse_standard_format(self) -> None:
         """Test parsing standard OpenLDAP 1.x access format."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = "access to * by self write by users read"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
         entry = result.unwrap()
         assert entry is not None
 
-    def test_parse_acl_with_attr_filter(self) -> None:
+    def test_parse_with_attr_filter(self) -> None:
         """Test parsing ACL with attribute restrictions."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = "access to attrs=userPassword,shadowPassword by self write"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
         entry = result.unwrap()
         assert entry.attributes.get("to") is not None
 
-    def test_parse_acl_with_dn_subtree(self) -> None:
+    def test_parse_with_dn_subtree(self) -> None:
         """Test parsing ACL with DN subtree restriction."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = 'access to dn.subtree="ou=users,dc=example,dc=com" by * none'
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
 
-    def test_parse_acl_multiple_by_clauses(self) -> None:
+    def test_parse_multiple_by_clauses(self) -> None:
         """Test parsing ACL with multiple by clauses."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = "access to * by self write by anonymous auth by users read by * none"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert result.is_success
         entry = result.unwrap()
         rules = entry.attributes.get("rules")
         assert rules is not None
 
-    def test_parse_acl_invalid_format(self) -> None:
+    def test_parse_invalid_format(self) -> None:
         """Test parsing invalid ACL format."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = "invalid acl format here"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         # Should still succeed but create basic entry
         assert isinstance(result, FlextResult)
 
-    def test_parse_acl_empty_string(self) -> None:
+    def test_parse_empty_string(self) -> None:
         """Test parsing empty ACL string."""
         ops = FlextLdapServersOpenLDAP1Operations()
         acl_str = ""
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
 
 
@@ -329,7 +329,7 @@ class TestOpenLDAP1AclFormattingDetailed:
         ops = FlextLdapServersOpenLDAP1Operations()
         # First parse, then format
         acl_str = "access to * by self write by users read"
-        parse_result = ops.parse_acl(acl_str)
+        parse_result = ops.parse(acl_str)
         assert parse_result.is_success
 
         entry = parse_result.unwrap()

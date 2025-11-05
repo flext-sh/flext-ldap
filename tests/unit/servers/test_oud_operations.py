@@ -84,12 +84,12 @@ class TestFlextLdapServersOUDACL:
         # OUD uses 'oracle' format
         assert acl_format == "oracle"
 
-    def test_parse_acl_simple(self) -> None:
+    def test_parse_simple(self) -> None:
         """Test parsing simple OUD ACL."""
         ops = FlextLdapServersOUDOperations()
         # OUD format similar to OID
         acl_str = "access to entry by * : browse"
-        result = ops.parse_acl(acl_str)
+        result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
         assert result.is_success
 
@@ -420,42 +420,42 @@ class TestFlextLdapServersOUDSetAclsDetailed:
 class TestFlextLdapServersOUDParseAclDetailed:
     """Test ACL parsing with detailed scenarios."""
 
-    def test_parse_acl_config_read(self) -> None:
+    def test_parse_config_read(self) -> None:
         """Test parsing config-read privilege."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.parse_acl("config-read")
+        result = ops.parse("config-read")
         assert result.is_success
         entry = result.unwrap()
         assert entry is not None
 
-    def test_parse_acl_password_reset(self) -> None:
+    def test_parse_password_reset(self) -> None:
         """Test parsing password-reset privilege."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.parse_acl("password-reset")
+        result = ops.parse("password-reset")
         assert result.is_success
 
-    def test_parse_acl_bypass_acl(self) -> None:
+    def test_parse_bypass_acl(self) -> None:
         """Test parsing bypass-acl privilege."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.parse_acl("bypass-acl")
+        result = ops.parse("bypass-acl")
         assert result.is_success
 
-    def test_parse_acl_custom_privilege(self) -> None:
+    def test_parse_custom_privilege(self) -> None:
         """Test parsing custom privilege."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.parse_acl("custom-privilege")
+        result = ops.parse("custom-privilege")
         assert result.is_success
 
-    def test_parse_acl_with_whitespace(self) -> None:
+    def test_parse_with_whitespace(self) -> None:
         """Test parsing ACL with whitespace."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.parse_acl("  config-read  ")
+        result = ops.parse("  config-read  ")
         assert result.is_success
 
-    def test_parse_acl_empty_string(self) -> None:
+    def test_parse_empty_string(self) -> None:
         """Test parsing empty privilege string."""
         ops = FlextLdapServersOUDOperations()
-        result = ops.parse_acl("")
+        result = ops.parse("")
         assert result.is_success
 
 

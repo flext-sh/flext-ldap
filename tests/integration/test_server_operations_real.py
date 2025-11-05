@@ -93,13 +93,13 @@ class TestOpenLDAP2Operations:
             "rfc_generic",
         }
 
-    def test_parse_acl(self) -> None:
+    def test_parse(self) -> None:
         """Test ACL parsing for OpenLDAP."""
         ops = FlextLdapServersOpenLDAP2Operations()
 
         # OpenLDAP ACL syntax: {priority}to <what> by <who> <accesslevel>
         acl_string = "{0}to * by * read"
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
 
         assert result.is_success
         acl_entry = result.unwrap()
@@ -220,12 +220,12 @@ class TestOIDOperations:
             "aci",
         }
 
-    def test_parse_acl(self) -> None:
+    def test_parse(self) -> None:
         """Test ACL parsing for Oracle OID."""
         ops = FlextLdapServersOIDOperations()
 
         acl_string = "permit|dn:cn=admin,dc=example,dc=com|read"
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
 
         # Should either succeed or fail gracefully
         assert result.is_success or result.is_failure
@@ -362,12 +362,12 @@ class TestOUDOperations:
 class TestServerOperationsErrorHandling:
     """Test error handling in server operations."""
 
-    def test_openldap_parse_acl_invalid_format(self) -> None:
+    def test_openldap_parse_invalid_format(self) -> None:
         """Test invalid ACL parsing for OpenLDAP."""
         ops = FlextLdapServersOpenLDAP2Operations()
 
         acl_string = "invalid@#$%^&*()"
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
 
         # Should handle gracefully
         assert result.is_success or result.is_failure
@@ -523,11 +523,11 @@ class TestOUDOperationsComprehensive:
         acl_format = ops.get_acl_format()
         assert isinstance(acl_format, str)
 
-    def test_oud_parse_acl(self) -> None:
+    def test_oud_parse(self) -> None:
         """Test OUD ACL parsing."""
         ops = FlextLdapServersOUDOperations()
         acl_string = "READ allow all"
-        result = ops.parse_acl(acl_string)
+        result = ops.parse(acl_string)
         assert result.is_success or result.is_failure
 
     def test_oud_format_acl(self) -> None:

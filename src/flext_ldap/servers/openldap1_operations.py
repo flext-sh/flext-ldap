@@ -68,7 +68,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
     # --------------------------------------------------------------------- #
     # These methods override the parent class with OpenLDAP 1.x-specific logic:
     # - get_acl_attribute_name(): Returns "access" (OpenLDAP 1.x ACL attribute)
-    # - parse_acl(): OpenLDAP 1.x-specific ACL parsing (access directive format)
+    # - parse(): OpenLDAP 1.x-specific ACL parsing (access directive format)
     # - format_acl(): OpenLDAP 1.x-specific ACL formatting (access directive format)
     # - normalize_entry(): OpenLDAP 1.x-specific entry normalization
     # - get_config_style(): Returns "slapd.conf" (OpenLDAP 1.x config style)
@@ -95,7 +95,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         return "openldap1"
 
     @override
-    def parse_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse access ACL string for OpenLDAP 1.x.
 
         OpenLDAP 1.x ACL format (slapd.conf):
