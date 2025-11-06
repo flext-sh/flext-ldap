@@ -38,7 +38,7 @@ from ldap3.core.exceptions import (
     LDAPStartTLSError,
     LDAPUserNameIsMandatoryError,
 )
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -76,6 +76,12 @@ class FlextLdapClients(FlextService[None]):
     - LdapValidationProtocol: validate_dn/validate_entry methods
     """
 
+    # Pydantic field declaration (required for validate_assignment=True)
+    s_mode: FlextLdapConstants.Types.QuirksMode = Field(
+        default=FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
+        description="Server-specific LDIF quirks handling mode for entry transformation",
+    )
+
     def __init__(
         self,
         config: FlextLdapConfig | None = None,
@@ -97,9 +103,7 @@ class FlextLdapClients(FlextService[None]):
 
         # Core configuration and logging
         self._ldap_config = config
-        self.s_mode: FlextLdapConstants.Types.QuirksMode = (
-            quirks_mode or FlextLdapConstants.Types.QuirksMode.AUTOMATIC
-        )
+        # s_mode is auto-initialized by Field default above
 
         # Direct connection state (no delegation layer)
         self._connection: Connection | None = None

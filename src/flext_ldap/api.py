@@ -19,7 +19,7 @@ from flext_core import (
     FlextService,
 )
 from flext_ldif import FlextLdif, FlextLdifModels
-from pydantic import SecretStr, ValidationError
+from pydantic import Field, SecretStr, ValidationError
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -56,6 +56,12 @@ class FlextLdap(FlextService[None]):
     _instance: FlextLdap | None = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
+    # Pydantic field declaration (required for validate_assignment=True)
+    s_mode: FlextLdapConstants.Types.QuirksMode = Field(
+        default=FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
+        description="Server-specific LDIF quirks handling mode for entry transformation",
+    )
+
     def __init__(self, config: FlextLdapConfig | None = None) -> None:
         """Initialize consolidated LDAP operations.
 
@@ -71,9 +77,7 @@ class FlextLdap(FlextService[None]):
         )
         self._ldif: FlextLdif = FlextLdif.get_instance()  # Always use singleton
         self._entry_adapter: FlextLdapEntryAdapter | None = None
-        self.s_mode: FlextLdapConstants.Types.QuirksMode = (
-            FlextLdapConstants.Types.QuirksMode.AUTOMATIC
-        )
+        # s_mode is auto-initialized by Field default above
 
         # Lazy-loaded subsystems
         self._client: FlextLdapClients | None = None
@@ -120,7 +124,7 @@ class FlextLdap(FlextService[None]):
         """Get LDAP client instance."""
         return cast(
             "FlextLdapClients",
-            self._lazy_init("client", lambda: FlextLdapClients(self._config)),
+            self._lazy_init("client", lambda: FlextLdapClients(config=self._config)),
         )
 
     @property
