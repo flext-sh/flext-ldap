@@ -95,21 +95,21 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
         def detect_server_type(
             self,
             server_info: FlextLdapTypes.DictionaryTypes.ResponseDict | None,
-        ) -> FlextLdifConstants.LdapServerType | None:
+        ) -> str | None:
             """Detect LDAP server type from server info.
 
             Args:
             server_info: Server information object
 
             Returns:
-            Detected server type enum or None if detection fails
+            Detected server type string or None if detection fails
 
             """
             if not server_info:
                 return None
 
-            # Generic detection - return a default type enum
-            return FlextLdifConstants.LdapServerType.GENERIC
+            # Generic detection - return a default type string
+            return FlextLdifConstants.ServerTypes.GENERIC
 
         def get_servers(
             self,
@@ -129,7 +129,7 @@ class FlextLdapSchema(FlextService[FlextLdapTypes.DictionaryTypes.ResponseDict |
 
             # Return generic quirks for any server type
             return FlextLdapModels.ServerQuirks(
-                server_type=FlextLdifConstants.LdapServerType.GENERIC,
+                server_type=FlextLdifConstants.ServerTypes.GENERIC,
                 case_sensitive_dns=True,
                 case_sensitive_attributes=True,
                 supports_paged_results=True,

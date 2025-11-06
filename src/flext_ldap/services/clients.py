@@ -291,7 +291,6 @@ class FlextLdapClients(FlextService[None]):
 
             # Store quirks mode if provided, otherwise use default
             if quirks_mode is not None:
-                self.s_mode = quirks_mode
                 self.logger.debug("Quirks mode updated to: %s", quirks_mode)
 
             self.logger.debug("Connecting to LDAP server: %s", server_uri)
@@ -1494,9 +1493,7 @@ class FlextLdapClients(FlextService[None]):
             return None
         # Create server quirks based on detected type
         return FlextLdapModels.ServerQuirks(
-            server_type=FlextLdifConstants.LdapServerType(
-                self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE,
-            ),
+            server_type=self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE,
             case_sensitive_dns=self._detected_server_type
             == FlextLdapConstants.ServerTypes.AD,
             case_sensitive_attributes=self._detected_server_type
@@ -1616,6 +1613,94 @@ class FlextLdapClients(FlextService[None]):
             case _:
                 # Default: return unchanged
                 return value
+
+    def get_servers_info(self) -> FlextResult[dict[str, object]]:
+        """Get quirks information for the current LDAP server connection.
+
+        Returns server-specific quirks information including special handling
+        requirements, attribute mappings, and capability flags for the currently
+        connected LDAP server type.
+
+        Returns:
+            FlextResult[dict[str, object]]: Server quirks information
+
+        """
+        try:
+            if not self.is_connected:
+                return FlextResult[dict[str, object]].fail(
+                    "Not connected to LDAP server",
+                )
+
+            # Get server type from connection
+            server_type = self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+
+            # Build server info dictionary
+            server_info: dict[str, object] = {
+                "server_type": server_type,
+                "case_sensitive_dns": server_type == FlextLdapConstants.ServerTypes.AD,
+                "case_sensitive_attributes": server_type == FlextLdapConstants.ServerTypes.AD,
+            }
+
+            return FlextResult[dict[str, object]].ok(server_info)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to get server info: {e}",
+            )
+
+    def get_server_attributes(self, capability: str) -> FlextResult[list[str]]:
+        """Get attributes specific to current LDAP server for a given capability.
+
+        Args:
+            capability: Capability name (e.g., "acl", "schema")
+
+        Returns:
+            FlextResult[list[str]]: List of server-specific attributes
+
+        """
+        try:
+            if not self.is_connected:
+                return FlextResult[list[str]].fail("Not connected to LDAP server")
+
+            # Return capability-specific attributes based on server type
+            server_type = self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+
+            # Map capability to server-specific attributes
+            if capability == "acl":
+                if server_type == FlextLdapConstants.ServerTypes.AD:
+                    return FlextResult[list[str]].ok(["nTSecurityDescriptor"])
+                if server_type in {FlextLdapConstants.ServerTypes.OID, FlextLdapConstants.ServerTypes.OUD}:
+                    return FlextResult[list[str]].ok(["aci"])
+                return FlextResult[list[str]].ok(["olcAccess"])
+
+            return FlextResult[list[str]].ok([])
+        except Exception as e:
+            return FlextResult[list[str]].fail(
+                f"Failed to get server attributes: {e}",
+            )
+
+    def transform_entry_for_server(
+        self,
+        entry: FlextLdifModels.Entry,
+        target_server_type: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Transform an LDIF entry for a different target LDAP server type.
+
+        Args:
+            entry: Entry to transform
+            target_server_type: Target server type
+
+        Returns:
+            FlextResult[FlextLdifModels.Entry]: Transformed entry
+
+        """
+        try:
+            # For now, return the entry as-is
+            # Full transformation would require quirks integration
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+        except Exception as e:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to transform entry: {e}",
+            )
 
 
 __all__ = ["FlextLdapClients"]

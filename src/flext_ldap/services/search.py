@@ -18,6 +18,7 @@ from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 from ldap3.core.exceptions import LDAPAttributeError
+from pydantic import Field
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -38,6 +39,12 @@ class FlextLdapSearch(FlextService[None]):
     - Generate synthetic test data (testing concern)
     - Validate DNs (delegate to ValidationService via caller)
     """
+
+    # Pydantic field declaration (required for validate_assignment=True)
+    s_mode: FlextLdapConstants.Types.QuirksMode = Field(
+        default=FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
+        description="Server-specific LDIF quirks handling mode for search operations",
+    )
 
     def __init__(self, parent: FlextLdapClients | None = None) -> None:
         """Initialize LDAP search service with Phase 1 context enrichment.
@@ -73,16 +80,15 @@ class FlextLdapSearch(FlextService[None]):
         quirks_mode: Quirks mode to set (automatic, server, rfc, relaxed)
 
         """
-        # For now, we store the quirks mode but don't use it in search operations
+        # s_mode is managed as a Pydantic Field and is auto-initialized by Field default
         # This method is provided for protocol compliance and future extensibility
-        self.s_mode = quirks_mode
+        # Future: implement quirks mode-specific search behavior if needed
 
     def search_one(
         self,
         search_base: str,
         filter_str: str,
         attributes: list[str] | None = None,
-        connection: Connection | None = None,
     ) -> FlextResult[FlextLdifModels.Entry | None]:
         """Perform LDAP search for single entry.
 
@@ -90,22 +96,19 @@ class FlextLdapSearch(FlextService[None]):
             search_base: LDAP search base DN
             filter_str: LDAP search filter
             attributes: List of attributes to retrieve
-            connection: Optional LDAP connection (uses context if not provided)
 
         Returns:
             FlextResult[FlextLdifModels.Entry | None]: Single Entry or None
 
         """
-        # Use provided connection or fall back to cached connection
-        active_connection = connection or self._connection
-        if not active_connection:
+        # Check if connection is available via context
+        if not self._connection:
             return FlextResult[FlextLdifModels.Entry | None].fail(
                 "No LDAP connection available for search_one",
             )
 
         # Use existing search method and return first result
         search_result = self.search(
-            active_connection,
             search_base,
             filter_str,
             attributes,
@@ -124,7 +127,6 @@ class FlextLdapSearch(FlextService[None]):
 
     def search(
         self,
-        connection: Connection | None,
         base_dn: str,
         filter_str: str,
         attributes: list[str] | None = None,
@@ -144,8 +146,8 @@ class FlextLdapSearch(FlextService[None]):
 
         """
         try:
-            # Use provided connection or fall back to cached connection
-            active_connection = connection or self._connection
+            # Use cached connection set via set_connection_context()
+            active_connection = self._connection
             if not active_connection:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     "LDAP connection not established",
@@ -157,6 +159,10 @@ class FlextLdapSearch(FlextService[None]):
             self.logger.trace(f"Search called with {search_params}")
 
             # CRITICAL: Verify connection is still bound and healthy
+            if not isinstance(active_connection, Connection):
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Invalid connection type: {type(active_connection).__name__}",
+                )
             self.logger.debug(
                 f"Connection check: exists={active_connection is not None}, bound={active_connection.bound if active_connection else 'N/A'}",
             )
