@@ -175,9 +175,7 @@ def demonstrates_detection(server_type: str | None) -> None:
         logger.info(f"      Max page size: {servers.max_page_size}")
         logger.info(f"      Default timeout: {servers.default_timeout}s")
         logger.info(f"      StartTLS: {servers.supports_start_tls}")
-        logger.info(
-            f"      Explicit bind required: {servers.requires_explicit_bind}"
-        )
+        logger.info(f"      Explicit bind required: {servers.requires_explicit_bind}")
     else:
         logger.warning("   ⚠️  No quirks detected (using defaults)")
 
