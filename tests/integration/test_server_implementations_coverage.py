@@ -253,9 +253,7 @@ class TestServerQuirksDetection:
         result = shared_ldap_client.discover_schema()
         assert result.is_success or result.is_failure
 
-    def test_handle_attributes(
-        self, shared_ldap_client: FlextLdapClients
-    ) -> None:
+    def test_handle_attributes(self, shared_ldap_client: FlextLdapClients) -> None:
         """Test handling of server-specific attribute quirks."""
         result = shared_ldap_client.search(
             base_dn="dc=flext,dc=local",

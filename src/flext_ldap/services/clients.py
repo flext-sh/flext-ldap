@@ -916,9 +916,7 @@ class FlextLdapClients(FlextService[None]):
             removed_attributes: list[str] = []
             # Limit retries unless in "relaxed" mode
             max_retries = (
-                1
-                if effectives_mode == FlextLdapConstants.Types.QuirksMode.RFC
-                else 20
+                1 if effectives_mode == FlextLdapConstants.Types.QuirksMode.RFC else 20
             )
             retry_count = 0
 
