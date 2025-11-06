@@ -730,7 +730,15 @@ class FlextLdapConstants(FlextLdifConstants):
     class LdapDictKeys(FlextLdifConstants.DictKeys):
         """Extend FlextLdifConstants.DictKeys with LDAP-specific keys."""
 
+        # LDAP-specific operational keys
         ACL_DATA: Final[str] = "acl_data"
+        ACL_ATTRIBUTE: Final[str] = "acl_attribute"
+        ACL_FORMAT: Final[str] = "acl_format"
+        SCHEMA_SUBENTRY: Final[str] = "schema_subentry"
+        SUPPORTS_OPERATIONAL_ATTRS: Final[str] = "supports_operational_attrs"
+        DESCRIPTION: Final[str] = "description"
+
+        # Connection and server keys
         GENERIC: Final[str] = "generic"
         LDAP_SERVER: Final[str] = "ldap_server"
         LDAP_PORT: Final[str] = "ldap_port"
@@ -740,26 +748,32 @@ class FlextLdapConstants(FlextLdifConstants):
         SERVER_URI: Final[str] = "server_uri"
         DEFAULT_TIMEOUT: Final[str] = "default_timeout"
         MAX_PAGE_SIZE: Final[str] = "max_page_size"
-        OPERATION: Final[str] = "operation"
-        ACL_STRING: Final[str] = "acl_string"
-        WHO: Final[str] = "who"
-        ATTRIBUTE: Final[str] = "attribute"
-        VALUES: Final[str] = "values"
-        OPERATION_TYPE: Final[str] = "operation_type"
+        DEFAULT_PORT: Final[str] = "defaultPort"
+        SUPPORTS_START_TLS: Final[str] = "supportsStartTls"
         PORT: Final[str] = "port"
         BASE_DN: Final[str] = "base_dn"
         SERVER: Final[str] = "server"
+
+        # Operation keys
+        OPERATION: Final[str] = "operation"
+        OPERATION_TYPE: Final[str] = "operation_type"
         TARGET_TYPE: Final[str] = "target_type"
+
+        # ACL and privilege keys
+        ACL_STRING: Final[str] = "acl_string"
+        WHO: Final[str] = "who"
+        PRIVILEGE: Final[str] = "privilege"
+        CATEGORY: Final[str] = "category"
+
+        # Entry attribute keys
+        ATTRIBUTE: Final[str] = "attribute"
+        VALUES: Final[str] = "values"
         ORGANIZATION: Final[str] = "organization"
         TITLE: Final[str] = "title"
         DEPARTMENT: Final[str] = "department"
         MOBILE: Final[str] = "mobile"
         GIVEN_NAME: Final[str] = "given_name"
         USER_PASSWORD: Final[str] = "user_password"
-        DEFAULT_PORT: Final[str] = "defaultPort"
-        SUPPORTS_START_TLS: Final[str] = "supportsStartTls"
-        PRIVILEGE: Final[str] = "privilege"
-        CATEGORY: Final[str] = "category"
 
     # =========================================================================
     # OBJECT CLASS KIND CONSTANTS

@@ -48,32 +48,37 @@ class TestLdapE2EOperations:
         assert connection_result is not None
         assert hasattr(connection_result, "is_success")
 
-        # Create user request
+        # Create user request with correct FlextLdifModels.Entry structure
         user_request = FlextLdifModels.Entry(
-            entry_type="user",
-            dn="cn=testuser,ou=users,dc=flext,dc=local",
-            object_classes=["inetOrgPerson", "organizationalPerson", "person", "top"],
-            uid="testuser",
-            cn="Test User",
-            sn="User",
-            given_name="Test",
-            mail=["testuser@example.com"],
-            description="Test User Description",
-            telephone_number=["123-456-7890"],
-            user_password="password123",
-            department="IT",
-            organizational_unit="Engineering",
-            title="Developer",
-            organization="Example Corp",
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=testuser,ou=users,dc=flext,dc=local",
+            ),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "uid": ["testuser"],
+                    "cn": ["Test User"],
+                    "sn": ["User"],
+                    "givenName": ["Test"],
+                    "mail": ["testuser@example.com"],
+                    "description": ["Test User Description"],
+                    "telephoneNumber": ["123-456-7890"],
+                    "userPassword": ["password123"],
+                    "departmentNumber": ["IT"],
+                    "ou": ["Engineering"],
+                    "title": ["Developer"],
+                    "o": ["Example Corp"],
+                },
+            ),
         )
 
         # Test user creation request structure
-        assert user_request.dn == "cn=testuser,ou=users,dc=flext,dc=local"
-        assert user_request.uid == "testuser"
-        assert user_request.cn == "Test User"
-        assert user_request.sn == "User"
-        assert user_request.mail == ["testuser@example.com"]
-        assert user_request.telephone_number == ["123-456-7890"]
+        assert user_request.dn.value == "cn=testuser,ou=users,dc=flext,dc=local"
+        assert user_request.attributes["uid"] == ["testuser"]
+        assert user_request.attributes["cn"] == ["Test User"]
+        assert user_request.attributes["sn"] == ["User"]
+        assert user_request.attributes["mail"] == ["testuser@example.com"]
+        assert user_request.attributes["telephoneNumber"] == ["123-456-7890"]
 
     def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""

@@ -378,7 +378,6 @@ class FlextLdapConfig(FlextConfig):
         """
         # Handle LDAP dot notation with pattern matching
         if key.startswith("ldap."):
-            # Split into category and property (e.g., "conn.server")
             parts = key[5:].split(".", 1)
             expected_split_length: int = 2
             if len(parts) != expected_split_length:
@@ -389,70 +388,105 @@ class FlextLdapConfig(FlextConfig):
 
             category, prop = parts
 
-            # Match on category and resolve properties efficiently
+            # Route to category-specific resolution methods
             match category:
                 case FlextLdapConstants.ConfigCategoryKeys.CONNECTION:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.SERVER:
-                            return self.ldap_server_uri
-                        case FlextLdapConstants.ConfigPropertyKeys.PORT:
-                            return self.ldap_port
-                        case FlextLdapConstants.ConfigPropertyKeys.SSL:
-                            return self.ldap_use_ssl
-                        case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
-                            return self.ldap_connection_timeout
-                        case FlextLdapConstants.ConfigPropertyKeys.URI:
-                            return f"{self.ldap_server_uri}:{self.ldap_port}"
+                    return self._resolve_connection_property(prop)
                 case FlextLdapConstants.ConfigCategoryKeys.AUTH:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.BIND_DN:
-                            return self.ldap_bind_dn
-                        case FlextLdapConstants.ConfigPropertyKeys.BIND_PASSWORD:
-                            return self.effective_bind_password
-                        case FlextLdapConstants.ConfigPropertyKeys.BASE_DN:
-                            return self.ldap_base_dn
+                    return self._resolve_auth_property(prop)
                 case FlextLdapConstants.ConfigCategoryKeys.POOL:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.SIZE:
-                            return self.ldap_pool_size
-                        case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
-                            return self.ldap_pool_timeout
+                    return self._resolve_pool_property(prop)
                 case FlextLdapConstants.ConfigCategoryKeys.OPERATION:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
-                            return self.ldap_operation_timeout
-                        case FlextLdapConstants.ConfigPropertyKeys.SIZE_LIMIT:
-                            return self.ldap_size_limit
-                        case FlextLdapConstants.ConfigPropertyKeys.TIME_LIMIT:
-                            return self.ldap_time_limit
+                    return self._resolve_operation_property(prop)
                 case FlextLdapConstants.ConfigCategoryKeys.CACHE:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.ENABLED:
-                            return self.enable_caching
-                        case FlextLdapConstants.ConfigPropertyKeys.TTL:
-                            return self.cache_ttl
+                    return self._resolve_cache_property(prop)
                 case FlextLdapConstants.ConfigCategoryKeys.RETRY:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.ATTEMPTS:
-                            return self.max_retry_attempts
-                        case FlextLdapConstants.ConfigPropertyKeys.DELAY:
-                            return self.retry_delay
+                    return self._resolve_retry_property(prop)
                 case FlextLdapConstants.ConfigCategoryKeys.LOGGING:
-                    match prop:
-                        case FlextLdapConstants.ConfigPropertyKeys.DEBUG:
-                            return self.ldap_enable_debug
-                        case FlextLdapConstants.ConfigPropertyKeys.TRACE:
-                            return self.ldap_enable_trace
-                        case FlextLdapConstants.ConfigPropertyKeys.QUERIES:
-                            return self.ldap_log_queries
-                        case FlextLdapConstants.ConfigPropertyKeys.MASK_PASSWORDS:
-                            return self.ldap_mask_passwords
+                    return self._resolve_logging_property(prop)
 
         # Fall back to standard FlextConfig access
         return cast(
             "str | int | float | bool | list[Any] | dict[str, Any] | None",
             super().__call__(key),
         )
+
+    def _resolve_connection_property(self, prop: str) -> str | int | float | bool | None:
+        """Resolve connection category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.SERVER:
+                return self.ldap_server_uri
+            case FlextLdapConstants.ConfigPropertyKeys.PORT:
+                return self.ldap_port
+            case FlextLdapConstants.ConfigPropertyKeys.SSL:
+                return self.ldap_use_ssl
+            case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
+                return self.ldap_connection_timeout
+            case FlextLdapConstants.ConfigPropertyKeys.URI:
+                return f"{self.ldap_server_uri}:{self.ldap_port}"
+        return None
+
+    def _resolve_auth_property(self, prop: str) -> str | None:
+        """Resolve authentication category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.BIND_DN:
+                return self.ldap_bind_dn
+            case FlextLdapConstants.ConfigPropertyKeys.BIND_PASSWORD:
+                return self.effective_bind_password
+            case FlextLdapConstants.ConfigPropertyKeys.BASE_DN:
+                return self.ldap_base_dn
+        return None
+
+    def _resolve_pool_property(self, prop: str) -> int | float | None:
+        """Resolve pool category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.SIZE:
+                return self.ldap_pool_size
+            case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
+                return self.ldap_pool_timeout
+        return None
+
+    def _resolve_operation_property(self, prop: str) -> int | None:
+        """Resolve operation category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.TIMEOUT:
+                return self.ldap_operation_timeout
+            case FlextLdapConstants.ConfigPropertyKeys.SIZE_LIMIT:
+                return self.ldap_size_limit
+            case FlextLdapConstants.ConfigPropertyKeys.TIME_LIMIT:
+                return self.ldap_time_limit
+        return None
+
+    def _resolve_cache_property(self, prop: str) -> bool | int | None:
+        """Resolve cache category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.ENABLED:
+                return self.enable_caching
+            case FlextLdapConstants.ConfigPropertyKeys.TTL:
+                return self.cache_ttl
+        return None
+
+    def _resolve_retry_property(self, prop: str) -> int | float | None:
+        """Resolve retry category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.ATTEMPTS:
+                return self.max_retry_attempts
+            case FlextLdapConstants.ConfigPropertyKeys.DELAY:
+                return self.retry_delay
+        return None
+
+    def _resolve_logging_property(self, prop: str) -> bool | None:
+        """Resolve logging category properties."""
+        match prop:
+            case FlextLdapConstants.ConfigPropertyKeys.DEBUG:
+                return self.ldap_enable_debug
+            case FlextLdapConstants.ConfigPropertyKeys.TRACE:
+                return self.ldap_enable_trace
+            case FlextLdapConstants.ConfigPropertyKeys.QUERIES:
+                return self.ldap_log_queries
+            case FlextLdapConstants.ConfigPropertyKeys.MASK_PASSWORDS:
+                return self.ldap_mask_passwords
+        return None
 
     # =========================================================================
     # INFRASTRUCTURE PROTOCOL IMPLEMENTATIONS

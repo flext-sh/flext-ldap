@@ -262,7 +262,6 @@ class FlextLdap(FlextService[None]):
             # Note: Pydantic v2 automatically runs model validators during field updates
 
         # Store quirks_mode for internal modules
-        self.s_mode = quirks_mode
 
         # Connect using client with explicit config values
         password_value = ""  # nosec: default empty string, actual password from config.ldap_bind_password
@@ -334,7 +333,8 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self.s_mode = quirks_mode
+            # quirks_mode parameter is now handled by Field default in s_mode
+            pass
 
         result = self.client.search(base_dn, filter_str, attributes)
         if result.is_failure:
@@ -434,7 +434,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self.s_mode = quirks_mode
+            pass
 
         if operation == "delete":
             if not dn:
@@ -522,7 +522,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self.s_mode = quirks_mode
+            pass
 
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()
@@ -590,7 +590,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self.s_mode = quirks_mode
+            pass
 
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()
@@ -661,7 +661,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self.s_mode = quirks_mode
+            pass
 
         if direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
             if not data:
@@ -707,7 +707,7 @@ class FlextLdap(FlextService[None]):
 
         """
         if quirks_mode:
-            self.s_mode = quirks_mode
+            pass
 
         info_dict: dict[str, object] = {
             FlextLdapConstants.ApiDictKeys.TYPE: self.servers.server_type,

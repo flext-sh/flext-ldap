@@ -32,9 +32,10 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.servers import FlextLdapServers
-
-# Lazy imports to avoid circular dependencies
-# Services and repository classes are loaded on-demand via __getattr__
+from flext_ldap.services.clients import FlextLdapClients
+from flext_ldap.services.repository import LdapEntryRepository, RepositoryBase
+from flext_ldap.services.schema import FlextLdapSchema
+from flext_ldap.services.upsert import FlextLdapUpsertService
 
 __all__ = [
     "FlextExceptions",
@@ -51,31 +52,3 @@ __all__ = [
     "__version__",
     "__version_info__",
 ]
-
-
-def __getattr__(name: str) -> object:
-    """Lazy load service and repository classes to avoid circular imports."""
-    if name == "FlextLdapClients":
-        from flext_ldap.services.clients import FlextLdapClients
-
-        return FlextLdapClients
-    if name == "FlextLdapSchema":
-        from flext_ldap.services.schema import FlextLdapSchema
-
-        return FlextLdapSchema
-    if name == "FlextLdapUpsertService":
-        from flext_ldap.services.upsert import FlextLdapUpsertService
-
-        return FlextLdapUpsertService
-    if name == "LdapEntryRepository":
-        from flext_ldap.services.repository import (
-            LdapEntryRepository,
-        )
-
-        return LdapEntryRepository
-    if name == "RepositoryBase":
-        from flext_ldap.services.repository import RepositoryBase
-
-        return RepositoryBase
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
