@@ -410,7 +410,11 @@ class FlextLdapModels(FlextModels):
                 {
                     "base_dn": base_dn,
                     "filter_str": f"(&{FlextLdapConstants.Filters.ALL_USERS_FILTER[1:-1]}(uid={uid}))",  # Remove outer parens and combine
-                    "attributes": attributes or ["uid", "cn", "mail", "sn"],
+                    "attributes": (
+                        ["uid", "cn", "mail", "sn"]
+                        if attributes is None
+                        else attributes
+                    ),
                     "page_size": 100,  # Default page size
                     "paged_cookie": None,
                 },
@@ -428,7 +432,11 @@ class FlextLdapModels(FlextModels):
                 {
                     "base_dn": base_dn,
                     "filter_str": f"(&{FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER[1:-1]}({FlextLdapConstants.LdapAttributeNames.CN}={cn}))",
-                    "attributes": attributes or ["cn", "member", "description"],
+                    "attributes": (
+                        ["cn", "member", "description"]
+                        if attributes is None
+                        else attributes
+                    ),
                     "page_size": 100,  # Default page size
                     "paged_cookie": None,
                 },
@@ -463,7 +471,7 @@ class FlextLdapModels(FlextModels):
                     base_dn=base_dn,
                     filter_str=filter_str,
                     scope=scope,
-                    attributes=attributes or [],
+                    attributes=[] if attributes is None else attributes,
                     page_size=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
                     paged_cookie=b"",
                 )
@@ -478,7 +486,7 @@ class FlextLdapModels(FlextModels):
                 "base_dn": base_dn,
                 "filter_str": filter_str,
                 "scope": scope,
-                "attributes": attributes or [],
+                "attributes": [] if attributes is None else attributes,
                 "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
                 "paged_cookie": b"",
                 "size_limit": (
@@ -664,17 +672,10 @@ class FlextLdapModels(FlextModels):
         organizational_unit: str | None = None
         mobile: str | None = None
 
-        def to_attributes(self) -> FlextLdifModels.LdifAttributes:
-            """Convert request to LDAP attributes using FlextLdifModels.LdifAttributes.
-
-            Returns FlextLdifModels.LdifAttributes wrapping standardized LDAP attribute
-            dict with all values as lists (RFC 4511 LDAP protocol standard).
-            """
-            if self.attributes:
-                return self.attributes
-
-            # Build from individual fields (for user/group creation)
+        def _build_attribute_dict(self) -> dict[str, list[str]]:
+            """Build LDAP attribute dict from individual fields."""
             attrs: dict[str, list[str]] = {}
+
             if self.cn:
                 attrs["cn"] = [self.cn]
             if self.sn:
@@ -696,6 +697,19 @@ class FlextLdapModels(FlextModels):
                     self.object_classes
                 )
 
+            return attrs
+
+        def to_attributes(self) -> FlextLdifModels.LdifAttributes:
+            """Convert request to LDAP attributes using FlextLdifModels.LdifAttributes.
+
+            Returns FlextLdifModels.LdifAttributes wrapping standardized LDAP attribute
+            dict with all values as lists (RFC 4511 LDAP protocol standard).
+            """
+            if self.attributes:
+                return self.attributes
+
+            # Build from individual fields using helper method
+            attrs = self._build_attribute_dict()
             return FlextLdifModels.LdifAttributes(attributes=attrs)
 
     # =========================================================================

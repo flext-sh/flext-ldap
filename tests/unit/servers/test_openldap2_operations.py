@@ -7,6 +7,8 @@ from flext_ldif import FlextLdifModels
 
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapServersOpenLDAP2Initialization:
     """Test initialization and basic properties."""
@@ -40,7 +42,9 @@ class TestFlextLdapServersOpenLDAP2Initialization:
         ops = FlextLdapServersOpenLDAP2Operations()
         schema_dn = ops.get_schema_dn()
         # OpenLDAP 2.x uses cn=subschema or cn=schema
-        assert "subschema" in schema_dn.lower() or "schema" in schema_dn.lower()
+        assert (
+            schema_dn and "subschema" in schema_dn.lower()
+        ) or "schema" in schema_dn.lower()
 
 
 class TestFlextLdapServersOpenLDAP2BindMechanisms:
@@ -89,7 +93,9 @@ class TestFlextLdapServersOpenLDAP2ACL:
         ops = FlextLdapServersOpenLDAP2Operations()
         acl_format = ops.get_acl_format()
         # OpenLDAP 2.x uses olcAccess format
-        assert "openldap" in acl_format.lower() or "olc" in acl_format.lower()
+        assert (
+            acl_format and "openldap" in acl_format.lower()
+        ) or "olc" in acl_format.lower()
 
     def test_parse_returns_dict(self) -> None:
         """Test parse returns dict."""

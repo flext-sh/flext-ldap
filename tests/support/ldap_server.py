@@ -25,7 +25,7 @@ from ldap3 import BASE, SIMPLE, Connection, Server
 from flext_ldap import FlextLdapModels
 from flext_ldap.constants import FlextLdapConstants
 
-# from flext_tests import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import when available
+# from flext_tests import FlextTestDocker  # FUTURE: Import when available in flext_tests package
 from .test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 

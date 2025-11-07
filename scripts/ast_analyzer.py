@@ -18,7 +18,9 @@ class CodeAnalyzer(ast.NodeVisitor):
         self.imported_names: set[str] = set()
         self.used_names: set[str] = set()
         self.class_definitions: dict[str, ast.ClassDef] = {}
-        self.function_definitions: dict[str, ast.FunctionDef] = {}
+        self.function_definitions: dict[
+            str, ast.FunctionDef | ast.AsyncFunctionDef
+        ] = {}
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Visit class definition."""

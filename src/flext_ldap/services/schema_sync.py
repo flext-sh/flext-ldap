@@ -436,6 +436,67 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
             FlextLdapConstants.Defaults.SCHEMA_SUBENTRY,
         )
 
+    def _add_schema_definitions_batch(
+        self,
+        schema_dn: str,
+        definitions: list[str],
+        schema_attribute: str,
+        definition_type_name: str,
+    ) -> tuple[int, int]:
+        """Add schema definitions one at a time (OUD doesn't support batch).
+
+        Args:
+            schema_dn: Schema DN to modify
+            definitions: List of schema definition strings
+            schema_attribute: Attribute name (attributeTypes or objectClasses)
+            definition_type_name: Human-readable type name for logging
+
+        Returns:
+            Tuple of (added_count, failed_count)
+
+        """
+        if not self._connection:
+            return 0, len(definitions)
+
+        added_count = 0
+        failed_count = 0
+        max_logged_failures = 3
+
+        for definition in definitions:
+            changes: dict[str, list[tuple[str, list[str]]]] = {
+                schema_attribute: [
+                    (
+                        FlextLdapConstants.ModifyOperation.MODIFY_ADD_STR,
+                        [definition],
+                    ),
+                ],
+            }
+            modify_result = self._connection.modify_entry(
+                schema_dn,
+                cast("FlextLdapModels.EntryChanges", changes),
+            )
+
+            if modify_result.is_success:
+                added_count += 1
+            else:
+                failed_count += 1
+                if failed_count <= max_logged_failures:
+                    self.logger.warning(
+                        f"Failed to add {definition_type_name}: {modify_result.error} - "
+                        f"Definition: {definition[:100]}...",
+                    )
+
+        if added_count > 0:
+            self.logger.info(
+                "Added %s %ss via FlextLdap", added_count, definition_type_name
+            )
+        if failed_count > 0:
+            self.logger.warning(
+                "Failed to add %s %ss", failed_count, definition_type_name
+            )
+
+        return added_count, failed_count
+
     def _add_schema_definitions(
         self,
         definitions: list[dict[str, object]],
@@ -459,7 +520,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
             # Determine schema DN for this server type
             schema_dn = self._get_schema_dn_for_server()
 
-            # Group definitions by type for batch operations
+            # Group definitions by type
             attribute_types: list[str] = []
             object_classes: list[str] = []
 
@@ -472,86 +533,37 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                 elif def_type == FlextLdapConstants.SchemaDefinitionTypes.OBJECT_CLASS:
                     object_classes.append(str(raw_line))
 
-            added_count = 0
-            failed_count = 0
-            max_logged_failures = 3  # Log only first few failures for debugging
-
-            # Add attributeTypes one at a time (OUD doesn't support batch schema mods)
-            for attr_type in attribute_types:
-                changes: dict[str, list[tuple[str, list[str]]]] = {
-                    FlextLdapConstants.SchemaAttributes.ATTRIBUTE_TYPES: [
-                        (
-                            FlextLdapConstants.ModifyOperation.MODIFY_ADD_STR,
-                            [attr_type],
-                        ),
-                    ],
-                }
-                modify_result = self._connection.modify_entry(
-                    schema_dn,
-                    cast("FlextLdapModels.EntryChanges", changes),
-                )
-
-                if modify_result.is_success:
-                    added_count += 1
-                else:
-                    failed_count += 1
-                    # Log first few failures for debugging
-                    if failed_count <= max_logged_failures:
-                        self.logger.warning(
-                            f"Failed to add attributeType: {modify_result.error} - "
-                            f"Definition: {attr_type[:100]}...",
-                        )
-
-            if added_count > 0:
-                self.logger.info("Added %s attributeTypes via FlextLdap", added_count)
-            if failed_count > 0:
-                self.logger.warning("Failed to add %s attributeTypes", failed_count)
-
-            # Add objectClasses one at a time (OUD doesn't support batch schema mods)
-            for obj_class in object_classes:
-                changes_obj: dict[str, list[tuple[str, list[str]]]] = {
-                    FlextLdapConstants.SchemaAttributes.OBJECT_CLASSES: [
-                        (
-                            FlextLdapConstants.ModifyOperation.MODIFY_ADD_STR,
-                            [obj_class],
-                        ),
-                    ],
-                }
-                modify_result = self._connection.modify_entry(
-                    schema_dn,
-                    cast("FlextLdapModels.EntryChanges", changes_obj),
-                )
-
-                if modify_result.is_success:
-                    added_count += 1
-                else:
-                    failed_count += 1
-                    # Log first few failures for debugging
-                    if failed_count <= max_logged_failures:
-                        self.logger.warning(
-                            f"Failed to add objectClass: {modify_result.error} - "
-                            f"Definition: {obj_class[:100]}...",
-                        )
-
-            if added_count > 0:
-                self.logger.info("Added %s objectClasses via FlextLdap", added_count)
-            if failed_count > 0:
-                self.logger.warning("Failed to add %s objectClasses", failed_count)
-
-            self.logger.info(
-                "Schema definitions processed via FlextLdap interfaces",
-                extra={
-                    FlextLdapConstants.StatusKeys.ADDED: added_count,
-                    FlextLdapConstants.StatusKeys.FAILED: failed_count,
-                    FlextLdapConstants.StatusKeys.TOTAL: len(definitions),
-                    FlextLdapConstants.StatusKeys.USEDS: True,
-                },
+            # Add attributeTypes using helper method
+            attr_added, attr_failed = self._add_schema_definitions_batch(
+                schema_dn,
+                attribute_types,
+                FlextLdapConstants.SchemaAttributes.ATTRIBUTE_TYPES,
+                "attributeType",
             )
+
+            # Add objectClasses using helper method
+            obj_added, obj_failed = self._add_schema_definitions_batch(
+                schema_dn,
+                object_classes,
+                FlextLdapConstants.SchemaAttributes.OBJECT_CLASSES,
+                "objectClass",
+            )
+
+            total_added = attr_added + obj_added
+            total_failed = attr_failed + obj_failed
+
+            if total_added > 0:
+                self.logger.info(
+                    "Schema sync completed: %s added, %s failed",
+                    total_added,
+                    total_failed,
+                )
 
             return FlextResult[None].ok(None)
 
         except Exception as e:
-            return FlextResult[None].fail(f"Schema addition failed: {e}")
+            self.logger.exception("Schema definition addition failed")
+            return FlextResult[None].fail(f"Schema definition addition failed: {e}")
 
     def _disconnect(self) -> None:
         """Disconnect from LDAP server using FlextLdapClients."""

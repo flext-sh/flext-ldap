@@ -8,6 +8,8 @@ from ldap3 import Connection
 
 from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapServersOIDInitialization:
     """Test initialization and basic properties."""

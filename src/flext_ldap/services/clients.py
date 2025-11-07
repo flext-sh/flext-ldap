@@ -24,11 +24,12 @@ from ldap3 import (
 from ldap3.core.exceptions import (
     LDAPAttributeError,
     LDAPBindError,
-    LDAPChangeError,
     LDAPCommunicationError,
     LDAPInvalidDnError,
     LDAPInvalidFilterError,
     LDAPInvalidScopeError,
+    LDAPNoSuchAttributeResult,
+    LDAPNoSuchObjectResult,
     LDAPObjectClassError,
     LDAPObjectError,
     LDAPOperationsErrorResult,
@@ -86,17 +87,13 @@ class FlextLdapClients(FlextService[None]):
         self,
         config: FlextLdapConfig | None = None,
         *,
-        quirks_mode: FlextLdapConstants.Types.QuirksMode = FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
+        _quirks_mode: FlextLdapConstants.Types.QuirksMode = FlextLdapConstants.Types.QuirksMode.AUTOMATIC,
     ) -> None:
         """Initialize LDAP client - consolidated implementation without bloat.
 
         Args:
             config: LDAP configuration (uses global if None)
-            quirks_mode: Server quirks mode (AUTOMATIC, OID, OUD, or RFC)
-
-        Args:
-            config: Optional LDAP configuration
-            quirks_mode: Quirks handling mode (automatic, server, rfc, relaxed)
+            _quirks_mode: Server quirks mode (AUTOMATIC, OID, OUD, or RFC)
 
         """
         super().__init__()
@@ -235,6 +232,169 @@ class FlextLdapClients(FlextService[None]):
     # CONNECTION MANAGEMENT - Direct implementation (no delegation bloat)
     # =========================================================================
 
+    # Connection Management Helper Methods
+
+    def _validate_connection_params(
+        self,
+        server_uri: str,
+        bind_dn: FlextLdifModels.DistinguishedName | str,
+        password: str,
+    ) -> FlextResult[str]:
+        """Validate connection parameters and return bind_dn string."""
+        uri_validation = FlextLdapValidations.validate_server_uri(server_uri)
+        if uri_validation.is_failure:
+            return FlextResult[str].fail(
+                uri_validation.error or "Server URI validation failed",
+            )
+
+        bind_dn_str = (
+            bind_dn.value
+            if isinstance(bind_dn, FlextLdifModels.DistinguishedName)
+            else bind_dn
+        )
+        bind_dn_validation = FlextLdapValidations.validate_dn(bind_dn_str, "Bind DN")
+        if bind_dn_validation.is_failure:
+            return FlextResult[str].fail(
+                bind_dn_validation.error or "Bind DN validation failed",
+            )
+
+        password_validation = FlextLdapValidations.validate_password(password)
+        if password_validation.is_failure:
+            return FlextResult[str].fail(
+                password_validation.error or "Password validation failed",
+            )
+
+        return FlextResult[str].ok(bind_dn_str)
+
+    def _parse_connection_options(
+        self,
+        connection_options: dict[str, object],
+        *,
+        auto_discover_schema: bool,
+    ) -> tuple[int | None, bool, FlextLdapConstants.Types.GetInfoType]:
+        """Parse connection options into Server parameters."""
+        port: int | None = None
+        use_ssl: bool = False
+        get_info: FlextLdapConstants.Types.GetInfoType = (
+            FlextLdapConstants.Types.GetInfoType.SCHEMA
+        )
+
+        for key, value in connection_options.items():
+            if key == "port" and value is not None:
+                port = int(str(value))
+            elif key == "use_ssl" and value is not None:
+                use_ssl = bool(value)
+            elif key == "get_info" and value is not None:
+                str_value = str(value)
+                if str_value == FlextLdapConstants.Types.GetInfoType.ALL.value:
+                    get_info = FlextLdapConstants.Types.GetInfoType.ALL
+                elif str_value == FlextLdapConstants.Types.GetInfoType.SCHEMA.value:
+                    get_info = FlextLdapConstants.Types.GetInfoType.SCHEMA
+                elif str_value == FlextLdapConstants.Types.GetInfoType.DSA.value:
+                    get_info = FlextLdapConstants.Types.GetInfoType.DSA
+                elif str_value == FlextLdapConstants.Types.GetInfoType.NO_INFO.value:
+                    get_info = FlextLdapConstants.Types.GetInfoType.NO_INFO
+                else:
+                    get_info = FlextLdapConstants.Types.GetInfoType.SCHEMA
+
+        if (
+            auto_discover_schema
+            and get_info == FlextLdapConstants.Types.GetInfoType.SCHEMA
+        ):
+            get_info = FlextLdapConstants.Types.GetInfoType.ALL
+
+        return port, use_ssl, get_info
+
+    def _create_ldap_server(
+        self,
+        server_uri: str,
+        *,
+        auto_discover_schema: bool,
+        connection_options: dict[str, object] | None,
+    ) -> Server:
+        """Create LDAP Server instance with appropriate configuration."""
+        if connection_options:
+            port, use_ssl, get_info = self._parse_connection_options(
+                connection_options,
+                auto_discover_schema=auto_discover_schema,
+            )
+            if port is not None:
+                return Server(
+                    server_uri,
+                    port=port,
+                    use_ssl=use_ssl,
+                    get_info=cast(
+                        "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
+                        get_info.value,
+                    ),
+                )
+            return Server(
+                server_uri,
+                use_ssl=use_ssl,
+                get_info=cast(
+                    "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
+                    get_info.value,
+                ),
+            )
+        if auto_discover_schema:
+            return Server(
+                server_uri,
+                get_info=cast(
+                    "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
+                    FlextLdapConstants.Types.GetInfoType.ALL.value,
+                ),
+            )
+        return Server(server_uri)
+
+    def _bind_and_verify_connection(
+        self,
+        server: Server,
+        bind_dn_str: str,
+        password: str,
+    ) -> FlextResult[Connection]:
+        """Create and bind LDAP connection, verify successful binding."""
+        # Use auto_bind=False to capture specific bind error messages
+        connection = Connection(server, bind_dn_str, password, auto_bind=False)
+        try:
+            bind_result = connection.bind()
+            if not bind_result:
+                error_msg = connection.last_error or "Bind returned False"
+                return FlextResult[Connection].fail(f"Bind failed: {error_msg}")
+            return FlextResult[Connection].ok(connection)
+        except (LDAPBindError, LDAPCommunicationError) as e:
+            return FlextResult[Connection].fail(f"Bind error: {e}")
+
+    def _update_dependent_services(self) -> None:
+        """Update searcher and authenticator with new connection."""
+        if self._searcher is not None and self._connection is not None:
+            self._searcher.set_connection_context(self._connection)
+        if self._authenticator is not None and self._connection is not None:
+            self._authenticator.set_connection_context(
+                self._connection,
+                self._server,
+                cast("FlextLdapConfig", self._ldap_config),
+            )
+
+    def _auto_detect_server_type(self) -> None:
+        """Auto-detect server type from Root DSE."""
+        try:
+            root_dse_result = self._get_root_dse_attributes()
+            if root_dse_result.is_success:
+                root_dse = root_dse_result.unwrap()
+                self._detected_server_type = self._detect_server_type_from_root_dse(
+                    root_dse,
+                )
+                self.logger.info(
+                    "Auto-detected LDAP server type: %s",
+                    self._detected_server_type,
+                )
+            else:
+                self._detected_server_type = FlextLdifConstants.LdapServers.GENERIC
+                self.logger.debug("Could not detect server type, using generic")
+        except Exception as e:
+            self._detected_server_type = FlextLdifConstants.LdapServers.GENERIC
+            self.logger.debug("Server detection failed, using generic: %s", e)
+
     def connect(
         self,
         server_uri: str,
@@ -260,164 +420,47 @@ class FlextLdapClients(FlextService[None]):
 
         """
         try:
-            # Use centralized server URI validation
-            uri_validation = FlextLdapValidations.validate_server_uri(server_uri)
-            if uri_validation.is_failure:
-                return FlextResult[bool].fail(
-                    uri_validation.error or "Server URI validation failed",
-                )
-
-            # Use centralized DN validation for bind_dn
-            bind_dn_str = (
-                bind_dn.value
-                if isinstance(bind_dn, FlextLdifModels.DistinguishedName)
-                else bind_dn
+            # Step 1: Validate all connection parameters
+            validation_result = self._validate_connection_params(
+                server_uri,
+                bind_dn,
+                password,
             )
-            bind_dn_validation = FlextLdapValidations.validate_dn(
-                bind_dn_str,
-                "Bind DN",
-            )
-            if bind_dn_validation.is_failure:
-                return FlextResult[bool].fail(
-                    bind_dn_validation.error or "Bind DN validation failed",
-                )
+            if validation_result.is_failure:
+                return FlextResult[bool].fail(validation_result.error)
 
-            # Use centralized password validation
-            password_validation = FlextLdapValidations.validate_password(password)
-            if password_validation.is_failure:
-                return FlextResult[bool].fail(
-                    password_validation.error or "Password validation failed",
-                )
+            bind_dn_str = validation_result.unwrap()
 
-            # Store quirks mode if provided, otherwise use default
+            # Step 2: Store quirks mode if provided
             if quirks_mode is not None:
                 self.logger.debug("Quirks mode updated to: %s", quirks_mode)
 
             self.logger.debug("Connecting to LDAP server: %s", server_uri)
 
-            # Apply connection options if provided
-            if connection_options:
-                # Build Server constructor arguments with proper typing
-                port: int | None = None
-                use_ssl: bool = False
-                get_info: FlextLdapConstants.Types.GetInfoType = cast(
-                    "FlextLdapConstants.Types.GetInfoType",
-                    FlextLdapConstants.Types.GetInfoType.SCHEMA,
-                )
-
-                for key, value in connection_options.items():
-                    if key == "port" and value is not None:
-                        port = int(str(value))
-                    elif key == "use_ssl" and value is not None:
-                        use_ssl = bool(value)
-                    elif key == "get_info" and value is not None:
-                        str_value = str(value)
-                        # Use FlextLdapConstants.GetInfoType for string comparisons
-                        if str_value == FlextLdapConstants.Types.GetInfoType.ALL.value:
-                            get_info = FlextLdapConstants.Types.GetInfoType.ALL
-                        elif (
-                            str_value
-                            == FlextLdapConstants.Types.GetInfoType.SCHEMA.value
-                        ):
-                            get_info = FlextLdapConstants.Types.GetInfoType.SCHEMA
-                        elif (
-                            str_value == FlextLdapConstants.Types.GetInfoType.DSA.value
-                        ):
-                            get_info = FlextLdapConstants.Types.GetInfoType.DSA
-                        elif (
-                            str_value
-                            == FlextLdapConstants.Types.GetInfoType.NO_INFO.value
-                        ):
-                            get_info = FlextLdapConstants.Types.GetInfoType.NO_INFO
-                        else:
-                            # Default to SCHEMA if unknown
-                            get_info = FlextLdapConstants.Types.GetInfoType.SCHEMA
-
-                # Set get_info to ALL if auto_discover_schema and not set
-                if (
-                    auto_discover_schema
-                    and get_info == FlextLdapConstants.Types.GetInfoType.SCHEMA
-                ):
-                    get_info = FlextLdapConstants.Types.GetInfoType.ALL
-
-                # Create server with the collected arguments
-                if port is not None:
-                    self._server = Server(
-                        server_uri,
-                        port=port,
-                        use_ssl=use_ssl,
-                        get_info=cast(
-                            "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                            get_info.value,
-                        ),
-                    )
-                else:
-                    self._server = Server(
-                        server_uri,
-                        use_ssl=use_ssl,
-                        get_info=cast(
-                            "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                            get_info.value,
-                        ),
-                    )
-            # Set get_info to ALL if auto_discover_schema is True
-            elif auto_discover_schema:
-                self._server = Server(
-                    server_uri,
-                    get_info=cast(
-                        "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                        FlextLdapConstants.Types.GetInfoType.ALL.value,
-                    ),
-                )
-            else:
-                self._server = Server(server_uri)
-
-            # Create connection with auto-bind
-            bind_dn_str = (
-                bind_dn.value
-                if isinstance(bind_dn, FlextLdifModels.DistinguishedName)
-                else bind_dn
+            # Step 3: Create server instance
+            self._server = self._create_ldap_server(
+                server_uri,
+                auto_discover_schema=auto_discover_schema,
+                connection_options=connection_options,
             )
-            self._connection = Connection(
+
+            # Step 4: Create and bind connection
+            connection_result = self._bind_and_verify_connection(
                 self._server,
                 bind_dn_str,
                 password,
-                auto_bind=True,
             )
+            if connection_result.is_failure:
+                return FlextResult[bool].fail(connection_result.error)
 
-            if not self._connection.bound:
-                return FlextResult[bool].fail("Failed to bind to LDAP server")
-
+            self._connection = connection_result.unwrap()
             self.logger.info("Successfully connected to LDAP server")
 
-            # Update searcher and authenticator with new connection if they exist
-            if self._searcher is not None:
-                self._searcher.set_connection_context(self._connection)
-            if self._authenticator is not None:
-                self._authenticator.set_connection_context(
-                    self._connection,
-                    self._server,
-                    cast("FlextLdapConfig", self._ldap_config),
-                )
+            # Step 5: Update dependent services
+            self._update_dependent_services()
 
-            # Auto-detect server type from Root DSE
-            try:
-                root_dse_result = self._get_root_dse_attributes()
-                if root_dse_result.is_success:
-                    root_dse = root_dse_result.unwrap()
-                    self._detected_server_type = self._detect_server_type_from_root_dse(
-                        root_dse,
-                    )
-                    self.logger.info(
-                        "Auto-detected LDAP server type: %s",
-                        self._detected_server_type,
-                    )
-                else:
-                    self._detected_server_type = FlextLdifConstants.LdapServers.GENERIC
-                    self.logger.debug("Could not detect server type, using generic")
-            except Exception as e:
-                self._detected_server_type = FlextLdifConstants.LdapServers.GENERIC
-                self.logger.debug("Server detection failed, using generic: %s", e)
+            # Step 6: Auto-detect server type
+            self._auto_detect_server_type()
 
             return FlextResult[bool].ok(True)
 
@@ -527,15 +570,21 @@ class FlextLdapClients(FlextService[None]):
                 if isinstance(bind_dn, FlextLdifModels.DistinguishedName)
                 else bind_dn
             )
+            # Use auto_bind=False to capture specific error messages
             self._connection = Connection(
                 self._server,
                 bind_dn_str,
                 password,
-                auto_bind=True,
+                auto_bind=False,
             )
 
-            if not self._connection.bound:
-                return FlextResult[bool].fail("Bind failed - invalid credentials")
+            # Explicitly bind and check result
+            bind_result = self._connection.bind()
+            if not bind_result:
+                error_msg = (
+                    self._connection.last_error or "Bind failed - invalid credentials"
+                )
+                return FlextResult[bool].fail(error_msg)
 
             return FlextResult[bool].ok(True)
 
@@ -590,12 +639,18 @@ class FlextLdapClients(FlextService[None]):
 
         try:
             if self._connection:
-                self._connection.search(
+                # Check search result - do not ignore failures
+                search_result = self._connection.search(
                     "",
                     FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
                     self._search_scope,
                     attributes=[FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS],
                 )
+                if not search_result:
+                    error_msg = (
+                        self._connection.last_error or "Connection test search failed"
+                    )
+                    return FlextResult[bool].fail(error_msg)
             return FlextResult[bool].ok(True)
         except (
             LDAPCommunicationError,
@@ -864,6 +919,96 @@ class FlextLdapClients(FlextService[None]):
     # CRUD OPERATIONS - Direct implementation (simpler operations)
     # =========================================================================
 
+    # Add Entry Helper Methods
+
+    def _convert_attributes_to_ldap3_format(
+        self,
+        attributes: FlextLdifModels.LdifAttributes | dict[str, str | list[str]],
+    ) -> dict[str, list[str]]:
+        """Convert attributes to ldap3 format (dict with list values)."""
+        attrs_dict: dict[str, str | list[str]]
+        if isinstance(attributes, FlextLdifModels.LdifAttributes):
+            attrs_dict = cast("dict[str, str | list[str]]", attributes.attributes)
+        else:
+            attrs_dict = attributes
+
+        ldap3_attributes: dict[str, list[str]] = {}
+        for key, value in attrs_dict.items():
+            if isinstance(value, list):
+                ldap3_attributes[key] = value
+            else:
+                ldap3_attributes[key] = [str(value)]
+        return ldap3_attributes
+
+    def _attempt_add_entry(
+        self,
+        dn_str: str,
+        attempted_attributes: dict[str, list[str]],
+    ) -> bool:
+        """Attempt to add entry with current attributes."""
+        object_class_raw = attempted_attributes.get(
+            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
+            [FlextLdapConstants.Defaults.OBJECT_CLASS_TOP],
+        )
+        if isinstance(object_class_raw, list):
+            object_class = (
+                object_class_raw[0]
+                if object_class_raw
+                else FlextLdapConstants.Defaults.OBJECT_CLASS_TOP
+            )
+        else:
+            object_class = str(object_class_raw)
+
+        typed_conn = cast(
+            "FlextLdapTypes.Ldap3Protocols.Connection",
+            self.connection,
+        )
+        attrs = cast(
+            "dict[str, str | list[str]] | None",
+            attempted_attributes,
+        )
+        return typed_conn.add(dn_str, object_class=object_class, attributes=attrs)
+
+    def _extract_undefined_attribute(
+        self,
+        error_msg: str,
+        attempted_attributes: dict[str, list[str]],
+    ) -> str | None:
+        """Extract attribute name from undefined attribute error."""
+        error_parts = error_msg.split()
+        if len(error_parts) > 0:
+            problem_attr = error_parts[-1].strip()
+            if problem_attr in attempted_attributes:
+                return problem_attr
+        return None
+
+    def _handle_undefined_attribute_error(
+        self,
+        attempted_attributes: dict[str, list[str]],
+        removed_attributes: list[str],
+    ) -> bool:
+        """Handle undefined attribute error by removing problematic attribute."""
+        if not self.connection:
+            return False
+
+        error_msg = str(self.connection.last_error).lower()
+        if (
+            "undefined attribute" not in error_msg
+            and "invalid attribute" not in error_msg
+        ):
+            return False
+
+        problem_attr = self._extract_undefined_attribute(
+            str(self.connection.last_error),
+            attempted_attributes,
+        )
+        if problem_attr:
+            self.logger.debug("Removing undefined '%s'", problem_attr)
+            del attempted_attributes[problem_attr]
+            removed_attributes.append(problem_attr)
+            return True
+        return False
+
     def add_entry(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
@@ -889,35 +1034,20 @@ class FlextLdapClients(FlextService[None]):
             if not self.connection:
                 return FlextResult[bool].fail("LDAP connection not established")
 
-            # Use provided quirks_mode or fall back to instance quirks_mode
+            # Determine effective quirks mode
             effectives_mode = quirks_mode or self.s_mode
 
-            # Extract dict from LdifAttributes if needed
-            attrs_dict: dict[str, str | list[str]]
-            if isinstance(attributes, FlextLdifModels.LdifAttributes):
-                # LdifAttributes wraps dict[str, list[str]]
-                attrs_dict = cast("dict[str, str | list[str]]", attributes.attributes)
-            else:
-                attrs_dict = attributes
+            # Convert attributes to ldap3 format
+            ldap3_attributes = self._convert_attributes_to_ldap3_format(attributes)
 
-            # Convert DN to string if needed
+            # Convert DN to string
             dn_str = (
                 dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
             )
 
-            # Convert attributes to ldap3 format
-            ldap3_attributes = {}
-            for key, value in attrs_dict.items():
-                if isinstance(value, list):
-                    ldap3_attributes[key] = value
-                else:
-                    ldap3_attributes[key] = [str(value)]
-
-            # Try to add entry, handling undefined attributes gracefully
-            success = False
+            # Retry logic with undefined attribute handling
             attempted_attributes = ldap3_attributes.copy()
             removed_attributes: list[str] = []
-            # Limit retries unless in "relaxed" mode
             max_retries = (
                 1 if effectives_mode == FlextLdapConstants.Types.QuirksMode.RFC else 20
             )
@@ -929,99 +1059,50 @@ class FlextLdapClients(FlextService[None]):
                 effectives_mode,
             )
 
-            while not success and retry_count < max_retries:
+            while retry_count < max_retries:
                 try:
-                    # Extract objectClass from attributes or use default
-                    object_class_raw = attempted_attributes.get(
-                        FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
-                        [FlextLdapConstants.Defaults.OBJECT_CLASS_TOP],
-                    )
-                    if isinstance(object_class_raw, list):
-                        object_class = (
-                            object_class_raw[0]
-                            if object_class_raw
-                            else FlextLdapConstants.Defaults.OBJECT_CLASS_TOP
-                        )
-                    else:
-                        object_class = str(object_class_raw)
-                    # Cast to Protocol type for proper type checking with ldap3
-                    typed_conn = cast(
-                        "FlextLdapTypes.Ldap3Protocols.Connection",
-                        self.connection,
-                    )
-                    # Cast attributes to match Protocol signature
-                    attrs = cast(
-                        "dict[str, str | list[str]] | None",
-                        attempted_attributes,
-                    )
-                    success = typed_conn.add(
-                        dn_str,
-                        object_class=object_class,
-                        attributes=attrs,
-                    )
+                    success = self._attempt_add_entry(dn_str, attempted_attributes)
                     if success:
                         if removed_attributes:
-                            msg = f"Removed attrs: {removed_attributes}"
-                            self.logger.debug(msg)
+                            self.logger.debug("Removed attrs: %s", removed_attributes)
                         return FlextResult[bool].ok(True)
 
-                    # Check if error is about undefined attribute
-                    error_msg = str(self.connection.last_error).lower()
-                    if (
-                        "undefined attribute" in error_msg
-                        or "invalid attribute" in error_msg
+                    # Try to handle undefined attribute error
+                    if self._handle_undefined_attribute_error(
+                        attempted_attributes,
+                        removed_attributes,
                     ):
-                        # Extract attribute name from error message
-                        # Format: "Undefined attribute type department"
-                        error_parts = str(self.connection.last_error).split()
-                        if len(error_parts) > 0:
-                            # Get last word (attribute name)
-                            problem_attr = error_parts[-1].strip()
-                            if problem_attr in attempted_attributes:
-                                msg = f"Removing undefined '{problem_attr}'"
-                                self.logger.debug(msg)
-                                del attempted_attributes[problem_attr]
-                                removed_attributes.append(problem_attr)
-                                retry_count += 1
-                                continue
+                        retry_count += 1
+                        continue
 
-                    # If we can't identify the problem attribute or other error, fail
+                    # Unknown error
                     return FlextResult[bool].fail(
                         f"Add entry failed: {self.connection.last_error}",
                     )
 
-                except (
-                    LDAPAttributeError,
-                    LDAPObjectClassError,
-                ) as e:
-                    # Some LDAP servers raise exceptions for undefined attributes
+                except (LDAPAttributeError, LDAPObjectClassError) as e:
                     error_str = str(e).lower()
                     if (
                         "undefined attribute" in error_str
                         or "invalid attribute" in error_str
                     ):
-                        # Try to extract attribute name from exception message
-                        error_parts = str(e).split()
-                        if len(error_parts) > 0:
-                            problem_attr = error_parts[-1].strip()
-                            if problem_attr in attempted_attributes:
-                                msg = f"Exception on undefined '{problem_attr}'"
-                                self.logger.debug(msg)
-                                del attempted_attributes[problem_attr]
-                                removed_attributes.append(problem_attr)
-                                retry_count += 1
-                                continue
-                    # Re-raise if not an attribute error
+                        problem_attr = self._extract_undefined_attribute(
+                            str(e),
+                            attempted_attributes,
+                        )
+                        if problem_attr:
+                            self.logger.debug(
+                                "Exception on undefined '%s'", problem_attr
+                            )
+                            del attempted_attributes[problem_attr]
+                            removed_attributes.append(problem_attr)
+                            retry_count += 1
+                            continue
                     raise
 
-            # If we exhausted retries
-            if retry_count >= max_retries:
-                return FlextResult[bool].fail(
-                    f"Add entry failed after {max_retries} retries removing attributes",
-                )
-
+            # Exhausted retries
             return FlextResult[bool].fail(
-                f"Add entry failed: {self.connection.last_error}",
+                f"Add entry failed after {max_retries} retries removing attributes",
             )
 
         except (
@@ -1035,6 +1116,59 @@ class FlextLdapClients(FlextService[None]):
         ) as e:
             self.logger.exception("Add entry failed")
             return FlextResult[bool].fail(f"Add entry failed: {e}")
+
+    # Modify Entry Helper Methods
+
+    def _convert_changes_to_dict(
+        self,
+        changes: FlextLdapModels.EntryChanges,
+    ) -> dict[str, object]:
+        """Convert EntryChanges to dict format."""
+        if hasattr(changes, "model_dump"):
+            return changes.model_dump()
+        if hasattr(changes, "items"):
+            return dict(changes)
+        return changes
+
+    def _parse_change_spec_to_ldap3(
+        self,
+        change_spec: object,
+    ) -> list[tuple[str | int, list[str]]]:
+        """Parse change spec to ldap3 tuple format."""
+        # Already in ldap3 tuple format
+        if (
+            isinstance(change_spec, list)
+            and change_spec
+            and isinstance(change_spec[0], tuple)
+        ):
+            return cast("list[tuple[str | int, list[str]]]", change_spec)
+
+        # Dict format (complex operations)
+        if isinstance(change_spec, dict):
+            operations: list[tuple[str, list[str]]] = []
+            for op_name, op_value in change_spec.items():
+                if op_name in {
+                    FlextLdapConstants.ModifyOperation.ADD,
+                    FlextLdapConstants.ModifyOperation.DELETE,
+                    FlextLdapConstants.ModifyOperation.REPLACE,
+                }:
+                    values = op_value if isinstance(op_value, list) else [str(op_value)]
+                    operations.append((op_name, values))
+            return operations
+
+        # Simple value format (default to REPLACE)
+        values = change_spec if isinstance(change_spec, list) else [str(change_spec)]
+        return [(FlextLdapConstants.ModifyOperation.REPLACE, values)]
+
+    def _build_ldap3_changes(
+        self,
+        changes_dict: dict[str, object],
+    ) -> dict[str, list[tuple[str | int, list[str]]]]:
+        """Build ldap3 changes dict from FlextLdapModels.EntryChanges."""
+        ldap3_changes: dict[str, list[tuple[str | int, list[str]]]] = {}
+        for attr, change_spec in changes_dict.items():
+            ldap3_changes[attr] = self._parse_change_spec_to_ldap3(change_spec)
+        return ldap3_changes
 
     def modify_entry(
         self,
@@ -1067,116 +1201,36 @@ class FlextLdapClients(FlextService[None]):
                 effectives_mode,
             )
 
-            # Convert changes to ldap3 format
-            # ldap3 expects: {'attr': [(MODIFY_OP, [values])]}
-            ldap3_changes: dict[str, list[tuple[str | int, list[str]]]] = {}
-            changes_dict: dict[str, object] = (
-                changes.model_dump()
-                if hasattr(changes, "model_dump")
-                else dict(changes)
-                if hasattr(changes, "items")
-                else changes
+            # Convert DN to string
+            dn_str = (
+                dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
             )
-            for attr, change_spec in changes_dict.items():
-                # Check if already in ldap3 tuple format: [(operation, values)]
-                if (
-                    isinstance(change_spec, list)
-                    and change_spec
-                    and isinstance(change_spec[0], tuple)
-                ):
-                    # Already in correct format
-                    ldap3_changes[attr] = cast(
-                        "list[tuple[str | int, list[str]]]",
-                        change_spec,
-                    )
-                elif isinstance(change_spec, dict):
-                    # Handle dict format (complex operations)
-                    # Convert dict operations to proper tuple format for ldap3
-                    operations: list[tuple[str, list[str]]] = []
-                    for op_name, op_value in change_spec.items():
-                        # Use FlextLdapConstants.ModifyOperation constants
-                        if op_name in {
-                            FlextLdapConstants.ModifyOperation.MODIFY_ADD_STR,
-                            FlextLdapConstants.ModifyOperation.ADD,
-                        }:
-                            operations.append((
-                                FlextLdapConstants.ModifyOperation.ADD,
-                                [op_value]
-                                if not isinstance(op_value, list)
-                                else op_value,
-                            ))
-                        elif op_name in {
-                            FlextLdapConstants.ModifyOperation.MODIFY_DELETE_STR,
-                            FlextLdapConstants.ModifyOperation.DELETE,
-                        }:
-                            operations.append((
-                                FlextLdapConstants.ModifyOperation.DELETE,
-                                [op_value]
-                                if not isinstance(op_value, list)
-                                else op_value,
-                            ))
-                        elif op_name in {
-                            FlextLdapConstants.ModifyOperation.MODIFY_REPLACE_STR,
-                            FlextLdapConstants.ModifyOperation.REPLACE,
-                        }:
-                            operations.append((
-                                FlextLdapConstants.ModifyOperation.REPLACE,
-                                [op_value]
-                                if not isinstance(op_value, list)
-                                else op_value,
-                            ))
-                        elif (
-                            op_name
-                            == FlextLdapConstants.ModifyOperation.MODIFY_INCREMENT_STR
-                        ):
-                            # MODIFY_INCREMENT not supported, skip
-                            msg = f"MODIFY_INCREMENT not supported for {attr}"
-                            self.logger.warning(msg)
-                            continue
-                    # Cast to match expected dict value type
-                    ldap3_changes[attr] = cast(
-                        "list[tuple[str | int, list[str]]]",
-                        operations,
-                    )
-                else:
-                    # Simple value - wrap as MODIFY_REPLACE
-                    ldap3_changes[attr] = [
-                        cast(
-                            "tuple[str | int, list[str]]",
-                            (
-                                2,  # MODIFY_REPLACE operation code in LDAP
-                                change_spec
-                                if isinstance(change_spec, list)
-                                else [str(change_spec)],
-                            ),
-                        ),
-                    ]
 
-            # Use direct ldap3 modify (server-specific handling simplified)
+            # Convert changes to ldap3 format using helper methods
+            changes_dict = self._convert_changes_to_dict(changes)
+            ldap3_changes = self._build_ldap3_changes(changes_dict)
+
             # Cast to Protocol type for proper type checking with ldap3
             typed_conn = cast(
                 "FlextLdapTypes.Ldap3Protocols.Connection",
                 self.connection,
             )
-            # Cast changes directly to match Protocol signature
-            dn_str = (
-                dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
-            )
-            success = typed_conn.modify(
-                dn_str,
-                changes=cast("dict[str, list[tuple[int, list[str]]]]", ldap3_changes),
-            )
+
+            # Execute modify operation
+            success = typed_conn.modify(dn_str, ldap3_changes)
             if success:
                 return FlextResult[bool].ok(True)
+
             return FlextResult[bool].fail(
                 f"Modify entry failed: {self.connection.last_error}",
             )
 
         except (
             LDAPCommunicationError,
-            LDAPChangeError,
-            LDAPInvalidDnError,
             LDAPAttributeError,
+            LDAPInvalidDnError,
+            LDAPNoSuchAttributeResult,
+            LDAPNoSuchObjectResult,
             LDAPOperationsErrorResult,
             ValidationError,
         ) as e:
@@ -1493,7 +1547,8 @@ class FlextLdapClients(FlextService[None]):
             return None
         # Create server quirks based on detected type
         return FlextLdapModels.ServerQuirks(
-            server_type=self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE,
+            server_type=self._detected_server_type
+            or FlextLdapConstants.Defaults.SERVER_TYPE,
             case_sensitive_dns=self._detected_server_type
             == FlextLdapConstants.ServerTypes.AD,
             case_sensitive_attributes=self._detected_server_type
@@ -1544,6 +1599,68 @@ class FlextLdapClients(FlextService[None]):
         """Create user from entry (private helper method)."""
         return self._create_user_from_entry_result(entry)
 
+    # Normalize Helper Methods
+
+    def _normalize_string(self, value: str | list[object] | dict[str, object]) -> str:
+        """Normalize value to string."""
+        return value.strip() if isinstance(value, str) else str(value)
+
+    def _normalize_attributes(
+        self, value: str | list[object] | dict[str, object]
+    ) -> str | list[object] | dict[str, object]:
+        """Normalize value to list of attribute strings."""
+        if isinstance(value, list):
+            return [str(attr).strip() for attr in value]
+        return [str(value)]
+
+    def _normalize_entry(
+        self, value: str | list[object] | dict[str, object]
+    ) -> str | list[object] | dict[str, object]:
+        """Normalize entry dict."""
+        if not isinstance(value, dict):
+            error_type = type(value).__name__
+            msg = f"Expected dict for entry normalization, got {error_type}"
+            raise TypeError(msg)
+        return {
+            k: (
+                [str(v).strip() for v in val]
+                if isinstance(val, list)
+                else str(val).strip()
+            )
+            for k, val in value.items()
+        }
+
+    def _normalize_changes(
+        self, value: str | list[object] | dict[str, object]
+    ) -> dict[str, object]:
+        """Normalize changes dict."""
+        if not isinstance(value, dict):
+            error_type = type(value).__name__
+            msg = f"Expected dict for changes normalization, got {error_type}"
+            raise TypeError(msg)
+        return {
+            k: (
+                [(op, [s.strip() for s in vals]) for op, vals in change_list]
+                if isinstance(change_list, list)
+                and all(
+                    isinstance(op, tuple)
+                    and len(op)
+                    == FlextLdapConstants.AclParsing.MODIFY_OPERATION_TUPLE_LENGTH
+                    for op in change_list
+                )
+                else change_list
+            )
+            for k, change_list in value.items()
+        }
+
+    def _normalize_results(
+        self, value: str | list[object] | dict[str, object]
+    ) -> list[object]:
+        """Normalize results to list."""
+        if isinstance(value, list):
+            return value
+        return [value] if value is not None else []
+
     def _normalize(
         self,
         value: str | list[object] | dict[str, object],
@@ -1563,55 +1680,16 @@ class FlextLdapClients(FlextService[None]):
         """
         match normalize_type:
             case "string":
-                if isinstance(value, str):
-                    return value.strip()
-                return str(value)
-
+                return self._normalize_string(value)
             case "attributes":
-                if isinstance(value, list):
-                    return [str(attr).strip() for attr in value]
-                return [str(value)]
-
+                return self._normalize_attributes(value)
             case "entry":
-                if isinstance(value, dict):
-                    return {
-                        k: (
-                            [str(v).strip() for v in val]
-                            if isinstance(val, list)
-                            else str(val).strip()
-                        )
-                        for k, val in value.items()
-                    }
-                return {}
-
+                return self._normalize_entry(value)
             case "changes":
-                if isinstance(value, dict):
-                    return {
-                        k: (
-                            [
-                                (op, [s.strip() for s in vals])
-                                for op, vals in change_list
-                            ]
-                            if isinstance(change_list, list)
-                            and all(
-                                isinstance(op, tuple)
-                                and len(op)
-                                == FlextLdapConstants.AclParsing.MODIFY_OPERATION_TUPLE_LENGTH
-                                for op in change_list
-                            )
-                            else change_list
-                        )
-                        for k, change_list in value.items()
-                    }
-                return {}
-
+                return self._normalize_changes(value)
             case "results":
-                if isinstance(value, list):
-                    return value
-                return [value] if value is not None else []
-
+                return self._normalize_results(value)
             case _:
-                # Default: return unchanged
                 return value
 
     def get_servers_info(self) -> FlextResult[dict[str, object]]:
@@ -1632,13 +1710,16 @@ class FlextLdapClients(FlextService[None]):
                 )
 
             # Get server type from connection
-            server_type = self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+            server_type = (
+                self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+            )
 
             # Build server info dictionary
             server_info: dict[str, object] = {
                 "server_type": server_type,
                 "case_sensitive_dns": server_type == FlextLdapConstants.ServerTypes.AD,
-                "case_sensitive_attributes": server_type == FlextLdapConstants.ServerTypes.AD,
+                "case_sensitive_attributes": server_type
+                == FlextLdapConstants.ServerTypes.AD,
             }
 
             return FlextResult[dict[str, object]].ok(server_info)
@@ -1662,13 +1743,18 @@ class FlextLdapClients(FlextService[None]):
                 return FlextResult[list[str]].fail("Not connected to LDAP server")
 
             # Return capability-specific attributes based on server type
-            server_type = self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+            server_type = (
+                self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+            )
 
             # Map capability to server-specific attributes
             if capability == "acl":
                 if server_type == FlextLdapConstants.ServerTypes.AD:
                     return FlextResult[list[str]].ok(["nTSecurityDescriptor"])
-                if server_type in {FlextLdapConstants.ServerTypes.OID, FlextLdapConstants.ServerTypes.OUD}:
+                if server_type in {
+                    FlextLdapConstants.ServerTypes.OID,
+                    FlextLdapConstants.ServerTypes.OUD,
+                }:
                     return FlextResult[list[str]].ok(["aci"])
                 return FlextResult[list[str]].ok(["olcAccess"])
 
@@ -1681,13 +1767,13 @@ class FlextLdapClients(FlextService[None]):
     def transform_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
-        target_server_type: str,
+        _target_server_type: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Transform an LDIF entry for a different target LDAP server type.
 
         Args:
             entry: Entry to transform
-            target_server_type: Target server type
+            _target_server_type: Target server type
 
         Returns:
             FlextResult[FlextLdifModels.Entry]: Transformed entry

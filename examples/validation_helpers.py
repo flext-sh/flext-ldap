@@ -346,6 +346,222 @@ def validate_search_operations(
     return all_passed
 
 
+def _ensure_parent_ou_exists(api: FlextLdap, base_dn: str) -> None:
+    """Ensure parent OU exists for CRUD tests."""
+    try:
+        parent_ou_dn = f"ou=users,{base_dn}"
+        search_result = api.search_with_request(
+            FlextLdapModels.SearchRequest(
+                base_dn=parent_ou_dn,
+                filter_str="(objectClass=*)",
+                scope=FlextLdapConstants.Scopes.BASE,
+            )
+        )
+        if search_result.is_failure or not search_result.unwrap():
+            ou_attributes: dict[str, str | list[str]] = {
+                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
+                    "organizationalUnit",
+                    "top",
+                ],
+                FlextLdapConstants.LdapAttributeNames.OU: "users",
+            }
+            create_ou_result = api.client.add_entry(parent_ou_dn, ou_attributes)
+            if create_ou_result.is_failure:
+                logger.warning(
+                    f"Could not create parent OU {parent_ou_dn}: {create_ou_result.error}"
+                )
+    except Exception as e:
+        logger.warning(f"Parent OU check failed: {e}")
+
+
+def _test_create_entry(
+    api: FlextLdap,
+    test_dn: str,
+    test_name: str,
+    metrics: ValidationMetrics,
+) -> bool:
+    """Test create entry operation."""
+    try:
+        start_time = time.time()
+        attributes: dict[str, str | list[str]] = {
+            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
+                "inetOrgPerson",
+                "organizationalPerson",
+                "person",
+                "top",
+            ],
+            FlextLdapConstants.LdapAttributeNames.CN: "test-crud-user",
+            FlextLdapConstants.LdapAttributeNames.SN: "CrudUser",
+            FlextLdapConstants.LdapAttributeNames.GIVEN_NAME: "Test",
+            FlextLdapConstants.LdapAttributeNames.UID: "testcrud",
+            FlextLdapConstants.LdapAttributeNames.MAIL: "testcrud@flext.local",
+        }
+        result = api.client.add_entry(test_dn, attributes)
+        duration = time.time() - start_time
+
+        if result.is_failure:
+            metrics.add_result(
+                f"{test_name} - Create Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
+            return False
+        metrics.add_result(
+            f"{test_name} - Create Entry",
+            "pass",
+            "Entry created successfully",
+            duration,
+        )
+        logger.info(f"✅ Create entry: {test_dn} ({duration:.2f}s)")
+        return True
+    except Exception as e:
+        metrics.add_result(
+            f"{test_name} - Create Entry",
+            "fail",
+            f"Exception: {e}",
+            time.time() - start_time,
+        )
+        return False
+
+
+def _test_read_entry(
+    api: FlextLdap,
+    test_dn: str,
+    test_name: str,
+    metrics: ValidationMetrics,
+) -> bool:
+    """Test read entry operation."""
+    start_time = time.time()
+    try:
+        result = api.search_one(
+            FlextLdapModels.SearchRequest(
+                base_dn=test_dn,
+                filter_str="(objectClass=*)",
+                scope=FlextLdapConstants.Scopes.BASE,
+                attributes=["*"],
+            )
+        )
+        duration = time.time() - start_time
+
+        if result.is_failure:
+            metrics.add_result(
+                f"{test_name} - Read Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
+            return False
+
+        entry = result.unwrap()
+        if entry:
+            metrics.add_result(
+                f"{test_name} - Read Entry",
+                "pass",
+                f"Entry read: {entry.dn}",
+                duration,
+            )
+            logger.info(f"✅ Read entry: {entry.dn} ({duration:.2f}s)")
+            return True
+
+        metrics.add_result(
+            f"{test_name} - Read Entry",
+            "fail",
+            "Entry not found after creation",
+            duration,
+        )
+        return False
+    except Exception as e:
+        metrics.add_result(
+            f"{test_name} - Read Entry",
+            "fail",
+            f"Exception: {e}",
+            time.time() - start_time,
+        )
+        return False
+
+
+def _test_update_entry(
+    api: FlextLdap,
+    test_dn: str,
+    test_name: str,
+    metrics: ValidationMetrics,
+) -> bool:
+    """Test update entry operation."""
+    start_time = time.time()
+    try:
+        changes: dict[str, str | list[str]] = {
+            FlextLdapConstants.LdapAttributeNames.DESCRIPTION: "Updated test entry"
+        }
+        result = api.modify_entry(test_dn, changes)
+        duration = time.time() - start_time
+
+        if result.is_failure:
+            metrics.add_result(
+                f"{test_name} - Update Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
+            return False
+
+        metrics.add_result(
+            f"{test_name} - Update Entry",
+            "pass",
+            "Entry updated successfully",
+            duration,
+        )
+        logger.info(f"✅ Update entry: {test_dn} ({duration:.2f}s)")
+        return True
+    except Exception as e:
+        metrics.add_result(
+            f"{test_name} - Update Entry",
+            "fail",
+            f"Exception: {e}",
+            time.time() - start_time,
+        )
+        return False
+
+
+def _test_delete_entry(
+    api: FlextLdap,
+    test_dn: str,
+    test_name: str,
+    metrics: ValidationMetrics,
+) -> bool:
+    """Test delete entry operation."""
+    start_time = time.time()
+    try:
+        result = api.delete_entry(test_dn)
+        duration = time.time() - start_time
+
+        if result.is_failure:
+            metrics.add_result(
+                f"{test_name} - Delete Entry",
+                "fail",
+                result.error or "Unknown error",
+                duration,
+            )
+            return False
+
+        metrics.add_result(
+            f"{test_name} - Delete Entry",
+            "pass",
+            "Entry deleted successfully",
+            duration,
+        )
+        logger.info(f"✅ Delete entry: {test_dn} ({duration:.2f}s)")
+        return True
+    except Exception as e:
+        metrics.add_result(
+            f"{test_name} - Delete Entry",
+            "fail",
+            f"Exception: {e}",
+            time.time() - start_time,
+        )
+        return False
+
+
 def validate_crud_operations(
     api: FlextLdap,
     base_dn: str,
@@ -366,195 +582,20 @@ def validate_crud_operations(
     logger.info(f"\n=== {test_name} ===")
 
     test_dn = f"cn=test-crud-user,ou=users,{base_dn}"
-    all_passed = True
 
-    # Test 0: Ensure parent OU exists (create if needed)
-    start_time = time.time()
-    try:
-        parent_ou_dn = f"ou=users,{base_dn}"
+    # Ensure parent OU exists
+    _ensure_parent_ou_exists(api, base_dn)
 
-        # Check if parent OU exists
-        search_result = api.search_with_request(
-            FlextLdapModels.SearchRequest(
-                base_dn=parent_ou_dn,
-                filter_str="(objectClass=*)",
-                scope=FlextLdapConstants.Scopes.BASE,
-            )
-        )
+    # Execute CRUD tests using helper functions
+    create_ok = _test_create_entry(api, test_dn, test_name, metrics)
+    if not create_ok:
+        return False  # Can't continue if create fails
 
-        # Create parent OU if it doesn't exist
-        if search_result.is_failure or not search_result.unwrap():
-            ou_attributes: dict[str, str | list[str]] = {
-                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                    "organizationalUnit",
-                    "top",
-                ],
-                FlextLdapConstants.LdapAttributeNames.OU: "users",
-            }
-            create_ou_result = api.client.add_entry(parent_ou_dn, ou_attributes)
-            if create_ou_result.is_failure:
-                logger.warning(
-                    f"Could not create parent OU {parent_ou_dn}: {create_ou_result.error}"
-                )
+    read_ok = _test_read_entry(api, test_dn, test_name, metrics)
+    update_ok = _test_update_entry(api, test_dn, test_name, metrics)
+    delete_ok = _test_delete_entry(api, test_dn, test_name, metrics)
 
-        duration = time.time() - start_time
-    except Exception as e:
-        logger.warning(f"Parent OU check failed: {e}")
-
-    # Test 1: Create entry
-    try:
-        start_time = time.time()
-        attributes: dict[str, str | list[str]] = {
-            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [
-                "inetOrgPerson",
-                "organizationalPerson",
-                "person",
-                "top",
-            ],
-            FlextLdapConstants.LdapAttributeNames.CN: "test-crud-user",
-            FlextLdapConstants.LdapAttributeNames.SN: "CrudUser",
-            FlextLdapConstants.LdapAttributeNames.GIVEN_NAME: "Test",
-            FlextLdapConstants.LdapAttributeNames.UID: "testcrud",
-            FlextLdapConstants.LdapAttributeNames.MAIL: "testcrud@flext.local",
-        }
-
-        result = api.client.add_entry(test_dn, attributes)
-        duration = time.time() - start_time
-
-        if result.is_failure:
-            metrics.add_result(
-                f"{test_name} - Create Entry",
-                "fail",
-                result.error or "Unknown error",
-                duration,
-            )
-            return False  # Can't continue if create fails
-        metrics.add_result(
-            f"{test_name} - Create Entry",
-            "pass",
-            "Entry created successfully",
-            duration,
-        )
-        logger.info(f"✅ Create entry: {test_dn} ({duration:.2f}s)")
-
-    except Exception as e:
-        duration = time.time() - start_time
-        metrics.add_result(
-            f"{test_name} - Create Entry", "fail", f"Exception: {e}", duration
-        )
-        return False
-
-    # Test 2: Read entry
-    try:
-        start_time = time.time()
-        result = api.search_one(
-            FlextLdapModels.SearchRequest(
-                base_dn=test_dn,
-                filter_str="(objectClass=*)",
-                scope=FlextLdapConstants.Scopes.BASE,
-                attributes=["*"],
-            )
-        )
-        duration = time.time() - start_time
-
-        if result.is_failure:
-            metrics.add_result(
-                f"{test_name} - Read Entry",
-                "fail",
-                result.error or "Unknown error",
-                duration,
-            )
-            all_passed = False
-        else:
-            entry = result.unwrap()
-            if entry:
-                metrics.add_result(
-                    f"{test_name} - Read Entry",
-                    "pass",
-                    f"Entry read: {entry.dn}",
-                    duration,
-                )
-                logger.info(f"✅ Read entry: {entry.dn} ({duration:.2f}s)")
-            else:
-                metrics.add_result(
-                    f"{test_name} - Read Entry",
-                    "fail",
-                    "Entry not found after creation",
-                    duration,
-                )
-                all_passed = False
-
-    except Exception as e:
-        duration = time.time() - start_time
-        metrics.add_result(
-            f"{test_name} - Read Entry", "fail", f"Exception: {e}", duration
-        )
-        all_passed = False
-
-    # Test 3: Update entry
-    try:
-        start_time = time.time()
-        changes: dict[str, str | list[str]] = {
-            FlextLdapConstants.LdapAttributeNames.DESCRIPTION: "Updated test entry"
-        }
-        result = api.modify_entry(test_dn, changes)
-        duration = time.time() - start_time
-
-        if result.is_failure:
-            metrics.add_result(
-                f"{test_name} - Update Entry",
-                "fail",
-                result.error or "Unknown error",
-                duration,
-            )
-            all_passed = False
-        else:
-            metrics.add_result(
-                f"{test_name} - Update Entry",
-                "pass",
-                "Entry updated successfully",
-                duration,
-            )
-            logger.info(f"✅ Update entry: {test_dn} ({duration:.2f}s)")
-
-    except Exception as e:
-        duration = time.time() - start_time
-        metrics.add_result(
-            f"{test_name} - Update Entry", "fail", f"Exception: {e}", duration
-        )
-        all_passed = False
-
-    # Test 4: Delete entry
-    try:
-        start_time = time.time()
-        result = api.delete_entry(test_dn)
-        duration = time.time() - start_time
-
-        if result.is_failure:
-            metrics.add_result(
-                f"{test_name} - Delete Entry",
-                "fail",
-                result.error or "Unknown error",
-                duration,
-            )
-            all_passed = False
-        else:
-            metrics.add_result(
-                f"{test_name} - Delete Entry",
-                "pass",
-                "Entry deleted successfully",
-                duration,
-            )
-            logger.info(f"✅ Delete entry: {test_dn} ({duration:.2f}s)")
-
-    except Exception as e:
-        duration = time.time() - start_time
-        metrics.add_result(
-            f"{test_name} - Delete Entry", "fail", f"Exception: {e}", duration
-        )
-        all_passed = False
-
-    return all_passed
+    return create_ok and read_ok and update_ok and delete_ok
 
 
 def validate_batch_operations(

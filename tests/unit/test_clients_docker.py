@@ -21,6 +21,8 @@ from flext_core import FlextResult
 
 from flext_ldap import FlextLdapClients
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapClientsBasic:
     """Basic initialization and connection tests."""

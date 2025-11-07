@@ -116,7 +116,9 @@ class EntryFactory:
         dn_obj = FlextLdifModels.DistinguishedName(value=dn)
         ldif_attrs = FlextLdifModels.LdifAttributes(attributes=attributes_dict)
         return FlextLdifModels.Entry(
-            dn=dn_obj, attributes=ldif_attrs, entry_type="user"
+            dn=dn_obj,
+            attributes=ldif_attrs,  # entry_type= # Removed parameter (no longer exists)
+            # "user"
         )
 
     @staticmethod
@@ -169,7 +171,9 @@ class EntryFactory:
         dn_obj = FlextLdifModels.DistinguishedName(value=dn)
         ldif_attrs = FlextLdifModels.LdifAttributes(attributes=attributes_dict)
         return FlextLdifModels.Entry(
-            dn=dn_obj, attributes=ldif_attrs, entry_type="group"
+            dn=dn_obj,
+            attributes=ldif_attrs,  # entry_type= # Removed parameter (no longer exists)
+            # "group"
         )
 
     @staticmethod
@@ -192,7 +196,9 @@ class EntryFactory:
         dn_obj = FlextLdifModels.DistinguishedName(value=dn)
         ldif_attrs = FlextLdifModels.LdifAttributes(attributes=attributes)
         return FlextLdifModels.Entry(
-            dn=dn_obj, attributes=ldif_attrs, entry_type=entry_type
+            dn=dn_obj,
+            attributes=ldif_attrs,  # entry_type= # Removed parameter (no longer exists)
+            # entry_type
         )
 
 

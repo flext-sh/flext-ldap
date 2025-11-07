@@ -379,6 +379,93 @@ class FlextLdap(FlextService[None]):
             FlextResult.ok(search_response),
         )
 
+    # Apply Changes Helper Methods
+
+    def _execute_batch_add(
+        self,
+        modifications: list[tuple[str, dict[str, str | list[str]]]],
+    ) -> list[bool]:
+        """Execute batch add operations."""
+        results: list[bool] = []
+        for batch_dn, batch_attrs in modifications:
+            result = self.client.add_entry(batch_dn, batch_attrs)
+            results.append(result.is_success)
+        return results
+
+    def _execute_batch_modify_atomic(
+        self,
+        modifications: list[tuple[str, dict[str, str | list[str]]]],
+    ) -> FlextResult[list[bool]]:
+        """Execute batch modify operations atomically."""
+        temp_results = []
+        for batch_dn, batch_changes in modifications:
+            result = self.client.modify_entry(
+                batch_dn,
+                cast("FlextLdapModels.EntryChanges", batch_changes),
+            )
+            temp_results.append(result.is_success)
+
+        if not all(temp_results):
+            return FlextResult[list[bool]].fail(
+                "Atomic batch modify failed - one or more operations failed",
+            )
+        return FlextResult[list[bool]].ok(temp_results)
+
+    def _execute_batch_modify_non_atomic(
+        self,
+        modifications: list[tuple[str, dict[str, str | list[str]]]],
+    ) -> list[bool]:
+        """Execute batch modify operations non-atomically."""
+        results: list[bool] = []
+        for batch_dn, batch_changes in modifications:
+            result = self.client.modify_entry(
+                batch_dn,
+                cast("FlextLdapModels.EntryChanges", batch_changes),
+            )
+            results.append(result.is_success)
+        return results
+
+    def _execute_single_add(
+        self,
+        dn: str,
+        changes: dict[str, str | list[str]],
+    ) -> FlextResult[bool]:
+        """Execute single add operation."""
+        return cast("FlextResult[bool]", self.client.add_entry(dn, changes))
+
+    def _execute_single_modify(
+        self,
+        dn: str,
+        changes: dict[str, str | list[str]],
+    ) -> FlextResult[bool]:
+        """Execute single modify operation."""
+        return cast(
+            "FlextResult[bool]",
+            self.client.modify_entry(
+                dn,
+                cast("FlextLdapModels.EntryChanges", changes),
+            ),
+        )
+
+    def _execute_batch_operations(
+        self,
+        operation: FlextLdapConstants.Types.ApiOperation,
+        modifications: list[tuple[str, dict[str, str | list[str]]]],
+        *,
+        atomic: bool,
+    ) -> FlextResult[list[bool]]:
+        """Execute batch operations (add or modify)."""
+        if operation == "add":
+            results = self._execute_batch_add(modifications)
+            return FlextResult[list[bool]].ok(results)
+        if operation == "modify":
+            if atomic:
+                return self._execute_batch_modify_atomic(modifications)
+            results = self._execute_batch_modify_non_atomic(modifications)
+            return FlextResult[list[bool]].ok(results)
+
+        return FlextResult[list[bool]].fail(f"Unknown operation: {operation}")
+
     def apply_changes(
         self,
         changes: dict[str, str | list[str]],
@@ -407,35 +494,11 @@ class FlextLdap(FlextService[None]):
         Returns:
             FlextResult[bool] for single operation, FlextResult[list[bool]] for batch.
 
-        Examples:
-            # Add single entry
-            result = ldap.execute(
-                {FlextLdapConstants.LdapAttributeNames.CN: ["user"], FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS: [FlextLdapConstants.ObjectClasses.PERSON]},
-                dn="cn=user,dc=example,dc=com",
-                operation="add"
-            )
-
-            # Modify single entry
-            result = ldap.execute(
-                {"mail": "new@example.com"},
-                dn="cn=user,dc=example,dc=com",
-                operation="modify"
-            )
-
-            # Delete entry
-            result = ldap.execute({}, dn="cn=user,dc=example,dc=com", operation="delete")
-
-            # Batch modify
-            mods = [
-                ("cn=user1,dc=example,dc=com", {"mail": "user1@example.com"}),
-                ("cn=user2,dc=example,dc=com", {"mail": "user2@example.com"}),
-            ]
-            result = ldap.execute({}, batch=True, modifications=mods, operation="modify")
-
         """
         if quirks_mode:
             pass
 
+        # Handle delete operation
         if operation == "delete":
             if not dn:
                 return FlextResult[bool | list[bool]].fail(
@@ -443,40 +506,14 @@ class FlextLdap(FlextService[None]):
                 )
             return cast("FlextResult[bool | list[bool]]", self.client.delete_entry(dn))
 
+        # Handle batch operations
         if batch and modifications:
-            results: list[bool] = []
-            if operation == "add":
-                for batch_dn, batch_attrs in modifications:
-                    result = self.client.add_entry(batch_dn, batch_attrs)
-                    results.append(result.is_success)
-            elif operation == "modify":
-                if atomic:
-                    temp_results = []
-                    for batch_dn, batch_changes in modifications:
-                        result = self.client.modify_entry(
-                            batch_dn,
-                            cast("FlextLdapModels.EntryChanges", batch_changes),
-                        )
-                        temp_results.append(result.is_success)
-                    if not all(temp_results):
-                        failed_count = len([r for r in temp_results if not r])
-                        return FlextResult[bool | list[bool]].fail(
-                            f"Atomic modification failed: {failed_count} of {len(modifications)} entries",
-                        )
-                    results = temp_results
-                else:
-                    for batch_dn, batch_changes in modifications:
-                        result = self.client.modify_entry(
-                            batch_dn,
-                            cast("FlextLdapModels.EntryChanges", batch_changes),
-                        )
-                        results.append(result.is_success)
-            return cast(
-                "FlextResult[bool | list[bool]]",
-                FlextResult[list[bool]].ok(results),
+            batch_result = self._execute_batch_operations(
+                operation, modifications, atomic=atomic
             )
+            return cast("FlextResult[bool | list[bool]]", batch_result)
 
-        # Single operation
+        # Handle single operations
         if not dn:
             return FlextResult[bool | list[bool]].fail(
                 f"DN required for {operation} operation",
@@ -484,16 +521,12 @@ class FlextLdap(FlextService[None]):
 
         if operation == "add":
             return cast(
-                "FlextResult[bool | list[bool]]",
-                self.client.add_entry(dn, changes),
+                "FlextResult[bool | list[bool]]", self._execute_single_add(dn, changes)
             )
         if operation == "modify":
             return cast(
                 "FlextResult[bool | list[bool]]",
-                self.client.modify_entry(
-                    dn,
-                    cast("FlextLdapModels.EntryChanges", changes),
-                ),
+                self._execute_single_modify(dn, changes),
             )
 
         return FlextResult[bool | list[bool]].fail(f"Unknown operation: {operation}")
@@ -682,8 +715,14 @@ class FlextLdap(FlextService[None]):
                 "Entries required for export operation",
             )
         if data_format == "ldif":
-            exported_data = self.export_to_ldif(entries)
-            return FlextResult[str | list[FlextLdifModels.Entry]].ok(exported_data)
+            export_result = self.export_to_ldif(entries)
+            if export_result.is_failure:
+                return FlextResult[str | list[FlextLdifModels.Entry]].fail(
+                    export_result.error
+                )
+            return FlextResult[str | list[FlextLdifModels.Entry]].ok(
+                export_result.unwrap()
+            )
         return FlextResult[str | list[FlextLdifModels.Entry]].fail(
             f"Export format {data_format} not yet supported",
         )
@@ -884,18 +923,24 @@ class FlextLdap(FlextService[None]):
                 f"Entry conversion failed: {e}",
             )
 
-    def export_to_ldif(self, entries: list[FlextLdifModels.Entry]) -> str:
+    def export_to_ldif(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
         """Export entries to LDIF format using FlextLdif library.
 
         Delegates to FlextLdif.write() to eliminate duplication and ensure
         RFC-compliant LDIF formatting.
+
+        Args:
+            entries: List of entries to export
+
+        Returns:
+            FlextResult[str] containing LDIF data or failure with error message
+
         """
         # Use integrated FlextLdif singleton instance
         write_result = self._ldif.write(entries)
         if write_result.is_failure:
-            # Return empty string on failure (or could log the error)
-            return ""
-        return write_result.unwrap()
+            return FlextResult[str].fail(f"LDIF export failed: {write_result.error}")
+        return FlextResult[str].ok(write_result.unwrap())
 
     def import_from_ldif(
         self,
@@ -1098,6 +1143,26 @@ class FlextLdap(FlextService[None]):
     # =========================================================================
     # MODIFY DELEGATION - Forward to FlextLdapClients
     # =========================================================================
+
+    def add_entry(
+        self,
+        dn: FlextLdifModels.DistinguishedName | str,
+        attributes: FlextLdifModels.LdifAttributes | dict[str, str | list[str]],
+        *,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
+    ) -> FlextResult[bool]:
+        """Add new LDAP entry - delegates to client.
+
+        Args:
+            dn: Distinguished name for new entry
+            attributes: Entry attributes
+            quirks_mode: Override default quirks mode for this operation
+
+        Returns:
+            FlextResult[bool]: Success if entry was added
+
+        """
+        return self.client.add_entry(dn, attributes, quirks_mode=quirks_mode)
 
     def modify_entry(
         self,

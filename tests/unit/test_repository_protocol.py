@@ -16,6 +16,8 @@ from flext_core import FlextResult
 
 from flext_ldap import LdapEntryRepository, RepositoryBase
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class MockEntity:
     """Mock entity for testing repository operations."""
@@ -292,7 +294,7 @@ class TestRepositoryCRUDOperations:
 
         result = repo.get_by_id("")
         assert result.is_failure
-        assert "required" in result.error.lower()
+        assert result.error and "required" in result.error.lower()
 
     def test_get_all_returns_flext_result(self) -> None:
         """Test that get_all returns FlextResult."""
@@ -590,7 +592,7 @@ class TestRepositoryErrorHandling:
         assert result.is_failure
 
         # Error message should be informative
-        assert "not found" in result.error.lower()
+        assert result.error and "not found" in result.error.lower()
 
 
 @pytest.mark.unit

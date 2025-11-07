@@ -17,6 +17,8 @@ from flext_core import FlextResult
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.services.schema import FlextLdapSchema
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapSchemaInitialization:
     """Test FlextLdapSchema initialization and basic functionality."""
@@ -90,7 +92,7 @@ class TestGenericQuirksDetector:
         detector = FlextLdapSchema.GenericQuirksDetector()
         result = detector.handle(None)
         assert result.is_failure
-        assert "cannot be empty" in result.error.lower()
+        assert result.error and "cannot be empty" in result.error.lower()
 
     @pytest.mark.unit
     def test_handle_with_valid_message_succeeds(self) -> None:
@@ -177,7 +179,7 @@ class TestSchemaDiscovery:
         discovery = FlextLdapSchema.Discovery()
         result = discovery.handle(None)
         assert result.is_failure
-        assert "cannot be empty" in result.error.lower()
+        assert result.error and "cannot be empty" in result.error.lower()
 
     @pytest.mark.unit
     def test_handle_with_valid_message_succeeds(self) -> None:

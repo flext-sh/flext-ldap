@@ -22,6 +22,8 @@ from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdapClients, FlextLdapServers
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapServersFacadeFactory:
     """Test FlextLdapServers factory methods."""

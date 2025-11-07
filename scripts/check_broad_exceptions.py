@@ -55,7 +55,7 @@ def check_file(filepath: Path) -> list[Violation]:
         List of violations found
 
     """
-    violations = []
+    violations: list[Violation] = []
 
     try:
         content = filepath.read_text(encoding="utf-8")

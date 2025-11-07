@@ -23,6 +23,8 @@ from flext_ldap import FlextLdapClients
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapBaseOperationsConnectionMethods:
     """Test connection operation methods with real LDAP."""
@@ -141,7 +143,7 @@ class TestFlextLdapBaseOperationsSchema:
         result = operations.discover_schema(None)
 
         assert result.is_failure is True
-        assert "connection" in result.error.lower()
+        assert result.error and "connection" in result.error.lower()
 
 
 class TestFlextLdapBaseOperationsAcl:

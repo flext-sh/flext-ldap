@@ -273,6 +273,105 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             f"ACL setting not supported for server type: {self.server_type}",
         )
 
+    # ACL Parse Helper Methods
+
+    def _extract_target_attributes(
+        self,
+        acl: FlextLdifModels.Acl,
+    ) -> dict[str, list[str]]:
+        """Extract target-related ACL attributes."""
+        attributes: dict[str, list[str]] = {}
+
+        if acl.target:
+            target_dn = (
+                acl.target.target_dn
+                if hasattr(acl.target, "target_dn")
+                else str(acl.target)
+            )
+            attributes[FlextLdapConstants.AclAttributes.TARGET] = [target_dn]
+
+            if hasattr(acl.target, "attributes") and acl.target.attributes:
+                attr_list = (
+                    acl.target.attributes
+                    if isinstance(acl.target.attributes, list)
+                    else [acl.target.attributes]
+                )
+                attributes[FlextLdapConstants.AclAttributes.TARGET_ATTRIBUTES] = [
+                    str(a) for a in attr_list
+                ]
+
+        return attributes
+
+    def _extract_subject_attributes(
+        self,
+        acl: FlextLdifModels.Acl,
+    ) -> dict[str, list[str]]:
+        """Extract subject-related ACL attributes."""
+        attributes: dict[str, list[str]] = {}
+
+        if acl.subject:
+            if hasattr(acl.subject, "subject_value") and acl.subject.subject_value:
+                attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
+                    str(acl.subject.subject_value),
+                ]
+            elif hasattr(acl.subject, "subject_type"):
+                subject_val = (
+                    str(acl.subject.subject_value)
+                    if hasattr(acl.subject, "subject_value")
+                    else ""
+                )
+                attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
+                    f"{acl.subject.subject_type}:{subject_val}",
+                ]
+            else:
+                attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
+                    str(acl.subject)
+                ]
+
+        return attributes
+
+    def _extract_permissions_attributes(
+        self,
+        acl: FlextLdifModels.Acl,
+    ) -> dict[str, list[str]]:
+        """Extract permissions-related ACL attributes."""
+        attributes: dict[str, list[str]] = {}
+
+        if acl.permissions:
+            perm_list = (
+                acl.permissions
+                if isinstance(acl.permissions, list)
+                else [acl.permissions]
+            )
+            attributes[FlextLdapConstants.AclAttributes.PERMISSIONS] = [
+                str(p) for p in perm_list
+            ]
+
+        return attributes
+
+    def _build_acl_attributes(
+        self,
+        acl: FlextLdifModels.Acl,
+        acl_string: str,
+    ) -> dict[str, list[str]]:
+        """Build complete ACL attributes dict from parsed ACL."""
+        acl_attributes: dict[str, list[str]] = {
+            FlextLdapConstants.AclAttributes.RAW: [acl_string],
+            "format": [self.get_acl_format()],
+            "serverType": [self.server_type],
+        }
+
+        # Add target attributes
+        acl_attributes.update(self._extract_target_attributes(acl))
+
+        # Add subject attributes
+        acl_attributes.update(self._extract_subject_attributes(acl))
+
+        # Add permissions attributes
+        acl_attributes.update(self._extract_permissions_attributes(acl))
+
+        return acl_attributes
+
     def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse ACL string using FlextLdifAcl.
 
@@ -286,7 +385,6 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         FlextResult containing parsed ACL as Entry object
 
         """
-        # Use FlextLdifAcl for ACL parsing
         try:
             # Parse ACL using FlextLdifAcl
             acl_result = self._acl_service.parse(acl_string, self.server_type)
@@ -295,67 +393,11 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
                     f"ACL parsing failed: {acl_result.error}",
                 )
 
-            # Convert FlextLdifModels.Acl to Entry format
+            # Build ACL attributes using helper methods
             acl = acl_result.unwrap()
+            acl_attributes = self._build_acl_attributes(acl, acl_string)
 
-            # Extract ACL data to entry attributes
-            acl_attributes: dict[str, list[str]] = {
-                FlextLdapConstants.AclAttributes.RAW: [acl_string],
-                "format": [self.get_acl_format()],
-                "serverType": [self.server_type],
-            }
-
-            # Add ACL-specific attributes from Acl model
-            if acl.target:
-                # AclTarget has target_dn attribute (not value)
-                target_dn = (
-                    acl.target.target_dn
-                    if hasattr(acl.target, "target_dn")
-                    else str(acl.target)
-                )
-                acl_attributes[FlextLdapConstants.AclAttributes.TARGET] = [target_dn]
-                if hasattr(acl.target, "attributes") and acl.target.attributes:
-                    attr_list = (
-                        acl.target.attributes
-                        if isinstance(acl.target.attributes, list)
-                        else [acl.target.attributes]
-                    )
-                    acl_attributes[
-                        FlextLdapConstants.AclAttributes.TARGET_ATTRIBUTES
-                    ] = [str(a) for a in attr_list]
-            if acl.subject:
-                # AclSubject has subject_type and subject_value
-                if hasattr(acl.subject, "subject_value") and acl.subject.subject_value:
-                    acl_attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
-                        str(acl.subject.subject_value),
-                    ]
-                elif hasattr(acl.subject, "subject_type"):
-                    acl_attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
-                        f"{acl.subject.subject_type}:{str(acl.subject.subject_value) if hasattr(acl.subject, 'subject_value') else ''}",
-                    ]
-                else:
-                    acl_attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
-                        str(acl.subject),
-                    ]
-            if acl.permissions:
-                perms = acl.permissions
-                # AclPermissions has individual permission flags (read, write, etc.)
-                perm_list: list[str] = [
-                    perm_name
-                    for perm_name in FlextLdapConstants.AclPermissions.ALL_PERMISSIONS
-                    if hasattr(perms, perm_name) and getattr(perms, perm_name)
-                ]
-                if perm_list:
-                    acl_attributes[FlextLdapConstants.AclAttributes.PERMISSIONS] = (
-                        perm_list
-                    )
-                else:
-                    acl_attributes[FlextLdapConstants.AclAttributes.PERMISSIONS] = [
-                        str(perms),
-                    ]
-
-            # Use Entry.create() instead of constructing Entry directly
-            # Convert attributes dict to proper type for Entry.create()
+            # Convert to proper format for Entry.create()
             acl_attrs_for_create: dict[str, str | list[str]] = {}
             for key, values in acl_attributes.items():
                 if isinstance(values, list) and len(values) == 1:
@@ -373,7 +415,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
                 )
             return entry_result
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(f"ACL parse failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(f"ACL parsing failed: {e}")
 
     def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
         """Format ACL Entry using FlextLdifAcl.
@@ -589,7 +631,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             connection: Active LDAP connection
             base_dn: Search base DN
             search_filter: LDAP search filter
-            attributes: Attributes to retrieve
+            attributes: Attributes to retrieve (None = all attributes ["*"])
             scope: Search scope ("base", "level", or "subtree")
             page_size: Page size for results
 
@@ -616,7 +658,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
                 search_base=base_dn,
                 search_filter=search_filter,
                 search_scope=search_scope,
-                attributes=attributes or ["*"],
+                attributes=["*"] if attributes is None else attributes,
                 paged_size=page_size,
                 generator=True,
             )

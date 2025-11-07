@@ -266,8 +266,8 @@ def scan_layer_2_domain() -> list[Violation]:
             if isinstance(node, ast.ImportFrom)
             and (
                 (node.module and "clients" in node.module)
-                or "ldap3" in node.module
-                or "servers" in node.module
+                or (node.module and "ldap3" in node.module)
+                or (node.module and "servers" in node.module)
             )
         )
 
