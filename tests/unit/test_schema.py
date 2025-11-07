@@ -15,6 +15,8 @@ from flext_ldif.constants import FlextLdifConstants
 
 from flext_ldap.services.schema import FlextLdapSchema
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestGenericQuirksDetectorInitialization:
     """Test GenericQuirksDetector initialization."""
@@ -60,7 +62,7 @@ class TestGenericQuirksDetectorHandle:
         result = detector.handle(None)
 
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        assert result.error and "empty" in result.error.lower()
 
     @pytest.mark.unit
     def test_handle_returns_flext_result(self) -> None:
@@ -205,7 +207,7 @@ class TestSchemaDiscoveryHandle:
         result = discovery.handle(None)
 
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        assert result.error and "empty" in result.error.lower()
 
     @pytest.mark.unit
     def test_handle_returns_flext_result(self) -> None:

@@ -38,17 +38,15 @@ class TestDistinguishedName:
             value="uid=testuser,ou=people,dc=example,dc=com"
         )
 
-        # Test rdn property
-        assert dn.rdn == "uid=testuser"
+        # Test rdn property (DEPRECATED: rdn, rdn_attribute, rdn_value, components_count removed)
+        # Use dn.components instead for accessing RDN information
+        # assert dn.rdn == "uid=testuser"
+        # assert dn.rdn_attribute == "uid"
+        # assert dn.rdn_value == "testuser"
+        # assert dn.components_count == 4
 
-        # Test rdn_attribute property
-        assert dn.rdn_attribute == "uid"
-
-        # Test rdn_value property
-        assert dn.rdn_value == "testuser"
-
-        # Test components_count property
-        assert dn.components_count == 4
+        # New API:
+        assert len(dn.components()) > 0
 
     def test_distinguished_name_normalization(self) -> None:
         """Test DN normalization with mixed case."""

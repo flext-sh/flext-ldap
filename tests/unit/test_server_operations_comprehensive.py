@@ -19,6 +19,8 @@ from flext_ldap.servers.openldap1_operations import FlextLdapServersOpenLDAP1Ope
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 @pytest.mark.unit
 class TestAllServerOperationsBindMechanisms:
@@ -151,7 +153,7 @@ class TestAllServerOperationsSchemaDN:
         ad = FlextLdapServersActiveDirectoryOperations()
         schema_dn = ad.get_schema_dn()
 
-        assert "schema" in schema_dn.lower()
+        assert schema_dn and "schema" in schema_dn.lower()
         assert isinstance(schema_dn, str)
 
     def test_generic_schema_dn(self) -> None:

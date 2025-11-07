@@ -156,7 +156,7 @@ class TestGroupMembershipValidation:
 
         result = DomainServices.validate_group_membership_rules(user, REDACTED_LDAP_BIND_PASSWORD_group)
         assert result.is_failure
-        assert "email" in result.error.lower()
+        assert result.error and "email" in result.error.lower()
 
     @pytest.mark.unit
     def test_REDACTED_LDAP_BIND_PASSWORD_group_with_email_succeeds(self) -> None:
@@ -212,7 +212,7 @@ class TestGroupMembershipValidation:
 
         result = DomainServices.validate_group_membership_rules(user, group)
         assert result.is_failure
-        assert "inactive" in result.error.lower()
+        assert result.error and "inactive" in result.error.lower()
 
 
 class TestUniqueUsernameGeneration:
@@ -257,7 +257,7 @@ class TestUniqueUsernameGeneration:
         """Test that empty base name fails."""
         result = DomainServices.generate_unique_username("", [])
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        assert result.error and "empty" in result.error.lower()
 
     @pytest.mark.unit
     def test_generate_username_sanitizes_special_chars(self) -> None:

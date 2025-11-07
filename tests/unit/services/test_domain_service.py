@@ -364,7 +364,7 @@ class TestDomainServicesGroupMembership:
         result = DomainServices.validate_group_membership_rules(user, group)
 
         assert result.is_failure
-        assert "must have email" in result.error.lower()
+        assert result.error and "must have email" in result.error.lower()
 
     @pytest.mark.unit
     def test_group_membership_valid_non_REDACTED_LDAP_BIND_PASSWORD_group(self) -> None:
@@ -407,7 +407,7 @@ class TestDomainServicesGroupMembership:
         result = DomainServices.validate_group_membership_rules(user, group)
 
         assert result.is_failure
-        assert "inactive" in result.error.lower()
+        assert result.error and "inactive" in result.error.lower()
 
     @pytest.mark.unit
     def test_group_membership_empty_group_attributes(self) -> None:
@@ -449,7 +449,7 @@ class TestDomainServicesGroupMembership:
         result = DomainServices.validate_group_membership_rules(user, group)
 
         assert result.is_failure
-        assert "must have email" in result.error.lower()
+        assert result.error and "must have email" in result.error.lower()
 
     @pytest.mark.unit
     def test_group_membership_returns_flext_result(self) -> None:
@@ -496,7 +496,7 @@ class TestDomainServicesUsernameGeneration:
             assert "_" in result.unwrap()
         else:
             # If validation fails, it's due to underscore in LDAP name
-            assert "LDAP attribute name requirements" in result.error
+            assert result.error and "LDAP attribute name requirements" in result.error
 
     @pytest.mark.unit
     def test_username_generation_lowercase(self) -> None:
@@ -512,7 +512,7 @@ class TestDomainServicesUsernameGeneration:
         result = DomainServices.generate_unique_username("", [])
 
         assert result.is_failure
-        assert "empty" in result.error.lower()
+        assert result.error and "empty" in result.error.lower()
 
     @pytest.mark.unit
     def test_username_generation_special_chars_removed(self) -> None:
@@ -531,7 +531,7 @@ class TestDomainServicesUsernameGeneration:
         result = DomainServices.generate_unique_username("@#$%^&*()", [])
 
         assert result.is_failure
-        assert "valid characters" in result.error.lower()
+        assert result.error and "valid characters" in result.error.lower()
 
     @pytest.mark.unit
     def test_username_generation_unique_when_not_existing(self) -> None:
@@ -599,7 +599,7 @@ class TestDomainServicesUsernameGeneration:
         result = DomainServices.generate_unique_username("john", users, max_attempts=10)
 
         assert result.is_failure
-        assert "unique username" in result.error.lower()
+        assert result.error and "unique username" in result.error.lower()
 
     @pytest.mark.unit
     def test_username_generation_with_empty_uid_entries(self) -> None:

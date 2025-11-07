@@ -18,7 +18,7 @@ def find_flext_ldap_usage_in_client-a() -> None:
     print("=" * 100 + "\n")
 
     # Find all imports from flext_ldap using native Python file operations
-    imports = []
+    imports: list[str] = []
     try:
         for py_file in client-a_path.rglob("*.py"):
             try:
@@ -46,7 +46,7 @@ def find_flext_ldap_usage_in_client-a() -> None:
     print("=" * 100 + "\n")
 
     # Find all usages of FlextLdapModels using native Python file operations
-    usages = []
+    usages: list[str] = []
     try:
         for py_file in client-a_path.rglob("*.py"):
             try:

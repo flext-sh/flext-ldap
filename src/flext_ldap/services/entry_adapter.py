@@ -58,6 +58,47 @@ class FlextLdapEntryAdapter(FlextService[None]):
         """Execute method required by FlextService - no-op for adapter."""
         return FlextResult[None].ok(None)
 
+    # Entry Conversion Helper Methods
+
+    def _validate_dict_entry(
+        self,
+        ldap3_entry: dict[str, object] | dict[str, str | int | bool | list[str] | None],
+    ) -> FlextResult[tuple[str, dict[str, object]]]:
+        """Validate dict entry has required keys."""
+        if "dn" not in ldap3_entry:
+            return FlextResult[tuple[str, dict[str, object]]].fail(
+                "Dict entry missing 'dn' key",
+            )
+        if "attributes" not in ldap3_entry:
+            return FlextResult[tuple[str, dict[str, object]]].fail(
+                "Dict entry missing 'attributes' key",
+            )
+
+        dn_str = str(ldap3_entry["dn"])
+        raw_attributes = ldap3_entry["attributes"]
+        if not isinstance(raw_attributes, dict):
+            return FlextResult[tuple[str, dict[str, object]]].fail(
+                "Dict entry 'attributes' must be a dictionary",
+            )
+
+        return FlextResult[tuple[str, dict[str, object]]].ok((dn_str, raw_attributes))
+
+    def _convert_dict_attributes(
+        self,
+        raw_attributes: dict[str, object],
+    ) -> dict[str, str | list[str]]:
+        """Convert dict attributes to proper format for Entry.create."""
+        attributes_for_create: dict[str, str | list[str]] = {}
+        for attr_name, attr_values in raw_attributes.items():
+            if isinstance(attr_values, list):
+                if len(attr_values) == 1:
+                    attributes_for_create[attr_name] = str(attr_values[0])
+                else:
+                    attributes_for_create[attr_name] = [str(v) for v in attr_values]
+            else:
+                attributes_for_create[attr_name] = str(attr_values)
+        return attributes_for_create
+
     def ldap3_to_ldif_entry(
         self,
         ldap3_entry: Ldap3Entry | FlextLdapTypes.DictionaryTypes.ResponseDict | None,
@@ -86,37 +127,15 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 )
             return entry_result
 
-        # Handle dict format (when not using ldap3.Entry directly)
+        # Handle dict format using helper methods
         if isinstance(ldap3_entry, dict):
-            if "dn" not in ldap3_entry:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    "Dict entry missing 'dn' key",
-                )
-            if "attributes" not in ldap3_entry:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    "Dict entry missing 'attributes' key",
-                )
+            validation_result = self._validate_dict_entry(ldap3_entry)
+            if validation_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(validation_result.error)
 
-            dn_str = str(ldap3_entry["dn"])
-            raw_attributes = ldap3_entry["attributes"]
-            if not isinstance(raw_attributes, dict):
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    "Dict entry 'attributes' must be a dictionary",
-                )
+            dn_str, raw_attributes = validation_result.unwrap()
+            attributes_for_create = self._convert_dict_attributes(raw_attributes)
 
-            # Convert dict attributes to proper format for Entry.create
-            # Entry.create accepts dict[str, str | list[str]], so convert values appropriately
-            attributes_for_create: dict[str, str | list[str]] = {}
-            for attr_name, attr_values in raw_attributes.items():
-                if isinstance(attr_values, list):
-                    if len(attr_values) == 1:
-                        attributes_for_create[attr_name] = str(attr_values[0])
-                    else:
-                        attributes_for_create[attr_name] = [str(v) for v in attr_values]
-                else:
-                    attributes_for_create[attr_name] = str(attr_values)
-
-            # Use Entry.create() which handles DN and attribute conversion
             return FlextLdifModels.Entry.create(
                 dn=dn_str,
                 attributes=attributes_for_create,
@@ -313,23 +332,17 @@ class FlextLdapEntryAdapter(FlextService[None]):
         if not server_type:
             return FlextResult[bool].fail("Server type cannot be empty")
 
-        # Get server quirks
+        # Get server quirks - propagate any errors
         try:
             quirks_dict = self.s_manager.get_alls_for_server(server_type)
             if not quirks_dict:
-                self.logger.debug(
-                    "Could not get server quirks for validation",
-                    extra={"server_type": server_type},
+                return FlextResult[bool].fail(
+                    f"Cannot validate entry: server quirks unavailable for {server_type}"
                 )
-                # Default to valid if we can't get quirks
-                return FlextResult[bool].ok(True)
-        except Exception:
-            self.logger.debug(
-                "Could not get server quirks for validation",
-                extra={"server_type": server_type},
+        except Exception as e:
+            return FlextResult[bool].fail(
+                f"Quirks service error during validation: {type(e).__name__}: {e}"
             )
-            # Default to valid if we can't get quirks
-            return FlextResult[bool].ok(True)
 
         # Validate DN format
         dn_str = str(entry.dn)

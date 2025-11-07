@@ -9,12 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 from typing import cast
 
 from flext_core import FlextModels, FlextResult, FlextService
 from flext_ldif import FlextLdifModels
-from ldap3 import SUBTREE, Connection, Server
+from ldap3 import SUBTREE, Connection, Entry as Ldap3Entry, Server
 from ldap3.core.exceptions import (
     LDAPBindError,
     LDAPCommunicationError,
@@ -118,17 +117,23 @@ class FlextLdapAuthentication(FlextService[None]):
         This helper isolates the ldap3.Connection.unbind() call which lacks
         type stubs. The method is private infrastructure layer.
 
+        Unbind failures during cleanup are logged for diagnostics but not
+        propagated, as cleanup operations should not raise exceptions.
+
         Args:
         connection: ldap3 Connection to unbind
 
         """
-        with contextlib.suppress(Exception):
+        try:
             # Cast to Protocol type for proper type checking with ldap3
             typed_connection = cast(
                 "FlextLdapTypes.Ldap3Protocols.Connection",
                 connection,
             )
             typed_connection.unbind()
+        except Exception as e:
+            # Log for diagnostics, but don't propagate during cleanup
+            self.logger.debug("Unbind during cleanup failed (non-critical): %s", e)
 
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
         """Validate user credentials against LDAP server.
@@ -146,16 +151,21 @@ class FlextLdapAuthentication(FlextService[None]):
             # Use the existing connection context if available
             if self._connection is not None and self._server is not None:
                 # Create test connection with alternate credentials
+                # Use auto_bind=False to capture specific error messages
                 test_connection = Connection(
                     self._server,
                     user=dn,
                     password=password,
-                    auto_bind=True,
+                    auto_bind=False,
                     auto_range=True,
                 )
                 try:
                     # Test the connection by attempting to bind
-                    test_connection.bind()
+                    bind_result = test_connection.bind()
+                    if not bind_result:
+                        return FlextResult[bool].fail(
+                            f"Credential validation failed: {test_connection.last_error}"
+                        )
                     is_valid = test_connection.bound
                     return FlextResult[bool].ok(is_valid)
                 finally:
@@ -204,12 +214,18 @@ class FlextLdapAuthentication(FlextService[None]):
                     "LDAP connection not established",
                 )
 
-            self._connection.search(
+            # Check search result - if search fails, report that specifically
+            search_result = self._connection.search(
                 search_base,
                 search_filter,
                 SUBTREE,
                 attributes=["*"],
             )
+
+            if not search_result:
+                return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
+                    f"User search failed: {self._connection.last_error}",
+                )
 
             if not self._connection.entries:
                 return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
@@ -295,7 +311,9 @@ class FlextLdapAuthentication(FlextService[None]):
 
         # Use FlextLdapEntryAdapter for ldap3 → FlextLdif conversion
         adapter = FlextLdapEntryAdapter()
-        return adapter.ldap3_to_ldif_entry(user_entry)
+        # Cast Protocol type to concrete ldap3.Entry for adapter compatibility
+        concrete_entry = cast("Ldap3Entry", user_entry)
+        return adapter.ldap3_to_ldif_entry(concrete_entry)
 
     def execute(self) -> FlextResult[None]:
         """Execute the main domain operation (required by FlextService)."""

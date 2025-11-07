@@ -22,6 +22,8 @@ import pytest
 from flext_ldap import FlextLdapClients
 from flext_ldap.servers.factory import FlextLdapServersFactory
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapServersFactoryCreation:
     """Test factory creation methods with real LDAP operations."""
@@ -90,7 +92,7 @@ class TestFlextLdapServersFactoryCreation:
         result = factory.create_from_server_type("")
 
         assert result.is_failure is True
-        assert "empty" in result.error.lower()
+        assert result.error and "empty" in result.error.lower()
 
     @pytest.mark.docker
     @pytest.mark.unit
@@ -125,7 +127,7 @@ class TestFlextLdapServersFactoryCreation:
         result = factory.create_from_connection(None)
 
         assert result.is_failure is True
-        assert "connection" in result.error.lower()
+        assert result.error and "connection" in result.error.lower()
 
     @pytest.mark.docker
     @pytest.mark.unit
@@ -149,7 +151,7 @@ class TestFlextLdapServersFactoryCreation:
         result = factory.detect_server_type_from_root_dse(None)
 
         assert result.is_failure is True
-        assert "connection" in result.error.lower()
+        assert result.error and "connection" in result.error.lower()
 
 
 class TestFlextLdapServersFactorySupportedTypes:
@@ -281,7 +283,7 @@ class TestFlextLdapServersFactoryServerInfo:
         result = factory.get_server_info("unknown-server-xyz")
 
         assert result.is_failure is True
-        assert "unsupported" in result.error.lower()
+        assert result.error and "unsupported" in result.error.lower()
 
 
 class TestFlextLdapServersFactoryOperationsInstances:

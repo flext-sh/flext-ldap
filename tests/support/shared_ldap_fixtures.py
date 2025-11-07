@@ -12,7 +12,7 @@ from typing import Any, Protocol, cast
 import pytest
 from flext_core import FlextResult
 
-# from flext_tests import FlextTestDocker  # TODO(marlonsc): [https://github.com/flext-sh/flext/issues/TBD] Import when available
+# from flext_tests import FlextTestDocker  # FUTURE: Import when available in flext_tests package
 
 
 # Temporary placeholder until FlextTestDocker is available

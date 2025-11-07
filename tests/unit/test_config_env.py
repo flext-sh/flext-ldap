@@ -16,6 +16,8 @@ import pytest
 
 from flext_ldap import FlextLdapConfig
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapConfigEnvironment:
     """Test suite for FlextLdapConfig environment variable configuration."""

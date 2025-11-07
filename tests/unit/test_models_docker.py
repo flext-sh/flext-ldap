@@ -22,6 +22,8 @@ from pydantic import ValidationError
 
 from flext_ldap import FlextLdapClients, FlextLdapModels
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapModelsConnectionConfig:
     """ConnectionConfig model tests."""

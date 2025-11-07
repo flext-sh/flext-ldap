@@ -411,7 +411,9 @@ class FlextLdapConfig(FlextConfig):
             super().__call__(key),
         )
 
-    def _resolve_connection_property(self, prop: str) -> str | int | float | bool | None:
+    def _resolve_connection_property(
+        self, prop: str
+    ) -> str | int | float | bool | None:
         """Resolve connection category properties."""
         match prop:
             case FlextLdapConstants.ConfigPropertyKeys.SERVER:

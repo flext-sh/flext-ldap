@@ -85,7 +85,10 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
     def _extract_entry_from_search(
         self,
-        search_response: FlextLdifModels.Entry | list[FlextLdifModels.Entry] | list[tuple[str, FlextLdifModels.Entry]] | None,
+        search_response: FlextLdifModels.Entry
+        | list[FlextLdifModels.Entry]
+        | list[tuple[str, FlextLdifModels.Entry]]
+        | None,
         dn: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Extract Entry object from various search response formats."""
@@ -106,12 +109,14 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 isinstance(search_result_item, tuple)
                 and len(search_result_item) == expected_tuple_length
             ):
-                entry: FlextLdifModels.Entry = search_result_item[entry_index]  # type: ignore[assignment]
+                entry: FlextLdifModels.Entry = search_result_item[entry_index]
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
             # Direct Entry object from list
             if isinstance(search_result_item, FlextLdifModels.Entry):
                 return FlextResult[FlextLdifModels.Entry].ok(search_result_item)
-            return FlextResult[FlextLdifModels.Entry].fail(f"Unexpected search result format for {dn}")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Unexpected search result format for {dn}"
+            )
 
         return FlextResult[FlextLdifModels.Entry].ok(search_response)
 
@@ -124,7 +129,9 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         for attr_name, attr_obj in entry.attributes.items():
             if attr_obj:
                 if hasattr(attr_obj, "values"):
-                    existing_attrs[attr_name.lower()] = [str(v) for v in attr_obj.values]
+                    existing_attrs[attr_name.lower()] = [
+                        str(v) for v in attr_obj.values
+                    ]
                 else:
                     existing_attrs[attr_name.lower()] = [str(attr_obj)]
         return existing_attrs
@@ -135,8 +142,13 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         existing_attrs: dict[str, list[str]],
         skip_attributes: set[str],
     ) -> tuple[dict[str, list[str]], dict[str, list[str]], int]:
-        """Determine which attributes to ADD, REPLACE, or leave unchanged."""
-        to_add: dict[str, list[str]] = {}
+        """Determine which attributes to ADD, REPLACE, or leave unchanged.
+
+        Strategy: Since we fetched ALL attributes (including operational with "+"),
+        we use REPLACE for all changes to avoid attributeOrValueExists errors.
+        REPLACE is idempotent and works whether attribute exists or not.
+        """
+        to_add: dict[str, list[str]] = {}  # Will be empty - using REPLACE for all
         to_replace: dict[str, list[str]] = {}
         unchanged_count = 0
 
@@ -146,7 +158,9 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
             attr_lower = attr.lower()
             if attr_lower not in existing_attrs:
-                to_add[attr] = new_values
+                # Attribute doesn't exist - use REPLACE (not ADD) for robustness
+                # REPLACE works even on non-existent attributes
+                to_replace[attr] = new_values
             else:
                 existing_values = existing_attrs[attr_lower]
                 if set(new_values) == set(existing_values):
@@ -162,7 +176,12 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         dn: str,
         to_add: dict[str, list[str]],
     ) -> FlextResult[int]:
-        """Execute MODIFY ADD operations."""
+        """Execute MODIFY ADD operations.
+
+        Note: For attributes identified as "not existing" in _compute_attribute_changes,
+        we can safely ADD all values. The logic ensures to_add only contains attributes
+        that don't exist in the entry, so no filtering is needed here.
+        """
         if not to_add:
             return FlextResult[int].ok(0)
 
@@ -178,10 +197,23 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
         add_result = ldap_client.modify_entry(dn=dn, changes=add_changes)
         if add_result.is_failure:
-            self.logger.error(
-                "MODIFY ADD failed",
-                extra={"dn": dn, "error": str(add_result.error)},
-            )
+            # If still getting attributeOrValueExists despite checking,
+            # log detailed error and fail (indicates data race or operational attr issue)
+            error_str = str(add_result.error).lower()
+            if "attributeorvalueexists" in error_str or "already exists" in error_str:
+                self.logger.error(
+                    "MODIFY ADD failed with attributeOrValueExists - possible race condition or operational attribute",
+                    extra={
+                        "dn": dn,
+                        "error": str(add_result.error),
+                        "attempted_attributes": list(to_add.keys()),
+                    },
+                )
+            else:
+                self.logger.error(
+                    "MODIFY ADD failed",
+                    extra={"dn": dn, "error": str(add_result.error)},
+                )
             return FlextResult[int].fail(str(add_result.error))
 
         added_count = len(to_add)
@@ -309,11 +341,16 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             )
             return FlextResult[dict[str, object]].fail(str(add_result.error))
 
-        # Step 4: Entry exists - fetch and extract existing entry
+        # Step 4: Entry exists - fetch ALL attributes (including operational)
+        # Use ["*", "+"] to get user + operational attributes for accurate comparison
         self.logger.debug("Entry exists, fetching current attributes", extra={"dn": dn})
         search_result = ldap_client.search(
             base_dn=dn,
             filter_str=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+            attributes=[
+                "*",
+                "+",
+            ],  # Fetch ALL attributes to avoid attributeOrValueExists
             single=True,
         )
 
@@ -357,26 +394,24 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 FlextLdapConstants.StatusKeys.UNCHANGED: unchanged_count,
             })
 
-        # Step 6: Execute modifications
+        # Step 6: Execute modifications (using REPLACE for all to avoid attributeOrValueExists)
         self.logger.debug(
-            "Preparing MODIFY",
+            "Preparing MODIFY REPLACE",
             extra={
                 "dn": dn,
-                "to_add_count": len(to_add),
                 "to_replace_count": len(to_replace),
             },
         )
 
-        add_count_result = self._execute_add_modifications(ldap_client, dn, to_add)
-        if add_count_result.is_failure:
-            return FlextResult[dict[str, object]].fail(str(add_count_result.error))
-
-        replace_count_result = self._execute_replace_modifications(ldap_client, dn, to_replace)
+        # Use REPLACE for all modifications (to_add is always empty now)
+        replace_count_result = self._execute_replace_modifications(
+            ldap_client, dn, to_replace
+        )
         if replace_count_result.is_failure:
             return FlextResult[dict[str, object]].fail(str(replace_count_result.error))
 
-        added_count = add_count_result.unwrap()
         replaced_count = replace_count_result.unwrap()
+        added_count = 0  # No longer using ADD operation for existing entries
 
         self.logger.info(
             "Entry upserted successfully",

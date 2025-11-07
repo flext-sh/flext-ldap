@@ -55,7 +55,12 @@ class TestLdapE2EOperations:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": ["testuser"],
                     "cn": ["Test User"],
                     "sn": ["User"],

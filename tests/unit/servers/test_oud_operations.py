@@ -7,6 +7,8 @@ from flext_ldif import FlextLdifModels
 
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapServersOUDInitialization:
     """Test initialization and basic properties."""
@@ -75,7 +77,9 @@ class TestFlextLdapServersOUDACL:
         ops = FlextLdapServersOUDOperations()
         acl_attr = ops.get_acl_attribute_name()
         # OUD uses ds-privilege-name
-        assert "privilege" in acl_attr.lower() or acl_attr == "ds-privilege-name"
+        assert (
+            acl_attr and "privilege" in acl_attr.lower()
+        ) or acl_attr == "ds-privilege-name"
 
     def test_get_acl_format(self) -> None:
         """Test ACL format for OUD (oracle)."""

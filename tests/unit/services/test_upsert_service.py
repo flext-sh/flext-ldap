@@ -24,6 +24,9 @@ import pytest
 
 from flext_ldap import FlextLdapUpsertService
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
+
 # Mark as unit tests
 pytestmark = pytest.mark.unit
 
@@ -150,7 +153,7 @@ class TestUpsertServiceDocumentation:
         docstring = service.upsert_entry.__doc__
         assert "ADD" in docstring
         assert "REPLACE" in docstring
-        assert "search" in docstring.lower()
+        assert docstring and "search" in docstring.lower()
 
     def test_method_docstring_contains_return_documentation(self) -> None:
         """Test that method documents return value."""

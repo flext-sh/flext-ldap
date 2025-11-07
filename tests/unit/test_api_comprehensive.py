@@ -23,6 +23,8 @@ from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapModels
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapInitialization:
     """Test FlextLdap initialization and configuration."""

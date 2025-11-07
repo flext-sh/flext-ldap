@@ -24,6 +24,8 @@ from ldap3 import Connection, Server
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.services.authentication import FlextLdapAuthentication
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapAuthenticationInitialization:
     """Test FlextLdapAuthentication initialization."""

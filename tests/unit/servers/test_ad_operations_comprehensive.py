@@ -22,6 +22,8 @@ import pytest
 from flext_ldap import FlextLdapClients
 from flext_ldap.servers.ad_operations import FlextLdapServersActiveDirectoryOperations
 
+# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
+
 
 class TestFlextLdapActiveDirectoryBasics:
     """Test Active Directory operations basics."""

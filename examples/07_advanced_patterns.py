@@ -260,87 +260,92 @@ def demonstrate_bulk_operations() -> None:
         logger.exception("❌ Connection error in search patterns")
 
 
+def _demo_pattern_1_success_check(api: FlextLdap) -> None:
+    """Pattern 1: Check success before unwrap."""
+    logger.info("\nPattern 1: Success check before unwrap")
+    search_request = FlextLdapModels.SearchRequest.create(
+        base_dn=BASE_DN,
+        filter_str="(objectClass=*)",
+        attributes=["dn"],
+    )
+    result = api.search_with_request(search_request)
+
+    if result.is_success:
+        entries = result.unwrap()
+        logger.info(f"   ✅ Success: {len(entries.entries)} entries")
+    else:
+        logger.error(f"   ❌ Failure: {result.error}")
+
+
+def _demo_pattern_2_early_return(api: FlextLdap) -> None:
+    """Pattern 2: Early return on failure."""
+    logger.info("\nPattern 2: Early return on failure")
+
+    def process_with_early_return() -> FlextResult[int]:
+        """Process with early return pattern."""
+        search_request = FlextLdapModels.SearchRequest.create(
+            base_dn=BASE_DN,
+            filter_str="(objectClass=organizationalUnit)",
+            attributes=["ou"],
+        )
+        search_result = api.search_with_request(search_request)
+
+        if search_result.is_failure:
+            err = search_result.error
+            return FlextResult[int].fail(f"Search failed: {err}")
+
+        entries = search_result.unwrap()
+        return FlextResult[int].ok(len(entries.entries))
+
+    count_result = process_with_early_return()
+    if count_result.is_success:
+        logger.info(f"   ✅ Processed {count_result.unwrap()} entries")
+
+
+def _demo_pattern_3_chaining(api: FlextLdap) -> None:
+    """Pattern 3: Chaining operations."""
+    logger.info("\nPattern 3: Chaining operations")
+
+    def chain_operations() -> FlextResult[str]:
+        """Chain multiple operations."""
+        if not api.client.is_connected:
+            return FlextResult[str].fail("Not connected")
+
+        search_request = FlextLdapModels.SearchRequest.create(
+            base_dn=BASE_DN,
+            filter_str="(objectClass=*)",
+            attributes=["dn"],
+        )
+        search_result_raw = api.search_with_request(search_request)
+        search_result: FlextResult[list[FlextLdifModels.Entry]] = cast(
+            "FlextResult[list[FlextLdifModels.Entry]]", search_result_raw
+        )
+
+        if search_result.is_failure:
+            err = search_result.error
+            return FlextResult[str].fail(f"Search failed: {err}")
+
+        entries = search_result.unwrap()
+        if not entries:
+            return FlextResult[str].fail("No entries found")
+
+        entry = entries[0]
+        return FlextResult[str].ok(f"Processed entry: {entry.dn}")
+
+    chain_result = chain_operations()
+    if chain_result.is_success:
+        logger.info(f"   ✅ {chain_result.unwrap()}")
+
+
 def demonstrate_flext_result_patterns() -> None:
     """Demonstrate FlextResult error handling patterns."""
     logger.info("\n=== FlextResult Error Handling Patterns ===")
 
     try:
         with ldap_connection() as api:
-            # Pattern 1: Check success before unwrap
-            logger.info("\nPattern 1: Success check before unwrap")
-            search_request = FlextLdapModels.SearchRequest.create(
-                base_dn=BASE_DN,
-                filter_str="(objectClass=*)",
-                attributes=["dn"],
-            )
-            result = api.search_with_request(search_request)
-
-            if result.is_success:
-                entries = result.unwrap()
-                logger.info(f"   ✅ Success: {len(entries.entries)} entries")
-            else:
-                logger.error(f"   ❌ Failure: {result.error}")
-
-            # Pattern 2: Early return on failure
-            logger.info("\nPattern 2: Early return on failure")
-
-            def process_with_early_return() -> FlextResult[int]:
-                """Process with early return pattern."""
-                # Search for entries
-                search_request = FlextLdapModels.SearchRequest.create(
-                    base_dn=BASE_DN,
-                    filter_str="(objectClass=organizationalUnit)",
-                    attributes=["ou"],
-                )
-                search_result = api.search_with_request(search_request)
-
-                if search_result.is_failure:
-                    err = search_result.error
-                    return FlextResult[int].fail(f"Search failed: {err}")
-
-                entries = search_result.unwrap()
-                return FlextResult[int].ok(len(entries.entries))
-
-            count_result = process_with_early_return()
-            if count_result.is_success:
-                logger.info(f"   ✅ Processed {count_result.unwrap()} entries")
-
-            # Pattern 3: Chaining operations
-            logger.info("\nPattern 3: Chaining operations")
-
-            def chain_operations() -> FlextResult[str]:
-                """Chain multiple operations."""
-                # Step 1: Connect check
-                if not api.client.is_connected:
-                    return FlextResult[str].fail("Not connected")
-
-                # Step 2: Search
-                search_request = FlextLdapModels.SearchRequest.create(
-                    base_dn=BASE_DN,
-                    filter_str="(objectClass=*)",
-                    attributes=["dn"],
-                )
-                search_result_raw = api.search_with_request(search_request)
-                search_result: FlextResult[list[FlextLdifModels.Entry]] = cast(
-                    "FlextResult[list[FlextLdifModels.Entry]]", search_result_raw
-                )
-
-                if search_result.is_failure:
-                    err = search_result.error
-                    return FlextResult[str].fail(f"Search failed: {err}")
-
-                entries = search_result.unwrap()
-                if not entries:
-                    return FlextResult[str].fail("No entries found")
-
-                entry = entries[0]
-
-                # Step 3: Process
-                return FlextResult[str].ok(f"Processed entry: {entry.dn}")
-
-            chain_result = chain_operations()
-            if chain_result.is_success:
-                logger.info(f"   ✅ {chain_result.unwrap()}")
+            _demo_pattern_1_success_check(api)
+            _demo_pattern_2_early_return(api)
+            _demo_pattern_3_chaining(api)
 
     except ConnectionError:
         logger.exception("❌ Connection error in search patterns")

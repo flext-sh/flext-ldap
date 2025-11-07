@@ -125,6 +125,181 @@ class FlextLdapSearch(FlextService[None]):
 
         return FlextResult[FlextLdifModels.Entry | None].ok(results[0])
 
+    # Search Helper Methods
+
+    def _validate_and_rebind_connection(
+        self,
+        connection: Connection,
+    ) -> FlextResult[None]:
+        """Validate connection and rebind if needed."""
+        if not isinstance(connection, Connection):
+            return FlextResult[None].fail(
+                f"Invalid connection type: {type(connection).__name__}",
+            )
+
+        self.logger.debug(
+            f"Connection check: exists={connection is not None}, bound={connection.bound if connection else 'N/A'}",
+        )
+
+        if not connection.bound:
+            self.logger.debug("LDAP connection not bound, attempting to rebind")
+            try:
+                connection.bind()
+                if not connection.bound:
+                    return FlextResult[None].fail("LDAP connection rebind failed")
+            except Exception as rebind_err:
+                self.logger.exception("Rebind failed")
+                return FlextResult[None].fail(
+                    f"LDAP connection rebind error: {rebind_err}",
+                )
+
+        return FlextResult[None].ok(None)
+
+    def _execute_search_with_retry(
+        self,
+        connection: Connection,
+        base_dn: str,
+        filter_str: str,
+        ldap3_scope: str,
+        attributes: list[str] | None,
+        page_size: int,
+        paged_cookie: bytes | None,
+    ) -> bool:
+        """Execute search with attribute error retry logic."""
+        self.logger.debug(
+            f"Before ldap3.search: bound={connection.bound}, "
+            f"attributes={attributes}, filter={filter_str}",
+        )
+
+        try:
+            scope_value: FlextLdapConstants.Types.Ldap3Scope = cast(
+                "FlextLdapConstants.Types.Ldap3Scope",
+                ldap3_scope,
+            )
+            search_result = connection.search(
+                base_dn,
+                filter_str,
+                scope_value,
+                attributes=attributes,
+                paged_size=page_size if page_size > 0 else None,
+                paged_cookie=paged_cookie,
+            )
+            self.logger.debug(
+                f"After ldap3.search: success={search_result}, "
+                f"entries_count={len(connection.entries) if search_result else 'N/A'}, "
+                f"last_error={connection.last_error}",
+            )
+            return search_result
+        except LDAPAttributeError as e:
+            # Retry with all attributes on attribute error
+            attr_str = str(attributes)[:40] if attributes else "None"
+            self.logger.debug(
+                "Attribute error with %s, retrying with all attributes: %s",
+                attr_str,
+                e,
+            )
+            scope_value = cast("FlextLdapConstants.Types.Ldap3Scope", ldap3_scope)
+            search_result = connection.search(
+                base_dn,
+                filter_str,
+                scope_value,
+                attributes=["*"],
+                paged_size=page_size if page_size > 0 else None,
+                paged_cookie=paged_cookie,
+            )
+            self.logger.trace(f"Retry after exception: success={search_result}")
+            return search_result
+
+    def _handle_search_errors(
+        self,
+        connection: Connection,
+        base_dn: str,
+        filter_str: str,
+        ldap3_scope: str,
+        page_size: int,
+        paged_cookie: bytes | None,
+        *,
+        success: bool,
+    ) -> bool:
+        """Handle search errors and retry if needed."""
+        if success:
+            return True
+
+        if not connection.last_error:
+            self.logger.trace("Search failed but no last_error available")
+            return False
+
+        error_msg = str(connection.last_error).lower()
+        err_trunc = error_msg[:60]
+        self.logger.trace(f"Search failed: success={success}, error='{err_trunc}'")
+
+        if "invalid attribute" in error_msg or "no such attribute" in error_msg:
+            self.logger.debug(
+                f"Attribute validation failed, retrying: {str(connection.last_error)[:50]}",
+            )
+            scope_value = cast("FlextLdapConstants.Types.Ldap3Scope", ldap3_scope)
+            search_result = connection.search(
+                base_dn,
+                filter_str,
+                scope_value,
+                attributes=["*"],
+                paged_size=page_size if page_size > 0 else None,
+                paged_cookie=paged_cookie,
+            )
+            self.logger.trace(f"Retry after error check: success={search_result}")
+            return search_result
+
+        return False
+
+    def _normalize_search_success(
+        self,
+        connection: Connection,
+        scope: str,
+        *,
+        success: bool,
+    ) -> bool:
+        """Normalize search success for edge cases."""
+        last_error_text = str(connection.last_error) if connection.last_error else ""
+
+        # ldap3 returns False for zero results (not an error)
+        if not success and connection.bound and not last_error_text:
+            self.logger.debug(
+                "ldap3 returned False with no error (zero results), treating as success",
+            )
+            return True
+
+        # BASE scope with noSuchObject means base DN doesn't exist (zero results)
+        if (
+            not success
+            and scope.lower() == "base"
+            and "noSuchObject" in last_error_text
+        ):
+            self.logger.debug(
+                "BASE scope search: noSuchObject means base DN doesn't exist (zero results), treating as success",
+            )
+            return True
+
+        return success
+
+    def _convert_ldap3_entries_to_models(
+        self,
+        connection: Connection,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Convert ldap3 entries to FlextLdifModels.Entry."""
+        if not connection.entries:
+            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+
+        entries: list[FlextLdifModels.Entry] = []
+        for ldap3_entry in connection.entries:
+            entry_result = FlextLdifModels.Entry.from_ldap3(ldap3_entry)
+            if entry_result.is_failure:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Entry conversion failed: {entry_result.error}",
+                )
+            entries.append(entry_result.unwrap())
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
     def search(
         self,
         base_dn: str,
@@ -146,7 +321,7 @@ class FlextLdapSearch(FlextService[None]):
 
         """
         try:
-            # Use cached connection set via set_connection_context()
+            # Step 1: Validate connection exists
             active_connection = self._connection
             if not active_connection:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -158,167 +333,63 @@ class FlextLdapSearch(FlextService[None]):
             )
             self.logger.trace(f"Search called with {search_params}")
 
-            # CRITICAL: Verify connection is still bound and healthy
-            if not isinstance(active_connection, Connection):
+            # Step 2: Validate and rebind connection if needed
+            validation_result = self._validate_and_rebind_connection(active_connection)
+            if validation_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Invalid connection type: {type(active_connection).__name__}",
+                    validation_result.error,
                 )
-            self.logger.debug(
-                f"Connection check: exists={active_connection is not None}, bound={active_connection.bound if active_connection else 'N/A'}",
-            )
-            if not active_connection.bound:
-                self.logger.debug("LDAP connection not bound, attempting to rebind")
-                try:
-                    active_connection.bind()
-                    if not active_connection.bound:
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            "LDAP connection rebind failed",
-                        )
-                except Exception as rebind_err:
-                    self.logger.exception("Rebind failed")
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"LDAP connection rebind error: {rebind_err}",
-                    )
 
-            # Convert scope string to ldap3 constant
+            # Step 3: Convert scope to ldap3 constant
             ldap3_scope = self._get_ldap3_scope(scope)
 
-            # ROOT CAUSE FIX: Issue 4.1 - Connection state race condition
-            # Removed redundant null check here (already validated at line 138 and rebound at 148)
-            # Instead, wrap search call in try-except to handle race condition if connection
-            # becomes None between this point and the actual search call
-
-            # Perform search with attribute error handling
-            # If specific attributes requested, retry with all if not found
-
-            success: bool = False
-
-            # DIAGNOSTIC: Log detailed connection state BEFORE ldap3 search call
-            self.logger.debug(
-                f"Before ldap3.search: bound={active_connection.bound}, "
-                f"attributes={attributes}, filter={filter_str}",
+            # Step 4: Execute search with retry logic
+            search_result = self._execute_search_with_retry(
+                active_connection,
+                base_dn,
+                filter_str,
+                ldap3_scope,
+                attributes,
+                page_size,
+                paged_cookie,
             )
 
-            try:
-                # Cast to Ldap3Scope type for ldap3 compatibility
-                scope_value: FlextLdapConstants.Types.Ldap3Scope = cast(
-                    "FlextLdapConstants.Types.Ldap3Scope",
-                    ldap3_scope,
-                )
-                search_result = active_connection.search(
-                    base_dn,
-                    filter_str,
-                    scope_value,
-                    attributes=attributes,
-                    paged_size=page_size if page_size > 0 else None,
-                    paged_cookie=paged_cookie,
-                )
-                # DIAGNOSTIC: Log search result immediately after call
-                self.logger.debug(
-                    f"After ldap3.search: success={success}, "
-                    f"entries_count={len(active_connection.entries) if success else 'N/A'}, "
-                    f"last_error={active_connection.last_error}",
-                )
-            except LDAPAttributeError as e:
-                # If attribute error occurs, retry with all attributes
-                attr_str = str(attributes)[:40] if attributes else "None"
-                self.logger.debug(
-                    "Attribute error with %s, retrying with all attributes: %s",
-                    attr_str,
-                    e,
-                )
-                scope_value = cast("FlextLdapConstants.Types.Ldap3Scope", ldap3_scope)
-                search_result = active_connection.search(
-                    base_dn,
-                    filter_str,
-                    scope_value,
-                    attributes=["*"],
-                    paged_size=page_size if page_size > 0 else None,
-                    paged_cookie=paged_cookie,
-                )
-                self.logger.trace(f"Retry after exception: success={success}")
+            # Step 5: Handle search errors and retry if needed
+            success = self._handle_search_errors(
+                active_connection,
+                base_dn,
+                filter_str,
+                ldap3_scope,
+                page_size,
+                paged_cookie,
+                success=search_result,
+            )
 
-            # Check if search failed due to invalid attribute type
+            # Step 6: Normalize success for edge cases (zero results, etc)
+            success = self._normalize_search_success(
+                active_connection,
+                scope,
+                success=success,
+            )
+
+            # Step 7: Check final success status
             if not success:
-                if active_connection.last_error:
-                    error_msg = str(active_connection.last_error).lower()
-                    err_trunc = error_msg[:60]
-                    self.logger.trace(
-                        f"Search failed: success={success}, error='{err_trunc}'",
-                    )
-                    if (
-                        "invalid attribute" in error_msg
-                        or "no such attribute" in error_msg
-                    ):
-                        self.logger.debug(
-                            f"Attribute validation failed, retrying: {str(active_connection.last_error)[:50]}",
-                        )
-                        scope_value = cast(
-                            "FlextLdapConstants.Types.Ldap3Scope",
-                            ldap3_scope,
-                        )
-                        search_result = active_connection.search(
-                            base_dn,
-                            filter_str,
-                            scope_value,
-                            attributes=["*"],
-                            paged_size=page_size if page_size > 0 else None,
-                            paged_cookie=paged_cookie,
-                        )
-                        self.logger.trace(f"Retry after error check: success={success}")
-                else:
-                    self.logger.trace("Search failed but no last_error available")
-
-            last_error_text = ""
-            if active_connection.last_error:
-                last_error_text = str(active_connection.last_error)
-
-            # ldap3 returns False when search matches zero results (not an error)
-            if not search_result and active_connection.bound and not last_error_text:
-                self.logger.debug(
-                    "ldap3 returned False with no error (zero results), treating as success",
+                last_error_text = (
+                    str(active_connection.last_error)
+                    if active_connection.last_error
+                    else ""
                 )
-                success = True
-
-            # For BASE scope searches, noSuchObject means the base DN doesn't exist
-            if (
-                not success
-                and scope.lower() == "base"
-                and "noSuchObject" in last_error_text
-            ):
-                self.logger.debug(
-                    "BASE scope search: noSuchObject means base DN doesn't exist (zero results), treating as success",
-                )
-                success = True
-
-            # DIAGNOSTIC: Log connection state when search fails
-            if not success:
                 self.logger.warning(
                     f"Search operation failed: "
                     f"connection_bound={active_connection.bound}, "
                     f"last_error={last_error_text or FlextLdapConstants.ErrorStrings.NONE}",
                 )
-
-            if not success:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Search failed: {last_error_text or 'Connection not established'}",
                 )
 
-            # Convert entries to Entry models using flext-ldif
-            entries: list[FlextLdifModels.Entry] = []
-            if not active_connection.entries:
-                return FlextResult[list[FlextLdifModels.Entry]].ok([])
-
-            for ldap3_entry in active_connection.entries:
-                # Use flext-ldif Entry.from_ldap3 for conversion
-                entry_result = FlextLdifModels.Entry.from_ldap3(ldap3_entry)
-                if entry_result.is_failure:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Entry conversion failed: {entry_result.error}",
-                    )
-                entries.append(entry_result.unwrap())
-
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            # Step 8: Convert ldap3 entries to FlextLdifModels.Entry
+            return self._convert_ldap3_entries_to_models(active_connection)
 
         except Exception as e:
             self.logger.exception("Search failed")

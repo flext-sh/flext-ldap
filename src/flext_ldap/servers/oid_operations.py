@@ -232,6 +232,55 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             self.logger.exception("Set ACLs error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
 
+    # OID ACL Parse Helper Methods
+
+    def _parse_oid_target_clause(
+        self,
+        target_clause: str,
+    ) -> dict[str, list[str]]:
+        """Parse OID target clause (entry or attr:name)."""
+        attributes: dict[str, list[str]] = {}
+
+        if target_clause.startswith(FlextLdapConstants.AclSyntaxKeywords.ATTR_PREFIX):
+            attributes[FlextLdapConstants.AclAttributes.TARGET_TYPE] = [
+                FlextLdapConstants.AclSyntaxKeywords.TARGET_TYPE_ATTR,
+            ]
+            attributes[FlextLdapConstants.AclAttributes.TARGET] = [
+                target_clause[len(FlextLdapConstants.AclSyntaxKeywords.ATTR_PREFIX) :],
+            ]
+        elif target_clause == FlextLdapConstants.AclSyntaxKeywords.ENTRY:
+            attributes[FlextLdapConstants.AclAttributes.TARGET_TYPE] = [
+                FlextLdapConstants.AclSyntaxKeywords.TARGET_TYPE_ENTRY,
+            ]
+            attributes[FlextLdapConstants.AclAttributes.TARGET] = ["*"]
+        else:
+            attributes[FlextLdapConstants.AclAttributes.TARGET_TYPE] = [
+                FlextLdapConstants.AclSyntaxKeywords.TARGET_TYPE_ENTRY,
+            ]
+            attributes[FlextLdapConstants.AclAttributes.TARGET] = [target_clause]
+
+        return attributes
+
+    def _parse_oid_by_clause(
+        self,
+        by_clause: str,
+    ) -> dict[str, list[str]]:
+        """Parse OID by clause (<subject>:<permissions>)."""
+        attributes: dict[str, list[str]] = {}
+
+        if ":" not in by_clause:
+            return attributes
+
+        parts = by_clause.rsplit(":", 1)
+        attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [parts[0].strip()]
+
+        # Parse permissions (comma-separated)
+        permissions_str = parts[1].strip()
+        permissions = [p.strip() for p in permissions_str.split(",")]
+        attributes[FlextLdapConstants.AclAttributes.PERMISSIONS] = permissions
+
+        return attributes
+
     @override
     def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
         """Parse orclaci ACL string for Oracle OID.
@@ -261,6 +310,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
         """
         try:
+            # Initialize base attributes
             acl_attributes: dict[str, list[str]] = {
                 FlextLdapConstants.AclAttributes.RAW: [acl_string],
                 FlextLdapConstants.AclAttributes.FORMAT: [
@@ -271,13 +321,13 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 ],
             }
 
-            # Parse Oracle OID syntax: access to <target> by <subject>:<permissions>
+            # Parse Oracle OID syntax using helper methods
             if acl_string.startswith(
-                FlextLdapConstants.AclSyntaxKeywords.ACCESS_TO + " ",
+                FlextLdapConstants.AclSyntaxKeywords.ACCESS_TO + " "
             ):
                 remainder = acl_string[
                     len(FlextLdapConstants.AclSyntaxKeywords.ACCESS_TO) + 1 :
-                ]  # Skip "access to "
+                ]
 
                 # Split into target and "by" clause
                 by_split = remainder.split(
@@ -286,61 +336,15 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 )
                 target_clause = by_split[0].strip()
 
-                # Parse target (entry or attr:name)
-                if target_clause.startswith(
-                    FlextLdapConstants.AclSyntaxKeywords.ATTR_PREFIX,
-                ):
-                    acl_attributes[FlextLdapConstants.AclAttributes.TARGET_TYPE] = [
-                        FlextLdapConstants.AclSyntaxKeywords.TARGET_TYPE_ATTR,
-                    ]
-                    acl_attributes[FlextLdapConstants.AclAttributes.TARGET] = [
-                        target_clause[
-                            len(FlextLdapConstants.AclSyntaxKeywords.ATTR_PREFIX) :
-                        ],
-                    ]  # Skip "attr:"
-                elif target_clause == FlextLdapConstants.AclSyntaxKeywords.ENTRY:
-                    acl_attributes[FlextLdapConstants.AclAttributes.TARGET_TYPE] = [
-                        FlextLdapConstants.AclSyntaxKeywords.TARGET_TYPE_ENTRY,
-                    ]
-                    acl_attributes[FlextLdapConstants.AclAttributes.TARGET] = ["*"]
-                else:
-                    acl_attributes[FlextLdapConstants.AclAttributes.TARGET_TYPE] = [
-                        FlextLdapConstants.AclSyntaxKeywords.TARGET_TYPE_ENTRY,
-                    ]
-                    acl_attributes[FlextLdapConstants.AclAttributes.TARGET] = [
-                        target_clause,
-                    ]
+                # Parse target using helper
+                acl_attributes.update(self._parse_oid_target_clause(target_clause))
 
+                # Parse "by" clause using helper
                 if len(by_split) > 1:
-                    # Parse "by <subject>:<permissions>"
                     by_clause = by_split[1].strip()
+                    acl_attributes.update(self._parse_oid_by_clause(by_clause))
 
-                    # Split subject and permissions by last ":"
-                    if ":" in by_clause:
-                        parts = by_clause.rsplit(":", 1)
-                        acl_attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
-                            parts[0].strip(),
-                        ]
-
-                        # Parse permissions (comma-separated)
-                        if len(parts) > 1:
-                            perms_str = parts[1].strip()
-                            permissions = [p.strip() for p in perms_str.split(",")]
-                            acl_attributes[
-                                FlextLdapConstants.AclAttributes.PERMISSIONS
-                            ] = permissions
-                    else:
-                        # No explicit permissions
-                        acl_attributes[FlextLdapConstants.AclAttributes.SUBJECT] = [
-                            by_clause,
-                        ]
-                        acl_attributes[FlextLdapConstants.AclAttributes.PERMISSIONS] = [
-                            FlextLdapConstants.AclPermissions.READ,
-                        ]  # Default
-
-            # LdifAttributes.create returns FlextResult, need to unwrap
-            # Use Entry.create() instead of LdifAttributes.create() + Entry()
-            # Convert attributes dict to proper type for Entry.create()
+            # Convert to Entry format
             acl_attrs_for_create: dict[str, str | list[str]] = {}
             for key, values in acl_attributes.items():
                 if isinstance(values, list) and len(values) == 1:
@@ -360,7 +364,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Oracle OID ACL parse failed: {e}",
+                f"Failed to parse OID ACL: {e}",
             )
 
     @override
