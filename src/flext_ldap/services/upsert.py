@@ -26,12 +26,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Protocol, cast
+
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.clients import FlextLdapClients
+
+
+class _AttrWithValues(Protocol):
+    """Protocol for attribute objects with values attribute."""
+
+    @property
+    def values(self) -> list[str] | str: ...
 
 
 class FlextLdapUpsertService(FlextService[dict[str, object]]):
@@ -109,8 +118,12 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 isinstance(search_result_item, tuple)
                 and len(search_result_item) == expected_tuple_length
             ):
-                entry: FlextLdifModels.Entry = search_result_item[entry_index]
-                return FlextResult[FlextLdifModels.Entry].ok(entry)
+                entry_from_tuple = search_result_item[entry_index]
+                if isinstance(entry_from_tuple, FlextLdifModels.Entry):
+                    return FlextResult[FlextLdifModels.Entry].ok(entry_from_tuple)
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Tuple entry is not FlextLdifModels.Entry for {dn}"
+                )
             # Direct Entry object from list
             if isinstance(search_result_item, FlextLdifModels.Entry):
                 return FlextResult[FlextLdifModels.Entry].ok(search_result_item)
@@ -118,7 +131,12 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 f"Unexpected search result format for {dn}"
             )
 
-        return FlextResult[FlextLdifModels.Entry].ok(search_response)
+        # At this point, search_response must be FlextLdifModels.Entry (not a list)
+        if isinstance(search_response, FlextLdifModels.Entry):
+            return FlextResult[FlextLdifModels.Entry].ok(search_response)
+        return FlextResult[FlextLdifModels.Entry].fail(
+            f"Search response is not FlextLdifModels.Entry for {dn}"
+        )
 
     def _extract_existing_attributes(
         self,
@@ -128,10 +146,20 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         existing_attrs: dict[str, list[str]] = {}
         for attr_name, attr_obj in entry.attributes.items():
             if attr_obj:
-                if hasattr(attr_obj, "values"):
-                    existing_attrs[attr_name.lower()] = [
-                        str(v) for v in attr_obj.values
-                    ]
+                # Handle list[str] directly
+                if isinstance(attr_obj, list):
+                    existing_attrs[attr_name.lower()] = [str(v) for v in attr_obj]
+                # Handle objects with .values attribute (cast to Protocol for type safety)
+                elif hasattr(attr_obj, "values"):
+                    attr_with_values = cast("_AttrWithValues", attr_obj)
+                    values_attr = attr_with_values.values
+                    if isinstance(values_attr, list):
+                        existing_attrs[attr_name.lower()] = [
+                            str(v) for v in values_attr
+                        ]
+                    else:
+                        existing_attrs[attr_name.lower()] = [str(values_attr)]
+                # Fallback to string conversion
                 else:
                     existing_attrs[attr_name.lower()] = [str(attr_obj)]
         return existing_attrs

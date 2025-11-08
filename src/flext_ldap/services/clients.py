@@ -318,31 +318,27 @@ class FlextLdapClients(FlextService[None]):
                 connection_options,
                 auto_discover_schema=auto_discover_schema,
             )
+            # Convert enum to ldap3-compatible literal using constant mapping
+            get_info_literal = FlextLdapConstants.Types.GET_INFO_TO_LDAP3[get_info]
             if port is not None:
                 return Server(
                     server_uri,
                     port=port,
                     use_ssl=use_ssl,
-                    get_info=cast(
-                        "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                        get_info.value,
-                    ),
+                    get_info=get_info_literal,
                 )
             return Server(
                 server_uri,
                 use_ssl=use_ssl,
-                get_info=cast(
-                    "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                    get_info.value,
-                ),
+                get_info=get_info_literal,
             )
         if auto_discover_schema:
+            # Convert enum constant to ldap3-compatible literal
             return Server(
                 server_uri,
-                get_info=cast(
-                    "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']",
-                    FlextLdapConstants.Types.GetInfoType.ALL.value,
-                ),
+                get_info=FlextLdapConstants.Types.GET_INFO_TO_LDAP3[
+                    FlextLdapConstants.Types.GetInfoType.ALL
+                ],
             )
         return Server(server_uri)
 
@@ -1128,7 +1124,8 @@ class FlextLdapClients(FlextService[None]):
             return changes.model_dump()
         if hasattr(changes, "items"):
             return dict(changes)
-        return changes
+        # Fallback: cast to dict (changes should always have model_dump() or items())
+        return cast("dict[str, object]", changes)
 
     def _parse_change_spec_to_ldap3(
         self,
@@ -1145,7 +1142,7 @@ class FlextLdapClients(FlextService[None]):
 
         # Dict format (complex operations)
         if isinstance(change_spec, dict):
-            operations: list[tuple[str, list[str]]] = []
+            operations: list[tuple[str | int, list[str]]] = []
             for op_name, op_value in change_spec.items():
                 if op_name in {
                     FlextLdapConstants.ModifyOperation.ADD,
@@ -1216,8 +1213,14 @@ class FlextLdapClients(FlextService[None]):
                 self.connection,
             )
 
+            # Cast ldap3_changes to expected protocol type (ldap3 accepts both str and int)
+            changes_for_modify = cast(
+                "dict[str, list[tuple[int, list[str]]]]",
+                ldap3_changes,
+            )
+
             # Execute modify operation
-            success = typed_conn.modify(dn_str, ldap3_changes)
+            success = typed_conn.modify(dn_str, changes_for_modify)
             if success:
                 return FlextResult[bool].ok(True)
 

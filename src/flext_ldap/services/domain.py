@@ -93,9 +93,8 @@ class DomainServices:
         for attr in lock_attrs:
             value = user.attributes.get(attr) if user.attributes else None
             if value:
-                if isinstance(value, list):
-                    value = value[0]
-                if isinstance(value, str) and value.lower() in {
+                value_str = str(value[0]) if isinstance(value, list) else str(value)
+                if value_str.lower() in {
                     FlextLdapConstants.BooleanStrings.TRUE,
                     FlextLdapConstants.BooleanStrings.ONE,
                     FlextLdapConstants.BooleanStrings.YES,
