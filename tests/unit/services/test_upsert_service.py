@@ -316,13 +316,11 @@ class TestUpsertServiceBusinessLogic:
     """Test UPSERT service business logic with mocked LDAP client."""
 
     def _create_mock_client(self) -> object:
-        """Create a mock FlextLdap client for testing."""
+        """Create a mock FlextLdapClients for testing."""
         from unittest.mock import MagicMock
 
-        mock_client = MagicMock()
-        # The service expects a client with a .client attribute
-        mock_client.client = MagicMock()
-        return mock_client
+        # FlextLdapClients has methods directly (add_entry, search, modify_entry, etc)
+        return MagicMock()
 
     def test_upsert_entry_add_success_new_entry(self) -> None:
         """Test upsert when ADD succeeds (new entry created)."""
@@ -332,7 +330,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock successful ADD
-        mock_client.client.add_entry.return_value = FlextResult[bool].ok(True)
+        mock_client.add_entry.return_value = FlextResult[bool].ok(True)
 
         dn = "cn=newuser,ou=users,dc=example,dc=com"
         attrs = {"mail": ["user@example.com"], "cn": ["New User"]}
@@ -355,7 +353,7 @@ class TestUpsertServiceBusinessLogic:
 
         # Mock ADD failure with non-exists error
         error_msg = "LDAP error: no such object"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(error_msg)
+        mock_client.add_entry.return_value = FlextResult[bool].fail(error_msg)
 
         dn = "cn=user,ou=invalidou,dc=example,dc=com"
         attrs = {"mail": ["user@example.com"]}
@@ -374,7 +372,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
+        mock_client.add_entry.return_value = FlextResult[bool].fail(
             "entryalreadyexists"
         )
 
@@ -389,12 +387,12 @@ class TestUpsertServiceBusinessLogic:
             }).unwrap(),
         )
 
-        mock_client.client.search.return_value = FlextResult[
-            FlextLdifModels.Entry | None
-        ].ok(existing_entry)
+        mock_client.search.return_value = FlextResult[FlextLdifModels.Entry | None].ok(
+            existing_entry
+        )
 
         # Mock successful MODIFY ADD (for telephoneNumber)
-        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+        mock_client.modify_entry.return_value = FlextResult[bool].ok(True)
 
         dn = "cn=user,ou=users,dc=example,dc=com"
         attrs = {
@@ -422,7 +420,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail("code 68")
+        mock_client.add_entry.return_value = FlextResult[bool].fail("code 68")
 
         # Mock search to return existing entry
         existing_entry = FlextLdifModels.Entry(
@@ -435,12 +433,12 @@ class TestUpsertServiceBusinessLogic:
             }).unwrap(),
         )
 
-        mock_client.client.search.return_value = FlextResult[
-            FlextLdifModels.Entry | None
-        ].ok(existing_entry)
+        mock_client.search.return_value = FlextResult[FlextLdifModels.Entry | None].ok(
+            existing_entry
+        )
 
         # Mock successful MODIFY REPLACE
-        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+        mock_client.modify_entry.return_value = FlextResult[bool].ok(True)
 
         dn = "cn=user,ou=users,dc=example,dc=com"
         attrs = {"mail": ["new@example.com"]}
@@ -460,12 +458,10 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
-            "already exists"
-        )
+        mock_client.add_entry.return_value = FlextResult[bool].fail("already exists")
 
         # Mock search failure
-        mock_client.client.search.return_value = FlextResult[object].fail(
+        mock_client.search.return_value = FlextResult[object].fail(
             "Search operation failed"
         )
 
@@ -485,7 +481,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD success for new entry with string attributes
-        mock_client.client.add_entry.return_value = FlextResult[bool].ok(True)
+        mock_client.add_entry.return_value = FlextResult[bool].ok(True)
 
         dn = "cn=user,ou=users,dc=example,dc=com"
         # Pass string attributes instead of lists
@@ -507,12 +503,10 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
-            "already exists"
-        )
+        mock_client.add_entry.return_value = FlextResult[bool].fail("already exists")
 
         # Mock search returning None (entry doesn't exist)
-        mock_client.client.search.return_value = FlextResult[object].ok(None)
+        mock_client.search.return_value = FlextResult[object].ok(None)
 
         dn = "cn=user,ou=users,dc=example,dc=com"
         attrs = {"mail": ["user@example.com"]}
@@ -531,7 +525,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail("code 68")
+        mock_client.add_entry.return_value = FlextResult[bool].fail("code 68")
 
         # Mock search to return existing entry with identical attributes
         existing_entry = FlextLdifModels.Entry(
@@ -543,12 +537,12 @@ class TestUpsertServiceBusinessLogic:
             }).unwrap(),
         )
 
-        mock_client.client.search.return_value = FlextResult[
-            FlextLdifModels.Entry | None
-        ].ok(existing_entry)
+        mock_client.search.return_value = FlextResult[FlextLdifModels.Entry | None].ok(
+            existing_entry
+        )
 
         # Mock modify_entry to return success
-        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+        mock_client.modify_entry.return_value = FlextResult[bool].ok(True)
 
         dn = "cn=user,ou=users,dc=example,dc=com"
         attrs = {"mail": ["user@example.com"]}  # Identical to existing
@@ -569,9 +563,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
-            "already exists"
-        )
+        mock_client.add_entry.return_value = FlextResult[bool].fail("already exists")
 
         # Mock search to return existing entry with mail attribute
         existing_entry = FlextLdifModels.Entry(
@@ -583,12 +575,12 @@ class TestUpsertServiceBusinessLogic:
             }).unwrap(),
         )
 
-        mock_client.client.search.return_value = FlextResult[
-            FlextLdifModels.Entry | None
-        ].ok(existing_entry)
+        mock_client.search.return_value = FlextResult[FlextLdifModels.Entry | None].ok(
+            existing_entry
+        )
 
         # Mock successful MODIFY operations
-        mock_client.client.modify_entry.return_value = FlextResult[bool].ok(True)
+        mock_client.modify_entry.return_value = FlextResult[bool].ok(True)
 
         dn = "cn=user,ou=users,dc=example,dc=com"
         attrs = {
@@ -604,7 +596,7 @@ class TestUpsertServiceBusinessLogic:
         assert stats["added"] >= 1
         # Verify upsert was successful and modify was called
         assert stats["upserted"] is True
-        mock_client.client.modify_entry.assert_called()
+        mock_client.modify_entry.assert_called()
 
     def test_upsert_entry_modify_add_failure(self) -> None:
         """Test upsert when MODIFY ADD operation fails."""
@@ -615,9 +607,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
-            "already exists"
-        )
+        mock_client.add_entry.return_value = FlextResult[bool].fail("already exists")
 
         # Mock search to return existing entry
         existing_entry = FlextLdifModels.Entry(
@@ -629,12 +619,12 @@ class TestUpsertServiceBusinessLogic:
             }).unwrap(),
         )
 
-        mock_client.client.search.return_value = FlextResult[
-            FlextLdifModels.Entry | None
-        ].ok(existing_entry)
+        mock_client.search.return_value = FlextResult[FlextLdifModels.Entry | None].ok(
+            existing_entry
+        )
 
         # Mock MODIFY ADD failure
-        mock_client.client.modify_entry.return_value = FlextResult[bool].fail(
+        mock_client.modify_entry.return_value = FlextResult[bool].fail(
             "MODIFY ADD failed: permission denied"
         )
 
@@ -658,9 +648,7 @@ class TestUpsertServiceBusinessLogic:
         mock_client = self._create_mock_client()
 
         # Mock ADD failure with "already exists"
-        mock_client.client.add_entry.return_value = FlextResult[bool].fail(
-            "already exists"
-        )
+        mock_client.add_entry.return_value = FlextResult[bool].fail("already exists")
 
         # Mock search to return existing entry
         existing_entry = FlextLdifModels.Entry(
@@ -672,12 +660,12 @@ class TestUpsertServiceBusinessLogic:
             }).unwrap(),
         )
 
-        mock_client.client.search.return_value = FlextResult[
-            FlextLdifModels.Entry | None
-        ].ok(existing_entry)
+        mock_client.search.return_value = FlextResult[FlextLdifModels.Entry | None].ok(
+            existing_entry
+        )
 
         # Mock MODIFY REPLACE failure
-        mock_client.client.modify_entry.return_value = FlextResult[bool].fail(
+        mock_client.modify_entry.return_value = FlextResult[bool].fail(
             "MODIFY REPLACE failed: attribute is immutable"
         )
 

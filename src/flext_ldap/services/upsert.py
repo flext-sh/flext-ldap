@@ -169,15 +169,24 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         normalized_new: dict[str, list[str]],
         existing_attrs: dict[str, list[str]],
         skip_attributes: set[str],
-    ) -> tuple[dict[str, list[str]], dict[str, list[str]], int]:
+    ) -> tuple[dict[str, list[str]], dict[str, list[str]], dict[str, list[str]], int]:
         """Determine which attributes to ADD, REPLACE, or leave unchanged.
 
         Strategy: Since we fetched ALL attributes (including operational with "+"),
         we use REPLACE for all changes to avoid attributeOrValueExists errors.
         REPLACE is idempotent and works whether attribute exists or not.
+
+        Returns:
+            Tuple of (to_add, to_replace_new, to_replace_existing, unchanged_count)
+            - to_add: Always empty (using REPLACE for all)
+            - to_replace_new: New attributes to be added via REPLACE
+            - to_replace_existing: Existing attributes to be modified via REPLACE
+            - unchanged_count: Count of attributes with no changes
+
         """
         to_add: dict[str, list[str]] = {}  # Will be empty - using REPLACE for all
-        to_replace: dict[str, list[str]] = {}
+        to_replace_new: dict[str, list[str]] = {}  # New attributes
+        to_replace_existing: dict[str, list[str]] = {}  # Existing attributes
         unchanged_count = 0
 
         for attr, new_values in normalized_new.items():
@@ -187,16 +196,17 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             attr_lower = attr.lower()
             if attr_lower not in existing_attrs:
                 # Attribute doesn't exist - use REPLACE (not ADD) for robustness
-                # REPLACE works even on non-existent attributes
-                to_replace[attr] = new_values
+                # Track as "new" for statistics
+                to_replace_new[attr] = new_values
             else:
                 existing_values = existing_attrs[attr_lower]
                 if set(new_values) == set(existing_values):
                     unchanged_count += 1
                 else:
-                    to_replace[attr] = new_values
+                    # Attribute exists and needs update - track as "existing"
+                    to_replace_existing[attr] = new_values
 
-        return to_add, to_replace, unchanged_count
+        return to_add, to_replace_new, to_replace_existing, unchanged_count
 
     def _execute_add_modifications(
         self,
@@ -403,14 +413,16 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         existing_attrs = self._extract_existing_attributes(existing_entry)
 
         # Step 5: Compute changes (ADD vs REPLACE)
-        to_add, to_replace, unchanged_count = self._compute_attribute_changes(
-            normalized_new,
-            existing_attrs,
-            skip_attributes,
+        to_add, to_replace_new, to_replace_existing, unchanged_count = (
+            self._compute_attribute_changes(
+                normalized_new,
+                existing_attrs,
+                skip_attributes,
+            )
         )
 
         # Skip MODIFY if no changes detected
-        if not to_add and not to_replace:
+        if not to_add and not to_replace_new and not to_replace_existing:
             self.logger.debug(
                 "Entry already has identical attributes, skipping MODIFY",
                 extra={"dn": dn, "unchanged_count": unchanged_count},
@@ -423,23 +435,29 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             })
 
         # Step 6: Execute modifications (using REPLACE for all to avoid attributeOrValueExists)
+        # Combine new and existing attributes for single REPLACE operation
+        to_replace_all = {**to_replace_new, **to_replace_existing}
+
         self.logger.debug(
             "Preparing MODIFY REPLACE",
             extra={
                 "dn": dn,
-                "to_replace_count": len(to_replace),
+                "new_attributes_count": len(to_replace_new),
+                "existing_attributes_count": len(to_replace_existing),
+                "total_replace_count": len(to_replace_all),
             },
         )
 
         # Use REPLACE for all modifications (to_add is always empty now)
-        replace_count_result = self._execute_replace_modifications(
-            ldap_client, dn, to_replace
+        replace_result = self._execute_replace_modifications(
+            ldap_client, dn, to_replace_all
         )
-        if replace_count_result.is_failure:
-            return FlextResult[dict[str, object]].fail(str(replace_count_result.error))
+        if replace_result.is_failure:
+            return FlextResult[dict[str, object]].fail(str(replace_result.error))
 
-        replaced_count = replace_count_result.unwrap()
-        added_count = 0  # No longer using ADD operation for existing entries
+        # Track statistics correctly: new attributes are "added", existing are "replaced"
+        added_count = len(to_replace_new)
+        replaced_count = len(to_replace_existing)
 
         self.logger.info(
             "Entry upserted successfully",

@@ -165,7 +165,6 @@ class TestSearchMethodWithoutConnection:
         """Test search with specific attributes."""
         search = FlextLdapSearch()
         result = search.search(
-            None,
             "dc=example,dc=com",
             "(objectClass=*)",
             attributes=["cn", "mail", "uid"],

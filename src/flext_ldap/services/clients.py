@@ -635,11 +635,11 @@ class FlextLdapClients(FlextService[None]):
 
         try:
             if self._connection:
-                # Check search result - do not ignore failures
+                # Test connection by reading root DSE with BASE scope
                 search_result = self._connection.search(
-                    "",
+                    "",  # Root DSE
                     FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-                    self._search_scope,
+                    "BASE",  # BASE scope for root DSE
                     attributes=[FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS],
                 )
                 if not search_result:

@@ -50,9 +50,13 @@ class TestOIDACLOperations:
         result = ops.parse_object_class("inetOrgPerson")
         assert isinstance(result, FlextResult)
         assert result.is_success
-        data = result.unwrap()
-        assert data["server_type"] == "oid"
-        assert data["definition"] == "inetOrgPerson"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify OID-specific note was added
+        assert "note" in entry.attributes.attributes
+        assert "Oracle OID schema parsing" in entry.attributes.attributes["note"]
 
     def test_oid_parse_object_class_oracle_specific(
         self, shared_ldap_client: FlextLdapClients
@@ -61,9 +65,12 @@ class TestOIDACLOperations:
         ops = FlextLdapServersOIDOperations()
         result = ops.parse_object_class("orclUserV2")
         assert result.is_success
-        data = result.unwrap()
-        assert "definition" in data
-        assert data["server_type"] == "oid"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify OID-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oid_parse_attribute_type_standard(
         self, shared_ldap_client: FlextLdapClients
@@ -72,9 +79,12 @@ class TestOIDACLOperations:
         ops = FlextLdapServersOIDOperations()
         result = ops.parse_attribute_type("cn")
         assert result.is_success
-        data = result.unwrap()
-        assert data["definition"] == "cn"
-        assert data["server_type"] == "oid"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify OID-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oid_parse_attribute_type_oracle_attr(
         self, shared_ldap_client: FlextLdapClients
@@ -83,9 +93,12 @@ class TestOIDACLOperations:
         ops = FlextLdapServersOIDOperations()
         result = ops.parse_attribute_type("orclUserStatus")
         assert result.is_success
-        data = result.unwrap()
-        assert "definition" in data
-        assert data["server_type"] == "oid"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify oid-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oid_get_acls_with_connection(
         self, shared_ldap_client: FlextLdapClients
@@ -160,9 +173,12 @@ class TestOUDACLOperations:
         result = ops.parse_object_class("inetOrgPerson")
         assert isinstance(result, FlextResult)
         assert result.is_success
-        data = result.unwrap()
-        assert data["server_type"] == "oud"
-        assert data["definition"] == "inetOrgPerson"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify oud-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oud_parse_object_class_oud_specific(
         self, shared_ldap_client: FlextLdapClients
@@ -171,9 +187,12 @@ class TestOUDACLOperations:
         ops = FlextLdapServersOUDOperations()
         result = ops.parse_object_class("person")
         assert result.is_success
-        data = result.unwrap()
-        assert "definition" in data
-        assert data["server_type"] == "oud"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify oud-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oud_parse_attribute_type_standard(
         self, shared_ldap_client: FlextLdapClients
@@ -182,9 +201,12 @@ class TestOUDACLOperations:
         ops = FlextLdapServersOUDOperations()
         result = ops.parse_attribute_type("cn")
         assert result.is_success
-        data = result.unwrap()
-        assert data["definition"] == "cn"
-        assert data["server_type"] == "oud"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify oud-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oud_parse_attribute_type_oud_attr(
         self, shared_ldap_client: FlextLdapClients
@@ -193,9 +215,12 @@ class TestOUDACLOperations:
         ops = FlextLdapServersOUDOperations()
         result = ops.parse_attribute_type("ds-pwp-account-disabled")
         assert result.is_success
-        data = result.unwrap()
-        assert "definition" in data
-        assert data["server_type"] == "oud"
+        entry = result.unwrap()
+        # Verify Entry object structure
+        assert isinstance(entry, FlextLdifModels.Entry)
+        assert entry.attributes is not None
+        # Verify oud-specific note was added
+        assert "note" in entry.attributes.attributes
 
     def test_oud_get_acls_with_connection(
         self, shared_ldap_client: FlextLdapClients
@@ -301,13 +326,9 @@ class TestEntryNormalizationSpecialAttributes:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson", "person"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "orclUserStatus": FlextLdifModels.AttributeValues(
-                        values=["DISABLED"]
-                    ),
+                    "objectClass": ["inetOrgPerson", "person"],
+                    "cn": ["test"],
+                    "orclUserStatus": ["DISABLED"],
                 }
             ),
         )
@@ -325,13 +346,9 @@ class TestEntryNormalizationSpecialAttributes:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "ds-privilege-name": FlextLdifModels.AttributeValues(
-                        values=["admin"]
-                    ),
+                    "objectClass": ["inetOrgPerson"],
+                    "cn": ["test"],
+                    "ds-privilege-name": ["admin"],
                 }
             ),
         )
@@ -349,13 +366,9 @@ class TestEntryNormalizationSpecialAttributes:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["orclUserV2"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "orclUserStatus": FlextLdifModels.AttributeValues(
-                        values=["ACTIVE"]
-                    ),
+                    "objectClass": ["orclUserV2"],
+                    "cn": ["test"],
+                    "orclUserStatus": ["ACTIVE"],
                 }
             ),
         )
@@ -373,13 +386,9 @@ class TestEntryNormalizationSpecialAttributes:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["inetOrgPerson"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "ds-pwp-account-disabled": FlextLdifModels.AttributeValues(
-                        values=["true"]
-                    ),
+                    "objectClass": ["inetOrgPerson"],
+                    "cn": ["test"],
+                    "ds-pwp-account-disabled": ["true"],
                 }
             ),
         )

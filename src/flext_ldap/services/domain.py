@@ -101,9 +101,11 @@ class DomainServices:
                 }:
                     return FlextLdapConstants.UserStatus.LOCKED
                 try:
+                    # Extract value for bitwise check (handle list or single value)
+                    check_value = value[0] if isinstance(value, list) else value
                     if (
-                        isinstance(value, (int, str))
-                        and int(value)
+                        isinstance(check_value, (int, str))
+                        and int(check_value)
                         & FlextLdapConstants.ActiveDirectoryFlags.ADS_UF_ACCOUNTDISABLE
                     ):
                         return FlextLdapConstants.UserStatus.DISABLED

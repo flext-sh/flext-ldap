@@ -85,7 +85,7 @@ class TestGenericQuirksDetectorDetectServerType:
         server_type = detector.detect_server_type(server_info)
 
         assert server_type is not None
-        assert server_type == FlextLdifConstants.LdapServerType.GENERIC
+        assert server_type == FlextLdifConstants.ServerTypes.GENERIC
 
     @pytest.mark.unit
     def test_detect_server_type_with_none_info(self) -> None:
@@ -119,7 +119,7 @@ class TestGenericQuirksDetectorGetServerQuirks:
         quirks = detector.get_servers("generic")
 
         assert quirks is not None
-        assert quirks.server_type == FlextLdifConstants.LdapServerType.GENERIC
+        assert quirks.server_type == FlextLdifConstants.ServerTypes.GENERIC
 
     @pytest.mark.unit
     def test_get_servers_with_none_type(self) -> None:

@@ -15,6 +15,7 @@ import pathlib
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
 from ldap3 import Entry as Ldap3Entry
+from pydantic import PrivateAttr
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.typings import FlextLdapTypes
@@ -40,6 +41,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
     - Entry validation using server-specific rules
     """
 
+    # Private attributes (Pydantic v2 PrivateAttr for internal state)
+    _ldif: FlextLdif = PrivateAttr()
+    _detected_server_type: str | None = PrivateAttr(default=None)
+
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize entry adapter with FlextLdif integration and quirks.
 
@@ -50,9 +55,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif()  # Use FlextLdif facade for all LDIF operations
-        self._detected_server_type = (
-            server_type  # Private attribute to avoid Pydantic validation
-        )
+        self._detected_server_type = server_type
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService - no-op for adapter."""
