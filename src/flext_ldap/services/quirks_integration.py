@@ -72,13 +72,23 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         return FlextResult[dict[str, object]].ok({
             "service": "FlextLdapQuirksAdapter",
             "server_type": self._detected_server_type,
-            "quirks_loaded": bool(self.s_cache),
+            "quirks_loaded": bool(self._s_cache),
         })
 
     @property
     def server_type(self) -> str | None:
         """Get detected server type."""
         return self._detected_server_type
+
+    @property
+    def quirks_manager(self) -> FlextLdif:
+        """Get FlextLdif facade instance for quirks management."""
+        return self._ldif
+
+    @property
+    def s_cache(self) -> dict[str, object]:
+        """Get server quirks cache."""
+        return self._s_cache
 
     def detect_server_type_from_entries(
         self,
@@ -149,17 +159,17 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         )
 
         # Check cache first
-        if target_type in self.s_cache:
-            cacheds = self.s_cache[target_type]
+        if target_type in self._s_cache:
+            cacheds = self._s_cache[target_type]
             if isinstance(cacheds, dict):
                 return FlextResult[dict[str, object]].ok(cacheds)
             # Invalid cache entry, remove it
-            del self.s_cache[target_type]
+            del self._s_cache[target_type]
 
         # Return empty quirks for target server type
         # FlextLdif handles quirks internally
         emptys: dict[str, object] = {"server_type": target_type}
-        self.s_cache[target_type] = emptys
+        self._s_cache[target_type] = emptys
 
         self.logger.debug(
             "Server quirks retrieved",
@@ -366,7 +376,11 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
             )
 
             # Server-specific connection defaults
-            if target_type == FlextLdapConstants.ServerTypes.AD:
+            # Check both long form ("active_directory") and short form ("ad")
+            if target_type in {
+                FlextLdapConstants.ServerTypes.AD,
+                FlextLdapConstants.ServerTypes.AD_SHORT,
+            }:
                 config = FlextLdapModels.ConnectionConfig(
                     server="",  # Will be set by caller
                     port=FlextLdapConstants.Defaults.DEFAULT_PORT,

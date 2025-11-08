@@ -262,6 +262,7 @@ class FlextLdap(FlextService[None]):
             # Note: Pydantic v2 automatically runs model validators during field updates
 
         # Store quirks_mode for internal modules
+        self.s_mode = quirks_mode
 
         # Connect using client with explicit config values
         password_value = ""  # nosec: default empty string, actual password from config.ldap_bind_password
@@ -332,11 +333,9 @@ class FlextLdap(FlextService[None]):
             result = ldap.query("dc=example,dc=com", "(uid=jdoe)", single=True)
 
         """
-        if quirks_mode:
-            # quirks_mode parameter is now handled by Field default in s_mode
-            pass
-
-        result = self.client.search(base_dn, filter_str, attributes)
+        result = self.client.search(
+            base_dn, filter_str, attributes, quirks_mode=quirks_mode
+        )
         if result.is_failure:
             return cast(
                 "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
@@ -384,17 +383,21 @@ class FlextLdap(FlextService[None]):
     def _execute_batch_add(
         self,
         modifications: list[tuple[str, dict[str, str | list[str]]]],
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> list[bool]:
         """Execute batch add operations."""
         results: list[bool] = []
         for batch_dn, batch_attrs in modifications:
-            result = self.client.add_entry(batch_dn, batch_attrs)
+            result = self.client.add_entry(
+                batch_dn, batch_attrs, quirks_mode=quirks_mode
+            )
             results.append(result.is_success)
         return results
 
     def _execute_batch_modify_atomic(
         self,
         modifications: list[tuple[str, dict[str, str | list[str]]]],
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[list[bool]]:
         """Execute batch modify operations atomically."""
         temp_results = []
@@ -402,6 +405,7 @@ class FlextLdap(FlextService[None]):
             result = self.client.modify_entry(
                 batch_dn,
                 cast("FlextLdapModels.EntryChanges", batch_changes),
+                quirks_mode=quirks_mode,
             )
             temp_results.append(result.is_success)
 
@@ -414,6 +418,7 @@ class FlextLdap(FlextService[None]):
     def _execute_batch_modify_non_atomic(
         self,
         modifications: list[tuple[str, dict[str, str | list[str]]]],
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> list[bool]:
         """Execute batch modify operations non-atomically."""
         results: list[bool] = []
@@ -421,6 +426,7 @@ class FlextLdap(FlextService[None]):
             result = self.client.modify_entry(
                 batch_dn,
                 cast("FlextLdapModels.EntryChanges", batch_changes),
+                quirks_mode=quirks_mode,
             )
             results.append(result.is_success)
         return results
@@ -429,19 +435,22 @@ class FlextLdap(FlextService[None]):
         self,
         dn: str,
         changes: dict[str, str | list[str]],
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[bool]:
         """Execute single add operation."""
-        return self.client.add_entry(dn, changes)
+        return self.client.add_entry(dn, changes, quirks_mode=quirks_mode)
 
     def _execute_single_modify(
         self,
         dn: str,
         changes: dict[str, str | list[str]],
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[bool]:
         """Execute single modify operation."""
         return self.client.modify_entry(
             dn,
             cast("FlextLdapModels.EntryChanges", changes),
+            quirks_mode=quirks_mode,
         )
 
     def _execute_batch_operations(
@@ -450,15 +459,20 @@ class FlextLdap(FlextService[None]):
         modifications: list[tuple[str, dict[str, str | list[str]]]],
         *,
         atomic: bool,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[list[bool]]:
         """Execute batch operations (add or modify)."""
         if operation == "add":
-            results = self._execute_batch_add(modifications)
+            results = self._execute_batch_add(modifications, quirks_mode=quirks_mode)
             return FlextResult[list[bool]].ok(results)
         if operation == "modify":
             if atomic:
-                return self._execute_batch_modify_atomic(modifications)
-            results = self._execute_batch_modify_non_atomic(modifications)
+                return self._execute_batch_modify_atomic(
+                    modifications, quirks_mode=quirks_mode
+                )
+            results = self._execute_batch_modify_non_atomic(
+                modifications, quirks_mode=quirks_mode
+            )
             return FlextResult[list[bool]].ok(results)
 
         return FlextResult[list[bool]].fail(f"Unknown operation: {operation}")
@@ -492,9 +506,6 @@ class FlextLdap(FlextService[None]):
             FlextResult[bool] for single operation, FlextResult[list[bool]] for batch.
 
         """
-        if quirks_mode:
-            pass
-
         # Handle delete operation
         if operation == "delete":
             if not dn:
@@ -506,7 +517,7 @@ class FlextLdap(FlextService[None]):
         # Handle batch operations
         if batch and modifications:
             batch_result = self._execute_batch_operations(
-                operation, modifications, atomic=atomic
+                operation, modifications, atomic=atomic, quirks_mode=quirks_mode
             )
             return cast("FlextResult[bool | list[bool]]", batch_result)
 
@@ -518,12 +529,13 @@ class FlextLdap(FlextService[None]):
 
         if operation == "add":
             return cast(
-                "FlextResult[bool | list[bool]]", self._execute_single_add(dn, changes)
+                "FlextResult[bool | list[bool]]",
+                self._execute_single_add(dn, changes, quirks_mode=quirks_mode),
             )
         if operation == "modify":
             return cast(
                 "FlextResult[bool | list[bool]]",
-                self._execute_single_modify(dn, changes),
+                self._execute_single_modify(dn, changes, quirks_mode=quirks_mode),
             )
 
         return FlextResult[bool | list[bool]].fail(f"Unknown operation: {operation}")
@@ -551,9 +563,7 @@ class FlextLdap(FlextService[None]):
             FlextResult with validation report including any errors or warnings.
 
         """
-        if quirks_mode:
-            pass
-
+        _ = quirks_mode  # Reserved for future server-specific validation rules
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()
 
@@ -619,9 +629,7 @@ class FlextLdap(FlextService[None]):
             FlextResult with converted entry/entries.
 
         """
-        if quirks_mode:
-            pass
-
+        _ = quirks_mode  # Reserved for future server-specific conversion rules
         if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
             self._entry_adapter = FlextLdapEntryAdapter()
 
@@ -690,9 +698,7 @@ class FlextLdap(FlextService[None]):
             FlextResult with imported entries or exported data string.
 
         """
-        if quirks_mode:
-            pass
-
+        _ = quirks_mode  # Reserved for future format-specific import/export rules
         if direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
             if not data:
                 return FlextResult[str | list[FlextLdifModels.Entry]].fail(
@@ -742,9 +748,7 @@ class FlextLdap(FlextService[None]):
             FlextResult with comprehensive server information.
 
         """
-        if quirks_mode:
-            pass
-
+        _ = quirks_mode  # Reserved for future server-specific info formatting
         info_dict: dict[str, object] = {
             FlextLdapConstants.ApiDictKeys.TYPE: self.servers.server_type,
             FlextLdapConstants.ApiDictKeys.CONNECTED: self.client.is_connected,
@@ -1193,6 +1197,7 @@ class FlextLdap(FlextService[None]):
             server_uri=self._config.ldap_server_uri,
             bind_dn=self._config.ldap_bind_dn or "",
             password=password_value,
+            quirks_mode=self.s_mode,
         )
         if result.is_failure:
             error_msg = f"Failed to connect to LDAP server: {result.error}"

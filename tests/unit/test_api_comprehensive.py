@@ -477,7 +477,9 @@ sn: Test User
             attributes=FlextLdifModels.LdifAttributes(),
         )
 
-        ldif_data = connected_ldap.export_to_ldif([entry])
+        result = connected_ldap.export_to_ldif([entry])
+        assert result.is_success is True
+        ldif_data = result.unwrap()
         assert isinstance(ldif_data, str)
         assert len(ldif_data) > 0
 

@@ -93,7 +93,10 @@ class TestFlextLdapClientsModifyEntry:
     def test_modify_entry_success(self, connected_client: FlextLdapClients) -> None:
         """Test modifying an entry."""
         dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-        changes = FlextLdapModels.EntryChanges()
+        # Create changes with real MODIFY operation
+        changes = FlextLdapModels.EntryChanges(
+            description=[("MODIFY_REPLACE", ["Test modification"])]
+        )
 
         result = connected_client.modify_entry(dn, changes)
         assert result.is_success is True or result.is_failure is True
@@ -105,7 +108,10 @@ class TestFlextLdapClientsModifyEntry:
     ) -> None:
         """Test modify_entry returns FlextResult."""
         dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-        changes = FlextLdapModels.EntryChanges()
+        # Create changes with real MODIFY operation
+        changes = FlextLdapModels.EntryChanges(
+            description=[("MODIFY_REPLACE", ["Test modification"])]
+        )
 
         result = connected_client.modify_entry(dn, changes)
         assert result.is_success is True or result.is_failure is True
