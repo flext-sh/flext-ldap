@@ -951,7 +951,7 @@ class FlextLdapModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Validation failed: {e}")
 
-    class SearchConfig(FlextModels.Query):
+    class SearchConfig(BaseModel):
         """LDAP search operation configuration - Pydantic Query."""
 
         model_config = ConfigDict(frozen=True)

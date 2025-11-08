@@ -15,6 +15,7 @@ from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
 from ldap3 import Connection
+from pydantic import PrivateAttr
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.ad_operations import (
@@ -47,13 +48,18 @@ class FlextLdapServersFactory(FlextService[None]):
         - "generic" → GenericOperations (fallback)
     """
 
+    # Private attributes (Pydantic v2 PrivateAttr for internal state)
+    _ldif: FlextLdif = PrivateAttr()
+    _s_manager: FlextLdifServer = PrivateAttr()
+    _server_registry: dict[str, type[FlextLdapServersBaseOperations]] = PrivateAttr()
+
     def __init__(self) -> None:
         """Initialize server operations factory with Phase 1 context enrichment."""
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif.get_instance()
-        self.s_manager = FlextLdifServer.get_global_instance()
-        self._server_registry: dict[str, type[FlextLdapServersBaseOperations]] = {
+        self._s_manager = FlextLdifServer.get_global_instance()
+        self._server_registry = {
             FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
             FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,
             FlextLdapConstants.ServerTypes.OPENLDAP: FlextLdapServersOpenLDAP2Operations,
@@ -62,6 +68,7 @@ class FlextLdapServersFactory(FlextService[None]):
             FlextLdapConstants.ServerTypes.OUD: FlextLdapServersOUDOperations,
             FlextLdapConstants.ServerTypeAliases.ORACLE_OUD: FlextLdapServersOUDOperations,
             FlextLdapConstants.ServerTypes.AD: FlextLdapServersActiveDirectoryOperations,
+            FlextLdapConstants.ServerTypes.AD_SHORT: FlextLdapServersActiveDirectoryOperations,
             FlextLdapConstants.ServerTypeAliases.ACTIVE_DIRECTORY: FlextLdapServersActiveDirectoryOperations,
             FlextLdapConstants.Defaults.SERVER_TYPE: FlextLdapServersGenericOperations,
         }

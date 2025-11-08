@@ -431,7 +431,7 @@ class FlextLdap(FlextService[None]):
         changes: dict[str, str | list[str]],
     ) -> FlextResult[bool]:
         """Execute single add operation."""
-        return cast("FlextResult[bool]", self.client.add_entry(dn, changes))
+        return self.client.add_entry(dn, changes)
 
     def _execute_single_modify(
         self,
@@ -439,12 +439,9 @@ class FlextLdap(FlextService[None]):
         changes: dict[str, str | list[str]],
     ) -> FlextResult[bool]:
         """Execute single modify operation."""
-        return cast(
-            "FlextResult[bool]",
-            self.client.modify_entry(
-                dn,
-                cast("FlextLdapModels.EntryChanges", changes),
-            ),
+        return self.client.modify_entry(
+            dn,
+            cast("FlextLdapModels.EntryChanges", changes),
         )
 
     def _execute_batch_operations(
@@ -648,7 +645,7 @@ class FlextLdap(FlextService[None]):
             )
 
         # Convert entries
-        converted_list = []
+        converted_list: list[FlextLdifModels.Entry] = []
         for entry in entry_list:
             convert_result = self._entry_adapter.convert_entry_format(
                 entry,
@@ -666,7 +663,7 @@ class FlextLdap(FlextService[None]):
                 converted_list[0],
             )
         return FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]].ok(
-            cast("list[FlextLdifModels.Entry]", converted_list),
+            converted_list,
         )
 
     def exchange(
@@ -953,10 +950,7 @@ class FlextLdap(FlextService[None]):
         if result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(result.error)
 
-        entries = cast(
-            "list[FlextLdifModels.Entry]",
-            result.value if result.value is not None else [],
-        )
+        entries = result.value if result.value is not None else []
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def get_server_capabilities(

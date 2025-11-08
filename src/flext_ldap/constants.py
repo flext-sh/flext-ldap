@@ -102,13 +102,11 @@ class FlextLdapConstants(FlextLdifConstants):
         MAX_PAGE_SIZE_GENERIC: Final[int] = 1000
         MAX_PAGE_SIZE_AD: Final[int] = 100000
 
-    class Scopes:
-        """LDAP search scope constants (RFC 4511)."""
+    class Scopes(FlextLdifConstants.Scopes):
+        """LDAP search scope constants (RFC 4511) - extends FlextLdifConstants.Scopes.
 
-        BASE: Final[str] = "base"
-        ONELEVEL: Final[str] = "onelevel"
-        SUBTREE: Final[str] = "subtree"
-        CHILDREN: Final[str] = "children"
+        Inherits: BASE, ONELEVEL, SUBTREE, CHILDREN from parent class.
+        """
 
         # LDAP3 uppercase constants for library compatibility
         BASE_LDAP3: Final[str] = "BASE"
@@ -117,9 +115,9 @@ class FlextLdapConstants(FlextLdifConstants):
 
         # Scope mapping: RFC scope strings -> LDAP3 uppercase constants
         SCOPE_TO_LDAP3: Final[dict[str, str]] = {
-            BASE: BASE_LDAP3,
-            ONELEVEL: LEVEL_LDAP3,
-            SUBTREE: SUBTREE_LDAP3,
+            FlextLdifConstants.Scopes.BASE: BASE_LDAP3,
+            FlextLdifConstants.Scopes.ONELEVEL: LEVEL_LDAP3,
+            FlextLdifConstants.Scopes.SUBTREE: SUBTREE_LDAP3,
             "level": LEVEL_LDAP3,  # Alternative name for ONELEVEL
         }
 
@@ -139,8 +137,12 @@ class FlextLdapConstants(FlextLdifConstants):
     # ACL ATTRIBUTE NAMES
     # =========================================================================
 
-    class AclAttributes:
-        """ACL-related attribute names."""
+    class AclAttributes(FlextLdifConstants.AclAttributes):
+        """ACL-related attribute names - extends FlextLdifConstants.AclAttributes.
+
+        Inherits: ACI, ACLENTRY, ACLRIGHTS, ALL_ACL_ATTRIBUTES,
+                  FILTER_ACL_ATTRIBUTES from parent class.
+        """
 
         # Server-specific ACL attribute names
         ORCLACI: Final[str] = "orclaci"  # Oracle Internet Directory
@@ -174,16 +176,14 @@ class FlextLdapConstants(FlextLdifConstants):
     # ACL SUBJECT TYPES
     # =========================================================================
 
-    class AclSubjectTypes:
-        """ACL subject type constants."""
+    class AclSubjectTypes(FlextLdifConstants.AclSubjectTypes):
+        """ACL subject type constants - extends FlextLdifConstants.AclSubjectTypes.
 
-        USER: Final[str] = "user"
-        GROUP: Final[str] = "group"
-        DN: Final[str] = "dn"
-        SELF: Final[str] = "self"
-        ANONYMOUS: Final[str] = "anonymous"
-        AUTHENTICATED: Final[str] = "authenticated"
-        ANYONE: Final[str] = "anyone"
+        Inherits: USER, GROUP, DN_PREFIX, SELF, ANONYMOUS, AUTHENTICATED,
+                  PUBLIC, ROLE, ALL from parent class.
+
+        No additional LDAP-specific subject types at this time.
+        """
 
     # =========================================================================
     # ACL PERMISSION NAMES
@@ -676,21 +676,22 @@ class FlextLdapConstants(FlextLdifConstants):
     # SERVER TYPES - Server identification constants
     # =========================================================================
 
-    class ServerTypes:
+    class ServerTypes(FlextLdifConstants.ServerTypes):
         """LDAP server type identifiers extending FlextLdifConstants.
 
-        Inherits server types from FlextLdifConstants and adds LDAP-specific
-        server type identifiers for protocol-specific operations.
+        Inherits: GENERIC, OPENLDAP, OPENLDAP1, OPENLDAP2, OID, OUD, AD,
+                  DS_389 (DS389), APACHE, IBM_TIVOLI, NOVELL, RELAXED, RFC
+                  from parent class.
+
+        Also inherits utility methods: matches(), normalize(), and variant lists.
+
+        LDAP-specific additions:
+        - AD_SHORT: Short form "ad" for Active Directory (parent uses "active_directory")
         """
 
-        GENERIC: Final[str] = "generic"
-        OPENLDAP: Final[str] = "openldap"
-        OPENLDAP1: Final[str] = "openldap1"
-        OPENLDAP2: Final[str] = "openldap2"
-        OID: Final[str] = "oid"
-        OUD: Final[str] = "oud"
-        AD: Final[str] = "ad"
-        DS389: Final[str] = "ds389"
+        # LDAP-specific short form for Active Directory
+        # Parent class uses AD = "active_directory", but LDAP operations use "ad"
+        AD_SHORT: Final[str] = "ad"
 
     # =========================================================================
     # RETRY & TIMING CONSTANTS
@@ -998,6 +999,22 @@ class FlextLdapConstants(FlextLdifConstants):
             DSA = "DSA"
             SCHEMA = "SCHEMA"
             ALL = "ALL"
+
+        # LDAP3 get_info constants for library compatibility (Literal types for type safety)
+        ALL_LDAP3: Literal["ALL"] = "ALL"
+        DSA_LDAP3: Literal["DSA"] = "DSA"
+        NO_INFO_LDAP3: Literal["NO_INFO"] = "NO_INFO"
+        SCHEMA_LDAP3: Literal["SCHEMA"] = "SCHEMA"
+
+        # GetInfo mapping: GetInfoType enum -> LDAP3 Literal constants
+        GET_INFO_TO_LDAP3: Final[
+            dict[GetInfoType, Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]]
+        ] = {
+            GetInfoType.ALL: ALL_LDAP3,
+            GetInfoType.DSA: DSA_LDAP3,
+            GetInfoType.NO_INFO: NO_INFO_LDAP3,
+            GetInfoType.SCHEMA: SCHEMA_LDAP3,
+        }
 
         class ModeType(StrEnum):
             """LDAP IP mode values for connection configuration."""

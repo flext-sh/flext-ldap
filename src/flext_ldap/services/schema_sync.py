@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, override
+from typing import Protocol, cast, override
 
 from flext_core import FlextResult, FlextService
 from flext_ldif.services.parser import FlextLdifParser
@@ -19,6 +19,22 @@ from ldap3 import Connection
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.clients import FlextLdapClients
+
+
+class _NameWithValue(Protocol):
+    """Protocol for name objects with value attribute."""
+
+    @property
+    def value(self) -> str: ...
+
+
+class _SchemaObjectProtocol(Protocol):
+    """Protocol for schema objects with oid and name attributes."""
+
+    @property
+    def oid(self) -> str: ...
+    @property
+    def name(self) -> _NameWithValue | str: ...
 
 
 class FlextLdapSchemaSync(FlextService[dict[str, object]]):
@@ -177,39 +193,55 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
         definitions: list[dict[str, object]] = []
 
         # Extract attributes
-        attributes = parser_output.get("attributes", {})
+        attributes: dict[str, object] = (
+            parser_output.get("attributes", {})
+            if isinstance(parser_output, dict)
+            else {}
+        )
         if isinstance(attributes, dict):
             for attr_data in attributes.values():
                 if hasattr(attr_data, "oid") and hasattr(attr_data, "name"):
+                    # Cast to Protocol after hasattr check
+                    schema_obj = cast("_SchemaObjectProtocol", attr_data)
+                    # Extract name value safely (name is union of str | _NameWithValue)
+                    name_obj = schema_obj.name
                     name_str = (
-                        attr_data.name.value
-                        if hasattr(attr_data.name, "value")
-                        else str(attr_data.name)
+                        name_obj.value
+                        if not isinstance(name_obj, str) and hasattr(name_obj, "value")
+                        else str(name_obj)
                     )
                     definitions.append({
                         "type": FlextLdapConstants.SchemaDefinitionTypes.ATTRIBUTE_TYPE,
-                        "oid": attr_data.oid,
+                        "oid": schema_obj.oid,
                         "name": name_str,
-                        "definition": str(attr_data),
-                        "raw_line": f"( {attr_data.oid} NAME '{name_str}' ... )",
+                        "definition": str(schema_obj),
+                        "raw_line": f"( {schema_obj.oid} NAME '{name_str}' ... )",
                     })
 
         # Extract objectclasses
-        objectclasses = parser_output.get("objectclasses", {})
+        objectclasses: dict[str, object] = (
+            parser_output.get("objectclasses", {})
+            if isinstance(parser_output, dict)
+            else {}
+        )
         if isinstance(objectclasses, dict):
             for oc_data in objectclasses.values():
                 if hasattr(oc_data, "oid") and hasattr(oc_data, "name"):
+                    # Cast to Protocol after hasattr check
+                    schema_obj = cast("_SchemaObjectProtocol", oc_data)
+                    # Extract name value safely (name is union of str | _NameWithValue)
+                    name_obj = schema_obj.name
                     name_str = (
-                        oc_data.name.value
-                        if hasattr(oc_data.name, "value")
-                        else str(oc_data.name)
+                        name_obj.value
+                        if not isinstance(name_obj, str) and hasattr(name_obj, "value")
+                        else str(name_obj)
                     )
                     definitions.append({
                         "type": FlextLdapConstants.SchemaDefinitionTypes.OBJECT_CLASS,
-                        "oid": oc_data.oid,
+                        "oid": schema_obj.oid,
                         "name": name_str,
-                        "definition": str(oc_data),
-                        "raw_line": f"( {oc_data.oid} NAME '{name_str}' ... )",
+                        "definition": str(schema_obj),
+                        "raw_line": f"( {schema_obj.oid} NAME '{name_str}' ... )",
                     })
 
         return FlextResult[list[dict[str, object]]].ok(definitions)

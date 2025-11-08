@@ -14,6 +14,7 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
+from pydantic import PrivateAttr
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -43,6 +44,11 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
     - Generic LDAP servers
     """
 
+    # Private attributes (Pydantic v2 PrivateAttr for internal state)
+    _ldif: FlextLdif = PrivateAttr()
+    _detected_server_type: str | None = PrivateAttr(default=None)
+    _s_cache: dict[str, object] = PrivateAttr(default_factory=dict)
+
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize quirks adapter with Phase 1 context enrichment.
 
@@ -53,8 +59,8 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif()  # Use FlextLdif facade for all operations
-        self._detected_server_type: str | None = server_type
-        self.s_cache: dict[str, object] = {}
+        self._detected_server_type = server_type
+        self._s_cache = {}
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute method required by FlextService.

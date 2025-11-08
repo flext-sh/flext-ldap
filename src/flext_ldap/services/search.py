@@ -189,7 +189,7 @@ class FlextLdapSearch(FlextService[None]):
                 f"entries_count={len(connection.entries) if search_result else 'N/A'}, "
                 f"last_error={connection.last_error}",
             )
-            return search_result
+            return bool(search_result)
         except LDAPAttributeError as e:
             # Retry with all attributes on attribute error
             attr_str = str(attributes)[:40] if attributes else "None"
@@ -208,7 +208,7 @@ class FlextLdapSearch(FlextService[None]):
                 paged_cookie=paged_cookie,
             )
             self.logger.trace(f"Retry after exception: success={search_result}")
-            return search_result
+            return bool(search_result)
 
     def _handle_search_errors(
         self,
@@ -247,7 +247,7 @@ class FlextLdapSearch(FlextService[None]):
                 paged_cookie=paged_cookie,
             )
             self.logger.trace(f"Retry after error check: success={search_result}")
-            return search_result
+            return bool(search_result)
 
         return False
 

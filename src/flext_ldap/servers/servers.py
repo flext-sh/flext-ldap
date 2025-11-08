@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Self
+
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
@@ -31,6 +33,10 @@ class FlextLdapServers(FlextService[None]):
     PROTOCOL COMPLIANCE: Implements server-specific protocols through
     structural subtyping and factory-based delegation.
     """
+
+    def __new__(cls, _server_type: str | None = None) -> Self:
+        """Create new instance allowing server_type parameter."""
+        return super().__new__(cls)
 
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize unified server operations with Phase 1 context enrichment.
@@ -379,7 +385,7 @@ class FlextLdapServers(FlextService[None]):
     @classmethod
     def for_active_directory(cls) -> FlextLdapServers:
         """Create operations for Active Directory."""
-        return cls(FlextLdapConstants.ServerTypes.AD)
+        return cls(FlextLdapConstants.ServerTypes.AD_SHORT)
 
     @classmethod
     def generic(cls) -> FlextLdapServers:

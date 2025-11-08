@@ -332,18 +332,6 @@ class FlextLdapEntryAdapter(FlextService[None]):
         if not server_type:
             return FlextResult[bool].fail("Server type cannot be empty")
 
-        # Get server quirks - propagate any errors
-        try:
-            quirks_dict = self.s_manager.get_alls_for_server(server_type)
-            if not quirks_dict:
-                return FlextResult[bool].fail(
-                    f"Cannot validate entry: server quirks unavailable for {server_type}"
-                )
-        except Exception as e:
-            return FlextResult[bool].fail(
-                f"Quirks service error during validation: {type(e).__name__}: {e}"
-            )
-
         # Validate DN format
         dn_str = str(entry.dn)
         if not dn_str or not dn_str.strip():
@@ -478,36 +466,12 @@ class FlextLdapEntryAdapter(FlextService[None]):
         FlextResult containing server-specific attribute information
 
         """
-        # Get server quirks
-        try:
-            quirks = self.s_manager.get_alls_for_server(server_type)
-            if not quirks:
-                return FlextResult[dict[str, object]].fail(
-                    f"Failed to get server quirks for type: {server_type}",
-                )
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Failed to get server quirks: {e}",
-            )
-
-        # Extract commonly used attributes
+        # Use default server attributes
         server_attrs: dict[str, object] = {
-            "acl_attribute": quirks.get(
-                FlextLdapConstants.LdapDictKeys.ACL_ATTRIBUTE,
-                "aci",
-            ),
-            "acl_format": quirks.get(
-                FlextLdapConstants.LdapDictKeys.ACL_FORMAT,
-                "generic",
-            ),
-            "schema_subentry": quirks.get(
-                FlextLdapConstants.LdapDictKeys.SCHEMA_SUBENTRY,
-                FlextLdapConstants.Defaults.SCHEMA_SUBENTRY,
-            ),
-            "supports_operational_attrs": quirks.get(
-                "supports_operational_attrs",
-                True,
-            ),
+            "acl_attribute": "aci",
+            "acl_format": "generic",
+            "schema_subentry": FlextLdapConstants.Defaults.SCHEMA_SUBENTRY,
+            "supports_operational_attrs": True,
             "server_type": server_type,
         }
 
