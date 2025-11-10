@@ -173,35 +173,8 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         """AD uses SDDL format."""
         return FlextLdapConstants.AclFormat.SDDL
 
-    @override
-    def get_acls(
-        self,
-        _connection: Connection,
-        _dn: str,
-    ) -> FlextResult[list[FlextLdifModels.Acl]]:
-        """Get nTSecurityDescriptor from AD entry."""
-        try:
-            search_result = _connection.search(
-                search_base=_dn,
-                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
-                search_scope=cast(
-                    "FlextLdapConstants.Types.Ldap3Scope",
-                    FlextLdapConstants.Scopes.BASE_LDAP3,
-                ),
-                attributes=[FlextLdapConstants.AclAttributes.NT_SECURITY_DESCRIPTOR],
-            )
-
-            if not search_result or not _connection.entries:
-                return FlextResult[list[FlextLdifModels.Acl]].ok([])
-
-            # Return empty list - AD ACL parsing requires SDDL decoder in flext-ldif
-            return FlextResult[list[FlextLdifModels.Acl]].ok([])
-
-        except Exception as e:
-            self.logger.exception("AD ACL retrieval error", extra={"error": str(e)})
-            return FlextResult[list[FlextLdifModels.Acl]].fail(
-                f"AD ACL retrieval failed: {e}",
-            )
+    # get_acls() inherited from base class - uses get_acl_attribute_name()
+    # Base implementation adds connection bound check that was missing here
 
     @override
     def set_acls(

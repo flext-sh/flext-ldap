@@ -163,11 +163,7 @@ class TestFlextLdapQuirksIntegration:
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="dc=minimal,dc=com"),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={
-                        "objectClass": FlextLdifModels.AttributeValues(
-                            values=["dcObject"]
-                        )
-                    }
+                    attributes={"objectClass": ["dcObject"]}
                 ),
             )
         ]

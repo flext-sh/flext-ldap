@@ -242,17 +242,47 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         _connection: Connection,
         _dn: str,
     ) -> FlextResult[list[FlextLdifModels.Acl]]:
-        """Get ACLs for a given DN - default implementation.
+        """Get ACLs for a given DN - consolidated implementation.
 
-        Default implementation: returns empty list.
-        Override for server-specific ACL retrieval.
+        Uses get_acl_attribute_name() for server-specific attribute.
+        Searches the given DN for ACL entries and returns them.
+
+        Args:
+        _connection: Active LDAP connection
+        _dn: Distinguished name to search for ACLs
 
         Returns:
         FlextResult containing list of ACL entries
 
         """
-        # Default implementation returns empty list
-        return FlextResult[list[FlextLdifModels.Acl]].ok([])
+        try:
+            # Connection validation
+            if not _connection or not _connection.bound:
+                return FlextResult[list[FlextLdifModels.Acl]].fail(
+                    "Connection not bound",
+                )
+
+            # Search for ACLs using server-specific attribute name
+            search_result = _connection.search(
+                search_base=_dn,
+                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                search_scope=cast(
+                    "FlextLdapConstants.Types.Ldap3Scope",
+                    FlextLdapConstants.Scopes.BASE_LDAP3,
+                ),
+                attributes=[self.get_acl_attribute_name()],
+            )
+
+            # Handle no results
+            if not search_result or not _connection.entries:
+                return FlextResult[list[FlextLdifModels.Acl]].ok([])
+
+            # Return empty list - full ACL parsing requires server-specific parser in flext-ldif
+            return FlextResult[list[FlextLdifModels.Acl]].ok([])
+
+        except Exception as e:
+            self.logger.exception("Get ACLs error", extra={"error": str(e)})
+            return FlextResult[list[FlextLdifModels.Acl]].fail(f"Get ACLs failed: {e}")
 
     def set_acls(
         self,

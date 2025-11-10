@@ -52,21 +52,8 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_filter(filter_str: str | None) -> FlextResult[bool]:
-        """Centralized LDAP filter validation - ELIMINATE ALL DUPLICATION."""
-        if filter_str is None:
-            return FlextResult[bool].fail("Filter cannot be None")
-        if not filter_str or not filter_str.strip():
-            return FlextResult[bool].fail("Filter cannot be empty")
-
-        # Use regex for pattern validation
-        # LDAP filters must be enclosed in parentheses: (filter)
-        if not re.match(
-            FlextLdapConstants.RegexPatterns.FILTER_PATTERN,
-            filter_str.strip(),
-        ):
-            return FlextResult[bool].fail("Filter must be enclosed in parentheses")
-
-        return FlextResult[bool].ok(True)
+        """Centralized LDAP filter validation - delegates to unified validator."""
+        return FlextLdapValidations._validate_ldap_filter("Filter", filter_str)
 
     @classmethod
     def validate_attributes(
@@ -90,23 +77,8 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_server_uri(server_uri: str | None) -> FlextResult[bool]:
-        """Centralized server URI validation - ELIMINATE ALL DUPLICATION."""
-        if server_uri is None:
-            return FlextResult[bool].fail("URI cannot be None")
-        if not server_uri or not server_uri.strip():
-            return FlextResult[bool].fail("URI cannot be empty")
-
-        server_uri_stripped = server_uri.strip()
-
-        # Use regex for pattern validation
-        # LDAP URIs must start with ldap:// or ldaps://
-        if not re.match(
-            FlextLdapConstants.RegexPatterns.SERVER_URI_PATTERN,
-            server_uri_stripped,
-        ):
-            return FlextResult[bool].fail("URI must start with ldap:// or ldaps://")
-
-        return FlextResult[bool].ok(True)
+        """Centralized server URI validation - delegates to unified validator."""
+        return FlextLdapValidations._validate_ldap_uri("URI", server_uri)
 
     @staticmethod
     def validate_timeout(timeout: int | None) -> FlextResult[bool]:
@@ -134,35 +106,37 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_scope(scope: str | None) -> FlextResult[bool]:
-        """Centralized LDAP scope validation - LDAP-specific."""
-        if scope is None:
-            return FlextResult[bool].fail("Scope cannot be None")
-
-        valid_scopes = FlextLdapConstants.ValidationSets.VALID_SCOPES
-        if scope.lower() not in valid_scopes:
-            scopes_str = ", ".join(sorted(valid_scopes))
-            error_msg = f"Invalid scope: {scope}. Must be one of {scopes_str}"
-            return FlextResult[bool].fail(error_msg)
-
-        return FlextResult[bool].ok(True)
+        """Centralized LDAP scope validation - LDAP-specific using Python 3.13 pattern matching."""
+        match scope:
+            case None:
+                return FlextResult[bool].fail("Scope cannot be None")
+            case str() as scope_value:
+                valid_scopes = FlextLdapConstants.ValidationSets.VALID_SCOPES
+                if scope_value.lower() not in valid_scopes:
+                    scopes_str = ", ".join(sorted(valid_scopes))
+                    error_msg = (
+                        f"Invalid scope: {scope_value}. Must be one of {scopes_str}"
+                    )
+                    return FlextResult[bool].fail(error_msg)
+                return FlextResult[bool].ok(True)
+            case _:
+                return FlextResult[bool].fail("Scope must be a string")
 
     @staticmethod
     def validate_modify_operation(operation: str | None) -> FlextResult[bool]:
-        """Centralized LDAP modify operation validation - LDAP-specific."""
-        if operation is None:
-            return FlextResult[bool].fail("Operation cannot be None")
-
-        valid_operations = {
-            "add",
-            "delete",
-            "replace",
-        }
-        if operation.lower() not in valid_operations:
-            ops_str = ", ".join(sorted(valid_operations))
-            error_msg = f"Invalid operation: {operation}. Must be one of {ops_str}"
-            return FlextResult[bool].fail(error_msg)
-
-        return FlextResult[bool].ok(True)
+        """Centralized LDAP modify operation validation - LDAP-specific using Python 3.13 pattern matching."""
+        match operation:
+            case None:
+                return FlextResult[bool].fail("Operation cannot be None")
+            case str() as op_value if op_value.lower() in {"add", "delete", "replace"}:
+                return FlextResult[bool].ok(True)
+            case str() as op_value:
+                valid_operations = {"add", "delete", "replace"}
+                ops_str = ", ".join(sorted(valid_operations))
+                error_msg = f"Invalid operation: {op_value}. Must be one of {ops_str}"
+                return FlextResult[bool].fail(error_msg)
+            case _:
+                return FlextResult[bool].fail("Operation must be a string")
 
     @classmethod
     def validate_object_class(cls, object_class: str | None) -> FlextResult[bool]:
@@ -188,39 +162,125 @@ class FlextLdapValidations:
 
     @staticmethod
     def validate_password(password: str | None) -> FlextResult[bool]:
-        """Centralized password validation - ELIMINATE ALL DUPLICATION."""
-        if password is None:
-            return FlextResult[bool].fail("Password cannot be None")
-
-        min_length = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
-        max_length = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
-
-        if len(password) < min_length:
-            return FlextResult[bool].fail(
-                f"Password must be at least {min_length} characters",
-            )
-
-        if len(password) > max_length:
-            return FlextResult[bool].fail(
-                f"Password must be no more than {max_length} characters",
-            )
-
-        return FlextResult[bool].ok(True)
+        """Centralized password validation - delegates to unified validator."""
+        return FlextLdapValidations._validate_password("Password", password)
 
     @staticmethod
     def validate_connection_config(
         config: dict[str, object] | None,
     ) -> FlextResult[bool]:
-        """Centralized connection config validation - ELIMINATE ALL DUPLICATION."""
-        if config is None:
-            return FlextResult[bool].fail("Config cannot be None")
+        """Centralized connection config validation - ELIMINATE ALL DUPLICATION using Python 3.13 pattern matching."""
+        match config:
+            case None:
+                return FlextResult[bool].fail("Config cannot be None")
+            case dict() as config_dict:
+                required_fields = (
+                    FlextLdapConstants.ValidationSets.REQUIRED_CONNECTION_FIELDS
+                )
+                for field in required_fields:
+                    if field not in config_dict or config_dict[field] is None:
+                        return FlextResult[bool].fail(
+                            f"Missing required field: {field}"
+                        )
+                return FlextResult[bool].ok(True)
+            case _:
+                return FlextResult[bool].fail("Config must be a dictionary")
 
-        required_fields = FlextLdapConstants.ValidationSets.REQUIRED_CONNECTION_FIELDS
-        for field in required_fields:
-            if field not in config or config[field] is None:
-                return FlextResult[bool].fail(f"Missing required field: {field}")
-
+    @staticmethod
+    def _validate_required_string(param_name: str, value: object) -> FlextResult[bool]:
+        """Validate required string parameter."""
+        if value is None:
+            return FlextResult[bool].fail(f"{param_name} cannot be None")
+        if not isinstance(value, str) or not value or not value.strip():
+            return FlextResult[bool].fail(f"{param_name} cannot be empty")
         return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_non_negative_int(param_name: str, value: object) -> FlextResult[bool]:
+        """Validate non-negative integer parameter."""
+        if value is None:
+            return FlextResult[bool].fail(f"{param_name} cannot be None")
+        if not isinstance(value, int) or value < 0:
+            return FlextResult[bool].fail(f"{param_name} must be non-negative")
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_password(param_name: str, value: object) -> FlextResult[bool]:
+        """Validate password parameter."""
+        if value is None:
+            return FlextResult[bool].fail(f"{param_name} cannot be None")
+        if not isinstance(value, str):
+            return FlextResult[bool].fail(f"{param_name} must be a string")
+
+        pwd = value
+        if len(pwd) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
+            return FlextResult[bool].fail(
+                f"{param_name} must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH} characters"
+            )
+        if len(pwd) > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
+            return FlextResult[bool].fail(
+                f"{param_name} must be no more than {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH} characters"
+            )
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_ldap_uri(param_name: str, value: object) -> FlextResult[bool]:
+        """Validate LDAP URI parameter."""
+        if value is None:
+            return FlextResult[bool].fail(f"{param_name} cannot be None")
+        if not isinstance(value, str) or not value or not value.strip():
+            return FlextResult[bool].fail(f"{param_name} cannot be empty")
+
+        uri_value = value.strip()
+        if not re.match(FlextLdapConstants.RegexPatterns.SERVER_URI_PATTERN, uri_value):
+            return FlextResult[bool].fail(
+                f"{param_name} must start with ldap:// or ldaps://"
+            )
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_ldap_filter(param_name: str, value: object) -> FlextResult[bool]:
+        """Validate LDAP filter parameter."""
+        if value is None:
+            return FlextResult[bool].fail(f"{param_name} cannot be None")
+        if not isinstance(value, str) or not value or not value.strip():
+            return FlextResult[bool].fail(f"{param_name} cannot be empty")
+
+        filter_value = value.strip()
+        if not re.match(FlextLdapConstants.RegexPatterns.FILTER_PATTERN, filter_value):
+            return FlextResult[bool].fail(
+                f"{param_name} must be enclosed in parentheses"
+            )
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def validate_parameter_unified(
+        param_name: str,
+        value: object,
+        validation_type: str,
+    ) -> FlextResult[bool]:
+        """Unified parameter validation using dedicated validation methods.
+
+        Consolidates common validation patterns into a single method that
+        delegates to specific validation functions for better maintainability.
+        """
+        match validation_type:
+            case "required_string":
+                return FlextLdapValidations._validate_required_string(param_name, value)
+            case "non_negative_int":
+                return FlextLdapValidations._validate_non_negative_int(
+                    param_name, value
+                )
+            case "password":
+                return FlextLdapValidations._validate_password(param_name, value)
+            case "ldap_uri":
+                return FlextLdapValidations._validate_ldap_uri(param_name, value)
+            case "ldap_filter":
+                return FlextLdapValidations._validate_ldap_filter(param_name, value)
+            case _:
+                return FlextResult[bool].fail(
+                    f"Unsupported validation type: {validation_type}"
+                )
 
     # Field validators for Pydantic (raise exceptions)
 

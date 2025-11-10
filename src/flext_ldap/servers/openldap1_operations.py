@@ -9,16 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, override
+from typing import cast, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
+from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
-
-if TYPE_CHECKING:
-    from ldap3 import Connection
 
 
 class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):

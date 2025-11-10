@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Final, Literal, cast
+from typing import Final, Literal
 
 from flext_core import FlextConstants
 from flext_ldif import FlextLdifConstants
@@ -48,50 +48,46 @@ class FlextLdapConstants(FlextLdifConstants):
     # =========================================================================
 
     class Protocol:
-        """LDAP protocol-specific constants (RFC 4511)."""
+        """LDAP protocol defaults and URI helpers (RFC 4511)."""
 
-        LDAP: Final[str] = "ldap"
-        LDAPS: Final[str] = "ldaps"
+        LDAP_SCHEME: Final[str] = "ldap"
+        LDAPS_SCHEME: Final[str] = "ldaps"
+        LDAP: Final[str] = LDAP_SCHEME
+        LDAPS: Final[str] = LDAPS_SCHEME
         DEFAULT_PORT: Final[int] = 389
         DEFAULT_SSL_PORT: Final[int] = 636
         DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
         DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
         MAX_DESCRIPTION_LENGTH: Final[int] = 1024
+        LDAP_URI: Final[str] = "ldap://"
+        LDAPS_URI: Final[str] = "ldaps://"
+        URI_PREFIX_LDAP: Final[str] = LDAP_URI
+        URI_PREFIX_LDAPS: Final[str] = LDAPS_URI
+        URI_PATTERN: Final[str] = r"^ldaps?://"
 
-    class ModifyOperation:
-        """LDAP modify operations (RFC 4511).
+    class Protocols:
+        """Backward-compatible protocol namespace for legacy references."""
 
-        Public API constants for LDAP modify operations.
-        Re-exports ldap3 constants with FLEXT namespace for proper encapsulation.
+        LDAP: Final[str] = "ldap://"
+        LDAPS: Final[str] = "ldaps://"
 
-        Use these constants instead of importing ldap3 directly:
-        - FlextLdapConstants.ModifyOperation.ADD
-        - FlextLdapConstants.ModifyOperation.DELETE
-        - FlextLdapConstants.ModifyOperation.REPLACE
-        - FlextLdapConstants.ModifyOperation.INCREMENT
+    class ModifyOperation(StrEnum):
+        """Canonical LDAP modify operations (RFC 4511)."""
 
-        Example:
-            from flext_ldap import FlextLdap, FlextLdapConstants
+        ADD = str(MODIFY_ADD)
+        DELETE = str(MODIFY_DELETE)
+        REPLACE = str(MODIFY_REPLACE)
+        INCREMENT = "MODIFY_INCREMENT"
 
-            ldap_client = FlextLdap()
-            ldap_client.modify_entry(
-                dn="cn=schema",
-                changes={"attributeTypes": ["..."]},
-                operation=FlextLdapConstants.ModifyOperation.ADD
-            )
-
-        """
-
-        # Re-export ldap3 constants (strings in ldap3, typed as int in stubs)
-        ADD: Final[str] = cast("str", MODIFY_ADD)
-        DELETE: Final[str] = cast("str", MODIFY_DELETE)
-        REPLACE: Final[str] = cast("str", MODIFY_REPLACE)
-        # String constants for compatibility with string-based APIs
-        MODIFY_ADD_STR: Final[str] = "MODIFY_ADD"
-        MODIFY_DELETE_STR: Final[str] = "MODIFY_DELETE"
-        MODIFY_REPLACE_STR: Final[str] = "MODIFY_REPLACE"
-        MODIFY_INCREMENT_STR: Final[str] = "MODIFY_INCREMENT"
+        @classmethod
+        def is_valid(cls, value: str) -> bool:
+            """Return True when the provided value matches a supported operation."""
+            try:
+                cls(value)
+            except ValueError:
+                return False
+            return True
 
     class Connection:
         """LDAP connection-specific constants."""
@@ -221,6 +217,15 @@ class FlextLdapConstants(FlextLdifConstants):
         """Operation name constants."""
 
         BIND: Final[str] = "bind"
+        UNBIND: Final[str] = "unbind"
+        SEARCH: Final[str] = "search"
+        ADD: Final[str] = "add"
+        MODIFY: Final[str] = "modify"
+        DELETE: Final[str] = "delete"
+        COMPARE: Final[str] = "compare"
+        UPSERT: Final[str] = "upsert"
+        SCHEMA: Final[str] = "schema"
+        ACL: Final[str] = "acl"
 
     # =========================================================================
     # CAPABILITY NAMES
@@ -350,17 +355,6 @@ class FlextLdapConstants(FlextLdifConstants):
     # PROTOCOL/URI CONSTANTS
     # =========================================================================
 
-    class Protocols:
-        """LDAP protocol and URI constants."""
-
-        LDAP: Final[str] = "ldap://"
-        LDAPS: Final[str] = "ldaps://"
-        LDAP_PATTERN: Final[str] = r"^ldaps?://"
-
-        # Common URI patterns
-        URI_PREFIX_LDAP: Final[str] = "ldap://"
-        URI_PREFIX_LDAPS: Final[str] = "ldaps://"
-
     # =========================================================================
     # REGEX PATTERNS
     # =========================================================================
@@ -385,22 +379,6 @@ class FlextLdapConstants(FlextLdifConstants):
 
     # =========================================================================
     # DEFAULT VALUES (First definition - consolidated into parent Defaults later)
-    # =========================================================================
-    # Note: This class is a duplicate. Use the Defaults class at line 417 which
-    # properly inherits from FlextConstants.Defaults. This section kept for
-    # backward compatibility but may be removed in future refactoring.
-
-    class _LegacyDefaults:
-        """Legacy default values for LDAP operations (deprecated - use Defaults class below)."""
-
-        SERVER_TYPE: Final[str] = "generic"
-        OBJECT_CLASS_TOP: Final[str] = "top"
-        DEFAULT_TIMEOUT: Final[int] = 30
-        DEFAULT_PORT: Final[int] = 389
-        DEFAULT_PORT_SSL: Final[int] = 636
-        DEFAULT_PAGE_SIZE: Final[int] = 1000
-        SCHEMA_SUBENTRY: Final[str] = "cn=subschema"
-
     # =========================================================================
     # VALIDATION SETS
     # =========================================================================
@@ -1164,6 +1142,32 @@ class FlextLdapConstants(FlextLdifConstants):
         ACL_PERMISSION_NOT_SUPPORTED: Final[str] = "Perm '{permission}' not in {format}"
         ACL_FEATURE_LOSS: Final[str] = "Feature '{feature}' lost in {format}"
         ACL_SYNTAX_MISMATCH: Final[str] = "Syntax not translatable"
+
+    # =========================================================================
+    # ERROR MESSAGE CONSTANTS
+    # =========================================================================
+
+    class ErrorMessages:
+        """Error message constants for consistent error handling."""
+
+        # Connection errors
+        LDAP_CONNECTION_NOT_ESTABLISHED: Final[str] = "LDAP connection not established"
+        SERVER_CONNECTION_NOT_ESTABLISHED: Final[str] = (
+            "No server connection established"
+        )
+        CONNECTION_NOT_BOUND: Final[str] = "Connection not bound"
+        NOT_CONNECTED_TO_SERVER: Final[str] = "Not connected to LDAP server"
+
+        # Entry validation errors
+        ENTRY_DN_EMPTY: Final[str] = "Entry DN cannot be empty"
+        ENTRY_ATTRIBUTES_EMPTY: Final[str] = "Entry attributes cannot be empty"
+        ENTRY_MUST_HAVE_OBJECTCLASSES: Final[str] = "Entry must have object classes"
+        ENTRY_MUST_HAVE_VALID_DN: Final[str] = "Entry must have a valid DN"
+        ENTRY_MUST_HAVE_ATTRIBUTES: Final[str] = "Entry must have attributes"
+
+        # Operation errors
+        NO_ATTRIBUTES_PROVIDED: Final[str] = "No attributes provided for update"
+        NO_ROOT_DSE_FOUND: Final[str] = "No Root DSE found"
 
     # =========================================================================
     # VERSION CONSTANTS

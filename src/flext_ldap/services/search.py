@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdifModels
@@ -22,9 +22,6 @@ from pydantic import Field
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
-if TYPE_CHECKING:
-    from flext_ldap.services.clients import FlextLdapClients
 
 
 class FlextLdapSearch(FlextService[None]):
@@ -46,16 +43,10 @@ class FlextLdapSearch(FlextService[None]):
         description="Server-specific LDIF quirks handling mode for search operations",
     )
 
-    def __init__(self, parent: FlextLdapClients | None = None) -> None:
-        """Initialize LDAP search service with Phase 1 context enrichment.
-
-        Args:
-        parent: Optional parent client for shared state access
-
-        """
+    def __init__(self) -> None:
+        """Initialize LDAP search service with Phase 1 context enrichment."""
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
-        self._parent = parent
         # These will be set by the client that uses this service
         self._connection: Connection | None = None
 

@@ -169,38 +169,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         """Oracle OUD ACL format identifier."""
         return FlextLdapConstants.AclFormat.ORACLE
 
-    @override
-    def get_acls(
-        self,
-        _connection: Connection,
-        _dn: str,
-    ) -> FlextResult[list[FlextLdifModels.Acl]]:
-        """Get ds-privilege-name ACLs from Oracle OUD."""
-        try:
-            if not _connection or not _connection.bound:
-                return FlextResult[list[FlextLdifModels.Acl]].fail(
-                    "Connection not bound",
-                )
-
-            search_result = _connection.search(
-                search_base=_dn,
-                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
-                search_scope=cast(
-                    "FlextLdapConstants.Types.Ldap3Scope",
-                    FlextLdapConstants.Scopes.BASE_LDAP3,
-                ),
-                attributes=[FlextLdapConstants.AclAttributes.DS_PRIVILEGE_NAME],
-            )
-
-            if not search_result or not _connection.entries:
-                return FlextResult[list[FlextLdifModels.Acl]].ok([])
-
-            # Return empty list - full ACL parsing requires server-specific parser in flext-ldif
-            return FlextResult[list[FlextLdifModels.Acl]].ok([])
-
-        except Exception as e:
-            self.logger.exception("Get ACLs error", extra={"error": str(e)})
-            return FlextResult[list[FlextLdifModels.Acl]].fail(f"Get ACLs failed: {e}")
+    # get_acls() inherited from base class - uses get_acl_attribute_name()
 
     @override
     def set_acls(

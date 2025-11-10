@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 from dependency_injector import providers
 from flext_core import (
@@ -21,6 +21,7 @@ from flext_core import (
     FlextConstants,
     FlextExceptions,
     FlextResult,
+    FlextTypes,
     PortNumber,
     TimeoutSeconds,
 )
@@ -352,7 +353,7 @@ class FlextLdapConfig(FlextConfig):
     def __call__(
         self,
         key: str,
-    ) -> str | int | float | bool | list[Any] | dict[str, Any] | None:
+    ) -> FlextTypes.JsonValue:
         """Enhanced direct value access with LDAP-specific dot notation support.
 
         Extends FlextConfig.__call__ with LDAP-specific nested access patterns
@@ -382,7 +383,7 @@ class FlextLdapConfig(FlextConfig):
             expected_split_length: int = 2
             if len(parts) != expected_split_length:
                 return cast(
-                    "str | int | float | bool | list[Any] | dict[str, Any] | None",
+                    "FlextTypes.JsonValue",
                     super().__call__(key),
                 )
 
@@ -407,7 +408,7 @@ class FlextLdapConfig(FlextConfig):
 
         # Fall back to standard FlextConfig access
         return cast(
-            "str | int | float | bool | list[Any] | dict[str, Any] | None",
+            "FlextTypes.JsonValue",
             super().__call__(key),
         )
 

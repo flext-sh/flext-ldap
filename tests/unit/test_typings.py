@@ -48,10 +48,10 @@ class TestFlextLdapTypesIntegration:
         """Verify FlextLdapTypes uses FlextTypes dependencies."""
         # Verify Pydantic v2 refactoring removed simple type aliases
         # Now use native Python types: list[str], dict[str, object]
-        # Check for complex types that still exist
-        assert hasattr(FlextTypes, "IntList")
-        assert hasattr(FlextTypes, "FloatList")
-        assert hasattr(FlextTypes, "NestedDict")
+        # Check for complex types that actually exist in flext-core
+        assert hasattr(FlextTypes, "FlextResultType")
+        assert hasattr(FlextTypes, "GenericDetailsType")
+        assert hasattr(FlextTypes, "CachedObjectType")
 
     def test_uses_flextldap_constants_literal_types(self) -> None:
         """Verify FlextLdapTypes can access FlextLdapConstants.Types class."""
