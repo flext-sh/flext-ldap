@@ -107,9 +107,6 @@ class TestEntryAdapterUniversal:
             "active_directory",  # Fallback detection
         }  # Accept variants until quirks enhanced
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_entry_server_type_oid_orclaci(
         self, adapter_generic: FlextLdapEntryAdapter
     ) -> None:
@@ -175,9 +172,6 @@ class TestEntryAdapterUniversal:
             "active_directory",
         }  # Accept all valid detections
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_entry_server_type_ad_object_guid(
         self, adapter_generic: FlextLdapEntryAdapter
     ) -> None:
