@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import cast
 
 from flext_core import FlextResult, FlextService
@@ -19,6 +20,7 @@ from flext_ldif.services import (
     FlextLdifDn,
 )
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
+from pydantic import ValidationError
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
@@ -474,6 +476,39 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     # ENTRY OPERATIONS
     # =========================================================================
 
+    def _ensure_ldif_entry(
+        self,
+        entry: FlextLdifModels.Entry | Mapping[str, object],
+        *,
+        context: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Ensure entry inputs are validated Flext LDIF models."""
+        if isinstance(entry, FlextLdifModels.Entry):
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        if isinstance(entry, Mapping):
+            try:
+                validated_entry = FlextLdifModels.Entry.model_validate(entry)
+            except ValidationError as exc:
+                self.logger.exception(
+                    "Invalid entry payload for server operation",
+                    extra={"context": context, "error": str(exc)},
+                )
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"{context} failed: invalid entry payload: {exc}",
+                )
+
+            return FlextResult[FlextLdifModels.Entry].ok(validated_entry)
+
+        payload_type = type(entry).__name__
+        self.logger.error(
+            "Unsupported entry payload type",
+            extra={"context": context, "payload_type": payload_type},
+        )
+        return FlextResult[FlextLdifModels.Entry].fail(
+            f"{context} failed: unsupported entry payload type {payload_type}",
+        )
+
     def add_entry(
         self,
         connection: Connection,
@@ -808,19 +843,29 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
     def normalize_entry_for_server(
         self,
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for this server type.
 
-        Default implementation: delegates to normalize_entry().
-        Override for server-specific cross-server normalization.
+        Default implementation coerces raw payloads into Flext LDIF models and
+        delegates to normalize_entry(). Override for server-specific
+        cross-server normalization.
 
         Returns:
             FlextResult containing normalized entry
 
         """
-        return self.normalize_entry(entry)
+        ldif_entry_result = self._ensure_ldif_entry(
+            entry,
+            context="normalize_entry_for_server",
+        )
+        if ldif_entry_result.is_failure:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                ldif_entry_result.error,
+            )
+
+        return self.normalize_entry(ldif_entry_result.unwrap())
 
     def normalize_attribute_name(self, attribute_name: str) -> str:
         """Normalize LDAP attribute name per server conventions.

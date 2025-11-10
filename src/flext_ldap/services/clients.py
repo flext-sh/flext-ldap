@@ -45,6 +45,8 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldap.services.authentication import FlextLdapAuthentication
 from flext_ldap.services.search import FlextLdapSearch
 from flext_ldap.services.validations import FlextLdapValidations
@@ -1580,47 +1582,16 @@ class FlextLdapClients(FlextService[None]):
         if not self._detected_server_type:
             return None
         # Create server quirks based on detected type
-        return FlextLdapModels.ServerQuirks(
-            server_type=self._detected_server_type
-            or FlextLdapConstants.Defaults.SERVER_TYPE,
-            case_sensitive_dns=self._detected_server_type
-            == FlextLdapConstants.ServerTypes.AD,
-            case_sensitive_attributes=self._detected_server_type
-            == FlextLdapConstants.ServerTypes.AD,
-            supports_paged_results=self._detected_server_type
-            != FlextLdapConstants.ServerTypes.OPENLDAP1,
-            supports_vlv=self._detected_server_type
-            in {FlextLdapConstants.ServerTypes.OUD, FlextLdapConstants.ServerTypes.OID},
-            max_page_size=FlextLdapConstants.Connection.MAX_PAGE_SIZE_GENERIC
-            if self._detected_server_type != FlextLdapConstants.ServerTypes.AD
-            else FlextLdapConstants.Connection.MAX_PAGE_SIZE_AD,
-        )
-
-    def _create_user_from_entry_result(
-        self,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Create user from entry result (private helper method).
-
-        Modern Entry API: Entry is already validated by Pydantic during construction.
-        This method simply validates the entry is well-formed and returns it.
-        """
         try:
-            # Validate entry structure is correct (dn and attributes)
-            if not entry.dn or not entry.dn.value:
-                return FlextResult.fail(
-                    FlextLdapConstants.ErrorMessages.ENTRY_MUST_HAVE_VALID_DN
-                )
-
-            if not entry.attributes or not entry.attributes.attributes:
-                return FlextResult.fail(
-                    FlextLdapConstants.ErrorMessages.ENTRY_MUST_HAVE_ATTRIBUTES
-                )
-
-            # Entry is already valid - return it
-            return FlextResult.ok(entry)
-        except (AttributeError, ValueError) as e:
-            return FlextResult.fail(f"User creation failed: {e}")
+            return FlextLdapModels.ServerQuirks(
+                server_type=self._detected_server_type
+                or FlextLdapConstants.Defaults.SERVER_TYPE,
+                case_sensitive_dns=self._detected_server_type,
+            )
+        except Exception as e:
+            # This should not happen in normal operation, but log it
+            self.logger.warning(f"Failed to create server quirks: {e}")
+            return None
 
     def _validate_search_request(
         self,
@@ -1738,25 +1709,20 @@ class FlextLdapClients(FlextService[None]):
         connected LDAP server type.
 
         Returns:
-            FlextResult[dict[str, object]]: Server quirks information
+            FlextResult containing server quirks information
 
         """
         try:
-            if not self.is_connected:
+            if not self.connection:
                 return FlextResult[dict[str, object]].fail(
-                    FlextLdapConstants.ErrorMessages.NOT_CONNECTED_TO_SERVER,
+                    FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
                 )
 
-            # Get server type from connection
-            server_type = (
-                self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
-            )
-
-            # Build server info dictionary
-            server_info: dict[str, object] = {
-                "server_type": server_type,
-                "case_sensitive_dns": server_type == FlextLdapConstants.ServerTypes.AD,
-                "case_sensitive_attributes": server_type
+            server_info = {
+                "server_type": self._detected_server_type
+                or FlextLdapConstants.Defaults.SERVER_TYPE,
+                "quirks_mode": self.quirks_mode(),
+                "case_sensitive_attributes": self._detected_server_type
                 == FlextLdapConstants.ServerTypes.AD,
             }
 
@@ -1766,67 +1732,44 @@ class FlextLdapClients(FlextService[None]):
                 f"Failed to get server info: {e}",
             )
 
-    def get_server_attributes(self, capability: str) -> FlextResult[list[str]]:
-        """Get attributes specific to current LDAP server for a given capability.
+    def _get_server_operations(self) -> FlextResult[FlextLdapServersBaseOperations]:
+        """Get server operations instance for the detected server type."""
+        factory = FlextLdapServersFactory()
+        server_type = self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+        return factory.create_from_server_type(server_type)
 
-        Args:
-            capability: Capability name (e.g., "acl", "schema")
+    def discover_schema(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
+        """Discover LDAP schema from the connected server.
 
         Returns:
-            FlextResult[list[str]]: List of server-specific attributes
+            FlextResult containing schema discovery results
+
+        """
+        if not self.connection:
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+                FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
+            )
+
+        ops_result = self._get_server_operations()
+        if ops_result.is_failure:
+            return FlextResult[FlextLdifModels.SchemaDiscoveryResult].fail(
+                ops_result.error
+            )
+        return ops_result.unwrap().discover_schema(self.connection)
+
+    def validate_dn(self, dn: str) -> FlextResult[bool]:
+        """Validate DN format without LDAP server connection.
+
+        Args:
+            dn: DN string to validate
+
+        Returns:
+            FlextResult containing validation result
 
         """
         try:
-            if not self.is_connected:
-                return FlextResult[list[str]].fail(
-                    FlextLdapConstants.ErrorMessages.NOT_CONNECTED_TO_SERVER
-                )
-
-            # Return capability-specific attributes based on server type
-            server_type = (
-                self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
-            )
-
-            # Map capability to server-specific attributes
-            if capability == "acl":
-                if server_type == FlextLdapConstants.ServerTypes.AD:
-                    return FlextResult[list[str]].ok(["nTSecurityDescriptor"])
-                if server_type in {
-                    FlextLdapConstants.ServerTypes.OID,
-                    FlextLdapConstants.ServerTypes.OUD,
-                }:
-                    return FlextResult[list[str]].ok(["aci"])
-                return FlextResult[list[str]].ok(["olcAccess"])
-
-            return FlextResult[list[str]].ok([])
-        except Exception as e:
-            return FlextResult[list[str]].fail(
-                f"Failed to get server attributes: {e}",
-            )
-
-    def transform_entry_for_server(
-        self,
-        entry: FlextLdifModels.Entry,
-        _target_server_type: str,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Transform an LDIF entry for a different target LDAP server type.
-
-        Args:
-            entry: Entry to transform
-            _target_server_type: Target server type
-
-        Returns:
-            FlextResult[FlextLdifModels.Entry]: Transformed entry
-
-        """
-        try:
-            # For now, return the entry as-is
-            # Full transformation would require quirks integration
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to transform entry: {e}",
-            )
-
-
-__all__ = ["FlextLdapClients"]
+            # Use flext-ldif DistinguishedName validation
+            FlextLdifModels.DistinguishedName.create(dn)
+            return FlextResult[bool].ok(True)
+        except Exception:
+            return FlextResult[bool].ok(False)

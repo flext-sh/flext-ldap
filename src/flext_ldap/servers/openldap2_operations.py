@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import cast, override
 
 from flext_core import FlextResult
@@ -530,7 +531,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     @override
     def normalize_entry_for_server(
         self,
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for OpenLDAP 2.x server specifics.
@@ -547,9 +548,14 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         FlextResult containing normalized entry
 
         """
-        # Entry is already FlextLdifModels.Entry
-        # normalize_entry expects FlextLdifModels.Entry
-        ldif_entry = entry
+        # Ensure entry is validated FlextLdifModels.Entry
+        ensure_result = self._ensure_ldif_entry(
+            entry, context="normalize_entry_for_server"
+        )
+        if ensure_result.is_failure:
+            return ensure_result
+
+        ldif_entry = ensure_result.unwrap()
 
         # Reuse existing normalize_entry method which handles OpenLDAP 2.x specifics
         normalize_result = self.normalize_entry(ldif_entry)

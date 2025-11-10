@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_core import FlextConstants
+
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.services.validations import FlextLdapValidations
 
