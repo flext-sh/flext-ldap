@@ -293,7 +293,7 @@ class TestFlextLDAPAPIFullCoverage:
         self, shared_ldap_client: FlextLdapClients
     ) -> None:
         """API: Get server capabilities."""
-        result = shared_ldap_client.get_server_capabilities()
+        result = shared_ldap_client.get_server_info()
         assert isinstance(result, FlextResult)
         if result.is_success:
             assert result.data is not None

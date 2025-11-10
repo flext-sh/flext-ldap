@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import cast, override
 
 from flext_core import FlextResult
@@ -348,22 +349,18 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     @override
     def normalize_entry_for_server(
         self,
-        entry: FlextLdifModels.Entry,
+        entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Normalize entry for AD server specifics."""
-        # Entry is already FlextLdifModels.Entry
-        ldif_entry = entry
+        ldif_entry_result = self._ensure_ldif_entry(
+            entry,
+            context="Active Directory entry normalization",
+        )
+        if ldif_entry_result.is_failure:
+            return FlextResult[FlextLdifModels.Entry].fail(ldif_entry_result.error)
 
-        # Reuse existing normalize_entry method
-        normalize_result = self.normalize_entry(ldif_entry)
-        if normalize_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(normalize_result.error)
-
-        # Get normalized entry
-        normalized_ldif_entry = normalize_result.unwrap()
-
-        return FlextResult[FlextLdifModels.Entry].ok(normalized_ldif_entry)
+        return self.normalize_entry(ldif_entry_result.unwrap())
 
     @override
     def validate_entry_for_server(

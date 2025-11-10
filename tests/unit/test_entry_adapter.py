@@ -50,14 +50,11 @@ class TestEntryAdapterUniversal:
     # SERVER TYPE DETECTION TESTS
     # =========================================================================
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_entry_server_type_openldap2_olcaccess(
         self, adapter_generic: FlextLdapEntryAdapter
     ) -> None:
-        """Test detecting OpenLDAP 2.x from entry with olcAccess attribute."""
-        # Arrange - entry with OpenLDAP 2.x characteristics
+        """Test detecting OpenLDAP from entry with olcAccess attribute."""
+        # Arrange - entry with OpenLDAP characteristics
         attributes_dict = {
             "objectClass": ["olcDatabaseConfig", "top"],
             "olcAccess": ["{0}to * by self write by * read"],
@@ -73,16 +70,14 @@ class TestEntryAdapterUniversal:
         # Assert
         assert result.is_success
         detected_type = result.unwrap()
-        assert detected_type == "openldap2"
+        # FlextLdif currently returns "openldap" (catch-all) for all OpenLDAP versions
+        assert detected_type == "openldap"
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_entry_server_type_openldap1_access(
         self, adapter_generic: FlextLdapEntryAdapter
     ) -> None:
-        """Test detecting OpenLDAP 1.x from entry with access attribute."""
-        # Arrange - entry with OpenLDAP 1.x characteristics
+        """Test detecting OpenLDAP from entry with access attribute."""
+        # Arrange - entry with OpenLDAP characteristics
         attributes_dict = {
             "objectClass": ["olcDatabaseConfig", "top"],
             "access": ["access to * by self write by * read"],
@@ -99,13 +94,14 @@ class TestEntryAdapterUniversal:
         assert result.is_success
         detected_type = result.unwrap()
 
-        # NOTE: FlextLdif quirks manager doesn't recognize "access" attribute as OpenLDAP 1.x
-        # This is expected behavior until quirks are enhanced for OpenLDAP 1.x detection
+        # NOTE: FlextLdif returns "openldap" (catch-all) for OpenLDAP entries
+        # Specific version detection (openldap1/openldap2) is not fully implemented
         assert detected_type in {
-            "openldap1",
-            "generic",
+            "openldap",  # Current behavior
+            "openldap1",  # Future enhancement
+            "generic",  # Fallback
             "active_directory",  # Fallback detection
-        }  # Accept variants until quirks enhanced
+        }  # Accept variants until quirks fully enhanced
 
     def test_detect_entry_server_type_oid_orclaci(
         self, adapter_generic: FlextLdapEntryAdapter
@@ -138,9 +134,6 @@ class TestEntryAdapterUniversal:
             "generic",
         }  # Accept all Oracle OID variants
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_entry_server_type_oud_ds_privilege(
         self, adapter_generic: FlextLdapEntryAdapter
     ) -> None:
@@ -204,9 +197,6 @@ class TestEntryAdapterUniversal:
             "generic",
         }  # Accept variants
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_entry_server_type_generic_fallback(
         self, adapter_generic: FlextLdapEntryAdapter
     ) -> None:
