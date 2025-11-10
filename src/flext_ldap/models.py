@@ -263,7 +263,12 @@ class FlextLdapModels(FlextModels):
             return cls.DEFAULT_USER_ATTRIBUTES.copy()
 
     class SearchRequest(BaseModel):
-        """LDAP Search Request with parameters and Pydantic 2.11 validation."""
+        """LDAP Search Request with parameters and Pydantic 2.11 validation.
+
+        Uses __slots__ for memory efficiency in high-frequency LDAP operations.
+        """
+
+        __slots__ = ()  # Enable __slots__ for memory optimization
 
         # Default attribute constants (replicated from _SearchDefaults)
         DEFAULT_USER_ATTRIBUTES: ClassVar[list[str]] = [
@@ -552,7 +557,12 @@ class FlextLdapModels(FlextModels):
             return base_filter
 
     class SearchResponse(BaseModel):
-        """LDAP Search Response entity."""
+        """LDAP Search Response entity.
+
+        Uses __slots__ for memory efficiency in large result sets.
+        """
+
+        __slots__ = ()  # Enable __slots__ for memory optimization
 
         # Results - using Entry models for type-safe entries
         entries: list[FlextLdifModels.Entry] = Field(
@@ -786,7 +796,12 @@ class FlextLdapModels(FlextModels):
     # =========================================================================
 
     class ConnectionInfo(BaseModel):
-        """LDAP Connection Information entity."""
+        """LDAP Connection Information entity.
+
+        Uses __slots__ for memory efficiency in connection management.
+        """
+
+        __slots__ = ()  # Enable __slots__ for memory optimization
 
         # Connection details
         server: str = Field(

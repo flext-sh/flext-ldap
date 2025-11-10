@@ -384,6 +384,7 @@ class TestADOperationsGetAclsDetailed:
         """Test get_acls when search returns no entries."""
         ops = FlextLdapServersActiveDirectoryOperations()
         mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = True
         mock_conn.search.return_value = False
         mock_conn.entries = []
         result = ops.get_acls(mock_conn, "cn=test,dc=example,dc=com")
@@ -536,6 +537,7 @@ class TestADOperationsExceptionHandlingAndEdgeCases:
         """Test get_acls returns empty list."""
         ops = FlextLdapServersActiveDirectoryOperations()
         mock_conn = MagicMock(spec=Connection)
+        mock_conn.bound = True
         result = ops.get_acls(mock_conn, "cn=test,dc=example,dc=com")
         assert result.is_success
         assert result.unwrap() == []

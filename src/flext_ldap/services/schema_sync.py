@@ -498,7 +498,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
             changes: dict[str, list[tuple[str, list[str]]]] = {
                 schema_attribute: [
                     (
-                        FlextLdapConstants.ModifyOperation.MODIFY_ADD_STR,
+                        FlextLdapConstants.ModifyOperation.ADD,
                         [definition],
                     ),
                 ],

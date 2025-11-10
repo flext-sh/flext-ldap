@@ -109,7 +109,7 @@ class FlextLdapClients(FlextService[None]):
         # Server type detection for configuration
         self._detected_server_type: str | None = None
 
-        # Search scope constant - use string literal for Literal type compatibility
+        # Search scope constant - use literal string for type safety
         self._search_scope: FlextLdapConstants.Types.Ldap3Scope = "SUBTREE"
 
         # Lazy-loaded components: search/auth (substantial logic)
@@ -119,33 +119,34 @@ class FlextLdapClients(FlextService[None]):
         ) = None
 
     def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
-        """Get searcher with lazy initialization."""
-        if self._searcher is None:
-            searcher = FlextLdapSearch(parent=self)
-            # Set connection context if connection exists
-            if self._connection:
-                searcher.set_connection_context(self._connection)
-            self._searcher = cast(
-                "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
-                searcher,
-            )
-        # Type checker knows it's not None after the check above
+        """Get searcher with lazy initialization and type narrowing."""
+        if self._searcher is not None:
+            return self._searcher
+
+        searcher = FlextLdapSearch()
+        if self._connection:
+            searcher.set_connection_context(self._connection)
+        self._searcher = cast(
+            "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
+            searcher,
+        )
         return self._searcher
 
     def _get_authenticator(self) -> FlextLdapProtocols.Ldap.LdapAuthenticationProtocol:
-        """Get authenticator with lazy initialization."""
-        if self._authenticator is None:
-            auth = FlextLdapAuthentication()
-            auth.set_connection_context(
-                self._connection,
-                self._server,
-                cast("FlextLdapConfig", self._ldap_config),
-            )
-            self._authenticator = cast(
-                "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
-                auth,
-            )
-        # Type checker knows it's not None after the check above
+        """Get authenticator with lazy initialization and type narrowing."""
+        if self._authenticator is not None:
+            return self._authenticator
+
+        auth = FlextLdapAuthentication()
+        auth.set_connection_context(
+            self._connection,
+            self._server,
+            cast("FlextLdapConfig", self._ldap_config),
+        )
+        self._authenticator = cast(
+            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
+            auth,
+        )
         return self._authenticator
 
     @property
@@ -203,7 +204,7 @@ class FlextLdapClients(FlextService[None]):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
+        _exc_tb: types.TracebackType | None,
     ) -> Literal[False]:
         """Exit context manager - automatic connection cleanup.
 
@@ -213,13 +214,17 @@ class FlextLdapClients(FlextService[None]):
         Args:
         exc_type: Exception type if an exception occurred
         exc_val: Exception value if an exception occurred
-        exc_tb: Exception traceback if an exception occurred
+        _exc_tb: Exception traceback if an exception occurred - intentionally unused
 
         Returns:
         False to propagate exceptions (does not suppress)
 
         """
         if self.is_connected:
+            # Type narrowing: if is_connected is True, connection exists
+            if self._connection is None:
+                error_msg = "Connection should exist when is_connected is True"
+                raise RuntimeError(error_msg)
             result = self.unbind()
             if result.is_failure:
                 self.logger.warning(
@@ -475,7 +480,9 @@ class FlextLdapClients(FlextService[None]):
         """Get Root DSE attributes for server detection."""
         try:
             if not self._connection or not self._connection.bound:
-                return FlextResult[dict[str, object]].fail("Connection not bound")
+                return FlextResult[dict[str, object]].fail(
+                    FlextLdapConstants.ErrorMessages.CONNECTION_NOT_BOUND
+                )
 
             search_result = self._connection.search(
                 search_base="",
@@ -489,7 +496,9 @@ class FlextLdapClients(FlextService[None]):
             )
 
             if not search_result or not self._connection.entries:
-                return FlextResult[dict[str, object]].fail("No Root DSE found")
+                return FlextResult[dict[str, object]].fail(
+                    FlextLdapConstants.ErrorMessages.NO_ROOT_DSE_FOUND
+                )
 
             entry = self._connection.entries[0]
             attrs: dict[str, object] = {}
@@ -555,11 +564,15 @@ class FlextLdapClients(FlextService[None]):
         """Bind to LDAP server with specified credentials."""
         try:
             if not self._connection:
-                return FlextResult[bool].fail("LDAP connection not established")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED
+                )
 
             # Create new connection with provided credentials
             if not self._server:
-                return FlextResult[bool].fail("No server connection established")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.SERVER_CONNECTION_NOT_ESTABLISHED
+                )
 
             bind_dn_str = (
                 bind_dn.value
@@ -631,7 +644,9 @@ class FlextLdapClients(FlextService[None]):
     def test_connection(self) -> FlextResult[bool]:
         """Test LDAP connection."""
         if not self.is_connected:
-            return FlextResult[bool].fail("LDAP connection not established")
+            return FlextResult[bool].fail(
+                FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED
+            )
 
         try:
             if self._connection:
@@ -849,7 +864,7 @@ class FlextLdapClients(FlextService[None]):
 
         if not self._connection:
             return FlextResult[FlextLdifModels.Entry | None].fail(
-                "LDAP connection not established",
+                FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
             )
         return searcher.search_one(search_base, filter_str, attributes)
 
@@ -860,7 +875,7 @@ class FlextLdapClients(FlextService[None]):
         """Get user by DN - uses search_one."""
         if not self._connection:
             return FlextResult[FlextLdifModels.Entry | None].fail(
-                "LDAP connection not established",
+                FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
             )
         dn_str = dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
         return self._get_searcher().search_one(
@@ -876,7 +891,7 @@ class FlextLdapClients(FlextService[None]):
         """Get group by DN - uses search_one."""
         if not self._connection:
             return FlextResult[FlextLdifModels.Entry | None].fail(
-                "LDAP connection not established",
+                FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
             )
         dn_str = dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
         return self._get_searcher().search_one(
@@ -1028,7 +1043,9 @@ class FlextLdapClients(FlextService[None]):
         """
         try:
             if not self.connection:
-                return FlextResult[bool].fail("LDAP connection not established")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED
+                )
 
             # Determine effective quirks mode
             effectives_mode = quirks_mode or self.s_mode
@@ -1187,7 +1204,9 @@ class FlextLdapClients(FlextService[None]):
         """
         try:
             if not self.connection:
-                return FlextResult[bool].fail("LDAP connection not established")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED
+                )
 
             # Use provided quirks_mode or fall back to instance quirks_mode
             effectives_mode = quirks_mode or self.s_mode
@@ -1258,7 +1277,9 @@ class FlextLdapClients(FlextService[None]):
         """
         try:
             if not self.connection:
-                return FlextResult[bool].fail("LDAP connection not established")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED
+                )
 
             # Use provided quirks_mode or fall back to instance quirks_mode
             effectives_mode = quirks_mode or self.s_mode
@@ -1318,10 +1339,14 @@ class FlextLdapClients(FlextService[None]):
         # Basic validation (skip in relaxed mode)
         if effectives_mode != FlextLdapConstants.Types.QuirksMode.RELAXED:
             if not entry.dn:
-                return FlextResult[bool].fail("Entry DN cannot be empty")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.ENTRY_DN_EMPTY
+                )
 
             if not entry.attributes:
-                return FlextResult[bool].fail("Entry attributes cannot be empty")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.ENTRY_ATTRIBUTES_EMPTY
+                )
 
             # DN format validation using flext-ldif
             dn_validation = FlextLdapValidations.validate_dn(entry.dn.value, "Entry DN")
@@ -1335,7 +1360,9 @@ class FlextLdapClients(FlextService[None]):
                 else None
             )
             if not object_classes:
-                return FlextResult[bool].fail("Entry must have object classes")
+                return FlextResult[bool].fail(
+                    FlextLdapConstants.ErrorMessages.ENTRY_MUST_HAVE_OBJECTCLASSES
+                )
 
         return FlextResult[bool].ok(True)
 
@@ -1352,7 +1379,7 @@ class FlextLdapClients(FlextService[None]):
         try:
             if not self.connection:
                 return FlextResult[FlextLdapModels.ServerInfo].fail(
-                    "LDAP connection not established",
+                    FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
                 )
 
             server_info = self.connection.server.info
@@ -1500,7 +1527,9 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[bool]:
         """Update user attributes using LDAP modify operation."""
         if not attributes:
-            return FlextResult[bool].fail("No attributes provided for update")
+            return FlextResult[bool].fail(
+                FlextLdapConstants.ErrorMessages.NO_ATTRIBUTES_PROVIDED
+            )
         changes_dict: dict[str, object] = {
             attr_name: [
                 (
@@ -1520,7 +1549,9 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[bool]:
         """Update group attributes using LDAP modify operation."""
         if not attributes:
-            return FlextResult[bool].fail("No attributes provided for update")
+            return FlextResult[bool].fail(
+                FlextLdapConstants.ErrorMessages.NO_ATTRIBUTES_PROVIDED
+            )
         changes_dict: dict[str, object] = {
             attr_name: [
                 (
@@ -1577,10 +1608,14 @@ class FlextLdapClients(FlextService[None]):
         try:
             # Validate entry structure is correct (dn and attributes)
             if not entry.dn or not entry.dn.value:
-                return FlextResult.fail("Entry must have a valid DN")
+                return FlextResult.fail(
+                    FlextLdapConstants.ErrorMessages.ENTRY_MUST_HAVE_VALID_DN
+                )
 
             if not entry.attributes or not entry.attributes.attributes:
-                return FlextResult.fail("Entry must have attributes")
+                return FlextResult.fail(
+                    FlextLdapConstants.ErrorMessages.ENTRY_MUST_HAVE_ATTRIBUTES
+                )
 
             # Entry is already valid - return it
             return FlextResult.ok(entry)
@@ -1709,7 +1744,7 @@ class FlextLdapClients(FlextService[None]):
         try:
             if not self.is_connected:
                 return FlextResult[dict[str, object]].fail(
-                    "Not connected to LDAP server",
+                    FlextLdapConstants.ErrorMessages.NOT_CONNECTED_TO_SERVER,
                 )
 
             # Get server type from connection
@@ -1743,7 +1778,9 @@ class FlextLdapClients(FlextService[None]):
         """
         try:
             if not self.is_connected:
-                return FlextResult[list[str]].fail("Not connected to LDAP server")
+                return FlextResult[list[str]].fail(
+                    FlextLdapConstants.ErrorMessages.NOT_CONNECTED_TO_SERVER
+                )
 
             # Return capability-specific attributes based on server type
             server_type = (

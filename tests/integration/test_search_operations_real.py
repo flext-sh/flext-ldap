@@ -16,6 +16,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import FlextLdapClients
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.services.search import FlextLdapSearch
 
 # Integration tests - require Docker LDAP server from conftest.py
@@ -209,7 +210,9 @@ class TestFlextLdapSearchRealOperations:
         )
 
         assert result.is_failure
-        assert "LDAP connection not established" in (result.error or "")
+        assert FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED in (
+            result.error or ""
+        )
 
     def test_search_with_invalid_base_dn(
         self, shared_ldap_client: FlextLdapClients
@@ -308,7 +311,9 @@ class TestFlextLdapSearchOneOperation:
         )
 
         assert result.is_failure
-        assert "LDAP connection not established" in (result.error or "")
+        assert FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED in (
+            result.error or ""
+        )
 
 
 @pytest.mark.integration
@@ -388,7 +393,9 @@ class TestFlextLdapUserOperations:
         result = search_service.get_user("cn=user,dc=example,dc=com")
 
         assert result.is_failure
-        assert "LDAP connection not established" in (result.error or "")
+        assert FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED in (
+            result.error or ""
+        )
 
     @pytest.mark.xfail(reason="Docker LDAP setup may not have admin user populated")
     def test_user_exists_for_existing_user(
@@ -540,7 +547,9 @@ class TestFlextLdapGroupOperations:
         result = search_service.get_group("cn=group,dc=example,dc=com")
 
         assert result.is_failure
-        assert "LDAP connection not established" in (result.error or "")
+        assert FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED in (
+            result.error or ""
+        )
 
     def test_group_exists_for_existing_group(
         self, shared_ldap_client: FlextLdapClients

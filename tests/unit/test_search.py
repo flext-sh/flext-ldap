@@ -35,12 +35,6 @@ class TestFlextLdapSearchInitialization:
         assert isinstance(search, FlextLdapSearch)
 
     @pytest.mark.unit
-    def test_search_service_with_parent_none(self) -> None:
-        """Test search service can be instantiated with parent=None."""
-        search = FlextLdapSearch(parent=None)
-        assert search is not None
-
-    @pytest.mark.unit
     def test_search_service_has_logger(self) -> None:
         """Test search service inherits logger from FlextService."""
         search = FlextLdapSearch()

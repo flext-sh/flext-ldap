@@ -12,16 +12,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar
 
 from flext_core import FlextResult
 
-# Covariant type variable for Repository return types
-T_co = TypeVar("T_co", covariant=True)
-
-# Contravariant type variables for input parameters
-T_in = TypeVar("T_in")
-ID_Type = TypeVar("ID_Type")
+# Type parameters using PEP 695 syntax (Python 3.12+)
+type T_co = object  # Covariant type variable for Repository return types
+type T_in = object  # Contravariant type variables for input parameters
+type ID_Type = object
 
 
 class RepositoryBase[T_co](ABC):

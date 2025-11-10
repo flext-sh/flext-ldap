@@ -20,12 +20,12 @@ class TestRealLdifReadOperations:
     def test_parse_sample_user_ldif_to_entry(self, shared_ldif_data: str) -> None:
         """Test parsing LDIF user entry string to FlextLdif Entry model."""
         # Build Entry from LDIF manually with correct structure
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["inetOrgPerson"]),
-            "uid": FlextLdifModels.AttributeValues(values=["john.doe"]),
-            "cn": FlextLdifModels.AttributeValues(values=["John Doe"]),
-            "sn": FlextLdifModels.AttributeValues(values=["Doe"]),
-            "mail": FlextLdifModels.AttributeValues(values=["john.doe@flext.local"]),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson"],
+            "uid": ["john.doe"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
+            "mail": ["john.doe@flext.local"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -37,23 +37,17 @@ class TestRealLdifReadOperations:
 
         # Verify entry was created correctly
         assert entry.dn.value == "uid=john.doe,ou=people,dc=flext,dc=local"
-        assert entry.attributes.attributes["uid"].values == ["john.doe"]
-        assert entry.attributes.attributes["mail"].values == ["john.doe@flext.local"]
+        assert entry.attributes.attributes["uid"] == ["john.doe"]
+        assert entry.attributes.attributes["mail"] == ["john.doe@flext.local"]
 
     def test_parse_sample_group_ldif_to_entry(self) -> None:
         """Test parsing LDIF group entry to FlextLdif Entry model."""
         # Build group Entry with correct multi-valued attributes
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["groupOfNames"]),
-            "cn": FlextLdifModels.AttributeValues(values=["testgroup"]),
-            "description": FlextLdifModels.AttributeValues(
-                values=["Test group for testing"]
-            ),
-            "member": FlextLdifModels.AttributeValues(
-                values=[
-                    "uid=john.doe,ou=people,dc=flext,dc=local",
-                ]
-            ),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["groupOfNames"],
+            "cn": ["testgroup"],
+            "description": ["Test group for testing"],
+            "member": ["uid=john.doe,ou=people,dc=flext,dc=local"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -65,8 +59,8 @@ class TestRealLdifReadOperations:
 
         # Verify group entry
         assert entry.dn.value == "cn=testgroup,ou=groups,dc=flext,dc=local"
-        assert entry.attributes.attributes["cn"].values == ["testgroup"]
-        assert len(entry.attributes.attributes["member"].values) == 1
+        assert entry.attributes.attributes["cn"] == ["testgroup"]
+        assert len(entry.attributes.attributes["member"]) == 1
 
     def test_multi_valued_attributes_as_lists(
         self, sample_user: FlextLdifModels.Entry
@@ -81,13 +75,11 @@ class TestRealLdifReadOperations:
 
     def test_ldif_entry_with_multiple_object_classes(self) -> None:
         """Test LDIF entry with multiple objectClass values."""
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["top", "inetOrgPerson", "person"]
-            ),
-            "uid": FlextLdifModels.AttributeValues(values=["testuser"]),
-            "cn": FlextLdifModels.AttributeValues(values=["Test User"]),
-            "sn": FlextLdifModels.AttributeValues(values=["User"]),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["top", "inetOrgPerson", "person"],
+            "uid": ["testuser"],
+            "cn": ["Test User"],
+            "sn": ["User"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -98,7 +90,7 @@ class TestRealLdifReadOperations:
         )
 
         # Verify multiple objectClass values
-        object_classes = entry.attributes.attributes["objectClass"].values
+        object_classes = entry.attributes.attributes["objectClass"]
         assert len(object_classes) == 3
         assert "top" in object_classes
         assert "inetOrgPerson" in object_classes
@@ -159,12 +151,12 @@ class TestRealLdifRoundTrip:
         """Test round-trip for user entry consistency."""
         # Step 1: Create Entry from fixture data
         dn = "uid=roundtrip-user,ou=people,dc=flext,dc=local"
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["inetOrgPerson"]),
-            "uid": FlextLdifModels.AttributeValues(values=["roundtrip-user"]),
-            "cn": FlextLdifModels.AttributeValues(values=["Roundtrip User"]),
-            "sn": FlextLdifModels.AttributeValues(values=["User"]),
-            "mail": FlextLdifModels.AttributeValues(values=["roundtrip@example.com"]),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson"],
+            "uid": ["roundtrip-user"],
+            "cn": ["Roundtrip User"],
+            "sn": ["User"],
+            "mail": ["roundtrip@example.com"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -177,7 +169,7 @@ class TestRealLdifRoundTrip:
         ldif_lines.extend(
             f"{attr_name}: {val}"
             for attr_name, attr_val in entry.attributes.attributes.items()
-            for val in attr_val.values
+            for val in attr_val
         )
 
         ldif_output = "\n".join(ldif_lines)
@@ -190,15 +182,13 @@ class TestRealLdifRoundTrip:
     def test_roundtrip_group_entry(self) -> None:
         """Test round-trip for group entry consistency."""
         dn = "cn=roundtrip-group,ou=groups,dc=flext,dc=local"
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["groupOfNames"]),
-            "cn": FlextLdifModels.AttributeValues(values=["roundtrip-group"]),
-            "member": FlextLdifModels.AttributeValues(
-                values=[
-                    "uid=user1,ou=people,dc=flext,dc=local",
-                    "uid=user2,ou=people,dc=flext,dc=local",
-                ]
-            ),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["groupOfNames"],
+            "cn": ["roundtrip-group"],
+            "member": [
+                "uid=user1,ou=people,dc=flext,dc=local",
+                "uid=user2,ou=people,dc=flext,dc=local",
+            ],
         }
 
         entry = FlextLdifModels.Entry(
@@ -211,7 +201,7 @@ class TestRealLdifRoundTrip:
         ldif_lines.extend(
             f"{attr_name}: {val}"
             for attr_name, attr_val in entry.attributes.attributes.items()
-            for val in attr_val.values
+            for val in attr_val
         )
 
         ldif_output = "\n".join(ldif_lines)
@@ -229,11 +219,11 @@ class TestRealLdifServerQuirks:
     def test_openldap_attribute_handling(self) -> None:
         """Test OpenLDAP-specific attribute handling in LDIF."""
         # OpenLDAP uses standard LDIF format
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["inetOrgPerson"]),
-            "uid": FlextLdifModels.AttributeValues(values=["openldap-user"]),
-            "cn": FlextLdifModels.AttributeValues(values=["OpenLDAP User"]),
-            "sn": FlextLdifModels.AttributeValues(values=["User"]),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson"],
+            "uid": ["openldap-user"],
+            "cn": ["OpenLDAP User"],
+            "sn": ["User"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -250,16 +240,12 @@ class TestRealLdifServerQuirks:
     def test_oracle_oid_attribute_handling(self) -> None:
         """Test Oracle OID-specific LDIF handling."""
         # Oracle OID supports standard LDIF with extended attributes
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["inetOrgPerson", "organizationalPerson"]
-            ),
-            "uid": FlextLdifModels.AttributeValues(values=["oracle-user"]),
-            "cn": FlextLdifModels.AttributeValues(values=["Oracle OID User"]),
-            "sn": FlextLdifModels.AttributeValues(values=["User"]),
-            "orclCommonname": FlextLdifModels.AttributeValues(
-                values=["Oracle OID User"]
-            ),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson", "organizationalPerson"],
+            "uid": ["oracle-user"],
+            "cn": ["Oracle OID User"],
+            "sn": ["User"],
+            "orclCommonname": ["Oracle OID User"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -275,12 +261,12 @@ class TestRealLdifServerQuirks:
     def test_oracle_oud_attribute_handling(self) -> None:
         """Test Oracle Unified Directory LDIF handling."""
         # Oracle OUD supports standard LDIF with unified attributes
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["inetOrgPerson"]),
-            "uid": FlextLdifModels.AttributeValues(values=["oud-user"]),
-            "cn": FlextLdifModels.AttributeValues(values=["Oracle OUD User"]),
-            "sn": FlextLdifModels.AttributeValues(values=["User"]),
-            "ds-privilege-name": FlextLdifModels.AttributeValues(values=["admin"]),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson"],
+            "uid": ["oud-user"],
+            "cn": ["Oracle OUD User"],
+            "sn": ["User"],
+            "ds-privilege-name": ["admin"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -338,14 +324,10 @@ class TestRealDockerLdifDataStructures:
     def test_ldif_multi_valued_attributes_for_docker(self) -> None:
         """Test multi-valued LDIF attributes for Docker LDAP server."""
         # Create entry with multiple values per attribute
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(
-                values=["inetOrgPerson", "organizationalPerson"]
-            ),
-            "uid": FlextLdifModels.AttributeValues(values=["multivalue-test"]),
-            "mail": FlextLdifModels.AttributeValues(
-                values=["test1@flext.local", "test2@flext.local", "test3@flext.local"]
-            ),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson", "organizationalPerson"],
+            "uid": ["multivalue-test"],
+            "mail": ["test1@flext.local", "test2@flext.local", "test3@flext.local"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -356,19 +338,19 @@ class TestRealDockerLdifDataStructures:
         )
 
         # Verify LDIF entry has correct multi-valued structure
-        assert len(entry.attributes.attributes["mail"].values) == 3
-        assert entry.attributes.attributes["mail"].values[0] == "test1@flext.local"
-        assert len(entry.attributes.attributes["objectClass"].values) == 2
+        assert len(entry.attributes.attributes["mail"]) == 3
+        assert entry.attributes.attributes["mail"][0] == "test1@flext.local"
+        assert len(entry.attributes.attributes["objectClass"]) == 2
 
     def test_docker_ldap_ldif_format_compliance(self) -> None:
         """Test LDIF format generation complies with RFC 2849 for Docker LDAP."""
         # Create an entry compatible with all LDAP server types
-        attributes_dict: dict[str, FlextLdifModels.AttributeValues] = {
-            "objectClass": FlextLdifModels.AttributeValues(values=["inetOrgPerson"]),
-            "uid": FlextLdifModels.AttributeValues(values=["compliance-test"]),
-            "cn": FlextLdifModels.AttributeValues(values=["Compliance Test"]),
-            "sn": FlextLdifModels.AttributeValues(values=["Test"]),
-            "mail": FlextLdifModels.AttributeValues(values=["compliance@example.com"]),
+        attributes_dict: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson"],
+            "uid": ["compliance-test"],
+            "cn": ["Compliance Test"],
+            "sn": ["Test"],
+            "mail": ["compliance@example.com"],
         }
 
         entry = FlextLdifModels.Entry(
@@ -383,7 +365,7 @@ class TestRealDockerLdifDataStructures:
         ldif_lines.extend(
             f"{attr_name}: {val}"
             for attr_name, attr_val in entry.attributes.attributes.items()
-            for val in attr_val.values
+            for val in attr_val
         )
         ldif_output = "\n".join(ldif_lines)
 

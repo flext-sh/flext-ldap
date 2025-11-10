@@ -30,6 +30,18 @@ from flext_ldap.services.clients import FlextLdapClients
 from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.services.servers import FlextLdapServersService
 
+# Type aliases for handler message types and common return types
+HandlerMessageType = (
+    str
+    | type[FlextLdapModels.SearchRequest]
+    | type[FlextLdapModels.SearchResponse]
+    | type[FlextLdifModels.Entry]
+)
+
+# Type aliases to eliminate cast() repetition (DRY principle)
+SearchResultType = FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None
+OperationResultType = bool | list[bool]
+
 
 class FlextLdap(FlextService[None]):
     """Consolidated LDAP operations with FLEXT integration.
@@ -94,9 +106,17 @@ class FlextLdap(FlextService[None]):
         return cls._instance
 
     @classmethod
-    def create(cls) -> FlextLdap:
-        """Factory method to create FlextLdap instance."""
-        return cls()
+    def create(cls, config: FlextLdapConfig | None = None) -> FlextLdap:
+        """Create new FlextLdap instance (factory method).
+
+        Args:
+            config: Optional LDAP configuration.
+
+        Returns:
+            New FlextLdap instance.
+
+        """
+        return cls(config=config)
 
     @property
     def config(self) -> FlextLdapConfig:
@@ -108,43 +128,50 @@ class FlextLdap(FlextService[None]):
         """Get FlextLdif singleton instance for deep LDIF integration."""
         return self._ldif
 
-    def _lazy_init(self, attr_name: str, factory: Callable[[], object]) -> object:
-        """Unified lazy initialization pattern using FlextContainer-like pattern.
+    def _lazy_init[T_lazy](
+        self,
+        attr_name: str,
+        factory: Callable[[], T_lazy],
+    ) -> T_lazy:
+        """Advanced lazy initialization using Python 3.13 generics and type safety.
 
-        Eliminates 4 repetitive lazy-load properties with single unified method.
+        Unified lazy initialization pattern with full type safety and generic support.
+        Eliminates repetitive lazy-load properties while maintaining type safety.
+
+        Uses type parameters (PEP 695) for advanced generic programming patterns.
         """
-        attr = getattr(self, f"_{attr_name}", None)
+        # Get attribute with proper type narrowing
+        attr: T_lazy | None = getattr(self, f"_{attr_name}", None)
+
         if attr is None:
+            # Factory execution with type safety
             attr = factory()
+            # Set attribute with type preservation
             setattr(self, f"_{attr_name}", attr)
+
+        # Type narrowing ensures non-None return
         return attr
 
     @property
     def client(self) -> FlextLdapClients:
-        """Get LDAP client instance."""
-        return cast(
-            "FlextLdapClients",
-            self._lazy_init("client", lambda: FlextLdapClients(config=self._config)),
-        )
+        """Get LDAP client instance with advanced generic lazy initialization."""
+        return self._lazy_init("client", lambda: FlextLdapClients(config=self._config))
 
     @property
     def servers(self) -> FlextLdapServersService:
-        """Get server operations instance."""
-        return cast(
-            "FlextLdapServersService",
-            self._lazy_init("servers", FlextLdapServersService),
-        )
+        """Get server operations instance with advanced generic lazy initialization."""
+        return self._lazy_init("servers", FlextLdapServersService)
 
     @property
     def acl(self) -> FlextLdapAclService:
-        """Get ACL operations instance."""
-        return cast("FlextLdapAclService", self._lazy_init("acl", FlextLdapAclService))
+        """Get ACL operations instance with advanced generic lazy initialization."""
+        return self._lazy_init("acl", FlextLdapAclService)
 
-    def can_handle(self, message_type: object) -> bool:
-        """Check if FlextLdap handler can process this message type.
+    def can_handle(self, message_type: HandlerMessageType) -> bool:
+        """Check if FlextLdap handler can process this message type using Python 3.13 pattern matching.
 
-        Implements Application.Handler protocol for command routing.
-        Determines if a given message type can be processed by this handler.
+        Implements Application.Handler protocol for command routing using advanced
+        structural pattern matching for type checking and validation.
 
         Args:
             message_type: The message type to check (typically a class or string)
@@ -153,38 +180,38 @@ class FlextLdap(FlextService[None]):
             True if handler can process this message type, False otherwise
 
         """
-        # Support LDAP operation message types
-        if isinstance(message_type, str):
-            ldap_operations = {
-                "search",
-                "add",
-                "modify",
-                "delete",
+        match message_type:
+            # String-based LDAP operations using guard pattern
+            case str() as operation if operation.lower() in {
+                FlextLdapConstants.OperationNames.SEARCH,
+                FlextLdapConstants.OperationNames.ADD,
+                FlextLdapConstants.OperationNames.MODIFY,
+                FlextLdapConstants.OperationNames.DELETE,
                 FlextLdapConstants.OperationNames.BIND,
-                "unbind",
-                "compare",
-                "upsert",
-                "schema",
-                "acl",
-            }
-            return message_type.lower() in ldap_operations
+                FlextLdapConstants.OperationNames.UNBIND,
+                FlextLdapConstants.OperationNames.COMPARE,
+                FlextLdapConstants.OperationNames.UPSERT,
+                FlextLdapConstants.OperationNames.SCHEMA,
+                FlextLdapConstants.OperationNames.ACL,
+            }:
+                return True
 
-        # Support FlextLdapModels request types
-        if message_type is FlextLdapModels.SearchRequest:
-            return True
-        if message_type is FlextLdapModels.SearchResponse:
-            return True
+            # Specific model types
+            case FlextLdapModels.SearchRequest:
+                return True
+            case FlextLdapModels.SearchResponse:
+                return True
+            case FlextLdifModels.Entry:
+                return True
 
-        # Default: handle Entry type or return False for unknown types
-        return message_type is FlextLdifModels.Entry
+            # Default case for unsupported types
+            case _:
+                return False
 
     @property
     def authentication(self) -> FlextLdapAuthentication:
-        """Get authentication operations instance."""
-        return cast(
-            "FlextLdapAuthentication",
-            self._lazy_init("authentication", FlextLdapAuthentication),
-        )
+        """Get authentication operations instance with advanced generic lazy initialization."""
+        return self._lazy_init("authentication", FlextLdapAuthentication)
 
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
@@ -243,23 +270,40 @@ class FlextLdap(FlextService[None]):
             )
 
         """
-        # Update configuration if parameters provided
-        if uri:
+        # Advanced parameter parsing using Python 3.13 pattern matching with guards
+        # URI parameter handling with type narrowing
+        if isinstance(uri, str) and uri:
             self._config.ldap_server_uri = uri
 
-        # Set both bind_dn and bind_password together to avoid validation errors
-        # Update __dict__ directly to bypass validate_assignment, then manually validate
-        if bind_dn or password:
-            if isinstance(password, str):
-                password = SecretStr(password)
+        # Credential parameters with structural validation using pattern matching
+        match (bind_dn, password):
+            case (str() as dn_value, str() as pwd_value) if dn_value and pwd_value:
+                # Both DN and password provided as strings
+                self._config.__dict__["ldap_bind_dn"] = dn_value
+                self._config.__dict__["ldap_bind_password"] = SecretStr(pwd_value)
 
-            # Update fields directly to avoid triggering validation between assignments
-            if bind_dn:
-                self._config.__dict__["ldap_bind_dn"] = bind_dn
-            if password:
-                self._config.__dict__["ldap_bind_password"] = password
+            case (str() as dn_value, SecretStr() as pwd_secret) if (
+                dn_value and pwd_secret
+            ):
+                # Both DN and password provided (password already SecretStr)
+                self._config.__dict__["ldap_bind_dn"] = dn_value
+                self._config.__dict__["ldap_bind_password"] = pwd_secret
 
-            # Note: Pydantic v2 automatically runs model validators during field updates
+            case (str() as dn_value, None) if dn_value:
+                # Only DN provided
+                self._config.__dict__["ldap_bind_dn"] = dn_value
+
+            case (None, str() as pwd_value) if pwd_value:
+                # Only password provided
+                self._config.__dict__["ldap_bind_password"] = SecretStr(pwd_value)
+
+            case (None, SecretStr() as pwd_secret) if pwd_secret:
+                # Only password provided (already SecretStr)
+                self._config.__dict__["ldap_bind_password"] = pwd_secret
+
+            case _:
+                # No credential changes needed
+                pass
 
         # Store quirks_mode for internal modules
         self.s_mode = quirks_mode
@@ -337,46 +381,53 @@ class FlextLdap(FlextService[None]):
             base_dn, filter_str, attributes, quirks_mode=quirks_mode
         )
         if result.is_failure:
-            return cast(
-                "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
-                result,
-            )
+            return cast("FlextResult[SearchResultType]", result)
 
-        # client.search() returns list[Entry], wrap in SearchResponse
+        # Advanced result processing using Python 3.13 structural pattern matching
         entries_result = result.unwrap()
-        # Normalize to list
-        entries_list = (
-            entries_result
-            if isinstance(entries_result, list)
-            else [entries_result]
-            if entries_result
-            else []
-        )
 
-        # Create SearchResponse from entries
+        # Structural pattern matching for result normalization
+        match entries_result:
+            case list() as entries_list:
+                # Already a list
+                normalized_entries = entries_list
+            case object() as single_entry if single_entry:
+                # Single entry, wrap in list
+                normalized_entries = [single_entry]
+            case _:
+                # Empty or None result
+                normalized_entries = []
+
+        # Create SearchResponse from normalized entries
         search_response = FlextLdapModels.SearchResponse(
-            entries=entries_list,
-            total_count=len(entries_list),
+            entries=normalized_entries,
+            total_count=len(normalized_entries),
             result_code=0,
             time_elapsed=0.0,
         )
 
-        if single:
-            # Return first entry or None
-            if search_response.entries:
+        # Structural pattern matching for single vs multi-result handling
+        match (single, search_response.entries):
+            case (True, [first_entry, *_]):
+                # Single mode with at least one entry - return first
                 return cast(
-                    "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
-                    FlextResult.ok(search_response.entries[0]),
+                    "FlextResult[SearchResultType]", FlextResult.ok(first_entry)
                 )
-            return cast(
-                "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
-                FlextResult.ok(None),
-            )
-
-        return cast(
-            "FlextResult[FlextLdapModels.SearchResponse | FlextLdifModels.Entry | None]",
-            FlextResult.ok(search_response),
-        )
+            case (True, []):
+                # Single mode with no entries - return None
+                return cast("FlextResult[SearchResultType]", FlextResult.ok(None))
+            case (False, _):
+                # Multi mode - return full SearchResponse
+                return cast(
+                    "FlextResult[SearchResultType]", FlextResult.ok(search_response)
+                )
+            # Fallback case to ensure all paths return
+            case _:
+                # This should never happen, but ensures type safety
+                return cast(
+                    "FlextResult[SearchResultType]",
+                    FlextResult.fail("Unexpected query result state"),
+                )
 
     # Apply Changes Helper Methods
 
@@ -461,21 +512,35 @@ class FlextLdap(FlextService[None]):
         atomic: bool,
         quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[list[bool]]:
-        """Execute batch operations (add or modify)."""
-        if operation == "add":
-            results = self._execute_batch_add(modifications, quirks_mode=quirks_mode)
-            return FlextResult[list[bool]].ok(results)
-        if operation == "modify":
-            if atomic:
+        """Execute batch operations using Python 3.13 structural pattern matching.
+
+        Consolidates batch operation logic using advanced pattern matching
+        to eliminate conditional chains and improve type safety.
+        """
+        match (operation, atomic):
+            case (FlextLdapConstants.OperationNames.ADD, _):
+                # Add operations are always non-atomic by nature
+                results = self._execute_batch_add(
+                    modifications, quirks_mode=quirks_mode
+                )
+                return FlextResult[list[bool]].ok(results)
+
+            case (FlextLdapConstants.OperationNames.MODIFY, True):
+                # Atomic modify operations
                 return self._execute_batch_modify_atomic(
                     modifications, quirks_mode=quirks_mode
                 )
-            results = self._execute_batch_modify_non_atomic(
-                modifications, quirks_mode=quirks_mode
-            )
-            return FlextResult[list[bool]].ok(results)
 
-        return FlextResult[list[bool]].fail(f"Unknown operation: {operation}")
+            case (FlextLdapConstants.OperationNames.MODIFY, False):
+                # Non-atomic modify operations
+                results = self._execute_batch_modify_non_atomic(
+                    modifications, quirks_mode=quirks_mode
+                )
+                return FlextResult[list[bool]].ok(results)
+
+            # Fallback for unsupported operations or unreachable states
+            case _:
+                return FlextResult[list[bool]].fail(f"Unknown operation: {operation}")
 
     def apply_changes(
         self,
@@ -506,39 +571,61 @@ class FlextLdap(FlextService[None]):
             FlextResult[bool] for single operation, FlextResult[list[bool]] for batch.
 
         """
-        # Handle delete operation
-        if operation == "delete":
-            if not dn:
-                return FlextResult[bool | list[bool]].fail(
-                    "DN required for delete operation",
+        # Use structural pattern matching for operation routing
+        match (operation, batch, modifications, dn):
+            # Delete operation - requires DN
+            case (FlextLdapConstants.OperationNames.DELETE, _, _, None):
+                return FlextResult[OperationResultType].fail(
+                    "DN required for delete operation"
                 )
-            return cast("FlextResult[bool | list[bool]]", self.client.delete_entry(dn))
+            case (FlextLdapConstants.OperationNames.DELETE, _, _, dn_value) if (
+                dn_value is not None
+            ):
+                return cast(
+                    "FlextResult[OperationResultType]",
+                    self.client.delete_entry(dn_value),
+                )
 
-        # Handle batch operations
-        if batch and modifications:
-            batch_result = self._execute_batch_operations(
-                operation, modifications, atomic=atomic, quirks_mode=quirks_mode
-            )
-            return cast("FlextResult[bool | list[bool]]", batch_result)
+            # Batch operations - require modifications list
+            case (op, True, mods, _) if mods:
+                batch_result = self._execute_batch_operations(
+                    op, mods, atomic=atomic, quirks_mode=quirks_mode
+                )
+                return cast("FlextResult[OperationResultType]", batch_result)
 
-        # Handle single operations
-        if not dn:
-            return FlextResult[bool | list[bool]].fail(
-                f"DN required for {operation} operation",
-            )
+            # Single operations - require DN
+            case (_, _, _, None):
+                return FlextResult[OperationResultType].fail(
+                    f"DN required for {operation} operation"
+                )
 
-        if operation == "add":
-            return cast(
-                "FlextResult[bool | list[bool]]",
-                self._execute_single_add(dn, changes, quirks_mode=quirks_mode),
-            )
-        if operation == "modify":
-            return cast(
-                "FlextResult[bool | list[bool]]",
-                self._execute_single_modify(dn, changes, quirks_mode=quirks_mode),
-            )
+            # Single add operation
+            case (FlextLdapConstants.OperationNames.ADD, False, _, dn_value) if (
+                dn_value is not None
+            ):
+                return cast(
+                    "FlextResult[OperationResultType]",
+                    self._execute_single_add(
+                        dn_value, changes, quirks_mode=quirks_mode
+                    ),
+                )
 
-        return FlextResult[bool | list[bool]].fail(f"Unknown operation: {operation}")
+            # Single modify operation
+            case (FlextLdapConstants.OperationNames.MODIFY, False, _, dn_value) if (
+                dn_value is not None
+            ):
+                return cast(
+                    "FlextResult[OperationResultType]",
+                    self._execute_single_modify(
+                        dn_value, changes, quirks_mode=quirks_mode
+                    ),
+                )
+
+            # Fallback for unknown operations or unreachable states
+            case _:
+                return FlextResult[OperationResultType].fail(
+                    f"Unknown operation: {operation}"
+                )
 
     def validate_entries(
         self,
@@ -1183,32 +1270,91 @@ class FlextLdap(FlextService[None]):
         return self.client.modify_entry(dn, changes, quirks_mode=quirks_mode)
 
     def __enter__(self) -> Self:
-        """Enter context manager - establish connection using config.
+        """Enter context manager with advanced Python 3.13 error handling.
+
+        Establishes LDAP connection using configuration with comprehensive
+        error handling and type safety.
 
         Raises:
-            ConnectionError: If connection fails
+            ConnectionError: If connection fails with detailed error information
 
         """
-        password_value = ""  # nosec: default empty string, actual password from config.ldap_bind_password
+        # Extract password with type narrowing and safety
+        password_value: str = ""
         if self._config.ldap_bind_password is not None:
             password_value = self._config.ldap_bind_password.get_secret_value()
 
+        # Attempt connection with structured error handling
         result = self.client.connect(
             server_uri=self._config.ldap_server_uri,
             bind_dn=self._config.ldap_bind_dn or "",
             password=password_value,
             quirks_mode=self.s_mode,
         )
-        if result.is_failure:
-            error_msg = f"Failed to connect to LDAP server: {result.error}"
-            raise ConnectionError(error_msg)
-        return self
+
+        # Pattern matching for connection result handling
+        match result:
+            case FlextResult() if result.is_success:
+                return self
+            case FlextResult() if result.is_failure:
+                error_msg = f"Failed to connect to LDAP server: {result.error}"
+                raise ConnectionError(error_msg) from None
+            case _:
+                # Fallback for unexpected result types
+                error_msg = "Unexpected connection result type"
+                raise ConnectionError(error_msg) from None
 
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
+        _exc_tb: types.TracebackType | None,
     ) -> None:
-        """Exit context manager - close connection."""
-        self.client.unbind()
+        """Exit context manager with advanced Python 3.13 exception handling.
+
+        Uses structural pattern matching to handle different exception scenarios
+        during LDAP connection cleanup.
+
+        Args:
+            exc_type: Type of exception that occurred (if any)
+            exc_val: Exception instance that occurred (if any)
+            _exc_tb: Exception traceback (if any) - intentionally unused
+
+        """
+        # Always attempt to unbind, even if an exception occurred
+        try:
+            self.client.unbind()
+        except Exception as unbind_error:
+            # Log unbind error but don't suppress original exception
+            # In Python 3.13 context managers, we don't suppress exceptions
+            match (exc_type, exc_val):
+                case (None, None):
+                    # No original exception, raise unbind error
+                    raise unbind_error from None
+                case (_, BaseException() as original_exc):
+                    # Original exception exists, add unbind error as context
+                    raise unbind_error from original_exc
+                case (_, None):
+                    # Original exception was None, raise unbind error
+                    raise unbind_error from None
+
+        # Advanced exception analysis using pattern matching
+        match (exc_type, exc_val):
+            case (_, _) if isinstance(exc_type, type) and issubclass(
+                exc_type, ConnectionError
+            ):
+                # LDAP connection errors - already handled in __enter__
+                pass
+            case (_, _) if isinstance(exc_type, type) and issubclass(
+                exc_type, ValueError
+            ):
+                # Data validation errors - let them propagate
+                pass
+            case (_, _) if isinstance(exc_type, type) and issubclass(
+                exc_type, TypeError
+            ):
+                # Type validation errors - let them propagate
+                pass
+            case (_, _):
+                # Other exceptions - ensure proper cleanup occurred
+                pass
