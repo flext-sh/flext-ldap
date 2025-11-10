@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextConstants
 
+from flext_core import FlextConstants
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.services.validations import FlextLdapValidations
 
@@ -587,9 +587,6 @@ class TestFlextLdapValidations:
         assert result.error is not None
         assert result.error and result.error and "Config cannot be None" in result.error
 
-    @pytest.mark.xfail(
-        reason="validate_timeout method removed during Pydantic v2 refactoring"
-    )
     def test_validations_integration_complete_workflow(
         self, validations: type[FlextLdapValidations]
     ) -> None:
@@ -628,9 +625,6 @@ class TestFlextLdapValidations:
         object_class_result = validations.validate_object_class("inetOrgPerson")
         assert object_class_result.is_success
 
-    @pytest.mark.xfail(
-        reason="validate_size_limit method removed during Pydantic v2 refactoring"
-    )
     def test_validations_error_handling_consistency(
         self, validations: type[FlextLdapValidations]
     ) -> None:

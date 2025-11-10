@@ -15,9 +15,9 @@ Tests cover:
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 
+from flext_core import FlextResult
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
@@ -137,9 +137,6 @@ class TestFlextLdapQuirksIntegration:
             "active_directory",
         }
 
-    @pytest.mark.xfail(
-        reason="FlextLdif quirks manager API changed - detect_server_type method removed"
-    )
     def test_detect_server_type_updates_internal_state(
         self,
         quirks_adapter: FlextLdapQuirksIntegration,
