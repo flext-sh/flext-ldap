@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapClients
+from flext_ldap import FlextLdapClients, FlextLdapModels
 from flext_ldap.servers.factory import FlextLdapServersFactory
 
 # mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
@@ -37,11 +37,12 @@ class TestFlextLdapServersFactoryCreation:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=admin,dc=flext,dc=local",
             password="admin123",
         )
+        client.connect(request)
         yield client
         client.unbind()
 

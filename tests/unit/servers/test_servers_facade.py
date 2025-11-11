@@ -20,7 +20,7 @@ from __future__ import annotations
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap import FlextLdapClients, FlextLdapServers
+from flext_ldap import FlextLdapClients, FlextLdapModels, FlextLdapServers
 
 # mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
 
@@ -205,11 +205,12 @@ class TestFlextLdapServersFacadeWithConnection:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        connect_result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=admin,dc=flext,dc=local",
             password="admin123",
         )
+        connect_result = client.connect(request)
         assert connect_result.is_success is True, (
             f"Connection failed: {connect_result.error}"
         )

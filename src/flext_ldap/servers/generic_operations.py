@@ -17,6 +17,7 @@ from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 
 
 class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
@@ -177,22 +178,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry,
         _server_type: str | None = None,
     ) -> FlextResult[bool]:
-        """Validate entry for generic server - enhanced validation."""
-        # Use base validation first
-        base_result = super().validate_entry_for_server(entry, _server_type)
-        if base_result.is_failure:
-            return base_result
-
-        try:
-            # Additional generic server checks
-            # Check for required attributes based on object classes
-            object_classes = entry.attributes.get("objectClass")
-            if not object_classes:
-                return FlextResult[bool].fail("Entry must have objectClass attribute")
-
-            # Assume valid if has DN and attributes
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception("Entry validation error", extra={"error": str(e)})
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        """Validate entry for generic LDAP server using shared service."""
+        # Use shared FlextLdapEntryAdapter service for validation
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.validate_entry_for_server(entry, self.server_type)

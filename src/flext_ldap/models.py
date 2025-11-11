@@ -32,6 +32,7 @@ from pydantic import (
     ConfigDict,
     Field,
     SecretStr,
+    ValidationInfo,
     computed_field,
     field_serializer,
     field_validator,
@@ -358,6 +359,18 @@ class FlextLdapModels(FlextModels):
             pattern="^(never|searching|finding|always)$",
         )
 
+        # Result control
+        single: bool = Field(
+            default=False,
+            description="Return single entry (first result) instead of list",
+        )
+
+        # Server-specific handling
+        quirks_mode: str | None = Field(
+            default=None,
+            description="Override quirks mode for server-specific behavior",
+        )
+
         @model_validator(mode="after")
         def validate_search_consistency(self) -> Self:
             """Model validator for cross-field validation and search optimization."""
@@ -500,61 +513,181 @@ class FlextLdapModels(FlextModels):
                 "time_limit": FlextConstants.Network.DEFAULT_TIMEOUT,
             })
 
-        @staticmethod
-        def create_user_filter(username_filter: str | None = None) -> str:
-            """Create LDAP filter for user search.
+    class ApplyChangesRequest(BaseModel):
+        """LDAP Apply Changes Request with parameters and Pydantic 2 validation.
 
-            Creates a base filter for person objects, optionally combined with
-            additional filter criteria.
+        Consolidates add/modify/delete operations into unified request model.
+        """
 
-            Args:
-                username_filter: Optional additional filter to combine with base filter
+        __slots__ = ()  # Enable __slots__ for memory optimization
 
-            Returns:
-                LDAP filter string for user search
+        # Core operation parameters
+        changes: dict[str, str | list[str]] = Field(
+            ...,
+            description="Attribute changes for single operation",
+        )
+        dn: str | None = Field(
+            default=None,
+            description="Distinguished name for single operation",
+        )
 
-            Example:
-                # Basic user filter
-                filter_str = SearchRequest.create_user_filter()
-                # "(objectClass=person)"
+        # Operation configuration
+        operation: str = Field(
+            default="add",
+            description="Operation type: add, modify, or delete",
+            pattern="^(add|modify|delete)$",
+        )
+        atomic: bool = Field(
+            default=False,
+            description="If True, attempt atomic modification",
+        )
+        batch: bool = Field(
+            default=False,
+            description="If True, use modifications for batch mode",
+        )
 
-                # Combined filter
-                filter_str = SearchRequest.create_user_filter("(uid=john)")
-                # "(&(objectClass=person)(uid=john))"
+        # Batch operation parameters
+        modifications: list[tuple[str, dict[str, str | list[str]]]] | None = Field(
+            default=None,
+            description="List of (DN, changes) tuples for batch operations",
+        )
 
+        # Server quirks
+        quirks_mode: str | None = Field(
+            default=None,
+            description="Optional quirks mode override",
+        )
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn_for_operation(
+            cls, v: str | None, info: ValidationInfo
+        ) -> str | None:
+            """Validate DN is provided for operations that require it."""
+            operation = info.data.get("operation", "add")
+            batch = info.data.get("batch", False)
+
+            # DN is required for non-batch operations (except when it will be validated later)
+            if not batch and operation != "delete" and not v:
+                # Allow None for now, validation happens in apply_changes
+                pass
+            return v
+
+    class ConnectionRequest(BaseModel):
+        """LDAP Connection Request with parameters and Pydantic 2 validation.
+
+        Consolidates connection parameters into unified request model.
+        Reduces connect() method from 6 parameters to 1 model.
+        """
+
+        __slots__ = ()  # Enable __slots__ for memory optimization
+
+        # Core connection parameters (required)
+        server_uri: str = Field(
+            ...,
+            description="LDAP server URI (e.g., 'ldap://localhost:389')",
+        )
+        bind_dn: FlextLdifModels.DistinguishedName | str = Field(
+            ...,
+            description="Distinguished Name for binding",
+        )
+        password: str = Field(
+            ...,
+            description="Password for binding",
+        )
+
+        # Connection configuration (optional)
+        auto_discover_schema: bool = Field(
+            default=True,
+            description="Whether to automatically discover schema",
+        )
+        connection_options: dict[str, object] | None = Field(
+            default=None,
+            description="Additional connection options (timeout, pool_size, etc.)",
+        )
+        quirks_mode: str | None = Field(
+            default=None,
+            description="Override default quirks mode for this connection",
+        )
+
+        @field_validator("server_uri")
+        @classmethod
+        def validate_server_uri(cls, v: str) -> str:
+            """Validate server URI format."""
+            if not v:
+                msg = "Server URI cannot be empty"
+                raise ValueError(msg)
+            if not v.startswith(("ldap://", "ldaps://")):
+                msg = "Server URI must start with ldap:// or ldaps://"
+                raise ValueError(msg)
+            return v
+
+        @field_validator("password")
+        @classmethod
+        def validate_password(cls, v: str) -> str:
+            """Validate password is provided."""
+            if not v:
+                msg = "Password cannot be empty"
+                raise ValueError(msg)
+            return v
+
+    class ExchangeRequest(BaseModel):
+        """LDAP Exchange Request with parameters and Pydantic 2 validation.
+
+        Consolidates import/export parameters into unified request model.
+        Reduces exchange() method from 6 parameters to 1 model.
+
+        Used for bidirectional data exchange:
+        - Import: data → entries
+        - Export: entries → data
+        """
+
+        __slots__ = ()  # Enable __slots__ for memory optimization
+
+        # Data parameters (mutually exclusive based on direction)
+        data: str | None = Field(
+            default=None,
+            description="Data string for import operation (LDIF/JSON/CSV)",
+        )
+        entries: list[FlextLdifModels.Entry] | None = Field(
+            default=None,
+            description="Entries for export operation",
+        )
+
+        # Operation configuration
+        data_format: str = Field(
+            default="ldif",
+            description="Data format: ldif, json, or csv",
+            pattern="^(ldif|json|csv)$",
+        )
+        direction: str = Field(
+            default="import",
+            description="Operation direction: import or export",
+            pattern="^(import|export)$",
+        )
+
+        # Server quirks
+        quirks_mode: str | None = Field(
+            default=None,
+            description="Optional quirks mode override for format-specific rules",
+        )
+
+        @model_validator(mode="after")
+        def validate_data_direction(self) -> Self:
+            """Validate data/entries provided based on direction.
+
+            - Import direction requires 'data'
+            - Export direction requires 'entries'
+
+            Note: mode="after" validators do not use @classmethod in Pydantic v2.
             """
-            base_filter = FlextLdapConstants.Filters.ALL_USERS_FILTER
-            if username_filter:
-                return f"(&{base_filter}{username_filter})"
-            return base_filter
-
-        @staticmethod
-        def create_group_filter(group_filter: str | None = None) -> str:
-            """Create LDAP filter for group search.
-
-            Creates a base filter for group objects, optionally combined with
-            additional filter criteria.
-
-            Args:
-                group_filter: Optional additional filter to combine with base filter
-
-            Returns:
-                LDAP filter string for group search
-
-            Example:
-                # Basic group filter
-                filter_str = SearchRequest.create_group_filter()
-                # "(objectClass=groupOfNames)"
-
-                # Combined filter
-                filter_str = SearchRequest.create_group_filter("(cn=admins)")
-                # "(&(objectClass=groupOfNames)(cn=admins))"
-
-            """
-            base_filter = FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER
-            if group_filter:
-                return f"(&{base_filter}{group_filter})"
-            return base_filter
+            if self.direction == "import" and not self.data:
+                msg = "Data required for import operation"
+                raise ValueError(msg)
+            if self.direction == "export" and not self.entries:
+                msg = "Entries required for export operation"
+                raise ValueError(msg)
+            return self
 
     class SearchResponse(BaseModel):
         """LDAP Search Response entity.

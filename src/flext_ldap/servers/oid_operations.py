@@ -18,7 +18,9 @@ from ldap3 import MODIFY_REPLACE, Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
@@ -144,36 +146,23 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         _dn: str,
         _acls: list[dict[str, object]],
     ) -> FlextResult[bool]:
-        """Set orclaci ACLs on Oracle OID."""
+        """Set orclaci ACLs on Oracle OID.
+
+        Refactored with Railway Pattern: 6→3 returns (SOLID/DRY compliance).
+        """
         try:
+            # Railway Pattern: Early validation
             if not _connection or not _connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            formatted_acls: list[str] = []
-            for acl in _acls:
-                # Convert dict to Entry for format_acl
-                # LdifAttributes.create returns FlextResult, need to unwrap
-                attrs_result = FlextLdifModels.LdifAttributes.create(acl)
-                if attrs_result.is_failure:
-                    return FlextResult[bool].fail(
-                        f"Failed to create LdifAttributes: {attrs_result.error}",
-                    )
-                attrs = attrs_result.unwrap()
+            # Railway Pattern: Delegate formatting to helper
+            format_result = self._format_acls_for_oid(_acls)
+            if format_result.is_failure:
+                return FlextResult[bool].fail(str(format_result.error))
 
-                acl_entry = FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(
-                        value=FlextLdapConstants.SyntheticDns.ACL_RULE,
-                    ),
-                    attributes=attrs,
-                )
-                format_result = self.format_acl(acl_entry)
-                if format_result.is_failure:
-                    return FlextResult[bool].fail(
-                        format_result.error or "ACL format failed",
-                    )
-                formatted_acls.append(format_result.unwrap())
+            formatted_acls = format_result.unwrap()
 
-            # Cast to Protocol type for proper type checking with ldap3
+            # Railway Pattern: Execute modify operation
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
             mods = cast(
                 "dict[str, list[tuple[int, list[str]]]]",
@@ -201,6 +190,20 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         except Exception as e:
             self.logger.exception("Set ACLs error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Set ACLs failed: {e}")
+
+    def _format_acls_for_oid(
+        self, acls: list[dict[str, object]]
+    ) -> FlextResult[list[str]]:
+        """Format ACLs for Oracle OID orclaci attribute using FlextLdapUtilities.
+
+        Consolidated with FlextLdapUtilities.AclFormatting for reusability.
+        Delegates formatting to shared utility.
+
+        Returns:
+            FlextResult containing list of formatted ACL strings or failure
+
+        """
+        return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
 
     # OID ACL Parse Helper Methods
 
@@ -659,17 +662,8 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for Oracle OID server.
-
-        Args:
-        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-        _target_server_type: Ignored for OID (uses self._server_type)
-
-        Returns:
-        FlextResult containing normalized entry
-
-        """
-        # Ensure entry is validated FlextLdifModels.Entry
+        """Normalize entry for Oracle OID server using shared service."""
+        # Ensure entry is FlextLdifModels.Entry first
         ensure_result = self._ensure_ldif_entry(
             entry, context="normalize_entry_for_server"
         )
@@ -678,24 +672,9 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
         ldif_entry = ensure_result.unwrap()
 
-        try:
-            # Oracle OID specific normalization
-            normalized_entry = ldif_entry.model_copy()
-
-            # Ensure Oracle-specific object classes are present
-            if "objectClass" not in normalized_entry.attributes.attributes:
-                # Use list directly instead of AttributeValues
-                normalized_entry.attributes.attributes["objectClass"] = [
-                    FlextLdapConstants.ObjectClasses.TOP,
-                    FlextLdapConstants.ObjectClasses.PERSON,
-                ]
-
-            # Return normalized entry (no cast needed)
-            return FlextResult[FlextLdifModels.Entry].ok(normalized_entry)
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to normalize entry: {e}",
-            )
+        # Use shared FlextLdapEntryAdapter service for normalization
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(
@@ -703,24 +682,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry,
         _server_type: str | None = None,
     ) -> FlextResult[bool]:
-        """Validate entry for Oracle OID."""
-        try:
-            # Oracle OID specific validation
-            # Convert DistinguishedName to string if needed before strip()
-            dn_str = str(entry.dn) if entry.dn else ""
-            if not dn_str or not dn_str.strip():
-                return FlextResult[bool].fail("Entry DN cannot be empty")
-
-            if not entry.attributes:
-                return FlextResult[bool].fail("Entry must have attributes")
-
-            # Check for required object classes
-            object_classes = entry.attributes.get(
-                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
-            )
-            if not object_classes:
-                return FlextResult[bool].fail("Entry must have objectClass attribute")
-
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        """Validate entry for Oracle OID using shared service."""
+        # Use shared FlextLdapEntryAdapter service for validation
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.validate_entry_for_server(entry, self.server_type)

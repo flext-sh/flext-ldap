@@ -261,13 +261,16 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
             protocol = "ldaps" if self._use_ssl else "ldap"
             server_uri = f"{protocol}://{self._server_host}:{self._server_port}"
 
-            # Establish connection (without auto-discovery to avoid hangs)
-            connect_result = self._connection.connect(
+            # Create ConnectionRequest model for connect()
+            request = FlextLdapModels.ConnectionRequest(
                 server_uri=server_uri,
                 bind_dn=self._bind_dn or "",
                 password=self._bind_password or "",
                 auto_discover_schema=False,
             )
+
+            # Establish connection (without auto-discovery to avoid hangs)
+            connect_result = self._connection.connect(request)
 
             if connect_result.is_failure:
                 return FlextResult[None].fail(

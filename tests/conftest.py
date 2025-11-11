@@ -602,11 +602,12 @@ def clean_ldap_container() -> dict[str, object]:
     provisioning_client = None
     try:
         provisioning_client = FlextLdapClients()
-        connect_result = provisioning_client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=admin,dc=flext,dc=local",
             password="admin123",
         )
+        connect_result = provisioning_client.connect(request)
 
         if connect_result.is_success:
             # Create ou=people organizational unit if it doesn't exist
@@ -682,12 +683,13 @@ def shared_ldap_client(
     client = FlextLdapClients()
 
     # Connect to the LDAP server with proper parameters
-    connect_result = client.connect(
+    request = FlextLdapModels.ConnectionRequest(
         server_uri=shared_ldap_config["server_url"],
         bind_dn=shared_ldap_config["bind_dn"],
         password=shared_ldap_config["password"],
         auto_discover_schema=True,  # Enable schema discovery for testing
     )
+    connect_result = client.connect(request)
 
     if connect_result.is_failure:
         pytest.skip(f"Failed to connect to LDAP server: {connect_result.error}")

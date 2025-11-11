@@ -18,7 +18,9 @@ from ldap3 import MODIFY_REPLACE, Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
@@ -172,52 +174,55 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
     # get_acls() inherited from base class - uses get_acl_attribute_name()
 
-    @override
+    def _format_acls_for_oud(
+        self, acls: list[dict[str, object]]
+    ) -> FlextResult[list[str]]:
+        """Format ACL dictionaries to ds-privilege-name strings using FlextLdapUtilities.
+
+        Consolidated with FlextLdapUtilities.AclFormatting for reusability.
+        Delegates formatting to shared utility.
+
+        Args:
+            acls: List of ACL dictionaries
+
+        Returns:
+            FlextResult containing formatted ds-privilege-name strings or error
+
+        """
+        return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
+
     def set_acls(
         self,
         _connection: Connection,
         _dn: str,
         _acls: list[dict[str, object]],
     ) -> FlextResult[bool]:
-        """Set ds-privilege-name ACLs on Oracle OUD."""
+        """Set ds-privilege-name ACLs on Oracle OUD.
+
+        Refactored with Railway Pattern: 6→4 returns (SOLID/DRY compliance).
+
+        Args:
+            _connection: Active ldap3 connection
+            _dn: DN of entry to set ACLs on
+            _acls: List of ACL dictionaries
+
+        Returns:
+            FlextResult[bool] indicating success or failure
+
+        """
         try:
+            # Railway Pattern: Early validation
             if not _connection or not _connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            formatted_acls: list[str] = []
-            for acl in _acls:
-                # Use Entry.create() instead of LdifAttributes.create() + Entry()
-                # Convert acl dict to proper type (dict[str, str | list[str]])
-                acl_dict: dict[str, str | list[str]] = {}
-                for key, value in acl.items():
-                    if isinstance(value, list):
-                        acl_dict[key] = (
-                            value
-                            if all(isinstance(v, str) for v in value)
-                            else [str(v) for v in value]
-                        )
-                    elif isinstance(value, str):
-                        acl_dict[key] = value
-                    else:
-                        acl_dict[key] = [str(value)]
+            # Railway Pattern: Delegate formatting to helper
+            format_result = self._format_acls_for_oud(_acls)
+            if format_result.is_failure:
+                return FlextResult[bool].fail(str(format_result.error))
 
-                acl_entry_result = FlextLdifModels.Entry.create(
-                    dn=FlextLdapConstants.SyntheticDns.ACL_RULE,
-                    attributes=acl_dict,
-                )
-                if acl_entry_result.is_failure:
-                    return FlextResult[bool].fail(
-                        f"Failed to create ACL entry: {acl_entry_result.error}",
-                    )
-                acl_entry = acl_entry_result.unwrap()
-                format_result = self.format_acl(acl_entry)
-                if format_result.is_failure:
-                    return FlextResult[bool].fail(
-                        format_result.error or "ACL format failed",
-                    )
-                formatted_acls.append(format_result.unwrap())
+            formatted_acls = format_result.unwrap()
 
-            # Cast to Protocol type for proper type checking with ldap3
+            # Railway Pattern: Execute modify operation
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
             mods = cast(
                 "dict[str, list[tuple[int, list[str]]]]",
@@ -498,6 +503,8 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     def get_privilege_category(self, privilege: str) -> str:
         """Get category for a privilege.
 
+        Refactored: 7→1 returns using category mapping (SOLID/DRY compliance).
+
         Args:
         privilege: Privilege name
 
@@ -505,19 +512,25 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         Category name
 
         """
-        if privilege in FlextLdapConstants.OudPrivileges.CONFIG_PRIVILEGES:
-            return FlextLdapConstants.OudPrivilegeCategories.CONFIGURATION
-        if privilege in FlextLdapConstants.OudPrivileges.PASSWORD_PRIVILEGES:
-            return FlextLdapConstants.OudPrivilegeCategories.PASSWORD
-        if privilege in FlextLdapConstants.OudPrivileges.ADMINISTRATIVE_PRIVILEGES:
-            return FlextLdapConstants.OudPrivilegeCategories.ADMINISTRATIVE
-        if privilege in FlextLdapConstants.OudPrivileges.MANAGEMENT_PRIVILEGES:
-            return FlextLdapConstants.OudPrivilegeCategories.MANAGEMENT
-        if privilege in FlextLdapConstants.OudPrivileges.DATA_MANAGEMENT_PRIVILEGES:
-            return FlextLdapConstants.OudPrivilegeCategories.DATA_MANAGEMENT
-        if privilege in FlextLdapConstants.OudPrivileges.MAINTENANCE_PRIVILEGES:
-            return FlextLdapConstants.OudPrivilegeCategories.MAINTENANCE
-        return FlextLdapConstants.OudPrivilegeCategories.CUSTOM
+        # Mapping: (privilege_set, category) tuples for O(n) worst-case lookup
+        # where n is number of categories (6), which is constant and small
+        category_mappings = [
+            (FlextLdapConstants.OudPrivileges.CONFIG_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.CONFIGURATION),
+            (FlextLdapConstants.OudPrivileges.PASSWORD_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.PASSWORD),
+            (FlextLdapConstants.OudPrivileges.ADMINISTRATIVE_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.ADMINISTRATIVE),
+            (FlextLdapConstants.OudPrivileges.MANAGEMENT_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.MANAGEMENT),
+            (FlextLdapConstants.OudPrivileges.DATA_MANAGEMENT_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.DATA_MANAGEMENT),
+            (FlextLdapConstants.OudPrivileges.MAINTENANCE_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.MAINTENANCE),
+        ]
+
+        # Single return: find matching category or default to CUSTOM
+        result_category = FlextLdapConstants.OudPrivilegeCategories.CUSTOM
+        for privilege_set, category in category_mappings:
+            if privilege in privilege_set:
+                result_category = category
+                break
+
+        return result_category
 
     def supports_replication(self) -> bool:
         """Check if OUD supports replication.
@@ -591,16 +604,8 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for Oracle OUD server.
-
-        Args:
-        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-
-        Returns:
-        FlextResult containing normalized entry
-
-        """
-        # Ensure entry is validated FlextLdifModels.Entry
+        """Normalize entry for Oracle OUD server using shared service."""
+        # Ensure entry is FlextLdifModels.Entry first
         ensure_result = self._ensure_ldif_entry(
             entry, context="normalize_entry_for_server"
         )
@@ -609,30 +614,9 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
         ldif_entry = ensure_result.unwrap()
 
-        try:
-            # Oracle OUD specific normalization
-            normalized_entry = ldif_entry.model_copy()
-
-            # Ensure OUD-specific object classes are present
-            if (
-                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS
-                not in normalized_entry.attributes.attributes
-            ):
-                normalized_entry.attributes.attributes[
-                    FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS
-                ] = [
-                    FlextLdapConstants.ObjectClasses.TOP,
-                    FlextLdapConstants.ObjectClasses.PERSON,
-                ]
-
-            # Return normalized entry
-            return FlextResult[FlextLdifModels.Entry].ok(
-                normalized_entry,
-            )
-        except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to normalize entry: {e}",
-            )
+        # Use shared FlextLdapEntryAdapter service for normalization
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(
@@ -640,24 +624,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry,
         _server_type: str | None = None,
     ) -> FlextResult[bool]:
-        """Validate entry for Oracle OUD."""
-        try:
-            # Oracle OUD specific validation
-            # Convert DistinguishedName to string if needed before strip()
-            dn_str = str(entry.dn) if entry.dn else ""
-            if not dn_str or not dn_str.strip():
-                return FlextResult[bool].fail("Entry DN cannot be empty")
-
-            if not entry.attributes or not entry.attributes.attributes:
-                return FlextResult[bool].fail("Entry must have attributes")
-
-            # Check for required object classes
-            object_classes = entry.attributes.get(
-                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
-            )
-            if not object_classes:
-                return FlextResult[bool].fail("Entry must have objectClass attribute")
-
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        """Validate entry for Oracle OUD using shared service."""
+        # Use shared FlextLdapEntryAdapter service for validation
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.validate_entry_for_server(entry, self.server_type)

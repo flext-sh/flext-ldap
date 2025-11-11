@@ -36,6 +36,7 @@ from flext_ldap.services.clients import FlextLdapClients
 from flext_ldap.services.repository import LdapEntryRepository, RepositoryBase
 from flext_ldap.services.schema import FlextLdapSchema
 from flext_ldap.services.upsert import FlextLdapUpsertService
+from flext_ldap.utilities import FlextLdapUtilities
 
 __all__ = [
     "FlextExceptions",
@@ -47,6 +48,7 @@ __all__ = [
     "FlextLdapSchema",
     "FlextLdapServers",
     "FlextLdapUpsertService",
+    "FlextLdapUtilities",
     "LdapEntryRepository",
     "RepositoryBase",
     "__version__",

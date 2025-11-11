@@ -753,13 +753,16 @@ class TestFlextLdapServersOUDNormalizeEntryDetailed:
         normalized = result.unwrap()
         assert normalized is not None
 
-    def test_normalize_entry_exception(self) -> None:
-        """Test normalization exception handling."""
+    def test_normalize_entry_with_mock(self) -> None:
+        """Test normalization with mock entry (new adapter bypasses model_copy)."""
         ops = FlextLdapServersOUDOperations()
         entry = MagicMock(spec=FlextLdifModels.Entry)
-        entry.model_copy.side_effect = Exception("Copy failed")
+        # Add required attributes for FlextLdapEntryAdapter
+        entry.dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
+        # FlextLdapEntryAdapter returns mock entry as-is for normalization
         result = ops.normalize_entry_for_server(entry)
-        assert result.is_failure
+        # New adapter succeeds with mock entry (doesn't call model_copy)
+        assert result.is_success
 
 
 class TestFlextLdapServersOUDValidateEntryDetailed:

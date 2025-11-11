@@ -116,6 +116,7 @@ class FlextLdapQuirksIntegration(FlextService[dict[str, object]]):
             )
             return FlextResult[str].ok(FlextLdapConstants.Defaults.SERVER_TYPE)
 
+        # FlextLdif.write() returns FlextResult[str] directly
         ldif_content = ldif_write_result.unwrap()
 
         # Use FlextLdif API for server detection

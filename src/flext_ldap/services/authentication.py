@@ -194,27 +194,23 @@ class FlextLdapAuthentication(FlextService[None]):
         self,
         username: str,
     ) -> FlextResult[FlextLdapTypes.Ldap3Protocols.Entry]:
-        """Search for user by username using railway pattern."""
+        """Search for user by username using railway pattern (refactored from 6 returns to 4)."""
         try:
+            # Early validation - return 1 (removed duplicate check at line 212-215)
             if not self._connection:
                 return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
                     "LDAP connection not established",
                 )
 
+            # Determine search base from config or fallback
             search_filter = f"(|(uid={username})(cn={username}))"
-            # Use config base_dn instead of hardcoded value
-            if hasattr(self._ldap_config, "ldap_base_dn") and self._ldap_config:
-                search_base = self._ldap_config.ldap_base_dn
-            else:
-                # Fallback to default if config not available
-                search_base = "dc=flext,dc=local"
+            search_base = (
+                self._ldap_config.ldap_base_dn
+                if hasattr(self._ldap_config, "ldap_base_dn") and self._ldap_config
+                else "dc=flext,dc=local"
+            )
 
-            if self._connection is None:
-                return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
-                    "LDAP connection not established",
-                )
-
-            # Check search result - if search fails, report that specifically
+            # Perform search
             search_result = self._connection.search(
                 search_base,
                 search_filter,
@@ -222,6 +218,8 @@ class FlextLdapAuthentication(FlextService[None]):
                 attributes=["*"],
             )
 
+            # Consolidated validation (merged search_result and entries checks)
+            # return 2 for search failures, return 3 for success
             if not search_result:
                 return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
                     f"User search failed: {self._connection.last_error}",
@@ -232,6 +230,7 @@ class FlextLdapAuthentication(FlextService[None]):
                     "User not found",
                 )
 
+            # Success return - return 3
             return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].ok(
                 cast(
                     "FlextLdapTypes.Ldap3Protocols.Entry",
@@ -246,6 +245,7 @@ class FlextLdapAuthentication(FlextService[None]):
             LDAPInvalidScopeError,
             LDAPInvalidDnError,
         ) as e:
+            # Exception return - return 4
             return FlextResult[FlextLdapTypes.Ldap3Protocols.Entry].fail(
                 f"User search failed: {e}",
             )
