@@ -30,11 +30,12 @@ class TestFlextLdapClientsConnection:
         """Test successful connection to LDAP server with valid credentials."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password=str(clean_ldap_container["password"]),
         )
+        result = client.connect(request)
 
         assert result.is_success
         assert client.is_connected
@@ -44,11 +45,12 @@ class TestFlextLdapClientsConnection:
         """Test connection failure with invalid server URI."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://nonexistent.invalid:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             password="password123",
         )
+        result = client.connect(request)
 
         assert result.is_failure
         assert not client.is_connected
@@ -59,11 +61,12 @@ class TestFlextLdapClientsConnection:
         """Test connection failure with invalid credentials."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password="wrong_password",
         )
+        result = client.connect(request)
 
         assert result.is_failure
         assert not client.is_connected
@@ -117,11 +120,12 @@ class TestFlextLdapClientsSearch:
         """Create authenticated LDAP client for searches with proper cleanup."""
         client = FlextLdapClients()
 
-        connect_result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password=str(clean_ldap_container["password"]),
         )
+        connect_result = client.connect(request)
 
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -198,11 +202,12 @@ class TestFlextLdapClientsValidation:
         """Test connect with empty server URI."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             password="test",
         )
+        result = client.connect(request)
 
         assert result.is_failure
 
@@ -210,11 +215,12 @@ class TestFlextLdapClientsValidation:
         """Test connect with empty bind DN."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:389",
             bind_dn="",
             password="test",
         )
+        result = client.connect(request)
 
         assert result.is_failure
 
@@ -222,11 +228,12 @@ class TestFlextLdapClientsValidation:
         """Test connect with empty password."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             password="",
         )
+        result = client.connect(request)
 
         assert result.is_failure
 
@@ -281,11 +288,12 @@ class TestFlextLdapClientsAuthentication:
         """Create authenticated LDAP client with proper cleanup."""
         client = FlextLdapClients()
 
-        connect_result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password=str(clean_ldap_container["password"]),
         )
+        connect_result = client.connect(request)
 
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -315,11 +323,12 @@ class TestFlextLdapClientsAuthentication:
         """Test authentication with correct credentials."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password=str(clean_ldap_container["password"]),
         )
+        result = client.connect(request)
 
         assert result.is_success
         assert client.is_connected
@@ -331,11 +340,12 @@ class TestFlextLdapClientsAuthentication:
         """Test authentication failure with wrong credentials."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password="wrong_password_xyz123",
         )
+        result = client.connect(request)
 
         assert result.is_failure
         assert not client.is_connected
@@ -353,11 +363,12 @@ class TestFlextLdapClientsModify:
         """Create authenticated LDAP client for modifications with proper cleanup."""
         client = FlextLdapClients()
 
-        connect_result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password=str(clean_ldap_container["password"]),
         )
+        connect_result = client.connect(request)
 
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -484,11 +495,12 @@ class TestFlextLdapClientsEdgeCases:
         """Create authenticated LDAP client with proper cleanup."""
         client = FlextLdapClients()
 
-        connect_result = client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=str(clean_ldap_container["server_url"]),
             bind_dn=str(clean_ldap_container["bind_dn"]),
             password=str(clean_ldap_container["password"]),
         )
+        connect_result = client.connect(request)
 
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")

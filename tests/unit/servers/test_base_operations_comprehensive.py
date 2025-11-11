@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapClients
+from flext_ldap import FlextLdapClients, FlextLdapModels
 from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 
@@ -38,11 +38,12 @@ class TestFlextLdapBaseOperationsConnectionMethods:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         yield client
         client.unbind()
 
@@ -101,11 +102,12 @@ class TestFlextLdapBaseOperationsSchema:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         yield client
         client.unbind()
 
@@ -158,11 +160,12 @@ class TestFlextLdapBaseOperationsAcl:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         yield client
         client.unbind()
 
@@ -214,11 +217,12 @@ class TestFlextLdapBaseOperationsPagedSearch:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         yield client
         client.unbind()
 
@@ -301,11 +305,12 @@ class TestFlextLdapBaseOperationsRootDse:
     def connected_client(self) -> FlextLdapClients:
         """Provide a connected LDAP client."""
         client = FlextLdapClients()
-        client.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         yield client
         client.unbind()
 

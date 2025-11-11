@@ -125,6 +125,7 @@ class TestFlextLdapQuirksIntegration:
         assert isinstance(detected_type, str)
         assert detected_type in {
             "generic",
+            "openldap",  # Generic OpenLDAP when version cannot be distinguished
             "openldap1",
             "openldap2",
             "oid",
@@ -165,6 +166,8 @@ class TestFlextLdapQuirksIntegration:
         assert isinstance(detected, str)
         assert detected in {
             "generic",
+            "rfc",  # RFC fallback when detection has low confidence
+            "openldap",  # Generic OpenLDAP when version cannot be distinguished
             "openldap1",
             "openldap2",
             "oid",

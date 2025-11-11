@@ -19,7 +19,7 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextResult
 
-from flext_ldap import FlextLdapClients
+from flext_ldap import FlextLdapClients, FlextLdapModels
 
 # mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
 
@@ -43,11 +43,12 @@ class TestFlextLdapClientsBasic:
         """Test connection with explicit parameters."""
         client = FlextLdapClients()
 
-        result = client.connect(
+        result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
 
         assert result.is_success is True
         assert client.is_connected is True
@@ -63,11 +64,12 @@ class TestFlextLdapClientsBasic:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
         assert client.is_connected is True
 
@@ -88,11 +90,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search at base DN
@@ -118,11 +121,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search entire subtree
@@ -148,11 +152,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search single level
@@ -177,11 +182,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search for organizational units
@@ -206,11 +212,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search with specific attributes
@@ -236,11 +243,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search for entries with non-matching filter (returns empty)
@@ -266,11 +274,12 @@ class TestFlextLdapClientsSearch:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search
@@ -306,11 +315,12 @@ class TestFlextLdapClientsServer:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Get connection via property
@@ -328,11 +338,12 @@ class TestFlextLdapClientsServer:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Get server type via property
@@ -351,11 +362,12 @@ class TestFlextLdapClientsServer:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Get server info (capabilities) - may be dict or list
@@ -381,11 +393,12 @@ class TestFlextLdapClientsConnectionReuse:
         client = FlextLdapClients()
 
         # Connect once
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # First search
@@ -421,11 +434,12 @@ class TestFlextLdapClientsConnectionReuse:
         client = FlextLdapClients()
 
         # First connection
-        result1 = client.connect(
+        result1 = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert result1.is_success is True
         assert client.is_connected is True
 
@@ -435,11 +449,12 @@ class TestFlextLdapClientsConnectionReuse:
         assert client.is_connected is False
 
         # Reconnect
-        result2 = client.connect(
+        result2 = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert result2.is_success is True
         assert client.is_connected is True
 
@@ -458,11 +473,12 @@ class TestFlextLdapClientsErrorHandling:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search with invalid base DN
@@ -486,11 +502,12 @@ class TestFlextLdapClientsErrorHandling:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search with invalid filter
@@ -518,11 +535,12 @@ class TestFlextLdapClientsReturnValues:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search
@@ -549,11 +567,12 @@ class TestFlextLdapClientsReturnValues:
         client = FlextLdapClients()
 
         # Connect
-        result = client.connect(
+        result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
 
         # Must return FlextResult
         assert isinstance(result, FlextResult)
@@ -578,11 +597,12 @@ class TestFlextLdapClientsScopesParametrized:
         client = FlextLdapClients()
 
         # Connect
-        connect_result = client.connect(
+        connect_result = request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3390",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password="REDACTED_LDAP_BIND_PASSWORD123",
         )
+        client.connect(request)
         assert connect_result.is_success is True
 
         # Search with scope

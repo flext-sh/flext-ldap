@@ -48,9 +48,11 @@ from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldap.services.authentication import FlextLdapAuthentication
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.services.search import FlextLdapSearch
 from flext_ldap.services.validations import FlextLdapValidations
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 # =========================================================================
@@ -400,34 +402,35 @@ class FlextLdapClients(FlextService[None]):
 
     def connect(
         self,
-        server_uri: str,
-        bind_dn: FlextLdifModels.DistinguishedName | str,
-        password: str,
-        *,
-        auto_discover_schema: bool = True,
-        connection_options: dict[str, object] | None = None,
-        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
+        request: FlextLdapModels.ConnectionRequest,
     ) -> FlextResult[bool]:
         """Connect and bind to LDAP server with universal compatibility.
 
+        Refactored to use ConnectionRequest model (6 parameters → 1 model).
+        Reduces complexity and improves maintainability with Pydantic validation.
+
         Args:
-        server_uri: LDAP server URI (e.g., 'ldap://localhost:389').
-        bind_dn: Distinguished Name for binding.
-        password: Password for binding.
-        auto_discover_schema: Whether to automatically discover schema.
-        connection_options: Additional connection options.
-        quirks_mode: Override default quirks mode for this connection.
+            request: Connection request with server_uri, bind_dn, password,
+                     auto_discover_schema, connection_options, quirks_mode.
 
         Returns:
-        FlextResult[bool]: Success result or error.
+            FlextResult[bool]: Success result or error.
+
+        Example:
+            >>> request = FlextLdapModels.ConnectionRequest(
+            ...     server_uri="ldap://localhost:389",
+            ...     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            ...     password="secret",
+            ... )
+            >>> result = client.connect(request)
 
         """
         try:
-            # Step 1: Validate all connection parameters
+            # Step 1: Validate all connection parameters (Pydantic already validated)
             validation_result = self._validate_connection_params(
-                server_uri,
-                bind_dn,
-                password,
+                request.server_uri,
+                request.bind_dn,
+                request.password,
             )
             if validation_result.is_failure:
                 return FlextResult[bool].fail(validation_result.error)
@@ -435,23 +438,23 @@ class FlextLdapClients(FlextService[None]):
             bind_dn_str = validation_result.unwrap()
 
             # Step 2: Store quirks mode if provided
-            if quirks_mode is not None:
-                self.logger.debug("Quirks mode updated to: %s", quirks_mode)
+            if request.quirks_mode is not None:
+                self.logger.debug("Quirks mode updated to: %s", request.quirks_mode)
 
-            self.logger.debug("Connecting to LDAP server: %s", server_uri)
+            self.logger.debug("Connecting to LDAP server: %s", request.server_uri)
 
             # Step 3: Create server instance
             self._server = self._create_ldap_server(
-                server_uri,
-                auto_discover_schema=auto_discover_schema,
-                connection_options=connection_options,
+                request.server_uri,
+                auto_discover_schema=request.auto_discover_schema,
+                connection_options=request.connection_options,
             )
 
             # Step 4: Create and bind connection
             connection_result = self._bind_and_verify_connection(
                 self._server,
                 bind_dn_str,
-                password,
+                request.password,
             )
             if connection_result.is_failure:
                 return FlextResult[bool].fail(connection_result.error)
@@ -515,48 +518,20 @@ class FlextLdapClients(FlextService[None]):
             )
 
     def _detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
-        """Detect server type from Root DSE attributes using flext-ldif constants."""
-        if not root_dse:
-            return FlextLdifConstants.LdapServers.GENERIC
+        """Detect server type from Root DSE attributes using FlextLdapUtilities.
 
-        # Check vendor name
-        vendor_name = str(
-            root_dse.get(FlextLdapConstants.RootDseAttributes.VENDOR_NAME, ""),
-        ).lower()
+        Consolidated with FlextLdapUtilities.ServerDetection for reusability.
 
-        if FlextLdapConstants.VendorNames.ORACLE in vendor_name:
-            # Check for OUD-specific attributes
-            config_context = str(
-                root_dse.get(FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT, ""),
-            ).lower()
-            if FlextLdapConstants.SchemaDns.CONFIG in config_context:
-                return FlextLdifConstants.LdapServers.ORACLE_OUD
-            return FlextLdifConstants.LdapServers.ORACLE_OID
+        Args:
+            root_dse: Root DSE attributes dictionary
 
-        if FlextLdapConstants.VendorNames.OPENLDAP in vendor_name:
-            vendor_version = str(
-                root_dse.get(FlextLdapConstants.RootDseAttributes.VENDOR_VERSION, ""),
-            )
-            if vendor_version.startswith(
-                FlextLdapConstants.VersionPrefixes.VERSION_1_PREFIX,
-            ):
-                return FlextLdifConstants.LdapServers.OPENLDAP_1
-            return FlextLdifConstants.LdapServers.OPENLDAP_2
+        Returns:
+            Detected server type string
 
-        if (
-            hasattr(
-                root_dse,
-                FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT,
-            )
-            or FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT
-            in root_dse
-        ):
-            return FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-
-        if FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT in root_dse:
-            return FlextLdifConstants.LdapServers.ORACLE_OID
-
-        return FlextLdifConstants.LdapServers.GENERIC
+        """
+        return FlextLdapUtilities.ServerDetection.detect_server_type_from_root_dse(
+            root_dse,
+        )
 
     def bind(
         self,
@@ -692,13 +667,14 @@ class FlextLdapClients(FlextService[None]):
         return "ldap://not-connected"
 
     def __call__(self, *args: str, **kwargs: dict[str, object]) -> FlextResult[bool]:
-        """Callable interface for connection."""
+        """Callable interface for connection - creates ConnectionRequest and delegates."""
         if len(args) >= FlextLdapConstants.Validation.MIN_CONNECTION_ARGS:
             server_uri, bind_dn, password = str(args[0]), str(args[1]), str(args[2])
 
-            # Extract known parameters with proper types
+            # Extract optional parameters with proper types
             auto_discover_schema_val: bool = True
             connection_options_val: dict[str, object] | None = None
+            quirks_mode_val: str | None = None
 
             if "auto_discover_schema" in kwargs:
                 auto_discover_schema_val = bool(kwargs["auto_discover_schema"])
@@ -707,16 +683,22 @@ class FlextLdapClients(FlextService[None]):
                 conn_opts = kwargs["connection_options"]
                 if isinstance(conn_opts, dict):
                     connection_options_val = conn_opts
-                else:
-                    connection_options_val = None
 
-            return self.connect(
+            if "quirks_mode" in kwargs:
+                quirks_mode_val = (
+                    str(kwargs["quirks_mode"]) if kwargs["quirks_mode"] else None
+                )
+
+            # Create ConnectionRequest model and delegate to connect()
+            request = FlextLdapModels.ConnectionRequest(
                 server_uri=server_uri,
                 bind_dn=bind_dn,
                 password=password,
                 auto_discover_schema=auto_discover_schema_val,
                 connection_options=connection_options_val,
+                quirks_mode=quirks_mode_val,
             )
+            return self.connect(request)
 
         return FlextResult[bool].fail(
             "Invalid connection arguments. Expected: (server_uri, bind_dn, password)",
@@ -749,34 +731,34 @@ class FlextLdapClients(FlextService[None]):
 
     def search(
         self,
-        base_dn: FlextLdifModels.DistinguishedName | str,
-        filter_str: str,
-        attributes: list[str] | None = None,
-        scope: FlextLdapConstants.Types.Ldap3Scope = "SUBTREE",
-        page_size: int = 0,
-        paged_cookie: bytes | None = None,
-        *,
-        single: bool = False,
-        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
+        request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[list[FlextLdifModels.Entry] | FlextLdifModels.Entry | None]:
         """Perform LDAP search - delegates to searcher.
 
+        Refactored to use SearchRequest model (8 parameters → 1 model).
+        Reduces complexity and improves maintainability with Pydantic validation.
+
         Args:
-            base_dn: Search base DN
-            filter_str: LDAP filter string
-            attributes: Attributes to retrieve
-            scope: Search scope (BASE, LEVEL, SUBTREE)
-            page_size: Page size for paged results
-            paged_cookie: Cookie for paged results continuation
-            single: If True, return first entry only. If False, return list of entries.
-            quirks_mode: Override default quirks mode for this search
+            request: Search request with base_dn, filter_str, attributes, scope,
+                     page_size, paged_cookie, single, quirks_mode.
 
         Returns:
-            FlextResult with list of entries or single entry based on single parameter.
+            FlextResult with list of entries or single entry based on request.single.
+
+        Example:
+            >>> request = FlextLdapModels.SearchRequest(
+            ...     base_dn="dc=example,dc=com",
+            ...     filter_str="(objectClass=person)",
+            ...     scope="subtree",
+            ... )
+            >>> result = client.search(request)
 
         """
         # Use provided quirks_mode or fall back to instance quirks_mode
-        effectives_mode = quirks_mode or self.s_mode
+        effectives_mode = cast(
+            "FlextLdapConstants.Types.QuirksMode",
+            request.quirks_mode or self.s_mode,
+        )
 
         # Get or create searcher with FRESH connection context for each search
         # This ensures we always have the current connection state and prevents stale references
@@ -794,7 +776,9 @@ class FlextLdapClients(FlextService[None]):
         searcher.sets_mode(effectives_mode)
 
         # Convert scope to lowercase for searcher compatibility
-        normalized_scope_str = scope.lower() if isinstance(scope, str) else scope
+        normalized_scope_str = (
+            request.scope.lower() if isinstance(request.scope, str) else request.scope
+        )
         # Cast to Ldap3Scope for type checker
         normalized_scope = cast(
             "FlextLdapConstants.Types.Ldap3Scope",
@@ -802,17 +786,19 @@ class FlextLdapClients(FlextService[None]):
         )
 
         base_dn_str = (
-            base_dn.value
-            if isinstance(base_dn, FlextLdifModels.DistinguishedName)
-            else base_dn
+            request.base_dn.value
+            if isinstance(request.base_dn, FlextLdifModels.DistinguishedName)
+            else request.base_dn
         )
+        # Ensure page_size is int (default 0 if None)
+        page_size_val = request.page_size if request.page_size is not None else 0
         search_result = searcher.search(
             base_dn_str,
-            filter_str,
-            attributes,
+            request.filter_str,
+            request.attributes,
             normalized_scope,
-            page_size,
-            paged_cookie,
+            page_size_val,
+            request.paged_cookie,
         )
 
         if search_result.is_failure:
@@ -822,7 +808,7 @@ class FlextLdapClients(FlextService[None]):
             )
 
         # Handle single result request
-        if single:
+        if request.single:
             entries = search_result.unwrap()
             if entries and len(entries) > 0:
                 return FlextResult[
@@ -1446,7 +1432,14 @@ class FlextLdapClients(FlextService[None]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Search for LDAP users."""
         search_filter = filter_str or FlextLdapConstants.Filters.ALL_USERS_FILTER
-        result = self.search(base_dn, search_filter, attributes, single=False)
+        # Create SearchRequest model for search()
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=base_dn,
+            filter_str=search_filter,
+            attributes=attributes,
+            single=False,
+        )
+        result = self.search(search_request)
         if result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 result.error or "Search failed",
@@ -1473,7 +1466,14 @@ class FlextLdapClients(FlextService[None]):
             if cn
             else FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER
         )
-        result = self.search(base_dn, search_filter, attributes, single=False)
+        # Create SearchRequest model for search()
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=base_dn,
+            filter_str=search_filter,
+            attributes=attributes,
+            single=False,
+        )
+        result = self.search(search_request)
         if result.is_failure:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 result.error or "Search failed",
@@ -1493,11 +1493,8 @@ class FlextLdapClients(FlextService[None]):
         request: FlextLdapModels.SearchRequest,
     ) -> FlextResult[FlextLdapModels.SearchResponse]:
         """Search using a SearchRequest object."""
-        search_result = self.search(
-            request.base_dn,
-            request.filter_str,
-            request.attributes,
-        )
+        # Directly pass request to search() since it now accepts SearchRequest
+        search_result = self.search(request)
         if search_result.is_failure:
             return FlextResult[FlextLdapModels.SearchResponse].fail(
                 search_result.error or "Search failed",
@@ -1586,7 +1583,7 @@ class FlextLdapClients(FlextService[None]):
             return FlextLdapModels.ServerQuirks(
                 server_type=self._detected_server_type
                 or FlextLdapConstants.Defaults.SERVER_TYPE,
-                case_sensitive_dns=self._detected_server_type,
+                # Use default case_sensitive_dns=True from model
             )
         except Exception as e:
             # This should not happen in normal operation, but log it
@@ -1606,7 +1603,8 @@ class FlextLdapClients(FlextService[None]):
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Create user from entry (private helper method)."""
-        return self._create_user_from_entry_result(entry)
+        # Simply return the entry wrapped in FlextResult
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
 
     # Normalize Helper Methods
 
@@ -1718,10 +1716,10 @@ class FlextLdapClients(FlextService[None]):
                     FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
                 )
 
-            server_info = {
+            server_info: dict[str, object] = {
                 "server_type": self._detected_server_type
                 or FlextLdapConstants.Defaults.SERVER_TYPE,
-                "quirks_mode": self.quirks_mode(),
+                "quirks_mode": self.quirks_mode,  # Property, not method
                 "case_sensitive_attributes": self._detected_server_type
                 == FlextLdapConstants.ServerTypes.AD,
             }
@@ -1735,7 +1733,9 @@ class FlextLdapClients(FlextService[None]):
     def _get_server_operations(self) -> FlextResult[FlextLdapServersBaseOperations]:
         """Get server operations instance for the detected server type."""
         factory = FlextLdapServersFactory()
-        server_type = self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+        server_type = (
+            self._detected_server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+        )
         return factory.create_from_server_type(server_type)
 
     def discover_schema(self) -> FlextResult[FlextLdifModels.SchemaDiscoveryResult]:
@@ -1773,3 +1773,57 @@ class FlextLdapClients(FlextService[None]):
             return FlextResult[bool].ok(True)
         except Exception:
             return FlextResult[bool].ok(False)
+
+    def get_server_attributes(self, capability: str) -> FlextResult[list[str]]:
+        """Get server-specific attributes for a given capability using server operations.
+
+        Args:
+            capability: Capability name (e.g., 'acl', 'schema', 'operational')
+
+        Returns:
+            FlextResult with list of attribute names for this capability
+
+        """
+        ops_result = self._get_server_operations()
+        if ops_result.is_failure:
+            return FlextResult[list[str]].fail(ops_result.error)
+
+        ops = ops_result.unwrap()
+
+        # Map capability to server-specific attributes
+        if capability == "acl":
+            acl_attr = ops.get_acl_attribute_name()
+            return FlextResult[list[str]].ok([acl_attr])
+        if capability == "schema":
+            schema_dn = ops.get_schema_dn()
+            return FlextResult[list[str]].ok([schema_dn])
+        if capability == "operational":
+            # Return common operational attributes
+            return FlextResult[list[str]].ok([
+                "modifyTimestamp",
+                "createTimestamp",
+                "creatorsName",
+                "modifiersName",
+            ])
+
+        return FlextResult[list[str]].fail(
+            f"Unknown capability: {capability}",
+        )
+
+    def transform_entry_for_server(
+        self,
+        entry: FlextLdifModels.Entry,
+        target_server_type: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Transform entry for target server using FlextLdapEntryAdapter service.
+
+        Args:
+            entry: Entry to transform
+            target_server_type: Target server type
+
+        Returns:
+            FlextResult with transformed entry
+
+        """
+        adapter = FlextLdapEntryAdapter(server_type=target_server_type)
+        return adapter.normalize_entry_for_server(entry, target_server_type)

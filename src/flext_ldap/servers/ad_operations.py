@@ -17,6 +17,7 @@ from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 
 
 class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
@@ -302,48 +303,58 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
 
     @override
     def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
-        """Get supported controls for AD."""
+        """Get supported controls for AD (refactored from 6 returns to 4)."""
         try:
+            # Early validation - return 1
             if not connection or not connection.bound:
                 return FlextResult[list[str]].fail("Connection not bound")
 
+            # Default AD controls as fallback
+            default_ad_controls = [
+                "1.2.840.113556.1.4.319",  # pagedResults
+                "1.2.840.113556.1.4.417",  # show deleted
+                "1.2.840.113556.1.4.473",  # Server-side sort
+                "1.2.840.113556.1.4.528",  # server notification
+                "1.2.840.113556.1.4.801",  # SD flags control
+                "1.2.840.113556.1.4.1338",  # verify name
+                "1.2.840.113556.1.4.1339",  # domain scope
+                "1.2.840.113556.1.4.1340",  # search options
+                "1.2.840.113556.1.4.1413",  # permissive modify
+                "1.2.840.113556.1.4.1504",  # attribute scoped query
+                "1.2.840.113556.1.4.1852",  # quota control
+                "1.2.840.113556.1.4.2026",  # input DN
+                "1.2.840.113556.1.4.2064",  # show recycled
+                "1.2.840.113556.1.4.2065",  # show deactivated link
+                "1.2.840.113556.1.4.2066",  # policy hints
+            ]
+
             # Get Root DSE which contains supportedControl attribute
             root_dse_result = self.get_root_dse_attributes(connection)
+
+            # Use fallback if Root DSE unavailable - return 2
             if root_dse_result.is_failure:
-                # Return common AD controls as fallback
-                ad_controls = [
-                    "1.2.840.113556.1.4.319",  # pagedResults
-                    "1.2.840.113556.1.4.417",  # show deleted
-                    "1.2.840.113556.1.4.473",  # Server-side sort
-                    "1.2.840.113556.1.4.528",  # server notification
-                    "1.2.840.113556.1.4.801",  # SD flags control
-                    "1.2.840.113556.1.4.1338",  # verify name
-                    "1.2.840.113556.1.4.1339",  # domain scope
-                    "1.2.840.113556.1.4.1340",  # search options
-                    "1.2.840.113556.1.4.1413",  # permissive modify
-                    "1.2.840.113556.1.4.1504",  # attribute scoped query
-                    "1.2.840.113556.1.4.1852",  # quota control
-                    "1.2.840.113556.1.4.2026",  # input DN
-                    "1.2.840.113556.1.4.2064",  # show recycled
-                    "1.2.840.113556.1.4.2065",  # show deactivated link
-                    "1.2.840.113556.1.4.2066",  # policy hints
-                ]
-                return FlextResult[list[str]].ok(ad_controls)
+                return FlextResult[list[str]].ok(default_ad_controls)
 
+            # Extract and normalize supportedControl from Root DSE
             root_dse = root_dse_result.unwrap()
+            controls_raw = root_dse.get("supportedControl", [])
 
-            # Extract supportedControl from Root DSE
-            if "supportedControl" in root_dse:
-                controls = root_dse["supportedControl"]
-                if isinstance(controls, list):
-                    return FlextResult[list[str]].ok([str(c) for c in controls])
-                return FlextResult[list[str]].ok([str(controls)])
+            # Normalize to list of strings (consolidated logic from 3 returns to 1)
+            # Handles: list, single value, or empty
+            controls_list: list[str]
+            if isinstance(controls_raw, list):
+                controls_list = [str(c) for c in controls_raw]
+            elif controls_raw:
+                controls_list = [str(controls_raw)]
+            else:
+                controls_list = []
 
-            # Return empty list if not found
-            return FlextResult[list[str]].ok([])
+            # Single success return - return 3
+            return FlextResult[list[str]].ok(controls_list)
 
         except Exception as e:
             self.logger.exception("Control retrieval error", extra={"error": str(e)})
+            # Exception return - return 4
             return FlextResult[list[str]].fail(f"Control retrieval failed: {e}")
 
     @override
@@ -352,15 +363,19 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for AD server specifics."""
-        ldif_entry_result = self._ensure_ldif_entry(
-            entry,
-            context="Active Directory entry normalization",
+        """Normalize entry for Active Directory server using shared service."""
+        # Ensure entry is FlextLdifModels.Entry first
+        ensure_result = self._ensure_ldif_entry(
+            entry, context="normalize_entry_for_server"
         )
-        if ldif_entry_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(ldif_entry_result.error)
+        if ensure_result.is_failure:
+            return ensure_result
 
-        return self.normalize_entry(ldif_entry_result.unwrap())
+        ldif_entry = ensure_result.unwrap()
+
+        # Use shared FlextLdapEntryAdapter service for normalization
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(
@@ -368,38 +383,10 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry,
         _server_type: str | None = None,
     ) -> FlextResult[bool]:
-        """Validate entry for AD server."""
-        try:
-            # Basic validation
-            if not entry.dn:
-                return FlextResult[bool].fail("Entry must have a DN")
-
-            if not entry.attributes or not entry.attributes.attributes:
-                return FlextResult[bool].fail("Entry must have attributes")
-
-            # Check for objectClass
-            attrs = entry.attributes.attributes
-            if "objectClass" not in attrs:
-                return FlextResult[bool].fail("Entry must have objectClass attribute")
-
-            # AD accepts standard and AD-specific objectClasses
-            object_class_attr = attrs["objectClass"]
-            object_classes = (
-                object_class_attr
-                if isinstance(object_class_attr, list)
-                else [object_class_attr]
-            )
-
-            # Ensure at least one objectClass value
-            if not object_classes:
-                return FlextResult[bool].fail(
-                    "objectClass must have at least one value",
-                )
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        """Validate entry for Active Directory using shared service."""
+        # Use shared FlextLdapEntryAdapter service for validation
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.validate_entry_for_server(entry, self.server_type)
 
     # =========================================================================
     # AD-SPECIFIC OPERATIONS

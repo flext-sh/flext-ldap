@@ -34,6 +34,7 @@ from flext_ldif import FlextLdifModels
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.clients import FlextLdapClients
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class _AttrWithValues(Protocol):
@@ -100,43 +101,60 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         | None,
         dn: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Extract Entry object from various search response formats."""
+        """Extract Entry object from various search response formats.
+
+        Refactored with Railway Pattern: 8→4 returns (SOLID/DRY compliance).
+        Uses structural pattern matching for type-safe extraction.
+        """
+        # Railway Pattern: Early validation
         if not search_response:
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Entry {dn} not found in search despite ADD indicating existence",
             )
 
-        if isinstance(search_response, list):
-            if not search_response:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Entry {dn} not found in search entries despite ADD indicating existence",
-                )
-            search_result_item = search_response[0]
-            expected_tuple_length = 2
-            entry_index = 1
-            if (
-                isinstance(search_result_item, tuple)
-                and len(search_result_item) == expected_tuple_length
-            ):
-                entry_from_tuple = search_result_item[entry_index]
-                if isinstance(entry_from_tuple, FlextLdifModels.Entry):
-                    return FlextResult[FlextLdifModels.Entry].ok(entry_from_tuple)
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Tuple entry is not FlextLdifModels.Entry for {dn}"
-                )
-            # Direct Entry object from list
-            if isinstance(search_result_item, FlextLdifModels.Entry):
-                return FlextResult[FlextLdifModels.Entry].ok(search_result_item)
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Unexpected search result format for {dn}"
-            )
+        # Structural pattern matching for type-safe extraction (Python 3.10+)
+        match search_response:
+            # Case 1: Direct Entry object
+            case FlextLdifModels.Entry() as entry:
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-        # At this point, search_response must be FlextLdifModels.Entry (not a list)
-        if isinstance(search_response, FlextLdifModels.Entry):
-            return FlextResult[FlextLdifModels.Entry].ok(search_response)
-        return FlextResult[FlextLdifModels.Entry].fail(
-            f"Search response is not FlextLdifModels.Entry for {dn}"
-        )
+            # Case 2: List of responses (tuple or Entry)
+            case list() as response_list if response_list:
+                return self._extract_from_list(response_list, dn)
+
+            # Case 3: Empty list or invalid type
+            case _:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Unexpected search response format for {dn}: {type(search_response)}"
+                )
+
+    def _extract_from_list(
+        self,
+        response_list: list[FlextLdifModels.Entry] | list[tuple[str, FlextLdifModels.Entry]],
+        dn: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Extract Entry from list response (tuple or direct Entry).
+
+        Helper method for Railway Pattern extraction.
+        Handles: list[Entry] and list[tuple[str, Entry]]
+        """
+        first_item = response_list[0]
+
+        # Match on first item type
+        match first_item:
+            # Tuple format: (dn_str, Entry)
+            case (str(), FlextLdifModels.Entry() as entry):
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+            # Direct Entry format
+            case FlextLdifModels.Entry() as entry:
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+            # Invalid format
+            case _:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Unexpected list item format for {dn}: {type(first_item)}"
+                )
 
     def _extract_existing_attributes(
         self,
@@ -305,12 +323,12 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
     ) -> FlextResult[dict[str, object]]:
         """Intelligently create or update LDAP entry.
 
+        Refactored with Railway Pattern: 7→3 returns (SOLID/DRY compliance).
+
         Strategy:
         1. Attempt ADD (entry creation) - fastest path for new entries
-        2. If fails with "already exists", search for existing attributes
-        3. Compare current vs new attributes to decide ADD vs REPLACE
-        4. Execute MODIFY operations based on actual differences
-        5. Return errors immediately (no retries)
+        2. If fails with "already exists", delegate to existing entry handler
+        3. Return errors immediately (no retries)
 
         Args:
             ldap_client: Connected FlextLdapClients instance
@@ -337,15 +355,14 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
         """
         if skip_attributes is None:
-            skip_attributes = self._get_default_skip_attributes()
+            skip_attributes = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
 
-        # Step 1: Normalize attributes
+        # Step 1: Normalize attributes and try ADD first (most efficient for new entries)
         normalized_new = self._normalize_attributes(new_attributes)
-
-        # Step 2: Try ADD first (most efficient for new entries)
         self.logger.debug("Attempting ADD", extra={"dn": dn})
         add_result = ldap_client.add_entry(dn=dn, attributes=new_attributes)
 
+        # Railway Pattern: Early success - entry created
         if add_result.is_success:
             self.logger.debug(
                 "Entry created via ADD",
@@ -361,36 +378,44 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 FlextLdapConstants.StatusKeys.UNCHANGED: 0,
             })
 
-        # Step 3: Check if failure is because entry already exists
-        error_msg = str(add_result.error).lower()
-        is_already_exists = any(
-            pattern in error_msg
-            for pattern in [
-                FlextLdapConstants.ErrorPatterns.ENTRY_ALREADY_EXISTS,
-                FlextLdapConstants.ErrorPatterns.ALREADY_EXISTS,
-                FlextLdapConstants.ErrorPatterns.CODE_68,
-            ]
-        )
-
-        if not is_already_exists:
+        # Railway Pattern: Check if failure is "already exists" error
+        if not FlextLdapUtilities.ErrorHandling.is_already_exists_error(add_result.error):
             self.logger.error(
                 "ADD failed with non-existence error",
                 extra={"dn": dn, "error": str(add_result.error)},
             )
             return FlextResult[dict[str, object]].fail(str(add_result.error))
 
-        # Step 4: Entry exists - fetch ALL attributes (including operational)
-        # Use ["*", "+"] to get user + operational attributes for accurate comparison
+        # Railway Pattern: Delegate existing entry handling
+        return self._handle_existing_entry(
+            ldap_client, dn, normalized_new, skip_attributes
+        )
+
+    def _handle_existing_entry(
+        self,
+        ldap_client: FlextLdapClients,
+        dn: str,
+        normalized_new: dict[str, list[str]],
+        skip_attributes: set[str],
+    ) -> FlextResult[dict[str, object]]:
+        """Handle existing entry update logic.
+
+        Helper for Railway Pattern - extracted from upsert_entry().
+        Fetches existing entry, computes changes, and executes modifications.
+
+        Returns:
+            FlextResult with upsert statistics or failure message.
+
+        """
+        # Step 1: Fetch ALL attributes (including operational)
         self.logger.debug("Entry exists, fetching current attributes", extra={"dn": dn})
-        search_result = ldap_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn=dn,
             filter_str=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
-            attributes=[
-                "*",
-                "+",
-            ],  # Fetch ALL attributes to avoid attributeOrValueExists
+            attributes=["*", "+"],  # Fetch ALL attributes
             single=True,
         )
+        search_result = ldap_client.search(search_request)
 
         if search_result.is_failure:
             self.logger.error(
@@ -401,6 +426,7 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 f"Failed to fetch existing entry: {search_result.error}",
             )
 
+        # Step 2: Extract entry from search response
         entry_result = self._extract_entry_from_search(search_result.unwrap(), dn)
         if entry_result.is_failure:
             self.logger.error(
@@ -412,7 +438,7 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         existing_entry = entry_result.unwrap()
         existing_attrs = self._extract_existing_attributes(existing_entry)
 
-        # Step 5: Compute changes (ADD vs REPLACE)
+        # Step 3: Compute changes (ADD vs REPLACE)
         to_add, to_replace_new, to_replace_existing, unchanged_count = (
             self._compute_attribute_changes(
                 normalized_new,
@@ -421,7 +447,7 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             )
         )
 
-        # Skip MODIFY if no changes detected
+        # Step 4: Check if no changes needed (optimization)
         if not to_add and not to_replace_new and not to_replace_existing:
             self.logger.debug(
                 "Entry already has identical attributes, skipping MODIFY",
@@ -434,10 +460,8 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 FlextLdapConstants.StatusKeys.UNCHANGED: unchanged_count,
             })
 
-        # Step 6: Execute modifications (using REPLACE for all to avoid attributeOrValueExists)
-        # Combine new and existing attributes for single REPLACE operation
+        # Step 5: Execute modifications using REPLACE
         to_replace_all = {**to_replace_new, **to_replace_existing}
-
         self.logger.debug(
             "Preparing MODIFY REPLACE",
             extra={
@@ -448,14 +472,13 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             },
         )
 
-        # Use REPLACE for all modifications (to_add is always empty now)
         replace_result = self._execute_replace_modifications(
             ldap_client, dn, to_replace_all
         )
         if replace_result.is_failure:
             return FlextResult[dict[str, object]].fail(str(replace_result.error))
 
-        # Track statistics correctly: new attributes are "added", existing are "replaced"
+        # Step 6: Return success statistics
         added_count = len(to_replace_new)
         replaced_count = len(to_replace_existing)
 
@@ -474,35 +497,3 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             FlextLdapConstants.StatusKeys.REPLACED: replaced_count,
             FlextLdapConstants.StatusKeys.UNCHANGED: unchanged_count,
         })
-
-    @staticmethod
-    def _get_default_skip_attributes() -> set[str]:
-        """Get default set of attributes to skip during UPSERT.
-
-        Returns attributes that should never be modified:
-        - Operational attributes (managed by server)
-        - RDN attributes (cannot be modified via MODIFY)
-        - Structural attributes (objectClass cannot be modified)
-
-        Returns:
-            Set of lowercase attribute names to skip
-
-        """
-        return {
-            # Operational attributes
-            "createtimestamp",
-            "modifytimestamp",
-            "creatorsname",
-            "modifiersname",
-            "entryuuid",
-            "entrycsn",
-            "structuralobjectclass",
-            "hassubordinates",
-            "subschemasubentry",
-            # Common RDN attributes (check these, they're often RDNs)
-            "cn",
-            "uid",
-            "ou",
-            # Structural attributes (cannot be modified)
-            "objectclass",
-        }

@@ -313,13 +313,15 @@ class FlextLdap(FlextService[None]):
         if self._config.ldap_bind_password is not None:
             password_value = self._config.ldap_bind_password.get_secret_value()
 
-        result = self.client.connect(
+        # Create ConnectionRequest model for connect()
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=self._config.ldap_server_uri,
             bind_dn=self._config.ldap_bind_dn
             or "",  # Handle None with default empty string
             password=password_value,
             quirks_mode=quirks_mode,
         )
+        result = self.client.connect(request)
         if result.is_failure:
             return FlextResult[bool].fail(f"Connection failed: {result.error}")
 
@@ -345,6 +347,52 @@ class FlextLdap(FlextService[None]):
         """
         return self.client.unbind()
 
+    def _normalize_search_entries(
+        self, entries_result: object
+    ) -> list[FlextLdifModels.Entry]:
+        """Normalize search results to list of entries (helper for query).
+
+        Reduces complexity by extracting normalization logic.
+        """
+        match entries_result:
+            case list() as entries_list:
+                return cast("list[FlextLdifModels.Entry]", entries_list)
+            case object() as single_entry if single_entry:
+                return [cast("FlextLdifModels.Entry", single_entry)]
+            case _:
+                return []
+
+    def _create_search_response(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextLdapModels.SearchResponse:
+        """Create SearchResponse from entries (helper for query).
+
+        Reduces code duplication by centralizing SearchResponse creation.
+        """
+        return FlextLdapModels.SearchResponse(
+            entries=entries,
+            total_count=len(entries),
+            result_code=0,
+            time_elapsed=0.0,
+        )
+
+    def _process_query_result(
+        self,
+        response: FlextLdapModels.SearchResponse,
+        *,
+        single: bool,
+    ) -> FlextResult[SearchResultType]:
+        """Process query result based on single flag (helper for query).
+
+        Applies Railway-Oriented Programming pattern for result handling.
+        """
+        if single:
+            # Single mode: return first entry or None
+            first_entry = response.entries[0] if response.entries else None
+            return cast("FlextResult[SearchResultType]", FlextResult.ok(first_entry))
+        # Multi mode: return full SearchResponse
+        return cast("FlextResult[SearchResultType]", FlextResult.ok(response))
+
     def query(
         self,
         base_dn: str,
@@ -358,6 +406,8 @@ class FlextLdap(FlextService[None]):
 
         Queries LDAP directory with support for single entry or full response.
         Respects quirks_mode for server-specific behavior.
+
+        Refactored using helper methods to reduce complexity and code duplication.
 
         Args:
             base_dn: Base distinguished name for search.
@@ -377,57 +427,22 @@ class FlextLdap(FlextService[None]):
             result = ldap.query("dc=example,dc=com", "(uid=jdoe)", single=True)
 
         """
-        result = self.client.search(
-            base_dn, filter_str, attributes, quirks_mode=quirks_mode
+        # Railway-Oriented Programming: propagate failures early
+        # Create SearchRequest model for search()
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=base_dn,
+            filter_str=filter_str,
+            attributes=attributes,
+            quirks_mode=quirks_mode,
         )
+        result = self.client.search(search_request)
         if result.is_failure:
             return cast("FlextResult[SearchResultType]", result)
 
-        # Advanced result processing using Python 3.13 structural pattern matching
-        entries_result = result.unwrap()
-
-        # Structural pattern matching for result normalization
-        match entries_result:
-            case list() as entries_list:
-                # Already a list
-                normalized_entries = entries_list
-            case object() as single_entry if single_entry:
-                # Single entry, wrap in list
-                normalized_entries = [single_entry]
-            case _:
-                # Empty or None result
-                normalized_entries = []
-
-        # Create SearchResponse from normalized entries
-        search_response = FlextLdapModels.SearchResponse(
-            entries=normalized_entries,
-            total_count=len(normalized_entries),
-            result_code=0,
-            time_elapsed=0.0,
-        )
-
-        # Structural pattern matching for single vs multi-result handling
-        match (single, search_response.entries):
-            case (True, [first_entry, *_]):
-                # Single mode with at least one entry - return first
-                return cast(
-                    "FlextResult[SearchResultType]", FlextResult.ok(first_entry)
-                )
-            case (True, []):
-                # Single mode with no entries - return None
-                return cast("FlextResult[SearchResultType]", FlextResult.ok(None))
-            case (False, _):
-                # Multi mode - return full SearchResponse
-                return cast(
-                    "FlextResult[SearchResultType]", FlextResult.ok(search_response)
-                )
-            # Fallback case to ensure all paths return
-            case _:
-                # This should never happen, but ensures type safety
-                return cast(
-                    "FlextResult[SearchResultType]",
-                    FlextResult.fail("Unexpected query result state"),
-                )
+        # Use helper methods to reduce complexity (DRY principle)
+        entries = self._normalize_search_entries(result.unwrap())
+        response = self._create_search_response(entries)
+        return self._process_query_result(response, single=single)
 
     # Apply Changes Helper Methods
 
@@ -544,33 +559,36 @@ class FlextLdap(FlextService[None]):
 
     def apply_changes(
         self,
-        changes: dict[str, str | list[str]],
-        dn: str | None = None,
-        *,
-        operation: FlextLdapConstants.Types.ApiOperation = "add",
-        atomic: bool = False,
-        batch: bool = False,
-        modifications: list[tuple[str, dict[str, str | list[str]]]] | None = None,
-        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
+        request: FlextLdapModels.ApplyChangesRequest,
     ) -> FlextResult[bool | list[bool]]:
-        """Universal CRUD apply_changes method with quirks support.
+        """Universal CRUD apply_changes method with quirks support (refactored from 8 parameters to 1 model).
 
         Consolidates add, modify, and delete operations with unified interface.
         Supports both single and batch operations with optional atomic semantics.
 
         Args:
-            changes: Changes/attributes for single operation.
-            dn: Distinguished name for single operation (required for add/modify).
-            operation: Type of operation: "add", "modify", or "delete".
-            atomic: If True, attempt atomic modification (all or none).
-            batch: If True, use modifications parameter for batch mode.
-            modifications: List of (DN, changes) tuples for batch operations.
-            quirks_mode: Optional override of current quirks mode.
+            request: ApplyChangesRequest model containing operation parameters.
 
         Returns:
             FlextResult[bool] for single operation, FlextResult[list[bool]] for batch.
 
         """
+        # Extract parameters from request model (DRY - single source of truth)
+        changes = request.changes
+        dn = request.dn
+        # Cast to proper types for internal methods (type safety)
+        operation = cast(
+            "FlextLdapConstants.Types.ApiOperation",
+            request.operation,
+        )
+        atomic = request.atomic
+        batch = request.batch
+        modifications = request.modifications
+        quirks_mode = cast(
+            "FlextLdapConstants.Types.QuirksMode | None",
+            request.quirks_mode,
+        )
+
         # Use structural pattern matching for operation routing
         match (operation, batch, modifications, dn):
             # Delete operation - requires DN
@@ -773,6 +791,7 @@ class FlextLdap(FlextService[None]):
         """Data exchange method for import/export with quirks support.
 
         Consolidates import_from_ldif and export_to_ldif operations.
+        Refactored with Railway Pattern: 7→3 returns (SOLID/DRY compliance).
 
         Args:
             data: Data string for import operation.
@@ -785,36 +804,51 @@ class FlextLdap(FlextService[None]):
             FlextResult with imported entries or exported data string.
 
         """
-        _ = quirks_mode  # Reserved for future format-specific import/export rules
-        if direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
-            if not data:
-                return FlextResult[str | list[FlextLdifModels.Entry]].fail(
-                    "Data required for import operation",
-                )
-            if data_format == FlextLdapConstants.DataFormatValues.LDIF:
-                return cast(
-                    "FlextResult[str | list[FlextLdifModels.Entry]]",
-                    self.import_from_ldif(data),
-                )
+        # Create ExchangeRequest model - Pydantic validates data/entries by direction
+        try:
+            request = FlextLdapModels.ExchangeRequest(
+                data=data,
+                entries=entries,
+                data_format=data_format,
+                direction=direction,
+                quirks_mode=quirks_mode,
+            )
+        except ValueError as e:
+            return FlextResult[str | list[FlextLdifModels.Entry]].fail(str(e))
+
+        # Railway Pattern: delegate to direction-specific handler
+        if request.direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
+            return self._execute_import(request)
+        return self._execute_export(request)
+
+    def _execute_import(
+        self, request: FlextLdapModels.ExchangeRequest
+    ) -> FlextResult[str | list[FlextLdifModels.Entry]]:
+        """Execute import operation - extracted for Railway Pattern."""
+        if request.data_format != FlextLdapConstants.DataFormatValues.LDIF:
             return FlextResult[str | list[FlextLdifModels.Entry]].fail(
-                f"Import format {data_format} not yet supported",
+                f"Import format {request.data_format} not yet supported",
             )
-        # export
-        if not entries:
+        return cast(
+            "FlextResult[str | list[FlextLdifModels.Entry]]",
+            self.import_from_ldif(request.data),  # type: ignore[arg-type]
+        )
+
+    def _execute_export(
+        self, request: FlextLdapModels.ExchangeRequest
+    ) -> FlextResult[str | list[FlextLdifModels.Entry]]:
+        """Execute export operation - extracted for Railway Pattern.
+
+        Railway Pattern: propagate FlextResult without intermediate checks.
+        """
+        if request.data_format != "ldif":
             return FlextResult[str | list[FlextLdifModels.Entry]].fail(
-                "Entries required for export operation",
+                f"Export format {request.data_format} not yet supported",
             )
-        if data_format == "ldif":
-            export_result = self.export_to_ldif(entries)
-            if export_result.is_failure:
-                return FlextResult[str | list[FlextLdifModels.Entry]].fail(
-                    export_result.error
-                )
-            return FlextResult[str | list[FlextLdifModels.Entry]].ok(
-                export_result.unwrap()
-            )
-        return FlextResult[str | list[FlextLdifModels.Entry]].fail(
-            f"Export format {data_format} not yet supported",
+        # Railway Pattern: export_to_ldif returns FlextResult, propagate it
+        return cast(
+            "FlextResult[str | list[FlextLdifModels.Entry]]",
+            self.export_to_ldif(request.entries),  # type: ignore[arg-type]
         )
 
     def info(
@@ -1028,6 +1062,7 @@ class FlextLdap(FlextService[None]):
         write_result = self._ldif.write(entries)
         if write_result.is_failure:
             return FlextResult[str].fail(f"LDIF export failed: {write_result.error}")
+        # FlextLdif.write() returns FlextResult[str] directly
         return FlextResult[str].ok(write_result.unwrap())
 
     def import_from_ldif(
@@ -1214,16 +1249,20 @@ class FlextLdap(FlextService[None]):
             FlextResult with list of entries or single entry based on single parameter.
 
         """
-        return self.client.search(
-            base_dn,
-            filter_str,
-            attributes,
-            scope,
-            page_size,
-            paged_cookie,
+        # Create SearchRequest model for delegation to client
+        # Convert DistinguishedName to str if needed
+        base_dn_str = str(base_dn) if not isinstance(base_dn, str) else base_dn
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn=base_dn_str,
+            filter_str=filter_str,
+            attributes=attributes,
+            scope=scope,
+            page_size=page_size,
+            paged_cookie=paged_cookie,
             single=single,
             quirks_mode=quirks_mode,
         )
+        return self.client.search(search_request)
 
     # =========================================================================
     # MODIFY DELEGATION - Forward to FlextLdapClients
@@ -1284,13 +1323,16 @@ class FlextLdap(FlextService[None]):
         if self._config.ldap_bind_password is not None:
             password_value = self._config.ldap_bind_password.get_secret_value()
 
-        # Attempt connection with structured error handling
-        result = self.client.connect(
+        # Create ConnectionRequest model for connect()
+        request = FlextLdapModels.ConnectionRequest(
             server_uri=self._config.ldap_server_uri,
             bind_dn=self._config.ldap_bind_dn or "",
             password=password_value,
             quirks_mode=self.s_mode,
         )
+
+        # Attempt connection with structured error handling
+        result = self.client.connect(request)
 
         # Pattern matching for connection result handling
         match result:

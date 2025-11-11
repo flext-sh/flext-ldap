@@ -38,11 +38,12 @@ class TestLdapE2EOperations:
         )
 
         # Test connection creation (will fail without real server)
-        connection_result = api.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://localhost:3389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
             password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
         )
+        connection_result = api.connect(request)
 
         # For now, just test that the API methods exist and return results
         assert connection_result is not None
@@ -128,11 +129,12 @@ class TestLdapE2EOperations:
         api = FlextLdapClients()
 
         # Test connection to non-existent server
-        result = api.connect(
+        request = FlextLdapModels.ConnectionRequest(
             server_uri="ldap://127.0.0.1:9999",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
             password=os.getenv("LDAP_TEST_ADMIN_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
         )
+        result = api.connect(request)
 
         # Should fail gracefully
         assert not result.is_success
@@ -169,11 +171,12 @@ class TestLdapE2EOperations:
         ]
 
         for uri, _expected_error_type in scenarios:
-            result = api.connect(
+            request = FlextLdapModels.ConnectionRequest(
                 server_uri=uri,
                 bind_dn="cn=test",
                 password=os.getenv("LDAP_TEST_PASSWORD", "test"),
             )
+            result = api.connect(request)
 
             # Should handle all error types gracefully
             assert hasattr(result, "is_success")

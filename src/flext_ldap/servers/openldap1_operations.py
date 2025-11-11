@@ -18,6 +18,7 @@ from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 
 
 class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
@@ -455,21 +456,8 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for OpenLDAP 1.x server specifics.
-
-        Applies OpenLDAP 1.x-specific transformations:
-        - Convert olcAccess to access ACLs
-        - Map 2.x objectClasses to 1.x equivalents
-        - Remove cn=config specific attributes
-
-        Args:
-        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-
-        Returns:
-        FlextResult containing normalized entry
-
-        """
-        # Ensure entry is validated FlextLdifModels.Entry
+        """Normalize entry for OpenLDAP 1.x server using shared service."""
+        # Ensure entry is FlextLdifModels.Entry first
         ensure_result = self._ensure_ldif_entry(
             entry, context="normalize_entry_for_server"
         )
@@ -478,16 +466,9 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
 
         ldif_entry = ensure_result.unwrap()
 
-        # Reuse existing normalize_entry method which handles OpenLDAP 1.x specifics
-        normalize_result = self.normalize_entry(ldif_entry)
-        if normalize_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(normalize_result.error)
-
-        # Get normalized entry
-        normalized_ldif_entry = normalize_result.unwrap()
-
-        # Return normalized entry directly (no cast needed)
-        return FlextResult[FlextLdifModels.Entry].ok(normalized_ldif_entry)
+        # Use shared FlextLdapEntryAdapter service for normalization
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(
@@ -495,59 +476,7 @@ class FlextLdapServersOpenLDAP1Operations(FlextLdapServersOpenLDAP2Operations):
         entry: FlextLdifModels.Entry,
         _server_type: str | None = None,
     ) -> FlextResult[bool]:
-        """Validate entry for OpenLDAP 1.x server.
-
-        Checks:
-        - Entry has DN
-        - Entry has attributes
-        - Entry has objectClass
-        - No 2.x-specific objectClasses (olc*)
-        - No cn=config attributes
-
-        Args:
-        entry: Entry to validate
-
-        Returns:
-        FlextResult[bool] indicating validation success
-
-        """
-        try:
-            # Basic validation
-            if not entry.dn:
-                return FlextResult[bool].fail("Entry must have a DN")
-
-            if not entry.attributes or not entry.attributes.attributes:
-                return FlextResult[bool].fail("Entry must have attributes")
-
-            # Check for objectClass
-            attrs = entry.attributes.attributes
-            if FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS not in attrs:
-                return FlextResult[bool].fail("Entry must have objectClass attribute")
-
-            # OpenLDAP 1.x specific: reject olc* objectClasses
-            object_class_attr = attrs[
-                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS
-            ]
-            # object_class_attr is already a list, don't call .values
-            object_classes = (
-                object_class_attr
-                if isinstance(object_class_attr, list)
-                else [object_class_attr]
-            )
-            for oc in object_classes:
-                oc_str = str(oc)
-                if oc_str.startswith("olc"):
-                    return FlextResult[bool].fail(
-                        f"OpenLDAP 2.x objectClass '{oc_str}' not supported in 1.x",
-                    )
-
-            # Warn about access ACL format
-            if FlextLdapConstants.AclAttributes.OLC_ACCESS in attrs:
-                return FlextResult[bool].fail(
-                    "Use 'access' attribute for OpenLDAP 1.x ACLs, not 'olcAccess'",
-                )
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        """Validate entry for OpenLDAP 1.x using shared service."""
+        # Use shared FlextLdapEntryAdapter service for validation
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.validate_entry_for_server(entry, self.server_type)

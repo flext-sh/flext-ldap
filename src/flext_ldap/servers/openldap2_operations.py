@@ -18,7 +18,9 @@ from ldap3 import MODIFY_REPLACE, Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
@@ -176,7 +178,23 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
     # get_acls() inherited from base class - uses get_acl_attribute_name()
 
-    @override
+    def _format_acls_for_openldap2(
+        self, acls: list[dict[str, object]]
+    ) -> FlextResult[list[str]]:
+        """Format ACL dictionaries to olcAccess strings using FlextLdapUtilities.
+
+        Consolidated with FlextLdapUtilities.AclFormatting for reusability.
+        Delegates formatting to shared utility.
+
+        Args:
+            acls: List of ACL dictionaries
+
+        Returns:
+            FlextResult containing formatted olcAccess strings or error
+
+        """
+        return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
+
     def set_acls(
         self,
         _connection: Connection,
@@ -185,55 +203,30 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Set olcAccess ACLs on OpenLDAP 2.x.
 
+        Refactored with Railway Pattern: 6→4 returns (SOLID/DRY compliance).
+
         Args:
-        _connection: Active ldap3 connection
-        _dn: DN of config entry
-        _acls: List of ACL dictionaries
+            _connection: Active ldap3 connection
+            _dn: DN of config entry
+            _acls: List of ACL dictionaries
 
         Returns:
-        FlextResult indicating success
+            FlextResult indicating success
 
         """
         try:
+            # Railway Pattern: Early validation
             if not _connection or not _connection.bound:
                 return FlextResult[bool].fail("Connection not bound")
 
-            # Format ACLs to olcAccess strings
-            formatted_acls: list[str] = []
-            for acl in _acls:
-                # Use Entry.create() instead of LdifAttributes.create() + Entry()
-                # Convert acl dict to proper type (dict[str, str | list[str]])
-                acl_dict: dict[str, str | list[str]] = {}
-                for key, value in acl.items():
-                    if isinstance(value, list):
-                        acl_dict[key] = (
-                            value
-                            if all(isinstance(v, str) for v in value)
-                            else [str(v) for v in value]
-                        )
-                    elif isinstance(value, str):
-                        acl_dict[key] = value
-                    else:
-                        acl_dict[key] = [str(value)]
+            # Railway Pattern: Delegate formatting to helper
+            format_result = self._format_acls_for_openldap2(_acls)
+            if format_result.is_failure:
+                return FlextResult[bool].fail(str(format_result.error))
 
-                acl_entry_result = FlextLdifModels.Entry.create(
-                    dn=FlextLdapConstants.SyntheticDns.ACL_RULE,
-                    attributes=acl_dict,
-                )
-                if acl_entry_result.is_failure:
-                    return FlextResult[bool].fail(
-                        f"Failed to create ACL entry: {acl_entry_result.error}",
-                    )
-                acl_entry = acl_entry_result.unwrap()
-                format_result = self.format_acl(acl_entry)
-                if format_result.is_failure:
-                    return FlextResult[bool].fail(
-                        format_result.error or "ACL format failed",
-                    )
-                formatted_acls.append(format_result.unwrap())
+            formatted_acls = format_result.unwrap()
 
-            # Modify entry with new ACLs
-            # Cast to Protocol type for proper type checking with ldap3
+            # Railway Pattern: Execute modify operation
             typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
             mods = cast(
                 "dict[str, list[tuple[int, list[str]]]]",
@@ -480,25 +473,49 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         # Fallback to generic openldap
         return FlextLdapConstants.ServerTypes.OPENLDAP
 
-    @override
+    def _extract_supported_controls_from_root_dse(
+        self, root_dse: dict[str, object]
+    ) -> list[str]:
+        """Extract supportedControl OIDs from Root DSE attributes.
+
+        Extracted helper for Railway Pattern (SOLID compliance).
+
+        Args:
+            root_dse: Root DSE attributes dictionary
+
+        Returns:
+            List of control OIDs (empty list if not found)
+
+        """
+        if "supportedControl" not in root_dse:
+            return []
+
+        controls = root_dse["supportedControl"]
+        if isinstance(controls, list):
+            return [str(c) for c in controls]
+        return [str(controls)]
+
     def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
         """Get supported controls for OpenLDAP 2.x server.
 
+        Refactored with Railway Pattern: 6→4 returns (SOLID/DRY compliance).
+
         Args:
-        connection: Active ldap3 connection
+            connection: Active ldap3 connection
 
         Returns:
-        FlextResult containing list of supported control OIDs
+            FlextResult containing list of supported control OIDs
 
         """
         try:
+            # Railway Pattern: Early validation
             if not connection or not connection.bound:
                 return FlextResult[list[str]].fail("Connection not bound")
 
-            # Get Root DSE which contains supportedControl attribute
+            # Railway Pattern: Get Root DSE which contains supportedControl attribute
             root_dse_result = self.get_root_dse_attributes(connection)
             if root_dse_result.is_failure:
-                # Return common OpenLDAP 2.x controls as fallback
+                # Fallback to common OpenLDAP 2.x controls
                 openldap2_controls = [
                     "1.2.840.113556.1.4.319",  # pagedResults
                     "1.2.840.113556.1.4.473",  # Server-side sort
@@ -512,17 +529,10 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 ]
                 return FlextResult[list[str]].ok(openldap2_controls)
 
+            # Railway Pattern: Delegate extraction to helper
             root_dse = root_dse_result.unwrap()
-
-            # Extract supportedControl from Root DSE
-            if "supportedControl" in root_dse:
-                controls = root_dse["supportedControl"]
-                if isinstance(controls, list):
-                    return FlextResult[list[str]].ok([str(c) for c in controls])
-                return FlextResult[list[str]].ok([str(controls)])
-
-            # Return empty list if not found
-            return FlextResult[list[str]].ok([])
+            controls = self._extract_supported_controls_from_root_dse(root_dse)
+            return FlextResult[list[str]].ok(controls)
 
         except Exception as e:
             self.logger.exception("Control retrieval error", extra={"error": str(e)})
@@ -534,21 +544,8 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for OpenLDAP 2.x server specifics.
-
-        Applies OpenLDAP 2.x-specific transformations:
-        - Ensures cn=config compatible objectClasses
-        - Converts access ACLs to olcAccess format if needed
-        - Normalizes attribute names to lowercase
-
-        Args:
-        entry: Entry to normalize (accepts both LDAP and LDIF entry types)
-
-        Returns:
-        FlextResult containing normalized entry
-
-        """
-        # Ensure entry is validated FlextLdifModels.Entry
+        """Normalize entry for OpenLDAP 2.x server using shared service."""
+        # Ensure entry is FlextLdifModels.Entry first
         ensure_result = self._ensure_ldif_entry(
             entry, context="normalize_entry_for_server"
         )
@@ -557,19 +554,9 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
         ldif_entry = ensure_result.unwrap()
 
-        # Reuse existing normalize_entry method which handles OpenLDAP 2.x specifics
-        normalize_result = self.normalize_entry(ldif_entry)
-        if normalize_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(normalize_result.error)
-
-        # Convert FlextLdifModels.Entry to FlextLdifModels.Entry
-        normalized_ldif_entry = normalize_result.unwrap()
-
-        # Cast FlextLdifModels.Entry to FlextLdifModels.Entry
-        # Both have compatible structure (dn, attributes) and represent LDAP entries
-        return FlextResult[FlextLdifModels.Entry].ok(
-            normalized_ldif_entry,
-        )
+        # Use shared FlextLdapEntryAdapter service for normalization
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(
@@ -577,53 +564,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         entry: FlextLdifModels.Entry,
         _server_type: str | None = None,
     ) -> FlextResult[bool]:
-        """Validate entry for OpenLDAP 2.x server.
-
-        Checks:
-        - Entry has DN
-        - Entry has attributes
-        - Entry has objectClass
-        - ObjectClass values are valid for OpenLDAP 2.x
-
-        Args:
-        entry: Entry to validate
-        ^_server_type: Ignored for OpenLDAP 2.x (uses self._server_type)
-
-        Returns:
-        FlextResult[bool] indicating validation success
-
-        """
-        try:
-            # Basic validation
-            if not entry.dn:
-                return FlextResult[bool].fail("Entry must have a DN")
-
-            if not entry.attributes or not entry.attributes.attributes:
-                return FlextResult[bool].fail("Entry must have attributes")
-
-            # Check for objectClass
-            attrs = entry.attributes.attributes
-            if FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS not in attrs:
-                return FlextResult[bool].fail("Entry must have objectClass attribute")
-
-            # OpenLDAP 2.x accepts both standard and olc* objectClasses
-            object_class_attr = attrs[
-                FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS
-            ]
-            # object_class_attr is already a list, don't call .values
-            object_classes = (
-                object_class_attr
-                if isinstance(object_class_attr, list)
-                else [object_class_attr]
-            )
-
-            # Ensure at least one objectClass value
-            if not object_classes:
-                return FlextResult[bool].fail(
-                    "objectClass must have at least one value",
-                )
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        """Validate entry for OpenLDAP 2.x using shared service."""
+        # Use shared FlextLdapEntryAdapter service for validation
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.validate_entry_for_server(entry, self.server_type)

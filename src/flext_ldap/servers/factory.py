@@ -27,6 +27,7 @@ from flext_ldap.servers.oid_operations import FlextLdapServersOIDOperations
 from flext_ldap.servers.openldap1_operations import FlextLdapServersOpenLDAP1Operations
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
 from flext_ldap.servers.oud_operations import FlextLdapServersOUDOperations
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersFactory(FlextService[None]):
@@ -194,6 +195,8 @@ class FlextLdapServersFactory(FlextService[None]):
     ) -> FlextResult[str]:
         """Detect server type from root DSE (rootDomainServiceEntry).
 
+        Refactored with Railway Pattern: 7→4 returns (SOLID/DRY compliance).
+
         The root DSE contains server-specific attributes that can be used
         to identify the LDAP server implementation.
 
@@ -217,97 +220,21 @@ class FlextLdapServersFactory(FlextService[None]):
 
         """
         try:
+            # Railway Pattern: Early validation
             if not connection or not connection.bound:
                 return FlextResult[str].fail("Connection not bound")
 
-            # Search for root DSE
-            # Use '*' and '+' to get all attributes (standard and operational)
-            # Avoids errors when requesting attributes that don't exist
-            search_result = connection.search(
-                search_base="",
-                search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
-                search_scope=cast(
-                    "FlextLdapConstants.Types.Ldap3Scope",
-                    FlextLdapConstants.Scopes.BASE_LDAP3,
-                ),
-                attributes=[
-                    "*",
-                    "+",
-                ],  # Request all standard and operational attributes
-            )
-
-            if not search_result or not connection.entries:
-                self.logger.debug("Root DSE query failed, unable to detect server type")
+            # Railway Pattern: Search root DSE and extract entry
+            entry_result = self._fetch_root_dse_entry(connection)
+            if entry_result.is_failure:
+                self.logger.debug("Root DSE query failed, using generic server type")
                 return FlextResult[str].ok(FlextLdapConstants.Defaults.SERVER_TYPE)
 
-            entry = connection.entries[0]
+            entry = entry_result.unwrap()
 
-            # Detect OpenLDAP
-            vendor_name = str(entry.vendorName) if hasattr(entry, "vendorName") else ""
-            if FlextLdapConstants.VendorNames.OPENLDAP in vendor_name.lower():
-                # Check version for OpenLDAP 1.x vs 2.x
-                vendor_version = (
-                    str(entry.vendorVersion) if hasattr(entry, "vendorVersion") else ""
-                )
-                if vendor_version.startswith(
-                    FlextLdapConstants.VersionPrefixes.VERSION_1_PREFIX,
-                ):
-                    detected_type = FlextLdapConstants.ServerTypes.OPENLDAP1
-                else:
-                    detected_type = (
-                        FlextLdapConstants.ServerTypes.OPENLDAP2
-                    )  # Default to 2.x
-
-                self.logger.debug(
-                    "OpenLDAP detected from root DSE",
-                    extra={"version": vendor_version, "detected_type": detected_type},
-                )
-                return FlextResult[str].ok(detected_type)
-
-            # Detect Oracle OID/OUD
-            if FlextLdapConstants.VendorNames.ORACLE in vendor_name.lower():
-                # Check for OUD-specific indicators
-                config_context = (
-                    str(entry.configContext) if hasattr(entry, "configContext") else ""
-                )
-                if (
-                    FlextLdapConstants.SchemaDns.CONFIG.lower()
-                    in config_context.lower()
-                ):
-                    detected_type = (
-                        FlextLdapConstants.ServerTypes.OUD
-                    )  # OUD uses cn=config like OpenLDAP 2.x
-                else:
-                    detected_type = (
-                        FlextLdapConstants.ServerTypes.OID
-                    )  # OID uses traditional structure
-
-                self.logger.debug(
-                    "Oracle directory server detected from root DSE",
-                    extra={"vendor": vendor_name, "detected_type": detected_type},
-                )
-                return FlextResult[str].ok(detected_type)
-
-            # Detect Active Directory
-            if hasattr(
-                entry,
-                FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT,
-            ) or hasattr(
-                entry,
-                FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT,
-            ):
-                self.logger.debug("Active Directory detected from root DSE")
-                return FlextResult[str].ok(FlextLdapConstants.ServerTypes.AD)
-
-            # Generic fallback
-            self.logger.debug(
-                "Generic LDAP server detected",
-                extra={
-                    "vendor": vendor_name
-                    or FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
-                },
-            )
-            return FlextResult[str].ok(FlextLdapConstants.Defaults.SERVER_TYPE)
+            # Railway Pattern: Delegate detection to helper
+            detected_type = self._detect_server_type_from_entry_attributes(entry)
+            return FlextResult[str].ok(detected_type)
 
         except Exception as e:
             self.logger.exception(
@@ -315,6 +242,70 @@ class FlextLdapServersFactory(FlextService[None]):
                 extra={"error": str(e)},
             )
             return FlextResult[str].fail(f"Root DSE detection failed: {e}")
+
+    def _fetch_root_dse_entry(
+        self, connection: Connection
+    ) -> FlextResult[object]:
+        """Fetch root DSE entry from connection.
+
+        Helper for Railway Pattern - extracted from detect_server_type_from_root_dse().
+
+        Args:
+            connection: Active ldap3 connection
+
+        Returns:
+            FlextResult containing root DSE entry or failure
+
+        """
+        search_result = connection.search(
+            search_base="",
+            search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+            search_scope=cast(
+                "FlextLdapConstants.Types.Ldap3Scope",
+                FlextLdapConstants.Scopes.BASE_LDAP3,
+            ),
+            attributes=["*", "+"],  # All standard and operational attributes
+        )
+
+        if not search_result or not connection.entries:
+            return FlextResult[object].fail("Root DSE query returned no entries")
+
+        return FlextResult[object].ok(connection.entries[0])
+
+    def _detect_server_type_from_entry_attributes(self, entry: object) -> str:
+        """Detect server type from root DSE entry using FlextLdapUtilities.
+
+        Consolidated with FlextLdapUtilities.ServerDetection for reusability.
+        Converts ldap3 entry object to dict for utility compatibility.
+
+        Args:
+            entry: Root DSE entry from ldap3 connection
+
+        Returns:
+            Server type string (openldap1, openldap2, oid, oud, ad, generic)
+
+        """
+        # Convert ldap3 entry to dict for utility compatibility
+        root_dse: dict[str, object] = {}
+        if hasattr(entry, "vendorName"):
+            root_dse["vendorName"] = str(entry.vendorName)
+        if hasattr(entry, "vendorVersion"):
+            root_dse["vendorVersion"] = str(entry.vendorVersion)
+        if hasattr(entry, "configContext"):
+            root_dse["configContext"] = str(entry.configContext)
+        if hasattr(entry, FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT):
+            root_dse[FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT] = str(
+                getattr(entry, FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT)
+            )
+        if hasattr(entry, FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT):
+            root_dse[FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT] = str(
+                getattr(entry, FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT)
+            )
+
+        # Delegate to FlextLdapUtilities for detection
+        return FlextLdapUtilities.ServerDetection.detect_server_type_from_root_dse(
+            root_dse,
+        )
 
     def create_from_connection(
         self,
