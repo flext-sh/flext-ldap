@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, FlextRuntime
-
 from flext_ldif import FlextLdifUtilities
 from flext_ldif.services.validation import FlextLdifValidation
 
@@ -227,7 +226,9 @@ class FlextLdapValidations:
             FlextResult[bool] indicating validation success or failure
 
         """
-        return FlextLdapUtilities.Validation.validate_non_negative_int("timeout", timeout)
+        return FlextLdapUtilities.Validation.validate_non_negative_int(
+            "timeout", timeout
+        )
 
     # Field validators for Pydantic (raise exceptions)
 

@@ -419,11 +419,11 @@ class FlextLdapModels(FlextModels):
             le=300,
         )
 
-        # Paging - Optional for paged LDAP search results
+        # Paging - Optional for paged LDAP search results (RFC 2696)
         page_size: int | None = Field(
             default=None,
-            description="Page size for paged results",
-            ge=1,
+            description="Page size for paged results (RFC 2696: 0=no paging, ≥1=page size)",
+            ge=0,
         )
         paged_cookie: bytes | None = Field(
             default=None,
@@ -497,7 +497,9 @@ class FlextLdapModels(FlextModels):
                 # Check for attribute name before =
                 attr_name = rdn_stripped.split("=", 1)[0].strip()
                 if not attr_name:
-                    msg = f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    msg = (
+                        f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    )
                     raise ValueError(msg)
 
             return v
@@ -738,7 +740,9 @@ class FlextLdapModels(FlextModels):
                 # Check for attribute name before =
                 attr_name = rdn_stripped.split("=", 1)[0].strip()
                 if not attr_name:
-                    msg = f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    msg = (
+                        f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    )
                     raise ValueError(msg)
 
             return v_stripped
@@ -756,7 +760,9 @@ class FlextLdapModels(FlextModels):
 
             # Single operation requires dn (unless batch)
             if not self.batch and self.dn is None:
-                msg = "Single operation requires DN (use batch=True for batch operations)"
+                msg = (
+                    "Single operation requires DN (use batch=True for batch operations)"
+                )
                 raise ValueError(msg)
 
             # Modifications should only be used in batch mode
@@ -1129,7 +1135,9 @@ class FlextLdapModels(FlextModels):
                 # Check for attribute name before =
                 attr_name = rdn_stripped.split("=", 1)[0].strip()
                 if not attr_name:
-                    msg = f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    msg = (
+                        f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    )
                     raise ValueError(msg)
 
             return v_stripped

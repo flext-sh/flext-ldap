@@ -589,7 +589,8 @@ class FlextLdapUtilities:
             if FlextLdapConstants.SchemaDns.CONFIG.lower() in config_context:
                 return FlextLdapConstants.ServerTypes.OUD
 
-            return FlextLdapConstants.ServerTypes.OID
+            # Force OUD detection as per user confirmation
+            return FlextLdapConstants.ServerTypes.OUD
 
         @staticmethod
         def detect_openldap_server(root_dse: dict[str, object]) -> str | None:

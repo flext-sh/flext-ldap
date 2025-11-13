@@ -178,21 +178,14 @@ class FlextLdapClients(FlextService[None]):
         """
         # Functional lazy initialization - check if already exists
         if hasattr(self, "_searcher") and self._searcher is not None:
-            return cast(
-                "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
-                self._searcher,
-            )
+            return self._searcher
 
         # Builder pattern: create and configure searcher
         searcher = FlextLdapSearch()
         if self._connection:
             searcher.set_connection_context(self._connection)
         self._searcher = searcher  # type: ignore[assignment]
-        # Cast to Protocol type for proper type checking
-        return cast(
-            "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
-            searcher,
-        )
+        return cast("FlextLdapProtocols.Ldap.LdapSearcherProtocol", searcher)
 
     def _get_authenticator(self) -> FlextLdapProtocols.Ldap.LdapAuthenticationProtocol:
         """Get authenticator using functional lazy initialization with helper method.
@@ -202,10 +195,7 @@ class FlextLdapClients(FlextService[None]):
         """
         # Functional lazy initialization - check if already exists
         if hasattr(self, "_authenticator") and self._authenticator is not None:
-            return cast(
-                "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
-                self._authenticator,
-            )
+            return self._authenticator
 
         # Builder pattern: create and configure authenticator
         auth = FlextLdapAuthentication()
@@ -215,11 +205,7 @@ class FlextLdapClients(FlextService[None]):
             cast("FlextLdapConfig", self._ldap_config),
         )
         self._authenticator = auth  # type: ignore[assignment]
-        # Cast to Protocol type for proper type checking
-        return cast(
-            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
-            auth,
-        )
+        return cast("FlextLdapProtocols.Ldap.LdapAuthenticationProtocol", auth)
 
     @property
     def connection(self) -> Connection | None:

@@ -184,6 +184,7 @@ class TestUpsertServiceTypeAnnotations:
         assert "dn" in params
         assert "new_attributes" in params
         assert "skip_attributes" in params
+        assert "existing_entry" in params
 
     def test_skip_attributes_optional_parameter(self) -> None:
         """Test that skip_attributes parameter has default value."""
@@ -195,6 +196,15 @@ class TestUpsertServiceTypeAnnotations:
         # skip_attributes should have default (None)
         param = sig.parameters["skip_attributes"]
         assert param.default is not inspect.Parameter.empty
+
+    def test_existing_entry_optional_parameter(self) -> None:
+        """Test that existing_entry parameter has default value."""
+        from inspect import signature
+
+        service = FlextLdapUpsertService()
+        sig = signature(service.upsert_entry)
+        param = sig.parameters["existing_entry"]
+        assert param.default is None
 
 
 @pytest.mark.unit

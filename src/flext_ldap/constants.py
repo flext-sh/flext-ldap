@@ -59,7 +59,9 @@ class FlextLdapConstants(FlextLdifConstants):
         DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
         DEFAULT_SERVER_URI: Final[str] = "ldap://localhost"
         DEFAULT_SSL_SERVER_URI: Final[str] = "ldaps://localhost"
-        NOT_CONNECTED_URI: Final[str] = "ldap://not-connected"  # Fallback URI when disconnected
+        NOT_CONNECTED_URI: Final[str] = (
+            "ldap://not-connected"  # Fallback URI when disconnected
+        )
         MAX_DESCRIPTION_LENGTH: Final[int] = 1024
         LDAP_URI: Final[str] = "ldap://"
         LDAPS_URI: Final[str] = "ldaps://"
@@ -387,6 +389,7 @@ class FlextLdapConstants(FlextLdifConstants):
         TOTAL: Final[str] = "total"
         ATTRIBUTE_COUNT: Final[str] = "attribute_count"
         USEDS: Final[str] = "useds"
+        DELETED: Final[str] = "deleted"
 
     # =========================================================================
     # DEFAULT VALUES
@@ -742,7 +745,9 @@ class FlextLdapConstants(FlextLdifConstants):
         MAX_GROUP_DESCRIPTION_LENGTH: Final[int] = 500
         MAX_DESCRIPTION_LENGTH: Final[int] = 500
         MIN_CONNECTION_ARGS: Final[int] = 3
-        DEFAULT_TEST_BASE_DN: Final[str] = "dc=flext,dc=local"  # Test environment base DN
+        DEFAULT_TEST_BASE_DN: Final[str] = (
+            "dc=flext,dc=local"  # Test environment base DN
+        )
 
     # =========================================================================
     # SERVER TYPES - Server identification constants
@@ -940,8 +945,12 @@ class FlextLdapConstants(FlextLdifConstants):
         ACL_INFO: Final[str] = "cn=AclInfo"
         SERVER_INFO: Final[str] = "cn=ServerInfo"
         SUBS_SCHEMA_ALT: Final[str] = "cn=Subschema"  # Alternative casing variant
-        OBJECT_CLASS_DEFINITION: Final[str] = "cn=ObjectClassDefinition"  # Schema parsing
-        ATTRIBUTE_TYPE_DEFINITION: Final[str] = "cn=AttributeTypeDefinition"  # Schema parsing
+        OBJECT_CLASS_DEFINITION: Final[str] = (
+            "cn=ObjectClassDefinition"  # Schema parsing
+        )
+        ATTRIBUTE_TYPE_DEFINITION: Final[str] = (
+            "cn=AttributeTypeDefinition"  # Schema parsing
+        )
 
     # =========================================================================
     # USER STATUS VALUES
