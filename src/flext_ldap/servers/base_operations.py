@@ -13,12 +13,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import cast
 
-from flext_core import FlextResult, FlextService
-from flext_ldif import FlextLdifModels
-from flext_ldif.services import (
-    FlextLdifAcl,
-    FlextLdifDn,
-)
+from flext_core import FlextDecorators, FlextResult, FlextService
+from flext_ldif import FlextLdifModels, FlextLdifUtilities
+from flext_ldif.services.acl import FlextLdifAcl
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 from pydantic import ValidationError
 
@@ -50,7 +47,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         # logger inherited from FlextService
         self._server_type = server_type or FlextLdapConstants.Defaults.SERVER_TYPE
         # Use flext-ldif services for DN and ACL operations
-        self._dn_service = FlextLdifDn()
+        self._dn_service = FlextLdifUtilities.DN()
         self._acl_service = FlextLdifAcl()
 
     def execute(self) -> FlextResult[None]:
@@ -105,6 +102,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         """
 
+    @FlextDecorators.log_operation("LDAP Schema Discovery")
+    @FlextDecorators.track_performance("LDAP Schema Discovery")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def discover_schema(
         self,
         connection: Connection,
@@ -286,25 +286,6 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             self.logger.exception("Get ACLs error", extra={"error": str(e)})
             return FlextResult[list[FlextLdifModels.Acl]].fail(f"Get ACLs failed: {e}")
 
-    def set_acls(
-        self,
-        _connection: Connection,
-        _dn: str,
-        _acls: list[dict[str, object]],
-    ) -> FlextResult[bool]:
-        """Set ACLs for a given DN - default implementation.
-
-        Default implementation: not supported.
-        Override for server-specific ACL setting.
-
-        Returns:
-        FlextResult indicating success
-
-        """
-        return FlextResult[bool].fail(
-            f"ACL setting not supported for server type: {self.server_type}",
-        )
-
     # ACL Parse Helper Methods
 
     def _extract_target_attributes(
@@ -445,7 +426,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create ACL entry: {entry_result.error}",
                 )
-            return entry_result
+            return FlextResult.ok(cast("FlextLdifModels.Entry", entry_result.unwrap()))
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(f"ACL parsing failed: {e}")
 
@@ -846,26 +827,29 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         entry: FlextLdifModels.Entry | Mapping[str, object],
         _target_server_type: str | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for this server type.
+        """Normalize entry for this server type using shared FlextLdapEntryAdapter.
 
-        Default implementation coerces raw payloads into Flext LDIF models and
-        delegates to normalize_entry(). Override for server-specific
-        cross-server normalization.
+        Ensures entry is FlextLdifModels.Entry then delegates to FlextLdapEntryAdapter
+        for server-specific normalization. This is now the standard implementation
+        used by all server types.
 
         Returns:
             FlextResult containing normalized entry
 
         """
-        ldif_entry_result = self._ensure_ldif_entry(
+        # Ensure entry is FlextLdifModels.Entry first
+        ensure_result = self._ensure_ldif_entry(
             entry,
             context="normalize_entry_for_server",
         )
-        if ldif_entry_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                ldif_entry_result.error,
-            )
+        if ensure_result.is_failure:
+            return ensure_result
 
-        return self.normalize_entry(ldif_entry_result.unwrap())
+        ldif_entry = ensure_result.unwrap()
+
+        # Use shared FlextLdapEntryAdapter service for normalization
+        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
+        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     def normalize_attribute_name(self, attribute_name: str) -> str:
         """Normalize LDAP attribute name per server conventions.
@@ -903,11 +887,7 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
             Normalized DN string
 
         """
-        normalize_result = self._dn_service.normalize(dn)
-        if normalize_result.is_failure:
-            # Fallback to cleaned DN if normalization fails
-            return self._dn_service.clean_dn(dn)
-        return normalize_result.unwrap()
+        return self._dn_service.norm(dn) or self._dn_service.clean_dn(dn)
 
     # =========================================================================
     # HELPER METHODS - Common LDAP operations used by all servers
@@ -1054,3 +1034,97 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         except Exception as e:
             self.logger.exception("Entry validation error", extra={"error": str(e)})
             return FlextResult[bool].fail(f"Entry validation failed: {e}")
+
+    # =========================================================================
+    # ACL OPERATIONS - Template Method Pattern
+    # =========================================================================
+
+    def set_acls(
+        self,
+        _connection: Connection,
+        _dn: str,
+        _acls: list[dict[str, object]],
+    ) -> FlextResult[bool]:
+        """Template method for setting ACLs - delegates to server-specific implementations.
+
+        Consolidated from OID/OUD implementations (eliminated 100 lines duplication).
+        Uses Template Method Pattern: common flow in base, variable parts in subclasses.
+
+        Railway Pattern: 6→3 returns (SOLID/DRY compliance).
+
+        Args:
+            _connection: Active ldap3 connection
+            _dn: DN of entry to set ACLs on
+            _acls: List of ACL dictionaries
+
+        Returns:
+            FlextResult[bool] indicating success or failure
+
+        """
+        try:
+            # Railway Pattern: Early validation
+            if not _connection or not _connection.bound:
+                return FlextResult[bool].fail("Connection not bound")
+
+            # Railway Pattern: Delegate formatting to server-specific implementation
+            format_result = self._format_acls(_acls)
+            if format_result.is_failure:
+                return FlextResult[bool].fail(str(format_result.error))
+
+            formatted_acls = format_result.unwrap()
+
+            # Railway Pattern: Execute modify operation
+            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
+            mods = cast(
+                "dict[str, list[tuple[int, list[str]]]]",
+                {
+                    self._get_acl_attribute(): [
+                        (MODIFY_REPLACE, formatted_acls),
+                    ],
+                },
+            )
+            success = typed_conn.modify(_dn, mods)
+
+            if not success:
+                error_msg = (
+                    _connection.result.get(
+                        FlextLdapConstants.LdapDictKeys.DESCRIPTION,
+                        FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
+                    )
+                    if _connection.result
+                    else FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR
+                )
+                return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            self.logger.exception("Set ACLs error", extra={"error": str(e)})
+            return FlextResult[bool].fail(f"Set ACLs failed: {e}")
+
+    @abstractmethod
+    def _format_acls(self, acls: list[dict[str, object]]) -> FlextResult[list[str]]:
+        """Format ACLs for this server type.
+
+        Template Method Pattern: Subclasses implement server-specific formatting.
+
+        Args:
+            acls: List of ACL dictionaries
+
+        Returns:
+            FlextResult containing formatted ACL strings or error
+
+        """
+        ...
+
+    @abstractmethod
+    def _get_acl_attribute(self) -> str:
+        """Get the ACL attribute name for this server type.
+
+        Template Method Pattern: Subclasses return their specific ACL attribute.
+
+        Returns:
+            ACL attribute name (e.g., 'orclaci', 'ds-privilege-name')
+
+        """
+        ...

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextModels, FlextResult, FlextService
+from flext_core import FlextDecorators, FlextModels, FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import SUBTREE, Connection, Entry as Ldap3Entry, Server
 from ldap3.core.exceptions import (
@@ -71,6 +71,9 @@ class FlextLdapAuthentication(FlextService[None]):
         self._server = server
         self._ldap_config = config
 
+    @FlextDecorators.log_operation("LDAP User Authentication")
+    @FlextDecorators.track_performance("LDAP User Authentication")
+    @FlextDecorators.timeout(timeout_seconds=15.0)
     def authenticate_user(
         self,
         username: str,
@@ -135,6 +138,9 @@ class FlextLdapAuthentication(FlextService[None]):
             # Log for diagnostics, but don't propagate during cleanup
             self.logger.debug("Unbind during cleanup failed (non-critical): %s", e)
 
+    @FlextDecorators.log_operation("LDAP Credential Validation")
+    @FlextDecorators.track_performance("LDAP Credential Validation")
+    @FlextDecorators.timeout(timeout_seconds=10.0)
     def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
         """Validate user credentials against LDAP server.
 

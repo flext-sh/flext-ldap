@@ -165,7 +165,7 @@ class TestLdapE2EOperations:
 
         # Test various error scenarios
         scenarios = [
-            ("", "Invalid server URI"),
+            ("ldap://invalid.server", "Invalid server"),
             ("invalid://protocol", "Protocol error"),
             ("ldap://", "Incomplete URI"),
         ]

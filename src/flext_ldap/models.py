@@ -290,27 +290,17 @@ class FlextLdapModels(FlextModels):
             """Get default user attributes for search requests."""
             return cls.DEFAULT_USER_ATTRIBUTES.copy()
 
-        # Search scope
-        base_dn: str = Field(..., description="Search base Distinguished Name")
-        filter_str: str = Field(..., description="LDAP search filter")
-
-        @field_validator("base_dn")
-        @classmethod
-        def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN is not empty."""
-            if not v or not v.strip():
-                error_msg = "DN cannot be empty"
-                raise ValueError(error_msg)
-            return v
-
-        @field_validator("filter_str")
-        @classmethod
-        def validate_filter_str(cls, v: str) -> str:
-            """Validate filter string is not empty."""
-            if not v or not v.strip():
-                error_msg = "Filter string cannot be empty"
-                raise ValueError(error_msg)
-            return v
+        # Search scope - Pydantic 2 Field constraints replace validators
+        base_dn: str = Field(
+            ...,
+            min_length=1,
+            description="Search base Distinguished Name",
+        )
+        filter_str: str = Field(
+            ...,
+            min_length=1,
+            description="LDAP search filter",
+        )
 
         scope: str = Field(
             default="subtree",
@@ -582,9 +572,11 @@ class FlextLdapModels(FlextModels):
 
         __slots__ = ()  # Enable __slots__ for memory optimization
 
-        # Core connection parameters (required)
+        # Core connection parameters (required) - Pydantic 2 Field constraints
         server_uri: str = Field(
             ...,
+            pattern=r"^ldaps?://",
+            min_length=1,
             description="LDAP server URI (e.g., 'ldap://localhost:389')",
         )
         bind_dn: FlextLdifModels.DistinguishedName | str = Field(
@@ -593,6 +585,7 @@ class FlextLdapModels(FlextModels):
         )
         password: str = Field(
             ...,
+            min_length=1,
             description="Password for binding",
         )
 
@@ -609,27 +602,6 @@ class FlextLdapModels(FlextModels):
             default=None,
             description="Override default quirks mode for this connection",
         )
-
-        @field_validator("server_uri")
-        @classmethod
-        def validate_server_uri(cls, v: str) -> str:
-            """Validate server URI format."""
-            if not v:
-                msg = "Server URI cannot be empty"
-                raise ValueError(msg)
-            if not v.startswith(("ldap://", "ldaps://")):
-                msg = "Server URI must start with ldap:// or ldaps://"
-                raise ValueError(msg)
-            return v
-
-        @field_validator("password")
-        @classmethod
-        def validate_password(cls, v: str) -> str:
-            """Validate password is provided."""
-            if not v:
-                msg = "Password cannot be empty"
-                raise ValueError(msg)
-            return v
 
     class ExchangeRequest(BaseModel):
         """LDAP Exchange Request with parameters and Pydantic 2 validation.
@@ -1082,22 +1054,8 @@ class FlextLdapModels(FlextModels):
             """Get bind password."""
             return self.bind_password
 
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate the configuration business rules and return FlextResult.
-
-            Returns:
-            FlextResult[None] indicating validation success or failure
-
-            """
-            try:
-                if not self.server or not self.server.strip():
-                    return FlextResult[None].fail("Server cannot be empty")
-                max_port = 65535
-                if self.port <= 0 or self.port > max_port:
-                    return FlextResult[None].fail("Invalid port number")
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
+        # validate_business_rules removed - redundant with Pydantic 2 Field constraints
+        # server/port validation handled by Field(min_length=1) and Field(ge=1, le=65535)
 
     class SearchConfig(BaseModel):
         """LDAP search operation configuration - Pydantic Query."""

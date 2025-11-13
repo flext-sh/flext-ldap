@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextRuntime, FlextService
 from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 from ldap3.core.exceptions import LDAPAttributeError
@@ -75,6 +75,9 @@ class FlextLdapSearch(FlextService[None]):
         # This method is provided for protocol compliance and future extensibility
         # Future: implement quirks mode-specific search behavior if needed
 
+    @FlextDecorators.log_operation("LDAP Search One")
+    @FlextDecorators.track_performance("LDAP Search One")
+    @FlextDecorators.timeout(timeout_seconds=15.0)
     def search_one(
         self,
         search_base: str,
@@ -93,7 +96,7 @@ class FlextLdapSearch(FlextService[None]):
 
         """
         # Check if connection is available via context
-        if not self._connection:
+        if not FlextRuntime.safe_get_attribute(self, "_connection", None):
             return FlextResult[FlextLdifModels.Entry | None].fail(
                 "No LDAP connection available for search_one",
             )
@@ -287,10 +290,13 @@ class FlextLdapSearch(FlextService[None]):
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Entry conversion failed: {entry_result.error}",
                 )
-            entries.append(entry_result.unwrap())
+            entries.append(cast("FlextLdifModels.Entry", entry_result.unwrap()))
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
+    @FlextDecorators.log_operation("LDAP Search")
+    @FlextDecorators.track_performance("LDAP Search")
+    @FlextDecorators.timeout(timeout_seconds=60.0)
     def search(
         self,
         base_dn: str,

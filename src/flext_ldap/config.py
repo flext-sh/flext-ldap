@@ -350,15 +350,15 @@ class FlextLdapConfig(FlextConfig):
     # ENHANCED DIRECT ACCESS - Dot notation support for LDAP config
     # =========================================================================
 
-    # Category resolver mapping for optimized dispatch (replaces pattern matching)
-    _CATEGORY_RESOLVERS: ClassVar[dict[str, str]] = {
-        FlextLdapConstants.ConfigCategoryKeys.CONNECTION: "_resolve_connection_property",
-        FlextLdapConstants.ConfigCategoryKeys.AUTH: "_resolve_auth_property",
-        FlextLdapConstants.ConfigCategoryKeys.POOL: "_resolve_pool_property",
-        FlextLdapConstants.ConfigCategoryKeys.OPERATION: "_resolve_operation_property",
-        FlextLdapConstants.ConfigCategoryKeys.CACHE: "_resolve_cache_property",
-        FlextLdapConstants.ConfigCategoryKeys.RETRY: "_resolve_retry_property",
-        FlextLdapConstants.ConfigCategoryKeys.LOGGING: "_resolve_logging_property",
+    # Category mapping for optimized dispatch using constants
+    _CATEGORY_MAPPINGS: ClassVar[dict[str, dict[str, str]]] = {
+        FlextLdapConstants.ConfigCategoryKeys.CONNECTION: FlextLdapConstants.ConfigPropertyMappings.CONNECTION,
+        FlextLdapConstants.ConfigCategoryKeys.AUTH: FlextLdapConstants.ConfigPropertyMappings.AUTH,
+        FlextLdapConstants.ConfigCategoryKeys.POOL: FlextLdapConstants.ConfigPropertyMappings.POOL,
+        FlextLdapConstants.ConfigCategoryKeys.OPERATION: FlextLdapConstants.ConfigPropertyMappings.OPERATION,
+        FlextLdapConstants.ConfigCategoryKeys.CACHE: FlextLdapConstants.ConfigPropertyMappings.CACHE,
+        FlextLdapConstants.ConfigCategoryKeys.RETRY: FlextLdapConstants.ConfigPropertyMappings.RETRY,
+        FlextLdapConstants.ConfigCategoryKeys.LOGGING: FlextLdapConstants.ConfigPropertyMappings.LOGGING,
     }
 
     def __call__(
@@ -368,7 +368,7 @@ class FlextLdapConfig(FlextConfig):
         """Enhanced direct value access with LDAP-specific dot notation support.
 
         Extends FlextConfig.__call__ with LDAP-specific nested access patterns
-        using dictionary-based dispatch for optimized property resolution.
+        using constant-based mappings for optimized property resolution.
 
         Args:
             key: Configuration field name with optional LDAP dot notation
@@ -388,88 +388,32 @@ class FlextLdapConfig(FlextConfig):
             'cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com'
 
         """
-        # Handle LDAP dot notation with dictionary-based dispatch
+        # Handle LDAP dot notation with constant-based mapping
         if key.startswith("ldap."):
             parts = key[5:].split(".", 1)
             expected_split_length: int = 2
             if len(parts) != expected_split_length:
-                return cast("FlextTypes.JsonValue", super().__call__(key))
+                # Invalid dot notation format, return None
+                return None
 
             category, prop = parts
 
-            # Dictionary-based dispatch to category resolver
-            resolver_method_name = self._CATEGORY_RESOLVERS.get(category)
-            if resolver_method_name:
-                resolver_method = getattr(self, resolver_method_name)
-                return cast("FlextTypes.JsonValue", resolver_method(prop))
+            # Get property mapping from constants
+            property_mapping = self._CATEGORY_MAPPINGS.get(category)
+            if property_mapping:
+                field_name = property_mapping.get(prop)
+                if field_name:
+                    # Handle computed URI field
+                    if field_name == "_connection_uri":
+                        return cast(
+                            "FlextTypes.JsonValue",
+                            f"{self.ldap_server_uri}:{self.ldap_port}",
+                        )
+                    # Get field value via getattr
+                    return cast("FlextTypes.JsonValue", getattr(self, field_name))
 
-        # Fall back to standard FlextConfig access
-        return cast("FlextTypes.JsonValue", super().__call__(key))
-
-    def _resolve_connection_property(
-        self, prop: str
-    ) -> str | int | float | bool | None:
-        """Resolve connection category properties using dictionary lookup."""
-        connection_props = {
-            FlextLdapConstants.ConfigPropertyKeys.SERVER: self.ldap_server_uri,
-            FlextLdapConstants.ConfigPropertyKeys.PORT: self.ldap_port,
-            FlextLdapConstants.ConfigPropertyKeys.SSL: self.ldap_use_ssl,
-            FlextLdapConstants.ConfigPropertyKeys.TIMEOUT: self.ldap_connection_timeout,
-            FlextLdapConstants.ConfigPropertyKeys.URI: f"{self.ldap_server_uri}:{self.ldap_port}",
-        }
-        return connection_props.get(prop)
-
-    def _resolve_auth_property(self, prop: str) -> str | None:
-        """Resolve authentication category properties using dictionary lookup."""
-        auth_props = {
-            FlextLdapConstants.ConfigPropertyKeys.BIND_DN: self.ldap_bind_dn,
-            FlextLdapConstants.ConfigPropertyKeys.BIND_PASSWORD: self.effective_bind_password,
-            FlextLdapConstants.ConfigPropertyKeys.BASE_DN: self.ldap_base_dn,
-        }
-        return auth_props.get(prop)
-
-    def _resolve_pool_property(self, prop: str) -> int | float | None:
-        """Resolve pool category properties using dictionary lookup."""
-        pool_props = {
-            FlextLdapConstants.ConfigPropertyKeys.SIZE: self.ldap_pool_size,
-            FlextLdapConstants.ConfigPropertyKeys.TIMEOUT: self.ldap_pool_timeout,
-        }
-        return pool_props.get(prop)
-
-    def _resolve_operation_property(self, prop: str) -> int | None:
-        """Resolve operation category properties using dictionary lookup."""
-        operation_props = {
-            FlextLdapConstants.ConfigPropertyKeys.TIMEOUT: self.ldap_operation_timeout,
-            FlextLdapConstants.ConfigPropertyKeys.SIZE_LIMIT: self.ldap_size_limit,
-            FlextLdapConstants.ConfigPropertyKeys.TIME_LIMIT: self.ldap_time_limit,
-        }
-        return operation_props.get(prop)
-
-    def _resolve_cache_property(self, prop: str) -> bool | int | None:
-        """Resolve cache category properties using dictionary lookup."""
-        cache_props = {
-            FlextLdapConstants.ConfigPropertyKeys.ENABLED: self.enable_caching,
-            FlextLdapConstants.ConfigPropertyKeys.TTL: self.cache_ttl,
-        }
-        return cache_props.get(prop)
-
-    def _resolve_retry_property(self, prop: str) -> int | float | None:
-        """Resolve retry category properties using dictionary lookup."""
-        retry_props = {
-            FlextLdapConstants.ConfigPropertyKeys.ATTEMPTS: self.max_retry_attempts,
-            FlextLdapConstants.ConfigPropertyKeys.DELAY: self.retry_delay,
-        }
-        return retry_props.get(prop)
-
-    def _resolve_logging_property(self, prop: str) -> bool | None:
-        """Resolve logging category properties using dictionary lookup."""
-        logging_props = {
-            FlextLdapConstants.ConfigPropertyKeys.DEBUG: self.ldap_enable_debug,
-            FlextLdapConstants.ConfigPropertyKeys.TRACE: self.ldap_enable_trace,
-            FlextLdapConstants.ConfigPropertyKeys.QUERIES: self.ldap_log_queries,
-            FlextLdapConstants.ConfigPropertyKeys.MASK_PASSWORDS: self.ldap_mask_passwords,
-        }
-        return logging_props.get(prop)
+        # No mapping found, return None
+        return None
 
     # =========================================================================
     # INFRASTRUCTURE PROTOCOL IMPLEMENTATIONS

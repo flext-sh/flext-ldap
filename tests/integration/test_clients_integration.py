@@ -15,8 +15,9 @@ from collections.abc import Generator
 
 import pytest
 
-from flext_ldap.config import FlextLdapConfig
-from flext_ldap.services.clients import FlextLdapClients
+from flext_ldap import FlextLdapClients, FlextLdapConfig, FlextLdapModels
+
+__all__: list[str] = []
 
 
 @pytest.mark.integration
@@ -141,42 +142,46 @@ class TestFlextLdapClientsSearch:
 
     def test_search_base_scope(self, authenticated_client: FlextLdapClients) -> None:
         """Test search with BASE scope on root entry."""
-        result = authenticated_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
-            scope="BASE",
+            filter_str="objectClass=*",
         )
+
+        result = authenticated_client.search(search_request, scope="BASE")
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) >= 1
 
     def test_search_subtree_scope(self, authenticated_client: FlextLdapClients) -> None:
         """Test search with SUBTREE scope."""
-        result = authenticated_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=organizationalUnit)",
-            scope="SUBTREE",
+            filter_str="objectClass=organizationalUnit",
         )
+
+        result = authenticated_client.search(search_request, scope="SUBTREE")
         assert result.is_success
 
     def test_search_with_attribute_filter(
         self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test search with attribute-based filter."""
-        result = authenticated_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(uid=*)",
-            scope="SUBTREE",
+            filter_str="uid=*",
         )
+
+        result = authenticated_client.search(search_request, scope="SUBTREE")
         assert result.is_success
 
     def test_search_no_results(self, authenticated_client: FlextLdapClients) -> None:
         """Test search that returns no results."""
-        result = authenticated_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(uid=nonexistent)",
-            scope="SUBTREE",
+            filter_str="uid=nonexistent",
         )
+
+        result = authenticated_client.search(search_request, scope="SUBTREE")
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 0
@@ -241,11 +246,14 @@ class TestFlextLdapClientsValidation:
         """Test search operation when not connected."""
         client = FlextLdapClients()
 
-        result = client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=test,dc=com",
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            filter_str="objectClass=*",
+            scope="subtree",
         )
+        search_request = FlextLdapModels.SearchRequest()
+
+        result = client.search(search_request)
         assert result.is_failure
 
     def test_add_entry_not_connected(self) -> None:
@@ -267,13 +275,6 @@ class TestFlextLdapClientsValidation:
 
         result = client.delete_entry("uid=test,ou=people,dc=test,dc=com")
         assert result.is_failure
-
-
-__all__ = [
-    "TestFlextLdapClientsConnection",
-    "TestFlextLdapClientsSearch",
-    "TestFlextLdapClientsValidation",
-]
 
 
 @pytest.mark.integration
@@ -456,7 +457,7 @@ class TestFlextLdapClientsModify:
         # Verify it exists
         search_result = authenticated_client.search(
             base_dn=test_dn,
-            filter_str="(objectClass=*)",
+            filter_str="objectClass=*)",
             scope="BASE",
         )
         assert len(search_result.unwrap()) == 1
@@ -518,11 +519,14 @@ class TestFlextLdapClientsEdgeCases:
         self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test search with malformed LDAP filter."""
-        result = authenticated_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*",  # Missing closing paren
+            filter_str="objectClass=*",
+            # Missing closing paren
             scope="SUBTREE",
         )
+
+        result = authenticated_client.search(search_request)
         # Should fail or return empty
         assert result.is_failure or len(result.unwrap()) == 0
 
@@ -530,11 +534,13 @@ class TestFlextLdapClientsEdgeCases:
         self, authenticated_client: FlextLdapClients
     ) -> None:
         """Test search with pagination for large result sets."""
-        result = authenticated_client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
-            page_size=10,  # Small page size to test pagination
+            filter_str="objectClass=*",
+        )
+
+        result = authenticated_client.search(
+            search_request, scope="SUBTREE", page_size=10
         )
         assert result.is_success
 
@@ -560,11 +566,12 @@ class TestFlextLdapClientsEdgeCases:
 
     def test_empty_search_result(self, authenticated_client: FlextLdapClients) -> None:
         """Test search that returns empty result."""
-        result = authenticated_client.search(
-            base_dn="ou=nonexistent,dc=flext,dc=local",
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
+        search_request = FlextLdapModels.SearchRequest(
+            base_dn="ou=nonexistent,dc=local",
+            filter_str="objectClass=*",
         )
+
+        result = authenticated_client.search(search_request, scope="SUBTREE")
         # Should fail or return empty list
         if result.is_success:
             assert len(result.unwrap()) == 0

@@ -22,8 +22,6 @@ from pydantic import ValidationError
 
 from flext_ldap import FlextLdapClients, FlextLdapModels
 
-# mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
-
 
 class TestFlextLdapModelsConnectionConfig:
     """ConnectionConfig model tests."""
@@ -141,18 +139,21 @@ class TestFlextLdapModelsSearchWithRealDocker:
 
         # Connect
         connect_result = client.connect(
-            server_uri="ldap://localhost:3390",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-            password="REDACTED_LDAP_BIND_PASSWORD123",
+            FlextLdapModels.ConnectionRequest(
+                server_uri="ldap://localhost:3390",
+                bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                password="REDACTED_LDAP_BIND_PASSWORD123",
+            )
         )
         assert connect_result.is_success is True
 
         # Search
-        search_result = client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=*)",
             scope="BASE",
         )
+        search_result = client.search(search_request)
         assert search_result.is_success is True
 
         entries = search_result.unwrap()
@@ -171,18 +172,21 @@ class TestFlextLdapModelsSearchWithRealDocker:
 
         # Connect
         connect_result = client.connect(
-            server_uri="ldap://localhost:3390",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-            password="REDACTED_LDAP_BIND_PASSWORD123",
+            FlextLdapModels.ConnectionRequest(
+                server_uri="ldap://localhost:3390",
+                bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                password="REDACTED_LDAP_BIND_PASSWORD123",
+            )
         )
         assert connect_result.is_success is True
 
         # Search for non-existent entries
-        search_result = client.search(
+        search_request = FlextLdapModels.SearchRequest(
             base_dn="dc=flext,dc=local",
             filter_str="(cn=nonexistent12345)",
             scope="SUBTREE",
         )
+        search_result = client.search(search_request)
         assert search_result.is_success is True
 
         entries = search_result.unwrap()
@@ -205,9 +209,11 @@ class TestFlextLdapModelsServerInfo:
 
         # Connect
         connect_result = client.connect(
-            server_uri="ldap://localhost:3390",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-            password="REDACTED_LDAP_BIND_PASSWORD123",
+            FlextLdapModels.ConnectionRequest(
+                server_uri="ldap://localhost:3390",
+                bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                password="REDACTED_LDAP_BIND_PASSWORD123",
+            )
         )
         assert connect_result.is_success is True
 
@@ -307,18 +313,15 @@ class TestFlextLdapModelsIntegration:
         # Execute search
         client = FlextLdapClients()
         connect_result = client.connect(
-            server_uri=f"ldap://{config.server}:{config.port}",
-            bind_dn=config.bind_dn,
-            password=config.bind_password,
+            FlextLdapModels.ConnectionRequest(
+                server_uri=f"ldap://{config.server}:{config.port}",
+                bind_dn=config.bind_dn or "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                password=config.bind_password or "REDACTED_LDAP_BIND_PASSWORD123",
+            )
         )
         assert connect_result.is_success is True
 
-        search_result = client.search(
-            base_dn=search_req.base_dn,
-            filter_str=search_req.filter_str,
-            scope=search_req.scope,
-            attributes=search_req.attributes,
-        )
+        search_result = client.search(search_req)
         assert search_result.is_success is True
 
         entries = search_result.unwrap()

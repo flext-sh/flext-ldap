@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import cast, override
 
 from flext_core import FlextResult
@@ -356,26 +355,6 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             self.logger.exception("Control retrieval error", extra={"error": str(e)})
             # Exception return - return 4
             return FlextResult[list[str]].fail(f"Control retrieval failed: {e}")
-
-    @override
-    def normalize_entry_for_server(
-        self,
-        entry: FlextLdifModels.Entry | Mapping[str, object],
-        _target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for Active Directory server using shared service."""
-        # Ensure entry is FlextLdifModels.Entry first
-        ensure_result = self._ensure_ldif_entry(
-            entry, context="normalize_entry_for_server"
-        )
-        if ensure_result.is_failure:
-            return ensure_result
-
-        ldif_entry = ensure_result.unwrap()
-
-        # Use shared FlextLdapEntryAdapter service for normalization
-        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
-        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(

@@ -60,19 +60,22 @@ class FlextLdapServersFactory(FlextService[None]):
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif.get_instance()
         self._s_manager = FlextLdifServer.get_global_instance()
-        self._server_registry = {
-            FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
-            FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,
-            FlextLdapConstants.ServerTypes.OPENLDAP: FlextLdapServersOpenLDAP2Operations,
-            FlextLdapConstants.ServerTypes.OID: FlextLdapServersOIDOperations,
-            FlextLdapConstants.ServerTypeAliases.ORACLE_OID: FlextLdapServersOIDOperations,
-            FlextLdapConstants.ServerTypes.OUD: FlextLdapServersOUDOperations,
-            FlextLdapConstants.ServerTypeAliases.ORACLE_OUD: FlextLdapServersOUDOperations,
-            FlextLdapConstants.ServerTypes.AD: FlextLdapServersActiveDirectoryOperations,
-            FlextLdapConstants.ServerTypes.AD_SHORT: FlextLdapServersActiveDirectoryOperations,
-            FlextLdapConstants.ServerTypeAliases.ACTIVE_DIRECTORY: FlextLdapServersActiveDirectoryOperations,
-            FlextLdapConstants.Defaults.SERVER_TYPE: FlextLdapServersGenericOperations,
-        }
+        self._server_registry = cast(
+            "dict[str, type[FlextLdapServersBaseOperations]]",
+            {
+                FlextLdapConstants.ServerTypes.OPENLDAP1: FlextLdapServersOpenLDAP1Operations,
+                FlextLdapConstants.ServerTypes.OPENLDAP2: FlextLdapServersOpenLDAP2Operations,
+                FlextLdapConstants.ServerTypes.OPENLDAP: FlextLdapServersOpenLDAP2Operations,
+                FlextLdapConstants.ServerTypes.OID: FlextLdapServersOIDOperations,
+                FlextLdapConstants.ServerTypeAliases.ORACLE_OID: FlextLdapServersOIDOperations,
+                FlextLdapConstants.ServerTypes.OUD: FlextLdapServersOUDOperations,
+                FlextLdapConstants.ServerTypeAliases.ORACLE_OUD: FlextLdapServersOUDOperations,
+                FlextLdapConstants.ServerTypes.AD: FlextLdapServersActiveDirectoryOperations,
+                FlextLdapConstants.ServerTypes.AD_SHORT: FlextLdapServersActiveDirectoryOperations,
+                FlextLdapConstants.ServerTypeAliases.ACTIVE_DIRECTORY: FlextLdapServersActiveDirectoryOperations,
+                FlextLdapConstants.Defaults.SERVER_TYPE: FlextLdapServersGenericOperations,
+            },
+        )
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService."""
@@ -120,7 +123,10 @@ class FlextLdapServersFactory(FlextService[None]):
                 extra={"server_type": server_type_lower},
             )
             return FlextResult[FlextLdapServersBaseOperations].ok(
-                FlextLdapServersGenericOperations(),
+                cast(
+                    "FlextLdapServersBaseOperations",
+                    FlextLdapServersGenericOperations(),
+                ),
             )
 
         except Exception as e:
@@ -151,7 +157,10 @@ class FlextLdapServersFactory(FlextService[None]):
         if not entries:
             self.logger.debug("No entries provided, using generic operations")
             return FlextResult[FlextLdapServersBaseOperations].ok(
-                FlextLdapServersGenericOperations(),
+                cast(
+                    "FlextLdapServersBaseOperations",
+                    FlextLdapServersGenericOperations(),
+                ),
             )
 
         # Convert entries to LDIF content
@@ -162,7 +171,10 @@ class FlextLdapServersFactory(FlextService[None]):
                 extra={"error": str(ldif_write_result.error)},
             )
             return FlextResult[FlextLdapServersBaseOperations].ok(
-                FlextLdapServersGenericOperations(),
+                cast(
+                    "FlextLdapServersBaseOperations",
+                    FlextLdapServersGenericOperations(),
+                ),
             )
 
         ldif_content = ldif_write_result.unwrap()
@@ -176,7 +188,10 @@ class FlextLdapServersFactory(FlextService[None]):
                 extra={"error": str(detection_result.error)},
             )
             return FlextResult[FlextLdapServersBaseOperations].ok(
-                FlextLdapServersGenericOperations(),
+                cast(
+                    "FlextLdapServersBaseOperations",
+                    FlextLdapServersGenericOperations(),
+                ),
             )
 
         detected_result = detection_result.unwrap()
@@ -243,9 +258,7 @@ class FlextLdapServersFactory(FlextService[None]):
             )
             return FlextResult[str].fail(f"Root DSE detection failed: {e}")
 
-    def _fetch_root_dse_entry(
-        self, connection: Connection
-    ) -> FlextResult[object]:
+    def _fetch_root_dse_entry(self, connection: Connection) -> FlextResult[object]:
         """Fetch root DSE entry from connection.
 
         Helper for Railway Pattern - extracted from detect_server_type_from_root_dse().
@@ -293,13 +306,22 @@ class FlextLdapServersFactory(FlextService[None]):
             root_dse["vendorVersion"] = str(entry.vendorVersion)
         if hasattr(entry, "configContext"):
             root_dse["configContext"] = str(entry.configContext)
-        if hasattr(entry, FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT):
-            root_dse[FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT] = str(
-                getattr(entry, FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT)
+        if hasattr(
+            entry, FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT
+        ):
+            root_dse[
+                FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT
+            ] = str(
+                getattr(
+                    entry,
+                    FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT,
+                )
             )
         if hasattr(entry, FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT):
             root_dse[FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT] = str(
-                getattr(entry, FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT)
+                getattr(
+                    entry, FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT
+                )
             )
 
         # Delegate to FlextLdapUtilities for detection
@@ -337,7 +359,10 @@ class FlextLdapServersFactory(FlextService[None]):
                     extra={"error": str(detection_result.error)},
                 )
                 return FlextResult[FlextLdapServersBaseOperations].ok(
-                    FlextLdapServersGenericOperations(),
+                    cast(
+                        "FlextLdapServersBaseOperations",
+                        FlextLdapServersGenericOperations(),
+                    ),
                 )
 
             detected_type = detection_result.unwrap()

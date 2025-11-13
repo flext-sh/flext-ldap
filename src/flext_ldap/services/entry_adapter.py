@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pathlib
+from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
@@ -118,7 +119,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
         FlextResult containing FlextLdifModels.Entry or error
 
         """
-        if not ldap3_entry:
+        if ldap3_entry is None:
             return FlextResult[FlextLdifModels.Entry].fail("ldap3 entry cannot be None")
 
         # Use FlextLdifModels.Entry.from_ldap3() for ldap3.Entry objects
@@ -128,7 +129,7 @@ class FlextLdapEntryAdapter(FlextService[None]):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to convert ldap3 Entry: {entry_result.error}",
                 )
-            return entry_result
+            return FlextResult.ok(cast("FlextLdifModels.Entry", entry_result.unwrap()))
 
         # Handle dict format using helper methods
         if isinstance(ldap3_entry, dict):
@@ -139,10 +140,15 @@ class FlextLdapEntryAdapter(FlextService[None]):
             dn_str, raw_attributes = validation_result.unwrap()
             attributes_for_create = self._convert_dict_attributes(raw_attributes)
 
-            return FlextLdifModels.Entry.create(
+            entry_result = FlextLdifModels.Entry.create(
                 dn=dn_str,
                 attributes=attributes_for_create,
             )
+            if entry_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create entry from dict: {entry_result.error}",
+                )
+            return FlextResult.ok(cast("FlextLdifModels.Entry", entry_result.unwrap()))
 
         return FlextResult[FlextLdifModels.Entry].fail("Unsupported entry type")
 

@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import cast, override
 
 from flext_core import FlextResult
@@ -173,12 +172,17 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         return FlextLdapConstants.AclFormat.ORACLE
 
     # get_acls() inherited from base class - uses get_acl_attribute_name()
+    # set_acls() inherited from base class - uses Template Method Pattern
 
-    def _format_acls_for_oud(
-        self, acls: list[dict[str, object]]
-    ) -> FlextResult[list[str]]:
+    # =========================================================================
+    # TEMPLATE METHOD PATTERN - Abstract Methods Implementation
+    # =========================================================================
+
+    @override
+    def _format_acls(self, acls: list[dict[str, object]]) -> FlextResult[list[str]]:
         """Format ACL dictionaries to ds-privilege-name strings using FlextLdapUtilities.
 
+        Template Method Pattern: Implements abstract method from base class.
         Consolidated with FlextLdapUtilities.AclFormatting for reusability.
         Delegates formatting to shared utility.
 
@@ -191,65 +195,17 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         """
         return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
 
-    def set_acls(
-        self,
-        _connection: Connection,
-        _dn: str,
-        _acls: list[dict[str, object]],
-    ) -> FlextResult[bool]:
-        """Set ds-privilege-name ACLs on Oracle OUD.
+    @override
+    def _get_acl_attribute(self) -> str:
+        """Get Oracle OUD ACL attribute name.
 
-        Refactored with Railway Pattern: 6→4 returns (SOLID/DRY compliance).
-
-        Args:
-            _connection: Active ldap3 connection
-            _dn: DN of entry to set ACLs on
-            _acls: List of ACL dictionaries
+        Template Method Pattern: Implements abstract method from base class.
 
         Returns:
-            FlextResult[bool] indicating success or failure
+            'ds-privilege-name' - Oracle OUD ACL attribute
 
         """
-        try:
-            # Railway Pattern: Early validation
-            if not _connection or not _connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Railway Pattern: Delegate formatting to helper
-            format_result = self._format_acls_for_oud(_acls)
-            if format_result.is_failure:
-                return FlextResult[bool].fail(str(format_result.error))
-
-            formatted_acls = format_result.unwrap()
-
-            # Railway Pattern: Execute modify operation
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
-            mods = cast(
-                "dict[str, list[tuple[int, list[str]]]]",
-                {
-                    FlextLdapConstants.AclAttributes.DS_PRIVILEGE_NAME: [
-                        (MODIFY_REPLACE, formatted_acls),
-                    ],
-                },
-            )
-            success = typed_conn.modify(_dn, mods)
-
-            if not success:
-                error_msg = (
-                    _connection.result.get(
-                        FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                        FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
-                    )
-                    if _connection.result
-                    else FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR
-                )
-                return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception("Set ACLs error", extra={"error": str(e)})
-            return FlextResult[bool].fail(f"Set ACLs failed: {e}")
+        return FlextLdapConstants.AclAttributes.DS_PRIVILEGE_NAME
 
     @override
     def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
@@ -330,7 +286,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create ACL entry: {entry_result.error}",
                 )
-            return entry_result
+            return FlextResult.ok(cast("FlextLdifModels.Entry", entry_result.unwrap()))
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
@@ -515,12 +471,30 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         # Mapping: (privilege_set, category) tuples for O(n) worst-case lookup
         # where n is number of categories (6), which is constant and small
         category_mappings = [
-            (FlextLdapConstants.OudPrivileges.CONFIG_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.CONFIGURATION),
-            (FlextLdapConstants.OudPrivileges.PASSWORD_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.PASSWORD),
-            (FlextLdapConstants.OudPrivileges.ADMINISTRATIVE_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.ADMINISTRATIVE),
-            (FlextLdapConstants.OudPrivileges.MANAGEMENT_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.MANAGEMENT),
-            (FlextLdapConstants.OudPrivileges.DATA_MANAGEMENT_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.DATA_MANAGEMENT),
-            (FlextLdapConstants.OudPrivileges.MAINTENANCE_PRIVILEGES, FlextLdapConstants.OudPrivilegeCategories.MAINTENANCE),
+            (
+                FlextLdapConstants.OudPrivileges.CONFIG_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.CONFIGURATION,
+            ),
+            (
+                FlextLdapConstants.OudPrivileges.PASSWORD_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.PASSWORD,
+            ),
+            (
+                FlextLdapConstants.OudPrivileges.ADMINISTRATIVE_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.ADMINISTRATIVE,
+            ),
+            (
+                FlextLdapConstants.OudPrivileges.MANAGEMENT_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.MANAGEMENT,
+            ),
+            (
+                FlextLdapConstants.OudPrivileges.DATA_MANAGEMENT_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.DATA_MANAGEMENT,
+            ),
+            (
+                FlextLdapConstants.OudPrivileges.MAINTENANCE_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.MAINTENANCE,
+            ),
         ]
 
         # Single return: find matching category or default to CUSTOM
@@ -597,26 +571,6 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[str]].ok(list(controls))
         except Exception as e:
             return FlextResult[list[str]].fail(f"Failed to get supported controls: {e}")
-
-    @override
-    def normalize_entry_for_server(
-        self,
-        entry: FlextLdifModels.Entry | Mapping[str, object],
-        _target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for Oracle OUD server using shared service."""
-        # Ensure entry is FlextLdifModels.Entry first
-        ensure_result = self._ensure_ldif_entry(
-            entry, context="normalize_entry_for_server"
-        )
-        if ensure_result.is_failure:
-            return ensure_result
-
-        ldif_entry = ensure_result.unwrap()
-
-        # Use shared FlextLdapEntryAdapter service for normalization
-        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
-        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(
