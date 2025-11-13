@@ -15,7 +15,7 @@ from typing import cast
 import pytest
 from flext_ldif import FlextLdifModels
 
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
 
 class TestEntryAdapterUniversal:

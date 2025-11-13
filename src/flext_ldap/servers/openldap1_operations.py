@@ -17,8 +17,8 @@ from flext_ldif import FlextLdifModels
 from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.openldap2_operations import FlextLdapServersOpenLDAP2Operations
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 
 
 class RootDSENotFoundError(RuntimeError):

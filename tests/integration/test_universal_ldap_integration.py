@@ -13,8 +13,8 @@ import pytest
 from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.factory import FlextLdapServersFactory
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 
 
 @pytest.mark.integration

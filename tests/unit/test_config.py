@@ -10,7 +10,7 @@ Test Categories:
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextExceptions, FlextResult
 from pydantic import SecretStr
 
 from flext_ldap.config import FlextLdapConfig
@@ -431,41 +431,54 @@ class TestFlextLdapConfigLdapSpecificMethods:
 
     @pytest.mark.unit
     def test_validate_ldap_requirements_ldaps_with_ldap_port(self) -> None:
-        """Test ldaps:// URI with LDAP port fails validation."""
-        config = FlextLdapConfig(
-            ldap_server_uri="ldaps://test.local",
-            ldap_port=389,
-            ldap_connection_timeout=30,
-            ldap_operation_timeout=120,
-        )
-        result = config.validate_ldap_requirements()
-        assert result.is_failure
+        """Test ldaps:// URI with LDAP port fails validation.
+
+        Note: With Pydantic v2 @model_validator, validation occurs at __init__.
+        """
+        with pytest.raises(FlextExceptions.ConfigurationError) as exc_info:
+            FlextLdapConfig(
+                ldap_server_uri="ldaps://test.local",
+                ldap_port=389,
+                ldap_connection_timeout=30,
+                ldap_operation_timeout=120,
+            )
+        assert "Port 389 is for LDAP, not LDAPS" in str(exc_info.value)
+        assert "Use 636" in str(exc_info.value)
 
     @pytest.mark.unit
     def test_validate_ldap_requirements_ldap_with_ldaps_port(self) -> None:
-        """Test ldap:// URI with LDAPS port fails validation."""
-        config = FlextLdapConfig(
-            ldap_server_uri="ldap://test.local",
-            ldap_port=636,
-            ldap_connection_timeout=30,
-            ldap_operation_timeout=120,
-        )
-        result = config.validate_ldap_requirements()
-        assert result.is_failure
+        """Test ldap:// URI with LDAPS port fails validation.
+
+        Note: With Pydantic v2 @model_validator, validation occurs at __init__.
+        """
+        with pytest.raises(FlextExceptions.ConfigurationError) as exc_info:
+            FlextLdapConfig(
+                ldap_server_uri="ldap://test.local",
+                ldap_port=636,
+                ldap_connection_timeout=30,
+                ldap_operation_timeout=120,
+            )
+        assert "Port 636 is for LDAPS, not LDAP" in str(exc_info.value)
+        assert "Use 389" in str(exc_info.value)
 
     @pytest.mark.unit
     def test_validate_ldap_requirements_operation_timeout_less_than_connection(
         self,
     ) -> None:
-        """Test operation timeout must be greater than connection timeout."""
-        config = FlextLdapConfig(
-            ldap_server_uri="ldap://test.local",
-            ldap_port=389,
-            ldap_connection_timeout=30,
-            ldap_operation_timeout=20,
+        """Test operation timeout must be greater than connection timeout.
+
+        Note: With Pydantic v2 @model_validator, validation occurs at __init__.
+        """
+        with pytest.raises(FlextExceptions.ConfigurationError) as exc_info:
+            FlextLdapConfig(
+                ldap_server_uri="ldap://test.local",
+                ldap_port=389,
+                ldap_connection_timeout=30,
+                ldap_operation_timeout=20,
+            )
+        assert "Operation timeout must be greater than connection timeout" in str(
+            exc_info.value
         )
-        result = config.validate_ldap_requirements()
-        assert result.is_failure
 
     @pytest.mark.unit
     def test_effective_bind_password_with_password(self) -> None:

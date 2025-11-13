@@ -410,13 +410,15 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         """
         # Step 1: Fetch ALL attributes (including operational)
         self.logger.debug("Entry exists, fetching current attributes", extra={"dn": dn})
+
+        # Use SearchRequest object for type-safe search (Pydantic v2 pattern)
         search_request = FlextLdapModels.SearchRequest(
             base_dn=dn,
             filter_str=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
             attributes=["*", "+"],  # Fetch ALL attributes
             single=True,
         )
-        search_result = ldap_client.search(search_request)
+        search_result = ldap_client.search(request=search_request)
 
         if search_result.is_failure:
             self.logger.error(

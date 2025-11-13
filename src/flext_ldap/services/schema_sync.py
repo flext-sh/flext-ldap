@@ -573,7 +573,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                 schema_dn,
                 attribute_types,
                 FlextLdapConstants.SchemaAttributes.ATTRIBUTE_TYPES,
-                "attributeType",
+                FlextLdapConstants.SchemaDefinitionTypes.ATTRIBUTE_TYPE,
             )
 
             # Add objectClasses using helper method
@@ -581,7 +581,7 @@ class FlextLdapSchemaSync(FlextService[dict[str, object]]):
                 schema_dn,
                 object_classes,
                 FlextLdapConstants.SchemaAttributes.OBJECT_CLASSES,
-                "objectClass",
+                FlextLdapConstants.SchemaDefinitionTypes.OBJECT_CLASS,
             )
 
             total_added = attr_added + obj_added

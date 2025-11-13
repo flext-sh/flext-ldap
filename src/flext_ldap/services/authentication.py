@@ -27,7 +27,8 @@ from ldap3.core.exceptions import (
 )
 
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.typings import FlextLdapTypes
 
 
@@ -213,7 +214,7 @@ class FlextLdapAuthentication(FlextService[None]):
             search_base = (
                 self._ldap_config.ldap_base_dn
                 if hasattr(self._ldap_config, "ldap_base_dn") and self._ldap_config
-                else "dc=flext,dc=local"
+                else FlextLdapConstants.Defaults.DEFAULT_TEST_BASE_DN
             )
 
             # Perform search

@@ -26,11 +26,11 @@ from pydantic import Field, SecretStr
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.acl import FlextLdapAclService
 from flext_ldap.services.authentication import FlextLdapAuthentication
 from flext_ldap.services.clients import FlextLdapClients
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.services.servers import FlextLdapServersService
 
 # Type aliases for handler message types and common return types
@@ -259,6 +259,27 @@ class FlextLdap(FlextService[None]):
             return mode
         return FlextLdapConstants.Types.QuirksMode.STRICT
 
+    def _normalize_quirks_mode(
+        self,
+        quirks_mode: FlextLdapConstants.Types.QuirksMode | None,
+    ) -> FlextLdapConstants.Types.QuirksMode:
+        """Normalize quirks_mode with fallback to persisted instance default.
+
+        Args:
+            quirks_mode: Optional quirks mode override.
+
+        Returns:
+            Normalized quirks mode (never None).
+
+        Examples:
+            # Use provided quirks_mode
+            mode = self._normalize_quirks_mode(QuirksMode.RFC)  # Returns RFC
+
+            # Fallback to instance default when None
+            mode = self._normalize_quirks_mode(None)  # Returns self.quirks_mode
+        """
+        return quirks_mode if quirks_mode is not None else self.quirks_mode
+
     @override
     def execute(self) -> FlextResult[None]:
         """Execute main domain operation (required by FlextService)."""
@@ -430,12 +451,15 @@ class FlextLdap(FlextService[None]):
 
         """
         # Railway-Oriented Programming: propagate failures early
+        # Normalize quirks_mode with fallback to instance default
+        normalized_quirks_mode = self._normalize_quirks_mode(quirks_mode)
+
         # Create SearchRequest model for search()
         search_request = FlextLdapModels.SearchRequest(
             base_dn=base_dn,
             filter_str=filter_str,
             attributes=attributes,
-            quirks_mode=quirks_mode,
+            quirks_mode=normalized_quirks_mode,
         )
         result = self.client.search(search_request)
         if result.is_failure:
@@ -601,10 +625,12 @@ class FlextLdap(FlextService[None]):
         atomic = request.atomic
         batch = request.batch
         modifications = request.modifications
-        quirks_mode = cast(
+        quirks_mode_raw = cast(
             "FlextLdapConstants.Types.QuirksMode | None",
             request.quirks_mode,
         )
+        # Normalize quirks_mode with fallback to instance default
+        quirks_mode = self._normalize_quirks_mode(quirks_mode_raw)
 
         # Use conditional logic for operation routing (mypy-friendly)
         if operation == FlextLdapConstants.OperationNames.DELETE:

@@ -83,107 +83,8 @@ class FlextLdapConfig(FlextConfig):
     # NO model_config override - Pydantic v2 pattern for proper field inheritance
 
     # =========================================================================
-    # CONFIGURATION VALIDATION HELPERS - DRY Principle Implementation
+    # PYDANTIC V2 VALIDATORS - Consolidated Configuration Validation
     # =========================================================================
-
-    def _validate_authentication_consistency(self) -> FlextResult[None]:
-        """Validate authentication configuration consistency.
-
-        DRY helper for checking bind DN and password relationship.
-        Ensures password is provided when DN is specified.
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
-        if self.ldap_bind_dn is not None and self.ldap_bind_password is None:
-            return FlextResult[None].fail(
-                "Bind password is required when bind DN is specified"
-            )
-        return FlextResult[None].ok(None)
-
-    def _validate_caching_consistency(self) -> FlextResult[None]:
-        """Validate caching configuration consistency.
-
-        DRY helper for checking cache TTL when caching is enabled.
-        Ensures positive TTL when caching is active.
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
-        if self.enable_caching and self.cache_ttl <= 0:
-            return FlextResult[None].fail(
-                "Cache TTL must be positive when caching is enabled"
-            )
-        return FlextResult[None].ok(None)
-
-    def _validate_ssl_consistency(self) -> FlextResult[None]:
-        """Validate SSL configuration consistency.
-
-        DRY helper for checking SSL settings match URI scheme.
-        Ensures SSL is enabled for ldaps:// URIs.
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
-        if (
-            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAPS)
-            and not self.ldap_use_ssl
-        ):
-            return FlextResult[None].fail(
-                "SSL must be enabled for ldaps:// server URIs"
-            )
-        return FlextResult[None].ok(None)
-
-    def _validate_timeout_relationships(self) -> FlextResult[None]:
-        """Validate timeout configuration relationships.
-
-        DRY helper for checking operation vs connection timeout consistency.
-        Ensures operation timeout is greater than connection timeout.
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
-        if self.ldap_operation_timeout <= self.ldap_connection_timeout:
-            return FlextResult[None].fail(
-                "Operation timeout must be greater than connection timeout"
-            )
-        return FlextResult[None].ok(None)
-
-    def _validate_port_uri_consistency(self) -> FlextResult[None]:
-        """Validate port and URI scheme consistency.
-
-        DRY helper for checking port matches URI scheme (ldap vs ldaps).
-        Ensures correct port for each protocol.
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
-        if (
-            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAPS)
-            and self.ldap_port == FlextLdapConstants.Defaults.DEFAULT_PORT
-        ):
-            port = FlextLdapConstants.Defaults.DEFAULT_PORT
-            ssl_port = FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
-            return FlextResult[None].fail(
-                f"Port {port} is for LDAP, not LDAPS. Use {ssl_port}."
-            )
-
-        if (
-            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAP)
-            and self.ldap_port == FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
-        ):
-            ssl_port = FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
-            port = FlextLdapConstants.Defaults.DEFAULT_PORT
-            return FlextResult[None].fail(
-                f"Port {ssl_port} is for LDAPS, not LDAP. Use {port}."
-            )
-
-        return FlextResult[None].ok(None)
 
     # LDAP Connection Configuration using FlextLdapConstants for defaults
     ldap_server_uri: str = Field(
@@ -425,29 +326,83 @@ class FlextLdapConfig(FlextConfig):
 
     @model_validator(mode="after")
     def validate_ldap_configuration_consistency(self) -> FlextLdapConfig:
-        """Validate LDAP configuration consistency with business rules using DRY helpers."""
-        # Validate authentication configuration using helper
-        auth_result = self._validate_authentication_consistency()
-        if auth_result.is_failure:
+        """Validate LDAP configuration consistency (Pydantic v2 consolidated pattern).
+
+        Consolidates all configuration validations in single Pydantic v2 validator:
+        1. Authentication: Bind password required when bind DN specified
+        2. Caching: Positive cache TTL when caching enabled
+        3. SSL: SSL enabled for ldaps:// URIs
+        4. Timeouts: Operation timeout > connection timeout
+        5. Port/URI: Port matches URI scheme (389 for ldap://, 636 for ldaps://)
+
+        Replaces 5 private validation methods with Pydantic v2 advanced usage
+        to eliminate methods per architectural requirement.
+
+        Raises:
+            FlextExceptions.ConfigurationError: When validation fails
+
+        Returns:
+            Self for Pydantic v2 chaining
+
+        """
+        # 1. Authentication consistency
+        if self.ldap_bind_dn is not None and self.ldap_bind_password is None:
+            msg = "Bind password is required when bind DN is specified"
             raise FlextExceptions.ConfigurationError(
-                auth_result.error or "Authentication validation failed",
+                msg,
                 config_key="ldap_bind_password",
             )
 
-        # Validate caching configuration using helper
-        cache_result = self._validate_caching_consistency()
-        if cache_result.is_failure:
+        # 2. Caching consistency
+        if self.enable_caching and self.cache_ttl <= 0:
+            msg = "Cache TTL must be positive when caching is enabled"
             raise FlextExceptions.ConfigurationError(
-                cache_result.error or "Caching validation failed",
-                config_key="ldap_cache_ttl",
+                msg,
+                config_key="cache_ttl",
             )
 
-        # Validate SSL configuration using helper
-        ssl_result = self._validate_ssl_consistency()
-        if ssl_result.is_failure:
+        # 3. SSL consistency
+        if (
+            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAPS)
+            and not self.ldap_use_ssl
+        ):
+            msg = "SSL must be enabled for ldaps:// server URIs"
             raise FlextExceptions.ConfigurationError(
-                ssl_result.error or "SSL validation failed",
+                msg,
                 config_key="ldap_use_ssl",
+            )
+
+        # 4. Timeout relationships
+        if self.ldap_operation_timeout <= self.ldap_connection_timeout:
+            msg = "Operation timeout must be greater than connection timeout"
+            raise FlextExceptions.ConfigurationError(
+                msg,
+                config_key="ldap_operation_timeout",
+            )
+
+        # 5. Port/URI consistency
+        if (
+            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAPS)
+            and self.ldap_port == FlextLdapConstants.Defaults.DEFAULT_PORT
+        ):
+            port = FlextLdapConstants.Defaults.DEFAULT_PORT
+            ssl_port = FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
+            msg = f"Port {port} is for LDAP, not LDAPS. Use {ssl_port}."
+            raise FlextExceptions.ConfigurationError(
+                msg,
+                config_key="ldap_port",
+            )
+
+        if (
+            self.ldap_server_uri.startswith(FlextLdapConstants.Protocols.LDAP)
+            and self.ldap_port == FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
+        ):
+            ssl_port = FlextLdapConstants.Defaults.DEFAULT_PORT_SSL
+            port = FlextLdapConstants.Defaults.DEFAULT_PORT
+            msg = f"Port {ssl_port} is for LDAPS, not LDAP. Use {port}."
+            raise FlextExceptions.ConfigurationError(
+                msg,
+                config_key="ldap_port",
             )
 
         return self
@@ -566,29 +521,19 @@ class FlextLdapConfig(FlextConfig):
     def validate_ldap_requirements(self) -> FlextResult[None]:
         """Validate LDAP-specific configuration requirements.
 
-        Extended validation for LDAP configuration beyond basic
-        Pydantic validation, including business rules and consistency checks.
+        Note: Configuration consistency validations are handled automatically by
+        Pydantic v2 @model_validator. This method only handles additional runtime
+        business rules validation.
 
         Returns:
         FlextResult[None]: Success if all LDAP requirements met
 
         """
-        # Run business rules validation
-        business_validation = self.validate_business_rules()
-        if business_validation.is_failure:
-            return business_validation
-
-        # Validate port and URI consistency using helper
-        port_uri_result = self._validate_port_uri_consistency()
-        if port_uri_result.is_failure:
-            return port_uri_result
-
-        # Validate timeout relationships using helper
-        timeout_result = self._validate_timeout_relationships()
-        if timeout_result.is_failure:
-            return timeout_result
-
-        return FlextResult[None].ok(None)
+        # Note: All configuration consistency validations (authentication, caching,
+        # SSL, timeouts, port/URI) are now handled by Pydantic v2 @model_validator
+        # validate_ldap_configuration_consistency() which runs automatically on
+        # model creation/update. Only additional business rules are validated here.
+        return self.validate_business_rules()
 
     @property
     def effective_bind_password(self) -> str | None:
