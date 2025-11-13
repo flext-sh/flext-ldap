@@ -93,6 +93,27 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
         """Generic LDAP ACL format identifier."""
         return FlextLdapConstants.AclFormat.GENERIC
 
+    @override
+    def _format_acls(self, acls: list[dict[str, object]]) -> FlextResult[list[str]]:
+        """Format ACLs for generic LDAP server."""
+        try:
+            formatted_acls = []
+            for acl in acls:
+                # Generic ACL formatting - convert dict to string
+                acl_str = str(acl)
+                formatted_acls.append(acl_str)
+            return FlextResult.ok(formatted_acls)
+        except Exception as e:
+            return FlextResult.fail(
+                f"Failed to format ACLs: {e}",
+                error_code=FlextLdapConstants.Errors.PROCESSING_ERROR,
+            )
+
+    @override
+    def _get_acl_attribute(self) -> str:
+        """Get ACL attribute name for generic LDAP."""
+        return "aci"  # Generic default
+
     # get_acls(), set_acls() - Use base implementations
 
     # parse() - Use base implementation

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 from flext_ldif import FlextLdifModels
 from flext_ldif.services import FlextLdifValidation
 
@@ -45,31 +45,53 @@ class DomainServices:
 
         """
         # Priority: displayName > givenName + sn > cn > uid
-        display_name = user.attributes.get("displayName") if user.attributes else None
+        display_name = (
+            user.attributes.get("displayName")
+            if isinstance(user.attributes, dict) and user.attributes
+            else None
+        )
         if display_name:
             return (
                 str(display_name[0])
-                if isinstance(display_name, list)
+                if FlextRuntime.is_list_like(display_name)
                 else str(display_name)
             )
 
-        given_name = user.attributes.get("givenName") if user.attributes else None
-        sn = user.attributes.get("sn") if user.attributes else None
+        given_name = (
+            user.attributes.get("givenName")
+            if isinstance(user.attributes, dict) and user.attributes
+            else None
+        )
+        sn = (
+            user.attributes.get("sn")
+            if isinstance(user.attributes, dict) and user.attributes
+            else None
+        )
         if given_name and sn:
             given_str = (
-                str(given_name[0]) if isinstance(given_name, list) else str(given_name)
+                str(given_name[0])
+                if FlextRuntime.is_list_like(given_name)
+                else str(given_name)
             )
-            sn_str = str(sn[0]) if isinstance(sn, list) else str(sn)
+            sn_str = str(sn[0]) if FlextRuntime.is_list_like(sn) else str(sn)
             return f"{given_str} {sn_str}"
 
-        cn = user.attributes.get("cn") if user.attributes else None
+        cn = (
+            user.attributes.get("cn")
+            if isinstance(user.attributes, dict) and user.attributes
+            else None
+        )
         if cn:
-            return str(cn[0]) if isinstance(cn, list) else str(cn)
+            return str(cn[0]) if FlextRuntime.is_list_like(cn) else str(cn)
 
-        uid = user.attributes.get("uid") if user.attributes else None
+        uid = (
+            user.attributes.get("uid")
+            if isinstance(user.attributes, dict) and user.attributes
+            else None
+        )
         return (
             str(uid[0])
-            if uid and isinstance(uid, list)
+            if uid and FlextRuntime.is_list_like(uid)
             else (str(uid) if uid else FlextLdapConstants.ErrorStrings.UNKNOWN_USER)
         )
 
@@ -91,9 +113,15 @@ class DomainServices:
         lock_attrs = FlextLdapConstants.LockAttributes.ALL_LOCK_ATTRIBUTES
 
         for attr in lock_attrs:
-            value = user.attributes.get(attr) if user.attributes else None
+            value = (
+                user.attributes.get(attr)
+                if isinstance(user.attributes, dict) and user.attributes
+                else None
+            )
             if value:
-                value_str = str(value[0]) if isinstance(value, list) else str(value)
+                value_str = (
+                    str(value[0]) if FlextRuntime.is_list_like(value) else str(value)
+                )
                 if value_str.lower() in {
                     FlextLdapConstants.BooleanStrings.TRUE,
                     FlextLdapConstants.BooleanStrings.ONE,
@@ -102,7 +130,9 @@ class DomainServices:
                     return FlextLdapConstants.UserStatus.LOCKED
                 try:
                     # Extract value for bitwise check (handle list or single value)
-                    check_value = value[0] if isinstance(value, list) else value
+                    check_value = (
+                        value[0] if FlextRuntime.is_list_like(value) else value
+                    )
                     if (
                         isinstance(check_value, (int, str))
                         and int(check_value)
@@ -117,7 +147,7 @@ class DomainServices:
             user.attributes.get(
                 FlextLdapConstants.ActiveDirectoryAttributes.PWD_LAST_SET,
             )
-            if user.attributes
+            if isinstance(user.attributes, dict) and user.attributes
             else None
         )
         if pwd_expiry:
@@ -145,12 +175,22 @@ class DomainServices:
 
         """
         # Example business rule: users must have email for certain groups
-        group_cn = group.attributes.get("cn") if group.attributes else None
-        user_mail = user.attributes.get("mail") if user.attributes else None
+        group_cn = (
+            group.attributes.get("cn")
+            if isinstance(group.attributes, dict) and group.attributes
+            else None
+        )
+        user_mail = (
+            user.attributes.get("mail")
+            if isinstance(user.attributes, dict) and user.attributes
+            else None
+        )
 
         if group_cn:
             group_cn_str = (
-                str(group_cn[0]) if isinstance(group_cn, list) else str(group_cn)
+                str(group_cn[0])
+                if FlextRuntime.is_list_like(group_cn)
+                else str(group_cn)
             )
             if "admin" in group_cn_str.lower() and not user_mail:
                 return FlextResult[bool].fail(
@@ -161,7 +201,11 @@ class DomainServices:
         lock_attrs = FlextLdapConstants.LockAttributes.ALL_LOCK_ATTRIBUTES
         is_locked = False
         for attr in lock_attrs:
-            value = user.attributes.get(attr) if user.attributes else None
+            value = (
+                user.attributes.get(attr)
+                if isinstance(user.attributes, dict) and user.attributes
+                else None
+            )
             if value:
                 is_locked = True
                 break
@@ -225,7 +269,7 @@ class DomainServices:
             if uid_values:
                 uid_str = (
                     str(uid_values[0])
-                    if isinstance(uid_values, list)
+                    if FlextRuntime.is_list_like(uid_values)
                     else str(uid_values)
                 )
                 existing_uids.add(uid_str)

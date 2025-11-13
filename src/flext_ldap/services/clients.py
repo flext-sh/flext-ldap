@@ -15,8 +15,13 @@ from __future__ import annotations
 import types
 from typing import Literal, Self, cast, override
 
-from flext_core import FlextResult, FlextService
-from flext_ldif import FlextLdifConstants, FlextLdifModels
+from flext_core import (
+    FlextDecorators,
+    FlextResult,
+    FlextRuntime,
+    FlextService,
+)
+from flext_ldif import FlextLdifConstants, FlextLdifModels, FlextLdifUtilities
 from ldap3 import (
     Connection,
     Server,
@@ -123,59 +128,96 @@ class FlextLdapClients(FlextService[None]):
         ) = None
 
     def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
-        """Get searcher with lazy initialization and type narrowing."""
-        if self._searcher is not None:
-            return self._searcher
+        """Get searcher using functional lazy initialization with FlextRuntime.
 
-        searcher = FlextLdapSearch()
-        if self._connection:
-            searcher.set_connection_context(self._connection)
-        self._searcher = cast(
-            "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
-            searcher,
-        )
-        return self._searcher
+        Uses FlextRuntime.safe_get_attribute for thread-safe lazy loading
+        and functional composition for connection setup.
+        """
+        # Functional lazy initialization using FlextRuntime (DRY principle)
+        searcher = FlextRuntime.safe_get_attribute(self, "_searcher", None)
+
+        if searcher is None:
+            # Functional composition: create and configure searcher
+            searcher = FlextLdapSearch()
+            if self._connection:
+                searcher.set_connection_context(self._connection)
+            self._searcher = cast(
+                "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
+                searcher,
+            )
+
+        return searcher
 
     def _get_authenticator(self) -> FlextLdapProtocols.Ldap.LdapAuthenticationProtocol:
-        """Get authenticator with lazy initialization and type narrowing."""
-        if self._authenticator is not None:
-            return self._authenticator
+        """Get authenticator using functional lazy initialization with FlextRuntime.
 
-        auth = FlextLdapAuthentication()
-        auth.set_connection_context(
-            self._connection,
-            self._server,
-            cast("FlextLdapConfig", self._ldap_config),
-        )
-        self._authenticator = cast(
-            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
-            auth,
-        )
-        return self._authenticator
+        Uses FlextRuntime.safe_get_attribute for thread-safe lazy loading
+        and functional composition for connection context setup.
+        """
+        # Functional lazy initialization using FlextRuntime (DRY principle)
+        authenticator = FlextRuntime.safe_get_attribute(self, "_authenticator", None)
+
+        if authenticator is None:
+            # Functional composition: create and configure authenticator
+            auth = FlextLdapAuthentication()
+            auth.set_connection_context(
+                self._connection,
+                self._server,
+                cast("FlextLdapConfig", self._ldap_config),
+            )
+            authenticator = cast(
+                "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
+                auth,
+            )
+            self._authenticator = authenticator
+
+        return authenticator
 
     @property
     def connection(self) -> Connection | None:
-        """Get the current LDAP connection."""
-        return self._connection
+        """Get the current LDAP connection using functional property access.
+
+        Returns the active LDAP connection or None if not connected.
+        Uses FlextRuntime.safe_get_attribute for safe property access.
+        """
+        # Functional property access with safe fallback
+        return FlextRuntime.safe_get_attribute(self, "_connection", None)
 
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
-        """Get current quirks mode for LDAP operations."""
-        return self.s_mode
+        """Get current quirks mode using functional property access.
+
+        Returns the active server-specific quirks handling mode.
+        Uses FlextRuntime.safe_get_attribute for safe property access.
+        """
+        # Functional property access with safe fallback
+        mode = FlextRuntime.safe_get_attribute(self, "s_mode", None)
+        if isinstance(mode, FlextLdapConstants.Types.QuirksMode):
+            return mode
+        return FlextLdapConstants.Types.QuirksMode.STRICT
 
     @property
     def quirks_mode_description(self) -> str:
-        """Get human-readable description of current quirks mode."""
-        descriptions = {
-            FlextLdapConstants.Types.QuirksMode.AUTOMATIC: "Auto-detect server type and apply quirks",
-            FlextLdapConstants.Types.QuirksMode.SERVER: "Use explicit server type with quirks",
-            FlextLdapConstants.Types.QuirksMode.RFC: "RFC-compliant only, no extensions",
-            FlextLdapConstants.Types.QuirksMode.RELAXED: "Permissive mode, accept anything",
-        }
-        return descriptions.get(
-            self.s_mode,
-            FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
-        )
+        """Get human-readable description using functional composition.
+
+        Returns human-readable description of current quirks mode.
+        Uses functional approach with dictionary lookup and safe fallback.
+        """
+
+        # Functional description lookup with safe fallback
+        def get_description(mode: FlextLdapConstants.Types.QuirksMode) -> str:
+            """Get description for a given quirks mode."""
+            descriptions = {
+                FlextLdapConstants.Types.QuirksMode.AUTOMATIC: "Auto-detect server type and apply quirks",
+                FlextLdapConstants.Types.QuirksMode.SERVER: "Use explicit server type with quirks",
+                FlextLdapConstants.Types.QuirksMode.RFC: "RFC-compliant only, no extensions",
+                FlextLdapConstants.Types.QuirksMode.RELAXED: "Permissive mode, accept anything",
+            }
+            return descriptions.get(mode, FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR)
+
+        # Functional composition: get mode then get description
+        current_mode = self.quirks_mode
+        return get_description(current_mode)
 
     @override
     def execute(self) -> FlextResult[None]:
@@ -250,24 +292,26 @@ class FlextLdapClients(FlextService[None]):
         password: str,
     ) -> FlextResult[str]:
         """Validate connection parameters and return bind_dn string."""
-        uri_validation = FlextLdapValidations.validate_server_uri(server_uri)
+        uri_validation = FlextLdapUtilities.Validation.validate_ldap_uri(
+            "Server URI",
+            server_uri,
+        )
         if uri_validation.is_failure:
             return FlextResult[str].fail(
                 uri_validation.error or "Server URI validation failed",
             )
 
-        bind_dn_str = (
-            bind_dn.value
-            if isinstance(bind_dn, FlextLdifModels.DistinguishedName)
-            else bind_dn
-        )
+        bind_dn_str = str(getattr(bind_dn, "value", bind_dn))
         bind_dn_validation = FlextLdapValidations.validate_dn(bind_dn_str, "Bind DN")
         if bind_dn_validation.is_failure:
             return FlextResult[str].fail(
                 bind_dn_validation.error or "Bind DN validation failed",
             )
 
-        password_validation = FlextLdapValidations.validate_password(password)
+        password_validation = FlextLdapUtilities.Validation.validate_password(
+            "Password",
+            password,
+        )
         if password_validation.is_failure:
             return FlextResult[str].fail(
                 password_validation.error or "Password validation failed",
@@ -288,23 +332,23 @@ class FlextLdapClients(FlextService[None]):
             FlextLdapConstants.Types.GetInfoType.SCHEMA
         )
 
-        for key, value in connection_options.items():
-            if key == "port" and value is not None:
-                port = int(str(value))
-            elif key == "use_ssl" and value is not None:
-                use_ssl = bool(value)
-            elif key == "get_info" and value is not None:
-                str_value = str(value)
-                if str_value == FlextLdapConstants.Types.GetInfoType.ALL.value:
-                    get_info = FlextLdapConstants.Types.GetInfoType.ALL
-                elif str_value == FlextLdapConstants.Types.GetInfoType.SCHEMA.value:
-                    get_info = FlextLdapConstants.Types.GetInfoType.SCHEMA
-                elif str_value == FlextLdapConstants.Types.GetInfoType.DSA.value:
-                    get_info = FlextLdapConstants.Types.GetInfoType.DSA
-                elif str_value == FlextLdapConstants.Types.GetInfoType.NO_INFO.value:
-                    get_info = FlextLdapConstants.Types.GetInfoType.NO_INFO
-                else:
-                    get_info = FlextLdapConstants.Types.GetInfoType.SCHEMA
+        if isinstance(connection_options, dict) and connection_options:
+            for key, value in connection_options.items():
+                if key == "port" and value is not None:
+                    port = int(str(value))
+                elif key == "use_ssl" and value is not None:
+                    use_ssl = bool(value)
+                elif key == "get_info" and value is not None:
+                    str_value = str(value)
+                    get_info_map = {
+                        FlextLdapConstants.Types.GetInfoType.ALL.value: FlextLdapConstants.Types.GetInfoType.ALL,
+                        FlextLdapConstants.Types.GetInfoType.SCHEMA.value: FlextLdapConstants.Types.GetInfoType.SCHEMA,
+                        FlextLdapConstants.Types.GetInfoType.DSA.value: FlextLdapConstants.Types.GetInfoType.DSA,
+                        FlextLdapConstants.Types.GetInfoType.NO_INFO.value: FlextLdapConstants.Types.GetInfoType.NO_INFO,
+                    }
+                    get_info = get_info_map.get(
+                        str_value, FlextLdapConstants.Types.GetInfoType.SCHEMA
+                    )
 
         if (
             auto_discover_schema
@@ -322,7 +366,11 @@ class FlextLdapClients(FlextService[None]):
         connection_options: dict[str, object] | None,
     ) -> Server:
         """Create LDAP Server instance with appropriate configuration."""
-        if connection_options:
+        if (
+            connection_options
+            and isinstance(connection_options, dict)
+            and connection_options
+        ):
             port, use_ssl, get_info = self._parse_connection_options(
                 connection_options,
                 auto_discover_schema=auto_discover_schema,
@@ -386,8 +434,10 @@ class FlextLdapClients(FlextService[None]):
             root_dse_result = self._get_root_dse_attributes()
             if root_dse_result.is_success:
                 root_dse = root_dse_result.unwrap()
-                self._detected_server_type = self._detect_server_type_from_root_dse(
-                    root_dse,
+                self._detected_server_type = (
+                    FlextLdapUtilities.ServerDetection.detect_server_type_from_root_dse(
+                        root_dse,
+                    )
                 )
                 self.logger.info(
                     "Auto-detected LDAP server type: %s",
@@ -400,6 +450,10 @@ class FlextLdapClients(FlextService[None]):
             self._detected_server_type = FlextLdifConstants.LdapServers.GENERIC
             self.logger.debug("Server detection failed, using generic: %s", e)
 
+    @FlextDecorators.log_operation("LDAP Connection")
+    @FlextDecorators.track_performance("LDAP Connection")
+    @FlextDecorators.retry(max_attempts=3, backoff_strategy="exponential")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def connect(
         self,
         request: FlextLdapModels.ConnectionRequest,
@@ -484,12 +538,18 @@ class FlextLdapClients(FlextService[None]):
     def _get_root_dse_attributes(self) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes for server detection."""
         try:
-            if not self._connection or not self._connection.bound:
+            if (
+                not getattr(self._connection, "bound", False)
+                if self._connection
+                else False
+            ):
                 return FlextResult[dict[str, object]].fail(
                     FlextLdapConstants.ErrorMessages.CONNECTION_NOT_BOUND
                 )
 
-            search_result = self._connection.search(
+            # Type narrowing: connection is not None here
+            connection = cast("Connection", self._connection)
+            search_result = connection.search(
                 search_base="",
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -500,12 +560,12 @@ class FlextLdapClients(FlextService[None]):
                 size_limit=1,
             )
 
-            if not search_result or not self._connection.entries:
+            if not search_result or not connection.entries:
                 return FlextResult[dict[str, object]].fail(
                     FlextLdapConstants.ErrorMessages.NO_ROOT_DSE_FOUND
                 )
 
-            entry = self._connection.entries[0]
+            entry = connection.entries[0]
             attrs: dict[str, object] = {}
             for attr in entry.entry_attributes:
                 attrs[attr] = entry[attr].value
@@ -517,22 +577,10 @@ class FlextLdapClients(FlextService[None]):
                 f"Root DSE retrieval failed: {e}",
             )
 
-    def _detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
-        """Detect server type from Root DSE attributes using FlextLdapUtilities.
-
-        Consolidated with FlextLdapUtilities.ServerDetection for reusability.
-
-        Args:
-            root_dse: Root DSE attributes dictionary
-
-        Returns:
-            Detected server type string
-
-        """
-        return FlextLdapUtilities.ServerDetection.detect_server_type_from_root_dse(
-            root_dse,
-        )
-
+    @FlextDecorators.log_operation("LDAP Bind")
+    @FlextDecorators.track_performance("LDAP Bind")
+    @FlextDecorators.retry(max_attempts=2, backoff_strategy="linear")
+    @FlextDecorators.timeout(timeout_seconds=15.0)
     def bind(
         self,
         bind_dn: FlextLdifModels.DistinguishedName | str,
@@ -654,7 +702,7 @@ class FlextLdapClients(FlextService[None]):
         if self._server and hasattr(self._server, "host"):
             protocol = (
                 FlextLdapConstants.Protocol.LDAPS
-                if getattr(self._server, "ssl", False)
+                if FlextRuntime.safe_get_attribute(self._server, "ssl", False)
                 else FlextLdapConstants.Protocol.LDAP
             )
             host = self._server.host
@@ -681,7 +729,7 @@ class FlextLdapClients(FlextService[None]):
 
             if "connection_options" in kwargs:
                 conn_opts = kwargs["connection_options"]
-                if isinstance(conn_opts, dict):
+                if FlextRuntime.is_dict_like(conn_opts):
                     connection_options_val = conn_opts
 
             if "quirks_mode" in kwargs:
@@ -716,19 +764,26 @@ class FlextLdapClients(FlextService[None]):
         """Authenticate user - delegates to authenticator."""
         return self._get_authenticator().authenticate_user(username, password)
 
+    @FlextDecorators.log_operation("LDAP Credential Validation")
+    @FlextDecorators.track_performance("LDAP Credential Validation")
+    @FlextDecorators.timeout(timeout_seconds=10.0)
     def validate_credentials(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
         password: str,
     ) -> FlextResult[bool]:
         """Validate credentials - delegates to authenticator."""
-        dn_str = dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
+        dn_str = str(getattr(dn, "value", dn) if hasattr(dn, "value") else dn)
         return self._get_authenticator().validate_credentials(dn_str, password)
 
     # =========================================================================
     # SEARCH OPERATIONS - Delegated to FlextLdapSearcher
     # =========================================================================
 
+    @FlextDecorators.log_operation("LDAP Search")
+    @FlextDecorators.track_performance("LDAP Search")
+    @FlextDecorators.retry(max_attempts=2, backoff_strategy="linear")
+    @FlextDecorators.timeout(timeout_seconds=60)
     def search(
         self,
         request: FlextLdapModels.SearchRequest,
@@ -856,11 +911,11 @@ class FlextLdapClients(FlextService[None]):
             )
         return searcher.search_one(search_base, filter_str, attributes)
 
-    def get_user(
+    def _get_entry_by_dn(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
     ) -> FlextResult[FlextLdifModels.Entry | None]:
-        """Get user by DN - uses search_one."""
+        """Get entry by DN - generic implementation for get_user/get_group."""
         if not self._connection:
             return FlextResult[FlextLdifModels.Entry | None].fail(
                 FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
@@ -872,21 +927,19 @@ class FlextLdapClients(FlextService[None]):
             attributes=["*"],
         )
 
+    def get_user(
+        self,
+        dn: FlextLdifModels.DistinguishedName | str,
+    ) -> FlextResult[FlextLdifModels.Entry | None]:
+        """Get user by DN - delegates to _get_entry_by_dn()."""
+        return self._get_entry_by_dn(dn)
+
     def get_group(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
     ) -> FlextResult[FlextLdifModels.Entry | None]:
-        """Get group by DN - uses search_one."""
-        if not self._connection:
-            return FlextResult[FlextLdifModels.Entry | None].fail(
-                FlextLdapConstants.ErrorMessages.LDAP_CONNECTION_NOT_ESTABLISHED,
-            )
-        dn_str = dn.value if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
-        return self._get_searcher().search_one(
-            dn_str,
-            FlextLdapConstants.Defaults.DEFAULT_SEARCH_FILTER,
-            attributes=["*"],
-        )
+        """Get group by DN - delegates to _get_entry_by_dn()."""
+        return self._get_entry_by_dn(dn)
 
     def user_exists(
         self,
@@ -933,8 +986,13 @@ class FlextLdapClients(FlextService[None]):
 
         ldap3_attributes: dict[str, list[str]] = {}
         for key, value in attrs_dict.items():
-            if isinstance(value, list):
-                ldap3_attributes[key] = value
+            if FlextRuntime.is_list_like(value):
+                # Convert list-like object to list of strings
+                if isinstance(value, list):
+                    ldap3_attributes[key] = [str(item) for item in value]
+                else:
+                    # Handle other sequence types
+                    ldap3_attributes[key] = [str(value)]
             else:
                 ldap3_attributes[key] = [str(value)]
         return ldap3_attributes
@@ -949,9 +1007,9 @@ class FlextLdapClients(FlextService[None]):
             FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
             [FlextLdapConstants.Defaults.OBJECT_CLASS_TOP],
         )
-        if isinstance(object_class_raw, list):
+        if FlextRuntime.is_list_like(object_class_raw):
             object_class = (
-                object_class_raw[0]
+                str(object_class_raw[0])
                 if object_class_raw
                 else FlextLdapConstants.Defaults.OBJECT_CLASS_TOP
             )
@@ -1008,6 +1066,9 @@ class FlextLdapClients(FlextService[None]):
             return True
         return False
 
+    @FlextDecorators.log_operation("LDAP Add Entry")
+    @FlextDecorators.track_performance("LDAP Add Entry")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def add_entry(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
@@ -1172,6 +1233,9 @@ class FlextLdapClients(FlextService[None]):
             ldap3_changes[attr] = self._parse_change_spec_to_ldap3(change_spec)
         return ldap3_changes
 
+    @FlextDecorators.log_operation("LDAP Modify Entry")
+    @FlextDecorators.track_performance("LDAP Modify Entry")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def modify_entry(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
@@ -1247,6 +1311,9 @@ class FlextLdapClients(FlextService[None]):
             self.logger.exception("Modify entry failed")
             return FlextResult[bool].fail(f"Modify entry failed: {e}")
 
+    @FlextDecorators.log_operation("LDAP Delete Entry")
+    @FlextDecorators.track_performance("LDAP Delete Entry")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def delete_entry(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
@@ -1519,12 +1586,12 @@ class FlextLdapClients(FlextService[None]):
 
         return FlextResult[FlextLdapModels.SearchResponse].ok(response)
 
-    def update_user_attributes(
+    def _update_entry_attributes(
         self,
         dn: str,
         attributes: dict[str, object],
     ) -> FlextResult[bool]:
-        """Update user attributes using LDAP modify operation."""
+        """Update entry attributes - generic implementation for update_user/update_group_attributes."""
         if not attributes:
             return FlextResult[bool].fail(
                 FlextLdapConstants.ErrorMessages.NO_ATTRIBUTES_PROVIDED
@@ -1541,27 +1608,21 @@ class FlextLdapClients(FlextService[None]):
         changes = FlextLdapModels.EntryChanges(**changes_dict)
         return self.modify_entry(dn, changes)
 
+    def update_user_attributes(
+        self,
+        dn: str,
+        attributes: dict[str, object],
+    ) -> FlextResult[bool]:
+        """Update user attributes - delegates to _update_entry_attributes()."""
+        return self._update_entry_attributes(dn, attributes)
+
     def update_group_attributes(
         self,
         dn: str,
         attributes: dict[str, object],
     ) -> FlextResult[bool]:
-        """Update group attributes using LDAP modify operation."""
-        if not attributes:
-            return FlextResult[bool].fail(
-                FlextLdapConstants.ErrorMessages.NO_ATTRIBUTES_PROVIDED
-            )
-        changes_dict: dict[str, object] = {
-            attr_name: [
-                (
-                    2,  # MODIFY_REPLACE operation code in LDAP
-                    attr_value if isinstance(attr_value, list) else [str(attr_value)],
-                ),
-            ]
-            for attr_name, attr_value in attributes.items()
-        }
-        changes = FlextLdapModels.EntryChanges(**changes_dict)
-        return self.modify_entry(dn, changes)
+        """Update group attributes - delegates to _update_entry_attributes()."""
+        return self._update_entry_attributes(dn, attributes)
 
     @property
     def server_type(self) -> str | None:
@@ -1768,9 +1829,8 @@ class FlextLdapClients(FlextService[None]):
 
         """
         try:
-            # Use flext-ldif DistinguishedName validation
-            FlextLdifModels.DistinguishedName.create(dn)
-            return FlextResult[bool].ok(True)
+            # Use flext-ldif DN validation
+            return FlextResult[bool].ok(FlextLdifUtilities.DN().validate(dn))
         except Exception:
             return FlextResult[bool].ok(False)
 

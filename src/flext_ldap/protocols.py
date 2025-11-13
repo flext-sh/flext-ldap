@@ -154,7 +154,7 @@ class FlextLdapProtocols(FlextProtocols):
         # =====================================================================
 
         @runtime_checkable
-        class LdapConnectionProtocol(FlextProtocols.Service, Protocol):
+        class LdapConnectionProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP connection operations."""
 
             def connect(
@@ -195,7 +195,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapSearchProtocol(FlextProtocols.Service, Protocol):
+        class LdapSearchProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP search operations."""
 
             def search(
@@ -237,7 +237,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapModifyProtocol(FlextProtocols.Service, Protocol):
+        class LdapModifyProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP modification operations."""
 
             def add_entry(
@@ -287,7 +287,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapAuthenticationProtocol(FlextProtocols.Service, Protocol):
+        class LdapAuthenticationProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP authentication operations."""
 
             def authenticate_user(
@@ -337,7 +337,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapValidationProtocol(FlextProtocols.Service, Protocol):
+        class LdapValidationProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP validation operations."""
 
             def validate_dn(self, dn: str) -> FlextResult[bool]:
@@ -366,7 +366,7 @@ class FlextLdapProtocols(FlextProtocols):
 
         @runtime_checkable
         class LdapConnectionManagerProtocol(
-            FlextProtocols.Service,
+            FlextProtocols.Service[None],
             Protocol,
         ):
             """Protocol for LDAP connection management operations.
@@ -461,7 +461,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapSearcherProtocol(FlextProtocols.Service, Protocol):
+        class LdapSearcherProtocol(FlextProtocols.Service[None], Protocol):
             """Protocol for LDAP search operations."""
 
             def search_one(

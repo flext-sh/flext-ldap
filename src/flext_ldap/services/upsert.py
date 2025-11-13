@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextService
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
@@ -84,14 +84,8 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         self,
         attributes: dict[str, list[str] | str],
     ) -> dict[str, list[str]]:
-        """Normalize attributes to list format."""
-        normalized: dict[str, list[str]] = {}
-        for attr, value in attributes.items():
-            if isinstance(value, list):
-                normalized[attr] = value
-            else:
-                normalized[attr] = [value]
-        return normalized
+        """Normalize attributes to list format - delegates to FlextLdapUtilities."""
+        return FlextLdapUtilities.Validation.normalize_list_values(attributes)
 
     def _extract_entry_from_search(
         self,
@@ -130,7 +124,8 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
     def _extract_from_list(
         self,
-        response_list: list[FlextLdifModels.Entry] | list[tuple[str, FlextLdifModels.Entry]],
+        response_list: list[FlextLdifModels.Entry]
+        | list[tuple[str, FlextLdifModels.Entry]],
         dn: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Extract Entry from list response (tuple or direct Entry).
@@ -314,6 +309,9 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
         )
         return FlextResult[int].ok(replaced_count)
 
+    @FlextDecorators.log_operation("LDAP UPSERT Entry")
+    @FlextDecorators.track_performance("LDAP UPSERT Entry")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def upsert_entry(
         self,
         ldap_client: FlextLdapClients,
@@ -355,7 +353,7 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
 
         """
         if skip_attributes is None:
-            skip_attributes = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
+            skip_attributes = FlextLdapConstants.SkipAttributes.DEFAULT_SKIP_ATTRIBUTES
 
         # Step 1: Normalize attributes and try ADD first (most efficient for new entries)
         normalized_new = self._normalize_attributes(new_attributes)
@@ -379,7 +377,9 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
             })
 
         # Railway Pattern: Check if failure is "already exists" error
-        if not FlextLdapUtilities.ErrorHandling.is_already_exists_error(add_result.error):
+        if not FlextLdapUtilities.ErrorHandling.is_already_exists_error(
+            add_result.error
+        ):
             self.logger.error(
                 "ADD failed with non-existence error",
                 extra={"dn": dn, "error": str(add_result.error)},

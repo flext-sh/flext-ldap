@@ -22,8 +22,7 @@ import inspect
 
 import pytest
 
-from flext_ldap import FlextLdapUpsertService
-from flext_ldap.utilities import FlextLdapUtilities
+from flext_ldap import FlextLdapConstants, FlextLdapUpsertService
 
 # mypy: disable-error-code="arg-type,misc,operator,attr-defined,assignment,index,call-arg,union-attr,return-value,list-item,valid-type"
 
@@ -65,14 +64,14 @@ class TestUpsertServiceSkipAttributes:
     """Test skip attributes functionality."""
 
     def test_default_skip_attributes_exist(self) -> None:
-        """Test that utilities provide default skip attributes."""
-        skip_attrs = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
+        """Test that constants provide default skip attributes."""
+        skip_attrs = FlextLdapConstants.SkipAttributes.DEFAULT_SKIP_ATTRIBUTES
         assert isinstance(skip_attrs, set)
         assert len(skip_attrs) > 0
 
     def test_default_skip_attributes_content(self) -> None:
         """Test that default skip attributes include expected attributes."""
-        skip_attrs = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
+        skip_attrs = FlextLdapConstants.SkipAttributes.DEFAULT_SKIP_ATTRIBUTES
 
         # Should include operational attributes
         assert "createtimestamp" in skip_attrs
@@ -84,7 +83,7 @@ class TestUpsertServiceSkipAttributes:
 
     def test_default_skip_attributes_rdn_attributes(self) -> None:
         """Test that default skip attributes include common RDN attributes."""
-        skip_attrs = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
+        skip_attrs = FlextLdapConstants.SkipAttributes.DEFAULT_SKIP_ATTRIBUTES
 
         # Should include common RDN attributes that cannot be modified
         assert "cn" in skip_attrs
@@ -93,7 +92,7 @@ class TestUpsertServiceSkipAttributes:
 
     def test_skip_attributes_case_insensitive(self) -> None:
         """Test that skip attribute matching is case-insensitive."""
-        skip_attrs = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
+        skip_attrs = FlextLdapConstants.SkipAttributes.DEFAULT_SKIP_ATTRIBUTES
 
         # All should be lowercase
         for attr in skip_attrs:
@@ -150,7 +149,9 @@ class TestUpsertServiceDocumentation:
         docstring = service.upsert_entry.__doc__
         assert "ADD" in docstring
         # Refactored docstring uses "delegate to existing entry handler" instead of explicit "REPLACE"
-        assert docstring and ("existing entry" in docstring.lower() or "REPLACE" in docstring)
+        assert docstring and (
+            "existing entry" in docstring.lower() or "REPLACE" in docstring
+        )
 
     def test_method_docstring_contains_return_documentation(self) -> None:
         """Test that method documents return value."""
@@ -213,13 +214,6 @@ class TestUpsertServiceErrorHandling:
         docstring = service.upsert_entry.__doc__
         # Railway pattern shouldn't raise, should return errors
         assert "raise" not in docstring.lower() or "raises" not in docstring.lower()
-
-    def test_get_default_skip_attributes_static_method(self) -> None:
-        """Test that skip attributes method is available in utilities."""
-        assert hasattr(FlextLdapUtilities.AttributeFiltering, "get_default_skip_attributes")
-        # Verify it returns expected type
-        result = FlextLdapUtilities.AttributeFiltering.get_default_skip_attributes()
-        assert isinstance(result, set)
 
 
 @pytest.mark.unit

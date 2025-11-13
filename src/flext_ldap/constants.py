@@ -299,6 +299,66 @@ class FlextLdapConstants(FlextLdifConstants):
         HOST: Final[str] = "host"
 
     # =========================================================================
+    # CONFIG PROPERTY MAPPINGS - Centralized field name mappings
+    # =========================================================================
+
+    class ConfigPropertyMappings:
+        """Property name mappings for configuration categories.
+
+        Maps config property keys to actual field names for dot notation access.
+        Used by FlextLdapConfig.__call__ for optimized property resolution.
+        """
+
+        # Connection properties mapping
+        CONNECTION: Final[dict[str, str]] = {
+            "server": "ldap_server_uri",
+            "port": "ldap_port",
+            "ssl": "ldap_use_ssl",
+            "timeout": "ldap_connection_timeout",
+            "uri": "_connection_uri",  # Computed dynamically
+        }
+
+        # Authentication properties mapping
+        AUTH: Final[dict[str, str]] = {
+            "bind_dn": "ldap_bind_dn",
+            "bind_password": "effective_bind_password",  # Property
+            "base_dn": "ldap_base_dn",
+        }
+
+        # Pool properties mapping
+        POOL: Final[dict[str, str]] = {
+            "size": "ldap_pool_size",
+            "timeout": "ldap_pool_timeout",
+        }
+
+        # Operation properties mapping
+        OPERATION: Final[dict[str, str]] = {
+            "timeout": "ldap_operation_timeout",
+            "size_limit": "ldap_size_limit",
+            "time_limit": "ldap_time_limit",
+        }
+
+        # Cache properties mapping
+        CACHE: Final[dict[str, str]] = {
+            "enabled": "enable_caching",
+            "ttl": "cache_ttl",
+        }
+
+        # Retry properties mapping
+        RETRY: Final[dict[str, str]] = {
+            "attempts": "max_retry_attempts",
+            "delay": "retry_delay",
+        }
+
+        # Logging properties mapping
+        LOGGING: Final[dict[str, str]] = {
+            "debug": "ldap_enable_debug",
+            "trace": "ldap_enable_trace",
+            "queries": "ldap_log_queries",
+            "mask_passwords": "ldap_mask_passwords",
+        }
+
+    # =========================================================================
     # ERROR PATTERNS
     # =========================================================================
 
@@ -455,6 +515,38 @@ class FlextLdapConstants(FlextLdifConstants):
             "owner",
             "memberOf",
         ]
+
+    # =========================================================================
+    # SKIP ATTRIBUTES - Attributes to skip during UPSERT operations
+    # =========================================================================
+
+    class SkipAttributes:
+        """Attributes that should be skipped during UPSERT operations.
+
+        These attributes should never be modified:
+        - Operational attributes (managed by server)
+        - RDN attributes (cannot be modified via MODIFY)
+        - Structural attributes (objectClass cannot be modified)
+        """
+
+        DEFAULT_SKIP_ATTRIBUTES: Final[set[str]] = {
+            # Operational attributes
+            "createtimestamp",
+            "modifytimestamp",
+            "creatorsname",
+            "modifiersname",
+            "entryuuid",
+            "entrycsn",
+            "structuralobjectclass",
+            "hassubordinates",
+            "subschemasubentry",
+            # Common RDN attributes (check these, they're often RDNs)
+            "cn",
+            "uid",
+            "ou",
+            # Structural attributes (cannot be modified)
+            "objectclass",
+        }
 
     # =========================================================================
     # SEARCH FILTERS - Consolidated from Filters class

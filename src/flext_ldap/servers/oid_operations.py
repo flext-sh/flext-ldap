@@ -9,17 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import cast, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
-from ldap3 import MODIFY_REPLACE, Connection
+from ldap3 import Connection
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 
 
@@ -138,64 +136,17 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         return FlextLdapConstants.AclFormat.ORACLE
 
     # get_acls() inherited from base class - uses get_acl_attribute_name()
+    # set_acls() inherited from base class - uses Template Method Pattern
+
+    # =========================================================================
+    # TEMPLATE METHOD PATTERN - Abstract Methods Implementation
+    # =========================================================================
 
     @override
-    def set_acls(
-        self,
-        _connection: Connection,
-        _dn: str,
-        _acls: list[dict[str, object]],
-    ) -> FlextResult[bool]:
-        """Set orclaci ACLs on Oracle OID.
-
-        Refactored with Railway Pattern: 6→3 returns (SOLID/DRY compliance).
-        """
-        try:
-            # Railway Pattern: Early validation
-            if not _connection or not _connection.bound:
-                return FlextResult[bool].fail("Connection not bound")
-
-            # Railway Pattern: Delegate formatting to helper
-            format_result = self._format_acls_for_oid(_acls)
-            if format_result.is_failure:
-                return FlextResult[bool].fail(str(format_result.error))
-
-            formatted_acls = format_result.unwrap()
-
-            # Railway Pattern: Execute modify operation
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
-            mods = cast(
-                "dict[str, list[tuple[int, list[str]]]]",
-                {
-                    FlextLdapConstants.AclAttributes.ORCLACI: [
-                        (MODIFY_REPLACE, formatted_acls),
-                    ],
-                },
-            )
-            success = typed_conn.modify(_dn, mods)
-
-            if not success:
-                error_msg = (
-                    _connection.result.get(
-                        FlextLdapConstants.LdapDictKeys.DESCRIPTION,
-                        FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR,
-                    )
-                    if _connection.result
-                    else FlextLdapConstants.ErrorStrings.UNKNOWN_ERROR
-                )
-                return FlextResult[bool].fail(f"Set ACLs failed: {error_msg}")
-
-            return FlextResult[bool].ok(True)
-
-        except Exception as e:
-            self.logger.exception("Set ACLs error", extra={"error": str(e)})
-            return FlextResult[bool].fail(f"Set ACLs failed: {e}")
-
-    def _format_acls_for_oid(
-        self, acls: list[dict[str, object]]
-    ) -> FlextResult[list[str]]:
+    def _format_acls(self, acls: list[dict[str, object]]) -> FlextResult[list[str]]:
         """Format ACLs for Oracle OID orclaci attribute using FlextLdapUtilities.
 
+        Template Method Pattern: Implements abstract method from base class.
         Consolidated with FlextLdapUtilities.AclFormatting for reusability.
         Delegates formatting to shared utility.
 
@@ -204,6 +155,18 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
 
         """
         return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
+
+    @override
+    def _get_acl_attribute(self) -> str:
+        """Get Oracle OID ACL attribute name.
+
+        Template Method Pattern: Implements abstract method from base class.
+
+        Returns:
+            'orclaci' - Oracle OID ACL attribute
+
+        """
+        return FlextLdapConstants.AclAttributes.ORCLACI
 
     # OID ACL Parse Helper Methods
 
@@ -333,7 +296,7 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create ACL entry: {entry_result.error}",
                 )
-            return entry_result
+            return FlextResult.ok(cast("FlextLdifModels.Entry", entry_result.unwrap()))
 
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
@@ -655,26 +618,6 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[str]].ok(list(controls))
         except Exception as e:
             return FlextResult[list[str]].fail(f"Failed to get supported controls: {e}")
-
-    @override
-    def normalize_entry_for_server(
-        self,
-        entry: FlextLdifModels.Entry | Mapping[str, object],
-        _target_server_type: str | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Normalize entry for Oracle OID server using shared service."""
-        # Ensure entry is FlextLdifModels.Entry first
-        ensure_result = self._ensure_ldif_entry(
-            entry, context="normalize_entry_for_server"
-        )
-        if ensure_result.is_failure:
-            return ensure_result
-
-        ldif_entry = ensure_result.unwrap()
-
-        # Use shared FlextLdapEntryAdapter service for normalization
-        adapter = FlextLdapEntryAdapter(server_type=self.server_type)
-        return adapter.normalize_entry_for_server(ldif_entry, self.server_type)
 
     @override
     def validate_entry_for_server(

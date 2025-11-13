@@ -13,10 +13,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+import re
+
+from flext_core import (
+    FlextDecorators,
+    FlextLogger,
+    FlextResult,
+)
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
+
+logger = FlextLogger(__name__)
 
 
 class FlextLdapUtilities:
@@ -63,37 +71,216 @@ class FlextLdapUtilities:
     class AttributeFiltering:
         """Attribute filtering utilities for LDAP operations."""
 
-        @staticmethod
-        def get_default_skip_attributes() -> set[str]:
-            """Get default set of attributes to skip during UPSERT operations.
+    class Validation:
+        """LDAP-specific validation utilities for inputs and parameters."""
 
-            Returns attributes that should never be modified:
-            - Operational attributes (managed by server)
-            - RDN attributes (cannot be modified via MODIFY)
-            - Structural attributes (objectClass cannot be modified)
+        @staticmethod
+        def validate_required_string(
+            param_name: str, value: object
+        ) -> FlextResult[bool]:
+            """Validate required string parameter.
+
+            Args:
+                param_name: Name of the parameter for error messages
+                value: Value to validate
 
             Returns:
-                Set of lowercase attribute names to skip
+                FlextResult[bool] indicating validation success or failure
 
             """
-            return {
-                # Operational attributes
-                "createtimestamp",
-                "modifytimestamp",
-                "creatorsname",
-                "modifiersname",
-                "entryuuid",
-                "entrycsn",
-                "structuralobjectclass",
-                "hassubordinates",
-                "subschemasubentry",
-                # Common RDN attributes (check these, they're often RDNs)
-                "cn",
-                "uid",
-                "ou",
-                # Structural attributes (cannot be modified)
-                "objectclass",
-            }
+            if value is None:
+                return FlextResult[bool].fail(f"{param_name} cannot be None")
+            if not isinstance(value, str) or (
+                not isinstance(value, str) and bool(value.strip())
+            ):
+                return FlextResult[bool].fail(f"{param_name} cannot be empty")
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_non_negative_int(
+            param_name: str, value: object
+        ) -> FlextResult[bool]:
+            """Validate non-negative integer parameter.
+
+            Args:
+                param_name: Name of the parameter for error messages
+                value: Value to validate
+
+            Returns:
+                FlextResult[bool] indicating validation success or failure
+
+            """
+            if value is None:
+                return FlextResult[bool].fail(f"{param_name} cannot be None")
+            if not isinstance(value, int) or value < 0:
+                return FlextResult[bool].fail(f"{param_name} must be non-negative")
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_password(param_name: str, value: object) -> FlextResult[bool]:
+            """Validate password parameter.
+
+            Args:
+                param_name: Name of the parameter for error messages
+                value: Value to validate
+
+            Returns:
+                FlextResult[bool] indicating validation success or failure
+
+            """
+            if value is None:
+                return FlextResult[bool].fail(f"{param_name} cannot be None")
+            if not isinstance(value, str):
+                return FlextResult[bool].fail(f"{param_name} must be a string")
+
+            pwd = value
+            if len(pwd) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
+                return FlextResult[bool].fail(
+                    f"{param_name} must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH} characters"
+                )
+            if len(pwd) > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
+                return FlextResult[bool].fail(
+                    f"{param_name} must be no more than {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH} characters"
+                )
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_ldap_uri(param_name: str, value: object) -> FlextResult[bool]:
+            """Validate LDAP URI parameter.
+
+            Args:
+                param_name: Name of the parameter for error messages
+                value: Value to validate
+
+            Returns:
+                FlextResult[bool] indicating validation success or failure
+
+            """
+            if value is None:
+                return FlextResult[bool].fail(f"{param_name} cannot be None")
+            if not isinstance(value, str) or (
+                not isinstance(value, str) and bool(value.strip())
+            ):
+                return FlextResult[bool].fail(f"{param_name} cannot be empty")
+
+            uri_value = value.strip()
+            if not re.match(
+                FlextLdapConstants.RegexPatterns.SERVER_URI_PATTERN, uri_value
+            ):
+                return FlextResult[bool].fail(
+                    f"{param_name} must start with ldap:// or ldaps://"
+                )
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_ldap_filter(param_name: str, value: object) -> FlextResult[bool]:
+            """Validate LDAP filter parameter.
+
+            Args:
+                param_name: Name of the parameter for error messages
+                value: Value to validate
+
+            Returns:
+                FlextResult[bool] indicating validation success or failure
+
+            """
+            if value is None:
+                return FlextResult[bool].fail(f"{param_name} cannot be None")
+            if not isinstance(value, str) or (
+                not isinstance(value, str) and bool(value.strip())
+            ):
+                return FlextResult[bool].fail(f"{param_name} cannot be empty")
+
+            filter_value = value.strip()
+            if not re.match(
+                FlextLdapConstants.RegexPatterns.FILTER_PATTERN, filter_value
+            ):
+                return FlextResult[bool].fail(
+                    f"{param_name} must be enclosed in parentheses"
+                )
+            return FlextResult[bool].ok(True)
+
+        @staticmethod
+        def validate_scope(scope: object) -> FlextResult[bool]:
+            """Validate LDAP scope parameter using pattern matching.
+
+            Args:
+                scope: Scope value to validate
+
+            Returns:
+                FlextResult[bool] indicating validation success or failure
+
+            """
+            match scope:
+                case None:
+                    return FlextResult[bool].fail("Scope cannot be None")
+                case str() as scope_value:
+                    valid_scopes = FlextLdapConstants.ValidationSets.VALID_SCOPES
+                    if scope_value.lower() not in valid_scopes:
+                        scopes_str = ", ".join(sorted(valid_scopes))
+                        return FlextResult[bool].fail(
+                            f"Invalid scope: {scope_value}. Must be one of {scopes_str}"
+                        )
+                    return FlextResult[bool].ok(True)
+                case _:
+                    return FlextResult[bool].fail("Scope must be a string")
+
+        @staticmethod
+        def validate_modify_operation(operation: object) -> FlextResult[bool]:
+            """Validate LDAP modify operation using pattern matching.
+
+            Args:
+                operation: Operation value to validate
+
+            Returns:
+                FlextResult[bool] indicating validation success or failure
+
+            """
+            match operation:
+                case None:
+                    return FlextResult[bool].fail("Operation cannot be None")
+                case str() as op_value if op_value.lower() in {
+                    "add",
+                    "delete",
+                    "replace",
+                }:
+                    return FlextResult[bool].ok(True)
+                case str() as op_value:
+                    valid_operations = {"add", "delete", "replace"}
+                    ops_str = ", ".join(sorted(valid_operations))
+                    return FlextResult[bool].fail(
+                        f"Invalid operation: {op_value}. Must be one of {ops_str}"
+                    )
+                case _:
+                    return FlextResult[bool].fail("Operation must be a string")
+
+        @staticmethod
+        def normalize_list_values(
+            values_dict: dict[str, list[str] | str],
+        ) -> dict[str, list[str]]:
+            """Normalize dict values to always be lists.
+
+            Converts dict[str, list[str] | str] → dict[str, list[str]]
+            Useful for LDAP attribute normalization and similar scenarios.
+
+            Args:
+                values_dict: Dictionary with values as either strings or lists
+
+            Returns:
+                Dictionary with all values normalized to lists
+
+            Example:
+                >>> normalize_list_values({"a": "x", "b": ["y", "z"]})
+                {"a": ["x"], "b": ["y", "z"]}
+
+            """
+            normalized: dict[str, list[str]] = {}
+            for key, value in values_dict.items():
+                if isinstance(value, list):
+                    normalized[key] = value
+                else:
+                    normalized[key] = [value]
+            return normalized
 
     class AclFormatting:
         """ACL formatting utilities for server-specific syntax."""
@@ -108,6 +295,8 @@ class FlextLdapUtilities:
             Consolidated helper used by OID, OpenLDAP2, and OUD operations.
             Eliminates duplicate code across server implementations.
 
+            Uses FlextUtilities.Validation for input validation and Railway Pattern.
+
             Args:
                 acls: List of ACL dictionaries
                 server_operations: Server operations instance with format_acl() method
@@ -116,9 +305,23 @@ class FlextLdapUtilities:
                 FlextResult containing list of formatted ACL strings or error
 
             """
+            # Validate inputs using inline validation with FlextUtilities
+            if not isinstance(acls, list) or not acls:
+                return FlextResult[list[str]].fail("ACL list cannot be empty")
+
+            if not hasattr(server_operations, "format_acl"):
+                return FlextResult[list[str]].fail(
+                    "Server operations must have format_acl method"
+                )
+
+            # Process ACLs using functional pipeline pattern
             formatted_acls: list[str] = []
 
             for acl in acls:
+                # Validate individual ACL using FlextUtilities.TypeGuards
+                if not isinstance(acl, dict) or not acl:
+                    return FlextResult[list[str]].fail("ACL dictionary cannot be empty")
+
                 # Convert dict to proper type (dict[str, str | list[str]])
                 acl_dict: dict[str, str | list[str]] = {}
                 for key, value in acl.items():
@@ -146,7 +349,7 @@ class FlextLdapUtilities:
                 acl_entry = acl_entry_result.unwrap()
 
                 # Delegate formatting to server-specific format_acl()
-                format_result = server_operations.format_acl(acl_entry)  # type: ignore[attr-defined]
+                format_result = server_operations.format_acl(acl_entry)
                 if format_result.is_failure:
                     return FlextResult[list[str]].fail(
                         format_result.error or "ACL format failed",
@@ -219,8 +422,13 @@ class FlextLdapUtilities:
 
             """
             # Check for AD-specific attributes
-            has_root_domain = FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT in root_dse
-            has_default_naming = FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT in root_dse
+            has_root_domain = (
+                FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT
+                in root_dse
+            )
+            has_default_naming = (
+                FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT in root_dse
+            )
 
             if has_root_domain or has_default_naming:
                 return FlextLdapConstants.ServerTypes.AD
@@ -244,6 +452,8 @@ class FlextLdapUtilities:
             return None
 
         @staticmethod
+        @FlextDecorators.log_operation("LDAP Server Detection")
+        @FlextDecorators.track_performance("LDAP Server Detection")
         def detect_server_type_from_root_dse(
             root_dse: dict[str, object],
         ) -> str:
@@ -252,6 +462,8 @@ class FlextLdapUtilities:
             Tries detection in order: Oracle, OpenLDAP, Active Directory, OID fallback.
             Returns generic type if no specific server detected.
 
+            Uses FlextUtilities.Validation for robust input validation.
+
             Args:
                 root_dse: Root DSE attributes dictionary
 
@@ -259,31 +471,28 @@ class FlextLdapUtilities:
                 Detected server type string
 
             """
-            # Try Oracle detection
-            detected = FlextLdapUtilities.ServerDetection.detect_oracle_server(
-                root_dse,
-            )
-            if detected:
-                return detected
+            # Validate input using FlextUtilities.TypeGuards
+            if not isinstance(root_dse, dict) or not root_dse:
+                return FlextLdapConstants.Defaults.SERVER_TYPE
 
-            # Try OpenLDAP detection
-            detected = FlextLdapUtilities.ServerDetection.detect_openldap_server(
-                root_dse,
-            )
-            if detected:
-                return detected
+            # Detection pipeline using Railway Pattern
+            detection_pipeline = [
+                FlextLdapUtilities.ServerDetection.detect_oracle_server,
+                FlextLdapUtilities.ServerDetection.detect_openldap_server,
+                FlextLdapUtilities.ServerDetection.detect_active_directory_server,
+                FlextLdapUtilities.ServerDetection.detect_oid_fallback,
+            ]
 
-            # Try Active Directory detection
-            detected = FlextLdapUtilities.ServerDetection.detect_active_directory_server(
-                root_dse,
-            )
-            if detected:
-                return detected
-
-            # Try OID fallback detection
-            detected = FlextLdapUtilities.ServerDetection.detect_oid_fallback(root_dse)
-            if detected:
-                return detected
+            # Try each detection method in order
+            for detector in detection_pipeline:
+                try:
+                    detected = detector(root_dse)
+                    if detected:
+                        return detected
+                except (AttributeError, KeyError, TypeError, ValueError) as e:
+                    # Continue to next detector on expected errors during detection
+                    logger.debug(f"Detector {detector.__name__} failed: {e}")
+                    continue
 
             # Generic fallback
             return FlextLdapConstants.Defaults.SERVER_TYPE

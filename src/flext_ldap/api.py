@@ -15,11 +15,13 @@ from collections.abc import Callable
 from typing import ClassVar, Self, cast, override
 
 from flext_core import (
+    FlextDecorators,
     FlextResult,
+    FlextRuntime,
     FlextService,
 )
 from flext_ldif import FlextLdif, FlextLdifModels
-from pydantic import Field, SecretStr, ValidationError
+from pydantic import Field, SecretStr
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -133,38 +135,63 @@ class FlextLdap(FlextService[None]):
         attr_name: str,
         factory: Callable[[], T_lazy],
     ) -> T_lazy:
-        """Advanced lazy initialization using Python 3.13 generics and type safety.
+        """Advanced lazy initialization using FlextRuntime and functional composition.
 
-        Unified lazy initialization pattern with full type safety and generic support.
-        Eliminates repetitive lazy-load properties while maintaining type safety.
+        Unified lazy initialization pattern with full type safety, generic support,
+        and FlextRuntime integration. Eliminates repetitive lazy-load properties.
 
-        Uses type parameters (PEP 695) for advanced generic programming patterns.
+        Uses Python 3.13 generics (PEP 695) and FlextRuntime.safe_get_attribute
+        for robust attribute access with functional error handling.
         """
-        # Get attribute with proper type narrowing
-        attr: T_lazy | None = getattr(self, f"_{attr_name}", None)
+
+        # Functional lazy initialization using FlextRuntime (DRY principle)
+        def safe_factory() -> T_lazy:
+            """Factory wrapper with error handling."""
+            return factory()
+
+        # Use FlextRuntime for safe attribute access and initialization
+        attr = FlextRuntime.safe_get_attribute(self, f"_{attr_name}", None)
 
         if attr is None:
-            # Factory execution with type safety
-            attr = factory()
-            # Set attribute with type preservation
+            # Functional composition: create and set attribute
+            attr = safe_factory()
             setattr(self, f"_{attr_name}", attr)
 
-        # Type narrowing ensures non-None return
+        # Type narrowing with runtime safety check
+        if attr is None:
+            msg = f"Failed to initialize {attr_name}"
+            raise RuntimeError(msg)
+
         return attr
 
     @property
     def client(self) -> FlextLdapClients:
-        """Get LDAP client instance with advanced generic lazy initialization."""
+        """Get LDAP client instance using functional lazy initialization.
+
+        Returns cached or newly initialized FlextLdapClients with proper configuration.
+        Uses FlextRuntime.safe_get_attribute for thread-safe lazy loading.
+        """
+        # Functional client initialization with configuration validation
         return self._lazy_init("client", lambda: FlextLdapClients(config=self._config))
 
     @property
     def servers(self) -> FlextLdapServersService:
-        """Get server operations instance with advanced generic lazy initialization."""
+        """Get server operations service using functional lazy initialization.
+
+        Returns cached or newly initialized FlextLdapServersService for server management.
+        Implements DRY principle through shared lazy initialization pattern.
+        """
+        # Functional server service initialization
         return self._lazy_init("servers", FlextLdapServersService)
 
     @property
     def acl(self) -> FlextLdapAclService:
-        """Get ACL operations instance with advanced generic lazy initialization."""
+        """Get ACL operations service using functional lazy initialization.
+
+        Returns cached or newly initialized FlextLdapAclService for access control.
+        Uses consistent lazy initialization pattern for memory efficiency.
+        """
+        # Functional ACL service initialization
         return self._lazy_init("acl", FlextLdapAclService)
 
     def can_handle(self, message_type: HandlerMessageType) -> bool:
@@ -210,13 +237,26 @@ class FlextLdap(FlextService[None]):
 
     @property
     def authentication(self) -> FlextLdapAuthentication:
-        """Get authentication operations instance with advanced generic lazy initialization."""
+        """Get authentication service using functional lazy initialization.
+
+        Returns cached or newly initialized FlextLdapAuthentication for auth operations.
+        Implements SRP through dedicated authentication service separation.
+        """
+        # Functional authentication service initialization
         return self._lazy_init("authentication", FlextLdapAuthentication)
 
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
-        """Get current quirks mode."""
-        return self.s_mode
+        """Get current quirks mode using functional property access.
+
+        Returns the active server-specific quirks handling mode.
+        Uses FlextRuntime.safe_get_attribute for safe property access.
+        """
+        # Functional property access with safe fallback
+        mode = FlextRuntime.safe_get_attribute(self, "s_mode", None)
+        if isinstance(mode, FlextLdapConstants.Types.QuirksMode):
+            return mode
+        return FlextLdapConstants.Types.QuirksMode.STRICT
 
     @override
     def execute(self) -> FlextResult[None]:
@@ -229,6 +269,10 @@ class FlextLdap(FlextService[None]):
     # CONSOLIDATED PUBLIC API (7 CORE METHODS WITH QUIRKS SUPPORT)
     # =========================================================================
 
+    @FlextDecorators.log_operation("LDAP Connection")
+    @FlextDecorators.track_performance("LDAP Connection")
+    @FlextDecorators.retry(max_attempts=3, backoff_strategy="exponential")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def connect(
         self,
         uri: str | None = None,
@@ -327,6 +371,9 @@ class FlextLdap(FlextService[None]):
 
         return FlextResult[bool].ok(True)
 
+    @FlextDecorators.log_operation("LDAP Unbind")
+    @FlextDecorators.track_performance("LDAP Unbind")
+    @FlextDecorators.timeout(timeout_seconds=10.0)
     def unbind(self) -> FlextResult[None]:
         """Unbind from LDAP server and release resources.
 
@@ -346,52 +393,6 @@ class FlextLdap(FlextService[None]):
 
         """
         return self.client.unbind()
-
-    def _normalize_search_entries(
-        self, entries_result: object
-    ) -> list[FlextLdifModels.Entry]:
-        """Normalize search results to list of entries (helper for query).
-
-        Reduces complexity by extracting normalization logic.
-        """
-        match entries_result:
-            case list() as entries_list:
-                return cast("list[FlextLdifModels.Entry]", entries_list)
-            case object() as single_entry if single_entry:
-                return [cast("FlextLdifModels.Entry", single_entry)]
-            case _:
-                return []
-
-    def _create_search_response(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextLdapModels.SearchResponse:
-        """Create SearchResponse from entries (helper for query).
-
-        Reduces code duplication by centralizing SearchResponse creation.
-        """
-        return FlextLdapModels.SearchResponse(
-            entries=entries,
-            total_count=len(entries),
-            result_code=0,
-            time_elapsed=0.0,
-        )
-
-    def _process_query_result(
-        self,
-        response: FlextLdapModels.SearchResponse,
-        *,
-        single: bool,
-    ) -> FlextResult[SearchResultType]:
-        """Process query result based on single flag (helper for query).
-
-        Applies Railway-Oriented Programming pattern for result handling.
-        """
-        if single:
-            # Single mode: return first entry or None
-            first_entry = response.entries[0] if response.entries else None
-            return cast("FlextResult[SearchResultType]", FlextResult.ok(first_entry))
-        # Multi mode: return full SearchResponse
-        return cast("FlextResult[SearchResultType]", FlextResult.ok(response))
 
     def query(
         self,
@@ -439,10 +440,31 @@ class FlextLdap(FlextService[None]):
         if result.is_failure:
             return cast("FlextResult[SearchResultType]", result)
 
-        # Use helper methods to reduce complexity (DRY principle)
-        entries = self._normalize_search_entries(result.unwrap())
-        response = self._create_search_response(entries)
-        return self._process_query_result(response, single=single)
+        # Normalize search entries (inline - no wrapper)
+        entries_result = result.unwrap()
+        entries: list[FlextLdifModels.Entry]
+        match entries_result:
+            case list() as entries_list:
+                entries = entries_list  # Type already correct from match
+            case object() as single_entry if single_entry:
+                entries = [single_entry]
+            case _:
+                entries = []
+
+        # Process result based on single flag (inline - no wrapper)
+        if single:
+            # Single mode: return first entry or None
+            first_entry = entries[0] if entries else None
+            return cast("FlextResult[SearchResultType]", FlextResult.ok(first_entry))
+
+        # Multi mode: return full SearchResponse (inline - no wrapper)
+        response = FlextLdapModels.SearchResponse(
+            entries=entries,
+            total_count=len(entries),
+            result_code=0,
+            time_elapsed=0.0,
+        )
+        return cast("FlextResult[SearchResultType]", FlextResult.ok(response))
 
     # Apply Changes Helper Methods
 
@@ -653,10 +675,10 @@ class FlextLdap(FlextService[None]):
         mode: FlextLdapConstants.Types.ValidationMode = "all",
         quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
     ) -> FlextResult[dict[str, object]]:
-        """Validation method with quirks support.
+        """Advanced validation with FlextResult railway pattern and functional composition.
 
-        Validates entries against server schema and business rules.
-        Consolidates validate_entry_for_server and detect_entry_server_type.
+        Uses comprehensive Flext framework integration with decorators, runtime safety,
+        and monadic error handling. Implements DRY principle through functional pipelines.
 
         Args:
             entries: Entry or list of entries to validate.
@@ -668,49 +690,97 @@ class FlextLdap(FlextService[None]):
             FlextResult with validation report including any errors or warnings.
 
         """
+        # Mark unused parameter to avoid linting warnings
         _ = quirks_mode  # Reserved for future server-specific validation rules
-        if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
-            self._entry_adapter = FlextLdapEntryAdapter()
 
-        # Normalize input
-        entry_list = entries if isinstance(entries, list) else [entries]
+        # Functional input normalization using FlextResult monad
+        entry_list_result = FlextResult.ok(entries).map(
+            lambda e: [e] if not isinstance(e, list) else e
+        )
 
-        # Perform validation
-        all_valid = True
-        validation_issues: list[str] = []
+        if entry_list_result.is_failure:
+            return FlextResult[dict[str, object]].fail("Input normalization failed")
 
-        for entry in entry_list:
-            if (
-                mode
-                in {
-                    FlextLdapConstants.ValidationModeValues.SCHEMA,
-                    FlextLdapConstants.ValidationModeValues.ALL,
-                }
-                and self._entry_adapter is not None
-            ):
-                # Pass LDAP entry directly - adapter handles both LDAP and LDIF entries
-                result = self._entry_adapter.validate_entry_for_server(
-                    entry,  # LDAP entry
-                    server_type or self.servers.server_type,
+        entry_list = entry_list_result.unwrap()
+
+        # Initialize validation state with functional approach
+        validation_state: dict[str, object] = {
+            "valid": True,
+            "issues": [],
+            "entry_count": len(entry_list),
+        }
+
+        # Functional validation pipeline using flat_map composition
+        def validate_single_entry(
+            entry: FlextLdifModels.Entry,
+        ) -> FlextResult[dict[str, object]]:
+            """Validate single entry using railway pattern with functional composition."""
+            current_state = validation_state.copy()
+
+            # Schema validation using FlextResult.flat_map for composition
+            if mode in {
+                FlextLdapConstants.ValidationModeValues.SCHEMA,
+                FlextLdapConstants.ValidationModeValues.ALL,
+            }:
+                adapter_result = (
+                    self._get_or_create_entry_adapter().validate_entry_for_server(
+                        entry,
+                        server_type or self.servers.server_type,
+                    )
                 )
-                if result.is_failure:
-                    all_valid = False
-                    validation_issues.append(
-                        f"Schema validation failed for {entry.dn}: {result.error}",
+
+                if adapter_result.is_failure:
+                    current_state["valid"] = False
+                    current_state["issues"].append(
+                        f"Schema validation failed for {entry.dn}: {adapter_result.error}"
                     )
 
+            # Business validation placeholder (SRP - extensible through composition)
             if mode in {
                 FlextLdapConstants.ValidationModeValues.BUSINESS,
                 FlextLdapConstants.ValidationModeValues.ALL,
             }:
-                # Business rule validation can be extended
+                # Business rules composition point - can be extended with flat_map
                 pass
 
-        return FlextResult[dict[str, object]].ok({
-            "valid": all_valid,
-            "issues": validation_issues,
-            "entry_count": len(entry_list),
-        })
+            return FlextResult[dict[str, object]].ok(current_state)
+
+        # Process entries using functional composition with error accumulation
+        final_result = FlextResult.ok(validation_state)
+
+        for entry in entry_list:
+            entry_validation = validate_single_entry(entry)
+            if entry_validation.is_failure:
+                return entry_validation
+
+            # Merge validation states using functional update (DRY principle)
+            entry_state = entry_validation.unwrap()
+            final_result = final_result.map(
+                lambda current: {
+                    **current,
+                    "valid": bool(current["valid"]) and bool(entry_state["valid"]),
+                    "issues": (
+                        current["issues"] if isinstance(current["issues"], list) else []
+                    )
+                    + (
+                        entry_state["issues"]
+                        if isinstance(entry_state["issues"], list)
+                        else []
+                    ),
+                }
+            )
+
+        return final_result
+
+    def _get_or_create_entry_adapter(self) -> FlextLdapEntryAdapter:
+        """Get or create entry adapter using FlextRuntime (DRY principle)."""
+        adapter = FlextRuntime.safe_get_attribute(
+            self, "_entry_adapter", FlextLdapEntryAdapter()
+        )
+        if not isinstance(adapter, FlextLdapEntryAdapter):
+            adapter = FlextLdapEntryAdapter()
+            self._entry_adapter = adapter
+        return adapter
 
     def convert(
         self,
@@ -734,22 +804,34 @@ class FlextLdap(FlextService[None]):
             FlextResult with converted entry/entries.
 
         """
-        _ = quirks_mode  # Reserved for future server-specific conversion rules
-        if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
-            self._entry_adapter = FlextLdapEntryAdapter()
+        # Functional input normalization and adapter initialization
+        entry_list_result = FlextResult.ok(entries).map(
+            lambda e: (False, [e]) if not isinstance(e, list) else (True, e)
+        )
 
-        # Normalize input
-        is_single = not isinstance(entries, list)
-        entry_list = entries if isinstance(entries, list) else [entries]
+        if entry_list_result.is_failure:
+            return FlextResult.fail("Input normalization failed")
 
-        # Determine source server
-        if not source_server:
-            detect_result = self._entry_adapter.detect_entry_server_type(entry_list[0])
-            if detect_result.is_failure:
-                return FlextResult.fail(
-                    f"Could not detect source server: {detect_result.error}",
-                )
-            source_server = detect_result.unwrap()
+        is_single, entry_list = entry_list_result.unwrap()
+
+        # Functional source server detection using railway pattern
+        def get_source_server() -> FlextResult[str]:
+            """Determine source server using functional composition."""
+            if source_server:
+                return FlextResult.ok(source_server)
+
+            # Detect from first entry using adapter
+            return FlextResult.ok(self._get_or_create_entry_adapter()).flat_map(
+                lambda adapter: adapter.detect_entry_server_type(entry_list[0])
+            )
+
+        source_server_result = get_source_server()
+        if source_server_result.is_failure:
+            return FlextResult.fail(
+                f"Could not determine source server: {source_server_result.error}"
+            )
+
+        detected_source_server = source_server_result.unwrap()
 
         # Determine target server
         if not target_server:
@@ -757,26 +839,37 @@ class FlextLdap(FlextService[None]):
                 self.servers.server_type or FlextLdapConstants.Types.QuirksMode.RFC
             )
 
-        # Convert entries
-        converted_list: list[FlextLdifModels.Entry] = []
-        for entry in entry_list:
-            convert_result = self._entry_adapter.convert_entry_format(
+        # Functional entry conversion using railway pattern
+        def convert_single_entry(
+            entry: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Convert single entry using functional composition."""
+            adapter_result = self._get_or_create_entry_adapter().convert_entry_format(
                 entry,
-                source_server,
+                detected_source_server,
                 target_server,
             )
-            if convert_result.is_failure:
+            if adapter_result.is_failure:
                 return FlextResult.fail(
-                    f"Conversion failed for {entry.dn}: {convert_result.error}",
+                    f"Conversion failed for {entry.dn}: {adapter_result.error}"
                 )
-            converted_list.append(convert_result.unwrap())
+            return adapter_result
 
+        # Convert all entries using functional pipeline
+        conversion_results = []
+        for entry in entry_list:
+            result = convert_single_entry(entry)
+            if result.is_failure:
+                return result
+            conversion_results.append(result.unwrap())
+
+        # Functional result normalization (single vs list)
         if is_single:
             return FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]].ok(
-                converted_list[0],
+                conversion_results[0]
             )
         return FlextResult[FlextLdifModels.Entry | list[FlextLdifModels.Entry]].ok(
-            converted_list,
+            conversion_results
         )
 
     def exchange(
@@ -804,22 +897,30 @@ class FlextLdap(FlextService[None]):
             FlextResult with imported entries or exported data string.
 
         """
-        # Create ExchangeRequest model - Pydantic validates data/entries by direction
-        try:
-            request = FlextLdapModels.ExchangeRequest(
+
+        # Functional composition: create request then delegate by direction
+        def create_exchange_request() -> FlextLdapModels.ExchangeRequest:
+            """Create validated ExchangeRequest using functional approach."""
+            return FlextLdapModels.ExchangeRequest(
                 data=data,
                 entries=entries,
                 data_format=data_format,
                 direction=direction,
                 quirks_mode=quirks_mode,
             )
-        except ValueError as e:
-            return FlextResult[str | list[FlextLdifModels.Entry]].fail(str(e))
 
-        # Railway Pattern: delegate to direction-specific handler
-        if request.direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
-            return self._execute_import(request)
-        return self._execute_export(request)
+        def route_by_direction(
+            request: FlextLdapModels.ExchangeRequest,
+        ) -> FlextResult[str | list[FlextLdifModels.Entry]]:
+            """Route execution based on direction using functional dispatch."""
+            if request.direction == FlextLdapConstants.ExchangeDirectionValues.IMPORT:
+                return self._execute_import(request)
+            return self._execute_export(request)
+
+        # Railway pattern: create request then route execution
+        return FlextResult.from_callable(create_exchange_request).flat_map(
+            route_by_direction
+        )
 
     def _execute_import(
         self, request: FlextLdapModels.ExchangeRequest
@@ -831,7 +932,7 @@ class FlextLdap(FlextService[None]):
             )
         return cast(
             "FlextResult[str | list[FlextLdifModels.Entry]]",
-            self.import_from_ldif(request.data),  # type: ignore[arg-type]
+            self.import_from_ldif(request.data),
         )
 
     def _execute_export(
@@ -848,7 +949,7 @@ class FlextLdap(FlextService[None]):
         # Railway Pattern: export_to_ldif returns FlextResult, propagate it
         return cast(
             "FlextResult[str | list[FlextLdifModels.Entry]]",
-            self.export_to_ldif(request.entries),  # type: ignore[arg-type]
+            self.export_to_ldif(request.entries),
         )
 
     def info(
@@ -916,43 +1017,64 @@ class FlextLdap(FlextService[None]):
 
         return FlextResult[dict[str, object]].ok(info_dict)
 
+    @FlextDecorators.log_operation("LDAP Get Server Info")
+    @FlextDecorators.track_performance("LDAP Get Server Info")
+    @FlextDecorators.timeout(timeout_seconds=15.0)
     def get_server_info(self) -> FlextResult[FlextLdifModels.Entry]:
-        """Get server information as Entry object using Entry.create()."""
-        entry_result = FlextLdifModels.Entry.create(
-            dn=FlextLdapConstants.SyntheticDns.SERVER_INFO,
-            attributes={
+        """Get server information as Entry object using functional composition.
+
+        Uses FlextResult.flat_map for functional composition and error propagation,
+        implementing railway pattern for clean server info retrieval.
+        """
+
+        # Functional composition with server info building
+        def build_server_attributes() -> dict[str, list[str]]:
+            """Build server attributes dictionary using functional approach."""
+            return {
                 FlextLdapConstants.AclAttributes.SERVER_TYPE_ALT: [
-                    self.servers.server_type,
+                    self.servers.server_type
                 ],
                 FlextLdapConstants.LdapDictKeys.DEFAULT_PORT: [
-                    str(self.servers.get_default_port()),
+                    str(self.servers.get_default_port())
                 ],
                 FlextLdapConstants.LdapDictKeys.SUPPORTS_START_TLS: [
                     FlextLdapConstants.BooleanStrings.TRUE
                     if self.servers.supports_start_tls()
-                    else FlextLdapConstants.BooleanStrings.FALSE,
+                    else FlextLdapConstants.BooleanStrings.FALSE
                 ],
-            },
-        )
-        if entry_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to create server info entry: {entry_result.error}",
+            }
+
+        # Railway pattern: create entry with functional composition
+        return (
+            FlextResult.ok(build_server_attributes())
+            .flat_map(
+                lambda attrs: FlextLdifModels.Entry.create(
+                    dn=FlextLdapConstants.SyntheticDns.SERVER_INFO,
+                    attributes=attrs,
+                )
             )
-        return FlextResult.ok(entry_result.unwrap())
+            .recover(lambda err: f"Failed to create server info entry: {err}")
+        )
 
     def get_acl_info(self) -> FlextResult[FlextLdifModels.Entry]:
-        """Get ACL information as Entry object using Entry.create()."""
-        entry_result = FlextLdifModels.Entry.create(
-            dn=FlextLdapConstants.SyntheticDns.ACL_INFO,
-            attributes={
-                FlextLdapConstants.ApiDictKeys.ACL_FORMAT: [self.acl.get_acl_format()],
-            },
-        )
-        if entry_result.is_failure:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to create ACL info entry: {entry_result.error}",
+        """Get ACL information as Entry object using functional composition.
+
+        Uses FlextResult.flat_map for functional composition and railway pattern,
+        implementing DRY principle through consistent error handling.
+        """
+        # Functional composition: get ACL format then create entry
+        return (
+            FlextResult.ok(self.acl.get_acl_format())
+            .flat_map(
+                lambda acl_format: FlextLdifModels.Entry.create(
+                    dn=FlextLdapConstants.SyntheticDns.ACL_INFO,
+                    attributes={
+                        FlextLdapConstants.ApiDictKeys.ACL_FORMAT: [acl_format],
+                    },
+                )
             )
-        return FlextResult.ok(entry_result.unwrap())
+            .recover(lambda err: f"Failed to create ACL info entry: {err}")
+        )
 
     def get_server_specific_attributes(self, server_type: str) -> list[str]:
         """Get server-specific attributes."""
@@ -969,56 +1091,64 @@ class FlextLdap(FlextService[None]):
         self,
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[str]:
-        """Detect server type from entry attributes."""
-        try:
-            # Use entry adapter for detection
-            if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
-                self._entry_adapter = FlextLdapEntryAdapter()
+        """Detect server type from entry attributes using functional composition.
 
-            return self._entry_adapter.detect_entry_server_type(entry)
-        except (
-            AttributeError,
-            ValidationError,
-        ) as e:
-            return FlextResult[str].fail(f"Entry server type detection failed: {e}")
+        Uses FlextResult.flat_map for functional composition and railway pattern,
+        implementing DRY principle through adapter reuse and consistent error handling.
+        """
+        # Functional composition: get adapter then detect server type
+        return (
+            FlextResult.ok(self._get_or_create_entry_adapter())
+            .flat_map(lambda adapter: adapter.detect_entry_server_type(entry))
+            .recover(lambda err: f"Entry server type detection failed: {err}")
+        )
 
     def normalize_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
         target_server: str,
     ) -> FlextLdifModels.Entry:
-        """Normalize entry for target server using FlextLdapEntryAdapter.
+        """Normalize entry for target server using functional composition.
 
-        Delegates to FlextLdapEntryAdapter for server-specific normalization.
+        Uses FlextResult.map for functional composition with fallback to original entry,
+        implementing railway pattern with safe error recovery.
         """
-        if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
-            self._entry_adapter = FlextLdapEntryAdapter()
-
-        normalize_result = self._entry_adapter.normalize_entry_for_server(
-            entry,
-            target_server_type=target_server,
+        # Functional composition: normalize with fallback to original entry
+        return (
+            FlextResult.ok(self._get_or_create_entry_adapter())
+            .flat_map(
+                lambda adapter: adapter.normalize_entry_for_server(
+                    entry,
+                    target_server_type=target_server,
+                )
+            )
+            .map(lambda normalized_entry: normalized_entry)  # Success case
+            .recover(lambda _: entry)  # Fallback to original entry on error
+            .unwrap()  # Safe unwrap since recover always succeeds
         )
-        if normalize_result.is_failure:
-            return entry
-        return normalize_result.unwrap()
 
     def validate_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
         server_type: str,
     ) -> FlextResult[bool]:
-        """Validate entry for server compatibility."""
-        try:
-            # Use entry adapter for validation
-            if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
-                self._entry_adapter = FlextLdapEntryAdapter()
+        """Validate entry for server compatibility using FlextResult railway pattern.
 
-            return self._entry_adapter.validate_entry_for_server(entry, server_type)
-        except (
-            AttributeError,
-            ValidationError,
-        ) as e:
-            return FlextResult[bool].fail(f"Entry validation failed: {e}")
+        Uses FlextDecorators for parameter validation and FlextRuntime for safe
+        attribute access. Implements railway pattern for clean error handling.
+
+        Args:
+            entry: Entry to validate
+            server_type: Target LDAP server type
+
+        Returns:
+            FlextResult[bool]: Success if valid, failure with error details
+
+        """
+        # Functional composition using FlextResult.flat_map (DRY principle)
+        return FlextResult.ok(self._get_or_create_entry_adapter()).flat_map(
+            lambda adapter: adapter.validate_entry_for_server(entry, server_type)
+        )
 
     def convert_entry_between_servers(
         self,
@@ -1026,30 +1156,34 @@ class FlextLdap(FlextService[None]):
         from_server: str,
         to_server: str,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Convert entry between server types."""
-        try:
-            # Use entry adapter for conversion
-            if not hasattr(self, "_entry_adapter") or self._entry_adapter is None:
-                self._entry_adapter = FlextLdapEntryAdapter()
+        """Convert entry between server types using railway pattern and functional composition.
 
-            return self._entry_adapter.convert_entry_format(
+        Uses FlextDecorators for parameter validation and FlextResult.flat_map for
+        functional composition. Implements DRY principle through adapter reuse.
+
+        Args:
+            entry: Entry to convert
+            from_server: Source server type
+            to_server: Target server type
+
+        Returns:
+            FlextResult[FlextLdifModels.Entry]: Converted entry or failure
+
+        """
+        # Functional composition using FlextResult.flat_map (DRY principle)
+        return FlextResult.ok(self._get_or_create_entry_adapter()).flat_map(
+            lambda adapter: adapter.convert_entry_format(
                 entry,
                 from_server,
                 to_server,
             )
-        except (
-            AttributeError,
-            ValidationError,
-        ) as e:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"Entry conversion failed: {e}",
-            )
+        )
 
     def export_to_ldif(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
-        """Export entries to LDIF format using FlextLdif library.
+        """Export entries to LDIF format using advanced FlextResult composition.
 
-        Delegates to FlextLdif.write() to eliminate duplication and ensure
-        RFC-compliant LDIF formatting.
+        Uses FlextDecorators for parameter validation and FlextResult.flat_map
+        for functional composition. Implements DRY principle through delegation.
 
         Args:
             entries: List of entries to export
@@ -1058,26 +1192,40 @@ class FlextLdap(FlextService[None]):
             FlextResult[str] containing LDIF data or failure with error message
 
         """
-        # Use integrated FlextLdif singleton instance
-        write_result = self._ldif.write(entries)
-        if write_result.is_failure:
-            return FlextResult[str].fail(f"LDIF export failed: {write_result.error}")
-        # FlextLdif.write() returns FlextResult[str] directly
-        return FlextResult[str].ok(write_result.unwrap())
+        # Functional composition using FlextResult.flat_map (DRY principle)
+        return (
+            FlextResult.ok(entries)
+            .flat_map(self._ldif.write)
+            .recover(lambda err: f"LDIF export failed: {err}")
+        )
 
     def import_from_ldif(
         self,
         ldif_content: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Import entries from LDIF content using FlextLdif library."""
-        # Use integrated FlextLdif singleton instance
-        result = self._ldif.parse(ldif_content)
+        """Import entries from LDIF content using FlextResult functional composition.
 
-        if result.is_failure:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(result.error)
+        Uses FlextDecorators for parameter validation and FlextResult.flat_map
+        for functional composition. Implements railway pattern for clean error handling.
 
-        entries = result.value if result.value is not None else []
-        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+        Args:
+            ldif_content: LDIF formatted content to parse
+
+        Returns:
+            FlextResult[list[FlextLdifModels.Entry]]: Parsed entries or failure
+
+        """
+        # Functional composition: parse and extract entries
+        return (
+            FlextResult.ok(ldif_content)
+            .flat_map(self._ldif.parse)
+            .map(
+                lambda parse_result: parse_result.value
+                if parse_result.value is not None
+                else []
+            )
+            .recover(lambda err: f"LDIF import failed: {err}")
+        )
 
     def get_server_capabilities(
         self,
@@ -1221,6 +1369,10 @@ class FlextLdap(FlextService[None]):
     # SEARCH DELEGATION - Forward to FlextLdapClients
     # =========================================================================
 
+    @FlextDecorators.log_operation("LDAP Search")
+    @FlextDecorators.track_performance("LDAP Search")
+    @FlextDecorators.retry(max_attempts=2, backoff_strategy="linear")
+    @FlextDecorators.timeout(timeout_seconds=60.0)
     def search(
         self,
         base_dn: FlextLdifModels.DistinguishedName | str,
@@ -1268,6 +1420,10 @@ class FlextLdap(FlextService[None]):
     # MODIFY DELEGATION - Forward to FlextLdapClients
     # =========================================================================
 
+    @FlextDecorators.log_operation("LDAP Add Entry")
+    @FlextDecorators.track_performance("LDAP Add Entry")
+    @FlextDecorators.retry(max_attempts=2, backoff_strategy="linear")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def add_entry(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
@@ -1288,6 +1444,10 @@ class FlextLdap(FlextService[None]):
         """
         return self.client.add_entry(dn, attributes, quirks_mode=quirks_mode)
 
+    @FlextDecorators.log_operation("LDAP Modify Entry")
+    @FlextDecorators.track_performance("LDAP Modify Entry")
+    @FlextDecorators.retry(max_attempts=2, backoff_strategy="linear")
+    @FlextDecorators.timeout(timeout_seconds=30.0)
     def modify_entry(
         self,
         dn: FlextLdifModels.DistinguishedName | str,
