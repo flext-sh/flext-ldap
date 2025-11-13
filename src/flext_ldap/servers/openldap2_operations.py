@@ -475,26 +475,26 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             )
 
     @override
-    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect OpenLDAP version from Root DSE attributes.
 
         Args:
-            _root_dse: Root DSE attributes
+            root_dse: Root DSE attributes
 
         Returns:
             Detected server type ("openldap2", "openldap1", or "openldap")
 
         """
         # Check for vendorName
-        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in _root_dse:
+        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in root_dse:
             vendor = str(
-                _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
+                root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
             ).lower()
             if FlextLdapConstants.VendorNames.OPENLDAP in vendor:
                 # Check for version to distinguish 1.x from 2.x
-                if FlextLdapConstants.RootDseAttributes.VENDOR_VERSION in _root_dse:
+                if FlextLdapConstants.RootDseAttributes.VENDOR_VERSION in root_dse:
                     version = str(
-                        _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_VERSION],
+                        root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_VERSION],
                     ).lower()
                     if version.startswith(
                         FlextLdapConstants.VersionPrefixes.VERSION_1_PREFIX,
@@ -508,7 +508,7 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 return FlextLdapConstants.ServerTypes.OPENLDAP2
 
         # Check for configContext (2.x feature - cn=config)
-        if FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT in _root_dse:
+        if FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT in root_dse:
             return FlextLdapConstants.ServerTypes.OPENLDAP2
 
         # Fallback to generic openldap

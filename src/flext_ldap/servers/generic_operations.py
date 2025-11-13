@@ -154,12 +154,12 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
     # get_root_dse_attributes() - Use base implementation
 
     @override
-    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect server type from Root DSE attributes."""
         # Check for common vendor identifiers
-        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in _root_dse:
+        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in root_dse:
             vendor = str(
-                _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
+                root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
             ).lower()
             if FlextLdapConstants.VendorNames.ORACLE in vendor:
                 return "oracle-oid"  # Legacy format - keep for compatibility
@@ -183,7 +183,7 @@ class FlextLdapServersGenericOperations(FlextLdapServersBaseOperations):
                 return FlextLdapConstants.VendorNames.FORGEROCK
 
         # Check for specific attributes
-        if FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT in _root_dse:
+        if FlextLdapConstants.RootDseAttributes.CONFIG_CONTEXT in root_dse:
             return "oracle-oid"  # Legacy format - keep for compatibility
 
         # Default to generic

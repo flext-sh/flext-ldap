@@ -11,10 +11,18 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from typing import cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
+
+# Import LDIF servers for querying constants via composition pattern
+from flext_ldif.servers.ad import FlextLdifServersAd
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 # FlextLdifUtilities.ACL doesn't have parse method - using full service
 # Importing directly from service (internal use only - will be refactored to public API)
@@ -25,6 +33,9 @@ from pydantic import ValidationError
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.typings import FlextLdapTypes
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdapServersBaseOperations(FlextService[None], ABC):
@@ -39,6 +50,19 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     - Search operations
     """
 
+    # Mapping from flext-ldap server_type to flext-ldif server classes
+    _LDIF_SERVER_MAP: ClassVar[dict[str, type[FlextLdifServersBase]]] = {
+        "openldap": FlextLdifServersOpenldap,
+        "openldap2": FlextLdifServersOpenldap,
+        "openldap1": FlextLdifServersOpenldap1,
+        "oid": FlextLdifServersOid,
+        "oud": FlextLdifServersOud,
+        "ad": FlextLdifServersAd,
+        "active_directory": FlextLdifServersAd,
+        "generic": FlextLdifServersRfc,
+        "rfc": FlextLdifServersRfc,
+    }
+
     def __init__(self, server_type: str | None = None) -> None:
         """Initialize base server operations.
 
@@ -49,6 +73,14 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         super().__init__()
         # logger inherited from FlextService
         self._server_type = server_type or FlextLdapConstants.Defaults.SERVER_TYPE
+
+        # Composition: query server constants from flext-ldif via _ldif_server reference
+        # This eliminates hard-coded port/page size values and uses flext-ldif as single source of truth
+        ldif_server_class = self._LDIF_SERVER_MAP.get(
+            self._server_type.lower(), FlextLdifServersRfc
+        )
+        self._ldif_server = ldif_server_class()
+
         # Use flext-ldif utilities/services for DN and ACL operations
         self._dn_service = FlextLdifUtilities.DN()
         self._acl_service = FlextLdifAcl()  # Using service for full ACL parsing
@@ -69,14 +101,20 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     def get_default_port(self, *, use_ssl: bool = False) -> int:
         """Get default port for this server type.
 
+        Queries flext-ldif server constants via composition pattern.
+        Uses DEFAULT_SSL_PORT for SSL, DEFAULT_PORT otherwise.
+
         Args:
         use_ssl: Whether SSL is used
 
         Returns:
-        Default port number (636 for SSL, 389 otherwise)
+        Default port number (from flext-ldif server constants)
 
         """
-        return 636 if use_ssl else 389
+        # Query constants from LDIF server (all subclasses have Constants)
+        # Note: FlextLdifServersBase doesn't have Constants, but all concrete subclasses do
+        constants = self._ldif_server.Constants  # type: ignore[attr-defined]
+        return constants.DEFAULT_SSL_PORT if use_ssl else constants.DEFAULT_PORT
 
     def supports_start_tls(self) -> bool:
         """Check if server supports START_TLS.
@@ -654,9 +692,17 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
     def get_max_page_size(self) -> int:
         """Get maximum page size for paged searches.
 
-        Default: 1000 entries per page
+        Queries flext-ldif server constants via composition pattern.
+        Uses DEFAULT_PAGE_SIZE (RFC 2696 Simple Paged Results).
+
+        Returns:
+        Maximum page size (from flext-ldif server constants)
+
         """
-        return 1000
+        # Query constants from LDIF server (all subclasses have Constants)
+        # Note: FlextLdifServersBase doesn't have Constants, but all concrete subclasses do
+        constants = self._ldif_server.Constants  # type: ignore[attr-defined]
+        return constants.DEFAULT_PAGE_SIZE
 
     def supports_paged_results(self) -> bool:
         """Check if server supports paged result control.
@@ -788,18 +834,65 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
                 f"Root DSE retrieval failed: {e}",
             )
 
-    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
-        """Detect server type from Root DSE - default implementation.
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
+        """Detect server type from Root DSE using FlextLdifDetector (DI pattern).
 
-        Default implementation returns "generic".
-        Override for server-specific detection logic.
+        Delegates to flext-ldif for detection using server patterns.
+        Architecture: flext-ldap (LDAP protocol) → flext-ldif (server detection via DI).
+
+        Args:
+            root_dse: Root DSE dictionary from ldap3 connection
 
         Returns:
-            Detected server type ("generic" by default)
+            Detected server type (from flext-ldif detector)
 
         """
-        # Default implementation returns generic
-        return FlextLdapConstants.Defaults.SERVER_TYPE
+        try:
+            # Import FlextLdifDetector (lazy import to avoid circular dependencies)
+            from flext_ldif.services.detector import FlextLdifDetector  # noqa: PLC0415
+
+            # Convert Root DSE dict to LDIF content string for flext-ldif detector
+            # Format: attribute: value (LDIF-like format)
+            ldif_lines = ["# Root DSE", "dn:", ""]
+            for attr, value in root_dse.items():
+                if isinstance(value, list):
+                    # Use list.extend for better performance
+                    ldif_lines.extend(f"{attr}: {v}" for v in value)
+                else:
+                    ldif_lines.append(f"{attr}: {value}")
+
+            ldif_content = "\n".join(ldif_lines)
+
+            # Delegate detection to FlextLdifDetector (single source of truth)
+            detector = FlextLdifDetector()
+            result = detector.detect_server_type(
+                ldif_content=ldif_content,
+                max_lines=100,  # Root DSE is small
+            )
+
+            if result.is_success:
+                detection = result.unwrap()
+                detected_type = detection.detected_server_type
+                self.logger.info(
+                    "Server detected from Root DSE",
+                    server_type=detected_type,
+                    confidence=detection.confidence,
+                )
+                return detected_type
+
+            # Fallback to generic on detection failure
+            self.logger.warning(
+                "Server detection failed, using generic",
+                error=result.error,
+            )
+            return FlextLdapConstants.Defaults.SERVER_TYPE
+
+        except Exception as e:
+            self.logger.exception(
+                "Root DSE detection error",
+                extra={"error": str(e)},
+            )
+            return FlextLdapConstants.Defaults.SERVER_TYPE
 
     def get_supported_controls(self, connection: Connection) -> FlextResult[list[str]]:
         """Get supported LDAP controls - default implementation.

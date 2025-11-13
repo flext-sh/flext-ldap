@@ -89,10 +89,11 @@ class TestFlextLdapServersOUDACL:
         assert acl_format == "oracle"
 
     def test_parse_simple(self) -> None:
-        """Test parsing simple OUD ACL."""
+        """Test parsing simple OUD ds-privilege-name."""
         ops = FlextLdapServersOUDOperations()
-        # OUD format similar to OID
-        acl_str = "access to entry by * : browse"
+        # OUD uses ds-privilege-name format (simple privilege names)
+        # NOT Oracle OID format - each server has its own RFC-compliant format
+        acl_str = "config-read"
         result = ops.parse(acl_str)
         assert isinstance(result, FlextResult)
         assert result.is_success

@@ -184,7 +184,9 @@ class FlextLdap(FlextService[None]):
         Uses cached_property for performance - computed once and cached.
         Returns FlextLdapServersService for server-specific operations management.
         """
-        return FlextLdapServersService()
+        # Get detected server type from client
+        detected_type = getattr(self.client, '_detected_server_type', None) if self.client else None
+        return FlextLdapServersService(server_type=detected_type)
 
     @cached_property
     def acl(self) -> FlextLdapAclService:
@@ -248,16 +250,17 @@ class FlextLdap(FlextService[None]):
 
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
-        """Get current quirks mode using functional property access.
+        """Get current quirks mode with direct attribute access.
 
         Returns the active server-specific quirks handling mode.
-        Uses FlextRuntime.safe_get_attribute for safe property access.
+        Defaults to STRICT if not set.
         """
-        # Functional property access with safe fallback
-        mode = FlextRuntime.safe_get_attribute(self, "s_mode", None)
-        if isinstance(mode, FlextLdapConstants.Types.QuirksMode):
-            return mode
-        return FlextLdapConstants.Types.QuirksMode.STRICT
+        # Direct attribute access with fallback to STRICT
+        return getattr(
+            self,
+            "s_mode",
+            FlextLdapConstants.Types.QuirksMode.STRICT,
+        )
 
     def _normalize_quirks_mode(
         self,
@@ -277,6 +280,7 @@ class FlextLdap(FlextService[None]):
 
             # Fallback to instance default when None
             mode = self._normalize_quirks_mode(None)  # Returns self.quirks_mode
+
         """
         return quirks_mode if quirks_mode is not None else self.quirks_mode
 

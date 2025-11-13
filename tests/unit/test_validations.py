@@ -121,7 +121,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "cannot be none" in result.error.lower()
+        assert (
+            result.error and result.error and "cannot be none" in result.error.lower()
+        )
 
     def test_validate_password_success(
         self, validations: type[FlextLdapValidations]
@@ -298,7 +300,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "cannot be empty" in result.error.lower()
+        assert (
+            result.error and result.error and "cannot be empty" in result.error.lower()
+        )
 
     def test_validate_server_uri_none(
         self, validations: type[FlextLdapValidations]
@@ -308,7 +312,9 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "cannot be none" in result.error.lower()
+        assert (
+            result.error and result.error and "cannot be none" in result.error.lower()
+        )
 
     # validate_port tests removed - use flext-core FlextUtilities.Validation.validate_port directly
 

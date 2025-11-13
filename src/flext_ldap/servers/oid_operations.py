@@ -615,12 +615,12 @@ class FlextLdapServersOIDOperations(FlextLdapServersBaseOperations):
         return "orclUserV2" in object_classes
 
     @override
-    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect server type from Root DSE for Oracle OID."""
         # Oracle OID specific detection logic
-        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME_LOWER in _root_dse:
+        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME_LOWER in root_dse:
             vendor = str(
-                _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME_LOWER],
+                root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME_LOWER],
             ).lower()
             if (
                 FlextLdapConstants.VendorNames.ORACLE in vendor

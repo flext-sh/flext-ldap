@@ -48,7 +48,7 @@ from pydantic import SecretStr
 
 from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 
 logger: FlextLogger = FlextLogger(__name__)
 

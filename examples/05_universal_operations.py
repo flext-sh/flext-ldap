@@ -48,7 +48,7 @@ from flext_ldif import FlextLdifModels
 from pydantic import SecretStr
 
 from flext_ldap import FlextLdap, FlextLdapConfig, FlextLdapModels
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.services.quirks_integration import FlextLdapQuirksIntegration
 
 logger: FlextLogger = FlextLogger(__name__)

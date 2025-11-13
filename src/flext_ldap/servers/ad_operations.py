@@ -34,10 +34,16 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
     """
 
     def __init__(self) -> None:
-        """Initialize Active Directory operations."""
+        """Initialize Active Directory operations.
+
+        Queries Global Catalog ports from flext-ldif AD server constants.
+        """
         super().__init__(server_type="ad")
-        self._global_catalog_port_ssl = 3269
-        self._global_catalog_port = 3268
+        # Query Global Catalog ports from flext-ldif AD server (composition pattern)
+        # Note: FlextLdifServersBase doesn't have Constants, but all concrete subclasses do
+        constants = self._ldif_server.Constants  # type: ignore[attr-defined]
+        self._global_catalog_port_ssl = constants.GLOBAL_CATALOG_SSL_PORT
+        self._global_catalog_port = constants.GLOBAL_CATALOG_PORT
 
     # --------------------------------------------------------------------- #
     # INHERITED METHODS (from FlextLdapServersBaseOperations)
@@ -285,17 +291,17 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             )
 
     @override
-    def detect_server_type_from_root_dse(self, _root_dse: dict[str, object]) -> str:
+    def detect_server_type_from_root_dse(self, root_dse: dict[str, object]) -> str:
         """Detect AD from Root DSE attributes."""
         # Check for AD-specific attributes
         if (
-            FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT in _root_dse
-            or FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT in _root_dse
+            FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT in root_dse
+            or FlextLdapConstants.RootDseAttributes.DEFAULT_NAMING_CONTEXT in root_dse
         ):
             return FlextLdapConstants.ServerTypes.AD
-        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in _root_dse:
+        if FlextLdapConstants.RootDseAttributes.VENDOR_NAME in root_dse:
             vendor = str(
-                _root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
+                root_dse[FlextLdapConstants.RootDseAttributes.VENDOR_NAME],
             ).lower()
             if (
                 FlextLdapConstants.VendorNames.MICROSOFT in vendor
