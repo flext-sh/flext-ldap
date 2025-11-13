@@ -1102,6 +1102,7 @@ class FlextLdapConstants(FlextLdifConstants):
             SERVER = "server"
             RFC = "rfc"
             RELAXED = "relaxed"
+            STRICT = "strict"
 
     # =========================================================================
     # VALIDATION MODE VALUES

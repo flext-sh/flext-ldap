@@ -182,7 +182,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         attributes = FlextLdifModels.LdifAttributes(attributes=attrs_data)
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=ObjectClassDefinition"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=ObjectClassDefinition", metadata=None
+            ),
             attributes=attributes,
         )
         return FlextResult.ok(entry)
@@ -212,7 +214,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         attributes = FlextLdifModels.LdifAttributes(attributes=attrs_data)
 
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=AttributeTypeDefinition"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=AttributeTypeDefinition", metadata=None
+            ),
             attributes=attributes,
         )
         return FlextResult.ok(entry)
@@ -443,7 +447,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         """
         # Extract raw ACL string if available
-        raw_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.RAW)
+        raw_attr = None
+        if acl_entry.attributes is not None:
+            raw_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.RAW)
         if raw_attr and len(raw_attr) > 0:
             return FlextResult[str].ok(raw_attr[0])
 

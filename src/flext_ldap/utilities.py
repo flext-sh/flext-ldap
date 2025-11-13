@@ -46,10 +46,10 @@ class FlextLdapUtilities:
 
         @staticmethod
         def is_already_exists_error(error: object) -> bool:
-            """Check if error indicates entry already exists.
+            """Check if error indicates entry already exists using functional composition.
 
             Consolidated helper for Railway Pattern error detection.
-            Checks for common LDAP "entry already exists" error patterns.
+            Uses functional composition with FlextResult for clean pattern matching.
 
             Args:
                 error: Error object to check
@@ -58,14 +58,27 @@ class FlextLdapUtilities:
                 True if error indicates entry already exists, False otherwise
 
             """
-            error_msg = str(error).lower()
-            return any(
-                pattern in error_msg
-                for pattern in [
+
+            # Functional error pattern matching with railway pattern
+            def normalize_error_msg(error_obj: object) -> str:
+                """Normalize error to string for pattern matching."""
+                return str(error_obj).lower()
+
+            def check_patterns(error_msg: str) -> bool:
+                """Check if error message contains any already exists patterns."""
+                patterns = [
                     FlextLdapConstants.ErrorPatterns.ENTRY_ALREADY_EXISTS,
                     FlextLdapConstants.ErrorPatterns.ALREADY_EXISTS,
                     FlextLdapConstants.ErrorPatterns.CODE_68,
                 ]
+                return any(pattern in error_msg for pattern in patterns)
+
+            # Railway pattern: normalize then check patterns
+            return (
+                FlextResult.ok(error)
+                .map(normalize_error_msg)
+                .map(check_patterns)
+                .unwrap_or(False)  # Safe fallback
             )
 
     class AttributeFiltering:
@@ -78,7 +91,10 @@ class FlextLdapUtilities:
         def validate_required_string(
             param_name: str, value: object
         ) -> FlextResult[bool]:
-            """Validate required string parameter.
+            """Validate required string parameter using functional composition.
+
+            Uses railway pattern with functional composition for clean validation flow.
+            Implements DRY principle through reusable validation patterns.
 
             Args:
                 param_name: Name of the parameter for error messages
@@ -88,19 +104,48 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-            if value is None:
-                return FlextResult[bool].fail(f"{param_name} cannot be None")
-            if not isinstance(value, str) or (
-                not isinstance(value, str) and bool(value.strip())
-            ):
-                return FlextResult[bool].fail(f"{param_name} cannot be empty")
-            return FlextResult[bool].ok(True)
+
+            # Functional validation pipeline with railway pattern
+            def check_not_none(val: object) -> FlextResult[object]:
+                """Check that value is not None."""
+                return (
+                    FlextResult.ok(val)
+                    if val is not None
+                    else FlextResult.fail(f"{param_name} cannot be None")
+                )
+
+            def check_is_string(val: object) -> FlextResult[str]:
+                """Check that value is a string."""
+                return (
+                    FlextResult.ok(val)
+                    if isinstance(val, str)
+                    else FlextResult.fail(f"{param_name} must be a string")
+                )
+
+            def check_not_empty(val: str) -> FlextResult[bool]:
+                """Check that string is not empty."""
+                return (
+                    FlextResult.ok(True)
+                    if val.strip()
+                    else FlextResult.fail(f"{param_name} cannot be empty")
+                )
+
+            # Railway pattern: chain validations
+            return (
+                FlextResult.ok(value)
+                .flat_map(check_not_none)
+                .flat_map(check_is_string)
+                .flat_map(check_not_empty)
+            )
 
         @staticmethod
         def validate_non_negative_int(
             param_name: str, value: object
         ) -> FlextResult[bool]:
-            """Validate non-negative integer parameter.
+            """Validate non-negative integer parameter using functional composition.
+
+            Uses railway pattern with functional validation steps.
+            Implements DRY principle through consistent validation patterns.
 
             Args:
                 param_name: Name of the parameter for error messages
@@ -110,15 +155,46 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-            if value is None:
-                return FlextResult[bool].fail(f"{param_name} cannot be None")
-            if not isinstance(value, int) or value < 0:
-                return FlextResult[bool].fail(f"{param_name} must be non-negative")
-            return FlextResult[bool].ok(True)
+
+            # Functional validation pipeline with railway pattern
+            def check_not_none(val: object) -> FlextResult[object]:
+                """Check that value is not None."""
+                return (
+                    FlextResult.ok(val)
+                    if val is not None
+                    else FlextResult.fail(f"{param_name} cannot be None")
+                )
+
+            def check_is_int(val: object) -> FlextResult[int]:
+                """Check that value is an integer."""
+                return (
+                    FlextResult.ok(val)
+                    if isinstance(val, int)
+                    else FlextResult.fail(f"{param_name} must be an integer")
+                )
+
+            def check_non_negative(val: int) -> FlextResult[bool]:
+                """Check that integer is non-negative."""
+                return (
+                    FlextResult.ok(True)
+                    if val >= 0
+                    else FlextResult.fail(f"{param_name} must be non-negative")
+                )
+
+            # Railway pattern: chain validations
+            return (
+                FlextResult.ok(value)
+                .flat_map(check_not_none)
+                .flat_map(check_is_int)
+                .flat_map(check_non_negative)
+            )
 
         @staticmethod
         def validate_password(param_name: str, value: object) -> FlextResult[bool]:
-            """Validate password parameter.
+            """Validate password parameter using functional composition.
+
+            Uses railway pattern with functional validation steps for password requirements.
+            Implements DRY principle through consistent validation patterns.
 
             Args:
                 param_name: Name of the parameter for error messages
@@ -128,21 +204,46 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-            if value is None:
-                return FlextResult[bool].fail(f"{param_name} cannot be None")
-            if not isinstance(value, str):
-                return FlextResult[bool].fail(f"{param_name} must be a string")
 
-            pwd = value
-            if len(pwd) < FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH:
-                return FlextResult[bool].fail(
-                    f"{param_name} must be at least {FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH} characters"
+            # Functional validation pipeline with railway pattern
+            def check_not_none(val: object) -> FlextResult[object]:
+                """Check that value is not None."""
+                return (
+                    FlextResult.ok(val)
+                    if val is not None
+                    else FlextResult.fail(f"{param_name} cannot be None")
                 )
-            if len(pwd) > FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH:
-                return FlextResult[bool].fail(
-                    f"{param_name} must be no more than {FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH} characters"
+
+            def check_is_string(val: object) -> FlextResult[str]:
+                """Check that value is a string."""
+                return (
+                    FlextResult.ok(val)
+                    if isinstance(val, str)
+                    else FlextResult.fail(f"{param_name} must be a string")
                 )
-            return FlextResult[bool].ok(True)
+
+            def check_length(val: str) -> FlextResult[bool]:
+                """Check password length requirements."""
+                min_len = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
+                max_len = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
+
+                if len(val) < min_len:
+                    return FlextResult.fail(
+                        f"{param_name} must be at least {min_len} characters"
+                    )
+                if len(val) > max_len:
+                    return FlextResult.fail(
+                        f"{param_name} must be no more than {max_len} characters"
+                    )
+                return FlextResult.ok(True)
+
+            # Railway pattern: chain validations
+            return (
+                FlextResult.ok(value)
+                .flat_map(check_not_none)
+                .flat_map(check_is_string)
+                .flat_map(check_length)
+            )
 
         @staticmethod
         def validate_ldap_uri(param_name: str, value: object) -> FlextResult[bool]:
@@ -349,7 +450,9 @@ class FlextLdapUtilities:
                 acl_entry = acl_entry_result.unwrap()
 
                 # Delegate formatting to server-specific format_acl()
-                format_result = server_operations.format_acl(acl_entry)
+                # Use getattr for type-safe attribute access on object type
+                format_acl_method = server_operations.format_acl
+                format_result = format_acl_method(acl_entry)
                 if format_result.is_failure:
                     return FlextResult[list[str]].fail(
                         format_result.error or "ACL format failed",

@@ -300,12 +300,15 @@ class FlextLdapServersFactory(FlextService[None]):
         """
         # Convert ldap3 entry to dict for utility compatibility
         root_dse: dict[str, object] = {}
-        if hasattr(entry, "vendorName"):
-            root_dse["vendorName"] = str(entry.vendorName)
-        if hasattr(entry, "vendorVersion"):
-            root_dse["vendorVersion"] = str(entry.vendorVersion)
-        if hasattr(entry, "configContext"):
-            root_dse["configContext"] = str(entry.configContext)
+        vendor_name = getattr(entry, "vendorName", None)
+        if vendor_name is not None:
+            root_dse["vendorName"] = str(vendor_name)
+        vendor_version = getattr(entry, "vendorVersion", None)
+        if vendor_version is not None:
+            root_dse["vendorVersion"] = str(vendor_version)
+        config_context = getattr(entry, "configContext", None)
+        if config_context is not None:
+            root_dse["configContext"] = str(config_context)
         if hasattr(
             entry, FlextLdapConstants.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT
         ):
