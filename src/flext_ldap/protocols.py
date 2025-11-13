@@ -50,14 +50,30 @@ class FlextLdapProtocols(FlextProtocols):
 
         @runtime_checkable
         class LdifOperationsProtocol(Protocol):
-            """Protocol for LDIF file operations."""
+            """Protocol for LDIF file operations using functional composition.
+
+            Defines the contract for LDIF file processing with railway pattern,
+            validation, and error handling.
+            """
 
             def parse_ldif_file(
                 self,
                 file_path: Path,
                 server_type: str = "rfc",
             ) -> FlextResult[list[FlextLdifModels.Entry]]:
-                """Parse LDIF file and return entries."""
+                """Parse LDIF file using functional composition and railway pattern.
+
+                Implements file validation, parsing pipeline, and error recovery
+                with proper resource management and cleanup.
+
+                Args:
+                    file_path: Path to LDIF file (validated for existence and permissions)
+                    server_type: Target server type for parsing quirks
+
+                Returns:
+                    FlextResult[list[FlextLdifModels.Entry]]: Parsed entries with validation
+
+                """
                 ...
 
             def write_file(
@@ -65,7 +81,19 @@ class FlextLdapProtocols(FlextProtocols):
                 entries: list[FlextLdifModels.Entry],
                 output_path: Path,
             ) -> FlextResult[str]:
-                """Write entries to LDIF file."""
+                """Write entries to LDIF file using functional composition.
+
+                Implements validation pipeline, file creation with atomic writes,
+                and proper error handling with cleanup on failure.
+
+                Args:
+                    entries: List of entries to write (validated)
+                    output_path: Output file path (validated for permissions)
+
+                Returns:
+                    FlextResult[str]: Success confirmation with file details
+
+                """
                 ...
 
         @runtime_checkable
@@ -154,8 +182,12 @@ class FlextLdapProtocols(FlextProtocols):
         # =====================================================================
 
         @runtime_checkable
-        class LdapConnectionProtocol(FlextProtocols.Service[None], Protocol):
-            """Protocol for LDAP connection operations."""
+        class LdapConnectionProtocol(FlextProtocols.Service, Protocol):
+            """Protocol for LDAP connection operations using railway pattern.
+
+            Defines the contract for LDAP connection management with functional
+            composition and error handling patterns.
+            """
 
             def connect(
                 self,
@@ -163,39 +195,48 @@ class FlextLdapProtocols(FlextProtocols):
                 bind_dn: str,
                 password: str,
             ) -> FlextResult[bool]:
-                """Establish LDAP connection.
+                """Establish LDAP connection using functional composition.
+
+                Implements railway pattern for connection establishment with
+                proper error propagation and resource management.
 
                 Args:
-                server_uri: LDAP server URI
-                bind_dn: Distinguished name for binding
-                password: Authentication password
+                    server_uri: LDAP server URI with validation
+                    bind_dn: Distinguished name for binding (validated)
+                    password: Authentication password (secure handling)
 
                 Returns:
-                FlextResult[bool]: Connection success status
+                    FlextResult[bool]: Connection success status with error details
 
                 """
                 ...
 
             def disconnect(self) -> FlextResult[None]:
-                """Close LDAP connection.
+                """Close LDAP connection with resource cleanup.
+
+                Implements proper resource cleanup using railway pattern,
+                ensuring connection is safely closed even on errors.
 
                 Returns:
-                FlextResult[None]: Disconnect success status
+                    FlextResult[None]: Disconnect success status with cleanup confirmation
 
                 """
                 ...
 
             def is_connected(self) -> FlextResult[bool]:
-                """Check if LDAP connection is active.
+                """Check if LDAP connection is active using functional validation.
+
+                Performs connection health check with timeout and proper error
+                handling using railway pattern.
 
                 Returns:
-                FlextResult[bool]: Connection status
+                    FlextResult[bool]: Connection status with health check details
 
                 """
                 ...
 
         @runtime_checkable
-        class LdapSearchProtocol(FlextProtocols.Service[None], Protocol):
+        class LdapSearchProtocol(FlextProtocols.Service, Protocol):
             """Protocol for LDAP search operations."""
 
             def search(
@@ -237,7 +278,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapModifyProtocol(FlextProtocols.Service[None], Protocol):
+        class LdapModifyProtocol(FlextProtocols.Service, Protocol):
             """Protocol for LDAP modification operations."""
 
             def add_entry(
@@ -287,35 +328,45 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapAuthenticationProtocol(FlextProtocols.Service[None], Protocol):
-            """Protocol for LDAP authentication operations."""
+        class LdapAuthenticationProtocol(FlextProtocols.Service, Protocol):
+            """Protocol for LDAP authentication operations using functional security.
+
+            Defines secure authentication contracts with railway pattern,
+            credential validation, and safe error handling.
+            """
 
             def authenticate_user(
                 self,
                 username: str,
                 password: str,
             ) -> FlextResult[FlextLdifModels.Entry]:
-                """Authenticate user against LDAP.
+                """Authenticate user against LDAP using functional composition.
+
+                Implements secure authentication pipeline with input sanitization,
+                connection validation, and user lookup with proper error masking.
 
                 Args:
-                username: Username for authentication
-                password: Password for authentication
+                    username: Username for authentication (validated and sanitized)
+                    password: Password for authentication (secure handling, not logged)
 
                 Returns:
-                FlextResult[FlextLdifModels.Entry]: Auth result
+                    FlextResult[FlextLdifModels.Entry]: User entry on success, masked error on failure
 
                 """
                 ...
 
             def validate_credentials(self, dn: str, password: str) -> FlextResult[bool]:
-                """Validate user credentials against LDAP.
+                """Validate user credentials against LDAP using railway pattern.
+
+                Performs credential validation with secure error handling,
+                timing attack protection, and proper connection management.
 
                 Args:
-                dn: User distinguished name
-                password: User password
+                    dn: User distinguished name (validated DN format)
+                    password: User password (secure handling)
 
                 Returns:
-                FlextResult[bool]: Validation success status
+                    FlextResult[bool]: Validation result with security considerations
 
                 """
                 ...
@@ -337,7 +388,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapValidationProtocol(FlextProtocols.Service[None], Protocol):
+        class LdapValidationProtocol(FlextProtocols.Service, Protocol):
             """Protocol for LDAP validation operations."""
 
             def validate_dn(self, dn: str) -> FlextResult[bool]:
@@ -366,7 +417,7 @@ class FlextLdapProtocols(FlextProtocols):
 
         @runtime_checkable
         class LdapConnectionManagerProtocol(
-            FlextProtocols.Service[None],
+            FlextProtocols.Service,
             Protocol,
         ):
             """Protocol for LDAP connection management operations.
@@ -461,7 +512,7 @@ class FlextLdapProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
-        class LdapSearcherProtocol(FlextProtocols.Service[None], Protocol):
+        class LdapSearcherProtocol(FlextProtocols.Service, Protocol):
             """Protocol for LDAP search operations."""
 
             def search_one(

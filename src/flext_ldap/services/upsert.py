@@ -157,10 +157,11 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
     ) -> dict[str, list[str]]:
         """Extract current attributes from existing entry."""
         existing_attrs: dict[str, list[str]] = {}
-        for attr_name, attr_obj in entry.attributes.items():
-            if attr_obj:
-                # Handle list[str] directly
-                if isinstance(attr_obj, list):
+        if entry.attributes is not None:
+            for attr_name, attr_obj in entry.attributes.items():
+                if attr_obj:
+                    # Handle list[str] directly
+                    if isinstance(attr_obj, list):
                     existing_attrs[attr_name.lower()] = [str(v) for v in attr_obj]
                 # Handle objects with .values attribute (cast to Protocol for type safety)
                 elif hasattr(attr_obj, "values"):

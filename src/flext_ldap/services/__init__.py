@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldap.services.acl import FlextLdapAclService
+from flext_ldap.services.clients import FlextLdapClients
 from flext_ldap.services.domain import DomainServices
 from flext_ldap.services.repository import LdapEntryRepository, RepositoryBase
 from flext_ldap.services.schema import FlextLdapSchema
@@ -27,6 +28,7 @@ from flext_ldap.services.upsert import FlextLdapUpsertService
 __all__ = [
     "DomainServices",
     "FlextLdapAclService",
+    "FlextLdapClients",
     "FlextLdapSchema",
     "FlextLdapServersService",
     "FlextLdapUpsertService",

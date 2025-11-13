@@ -134,7 +134,10 @@ class FlextLdapClients(FlextService[None]):
         and functional composition for connection setup.
         """
         # Functional lazy initialization using FlextRuntime (DRY principle)
-        searcher = FlextRuntime.safe_get_attribute(self, "_searcher", None)
+        searcher = cast(
+            "FlextLdapProtocols.Ldap.LdapSearcherProtocol | None",
+            FlextRuntime.safe_get_attribute(self, "_searcher", None),
+        )
 
         if searcher is None:
             # Functional composition: create and configure searcher
@@ -146,7 +149,7 @@ class FlextLdapClients(FlextService[None]):
                 searcher,
             )
 
-        return searcher
+        return cast("FlextLdapProtocols.Ldap.LdapSearcherProtocol", searcher)
 
     def _get_authenticator(self) -> FlextLdapProtocols.Ldap.LdapAuthenticationProtocol:
         """Get authenticator using functional lazy initialization with FlextRuntime.
@@ -155,7 +158,10 @@ class FlextLdapClients(FlextService[None]):
         and functional composition for connection context setup.
         """
         # Functional lazy initialization using FlextRuntime (DRY principle)
-        authenticator = FlextRuntime.safe_get_attribute(self, "_authenticator", None)
+        authenticator = cast(
+            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol | None",
+            FlextRuntime.safe_get_attribute(self, "_authenticator", None),
+        )
 
         if authenticator is None:
             # Functional composition: create and configure authenticator
@@ -181,7 +187,10 @@ class FlextLdapClients(FlextService[None]):
         Uses FlextRuntime.safe_get_attribute for safe property access.
         """
         # Functional property access with safe fallback
-        return FlextRuntime.safe_get_attribute(self, "_connection", None)
+        return cast(
+            "Connection | None",
+            FlextRuntime.safe_get_attribute(self, "_connection", None),
+        )
 
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
