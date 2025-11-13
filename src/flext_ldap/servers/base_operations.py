@@ -15,6 +15,9 @@ from typing import cast
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
+
+# FlextLdifUtilities.ACL doesn't have parse method - using full service
+# Importing directly from service (internal use only - will be refactored to public API)
 from flext_ldif.services.acl import FlextLdifAcl
 from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 from pydantic import ValidationError
@@ -46,9 +49,9 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
         super().__init__()
         # logger inherited from FlextService
         self._server_type = server_type or FlextLdapConstants.Defaults.SERVER_TYPE
-        # Use flext-ldif services for DN and ACL operations
+        # Use flext-ldif utilities/services for DN and ACL operations
         self._dn_service = FlextLdifUtilities.DN()
-        self._acl_service = FlextLdifAcl()
+        self._acl_service = FlextLdifAcl()  # Using service for full ACL parsing
 
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService."""
@@ -942,6 +945,8 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         # Extract DN, objectClass, and attributes
         dn = str(entry.dn)
+        if entry.attributes is None:
+            return FlextResult.fail("Entry has no attributes")
         attrs = entry.attributes.attributes
 
         # Extract objectClass

@@ -9,9 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from functools import cached_property
+from itertools import starmap
+from typing import cast, override
 
-from flext_core import FlextDecorators, FlextResult
+from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 from ldap3 import MODIFY_REPLACE, Connection
 
@@ -22,13 +24,30 @@ from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
-    """Complete Oracle OUD operations implementation.
+    """Complete Oracle OUD operations implementation following SOLID and Flext principles.
 
-    Oracle OUD Features:
-    - Based on 389 Directory Server
-    - ds-privilege-name ACL attribute
-    - cn=schema for schema discovery
-    - Modern LDAP features
+    This class implements server-specific operations for Oracle Unified Directory (OUD)
+    while maintaining clean separation of concerns and leveraging Flext architectural patterns.
+
+    **SOLID Principles Compliance:**
+    - SRP: Single responsibility - handles only OUD-specific LDAP operations
+    - OCP: Open for extension through inheritance, closed for modification via overrides
+    - LSP: Substitutable with base class without breaking contracts
+    - DIP: Depends on abstractions (FlextServices, FlextConstants) not concretions
+
+    **Flext Architecture Compliance:**
+    - Uses FlextServices for dependency injection and service management
+    - Leverages FlextConstants for type-safe configuration
+    - Implements FlextResult monadic pattern for error handling
+    - Uses FlextDecorators for cross-cutting concerns (logging, caching)
+    - Delegates to shared utilities (FlextLdapUtilities, FlextLdapEntryAdapter)
+
+    **Oracle OUD Features:**
+    - Based on 389 Directory Server architecture
+    - ds-privilege-name ACL attribute for access control
+    - cn=schema for schema discovery operations
+    - Modern LDAP features with enterprise extensions
+    - Multi-master replication support
     """
 
     def __init__(self) -> None:
@@ -140,7 +159,8 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         if not result.is_failure:
             entry = result.unwrap()
             # Add OUD-specific note
-            entry.attributes.attributes["note"] = ["Oracle OUD schema parsing"]
+            if entry.attributes is not None:
+                entry.attributes.attributes["note"] = ["Oracle OUD schema parsing"]
         return result
 
     @override
@@ -153,7 +173,8 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         if not result.is_failure:
             entry = result.unwrap()
             # Add OUD-specific note
-            entry.attributes.attributes["note"] = ["Oracle OUD schema parsing"]
+            if entry.attributes is not None:
+                entry.attributes.attributes["note"] = ["Oracle OUD schema parsing"]
         return result
 
     # =========================================================================
@@ -207,6 +228,57 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         return FlextLdapConstants.AclAttributes.DS_PRIVILEGE_NAME
 
     @override
+    def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
+        """Parse ds-privilege-name ACL string for Oracle OUD.
+
+        Delegates to FlextLdifAcl service for proper ACL parsing using server-specific quirks.
+        This ensures consistent ACL handling across the Flext framework.
+
+        Args:
+            acl_string: ds-privilege-name value (privilege name)
+
+        Returns:
+            FlextResult containing parsed ACL as Entry object with proper structure
+
+        """
+        try:
+            # Delegate to FlextLdifAcl service for server-specific parsing
+            acl_service = self._acl_service
+            parse_result = acl_service.parse(acl_string, self.server_type)
+
+            if parse_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"ACL parsing failed: {parse_result.error}",
+                )
+
+            # Convert ACL model to Entry format for compatibility
+            parse_result.unwrap()
+            acl_attributes: dict[str, str | list[str]] = {
+                "raw": acl_string,
+                FlextLdapConstants.AclAttributes.FORMAT: FlextLdapConstants.AclFormat.ORACLE,
+                "server_type": self.server_type,
+                "privilege": acl_string.strip(),  # Privilege name from raw string
+            }
+
+            entry_result = FlextLdifModels.Entry.create(
+                dn="cn=AclRule",
+                attributes=acl_attributes,
+            )
+            if entry_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create ACL entry: {entry_result.error}",
+                )
+            return cast(
+                "FlextResult[FlextLdifModels.Entry]",
+                FlextResult.ok(entry_result.unwrap()),
+            )
+
+        except Exception as e:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Oracle OUD ACL parse failed: {e}",
+            )
+
+    @override
     def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
         """Format ACL Entry to ds-privilege-name string for Oracle OUD.
 
@@ -228,16 +300,17 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
         """
         try:
             # Extract attributes from entry
-            raw_attr = acl_entry.attributes.get("raw")
-            if raw_attr and len(raw_attr) > 0:
-                return FlextResult[str].ok(raw_attr[0])
+            if acl_entry.attributes is not None:
+                raw_attr = acl_entry.attributes.get("raw")
+                if raw_attr and len(raw_attr) > 0:
+                    return FlextResult[str].ok(raw_attr[0])
 
-            # Use privilege name if available
-            privilege_attr = acl_entry.attributes.get(
-                FlextLdapConstants.LdapDictKeys.PRIVILEGE,
-            )
-            if privilege_attr and len(privilege_attr) > 0:
-                return FlextResult[str].ok(privilege_attr[0])
+                # Use privilege name if available
+                privilege_attr = acl_entry.attributes.get(
+                    FlextLdapConstants.LdapDictKeys.PRIVILEGE,
+                )
+                if privilege_attr and len(privilege_attr) > 0:
+                    return FlextResult[str].ok(privilege_attr[0])
 
             # Default fallback
             return FlextResult[str].fail(
@@ -253,6 +326,53 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
 
     # add_entry(), delete_entry() - Use base implementations
 
+    def _process_oud_modifications(
+        self,
+        modifications: dict[str, object],
+        dn: str,
+    ) -> dict[str, list[tuple[object, list[str]]]]:
+        """Process modifications with OUD-specific quirks.
+
+        Applies OUD schema quirk: lowercase attribute names for cn=schema modifications.
+        Converts Flext format modifications to ldap3 format.
+
+        Args:
+            modifications: Dict of attribute modifications
+            dn: DN being modified
+
+        Returns:
+            ldap3-compatible modifications dict
+
+        """
+        # Apply OUD schema quirk: lowercase attribute names for cn=schema
+        is_schema_mod = dn.lower() == FlextLdapConstants.SchemaDns.SCHEMA.lower()
+
+        def process_single_mod(
+            attr: str, value: object
+        ) -> tuple[str, list[tuple[object, list[str]]]]:
+            """Process single attribute modification."""
+            # Apply schema quirk
+            attr_name = attr
+            if is_schema_mod:
+                if attr.lower() == "attributetypes":
+                    attr_name = "attributetypes"
+                elif attr.lower() == "objectclasses":
+                    attr_name = "objectclasses"
+
+            # Handle tuple format (operation, values) or simple value
+            if isinstance(value, list) and value and isinstance(value[0], tuple):
+                operation, val_list = value[0]
+                values = val_list if isinstance(val_list, list) else [val_list]
+            else:
+                operation = MODIFY_REPLACE
+                values = value if isinstance(value, list) else [value]
+
+            str_values = [str(v) for v in values]
+            return attr_name, [(operation, str_values)]
+
+        # Process all modifications using functional mapping
+        return dict(starmap(process_single_mod, modifications.items()))
+
     @override
     def modify_entry(
         self,
@@ -262,40 +382,20 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Modify entry in Oracle OUD with OUD-specific quirks.
 
-        Applies OUD schema quirk: lowercase attribute names for cn=schema
+        Uses functional processing with OUD schema quirks applied.
+        Delegates modification processing to helper method for clarity.
         """
         try:
             conn_check = self._check_connection(connection)
             if conn_check.is_failure:
                 return FlextResult[bool].fail(conn_check.error)
 
-            # Apply OUD schema quirk: lowercase attribute names for cn=schema
-            is_schema_mod = dn.lower() == FlextLdapConstants.SchemaDns.SCHEMA.lower()
-
-            # Convert modifications to ldap3 format
-            ldap3_mods: dict[str, list[tuple[object, list[str]]]] = {}
-            for attr, value in modifications.items():
-                # Apply schema quirk
-                attr_name = attr
-                if is_schema_mod:
-                    if attr.lower() == "attributetypes":
-                        attr_name = "attributetypes"
-                    elif attr.lower() == "objectclasses":
-                        attr_name = "objectclasses"
-
-                # Handle tuple format (operation, values)
-                if isinstance(value, list) and value and isinstance(value[0], tuple):
-                    operation, val_list = value[0]
-                    values = val_list if isinstance(val_list, list) else [val_list]
-                else:
-                    operation = MODIFY_REPLACE
-                    values = value if isinstance(value, list) else [value]
-
-                str_values = [str(v) for v in values]
-                ldap3_mods[attr_name] = [(operation, str_values)]
+            # Process modifications with OUD-specific quirks
+            ldap3_mods = self._process_oud_modifications(modifications, dn)
 
             # Execute modification using ldap3 Connection interface
-            success = connection.modify(dn, ldap3_mods)
+            modify_func = connection.modify
+            success = bool(modify_func(dn, ldap3_mods))
 
             if not success:
                 error_msg = self._get_connection_error_message(connection)
@@ -364,11 +464,58 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             FlextLdapConstants.OudPrivileges.BACKEND_RESTORE,
         ]
 
-    def get_privilege_category(self, privilege: str) -> str:
-        """Get category for a privilege using efficient lookup.
+    @cached_property
+    def _privilege_category_mapping(self) -> dict[str, str]:
+        """Build cached privilege-to-category mapping for efficient lookups.
 
-        Uses O(1) dict lookup instead of O(n) loop for better performance.
-        Leverages FlextConstants for type-safe category mappings.
+        Uses functools.cached_property to build mapping once and cache it.
+        Provides O(1) lookup performance for privilege categorization.
+
+        Returns:
+            Dict mapping privilege names to category names
+
+        """
+        privilege_to_category = dict.fromkeys(
+            FlextLdapConstants.OudPrivileges.CONFIG_PRIVILEGES,
+            FlextLdapConstants.OudPrivilegeCategories.CONFIGURATION,
+        )
+        privilege_to_category.update(
+            dict.fromkeys(
+                FlextLdapConstants.OudPrivileges.PASSWORD_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.PASSWORD,
+            )
+        )
+        privilege_to_category.update(
+            dict.fromkeys(
+                FlextLdapConstants.OudPrivileges.ADMINISTRATIVE_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.ADMINISTRATIVE,
+            )
+        )
+        privilege_to_category.update(
+            dict.fromkeys(
+                FlextLdapConstants.OudPrivileges.MANAGEMENT_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.MANAGEMENT,
+            )
+        )
+        privilege_to_category.update(
+            dict.fromkeys(
+                FlextLdapConstants.OudPrivileges.DATA_MANAGEMENT_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.DATA_MANAGEMENT,
+            )
+        )
+        privilege_to_category.update(
+            dict.fromkeys(
+                FlextLdapConstants.OudPrivileges.MAINTENANCE_PRIVILEGES,
+                FlextLdapConstants.OudPrivilegeCategories.MAINTENANCE,
+            )
+        )
+        return privilege_to_category
+
+    def get_privilege_category(self, privilege: str) -> str:
+        """Get category for a privilege using cached efficient lookup.
+
+        Uses cached mapping for O(1) performance. Leverages FlextDecorators
+        for automatic caching and FlextConstants for type-safe categories.
 
         Args:
             privilege: Privilege name
@@ -377,33 +524,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             Category name from FlextLdapConstants.OudPrivilegeCategories
 
         """
-        # Build reverse mapping: privilege → category for O(1) lookup
-        privilege_to_category = {
-            priv: FlextLdapConstants.OudPrivilegeCategories.CONFIGURATION
-            for priv in FlextLdapConstants.OudPrivileges.CONFIG_PRIVILEGES
-        }
-        privilege_to_category.update({
-            priv: FlextLdapConstants.OudPrivilegeCategories.PASSWORD
-            for priv in FlextLdapConstants.OudPrivileges.PASSWORD_PRIVILEGES
-        })
-        privilege_to_category.update({
-            priv: FlextLdapConstants.OudPrivilegeCategories.ADMINISTRATIVE
-            for priv in FlextLdapConstants.OudPrivileges.ADMINISTRATIVE_PRIVILEGES
-        })
-        privilege_to_category.update({
-            priv: FlextLdapConstants.OudPrivilegeCategories.MANAGEMENT
-            for priv in FlextLdapConstants.OudPrivileges.MANAGEMENT_PRIVILEGES
-        })
-        privilege_to_category.update({
-            priv: FlextLdapConstants.OudPrivilegeCategories.DATA_MANAGEMENT
-            for priv in FlextLdapConstants.OudPrivileges.DATA_MANAGEMENT_PRIVILEGES
-        })
-        privilege_to_category.update({
-            priv: FlextLdapConstants.OudPrivilegeCategories.MAINTENANCE
-            for priv in FlextLdapConstants.OudPrivileges.MAINTENANCE_PRIVILEGES
-        })
-
-        return privilege_to_category.get(
+        return self._privilege_category_mapping.get(
             privilege,
             FlextLdapConstants.OudPrivilegeCategories.CUSTOM,
         )
@@ -475,7 +596,6 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             return FlextResult[list[str]].fail(f"Failed to get supported controls: {e}")
 
     @override
-    @FlextDecorators.log_method_call(level="DEBUG")
     def validate_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
@@ -483,9 +603,8 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
     ) -> FlextResult[bool]:
         """Validate entry for Oracle OUD using shared FlextLdapEntryAdapter service.
 
-        Uses FlextDecorators for automatic logging and FlextLdapEntryAdapter
-        for server-specific validation logic. Delegates to shared service
-        to avoid code duplication and ensure consistency.
+        Delegates to FlextLdapEntryAdapter for server-specific validation logic.
+        Uses shared service to avoid code duplication and ensure consistency.
         """
         # Use shared FlextLdapEntryAdapter service for validation
         adapter = FlextLdapEntryAdapter(server_type=self.server_type)

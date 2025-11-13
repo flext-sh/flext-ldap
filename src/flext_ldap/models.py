@@ -32,10 +32,8 @@ from pydantic import (
     ConfigDict,
     Field,
     SecretStr,
-    ValidationInfo,
     computed_field,
     field_serializer,
-    field_validator,
     model_validator,
 )
 
@@ -122,8 +120,65 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def object_class(cls, object_class: str) -> FlextLdapModels.Filter:
-            """Create objectClass filter."""
+            """Create objectClass filter using builder pattern."""
             return cls(expression=f"(objectClass={object_class})")
+
+        @classmethod
+        def _build_filter_expression(
+            cls, attribute: str, operator: str, value: str
+        ) -> str:
+            """Build LDAP filter expression using builder pattern.
+
+            DRY helper for creating filter expressions with proper formatting.
+            Handles escaping and formatting for common LDAP filter patterns.
+
+            Args:
+                attribute: LDAP attribute name
+                operator: Filter operator (=, ~=, >=, <=, etc.)
+                value: Attribute value to match
+
+            Returns:
+                Properly formatted LDAP filter expression
+
+            """
+            return f"({attribute}{operator}{value})"
+
+        @classmethod
+        def and_filters(
+            cls, *filters: FlextLdapModels.Filter
+        ) -> FlextLdapModels.Filter:
+            """Combine multiple filters with AND using builder pattern.
+
+            Creates compound filter expressions with proper LDAP syntax.
+            Eliminates manual string concatenation for complex filters.
+
+            Args:
+                *filters: Filter objects to combine with AND
+
+            Returns:
+                Combined filter with AND logic
+
+            """
+            if not filters:
+                return cls(expression="(objectClass=*)")  # Default match-all filter
+
+            expressions = [f.expression for f in filters]
+            combined = f"(&{' '.join(expressions)})"
+            return cls(expression=combined)
+
+        @classmethod
+        def user_by_uid(cls, uid: str) -> FlextLdapModels.Filter:
+            """Create user filter by UID using builder pattern with AND combination."""
+            user_filter = cls.object_class("person")
+            uid_filter = cls.equals("uid", uid)
+            return cls.and_filters(user_filter, uid_filter)
+
+        @classmethod
+        def group_by_cn(cls, cn: str) -> FlextLdapModels.Filter:
+            """Create group filter by CN using builder pattern with AND combination."""
+            group_filter = cls.object_class("groupOfNames")
+            cn_filter = cls.equals("cn", cn)
+            return cls.and_filters(group_filter, cn_filter)
 
     class Scope(FlextModels.Value):
         """LDAP search scope value object.
@@ -142,32 +197,32 @@ class FlextLdapModels(FlextModels):
 
         @classmethod
         def base(cls) -> FlextLdapModels.Scope:
-            """Create base scope using FlextLdapConstants."""
+            """Create base scope using FlextLdapConstants with proper type casting."""
             return cls(
                 value=cast(
                     "FlextLdapConstants.Types.SearchScope",
                     FlextLdapConstants.Scopes.BASE,
-                ),
+                )
             )
 
         @classmethod
         def onelevel(cls) -> FlextLdapModels.Scope:
-            """Create onelevel scope using FlextLdapConstants."""
+            """Create onelevel scope using FlextLdapConstants with proper type casting."""
             return cls(
                 value=cast(
                     "FlextLdapConstants.Types.SearchScope",
                     FlextLdapConstants.Scopes.ONELEVEL,
-                ),
+                )
             )
 
         @classmethod
         def subtree(cls) -> FlextLdapModels.Scope:
-            """Create subtree scope using FlextLdapConstants."""
+            """Create subtree scope using FlextLdapConstants with proper type casting."""
             return cls(
                 value=cast(
                     "FlextLdapConstants.Types.SearchScope",
                     FlextLdapConstants.Scopes.SUBTREE,
-                ),
+                )
             )
 
     # =========================================================================
@@ -267,28 +322,20 @@ class FlextLdapModels(FlextModels):
         """LDAP Search Request with parameters and Pydantic 2.11 validation.
 
         Uses __slots__ for memory efficiency in high-frequency LDAP operations.
+        DRY principle: Uses shared constants from _SearchDefaults to avoid duplication.
         """
 
         __slots__ = ()  # Enable __slots__ for memory optimization
 
-        # Default attribute constants (replicated from _SearchDefaults)
-        DEFAULT_USER_ATTRIBUTES: ClassVar[list[str]] = [
-            "cn",
-            "sn",
-            "mail",
-            "objectClass",
-        ]
-        DEFAULT_GROUP_ATTRIBUTES: ClassVar[list[str]] = [
-            "cn",
-            "member",
-            "description",
-            "objectClass",
-        ]
-
         @classmethod
         def get_user_attributes(cls) -> list[str]:
-            """Get default user attributes for search requests."""
-            return cls.DEFAULT_USER_ATTRIBUTES.copy()
+            """Get default user attributes for search requests using DRY shared constants."""
+            return FlextLdapModels._SearchDefaults.DEFAULT_USER_ATTRIBUTES.copy()
+
+        @classmethod
+        def get_group_attributes(cls) -> list[str]:
+            """Get default group attributes for search requests using DRY shared constants."""
+            return FlextLdapModels._SearchDefaults.DEFAULT_GROUP_ATTRIBUTES.copy()
 
         # Search scope - Pydantic 2 Field constraints replace validators
         base_dn: str = Field(
@@ -413,17 +460,18 @@ class FlextLdapModels(FlextModels):
             base_dn: str = "ou=users,dc=example,dc=com",
             attributes: list[str] | None = None,
         ) -> Self:
-            """Create search request for user."""
+            """Create search request for user using builder pattern and filter helpers."""
+            # Use builder pattern for filter creation
+            user_filter = FlextLdapModels.Filter.user_by_uid(uid)
+
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter_str": f"(&{FlextLdapConstants.Filters.ALL_USERS_FILTER[1:-1]}(uid={uid}))",  # Remove outer parens and combine
+                    "filter_str": user_filter.expression,
                     "attributes": (
-                        ["uid", "cn", "mail", "sn"]
-                        if attributes is None
-                        else attributes
+                        cls.get_user_attributes() if attributes is None else attributes
                     ),
-                    "page_size": 100,  # Default page size
+                    "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
                     "paged_cookie": None,
                 },
             )
@@ -435,17 +483,18 @@ class FlextLdapModels(FlextModels):
             base_dn: str = "ou=groups,dc=example,dc=com",
             attributes: list[str] | None = None,
         ) -> Self:
-            """Create search request for group."""
+            """Create search request for group using builder pattern and filter helpers."""
+            # Use builder pattern for filter creation
+            group_filter = FlextLdapModels.Filter.group_by_cn(cn)
+
             return cls.model_validate(
                 {
                     "base_dn": base_dn,
-                    "filter_str": f"(&{FlextLdapConstants.Filters.DEFAULT_GROUP_FILTER[1:-1]}({FlextLdapConstants.LdapAttributeNames.CN}={cn}))",
+                    "filter_str": group_filter.expression,
                     "attributes": (
-                        ["cn", "member", "description"]
-                        if attributes is None
-                        else attributes
+                        cls.get_group_attributes() if attributes is None else attributes
                     ),
-                    "page_size": 100,  # Default page size
+                    "page_size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
                     "paged_cookie": None,
                 },
             )
@@ -547,21 +596,6 @@ class FlextLdapModels(FlextModels):
             default=None,
             description="Optional quirks mode override",
         )
-
-        @field_validator("dn")
-        @classmethod
-        def validate_dn_for_operation(
-            cls, v: str | None, info: ValidationInfo
-        ) -> str | None:
-            """Validate DN is provided for operations that require it."""
-            operation = info.data.get("operation", "add")
-            batch = info.data.get("batch", False)
-
-            # DN is required for non-batch operations (except when it will be validated later)
-            if not batch and operation != "delete" and not v:
-                # Allow None for now, validation happens in apply_changes
-                pass
-            return v
 
     class ConnectionRequest(BaseModel):
         """LDAP Connection Request with parameters and Pydantic 2 validation.

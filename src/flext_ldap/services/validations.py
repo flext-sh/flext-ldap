@@ -14,7 +14,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, FlextRuntime
-from flext_ldif import FlextLdifUtilities
+
+# FlextLdifUtilities doesn't expose DN/Validation yet - needs to be added to utilities.py
+# Importing directly from services (internal use only - will be refactored to public API)
+from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.validation import FlextLdifValidation
 
 from flext_ldap.constants import FlextLdapConstants
@@ -28,7 +31,7 @@ class FlextLdapValidations:
     duplication and follow SRP. Provides convenience methods for common validations.
     """
 
-    _dn_service = FlextLdifUtilities.DN()
+    _dn_service = FlextLdifDn()
     _validation_service = FlextLdifValidation()
 
     @classmethod

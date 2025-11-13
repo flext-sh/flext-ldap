@@ -23,7 +23,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import Any, cast
 
 from flext_core import FlextLogger, FlextResult
 

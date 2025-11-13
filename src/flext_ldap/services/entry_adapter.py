@@ -58,6 +58,98 @@ class FlextLdapEntryAdapter(FlextService[None]):
         self._ldif = FlextLdif()  # Use FlextLdif facade for all LDIF operations
         self._detected_server_type = server_type
 
+    def _validate_entry_param(
+        self, entry: FlextLdifModels.Entry | None, param_name: str = "entry"
+    ) -> FlextResult[None]:
+        """Validate entry parameter using functional approach.
+
+        DRY helper for entry parameter validation across all methods.
+        Uses monadic pattern for consistent error handling.
+
+        Args:
+            entry: Entry to validate
+            param_name: Parameter name for error messages
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """
+        if entry is None:
+            return FlextResult[None].fail(f"{param_name} cannot be None")
+        return FlextResult[None].ok(None)
+
+    def _validate_server_type_param(
+        self, server_type: str | None, param_name: str = "server_type"
+    ) -> FlextResult[None]:
+        """Validate server_type parameter using functional approach.
+
+        DRY helper for server type parameter validation.
+        Ensures server type is provided and non-empty.
+
+        Args:
+            server_type: Server type to validate
+            param_name: Parameter name for error messages
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """
+        if not server_type or not server_type.strip():
+            return FlextResult[None].fail(f"{param_name} cannot be empty")
+        return FlextResult[None].ok(None)
+
+    def _validate_conversion_params(
+        self,
+        entry: FlextLdifModels.Entry | None,
+        source_server_type: str | None,
+        target_server_type: str | None,
+    ) -> FlextResult[tuple[FlextLdifModels.Entry, str, str]]:
+        """Validate all parameters for entry conversion operations.
+
+        DRY helper that combines entry and server type validation.
+        Uses monadic composition for clean error handling.
+
+        Args:
+            entry: Entry to validate
+            source_server_type: Source server type to validate
+            target_server_type: Target server type to validate
+
+        Returns:
+            FlextResult with validated parameters or error
+
+        """
+        # Validate entry
+        entry_result = self._validate_entry_param(entry, "entry")
+        if entry_result.is_failure:
+            return FlextResult[tuple[FlextLdifModels.Entry, str, str]].fail(
+                entry_result.error
+            )
+
+        # Validate server types
+        source_result = self._validate_server_type_param(
+            source_server_type, "source_server_type"
+        )
+        if source_result.is_failure:
+            return FlextResult[tuple[FlextLdifModels.Entry, str, str]].fail(
+                source_result.error
+            )
+
+        target_result = self._validate_server_type_param(
+            target_server_type, "target_server_type"
+        )
+        if target_result.is_failure:
+            return FlextResult[tuple[FlextLdifModels.Entry, str, str]].fail(
+                target_result.error
+            )
+
+        # Return validated parameters
+        # Type narrowing: validation ensures values are non-None
+        return FlextResult[tuple[FlextLdifModels.Entry, str, str]].ok((
+            cast("FlextLdifModels.Entry", entry),
+            cast("str", source_server_type),
+            cast("str", target_server_type),
+        ))
+
     def execute(self) -> FlextResult[None]:
         """Execute method required by FlextService - no-op for adapter."""
         return FlextResult[None].ok(None)
@@ -87,21 +179,45 @@ class FlextLdapEntryAdapter(FlextService[None]):
 
         return FlextResult[tuple[str, dict[str, object]]].ok((dn_str, raw_attributes))
 
+    def _normalize_attribute_value(self, attr_value: object) -> str | list[str]:
+        """Normalize single attribute value using functional approach.
+
+        DRY helper for attribute value normalization.
+        Handles both single values and lists uniformly.
+
+        Args:
+            attr_value: Raw attribute value from dict
+
+        Returns:
+            Normalized attribute value (string or list of strings)
+
+        """
+        if isinstance(attr_value, list):
+            if len(attr_value) == 1:
+                return str(attr_value[0])
+            return [str(v) for v in attr_value]
+        return str(attr_value)
+
     def _convert_dict_attributes(
         self,
         raw_attributes: dict[str, object],
     ) -> dict[str, str | list[str]]:
-        """Convert dict attributes to proper format for Entry.create."""
-        attributes_for_create: dict[str, str | list[str]] = {}
-        for attr_name, attr_values in raw_attributes.items():
-            if isinstance(attr_values, list):
-                if len(attr_values) == 1:
-                    attributes_for_create[attr_name] = str(attr_values[0])
-                else:
-                    attributes_for_create[attr_name] = [str(v) for v in attr_values]
-            else:
-                attributes_for_create[attr_name] = str(attr_values)
-        return attributes_for_create
+        """Convert dict attributes to proper format for Entry.create using functional approach.
+
+        Uses helper method for value normalization and dictionary comprehension
+        for clean, declarative attribute conversion.
+
+        Args:
+            raw_attributes: Raw attributes dict from ldap3 or other sources
+
+        Returns:
+            Normalized attributes dict suitable for Entry.create()
+
+        """
+        return {
+            attr_name: self._normalize_attribute_value(attr_value)
+            for attr_name, attr_value in raw_attributes.items()
+        }
 
     def ldap3_to_ldif_entry(
         self,
@@ -238,9 +354,10 @@ class FlextLdapEntryAdapter(FlextService[None]):
             - "generic" when server type cannot be determined
 
         """
-        # Explicit FlextResult error handling - NO try/except
-        if not entry:
-            return FlextResult[str].fail("Entry cannot be None")
+        # Validate parameters using DRY helper
+        validation_result = self._validate_entry_param(entry, "entry")
+        if validation_result.is_failure:
+            return FlextResult[str].fail(validation_result.error)
 
         # Convert entry to LDIF content using flext-ldif
         ldif_write_result = self._ldif.write([entry])
@@ -293,13 +410,16 @@ class FlextLdapEntryAdapter(FlextService[None]):
             FlextResult containing normalized entry
 
         """
-        if not entry:
-            return FlextResult[FlextLdifModels.Entry].fail("Entry cannot be None")
+        # Validate parameters using DRY helpers
+        entry_validation = self._validate_entry_param(entry, "entry")
+        if entry_validation.is_failure:
+            return FlextResult[FlextLdifModels.Entry].fail(entry_validation.error)
 
-        if not target_server_type:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                "Target server type cannot be empty",
-            )
+        server_validation = self._validate_server_type_param(
+            target_server_type, "target_server_type"
+        )
+        if server_validation.is_failure:
+            return FlextResult[FlextLdifModels.Entry].fail(server_validation.error)
 
         self.logger.debug(
             "Entry normalized for target server",
@@ -310,6 +430,30 @@ class FlextLdapEntryAdapter(FlextService[None]):
         )
 
         return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+    def _get_entry_object_classes(self, entry: FlextLdifModels.Entry) -> list[str]:
+        """Get object classes from entry using functional approach.
+
+        DRY helper for extracting object classes from entries.
+        Handles different entry interfaces uniformly.
+
+        Args:
+            entry: Entry to extract object classes from
+
+        Returns:
+            List of object class names
+
+        """
+        if hasattr(entry, "get_attribute_values"):
+            # FlextLdifModels.Entry interface
+            object_classes = entry.get_attribute_values("objectClass")
+            if isinstance(object_classes, list):
+                return object_classes
+        else:
+            # Fallback for other entry types
+            object_classes = getattr(entry, "object_classes", [])
+
+        return object_classes if isinstance(object_classes, list) else []
 
     def validate_entry_for_server(
         self,
@@ -327,41 +471,33 @@ class FlextLdapEntryAdapter(FlextService[None]):
         - No server-incompatible attributes
 
         Args:
-        entry: FlextLdap or FlextLdif Entry to validate
-        server_type: Target server type to validate against
+            entry: FlextLdap or FlextLdif Entry to validate
+            server_type: Target server type to validate against
 
         Returns:
-        FlextResult[bool] indicating if entry is valid for server
+            FlextResult[bool] indicating if entry is valid for server
 
         """
-        # Explicit FlextResult error handling - NO try/except
-        if not entry:
-            return FlextResult[bool].fail("Entry cannot be None")
+        # Validate parameters using DRY helpers
+        entry_validation = self._validate_entry_param(entry, "entry")
+        if entry_validation.is_failure:
+            return FlextResult[bool].fail(entry_validation.error)
 
-        if not server_type:
-            return FlextResult[bool].fail("Server type cannot be empty")
+        server_validation = self._validate_server_type_param(server_type, "server_type")
+        if server_validation.is_failure:
+            return FlextResult[bool].fail(server_validation.error)
 
         # Validate DN format
         dn_str = str(entry.dn)
         if not dn_str or not dn_str.strip():
             return FlextResult[bool].fail("Entry has invalid DN")
 
-        # Validate has object classes
-        if hasattr(entry, "get_attribute_values"):
-            # FlextLdifModels.Entry interface
-            object_classes = entry.get_attribute_values("objectClass")
-        else:
-            # FlextLdifModels.Entry interface
-            object_classes = getattr(entry, "object_classes", [])
-
+        # Validate object classes using helper method
+        object_classes = self._get_entry_object_classes(entry)
         if not object_classes:
             return FlextResult[bool].fail(
-                "Entry missing required objectClass attribute",
+                "Entry missing required objectClass attribute"
             )
-
-        # Validate has at least one structural object class
-        if isinstance(object_classes, list) and len(object_classes) == 0:
-            return FlextResult[bool].fail("Entry has empty objectClass")
 
         self.logger.debug(
             "Entry validated for server type",
@@ -392,12 +528,12 @@ class FlextLdapEntryAdapter(FlextService[None]):
         - DN format adjustments
 
         Args:
-        entry: FlextLdif Entry to convert
-        source_server_type: Source server type (where entry came from)
-        target_server_type: Target server type (where entry will be added)
+            entry: FlextLdif Entry to convert
+            source_server_type: Source server type (where entry came from)
+            target_server_type: Target server type (where entry will be added)
 
         Returns:
-        FlextResult containing converted entry
+            FlextResult containing converted entry
 
         Examples:
         Convert Oracle OID entry to OpenLDAP 2.x:
@@ -406,13 +542,19 @@ class FlextLdapEntryAdapter(FlextService[None]):
         - Oracle-specific attrs → OpenLDAP equivalents
 
         """
-        # Explicit FlextResult error handling - NO try/except
-        if not entry:
-            return FlextResult[FlextLdifModels.Entry].fail("Entry cannot be None")
+        # Validate all parameters using DRY helper
+        validation_result = self._validate_conversion_params(
+            entry, source_server_type, target_server_type
+        )
+        if validation_result.is_failure:
+            return FlextResult[FlextLdifModels.Entry].fail(validation_result.error)
 
-        if source_server_type == target_server_type:
+        # Unpack validated parameters
+        validated_entry, source_type, target_type = validation_result.unwrap()
+
+        if source_type == target_type:
             # No conversion needed
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            return FlextResult[FlextLdifModels.Entry].ok(validated_entry)
 
         self.logger.info(
             "Converting entry format",

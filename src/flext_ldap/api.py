@@ -12,6 +12,7 @@ from __future__ import annotations
 import threading
 import types
 from collections.abc import Callable
+from functools import cached_property
 from typing import ClassVar, Self, cast, override
 
 from flext_core import (
@@ -167,35 +168,32 @@ class FlextLdap(FlextService[None]):
 
         return attr
 
-    @property
+    @cached_property
     def client(self) -> FlextLdapClients:
-        """Get LDAP client instance using functional lazy initialization.
+        """Get cached LDAP client instance with proper configuration.
 
-        Returns cached or newly initialized FlextLdapClients with proper configuration.
-        Uses FlextRuntime.safe_get_attribute for thread-safe lazy loading.
+        Uses cached_property for performance - computed once and cached.
+        Returns FlextLdapClients with validated configuration for operations.
         """
-        # Functional client initialization with configuration validation
-        return self._lazy_init("client", lambda: FlextLdapClients(config=self._config))
+        return FlextLdapClients(config=self._config)
 
-    @property
+    @cached_property
     def servers(self) -> FlextLdapServersService:
-        """Get server operations service using functional lazy initialization.
+        """Get cached server operations service.
 
-        Returns cached or newly initialized FlextLdapServersService for server management.
-        Implements DRY principle through shared lazy initialization pattern.
+        Uses cached_property for performance - computed once and cached.
+        Returns FlextLdapServersService for server-specific operations management.
         """
-        # Functional server service initialization
-        return self._lazy_init("servers", FlextLdapServersService)
+        return FlextLdapServersService()
 
-    @property
+    @cached_property
     def acl(self) -> FlextLdapAclService:
-        """Get ACL operations service using functional lazy initialization.
+        """Get cached ACL operations service.
 
-        Returns cached or newly initialized FlextLdapAclService for access control.
-        Uses consistent lazy initialization pattern for memory efficiency.
+        Uses cached_property for performance - computed once and cached.
+        Returns FlextLdapAclService for access control list management.
         """
-        # Functional ACL service initialization
-        return self._lazy_init("acl", FlextLdapAclService)
+        return FlextLdapAclService()
 
     def can_handle(self, message_type: HandlerMessageType) -> bool:
         """Check if FlextLdap handler can process this message type using Python 3.13 pattern matching.
@@ -446,19 +444,20 @@ class FlextLdap(FlextService[None]):
         # Normalize search entries (inline - no wrapper)
         entries_result = result.unwrap()
         entries: list[FlextLdifModels.Entry]
-        match entries_result:
-            case list() as entries_list:
-                entries = cast("list[FlextLdifModels.Entry]", entries_list)
-            case object() as single_entry if single_entry:
-                entries = [cast("FlextLdifModels.Entry", single_entry)]
-            case _:
-                entries = []
+        if isinstance(entries_result, list):
+            entries = entries_result
+        elif isinstance(entries_result, FlextLdifModels.Entry):
+            # Single entry case
+            entries = [entries_result]
+        else:
+            # None case
+            entries = []
 
         # Process result based on single flag (inline - no wrapper)
         if single:
             # Single mode: return first entry or None
             first_entry = entries[0] if entries else None
-            return cast("FlextResult[SearchResultType]", FlextResult.ok(first_entry))
+            return FlextResult.ok(first_entry)
 
         # Multi mode: return full SearchResponse (inline - no wrapper)
         response = FlextLdapModels.SearchResponse(
@@ -467,7 +466,7 @@ class FlextLdap(FlextService[None]):
             result_code=0,
             time_elapsed=0.0,
         )
-        return cast("FlextResult[SearchResultType]", FlextResult.ok(response))
+        return FlextResult.ok(response)
 
     # Apply Changes Helper Methods
 
@@ -495,7 +494,7 @@ class FlextLdap(FlextService[None]):
         for batch_dn, batch_changes in modifications:
             result = self.client.modify_entry(
                 batch_dn,
-                cast("FlextLdapModels.EntryChanges", batch_changes),
+                FlextLdapModels.EntryChanges(**batch_changes),
                 quirks_mode=quirks_mode,
             )
             temp_results.append(result.is_success)
@@ -516,7 +515,7 @@ class FlextLdap(FlextService[None]):
         for batch_dn, batch_changes in modifications:
             result = self.client.modify_entry(
                 batch_dn,
-                cast("FlextLdapModels.EntryChanges", batch_changes),
+                FlextLdapModels.EntryChanges(**batch_changes),
                 quirks_mode=quirks_mode,
             )
             results.append(result.is_success)
@@ -540,7 +539,7 @@ class FlextLdap(FlextService[None]):
         """Execute single modify operation."""
         return self.client.modify_entry(
             dn,
-            cast("FlextLdapModels.EntryChanges", changes),
+            FlextLdapModels.EntryChanges(**changes),
             quirks_mode=quirks_mode,
         )
 
@@ -597,11 +596,8 @@ class FlextLdap(FlextService[None]):
         # Extract parameters from request model (DRY - single source of truth)
         changes = request.changes
         dn = request.dn
-        # Cast to proper types for internal methods (type safety)
-        operation = cast(
-            "FlextLdapConstants.Types.ApiOperation",
-            request.operation,
-        )
+        # Extract request parameters
+        operation = request.operation
         atomic = request.atomic
         batch = request.batch
         modifications = request.modifications
@@ -624,7 +620,10 @@ class FlextLdap(FlextService[None]):
         # Batch operations - require modifications list
         if batch and modifications:
             batch_result = self._execute_batch_operations(
-                operation, modifications, atomic=atomic, quirks_mode=quirks_mode
+                cast("FlextLdapConstants.Types.ApiOperation", operation),
+                modifications,
+                atomic=atomic,
+                quirks_mode=quirks_mode,
             )
             return cast("FlextResult[OperationResultType]", batch_result)
 
@@ -638,24 +637,18 @@ class FlextLdap(FlextService[None]):
         if operation == FlextLdapConstants.OperationNames.ADD and not batch:
             return cast(
                 "FlextResult[OperationResultType]",
-                self._execute_single_add(
-                    dn, changes, quirks_mode=quirks_mode
-                ),
+                self._execute_single_add(dn, changes, quirks_mode=quirks_mode),
             )
 
         # Single modify operation
         if operation == FlextLdapConstants.OperationNames.MODIFY and not batch:
             return cast(
                 "FlextResult[OperationResultType]",
-                self._execute_single_modify(
-                    dn, changes, quirks_mode=quirks_mode
-                ),
+                self._execute_single_modify(dn, changes, quirks_mode=quirks_mode),
             )
 
         # Fallback for unknown operations
-        return FlextResult[OperationResultType].fail(
-            f"Unknown operation: {operation}"
-        )
+        return FlextResult[OperationResultType].fail(f"Unknown operation: {operation}")
 
     def validate_entries(
         self,
@@ -1021,7 +1014,7 @@ class FlextLdap(FlextService[None]):
         """
 
         # Functional composition with server info building
-        def build_server_attributes() -> dict[str, list[str]]:
+        def build_server_attributes() -> dict[str, str | list[str]]:
             """Build server attributes dictionary using functional approach."""
             return {
                 FlextLdapConstants.AclAttributes.SERVER_TYPE_ALT: [
@@ -1042,15 +1035,14 @@ class FlextLdap(FlextService[None]):
         entry_result = attrs_result.flat_map(
             lambda attrs: FlextLdifModels.Entry.create(
                 dn=FlextLdapConstants.SyntheticDns.SERVER_INFO,
-                attributes=cast("dict[str, str | list[str]]", attrs),
+                attributes=attrs,
             )
         )
 
         # Handle recovery manually to avoid type issues
         if entry_result.is_failure:
             fallback_result = FlextLdifModels.Entry.create(
-                dn=FlextLdapConstants.SyntheticDns.SERVER_INFO,
-                attributes={}
+                dn=FlextLdapConstants.SyntheticDns.SERVER_INFO, attributes={}
             )
             return cast("FlextResult[FlextLdifModels.Entry]", fallback_result)
 
@@ -1063,23 +1055,24 @@ class FlextLdap(FlextService[None]):
         implementing DRY principle through consistent error handling.
         """
         # Functional composition: get ACL format then create entry
-        return cast(
-            "FlextResult[FlextLdifModels.Entry]",
-            FlextResult.ok(self.acl.get_acl_format())
-            .flat_map(
-                lambda acl_format: FlextLdifModels.Entry.create(
-                    dn=FlextLdapConstants.SyntheticDns.ACL_INFO,
-                    attributes={
-                        FlextLdapConstants.ApiDictKeys.ACL_FORMAT: [acl_format],
-                    },
-                )
+        acl_format_result = FlextResult.ok(self.acl.get_acl_format())
+        entry_result = acl_format_result.flat_map(
+            lambda acl_format: FlextLdifModels.Entry.create(
+                dn=FlextLdapConstants.SyntheticDns.ACL_INFO,
+                attributes={
+                    FlextLdapConstants.ApiDictKeys.ACL_FORMAT: [acl_format],
+                },
             )
-            .recover(
-                lambda _err: FlextLdifModels.Entry.create(
-                    dn=FlextLdapConstants.SyntheticDns.ACL_INFO, attributes={}
-                )
-            ),
         )
+
+        # Handle recovery manually to avoid type issues
+        if entry_result.is_failure:
+            fallback_result = FlextLdifModels.Entry.create(
+                dn=FlextLdapConstants.SyntheticDns.ACL_INFO, attributes={}
+            )
+            return cast("FlextResult[FlextLdifModels.Entry]", fallback_result)
+
+        return cast("FlextResult[FlextLdifModels.Entry]", entry_result)
 
     def get_server_specific_attributes(self, server_type: str) -> list[str]:
         """Get server-specific attributes."""

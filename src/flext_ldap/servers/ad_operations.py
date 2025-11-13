@@ -17,6 +17,7 @@ from ldap3 import Connection
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
@@ -140,9 +141,10 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         if not result.is_failure:
             entry = result.unwrap()
             # Add AD-specific note
-            entry.attributes.attributes["note"] = [
-                "Use connection.server.schema for full parsing",
-            ]
+            if entry.attributes is not None:
+                entry.attributes.attributes["note"] = [
+                    "Use connection.server.schema for full parsing",
+                ]
         return result
 
     @override
@@ -155,9 +157,10 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         if not result.is_failure:
             entry = result.unwrap()
             # Add AD-specific note
-            entry.attributes.attributes["note"] = [
-                "Use connection.server.schema for full parsing",
-            ]
+            if entry.attributes is not None:
+                entry.attributes.attributes["note"] = [
+                    "Use connection.server.schema for full parsing",
+                ]
         return result
 
     # =========================================================================
@@ -207,8 +210,9 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
             if not result.is_failure:
                 entry = result.unwrap()
                 # Add AD-specific note about SDDL parsing
-                acl_attrs = entry.attributes.attributes
-                acl_attrs["note"] = ["SDDL parsing requires Windows Security APIs"]
+                if entry.attributes is not None:
+                    acl_attrs = entry.attributes.attributes
+                    acl_attrs["note"] = ["SDDL parsing requires Windows Security APIs"]
             return result
         except Exception as e:
             return FlextResult[FlextLdifModels.Entry].fail(
@@ -366,6 +370,34 @@ class FlextLdapServersActiveDirectoryOperations(FlextLdapServersBaseOperations):
         # Use shared FlextLdapEntryAdapter service for validation
         adapter = FlextLdapEntryAdapter(server_type=self.server_type)
         return adapter.validate_entry_for_server(entry, self.server_type)
+
+    @override
+    def _format_acls(self, acls: list[dict[str, object]]) -> FlextResult[list[str]]:
+        """Format ACL dictionaries to AD nTSecurityDescriptor strings.
+
+        Template Method Pattern: Implements abstract method from base class.
+        Delegates formatting to shared utility.
+
+        Args:
+            acls: List of ACL dictionaries
+
+        Returns:
+            FlextResult containing formatted ACL strings or error
+
+        """
+        return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
+
+    @override
+    def _get_acl_attribute(self) -> str:
+        """Get Active Directory ACL attribute name.
+
+        Template Method Pattern: Implements abstract method from base class.
+
+        Returns:
+            'nTSecurityDescriptor' - AD ACL attribute
+
+        """
+        return "nTSecurityDescriptor"
 
     # =========================================================================
     # AD-SPECIFIC OPERATIONS

@@ -12,8 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import types
-from typing import Literal, Self, cast, override
+from collections.abc import Callable
+from typing import Any, Literal, Self, cast, override
 
 from flext_core import (
     FlextDecorators,
@@ -127,80 +127,122 @@ class FlextLdapClients(FlextService[None]):
             FlextLdapProtocols.Ldap.LdapAuthenticationProtocol | None
         ) = None
 
-    def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
-        """Get searcher using functional lazy initialization with FlextRuntime.
+    def _safe_get_attribute(self, name: str, default: object | None = None) -> object:
+        """Safely get instance attribute with fallback using FlextRuntime.
 
-        Uses FlextRuntime.safe_get_attribute for thread-safe lazy loading
-        and functional composition for connection setup.
+        DRY helper method for safe attribute access across the class.
+        Consolidates repetitive FlextRuntime.safe_get_attribute calls.
+
+        Args:
+            name: Attribute name to retrieve
+            default: Default value if attribute doesn't exist
+
+        Returns:
+            Attribute value or default
+
         """
-        # Functional lazy initialization using FlextRuntime (DRY principle)
-        searcher = cast(
-            "FlextLdapProtocols.Ldap.LdapSearcherProtocol | None",
-            FlextRuntime.safe_get_attribute(self, "_searcher", None),
-        )
+        return FlextRuntime.safe_get_attribute(self, name, default)
 
-        if searcher is None:
-            # Functional composition: create and configure searcher
-            searcher = FlextLdapSearch()
-            if self._connection:
-                searcher.set_connection_context(self._connection)
-            self._searcher = cast(
+    def _validate_param(
+        self,
+        validator_func: Callable[[str, object], FlextResult[Any]],
+        param_name: str,
+        param_value: object,
+    ) -> FlextResult[None]:
+        """Validate a single parameter using functional validation pattern.
+
+        DRY helper for parameter validation across connection methods.
+        Uses monadic pattern with early return on validation failure.
+
+        Args:
+            validator_func: Validation function to call
+            param_name: Human-readable parameter name for error messages
+            param_value: Parameter value to validate
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """
+        validation_result = validator_func(param_name, param_value)
+        if validation_result.is_failure:
+            return FlextResult[None].fail(
+                validation_result.error or f"{param_name} validation failed"
+            )
+        return FlextResult[None].ok(None)
+
+    def _get_searcher(self) -> FlextLdapProtocols.Ldap.LdapSearcherProtocol:
+        """Get searcher using functional lazy initialization with helper method.
+
+        Uses DRY helper method for safe attribute access and functional
+        composition for connection setup with builder pattern.
+        """
+        # Functional lazy initialization - check if already exists
+        if hasattr(self, "_searcher") and self._searcher is not None:
+            return cast(
                 "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
-                searcher,
+                self._searcher,
             )
 
-        return cast("FlextLdapProtocols.Ldap.LdapSearcherProtocol", searcher)
+        # Builder pattern: create and configure searcher
+        searcher = FlextLdapSearch()
+        if self._connection:
+            searcher.set_connection_context(self._connection)
+        self._searcher = searcher  # type: ignore[assignment]
+        # Cast to Protocol type for proper type checking
+        return cast(
+            "FlextLdapProtocols.Ldap.LdapSearcherProtocol",
+            searcher,
+        )
 
     def _get_authenticator(self) -> FlextLdapProtocols.Ldap.LdapAuthenticationProtocol:
-        """Get authenticator using functional lazy initialization with FlextRuntime.
+        """Get authenticator using functional lazy initialization with helper method.
 
-        Uses FlextRuntime.safe_get_attribute for thread-safe lazy loading
-        and functional composition for connection context setup.
+        Uses DRY helper method for safe attribute access and builder pattern
+        for connection context setup with functional composition.
         """
-        # Functional lazy initialization using FlextRuntime (DRY principle)
-        authenticator = cast(
-            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol | None",
-            FlextRuntime.safe_get_attribute(self, "_authenticator", None),
-        )
-
-        if authenticator is None:
-            # Functional composition: create and configure authenticator
-            auth = FlextLdapAuthentication()
-            auth.set_connection_context(
-                self._connection,
-                self._server,
-                cast("FlextLdapConfig", self._ldap_config),
-            )
-            authenticator = cast(
+        # Functional lazy initialization - check if already exists
+        if hasattr(self, "_authenticator") and self._authenticator is not None:
+            return cast(
                 "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
-                auth,
+                self._authenticator,
             )
-            self._authenticator = authenticator
 
-        return authenticator
+        # Builder pattern: create and configure authenticator
+        auth = FlextLdapAuthentication()
+        auth.set_connection_context(
+            self._connection,
+            self._server,
+            cast("FlextLdapConfig", self._ldap_config),
+        )
+        self._authenticator = auth  # type: ignore[assignment]
+        # Cast to Protocol type for proper type checking
+        return cast(
+            "FlextLdapProtocols.Ldap.LdapAuthenticationProtocol",
+            auth,
+        )
 
     @property
     def connection(self) -> Connection | None:
-        """Get the current LDAP connection using functional property access.
+        """Get the current LDAP connection using helper method.
 
         Returns the active LDAP connection or None if not connected.
-        Uses FlextRuntime.safe_get_attribute for safe property access.
+        Uses DRY helper method for safe property access.
         """
-        # Functional property access with safe fallback
+        # Functional property access with safe fallback using helper
         return cast(
             "Connection | None",
-            FlextRuntime.safe_get_attribute(self, "_connection", None),
+            self._safe_get_attribute("_connection", None),
         )
 
     @property
     def quirks_mode(self) -> FlextLdapConstants.Types.QuirksMode:
-        """Get current quirks mode using functional property access.
+        """Get current quirks mode using helper method with type safety.
 
         Returns the active server-specific quirks handling mode.
-        Uses FlextRuntime.safe_get_attribute for safe property access.
+        Uses DRY helper method with proper type checking.
         """
-        # Functional property access with safe fallback
-        mode = FlextRuntime.safe_get_attribute(self, "s_mode", None)
+        # Functional property access with type-safe fallback
+        mode = self._safe_get_attribute("s_mode", None)
         if isinstance(mode, FlextLdapConstants.Types.QuirksMode):
             return mode
         return FlextLdapConstants.Types.QuirksMode.STRICT
@@ -259,7 +301,7 @@ class FlextLdapClients(FlextService[None]):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        _exc_tb: types.TracebackType | None,
+        _exc_tb: object,
     ) -> Literal[False]:
         """Exit context manager - automatic connection cleanup.
 
@@ -300,31 +342,36 @@ class FlextLdapClients(FlextService[None]):
         bind_dn: FlextLdifModels.DistinguishedName | str,
         password: str,
     ) -> FlextResult[str]:
-        """Validate connection parameters and return bind_dn string."""
-        uri_validation = FlextLdapUtilities.Validation.validate_ldap_uri(
-            "Server URI",
-            server_uri,
-        )
-        if uri_validation.is_failure:
-            return FlextResult[str].fail(
-                uri_validation.error or "Server URI validation failed",
-            )
+        """Validate connection parameters using builder pattern and return bind_dn string.
 
+        Uses monadic validation pattern with helper method for DRY principle.
+        Validates all parameters and returns normalized bind DN string.
+        """
+        # Monadic validation chain using helper method
+        uri_result = self._validate_param(
+            FlextLdapUtilities.Validation.validate_ldap_uri, "Server URI", server_uri
+        )
+        if uri_result.is_failure:
+            return FlextResult[str].fail(uri_result.error)
+
+        # Normalize bind DN to string
         bind_dn_str = str(getattr(bind_dn, "value", bind_dn))
-        bind_dn_validation = FlextLdapValidations.validate_dn(bind_dn_str, "Bind DN")
-        if bind_dn_validation.is_failure:
-            return FlextResult[str].fail(
-                bind_dn_validation.error or "Bind DN validation failed",
-            )
 
-        password_validation = FlextLdapUtilities.Validation.validate_password(
-            "Password",
-            password,
+        dn_result = self._validate_param(
+            lambda name, value: FlextLdapValidations.validate_dn(
+                cast("str | None", value), name
+            ),
+            "Bind DN",
+            bind_dn_str,
         )
-        if password_validation.is_failure:
-            return FlextResult[str].fail(
-                password_validation.error or "Password validation failed",
-            )
+        if dn_result.is_failure:
+            return FlextResult[str].fail(dn_result.error)
+
+        password_result = self._validate_param(
+            FlextLdapUtilities.Validation.validate_password, "Password", password
+        )
+        if password_result.is_failure:
+            return FlextResult[str].fail(password_result.error)
 
         return FlextResult[str].ok(bind_dn_str)
 
@@ -434,7 +481,7 @@ class FlextLdapClients(FlextService[None]):
             self._authenticator.set_connection_context(
                 self._connection,
                 self._server,
-                cast("FlextLdapConfig", self._ldap_config),
+                self._ldap_config,
             )
 
     def _auto_detect_server_type(self) -> None:
@@ -547,18 +594,19 @@ class FlextLdapClients(FlextService[None]):
     def _get_root_dse_attributes(self) -> FlextResult[dict[str, object]]:
         """Get Root DSE attributes for server detection."""
         try:
-            if (
-                not getattr(self._connection, "bound", False)
-                if self._connection
-                else False
-            ):
+            # Early return if connection is None or not bound
+            if not self._connection:
                 return FlextResult[dict[str, object]].fail(
                     FlextLdapConstants.ErrorMessages.CONNECTION_NOT_BOUND
                 )
 
-            # Type narrowing: connection is not None here
-            connection = cast("Connection", self._connection)
-            search_result = connection.search(
+            if not getattr(self._connection, "bound", False):
+                return FlextResult[dict[str, object]].fail(
+                    FlextLdapConstants.ErrorMessages.CONNECTION_NOT_BOUND
+                )
+
+            # Type narrowing: connection is guaranteed to be non-None here
+            search_result = self._connection.search(
                 search_base="",
                 search_filter=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
                 search_scope=cast(
@@ -569,12 +617,12 @@ class FlextLdapClients(FlextService[None]):
                 size_limit=1,
             )
 
-            if not search_result or not connection.entries:
+            if not search_result or not self._connection.entries:
                 return FlextResult[dict[str, object]].fail(
                     FlextLdapConstants.ErrorMessages.NO_ROOT_DSE_FOUND
                 )
 
-            entry = connection.entries[0]
+            entry = self._connection.entries[0]
             attrs: dict[str, object] = {}
             for attr in entry.entry_attributes:
                 attrs[attr] = entry[attr].value
