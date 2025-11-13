@@ -7,7 +7,7 @@ that require Docker containers.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 
 import pytest
 from flext_core import FlextResult
@@ -32,9 +32,8 @@ class DockerManagerProtocol(Protocol):
 def check_docker_available() -> bool:
     """Check if Docker is available and running using FlextTestDocker."""
     try:
-        docker_manager: DockerManagerProtocol = cast(
-            "DockerManagerProtocol", FlextTestDocker()
-        )
+        # Create Docker manager instance (protocol ensures type safety)
+        docker_manager = FlextTestDocker()
 
         # Use FlextTestDocker to check Docker availability
         version_result = docker_manager.get_docker_version()

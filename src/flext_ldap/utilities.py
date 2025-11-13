@@ -41,6 +41,115 @@ class FlextLdapUtilities:
     use FlextUtilities from flext-core.
     """
 
+    # =========================================================================
+    # SHARED VALIDATION HELPERS - DRY Principle Implementation
+    # =========================================================================
+
+    @staticmethod
+    def _check_not_none(param_name: str, value: object) -> FlextResult[object]:
+        """Validate that value is not None using functional approach.
+
+        DRY helper for null checking across all validation methods.
+        Uses monadic pattern for consistent error handling.
+
+        Args:
+            param_name: Parameter name for error messages
+            value: Value to check
+
+        Returns:
+            FlextResult with value or error
+
+        """
+        return (
+            FlextResult.ok(value)
+            if value is not None
+            else FlextResult.fail(f"{param_name} cannot be None")
+        )
+
+    @staticmethod
+    def _check_is_string(param_name: str, value: object) -> FlextResult[str]:
+        """Validate that value is a string using functional approach.
+
+        DRY helper for string type checking across validation methods.
+        Uses monadic pattern for consistent error handling.
+
+        Args:
+            param_name: Parameter name for error messages
+            value: Value to check
+
+        Returns:
+            FlextResult with string value or error
+
+        """
+        return (
+            FlextResult.ok(value)
+            if isinstance(value, str)
+            else FlextResult.fail(f"{param_name} must be a string")
+        )
+
+    @staticmethod
+    def _check_not_empty_string(param_name: str, value: str) -> FlextResult[str]:
+        """Validate that string value is not empty using functional approach.
+
+        DRY helper for empty string checking across validation methods.
+        Uses monadic pattern for consistent error handling.
+
+        Args:
+            param_name: Parameter name for error messages
+            value: String value to check
+
+        Returns:
+            FlextResult with non-empty string or error
+
+        """
+        return (
+            FlextResult.ok(value)
+            if value.strip()
+            else FlextResult.fail(f"{param_name} cannot be empty")
+        )
+
+    @staticmethod
+    def _check_is_int(param_name: str, value: object) -> FlextResult[int]:
+        """Validate that value is an integer using functional approach.
+
+        DRY helper for integer type checking across validation methods.
+        Uses monadic pattern for consistent error handling.
+
+        Args:
+            param_name: Parameter name for error messages
+            value: Value to check
+
+        Returns:
+            FlextResult with integer value or error
+
+        """
+        return (
+            FlextResult.ok(value)
+            if isinstance(value, int)
+            else FlextResult.fail(f"{param_name} must be an integer")
+        )
+
+    @staticmethod
+    def _check_non_negative(param_name: str, value: int) -> FlextResult[int]:
+        """Validate that integer value is non-negative using functional approach.
+
+        DRY helper for non-negative checking across validation methods.
+        Uses monadic pattern for consistent error handling.
+
+        Args:
+            param_name: Parameter name for error messages
+            value: Integer value to check
+
+        Returns:
+            FlextResult with non-negative integer or error
+
+        """
+        return (
+            FlextResult.ok(value)
+            if value >= 0
+            else FlextResult.fail(f"{param_name} must be non-negative")
+        )
+
     class ErrorHandling:
         """LDAP error detection and handling utilities."""
 
@@ -91,9 +200,9 @@ class FlextLdapUtilities:
         def validate_required_string(
             param_name: str, value: object
         ) -> FlextResult[bool]:
-            """Validate required string parameter using functional composition.
+            """Validate required string parameter using DRY helpers and monadic composition.
 
-            Uses railway pattern with functional composition for clean validation flow.
+            Uses railway pattern with shared validation helpers for clean validation flow.
             Implements DRY principle through reusable validation patterns.
 
             Args:
@@ -104,47 +213,23 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-
-            # Functional validation pipeline with railway pattern
-            def check_not_none(val: object) -> FlextResult[object]:
-                """Check that value is not None."""
-                return (
-                    FlextResult.ok(val)
-                    if val is not None
-                    else FlextResult.fail(f"{param_name} cannot be None")
-                )
-
-            def check_is_string(val: object) -> FlextResult[str]:
-                """Check that value is a string."""
-                return (
-                    FlextResult.ok(val)
-                    if isinstance(val, str)
-                    else FlextResult.fail(f"{param_name} must be a string")
-                )
-
-            def check_not_empty(val: str) -> FlextResult[bool]:
-                """Check that string is not empty."""
-                return (
-                    FlextResult.ok(True)
-                    if val.strip()
-                    else FlextResult.fail(f"{param_name} cannot be empty")
-                )
-
-            # Railway pattern: chain validations
+            # Railway pattern: chain validations using DRY helpers
             return (
-                FlextResult.ok(value)
-                .flat_map(check_not_none)
-                .flat_map(check_is_string)
-                .flat_map(check_not_empty)
+                FlextLdapUtilities._check_not_none(param_name, value)
+                .flat_map(lambda v: FlextLdapUtilities._check_is_string(param_name, v))
+                .flat_map(
+                    lambda s: FlextLdapUtilities._check_not_empty_string(param_name, s)
+                )
+                .map(lambda _: True)  # Convert to boolean result
             )
 
         @staticmethod
         def validate_non_negative_int(
             param_name: str, value: object
         ) -> FlextResult[bool]:
-            """Validate non-negative integer parameter using functional composition.
+            """Validate non-negative integer parameter using DRY helpers and monadic composition.
 
-            Uses railway pattern with functional validation steps.
+            Uses railway pattern with shared validation helpers.
             Implements DRY principle through consistent validation patterns.
 
             Args:
@@ -155,45 +240,49 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-
-            # Functional validation pipeline with railway pattern
-            def check_not_none(val: object) -> FlextResult[object]:
-                """Check that value is not None."""
-                return (
-                    FlextResult.ok(val)
-                    if val is not None
-                    else FlextResult.fail(f"{param_name} cannot be None")
-                )
-
-            def check_is_int(val: object) -> FlextResult[int]:
-                """Check that value is an integer."""
-                return (
-                    FlextResult.ok(val)
-                    if isinstance(val, int)
-                    else FlextResult.fail(f"{param_name} must be an integer")
-                )
-
-            def check_non_negative(val: int) -> FlextResult[bool]:
-                """Check that integer is non-negative."""
-                return (
-                    FlextResult.ok(True)
-                    if val >= 0
-                    else FlextResult.fail(f"{param_name} must be non-negative")
-                )
-
-            # Railway pattern: chain validations
+            # Railway pattern: chain validations using DRY helpers
             return (
-                FlextResult.ok(value)
-                .flat_map(check_not_none)
-                .flat_map(check_is_int)
-                .flat_map(check_non_negative)
+                FlextLdapUtilities._check_not_none(param_name, value)
+                .flat_map(lambda v: FlextLdapUtilities._check_is_int(param_name, v))
+                .flat_map(
+                    lambda i: FlextLdapUtilities._check_non_negative(param_name, i)
+                )
+                .map(lambda _: True)  # Convert to boolean result
             )
+
+        @staticmethod
+        def _check_password_length(param_name: str, value: str) -> FlextResult[str]:
+            """Validate password length requirements using functional approach.
+
+            DRY helper for password length validation.
+            Checks against configured min/max password lengths.
+
+            Args:
+                param_name: Parameter name for error messages
+                value: Password string to validate
+
+            Returns:
+                FlextResult with validated password or error
+
+            """
+            min_len = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
+            max_len = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
+
+            if len(value) < min_len:
+                return FlextResult.fail(
+                    f"{param_name} must be at least {min_len} characters"
+                )
+            if len(value) > max_len:
+                return FlextResult.fail(
+                    f"{param_name} must be no more than {max_len} characters"
+                )
+            return FlextResult.ok(value)
 
         @staticmethod
         def validate_password(param_name: str, value: object) -> FlextResult[bool]:
-            """Validate password parameter using functional composition.
+            """Validate password parameter using DRY helpers and monadic composition.
 
-            Uses railway pattern with functional validation steps for password requirements.
+            Uses railway pattern with shared validation helpers for password requirements.
             Implements DRY principle through consistent validation patterns.
 
             Args:
@@ -204,50 +293,45 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-
-            # Functional validation pipeline with railway pattern
-            def check_not_none(val: object) -> FlextResult[object]:
-                """Check that value is not None."""
-                return (
-                    FlextResult.ok(val)
-                    if val is not None
-                    else FlextResult.fail(f"{param_name} cannot be None")
-                )
-
-            def check_is_string(val: object) -> FlextResult[str]:
-                """Check that value is a string."""
-                return (
-                    FlextResult.ok(val)
-                    if isinstance(val, str)
-                    else FlextResult.fail(f"{param_name} must be a string")
-                )
-
-            def check_length(val: str) -> FlextResult[bool]:
-                """Check password length requirements."""
-                min_len = FlextLdapConstants.Validation.MIN_PASSWORD_LENGTH
-                max_len = FlextLdapConstants.Validation.MAX_PASSWORD_LENGTH
-
-                if len(val) < min_len:
-                    return FlextResult.fail(
-                        f"{param_name} must be at least {min_len} characters"
-                    )
-                if len(val) > max_len:
-                    return FlextResult.fail(
-                        f"{param_name} must be no more than {max_len} characters"
-                    )
-                return FlextResult.ok(True)
-
-            # Railway pattern: chain validations
+            # Railway pattern: chain validations using DRY helpers
             return (
-                FlextResult.ok(value)
-                .flat_map(check_not_none)
-                .flat_map(check_is_string)
-                .flat_map(check_length)
+                FlextLdapUtilities._check_not_none(param_name, value)
+                .flat_map(lambda v: FlextLdapUtilities._check_is_string(param_name, v))
+                .flat_map(
+                    lambda s: FlextLdapUtilities.Validation._check_password_length(  # noqa: SLF001
+                        param_name, s
+                    )
+                )
+                .map(lambda _: True)  # Convert to boolean result
             )
 
         @staticmethod
+        def _check_ldap_uri_format(param_name: str, value: str) -> FlextResult[str]:
+            """Validate LDAP URI format using regex pattern matching.
+
+            DRY helper for LDAP URI format validation.
+            Checks against configured URI pattern.
+
+            Args:
+                param_name: Parameter name for error messages
+                value: URI string to validate
+
+            Returns:
+                FlextResult with validated URI or error
+
+            """
+            if not re.match(FlextLdapConstants.RegexPatterns.SERVER_URI_PATTERN, value):
+                return FlextResult.fail(
+                    f"{param_name} must start with ldap:// or ldaps://"
+                )
+            return FlextResult.ok(value)
+
+        @staticmethod
         def validate_ldap_uri(param_name: str, value: object) -> FlextResult[bool]:
-            """Validate LDAP URI parameter.
+            """Validate LDAP URI parameter using DRY helpers and monadic composition.
+
+            Uses railway pattern with shared validation helpers.
+            Checks LDAP URI format requirements.
 
             Args:
                 param_name: Name of the parameter for error messages
@@ -257,25 +341,46 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-            if value is None:
-                return FlextResult[bool].fail(f"{param_name} cannot be None")
-            if not isinstance(value, str) or (
-                not isinstance(value, str) and bool(value.strip())
-            ):
-                return FlextResult[bool].fail(f"{param_name} cannot be empty")
-
-            uri_value = value.strip()
-            if not re.match(
-                FlextLdapConstants.RegexPatterns.SERVER_URI_PATTERN, uri_value
-            ):
-                return FlextResult[bool].fail(
-                    f"{param_name} must start with ldap:// or ldaps://"
+            # Railway pattern: chain validations using DRY helpers
+            return (
+                FlextLdapUtilities._check_not_none(param_name, value)
+                .flat_map(lambda v: FlextLdapUtilities._check_is_string(param_name, v))
+                .flat_map(
+                    lambda s: FlextLdapUtilities._check_not_empty_string(param_name, s)
                 )
-            return FlextResult[bool].ok(True)
+                .flat_map(
+                    lambda s: FlextLdapUtilities.Validation._check_ldap_uri_format(  # noqa: SLF001
+                        param_name, s
+                    )
+                )
+                .map(lambda _: True)  # Convert to boolean result
+            )
+
+        @staticmethod
+        def _check_ldap_filter_format(param_name: str, value: str) -> FlextResult[str]:
+            """Validate LDAP filter format using regex pattern matching.
+
+            DRY helper for LDAP filter format validation.
+            Checks that filter is properly enclosed in parentheses.
+
+            Args:
+                param_name: Parameter name for error messages
+                value: Filter string to validate
+
+            Returns:
+                FlextResult with validated filter or error
+
+            """
+            if not re.match(FlextLdapConstants.RegexPatterns.FILTER_PATTERN, value):
+                return FlextResult.fail(f"{param_name} must be enclosed in parentheses")
+            return FlextResult.ok(value)
 
         @staticmethod
         def validate_ldap_filter(param_name: str, value: object) -> FlextResult[bool]:
-            """Validate LDAP filter parameter.
+            """Validate LDAP filter parameter using DRY helpers and monadic composition.
+
+            Uses railway pattern with shared validation helpers.
+            Checks LDAP filter format requirements.
 
             Args:
                 param_name: Name of the parameter for error messages
@@ -285,21 +390,20 @@ class FlextLdapUtilities:
                 FlextResult[bool] indicating validation success or failure
 
             """
-            if value is None:
-                return FlextResult[bool].fail(f"{param_name} cannot be None")
-            if not isinstance(value, str) or (
-                not isinstance(value, str) and bool(value.strip())
-            ):
-                return FlextResult[bool].fail(f"{param_name} cannot be empty")
-
-            filter_value = value.strip()
-            if not re.match(
-                FlextLdapConstants.RegexPatterns.FILTER_PATTERN, filter_value
-            ):
-                return FlextResult[bool].fail(
-                    f"{param_name} must be enclosed in parentheses"
+            # Railway pattern: chain validations using DRY helpers
+            return (
+                FlextLdapUtilities._check_not_none(param_name, value)
+                .flat_map(lambda v: FlextLdapUtilities._check_is_string(param_name, v))
+                .flat_map(
+                    lambda s: FlextLdapUtilities._check_not_empty_string(param_name, s)
                 )
-            return FlextResult[bool].ok(True)
+                .flat_map(
+                    lambda s: FlextLdapUtilities.Validation._check_ldap_filter_format(  # noqa: SLF001
+                        param_name, s
+                    )
+                )
+                .map(lambda _: True)  # Convert to boolean result
+            )
 
         @staticmethod
         def validate_scope(scope: object) -> FlextResult[bool]:

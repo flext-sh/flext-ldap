@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import cast, override
 
 from flext_core import FlextResult
@@ -18,25 +19,63 @@ from ldap3 import MODIFY_REPLACE, Connection
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 
 
 class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
-    """Complete OpenLDAP 2.x operations implementation.
+    """Complete OpenLDAP 2.x operations implementation following SOLID and Flext principles.
 
-    OpenLDAP 2.x Features:
-    - cn=config dynamic configuration
-    - olcAccess ACL attribute
-    - olcDatabase configuration entries
-    - Supports paged results
-    - START_TLS support
-    - SASL authentication
+    This class implements server-specific operations for OpenLDAP 2.x (cn=config style)
+    while maintaining clean separation of concerns and leveraging Flext architectural patterns.
+
+    **SOLID Principles Compliance:**
+    - SRP: Single responsibility - handles only OpenLDAP 2.x-specific LDAP operations
+    - OCP: Open for extension through inheritance, closed for modification via overrides
+    - LSP: Substitutable with base class without breaking contracts
+    - DIP: Depends on abstractions (FlextServices, FlextConstants) not concretions
+
+    **Flext Architecture Compliance:**
+    - Uses FlextServices for dependency injection and service management
+    - Leverages FlextConstants for type-safe configuration
+    - Implements FlextResult monadic pattern for error handling
+    - Uses cached_property for performance optimizations
+    - Delegates to shared utilities (FlextLdapUtilities, FlextLdapEntryAdapter)
+    - Applies DRY principle with functional composition and helper methods
+
+    **OpenLDAP 2.x Features:**
+    - cn=config dynamic configuration with olcDatabase entries
+    - olcAccess ACL attribute for access control
+    - Enterprise features with paged results and advanced controls
+    - START_TLS and SASL authentication support
+    - Server-side sorting and content synchronization
     """
 
     def __init__(self) -> None:
         """Initialize OpenLDAP 2.x operations."""
         super().__init__(server_type=FlextLdapConstants.ServerTypes.OPENLDAP2)
+
+    @cached_property
+    def openldap2_default_controls(self) -> list[str]:
+        """Get cached default supported controls for OpenLDAP 2.x.
+
+        Uses cached_property for performance - computed once and cached.
+        Returns immutable list of default control OIDs for OpenLDAP 2.x.
+
+        Returns:
+            List of default control OIDs for fallback scenarios
+
+        """
+        return [
+            "1.2.840.113556.1.4.319",  # pagedResults
+            "1.2.840.113556.1.4.473",  # Server-side sort
+            "1.3.6.1.4.1.4203.1.10.1",  # Subentries
+            "2.16.840.1.113730.3.4.2",  # ManageDsaIT
+            "1.3.6.1.4.1.1466.20037",  # StartTLS
+            "1.3.6.1.1.12",  # Assertion control
+            "1.3.6.1.1.13.1",  # LDAP Pre-read Controls
+            "1.3.6.1.1.13.2",  # LDAP Post-read Controls
+            "1.3.6.1.4.1.4203.1.9.1.1",  # Content Sync
+        ]
 
     # --------------------------------------------------------------------- #
     # INHERITED METHODS (from FlextLdapServersBaseOperations)
@@ -145,7 +184,8 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         if not result.is_failure:
             entry = result.unwrap()
             # Add OpenLDAP 2.x-specific note
-            entry.attributes.attributes["note"] = ["OpenLDAP 2.x schema parsing"]
+            if entry.attributes is not None:
+                entry.attributes.attributes["note"] = ["OpenLDAP 2.x schema parsing"]
         return result
 
     @override
@@ -158,7 +198,8 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         if not result.is_failure:
             entry = result.unwrap()
             # Add OpenLDAP 2.x-specific note
-            entry.attributes.attributes["note"] = ["OpenLDAP 2.x schema parsing"]
+            if entry.attributes is not None:
+                entry.attributes.attributes["note"] = ["OpenLDAP 2.x schema parsing"]
         return result
 
     # =========================================================================
@@ -177,11 +218,11 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
     # get_acls() inherited from base class - uses get_acl_attribute_name()
 
-    def _format_acls_for_openldap2(
-        self, acls: list[dict[str, object]]
-    ) -> FlextResult[list[str]]:
+    @override
+    def _format_acls(self, acls: list[dict[str, object]]) -> FlextResult[list[str]]:
         """Format ACL dictionaries to olcAccess strings using FlextLdapUtilities.
 
+        Template Method Pattern: Implements abstract method from base class.
         Consolidated with FlextLdapUtilities.AclFormatting for reusability.
         Delegates formatting to shared utility.
 
@@ -193,6 +234,18 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
         """
         return FlextLdapUtilities.AclFormatting.format_acls_for_server(acls, self)
+
+    @override
+    def _get_acl_attribute(self) -> str:
+        """Get OpenLDAP 2.x ACL attribute name.
+
+        Template Method Pattern: Implements abstract method from base class.
+
+        Returns:
+            'olcAccess' - OpenLDAP 2.x ACL attribute
+
+        """
+        return FlextLdapConstants.AclAttributes.OLC_ACCESS
 
     def set_acls(
         self,
@@ -219,23 +272,19 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
                 return FlextResult[bool].fail("Connection not bound")
 
             # Railway Pattern: Delegate formatting to helper
-            format_result = self._format_acls_for_openldap2(_acls)
+            format_result = self._format_acls(_acls)
             if format_result.is_failure:
                 return FlextResult[bool].fail(str(format_result.error))
 
             formatted_acls = format_result.unwrap()
 
             # Railway Pattern: Execute modify operation
-            typed_conn = cast("FlextLdapTypes.Ldap3Protocols.Connection", _connection)
-            mods = cast(
-                "dict[str, list[tuple[int, list[str]]]]",
-                {
-                    FlextLdapConstants.AclAttributes.OLC_ACCESS: [
-                        (MODIFY_REPLACE, formatted_acls),
-                    ],
-                },
-            )
-            success: bool = typed_conn.modify(_dn, mods)
+            mods = {
+                FlextLdapConstants.AclAttributes.OLC_ACCESS: [
+                    (MODIFY_REPLACE, formatted_acls),
+                ],
+            }
+            success: bool = _connection.modify(_dn, mods)
 
             if not success:
                 error_msg = (
@@ -256,74 +305,55 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
 
     @override
     def parse(self, acl_string: str) -> FlextResult[FlextLdifModels.Entry]:
-        """Parse olcAccess ACL string to Entry format.
+        """Parse olcAccess ACL string for OpenLDAP 2.x.
 
-        OpenLDAP 2.x ACL format:
-        {0}to what by whom access
-
-        Example:
-        {0}to * by self write by anonymous auth by * read
+        Delegates to FlextLdifAcl service for proper ACL parsing using server-specific quirks.
+        This ensures consistent ACL handling across the Flext framework.
 
         Args:
-        acl_string: olcAccess ACL string
+            acl_string: olcAccess ACL string
 
         Returns:
-        FlextResult containing parsed ACL as Entry
+            FlextResult containing parsed ACL as Entry object with proper structure
 
         """
         try:
-            # Parse ACL components
-            acl_attributes: dict[str, list[str]] = {
-                FlextLdapConstants.AclAttributes.RAW: [acl_string],
-                FlextLdapConstants.AclAttributes.FORMAT: [
-                    FlextLdapConstants.AclFormat.OPENLDAP2,
-                ],
-                FlextLdapConstants.AclAttributes.SERVER_TYPE_ALT: [
-                    FlextLdapConstants.ServerTypes.OPENLDAP2,
-                ],
+            # Delegate to FlextLdifAcl service for server-specific parsing
+            acl_service = self._acl_service
+            parse_result = acl_service.parse(acl_string, self.server_type)
+
+            if parse_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"ACL parsing failed: {parse_result.error}",
+                )
+
+            # Convert ACL model to Entry format for compatibility
+            parse_result.unwrap()
+            acl_attributes: dict[str, str | list[str]] = {
+                "raw": acl_string,
+                FlextLdapConstants.AclAttributes.FORMAT: FlextLdapConstants.AclFormat.OPENLDAP2,
+                "server_type": self.server_type,
+                "privilege": acl_string.strip(),  # Privilege name from raw string
             }
 
-            # Extract index if present
-            remaining = acl_string
-            if acl_string.startswith("{"):
-                end_idx = acl_string.find("}")
-                if end_idx > 0:
-                    acl_attributes[FlextLdapConstants.AclAttributes.INDEX] = [
-                        acl_string[1:end_idx],
-                    ]
-                    remaining = acl_string[end_idx + 1 :].strip()
-
-            # Extract 'to' clause
-            if remaining.startswith("to "):
-                parts = remaining.split(" by ", 1)
-                acl_attributes[FlextLdapConstants.AclAttributes.TO] = [
-                    parts[0][3:].strip(),
-                ]
-                if len(parts) > 1:
-                    acl_attributes[FlextLdapConstants.AclSyntaxKeywords.BY] = [parts[1]]
-
-            # LdifAttributes.create returns FlextResult, need to unwrap
-            # Use Entry.create() instead of LdifAttributes.create() + Entry()
-            # Convert attributes dict to proper type for Entry.create()
-            acl_attrs_for_create: dict[str, str | list[str]] = {}
-            for key, values in acl_attributes.items():
-                if isinstance(values, list) and len(values) == 1:
-                    acl_attrs_for_create[key] = values[0]
-                else:
-                    acl_attrs_for_create[key] = values
-
             entry_result = FlextLdifModels.Entry.create(
-                dn="cn=AclRule",
-                attributes=acl_attrs_for_create,
+                dn=FlextLdapConstants.SyntheticDns.ACL_RULE,
+                attributes=acl_attributes,
             )
             if entry_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create ACL entry: {entry_result.error}",
                 )
-            return FlextResult.ok(cast("FlextLdifModels.Entry", entry_result.unwrap()))
+            # Cast to ensure correct Entry type from FlextLdifModels
+            return cast(
+                "FlextResult[FlextLdifModels.Entry]",
+                entry_result,
+            )
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(f"ACL parse failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"OpenLDAP 2.x ACL parse failed: {e}",
+            )
 
     @override
     def format_acl(self, acl_entry: FlextLdifModels.Entry) -> FlextResult[str]:
@@ -338,24 +368,36 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
         """
         try:
             # Extract attributes from entry
-            raw_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.RAW)
+            raw_attr = None
+            if acl_entry.attributes is not None:
+                raw_attr = acl_entry.attributes.get(
+                    FlextLdapConstants.AclAttributes.RAW
+                )
             if raw_attr and len(raw_attr) > 0:
                 return FlextResult[str].ok(raw_attr[0])
 
             # Otherwise construct from parts
             parts: list[str] = []
 
-            index_attr = acl_entry.attributes.get(
-                FlextLdapConstants.AclAttributes.INDEX,
-            )
+            index_attr = None
+            if acl_entry.attributes is not None:
+                index_attr = acl_entry.attributes.get(
+                    FlextLdapConstants.AclAttributes.INDEX,
+                )
             if index_attr and len(index_attr) > 0:
                 parts.append(f"{{{index_attr[0]}}}")
 
-            to_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.TO)
+            to_attr = None
+            if acl_entry.attributes is not None:
+                to_attr = acl_entry.attributes.get(FlextLdapConstants.AclAttributes.TO)
             if to_attr and len(to_attr) > 0:
                 parts.append(f"to {to_attr[0]}")
 
-            by_attr = acl_entry.attributes.get(FlextLdapConstants.AclSyntaxKeywords.BY)
+            by_attr = None
+            if acl_entry.attributes is not None:
+                by_attr = acl_entry.attributes.get(
+                    FlextLdapConstants.AclSyntaxKeywords.BY
+                )
             if by_attr and len(by_attr) > 0:
                 parts.append(f"by {by_attr[0]}")
 
@@ -514,19 +556,8 @@ class FlextLdapServersOpenLDAP2Operations(FlextLdapServersBaseOperations):
             # Railway Pattern: Get Root DSE which contains supportedControl attribute
             root_dse_result = self.get_root_dse_attributes(connection)
             if root_dse_result.is_failure:
-                # Fallback to common OpenLDAP 2.x controls
-                openldap2_controls = [
-                    "1.2.840.113556.1.4.319",  # pagedResults
-                    "1.2.840.113556.1.4.473",  # Server-side sort
-                    "1.3.6.1.4.1.4203.1.10.1",  # Subentries
-                    "2.16.840.1.113730.3.4.2",  # ManageDsaIT
-                    "1.3.6.1.4.1.1466.20037",  # StartTLS
-                    "1.3.6.1.1.12",  # Assertion control
-                    "1.3.6.1.1.13.1",  # LDAP Pre-read Controls
-                    "1.3.6.1.1.13.2",  # LDAP Post-read Controls
-                    "1.3.6.1.4.1.4203.1.9.1.1",  # Content Sync
-                ]
-                return FlextResult[list[str]].ok(openldap2_controls)
+                # Fallback to cached default OpenLDAP 2.x controls
+                return FlextResult[list[str]].ok(self.openldap2_default_controls)
 
             # Railway Pattern: Delegate extraction to helper
             root_dse = root_dse_result.unwrap()

@@ -13,7 +13,6 @@ from typing import cast
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif.services.server import FlextLdifServer
 from ldap3 import Connection
 from pydantic import PrivateAttr
 
@@ -51,7 +50,6 @@ class FlextLdapServersFactory(FlextService[None]):
 
     # Private attributes (Pydantic v2 PrivateAttr for internal state)
     _ldif: FlextLdif = PrivateAttr()
-    _s_manager: FlextLdifServer = PrivateAttr()
     _server_registry: dict[str, type[FlextLdapServersBaseOperations]] = PrivateAttr()
 
     def __init__(self) -> None:
@@ -59,7 +57,6 @@ class FlextLdapServersFactory(FlextService[None]):
         super().__init__()
         # Logger and container inherited from FlextService via FlextMixins
         self._ldif = FlextLdif.get_instance()
-        self._s_manager = FlextLdifServer.get_global_instance()
         self._server_registry = cast(
             "dict[str, type[FlextLdapServersBaseOperations]]",
             {

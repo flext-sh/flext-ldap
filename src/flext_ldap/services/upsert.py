@@ -162,20 +162,20 @@ class FlextLdapUpsertService(FlextService[dict[str, object]]):
                 if attr_obj:
                     # Handle list[str] directly
                     if isinstance(attr_obj, list):
-                    existing_attrs[attr_name.lower()] = [str(v) for v in attr_obj]
-                # Handle objects with .values attribute (cast to Protocol for type safety)
-                elif hasattr(attr_obj, "values"):
-                    attr_with_values = cast("_AttrWithValues", attr_obj)
-                    values_attr = attr_with_values.values
-                    if isinstance(values_attr, list):
-                        existing_attrs[attr_name.lower()] = [
-                            str(v) for v in values_attr
-                        ]
+                        existing_attrs[attr_name.lower()] = [str(v) for v in attr_obj]
+                    # Handle objects with .values attribute (cast to Protocol for type safety)
+                    elif hasattr(attr_obj, "values"):
+                        attr_with_values = cast("_AttrWithValues", attr_obj)
+                        values_attr = attr_with_values.values
+                        if isinstance(values_attr, list):
+                            existing_attrs[attr_name.lower()] = [
+                                str(v) for v in values_attr
+                            ]
+                        else:
+                            existing_attrs[attr_name.lower()] = [str(values_attr)]
+                    # Fallback to string conversion
                     else:
-                        existing_attrs[attr_name.lower()] = [str(values_attr)]
-                # Fallback to string conversion
-                else:
-                    existing_attrs[attr_name.lower()] = [str(attr_obj)]
+                        existing_attrs[attr_name.lower()] = [str(attr_obj)]
         return existing_attrs
 
     def _compute_attribute_changes(
