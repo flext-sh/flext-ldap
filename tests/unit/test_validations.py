@@ -98,7 +98,7 @@ class TestFlextLdapValidations:
         assert (
             result.error
             and result.error
-            and "Filter must be enclosed in parentheses" in result.error
+            and "must be enclosed in parentheses" in result.error.lower()
         )
 
     def test_validate_filter_empty(
@@ -110,7 +110,7 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            result.error and result.error and "Filter cannot be empty" in result.error
+            result.error and result.error and "cannot be empty" in result.error.lower()
         )
 
     def test_validate_filter_none(
@@ -121,7 +121,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "Filter cannot be None" in result.error
+        assert result.error and result.error and "cannot be none" in result.error.lower()
 
     def test_validate_password_success(
         self, validations: type[FlextLdapValidations]
@@ -143,7 +143,7 @@ class TestFlextLdapValidations:
         assert (
             result.error
             and result.error
-            and "Password must be at least 8 characters" in result.error
+            and "must be at least 8 characters" in result.error.lower()
         )
 
     def test_validate_password_too_long(
@@ -160,7 +160,7 @@ class TestFlextLdapValidations:
         assert (
             result.error
             and result.error
-            and "Password must be no more than 128 characters" in result.error
+            and "must be no more than 128 characters" in result.error.lower()
         )
 
     def test_validate_password_empty(
@@ -174,7 +174,7 @@ class TestFlextLdapValidations:
         assert (
             result.error
             and result.error
-            and "Password must be at least 8 characters" in result.error
+            and "must be at least 8 characters" in result.error.lower()
         )
 
     def test_validate_password_none(
@@ -186,7 +186,7 @@ class TestFlextLdapValidations:
         assert result.is_failure
         assert result.error is not None
         assert (
-            result.error and result.error and "Password cannot be None" in result.error
+            result.error and result.error and "cannot be none" in result.error.lower()
         )
 
     def test_validate_attributes_success(
@@ -287,7 +287,7 @@ class TestFlextLdapValidations:
         assert (
             result.error
             and result.error
-            and "URI must start with ldap:// or ldaps://" in result.error
+            and "must start with ldap:// or ldaps://" in result.error.lower()
         )
 
     def test_validate_server_uri_empty(
@@ -298,7 +298,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "URI cannot be empty" in result.error
+        assert result.error and result.error and "cannot be empty" in result.error.lower()
 
     def test_validate_server_uri_none(
         self, validations: type[FlextLdapValidations]
@@ -308,7 +308,7 @@ class TestFlextLdapValidations:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error and result.error and "URI cannot be None" in result.error
+        assert result.error and result.error and "cannot be none" in result.error.lower()
 
     # validate_port tests removed - use flext-core FlextUtilities.Validation.validate_port directly
 

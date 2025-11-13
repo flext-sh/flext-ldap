@@ -18,8 +18,8 @@ from flext_ldif import FlextLdifModels
 from ldap3 import MODIFY_REPLACE, Connection
 
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.utilities import FlextLdapUtilities
 
 
@@ -261,7 +261,7 @@ class FlextLdapServersOUDOperations(FlextLdapServersBaseOperations):
             }
 
             entry_result = FlextLdifModels.Entry.create(
-                dn="cn=AclRule",
+                dn=FlextLdapConstants.SyntheticDns.ACL_RULE,
                 attributes=acl_attributes,
             )
             if entry_result.is_failure:

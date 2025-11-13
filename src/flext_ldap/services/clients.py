@@ -48,12 +48,12 @@ from pydantic import Field, ValidationError
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
 from flext_ldap.servers.factory import FlextLdapServersFactory
 from flext_ldap.services.authentication import FlextLdapAuthentication
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.services.search import FlextLdapSearch
 from flext_ldap.services.validations import FlextLdapValidations
 from flext_ldap.typings import FlextLdapTypes
@@ -769,7 +769,7 @@ class FlextLdapClients(FlextService[None]):
         if self._ldap_config and hasattr(self._ldap_config, "ldap_server_uri"):
             return str(self._ldap_config.ldap_server_uri)
 
-        return "ldap://not-connected"
+        return FlextLdapConstants.Protocol.NOT_CONNECTED_URI
 
     def __call__(self, *args: str, **kwargs: dict[str, object]) -> FlextResult[bool]:
         """Callable interface for connection - creates ConnectionRequest and delegates."""

@@ -15,9 +15,7 @@ from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, FlextRuntime
 
-# FlextLdifUtilities doesn't expose DN/Validation yet - needs to be added to utilities.py
-# Importing directly from services (internal use only - will be refactored to public API)
-from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif import FlextLdifUtilities
 from flext_ldif.services.validation import FlextLdifValidation
 
 from flext_ldap.constants import FlextLdapConstants
@@ -31,12 +29,12 @@ class FlextLdapValidations:
     duplication and follow SRP. Provides convenience methods for common validations.
     """
 
-    _dn_service = FlextLdifDn()
+    _dn_service = FlextLdifUtilities.DN()
     _validation_service = FlextLdifValidation()
 
     @classmethod
     def validate_dn(cls, dn: str | None, context: str = "DN") -> FlextResult[bool]:
-        """Centralized DN validation - delegates to FlextLdifDn.
+        """Centralized DN validation - delegates to FlextLdifUtilities.DN.
 
         Args:
             dn: DN string to validate
@@ -152,6 +150,84 @@ class FlextLdapValidations:
             if field not in config or config[field] is None:
                 return FlextResult[bool].fail(f"Missing required field: {field}")
         return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def validate_filter(filter_str: str | None) -> FlextResult[bool]:
+        """Centralized LDAP filter validation - delegates to FlextLdapUtilities.
+
+        Args:
+            filter_str: LDAP filter string to validate
+
+        Returns:
+            FlextResult[bool] indicating validation success or failure
+
+        """
+        return FlextLdapUtilities.Validation.validate_ldap_filter("filter", filter_str)
+
+    @staticmethod
+    def validate_password(password: str | None) -> FlextResult[bool]:
+        """Centralized password validation - delegates to FlextLdapUtilities.
+
+        Args:
+            password: Password string to validate
+
+        Returns:
+            FlextResult[bool] indicating validation success or failure
+
+        """
+        return FlextLdapUtilities.Validation.validate_password("password", password)
+
+    @staticmethod
+    def validate_server_uri(uri: str | None) -> FlextResult[bool]:
+        """Centralized LDAP server URI validation - delegates to FlextLdapUtilities.
+
+        Args:
+            uri: LDAP server URI to validate
+
+        Returns:
+            FlextResult[bool] indicating validation success or failure
+
+        """
+        return FlextLdapUtilities.Validation.validate_ldap_uri("server_uri", uri)
+
+    @staticmethod
+    def validate_scope(scope: object) -> FlextResult[bool]:
+        """Centralized LDAP scope validation - delegates to FlextLdapUtilities.
+
+        Args:
+            scope: LDAP scope to validate
+
+        Returns:
+            FlextResult[bool] indicating validation success or failure
+
+        """
+        return FlextLdapUtilities.Validation.validate_scope(scope)
+
+    @staticmethod
+    def validate_modify_operation(operation: object) -> FlextResult[bool]:
+        """Centralized LDAP modify operation validation - delegates to FlextLdapUtilities.
+
+        Args:
+            operation: LDAP modify operation to validate
+
+        Returns:
+            FlextResult[bool] indicating validation success or failure
+
+        """
+        return FlextLdapUtilities.Validation.validate_modify_operation(operation)
+
+    @staticmethod
+    def validate_timeout(timeout: object) -> FlextResult[bool]:
+        """Centralized timeout validation - delegates to FlextLdapUtilities.
+
+        Args:
+            timeout: Timeout value to validate
+
+        Returns:
+            FlextResult[bool] indicating validation success or failure
+
+        """
+        return FlextLdapUtilities.Validation.validate_non_negative_int("timeout", timeout)
 
     # Field validators for Pydantic (raise exceptions)
 

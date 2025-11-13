@@ -23,7 +23,7 @@ from ldap3 import BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection
 from pydantic import ValidationError
 
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.services.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap.entry_adapter import FlextLdapEntryAdapter
 from flext_ldap.typings import FlextLdapTypes
 
 
@@ -186,7 +186,8 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=ObjectClassDefinition", metadata=None
+                value=FlextLdapConstants.SyntheticDns.OBJECT_CLASS_DEFINITION,
+                metadata=None,
             ),
             attributes=attributes,
         )
@@ -218,7 +219,8 @@ class FlextLdapServersBaseOperations(FlextService[None], ABC):
 
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=AttributeTypeDefinition", metadata=None
+                value=FlextLdapConstants.SyntheticDns.ATTRIBUTE_TYPE_DEFINITION,
+                metadata=None,
             ),
             attributes=attributes,
         )

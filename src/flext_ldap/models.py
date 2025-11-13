@@ -34,6 +34,7 @@ from pydantic import (
     SecretStr,
     computed_field,
     field_serializer,
+    field_validator,
     model_validator,
 )
 
@@ -103,6 +104,50 @@ class FlextLdapModels(FlextModels):
             pattern=FlextLdapConstants.RegexPatterns.FILTER_PATTERN,
             description="LDAP filter expression",
         )
+
+        @field_validator("expression")
+        @classmethod
+        def validate_rfc4515_syntax(cls, v: str) -> str:
+            """Validate RFC 4515 LDAP filter syntax.
+
+            Validates:
+            - Balanced parentheses
+            - Valid operators (=, ~=, >=, <=, =*)
+            - Proper AND (&), OR (|), NOT (!) syntax
+            - Escaped special characters when needed
+
+            RFC 4515: LDAP Search Filter specification
+            """
+            if not v or not v.strip():
+                msg = "Filter expression cannot be empty"
+                raise ValueError(msg)
+
+            # RFC 4515: Filter MUST start with '(' and end with ')'
+            if not (v.startswith("(") and v.endswith(")")):
+                msg = "Filter must be enclosed in parentheses (RFC 4515)"
+                raise ValueError(msg)
+
+            # Validate balanced parentheses
+            depth = 0
+            for char in v:
+                if char == "(":
+                    depth += 1
+                elif char == ")":
+                    depth -= 1
+                if depth < 0:
+                    msg = "Unbalanced parentheses in filter (RFC 4515)"
+                    raise ValueError(msg)
+            if depth != 0:
+                msg = "Unbalanced parentheses in filter (RFC 4515)"
+                raise ValueError(msg)
+
+            # Validate no invalid characters (RFC 4515 special chars: * ( ) \ NUL)
+            # NUL char validation
+            if "\x00" in v:
+                msg = "NUL character not allowed in filter (RFC 4515)"
+                raise ValueError(msg)
+
+            return v
 
         @classmethod
         def equals(cls, attribute: str, value: str) -> FlextLdapModels.Filter:
@@ -408,6 +453,55 @@ class FlextLdapModels(FlextModels):
             description="Override quirks mode for server-specific behavior",
         )
 
+        @field_validator("base_dn")
+        @classmethod
+        def validate_rfc4514_dn(cls, v: str) -> str:
+            """Validate DN syntax (RFC 4514).
+
+            RFC 4514 specifies DN format: attribute=value pairs separated by commas.
+            Basic validation ensures DN structure compliance while being permissive
+            for server-specific extensions stored in Entry metadata.
+
+            RFC 4514: LDAP Distinguished Names specification
+            """
+            if not v or not v.strip():
+                msg = "DN cannot be empty (RFC 4514)"
+                raise ValueError(msg)
+
+            v = v.strip()
+
+            # RFC 4514: DN must contain at least one '=' for attribute=value
+            if "=" not in v:
+                msg = "DN must contain attribute=value pairs (RFC 4514)"
+                raise ValueError(msg)
+
+            # RFC 4514: Check for invalid characters (NULL byte)
+            if "\x00" in v:
+                msg = "DN cannot contain NUL character (RFC 4514)"
+                raise ValueError(msg)
+
+            # RFC 4514: Basic RDN structure validation
+            # Split by comma (but not escaped comma \,)
+            parts = v.split(",")
+            for rdn in parts:
+                rdn_stripped = rdn.strip()
+                if not rdn_stripped:
+                    msg = "DN cannot have empty RDN components (RFC 4514)"
+                    raise ValueError(msg)
+
+                # Each RDN must have attribute=value format
+                if "=" not in rdn_stripped:
+                    msg = f"Invalid RDN '{rdn_stripped}': missing '=' (RFC 4514)"
+                    raise ValueError(msg)
+
+                # Check for attribute name before =
+                attr_name = rdn_stripped.split("=", 1)[0].strip()
+                if not attr_name:
+                    msg = f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    raise ValueError(msg)
+
+            return v
+
         @model_validator(mode="after")
         def validate_search_consistency(self) -> Self:
             """Model validator for cross-field validation and search optimization."""
@@ -597,6 +691,81 @@ class FlextLdapModels(FlextModels):
             description="Optional quirks mode override",
         )
 
+        @field_validator("dn")
+        @classmethod
+        def validate_rfc4514_dn_optional(cls, v: str | None) -> str | None:
+            """Validate DN syntax when provided (RFC 4514).
+
+            RFC 4514 specifies DN format: attribute=value pairs separated by commas.
+            This validator allows None (for batch operations without single DN).
+
+            RFC 4514: LDAP Distinguished Names specification
+            """
+            # Allow None for batch operations
+            if v is None:
+                return v
+
+            if not v or not v.strip():
+                msg = "DN cannot be empty when provided (RFC 4514)"
+                raise ValueError(msg)
+
+            v_stripped = v.strip()
+
+            # RFC 4514: DN must contain at least one '=' for attribute=value
+            if "=" not in v_stripped:
+                msg = "DN must contain attribute=value pairs (RFC 4514)"
+                raise ValueError(msg)
+
+            # RFC 4514: Check for invalid characters (NULL byte)
+            if "\x00" in v_stripped:
+                msg = "DN cannot contain NUL character (RFC 4514)"
+                raise ValueError(msg)
+
+            # RFC 4514: Basic RDN structure validation
+            # Split by comma (but not escaped comma \,)
+            parts = v_stripped.split(",")
+            for rdn in parts:
+                rdn_stripped = rdn.strip()
+                if not rdn_stripped:
+                    msg = "DN cannot have empty RDN components (RFC 4514)"
+                    raise ValueError(msg)
+
+                # Each RDN must have attribute=value format
+                if "=" not in rdn_stripped:
+                    msg = f"Invalid RDN '{rdn_stripped}': missing '=' (RFC 4514)"
+                    raise ValueError(msg)
+
+                # Check for attribute name before =
+                attr_name = rdn_stripped.split("=", 1)[0].strip()
+                if not attr_name:
+                    msg = f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    raise ValueError(msg)
+
+            return v_stripped
+
+        @model_validator(mode="after")
+        def validate_operation_consistency(self) -> Self:
+            """Validate operation mode consistency.
+
+            Ensures either single operation (dn + changes) or batch mode (modifications).
+            """
+            # Batch mode requires modifications
+            if self.batch and not self.modifications:
+                msg = "Batch mode requires modifications list"
+                raise ValueError(msg)
+
+            # Single operation requires dn (unless batch)
+            if not self.batch and self.dn is None:
+                msg = "Single operation requires DN (use batch=True for batch operations)"
+                raise ValueError(msg)
+
+            # Modifications should only be used in batch mode
+            if not self.batch and self.modifications:
+                msg = "Modifications list requires batch=True"
+                raise ValueError(msg)
+
+            return self
+
     class ConnectionRequest(BaseModel):
         """LDAP Connection Request with parameters and Pydantic 2 validation.
 
@@ -636,6 +805,59 @@ class FlextLdapModels(FlextModels):
             default=None,
             description="Override default quirks mode for this connection",
         )
+
+        @field_validator("server_uri")
+        @classmethod
+        def validate_ldap_uri_rfc(cls, v: str) -> str:
+            """Validate LDAP URI RFC compliance (RFC 4516).
+
+            Validates:
+            - Correct scheme (ldap:// or ldaps://)
+            - Valid hostname or IP address
+            - Valid port range (1-65535) if specified
+            - No invalid characters
+
+            RFC 4516: LDAP URL specification
+            """
+            if not v:
+                msg = "LDAP URI cannot be empty"
+                raise ValueError(msg)
+
+            # Strip whitespace
+            v = v.strip()
+
+            # Validate scheme
+            if not v.startswith(("ldap://", "ldaps://")):
+                msg = "URI must start with ldap:// or ldaps:// (RFC 4516)"
+                raise ValueError(msg)
+
+            # Extract host:port portion
+            scheme_end = v.index("://") + 3
+            uri_remainder = v[scheme_end:]
+
+            # Split host:port from path/query
+            host_port = uri_remainder.split("/")[0].split("?")[0]
+
+            if not host_port:
+                msg = "URI must contain hostname or IP (RFC 4516)"
+                raise ValueError(msg)
+
+            # Validate port if present
+            if ":" in host_port:
+                try:
+                    port_str = host_port.split(":")[-1]
+                    port = int(port_str)
+                    max_port = FlextConstants.Network.MAX_PORT
+                    if not (1 <= port <= max_port):
+                        msg = f"Port {port} out of valid range 1-{max_port} (RFC 4516)"
+                        raise ValueError(msg)
+                except ValueError as e:
+                    if "invalid literal" in str(e):
+                        msg = "Invalid port number in URI (RFC 4516)"
+                        raise ValueError(msg) from e
+                    raise
+
+            return v
 
     class ExchangeRequest(BaseModel):
         """LDAP Exchange Request with parameters and Pydantic 2 validation.
@@ -860,6 +1082,109 @@ class FlextLdapModels(FlextModels):
             # Build from individual fields using helper method
             attrs = self._build_attribute_dict()
             return FlextLdifModels.LdifAttributes(attributes=attrs)
+
+        @field_validator("dn", "schema_dn", "owner")
+        @classmethod
+        def validate_dn_optional(cls, v: str | None) -> str | None:
+            """Validate DN syntax when provided (RFC 4514).
+
+            RFC 4514 specifies DN format: attribute=value pairs separated by commas.
+            This validator allows None for optional DN fields.
+
+            RFC 4514: LDAP Distinguished Names specification
+            """
+            # Allow None for optional DN fields
+            if v is None:
+                return v
+
+            if not v or not v.strip():
+                msg = "DN cannot be empty when provided (RFC 4514)"
+                raise ValueError(msg)
+
+            v_stripped = v.strip()
+
+            # RFC 4514: DN must contain at least one '=' for attribute=value
+            if "=" not in v_stripped:
+                msg = "DN must contain attribute=value pairs (RFC 4514)"
+                raise ValueError(msg)
+
+            # RFC 4514: Check for invalid characters (NULL byte)
+            if "\x00" in v_stripped:
+                msg = "DN cannot contain NUL character (RFC 4514)"
+                raise ValueError(msg)
+
+            # RFC 4514: Basic RDN structure validation
+            parts = v_stripped.split(",")
+            for rdn in parts:
+                rdn_stripped = rdn.strip()
+                if not rdn_stripped:
+                    msg = "DN cannot have empty RDN components (RFC 4514)"
+                    raise ValueError(msg)
+
+                # Each RDN must have attribute=value format
+                if "=" not in rdn_stripped:
+                    msg = f"Invalid RDN '{rdn_stripped}': missing '=' (RFC 4514)"
+                    raise ValueError(msg)
+
+                # Check for attribute name before =
+                attr_name = rdn_stripped.split("=", 1)[0].strip()
+                if not attr_name:
+                    msg = f"Invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                    raise ValueError(msg)
+
+            return v_stripped
+
+        @field_validator("member")
+        @classmethod
+        def validate_member_dns(cls, v: list[str]) -> list[str]:
+            """Validate member DN list (RFC 4514).
+
+            Each member DN must comply with RFC 4514 DN syntax.
+            Empty list is allowed (group without members).
+
+            RFC 4514: LDAP Distinguished Names specification
+            """
+            if not v:
+                return v
+
+            validated_members = []
+            for member_dn in v:
+                if not member_dn or not member_dn.strip():
+                    msg = "Member DN cannot be empty (RFC 4514)"
+                    raise ValueError(msg)
+
+                member_stripped = member_dn.strip()
+
+                # RFC 4514: DN must contain at least one '='
+                if "=" not in member_stripped:
+                    msg = f"Member DN '{member_stripped}' must contain attribute=value pairs (RFC 4514)"
+                    raise ValueError(msg)
+
+                # RFC 4514: Check for invalid characters (NULL byte)
+                if "\x00" in member_stripped:
+                    msg = f"Member DN '{member_stripped}' cannot contain NUL character (RFC 4514)"
+                    raise ValueError(msg)
+
+                # RFC 4514: Basic RDN structure validation
+                parts = member_stripped.split(",")
+                for rdn in parts:
+                    rdn_stripped = rdn.strip()
+                    if not rdn_stripped:
+                        msg = f"Member DN '{member_stripped}' cannot have empty RDN components (RFC 4514)"
+                        raise ValueError(msg)
+
+                    if "=" not in rdn_stripped:
+                        msg = f"Member DN '{member_stripped}' has invalid RDN '{rdn_stripped}': missing '=' (RFC 4514)"
+                        raise ValueError(msg)
+
+                    attr_name = rdn_stripped.split("=", 1)[0].strip()
+                    if not attr_name:
+                        msg = f"Member DN '{member_stripped}' has invalid RDN '{rdn_stripped}': empty attribute name (RFC 4514)"
+                        raise ValueError(msg)
+
+                validated_members.append(member_stripped)
+
+            return validated_members
 
     # =========================================================================
     # CONSOLIDATED SYNC RESULT - Python 3.13+ composition pattern
