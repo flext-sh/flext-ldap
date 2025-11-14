@@ -1,108 +1,120 @@
-"""Unit tests for flext-ldap models with correct modern API.
-
-Tests for FlextLdapModels components including Entry, SearchRequest, and other models
-using the actual modern API from FlextLdifModels.
+"""Unit tests for FlextLdapModels.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
-import pytest
-from flext_ldif import FlextLdifModels
-
 from flext_ldap.models import FlextLdapModels
 
 
-class TestDistinguishedName:
-    """Tests for DistinguishedName model."""
+class TestConnectionConfig:
+    """Tests for ConnectionConfig model."""
 
-    def test_distinguished_name_creation(self) -> None:
-        """Test creating a distinguished name."""
-        dn = FlextLdifModels.DistinguishedName(
-            value="uid=testuser,ou=people,dc=example,dc=com"
+    def test_connection_config_defaults(self) -> None:
+        """Test ConnectionConfig with default values."""
+        config = FlextLdapModels.ConnectionConfig(host="ldap.example.com")
+        assert config.host == "ldap.example.com"
+        assert config.port == 389
+        assert config.use_ssl is False
+        assert config.use_tls is False
+        assert config.bind_dn is None
+        assert config.bind_password is None
+        assert config.timeout == 30
+        assert config.auto_bind is True
+        assert config.auto_range is True
+
+    def test_connection_config_custom(self) -> None:
+        """Test ConnectionConfig with custom values."""
+        config = FlextLdapModels.ConnectionConfig(
+            host="ldap.example.com",
+            port=636,
+            use_ssl=True,
+            bind_dn="cn=admin,dc=example,dc=com",
+            bind_password="password",
+            timeout=60,
         )
-        assert dn.value == "uid=testuser,ou=people,dc=example,dc=com"
+        assert config.host == "ldap.example.com"
+        assert config.port == 636
+        assert config.use_ssl is True
+        assert config.bind_dn == "cn=admin,dc=example,dc=com"
+        assert config.bind_password == "password"
+        assert config.timeout == 60
 
-    @pytest.mark.skip(
-        reason="Computed properties (rdn, rdn_attribute, etc.) not in modern DistinguishedName API"
-    )
-    def test_distinguished_name_computed_properties(self) -> None:
-        """Test DistinguishedName computed properties.
 
-        Note: Modern DistinguishedName API only has 'value' field.
-        RDN parsing and computed properties are not implemented.
-        """
-        dn = FlextLdifModels.DistinguishedName(
-            value="uid=testuser,ou=people,dc=example,dc=com"
+class TestSearchOptions:
+    """Tests for SearchOptions model."""
+
+    def test_search_options_defaults(self) -> None:
+        """Test SearchOptions with default values."""
+        options = FlextLdapModels.SearchOptions(base_dn="dc=example,dc=com")
+        assert options.base_dn == "dc=example,dc=com"
+        assert options.scope == "SUBTREE"
+        assert options.filter_str == "(objectClass=*)"
+        assert options.attributes is None
+        assert options.size_limit == 0
+        assert options.time_limit == 0
+
+    def test_search_options_custom(self) -> None:
+        """Test SearchOptions with custom values."""
+        options = FlextLdapModels.SearchOptions(
+            base_dn="dc=example,dc=com",
+            scope="ONELEVEL",
+            filter_str="(cn=test)",
+            attributes=["cn", "sn"],
+            size_limit=100,
+            time_limit=30,
         )
+        assert options.base_dn == "dc=example,dc=com"
+        assert options.scope == "ONELEVEL"
+        assert options.filter_str == "(cn=test)"
+        assert options.attributes == ["cn", "sn"]
+        assert options.size_limit == 100
+        assert options.time_limit == 30
 
-        # Test rdn property (DEPRECATED: rdn, rdn_attribute, rdn_value, components_count removed)
-        # Use dn.components instead for accessing RDN information
-        # assert dn.rdn == "uid=testuser"
-        # assert dn.rdn_attribute == "uid"
-        # assert dn.rdn_value == "testuser"
-        # assert dn.components_count == 4
 
-        # New API:
-        assert len(dn.components()) > 0
+class TestOperationResult:
+    """Tests for OperationResult model."""
 
-    def test_distinguished_name_normalization(self) -> None:
-        """Test DN normalization with mixed case."""
-        dn = FlextLdifModels.DistinguishedName(
-            value="CN=Test User,OU=People,DC=Example,DC=Com"
+    def test_operation_result_success(self) -> None:
+        """Test OperationResult for successful operation."""
+        result = FlextLdapModels.OperationResult(
+            success=True,
+            operation_type="add",
+            message="Entry added successfully",
+            entries_affected=1,
         )
-        # Verify that DN is properly created
-        assert "Test User" in dn.value or "test" in dn.value.lower()
+        assert result.success is True
+        assert result.operation_type == "add"
+        assert result.message == "Entry added successfully"
+        assert result.entries_affected == 1
 
-
-class TestSearchRequest:
-    """Tests for SearchRequest model."""
-
-    def test_create_user_search(self) -> None:
-        """Test creating a user search request."""
-        search_req = FlextLdapModels.SearchRequest.create_user_search(
-            uid="john", base_dn="ou=people,dc=example,dc=com"
+    def test_operation_result_failure(self) -> None:
+        """Test OperationResult for failed operation."""
+        result = FlextLdapModels.OperationResult(
+            success=False,
+            operation_type="delete",
+            message="Entry not found",
+            entries_affected=0,
         )
+        assert result.success is False
+        assert result.operation_type == "delete"
+        assert result.message == "Entry not found"
+        assert result.entries_affected == 0
 
-        assert search_req.base_dn == "ou=people,dc=example,dc=com"
-        assert "john" in search_req.filter_str
-        assert "person" in search_req.filter_str.lower()
-        assert search_req.page_size == 100
 
-    def test_create_group_search(self) -> None:
-        """Test creating a group search request."""
-        search_req = FlextLdapModels.SearchRequest.create_group_search(
-            cn="developers", base_dn="ou=groups,dc=example,dc=com"
+class TestSearchResult:
+    """Tests for SearchResult model."""
+
+    def test_search_result_empty(self, search_options: FlextLdapModels.SearchOptions) -> None:
+        """Test SearchResult with no entries."""
+        result = FlextLdapModels.SearchResult(
+            entries=[],
+            total_count=0,
+            search_options=search_options,
         )
-
-        assert search_req.base_dn == "ou=groups,dc=example,dc=com"
-        assert "developers" in search_req.filter_str
-        assert "group" in search_req.filter_str.lower()
-        assert search_req.page_size == 100
-
-    def test_search_request_with_custom_attributes(self) -> None:
-        """Test search request with custom attributes."""
-        search_req = FlextLdapModels.SearchRequest.create_user_search(
-            uid="jane",
-            base_dn="ou=people,dc=example,dc=com",
-            attributes=["cn", "mail", "telephoneNumber"],
-        )
-
-        assert search_req.attributes == ["cn", "mail", "telephoneNumber"]
-
-    def test_search_request_validation(self) -> None:
-        """Test search request validation."""
-        # Test that empty DN raises validation error
-        with pytest.raises(ValueError, match="DN cannot be empty"):
-            FlextLdapModels.SearchRequest.create(base_dn="", filter_str="(uid=test)")
-
-        # Test that empty filter raises validation error
-        with pytest.raises(ValueError, match="Filter string cannot be empty"):
-            FlextLdapModels.SearchRequest.create(
-                base_dn="dc=example,dc=com", filter_str=""
-            )
-
-
-__all__ = ["TestDistinguishedName", "TestSearchRequest"]
+        assert len(result.entries) == 0
+        assert result.total_count == 0
+        assert result.search_options == search_options
