@@ -74,7 +74,14 @@ class FlextLdapConstants(FlextConstants):
 
         SearchScope = Literal["BASE", "ONELEVEL", "SUBTREE"]
         OperationType = Literal[
-            "search", "add", "modify", "delete", "modify_dn", "compare", "bind", "unbind"
+            "search",
+            "add",
+            "modify",
+            "delete",
+            "modify_dn",
+            "compare",
+            "bind",
+            "unbind",
         ]
 
     # =========================================================================
@@ -182,11 +189,11 @@ class FlextLdapConstants(FlextConstants):
         SASL_GSSAPI: Final[str] = "SASL/GSSAPI"
 
     # =========================================================================
-    # SCOPES (LDAP3 compatibility)
+    # SCOPES
     # =========================================================================
 
     class Scopes:
-        """LDAP search scope constants for ldap3 compatibility."""
+        """LDAP search scope constants for ldap3."""
 
         BASE_LDAP3: Final[int] = 0  # BASE scope
         LEVEL_LDAP3: Final[int] = 1  # ONELEVEL scope

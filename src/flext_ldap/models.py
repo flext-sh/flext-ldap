@@ -192,11 +192,19 @@ class FlextLdapModels(FlextModels):
             default=False,
             description="Allow delete operations (changetype: delete)",
         )
-        progress_callback: (
-            Callable[[int, int, str, dict[str, int]], None] | None
-        ) = Field(
+        source_basedn: str | None = Field(
             default=None,
-            description="Optional callback for progress updates (idx, total, dn, stats)",
+            description="Source BaseDN for transformation (if LDIF has different BaseDN than LDAP)",
+        )
+        target_basedn: str | None = Field(
+            default=None,
+            description="Target BaseDN for transformation (LDAP server BaseDN)",
+        )
+        progress_callback: Callable[[int, int, str, dict[str, int]], None] | None = (
+            Field(
+                default=None,
+                description="Optional callback for progress updates (idx, total, dn, stats)",
+            )
         )
 
     class SyncStats(FlextModels.ArbitraryTypesModel):

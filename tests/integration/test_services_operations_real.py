@@ -9,10 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Generator
+
 import pytest
 from flext_ldif.models import FlextLdifModels
+from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
 pytestmark = pytest.mark.integration
@@ -25,10 +29,8 @@ class TestFlextLdapOperationsSearch:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-    ) -> FlextLdapOperations:
+    ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
@@ -98,11 +100,12 @@ class TestFlextLdapOperationsSearch:
         ldap_container: dict[str, object],
     ) -> None:
         """Test search with specific attributes."""
+        # Note: "dn" is not a searchable attribute, it's part of entry structure
         search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="SUBTREE",
-            attributes=["objectClass", "dn"],
+            attributes=["objectClass", "cn"],  # Removed "dn", added "cn"
         )
 
         result = operations_service.search(search_options)
@@ -133,8 +136,6 @@ class TestFlextLdapOperationsSearch:
         ldap_container: dict[str, object],
     ) -> None:
         """Test search when not connected."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
 
@@ -156,10 +157,8 @@ class TestFlextLdapOperationsAdd:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-    ) -> FlextLdapOperations:
+    ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
@@ -184,7 +183,12 @@ class TestFlextLdapOperationsAdd:
                 attributes={
                     "cn": ["testopsadd"],
                     "sn": ["Test"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )
@@ -204,8 +208,6 @@ class TestFlextLdapOperationsAdd:
 
     def test_add_entry_when_not_connected(self) -> None:
         """Test add when not connected."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
 
@@ -228,10 +230,8 @@ class TestFlextLdapOperationsModify:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-    ) -> FlextLdapOperations:
+    ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
@@ -248,8 +248,6 @@ class TestFlextLdapOperationsModify:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test modifying an entry."""
-        from ldap3 import MODIFY_REPLACE
-
         # First add an entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -259,7 +257,12 @@ class TestFlextLdapOperationsModify:
                 attributes={
                     "cn": ["testopsmodify"],
                     "sn": ["Test"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )
@@ -292,10 +295,8 @@ class TestFlextLdapOperationsDelete:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-    ) -> FlextLdapOperations:
+    ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
@@ -321,7 +322,12 @@ class TestFlextLdapOperationsDelete:
                 attributes={
                     "cn": ["testopsdelete"],
                     "sn": ["Test"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )
@@ -341,8 +347,6 @@ class TestFlextLdapOperationsDelete:
 
     def test_delete_when_not_connected(self) -> None:
         """Test delete when not connected."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
 

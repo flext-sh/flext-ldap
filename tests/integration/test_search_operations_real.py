@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif.models import FlextLdifModels
+from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
@@ -37,8 +39,7 @@ class TestFlextLdapSearchRealOperations:
         assert len(search_result.entries) > 0
         # Base DN should be in results
         assert any(
-            entry.dn is not None
-            and "dc=flext,dc=local" in str(entry.dn.value)
+            entry.dn is not None and "dc=flext,dc=local" in str(entry.dn.value)
             for entry in search_result.entries
         )
 
@@ -103,13 +104,16 @@ class TestFlextLdapSearchRealOperations:
         search_result = result.unwrap()
         # All results should be organizational units
         for entry in search_result.entries:
-            if entry.attributes:
-                object_classes = entry.attributes.get("objectClass", [])
+            if entry.attributes and entry.attributes.attributes:
+                object_classes = entry.attributes.attributes.get("objectClass", [])
                 if isinstance(object_classes, list):
                     assert "organizationalUnit" in object_classes
                 else:
                     # Single value case
-                    assert object_classes == "organizationalUnit" or "organizationalUnit" in str(object_classes)
+                    assert (
+                        object_classes == "organizationalUnit"
+                        or "organizationalUnit" in str(object_classes)
+                    )
 
     def test_search_with_attributes(self, ldap_client: FlextLdap) -> None:
         """Test search with specific attributes."""
@@ -127,8 +131,11 @@ class TestFlextLdapSearchRealOperations:
         assert len(search_result.entries) == 1
         entry = search_result.entries[0]
         # Should only have requested attributes
-        if entry.attributes:
-            assert "dc" in entry.attributes or "objectClass" in entry.attributes
+        if entry.attributes and entry.attributes.attributes:
+            assert (
+                "dc" in entry.attributes.attributes
+                or "objectClass" in entry.attributes.attributes
+            )
 
     def test_search_with_size_limit(self, ldap_client: FlextLdap) -> None:
         """Test search with size limit."""
@@ -153,8 +160,6 @@ class TestFlextLdapAddRealOperations:
 
     def test_add_user_entry(self, ldap_client: FlextLdap) -> None:
         """Test adding a user entry."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create entry using FlextLdifModels (reusing from flext-ldif)
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -162,7 +167,12 @@ class TestFlextLdapAddRealOperations:
             ),
             attributes=FlextLdifModels.LdifAttributes.model_validate({
                 "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": ["testadd"],
                     "cn": ["Test Add User"],
                     "sn": ["Add"],
@@ -185,8 +195,6 @@ class TestFlextLdapAddRealOperations:
 
     def test_add_group_entry(self, ldap_client: FlextLdap) -> None:
         """Test adding a group entry."""
-        from flext_ldif.models import FlextLdifModels
-
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
                 value="cn=testaddgroup,ou=groups,dc=flext,dc=local"
@@ -205,7 +213,9 @@ class TestFlextLdapAddRealOperations:
         assert result.is_success, f"Add failed: {result.error}"
 
         # Cleanup
-        delete_result = ldap_client.delete("cn=testaddgroup,ou=groups,dc=flext,dc=local")
+        delete_result = ldap_client.delete(
+            "cn=testaddgroup,ou=groups,dc=flext,dc=local"
+        )
         # Result may be success or failure depending on if entry exists
         assert delete_result.is_success or delete_result.is_failure
 
@@ -216,8 +226,6 @@ class TestFlextLdapModifyRealOperations:
 
     def test_modify_entry(self, ldap_client: FlextLdap) -> None:
         """Test modifying an entry."""
-        from flext_ldif.models import FlextLdifModels
-
         # First add an entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -225,7 +233,12 @@ class TestFlextLdapModifyRealOperations:
             ),
             attributes=FlextLdifModels.LdifAttributes.model_validate({
                 "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": ["testmodify"],
                     "cn": ["Test Modify User"],
                     "sn": ["Modify"],
@@ -237,14 +250,14 @@ class TestFlextLdapModifyRealOperations:
         assert add_result.is_success
 
         # Now modify it
-        from ldap3 import MODIFY_ADD, MODIFY_REPLACE
-
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["testmodify@internal.invalid"])],
             "telephoneNumber": [(MODIFY_ADD, ["+1234567890"])],
         }
 
-        modify_result = ldap_client.modify("uid=testmodify,ou=people,dc=flext,dc=local", changes)
+        modify_result = ldap_client.modify(
+            "uid=testmodify,ou=people,dc=flext,dc=local", changes
+        )
 
         assert modify_result.is_success, f"Modify failed: {modify_result.error}"
 
@@ -260,8 +273,6 @@ class TestFlextLdapDeleteRealOperations:
 
     def test_delete_entry(self, ldap_client: FlextLdap) -> None:
         """Test deleting an entry."""
-        from flext_ldif.models import FlextLdifModels
-
         # First add an entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -269,7 +280,12 @@ class TestFlextLdapDeleteRealOperations:
             ),
             attributes=FlextLdifModels.LdifAttributes.model_validate({
                 "attributes": {
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "uid": ["testdelete"],
                     "cn": ["Test Delete User"],
                     "sn": ["Delete"],

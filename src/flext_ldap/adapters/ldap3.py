@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -172,10 +172,13 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
 
         """
         if not self.is_connected or self._connection is None:
-            return FlextResult[list[FlextLdifModels.Entry]].fail("Not connected to LDAP server")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                "Not connected to LDAP server"
+            )
 
         try:
-            # Map scope string to ldap3 constant (BASE, LEVEL, SUBTREE are strings in ldap3)
+            # Map scope string to ldap3 constant
+            # BASE, LEVEL, SUBTREE are string constants from ldap3
             scope_map: dict[str, str] = {
                 "BASE": BASE,
                 "ONELEVEL": LEVEL,
@@ -185,6 +188,8 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
 
             # Perform search
             search_attributes = attributes or ["*"]
+            # ldap_scope is a string constant from ldap3 (BASE, LEVEL, SUBTREE)
+            # which matches the expected Literal type
             self._connection.search(
                 search_base=base_dn,
                 search_filter=filter_str,
@@ -200,7 +205,11 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
                 entry_attrs: dict[str, list[str]] = {}
                 for attr in entry.entry_attributes:
                     attr_values = entry[attr].values
-                    entry_attrs[attr] = list(attr_values) if isinstance(attr_values, (list, tuple)) else [str(attr_values)]
+                    entry_attrs[attr] = (
+                        list(attr_values)
+                        if isinstance(attr_values, (list, tuple))
+                        else [str(attr_values)]
+                    )
                 ldap3_results.append((str(entry.entry_dn), entry_attrs))
 
             # Use FlextLdifParser to parse LDAP3 results to Entry models
@@ -210,16 +219,21 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
                 parse_response = parse_result.unwrap()
                 # Return entries directly (reusing FlextLdifModels.Entry)
                 # ParseResponse.entries is a Sequence, convert to list
-                # Type ignore needed because flext-ldif may return domain.Entry but we expect models.Entry
-                entries_list = list(parse_response.entries)  # type: ignore[arg-type]
-                return FlextResult[list[FlextLdifModels.Entry]].ok(entries_list)  # type: ignore[assignment]
+                # flext-ldif may return domain.Entry but models.Entry is compatible
+                entries_list = list(parse_response.entries)
+                # Cast to expected type - domain.Entry and models.Entry are compatible
+                return FlextResult[list[FlextLdifModels.Entry]].ok(
+                    cast("list[FlextLdifModels.Entry]", entries_list)  # type: ignore[arg-type]
+                )
             error_msg = parse_result.error or "Failed to parse LDAP results"
             _ = logger.warning(f"Failed to parse LDAP results: {error_msg}")
             return FlextResult[list[FlextLdifModels.Entry]].fail(error_msg)
 
         except Exception as e:
             _ = logger.exception("LDAP search failed")
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Search failed: {e!s}")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Search failed: {e!s}"
+            )
 
     def add(
         self,
@@ -243,7 +257,9 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
             # Use entry adapter to convert Entry to ldap3 attributes format
             attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
             if attrs_result.is_failure:
-                return FlextResult[None].fail(f"Failed to convert entry attributes: {attrs_result.error}")
+                return FlextResult[None].fail(
+                    f"Failed to convert entry attributes: {attrs_result.error}"
+                )
             ldap_attrs: dict[str, list[str]] = attrs_result.unwrap()
 
             # Use DN from Entry model (reusing FlextLdifModels.DistinguishedName)
@@ -253,7 +269,11 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
             if success:
                 return FlextResult[None].ok(None)
             result_dict = self._connection.result
-            error = result_dict.get("description", "Unknown error") if isinstance(result_dict, dict) else "Unknown error"
+            error = (
+                result_dict.get("description", "Unknown error")
+                if isinstance(result_dict, dict)
+                else "Unknown error"
+            )
             return FlextResult[None].fail(f"Add failed: {error}")
 
         except Exception as e:
@@ -282,13 +302,19 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
 
         try:
             # Convert DN to string (reusing FlextLdifModels.DistinguishedName)
-            dn_str = str(dn) if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
+            dn_str = (
+                str(dn) if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
+            )
 
             success = self._connection.modify(dn_str, changes)
             if success:
                 return FlextResult[None].ok(None)
             result_dict = self._connection.result
-            error = result_dict.get("description", "Unknown error") if isinstance(result_dict, dict) else "Unknown error"
+            error = (
+                result_dict.get("description", "Unknown error")
+                if isinstance(result_dict, dict)
+                else "Unknown error"
+            )
             return FlextResult[None].fail(f"Modify failed: {error}")
 
         except Exception as e:
@@ -315,13 +341,19 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
 
         try:
             # Convert DN to string (reusing FlextLdifModels.DistinguishedName)
-            dn_str = str(dn) if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
+            dn_str = (
+                str(dn) if isinstance(dn, FlextLdifModels.DistinguishedName) else dn
+            )
 
             success = self._connection.delete(dn_str)
             if success:
                 return FlextResult[None].ok(None)
             result_dict = self._connection.result
-            error = result_dict.get("description", "Unknown error") if isinstance(result_dict, dict) else "Unknown error"
+            error = (
+                result_dict.get("description", "Unknown error")
+                if isinstance(result_dict, dict)
+                else "Unknown error"
+            )
             return FlextResult[None].fail(f"Delete failed: {error}")
 
         except Exception as e:
@@ -336,7 +368,9 @@ class Ldap3Adapter(FlextService[FlextLdifModels.Entry]):
 
         """
         if not self.is_connected:
-            return FlextResult[FlextLdifModels.Entry].fail("Not connected to LDAP server")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                "Not connected to LDAP server"
+            )
 
         # Return success with empty entry as health check
         # This follows the FlextService pattern

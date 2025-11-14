@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-from flext_ldif import FlextLdif, FlextLdifModels
-from ldap3 import Entry as Ldap3Entry
+from typing import cast
+
+from flext_ldif import FlextLdifModels
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
@@ -55,12 +55,15 @@ class TestFlextLdapEntryAdapter:
     def test_ldap3_to_ldif_entry_with_dict(self) -> None:
         """Test conversion with dict format."""
         adapter = FlextLdapEntryAdapter()
-        entry_dict = {
+        entry_dict: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["top", "person"],
-            },
+            "attributes": cast(
+                "object",
+                {
+                    "cn": ["test"],
+                    "objectClass": ["top", "person"],
+                },
+            ),
         }
         result = adapter.ldap3_to_ldif_entry(entry_dict)
         assert result.is_success
@@ -83,15 +86,16 @@ class TestFlextLdapEntryAdapter:
     def test_ldif_entry_to_ldap3_attributes_with_single_values(self) -> None:
         """Test conversion with single-value attributes."""
         adapter = FlextLdapEntryAdapter()
+        # LdifAttributes requires all values to be lists (Pydantic validation)
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": "test",
-                    "sn": "User",
+            attributes=FlextLdifModels.LdifAttributes.model_validate({
+                "attributes": {
+                    "cn": ["test"],  # Single-value as list
+                    "sn": ["User"],  # Single-value as list
                     "objectClass": ["top", "person"],
                 }
-            ),
+            }),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         assert result.is_success
@@ -124,15 +128,16 @@ class TestFlextLdapEntryAdapter:
     def test_ldif_entry_to_ldap3_attributes_with_empty_values(self) -> None:
         """Test conversion with empty values."""
         adapter = FlextLdapEntryAdapter()
+        # LdifAttributes requires all values to be lists (Pydantic validation)
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
+            attributes=FlextLdifModels.LdifAttributes.model_validate({
+                "attributes": {
                     "cn": ["test"],
-                    "description": "",
+                    "description": [],  # Empty string becomes empty list
                     "emptyList": [],
                 }
-            ),
+            }),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         assert result.is_success
@@ -173,9 +178,7 @@ class TestFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=""),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"cn": ["test"]}
-            ),
+            attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
         )
         result = adapter.validate_entry_for_server(entry, "openldap2")
         assert result.is_failure
@@ -214,18 +217,18 @@ class TestFlextLdapEntryAdapter:
 class TestFlextLdapEntryAdapterWithLdap3Entry:
     """Tests for entry adapter with real ldap3.Entry objects."""
 
-    def test_ldap3_to_ldif_entry_with_ldap3_entry(self) -> None:
-        """Test conversion with real ldap3.Entry object."""
+    def test_ldap3_to_ldif_entry_with_ldap3_entry_dict(self) -> None:
+        """Test conversion with dict format (real-world usage)."""
         adapter = FlextLdapEntryAdapter()
-        # Create a mock ldap3 Entry-like object
-        # Since we can't easily create a real ldap3.Entry without a connection,
-        # we test the dict path which is what would be used in practice
-        entry_dict = {
+        entry_dict: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectClass": ["top", "person"],
-            },
+            "attributes": cast(
+                "object",
+                {
+                    "cn": ["test"],
+                    "objectClass": ["top", "person"],
+                },
+            ),
         }
         result = adapter.ldap3_to_ldif_entry(entry_dict)
         assert result.is_success
