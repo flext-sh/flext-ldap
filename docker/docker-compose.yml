@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: flext-openldap-test
+    environment:
+      LDAP_ORGANISATION: "FLEXT Test"
+      LDAP_DOMAIN: "internal.invalid"
+      LDAP_BASE_DN: "dc=flext,dc=local"
+      LDAP_ADMIN_PASSWORD: "REDACTED_LDAP_BIND_PASSWORD"
+      LDAP_CONFIG_PASSWORD: "config"
+      LDAP_READONLY_USER: "false"
+      LDAP_RFC2307BIS_SCHEMA: "false"
+      LDAP_BACKEND: "mdb"
+      LDAP_TLS: "false"
+      LDAP_REPLICATION: "false"
+    ports:
+      - "3390:389"
+      - "3636:636"
+    volumes:
+      - ./ldap-data:/var/lib/ldap
+      - ./ldap-config:/etc/ldap/slapd.d
+      - ./ldif-init:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    command: --copy-service --loglevel debug
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:389", "-b", "dc=flext,dc=local", "-D", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local", "-w", "REDACTED_LDAP_BIND_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
