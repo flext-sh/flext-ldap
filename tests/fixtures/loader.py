@@ -60,8 +60,7 @@ class LdapTestFixtures:
         result = ldif.parse(ldif_content)
         if result.is_success:
             entries = result.unwrap()
-            # Convert to list[object] for type compatibility
-            return list(entries)  # type: ignore[return-value]
+            return list(entries)
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
 

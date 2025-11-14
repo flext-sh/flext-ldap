@@ -108,8 +108,12 @@ class TestOperationResult:
 class TestSearchResult:
     """Tests for SearchResult model."""
 
-    def test_search_result_empty(self, search_options: FlextLdapModels.SearchOptions) -> None:
+    def test_search_result_empty(self) -> None:
         """Test SearchResult with no entries."""
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn="dc=example,dc=com",
+            filter_str="(objectClass=*)",
+        )
         result = FlextLdapModels.SearchResult(
             entries=[],
             total_count=0,

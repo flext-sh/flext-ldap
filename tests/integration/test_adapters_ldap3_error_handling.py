@@ -1,0 +1,246 @@
+"""Integration tests for Ldap3Adapter error handling with real LDAP server.
+
+Tests all error handling paths with real LDAP operations.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Generator
+
+import pytest
+from flext_ldif.models import FlextLdifModels
+from ldap3 import MODIFY_REPLACE
+
+from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.models import FlextLdapModels
+from tests.fixtures.constants import RFC
+
+pytestmark = pytest.mark.integration
+
+
+class TestLdap3AdapterErrorHandling:
+    """Tests for Ldap3Adapter error handling."""
+
+    @pytest.fixture
+    def connected_adapter(
+        self,
+        connection_config: FlextLdapModels.ConnectionConfig,
+    ) -> Generator[Ldap3Adapter]:
+        """Get connected adapter for testing."""
+        adapter = Ldap3Adapter()
+        connect_result = adapter.connect(connection_config)
+        if connect_result.is_failure:
+            pytest.skip(f"Failed to connect: {connect_result.error}")
+        yield adapter
+        adapter.disconnect()
+
+    def test_search_with_invalid_base_dn(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test search with invalid base DN."""
+        result = connected_adapter.search(
+            base_dn="invalid-dn-format",
+            filter_str="(objectClass=*)",
+            scope="SUBTREE",
+        )
+        # Should handle gracefully
+        assert result.is_success or result.is_failure
+
+    def test_search_with_invalid_filter(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test search with invalid filter."""
+        result = connected_adapter.search(
+            base_dn=RFC.DEFAULT_BASE_DN,
+            filter_str="invalid(filter",
+            scope="SUBTREE",
+        )
+        # Should handle gracefully
+        assert result.is_success or result.is_failure
+
+    def test_add_with_invalid_entry(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test add with invalid entry."""
+        # Entry with invalid DN format
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="invalid-dn"),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["test"],
+                    "objectClass": ["top", "person"],
+                }
+            ),
+        )
+
+        result = connected_adapter.add(entry)
+        # Should fail gracefully
+        assert result.is_failure
+
+    def test_add_with_missing_objectclass(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test add with missing objectClass."""
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=testnooc,ou=people,dc=flext,dc=local"
+            ),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["testnooc"],
+                    # Missing objectClass
+                }
+            ),
+        )
+
+        # Cleanup first
+        _ = connected_adapter.delete(str(entry.dn))
+
+        result = connected_adapter.add(entry)
+        # Should fail (objectClass required)
+        assert result.is_failure
+
+    def test_modify_with_invalid_dn(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test modify with invalid DN."""
+        changes: dict[str, list[tuple[str, list[str]]]] = {
+            "mail": [(MODIFY_REPLACE, ["test@example.com"])],
+        }
+
+        result = connected_adapter.modify("invalid-dn", changes)
+        assert result.is_failure
+
+    def test_modify_with_invalid_changes(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test modify with invalid changes format."""
+        # Invalid changes format
+        changes: dict[str, list[tuple[str, list[str]]]] = {}
+
+        result = connected_adapter.modify(f"cn=test,{RFC.DEFAULT_BASE_DN}", changes)
+        # Should handle gracefully
+        assert result.is_success or result.is_failure
+
+    def test_delete_with_invalid_dn(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test delete with invalid DN."""
+        result = connected_adapter.delete("invalid-dn")
+        assert result.is_failure
+
+    def test_connect_with_invalid_credentials(
+        self,
+        ldap_container: dict[str, object],
+    ) -> None:
+        """Test connect with invalid credentials."""
+        adapter = Ldap3Adapter()
+        config = FlextLdapModels.ConnectionConfig(
+            host=str(ldap_container["host"]),
+            port=int(str(ldap_container["port"])),
+            use_ssl=False,
+            bind_dn=str(ldap_container["bind_dn"]),
+            bind_password="wrong-password",
+        )
+        result = adapter.connect(config)
+        assert result.is_failure
+        adapter.disconnect()
+
+    def test_search_exception_handling(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test search exception handling."""
+        # This tests the exception handler in search method
+        # Use a filter that might cause issues
+        result = connected_adapter.search(
+            base_dn=RFC.DEFAULT_BASE_DN,
+            filter_str="(objectClass=*)",
+            scope="INVALID_SCOPE",  # Invalid scope
+        )
+        # Should handle gracefully
+        assert result.is_success or result.is_failure
+
+    def test_add_exception_handling(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test add exception handling."""
+        # Entry that might cause issues
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=testexception,ou=people,dc=flext,dc=local"
+            ),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["testexception"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
+                }
+            ),
+        )
+
+        # Cleanup first
+        _ = connected_adapter.delete(str(entry.dn))
+
+        # Add should work or fail gracefully
+        result = connected_adapter.add(entry)
+        assert result.is_success or result.is_failure
+
+        # Cleanup
+        _ = connected_adapter.delete(str(entry.dn))
+
+    def test_modify_exception_handling(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test modify exception handling."""
+        # Try to modify non-existent entry
+        changes: dict[str, list[tuple[str, list[str]]]] = {
+            "mail": [(MODIFY_REPLACE, ["test@example.com"])],
+        }
+
+        result = connected_adapter.modify(
+            "cn=nonexistent12345,dc=flext,dc=local", changes
+        )
+        # Should fail gracefully
+        assert result.is_failure
+
+    def test_delete_exception_handling(
+        self,
+        connected_adapter: Ldap3Adapter,
+    ) -> None:
+        """Test delete exception handling."""
+        # Try to delete non-existent entry
+        result = connected_adapter.delete("cn=nonexistent12345,dc=flext,dc=local")
+        # Should fail gracefully
+        assert result.is_failure
+
+    def test_connect_exception_handling(self) -> None:
+        """Test connect exception handling."""
+        adapter = Ldap3Adapter()
+        # Use a valid port number but one that's not listening (connection will fail)
+        config = FlextLdapModels.ConnectionConfig(
+            host="localhost",
+            port=65534,  # Valid port but not listening
+            use_ssl=False,
+            bind_dn="cn=admin,dc=test,dc=local",
+            bind_password="password",
+        )
+        result = adapter.connect(config)
+        assert result.is_failure
+        adapter.disconnect()

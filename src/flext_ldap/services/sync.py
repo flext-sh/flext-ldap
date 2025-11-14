@@ -15,6 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.operations import FlextLdapOperations
@@ -93,7 +94,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             )
 
         # Check if operations service is connected
-        if not self._operations._connection.is_connected:
+        if not self._operations.is_connected:
             return FlextResult[FlextLdapModels.SyncStats].fail(
                 "Not connected to LDAP server"
             )
@@ -121,6 +122,15 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                     total=0,
                     duration_seconds=0.0,
                 )
+            )
+
+        # Transform BaseDN if configured
+        if opts.source_basedn and opts.target_basedn:
+            _ = self._logger.debug(
+                f"Transforming BaseDN: {opts.source_basedn} → {opts.target_basedn}"
+            )
+            entries = self._transform_entries_basedn(
+                entries, opts.source_basedn, opts.target_basedn
             )
 
         # Process entries in batch
@@ -159,7 +169,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
 
     def _sync_batch(
         self,
-        entries: list[FlextLdapModels.Entry],
+        entries: list[FlextLdifModels.Entry],
         options: FlextLdapModels.SyncOptions,
     ) -> FlextResult[FlextLdapModels.SyncStats]:
         """Sync entries in batch mode.
@@ -191,7 +201,10 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             else:
                 # Check if error is due to entry already existing
                 error_msg = add_result.error or ""
-                if "already exists" in error_msg.lower() or "entryAlreadyExists" in error_msg:
+                if (
+                    "already exists" in error_msg.lower()
+                    or "entryAlreadyExists" in error_msg
+                ):
                     total_skipped += 1
                     entry_stats["skipped"] = 1
                 else:
@@ -216,6 +229,43 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 duration_seconds=0.0,  # Set by caller
             )
         )
+
+    def _transform_entries_basedn(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        source_basedn: str,
+        target_basedn: str,
+    ) -> list[FlextLdifModels.Entry]:
+        """Transform BaseDN in entry DNs.
+
+        Args:
+            entries: List of Entry models
+            source_basedn: Source BaseDN to replace
+            target_basedn: Target BaseDN to use
+
+        Returns:
+            List of entries with transformed DNs
+
+        """
+        if source_basedn == target_basedn:
+            return entries
+
+        transformed = []
+        for entry in entries:
+            if entry.dn:
+                dn_str = str(entry.dn.value)
+                # Replace source BaseDN with target BaseDN
+                if source_basedn.lower() in dn_str.lower():
+                    new_dn_str = dn_str.replace(source_basedn, target_basedn)
+                    # Create new entry with updated DN
+                    new_entry = entry.model_copy(update={"dn": new_dn_str})
+                    transformed.append(new_entry)
+                else:
+                    transformed.append(entry)
+            else:
+                transformed.append(entry)
+
+        return transformed
 
     def execute(self) -> FlextResult[FlextLdapModels.SyncStats]:
         """Execute service health check.

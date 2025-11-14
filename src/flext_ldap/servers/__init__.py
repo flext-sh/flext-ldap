@@ -12,12 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
-from flext_ldap.servers.factory import FlextLdapServersFactory
-from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
+# Server operations modules are not yet implemented
+# These imports are commented out until implementation is complete
+# from flext_ldap.servers.base_operations import FlextLdapServersBaseOperations
+# from flext_ldap.servers.factory import FlextLdapServersFactory
+# from flext_ldap.servers.generic_operations import FlextLdapServersGenericOperations
 
-__all__ = [
-    "FlextLdapServersBaseOperations",
-    "FlextLdapServersFactory",
-    "FlextLdapServersGenericOperations",
+__all__: list[str] = [
+    # "FlextLdapServersBaseOperations",
+    # "FlextLdapServersFactory",
+    # "FlextLdapServersGenericOperations",
 ]

@@ -91,7 +91,9 @@ class FlextLdapEntryAdapter(FlextService[Any]):
         if isinstance(ldap3_entry, dict):
             create_result = self._ldif.create_entry(
                 dn=str(ldap3_entry.get("dn", "")),
-                attributes=cast("dict[str, str | list[str]]", ldap3_entry.get("attributes", {})),
+                attributes=cast(
+                    "dict[str, str | list[str]]", ldap3_entry.get("attributes", {})
+                ),
             )
             if create_result.is_failure:
                 return FlextResult[FlextLdifModels.Entry].fail(
@@ -124,13 +126,21 @@ class FlextLdapEntryAdapter(FlextService[Any]):
         # Reuse FlextLdifEntryManipulation pattern for conversion (FASE 1)
         # Using same logic as EntryManipulationServices.convert_ldif_attributes_to_ldap3_format()
         # but avoiding import due to broken LDAPAttributeError import in flext-ldif
-        attrs_dict = entry.attributes.attributes  # Already dict[str, list[str]]
+        attrs_dict = entry.attributes.attributes  # dict[str, str | list[str]]
         ldap3_attributes: dict[str, list[str]] = {}
         for key, value in attrs_dict.items():
             if FlextRuntime.is_list_like(value):
                 # Convert list-like object to list of strings
-                ldap3_attributes[key] = [str(item) for item in value]
+                # Handle empty lists
+                if len(value) == 0:  # type: ignore[arg-type]
+                    ldap3_attributes[key] = []
+                else:
+                    ldap3_attributes[key] = [str(item) for item in value]
+            elif not value:
+                # Empty string becomes empty list
+                ldap3_attributes[key] = []
             else:
+                # Single value becomes list with one element
                 ldap3_attributes[key] = [str(value)]
         return FlextResult[dict[str, list[str]]].ok(ldap3_attributes)
 
@@ -160,7 +170,7 @@ class FlextLdapEntryAdapter(FlextService[Any]):
     def validate_entry_for_server(
         self,
         entry: FlextLdifModels.Entry,
-        server_type: str,
+        server_type: str,  # noqa: ARG002
     ) -> FlextResult[bool]:
         """Validate entry for target server type.
 

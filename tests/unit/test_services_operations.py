@@ -7,6 +7,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif.models import FlextLdifModels
+from ldap3 import MODIFY_REPLACE
+
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
@@ -23,8 +27,6 @@ class TestFlextLdapOperations:
 
     def test_search_when_not_connected(self) -> None:
         """Test search when not connected."""
-        from flext_ldap.models import FlextLdapModels
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
 
@@ -40,8 +42,6 @@ class TestFlextLdapOperations:
 
     def test_add_when_not_connected(self) -> None:
         """Test add when not connected."""
-        from flext_ldif.models import FlextLdifModels
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
 
@@ -60,8 +60,6 @@ class TestFlextLdapOperations:
         """Test modify when not connected."""
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
-
-        from ldap3 import MODIFY_REPLACE
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],

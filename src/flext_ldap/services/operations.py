@@ -63,7 +63,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         """
         if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.SearchResult].fail("Not connected to LDAP server")
+            return FlextResult[FlextLdapModels.SearchResult].fail(
+                "Not connected to LDAP server"
+            )
 
         # Normalize base_dn using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
         # Validation is expensive and base_dn is usually already valid from SearchOptions model
@@ -82,7 +84,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         )
 
         if not search_result.is_success:
-            return FlextResult[FlextLdapModels.SearchResult].fail(search_result.error or "Search failed")
+            return FlextResult[FlextLdapModels.SearchResult].fail(
+                search_result.error or "Search failed"
+            )
 
         # Adapter already returns Entry models (reusing FlextLdifModels.Entry)
         entries = search_result.unwrap()
@@ -113,7 +117,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         """
         if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.SearchResult].fail("Not connected to LDAP server")
+            return FlextResult[FlextLdapModels.OperationResult].fail(
+                "Not connected to LDAP server"
+            )
 
         # Normalize DN using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
         # Entry.dn is already validated by Pydantic model
@@ -159,7 +165,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         """
         if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.OperationResult].fail("Not connected to LDAP server")
+            return FlextResult[FlextLdapModels.OperationResult].fail(
+                "Not connected to LDAP server"
+            )
 
         # Normalize DN using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
         # DN validation is expensive, normalize only
@@ -201,7 +209,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         """
         if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.OperationResult].fail("Not connected to LDAP server")
+            return FlextResult[FlextLdapModels.OperationResult].fail(
+                "Not connected to LDAP server"
+            )
 
         # Normalize DN using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
         # DN validation is expensive, normalize only
@@ -229,6 +239,16 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         )
         return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
+    @property
+    def is_connected(self) -> bool:
+        """Check if operations service has active connection.
+
+        Returns:
+            True if connected, False otherwise
+
+        """
+        return self._connection.is_connected
+
     def execute(self) -> FlextResult[FlextLdapModels.SearchResult]:
         """Execute service health check.
 
@@ -237,7 +257,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         """
         if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.SearchResult].fail("Not connected to LDAP server")
+            return FlextResult[FlextLdapModels.SearchResult].fail(
+                "Not connected to LDAP server"
+            )
 
         # Return empty search result as health check
         empty_options = FlextLdapModels.SearchOptions(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 from flext_ldif.models import FlextLdifModels
+from ldap3 import MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
@@ -74,7 +75,12 @@ class TestFlextLdapAPI:
                 attributes={
                     "cn": ["testapiadd"],
                     "sn": ["Test"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )
@@ -94,8 +100,6 @@ class TestFlextLdapAPI:
         ldap_client: FlextLdap,
     ) -> None:
         """Test API modify operation."""
-        from ldap3 import MODIFY_REPLACE
-
         # First add an entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -105,7 +109,12 @@ class TestFlextLdapAPI:
                 attributes={
                     "cn": ["testapimodify"],
                     "sn": ["Test"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )
@@ -142,7 +151,12 @@ class TestFlextLdapAPI:
                 attributes={
                     "cn": ["testapidelete"],
                     "sn": ["Test"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )
@@ -184,8 +198,6 @@ class TestFlextLdapAPI:
         assert add_result.is_failure
 
         # Modify should fail
-        from ldap3 import MODIFY_REPLACE
-
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
@@ -216,7 +228,9 @@ class TestFlextLdapAPIWithQuirks:
         for server_type in ["rfc", "openldap2", "generic"]:
             # Note: server_type is passed through to parser
             result = ldap_client.search(search_options)
-            assert result.is_success, f"Search failed for server_type={server_type}: {result.error}"
+            assert result.is_success, (
+                f"Search failed for server_type={server_type}: {result.error}"
+            )
 
     def test_add_entry_with_quirks(
         self,
@@ -233,7 +247,12 @@ class TestFlextLdapAPIWithQuirks:
                     "cn": ["testquirks"],
                     "sn": ["Test"],
                     "mail": ["test@example.com"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                 }
             ),
         )

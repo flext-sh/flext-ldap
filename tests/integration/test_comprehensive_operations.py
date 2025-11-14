@@ -11,9 +11,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif.models import FlextLdifModels
+from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.loader import LdapTestFixtures
+from tests.helpers.entry_helpers import EntryTestHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -80,10 +84,12 @@ class TestFlextLdapComprehensiveSearch:
         search_result = result.unwrap()
         # All results should be users
         for entry in search_result.entries:
-            if entry.attributes:
-                object_classes = entry.attributes.get("objectClass", [])
+            if entry.attributes and entry.attributes.attributes:
+                object_classes = entry.attributes.attributes.get("objectClass", [])
                 if isinstance(object_classes, list):
-                    assert "inetOrgPerson" in object_classes or "person" in object_classes
+                    assert (
+                        "inetOrgPerson" in object_classes or "person" in object_classes
+                    )
 
     def test_search_groups_only(
         self,
@@ -103,8 +109,8 @@ class TestFlextLdapComprehensiveSearch:
         search_result = result.unwrap()
         # All results should be groups
         for entry in search_result.entries:
-            if entry.attributes:
-                object_classes = entry.attributes.get("objectClass", [])
+            if entry.attributes and entry.attributes.attributes:
+                object_classes = entry.attributes.attributes.get("objectClass", [])
                 if isinstance(object_classes, list):
                     assert "groupOfNames" in object_classes
 
@@ -119,40 +125,15 @@ class TestFlextLdapComprehensiveAdd:
         test_user_entry: dict[str, object],
     ) -> None:
         """Test adding user entry from fixture data."""
-        from flext_ldif.models import FlextLdifModels
-
-        # Convert fixture dict to Entry model
-        dn_str = str(test_user_entry.get("dn", ""))
-        dn = FlextLdifModels.DistinguishedName(value=dn_str)
-        attrs_dict = test_user_entry.get("attributes", {})
-        # LdifAttributes has an 'attributes' field that is dict[str, list[str]]
-        if isinstance(attrs_dict, dict):
-            attrs = FlextLdifModels.LdifAttributes.model_validate({"attributes": attrs_dict})
-        else:
-            attrs = FlextLdifModels.LdifAttributes()
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
-
-        # Add entry
-        result = ldap_client.add(entry)
+        # Complete workflow using helper: convert, cleanup, add, verify, cleanup
+        entry, result = EntryTestHelpers.add_entry_from_dict(
+            ldap_client, test_user_entry
+        )
 
         assert result.is_success, f"Add failed: {result.error}"
         operation_result = result.unwrap()
         assert operation_result.success is True
         assert operation_result.entries_affected == 1
-
-        # Verify entry was added by searching for it
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=dn_str,
-            filter_str="(objectClass=*)",
-            scope="BASE",
-        )
-        search_result = ldap_client.search(search_options)
-        assert search_result.is_success
-        assert len(search_result.unwrap().entries) == 1
-
-        # Cleanup
-        delete_result = ldap_client.delete(dn_str)
-        assert delete_result.is_success or delete_result.is_failure
 
     def test_add_group_from_fixture(
         self,
@@ -160,30 +141,12 @@ class TestFlextLdapComprehensiveAdd:
         test_group_entry: dict[str, object],
     ) -> None:
         """Test adding group entry from fixture data."""
-        from flext_ldif.models import FlextLdifModels
-
-        # Convert fixture dict to Entry model
-        dn_str = str(test_group_entry.get("dn", ""))
-        dn = FlextLdifModels.DistinguishedName(value=dn_str)
-        attrs_dict = test_group_entry.get("attributes", {})
-        if isinstance(attrs_dict, dict):
-            # LdifAttributes has an 'attributes' field that is dict[str, list[str]]
-            attrs = FlextLdifModels.LdifAttributes.model_validate({"attributes": attrs_dict})
-        else:
-            attrs = FlextLdifModels.LdifAttributes()
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
-
-        # Cleanup any existing entry first
-        _ = ldap_client.delete(dn_str)
-
-        # Add entry
-        result = ldap_client.add(entry)
+        # Complete workflow using helper
+        entry, result = EntryTestHelpers.add_entry_from_dict(
+            ldap_client, test_group_entry
+        )
 
         assert result.is_success, f"Add failed: {result.error}"
-
-        # Cleanup
-        delete_result = ldap_client.delete(dn_str)
-        assert delete_result.is_success or delete_result.is_failure
 
     def test_add_multiple_users_from_fixtures(
         self,
@@ -192,37 +155,23 @@ class TestFlextLdapComprehensiveAdd:
         ldap_container: dict[str, object],
     ) -> None:
         """Test adding multiple users from fixture JSON."""
-        from flext_ldif.models import FlextLdifModels
+        # Convert all users to entry dicts
+        entry_dicts = [
+            LdapTestFixtures.convert_user_json_to_entry(user_data)
+            for user_data in test_users_json[:2]  # Limit to 2 for test speed
+        ]
 
-        from tests.fixtures.loader import LdapTestFixtures
+        # Add all entries using helper with DN adjustment
+        base_dn = str(ldap_container.get("base_dn", ""))
+        results = EntryTestHelpers.add_multiple_entries_from_dicts(
+            ldap_client,
+            entry_dicts,
+            adjust_dn={"from": "dc=example,dc=com", "to": base_dn},
+        )
 
-        added_dns: list[str] = []
-
-        # Add each user from fixture
-        for user_data in test_users_json[:2]:  # Limit to 2 for test speed
-            # Convert to Entry
-            entry_dict = LdapTestFixtures.convert_user_json_to_entry(user_data)
-            # Adjust DN to use flext.local domain
-            original_dn = str(entry_dict.get("dn", ""))
-            base_dn = str(ldap_container.get("base_dn", ""))
-            dn_str = original_dn.replace("dc=example,dc=com", base_dn)
-
-            dn = FlextLdifModels.DistinguishedName(value=dn_str)
-            attrs_dict = entry_dict.get("attributes", {})
-            if isinstance(attrs_dict, dict):
-                attrs = FlextLdifModels.LdifAttributes.model_validate({"attributes": attrs_dict})
-            else:
-                attrs = FlextLdifModels.LdifAttributes()
-            entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
-
-            result = ldap_client.add(entry)
-            assert result.is_success, f"Failed to add {dn_str}: {result.error}"
-            added_dns.append(dn_str)
-
-        # Cleanup
-        for dn_str in added_dns:
-            delete_result = ldap_client.delete(dn_str)
-            assert delete_result.is_success or delete_result.is_failure
+        # Verify all adds succeeded
+        for entry, result in results:
+            assert result.is_success, f"Failed to add {entry.dn}: {result.error}"
 
 
 @pytest.mark.integration
@@ -235,46 +184,22 @@ class TestFlextLdapComprehensiveModify:
         test_user_entry: dict[str, object],
     ) -> None:
         """Test modifying user entry attributes."""
-        from flext_ldif.models import FlextLdifModels
-        from ldap3 import MODIFY_ADD, MODIFY_REPLACE
-
-        # First add the user
-        dn_str = str(test_user_entry.get("dn", ""))
-        dn = FlextLdifModels.DistinguishedName(value=dn_str)
-        attrs_dict = test_user_entry.get("attributes", {})
-        if isinstance(attrs_dict, dict):
-            attrs = FlextLdifModels.LdifAttributes.model_validate({"attributes": attrs_dict})
-        else:
-            attrs = FlextLdifModels.LdifAttributes()
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
-
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Modify attributes
+        # Complete modify workflow using helper: add, modify, verify, cleanup
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["updated@example.com"])],
             "telephoneNumber": [(MODIFY_ADD, ["+9876543210"])],
         }
 
-        modify_result = ldap_client.modify(dn_str, changes)
-        assert modify_result.is_success, f"Modify failed: {modify_result.error}"
-
-        # Verify modification
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=dn_str,
-            filter_str="(objectClass=*)",
-            scope="BASE",
+        entry, add_result, modify_result = EntryTestHelpers.modify_entry_with_verification(
+            ldap_client,
+            test_user_entry,
+            changes,
+            verify_attribute="mail",
+            verify_value="updated@example.com",
         )
-        search_result = ldap_client.search(search_options)
-        assert search_result.is_success
-        modified_entry = search_result.unwrap().entries[0]
-        if modified_entry.attributes:
-            assert "updated@example.com" in modified_entry.attributes.get("mail", [])
 
-        # Cleanup
-        delete_result = ldap_client.delete(str(test_user_entry.get("dn", "")))
-        assert delete_result.is_success or delete_result.is_failure
+        assert add_result.is_success
+        assert modify_result.is_success, f"Modify failed: {modify_result.error}"
 
 
 @pytest.mark.integration
@@ -287,38 +212,16 @@ class TestFlextLdapComprehensiveDelete:
         test_user_entry: dict[str, object],
     ) -> None:
         """Test deleting user entry."""
-        from flext_ldif.models import FlextLdifModels
+        # Complete delete workflow using helper: add, delete, verify deletion
+        entry, add_result, delete_result = EntryTestHelpers.delete_entry_with_verification(
+            ldap_client, test_user_entry
+        )
 
-        # First add the user
-        dn_str = str(test_user_entry.get("dn", ""))
-        dn = FlextLdifModels.DistinguishedName(value=dn_str)
-        attrs_dict = test_user_entry.get("attributes", {})
-        if isinstance(attrs_dict, dict):
-            attrs = FlextLdifModels.LdifAttributes.model_validate({"attributes": attrs_dict})
-        else:
-            attrs = FlextLdifModels.LdifAttributes()
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
-
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Delete the entry
-        delete_result = ldap_client.delete(str(dn_str))
+        assert add_result.is_success, f"Add failed: {add_result.error}"
         assert delete_result.is_success, f"Delete failed: {delete_result.error}"
         operation_result = delete_result.unwrap()
         assert operation_result.success is True
         assert operation_result.entries_affected == 1
-
-        # Verify deletion
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(dn_str),
-            filter_str="(objectClass=*)",
-            scope="BASE",
-        )
-        search_result = ldap_client.search(search_options)
-        assert search_result.is_success
-        # Entry should not exist
-        assert len(search_result.unwrap().entries) == 0
 
 
 @pytest.mark.integration
@@ -397,11 +300,15 @@ class TestFlextLdapWithBaseLdif:
             pytest.skip("No base LDIF entries available")
 
         # Find a user entry in base LDIF
-        from flext_ldif.models import FlextLdifModels
-
         user_entry = None
         for entry in base_ldif_entries:
-            if isinstance(entry, FlextLdifModels.Entry) and entry.attributes and "inetOrgPerson" in entry.attributes.get("objectClass", []):
+            if (
+                isinstance(entry, FlextLdifModels.Entry)
+                and entry.attributes
+                and entry.attributes.attributes
+                and "inetOrgPerson"
+                in entry.attributes.attributes.get("objectClass", [])
+            ):
                 user_entry = entry
                 break
 
@@ -412,7 +319,9 @@ class TestFlextLdapWithBaseLdif:
         if user_entry.dn is None:
             pytest.skip("Entry has no DN")
         original_dn = str(user_entry.dn.value)
-        new_dn = original_dn.replace("dc=example,dc=com", str(ldap_container.get("base_dn", "")))
+        new_dn = original_dn.replace(
+            "dc=example,dc=com", str(ldap_container.get("base_dn", ""))
+        )
 
         # Create new entry with adjusted DN
         new_entry = FlextLdifModels.Entry(

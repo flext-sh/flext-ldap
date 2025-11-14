@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+import types
+from typing import Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
@@ -124,7 +125,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         """
         return self._operations
 
-    def __enter__(self) -> FlextLdap:
+    def __enter__(self) -> Self:
         """Context manager entry.
 
         Returns:
@@ -137,7 +138,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: object | None,
+        exc_tb: types.TracebackType | None,
     ) -> None:
         """Context manager exit.
 

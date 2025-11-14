@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from flext_core import FlextLogger
@@ -20,6 +21,7 @@ from ldap3 import Connection, Server
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.loader import LdapTestFixtures
 
 logger = FlextLogger(__name__)
 
@@ -59,7 +61,6 @@ def ldap_container(
     compose_file = str(container_config["compose_file"])
     if not compose_file.startswith("/"):
         # Relative path, make it absolute from workspace root
-        from pathlib import Path
         # Workspace root is /home/marlonsc/flext
         workspace_root = Path("/home/marlonsc/flext")
         compose_file = str(workspace_root / compose_file)
@@ -110,7 +111,9 @@ def ldap_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
 
 
 @pytest.fixture(scope="module")
-def connection_config(ldap_container: dict[str, object]) -> FlextLdapModels.ConnectionConfig:
+def connection_config(
+    ldap_container: dict[str, object],
+) -> FlextLdapModels.ConnectionConfig:
     """Create connection configuration for testing.
 
     Module-scoped to match ldap_client fixture scope for performance.
@@ -256,40 +259,30 @@ def ldap_test_data_loader(
 @pytest.fixture
 def test_users_json() -> list[dict[str, object]]:
     """Load test users from JSON fixture file."""
-    from tests.fixtures.loader import LdapTestFixtures
-
     return LdapTestFixtures.load_users_json()
 
 
 @pytest.fixture
 def test_groups_json() -> list[dict[str, object]]:
     """Load test groups from JSON fixture file."""
-    from tests.fixtures.loader import LdapTestFixtures
-
     return LdapTestFixtures.load_groups_json()
 
 
 @pytest.fixture
 def base_ldif_content() -> str:
     """Load base LDIF structure from fixture file."""
-    from tests.fixtures.loader import LdapTestFixtures
-
     return LdapTestFixtures.load_base_ldif()
 
 
 @pytest.fixture
 def base_ldif_entries() -> list[object]:
     """Load and parse base LDIF structure to Entry models."""
-    from tests.fixtures.loader import LdapTestFixtures
-
     return LdapTestFixtures.load_base_ldif_entries()
 
 
 @pytest.fixture
 def test_user_entry(test_users_json: list[dict[str, object]]) -> dict[str, object]:
     """Get first test user as Entry-compatible dict."""
-    from tests.fixtures.loader import LdapTestFixtures
-
     if not test_users_json:
         pytest.skip("No test users available")
 
@@ -299,8 +292,6 @@ def test_user_entry(test_users_json: list[dict[str, object]]) -> dict[str, objec
 @pytest.fixture
 def test_group_entry(test_groups_json: list[dict[str, object]]) -> dict[str, object]:
     """Get first test group as Entry-compatible dict."""
-    from tests.fixtures.loader import LdapTestFixtures
-
     if not test_groups_json:
         pytest.skip("No test groups available")
 
@@ -308,7 +299,7 @@ def test_group_entry(test_groups_json: list[dict[str, object]]) -> dict[str, obj
 
 
 # =============================================================================
-# SAMPLE TEST DATA (for backward compatibility)
+# SAMPLE TEST DATA
 # =============================================================================
 
 
