@@ -9,14 +9,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from tests.fixtures.constants import RFC
-from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -50,9 +50,7 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test context manager usage."""
         with FlextLdap() as api:
-            result = api.connect(connection_config)
-            assert result.is_success
-            assert api.is_connected is True
+            TestOperationHelpers.connect_and_assert_success(api, connection_config)
 
         # Should be disconnected after context exit
         assert api.is_connected is False
@@ -66,7 +64,7 @@ class TestFlextLdapAPIComplete:
         try:
             with FlextLdap() as api:
                 result = api.connect(connection_config)
-                assert result.is_success
+                TestOperationHelpers.assert_result_success(result)
                 raise test_exception
         except ValueError:
             pass
@@ -83,7 +81,7 @@ class TestFlextLdapAPIComplete:
         ldap_container: dict[str, object],
     ) -> None:
         """Test search with different server types."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = TestOperationHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="SUBTREE",
@@ -91,118 +89,57 @@ class TestFlextLdapAPIComplete:
 
         # Only test with 'rfc' which is always registered in quirks
         result = ldap_client.search(search_options, server_type="rfc")
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
 
     def test_add_with_operation_result(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test add returns proper OperationResult."""
-        entry = EntryTestHelpers.create_entry(
-            "cn=testapiadd,ou=people,dc=flext,dc=local",
-            {
-                "cn": ["testapiadd"],
-                "sn": ["Test"],
-                "objectClass": [
-                    "inetOrgPerson",
-                    "organizationalPerson",
-                    "person",
-                    "top",
-                ],
-            },
+        _entry, result = TestDeduplicationHelpers.create_user_add_and_verify(
+            ldap_client, "testapiadd", verify_operation_result=True
         )
-
-        result = EntryTestHelpers.add_and_cleanup(ldap_client, entry)
-        assert result.is_success
         operation_result = result.unwrap()
         assert operation_result.success is True
-        assert operation_result.operation_type == "add"
 
     def test_modify_with_dn_object(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test modify with DistinguishedName object."""
-        entry_dict = {
-            "dn": "cn=testapimod,ou=people,dc=flext,dc=local",
-            "attributes": {
-                "cn": ["testapimod"],
-                "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
-        )
-
-        # Cleanup first
-        _ = ldap_client.delete(str(entry.dn))
-
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Modify using DN object
+        entry = TestDeduplicationHelpers.create_user("testapimod")
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
-
-        modify_result = ldap_client.modify(str(entry.dn) if entry.dn else "", changes)
-        assert modify_result.is_success
-
-        # Cleanup
-        delete_result = ldap_client.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        TestDeduplicationHelpers.add_then_modify_with_operation_results(
+            ldap_client, entry, changes
+        )
 
     def test_delete_with_dn_object(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test delete with DistinguishedName object."""
-        entry_dict = {
-            "dn": "cn=testapidel,ou=people,dc=flext,dc=local",
-            "attributes": {
-                "cn": ["testapidel"],
-                "sn": ["Test"],
-                "objectClass": [
-                    "inetOrgPerson",
-                    "organizationalPerson",
-                    "person",
-                    "top",
-                ],
-            },
-        }
-
-        entry, add_result, delete_result = EntryTestHelpers.delete_entry_with_verification(
-            ldap_client, entry_dict
+        entry = TestDeduplicationHelpers.create_user("testapidel")
+        TestDeduplicationHelpers.add_then_delete_with_operation_results(
+            ldap_client, entry
         )
-
-        assert add_result.is_success
-
-        # Delete using DN object
-        delete_result = ldap_client.delete(str(entry.dn) if entry.dn else "")
-        assert delete_result.is_success
 
     def test_execute_when_connected(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test execute when connected."""
-        result = ldap_client.execute()
-        assert result.is_success
-        search_result = result.unwrap()
-        assert search_result.total_count == 0
+        TestDeduplicationHelpers.execute_and_verify_total_count(
+            ldap_client, expected_total=0, expected_entries=0
+        )
 
     def test_execute_when_not_connected(self) -> None:
         """Test execute when not connected."""
         api = FlextLdap()
-        result = api.execute()
-        # Execute returns empty result, not failure
-        assert result.is_success
-        search_result = result.unwrap()
-        assert search_result.total_count == 0
+        TestDeduplicationHelpers.execute_and_verify_total_count(
+            api, expected_total=0, expected_entries=0
+        )
 
     def test_connect_with_service_config(
         self,
@@ -217,7 +154,7 @@ class TestFlextLdapAPIComplete:
         )
         api = FlextLdap(config=config)
         result = api.connect(None)  # Use service config
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
         api.disconnect()
 
     def test_all_operations_in_sequence(
@@ -225,48 +162,10 @@ class TestFlextLdapAPIComplete:
         ldap_client: FlextLdap,
     ) -> None:
         """Test all operations in sequence."""
-        # Add
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testsequence,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testsequence"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
-        )
-
-        # Cleanup first
-        _ = ldap_client.delete(str(entry.dn))
-
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Search
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(entry.dn),
-            filter_str="(objectClass=*)",
-            scope="BASE",
-        )
-        search_result = ldap_client.search(search_options)
-        assert search_result.is_success
-        assert len(search_result.unwrap().entries) == 1
-
-        # Modify
+        entry = TestDeduplicationHelpers.create_user("testsequence")
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_ADD, ["test@example.com"])],
         }
-        modify_result = ldap_client.modify(str(entry.dn), changes)
-        assert modify_result.is_success
-
-        # Delete
-        delete_result = ldap_client.delete(str(entry.dn))
-        assert delete_result.is_success
+        TestDeduplicationHelpers.add_modify_delete_with_operation_results(
+            ldap_client, entry, changes
+        )

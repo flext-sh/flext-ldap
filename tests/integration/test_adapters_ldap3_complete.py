@@ -19,6 +19,7 @@ from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
 from tests.fixtures.constants import RFC
 from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -33,9 +34,7 @@ class TestLdap3AdapterComplete:
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter()
-        connect_result = adapter.connect(connection_config)
-        if connect_result.is_failure:
-            pytest.skip(f"Failed to connect: {connect_result.error}")
+        TestOperationHelpers.connect_with_skip_on_failure(adapter, connection_config)
         yield adapter
         adapter.disconnect()
 
@@ -129,7 +128,7 @@ class TestLdap3AdapterComplete:
             scope="SUBTREE",
             time_limit=5,
         )
-        assert result.is_success
+        TestOperationHelpers.assert_result_success_and_unwrap(result)
 
     def test_search_with_all_attributes(
         self,
@@ -142,8 +141,7 @@ class TestLdap3AdapterComplete:
             scope="SUBTREE",
             attributes=None,  # All attributes
         )
-        assert result.is_success
-        entries = result.unwrap()
+        entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
         if entries:
             assert entries[0].attributes is not None
 
@@ -157,8 +155,7 @@ class TestLdap3AdapterComplete:
             filter_str="(cn=nonexistententry12345)",
             scope="SUBTREE",
         )
-        assert result.is_success
-        entries = result.unwrap()
+        entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert len(entries) == 0
 
     def test_add_entry_with_all_attribute_types(
@@ -166,151 +163,92 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test adding entry with various attribute types."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testallattrs,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testallattrs"],
-                    "sn": ["Test"],
-                    "mail": ["test@example.com", "test2@example.com"],
-                    "telephoneNumber": ["+1234567890"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testallattrs",
+            RFC.DEFAULT_BASE_DN,
+            additional_attrs={
+                "mail": ["test@example.com", "test2@example.com"],
+                "telephoneNumber": ["+1234567890"],
+            },
         )
 
-        # Cleanup first
-        _ = connected_adapter.delete(str(entry.dn))
-
-        result = connected_adapter.add(entry)
-        assert result.is_success
-
-        # Cleanup
-        delete_result = connected_adapter.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)  # type: ignore[arg-type]  # type: ignore[arg-type]
+        TestOperationHelpers.assert_result_success(result)
 
     def test_modify_with_add_operation(
         self,
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test modify with ADD operation."""
-        # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testmodadd,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testmodadd"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testmodadd", RFC.DEFAULT_BASE_DN
         )
 
-        # Cleanup first
-        _ = connected_adapter.delete(str(entry.dn))
-
-        add_result = connected_adapter.add(entry)
-        assert add_result.is_success
-
-        # Modify with ADD
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_ADD, ["newmail@example.com"])],
         }
 
-        modify_result = connected_adapter.modify(str(entry.dn), changes)
-        assert modify_result.is_success
+        results = TestOperationHelpers.execute_add_modify_delete_sequence(
+            connected_adapter, entry, changes, verify_delete=False
+        )
+
+        TestOperationHelpers.assert_result_success(results["add"])
+        TestOperationHelpers.assert_result_success(results["modify"])
 
         # Cleanup
-        delete_result = connected_adapter.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        if entry.dn:
+            _ = connected_adapter.delete(str(entry.dn))
 
     def test_modify_with_delete_operation(
         self,
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test modify with DELETE operation."""
-        # First add an entry with mail
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testmoddel,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testmoddel"],
-                    "sn": ["Test"],
-                    "mail": ["test@example.com"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testmoddel",
+            RFC.DEFAULT_BASE_DN,
+            additional_attrs={"mail": ["test@example.com"]},
         )
 
-        # Cleanup first
-        _ = connected_adapter.delete(str(entry.dn))
-
-        add_result = connected_adapter.add(entry)
-        assert add_result.is_success
-
-        # Modify with DELETE
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_DELETE, ["test@example.com"])],
         }
 
-        modify_result = connected_adapter.modify(str(entry.dn), changes)
-        assert modify_result.is_success
+        results = TestOperationHelpers.execute_add_modify_delete_sequence(
+            connected_adapter, entry, changes, verify_delete=False
+        )
+
+        TestOperationHelpers.assert_result_success(results["add"])
+        TestOperationHelpers.assert_result_success(results["modify"])
 
         # Cleanup
-        delete_result = connected_adapter.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        if entry.dn:
+            _ = connected_adapter.delete(str(entry.dn))
 
     def test_modify_with_multiple_operations(
         self,
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test modify with multiple operations."""
-        entry_dict = {
-            "dn": "cn=testmodmulti,ou=people,dc=flext,dc=local",
-            "attributes": {
-                "cn": ["testmodmulti"],
-                "sn": ["Test"],
-                "objectClass": [
-                    "inetOrgPerson",
-                    "organizationalPerson",
-                    "person",
-                    "top",
-                ],
-            },
-        }
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testmodmulti", RFC.DEFAULT_BASE_DN
+        )
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["newmail@example.com"])],
             "telephoneNumber": [(MODIFY_ADD, ["+9876543210"])],
         }
 
-        entry, add_result, modify_result = EntryTestHelpers.modify_entry_with_verification(
-            connected_adapter, entry_dict, changes, verify_attribute=None
+        results = TestOperationHelpers.execute_add_modify_delete_sequence(
+            connected_adapter, entry, changes, verify_delete=False
         )
 
-        assert add_result.is_success
-        assert modify_result.is_success
+        TestOperationHelpers.assert_result_success(results["add"])
+        TestOperationHelpers.assert_result_success(results["modify"])
+
+        # Cleanup
+        if entry.dn:
+            _ = connected_adapter.delete(str(entry.dn))
 
     def test_delete_nonexistent_entry(
         self,
@@ -326,9 +264,7 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test execute when connected."""
-        result = connected_adapter.execute()
-        assert result.is_success
-        entry = result.unwrap()
+        entry = TestOperationHelpers.execute_and_assert_success(connected_adapter)
         assert entry is not None
 
     def test_search_with_different_server_types(
@@ -356,7 +292,7 @@ class TestLdap3AdapterComplete:
             {"cn": ["testminimal"], "objectClass": ["top", "person"]},
         )
 
-        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)
+        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)  # type: ignore[arg-type]
         # Should succeed or fail gracefully
         assert result.is_success or result.is_failure
 

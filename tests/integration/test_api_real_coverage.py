@@ -13,6 +13,7 @@ import pytest
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -40,9 +41,7 @@ class TestFlextLdapAPICoverage:
         """Test context manager enter and exit."""
         with FlextLdap() as client:
             assert client is not None
-            connect_result = client.connect(connection_config)
-            assert connect_result.is_success
-            assert client.is_connected is True
+            TestOperationHelpers.connect_and_assert_success(client, connection_config)
 
         # After exit, connection should be closed
         assert not client.is_connected
@@ -55,8 +54,9 @@ class TestFlextLdapAPICoverage:
         client = FlextLdap()
         try:
             with client:
-                connect_result = client.connect(connection_config)
-                assert connect_result.is_success
+                TestOperationHelpers.connect_and_assert_success(
+                    client, connection_config
+                )
                 # Simulate exception
                 test_exception = ValueError("Test exception")
                 raise test_exception
@@ -71,9 +71,7 @@ class TestFlextLdapAPICoverage:
         ldap_client: FlextLdap,
     ) -> None:
         """Test execute method for health check."""
-        result = ldap_client.execute()
-        assert result.is_success
-        search_result = result.unwrap()
+        search_result = TestOperationHelpers.execute_and_assert_success(ldap_client)
         assert search_result is not None
         assert hasattr(search_result, "entries")
         assert hasattr(search_result, "total_count")

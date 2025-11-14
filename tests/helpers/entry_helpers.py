@@ -9,16 +9,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
+from collections.abc import Mapping
+from typing import Any
+
+from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 
 class EntryTestHelpers:
     """Helper methods for Entry creation and manipulation in tests."""
 
     @staticmethod
-    def dict_to_entry(entry_dict: dict[str, object]) -> FlextLdifModels.Entry:
+    def dict_to_entry(
+        entry_dict: Mapping[str, object] | dict[str, object],
+    ) -> FlextLdifModels.Entry:
         """Convert dictionary to FlextLdifModels.Entry.
 
         This is a common pattern repeated across many tests. Centralizes
@@ -51,7 +59,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def cleanup_entry(
-        client: object,
+        client: LdapClientProtocol,
         dn: str | FlextLdifModels.DistinguishedName,
     ) -> None:
         """Cleanup entry before add to avoid entryAlreadyExists errors.
@@ -70,12 +78,11 @@ class EntryTestHelpers:
 
         """
         dn_str = str(dn) if dn else ""
-        if hasattr(client, "delete"):
-            _ = client.delete(dn_str)  # Ignore result, just cleanup
+        _ = client.delete(dn_str)  # Ignore result, just cleanup
 
     @staticmethod
     def verify_entry_added(
-        client: object,
+        client: LdapClientProtocol,
         dn: str | FlextLdifModels.DistinguishedName,
     ) -> bool:
         """Verify that an entry was successfully added to LDAP.
@@ -96,24 +103,37 @@ class EntryTestHelpers:
             assert EntryTestHelpers.verify_entry_added(ldap_client, entry.dn)
 
         """
-        if not hasattr(client, "search"):
-            return False
-
         dn_str = str(dn) if dn else ""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=dn_str,
-            filter_str="(objectClass=*)",
-            scope="BASE",
-        )
-        search_result = client.search(search_options)
+        # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
+        sig = inspect.signature(client.search)
+        if "search_options" in sig.parameters:
+            # FlextLdap API - uses SearchOptions
+            search_options = FlextLdapModels.SearchOptions(
+                base_dn=dn_str,
+                filter_str="(objectClass=*)",
+                scope="BASE",
+            )
+            search_result = client.search(search_options)
+        else:
+            # Ldap3Adapter - uses base_dn, filter_str directly
+            search_result = client.search(
+                base_dn=dn_str,
+                filter_str="(objectClass=*)",
+                scope="BASE",
+            )
         if search_result.is_success:
-            entries = search_result.unwrap().entries
+            unwrapped = search_result.unwrap()
+            # Handle both return types: SearchResult or list[Entry]
+            if isinstance(unwrapped, FlextLdapModels.SearchResult):
+                entries = unwrapped.entries
+            else:
+                entries = unwrapped
             return len(entries) == 1
         return False
 
     @staticmethod
     def cleanup_after_test(
-        client: object,
+        client: LdapClientProtocol,
         dn: str | FlextLdifModels.DistinguishedName,
     ) -> None:
         """Cleanup entry after test execution.
@@ -134,20 +154,19 @@ class EntryTestHelpers:
 
         """
         dn_str = str(dn) if dn else ""
-        if hasattr(client, "delete"):
-            delete_result = client.delete(dn_str)
-            # Ignore result - entry may not exist, that's OK for cleanup
-            _ = delete_result
+        delete_result = client.delete(dn_str)
+        # Ignore result - entry may not exist, that's OK for cleanup
+        _ = delete_result
 
     @staticmethod
     def add_entry_from_dict(
-        client: object,
-        entry_dict: dict[str, object],
+        client: LdapClientProtocol,
+        entry_dict: Mapping[str, object] | dict[str, object],
         *,
         verify: bool = True,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, object]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
         """Complete workflow: convert dict to entry, cleanup, add, verify, cleanup.
 
         This method replaces the entire pattern of:
@@ -189,17 +208,14 @@ class EntryTestHelpers:
             EntryTestHelpers.cleanup_entry(client, dn_str)
 
         # Add entry
-        if not hasattr(client, "add"):
-            error_msg = "Client must have 'add' method"
-            raise AttributeError(error_msg)
         add_result = client.add(entry)
 
         # Verify if requested and add was successful
         if verify and add_result.is_success:
             dn_str = str(entry.dn) if entry.dn else ""
-            assert EntryTestHelpers.verify_entry_added(
-                client, dn_str
-            ), "Entry was not found after add"
+            assert EntryTestHelpers.verify_entry_added(client, dn_str), (
+                "Entry was not found after add"
+            )
 
         # Cleanup after if requested
         if cleanup_after:
@@ -210,13 +226,13 @@ class EntryTestHelpers:
 
     @staticmethod
     def add_multiple_entries_from_dicts(
-        client: object,
+        client: LdapClientProtocol,
         entry_dicts: list[dict[str, object]],
         *,
         adjust_dn: dict[str, str] | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> list[tuple[FlextLdifModels.Entry, object]]:
+    ) -> list[tuple[FlextLdifModels.Entry, FlextResult[Any]]]:
         """Add multiple entries from list of dictionaries.
 
         This method replaces the entire pattern of:
@@ -246,7 +262,7 @@ class EntryTestHelpers:
             )
 
         """
-        results: list[tuple[FlextLdifModels.Entry, object]] = []
+        results: list[tuple[FlextLdifModels.Entry, FlextResult[Any]]] = []
         added_dns: list[str] = []
 
         for entry_dict in entry_dicts:
@@ -276,19 +292,19 @@ class EntryTestHelpers:
             for dn_str in added_dns:
                 EntryTestHelpers.cleanup_after_test(client, dn_str)
 
-        return results
+        return results  # type: ignore[return-value]
 
     @staticmethod
     def modify_entry_with_verification(
-        client: object,
-        entry_dict: dict[str, object],
+        client: LdapClientProtocol,
+        entry_dict: Mapping[str, object] | dict[str, object],
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
         verify_value: str | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, object, object]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
         """Complete modify workflow: add entry, modify, verify, cleanup.
 
         This method replaces the entire pattern of:
@@ -330,12 +346,8 @@ class EntryTestHelpers:
             cleanup_after=False,  # We'll cleanup at the end
         )
 
-        # Check if add_result has is_success attribute (FlextResult pattern)
-        add_success = (
-            hasattr(add_result, "is_success") and add_result.is_success
-            if hasattr(add_result, "is_success")
-            else True  # Assume success if no is_success attribute
-        )
+        # Check if add_result is successful
+        add_success = add_result.is_success
 
         if not add_success:
             # If add failed, cleanup and return
@@ -345,34 +357,37 @@ class EntryTestHelpers:
             return entry, add_result, add_result  # Return add_result as modify_result
 
         # Modify the entry
-        if not hasattr(client, "modify"):
-            error_msg = "Client must have 'modify' method"
-            raise AttributeError(error_msg)
-
         dn_str = str(entry.dn) if entry.dn else ""
         modify_result = client.modify(dn_str, changes)
 
         # Verify modification if requested
-        modify_success = (
-            hasattr(modify_result, "is_success") and modify_result.is_success
-            if hasattr(modify_result, "is_success")
-            else True
-        )
+        modify_success = modify_result.is_success
 
-        if (
-            modify_success
-            and verify_attribute
-            and verify_value
-            and hasattr(client, "search")
-        ):
-            search_options = FlextLdapModels.SearchOptions(
-                base_dn=dn_str,
-                filter_str="(objectClass=*)",
-                scope="BASE",
-            )
-            search_result = client.search(search_options)
-            if hasattr(search_result, "is_success") and search_result.is_success:
-                entries = search_result.unwrap().entries
+        if modify_success and verify_attribute and verify_value:
+            # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
+            sig = inspect.signature(client.search)
+            if "search_options" in sig.parameters:
+                # FlextLdap API - uses SearchOptions
+                search_options = FlextLdapModels.SearchOptions(
+                    base_dn=dn_str,
+                    filter_str="(objectClass=*)",
+                    scope="BASE",
+                )
+                search_result = client.search(search_options)
+            else:
+                # Ldap3Adapter - uses base_dn, filter_str directly
+                search_result = client.search(
+                    base_dn=dn_str,
+                    filter_str="(objectClass=*)",
+                    scope="BASE",
+                )
+            if search_result.is_success:
+                unwrapped = search_result.unwrap()
+                # Handle both return types: SearchResult or list[Entry]
+                if isinstance(unwrapped, FlextLdapModels.SearchResult):
+                    entries = unwrapped.entries
+                else:
+                    entries = unwrapped
                 if entries:
                     modified_entry = entries[0]
                     if (
@@ -382,10 +397,9 @@ class EntryTestHelpers:
                         attrs = modified_entry.attributes.attributes.get(
                             verify_attribute, []
                         )
-                        if isinstance(attrs, list):
-                            assert (
-                                verify_value in attrs
-                            ), f"Expected {verify_value} in {verify_attribute}, got {attrs}"
+                        assert verify_value in attrs, (
+                            f"Expected {verify_value} in {verify_attribute}, got {attrs}"
+                        )
 
         # Cleanup after if requested
         if cleanup_after:
@@ -396,12 +410,12 @@ class EntryTestHelpers:
 
     @staticmethod
     def delete_entry_with_verification(
-        client: object,
-        entry_dict: dict[str, object],
+        client: LdapClientProtocol,
+        entry_dict: Mapping[str, object] | dict[str, object],
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, object, object]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
         """Complete delete workflow: add entry, delete, verify deletion.
 
         This method replaces the entire pattern of:
@@ -438,45 +452,49 @@ class EntryTestHelpers:
             cleanup_after=False,  # We'll delete it, no cleanup needed
         )
 
-        # Check if add_result has is_success attribute
-        add_success = (
-            hasattr(add_result, "is_success") and add_result.is_success
-            if hasattr(add_result, "is_success")
-            else True
-        )
+        # Check if add_result is successful
+        add_success = add_result.is_success
 
         if not add_success:
             # If add failed, return early
             return entry, add_result, add_result
 
         # Delete the entry
-        if not hasattr(client, "delete"):
-            error_msg = "Client must have 'delete' method"
-            raise AttributeError(error_msg)
-
         dn_str = str(entry.dn) if entry.dn else ""
         delete_result = client.delete(dn_str)
 
         # Verify deletion if requested
-        if verify_deletion and hasattr(client, "search"):
-            delete_success = (
-                hasattr(delete_result, "is_success") and delete_result.is_success
-                if hasattr(delete_result, "is_success")
-                else True
-            )
+        if verify_deletion:
+            delete_success = delete_result.is_success
 
             if delete_success:
-                search_options = FlextLdapModels.SearchOptions(
-                    base_dn=dn_str,
-                    filter_str="(objectClass=*)",
-                    scope="BASE",
-                )
-                search_result = client.search(search_options)
-                if hasattr(search_result, "is_success") and search_result.is_success:
-                    entries = search_result.unwrap().entries
-                    assert (
-                        len(entries) == 0
-                    ), f"Entry {dn_str} still exists after deletion"
+                # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
+                sig = inspect.signature(client.search)
+                if "search_options" in sig.parameters:
+                    # FlextLdap API - uses SearchOptions
+                    search_options = FlextLdapModels.SearchOptions(
+                        base_dn=dn_str,
+                        filter_str="(objectClass=*)",
+                        scope="BASE",
+                    )
+                    search_result = client.search(search_options)
+                else:
+                    # Ldap3Adapter - uses base_dn, filter_str directly
+                    search_result = client.search(
+                        base_dn=dn_str,
+                        filter_str="(objectClass=*)",
+                        scope="BASE",
+                    )
+                if search_result.is_success:
+                    unwrapped = search_result.unwrap()
+                    # Handle both return types: SearchResult or list[Entry]
+                    if isinstance(unwrapped, FlextLdapModels.SearchResult):
+                        entries = unwrapped.entries
+                    else:
+                        entries = unwrapped
+                    assert len(entries) == 0, (
+                        f"Entry {dn_str} still exists after deletion"
+                    )
 
         return entry, add_result, delete_result
 
@@ -510,6 +528,9 @@ class EntryTestHelpers:
         for key, value in attributes.items():
             if isinstance(value, list):
                 attrs_dict[key] = value
+            elif isinstance(value, (tuple, set, frozenset)):
+                # Convert list-like collections to list of strings
+                attrs_dict[key] = [str(item) for item in value]
             else:
                 attrs_dict[key] = [str(value)]
         attrs = FlextLdifModels.LdifAttributes.model_validate({
@@ -519,11 +540,12 @@ class EntryTestHelpers:
 
     @staticmethod
     def add_and_cleanup(
-        client: object,
+        client: LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify: bool = False,
-    ) -> object:
+        cleanup_after: bool = True,
+    ) -> FlextResult[Any]:
         """Add entry with automatic cleanup before and after.
 
         Simplified version for when you already have an Entry object.
@@ -532,6 +554,7 @@ class EntryTestHelpers:
             client: LDAP client with add, delete methods
             entry: FlextLdifModels.Entry to add
             verify: Whether to verify entry was added (default: False)
+            cleanup_after: Whether to cleanup after add (default: True)
 
         Returns:
             Add result object
@@ -547,23 +570,15 @@ class EntryTestHelpers:
             EntryTestHelpers.cleanup_entry(client, dn_str)
 
         # Add entry
-        if not hasattr(client, "add"):
-            error_msg = "Client must have 'add' method"
-            raise AttributeError(error_msg)
         add_result = client.add(entry)
 
         # Verify if requested
-        if (
-            verify
-            and entry.dn
-            and hasattr(add_result, "is_success")
-            and add_result.is_success
-        ):
+        if verify and entry.dn and add_result.is_success:
             dn_str = str(entry.dn)
             assert EntryTestHelpers.verify_entry_added(client, dn_str)
 
-        # Cleanup after
-        if entry.dn:
+        # Cleanup after if requested
+        if cleanup_after and entry.dn:
             dn_str = str(entry.dn)
             EntryTestHelpers.cleanup_after_test(client, dn_str)
 

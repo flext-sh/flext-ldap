@@ -17,9 +17,11 @@ from flext_ldif.models import FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
 from tests.fixtures.constants import RFC
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -81,9 +83,7 @@ sn: Test2
             _ = sync_service._operations.delete(dn)
 
         result = sync_service.sync_ldif_file(sample_ldif_file)
-        assert result.is_success
-
-        stats = result.unwrap()
+        stats = TestOperationHelpers.unwrap_sync_stats(result)
         assert stats.total == 2
         assert stats.added >= 0  # May be skipped if already exists
 
@@ -109,9 +109,7 @@ sn: Test2
 
         options = FlextLdapModels.SyncOptions(batch_size=1)
         result = sync_service.sync_ldif_file(sample_ldif_file, options)
-        assert result.is_success
-
-        stats = result.unwrap()
+        stats = TestOperationHelpers.unwrap_sync_stats(result)
         assert stats.total == 2
 
         # Cleanup
@@ -213,7 +211,7 @@ sn: Test
         try:
             result = sync_service.sync_ldif_file(temp_path)
             assert result.is_success
-            stats = result.unwrap()
+            stats = TestOperationHelpers.unwrap_sync_stats(result)
             assert stats.total == 0
         finally:
             if temp_path.exists():
@@ -221,8 +219,6 @@ sn: Test
 
     def test_sync_ldif_file_when_not_connected(self) -> None:
         """Test syncing when not connected."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
         sync_service = FlextLdapSyncService(operations=operations)
@@ -289,9 +285,7 @@ sn: Test
         """Test BaseDN transformation with same BaseDN (no change)."""
         entries = [
             FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(
-                    value="cn=test,dc=flext,dc=local"
-                ),
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=flext,dc=local"),
                 attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
             )
         ]
@@ -303,14 +297,12 @@ sn: Test
 
     def test_execute_method(self) -> None:
         """Test execute method required by FlextService."""
-        from flext_ldap.services.connection import FlextLdapConnection
-
         connection = FlextLdapConnection()
         operations = FlextLdapOperations(connection=connection)
         sync_service = FlextLdapSyncService(operations=operations)
         result = sync_service.execute()
         assert result.is_success
-        stats = result.unwrap()
+        stats = TestOperationHelpers.unwrap_sync_stats(result)
         assert stats.total == 0
         assert stats.added == 0
 
@@ -319,22 +311,8 @@ sn: Test
         sync_service: FlextLdapSyncService,
     ) -> None:
         """Test syncing entries that already exist."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testduplicate,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testduplicate"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testduplicate", RFC.DEFAULT_BASE_DN
         )
 
         # Add entry first
@@ -361,7 +339,7 @@ sn: Test
         try:
             result = sync_service.sync_ldif_file(temp_path)
             assert result.is_success
-            stats = result.unwrap()
+            stats = TestOperationHelpers.unwrap_sync_stats(result)
             # Entry should be skipped
             assert stats.skipped >= 0
         finally:
@@ -370,3 +348,63 @@ sn: Test
 
         # Cleanup
         _ = sync_service._operations.delete(str(entry.dn))
+
+    def test_sync_ldif_file_with_parse_failure_invalid_content(
+        self,
+        sync_service: FlextLdapSyncService,
+    ) -> None:
+        """Test sync with file that exists but causes parse failure (covers line 110).
+
+        Creates a file that exists but contains invalid content that causes
+        flext-ldif.parse() to return a failure, triggering the error handling
+        path at line 110.
+        """
+        # Create a file with invalid binary content that will cause parse failure
+        # The file exists (passes the exists() check) but parse() will fail
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".ldif", delete=False) as f:
+            # Write invalid binary content that will cause parsing to fail
+            f.write(b"\x00\x01\x02\x03invalid binary content\xff\xfe\xfd")
+            temp_path = Path(f.name)
+
+        try:
+            result = sync_service.sync_ldif_file(temp_path)
+
+            # Should fail with parse error (covers line 110)
+            # The file exists but parse() fails due to invalid content
+            assert result.is_failure, "Expected parse failure for invalid content"
+            assert "Failed to parse LDIF file" in (result.error or ""), (
+                f"Expected parse error message, got: {result.error}"
+            )
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
+
+    def test_transform_entries_basedn_dn_not_containing_source(
+        self,
+        sync_service: FlextLdapSyncService,
+    ) -> None:
+        """Test transform_entries_basedn when DN doesn't contain source_basedn (covers line 264)."""
+        # Create entry with DN that doesn't contain source_basedn
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=testtransform,ou=other,dc=example,dc=com"
+            ),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["testtransform"],
+                    "objectClass": ["top", "person"],
+                }
+            ),
+        )
+
+        # Transform with source_basedn that doesn't match entry DN
+        source_basedn = "dc=flext,dc=local"
+        target_basedn = "dc=example,dc=com"
+
+        transformed = sync_service._transform_entries_basedn(
+            [entry], source_basedn, target_basedn
+        )
+
+        # Entry should be added as-is since DN doesn't contain source_basedn (covers line 264)
+        assert len(transformed) == 1
+        assert str(transformed[0].dn) == "cn=testtransform,ou=other,dc=example,dc=com"

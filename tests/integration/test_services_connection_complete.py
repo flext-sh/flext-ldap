@@ -15,6 +15,7 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from tests.fixtures.constants import RFC
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -100,9 +101,7 @@ class TestFlextLdapConnectionComplete:
         connection = FlextLdapConnection()
         assert connection.is_connected is False
 
-        result = connection.connect(connection_config)
-        assert result.is_success
-        assert connection.is_connected is True
+        TestOperationHelpers.connect_and_assert_success(connection, connection_config)
 
         connection.disconnect()
         assert connection.is_connected is False
@@ -131,9 +130,8 @@ class TestFlextLdapConnectionComplete:
         connect_result = connection.connect(connection_config)
         assert connect_result.is_success
 
-        result = connection.execute()
-        assert result.is_success
-        assert result.unwrap() is True
+        result = TestOperationHelpers.execute_and_assert_success(connection)
+        assert result is True
 
         connection.disconnect()
 
@@ -141,8 +139,9 @@ class TestFlextLdapConnectionComplete:
         """Test execute when not connected."""
         connection = FlextLdapConnection()
         result = connection.execute()
-        assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        TestOperationHelpers.assert_result_failure(
+            result, expected_error="Not connected"
+        )
 
     def test_connect_failure_handling(self) -> None:
         """Test connection failure handling."""

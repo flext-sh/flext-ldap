@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from tests.helpers.entry_helpers import EntryTestHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -59,13 +59,9 @@ class TestFlextLdapOperationsErrorCoverage:
         operations = FlextLdapOperations(connection=connection)
 
         # Try to add entry with invalid DN to trigger error path
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="invalid=dn"),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "objectClass": ["top"],
-                }
-            }),
+        entry = EntryTestHelpers.create_entry(
+            "invalid=dn",
+            {"objectClass": ["top"]},
         )
 
         result = operations.add(entry)

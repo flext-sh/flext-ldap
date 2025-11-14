@@ -10,11 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
-from flext_ldap.models import FlextLdapModels
+from tests.fixtures.constants import RFC
+from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration
@@ -26,82 +27,57 @@ class TestFlextLdapSearchRealOperations:
 
     def test_search_base_dn_real_data(self, ldap_client: FlextLdap) -> None:
         """Test searching for base DN with real LDAP data."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
+        search_result = TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             attributes=["dc", "objectClass"],
+            expected_min_count=1,
         )
-
-        result = ldap_client.search(search_options)
-
-        assert result.is_success, f"Search failed: {result.error}"
-        search_result = result.unwrap()
-        assert len(search_result.entries) > 0
         # Base DN should be in results
         assert any(
-            entry.dn is not None and "dc=flext,dc=local" in str(entry.dn.value)
+            entry.dn is not None and RFC.DEFAULT_BASE_DN in str(entry.dn.value)
             for entry in search_result.entries
         )
 
     def test_search_with_subtree_scope(self, ldap_client: FlextLdap) -> None:
         """Test search with subtree scope."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
+        _ = TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             scope="SUBTREE",
+            expected_min_count=1,
         )
-
-        result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
-        assert len(search_result.entries) >= 1  # At least base DN
 
     def test_search_with_base_scope(self, ldap_client: FlextLdap) -> None:
         """Test search with base scope (single entry only)."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
+        search_result = TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             scope="BASE",
+            expected_min_count=1,
+            expected_max_count=1,
         )
-
-        result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
-        assert len(search_result.entries) == 1  # Base scope returns only base DN
         assert (
             search_result.entries[0].dn is not None
-            and str(search_result.entries[0].dn.value) == "dc=flext,dc=local"
+            and str(search_result.entries[0].dn.value) == RFC.DEFAULT_BASE_DN
         )
 
     def test_search_with_onelevel_scope(self, ldap_client: FlextLdap) -> None:
         """Test search with onelevel scope (one level below base)."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
+        _ = TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=organizationalUnit)",
             scope="ONELEVEL",
         )
 
-        result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
-        # Should find OUs directly under base DN
-        assert len(search_result.entries) >= 0  # May or may not have OUs
-
     def test_search_with_filter(self, ldap_client: FlextLdap) -> None:
         """Test search with specific filter."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
+        search_result = TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=organizationalUnit)",
-            scope="SUBTREE",
         )
-
-        result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
         # All results should be organizational units
         for entry in search_result.entries:
             if entry.attributes and entry.attributes.attributes:
@@ -117,18 +93,14 @@ class TestFlextLdapSearchRealOperations:
 
     def test_search_with_attributes(self, ldap_client: FlextLdap) -> None:
         """Test search with specific attributes."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
+        search_result = TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             scope="BASE",
             attributes=["dc", "objectClass"],
+            expected_min_count=1,
+            expected_max_count=1,
         )
-
-        result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
-        assert len(search_result.entries) == 1
         entry = search_result.entries[0]
         # Should only have requested attributes
         if entry.attributes and entry.attributes.attributes:
@@ -139,19 +111,12 @@ class TestFlextLdapSearchRealOperations:
 
     def test_search_with_size_limit(self, ldap_client: FlextLdap) -> None:
         """Test search with size limit."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="dc=flext,dc=local",
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
+        TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            RFC.DEFAULT_BASE_DN,
             size_limit=2,
+            expected_max_count=2,
         )
-
-        result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
-        # Should respect size limit (may be less if fewer entries exist)
-        assert len(search_result.entries) <= 2
 
 
 @pytest.mark.integration
@@ -160,52 +125,27 @@ class TestFlextLdapAddRealOperations:
 
     def test_add_user_entry(self, ldap_client: FlextLdap) -> None:
         """Test adding a user entry."""
-        # Create entry using FlextLdifModels (reusing from flext-ldif)
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="uid=testadd,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                    "uid": ["testadd"],
-                    "cn": ["Test Add User"],
-                    "sn": ["Add"],
-                    "mail": ["testadd@internal.invalid"],
-                }
-            }),
+        entry = TestOperationHelpers.create_entry_with_uid(
+            "testadd",
+            RFC.DEFAULT_BASE_DN,
+            cn="Test Add User",
+            sn="Add",
+            mail="testadd@internal.invalid",
         )
 
-        result = ldap_client.add(entry)
-
-        assert result.is_success, f"Add failed: {result.error}"
-        operation_result = result.unwrap()
-        assert operation_result.success is True
-        assert operation_result.entries_affected == 1
-
-        # Cleanup - delete returns OperationResult, not just success/failure
-        delete_result = ldap_client.delete("uid=testadd,ou=people,dc=flext,dc=local")
-        # Result may be success or failure depending on if entry exists
-        assert delete_result.is_success or delete_result.is_failure
+        result = TestOperationHelpers.add_entry_and_assert_success(
+            ldap_client, entry, verify_operation_result=True
+        )
+        TestOperationHelpers.assert_operation_result_success(
+            result, expected_operation_type="add", expected_entries_affected=1
+        )
 
     def test_add_group_entry(self, ldap_client: FlextLdap) -> None:
         """Test adding a group entry."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testaddgroup,ou=groups,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "objectClass": ["groupOfNames", "top"],
-                    "cn": ["testaddgroup"],
-                    "member": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"],
-                }
-            }),
+        entry = TestOperationHelpers.create_group_entry(
+            "testaddgroup",
+            RFC.DEFAULT_BASE_DN,
+            members=["cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"],
         )
 
         result = ldap_client.add(entry)
@@ -226,45 +166,34 @@ class TestFlextLdapModifyRealOperations:
 
     def test_modify_entry(self, ldap_client: FlextLdap) -> None:
         """Test modifying an entry."""
-        # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="uid=testmodify,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                    "uid": ["testmodify"],
-                    "cn": ["Test Modify User"],
-                    "sn": ["Modify"],
-                }
-            }),
-        )
+        entry_dict = {
+            "dn": "uid=testmodify,ou=people,dc=flext,dc=local",
+            "attributes": {
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
+                "uid": ["testmodify"],
+                "cn": ["Test Modify User"],
+                "sn": ["Modify"],
+            },
+        }
 
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Now modify it
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["testmodify@internal.invalid"])],
             "telephoneNumber": [(MODIFY_ADD, ["+1234567890"])],
         }
 
-        modify_result = ldap_client.modify(
-            "uid=testmodify,ou=people,dc=flext,dc=local", changes
+        _entry, add_result, modify_result = (
+            EntryTestHelpers.modify_entry_with_verification(
+                ldap_client, entry_dict, changes, verify_attribute=None
+            )
         )
 
+        assert add_result.is_success
         assert modify_result.is_success, f"Modify failed: {modify_result.error}"
-
-        # Cleanup
-        delete_result = ldap_client.delete("uid=testmodify,ou=people,dc=flext,dc=local")
-        # Result may be success or failure depending on if entry exists
-        assert delete_result.is_success or delete_result.is_failure
 
 
 @pytest.mark.integration
@@ -274,32 +203,21 @@ class TestFlextLdapDeleteRealOperations:
     def test_delete_entry(self, ldap_client: FlextLdap) -> None:
         """Test deleting an entry."""
         # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="uid=testdelete,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                    "uid": ["testdelete"],
-                    "cn": ["Test Delete User"],
-                    "sn": ["Delete"],
-                }
-            }),
+        entry = TestOperationHelpers.create_entry_with_uid(
+            "testdelete",
+            RFC.DEFAULT_BASE_DN,
+            cn="Test Delete User",
+            sn="Delete",
         )
 
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
+        TestOperationHelpers.add_entry_and_assert_success(
+            ldap_client, entry, cleanup_after=False
+        )
 
         # Now delete it
         delete_result = ldap_client.delete("uid=testdelete,ou=people,dc=flext,dc=local")
-
-        assert delete_result.is_success, f"Delete failed: {delete_result.error}"
-        operation_result = delete_result.unwrap()
-        assert operation_result.success is True
-        assert operation_result.entries_affected == 1
+        TestOperationHelpers.assert_operation_result_success(
+            delete_result,
+            expected_operation_type="delete",
+            expected_entries_affected=1,
+        )

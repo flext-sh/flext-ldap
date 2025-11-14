@@ -17,7 +17,8 @@ from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 from tests.fixtures.loader import LdapTestFixtures
-from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
+from tests.helpers.test_helpers import FlextLdapTestHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -32,18 +33,11 @@ class TestFlextLdapComprehensiveSearch:
         ldap_container: dict[str, object],
     ) -> None:
         """Test searching all entries in base DN."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = FlextLdapTestHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
         )
-
         result = ldap_client.search(search_options)
-
-        assert result.is_success, f"Search failed: {result.error}"
-        search_result = result.unwrap()
-        assert len(search_result.entries) > 0
-        assert search_result.total_count == len(search_result.entries)
+        FlextLdapTestHelpers.assert_search_success(result, min_entries=1)
 
     def test_search_with_fixture_filter(
         self,
@@ -52,19 +46,12 @@ class TestFlextLdapComprehensiveSearch:
         base_ldif_entries: list[object],
     ) -> None:
         """Test search using filter from fixture data."""
-        # Search for organizational units
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = FlextLdapTestHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=organizationalUnit)",
-            scope="SUBTREE",
         )
-
         result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
-        # Should find at least people, groups OUs
-        assert len(search_result.entries) >= 0  # May or may not have OUs yet
+        FlextLdapTestHelpers.assert_search_success(result)
 
     def test_search_users_only(
         self,
@@ -72,16 +59,12 @@ class TestFlextLdapComprehensiveSearch:
         ldap_container: dict[str, object],
     ) -> None:
         """Test searching for user entries only."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = FlextLdapTestHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=inetOrgPerson)",
-            scope="SUBTREE",
         )
-
         result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
+        search_result = FlextLdapTestHelpers.assert_search_success(result)
         # All results should be users
         for entry in search_result.entries:
             if entry.attributes and entry.attributes.attributes:
@@ -97,16 +80,12 @@ class TestFlextLdapComprehensiveSearch:
         ldap_container: dict[str, object],
     ) -> None:
         """Test searching for group entries only."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = FlextLdapTestHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=groupOfNames)",
-            scope="SUBTREE",
         )
-
         result = ldap_client.search(search_options)
-
-        assert result.is_success
-        search_result = result.unwrap()
+        search_result = FlextLdapTestHelpers.assert_search_success(result)
         # All results should be groups
         for entry in search_result.entries:
             if entry.attributes and entry.attributes.attributes:
@@ -125,15 +104,10 @@ class TestFlextLdapComprehensiveAdd:
         test_user_entry: dict[str, object],
     ) -> None:
         """Test adding user entry from fixture data."""
-        # Complete workflow using helper: convert, cleanup, add, verify, cleanup
-        entry, result = EntryTestHelpers.add_entry_from_dict(
+        _entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
             ldap_client, test_user_entry
         )
-
-        assert result.is_success, f"Add failed: {result.error}"
-        operation_result = result.unwrap()
-        assert operation_result.success is True
-        assert operation_result.entries_affected == 1
+        FlextLdapTestHelpers.assert_operation_success(result)
 
     def test_add_group_from_fixture(
         self,
@@ -141,12 +115,10 @@ class TestFlextLdapComprehensiveAdd:
         test_group_entry: dict[str, object],
     ) -> None:
         """Test adding group entry from fixture data."""
-        # Complete workflow using helper
-        entry, result = EntryTestHelpers.add_entry_from_dict(
+        _entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
             ldap_client, test_group_entry
         )
-
-        assert result.is_success, f"Add failed: {result.error}"
+        FlextLdapTestHelpers.assert_operation_success(result)
 
     def test_add_multiple_users_from_fixtures(
         self,
@@ -161,17 +133,15 @@ class TestFlextLdapComprehensiveAdd:
             for user_data in test_users_json[:2]  # Limit to 2 for test speed
         ]
 
-        # Add all entries using helper with DN adjustment
         base_dn = str(ldap_container.get("base_dn", ""))
-        results = EntryTestHelpers.add_multiple_entries_from_dicts(
+        results = FlextLdapTestHelpers.add_multiple_entries_from_dicts(
             ldap_client,
             entry_dicts,
             adjust_dn={"from": "dc=example,dc=com", "to": base_dn},
         )
 
-        # Verify all adds succeeded
-        for entry, result in results:
-            assert result.is_success, f"Failed to add {entry.dn}: {result.error}"
+        for _entry, result in results:
+            FlextLdapTestHelpers.assert_operation_success(result)
 
 
 @pytest.mark.integration
@@ -190,16 +160,15 @@ class TestFlextLdapComprehensiveModify:
             "telephoneNumber": [(MODIFY_ADD, ["+9876543210"])],
         }
 
-        entry, add_result, modify_result = EntryTestHelpers.modify_entry_with_verification(
-            ldap_client,
-            test_user_entry,
-            changes,
-            verify_attribute="mail",
-            verify_value="updated@example.com",
+        _entry, add_result, modify_result = (
+            FlextLdapTestHelpers.modify_entry_with_verification(
+                ldap_client,
+                test_user_entry,
+                changes,
+            )
         )
-
-        assert add_result.is_success
-        assert modify_result.is_success, f"Modify failed: {modify_result.error}"
+        FlextLdapTestHelpers.assert_operation_success(add_result)
+        FlextLdapTestHelpers.assert_operation_success(modify_result)
 
 
 @pytest.mark.integration
@@ -213,15 +182,13 @@ class TestFlextLdapComprehensiveDelete:
     ) -> None:
         """Test deleting user entry."""
         # Complete delete workflow using helper: add, delete, verify deletion
-        entry, add_result, delete_result = EntryTestHelpers.delete_entry_with_verification(
-            ldap_client, test_user_entry
+        _entry, add_result, delete_result = (
+            FlextLdapTestHelpers.delete_entry_with_verification(
+                ldap_client, test_user_entry
+            )
         )
-
-        assert add_result.is_success, f"Add failed: {add_result.error}"
-        assert delete_result.is_success, f"Delete failed: {delete_result.error}"
-        operation_result = delete_result.unwrap()
-        assert operation_result.success is True
-        assert operation_result.entries_affected == 1
+        FlextLdapTestHelpers.assert_operation_success(add_result)
+        FlextLdapTestHelpers.assert_operation_success(delete_result)
 
 
 @pytest.mark.integration
@@ -236,9 +203,7 @@ class TestFlextLdapConnectionManagement:
         client = FlextLdap()
 
         # Connect
-        connect_result = client.connect(connection_config)
-        assert connect_result.is_success, f"Connect failed: {connect_result.error}"
-        assert client.is_connected is True
+        TestOperationHelpers.connect_and_assert_success(client, connection_config)
 
         # Disconnect
         client.disconnect()
@@ -252,14 +217,11 @@ class TestFlextLdapConnectionManagement:
         client = FlextLdap()
 
         # First connection
-        connect_result = client.connect(connection_config)
-        assert connect_result.is_success
+        TestOperationHelpers.connect_and_assert_success(client, connection_config)
         client.disconnect()
 
         # Reconnect
-        connect_result2 = client.connect(connection_config)
-        assert connect_result2.is_success
-        assert client.is_connected is True
+        TestOperationHelpers.connect_and_assert_success(client, connection_config)
 
         client.disconnect()
 
@@ -278,16 +240,12 @@ class TestFlextLdapWithBaseLdif:
         if not base_ldif_entries:
             pytest.skip("No base LDIF entries available")
 
-        # Search for entries that should be in base LDIF
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = FlextLdapTestHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=organizationalUnit)",
-            scope="SUBTREE",
         )
-
         result = ldap_client.search(search_options)
-        assert result.is_success
-        # Should find OUs if they exist in server
+        FlextLdapTestHelpers.assert_search_success(result)
 
     def test_add_entry_from_base_ldif(
         self,
