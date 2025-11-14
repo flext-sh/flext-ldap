@@ -122,3 +122,68 @@ class TestSearchResult:
         assert len(result.entries) == 0
         assert result.total_count == 0
         assert result.search_options == search_options
+
+
+class TestSyncStats:
+    """Tests for SyncStats model."""
+
+    def test_sync_stats_defaults(self) -> None:
+        """Test SyncStats with default values."""
+        stats = FlextLdapModels.SyncStats()
+        assert stats.added == 0
+        assert stats.skipped == 0
+        assert stats.failed == 0
+        assert stats.total == 0
+        assert stats.duration_seconds == 0.0
+
+    def test_sync_stats_success_rate_with_zero_total(self) -> None:
+        """Test success_rate when total is zero (should return 0.0)."""
+        stats = FlextLdapModels.SyncStats(
+            added=0,
+            skipped=0,
+            failed=0,
+            total=0,
+        )
+        assert stats.success_rate == 0.0
+
+    def test_sync_stats_success_rate_calculation(self) -> None:
+        """Test success_rate calculation with values."""
+        stats = FlextLdapModels.SyncStats(
+            added=5,
+            skipped=3,
+            failed=2,
+            total=10,
+        )
+        # success_rate = (added + skipped) / total = (5 + 3) / 10 = 0.8
+        assert stats.success_rate == 0.8
+
+    def test_sync_stats_success_rate_all_skipped(self) -> None:
+        """Test success_rate when all entries are skipped."""
+        stats = FlextLdapModels.SyncStats(
+            added=0,
+            skipped=10,
+            failed=0,
+            total=10,
+        )
+        assert stats.success_rate == 1.0
+
+    def test_sync_stats_success_rate_all_added(self) -> None:
+        """Test success_rate when all entries are added."""
+        stats = FlextLdapModels.SyncStats(
+            added=10,
+            skipped=0,
+            failed=0,
+            total=10,
+        )
+        assert stats.success_rate == 1.0
+
+    def test_sync_stats_success_rate_partial_failure(self) -> None:
+        """Test success_rate with partial failures."""
+        stats = FlextLdapModels.SyncStats(
+            added=7,
+            skipped=2,
+            failed=1,
+            total=10,
+        )
+        # success_rate = (7 + 2) / 10 = 0.9
+        assert stats.success_rate == 0.9

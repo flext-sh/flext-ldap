@@ -12,11 +12,11 @@ from collections.abc import Generator
 from typing import cast
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from tests.fixtures.constants import RFC
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -61,9 +61,7 @@ class TestFlextLdapEntryAdapterComplete:
 
         # Convert real ldap3.Entry to FlextLdifModels.Entry
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert result.is_success
-
-        entry = result.unwrap()
+        entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert entry.dn is not None
         assert str(entry.dn) == str(ldap3_entry.entry_dn)
         assert entry.attributes is not None
@@ -99,9 +97,7 @@ class TestFlextLdapEntryAdapterComplete:
         }
 
         result = adapter.ldap3_to_ldif_entry(entry_dict)
-        assert result.is_success
-
-        entry = result.unwrap()
+        entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert str(entry.dn) == entry_dict["dn"]
         assert entry.attributes is not None
 
@@ -125,14 +121,11 @@ class TestFlextLdapEntryAdapterComplete:
 
         # Convert to FlextLdifModels.Entry
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
+        entry = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
 
         # Convert back to ldap3 attributes
         attrs_result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert attrs_result.is_success
-
-        attrs = attrs_result.unwrap()
+        attrs = TestOperationHelpers.assert_result_success_and_unwrap(attrs_result)
         assert isinstance(attrs, dict)
         assert len(attrs) > 0
 
@@ -141,20 +134,17 @@ class TestFlextLdapEntryAdapterComplete:
         adapter = FlextLdapEntryAdapter()
 
         # Create entry with tuple (list-like)
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "cn": ("test",),  # Tuple (list-like)
-                    "mail": ["test@example.com", "test2@example.com"],
-                    "objectClass": ["top", "person"],
-                }
-            }),
+        entry = TestOperationHelpers.create_entry_with_ldif_attributes(
+            "cn=test,dc=example,dc=com",
+            {
+                "cn": ["test"],  # Convert tuple to list
+                "mail": ["test@example.com", "test2@example.com"],
+                "objectClass": ["top", "person"],
+            },
         )
 
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert result.is_success
-        attrs = result.unwrap()
+        attrs = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert attrs["cn"] == ["test"]
         assert len(attrs["mail"]) == 2
 
@@ -164,23 +154,22 @@ class TestFlextLdapEntryAdapterComplete:
 
         # LdifAttributes requires all values to be lists
         # Empty string must be represented as empty list or list with empty string
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "cn": ["test"],
-                    "emptyList": [],  # Empty list stays empty list
-                    "listWithEmpty": [""],  # List with empty string
-                }
-            }),
+        entry = TestOperationHelpers.create_entry_with_ldif_attributes(
+            "cn=test,dc=example,dc=com",
+            {
+                "cn": ["test"],
+                "emptyList": [],  # Empty list stays empty list
+                "listWithEmpty": [""],  # List with empty string
+            },
         )
 
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert result.is_success
-        attrs = result.unwrap()
+        attrs = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert attrs["cn"] == ["test"]
         assert attrs["emptyList"] == []  # Empty list stays empty
-        assert attrs["listWithEmpty"] == [""]  # List with empty string
+        assert attrs["listWithEmpty"] == [
+            ""
+        ]  # List with empty string  # List with empty string
 
     def test_normalize_entry_for_server_with_real_entry(
         self,
@@ -201,15 +190,12 @@ class TestFlextLdapEntryAdapterComplete:
         ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
+        entry = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
 
         # Test normalization for different server types
         for server_type in ["rfc", "openldap2", "generic"]:
             result = adapter.normalize_entry_for_server(entry, server_type)
-            assert result.is_success
-            normalized = result.unwrap()
-            assert normalized is not None
+            _ = TestOperationHelpers.unwrap_and_assert_not_none(result)
 
     def test_validate_entry_for_server_with_real_entry(
         self,
@@ -230,13 +216,12 @@ class TestFlextLdapEntryAdapterComplete:
         ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
+        entry = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
 
         # Validate for different server types
         for server_type in ["rfc", "openldap2", "generic"]:
             result = adapter.validate_entry_for_server(entry, server_type)
-            assert result.is_success
+            TestOperationHelpers.assert_result_success(result)
             assert result.unwrap() is True
 
     def test_ldap3_to_ldif_entry_with_already_ldif_entry(
@@ -277,50 +262,55 @@ class TestFlextLdapEntryAdapterComplete:
     def test_ldif_entry_to_ldap3_attributes_with_none_attributes(self) -> None:
         """Test conversion with entry having no attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=None,
+        entry = TestOperationHelpers.create_entry_simple(
+            "cn=test,dc=example,dc=com",
+            {},
         )
+        entry.attributes = None
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert result.is_failure
-        assert "no attributes" in (result.error or "").lower()
+        TestOperationHelpers.assert_result_failure(
+            result, expected_error="no attributes"
+        )
 
     def test_validate_entry_for_server_with_empty_dn(self) -> None:
         """Test validation with empty DN."""
         adapter = FlextLdapEntryAdapter()
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value=""),
-            attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+        entry = TestOperationHelpers.create_entry_simple(
+            "",
+            {"cn": ["test"]},
         )
         result = adapter.validate_entry_for_server(entry, "rfc")
-        assert result.is_failure
-        assert "DN cannot be empty" in (result.error or "")
+        TestOperationHelpers.assert_result_failure(
+            result, expected_error="DN cannot be empty"
+        )
 
     def test_validate_entry_for_server_with_no_attributes(self) -> None:
         """Test validation with no attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=None,
+        entry = TestOperationHelpers.create_entry_simple(
+            "cn=test,dc=example,dc=com",
+            {},
         )
+        entry.attributes = None
         result = adapter.validate_entry_for_server(entry, "rfc")
-        assert result.is_failure
-        assert "must have attributes" in (result.error or "").lower()
+        TestOperationHelpers.assert_result_failure(
+            result, expected_error="must have attributes"
+        )
 
     def test_validate_entry_for_server_with_empty_attributes(self) -> None:
         """Test validation with empty attributes dict."""
         adapter = FlextLdapEntryAdapter()
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(attributes={}),
+        entry = TestOperationHelpers.create_entry_simple(
+            "cn=test,dc=example,dc=com",
+            {},
         )
         result = adapter.validate_entry_for_server(entry, "rfc")
-        assert result.is_failure
-        assert "must have attributes" in (result.error or "").lower()
+        TestOperationHelpers.assert_result_failure(
+            result, expected_error="must have attributes"
+        )
 
     def test_execute_method(self) -> None:
         """Test execute method required by FlextService."""
         adapter = FlextLdapEntryAdapter()
         result = adapter.execute()
-        assert result.is_success
-        assert result.unwrap() is None
+        assert TestOperationHelpers.assert_result_success_and_unwrap(result) is None

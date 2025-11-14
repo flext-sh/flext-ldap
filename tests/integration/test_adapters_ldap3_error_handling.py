@@ -11,12 +11,13 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
 from tests.fixtures.constants import RFC
+from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -69,14 +70,12 @@ class TestLdap3AdapterErrorHandling:
     ) -> None:
         """Test add with invalid entry."""
         # Entry with invalid DN format
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="invalid-dn"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["test"],
-                    "objectClass": ["top", "person"],
-                }
-            ),
+        entry = TestOperationHelpers.create_entry_with_dn_and_attributes(
+            "invalid-dn",
+            {
+                "cn": ["test"],
+                "objectClass": ["top", "person"],
+            },
         )
 
         result = connected_adapter.add(entry)
@@ -88,16 +87,10 @@ class TestLdap3AdapterErrorHandling:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test add with missing objectClass."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testnooc,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testnooc"],
-                    # Missing objectClass
-                }
-            ),
+        # Create entry without objectClass for error test
+        entry = EntryTestHelpers.create_entry(
+            "cn=testnooc,ou=people,dc=flext,dc=local",
+            {"cn": ["testnooc"]},  # Missing objectClass
         )
 
         # Cleanup first
@@ -177,21 +170,8 @@ class TestLdap3AdapterErrorHandling:
     ) -> None:
         """Test add exception handling."""
         # Entry that might cause issues
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testexception,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testexception"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testexception", RFC.DEFAULT_BASE_DN
         )
 
         # Cleanup first

@@ -11,11 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.constants import RFC
+from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -35,15 +38,7 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API connection lifecycle."""
         api = FlextLdap()
-
-        # Connect
-        connect_result = api.connect(connection_config)
-        assert connect_result.is_success, f"Connect failed: {connect_result.error}"
-        assert api.is_connected is True
-
-        # Disconnect
-        api.disconnect()
-        assert api.is_connected is False
+        TestDeduplicationHelpers.connect_and_disconnect(api, connection_config)
 
     def test_api_search(
         self,
@@ -51,125 +46,32 @@ class TestFlextLdapAPI:
         ldap_container: dict[str, object],
     ) -> None:
         """Test API search operation."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
+        TestOperationHelpers.search_and_assert_success(
+            ldap_client,
+            str(ldap_container["base_dn"]),
+            expected_min_count=1,
         )
-
-        result = ldap_client.search(search_options)
-        assert result.is_success, f"Search failed: {result.error}"
-        search_result = result.unwrap()
-        assert len(search_result.entries) > 0
 
     def test_api_add(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test API add operation."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testapiadd,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testapiadd"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
-        )
-
-        # Cleanup first
-        _ = ldap_client.delete(str(entry.dn))
-
-        result = ldap_client.add(entry)
-        assert result.is_success, f"Add failed: {result.error}"
-
-        # Cleanup
-        delete_result = ldap_client.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        TestDeduplicationHelpers.api_add_operation(ldap_client, "testapiadd", sn="Test")
 
     def test_api_modify(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test API modify operation."""
-        # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testapimodify,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testapimodify"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
-        )
-
-        # Cleanup first
-        _ = ldap_client.delete(str(entry.dn))
-
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Modify entry
-        changes: dict[str, list[tuple[str, list[str]]]] = {
-            "mail": [(MODIFY_REPLACE, ["api@example.com"])],
-        }
-
-        modify_result = ldap_client.modify(str(entry.dn), changes)
-        assert modify_result.is_success, f"Modify failed: {modify_result.error}"
-
-        # Cleanup
-        delete_result = ldap_client.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        TestDeduplicationHelpers.api_modify_operation(ldap_client, "testapimodify")
 
     def test_api_delete(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test API delete operation."""
-        # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testapidelete,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testapidelete"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
-        )
-
-        # Cleanup first
-        _ = ldap_client.delete(str(entry.dn))
-
-        add_result = ldap_client.add(entry)
-        assert add_result.is_success
-
-        # Delete entry
-        delete_result = ldap_client.delete(str(entry.dn))
-        assert delete_result.is_success, f"Delete failed: {delete_result.error}"
+        TestDeduplicationHelpers.api_delete_operation(ldap_client, "testapidelete")
 
     def test_api_operations_when_not_connected(
         self,
@@ -179,34 +81,34 @@ class TestFlextLdapAPI:
         api = FlextLdap()
 
         # Search should fail
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
+        search_options = TestOperationHelpers.create_search_options(
+            str(ldap_container["base_dn"])
         )
-        search_result = api.search(search_options)
-        assert search_result.is_failure
+        TestOperationHelpers.execute_operation_when_not_connected(
+            api, "search", search_options=search_options
+        )
 
         # Add should fail
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={"cn": ["test"], "objectClass": ["top", "person"]}
-            ),
+        entry = EntryTestHelpers.create_entry(
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["top", "person"]},
         )
-        add_result = api.add(entry)
-        assert add_result.is_failure
+        TestOperationHelpers.execute_operation_when_not_connected(
+            api, "add", entry=entry
+        )
 
         # Modify should fail
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
-        modify_result = api.modify("cn=test,dc=example,dc=com", changes)
-        assert modify_result.is_failure
+        TestOperationHelpers.execute_operation_when_not_connected(
+            api, "modify", dn="cn=test,dc=example,dc=com", changes=changes
+        )
 
         # Delete should fail
-        delete_result = api.delete("cn=test,dc=example,dc=com")
-        assert delete_result.is_failure
+        TestOperationHelpers.execute_operation_when_not_connected(
+            api, "delete", dn="cn=test,dc=example,dc=com"
+        )
 
 
 class TestFlextLdapAPIWithQuirks:
@@ -238,30 +140,14 @@ class TestFlextLdapAPIWithQuirks:
     ) -> None:
         """Test adding entry with server-specific quirks handling."""
         # Entry that might need quirks processing
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testquirks,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testquirks"],
-                    "sn": ["Test"],
-                    "mail": ["test@example.com"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testquirks",
+            RFC.DEFAULT_BASE_DN,
+            additional_attrs={"mail": ["test@example.com"]},
         )
 
-        # Cleanup first
-        _ = ldap_client.delete(str(entry.dn))
-
         # Add should work with quirks handled by flext-ldif
-        result = ldap_client.add(entry)
+        result = EntryTestHelpers.add_and_cleanup(ldap_client, entry)
         assert result.is_success, f"Add failed: {result.error}"
 
         # Cleanup

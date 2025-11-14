@@ -11,13 +11,14 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from tests.fixtures.constants import RFC
+from tests.helpers.entry_helpers import EntryTestHelpers
+from tests.helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -79,26 +80,22 @@ class TestFlextLdapOperationsCompleteCoverage:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test add with DN that needs normalization."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value=f"  cn=testnorm2,ou=people,{RFC.DEFAULT_BASE_DN}  "
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testnorm2"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testnorm2", RFC.DEFAULT_BASE_DN
         )
+        # Create new entry with DN that needs normalization (with spaces)
+        # Pydantic models are frozen, so we need to create a new entry
+        dn_with_spaces = f"  {entry.dn!s}  "
+        attrs = (
+            entry.attributes.attributes
+            if entry.attributes and entry.attributes.attributes
+            else {}
+        )
+        entry = EntryTestHelpers.create_entry(dn_with_spaces, attrs)
 
         # Cleanup first
-        _ = operations_service.delete(str(entry.dn).strip())
+        if entry.dn:
+            _ = operations_service.delete(str(entry.dn).strip())
 
         result = operations_service.add(entry)
         assert result.is_success
@@ -115,21 +112,8 @@ class TestFlextLdapOperationsCompleteCoverage:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test add error handling path."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testerror,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testerror"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testerror", RFC.DEFAULT_BASE_DN
         )
 
         # Disconnect to trigger error
@@ -145,14 +129,12 @@ class TestFlextLdapOperationsCompleteCoverage:
     ) -> None:
         """Test add when adapter.add fails."""
         # Entry that will fail to add (invalid DN format)
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="invalid-dn"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["test"],
-                    "objectClass": ["top", "person"],
-                }
-            ),
+        entry = TestOperationHelpers.create_entry_with_dn_and_attributes(
+            "invalid-dn",
+            {
+                "cn": ["test"],
+                "objectClass": ["top", "person"],
+            },
         )
 
         result = operations_service.add(entry)
@@ -165,22 +147,8 @@ class TestFlextLdapOperationsCompleteCoverage:
     ) -> None:
         """Test modify with DN that needs normalization."""
         # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testmodnorm2,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testmodnorm2"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testmodnorm2", RFC.DEFAULT_BASE_DN
         )
 
         # Cleanup first
@@ -222,23 +190,8 @@ class TestFlextLdapOperationsCompleteCoverage:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test delete with DN that needs normalization."""
-        # First add an entry
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(
-                value="cn=testdelnorm2,ou=people,dc=flext,dc=local"
-            ),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["testdelnorm2"],
-                    "sn": ["Test"],
-                    "objectClass": [
-                        "inetOrgPerson",
-                        "organizationalPerson",
-                        "person",
-                        "top",
-                    ],
-                }
-            ),
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testdelnorm2", RFC.DEFAULT_BASE_DN
         )
 
         # Cleanup first
