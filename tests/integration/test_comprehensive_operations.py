@@ -105,7 +105,8 @@ class TestFlextLdapComprehensiveAdd:
     ) -> None:
         """Test adding user entry from fixture data."""
         _entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
-            ldap_client, test_user_entry
+            ldap_client,
+            test_user_entry,
         )
         FlextLdapTestHelpers.assert_operation_success(result)
 
@@ -116,7 +117,8 @@ class TestFlextLdapComprehensiveAdd:
     ) -> None:
         """Test adding group entry from fixture data."""
         _entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
-            ldap_client, test_group_entry
+            ldap_client,
+            test_group_entry,
         )
         FlextLdapTestHelpers.assert_operation_success(result)
 
@@ -184,7 +186,8 @@ class TestFlextLdapComprehensiveDelete:
         # Complete delete workflow using helper: add, delete, verify deletion
         _entry, add_result, delete_result = (
             FlextLdapTestHelpers.delete_entry_with_verification(
-                ldap_client, test_user_entry
+                ldap_client,
+                test_user_entry,
             )
         )
         FlextLdapTestHelpers.assert_operation_success(add_result)
@@ -278,7 +281,8 @@ class TestFlextLdapWithBaseLdif:
             pytest.skip("Entry has no DN")
         original_dn = str(user_entry.dn.value)
         new_dn = original_dn.replace(
-            "dc=example,dc=com", str(ldap_container.get("base_dn", ""))
+            "dc=example,dc=com",
+            str(ldap_container.get("base_dn", "")),
         )
 
         # Create new entry with adjusted DN

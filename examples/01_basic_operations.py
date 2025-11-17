@@ -359,12 +359,8 @@ def demonstrate_configuration() -> None:
     # Create API with auto-loaded config - ZERO manual configuration needed!
     api = FlextLdap()  # Auto-loads config from environment
 
-    # Validate configuration consistency
-    validation_result: FlextResult[None] = api.validate_configuration_consistency()
-    if validation_result.is_success:
-        logger.info("✅ Configuration validation passed")
-    else:
-        logger.error(f"❌ Configuration validation failed: {validation_result.error}")
+    # Configuration is validated during initialization
+    logger.info("✅ Configuration loaded from environment")
 
 
 def demonstrate_constants() -> None:

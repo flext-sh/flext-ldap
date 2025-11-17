@@ -10,8 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -26,9 +28,11 @@ class TestFlextLdapOperationsErrorCoverage:
     def test_search_with_failed_adapter_search(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test search when adapter search fails."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         assert connect_result.is_success
 
@@ -50,9 +54,11 @@ class TestFlextLdapOperationsErrorCoverage:
     def test_add_with_failed_adapter_add(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test add when adapter add fails."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         assert connect_result.is_success
 
@@ -74,9 +80,11 @@ class TestFlextLdapOperationsErrorCoverage:
     def test_modify_with_failed_adapter_modify(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test modify when adapter modify fails."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         assert connect_result.is_success
 
@@ -97,9 +105,11 @@ class TestFlextLdapOperationsErrorCoverage:
     def test_delete_with_failed_adapter_delete(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test delete when adapter delete fails."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         assert connect_result.is_success
 
@@ -115,12 +125,16 @@ class TestFlextLdapOperationsErrorCoverage:
 
     def test_execute_when_not_connected(
         self,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test execute when not connected."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         result = operations.execute()
         # Should return failure when not connected
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error

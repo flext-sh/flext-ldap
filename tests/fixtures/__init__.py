@@ -32,7 +32,7 @@ class TestFixtures:
             filepath = FIXTURES_DIR / filename
             if not filepath.exists():
                 return FlextResult[list[dict[str, object]]].fail(
-                    f"Fixture file not found: {filename}"
+                    f"Fixture file not found: {filename}",
                 )
 
             with Path(filepath).open(encoding="utf-8") as f:
@@ -40,13 +40,13 @@ class TestFixtures:
 
             if not isinstance(data, list):
                 return FlextResult[list[dict[str, object]]].fail(
-                    f"Expected list in {filename}, got {type(data)}"
+                    f"Expected list in {filename}, got {type(data)}",
                 )
 
             return FlextResult[list[dict[str, object]]].ok(data)
         except Exception as e:
             return FlextResult[list[dict[str, object]]].fail(
-                f"Failed to load JSON fixture {filename}: {e}"
+                f"Failed to load JSON fixture {filename}: {e}",
             )
 
     @staticmethod
@@ -71,7 +71,7 @@ class TestFixtures:
             filepath = FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
                 return FlextResult[dict[str, object]].fail(
-                    "Docker config file not found"
+                    "Docker config file not found",
                 )
 
             with Path(filepath).open(encoding="utf-8") as f:
@@ -80,32 +80,48 @@ class TestFixtures:
             return FlextResult[dict[str, object]].ok(config)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to load Docker config: {e}"
+                f"Failed to load Docker config: {e}",
             )
 
     @classmethod
-    def get_test_users(cls) -> list[dict[str, object]]:
-        """Get test users list (convenience method)."""
-        result = cls.load_json("test_users.json")
-        return result.value if result.is_success else []
+    def get_test_users(cls) -> FlextResult[list[dict[str, object]]]:
+        """Get test users list (convenience method).
+
+        Returns:
+            FlextResult containing test users list or error (no fallback)
+
+        """
+        return cls.load_json("test_users.json")
 
     @classmethod
-    def get_test_groups(cls) -> list[dict[str, object]]:
-        """Get test groups list (convenience method)."""
-        result = cls.load_json("test_groups.json")
-        return result.value if result.is_success else []
+    def get_test_groups(cls) -> FlextResult[list[dict[str, object]]]:
+        """Get test groups list (convenience method).
+
+        Returns:
+            FlextResult containing test groups list or error (no fallback)
+
+        """
+        return cls.load_json("test_groups.json")
 
     @classmethod
-    def get_base_ldif(cls) -> str:
-        """Get base LDIF content (convenience method)."""
-        result = cls.load_ldif("test_base.ldif")
-        return result.value if result.is_success else ""
+    def get_base_ldif(cls) -> FlextResult[str]:
+        """Get base LDIF content (convenience method).
+
+        Returns:
+            FlextResult containing LDIF content or error (no fallback)
+
+        """
+        return cls.load_ldif("test_base.ldif")
 
     @classmethod
-    def get_docker_config(cls) -> dict[str, object]:
-        """Get Docker configuration (convenience method)."""
-        result = cls.load_docker_config()
-        return result.value if result.is_success else {}
+    def get_docker_config(cls) -> FlextResult[dict[str, object]]:
+        """Get Docker configuration (convenience method).
+
+        Returns:
+            FlextResult containing Docker config or error (no fallback)
+
+        """
+        return cls.load_docker_config()
 
 
 __all__ = [

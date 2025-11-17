@@ -143,7 +143,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
                 "attributes": {
                     "cn": ("test",),  # Tuple
                     "mail": ["test@example.com"],
-                }
+                },
             }),
         )
 
@@ -164,7 +164,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
                 "attributes": {
                     "cn": ["test"],
                     "emptyList": [],  # Empty list
-                }
+                },
             }),
         )
 
@@ -187,7 +187,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
                     "cn": ["test"],
                     "emptyList": [],  # Empty list
                     "listWithEmpty": [""],  # List with empty string
-                }
+                },
             }),
         )
 

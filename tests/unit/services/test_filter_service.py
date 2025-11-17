@@ -24,14 +24,14 @@ class TestFilterService:
         # This would require a connected client, so this is a placeholder
         # for when filter validation service is implemented
         search_options = TestDeduplicationHelpers.create_search(
-            filter_str="(objectClass=person)"
+            filter_str="(objectClass=person)",
         )
         assert search_options.filter_str == "(objectClass=person)"
 
     def test_search_with_complex_filter(self) -> None:
         """Test search with complex AND/OR filter."""
         search_options = TestDeduplicationHelpers.create_search(
-            filter_str="(&(objectClass=person)(mail=*@example.com))"
+            filter_str="(&(objectClass=person)(mail=*@example.com))",
         )
         assert "&" in search_options.filter_str
         assert "objectClass=person" in search_options.filter_str

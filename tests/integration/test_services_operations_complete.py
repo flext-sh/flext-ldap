@@ -13,6 +13,7 @@ from collections.abc import Generator
 import pytest
 from ldap3 import MODIFY_REPLACE
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -31,9 +32,11 @@ class TestFlextLdapOperationsComplete:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: object,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
 
         operations = FlextLdapOperations(connection=connection)
@@ -77,7 +80,8 @@ class TestFlextLdapOperationsComplete:
     ) -> None:
         """Test add with normalized DN."""
         entry = TestDeduplicationHelpers.create_entry_with_normalized_dn(
-            "testnorm", RFC.DEFAULT_BASE_DN
+            "testnorm",
+            RFC.DEFAULT_BASE_DN,
         )
         result = EntryTestHelpers.add_and_cleanup(operations_service, entry)
         TestOperationHelpers.assert_result_success(result)
@@ -88,7 +92,9 @@ class TestFlextLdapOperationsComplete:
     ) -> None:
         """Test modify with DistinguishedName object."""
         entry_dict = TestOperationHelpers.create_entry_dict(
-            "testmoddn", RFC.DEFAULT_BASE_DN, sn="Test"
+            "testmoddn",
+            RFC.DEFAULT_BASE_DN,
+            sn="Test",
         )
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
@@ -97,7 +103,10 @@ class TestFlextLdapOperationsComplete:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                operations_service, entry_dict, changes, verify_attribute=None
+                operations_service,
+                entry_dict,
+                changes,
+                verify_attribute=None,
             )
         )
 
@@ -111,14 +120,19 @@ class TestFlextLdapOperationsComplete:
         """Test modify with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testmodnorm")
         add_result = EntryTestHelpers.add_and_cleanup(
-            operations_service, entry, verify=False, cleanup_after=False
+            operations_service,
+            entry,
+            verify=False,
+            cleanup_after=False,
         )
         TestOperationHelpers.assert_result_success(add_result)
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.modify_with_dn_spaces(
-            operations_service, entry, changes
+            operations_service,
+            entry,
+            changes,
         )
         if entry.dn:
             _ = operations_service.delete(str(entry.dn))
@@ -129,11 +143,13 @@ class TestFlextLdapOperationsComplete:
     ) -> None:
         """Test delete with DistinguishedName object."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testdeldn", RFC.DEFAULT_BASE_DN
+            "testdeldn",
+            RFC.DEFAULT_BASE_DN,
         )
 
         _add_result, _delete_result = TestOperationHelpers.add_then_delete_and_assert(
-            operations_service, entry
+            operations_service,
+            entry,
         )
 
     def test_delete_with_normalized_dn(
@@ -143,7 +159,9 @@ class TestFlextLdapOperationsComplete:
         """Test delete with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testdelnorm")
         _add_result = TestOperationHelpers.add_entry_and_assert_success(
-            operations_service, entry, cleanup_after=False
+            operations_service,
+            entry,
+            cleanup_after=False,
         )
         if entry.dn:
             TestDeduplicationHelpers.delete_with_dn_spaces(operations_service, entry)
@@ -165,14 +183,19 @@ class TestFlextLdapOperationsComplete:
     ) -> None:
         """Test add returns proper OperationResult on success."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testresult", RFC.DEFAULT_BASE_DN
+            "testresult",
+            RFC.DEFAULT_BASE_DN,
         )
 
         result = TestOperationHelpers.add_entry_and_assert_success(
-            operations_service, entry, verify_operation_result=True
+            operations_service,
+            entry,
+            verify_operation_result=True,
         )
         TestOperationHelpers.assert_operation_result_success(
-            result, expected_operation_type="add", expected_entries_affected=1
+            result,
+            expected_operation_type="add",
+            expected_entries_affected=1,
         )
 
     def test_modify_with_operation_result_success(
@@ -185,7 +208,9 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            operations_service, entry, changes
+            operations_service,
+            entry,
+            changes,
         )
 
     def test_delete_with_operation_result_success(
@@ -195,5 +220,6 @@ class TestFlextLdapOperationsComplete:
         """Test delete returns proper OperationResult on success."""
         entry = TestDeduplicationHelpers.create_user("testdelresult")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            operations_service, entry
+            operations_service,
+            entry,
         )

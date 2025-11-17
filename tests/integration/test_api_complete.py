@@ -97,7 +97,9 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test add returns proper OperationResult."""
         _entry, result = TestDeduplicationHelpers.create_user_add_and_verify(
-            ldap_client, "testapiadd", verify_operation_result=True
+            ldap_client,
+            "testapiadd",
+            verify_operation_result=True,
         )
         operation_result = result.unwrap()
         assert operation_result.success is True
@@ -112,7 +114,9 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            ldap_client, entry, changes
+            ldap_client,
+            entry,
+            changes,
         )
 
     def test_delete_with_dn_object(
@@ -122,7 +126,8 @@ class TestFlextLdapAPIComplete:
         """Test delete with DistinguishedName object."""
         entry = TestDeduplicationHelpers.create_user("testapidel")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            ldap_client, entry
+            ldap_client,
+            entry,
         )
 
     def test_execute_when_connected(
@@ -131,14 +136,18 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test execute when connected."""
         TestDeduplicationHelpers.execute_and_verify_total_count(
-            ldap_client, expected_total=0, expected_entries=0
+            ldap_client,
+            expected_total=0,
+            expected_entries=0,
         )
 
     def test_execute_when_not_connected(self) -> None:
         """Test execute when not connected."""
         api = FlextLdap()
         TestDeduplicationHelpers.execute_and_verify_total_count(
-            api, expected_total=0, expected_entries=0
+            api,
+            expected_total=0,
+            expected_entries=0,
         )
 
     def test_connect_with_service_config(
@@ -152,8 +161,22 @@ class TestFlextLdapAPIComplete:
             ldap_bind_dn=str(ldap_container["bind_dn"]),
             ldap_bind_password=str(ldap_container["password"]),
         )
+        from flext_ldap.models import FlextLdapModels
+
         api = FlextLdap(config=config)
-        result = api.connect(None)  # Use service config
+        # Create ConnectionConfig from service config explicitly (no fallback)
+        connection_config = FlextLdapModels.ConnectionConfig(
+            host=config.ldap_host,
+            port=config.ldap_port,
+            use_ssl=config.ldap_use_ssl,
+            use_tls=config.ldap_use_tls,
+            bind_dn=config.ldap_bind_dn,
+            bind_password=config.ldap_bind_password,
+            timeout=config.ldap_timeout,
+            auto_bind=config.ldap_auto_bind,
+            auto_range=config.ldap_auto_range,
+        )
+        result = api.connect(connection_config)
         TestOperationHelpers.assert_result_success(result)
         api.disconnect()
 
@@ -167,5 +190,7 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_ADD, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_modify_delete_with_operation_results(
-            ldap_client, entry, changes
+            ldap_client,
+            entry,
+            changes,
         )

@@ -15,12 +15,16 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextLogger
+from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdap
+from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
 from tests.fixtures.loader import LdapTestFixtures
 
 logger = FlextLogger(__name__)
@@ -95,9 +99,21 @@ def ldap_container(
 # =============================================================================
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
+def ldap_parser() -> FlextLdifParser:
+    """Get standard LDIF parser instance for tests.
+
+    Module-scoped to match ldap_client fixture scope for performance.
+    """
+    return FlextLdifParser()
+
+
+@pytest.fixture(scope="module")
 def ldap_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
-    """Get standard LDAP connection configuration."""
+    """Get standard LDAP connection configuration.
+
+    Module-scoped to match ldap_client fixture scope for performance.
+    """
     port_value = ldap_container["port"]
     port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
 
@@ -149,6 +165,8 @@ def search_options(ldap_container: dict[str, object]) -> FlextLdapModels.SearchO
 def ldap_client(
     connection_config: FlextLdapModels.ConnectionConfig,
     ldap_test_data_loader: Connection,
+    ldap_config: FlextLdapConfig,
+    ldap_parser: FlextLdifParser,
 ) -> Generator[FlextLdap]:
     """Get configured LDAP client instance with real connection.
 
@@ -159,7 +177,7 @@ def ldap_client(
     # Ensure OUs exist (ldap_test_data_loader creates them)
     _ = ldap_test_data_loader
 
-    client = FlextLdap()
+    client = FlextLdap(config=ldap_config, parser=ldap_parser)
 
     # Connect to the LDAP server
     connect_result = client.connect(connection_config)
@@ -172,7 +190,7 @@ def ldap_client(
     try:
         client.disconnect()
     except Exception as e:
-        logger.warning(f"LDAP client disconnection failed: {e}")
+        logger.warning("LDAP client disconnection failed: %s", e)
 
 
 # =============================================================================
@@ -324,3 +342,33 @@ SAMPLE_GROUP_ENTRY = {
         "member": ["cn=testuser,ou=people,dc=flext,dc=local"],
     },
 }
+
+
+@pytest.fixture
+def ldap_connection(
+    ldap_config: FlextLdapConfig,
+    ldap_parser: FlextLdifParser,
+) -> FlextLdapConnection:
+    """Get FlextLdapConnection instance for testing."""
+    return FlextLdapConnection(config=ldap_config, parser=ldap_parser)
+
+
+@pytest.fixture
+def ldap_operations(ldap_connection: FlextLdapConnection) -> FlextLdapOperations:
+    """Get FlextLdapOperations instance for testing."""
+    return FlextLdapOperations(connection=ldap_connection)
+
+
+@pytest.fixture
+def ldap3_adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
+    """Get Ldap3Adapter instance for testing."""
+    return Ldap3Adapter(parser=ldap_parser)
+
+
+@pytest.fixture
+def flext_ldap_instance(
+    ldap_config: FlextLdapConfig,
+    ldap_parser: FlextLdifParser,
+) -> FlextLdap:
+    """Get FlextLdap instance without connection."""
+    return FlextLdap(config=ldap_config, parser=ldap_parser)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import pytest
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
@@ -21,14 +22,17 @@ pytestmark = pytest.mark.integration
 class TestFlextLdapAPICompleteCoverage:
     """Complete coverage tests for FlextLdap API."""
 
-    def test_api_initialization_with_default_config(self) -> None:
+    def test_api_initialization_with_default_config(
+        self,
+        flext_ldap_instance: FlextLdap,
+    ) -> None:
         """Test API initialization with default config."""
-        api = FlextLdap()
-        assert api._config is not None
-        assert isinstance(api._config, FlextLdapConfig)
+        assert flext_ldap_instance._config is not None
+        assert isinstance(flext_ldap_instance._config, FlextLdapConfig)
 
     def test_connect_with_service_config_all_options(
         self,
+        ldap_parser: FlextLdifParser,
         ldap_container: dict[str, object],
     ) -> None:
         """Test connect using service config with all options."""
@@ -43,8 +47,21 @@ class TestFlextLdapAPICompleteCoverage:
             ldap_auto_bind=True,
             ldap_auto_range=True,
         )
-        api = FlextLdap(config=config)
-        result = api.connect(None)  # Use service config
+
+        api = FlextLdap(config=config, parser=ldap_parser)
+        # Create ConnectionConfig from service config explicitly (no fallback)
+        connection_config = FlextLdapModels.ConnectionConfig(
+            host=config.ldap_host,
+            port=config.ldap_port,
+            use_ssl=config.ldap_use_ssl,
+            use_tls=config.ldap_use_tls,
+            bind_dn=config.ldap_bind_dn,
+            bind_password=config.ldap_bind_password,
+            timeout=config.ldap_timeout,
+            auto_bind=config.ldap_auto_bind,
+            auto_range=config.ldap_auto_range,
+        )
+        result = api.connect(connection_config)
         assert result.is_success
         api.disconnect()
 
@@ -75,8 +92,20 @@ class TestFlextLdapAPICompleteCoverage:
         )
         api = FlextLdap(config=config)
 
+        # Create ConnectionConfig from service config explicitly (no fallback)
+        connection_config = FlextLdapModels.ConnectionConfig(
+            host=config.ldap_host,
+            port=config.ldap_port,
+            use_ssl=config.ldap_use_ssl,
+            use_tls=config.ldap_use_tls,
+            bind_dn=config.ldap_bind_dn,
+            bind_password=config.ldap_bind_password,
+            timeout=config.ldap_timeout,
+            auto_bind=config.ldap_auto_bind,
+            auto_range=config.ldap_auto_range,
+        )
         # Connect using service config
-        connect_result = api.connect(None)
+        connect_result = api.connect(connection_config)
         assert connect_result.is_success
 
         # Search
@@ -91,7 +120,7 @@ class TestFlextLdapAPICompleteCoverage:
         # Add
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=testservice,ou=people,dc=flext,dc=local"
+                value="cn=testservice,ou=people,dc=flext,dc=local",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -103,7 +132,7 @@ class TestFlextLdapAPICompleteCoverage:
                         "person",
                         "top",
                     ],
-                }
+                },
             ),
         )
 

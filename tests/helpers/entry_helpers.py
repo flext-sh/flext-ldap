@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
 from collections.abc import Mapping
 from typing import Any
 
@@ -51,7 +50,7 @@ class EntryTestHelpers:
         attrs_dict = entry_dict.get("attributes", {})
         if isinstance(attrs_dict, dict):
             attrs = FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": attrs_dict
+                "attributes": attrs_dict,
             })
         else:
             attrs = FlextLdifModels.LdifAttributes()
@@ -104,23 +103,13 @@ class EntryTestHelpers:
 
         """
         dn_str = str(dn) if dn else ""
-        # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
-        sig = inspect.signature(client.search)
-        if "search_options" in sig.parameters:
-            # FlextLdap API - uses SearchOptions
-            search_options = FlextLdapModels.SearchOptions(
-                base_dn=dn_str,
-                filter_str="(objectClass=*)",
-                scope="BASE",
-            )
-            search_result = client.search(search_options)
-        else:
-            # Ldap3Adapter - uses base_dn, filter_str directly
-            search_result = client.search(
-                base_dn=dn_str,
-                filter_str="(objectClass=*)",
-                scope="BASE",
-            )
+        # All clients now use SearchOptions - unified API
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn=dn_str,
+            filter_str="(objectClass=*)",
+            scope="BASE",
+        )
+        search_result = client.search(search_options)
         if search_result.is_success:
             unwrapped = search_result.unwrap()
             # Handle both return types: SearchResult or list[Entry]
@@ -270,7 +259,8 @@ class EntryTestHelpers:
             if adjust_dn:
                 original_dn = str(entry_dict.get("dn", ""))
                 adjusted_dn = original_dn.replace(
-                    adjust_dn.get("from", ""), adjust_dn.get("to", "")
+                    adjust_dn.get("from", ""),
+                    adjust_dn.get("to", ""),
                 )
                 entry_dict = {**entry_dict, "dn": adjusted_dn}
 
@@ -364,23 +354,13 @@ class EntryTestHelpers:
         modify_success = modify_result.is_success
 
         if modify_success and verify_attribute and verify_value:
-            # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
-            sig = inspect.signature(client.search)
-            if "search_options" in sig.parameters:
-                # FlextLdap API - uses SearchOptions
-                search_options = FlextLdapModels.SearchOptions(
-                    base_dn=dn_str,
-                    filter_str="(objectClass=*)",
-                    scope="BASE",
-                )
-                search_result = client.search(search_options)
-            else:
-                # Ldap3Adapter - uses base_dn, filter_str directly
-                search_result = client.search(
-                    base_dn=dn_str,
-                    filter_str="(objectClass=*)",
-                    scope="BASE",
-                )
+            # All clients now use SearchOptions - unified API
+            search_options = FlextLdapModels.SearchOptions(
+                base_dn=dn_str,
+                filter_str="(objectClass=*)",
+                scope="BASE",
+            )
+            search_result = client.search(search_options)
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
                 # Handle both return types: SearchResult or list[Entry]
@@ -395,7 +375,8 @@ class EntryTestHelpers:
                         and modified_entry.attributes.attributes
                     ):
                         attrs = modified_entry.attributes.attributes.get(
-                            verify_attribute, []
+                            verify_attribute,
+                            [],
                         )
                         assert verify_value in attrs, (
                             f"Expected {verify_value} in {verify_attribute}, got {attrs}"
@@ -468,23 +449,13 @@ class EntryTestHelpers:
             delete_success = delete_result.is_success
 
             if delete_success:
-                # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
-                sig = inspect.signature(client.search)
-                if "search_options" in sig.parameters:
-                    # FlextLdap API - uses SearchOptions
-                    search_options = FlextLdapModels.SearchOptions(
-                        base_dn=dn_str,
-                        filter_str="(objectClass=*)",
-                        scope="BASE",
-                    )
-                    search_result = client.search(search_options)
-                else:
-                    # Ldap3Adapter - uses base_dn, filter_str directly
-                    search_result = client.search(
-                        base_dn=dn_str,
-                        filter_str="(objectClass=*)",
-                        scope="BASE",
-                    )
+                # All clients now use SearchOptions - unified API
+                search_options = FlextLdapModels.SearchOptions(
+                    base_dn=dn_str,
+                    filter_str="(objectClass=*)",
+                    scope="BASE",
+                )
+                search_result = client.search(search_options)
                 if search_result.is_success:
                     unwrapped = search_result.unwrap()
                     # Handle both return types: SearchResult or list[Entry]
@@ -534,7 +505,7 @@ class EntryTestHelpers:
             else:
                 attrs_dict[key] = [str(value)]
         attrs = FlextLdifModels.LdifAttributes.model_validate({
-            "attributes": attrs_dict
+            "attributes": attrs_dict,
         })
         return FlextLdifModels.Entry(dn=dn_obj, attributes=attrs)
 

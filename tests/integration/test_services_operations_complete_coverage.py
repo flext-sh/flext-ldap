@@ -11,8 +11,10 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -30,9 +32,11 @@ class TestFlextLdapOperationsCompleteCoverage:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: object,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -73,7 +77,9 @@ class TestFlextLdapOperationsCompleteCoverage:
 
         result = operations_service.search(search_options)
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     def test_add_with_normalized_dn_whitespace(
         self,
@@ -81,7 +87,8 @@ class TestFlextLdapOperationsCompleteCoverage:
     ) -> None:
         """Test add with DN that needs normalization."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testnorm2", RFC.DEFAULT_BASE_DN
+            "testnorm2",
+            RFC.DEFAULT_BASE_DN,
         )
         # Create new entry with DN that needs normalization (with spaces)
         # Pydantic models are frozen, so we need to create a new entry
@@ -113,7 +120,8 @@ class TestFlextLdapOperationsCompleteCoverage:
     ) -> None:
         """Test add error handling path."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testerror", RFC.DEFAULT_BASE_DN
+            "testerror",
+            RFC.DEFAULT_BASE_DN,
         )
 
         # Disconnect to trigger error
@@ -121,7 +129,9 @@ class TestFlextLdapOperationsCompleteCoverage:
 
         result = operations_service.add(entry)
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     def test_add_with_adapter_failure(
         self,
@@ -148,7 +158,8 @@ class TestFlextLdapOperationsCompleteCoverage:
         """Test modify with DN that needs normalization."""
         # First add an entry
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testmodnorm2", RFC.DEFAULT_BASE_DN
+            "testmodnorm2",
+            RFC.DEFAULT_BASE_DN,
         )
 
         # Cleanup first
@@ -183,7 +194,9 @@ class TestFlextLdapOperationsCompleteCoverage:
 
         result = operations_service.modify("cn=test,dc=flext,dc=local", changes)
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     def test_delete_with_normalized_dn_whitespace(
         self,
@@ -191,7 +204,8 @@ class TestFlextLdapOperationsCompleteCoverage:
     ) -> None:
         """Test delete with DN that needs normalization."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testdelnorm2", RFC.DEFAULT_BASE_DN
+            "testdelnorm2",
+            RFC.DEFAULT_BASE_DN,
         )
 
         # Cleanup first
@@ -214,13 +228,18 @@ class TestFlextLdapOperationsCompleteCoverage:
 
         result = operations_service.delete("cn=test,dc=flext,dc=local")
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
 
-    def test_execute_error_handling(self) -> None:
+    def test_execute_error_handling(self, ldap_parser: FlextLdifParser) -> None:
         """Test execute error handling path."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         result = operations.execute()
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error

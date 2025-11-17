@@ -37,47 +37,31 @@ class FlextLdapConnection(FlextService[bool]):
         """Initialize connection service.
 
         Args:
-            config: Optional FlextLdapConfig instance. If None, uses default config.
-            parser: Optional FlextLdifParser instance for adapter. If None, creates new instance.
+            config: FlextLdapConfig instance (optional, creates default if not provided)
+            parser: FlextLdifParser instance (optional, creates default if not provided)
 
         """
         super().__init__()
-        self._config = config if config is not None else FlextLdapConfig()
+        self._config = config or FlextLdapConfig()
         self._logger = FlextLogger(__name__)
-        # Pass parser to adapter to maximize reuse
-        self._adapter = Ldap3Adapter(parser=parser)
+        # Pass parser to adapter (optional, creates default if not provided)
+        self._adapter = Ldap3Adapter(parser=parser or FlextLdifParser())
 
     def connect(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        connection_config: FlextLdapModels.ConnectionConfig,
     ) -> FlextResult[bool]:
         """Establish LDAP connection.
 
         Args:
-            connection_config: Optional connection config. If None, uses service config.
+            connection_config: Connection configuration (required, no fallback)
 
         Returns:
             FlextResult[bool] indicating connection success
 
         """
-        if connection_config is None:
-            # Build config from service config
-            connection_config = FlextLdapModels.ConnectionConfig(
-                host=self._config.ldap_host,
-                port=self._config.ldap_port,
-                use_ssl=self._config.ldap_use_ssl,
-                use_tls=self._config.ldap_use_tls,
-                bind_dn=self._config.ldap_bind_dn,
-                bind_password=self._config.ldap_bind_password,
-                timeout=self._config.ldap_timeout,
-                auto_bind=self._config.ldap_auto_bind,
-                auto_range=self._config.ldap_auto_range,
-            )
-
-        result = self._adapter.connect(connection_config)
-        if result.is_success:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(result.error or "Connection failed")
+        # Monadic pattern - map success to True, preserve failure
+        return self._adapter.connect(connection_config).map(lambda _: True)
 
     def disconnect(self) -> None:
         """Close LDAP connection."""

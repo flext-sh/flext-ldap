@@ -15,6 +15,7 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 
@@ -47,7 +48,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
     def search(
         self,
         search_options: FlextLdapModels.SearchOptions,
-        server_type: str = "rfc",
+        server_type: str = FlextLdapConstants.ServerTypes.RFC,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation.
 
@@ -59,46 +60,39 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             server_type: LDAP server type for parsing (default: "rfc")
 
         Returns:
-            FlextResult containing SearchResult with Entry models (reusing FlextLdifModels.Entry)
+            FlextResult containing SearchResult with Entry models
+                (reusing FlextLdifModels.Entry)
 
         """
         if not self._connection.is_connected:
             return FlextResult[FlextLdapModels.SearchResult].fail(
-                "Not connected to LDAP server"
+                "Not connected to LDAP server",
             )
 
-        # Normalize base_dn using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
-        # Validation is expensive and base_dn is usually already valid from SearchOptions model
+        # Normalize base_dn using FlextLdifUtilities.DN
+        # Skip validation for performance
         normalized_base_dn = FlextLdifUtilities.DN.norm_string(search_options.base_dn)
-
-        # Perform search using adapter - it already returns Entry models
-        adapter = self._connection.adapter
-        search_result = adapter.search(
+        # Update search_options with normalized DN for consistency
+        normalized_options = FlextLdapModels.SearchOptions(
             base_dn=normalized_base_dn,
             filter_str=search_options.filter_str,
             scope=search_options.scope,
             attributes=search_options.attributes,
             size_limit=search_options.size_limit,
             time_limit=search_options.time_limit,
+        )
+
+        # Perform search using adapter - monadic pattern
+        return self._connection.adapter.search(
+            normalized_options,
             server_type=server_type,
+        ).map(
+            lambda entries: FlextLdapModels.SearchResult(
+                entries=entries,
+                total_count=len(entries),
+                search_options=normalized_options,
+            ),
         )
-
-        if not search_result.is_success:
-            return FlextResult[FlextLdapModels.SearchResult].fail(
-                search_result.error or "Search failed"
-            )
-
-        # Adapter already returns Entry models (reusing FlextLdifModels.Entry)
-        entries = search_result.unwrap()
-
-        # Create search result
-        result = FlextLdapModels.SearchResult(
-            entries=entries,
-            total_count=len(entries),
-            search_options=search_options,
-        )
-
-        return FlextResult[FlextLdapModels.SearchResult].ok(result)
 
     def add(
         self,
@@ -118,36 +112,17 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         """
         if not self._connection.is_connected:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                "Not connected to LDAP server"
+                "Not connected to LDAP server",
             )
 
-        # Normalize DN using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
-        # Entry.dn is already validated by Pydantic model
+        # Normalize DN using FlextLdifUtilities.DN - skip validation for performance
         dn_value = FlextLdifUtilities.DN.get_dn_value(entry.dn)
         normalized_dn = FlextLdifUtilities.DN.norm_string(dn_value)
         # Update entry with normalized DN for consistency
         entry.dn = FlextLdifModels.DistinguishedName(value=normalized_dn)
 
-        # Perform add operation - adapter accepts Entry model directly
-        adapter = self._connection.adapter
-        add_result = adapter.add(entry)
-
-        if add_result.is_success:
-            operation_result = FlextLdapModels.OperationResult(
-                success=True,
-                operation_type="add",
-                message="Entry added successfully",
-                entries_affected=1,
-            )
-            return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
-        error_msg = add_result.error or "Add failed"
-        operation_result = FlextLdapModels.OperationResult(
-            success=False,
-            operation_type="add",
-            message=error_msg,
-            entries_affected=0,
-        )
-        return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
+        # Perform add operation - monadic pattern, direct return
+        return self._connection.adapter.add(entry)
 
     def modify(
         self,
@@ -157,7 +132,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         """Modify LDAP entry.
 
         Args:
-            dn: Distinguished name of entry to modify
+            dn: Distinguished name of entry to modify (str or DistinguishedName)
             changes: Modification changes in ldap3 format
 
         Returns:
@@ -166,34 +141,21 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         """
         if not self._connection.is_connected:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                "Not connected to LDAP server"
+                "Not connected to LDAP server",
             )
 
-        # Normalize DN using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
-        # DN validation is expensive, normalize only
-        dn_value = FlextLdifUtilities.DN.get_dn_value(dn)
-        normalized_dn = FlextLdifUtilities.DN.norm_string(dn_value)
-
-        # Perform modify operation
-        adapter = self._connection.adapter
-        modify_result = adapter.modify(normalized_dn, changes)
-
-        if modify_result.is_success:
-            operation_result = FlextLdapModels.OperationResult(
-                success=True,
-                operation_type="modify",
-                message="Entry modified successfully",
-                entries_affected=1,
-            )
-            return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
-        error_msg = modify_result.error or "Modify failed"
-        operation_result = FlextLdapModels.OperationResult(
-            success=False,
-            operation_type="modify",
-            message=error_msg,
-            entries_affected=0,
+        # Convert to DistinguishedName model - single form internally
+        dn_model = (
+            dn
+            if isinstance(dn, FlextLdifModels.DistinguishedName)
+            else FlextLdifModels.DistinguishedName(value=dn)
         )
-        return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
+        # Normalize DN using FlextLdifUtilities.DN
+        normalized_dn_value = FlextLdifUtilities.DN.norm_string(dn_model.value)
+        normalized_dn = FlextLdifModels.DistinguishedName(value=normalized_dn_value)
+
+        # Perform modify operation - monadic pattern, direct return
+        return self._connection.adapter.modify(normalized_dn, changes)
 
     def delete(
         self,
@@ -202,7 +164,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         """Delete LDAP entry.
 
         Args:
-            dn: Distinguished name of entry to delete
+            dn: Distinguished name of entry to delete (str or DistinguishedName)
 
         Returns:
             FlextResult containing OperationResult
@@ -210,34 +172,21 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         """
         if not self._connection.is_connected:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                "Not connected to LDAP server"
+                "Not connected to LDAP server",
             )
 
-        # Normalize DN using FlextLdifUtilities.DN (FASE 2) - skip validation for performance
-        # DN validation is expensive, normalize only
-        dn_value = FlextLdifUtilities.DN.get_dn_value(dn)
-        normalized_dn = FlextLdifUtilities.DN.norm_string(dn_value)
-
-        # Perform delete operation
-        adapter = self._connection.adapter
-        delete_result = adapter.delete(normalized_dn)
-
-        if delete_result.is_success:
-            operation_result = FlextLdapModels.OperationResult(
-                success=True,
-                operation_type="delete",
-                message="Entry deleted successfully",
-                entries_affected=1,
-            )
-            return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
-        error_msg = delete_result.error or "Delete failed"
-        operation_result = FlextLdapModels.OperationResult(
-            success=False,
-            operation_type="delete",
-            message=error_msg,
-            entries_affected=0,
+        # Convert to DistinguishedName model - single form internally
+        dn_model = (
+            dn
+            if isinstance(dn, FlextLdifModels.DistinguishedName)
+            else FlextLdifModels.DistinguishedName(value=dn)
         )
-        return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
+        # Normalize DN using FlextLdifUtilities.DN
+        normalized_dn_value = FlextLdifUtilities.DN.norm_string(dn_model.value)
+        normalized_dn = FlextLdifModels.DistinguishedName(value=normalized_dn_value)
+
+        # Perform delete operation - monadic pattern, direct return
+        return self._connection.adapter.delete(normalized_dn)
 
     @property
     def is_connected(self) -> bool:
@@ -252,19 +201,23 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
     def execute(self) -> FlextResult[FlextLdapModels.SearchResult]:
         """Execute service health check.
 
+        Returns health check result based on connection status.
+        Fast fail if not connected - no fallback.
+
         Returns:
-            FlextResult containing empty SearchResult
+            FlextResult containing SearchResult if connected,
+            or failure if not connected
 
         """
         if not self._connection.is_connected:
             return FlextResult[FlextLdapModels.SearchResult].fail(
-                "Not connected to LDAP server"
+                "Not connected to LDAP server",
             )
 
-        # Return empty search result as health check
+        # Return empty search result as health check indicator
         empty_options = FlextLdapModels.SearchOptions(
             base_dn="",
-            filter_str="(objectClass=*)",
+            filter_str=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
         )
         result = FlextLdapModels.SearchResult(
             entries=[],

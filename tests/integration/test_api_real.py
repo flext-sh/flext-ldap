@@ -82,10 +82,12 @@ class TestFlextLdapAPI:
 
         # Search should fail
         search_options = TestOperationHelpers.create_search_options(
-            str(ldap_container["base_dn"])
+            str(ldap_container["base_dn"]),
         )
         TestOperationHelpers.execute_operation_when_not_connected(
-            api, "search", search_options=search_options
+            api,
+            "search",
+            search_options=search_options,
         )
 
         # Add should fail
@@ -94,7 +96,9 @@ class TestFlextLdapAPI:
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
         TestOperationHelpers.execute_operation_when_not_connected(
-            api, "add", entry=entry
+            api,
+            "add",
+            entry=entry,
         )
 
         # Modify should fail
@@ -102,12 +106,17 @@ class TestFlextLdapAPI:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestOperationHelpers.execute_operation_when_not_connected(
-            api, "modify", dn="cn=test,dc=example,dc=com", changes=changes
+            api,
+            "modify",
+            dn="cn=test,dc=example,dc=com",
+            changes=changes,
         )
 
         # Delete should fail
         TestOperationHelpers.execute_operation_when_not_connected(
-            api, "delete", dn="cn=test,dc=example,dc=com"
+            api,
+            "delete",
+            dn="cn=test,dc=example,dc=com",
         )
 
 

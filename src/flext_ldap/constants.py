@@ -21,10 +21,17 @@ class FlextLdapConstants(FlextConstants):
 
     Contains ONLY constant values specific to LDAP operations.
     Reuses flext-ldif constants for Entry, DN, and Schema operations.
+
+    Constants are organized with the most important ones first:
+    1. Enums (SearchScope, OperationType)
+    2. Literal Types
+    3. Connection Defaults
+    4. Server Types
+    5. Other constants
     """
 
     # =========================================================================
-    # LDAP SEARCH SCOPE ENUMS
+    # LDAP SEARCH SCOPE ENUMS (FIRST - Most Used)
     # =========================================================================
 
     class SearchScope(StrEnum):
@@ -35,7 +42,7 @@ class FlextLdapConstants(FlextConstants):
         SUBTREE = "SUBTREE"
 
     # =========================================================================
-    # LDAP OPERATION TYPES
+    # LDAP OPERATION TYPES (FIRST - Most Used)
     # =========================================================================
 
     class OperationType(StrEnum):
@@ -49,6 +56,43 @@ class FlextLdapConstants(FlextConstants):
         COMPARE = "compare"
         BIND = "bind"
         UNBIND = "unbind"
+
+    # =========================================================================
+    # LITERAL TYPES (FIRST - Type System)
+    # =========================================================================
+
+    class LiteralTypes:
+        """Type-safe literal types for LDAP operations."""
+
+        SearchScope = Literal["BASE", "ONELEVEL", "SUBTREE"]
+        OperationType = Literal[
+            "search",
+            "add",
+            "modify",
+            "delete",
+            "modify_dn",
+            "compare",
+            "bind",
+            "unbind",
+        ]
+        Ldap3Scope = Literal["BASE", "LEVEL", "SUBTREE"]
+
+    # =========================================================================
+    # SERVER TYPES (FIRST - Server Identification)
+    # =========================================================================
+
+    class ServerTypes:
+        """LDAP server type identifiers."""
+
+        RFC: Final[str] = "rfc"  # RFC-compliant (no quirks)
+        GENERIC: Final[str] = "generic"
+        OPENLDAP: Final[str] = "openldap"
+        OPENLDAP1: Final[str] = "openldap1"
+        OPENLDAP2: Final[str] = "openldap2"
+        OID: Final[str] = "oid"
+        OUD: Final[str] = "oud"
+        AD: Final[str] = "ad"
+        AD_SHORT: Final[str] = "ad"
 
     # =========================================================================
     # LDAP CONNECTION DEFAULTS
@@ -66,35 +110,19 @@ class FlextLdapConstants(FlextConstants):
         POOL_LIFETIME: Final[int] = 3600
 
     # =========================================================================
-    # LITERAL TYPES
-    # =========================================================================
-
-    class LiteralTypes:
-        """Type-safe literal types for LDAP operations."""
-
-        SearchScope = Literal["BASE", "ONELEVEL", "SUBTREE"]
-        OperationType = Literal[
-            "search",
-            "add",
-            "modify",
-            "delete",
-            "modify_dn",
-            "compare",
-            "bind",
-            "unbind",
-        ]
-
-    # =========================================================================
     # DEFAULT VALUES
     # =========================================================================
 
-    class Defaults:
+    class LdapDefaults:
         """LDAP-specific default values."""
 
         SERVER_TYPE: Final[str] = "generic"
         OBJECT_CLASS_TOP: Final[str] = "top"
         SCHEMA_SUBENTRY: Final[str] = "cn=subschema"
         DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
+        SCHEMA_OBJECT_CLASSES: Final[str] = "objectClasses"
+        SCHEMA_ATTRIBUTE_TYPES: Final[str] = "attributeTypes"
+        SCHEMA_LDAP_SYNTAXES: Final[str] = "ldapSyntaxes"
 
     # =========================================================================
     # SEARCH FILTERS
@@ -120,6 +148,7 @@ class FlextLdapConstants(FlextConstants):
         CN: Final[str] = "cn"
         UID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
+        ALL_ATTRIBUTES: Final[str] = "*"  # Wildcard for all attributes
 
     # =========================================================================
     # ERROR STRINGS
@@ -199,6 +228,16 @@ class FlextLdapConstants(FlextConstants):
         LEVEL_LDAP3: Final[int] = 1  # ONELEVEL scope
         SUBTREE_LDAP3: Final[int] = 2  # SUBTREE scope
 
+    class Ldap3ScopeValues:
+        """LDAP3 scope string values matching Ldap3Scope Literal type.
+
+        Values are Final[str] but match Literal["BASE", "LEVEL", "SUBTREE"] exactly.
+        """
+
+        BASE: Final[str] = "BASE"
+        LEVEL: Final[str] = "LEVEL"
+        SUBTREE: Final[str] = "SUBTREE"
+
     # =========================================================================
     # ROOT DSE ATTRIBUTES
     # =========================================================================
@@ -228,19 +267,3 @@ class FlextLdapConstants(FlextConstants):
         IBM: Final[str] = "ibm"
         UNBOUNDID: Final[str] = "unboundid"
         FORGEROCK: Final[str] = "forgerock"
-
-    # =========================================================================
-    # SERVER TYPES
-    # =========================================================================
-
-    class ServerTypes:
-        """LDAP server type identifiers."""
-
-        GENERIC: Final[str] = "generic"
-        OPENLDAP: Final[str] = "openldap"
-        OPENLDAP1: Final[str] = "openldap1"
-        OPENLDAP2: Final[str] = "openldap2"
-        OID: Final[str] = "oid"
-        OUD: Final[str] = "oud"
-        AD: Final[str] = "ad"
-        AD_SHORT: Final[str] = "ad"

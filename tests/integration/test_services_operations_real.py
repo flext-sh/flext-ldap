@@ -12,8 +12,10 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -31,9 +33,11 @@ class TestFlextLdapOperationsSearch:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -120,9 +124,11 @@ class TestFlextLdapOperationsSearch:
     def test_search_when_not_connected(
         self,
         ldap_container: dict[str, object],
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test search when not connected."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         search_options = TestOperationHelpers.create_search_options(
@@ -164,9 +170,11 @@ class TestFlextLdapOperationsAdd:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -183,17 +191,22 @@ class TestFlextLdapOperationsAdd:
     ) -> None:
         """Test adding an entry."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testopsadd", RFC.DEFAULT_BASE_DN, sn="Test"
+            "testopsadd",
+            RFC.DEFAULT_BASE_DN,
+            sn="Test",
         )
 
         result = EntryTestHelpers.add_and_cleanup(operations_service, entry)
         TestOperationHelpers.assert_operation_result_success(
-            result, expected_operation_type="add", expected_entries_affected=1
+            result,
+            expected_operation_type="add",
+            expected_entries_affected=1,
         )
 
-    def test_add_entry_when_not_connected(self) -> None:
+    def test_add_entry_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test add when not connected."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         entry = TestOperationHelpers.create_entry_with_dn_and_attributes(
@@ -215,9 +228,11 @@ class TestFlextLdapOperationsModify:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
 
         operations = FlextLdapOperations(connection=connection)
@@ -232,7 +247,9 @@ class TestFlextLdapOperationsModify:
     ) -> None:
         """Test modifying an entry."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testopsmodify", RFC.DEFAULT_BASE_DN, sn="Test"
+            "testopsmodify",
+            RFC.DEFAULT_BASE_DN,
+            sn="Test",
         )
         entry_dict = {
             "dn": str(entry.dn),
@@ -245,13 +262,17 @@ class TestFlextLdapOperationsModify:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                operations_service, entry_dict, changes, verify_attribute=None
+                operations_service,
+                entry_dict,
+                changes,
+                verify_attribute=None,
             )
         )
 
         assert add_result.is_success
         TestOperationHelpers.assert_operation_result_success(
-            modify_result, expected_operation_type="modify"
+            modify_result,
+            expected_operation_type="modify",
         )
 
 
@@ -262,9 +283,11 @@ class TestFlextLdapOperationsDelete:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
 
         operations = FlextLdapOperations(connection=connection)
@@ -279,12 +302,15 @@ class TestFlextLdapOperationsDelete:
     ) -> None:
         """Test deleting an entry."""
         entry_dict = TestOperationHelpers.create_entry_dict(
-            "testopsdelete", RFC.DEFAULT_BASE_DN, sn="Test"
+            "testopsdelete",
+            RFC.DEFAULT_BASE_DN,
+            sn="Test",
         )
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                operations_service, entry_dict
+                operations_service,
+                entry_dict,
             )
         )
 
@@ -295,9 +321,10 @@ class TestFlextLdapOperationsDelete:
             expected_entries_affected=1,
         )
 
-    def test_delete_when_not_connected(self) -> None:
+    def test_delete_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test delete when not connected."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         TestOperationHelpers.execute_operation_when_not_connected(
@@ -314,9 +341,11 @@ class TestFlextLdapOperationsExecute:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
 
         operations = FlextLdapOperations(connection=connection)
@@ -330,16 +359,19 @@ class TestFlextLdapOperationsExecute:
     ) -> None:
         """Test execute method when connected - covers execute() method."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            operations_service
+            operations_service,
         )
         assert search_result.total_count == 0
         assert len(search_result.entries) == 0
 
-    def test_execute_when_not_connected(self) -> None:
+    def test_execute_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test execute method when not connected - covers execute() failure path."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         result = operations.execute()
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error

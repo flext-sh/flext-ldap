@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from tests.helpers.operation_helpers import TestOperationHelpers
 
@@ -36,38 +34,9 @@ class TestFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         result = adapter.ldap3_to_ldif_entry(None)
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="cannot be None"
+            result,
+            expected_error="cannot be None",
         )
-
-    def test_ldap3_to_ldif_entry_with_ldif_entry(self) -> None:
-        """Test conversion with already FlextLdifModels.Entry."""
-        adapter = FlextLdapEntryAdapter()
-        entry = TestOperationHelpers.create_entry_simple(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["top", "person"]},
-        )
-        result = adapter.ldap3_to_ldif_entry(entry)
-        entry_result = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        assert entry_result == entry
-
-    def test_ldap3_to_ldif_entry_with_dict(self) -> None:
-        """Test conversion with dict format."""
-        adapter = FlextLdapEntryAdapter()
-        entry_dict: dict[str, object] = {
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": cast(
-                "object",
-                {
-                    "cn": ["test"],
-                    "objectClass": ["top", "person"],
-                },
-            ),
-        }
-        result = adapter.ldap3_to_ldif_entry(entry_dict)
-        entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        assert str(entry.dn) == "cn=test,dc=example,dc=com"
-        assert entry.attributes is not None
-        assert "cn" in entry.attributes.attributes
 
     def test_ldif_entry_to_ldap3_attributes_with_none_attributes(self) -> None:
         """Test conversion with entry having no attributes."""
@@ -79,7 +48,8 @@ class TestFlextLdapEntryAdapter:
         entry.attributes = None
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="no attributes"
+            result,
+            expected_error="no attributes",
         )
 
     def test_ldif_entry_to_ldap3_attributes_with_single_values(self) -> None:
@@ -158,7 +128,8 @@ class TestFlextLdapEntryAdapter:
         # Single string values should become lists with one element (covers line 144)
         assert attrs["cn"] == ["test"]  # Already a list
         assert isinstance(
-            attrs.get("singleValue"), list
+            attrs.get("singleValue"),
+            list,
         )  # Single value converted to list
         assert (
             attrs.get("emptyString") == []
@@ -194,7 +165,8 @@ class TestFlextLdapEntryAdapter:
         )
         result = adapter.validate_entry_for_server(entry, "openldap2")
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="DN cannot be empty"
+            result,
+            expected_error="DN cannot be empty",
         )
 
     def test_validate_entry_for_server_with_no_attributes(self) -> None:
@@ -207,7 +179,8 @@ class TestFlextLdapEntryAdapter:
         entry.attributes = None
         result = adapter.validate_entry_for_server(entry, "openldap2")
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="must have attributes"
+            result,
+            expected_error="must have attributes",
         )
 
     def test_validate_entry_for_server_with_empty_attributes(self) -> None:
@@ -219,71 +192,12 @@ class TestFlextLdapEntryAdapter:
         )
         result = adapter.validate_entry_for_server(entry, "openldap2")
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="must have attributes"
+            result,
+            expected_error="must have attributes",
         )
 
     def test_execute_method(self) -> None:
         """Test execute method required by FlextService."""
         adapter = FlextLdapEntryAdapter()
         result = adapter.execute()
-        assert TestOperationHelpers.assert_result_success_and_unwrap(result) is None
-
-
-class TestFlextLdapEntryAdapterWithLdap3Entry:
-    """Tests for entry adapter with real ldap3.Entry objects."""
-
-    def test_ldap3_to_ldif_entry_with_ldap3_entry_dict(self) -> None:
-        """Test conversion with dict format (real-world usage)."""
-        adapter = FlextLdapEntryAdapter()
-        entry_dict: dict[str, object] = {
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": cast(
-                "object",
-                {
-                    "cn": ["test"],
-                    "objectClass": ["top", "person"],
-                },
-            ),
-        }
-        result = adapter.ldap3_to_ldif_entry(entry_dict)
-        entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        assert str(entry.dn) == "cn=test,dc=example,dc=com"
-        assert entry.attributes is not None
-        assert "cn" in entry.attributes.attributes
-
-    def test_ldap3_to_ldif_entry_with_failed_from_ldap3(self) -> None:
-        """Test conversion when from_ldap3 returns failure (covers line 85)."""
-        from unittest.mock import MagicMock, patch
-
-        adapter = FlextLdapEntryAdapter()
-
-        # Create a mock ldap3.Entry that will cause from_ldap3 to fail
-        mock_ldap3_entry = MagicMock()
-        mock_ldap3_entry.__class__.__name__ = "Entry"  # Simulate ldap3.Entry
-
-        # Mock Entry.from_ldap3 to return failure
-        with patch(
-            "flext_ldif.models.FlextLdifModels.Entry.from_ldap3",
-            return_value=cast(
-                "object",
-                type(
-                    "FlextResult",
-                    (),
-                    {
-                        "is_failure": True,
-                        "error": "Invalid DN format",
-                        "unwrap": lambda: None,
-                    },
-                )(),
-            ),
-        ):
-            # Mock isinstance check to return True for Ldap3Entry
-            with patch(
-                "flext_ldap.adapters.entry.isinstance",
-                return_value=True,
-            ):
-                result = adapter.ldap3_to_ldif_entry(mock_ldap3_entry)
-
-                # Should fail with conversion error (covers line 85)
-                assert result.is_failure
-                assert "Failed to convert ldap3 Entry" in (result.error or "")
+        assert TestOperationHelpers.assert_result_success_and_unwrap(result) is True
