@@ -57,18 +57,13 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         Args:
             search_options: Search configuration
-            server_type: LDAP server type for parsing (default: "rfc")
+            server_type: LDAP server type for parsing (default: RFC constant)
 
         Returns:
             FlextResult containing SearchResult with Entry models
                 (reusing FlextLdifModels.Entry)
 
         """
-        if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.SearchResult].fail(
-                "Not connected to LDAP server",
-            )
-
         # Normalize base_dn using FlextLdifUtilities.DN
         # Skip validation for performance
         normalized_base_dn = FlextLdifUtilities.DN.norm_string(search_options.base_dn)
@@ -82,7 +77,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             time_limit=search_options.time_limit,
         )
 
-        # Perform search using adapter - monadic pattern
+        # Adapter handles connection check via _get_connection() - no duplication
         return self._connection.adapter.search(
             normalized_options,
             server_type=server_type,
@@ -110,18 +105,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.OperationResult].fail(
-                "Not connected to LDAP server",
-            )
-
-        # Normalize DN using FlextLdifUtilities.DN - skip validation for performance
-        dn_value = FlextLdifUtilities.DN.get_dn_value(entry.dn)
-        normalized_dn = FlextLdifUtilities.DN.norm_string(dn_value)
-        # Update entry with normalized DN for consistency
-        entry.dn = FlextLdifModels.DistinguishedName(value=normalized_dn)
-
-        # Perform add operation - monadic pattern, direct return
+        # Adapter handles connection check via _get_connection() - no duplication
         return self._connection.adapter.add(entry)
 
     def modify(
@@ -139,23 +123,15 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.OperationResult].fail(
-                "Not connected to LDAP server",
-            )
-
-        # Convert to DistinguishedName model - single form internally
+        # Convert to DistinguishedName model if needed
         dn_model = (
             dn
             if isinstance(dn, FlextLdifModels.DistinguishedName)
             else FlextLdifModels.DistinguishedName(value=dn)
         )
-        # Normalize DN using FlextLdifUtilities.DN
-        normalized_dn_value = FlextLdifUtilities.DN.norm_string(dn_model.value)
-        normalized_dn = FlextLdifModels.DistinguishedName(value=normalized_dn_value)
 
-        # Perform modify operation - monadic pattern, direct return
-        return self._connection.adapter.modify(normalized_dn, changes)
+        # Adapter handles connection check via _get_connection() - no duplication
+        return self._connection.adapter.modify(dn_model, changes)
 
     def delete(
         self,
@@ -170,23 +146,15 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        if not self._connection.is_connected:
-            return FlextResult[FlextLdapModels.OperationResult].fail(
-                "Not connected to LDAP server",
-            )
-
-        # Convert to DistinguishedName model - single form internally
+        # Convert to DistinguishedName model if needed
         dn_model = (
             dn
             if isinstance(dn, FlextLdifModels.DistinguishedName)
             else FlextLdifModels.DistinguishedName(value=dn)
         )
-        # Normalize DN using FlextLdifUtilities.DN
-        normalized_dn_value = FlextLdifUtilities.DN.norm_string(dn_model.value)
-        normalized_dn = FlextLdifModels.DistinguishedName(value=normalized_dn_value)
 
-        # Perform delete operation - monadic pattern, direct return
-        return self._connection.adapter.delete(normalized_dn)
+        # Adapter handles connection check via _get_connection() - no duplication
+        return self._connection.adapter.delete(dn_model)
 
     @property
     def is_connected(self) -> bool:
@@ -197,6 +165,85 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         """
         return self._connection.is_connected
+
+    def upsert(
+        self,
+        entry: FlextLdifModels.Entry,
+    ) -> FlextResult[dict[str, str]]:
+        """Upsert LDAP entry (add if doesn't exist, skip if exists).
+
+        Generic method that handles both regular entries and schema modifications.
+        For regular entries: tries add, returns "added" or "skipped" if already exists.
+        For schema entries (changetype=modify): checks if attribute exists, adds if not.
+
+        Args:
+            entry: Entry model to upsert
+
+        Returns:
+            FlextResult containing dict with "operation" key:
+                - "added": Entry was added
+                - "modified": Entry was modified (for schema)
+                - "skipped": Entry already exists (identical)
+
+        """
+        # Check if this is a modify operation (schema entry)
+        changetype_values = entry.attributes.attributes.get("changetype", [])
+        is_modify = changetype_values and changetype_values[0].lower() == "modify"
+
+        if is_modify:
+            # Schema modify operation - check if attribute exists first
+            # For now, try to modify - ldap3 will handle duplicates
+            # TODO: Implement attribute existence check for schema
+            add_op = entry.attributes.attributes.get("add", [])
+            if not add_op:
+                return FlextResult[dict[str, str]].fail(
+                    "Schema modify entry missing 'add' attribute",
+                )
+
+            # Extract the attribute being added (e.g., "attributeTypes", "objectClasses")
+            attr_type = add_op[0]
+            attr_values = entry.attributes.attributes.get(attr_type, [])
+
+            if not attr_values:
+                return FlextResult[dict[str, str]].fail(
+                    f"Schema modify entry missing '{attr_type}' values",
+                )
+
+            # Build modify changes dict for ldap3
+            # Format: {attr_name: [(operation, [values])]}
+            # operation is MODIFY_ADD from ldap3
+            from ldap3 import MODIFY_ADD
+
+            changes: dict[str, list[tuple[int, list[str]]]] = {
+                attr_type: [(MODIFY_ADD, attr_values)],
+            }
+
+            modify_result = self.modify(entry.dn, changes)
+            if modify_result.is_success:
+                return FlextResult[dict[str, str]].ok({"operation": "modified"})
+
+            # Check if error is "attribute already exists" - then skip
+            error = modify_result.error or ""
+            if (
+                "attribute or value exists" in error.lower()
+                or "already exists" in error.lower()
+            ):
+                return FlextResult[dict[str, str]].ok({"operation": "skipped"})
+
+            return FlextResult[dict[str, str]].fail(error)
+
+        # Regular add operation - try to add
+        add_result = self.add(entry)
+        if add_result.is_success:
+            return FlextResult[dict[str, str]].ok({"operation": "added"})
+
+        # Check if error is "already exists" - then skip
+        error = add_result.error or ""
+        if "already exists" in error.lower() or "entryalreadyexists" in error.lower():
+            return FlextResult[dict[str, str]].ok({"operation": "skipped"})
+
+        # Other error - propagate
+        return FlextResult[dict[str, str]].fail(error)
 
     def execute(self) -> FlextResult[FlextLdapModels.SearchResult]:
         """Execute service health check.
@@ -215,6 +262,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             )
 
         # Return empty search result as health check indicator
+        # Attributes default to all attributes from model
         empty_options = FlextLdapModels.SearchOptions(
             base_dn="",
             filter_str=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,

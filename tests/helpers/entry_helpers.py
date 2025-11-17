@@ -318,10 +318,11 @@ class EntryTestHelpers:
             Tuple of (entry, add_result, modify_result)
 
         Example:
-            entry, add_result, modify_result = EntryTestHelpers.modify_entry_with_verification(
-                ldap_client,
-                test_user_entry,
-                {"mail": [(MODIFY_REPLACE, ["new@example.com"])]},
+            entry, add_result, modify_result = (
+                EntryTestHelpers.modify_entry_with_verification(
+                    ldap_client,
+                    test_user_entry,
+                    {"mail": [(MODIFY_REPLACE, ["new@example.com"])]},
                 verify_attribute="mail",
                 verify_value="new@example.com"
             )
@@ -379,7 +380,8 @@ class EntryTestHelpers:
                             [],
                         )
                         assert verify_value in attrs, (
-                            f"Expected {verify_value} in {verify_attribute}, got {attrs}"
+                            f"Expected {verify_value} in {verify_attribute}, "
+                            f"got {attrs}"
                         )
 
         # Cleanup after if requested
@@ -417,8 +419,10 @@ class EntryTestHelpers:
             Tuple of (entry, add_result, delete_result)
 
         Example:
-            entry, add_result, delete_result = EntryTestHelpers.delete_entry_with_verification(
-                ldap_client, test_user_entry
+            entry, add_result, delete_result = (
+                EntryTestHelpers.delete_entry_with_verification(
+                    ldap_client, test_user_entry
+                )
             )
             assert add_result.is_success
             assert delete_result.is_success
@@ -531,7 +535,9 @@ class EntryTestHelpers:
             Add result object
 
         Example:
-            entry = EntryTestHelpers.create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})
+            entry = EntryTestHelpers.create_entry(
+                "cn=test,dc=example,dc=com", {"cn": ["test"]}
+            )
             result = EntryTestHelpers.add_and_cleanup(ldap_client, entry)
 
         """

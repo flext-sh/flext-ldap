@@ -74,8 +74,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
     ) -> FlextResult[FlextLdapModels.SyncStats]:
         """Sync LDIF file to LDAP directory.
 
-        Parses LDIF file directly without any conversions (server_type uses RFC constant)
-        and adds entries to LDAP directory using FlextLdapOperations.
+        Parses LDIF file directly without any conversions
+        (server_type uses RFC constant) and adds entries to LDAP directory
+        using FlextLdapOperations.
 
         Args:
             ldif_file: Path to LDIF file to sync
@@ -101,7 +102,10 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             )
 
         # Parse LDIF directly without quirks (server_type=RFC = no conversions)
-        _ = self._logger.debug("Parsing LDIF file: %s", ldif_file)
+        _ = self._logger.debug(
+            "Parsing LDIF file: %s",
+            ldif_file,
+        )
 
         # Monadic pattern - chain operations
         parse_result = self._ldif.parse(
@@ -144,8 +148,8 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 ),
             )
 
-        # Transform BaseDN if configured
-        if options.source_basedn and options.target_basedn:
+        # Transform BaseDN if configured (both must be non-empty strings)
+        if options.source_basedn.strip() and options.target_basedn.strip():
             _ = self._logger.debug(
                 "Transforming BaseDN: %s → %s",
                 options.source_basedn,
@@ -223,15 +227,11 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 total_added += 1
                 entry_stats["added"] = 1
             else:
-                # Fast fail - FlextResult contract guarantees error exists
-                # when is_failure is True
-                # No fallback - contract violation should fail fast
-                if not add_result.error:
-                    error_msg = (
-                        f"FlextResult contract violation: "
-                        f"is_failure=True but error is None for entry {entry.dn}"
-                    )
-                    return FlextResult[FlextLdapModels.SyncStats].fail(error_msg)
+                # FlextResult contract guarantees error exists when is_failure is True
+                # Type narrowing: assert for type checker
+                assert add_result.error is not None, (
+                    "FlextResult contract guarantees error when is_failure"
+                )  # noqa: S101
                 error_message = add_result.error
                 error_lower = error_message.lower()
                 if (
@@ -286,16 +286,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
 
         transformed = []
         for entry in entries:
-            # Entry.dn is validated by Pydantic model - guaranteed to exist
-            # Fast fail if DN is None or empty (no fallback, no skipping)
-            if entry.dn is None:
-                error_msg = f"Entry has None DN during BaseDN transformation: {entry}"
-                raise ValueError(error_msg)
-            dn_value = entry.dn.value
-            dn_str = str(dn_value)
-            if not dn_str.strip():
-                error_msg = f"Entry has empty DN during BaseDN transformation: {entry}"
-                raise ValueError(error_msg)
+            # Entry.dn is validated by Pydantic model - guaranteed to exist and non-empty
+            # Pydantic validation ensures DN is never empty
+            dn_str = str(entry.dn)
 
             # Replace source BaseDN with target BaseDN
             if source_basedn.lower() in dn_str.lower():

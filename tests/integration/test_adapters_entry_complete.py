@@ -252,14 +252,14 @@ class TestFlextLdapEntryAdapterComplete:
         assert result.error is not None
         assert "cannot be None" in result.error
 
-    def test_ldif_entry_to_ldap3_attributes_with_none_attributes(self) -> None:
-        """Test conversion with entry having no attributes."""
+    def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
+        """Test conversion with entry having empty attributes dict."""
         adapter = FlextLdapEntryAdapter()
         entry = TestOperationHelpers.create_entry_simple(
             "cn=test,dc=example,dc=com",
             {},
         )
-        entry.attributes = None
+        # Entry.attributes is guaranteed by Pydantic, but attributes.attributes can be empty
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         TestOperationHelpers.assert_result_failure(
             result,
@@ -280,13 +280,26 @@ class TestFlextLdapEntryAdapterComplete:
         )
 
     def test_validate_entry_for_server_with_no_attributes(self) -> None:
-        """Test validation with no attributes."""
+        """Test validation with no attributes.
+
+        Note: Pydantic v2 prevents setting attributes=None, so we test with
+        empty attributes dict instead, which is the valid way to represent
+        an entry with no attributes.
+        """
+        import pytest
+        from pydantic_core import ValidationError
+
         adapter = FlextLdapEntryAdapter()
         entry = TestOperationHelpers.create_entry_simple(
             "cn=test,dc=example,dc=com",
             {},
         )
-        entry.attributes = None
+        # Pydantic v2 prevents setting attributes=None - this is correct behavior
+        # Test that Pydantic raises ValidationError
+        with pytest.raises(ValidationError):
+            entry.attributes = None  # type: ignore[assignment]
+
+        # Test validation with empty attributes (valid case)
         result = adapter.validate_entry_for_server(entry, "rfc")
         TestOperationHelpers.assert_result_failure(
             result,

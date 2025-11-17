@@ -142,13 +142,13 @@ class TestFlextLdapAPIComplete:
         )
 
     def test_execute_when_not_connected(self) -> None:
-        """Test execute when not connected."""
+        """Test execute when not connected - should return failure."""
         api = FlextLdap()
-        TestDeduplicationHelpers.execute_and_verify_total_count(
-            api,
-            expected_total=0,
-            expected_entries=0,
-        )
+        result = api.execute()
+        # Fast fail - should return failure when not connected
+        assert result.is_failure
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     def test_connect_with_service_config(
         self,

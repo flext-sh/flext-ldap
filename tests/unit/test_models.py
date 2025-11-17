@@ -53,6 +53,9 @@ class TestSearchOptions:
         assert options.base_dn == "dc=example,dc=com"
         assert options.scope == "SUBTREE"
         assert options.filter_str == "(objectClass=*)"
+        # Default is None (all attributes in LDAP)
+        # The model uses default_factory but when None is passed, it stays None
+        # This is correct behavior - None means "all attributes" in LDAP
         assert options.attributes is None
         assert options.size_limit == 0
         assert options.time_limit == 0
@@ -187,3 +190,35 @@ class TestSyncStats:
         )
         # success_rate = (7 + 2) / 10 = 0.9
         assert stats.success_rate == 0.9
+
+
+class TestConfigDefault:
+    """Tests for _get_config_default helper function."""
+
+    def test_get_config_default_with_invalid_type(self) -> None:
+        """Test _get_config_default raises TypeError for unexpected type.
+
+        This tests the defensive error handling in lines 53-57 of models.py.
+        The function should raise TypeError when config returns an unexpected type.
+        """
+        from unittest.mock import patch
+
+        import pytest
+
+        from flext_ldap.models import _get_config_default
+
+        # Mock FlextLdapConfig to return an unexpected type (list)
+        # Patch where FlextLdapConfig is imported FROM (flext_ldap.config)
+        with patch("flext_ldap.config.FlextLdapConfig") as mock_config_class:
+            mock_instance = mock_config_class.return_value
+            # Set field to return a list (unexpected type)
+            mock_instance.ldap_host = ["unexpected", "list"]
+
+            # Should raise TypeError with descriptive message
+            with pytest.raises(TypeError) as exc_info:
+                _get_config_default("ldap_host")
+
+            # Verify error message mentions the unexpected type
+            assert "Unexpected type for config field ldap_host" in str(exc_info.value)
+            assert "list" in str(exc_info.value)
+            assert "Expected str, int, bool, or None" in str(exc_info.value)

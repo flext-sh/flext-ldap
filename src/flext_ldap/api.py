@@ -223,6 +223,28 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         """
         return self._operations.delete(dn)
 
+    def upsert(
+        self,
+        entry: FlextLdifModels.Entry,
+    ) -> FlextResult[dict[str, str]]:
+        """Upsert LDAP entry (add if doesn't exist, skip if exists).
+
+        Generic method that handles both regular entries and schema modifications.
+        For regular entries: tries add, returns "added" or "skipped" if already exists.
+        For schema entries (changetype=modify): applies modify operation.
+
+        Args:
+            entry: Entry model to upsert
+
+        Returns:
+            FlextResult containing dict with "operation" key:
+                - "added": Entry was added
+                - "modified": Entry was modified (for schema)
+                - "skipped": Entry already exists
+
+        """
+        return self._operations.upsert(entry)
+
     @override
     def execute(self) -> FlextResult[FlextLdapModels.SearchResult]:
         """Execute service health check.

@@ -211,7 +211,8 @@ class TestOperationHelpers:
         )
         if expected_max_count is not None:
             assert len(result.entries) <= expected_max_count, (
-                f"Expected at most {expected_max_count} entries, got {len(result.entries)}"
+                f"Expected at most {expected_max_count} entries, "
+                f"got {len(result.entries)}"
             )
         return result
 
@@ -761,7 +762,9 @@ class TestOperationHelpers:
         expected_operation_type: str | None = None,
         expected_entries_affected: int | None = None,
     ) -> FlextLdapModels.OperationResult:
-        """Assert operation result and return unwrapped - alias for assert_operation_result_success.
+        """Assert operation result and return unwrapped.
+
+        Alias for assert_operation_result_success.
 
         Args:
             result: Operation result to assert
@@ -786,7 +789,9 @@ class TestOperationHelpers:
         dn: str,
         attributes: dict[str, list[str] | str],
     ) -> FlextLdifModels.Entry:
-        """Create Entry with simple DN string and attributes - REPLACES MOST COMMON PATTERN.
+        """Create Entry with simple DN string and attributes.
+
+        REPLACES MOST COMMON PATTERN.
 
         Replaces the repetitive pattern:
             entry = FlextLdifModels.Entry(
