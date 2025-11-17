@@ -74,10 +74,10 @@ class TestFlextLdapAPICompleteCoverage:
         ldap_client.disconnect()
 
         result = ldap_client.execute()
-        # Execute returns empty result on failure, not fail
-        assert result.is_success
-        search_result = result.unwrap()
-        assert search_result.total_count == 0
+        # Fast fail - should return failure when not connected
+        assert result.is_failure
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     def test_all_operations_with_service_config(
         self,

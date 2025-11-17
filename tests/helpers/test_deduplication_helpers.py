@@ -221,7 +221,9 @@ class TestDeduplicationHelpers:
         Example:
             group = TestDeduplicationHelpers.create_group()
             # or
-            group = TestDeduplicationHelpers.create_group("REDACTED_LDAP_BIND_PASSWORDs", members=["cn=user1"])
+            group = TestDeduplicationHelpers.create_group(
+                "REDACTED_LDAP_BIND_PASSWORDs", members=["cn=user1"]
+            )
 
         """
         return TestOperationHelpers.create_test_group_entry(
@@ -286,7 +288,11 @@ class TestDeduplicationHelpers:
 
         Example:
             entry, result = TestDeduplicationHelpers.add_from_dict(
-                client, {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+                client,
+                {
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {"cn": ["test"]},
+                },
             )
             TestDeduplicationHelpers.assert_success(result)
 
@@ -497,8 +503,10 @@ class TestDeduplicationHelpers:
             port: Port (default: from ldap_container or RFC.DEFAULT_PORT)
             use_ssl: Use SSL (default: False)
             use_tls: Use TLS (default: False)
-            bind_dn: Bind DN (default: from ldap_container or RFC.DEFAULT_BIND_DN)
-            bind_password: Bind password (default: from ldap_container or RFC.DEFAULT_BIND_PASSWORD)
+            bind_dn: Bind DN (default: from ldap_container or
+                RFC.DEFAULT_BIND_DN)
+            bind_password: Bind password (default: from ldap_container or
+                RFC.DEFAULT_BIND_PASSWORD)
             timeout: Connection timeout (default: 30)
             auto_bind: Auto bind (default: True)
             auto_range: Auto range (default: True)
@@ -570,13 +578,19 @@ class TestDeduplicationHelpers:
 
         Args:
             client: LDAP client with connect method
-            connection_config: Optional connection config (created if not provided)
-            ldap_container: Optional container dict (used if connection_config not provided)
+            connection_config: Optional connection config
+                (created if not provided)
+            ldap_container: Optional container dict
+                (used if connection_config not provided)
 
         Example:
-            TestDeduplicationHelpers.connect_and_assert(client, ldap_container=ldap_container)
+            TestDeduplicationHelpers.connect_and_assert(
+                client, ldap_container=ldap_container
+            )
             # or
-            TestDeduplicationHelpers.connect_and_assert(client, connection_config=config)
+            TestDeduplicationHelpers.connect_and_assert(
+                client, connection_config=config
+            )
 
         """
         if connection_config is None:
@@ -613,7 +627,10 @@ class TestDeduplicationHelpers:
         Example:
             results = TestDeduplicationHelpers.crud_sequence(
                 client,
-                entry_dict={"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
+                entry_dict={
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {"cn": ["test"]},
+                },
                 changes={"mail": [(MODIFY_REPLACE, ["new@example.com"])]}
             )
             TestDeduplicationHelpers.assert_success(results["add"])
@@ -974,7 +991,11 @@ class TestDeduplicationHelpers:
 
         Example:
             entry, result = TestDeduplicationHelpers.test_add_operation_complete(
-                client, entry_dict={"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
+                client,
+                entry_dict={
+                    "dn": "cn=test,dc=example,dc=com",
+                    "attributes": {"cn": ["test"]},
+                },
             )
             TestDeduplicationHelpers.assert_success(result)
 
@@ -1029,7 +1050,8 @@ class TestDeduplicationHelpers:
             Tuple of (entry, add_result, modify_result)
 
         Example:
-            entry, add_result, modify_result = TestDeduplicationHelpers.test_modify_operation_complete(
+            entry, add_result, modify_result = (
+                TestDeduplicationHelpers.test_modify_operation_complete(
                 client,
                 {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
                 {"mail": [(MODIFY_REPLACE, ["new@example.com"])]},
@@ -1067,7 +1089,8 @@ class TestDeduplicationHelpers:
             Tuple of (entry, add_result, delete_result)
 
         Example:
-            entry, add_result, delete_result = TestDeduplicationHelpers.test_delete_operation_complete(
+            entry, add_result, delete_result = (
+                TestDeduplicationHelpers.test_delete_operation_complete(
                 client,
                 {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
             )
@@ -1105,7 +1128,8 @@ class TestDeduplicationHelpers:
             min_count: Minimum number of entries expected
             max_count: Maximum number of entries expected
             verify_entry_attributes: Whether to verify entry attributes
-            expected_object_classes: Optional list of object classes to verify in entries
+            expected_object_classes: Optional list of object classes
+                to verify in entries
 
         Returns:
             SearchResult
@@ -1141,7 +1165,8 @@ class TestDeduplicationHelpers:
                     if isinstance(object_classes, list):
                         for expected_oc in expected_object_classes:
                             assert expected_oc in object_classes, (
-                                f"Expected objectClass {expected_oc} not found in {object_classes}"
+                                f"Expected objectClass {expected_oc} "
+                                f"not found in {object_classes}"
                             )
 
         return result
@@ -1218,13 +1243,16 @@ class TestDeduplicationHelpers:
         test_disconnect: bool = True,
         test_reconnect: bool = False,
     ) -> object:
-        """Complete connection management test - REPLACES ENTIRE TEST METHOD (15-30 lines).
+        """Complete connection management test.
 
+        REPLACES ENTIRE TEST METHOD (15-30 lines).
         Replaces entire test_connect_* and test_context_manager_* methods.
 
         Args:
-            client_factory: Callable that returns client instance (e.g., lambda: FlextLdap())
-            connection_config: Optional connection config (created if not provided)
+            client_factory: Callable that returns client instance
+                (e.g., lambda: FlextLdap())
+            connection_config: Optional connection config
+                (created if not provided)
             ldap_container: Optional container dict (used if connection_config not provided)
             test_context_manager: Whether to test context manager
             test_disconnect: Whether to test disconnect
@@ -1337,8 +1365,10 @@ class TestDeduplicationHelpers:
             port: Port (default: from ldap_container or RFC.DEFAULT_PORT)
             use_ssl: Use SSL (default: False)
             use_tls: Use TLS (default: False)
-            bind_dn: Bind DN (default: from ldap_container or RFC.DEFAULT_BIND_DN)
-            bind_password: Bind password (default: from ldap_container or RFC.DEFAULT_BIND_PASSWORD)
+            bind_dn: Bind DN (default: from ldap_container or
+                RFC.DEFAULT_BIND_DN)
+            bind_password: Bind password (default: from ldap_container or
+                RFC.DEFAULT_BIND_PASSWORD)
             timeout: Connection timeout (default: 30)
             auto_bind: Auto bind (default: True)
             auto_range: Auto range (default: True)
@@ -2331,7 +2361,8 @@ class TestDeduplicationHelpers:
                     if isinstance(object_classes, list):
                         for expected_oc in verify_object_classes:
                             assert expected_oc in object_classes, (
-                                f"Expected objectClass {expected_oc} not found in {object_classes}"
+                                f"Expected objectClass {expected_oc} "
+                                f"not found in {object_classes}"
                             )
 
         if verify_attributes_present and result.entries:

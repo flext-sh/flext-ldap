@@ -155,9 +155,11 @@ class Ldap3Adapter(FlextService[bool]):
         """
         if not self.is_connected:
             return FlextResult[Connection].fail("Not connected to LDAP server")
+        # Type narrowing: connection is guaranteed non-None after is_connected check
         if self._connection is None:
-            return FlextResult[Connection].fail("Connection lost during operation")
-        # Type narrowing: connection is guaranteed non-None after checks
+            return FlextResult[Connection].fail(
+                "Connection is None despite is_connected=True",
+            )
         connection: Connection = self._connection
         return FlextResult[Connection].ok(connection)
 
@@ -172,8 +174,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         """
         scope_upper = scope.upper()
-        # Map FlextLdap scopes to ldap3 scopes
-        # Use literal values directly for Pyrefly type inference
+        # Map FlextLdap scopes to ldap3 scopes using Constants
+        # Use literal string values for type compatibility
         if scope_upper == FlextLdapConstants.SearchScope.BASE:
             return FlextResult[Ldap3Scope].ok("BASE")
         if scope_upper == FlextLdapConstants.SearchScope.ONELEVEL:
@@ -284,12 +286,10 @@ class Ldap3Adapter(FlextService[bool]):
             return FlextResult[list[FlextLdifModels.Entry]].fail(scope_result.error)
         ldap_scope = scope_result.unwrap()
 
-        # No fallback - use provided attributes or constant for all attributes
-        # None means "all attributes" in LDAP protocol, use constant explicitly
+        # Use provided attributes (None means all attributes)
+        # When None, pass empty list to ldap3 which means "all attributes"
         search_attributes: list[str] = (
-            search_options.attributes
-            if search_options.attributes is not None
-            else [FlextLdapConstants.LdapAttributeNames.ALL_ATTRIBUTES]
+            search_options.attributes if search_options.attributes is not None else []
         )
         return self._execute_search(
             connection,
@@ -330,7 +330,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         """
         try:
-            connection.search(
+            _ = connection.search(
                 search_base=base_dn,
                 search_filter=filter_str,
                 search_scope=ldap_scope,
@@ -338,6 +338,29 @@ class Ldap3Adapter(FlextService[bool]):
                 size_limit=size_limit,
                 time_limit=time_limit,
             )
+
+            # Check if search operation failed
+            # result_code == 0 means success, even if no entries found
+            # Empty results are valid (no entries match filter)
+            # CORRECT: Check result code, not search_success (which is False for empty results)
+            # Partial success codes (3, 4, 11) return partial results - NOT errors
+            result_code = connection.result.get("result", -1)
+            # Success codes per LDAP spec (RFC 4511):
+            # 0 = success
+            # 3 = timeLimitExceeded (partial success - returns partial results)
+            # 4 = sizeLimitExceeded (partial success - returns partial results)
+            # 11 = REDACTED_LDAP_BIND_PASSWORDLimitExceeded (partial success - returns partial results)
+            partial_success_codes = {0, 3, 4, 11}
+            if result_code not in partial_success_codes:
+                error_msg = connection.result.get("message", "LDAP search failed")
+                error_desc = connection.result.get("description", "unknown")
+                _ = logger.warning(
+                    f"LDAP search failed: {error_desc} - {error_msg}",
+                    extra={"base_dn": base_dn, "result": connection.result},
+                )
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"LDAP search failed: {error_desc} - {error_msg}",
+                )
 
             ldap3_results = self._convert_ldap3_results(connection)
             # Parse results using FlextLdif
@@ -413,7 +436,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return FlextResult[FlextLdapModels.OperationResult].ok(
                     FlextLdapModels.OperationResult(
                         success=True,
-                        operation_type=FlextLdapConstants.OperationType.ADD,
+                        operation_type="add",  # Use literal string value
                         message="Entry added successfully",
                         entries_affected=1,
                     ),
@@ -484,7 +507,7 @@ class Ldap3Adapter(FlextService[bool]):
             if success:
                 result = FlextLdapModels.OperationResult(
                     success=True,
-                    operation_type=FlextLdapConstants.OperationType.MODIFY,
+                    operation_type="modify",  # Use literal string value
                     message="Entry modified successfully",
                     entries_affected=1,
                 )
@@ -551,7 +574,7 @@ class Ldap3Adapter(FlextService[bool]):
             if success:
                 result = FlextLdapModels.OperationResult(
                     success=True,
-                    operation_type=FlextLdapConstants.OperationType.DELETE,
+                    operation_type="delete",  # Use literal string value
                     message="Entry deleted successfully",
                     entries_affected=1,
                 )

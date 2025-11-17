@@ -123,14 +123,13 @@ class TestFlextLdapAPI:
         ldap_config: FlextLdapConfig,
         ldap_parser: FlextLdifParser,
     ) -> None:
-        """Test execute when not connected."""
+        """Test execute when not connected - fast-fail pattern."""
         api = FlextLdap(config=ldap_config, parser=ldap_parser)
         result = api.execute()
-        # Execute returns empty result as health check, not failure
-        assert result.is_success
-        search_result = result.unwrap()
-        assert search_result.total_count == 0
-        assert len(search_result.entries) == 0
+        # Fast-fail: execute() returns failure when not connected
+        assert result.is_failure
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     def test_connect_method(
         self,
@@ -210,18 +209,17 @@ class TestFlextLdapAPI:
         ldap_config: FlextLdapConfig,
         ldap_parser: FlextLdifParser,
     ) -> None:
-        """Test execute when operations.execute() fails (covers line 229).
+        """Test execute when operations.execute() fails - fast-fail pattern.
 
         Uses real operations service that is not connected to trigger failure.
         """
         api = FlextLdap(config=ldap_config, parser=ldap_parser)
 
         # Operations service is not connected, so execute() will fail
-        # This tests the real failure path without mocks
+        # Fast-fail: returns failure, not empty success
         result = api.execute()
 
-        # Should return empty result on failure (covers line 229)
-        assert result.is_success
-        search_result = result.unwrap()
-        assert search_result.total_count == 0
-        assert len(search_result.entries) == 0
+        # Fast-fail: should return failure when not connected
+        assert result.is_failure
+        assert result.error is not None
+        assert "Not connected" in result.error

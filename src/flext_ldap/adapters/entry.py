@@ -18,6 +18,8 @@ from typing import TYPE_CHECKING
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
 
+from flext_ldap.constants import FlextLdapConstants
+
 if TYPE_CHECKING:
     from ldap3 import Entry as Ldap3Entry
 
@@ -39,16 +41,16 @@ class FlextLdapEntryAdapter(FlextService[bool]):
     """
 
     _ldif: FlextLdif
-    _server_type: str | None
+    _server_type: str
 
     def __init__(
         self,
-        server_type: str | None = None,
+        server_type: str = FlextLdapConstants.LdapDefaults.SERVER_TYPE,
     ) -> None:
         """Initialize entry adapter with FlextLdif integration and quirks.
 
         Args:
-            server_type: Optional server type for normalization
+            server_type: Server type for normalization (defaults to Constants)
 
         """
         super().__init__()
@@ -85,30 +87,55 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             FlextResult containing FlextLdifModels.Entry or error
 
         """
-        # Fast fail - validate input is not None (no fallback)
+        # Fast fail - validate ldap3_entry is not None
         if ldap3_entry is None:
-            return FlextResult[FlextLdifModels.Entry].fail(
-                "ldap3_entry cannot be None",
+            return FlextResult[FlextLdifModels.Entry].fail("ldap3_entry cannot be None")
+
+        # Extract DN and attributes from ldap3_entry and create Entry
+        # All operations wrapped in try-except for proper error handling
+        # This includes conversion of entry_dn to string which may raise exceptions
+        try:
+            # Try to access entry_dn - may raise AttributeError or ValueError
+            if not hasattr(ldap3_entry, "entry_dn"):
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "ldap3_entry missing entry_dn attribute"
+                )
+            if not hasattr(ldap3_entry, "entry_attributes_as_dict"):
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "ldap3_entry missing entry_attributes_as_dict attribute"
+                )
+
+            # Convert entry_dn to string - this may raise ValueError or other exceptions
+            dn_str = str(ldap3_entry.entry_dn)
+            attrs_dict = ldap3_entry.entry_attributes_as_dict
+
+            # Convert attributes dict to LdifAttributes format
+            # Ensure all values are lists (ldap3 format requirement)
+            ldif_attrs: dict[str, list[str]] = {}
+            for key, value in attrs_dict.items():
+                if isinstance(value, list):
+                    ldif_attrs[key] = [str(v) for v in value]
+                elif value is None:
+                    ldif_attrs[key] = []
+                else:
+                    ldif_attrs[key] = [str(value)]
+
+            # Create Entry with all required and optional fields initialized
+            entry = FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value=dn_str),
+                attributes=FlextLdifModels.LdifAttributes(attributes=ldif_attrs),
+                # Initialize optional fields with defaults
+                # to satisfy Pydantic v2 validation
+                acls=[],
+                objectclasses=[],
+                attributes_schema=[],
+                entry_metadata={},
             )
-        # Railway pattern - check for success before transforming
-        parse_result = FlextLdifModels.Entry.from_ldap3(ldap3_entry)
-        if parse_result.is_failure:
-            # FlextResult guarantees error is str when is_failure=True
-            return FlextResult[FlextLdifModels.Entry].fail(parse_result.error)
-
-        parsed_entry = parse_result.unwrap()
-
-        # Ensure DN is properly typed
-        entry = FlextLdifModels.Entry(
-            dn=(
-                parsed_entry.dn
-                if isinstance(parsed_entry.dn, FlextLdifModels.DistinguishedName)
-                else FlextLdifModels.DistinguishedName(value=str(parsed_entry.dn))
-            ),
-            attributes=parsed_entry.attributes,
-        )
-
-        return FlextResult[FlextLdifModels.Entry].ok(entry)
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+        except Exception as e:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to create Entry: {e!s}"
+            )
 
     def ldif_entry_to_ldap3_attributes(
         self,
@@ -127,10 +154,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         """
         # Entry.attributes is validated by Pydantic model - guaranteed to exist
-        # Fast fail if attributes is None (defensive check for invalid models)
-        if entry.attributes is None:
-            return FlextResult[dict[str, list[str]]].fail("Entry has no attributes")
-        # Fast fail if attributes dict is empty (defensive check)
+        # Fast fail if attributes dict is empty
         if not entry.attributes.attributes:
             return FlextResult[dict[str, list[str]]].fail("Entry has no attributes")
 
@@ -208,15 +232,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             return FlextResult[bool].fail("Entry DN cannot be empty")
 
         # Attributes are validated by Pydantic model - guaranteed to exist
-        # Fast fail if attributes is None (defensive check for invalid models)
-        if entry.attributes is None:
-            _ = logger.debug(
-                "Entry validation failed: no attributes for server type %s",
-                server_type,
-                extra={"dn": dn_str, "server_type": server_type},
-            )
-            return FlextResult[bool].fail("Entry must have attributes")
-        # Fast fail if attributes dict is empty (defensive check)
+        # Fast fail if attributes dict is empty
         if not entry.attributes.attributes:
             _ = logger.debug(
                 "Entry validation failed: no attributes for server type %s",

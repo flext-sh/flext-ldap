@@ -19,7 +19,10 @@ logger = FlextLogger(__name__)
 
 
 class LdapTestFixtures:
-    """Loader for LDAP test fixtures - extends TestFixtures with LDAP-specific methods."""
+    """Loader for LDAP test fixtures.
+
+    Extends TestFixtures with LDAP-specific methods.
+    """
 
     @staticmethod
     def load_users_json() -> list[dict[str, object]]:

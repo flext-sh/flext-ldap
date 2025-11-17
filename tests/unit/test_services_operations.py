@@ -70,13 +70,10 @@ class TestFlextLdapOperations:
         TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
 
     def test_execute_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test execute when not connected returns empty health check."""
+        """Test execute when not connected - fast-fail pattern."""
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
         result = operations.execute()
-        # Execute returns empty result as health check, not failure
-        assert result.is_success
-        search_result = result.unwrap()
-        assert search_result.total_count == 0
-        assert len(search_result.entries) == 0
+        # Fast-fail: execute() returns failure when not connected
+        TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
