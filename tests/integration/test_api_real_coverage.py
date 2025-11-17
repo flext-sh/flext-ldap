@@ -55,7 +55,8 @@ class TestFlextLdapAPICoverage:
         try:
             with client:
                 TestOperationHelpers.connect_and_assert_success(
-                    client, connection_config
+                    client,
+                    connection_config,
                 )
                 # Simulate exception
                 test_exception = ValueError("Test exception")

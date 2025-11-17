@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import cast
 
 import pytest
 from ldap3 import Connection, Entry as Ldap3Entry, Server
@@ -84,21 +83,10 @@ class TestFlextLdapEntryAdapterComplete:
         assert len(ldap_connection.entries) > 0
         ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
-        # Convert to dict format
-        entry_dict: dict[str, object] = {
-            "dn": str(ldap3_entry.entry_dn),
-            "attributes": cast(
-                "object",
-                {
-                    attr: list(ldap3_entry[attr].values)
-                    for attr in ldap3_entry.entry_attributes
-                },
-            ),
-        }
-
-        result = adapter.ldap3_to_ldif_entry(entry_dict)
+        # Use ldap3 Entry directly (not dict) - API direta
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        assert str(entry.dn) == entry_dict["dn"]
+        assert str(entry.dn) == str(ldap3_entry.entry_dn)
         assert entry.attributes is not None
 
     def test_ldif_entry_to_ldap3_attributes_with_real_entry(
@@ -168,7 +156,7 @@ class TestFlextLdapEntryAdapterComplete:
         assert attrs["cn"] == ["test"]
         assert attrs["emptyList"] == []  # Empty list stays empty
         assert attrs["listWithEmpty"] == [
-            ""
+            "",
         ]  # List with empty string  # List with empty string
 
     def test_normalize_entry_for_server_with_real_entry(
@@ -242,22 +230,27 @@ class TestFlextLdapEntryAdapterComplete:
         assert len(ldap_connection.entries) > 0
         ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
-        # Convert to FlextLdifModels.Entry
+        # Convert to FlextLdifModels.Entry - API direta
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
-        # Pass same entry back (should return as-is)
-        result = adapter.ldap3_to_ldif_entry(entry)
+        # Pass same ldap3_entry again (should convert again, not return as-is)
+        # API direta: método aceita apenas Ldap3Entry, não Entry já convertido
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         assert result.is_success
-        assert result.unwrap() == entry
+        converted_entry = result.unwrap()
+        # Entries devem ser equivalentes (mesmo DN e atributos)
+        assert str(converted_entry.dn) == str(entry.dn)
 
     def test_ldap3_to_ldif_entry_with_none(self) -> None:
         """Test conversion with None entry."""
         adapter = FlextLdapEntryAdapter()
         result = adapter.ldap3_to_ldif_entry(None)
         assert result.is_failure
-        assert "cannot be None" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "cannot be None" in result.error
 
     def test_ldif_entry_to_ldap3_attributes_with_none_attributes(self) -> None:
         """Test conversion with entry having no attributes."""
@@ -269,7 +262,8 @@ class TestFlextLdapEntryAdapterComplete:
         entry.attributes = None
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="no attributes"
+            result,
+            expected_error="no attributes",
         )
 
     def test_validate_entry_for_server_with_empty_dn(self) -> None:
@@ -281,7 +275,8 @@ class TestFlextLdapEntryAdapterComplete:
         )
         result = adapter.validate_entry_for_server(entry, "rfc")
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="DN cannot be empty"
+            result,
+            expected_error="DN cannot be empty",
         )
 
     def test_validate_entry_for_server_with_no_attributes(self) -> None:
@@ -294,7 +289,8 @@ class TestFlextLdapEntryAdapterComplete:
         entry.attributes = None
         result = adapter.validate_entry_for_server(entry, "rfc")
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="must have attributes"
+            result,
+            expected_error="must have attributes",
         )
 
     def test_validate_entry_for_server_with_empty_attributes(self) -> None:
@@ -306,11 +302,12 @@ class TestFlextLdapEntryAdapterComplete:
         )
         result = adapter.validate_entry_for_server(entry, "rfc")
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="must have attributes"
+            result,
+            expected_error="must have attributes",
         )
 
     def test_execute_method(self) -> None:
         """Test execute method required by FlextService."""
         adapter = FlextLdapEntryAdapter()
         result = adapter.execute()
-        assert TestOperationHelpers.assert_result_success_and_unwrap(result) is None
+        assert TestOperationHelpers.assert_result_success_and_unwrap(result) is True

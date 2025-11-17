@@ -134,10 +134,14 @@ class TestFlextLdapAddRealOperations:
         )
 
         result = TestOperationHelpers.add_entry_and_assert_success(
-            ldap_client, entry, verify_operation_result=True
+            ldap_client,
+            entry,
+            verify_operation_result=True,
         )
         TestOperationHelpers.assert_operation_result_success(
-            result, expected_operation_type="add", expected_entries_affected=1
+            result,
+            expected_operation_type="add",
+            expected_entries_affected=1,
         )
 
     def test_add_group_entry(self, ldap_client: FlextLdap) -> None:
@@ -154,7 +158,7 @@ class TestFlextLdapAddRealOperations:
 
         # Cleanup
         delete_result = ldap_client.delete(
-            "cn=testaddgroup,ou=groups,dc=flext,dc=local"
+            "cn=testaddgroup,ou=groups,dc=flext,dc=local",
         )
         # Result may be success or failure depending on if entry exists
         assert delete_result.is_success or delete_result.is_failure
@@ -188,7 +192,10 @@ class TestFlextLdapModifyRealOperations:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                ldap_client, entry_dict, changes, verify_attribute=None
+                ldap_client,
+                entry_dict,
+                changes,
+                verify_attribute=None,
             )
         )
 
@@ -211,7 +218,9 @@ class TestFlextLdapDeleteRealOperations:
         )
 
         TestOperationHelpers.add_entry_and_assert_success(
-            ldap_client, entry, cleanup_after=False
+            ldap_client,
+            entry,
+            cleanup_after=False,
         )
 
         # Now delete it

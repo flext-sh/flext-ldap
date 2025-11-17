@@ -230,7 +230,8 @@ class FlextLdapTestHelpers:
                 entry_dict = {**entry_dict, "dn": dn_str}
 
             entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
-                client, entry_dict
+                client,
+                entry_dict,
             )
             results.append((entry, result))
         return results
@@ -259,7 +260,8 @@ class FlextLdapTestHelpers:
 
         """
         entry, add_result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
-            client, entry_dict
+            client,
+            entry_dict,
         )
         if not add_result.is_success:
             return (
@@ -294,7 +296,8 @@ class FlextLdapTestHelpers:
 
         """
         entry, add_result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
-            client, entry_dict
+            client,
+            entry_dict,
         )
         if not add_result.is_success:
             return (

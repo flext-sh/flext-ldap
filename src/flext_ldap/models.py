@@ -94,11 +94,11 @@ class FlextLdapModels(FlextModels):
 
         base_dn: str = Field(..., description="Base DN for search")
         scope: FlextLdapConstants.LiteralTypes.SearchScope = Field(
-            default="SUBTREE",
+            default="SUBTREE",  # Matches FlextLdapConstants.SearchScope.SUBTREE.value
             description="Search scope (BASE, ONELEVEL, SUBTREE)",
         )
         filter_str: str = Field(
-            default="(objectClass=*)",
+            default=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
             description="LDAP filter string",
         )
         attributes: list[str] | None = Field(
@@ -140,7 +140,7 @@ class FlextLdapModels(FlextModels):
             ge=0,
             description="Number of entries affected",
         )
-        data: dict[str, object] | None = Field(
+        data: dict[str, str | int | float | bool | list[str]] | None = Field(
             default=None,
             description="Additional operation data",
         )
@@ -194,7 +194,10 @@ class FlextLdapModels(FlextModels):
         )
         source_basedn: str | None = Field(
             default=None,
-            description="Source BaseDN for transformation (if LDIF has different BaseDN than LDAP)",
+            description=(
+                "Source BaseDN for transformation "
+                "(if LDIF has different BaseDN than LDAP)"
+            ),
         )
         target_basedn: str | None = Field(
             default=None,
@@ -203,7 +206,9 @@ class FlextLdapModels(FlextModels):
         progress_callback: Callable[[int, int, str, dict[str, int]], None] | None = (
             Field(
                 default=None,
-                description="Optional callback for progress updates (idx, total, dn, stats)",
+                description=(
+                    "Optional callback for progress updates (idx, total, dn, stats)"
+                ),
             )
         )
 

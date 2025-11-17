@@ -29,7 +29,7 @@ class FlextLdapConfig(FlextConfig):
 
     # LDAP Connection Configuration
     ldap_host: str = Field(
-        default="localhost",
+        default="localhost",  # Default host - not a constant, configurable per instance
         description="LDAP server hostname or IP address",
     )
 

@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
 from typing import Any, Literal, cast
 
 import pytest
@@ -38,7 +37,8 @@ class TestOperationHelpers:
         """
         assert result.is_failure, "Expected operation to fail"
         if expected_error:
-            error_msg = result.error or ""
+            # No fallback - FlextResult guarantees error exists when is_failure is True
+            error_msg = result.error
             assert expected_error in error_msg, (
                 f"Expected error containing '{expected_error}', got: {error_msg}"
             )
@@ -97,7 +97,8 @@ class TestOperationHelpers:
 
         """
         value = TestOperationHelpers.assert_result_success_and_unwrap(
-            result, error_message=error_message
+            result,
+            error_message=error_message,
         )
         assert value is not None, "Unwrapped value is None"
         return value
@@ -154,7 +155,8 @@ class TestOperationHelpers:
 
         connect_result = client.connect(connection_config)
         TestOperationHelpers.assert_result_success(
-            connect_result, error_message="Connection failed"
+            connect_result,
+            error_message="Connection failed",
         )
 
     @staticmethod
@@ -199,7 +201,8 @@ class TestOperationHelpers:
 
         search_result = client.search(search_options)
         TestOperationHelpers.assert_result_success(
-            search_result, error_message="Search failed"
+            search_result,
+            error_message="Search failed",
         )
 
         result = search_result.unwrap()
@@ -231,7 +234,8 @@ class TestOperationHelpers:
 
         result = client.execute()
         return TestOperationHelpers.assert_result_success_and_unwrap(
-            result, error_message="Execute failed"
+            result,
+            error_message="Execute failed",
         )
 
     @staticmethod
@@ -497,7 +501,8 @@ class TestOperationHelpers:
 
         result = client.add(entry)
         TestOperationHelpers.assert_result_success(
-            result, error_message="Add operation failed"
+            result,
+            error_message="Add operation failed",
         )
 
         if verify_operation_result:
@@ -530,7 +535,9 @@ class TestOperationHelpers:
 
         """
         add_result = TestOperationHelpers.add_entry_and_assert_success(
-            client, entry, cleanup_after=False
+            client,
+            entry,
+            cleanup_after=False,
         )
 
         if not hasattr(client, "delete"):
@@ -540,7 +547,8 @@ class TestOperationHelpers:
         dn_str = str(entry.dn) if entry.dn else ""
         delete_result = client.delete(dn_str)
         TestOperationHelpers.assert_result_success(
-            delete_result, error_message="Delete operation failed"
+            delete_result,
+            error_message="Delete operation failed",
         )
 
         return (add_result, delete_result)
@@ -564,7 +572,8 @@ class TestOperationHelpers:
 
         """
         operation_result = TestOperationHelpers.assert_result_success_and_unwrap(
-            result, error_message="Operation failed"
+            result,
+            error_message="Operation failed",
         )
 
         assert operation_result.success is True
@@ -597,7 +606,9 @@ class TestOperationHelpers:
         """
         # Add (don't cleanup after since we'll modify and delete)
         add_result = TestOperationHelpers.add_entry_and_assert_success(
-            client, entry, cleanup_after=False
+            client,
+            entry,
+            cleanup_after=False,
         )
 
         # Modify
@@ -608,7 +619,8 @@ class TestOperationHelpers:
         dn_str = str(entry.dn) if entry.dn else ""
         modify_result = client.modify(dn_str, changes)
         TestOperationHelpers.assert_result_success(
-            modify_result, error_message="Modify operation failed"
+            modify_result,
+            error_message="Modify operation failed",
         )
 
         # Delete
@@ -619,7 +631,8 @@ class TestOperationHelpers:
         delete_result = client.delete(dn_str)  # type: ignore[attr-defined]
         if verify_delete:
             TestOperationHelpers.assert_result_success(
-                delete_result, error_message="Delete operation failed"
+                delete_result,
+                error_message="Delete operation failed",
             )
 
         return {
@@ -647,30 +660,22 @@ class TestOperationHelpers:
         """
         # Add (don't cleanup after since we'll modify and delete)
         add_result = TestOperationHelpers.add_entry_and_assert_success(
-            client, entry, cleanup_after=False
+            client,
+            entry,
+            cleanup_after=False,
         )
 
         # Search to verify entry was added
         search_result: FlextResult[Any] | None = None
         if hasattr(client, "search") and entry.dn:
             dn_str = str(entry.dn)
-            # Check if client uses SearchOptions (FlextLdap) or direct args (Ldap3Adapter)
-            sig = inspect.signature(client.search)
-            if "search_options" in sig.parameters:
-                # FlextLdap API - uses SearchOptions
-                search_options = FlextLdapModels.SearchOptions(
-                    base_dn=dn_str,
-                    filter_str="(objectClass=*)",
-                    scope="BASE",
-                )
-                search_result = client.search(search_options)
-            else:
-                # Ldap3Adapter - uses base_dn, filter_str directly
-                search_result = client.search(
-                    base_dn=dn_str,
-                    filter_str="(objectClass=*)",
-                    scope="BASE",
-                )
+            # All clients now use SearchOptions - unified API
+            search_options = FlextLdapModels.SearchOptions(
+                base_dn=dn_str,
+                filter_str="(objectClass=*)",
+                scope="BASE",
+            )
+            search_result = client.search(search_options)
 
         # Modify
         if not hasattr(client, "modify"):
@@ -680,7 +685,8 @@ class TestOperationHelpers:
         dn_str = str(entry.dn) if entry.dn else ""
         modify_result = client.modify(dn_str, changes)
         TestOperationHelpers.assert_result_success(
-            modify_result, error_message="Modify operation failed"
+            modify_result,
+            error_message="Modify operation failed",
         )
 
         # Delete
@@ -690,7 +696,8 @@ class TestOperationHelpers:
 
         delete_result = client.delete(dn_str)  # type: ignore[attr-defined]
         TestOperationHelpers.assert_result_success(
-            delete_result, error_message="Delete operation failed"
+            delete_result,
+            error_message="Delete operation failed",
         )
 
         results: dict[str, FlextResult[Any]] = {
@@ -743,7 +750,8 @@ class TestOperationHelpers:
             raise ValueError(error_msg)
 
         TestOperationHelpers.assert_result_failure(
-            result, expected_error="Not connected"
+            result,
+            expected_error="Not connected",
         )
 
     @staticmethod
@@ -764,10 +772,13 @@ class TestOperationHelpers:
             Unwrapped OperationResult
 
         """
+        if expected_entries_affected is None:
+            expected_entries_affected = 1
+
         return TestOperationHelpers.assert_operation_result_success(
             result,
             expected_operation_type=expected_operation_type,
-            expected_entries_affected=expected_entries_affected or 1,
+            expected_entries_affected=expected_entries_affected,
         )
 
     @staticmethod
@@ -850,12 +861,14 @@ class TestOperationHelpers:
         """
         from tests.fixtures.constants import RFC
 
-        cn = cn_value or RFC.TEST_USER_CN
-        base = base_dn or RFC.DEFAULT_BASE_DN
+        if cn_value is None:
+            cn_value = RFC.TEST_USER_CN
+        if base_dn is None:
+            base_dn = RFC.DEFAULT_BASE_DN
 
         return TestOperationHelpers.create_inetorgperson_entry(
-            cn,
-            base,
+            cn_value,
+            base_dn,
             use_uid=use_uid,
             **extra_attributes,  # type: ignore[arg-type]
         )
@@ -884,12 +897,14 @@ class TestOperationHelpers:
         """
         from tests.fixtures.constants import RFC
 
-        cn = cn_value or RFC.TEST_GROUP_CN
-        base = base_dn or RFC.DEFAULT_BASE_DN
+        if cn_value is None:
+            cn_value = RFC.TEST_GROUP_CN
+        if base_dn is None:
+            base_dn = RFC.DEFAULT_BASE_DN
 
         return TestOperationHelpers.create_group_entry(
-            cn,
-            base,
+            cn_value,
+            base_dn,
             members=members,
             **extra_attributes,  # type: ignore[arg-type]
         )
@@ -918,11 +933,18 @@ class TestOperationHelpers:
         """
         from tests.fixtures.constants import RFC
 
+        if base_dn is None:
+            base_dn = RFC.DEFAULT_BASE_DN
+        if filter_str is None:
+            filter_str = RFC.DEFAULT_FILTER
+        if scope is None:
+            scope = RFC.DEFAULT_SCOPE
+        if attributes is None:
+            attributes = list(RFC.DEFAULT_ATTRIBUTES)
+
         return FlextLdapModels.SearchOptions(
-            base_dn=base_dn or RFC.DEFAULT_BASE_DN,
-            filter_str=filter_str or RFC.DEFAULT_FILTER,
-            scope=cast(
-                "Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope or RFC.DEFAULT_SCOPE
-            ),
-            attributes=attributes or list(RFC.DEFAULT_ATTRIBUTES),
+            base_dn=base_dn,
+            filter_str=filter_str,
+            scope=cast("Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope),
+            attributes=attributes,
         )

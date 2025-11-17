@@ -13,7 +13,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
+from flext_ldif.services.parser import FlextLdifParser
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -31,9 +33,11 @@ class TestFlextLdapSyncServiceReal:
     def sync_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> FlextLdapSyncService:
         """Get sync service with connected operations."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connect_result = connection.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -44,23 +48,31 @@ class TestFlextLdapSyncServiceReal:
     def test_sync_ldif_file_when_not_connected(
         self,
         base_ldif_content: str,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test sync when operations service is not connected."""
-        connection = FlextLdapConnection()
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
         sync_service = FlextLdapSyncService(operations=operations)
 
         # Create temporary LDIF file
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             _ = f.write(base_ldif_content)
             ldif_file = Path(f.name)
 
         try:
-            result = sync_service.sync_ldif_file(ldif_file)
+            options = FlextLdapModels.SyncOptions()
+            result = sync_service.sync_ldif_file(ldif_file, options)
             assert result.is_failure
-            assert "Not connected" in (result.error or "")
+            # No fallback - FlextResult guarantees error exists when is_failure is True
+            assert result.error is not None
+            assert "Not connected" in result.error
         finally:
             ldif_file.unlink()
 
@@ -73,13 +85,17 @@ class TestFlextLdapSyncServiceReal:
         invalid_ldif = "invalid ldif content\nnot a valid entry\n"
 
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             _ = f.write(invalid_ldif)
             ldif_file = Path(f.name)
 
         try:
-            result = sync_service.sync_ldif_file(ldif_file)
+            options = FlextLdapModels.SyncOptions()
+            result = sync_service.sync_ldif_file(ldif_file, options)
             # Should handle parse failure gracefully
             assert result.is_failure or result.is_success
         finally:
@@ -91,13 +107,17 @@ class TestFlextLdapSyncServiceReal:
     ) -> None:
         """Test sync with empty LDIF file."""
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             _ = f.write("")
             ldif_file = Path(f.name)
 
         try:
-            result = sync_service.sync_ldif_file(ldif_file)
+            options = FlextLdapModels.SyncOptions()
+            result = sync_service.sync_ldif_file(ldif_file, options)
             # Should handle empty file gracefully
             assert result.is_success or result.is_failure
             if result.is_success:
@@ -120,13 +140,17 @@ objectClass: top
 """
 
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             _ = f.write(problematic_ldif)
             ldif_file = Path(f.name)
 
         try:
-            result = sync_service.sync_ldif_file(ldif_file)
+            options = FlextLdapModels.SyncOptions()
+            result = sync_service.sync_ldif_file(ldif_file, options)
             # Should continue syncing other entries even if some fail
             assert result.is_success or result.is_failure
             if result.is_success:
@@ -150,7 +174,10 @@ ou: test
 """
 
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             _ = f.write(ldif_content)
             ldif_file = Path(f.name)
@@ -184,7 +211,10 @@ ou: test
 """
 
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             _ = f.write(ldif_content)
             ldif_file = Path(f.name)

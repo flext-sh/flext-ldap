@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
@@ -28,10 +29,11 @@ class TestLdap3AdapterReal:
     @pytest.fixture
     def connected_adapter(
         self,
+        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -41,10 +43,11 @@ class TestLdap3AdapterReal:
     @pytest.mark.timeout(30)
     def test_connect_with_real_server(
         self,
+        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test connection with real LDAP server."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         result = adapter.connect(connection_config)
         assert result.is_success, f"Connect failed: {result.error}"
         assert adapter.is_connected is True
@@ -57,13 +60,15 @@ class TestLdap3AdapterReal:
         ldap_container: dict[str, object],
     ) -> None:
         """Test search with real LDAP server."""
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="SUBTREE",
         )
+        result = connected_adapter.search(search_options)
         entries = TestOperationHelpers.assert_result_success_and_unwrap(
-            result, error_message="Search"
+            result,
+            error_message="Search",
         )
         assert len(entries) > 0
 
@@ -74,7 +79,9 @@ class TestLdap3AdapterReal:
     ) -> None:
         """Test adding entry with real LDAP server."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testldap3add", RFC.DEFAULT_BASE_DN, sn="Test"
+            "testldap3add",
+            RFC.DEFAULT_BASE_DN,
+            sn="Test",
         )
 
         result = connected_adapter.add(entry)
@@ -91,7 +98,9 @@ class TestLdap3AdapterReal:
     ) -> None:
         """Test modifying entry with real LDAP server."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testldap3modify", RFC.DEFAULT_BASE_DN, sn="Test"
+            "testldap3modify",
+            RFC.DEFAULT_BASE_DN,
+            sn="Test",
         )
 
         add_result = connected_adapter.add(entry)
@@ -147,13 +156,16 @@ class TestLdap3AdapterReal:
     ) -> None:
         """Test search when not connected."""
         adapter = Ldap3Adapter()
-        result = adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
             scope="SUBTREE",
         )
+        result = adapter.search(search_options)
         assert result.is_failure
-        assert "Not connected" in (result.error or "")
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
 
     @pytest.mark.timeout(30)
     def test_disconnect_when_not_connected(self) -> None:

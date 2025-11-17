@@ -7,16 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from flext_core import FlextResult, FlextTypes
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
-# Generic TypeVars
-ServiceT = TypeVar("ServiceT", bound=object)
 
 
 class FlextLdapTypes(FlextTypes):
@@ -45,7 +42,6 @@ class FlextLdapTypes(FlextTypes):
     # =========================================================================
 
     type SearchResult = list[FlextLdifModels.Entry]
-    type OperationResult = dict[str, object]
 
 
 # =========================================================================
@@ -57,37 +53,37 @@ class LdapClientProtocol(Protocol):
     """Protocol for LDAP clients that support CRUD operations.
 
     This protocol defines the interface for LDAP clients used in test helpers.
-    Supports both FlextLdap (uses SearchOptions) and Ldap3Adapter
-    (uses individual parameters) patterns.
+    Uses SearchOptions model for type safety and consistency.
     """
 
     def search(
         self,
-        *args: object,
-        **kwargs: object,
-    ) -> (
-        FlextResult[FlextLdapModels.SearchResult]
-        | FlextResult[list[FlextLdifModels.Entry]]
-    ):
+        search_options: FlextLdapModels.SearchOptions,
+        server_type: str = FlextLdapConstants.ServerTypes.RFC,
+    ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation.
 
-        May accept either:
-        - search_options: FlextLdapModels.SearchOptions (FlextLdap)
-        - base_dn, filter_str, scope, etc. (Ldap3Adapter)
+        Args:
+            search_options: Search configuration (required)
+            server_type: LDAP server type for parsing (default: RFC)
+
+        Returns:
+            FlextResult containing SearchResult with Entry models
+
         """
         ...
 
     def add(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdapModels.OperationResult] | FlextResult[None]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add LDAP entry.
 
         Args:
             entry: Entry model to add
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult containing OperationResult
 
         """
         ...
@@ -96,7 +92,7 @@ class LdapClientProtocol(Protocol):
         self,
         dn: str | FlextLdifModels.DistinguishedName,
         changes: dict[str, list[tuple[str, list[str]]]],
-    ) -> FlextResult[FlextLdapModels.OperationResult] | FlextResult[None]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
 
         Args:
@@ -104,7 +100,7 @@ class LdapClientProtocol(Protocol):
             changes: Modification changes in ldap3 format
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult containing OperationResult
 
         """
         ...
@@ -112,14 +108,14 @@ class LdapClientProtocol(Protocol):
     def delete(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
-    ) -> FlextResult[FlextLdapModels.OperationResult] | FlextResult[None]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry.
 
         Args:
             dn: Distinguished name of entry to delete
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult containing OperationResult
 
         """
         ...

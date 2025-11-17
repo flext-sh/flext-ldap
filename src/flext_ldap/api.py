@@ -16,8 +16,10 @@ from typing import Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -73,32 +75,37 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
     def __init__(
         self,
         config: FlextLdapConfig | None = None,
+        parser: FlextLdifParser | None = None,
     ) -> None:
         """Initialize LDAP facade.
 
         Args:
-            config: Optional FlextLdapConfig instance. If None, uses default config.
+            config: FlextLdapConfig instance (optional, creates default if not provided)
+            parser: FlextLdifParser instance (optional, creates default if not provided)
 
         """
         super().__init__()
-        self._config = config if config is not None else FlextLdapConfig()
+        self._config = config or FlextLdapConfig()
         self._logger = FlextLogger(__name__)
-        self._connection = FlextLdapConnection(config=self._config)
+        self._connection = FlextLdapConnection(
+            config=self._config, parser=parser or FlextLdifParser()
+        )
         self._operations = FlextLdapOperations(connection=self._connection)
 
     def connect(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        connection_config: FlextLdapModels.ConnectionConfig,
     ) -> FlextResult[bool]:
         """Establish LDAP connection.
 
         Args:
-            connection_config: Optional connection config. If None, uses service config.
+            connection_config: Connection configuration (required, no fallback)
 
         Returns:
             FlextResult[bool] indicating connection success
 
         """
+        # Fast fail - connection_config is required, no fallback
         return self._connection.connect(connection_config)
 
     def disconnect(self) -> None:
@@ -155,13 +162,13 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
     def search(
         self,
         search_options: FlextLdapModels.SearchOptions,
-        server_type: str = "rfc",
+        server_type: str = FlextLdapConstants.ServerTypes.RFC,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation.
 
         Args:
             search_options: Search configuration
-            server_type: LDAP server type for parsing (default: "rfc")
+            server_type: LDAP server type for parsing (default: RFC constant)
 
         Returns:
             FlextResult containing SearchResult with Entry models
@@ -224,18 +231,5 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing service status
 
         """
-        result = self._operations.execute()
-        if result.is_success:
-            return result
-        # Return empty search result on failure
-        empty_options = FlextLdapModels.SearchOptions(
-            base_dn="",
-            filter_str="(objectClass=*)",
-        )
-        empty_result = FlextLdapModels.SearchResult(
-            entries=[],
-            total_count=0,
-            search_options=empty_options,
-        )
-        # Return empty result on failure (not fail) to match FlextService pattern
-        return FlextResult[FlextLdapModels.SearchResult].ok(empty_result)
+        # Fast fail - delegate to operations, no fallback
+        return self._operations.execute()

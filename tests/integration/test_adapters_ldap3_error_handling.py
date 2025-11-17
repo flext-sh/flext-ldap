@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
@@ -28,10 +29,11 @@ class TestLdap3AdapterErrorHandling:
     @pytest.fixture
     def connected_adapter(
         self,
+        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -43,11 +45,12 @@ class TestLdap3AdapterErrorHandling:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with invalid base DN."""
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn="invalid-dn-format",
             filter_str="(objectClass=*)",
             scope="SUBTREE",
         )
+        result = connected_adapter.search(search_options)
         # Should handle gracefully
         assert result.is_success or result.is_failure
 
@@ -56,11 +59,12 @@ class TestLdap3AdapterErrorHandling:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with invalid filter."""
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="invalid(filter",
             scope="SUBTREE",
         )
+        result = connected_adapter.search(search_options)
         # Should handle gracefully
         assert result.is_success or result.is_failure
 
@@ -156,11 +160,12 @@ class TestLdap3AdapterErrorHandling:
         """Test search exception handling."""
         # This tests the exception handler in search method
         # Use a filter that might cause issues
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope="INVALID_SCOPE",  # Invalid scope
         )
+        result = connected_adapter.search(search_options)
         # Should handle gracefully
         assert result.is_success or result.is_failure
 
@@ -171,7 +176,8 @@ class TestLdap3AdapterErrorHandling:
         """Test add exception handling."""
         # Entry that might cause issues
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testexception", RFC.DEFAULT_BASE_DN
+            "testexception",
+            RFC.DEFAULT_BASE_DN,
         )
 
         # Cleanup first
@@ -195,7 +201,8 @@ class TestLdap3AdapterErrorHandling:
         }
 
         result = connected_adapter.modify(
-            "cn=nonexistent12345,dc=flext,dc=local", changes
+            "cn=nonexistent12345,dc=flext,dc=local",
+            changes,
         )
         # Should fail gracefully
         assert result.is_failure
@@ -224,3 +231,79 @@ class TestLdap3AdapterErrorHandling:
         result = adapter.connect(config)
         assert result.is_failure
         adapter.disconnect()
+
+    def test_search_without_connection(self) -> None:
+        """Test search when not connected to LDAP server."""
+        adapter = Ldap3Adapter()
+        # Don't connect, try to search
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn=RFC.DEFAULT_BASE_DN,
+            filter_str="(objectClass=*)",
+            scope="SUBTREE",
+        )
+        result = adapter.search(search_options)
+        assert result.is_failure
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
+
+    def test_add_without_connection(self) -> None:
+        """Test add when not connected to LDAP server."""
+        adapter = Ldap3Adapter()
+        entry = TestOperationHelpers.create_inetorgperson_entry(
+            "testnocon",
+            RFC.DEFAULT_BASE_DN,
+        )
+        # Don't connect, try to add
+        result = adapter.add(entry)
+        assert result.is_failure
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
+
+    def test_modify_without_connection(self) -> None:
+        """Test modify when not connected to LDAP server."""
+        adapter = Ldap3Adapter()
+        changes: dict[str, list[tuple[str, list[str]]]] = {
+            "mail": [(MODIFY_REPLACE, ["test@example.com"])],
+        }
+        # Don't connect, try to modify
+        result = adapter.modify(f"cn=test,{RFC.DEFAULT_BASE_DN}", changes)
+        assert result.is_failure
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
+
+    def test_delete_without_connection(self) -> None:
+        """Test delete when not connected to LDAP server."""
+        adapter = Ldap3Adapter()
+        # Don't connect, try to delete
+        result = adapter.delete(f"cn=test,{RFC.DEFAULT_BASE_DN}")
+        assert result.is_failure
+        # No fallback - FlextResult guarantees error exists when is_failure is True
+        assert result.error is not None
+        assert "Not connected" in result.error
+
+    def test_disconnect_handles_no_connection(self) -> None:
+        """Test disconnect when there is no connection."""
+        adapter = Ldap3Adapter()
+        # Disconnect without connecting should not raise error
+        adapter.disconnect()
+        assert adapter.connection is None
+
+    def test_is_connected_property(self) -> None:
+        """Test is_connected property when not connected."""
+        adapter = Ldap3Adapter()
+        assert not adapter.is_connected
+
+    def test_is_connected_property_after_disconnect(
+        self,
+        connection_config: FlextLdapModels.ConnectionConfig,
+    ) -> None:
+        """Test is_connected property after disconnect."""
+        adapter = Ldap3Adapter()
+        connect_result = adapter.connect(connection_config)
+        if connect_result.is_success:
+            assert adapter.is_connected
+            adapter.disconnect()
+            assert not adapter.is_connected

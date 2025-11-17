@@ -30,10 +30,11 @@ class TestLdap3AdapterComplete:
     @pytest.fixture
     def connected_adapter(
         self,
+        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(adapter, connection_config)
         yield adapter
         adapter.disconnect()
@@ -48,9 +49,10 @@ class TestLdap3AdapterComplete:
     def test_connect_with_use_ssl(
         self,
         ldap_container: dict[str, object],
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with SSL enabled."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         config = FlextLdapModels.ConnectionConfig(
             host=str(ldap_container["host"]),
             port=int(str(ldap_container["port"])),
@@ -66,9 +68,10 @@ class TestLdap3AdapterComplete:
     def test_connect_with_use_tls(
         self,
         ldap_container: dict[str, object],
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with TLS enabled."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         config = FlextLdapModels.ConnectionConfig(
             host=str(ldap_container["host"]),
             port=int(str(ldap_container["port"])),
@@ -84,9 +87,10 @@ class TestLdap3AdapterComplete:
     def test_connect_with_timeout(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with custom timeout."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         config = FlextLdapModels.ConnectionConfig(
             host=connection_config.host,
             port=connection_config.port,
@@ -102,9 +106,10 @@ class TestLdap3AdapterComplete:
     def test_connect_with_auto_bind_false(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with auto_bind=False."""
-        adapter = Ldap3Adapter()
+        adapter = Ldap3Adapter(parser=ldap_parser)
         config = FlextLdapModels.ConnectionConfig(
             host=connection_config.host,
             port=connection_config.port,
@@ -122,12 +127,13 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with time limit."""
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope="SUBTREE",
             time_limit=5,
         )
+        result = connected_adapter.search(search_options)
         TestOperationHelpers.assert_result_success_and_unwrap(result)
 
     def test_search_with_all_attributes(
@@ -135,12 +141,13 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with all attributes."""
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope="SUBTREE",
             attributes=None,  # All attributes
         )
+        result = connected_adapter.search(search_options)
         entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
         if entries:
             assert entries[0].attributes is not None
@@ -150,11 +157,12 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with filter that returns no results."""
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(cn=nonexistententry12345)",
             scope="SUBTREE",
         )
+        result = connected_adapter.search(search_options)
         entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert len(entries) == 0
 
@@ -181,7 +189,8 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test modify with ADD operation."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testmodadd", RFC.DEFAULT_BASE_DN
+            "testmodadd",
+            RFC.DEFAULT_BASE_DN,
         )
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
@@ -189,7 +198,10 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            connected_adapter, entry, changes, verify_delete=False
+            connected_adapter,
+            entry,
+            changes,
+            verify_delete=False,
         )
 
         TestOperationHelpers.assert_result_success(results["add"])
@@ -215,7 +227,10 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            connected_adapter, entry, changes, verify_delete=False
+            connected_adapter,
+            entry,
+            changes,
+            verify_delete=False,
         )
 
         TestOperationHelpers.assert_result_success(results["add"])
@@ -231,7 +246,8 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test modify with multiple operations."""
         entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testmodmulti", RFC.DEFAULT_BASE_DN
+            "testmodmulti",
+            RFC.DEFAULT_BASE_DN,
         )
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
@@ -240,7 +256,10 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            connected_adapter, entry, changes, verify_delete=False
+            connected_adapter,
+            entry,
+            changes,
+            verify_delete=False,
         )
 
         TestOperationHelpers.assert_result_success(results["add"])
@@ -274,12 +293,12 @@ class TestLdap3AdapterComplete:
         """Test search with different server types."""
         # Only test server types that are registered in quirks
         # 'rfc' is the default and always works
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope="SUBTREE",
-            server_type="rfc",
         )
+        result = connected_adapter.search(search_options, server_type="rfc")
         assert result.is_success
 
     def test_add_entry_with_empty_attributes(
@@ -315,13 +334,13 @@ class TestLdap3AdapterComplete:
         # This tests the error path in add method
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=testadapterfail,ou=people,dc=flext,dc=local"
+                value="cn=testadapterfail,ou=people,dc=flext,dc=local",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": ["testadapterfail"],
                     "objectClass": ["top", "person"],
-                }
+                },
             ),
         )
 
@@ -341,11 +360,11 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test search handles parse failures gracefully."""
         # Search should work normally
-        result = connected_adapter.search(
+        search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope="SUBTREE",
-            server_type="rfc",
         )
+        result = connected_adapter.search(search_options, server_type="rfc")
         # Should succeed with valid server type
         assert result.is_success or result.is_failure

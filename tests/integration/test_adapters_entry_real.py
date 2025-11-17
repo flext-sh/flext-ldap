@@ -66,16 +66,12 @@ class TestFlextLdapEntryAdapterRealLdap3Entry:
         """Test conversion failure when from_ldap3 fails - covers line 85."""
         adapter = FlextLdapEntryAdapter()
 
-        # Create a mock-like scenario by using invalid entry data
-        # This tests the error handling path in ldap3_to_ldif_entry
-        invalid_entry_dict: dict[str, object] = {
-            "dn": None,  # Invalid DN
-            "attributes": None,  # Invalid attributes
-        }
-
-        result = adapter.ldap3_to_ldif_entry(invalid_entry_dict)
-        # Should handle gracefully
-        assert result.is_failure or result.is_success
+        # API direta: método aceita apenas Ldap3Entry, não dict
+        # Test None input - fast fail
+        result = adapter.ldap3_to_ldif_entry(None)
+        # Should fail fast with clear error
+        assert result.is_failure
+        assert "cannot be None" in result.error
 
     def test_ldap3_to_ldif_entry_with_failed_from_ldap3(
         self,
@@ -141,7 +137,7 @@ class TestFlextLdapEntryAdapterRealLdap3Entry:
                     "cn": ["test"],
                     "description": [],  # Empty list
                     "emptyList": [],  # Another empty list
-                }
+                },
             }),
         )
 
@@ -165,7 +161,7 @@ class TestFlextLdapEntryAdapterRealLdap3Entry:
                 "attributes": {
                     "cn": ["test"],
                     "emptyStringAttr": [""],  # List with empty string
-                }
+                },
             }),
         )
 
@@ -190,7 +186,7 @@ class TestFlextLdapEntryAdapterRealLdap3Entry:
                     "cn": ["test"],
                     "emptyList": [],
                     "listWithEmpty": [""],
-                }
+                },
             }),
         )
 

@@ -37,8 +37,22 @@ class TestFlextLdapConnectionCompleteCoverage:
             ldap_auto_bind=True,
             ldap_auto_range=True,
         )
+        from flext_ldap.models import FlextLdapModels
+
         connection = FlextLdapConnection(config=config)
-        result = connection.connect(None)  # Use service config
+        # Create ConnectionConfig from service config explicitly (no fallback)
+        connection_config = FlextLdapModels.ConnectionConfig(
+            host=config.ldap_host,
+            port=config.ldap_port,
+            use_ssl=config.ldap_use_ssl,
+            use_tls=config.ldap_use_tls,
+            bind_dn=config.ldap_bind_dn,
+            bind_password=config.ldap_bind_password,
+            timeout=config.ldap_timeout,
+            auto_bind=config.ldap_auto_bind,
+            auto_range=config.ldap_auto_range,
+        )
+        result = connection.connect(connection_config)
         assert result.is_success
         connection.disconnect()
 

@@ -328,6 +328,25 @@ clean-all: clean ## Deep clean including venv
 reset: clean-all setup ## Reset project
 
 # =============================================================================
+# FLEXT-QUALITY INTEGRATION
+# =============================================================================
+
+.PHONY: docs-via-quality
+docs-via-quality: ## Run documentation maintenance via flext-quality
+	@command -v flext-quality >/dev/null 2>&1 || { echo "❌ flext-quality not available"; exit 1; }
+	$(POETRY) run flext-quality make docs --project-path .
+
+.PHONY: fix-via-quality
+fix-via-quality: ## Run auto-fix via flext-quality
+	@command -v flext-quality >/dev/null 2>&1 || { echo "❌ flext-quality not available"; exit 1; }
+	$(POETRY) run flext-quality make fix --project-path .
+
+.PHONY: validate-via-quality
+validate-via-quality: ## Run validation via flext-quality
+	@command -v flext-quality >/dev/null 2>&1 || { echo "❌ flext-quality not available"; exit 1; }
+	$(POETRY) run flext-quality make validate --project-path .
+
+# =============================================================================
 # DIAGNOSTICS
 # =============================================================================
 
