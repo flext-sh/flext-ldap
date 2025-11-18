@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.config import FlextLdapConfig
@@ -61,12 +61,24 @@ class FlextLdapConnection(FlextService[bool]):
 
         """
         # Monadic pattern - map success to True, preserve failure
-        return self._adapter.connect(connection_config).map(lambda _: True)
+        connect_result = self._adapter.connect(connection_config)
+        if connect_result.is_success:
+            _ = self._logger.debug(
+                "LDAP connection established",
+                host=connection_config.host,
+                port=connection_config.port,
+                use_ssl=connection_config.use_ssl,
+                use_tls=connection_config.use_tls,
+            )
+        return connect_result.map(lambda _: True)
 
     def disconnect(self) -> None:
         """Close LDAP connection."""
         self._adapter.disconnect()
-        self._logger.info("LDAP connection closed")
+        self._logger.info(
+            "LDAP connection closed",
+            adapter_type=type(self._adapter).__name__,
+        )
 
     @property
     def is_connected(self) -> bool:
@@ -88,8 +100,11 @@ class FlextLdapConnection(FlextService[bool]):
         """
         return self._adapter
 
-    def execute(self) -> FlextResult[bool]:
+    def execute(self, **_kwargs: object) -> FlextResult[bool]:
         """Execute service health check.
+
+        Args:
+            **_kwargs: Unused - health check requires no configuration
 
         Returns:
             FlextResult[bool] indicating service status

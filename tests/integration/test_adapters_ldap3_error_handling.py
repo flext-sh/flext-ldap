@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter

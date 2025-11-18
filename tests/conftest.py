@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
 from flext_core import FlextLogger
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 from flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
@@ -31,6 +31,262 @@ logger = FlextLogger(__name__)
 
 # Register FlextTestDocker pytest fixtures in this module's namespace
 FlextTestDocker.register_pytest_fixtures(namespace=globals())
+
+
+# =============================================================================
+# PYTEST HOOKS (REGRAS 1 & 4: Container Lifecycle & Dirty State Management)
+# =============================================================================
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Cleanup dirty containers BEFORE test session starts (REGRA 1).
+
+    This hook executes before ANY test runs and:
+    1. Checks if containers are marked dirty from previous run
+    2. Recreates dirty containers with docker-compose down -v + up -d
+    3. Ensures clean state for test execution
+
+    REGRA 1: Container DEVE ser recreado TOTALMENTE se estiver dirty.
+    """
+    docker = FlextTestDocker()
+
+    # Cleanup any containers marked dirty from previous run
+    cleanup_result = docker.cleanup_dirty_containers()
+
+    if cleanup_result.is_failure:
+        logger.warning(f"Dirty container cleanup failed: {cleanup_result.error}")
+    else:
+        cleaned = cleanup_result.unwrap()
+        if cleaned:
+            logger.info(f"Recreated dirty containers: {cleaned}")
+        else:
+            logger.debug("No dirty containers to clean")
+
+
+def pytest_runtest_makereport(
+    item: pytest.Item,
+    call: pytest.CallInfo,
+) -> None:
+    """Mark container dirty on LDAP service failures ONLY (REGRA 4).
+
+    This hook executes after each test phase (setup/call/teardown) and:
+    1. Checks if exception indicates LDAP SERVICE failure (not test assertion)
+    2. Marks container as dirty for recreation in next run
+    3. Logs the failure for debugging
+
+    REGRA 4: APENAS falhas do serviço LDAP marcam como dirty.
+    - Assertion failures (test logic) = NOT dirty
+    - Connection/communication errors = dirty
+    """
+    if call.excinfo is None:
+        return  # No exception, skip
+
+    exc_type = call.excinfo.type
+    exc_msg = str(call.excinfo.value).lower()
+
+    # Lista de erros que indicam FALHA DO SERVIÇO LDAP (não de teste)
+    ldap_service_errors = [
+        "ldapsocketopenerror",
+        "ldapsessionterminatedbyservererror",
+        "ldapcommunicationerror",
+        "ldapserverdownerror",
+        "ldap server is not responding",
+        "connection refused",
+        "connection reset by peer",
+        "broken pipe",
+        "cannot connect to ldap",
+        "ldap bind failed",
+    ]
+
+    # Verificar se é erro de SERVIÇO (não assertion de teste)
+    is_service_failure = any(
+        err in str(exc_type).lower() or err in exc_msg for err in ldap_service_errors
+    )
+
+    if is_service_failure:
+        docker = FlextTestDocker()
+        docker.mark_container_dirty("flext-openldap-test")
+        logger.error(
+            f"LDAP SERVICE FAILURE detected in {item.nodeid}, "
+            f"container marked DIRTY for recreation: {exc_msg}"
+        )
+
+
+# =============================================================================
+# BASE FIXTURES (REGRA 3: Idempotência & Paralelização)
+# =============================================================================
+
+
+@pytest.fixture(scope="session")
+def worker_id(request: pytest.FixtureRequest) -> str:
+    """Get pytest-xdist worker ID for DN namespacing (REGRA 3).
+
+    Returns:
+        str: Worker ID (e.g., "gw0", "gw1", "master")
+            - "master": single-process execution
+            - "gw0", "gw1", ...: parallel workers from pytest-xdist
+
+    """
+    worker_input = getattr(request.config, "workerinput", {})
+    return worker_input.get("workerid", "master")
+
+
+@pytest.fixture(scope="session")
+def session_id() -> str:
+    """Unique session ID for this test run (REGRA 3).
+
+    Returns:
+        int: Timestamp in milliseconds
+
+    Used for DN namespacing to ensure test isolation.
+
+    """
+    import time
+
+    return int(time.time() * 1000)
+
+
+class DNSTracker:
+    """Thread-safe tracker of DNs created during tests."""
+
+    def __init__(self) -> None:
+        """Initialize tracker with thread-safe structures."""
+        from threading import Lock
+
+        self._created_dns: set[str] = set()
+        self._lock = Lock()
+
+    def add(self, dn: str) -> None:
+        """Add DN to tracker."""
+        with self._lock:
+            self._created_dns.add(dn)
+
+    def get_all(self) -> set[str]:
+        """Get all tracked DNs."""
+        with self._lock:
+            return self._created_dns.copy()
+
+
+@pytest.fixture(scope="session")
+def test_dns_tracker() -> DNSTracker:
+    """Thread-safe tracker of DNs created during tests (REGRA 3).
+
+    Tracks ALL DNs created by tests for intelligent cleanup.
+    Thread-safe to support parallel test execution.
+
+    Returns:
+        DNSTracker: Object with add() and get_all() methods
+
+    """
+    # Legacy code - keeping for compatibility but DNSTracker is now a class
+    from threading import Lock
+
+    created_dns: set[str] = set()
+    lock = Lock()
+
+    class LegacyDNSTracker:
+        """Thread-safe DN tracker for test cleanup."""
+
+        def add(self, dn: str) -> None:
+            """Add DN to tracking set (thread-safe)."""
+            with lock:
+                created_dns.add(dn)
+
+        def get_all(self) -> set[str]:
+            """Get copy of all tracked DNs (thread-safe)."""
+            with lock:
+                return created_dns.copy()
+
+    return DNSTracker()
+
+
+@pytest.fixture
+def unique_dn_suffix(worker_id: str, session_id: str) -> str:
+    """Generate unique DN suffix for this worker and test (REGRA 3).
+
+    Combines worker ID, session ID, and microsecond timestamp to create
+    globally unique DN suffix that prevents conflicts in parallel execution.
+
+    Args:
+        worker_id: pytest-xdist worker ID (e.g., "gw0", "master")
+        session_id: Test session timestamp
+
+    Returns:
+        str: Unique suffix (e.g., "gw0-1733000000-123456")
+
+    Example:
+        >>> suffix = unique_dn_suffix
+        >>> dn = f"uid=testuser-{suffix},ou=people,dc=flext,dc=local"
+
+    """
+    import time
+
+    # Microsecond precision for intra-second uniqueness
+    test_id = int(time.time() * 1000000) % 1000000
+
+    return f"{worker_id}-{session_id}-{test_id}"
+
+
+@pytest.fixture
+def make_user_dn(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Factory to create unique user DNs (REGRA 3).
+
+    Args:
+        unique_dn_suffix: Unique suffix from fixture
+
+    Returns:
+        callable: Factory function that takes uid and returns unique DN
+
+    Example:
+        >>> make_dn = make_user_dn
+        >>> dn = make_dn("testuser")  # uid=testuser-gw0-...,ou=people,...
+
+    """
+
+    def _make(uid: str) -> str:
+        """Create unique user DN.
+
+        Args:
+            uid: User ID (e.g., "testuser")
+
+        Returns:
+            str: Unique DN (e.g., "uid=testuser-gw0-123...,ou=people,dc=flext,dc=local")
+
+        """
+        return f"uid={uid}-{unique_dn_suffix},ou=people,dc=flext,dc=local"
+
+    return _make
+
+
+@pytest.fixture
+def make_group_dn(unique_dn_suffix: str) -> Callable[[str], str]:
+    """Factory to create unique group DNs (REGRA 3).
+
+    Args:
+        unique_dn_suffix: Unique suffix from fixture
+
+    Returns:
+        callable: Factory function that takes cn and returns unique DN
+
+    Example:
+        >>> make_dn = make_group_dn
+        >>> dn = make_dn("testgroup")  # cn=testgroup-gw0-...,ou=groups,...
+
+    """
+
+    def _make(cn: str) -> str:
+        """Create unique group DN.
+
+        Args:
+            cn: Common name (e.g., "testgroup")
+
+        Returns:
+            str: Unique DN (e.g., "cn=testgroup-gw0-123...,ou=groups,dc=flext,dc=local")
+
+        """
+        return f"cn={cn}-{unique_dn_suffix},ou=groups,dc=flext,dc=local"
+
+    return _make
 
 
 # =============================================================================
@@ -167,30 +423,52 @@ def ldap_client(
     ldap_test_data_loader: Connection,
     ldap_config: FlextLdapConfig,
     ldap_parser: FlextLdifParser,
+    docker_control: FlextTestDocker,
 ) -> Generator[FlextLdap]:
-    """Get configured LDAP client instance with real connection.
+    """Get configured LDAP client with REAL connection and dirty detection (REGRAS 3 & 4).
 
     Module-scoped to reuse connection across tests in same module for performance.
     Tests should clean up their own data to avoid state corruption.
     Ensures OUs exist via ldap_test_data_loader fixture.
+
+    REGRA 3: Uses REAL LDAP connection (NO MOCKS).
+    REGRA 4: Marks container dirty on connection/service failures.
+
+    Args:
+        connection_config: Connection configuration
+        ldap_test_data_loader: Ensures OUs exist
+        ldap_config: LDAP config
+        ldap_parser: LDIF parser
+        docker_control: Docker control for dirty state marking
+
+    Yields:
+        FlextLdap: REAL LDAP client instance (NO MOCKS)
+
     """
     # Ensure OUs exist (ldap_test_data_loader creates them)
     _ = ldap_test_data_loader
 
+    # Create REAL FlextLdap instance (NO MOCKS)
     client = FlextLdap(config=ldap_config, parser=ldap_parser)
 
-    # Connect to the LDAP server
+    # REAL connection attempt
     connect_result = client.connect(connection_config)
+
     if connect_result.is_failure:
-        pytest.skip(f"Failed to connect to LDAP server: {connect_result.error}")
+        # Connection failure = LDAP service problem = mark dirty (REGRA 4)
+        docker_control.mark_container_dirty("flext-openldap-test")
+        pytest.skip(
+            f"LDAP connection failed, container marked DIRTY: {connect_result.error}"
+        )
 
-    yield client
+    yield client  # REAL client object
 
-    # Disconnect when done - CRITICAL for cleanup
+    # REAL disconnect - mark dirty if fails (potential service issue)
     try:
         client.disconnect()
     except Exception as e:
-        logger.warning("LDAP client disconnection failed: %s", e)
+        logger.warning(f"LDAP client disconnection failed (marking dirty): {e}")
+        docker_control.mark_container_dirty("flext-openldap-test")
 
 
 # =============================================================================
@@ -201,26 +479,37 @@ def ldap_client(
 @pytest.fixture(scope="session")
 def ldap_test_data_loader(
     ldap_container: dict[str, object],
+    test_dns_tracker: DNSTracker,
 ) -> Generator[Connection]:
-    """Session-scoped test data loader for LDAP integration tests.
+    """Session-scoped test data loader with intelligent cleanup (REGRA 3).
 
-    Creates real LDAP connection and initializes comprehensive test data.
-    Test data is cleaned up after all tests complete.
+    Creates REAL LDAP connection (NO MOCKS) and initializes base test structure.
+    Tracks ALL DNs created during tests for intelligent cleanup.
+
+    REGRA 3: Cleanup inteligente de TODOS os DNs rastreados (não lista hardcoded).
+
+    Args:
+        ldap_container: Container connection info
+        test_dns_tracker: DN tracker for intelligent cleanup
+
+    Yields:
+        Connection: REAL ldap3 connection to LDAP container
 
     Uses FlextTestDocker managed container.
+
     """
     try:
-        # Create connection to LDAP server (managed by FlextTestDocker)
+        # Create REAL connection to LDAP server (NO MOCKS)
         server = Server("ldap://localhost:3390", get_info="ALL")
         connection = Connection(
             server,
             user=str(ldap_container["bind_dn"]),
             password=str(ldap_container["password"]),
-            auto_bind=True,
+            auto_bind=True,  # REAL bind
             auto_referrals=False,
         )
 
-        # Create organizational units if they don't exist
+        # Create organizational units with REAL LDAP operations
         ous = [
             ("ou=people,dc=flext,dc=local", "people"),
             ("ou=groups,dc=flext,dc=local", "groups"),
@@ -229,7 +518,7 @@ def ldap_test_data_loader(
 
         for ou_dn, ou_name in ous:
             try:
-                _ = connection.add(
+                _ = connection.add(  # REAL add operation
                     ou_dn,
                     attributes={
                         "objectClass": ["organizationalUnit", "top"],
@@ -239,28 +528,25 @@ def ldap_test_data_loader(
             except Exception:
                 pass  # OU might already exist
 
-        yield connection
+        yield connection  # REAL connection object
 
-        # Cleanup after all tests
+        # INTELLIGENT CLEANUP: Delete ALL tracked DNs (REGRA 3)
         try:
-            # Delete test entries (but keep OUs)
-            test_dns = [
-                "uid=testuser,ou=people,dc=flext,dc=local",
-                "uid=testuser2,ou=people,dc=flext,dc=local",
-                "uid=testuser3,ou=people,dc=flext,dc=local",
-                "cn=testgroup,ou=groups,dc=flext,dc=local",
-                "cn=testgroup2,ou=groups,dc=flext,dc=local",
-            ]
-            for dn in test_dns:
+            all_dns = test_dns_tracker.get_all()
+            logger.info(f"Cleaning up {len(all_dns)} tracked DNs from tests")
+
+            for dn in all_dns:
                 try:
-                    _ = connection.delete(dn)
-                except Exception:
-                    pass  # Entry might not exist
+                    _ = connection.delete(dn)  # REAL delete operation
+                    logger.debug(f"Cleaned up DN: {dn}")
+                except Exception as e:
+                    # Entry might be already deleted by test or not exist
+                    logger.debug(f"Cleanup skip for {dn}: {e}")
 
-        except Exception:
-            pass  # Cleanup failure is non-critical
+        except Exception as e:
+            logger.warning(f"Cleanup failed (non-critical): {e}")
 
-        # Close connection
+        # Close REAL connection
         if connection.bound:
             connection.unbind()
 

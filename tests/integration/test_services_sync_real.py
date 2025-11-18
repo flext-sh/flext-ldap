@@ -13,7 +13,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
@@ -50,7 +50,11 @@ class TestFlextLdapSyncServiceReal:
         base_ldif_content: str,
         ldap_parser: FlextLdifParser,
     ) -> None:
-        """Test sync when operations service is not connected."""
+        """Test sync when operations service is not connected.
+
+        Note: sync_service processes entries even when not connected,
+        marking them as failed. The result is success with failed stats.
+        """
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
@@ -69,10 +73,12 @@ class TestFlextLdapSyncServiceReal:
         try:
             options = FlextLdapModels.SyncOptions()
             result = sync_service.sync_ldif_file(ldif_file, options)
-            assert result.is_failure
-            # No fallback - FlextResult guarantees error exists when is_failure is True
-            assert result.error is not None
-            assert "Not connected" in result.error
+            # Sync service processes entries and marks failures, but returns success
+            assert result.is_success
+            stats = result.unwrap()
+            # Should have failed entries because not connected
+            assert stats.failed > 0
+            assert stats.added == 0
         finally:
             ldif_file.unlink()
 

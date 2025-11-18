@@ -15,8 +15,7 @@ import types
 from typing import Self, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifModels, FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -246,7 +245,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         return self._operations.upsert(entry)
 
     @override
-    def execute(self) -> FlextResult[FlextLdapModels.SearchResult]:
+    def execute(self, **kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:
         """Execute service health check.
 
         Returns:

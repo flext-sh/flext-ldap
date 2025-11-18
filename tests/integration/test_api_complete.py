@@ -194,3 +194,34 @@ class TestFlextLdapAPIComplete:
             entry,
             changes,
         )
+
+    def test_api_upsert_method(
+        self,
+        ldap_client: FlextLdap,
+    ) -> None:
+        """Test API upsert method (covers line 246)."""
+        from flext_ldif.models import FlextLdifModels
+
+        # Cleanup first
+        test_dn = f"cn=testapiupsert,{RFC.DEFAULT_BASE_DN}"
+        _ = ldap_client.delete(test_dn)
+
+        # Create entry
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value=test_dn),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["testapiupsert"],
+                    "objectClass": ["top", "person"],
+                    "sn": ["Test"],
+                },
+            ),
+        )
+
+        # Test upsert through API (covers line 246)
+        result = ldap_client.upsert(entry)
+        assert result.is_success
+        assert result.unwrap()["operation"] in {"added", "skipped"}
+
+        # Cleanup
+        _ = ldap_client.delete(test_dn)

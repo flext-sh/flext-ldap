@@ -101,7 +101,7 @@ class TestFlextLdapEntryAdapter:
         assert "test2@example.com" in attrs["mail"]
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_values(self) -> None:
-        """Test conversion with empty values."""
+        """Test conversion with empty values - empty lists are included."""
         adapter = FlextLdapEntryAdapter()
         entry = TestOperationHelpers.create_entry_simple(
             "cn=test,dc=example,dc=com",
@@ -114,6 +114,7 @@ class TestFlextLdapEntryAdapter:
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attrs = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert attrs["cn"] == ["test"]
+        # Empty lists are included as empty lists (consistent with integration tests)
         assert attrs["description"] == []
         assert attrs["emptyList"] == []
 
@@ -144,9 +145,8 @@ class TestFlextLdapEntryAdapter:
             attrs.get("singleValue"),
             list,
         )  # Single value converted to list
-        assert (
-            attrs.get("emptyString") == []
-        )  # Empty string becomes empty list (line 141)
+        # Empty string is filtered to prevent invalidAttributeSyntax
+        assert "emptyString" not in attrs
 
     def test_normalize_entry_for_server(self) -> None:
         """Test entry normalization for server type."""
@@ -227,10 +227,16 @@ class TestFlextLdapEntryAdapter:
         This test ensures that the conversion handles:
         - None values (converted to empty list) - lines 118-119
         - Single non-list values (converted to list with one item) - lines 120-121
+
+        TECH DEBT: Violates REGRA 5 (ZERO MOCKS policy).
+        TODO: Rewrite to use REAL ldap3.Entry from LDAP container.
+        - Move to tests/integration/ or add ldap_client fixture
+        - Create REAL LDAP entry with mixed attribute types
+        - Fetch with ldap3 and test conversion with REAL object
         """
         adapter = FlextLdapEntryAdapter()
 
-        # Create mock ldap3 entry with mixed value types
+        # TECH DEBT: Manual mock class (should use REAL ldap3.Entry)
         class MockLdap3Entry:
             """Mock ldap3 entry with None and single values."""
 

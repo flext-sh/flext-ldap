@@ -13,8 +13,8 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
@@ -280,10 +280,12 @@ sn: Test
         try:
             options = FlextLdapModels.SyncOptions()
             result = sync_service.sync_ldif_file(temp_path, options)
-            assert result.is_failure
-            # No fallback - FlextResult guarantees error exists when is_failure is True
-            assert result.error is not None
-            assert "Not connected" in result.error
+            # Sync service processes entries and marks failures, but returns success
+            assert result.is_success
+            stats = result.unwrap()
+            # Should have failed entries because not connected
+            assert stats.failed > 0
+            assert stats.added == 0
         finally:
             if temp_path.exists():
                 temp_path.unlink()

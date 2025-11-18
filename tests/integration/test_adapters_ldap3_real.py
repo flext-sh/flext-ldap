@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels

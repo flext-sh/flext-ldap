@@ -45,7 +45,7 @@ version = "25.4.0"
 description = "Classes Without Boilerplate"
 optional = false
 python-versions = ">=3.9"
-groups = ["test"]
+groups = ["main", "test"]
 files = [
     {file = "attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373"},
     {file = "attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11"},
@@ -981,6 +981,7 @@ files = []
 develop = false
 
 [package.dependencies]
+attrs = ">=25.4.0,<26.0.0"
 beartype = ">=0.19.0"
 cachetools = ">=5.3.0"
 dependency-injector = ">=4.41.0"
@@ -3055,4 +3056,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "7c7e53017aa6485600f971016c8c68b0c8ee585e0caa28cae50f7eadf3c77f92"
+content-hash = "1ee95bfe1b3c892573c4f8d8036e967081d62e81ed4256c0771056f0865139a9"
