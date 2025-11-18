@@ -57,12 +57,15 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         self._ldif = FlextLdif.get_instance()
         self._server_type = server_type
 
-    def execute(self) -> FlextResult[bool]:
+    def execute(self, **_kwargs: object) -> FlextResult[bool]:
         """Execute method required by FlextService.
 
         Entry adapter does not perform operations itself - it converts between
         entry formats. The conversion methods (ldap3_to_ldif_entry, etc.) should be
         called directly instead of using execute().
+
+        Args:
+            **_kwargs: Unused - adapter is stateless and requires no configuration
 
         Returns:
             FlextResult[bool] - success with True as this adapter is stateless
@@ -164,21 +167,23 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         # but avoiding import due to broken LDAPAttributeError import in flext-ldif
         attrs_dict = entry.attributes.attributes  # dict[str, str | list[str]]
         ldap3_attributes: dict[str, list[str]] = {}
+
         for key, value in attrs_dict.items():
             if FlextRuntime.is_list_like(value):
                 # Convert list-like object to list of strings
-                # Handle empty lists
-                value_list = list(value)
-                if len(value_list) == 0:
-                    ldap3_attributes[key] = []
-                else:
-                    ldap3_attributes[key] = [str(item) for item in value_list]
-            elif not value:
-                # Empty string becomes empty list
-                ldap3_attributes[key] = []
-            else:
-                # Single value becomes list with one element
+                # CRITICAL: Preserve empty lists - LDAP operations need them for attribute deletion
+                # Tests explicitly verify empty lists are preserved
+                value_list = list(
+                    value
+                )  # Ensure we have a real list, not tuple/set/etc
+                # Convert all items to strings, preserving empty lists as []
+                ldap3_attributes[key] = [str(item) for item in value_list]
+            elif value:
+                # Single non-empty value becomes list with one element
                 ldap3_attributes[key] = [str(value)]
+            # Skip empty non-list values (empty strings, None, etc.)
+            # These are not valid LDAP attribute values
+
         return FlextResult[dict[str, list[str]]].ok(ldap3_attributes)
 
     def normalize_entry_for_server(
@@ -201,7 +206,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         # parse/write operations
         _ = logger.debug(
             "Entry normalization handled by flext-ldif quirks",
-            extra={"dn": str(entry.dn), "target_server": target_server_type},
+            entry_dn=str(entry.dn),
+            target_server=target_server_type,
         )
         return FlextResult[FlextLdifModels.Entry].ok(entry)
 
@@ -225,9 +231,10 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         dn_str = str(entry.dn)
         if not dn_str.strip():
             _ = logger.debug(
-                "Entry validation failed: empty DN for server type %s",
-                server_type,
-                extra={"dn": dn_str, "server_type": server_type},
+                "Entry validation failed: empty DN",
+                entry_dn=dn_str,
+                server_type=server_type,
+                validation_error="empty_dn",
             )
             return FlextResult[bool].fail("Entry DN cannot be empty")
 
@@ -235,15 +242,20 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         # Fast fail if attributes dict is empty
         if not entry.attributes.attributes:
             _ = logger.debug(
-                "Entry validation failed: no attributes for server type %s",
-                server_type,
-                extra={"dn": dn_str, "server_type": server_type},
+                "Entry validation failed: no attributes",
+                entry_dn=dn_str,
+                server_type=server_type,
+                validation_error="no_attributes",
+                attributes_count=0,
             )
             return FlextResult[bool].fail("Entry must have attributes")
 
         _ = logger.debug(
-            "Entry validated successfully for server type %s",
-            server_type,
-            extra={"dn": dn_str, "server_type": server_type},
+            "Entry validated successfully",
+            entry_dn=dn_str,
+            server_type=server_type,
+            attributes_count=len(entry.attributes.attributes)
+            if entry.attributes
+            else 0,
         )
         return FlextResult[bool].ok(True)

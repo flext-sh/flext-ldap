@@ -93,25 +93,36 @@ class FlextLdapTestHelpers:
     def add_entry_with_cleanup(
         client: FlextLdap,
         entry: FlextLdifModels.Entry,
+        dns_tracker: object | None = None,
     ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
-        """Add entry with automatic cleanup before and after.
+        """Add entry with automatic cleanup and tracking (REGRA 3).
 
         Replaces add + cleanup pattern used in many tests.
+        Tracks DN for intelligent session cleanup.
 
         Args:
             client: FlextLdap client instance
             entry: Entry to add
+            dns_tracker: Optional DNS tracker for intelligent cleanup (REGRA 3)
 
         Returns:
             Tuple of (entry, result)
 
         """
-        # Cleanup any existing entry first
+        # Cleanup any existing entry first (pre-cleanup)
         dn_str = str(entry.dn)
         _ = client.delete(dn_str)
 
-        # Add entry
+        # Add entry (REAL LDAP operation, NO MOCKS)
         result = client.add(entry)
+
+        # Track DN for intelligent cleanup (REGRA 3)
+        if (
+            result.is_success
+            and dns_tracker is not None
+            and hasattr(dns_tracker, "add")
+        ):
+            dns_tracker.add(dn_str)  # type: ignore[attr-defined]
 
         return (entry, result)
 
@@ -119,21 +130,24 @@ class FlextLdapTestHelpers:
     def add_entry_from_dict_with_cleanup(
         client: FlextLdap,
         entry_dict: dict[str, object],
+        dns_tracker: object | None = None,
     ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
-        """Add entry from dict with automatic cleanup.
+        """Add entry from dict with automatic cleanup and tracking (REGRA 3).
 
         Combines create_entry_from_dict + add_entry_with_cleanup.
+        Tracks DN for intelligent session cleanup.
 
         Args:
             client: FlextLdap client instance
             entry_dict: Entry dict with 'dn' and 'attributes'
+            dns_tracker: Optional DNS tracker for intelligent cleanup (REGRA 3)
 
         Returns:
             Tuple of (entry, result)
 
         """
         entry = FlextLdapTestHelpers.create_entry_from_dict(entry_dict)
-        return FlextLdapTestHelpers.add_entry_with_cleanup(client, entry)
+        return FlextLdapTestHelpers.add_entry_with_cleanup(client, entry, dns_tracker)
 
     @staticmethod
     def delete_entry_safe(

@@ -1322,7 +1322,7 @@ class TestDeduplicationHelpers:
             )
 
         """
-        from flext_ldif.services.parser import FlextLdifParser
+        from flext_ldif import FlextLdifParser
 
         from flext_ldap.config import FlextLdapConfig
         from flext_ldap.services.connection import FlextLdapConnection
@@ -2857,7 +2857,7 @@ class TestDeduplicationHelpers:
             operations._connection.disconnect()  # Cleanup
 
         """
-        from flext_ldif.services.parser import FlextLdifParser
+        from flext_ldif import FlextLdifParser
 
         from flext_ldap.config import FlextLdapConfig
         from flext_ldap.services.connection import FlextLdapConnection
@@ -3688,7 +3688,7 @@ class TestDeduplicationHelpers:
         """Create FlextLdapConnection instance - COMMON PATTERN.
 
         Replaces:
-            from flext_ldif.services.parser import FlextLdifParser
+            from flext_ldif import FlextLdifParser
             from flext_ldap.config import FlextLdapConfig
             config = FlextLdapConfig()
             parser = FlextLdifParser()
@@ -3707,7 +3707,7 @@ class TestDeduplicationHelpers:
             connection = TestDeduplicationHelpers.create_connection(connection_config)
 
         """
-        from flext_ldif.services.parser import FlextLdifParser
+        from flext_ldif import FlextLdifParser
 
         from flext_ldap.config import FlextLdapConfig
         from flext_ldap.services.connection import FlextLdapConnection
@@ -3724,7 +3724,7 @@ class TestDeduplicationHelpers:
                 ldap_timeout=config.timeout,
             )
             return FlextLdapConnection(config=ldap_config, parser=parser)
-        from flext_ldif.services.parser import FlextLdifParser
+        from flext_ldif import FlextLdifParser
 
         from flext_ldap.config import FlextLdapConfig
 
@@ -3742,7 +3742,7 @@ class TestDeduplicationHelpers:
         """Create FlextLdapConnection and connect - COMMON PATTERN.
 
         Replaces:
-            from flext_ldif.services.parser import FlextLdifParser
+            from flext_ldif import FlextLdifParser
             from flext_ldap.config import FlextLdapConfig
             config = FlextLdapConfig()
             parser = FlextLdifParser()
@@ -4435,7 +4435,7 @@ class TestDeduplicationHelpers:
         """Create FlextLdapOperations with connected connection - COMMON PATTERN (5-7 lines -> 1 line).
 
         Replaces:
-            from flext_ldif.services.parser import FlextLdifParser
+            from flext_ldif import FlextLdifParser
             from flext_ldap.config import FlextLdapConfig
             config = FlextLdapConfig()
             parser = FlextLdifParser()

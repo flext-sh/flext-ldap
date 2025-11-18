@@ -168,10 +168,15 @@ class TestFlextLdapAddRealOperations:
 class TestFlextLdapModifyRealOperations:
     """Test FlextLdap modify operations against real LDAP server."""
 
-    def test_modify_entry(self, ldap_client: FlextLdap) -> None:
-        """Test modifying an entry."""
+    def test_modify_entry(
+        self,
+        ldap_client: FlextLdap,
+        unique_dn_suffix: str,
+    ) -> None:
+        """Test modifying an entry (idempotent with unique DN)."""
+        uid = f"testmodify-{unique_dn_suffix}"
         entry_dict = {
-            "dn": "uid=testmodify,ou=people,dc=flext,dc=local",
+            "dn": f"uid={uid},ou=people,dc=flext,dc=local",
             "attributes": {
                 "objectClass": [
                     "inetOrgPerson",
@@ -179,7 +184,7 @@ class TestFlextLdapModifyRealOperations:
                     "person",
                     "top",
                 ],
-                "uid": ["testmodify"],
+                "uid": [uid],
                 "cn": ["Test Modify User"],
                 "sn": ["Modify"],
             },
@@ -207,11 +212,16 @@ class TestFlextLdapModifyRealOperations:
 class TestFlextLdapDeleteRealOperations:
     """Test FlextLdap delete operations against real LDAP server."""
 
-    def test_delete_entry(self, ldap_client: FlextLdap) -> None:
-        """Test deleting an entry."""
-        # First add an entry
+    def test_delete_entry(
+        self,
+        ldap_client: FlextLdap,
+        unique_dn_suffix: str,
+    ) -> None:
+        """Test deleting an entry (idempotent with unique DN)."""
+        # First add an entry with unique UID
+        uid = f"testdelete-{unique_dn_suffix}"
         entry = TestOperationHelpers.create_entry_with_uid(
-            "testdelete",
+            uid,
             RFC.DEFAULT_BASE_DN,
             cn="Test Delete User",
             sn="Delete",
@@ -223,8 +233,8 @@ class TestFlextLdapDeleteRealOperations:
             cleanup_after=False,
         )
 
-        # Now delete it
-        delete_result = ldap_client.delete("uid=testdelete,ou=people,dc=flext,dc=local")
+        # Now delete it using the unique DN
+        delete_result = ldap_client.delete(f"uid={uid},ou=people,dc=flext,dc=local")
         TestOperationHelpers.assert_operation_result_success(
             delete_result,
             expected_operation_type="delete",

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
@@ -174,11 +174,12 @@ class TestFlextLdapConnectionComplete:
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         config = FlextLdapModels.ConnectionConfig(
-            host="invalid-host-that-does-not-exist",
+            host="192.0.2.1",  # TEST-NET-1 reserved IP (instant fail, no DNS lookup)
             port=389,
             use_ssl=False,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
             bind_password="password",
+            timeout=2,  # Fast timeout for invalid host test
         )
         result = connection.connect(config)
         assert result.is_failure

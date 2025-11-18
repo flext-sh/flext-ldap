@@ -11,8 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdifModels, FlextLdifParser
 from ldap3 import Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -77,11 +76,13 @@ class Ldap3Adapter(FlextService[bool]):
                     host=config.host,
                     port=config.port,
                     use_ssl=True,
+                    connect_timeout=config.timeout,  # Timeout for TCP connection
                 )
             else:
                 self._server = Server(
                     host=config.host,
                     port=config.port,
+                    connect_timeout=config.timeout,  # Timeout for TCP connection
                 )
 
             # Create connection with explicit parameters
@@ -106,13 +107,24 @@ class Ldap3Adapter(FlextService[bool]):
             if not self._connection.bound:
                 return FlextResult[bool].fail("Failed to bind to LDAP server")
 
-            _ = logger.info(f"Connected to LDAP server {config.host}:{config.port}")
+            _ = logger.info(
+                "Connected to LDAP server",
+                host=config.host,
+                port=config.port,
+                use_ssl=config.use_ssl,
+            )
             return FlextResult[bool].ok(True)
 
-        except ImportError:
-            return FlextResult[bool].fail("ldap3 library not installed")
         except Exception as e:
-            _ = logger.exception("Failed to connect to LDAP server")
+            _ = logger.exception(
+                "Failed to connect to LDAP server",
+                host=config.host,
+                port=config.port,
+                use_ssl=config.use_ssl,
+                use_tls=config.use_tls,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[bool].fail(f"Connection failed: {e!s}")
 
     def disconnect(self) -> None:
@@ -121,7 +133,11 @@ class Ldap3Adapter(FlextService[bool]):
             try:
                 self._connection.unbind()
             except Exception as e:
-                _ = logger.debug("Error during disconnect: %s", e)
+                _ = logger.debug(
+                    "Error during disconnect",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
             finally:
                 self._connection = None
                 self._server = None
@@ -153,10 +169,16 @@ class Ldap3Adapter(FlextService[bool]):
             FlextResult containing Connection or error
 
         """
+        # Fast fail if not connected
         if not self.is_connected:
             return FlextResult[Connection].fail("Not connected to LDAP server")
+
         # Type narrowing: connection is guaranteed non-None after is_connected check
+        # is_connected property returns: self._connection is not None and self._connection.bound
+        # Therefore, if is_connected is True, _connection is definitely not None
+        # However, type checker cannot infer this, so we need to assert it
         if self._connection is None:
+            # Defensive check for race conditions (theoretically unreachable but defensive)
             return FlextResult[Connection].fail(
                 "Connection is None despite is_connected=True",
             )
@@ -355,8 +377,12 @@ class Ldap3Adapter(FlextService[bool]):
                 error_msg = connection.result.get("message", "LDAP search failed")
                 error_desc = connection.result.get("description", "unknown")
                 _ = logger.warning(
-                    f"LDAP search failed: {error_desc} - {error_msg}",
-                    extra={"base_dn": base_dn, "result": connection.result},
+                    "LDAP search failed",
+                    base_dn=base_dn,
+                    error_description=error_desc,
+                    error_message=error_msg,
+                    result_code=result_code,
+                    server_type=server_type,
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"LDAP search failed: {error_desc} - {error_msg}",
@@ -367,14 +393,27 @@ class Ldap3Adapter(FlextService[bool]):
             parse_result = self._parser.parse_ldap3_results(ldap3_results, server_type)
             if parse_result.is_failure:
                 _ = logger.warning(
-                    f"Failed to parse LDAP results: {parse_result.error}",
+                    "Failed to parse LDAP results",
+                    error=str(parse_result.error),
+                    error_type=type(parse_result.error).__name__,
+                    results_count=len(ldap3_results)
+                    if isinstance(ldap3_results, list)
+                    else 0,
+                    server_type=server_type,
                 )
                 return FlextResult[list[FlextLdifModels.Entry]].fail(parse_result.error)
             # Convert parsed entries to Entry models
             return self._convert_parsed_entries(parse_result.unwrap())
 
         except Exception as e:
-            _ = logger.exception("LDAP search failed")
+            _ = logger.exception(
+                "LDAP search failed",
+                base_dn=base_dn,
+                filter_str=filter_str,
+                server_type=server_type,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Search failed: {e!s}",
             )
@@ -449,7 +488,12 @@ class Ldap3Adapter(FlextService[bool]):
             return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
         except Exception as e:
-            _ = logger.exception("LDAP add failed")
+            _ = logger.exception(
+                "LDAP add failed",
+                entry_dn=dn_str,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[FlextLdapModels.OperationResult].fail(
                 f"Add failed: {e!s}",
             )
@@ -520,7 +564,12 @@ class Ldap3Adapter(FlextService[bool]):
             return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
         except Exception as e:
-            _ = logger.exception("LDAP modify failed")
+            _ = logger.exception(
+                "LDAP modify failed",
+                entry_dn=dn_str,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[FlextLdapModels.OperationResult].fail(
                 f"Modify failed: {e!s}",
             )
@@ -587,13 +636,21 @@ class Ldap3Adapter(FlextService[bool]):
             return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
         except Exception as e:
-            _ = logger.exception("LDAP delete failed")
+            _ = logger.exception(
+                "LDAP delete failed",
+                entry_dn=dn_str,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[FlextLdapModels.OperationResult].fail(
                 f"Delete failed: {e!s}",
             )
 
-    def execute(self) -> FlextResult[bool]:
+    def execute(self, **_kwargs: object) -> FlextResult[bool]:
         """Execute service health check.
+
+        Args:
+            **_kwargs: Unused - health check requires no configuration
 
         Returns:
             FlextResult[bool] - ok(True) if connected, fail(error) otherwise

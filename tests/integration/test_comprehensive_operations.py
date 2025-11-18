@@ -255,8 +255,9 @@ class TestFlextLdapWithBaseLdif:
         ldap_client: FlextLdap,
         base_ldif_entries: list[object],
         ldap_container: dict[str, object],
+        unique_dn_suffix: str,
     ) -> None:
-        """Test adding entry parsed from base LDIF."""
+        """Test adding entry parsed from base LDIF (idempotent with unique DN)."""
         if not base_ldif_entries:
             pytest.skip("No base LDIF entries available")
 
@@ -276,19 +277,43 @@ class TestFlextLdapWithBaseLdif:
         if not user_entry or not isinstance(user_entry, FlextLdifModels.Entry):
             pytest.skip("No user entry found in base LDIF")
 
-        # Adjust DN to use internal.invalid domain
+        # Adjust DN to use internal.invalid domain AND make it unique
         if user_entry.dn is None:
             pytest.skip("Entry has no DN")
         original_dn = str(user_entry.dn.value)
+
+        # Extract UID from original DN and make it unique
+        import re
+
+        uid_match = re.search(r"uid=([^,]+)", original_dn)
+        if not uid_match:
+            pytest.skip("No UID found in DN")
+
+        original_uid = uid_match.group(1)
+        unique_uid = f"{original_uid}-{unique_dn_suffix}"
+
+        # Replace domain and UID to make DN unique
         new_dn = original_dn.replace(
             "dc=example,dc=com",
             str(ldap_container.get("base_dn", "")),
+        ).replace(
+            f"uid={original_uid}",
+            f"uid={unique_uid}",
         )
 
-        # Create new entry with adjusted DN
+        # Clone attributes and update UID
+        if not user_entry.attributes or not user_entry.attributes.attributes:
+            pytest.skip("Entry has no attributes")
+
+        new_attributes_dict = dict(user_entry.attributes.attributes)
+        new_attributes_dict["uid"] = [unique_uid]
+
+        new_attributes = FlextLdifModels.LdifAttributes(attributes=new_attributes_dict)
+
+        # Create new entry with adjusted DN and unique UID
         new_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=new_dn),
-            attributes=user_entry.attributes or FlextLdifModels.LdifAttributes(),
+            attributes=new_attributes,
         )
 
         # Add entry

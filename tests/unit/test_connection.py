@@ -7,10 +7,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.services.parser import FlextLdifParser
+import pytest
+from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.services.connection import FlextLdapConnection
+
+# Mark all tests in this module as unit tests (fast, no Docker)
+pytestmark = pytest.mark.unit
 
 
 class TestFlextLdapConnection:

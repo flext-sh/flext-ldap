@@ -148,6 +148,12 @@
             "-p no:randomly",
             "-q",
             "-ra",
+            # PARALELIZAÇÃO (pytest-xdist) - REGRA 3: Idempotência & Paralelização
+            # Uncomment to enable parallel testing (requires pytest-xdist installed)
+            # "-n", "auto",              # Use all CPU cores (or set number like "4")
+            # "--dist", "loadgroup",     # Distribute by test file (keeps module tests together)
+            # NOTE: Tests MUST be idempotent with unique DNs (make_user_dn/make_group_dn fixtures)
+            # Integration tests share single LDAP container but use DN namespacing for isolation
         ]
         filterwarnings = [
             "ignore::DeprecationWarning",
