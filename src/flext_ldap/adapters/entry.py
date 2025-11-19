@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -54,7 +54,9 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         """
         super().__init__()
-        self._ldif = FlextLdif.get_instance()
+        # Create FlextLdif with server_type to use correct quirks (OID/OUD/etc)
+        config = FlextLdifConfig(quirks_server_type=server_type)
+        self._ldif = FlextLdif(config=config)
         self._server_type = server_type
 
     def execute(self, **_kwargs: object) -> FlextResult[bool]:

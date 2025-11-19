@@ -28,6 +28,7 @@ from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldap.typings import FlextLdapTypes
 
 __email__ = "dev@flext.com"
@@ -37,5 +38,6 @@ __all__ = [
     "FlextLdapConfig",  # ✅ Configuration
     "FlextLdapConstants",  # ✅ Constants
     "FlextLdapModels",  # ✅ Domain models
+    "FlextLdapServerDetector",  # ✅ Server detection service
     "FlextLdapTypes",  # ✅ Type definitions
 ]
