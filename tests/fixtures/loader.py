@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextLogger
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifConfig
 
 from tests.fixtures import TestFixtures
 
@@ -59,7 +59,9 @@ class LdapTestFixtures:
             return []
 
         # Use FlextLdif to parse LDIF (reusing flext-ldif)
-        ldif = FlextLdif()
+        # Use RFC server type for test fixtures (generic parsing without quirks)
+        config = FlextLdifConfig(quirks_server_type="rfc")
+        ldif = FlextLdif(config=config)
         result = ldif.parse(ldif_content)
         if result.is_success:
             entries = result.unwrap()

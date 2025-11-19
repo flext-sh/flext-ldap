@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
@@ -64,7 +64,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
         """
         super().__init__()
         self._operations = operations
-        self._ldif = FlextLdif.get_instance()
+        # Create FlextLdif with RFC server type (no quirks/conversions for direct sync)
+        config = FlextLdifConfig(quirks_server_type=FlextLdapConstants.ServerTypes.RFC)
+        self._ldif = FlextLdif(config=config)
         self._logger = FlextLogger(__name__)
 
     def sync_ldif_file(

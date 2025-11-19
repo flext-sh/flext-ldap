@@ -14,8 +14,17 @@ from __future__ import annotations
 import types
 from typing import Self, override
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextDispatcher,
+    FlextLogger,
+    FlextRegistry,
+    FlextResult,
+    FlextService,
+)
 from flext_ldif import FlextLdifModels, FlextLdifParser
+from pydantic import PrivateAttr
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -38,58 +47,189 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         - Add, modify, and delete LDAP entries
         - Automatic conversion between LDAP results and Entry models
         - Reuses FlextLdifParser for parsing operations
+        - Service initialization and dependency injection via FlextContainer
+        - Context management with correlation tracking
+
+    Implementation:
+        This class coordinates LDAP operations through a unified facade,
+        managing service coordination, DI container operations, and business logic.
 
     Example:
         # Create instance
         ldap = FlextLdap()
 
-        # Connect to server
+        # Connect to server with context tracking
         config = FlextLdapModels.ConnectionConfig(
             host="ldap.example.com",
             port=389,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             bind_password="password"
         )
-        result = ldap.connect(config)
-        if result.is_success:
-            # Search entries
-            search_options = FlextLdapModels.SearchOptions(
-                base_dn="dc=example,dc=com",
-                filter_str="(objectClass=person)"
-            )
-            search_result = ldap.search(search_options)
-            if search_result.is_success:
-                entries = search_result.unwrap().entries
+
+        with ldap.context.set_correlation_id("req-123"):
+            result = ldap.connect(config)
+            if result.is_success:
+                # Search entries
+                search_options = FlextLdapModels.SearchOptions(
+                    base_dn="dc=example,dc=com",
+                    filter_str="(objectClass=person)"
+                )
+                search_result = ldap.search(search_options)
+                if search_result.is_success:
+                    entries = search_result.unwrap().entries
 
         # Disconnect
         ldap.disconnect()
 
     """
 
-    _connection: FlextLdapConnection
-    _operations: FlextLdapOperations
-    _config: FlextLdapConfig
-    _logger: FlextLogger
+    # Private attributes using Pydantic PrivateAttr for proper initialization
+    _connection: FlextLdapConnection = PrivateAttr()
+    _operations: FlextLdapOperations = PrivateAttr()
+    _config: FlextLdapConfig = PrivateAttr()
+    _logger: FlextLogger = PrivateAttr()
+    _parser: FlextLdifParser = PrivateAttr()
+    _dispatcher: FlextDispatcher = PrivateAttr()
+    _registry: FlextRegistry = PrivateAttr()
+    _context: dict[str, object] = PrivateAttr(default_factory=dict)
+    _handlers: dict[str, object] = PrivateAttr(default_factory=dict)
 
     def __init__(
         self,
         config: FlextLdapConfig | None = None,
         parser: FlextLdifParser | None = None,
+        **kwargs: object,
     ) -> None:
-        """Initialize LDAP facade.
+        """Initialize LDAP facade - the entry point for all LDAP operations.
+
+        Integrates Flext components for infrastructure support:
+            - FlextContainer: Dependency injection
+            - FlextLogger: Structured logging
+            - FlextContext: Request context management
+            - FlextConfig: Configuration with validation
+            - FlextBus: Event publishing
+            - FlextDispatcher: Message dispatching
+            - FlextRegistry: Component registration
 
         Args:
             config: FlextLdapConfig instance (optional, creates default if not provided)
             parser: FlextLdifParser instance (optional, creates default if not provided)
+            **kwargs: Configuration parameters (passed to Pydantic)
 
         """
-        super().__init__()
-        self._config = config or FlextLdapConfig()
+        # Store config and parser for use in model_post_init
+        # Cannot set PrivateAttr before super().__init__() in Pydantic v2
+        object.__setattr__(self, "_init_config_value", config)
+        object.__setattr__(self, "_init_parser_value", parser)
+
+        # Call super().__init__() for Pydantic v2 model initialization
+        # This will call model_post_init() which initializes all services
+        super().__init__(**kwargs)
+
+    def model_post_init(self, __context: object, /) -> None:
+        """Initialize private attributes after Pydantic initialization.
+
+        This hook is called by Pydantic after __init__ completes and handles:
+        - Service setup and dependency injection via FlextContainer
+        - Context and handler initialization
+        - Logging configuration
+
+        Pydantic v2 calls this method exactly once per instance, so no guard is needed.
+
+        Args:
+            __context: Pydantic's validation context dictionary or None (unused).
+
+        """
+        # Initialize dispatcher, registry, and logger FIRST
+        # These are needed by _setup_services() below
+        dispatcher = FlextDispatcher()
+        self._dispatcher = dispatcher
+        self._registry = FlextRegistry(dispatcher=dispatcher)
         self._logger = FlextLogger(__name__)
+
+        # Initialize config and parser from stored values
+        init_config = getattr(self, "_init_config_value", None)
+        init_parser = getattr(self, "_init_parser_value", None)
+        self._config = init_config if init_config is not None else FlextLdapConfig()
+        self._parser = init_parser if init_parser is not None else FlextLdifParser()
+
+        # Initialize context and handlers
+        self._context = {}
+        self._handlers = {}
+
+        # Initialize service instances
         self._connection = FlextLdapConnection(
-            config=self._config, parser=parser or FlextLdifParser()
+            config=self._config,
+            parser=self._parser,
         )
         self._operations = FlextLdapOperations(connection=self._connection)
+
+        # Register services in container
+        self._setup_services()
+
+        # Log initialization with detailed context
+        self.logger.info(
+            "FlextLdap facade initialized",
+            config_available=self._config is not None,
+            parser_available=self._parser is not None,
+            connection_ready=True,
+            operations_ready=True,
+        )
+
+        self.logger.debug(
+            "Services setup completed",
+            services_registered=["connection", "operations", "parser"],
+        )
+
+    # =========================================================================
+    # PRIVATE: Service Setup
+    # =========================================================================
+
+    def _setup_services(self) -> None:
+        """Register all services using FlextContainer patterns with metadata."""
+        container = self.container
+
+        # Execute service registration with error handling
+        try:
+            self._register_core_services(container)
+        except Exception:
+            self.logger.error(
+                "Failed to setup services - critical initialization error",
+                exc_info=True,
+            )
+            raise
+
+    def _register_core_services(self, container: FlextContainer) -> None:
+        """Register core infrastructure services."""
+        # Register connection service (check if already exists - container is global)
+        if not container.has("connection"):
+            result = container.register_service("connection", self._connection)
+            if result.is_failure:
+                error_msg = f"Failed to register connection service: {result.error}"
+                self.logger.error(error_msg, critical=True)
+                raise RuntimeError(error_msg)
+
+            self.logger.debug("Registered connection service in container")
+
+        # Register operations service
+        if not container.has("operations"):
+            result = container.register_service("operations", self._operations)
+            if result.is_failure:
+                error_msg = f"Failed to register operations service: {result.error}"
+                self.logger.error(error_msg, critical=True)
+                raise RuntimeError(error_msg)
+
+            self.logger.debug("Registered operations service in container")
+
+        # Register parser service
+        if not container.has("parser"):
+            result = container.register_service("parser", self._parser)
+            if result.is_failure:
+                error_msg = f"Failed to register parser service: {result.error}"
+                self.logger.error(error_msg, critical=True)
+                raise RuntimeError(error_msg)
+
+            self.logger.debug("Registered parser service in container")
 
     def connect(
         self,

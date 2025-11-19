@@ -1,0 +1,301 @@
+"""LDAP server detection service via rootDSE introspection.
+
+Provides server type detection from live LDAP connections by querying rootDSE
+and using flext-ldif server quirks detection patterns.
+
+This is the flext-ldap complement to flext-ldif's LDIF content detection:
+- flext-ldif: Detects server from LDIF file content
+- flext-ldap: Detects server from live LDAP connection (rootDSE)
+
+Both use the SAME detection constants from flext-ldif servers/quirks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from flext_core import FlextLogger, FlextResult, FlextService
+
+if TYPE_CHECKING:
+    from ldap3 import Connection
+
+logger = FlextLogger(__name__)
+
+
+class FlextLdapServerDetector(FlextService[str]):
+    """Detect LDAP server type from live connection via rootDSE.
+
+    Uses flext-ldif server quirks detection constants to identify server types.
+    This provides the "live LDAP" complement to flext-ldif's "LDIF file" detection.
+
+    Architecture:
+    - Queries rootDSE (base DN "", scope BASE) from live LDAP connection
+    - Extracts server-identifying attributes (vendorName, vendorVersion, etc.)
+    - Uses detection patterns from flext-ldif servers/quirks Constants
+    - Returns detected server type string (oid, oud, openldap, ad, etc.)
+
+    Supported Servers:
+    - Oracle Internet Directory (OID)
+    - Oracle Unified Directory (OUD)
+    - OpenLDAP 1.x/2.x
+    - Active Directory (AD)
+    - 389 Directory Server
+    - Apache Directory Server
+    - Novell eDirectory
+    - IBM Tivoli Directory Server
+
+    Example:
+        >>> detector = FlextLdapServerDetector()
+        >>> connection = Connection(server, user="...", password="...")
+        >>> connection.bind()
+        >>> result = detector.detect_from_connection(connection)
+        >>> if result.is_success:
+        ...     server_type = result.unwrap()
+        ...     print(f"Detected: {server_type}")
+
+    """
+
+    def execute(self, **kwargs: object) -> FlextResult[str]:
+        """Execute server detection from connection parameter.
+
+        Args:
+            **kwargs: Must contain 'connection' key with ldap3.Connection
+
+        Returns:
+            FlextResult[str] with detected server type or error
+
+        """
+        connection = kwargs.get("connection")
+        if not connection:
+            return FlextResult[str].fail("connection parameter required")
+
+        return self.detect_from_connection(connection)  # type: ignore[arg-type]
+
+    def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
+        """Detect server type from live LDAP connection via rootDSE query.
+
+        Queries rootDSE and uses flext-ldif server quirks detection patterns
+        to identify the server type.
+
+        Args:
+            connection: Active ldap3.Connection (must be bound)
+
+        Returns:
+            FlextResult[str] with detected server type or RFC fallback
+
+        Architecture:
+            1. Query rootDSE (base="", scope=BASE)
+            2. Extract identifying attributes
+            3. Score against flext-ldif quirks detection patterns
+            4. Return highest confidence match or "rfc" fallback
+
+        """
+        # Validate connection is bound
+        if not connection.bound:
+            return FlextResult[str].fail(
+                "Connection must be bound before server detection"
+            )
+
+        # Step 1: Query rootDSE
+        root_dse_result = self._query_root_dse(connection)
+        if root_dse_result.is_failure:
+            return FlextResult[str].fail(
+                f"Failed to query rootDSE: {root_dse_result.error}"
+            )
+
+        root_dse_attrs = root_dse_result.unwrap()
+
+        # Step 2: Extract server-identifying attributes
+        vendor_name = self._get_attribute_value(root_dse_attrs, "vendorName")
+        vendor_version = self._get_attribute_value(root_dse_attrs, "vendorVersion")
+        naming_contexts = self._get_attribute_values(root_dse_attrs, "namingContexts")
+        supported_controls = self._get_attribute_values(
+            root_dse_attrs, "supportedControl"
+        )
+        supported_extensions = self._get_attribute_values(
+            root_dse_attrs, "supportedExtension"
+        )
+
+        logger.debug(
+            "Extracted rootDSE attributes",
+            vendor_name=vendor_name,
+            vendor_version=vendor_version,
+            naming_contexts_count=len(naming_contexts),
+            supported_controls_count=len(supported_controls),
+            supported_extensions_count=len(supported_extensions),
+        )
+
+        # Step 3: Use flext-ldif detector with extracted attributes
+        return self._detect_from_attributes(
+            vendor_name=vendor_name,
+            vendor_version=vendor_version,
+            naming_contexts=naming_contexts,
+            supported_controls=supported_controls,
+            supported_extensions=supported_extensions,
+        )
+
+    def _query_root_dse(
+        self, connection: Connection
+    ) -> FlextResult[dict[str, list[str]]]:
+        """Query rootDSE from LDAP server.
+
+        rootDSE is queried with:
+        - Base DN: "" (empty string)
+        - Scope: BASE
+        - Filter: (objectClass=*)
+        - Attributes: ALL (*)
+
+        Args:
+            connection: Active bound ldap3.Connection
+
+        Returns:
+            FlextResult with rootDSE attributes dict
+
+        """
+        try:
+            # Query rootDSE (base DN "", scope BASE)
+            success = connection.search(
+                search_base="",
+                search_filter="(objectClass=*)",
+                search_scope="BASE",
+                attributes="*",
+            )
+
+            if not success:
+                return FlextResult[dict[str, list[str]]].fail(
+                    f"rootDSE query failed: {connection.result}"
+                )
+
+            # Extract first (and only) entry
+            if not connection.entries or len(connection.entries) == 0:
+                return FlextResult[dict[str, list[str]]].fail(
+                    "rootDSE query returned no entries"
+                )
+
+            root_dse_entry = connection.entries[0]
+
+            # Convert to dict[str, list[str]]
+            attributes: dict[str, list[str]] = {}
+            for attr_name in root_dse_entry.entry_attributes:
+                attr_value = getattr(root_dse_entry, attr_name, None)
+                if attr_value is not None:
+                    # Ensure list format
+                    if isinstance(attr_value, list):
+                        attributes[attr_name] = [str(v) for v in attr_value]
+                    else:
+                        attributes[attr_name] = [str(attr_value)]
+
+            return FlextResult[dict[str, list[str]]].ok(attributes)
+
+        except Exception as e:
+            return FlextResult[dict[str, list[str]]].fail(
+                f"Exception querying rootDSE: {e!s}"
+            )
+
+    def _get_attribute_value(
+        self, attributes: dict[str, list[str]], attr_name: str
+    ) -> str | None:
+        """Get single attribute value from attributes dict.
+
+        Args:
+            attributes: Attributes dict from rootDSE
+            attr_name: Attribute name to retrieve
+
+        Returns:
+            First value if exists, None otherwise
+
+        """
+        values = attributes.get(attr_name, [])
+        return values[0] if values else None
+
+    def _get_attribute_values(
+        self, attributes: dict[str, list[str]], attr_name: str
+    ) -> list[str]:
+        """Get all attribute values from attributes dict.
+
+        Args:
+            attributes: Attributes dict from rootDSE
+            attr_name: Attribute name to retrieve
+
+        Returns:
+            List of values (empty list if attribute doesn't exist)
+
+        """
+        return attributes.get(attr_name, [])
+
+    def _detect_from_attributes(
+        self,
+        vendor_name: str | None,
+        vendor_version: str | None,
+        naming_contexts: list[str],
+        supported_controls: list[str],
+        supported_extensions: list[str],
+    ) -> FlextResult[str]:
+        """Detect server type from rootDSE attributes using flext-ldif patterns.
+
+        Uses the same detection constants from flext-ldif servers/quirks.
+
+        Args:
+            vendor_name: vendorName attribute value
+            vendor_version: vendorVersion attribute value
+            naming_contexts: namingContexts attribute values
+            supported_controls: supportedControl OID values
+            supported_extensions: supportedExtension OID values
+
+        Returns:
+            FlextResult[str] with detected server type
+
+        """
+        # Build "pseudo-LDIF content" for flext-ldif detector
+        # This allows us to reuse flext-ldif's detection logic
+        pseudo_ldif_lines: list[str] = []
+
+        if vendor_name:
+            pseudo_ldif_lines.append(f"vendorName: {vendor_name}")
+        if vendor_version:
+            pseudo_ldif_lines.append(f"vendorVersion: {vendor_version}")
+
+        # Use list.extend for better performance
+        pseudo_ldif_lines.extend(f"namingContexts: {nc}" for nc in naming_contexts)
+        pseudo_ldif_lines.extend(
+            f"supportedControl: {control}" for control in supported_controls
+        )
+        pseudo_ldif_lines.extend(
+            f"supportedExtension: {extension}" for extension in supported_extensions
+        )
+
+        pseudo_ldif_content = "\n".join(pseudo_ldif_lines)
+
+        # Use flext-ldif detector
+        try:
+            # Import here to avoid circular dependency issues
+            from flext_ldif.services.detector import (  # noqa: PLC0415
+                FlextLdifDetector,
+            )
+
+            detector = FlextLdifDetector()
+            detection_result = detector.detect_server_type(
+                ldif_content=pseudo_ldif_content
+            )
+
+            if detection_result.is_success:
+                # ServerDetectionResult is a Pydantic model with attributes
+                detection_info = detection_result.unwrap()
+                detected_type = detection_info.detected_server_type
+
+                logger.info(
+                    "Server detected via rootDSE",
+                    detected_type=detected_type,
+                    confidence=detection_info.confidence,
+                    patterns_found=detection_info.patterns_found,
+                )
+
+                return FlextResult[str].ok(detected_type)
+
+            return FlextResult[str].fail(f"Detection failed: {detection_result.error}")
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Detection exception: {e!s}")
