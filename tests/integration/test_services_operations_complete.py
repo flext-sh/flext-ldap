@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
@@ -32,7 +33,7 @@ class TestFlextLdapOperationsComplete:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: object,
+        ldap_parser: FlextLdifParser | None,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
         config = FlextLdapConfig()
@@ -60,14 +61,12 @@ class TestFlextLdapOperationsComplete:
         result = operations_service.search(search_options)
         # Normalization should handle spaces correctly
         # If it fails, it's a real error that needs fixing
-        if (
-            result.is_failure
-            and "character" in result.error
-            and "not allowed" in result.error
-        ):
-            # This indicates normalization didn't work properly - skip for now
-            # as it may be a real issue with DN normalization
-            pytest.skip(f"DN normalization issue: {result.error}")
+        if result.is_failure:
+            assert result.error is not None
+            if "character" in result.error and "not allowed" in result.error:
+                # This indicates normalization didn't work properly - skip for now
+                # as it may be a real issue with DN normalization
+                pytest.skip(f"DN normalization issue: {result.error}")
         TestOperationHelpers.assert_result_success(result)
 
     def test_search_with_different_server_types(
@@ -389,7 +388,6 @@ class TestFlextLdapOperationsComplete:
                     ],  # All empty strings - filter will result in empty list (covers line 217)
                 },
             ),
-            entry_metadata={},  # Required by Pydantic model
         )
 
         result = operations_service.upsert(entry)
@@ -402,13 +400,16 @@ class TestFlextLdapOperationsComplete:
         # Cleanup
         operations_service.delete(f"cn=testattr,{RFC.DEFAULT_BASE_DN}")
 
-    def test_is_already_exists_error_with_none(
+    def test_is_already_exists_error_with_empty_string(
         self,
         operations_service: FlextLdapOperations,
     ) -> None:
-        """Test _is_already_exists_error with None error message (covers line 181)."""
-        # Test the private method directly to cover line 181
-        result = operations_service._is_already_exists_error(None)
+        """Test _is_already_exists_error with empty string error message."""
+        # _is_already_exists_error is now a module-level function, not a method
+        # FlextResult contract guarantees error is non-None, so function expects str
+        from flext_ldap.services.operations import _is_already_exists_error
+
+        result = _is_already_exists_error("")
         assert result is False
 
     def test_upsert_with_schema_modify_success(

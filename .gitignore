@@ -366,6 +366,15 @@ build/
 *.egg-info/
 
 # ============================================================================
+# DOCKER: Local data directories (use Docker volumes instead)
+# ============================================================================
+# Docker volumes are used instead of bind mounts to avoid permission issues
+docker/ldap-data/
+docker/ldap-config/
+docker/ldap-data/**
+docker/ldap-config/**
+
+# ============================================================================
 # SAFETY: Keep .gitkeep files
 # ============================================================================
 !**/.gitkeep

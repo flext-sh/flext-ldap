@@ -66,11 +66,11 @@ class TestLdap3AdapterReal:
             scope="SUBTREE",
         )
         result = connected_adapter.search(search_options)
-        entries = TestOperationHelpers.assert_result_success_and_unwrap(
+        search_result = TestOperationHelpers.assert_result_success_and_unwrap(
             result,
             error_message="Search",
         )
-        assert len(entries) > 0
+        assert len(search_result.entries) > 0
 
     @pytest.mark.timeout(30)
     def test_add_entry_with_real_server(
@@ -139,9 +139,14 @@ class TestLdap3AdapterReal:
             },
         }
 
+        # Ldap3Adapter implements LdapClientProtocol implicitly via duck typing
+        # Type ignore needed because mypy doesn't recognize structural subtyping
+        from typing import cast
+
+        from flext_ldap.typings import LdapClientProtocol
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                connected_adapter,
+                cast("LdapClientProtocol", connected_adapter),
                 entry_dict,  # type: ignore[arg-type]
             )
         )

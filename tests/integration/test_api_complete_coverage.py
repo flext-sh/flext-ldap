@@ -37,29 +37,29 @@ class TestFlextLdapAPICompleteCoverage:
     ) -> None:
         """Test connect using service config with all options."""
         config = FlextLdapConfig(
-            ldap_host=str(ldap_container["host"]),
-            ldap_port=int(str(ldap_container["port"])),
-            ldap_use_ssl=False,
-            ldap_use_tls=False,
-            ldap_bind_dn=str(ldap_container["bind_dn"]),
-            ldap_bind_password=str(ldap_container["password"]),
-            ldap_timeout=30,
-            ldap_auto_bind=True,
-            ldap_auto_range=True,
+            host=str(ldap_container["host"]),
+            port=int(str(ldap_container["port"])),
+            use_ssl=False,
+            use_tls=False,
+            bind_dn=str(ldap_container["bind_dn"]),
+            bind_password=str(ldap_container["password"]),
+            timeout=30,
+            auto_bind=True,
+            auto_range=True,
         )
 
         api = FlextLdap(config=config, parser=ldap_parser)
         # Create ConnectionConfig from service config explicitly (no fallback)
         connection_config = FlextLdapModels.ConnectionConfig(
-            host=config.ldap_host,
-            port=config.ldap_port,
-            use_ssl=config.ldap_use_ssl,
-            use_tls=config.ldap_use_tls,
-            bind_dn=config.ldap_bind_dn,
-            bind_password=config.ldap_bind_password,
-            timeout=config.ldap_timeout,
-            auto_bind=config.ldap_auto_bind,
-            auto_range=config.ldap_auto_range,
+            host=config.host,
+            port=config.port,
+            use_ssl=config.use_ssl,
+            use_tls=config.use_tls,
+            bind_dn=config.bind_dn,
+            bind_password=config.bind_password,
+            timeout=config.timeout,
+            auto_bind=config.auto_bind,
+            auto_range=config.auto_range,
         )
         result = api.connect(connection_config)
         assert result.is_success
@@ -85,24 +85,24 @@ class TestFlextLdapAPICompleteCoverage:
     ) -> None:
         """Test all operations using service config."""
         config = FlextLdapConfig(
-            ldap_host=str(ldap_container["host"]),
-            ldap_port=int(str(ldap_container["port"])),
-            ldap_bind_dn=str(ldap_container["bind_dn"]),
-            ldap_bind_password=str(ldap_container["password"]),
+            host=str(ldap_container["host"]),
+            port=int(str(ldap_container["port"])),
+            bind_dn=str(ldap_container["bind_dn"]),
+            bind_password=str(ldap_container["password"]),
         )
         api = FlextLdap(config=config)
 
         # Create ConnectionConfig from service config explicitly (no fallback)
         connection_config = FlextLdapModels.ConnectionConfig(
-            host=config.ldap_host,
-            port=config.ldap_port,
-            use_ssl=config.ldap_use_ssl,
-            use_tls=config.ldap_use_tls,
-            bind_dn=config.ldap_bind_dn,
-            bind_password=config.ldap_bind_password,
-            timeout=config.ldap_timeout,
-            auto_bind=config.ldap_auto_bind,
-            auto_range=config.ldap_auto_range,
+            host=config.host,
+            port=config.port,
+            use_ssl=config.use_ssl,
+            use_tls=config.use_tls,
+            bind_dn=config.bind_dn,
+            bind_password=config.bind_password,
+            timeout=config.timeout,
+            auto_bind=config.auto_bind,
+            auto_range=config.auto_range,
         )
         # Connect using service config
         connect_result = api.connect(connection_config)

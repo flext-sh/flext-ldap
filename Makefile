@@ -176,10 +176,13 @@ ldap-operations: ldap-validate ldap-connect ldap-test ## Run all LDAP validation
 # DOCKER LDAP SERVER (REAL TESTING)
 # =============================================================================
 
+# Docker Compose file path
+DOCKER_COMPOSE_FILE := docker/docker-compose.yml
+
 .PHONY: ldap-start
 ldap-start: ## Start flext-openldap-test Docker container
 	@echo "🐳 Starting flext-openldap-test LDAP server..."
-	docker-compose up -d
+	@cd $(shell pwd) && docker compose -f $(DOCKER_COMPOSE_FILE) up -d
 	@echo "⏳ Waiting for health check..."
 	@sleep 5
 	@$(MAKE) ldap-health
@@ -187,29 +190,29 @@ ldap-start: ## Start flext-openldap-test Docker container
 .PHONY: ldap-stop
 ldap-stop: ## Stop LDAP Docker container
 	@echo "🛑 Stopping flext-openldap-test..."
-	docker-compose stop
+	@cd $(shell pwd) && docker compose -f $(DOCKER_COMPOSE_FILE) stop
 
 .PHONY: ldap-restart
 ldap-restart: ldap-stop ldap-start ## Restart LDAP Docker container
 
 .PHONY: ldap-logs
 ldap-logs: ## View LDAP Docker container logs
-	docker-compose logs -f flext-openldap-test
+	@cd $(shell pwd) && docker compose -f $(DOCKER_COMPOSE_FILE) logs -f openldap
 
 .PHONY: ldap-logs-tail
 ldap-logs-tail: ## Tail LDAP Docker logs (last 50 lines)
-	docker-compose logs --tail=50 flext-openldap-test
+	@cd $(shell pwd) && docker compose -f $(DOCKER_COMPOSE_FILE) logs --tail=50 openldap
 
 .PHONY: ldap-health
 ldap-health: ## Check LDAP server health
 	@echo "🏥 Checking LDAP server health..."
 	@docker ps | grep flext-openldap-test > /dev/null && echo "✅ Container running" || (echo "❌ Container not running" && exit 1)
-	@docker exec flext-openldap-test ldapsearch -x -H ldap://localhost:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" -w "REDACTED_LDAP_BIND_PASSWORD123" -b "dc=flext,dc=local" -s base > /dev/null 2>&1 && echo "✅ LDAP server responding" || (echo "❌ LDAP server not responding" && exit 1)
+	@docker exec flext-openldap-test ldapsearch -x -H ldap://localhost:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" -w "REDACTED_LDAP_BIND_PASSWORD" -b "dc=flext,dc=local" -s base > /dev/null 2>&1 && echo "✅ LDAP server responding" || (echo "❌ LDAP server not responding" && exit 1)
 
 .PHONY: ldap-clean
 ldap-clean: ## Clean LDAP Docker (remove containers and volumes)
 	@echo "🧹 Cleaning LDAP Docker environment..."
-	docker-compose down -v
+	@cd $(shell pwd) && docker compose -f $(DOCKER_COMPOSE_FILE) down -v
 	@echo "✅ LDAP Docker cleanup complete"
 
 .PHONY: ldap-reset

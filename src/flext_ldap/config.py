@@ -1,7 +1,6 @@
 """Configuration management for LDAP operations.
 
 This module defines configuration settings using Pydantic models with validation.
-Reuses patterns from flext-ldif for consistency.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,91 +11,132 @@ from __future__ import annotations
 
 from flext_core import FlextConfig
 from pydantic import Field
+from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.constants import FlextLdapConstants
 
 
-class FlextLdapConfig(FlextConfig):
-    """Pydantic 2 Settings class for flext-ldap using FlextConfig.
+@FlextConfig.auto_register("ldap")
+class FlextLdapConfig(FlextConfig.AutoConfig):
+    """Pydantic v2 configuration for LDAP operations.
 
-    Leverages FlextConfig's features:
-    - Centralized configuration management
-    - Enhanced singleton pattern
-    - Integrated environment variable handling
-    - Validation and type safety
-    - Automatic dependency injection integration
+    **ARCHITECTURAL PATTERN**: Zero-Boilerplate Auto-Registration
+
+    This class uses FlextConfig.AutoConfig for automatic:
+    - Singleton pattern (thread-safe)
+    - Namespace registration (accessible via config.ldap)
+    - Environment variable loading from FLEXT_LDAP_* variables
+    - .env file loading (production/development)
+    - Automatic type conversion and validation via Pydantic v2
+
+    **Environment Variables** (via .env or environment):
+        FLEXT_LDAP_HOST=localhost
+        FLEXT_LDAP_PORT=389
+        FLEXT_LDAP_USE_SSL=false
+        FLEXT_LDAP_USE_TLS=false
+        FLEXT_LDAP_BIND_DN=cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+        FLEXT_LDAP_BIND_PASSWORD=secret
+        FLEXT_LDAP_BASE_DN=dc=example,dc=com
+        FLEXT_LDAP_TIMEOUT=30
+        FLEXT_LDAP_AUTO_BIND=true
+        FLEXT_LDAP_AUTO_RANGE=true
+        FLEXT_LDAP_POOL_SIZE=5
+        FLEXT_LDAP_POOL_LIFETIME=3600
+        FLEXT_LDAP_MAX_RESULTS=1000
+        FLEXT_LDAP_CHUNK_SIZE=100
+
+    **Usage**:
+        config = FlextLdapConfig.get_instance()
+        print(config.host, config.port, config.bind_dn)
     """
 
-    # LDAP Connection Configuration
-    ldap_host: str = Field(
-        default="localhost",  # Default host - not a constant, configurable per instance
-        description="LDAP server hostname or IP address",
+    model_config = SettingsConfigDict(
+        env_prefix="FLEXT_LDAP_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_ignore_empty=True,
+        extra="ignore",
+        case_sensitive=False,
     )
 
-    ldap_port: int = Field(
+    # Connection Configuration
+    host: str = Field(
+        default="localhost",
+        description="LDAP server hostname",
+    )
+
+    port: int = Field(
         default=FlextLdapConstants.ConnectionDefaults.PORT,
         ge=1,
         le=65535,
         description="LDAP server port",
     )
 
-    ldap_use_ssl: bool = Field(
+    use_ssl: bool = Field(
         default=False,
-        description="Use SSL/TLS for LDAP connection",
+        description="Use SSL/TLS for connection",
     )
 
-    ldap_use_tls: bool = Field(
+    use_tls: bool = Field(
         default=False,
-        description="Use STARTTLS for LDAP connection",
+        description="Use STARTTLS for connection",
     )
 
-    ldap_bind_dn: str | None = Field(
+    bind_dn: str | None = Field(
         default=None,
-        description="LDAP bind DN for authentication",
+        description="Bind DN for authentication",
     )
 
-    ldap_bind_password: str | None = Field(
+    bind_password: str | None = Field(
         default=None,
-        description="LDAP bind password for authentication",
+        description="Bind password for authentication",
     )
 
-    ldap_timeout: int = Field(
+    timeout: int = Field(
         default=FlextLdapConstants.ConnectionDefaults.TIMEOUT,
         ge=1,
-        description="LDAP connection timeout in seconds",
+        description="Connection timeout in seconds",
     )
 
-    ldap_auto_bind: bool = Field(
+    auto_bind: bool = Field(
         default=FlextLdapConstants.ConnectionDefaults.AUTO_BIND,
         description="Automatically bind after connection",
     )
 
-    ldap_auto_range: bool = Field(
+    auto_range: bool = Field(
         default=FlextLdapConstants.ConnectionDefaults.AUTO_RANGE,
         description="Automatically handle range queries",
     )
 
-    ldap_pool_size: int = Field(
+    pool_size: int = Field(
         default=FlextLdapConstants.ConnectionDefaults.POOL_SIZE,
         ge=1,
         description="Connection pool size",
     )
 
-    ldap_pool_lifetime: int = Field(
+    pool_lifetime: int = Field(
         default=FlextLdapConstants.ConnectionDefaults.POOL_LIFETIME,
         ge=1,
         description="Connection pool lifetime in seconds",
     )
 
-    # Processing Configuration (reuses flext-ldif patterns)
-    ldap_max_results: int = Field(
+    # Processing Configuration
+    max_results: int = Field(
         default=1000,
         ge=1,
         description="Maximum number of search results",
     )
 
-    ldap_chunk_size: int = Field(
+    chunk_size: int = Field(
         default=100,
         ge=1,
         description="Chunk size for batch operations",
     )
+
+    base_dn: str | None = Field(
+        default=None,
+        description="Base DN for LDAP operations",
+    )
+
+
+__all__ = ["FlextLdapConfig"]

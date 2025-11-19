@@ -204,4 +204,11 @@
             ]
 
     [tool.mypy]
+    exclude = [
+        "docker/",
+        "scripts/",
+        "docs/",
+        "examples/",
+    ]
+
 

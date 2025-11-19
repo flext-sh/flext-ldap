@@ -39,8 +39,8 @@ class TestFlextLdapAPI:
     def test_api_initialization_with_config(self, ldap_parser: FlextLdifParser) -> None:
         """Test API initialization with custom config."""
         config = FlextLdapConfig(
-            ldap_host="test.example.com",
-            ldap_port=389,
+            host="test.example.com",
+            port=389,
         )
         api = FlextLdap(config=config, parser=ldap_parser)
         assert api._config == config

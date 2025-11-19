@@ -19,9 +19,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from flext_core import FlextLogger, FlextModels
+from flext_core import FlextConfig, FlextLogger, FlextModels
 from flext_ldif.models import FlextLdifModels
-from pydantic import Field
+from flext_ldif.utilities import FlextLdifUtilities
+from pydantic import Field, field_validator
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -29,10 +30,10 @@ logger = FlextLogger(__name__)
 
 
 def _get_config_default(field_name: str) -> str | int | bool | None:
-    """Get default value from FlextLdapConfig SINGLETON for a field.
+    """Get default value from FlextLdapConfig via namespace.
 
-    IMPORTANT: Gets value from EXISTING config singleton, does NOT create new config.
-    This allows ConnectionConfig defaults to come from .env-loaded FlextLdapConfig.
+    Uses new config pattern with automatic namespace registration.
+    Accesses config via FlextConfig.get_global_instance().ldap namespace.
 
     Pydantic v2 Pattern:
     - default_factory gets value from config singleton
@@ -40,18 +41,21 @@ def _get_config_default(field_name: str) -> str | int | bool | None:
     - No @model_validator needed - Pydantic handles override automatically
 
     Args:
-        field_name: Name of the config field to get default for
+        field_name: Name of the config field to get default for (e.g., "host")
 
     Returns:
         Default value from Config singleton (which loaded from .env)
 
     """
+    # Use new config pattern: access via namespace
+    # FlextLdapConfig is auto-registered as "ldap" namespace
+    # Import ensures auto_register decorator executes
     from flext_ldap.config import FlextLdapConfig
 
-    # FlextConfig is a Pydantic Settings class, instantiate directly
-    # It will use environment variables and defaults automatically
-    config = FlextLdapConfig()
-    value = getattr(config, field_name)
+    config = FlextConfig.get_global_instance()
+    # Type cast needed: namespace returns BaseModel, but we know it's FlextLdapConfig
+    ldap_config = cast("FlextLdapConfig", config.ldap)
+    value = getattr(ldap_config, field_name)
     # Type narrowing - fast fail if unexpected type
     if isinstance(value, (str, int, bool)) or value is None:
         return value
@@ -136,6 +140,7 @@ class FlextLdapModels(FlextModels):
 
         Minimal search configuration model.
         Uses FlextLdapConstants for scope and filter defaults.
+        Uses Pydantic v2 field validators for DN format validation.
         """
 
         base_dn: str = Field(..., description="Base DN for search")
@@ -164,6 +169,29 @@ class FlextLdapModels(FlextModels):
             ge=0,
             description="Maximum time in seconds (0 = no limit)",
         )
+
+        @field_validator("base_dn")
+        @classmethod
+        def validate_base_dn_format(cls, v: str) -> str:
+            """Validate base_dn format using FlextLdifUtilities.DN.validate.
+
+            Pydantic v2 field validator ensures DN format is correct at model creation.
+            This replaces runtime validation in service methods.
+
+            Args:
+                v: Base DN string to validate
+
+            Returns:
+                Validated base_dn string
+
+            Raises:
+                ValueError: If DN format is invalid
+
+            """
+            if not FlextLdifUtilities.DN.validate(v):
+                error_msg = f"Invalid base_dn format: {v}"
+                raise ValueError(error_msg)
+            return v
 
     # =========================================================================
     # OPERATION RESULT MODELS
@@ -230,7 +258,7 @@ class FlextLdapModels(FlextModels):
         """
 
         batch_size: int = Field(
-            default_factory=lambda: cast("int", _get_config_default("ldap_chunk_size")),
+            default_factory=lambda: cast("int", _get_config_default("chunk_size")),
             ge=1,
             description="Number of entries to process in each batch",
         )

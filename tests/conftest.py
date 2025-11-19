@@ -136,14 +136,14 @@ def session_id() -> str:
     """Unique session ID for this test run (REGRA 3).
 
     Returns:
-        int: Timestamp in milliseconds
+        str: Timestamp in milliseconds as string
 
     Used for DN namespacing to ensure test isolation.
 
     """
     import time
 
-    return int(time.time() * 1000)
+    return str(int(time.time() * 1000))
 
 
 class DNSTracker:
@@ -201,18 +201,20 @@ def test_dns_tracker() -> DNSTracker:
 
 
 @pytest.fixture
-def unique_dn_suffix(worker_id: str, session_id: str) -> str:
+def unique_dn_suffix(worker_id: str, session_id: str, request: pytest.FixtureRequest) -> str:
     """Generate unique DN suffix for this worker and test (REGRA 3).
 
-    Combines worker ID, session ID, and microsecond timestamp to create
-    globally unique DN suffix that prevents conflicts in parallel execution.
+    Combines worker ID, session ID, test function name, and microsecond timestamp
+    to create globally unique DN suffix that prevents conflicts in parallel execution.
+    This ensures complete isolation between tests even when running in parallel.
 
     Args:
         worker_id: pytest-xdist worker ID (e.g., "gw0", "master")
         session_id: Test session timestamp
+        request: Pytest request object for test identification
 
     Returns:
-        str: Unique suffix (e.g., "gw0-1733000000-123456")
+        str: Unique suffix (e.g., "gw0-1733000000-test_function-123456")
 
     Example:
         >>> suffix = unique_dn_suffix
@@ -221,27 +223,38 @@ def unique_dn_suffix(worker_id: str, session_id: str) -> str:
     """
     import time
 
+    # Get test function name for additional isolation
+    test_name = request.node.name if hasattr(request, "node") else "unknown"
+    # Sanitize test name (remove special chars that could break DN)
+    allowed_chars = {"-", "_"}
+    test_name_clean = "".join(c if c.isalnum() or c in allowed_chars else "-" for c in test_name)[:20]
+
     # Microsecond precision for intra-second uniqueness
     test_id = int(time.time() * 1000000) % 1000000
 
-    return f"{worker_id}-{session_id}-{test_id}"
+    return f"{worker_id}-{session_id}-{test_name_clean}-{test_id}"
 
 
 @pytest.fixture
-def make_user_dn(unique_dn_suffix: str) -> Callable[[str], str]:
-    """Factory to create unique user DNs (REGRA 3).
+def make_user_dn(unique_dn_suffix: str, ldap_container: dict[str, object]) -> Callable[[str], str]:
+    """Factory to create unique user DNs with base DN isolation (REGRA 3).
+
+    Uses the base_dn from ldap_container to ensure complete isolation.
+    This allows multiple tests to run in parallel without conflicts.
 
     Args:
         unique_dn_suffix: Unique suffix from fixture
+        ldap_container: Container configuration with base_dn
 
     Returns:
         callable: Factory function that takes uid and returns unique DN
 
     Example:
         >>> make_dn = make_user_dn
-        >>> dn = make_dn("testuser")  # uid=testuser-gw0-...,ou=people,...
+        >>> dn = make_dn("testuser")  # uid=testuser-gw0-...,ou=people,dc=flext,dc=local
 
     """
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
 
     def _make(uid: str) -> str:
         """Create unique user DN.
@@ -253,26 +266,31 @@ def make_user_dn(unique_dn_suffix: str) -> Callable[[str], str]:
             str: Unique DN (e.g., "uid=testuser-gw0-123...,ou=people,dc=flext,dc=local")
 
         """
-        return f"uid={uid}-{unique_dn_suffix},ou=people,dc=flext,dc=local"
+        return f"uid={uid}-{unique_dn_suffix},ou=people,{base_dn}"
 
     return _make
 
 
 @pytest.fixture
-def make_group_dn(unique_dn_suffix: str) -> Callable[[str], str]:
-    """Factory to create unique group DNs (REGRA 3).
+def make_group_dn(unique_dn_suffix: str, ldap_container: dict[str, object]) -> Callable[[str], str]:
+    """Factory to create unique group DNs with base DN isolation (REGRA 3).
+
+    Uses the base_dn from ldap_container to ensure complete isolation.
+    This allows multiple tests to run in parallel without conflicts.
 
     Args:
         unique_dn_suffix: Unique suffix from fixture
+        ldap_container: Container configuration with base_dn
 
     Returns:
         callable: Factory function that takes cn and returns unique DN
 
     Example:
         >>> make_dn = make_group_dn
-        >>> dn = make_dn("testgroup")  # cn=testgroup-gw0-...,ou=groups,...
+        >>> dn = make_dn("testgroup")  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
 
     """
+    base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
 
     def _make(cn: str) -> str:
         """Create unique group DN.
@@ -284,7 +302,7 @@ def make_group_dn(unique_dn_suffix: str) -> Callable[[str], str]:
             str: Unique DN (e.g., "cn=testgroup-gw0-123...,ou=groups,dc=flext,dc=local")
 
         """
-        return f"cn={cn}-{unique_dn_suffix},ou=groups,dc=flext,dc=local"
+        return f"cn={cn}-{unique_dn_suffix},ou=groups,{base_dn}"
 
     return _make
 
@@ -297,14 +315,21 @@ def make_group_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 @pytest.fixture(scope="session")
 def ldap_container(
     docker_control: FlextTestDocker,  # From FlextTestDocker
+    worker_id: str,  # For isolation
 ) -> dict[str, object]:
-    """Session-scoped LDAP container configuration.
+    """Session-scoped LDAP container configuration with worker isolation.
 
-    Uses FlextTestDocker to manage flext-openldap-test container.
+    Uses FlextTestDocker to manage flext-openldap-test container on port 3390.
     Container is automatically started/stopped by FlextTestDocker.
+    All tests share the SAME container but use unique DNs for isolation.
+
+    IMPORTANT: This fixture uses ONLY flext-openldap-test on port 3390.
+    NO random ports, NO dynamic containers. All tests share the same container
+    but are isolated by unique DNs (via unique_dn_suffix fixture).
 
     Args:
         docker_control: FlextTestDocker instance from fixture
+        worker_id: Worker ID for logging (e.g., "gw0", "master")
 
     Returns:
         dict with connection parameters
@@ -322,30 +347,111 @@ def ldap_container(
     if not compose_file.startswith("/"):
         # Relative path, make it absolute from workspace root
         # Workspace root is /home/marlonsc/flext
+        # compose_file from SHARED_CONTAINERS is "docker/docker-compose.yml"
         workspace_root = Path("/home/marlonsc/flext")
-        compose_file = str(workspace_root / compose_file)
+        compose_file = str(workspace_root / "flext-ldap" / compose_file)
 
-    # Check if container is running, if not start it using docker-compose
-    status = docker_control.get_container_status(container_name)
-    if not status.is_success or (
-        isinstance(status.value, FlextTestDocker.ContainerInfo)
-        and status.value.status != FlextTestDocker.ContainerStatus.RUNNING
-    ):
-        # Container doesn't exist or not running, start it using docker-compose
-        start_result = docker_control.start_compose_stack(compose_file)
-        if start_result.is_failure:
-            pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+    # REGRA: Só recriar se estiver dirty, senão apenas iniciar se não estiver rodando
+    is_dirty = docker_control.is_container_dirty(container_name)
+    
+    if is_dirty:
+        # Container está dirty - recriar completamente (down -v + up)
+        logger.info(
+            f"Container {container_name} is dirty, recreating with fresh volumes"
+        )
+        cleanup_result = docker_control.cleanup_dirty_containers()
+        if cleanup_result.is_failure:
+            pytest.skip(
+                f"Failed to recreate dirty container {container_name}: {cleanup_result.error}"
+            )
+        # cleanup_dirty_containers já faz down -v e up, então container deve estar rodando agora
+    else:
+        # Container não está dirty - apenas verificar se está rodando e iniciar se necessário
+        status = docker_control.get_container_status(container_name)
+        container_running = (
+            status.is_success
+            and isinstance(status.value, FlextTestDocker.ContainerInfo)
+            and status.value.status == FlextTestDocker.ContainerStatus.RUNNING
+        )
+        
+        if not container_running:
+            # Container não está rodando mas não está dirty - apenas iniciar (sem recriar volumes)
+            logger.info(
+                f"Container {container_name} is not running (but not dirty), starting..."
+            )
+            # Usar ensure_container_running que é mais inteligente
+            ensure_result = docker_control.ensure_container_running(
+                container_name,
+                max_wait=30,  # Aguardar até 30s para container ficar healthy
+            )
+            if ensure_result.is_failure:
+                pytest.skip(
+                    f"Failed to start container {container_name}: {ensure_result.error}"
+                )
+        else:
+            # Container está rodando e não está dirty - tudo OK
+            logger.debug(
+                f"Container {container_name} is running and clean, no action needed"
+            )
 
-    # Provide connection info (matches docker-compose.openldap.yml)
+    # AGUARDAR container estar pronto antes de permitir testes
+    # Usar healthcheck do Docker se disponível, senão tentar conexão LDAP
+    import time
+    
+    max_wait = 60  # segundos
+    wait_interval = 2.0  # segundos
+    waited = 0
+    
+    logger.info(f"Waiting for container {container_name} to be ready...")
+    
+    # Verificar se container está pronto usando conexão LDAP direta
+    # (mais confiável que healthcheck do Docker)
+    while waited < max_wait:
+        try:
+            from ldap3 import Connection, Server
+            server = Server("ldap://localhost:3390", get_info="NONE")
+            test_conn = Connection(
+                server,
+                user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                password="REDACTED_LDAP_BIND_PASSWORD",
+                auto_bind=True,
+                receive_timeout=2,
+            )
+            test_conn.unbind()
+            logger.info(f"Container {container_name} is ready after {waited:.1f}s")
+            break
+        except Exception as e:
+            # Container ainda não está pronto, continuar aguardando
+            if waited % 10 == 0:  # Log a cada 10 segundos
+                logger.debug(
+                    f"Container {container_name} not ready yet (waited {waited:.1f}s): {e}"
+                )
+        
+        time.sleep(wait_interval)
+        waited += wait_interval
+    
+    if waited >= max_wait:
+        pytest.skip(
+            f"Container {container_name} did not become ready within {max_wait}s"
+        )
+
+    # Provide connection info (matches docker-compose.yml)
+    # ALWAYS use port 3390 - NO random ports
     container_info: dict[str, object] = {
         "server_url": "ldap://localhost:3390",
         "host": "localhost",
         "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        "password": "REDACTED_LDAP_BIND_PASSWORD123",  # From docker-compose.openldap.yml
+        "password": "REDACTED_LDAP_BIND_PASSWORD",  # From docker-compose.yml
         "base_dn": "dc=flext,dc=local",
-        "port": 3390,
+        "port": 3390,  # FIXED PORT - NO RANDOM PORTS
         "use_ssl": False,
+        "worker_id": worker_id,  # For logging/debugging
     }
+
+    logger.info(
+        f"LDAP container configured for worker {worker_id}: "
+        f"{container_name} on port 3390"
+    )
 
     return container_info
 
@@ -364,6 +470,22 @@ def ldap_parser() -> FlextLdifParser:
     return FlextLdifParser()
 
 
+@pytest.fixture
+def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
+    """Create simple connection config for unit tests (no Docker dependency).
+
+    This is a lightweight fixture for unit tests that mock the adapter.
+    For integration tests, use the 'connection_config' fixture instead.
+    """
+    return FlextLdapModels.ConnectionConfig(
+        host="localhost",
+        port=3390,
+        use_ssl=False,
+        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
+        bind_password="test123",
+    )
+
+
 @pytest.fixture(scope="module")
 def ldap_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
     """Get standard LDAP connection configuration.
@@ -374,11 +496,11 @@ def ldap_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
     port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
 
     return FlextLdapConfig(
-        ldap_host=str(ldap_container["host"]),
-        ldap_port=port_int,
-        ldap_use_ssl=False,
-        ldap_bind_dn=str(ldap_container["bind_dn"]),
-        ldap_bind_password=str(ldap_container["password"]),
+        host=str(ldap_container["host"]),
+        port=port_int,
+        use_ssl=False,
+        bind_dn=str(ldap_container["bind_dn"]),
+        bind_password=str(ldap_container["password"]),
     )
 
 
