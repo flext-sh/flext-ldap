@@ -32,7 +32,7 @@ class TestFlextLdapOperationsCompleteCoverage:
     def operations_service(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: object,
+        ldap_parser: FlextLdifParser | None,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
         config = FlextLdapConfig()
@@ -93,11 +93,15 @@ class TestFlextLdapOperationsCompleteCoverage:
         # Create new entry with DN that needs normalization (with spaces)
         # Pydantic models are frozen, so we need to create a new entry
         dn_with_spaces = f"  {entry.dn!s}  "
-        attrs = (
+        attrs_raw = (
             entry.attributes.attributes
             if entry.attributes and entry.attributes.attributes
             else {}
         )
+        # Convert to expected type: dict[str, list[str] | str]
+        attrs: dict[str, list[str] | str] = {
+            k: v if isinstance(v, (list, str)) else [str(v)] for k, v in attrs_raw.items()
+        }
         entry = EntryTestHelpers.create_entry(dn_with_spaces, attrs)
 
         # Cleanup first

@@ -44,15 +44,21 @@ class TestLdap3AdapterErrorHandling:
         self,
         connected_adapter: Ldap3Adapter,
     ) -> None:
-        """Test search with invalid base DN."""
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn="invalid-dn-format",
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
-        )
-        result = connected_adapter.search(search_options)
-        # Should handle gracefully
-        assert result.is_success or result.is_failure
+        """Test search with invalid base DN - Pydantic validation prevents invalid DN."""
+        # Pydantic v2 validates base_dn format at model creation
+        # Invalid DN will raise ValidationError before reaching adapter
+        import pytest
+        from pydantic_core import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdapModels.SearchOptions(
+                base_dn="invalid-dn-format",
+                filter_str="(objectClass=*)",
+                scope="SUBTREE",
+            )
+        # Verify it's the correct validation error
+        assert "base_dn" in str(exc_info.value)
+        assert "Invalid base_dn format" in str(exc_info.value)
 
     def test_search_with_invalid_filter(
         self,

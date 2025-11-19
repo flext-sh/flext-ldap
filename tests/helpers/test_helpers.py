@@ -82,10 +82,12 @@ class FlextLdapTestHelpers:
             FlextLdapModels.SearchOptions instance
 
         """
+        from typing import Literal, cast
+
         return FlextLdapModels.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
-            scope=scope,
+            scope=cast("Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope),
             attributes=attributes,
         )
 

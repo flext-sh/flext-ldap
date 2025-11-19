@@ -12,11 +12,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
-from typing import Self, override
+from collections.abc import Callable
+from typing import ClassVar, Self, cast, override
 
 from flext_core import (
+    FlextConfig,
     FlextContainer,
-    FlextContext,
     FlextDispatcher,
     FlextLogger,
     FlextRegistry,
@@ -94,6 +95,60 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
     _context: dict[str, object] = PrivateAttr(default_factory=dict)
     _handlers: dict[str, object] = PrivateAttr(default_factory=dict)
 
+    # Singleton instance storage
+    _instance: ClassVar[FlextLdap | None] = None
+    # Temporary storage for config/parser during __init__ → model_post_init
+    _pending_config: ClassVar[FlextLdapConfig | None] = None
+    _pending_parser: ClassVar[FlextLdifParser | None] = None
+
+    @classmethod
+    def get_instance(
+        cls,
+        config: FlextLdapConfig | None = None,
+        parser: FlextLdifParser | None = None,
+    ) -> FlextLdap:
+        """Get singleton instance of FlextLdap facade.
+
+        Args:
+            config: Optional FlextLdapConfig (only used on first call)
+            parser: Optional FlextLdifParser (only used on first call)
+
+        Returns:
+            Singleton FlextLdap instance
+
+        Example:
+            # Recommended usage
+            ldap = FlextLdap.get_instance(config=my_config)
+
+            # All calls return same instance
+            ldap2 = FlextLdap.get_instance()
+            assert ldap is ldap2
+
+        """
+        if cls._instance is None:
+            # Create instance with config/parser if provided
+            cls._instance = cls(config=config, parser=parser)
+        return cls._instance
+
+    @classmethod
+    def _reset_instance(cls) -> None:
+        """Reset singleton instance (for testing only).
+
+        WARNING: This method is intended for testing purposes only.
+        Do not use in production code as it breaks the singleton pattern.
+
+        Clears the singleton instance and initialization flag, allowing a fresh
+        instance to be created on the next call to get_instance(). This ensures
+        test isolation and idempotency by preventing state leakage between tests.
+
+        Example:
+            # In test fixture
+            FlextLdap._reset_instance()
+            ldap = FlextLdap.get_instance()  # Fresh instance
+
+        """
+        cls._instance = None
+
     def __init__(
         self,
         config: FlextLdapConfig | None = None,
@@ -117,14 +172,23 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             **kwargs: Configuration parameters (passed to Pydantic)
 
         """
-        # Store config and parser for use in model_post_init
+        # Store config and parser in CLASS variables for use in model_post_init
         # Cannot set PrivateAttr before super().__init__() in Pydantic v2
-        object.__setattr__(self, "_init_config_value", config)
-        object.__setattr__(self, "_init_parser_value", parser)
+        # Using class variables ensures they survive super().__init__()
+        FlextLdap._pending_config = config
+        FlextLdap._pending_parser = parser
+
+        # Remove config from kwargs to prevent Pydantic from treating it as a field
+        kwargs.pop("config", None)
+        kwargs.pop("parser", None)
 
         # Call super().__init__() for Pydantic v2 model initialization
         # This will call model_post_init() which initializes all services
         super().__init__(**kwargs)
+
+        # Clear class variables after initialization
+        FlextLdap._pending_config = None
+        FlextLdap._pending_parser = None
 
     def model_post_init(self, __context: object, /) -> None:
         """Initialize private attributes after Pydantic initialization.
@@ -134,7 +198,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         - Context and handler initialization
         - Logging configuration
 
-        Pydantic v2 calls this method exactly once per instance, so no guard is needed.
+        Singleton pattern ensures this is only called once (when the single instance is created).
 
         Args:
             __context: Pydantic's validation context dictionary or None (unused).
@@ -147,10 +211,19 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         self._registry = FlextRegistry(dispatcher=dispatcher)
         self._logger = FlextLogger(__name__)
 
-        # Initialize config and parser from stored values
-        init_config = getattr(self, "_init_config_value", None)
-        init_parser = getattr(self, "_init_parser_value", None)
-        self._config = init_config if init_config is not None else FlextLdapConfig()
+        # Initialize config and parser from CLASS variables (set in __init__)
+        init_config = FlextLdap._pending_config
+        init_parser = FlextLdap._pending_parser
+
+        # Use new config pattern: access via namespace when config not provided
+        # FlextLdapConfig is imported at top-level, ensuring auto_register decorator executes
+        if init_config is not None:
+            self._config = init_config
+        else:
+            # Access via namespace - auto-registered as "ldap"
+            global_config = FlextConfig.get_global_instance()
+            # Type cast needed: namespace returns BaseModel, but we know it's FlextLdapConfig
+            self._config = cast("FlextLdapConfig", global_config.ldap)
         self._parser = init_parser if init_parser is not None else FlextLdifParser()
 
         # Initialize context and handlers
@@ -192,10 +265,10 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         # Execute service registration with error handling
         try:
             self._register_core_services(container)
-        except Exception:
-            self.logger.error(
+        except Exception as e:
+            self.logger.exception(
                 "Failed to setup services - critical initialization error",
-                exc_info=True,
+                exception=e,
             )
             raise
 
@@ -234,22 +307,76 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
     def connect(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
+        *,
+        auto_retry: bool = False,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ) -> FlextResult[bool]:
-        """Establish LDAP connection.
+        """Establish LDAP connection with optional auto-retry.
 
         Args:
             connection_config: Connection configuration (required, no fallback)
+            auto_retry: Enable automatic retry on connection failure (default: False)
+            max_retries: Maximum number of retry attempts (default: 3)
+            retry_delay: Delay between retries in seconds (default: 1.0)
 
         Returns:
             FlextResult[bool] indicating connection success
 
         """
-        # Fast fail - connection_config is required, no fallback
-        return self._connection.connect(connection_config)
+        self._logger.debug(
+            "Connecting to LDAP server",
+            operation="connect",
+            host=connection_config.host,
+            port=connection_config.port,
+            use_ssl=connection_config.use_ssl,
+            use_tls=connection_config.use_tls,
+            auto_retry=auto_retry,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            bind_dn=connection_config.bind_dn[:50] if connection_config.bind_dn else None,
+            has_password=connection_config.bind_password is not None,
+        )
+        
+        result = self._connection.connect(
+            connection_config,
+            auto_retry=auto_retry,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+        )
+        
+        if result.is_success:
+            self._logger.info(
+                "LDAP connection established",
+                operation="connect",
+                host=connection_config.host,
+                port=connection_config.port,
+            )
+        else:
+            self._logger.error(
+                "LDAP connection failed",
+                operation="connect",
+                host=connection_config.host,
+                port=connection_config.port,
+                error=str(result.error),
+            )
+        
+        return result
 
     def disconnect(self) -> None:
         """Close LDAP connection."""
+        self._logger.debug(
+            "Disconnecting from LDAP server",
+            operation="disconnect",
+            was_connected=self.is_connected,
+        )
+        
         self._connection.disconnect()
+        
+        self._logger.info(
+            "LDAP connection closed",
+            operation="disconnect",
+        )
 
     @property
     def is_connected(self) -> bool:
@@ -313,7 +440,36 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing SearchResult with Entry models
 
         """
-        return self._operations.search(search_options, server_type)
+        self._logger.debug(
+            "Searching LDAP directory",
+            operation="search",
+            base_dn=search_options.base_dn[:100] if search_options.base_dn else None,
+            filter_str=search_options.filter_str[:100] if search_options.filter_str else None,
+            scope=search_options.scope,
+            server_type=server_type,
+            is_connected=self.is_connected,
+        )
+        
+        result = self._operations.search(search_options, server_type)
+        
+        if result.is_success:
+            search_result = result.unwrap()
+            self._logger.info(
+                "LDAP search completed",
+                operation="search",
+                base_dn=search_options.base_dn[:100] if search_options.base_dn else None,
+                total_entries=search_result.total_count,
+                entries_found=len(search_result.entries),
+            )
+        else:
+            self._logger.error(
+                "LDAP search failed",
+                operation="search",
+                base_dn=search_options.base_dn[:100] if search_options.base_dn else None,
+                error=str(result.error),
+            )
+        
+        return result
 
     def add(
         self,
@@ -328,7 +484,32 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        return self._operations.add(entry)
+        entry_dn_str = str(entry.dn) if entry.dn else "unknown"
+        self._logger.debug(
+            "Adding LDAP entry",
+            operation="add",
+            entry_dn=entry_dn_str[:100] if entry_dn_str else None,
+            attributes_count=len(entry.attributes.attributes) if entry.attributes else 0,
+            is_connected=self.is_connected,
+        )
+        
+        result = self._operations.add(entry)
+        
+        if result.is_success:
+            self._logger.info(
+                "LDAP entry added",
+                operation="add",
+                entry_dn=entry_dn_str[:100] if entry_dn_str else None,
+            )
+        else:
+            self._logger.error(
+                "LDAP add entry failed",
+                operation="add",
+                entry_dn=entry_dn_str[:100] if entry_dn_str else None,
+                error=str(result.error),
+            )
+        
+        return result
 
     def modify(
         self,
@@ -345,7 +526,35 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        return self._operations.modify(dn, changes)
+        dn_str = str(dn) if isinstance(dn, str) else str(dn.value) if dn else "unknown"
+        self._logger.debug(
+            "Modifying LDAP entry",
+            operation="modify",
+            entry_dn=dn_str[:100] if dn_str else None,
+            changes_count=len(changes),
+            changed_attributes=list(changes.keys())[:20] if changes else [],
+            is_connected=self.is_connected,
+        )
+        
+        result = self._operations.modify(dn, changes)
+        
+        if result.is_success:
+            self._logger.info(
+                "LDAP entry modified",
+                operation="modify",
+                entry_dn=dn_str[:100] if dn_str else None,
+                changes_applied=len(changes),
+            )
+        else:
+            self._logger.error(
+                "LDAP modify entry failed",
+                operation="modify",
+                entry_dn=dn_str[:100] if dn_str else None,
+                error=str(result.error),
+                changes_count=len(changes),
+            )
+        
+        return result
 
     def delete(
         self,
@@ -360,13 +569,40 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        return self._operations.delete(dn)
+        dn_str = str(dn) if isinstance(dn, str) else str(dn.value) if dn else "unknown"
+        self._logger.debug(
+            "Deleting LDAP entry",
+            operation="delete",
+            entry_dn=dn_str[:100] if dn_str else None,
+            is_connected=self.is_connected,
+        )
+        
+        result = self._operations.delete(dn)
+        
+        if result.is_success:
+            self._logger.info(
+                "LDAP entry deleted",
+                operation="delete",
+                entry_dn=dn_str[:100] if dn_str else None,
+            )
+        else:
+            self._logger.error(
+                "LDAP delete entry failed",
+                operation="delete",
+                entry_dn=dn_str[:100] if dn_str else None,
+                error=str(result.error),
+            )
+        
+        return result
 
     def upsert(
         self,
         entry: FlextLdifModels.Entry,
+        *,
+        retry_on_errors: list[str] | None = None,
+        max_retries: int = 1,
     ) -> FlextResult[dict[str, str]]:
-        """Upsert LDAP entry (add if doesn't exist, skip if exists).
+        """Upsert LDAP entry (add if doesn't exist, skip if exists) with optional retry.
 
         Generic method that handles both regular entries and schema modifications.
         For regular entries: tries add, returns "added" or "skipped" if already exists.
@@ -374,6 +610,8 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
         Args:
             entry: Entry model to upsert
+            retry_on_errors: List of error patterns to retry on (default: None = no retry)
+            max_retries: Maximum number of retry attempts (default: 1)
 
         Returns:
             FlextResult containing dict with "operation" key:
@@ -382,7 +620,109 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
                 - "skipped": Entry already exists
 
         """
-        return self._operations.upsert(entry)
+        entry_dn_str = str(entry.dn) if entry.dn else "unknown"
+        self._logger.debug(
+            "Upserting LDAP entry",
+            operation="upsert",
+            entry_dn=entry_dn_str[:100] if entry_dn_str else None,
+            attributes_count=len(entry.attributes.attributes) if entry.attributes else 0,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
+            is_connected=self.is_connected,
+        )
+        
+        result = self._operations.upsert(
+            entry,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
+        )
+        
+        if result.is_success:
+            operation_result = result.unwrap()
+            operation_type = operation_result.get("operation", "unknown")
+            self._logger.info(
+                "LDAP upsert completed",
+                operation="upsert",
+                entry_dn=entry_dn_str[:100] if entry_dn_str else None,
+                operation_type=operation_type,
+            )
+        else:
+            self._logger.error(
+                "LDAP upsert failed",
+                operation="upsert",
+                entry_dn=entry_dn_str[:100] if entry_dn_str else None,
+                error=str(result.error),
+            )
+        
+        return result
+
+    def batch_upsert(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        *,
+        progress_callback: Callable[[int, int, str, dict[str, int]], None] | None = None,
+        retry_on_errors: list[str] | None = None,
+        max_retries: int = 1,
+        stop_on_error: bool = False,
+    ) -> FlextResult[dict[str, int]]:
+        """Batch upsert multiple LDAP entries with progress tracking and retry.
+
+        Processes entries sequentially, applying retry logic per-entry if configured.
+        Aggregates results into synced/failed/skipped counters.
+
+        Args:
+            entries: List of entries to upsert
+            progress_callback: Optional callback(idx: int, total: int, dn: str, stats: dict[str, int]) after each entry
+            retry_on_errors: Error patterns to retry on (passed to each upsert)
+            max_retries: Maximum retries per entry (default: 1)
+            stop_on_error: Stop processing on first error (default: False)
+
+        Returns:
+            FlextResult with dict containing:
+                - "synced": Number of entries successfully added/modified
+                - "failed": Number of entries that failed
+                - "skipped": Number of entries skipped (already identical)
+
+        """
+        self._logger.debug(
+            "Starting batch upsert",
+            operation="batch_upsert",
+            entries_count=len(entries),
+            has_progress_callback=progress_callback is not None,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
+            stop_on_error=stop_on_error,
+            is_connected=self.is_connected,
+        )
+        
+        result = self._operations.batch_upsert(
+            entries,
+            progress_callback=progress_callback,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
+            stop_on_error=stop_on_error,
+        )
+        
+        if result.is_success:
+            stats = result.unwrap()
+            self._logger.info(
+                "Batch upsert completed",
+                operation="batch_upsert",
+                entries_count=len(entries),
+                synced=stats.get("synced", 0),
+                failed=stats.get("failed", 0),
+                skipped=stats.get("skipped", 0),
+                success_rate=f"{(stats.get('synced', 0) / len(entries) * 100):.1f}%" if entries else "0%",
+            )
+        else:
+            self._logger.error(
+                "Batch upsert failed",
+                operation="batch_upsert",
+                entries_count=len(entries),
+                error=str(result.error),
+            )
+        
+        return result
 
     @override
     def execute(self, **kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:

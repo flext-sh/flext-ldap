@@ -85,6 +85,7 @@ class TestLdap3AdapterComplete:
         assert result.is_failure or result.is_success
         if result.is_failure:
             # May fail with "Failed to start TLS" (covers line 104)
+            assert result.error is not None
             assert (
                 "TLS" in result.error
                 or "Failed" in result.error
@@ -156,9 +157,9 @@ class TestLdap3AdapterComplete:
             attributes=["*"],  # All attributes (use "*" instead of None)
         )
         result = connected_adapter.search(search_options)
-        entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        if entries:
-            assert entries[0].attributes is not None
+        search_result = TestOperationHelpers.assert_result_success_and_unwrap(result)
+        if search_result.entries:
+            assert search_result.entries[0].attributes is not None
 
     def test_search_with_empty_result(
         self,
@@ -171,8 +172,8 @@ class TestLdap3AdapterComplete:
             scope="SUBTREE",
         )
         result = connected_adapter.search(search_options)
-        entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        assert len(entries) == 0
+        search_result = TestOperationHelpers.assert_result_success_and_unwrap(result)
+        assert len(search_result.entries) == 0
 
     def test_add_entry_with_all_attribute_types(
         self,
@@ -402,6 +403,7 @@ class TestLdap3AdapterComplete:
         FlextLdifModels.ParseResponse(
             entries=[valid_entry],
             statistics=FlextLdifModels.Statistics(),
+            detected_server_type="openldap2",
         )
 
         # Create an invalid entry object that doesn't have dn attribute

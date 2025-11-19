@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeVar, cast
 
 import pytest
 from flext_core import FlextResult
@@ -17,6 +17,8 @@ from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.models import FlextLdapModels
 from tests.helpers.entry_helpers import EntryTestHelpers
+
+T = TypeVar("T")
 
 
 class TestOperationHelpers:
@@ -37,11 +39,31 @@ class TestOperationHelpers:
         """
         assert result.is_failure, "Expected operation to fail"
         if expected_error:
-            # No fallback - FlextResult guarantees error exists when is_failure is True
+            # FlextResult.error can be None, so we need to check
             error_msg = result.error
+            assert error_msg is not None, "Expected error message but got None"
             assert expected_error in error_msg, (
                 f"Expected error containing '{expected_error}', got: {error_msg}"
             )
+
+    @staticmethod
+    def get_error_message(result: FlextResult[Any]) -> str:
+        """Get error message from result, raising if None.
+
+        Args:
+            result: FlextResult to get error from
+
+        Returns:
+            str: Error message (guaranteed non-None)
+
+        Raises:
+            AssertionError: If result is success or error is None
+
+        """
+        assert result.is_failure, "Expected failure result"
+        error_msg = result.error
+        assert error_msg is not None, "Expected error message but got None"
+        return error_msg
 
     @staticmethod
     def assert_result_success(
@@ -105,15 +127,15 @@ class TestOperationHelpers:
 
     @staticmethod
     def unwrap_sync_stats(
-        result: FlextResult[object],
-    ) -> object:
+        result: FlextResult[T],
+    ) -> T:
         """Unwrap sync service stats result.
 
         Args:
-            result: Sync service result
+            result: Sync service result (accepts any FlextResult type)
 
         Returns:
-            Unwrapped stats
+            Unwrapped stats of type T
 
         """
         return TestOperationHelpers.assert_result_success_and_unwrap(result)
@@ -345,11 +367,18 @@ class TestOperationHelpers:
                     entry_attributes[key] = [str(value)]
 
         # Process individual extra attributes
-        for key, value in extra_attributes.items():
+        for key, value in extra_attributes.items():  # type: ignore[assignment]
             if isinstance(value, list):
-                entry_attributes[key] = value
+                # Ensure all list items are strings
+                # Type narrowing: value is list[object] at this point
+                str_list: list[str] = [str(item) for item in cast("list[object]", value)]
+                entry_attributes[key] = str_list
+            elif value is None:
+                # Skip None values
+                continue
             else:
-                entry_attributes[key] = [str(value)]  # type: ignore[assignment]
+                # Convert single value to list of strings
+                entry_attributes[key] = [str(value)]
 
         return EntryTestHelpers.create_entry(dn, entry_attributes)  # type: ignore[arg-type]
 

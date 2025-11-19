@@ -15,14 +15,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
+from flext_core import (
+    FlextConfig,
+    FlextExceptions,
+    FlextLogger,
+    FlextResult,
+    FlextService,
+)
+from flext_ldif.services.detector import FlextLdifDetector
+from pydantic import computed_field
 
 if TYPE_CHECKING:
     from ldap3 import Connection
 
-logger = FlextLogger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class FlextLdapServerDetector(FlextService[str]):
@@ -58,6 +67,60 @@ class FlextLdapServerDetector(FlextService[str]):
 
     """
 
+    @computed_field  # type: ignore[misc]
+    def service_config(self) -> FlextConfig:
+        """Automatic config binding via Pydantic v2 computed_field."""
+        return FlextConfig.get_global_instance()
+
+    @property
+    def project_config(self) -> FlextConfig:
+        """Auto-resolve project-specific configuration by naming convention."""
+        try:
+            return cast(
+                "FlextConfig",
+                self._resolve_project_component(
+                    "Config",
+                    lambda obj: isinstance(obj, FlextConfig),
+                ),
+            )
+        except Exception:
+            # Fast fail: return global config if project config not found
+            return FlextConfig.get_global_instance()
+
+    def _resolve_project_component(
+        self,
+        component_suffix: str,
+        type_check_func: Callable[[object], bool],
+    ) -> object:
+        """Resolve project component by naming convention (DRY helper)."""
+        service_class_name = self.__class__.__name__
+        component_class_name = service_class_name.replace("Service", component_suffix)
+
+        # Fast fail: container must be accessible
+        container = self.container
+
+        # Fast fail: component must exist in container
+        result = container.get(component_class_name)
+        if result.is_failure:
+            raise FlextExceptions.NotFoundError(
+                message=f"Component '{component_class_name}' not found in container",
+                resource_type="component",
+                resource_id=component_class_name,
+            )
+
+        obj = result.unwrap()
+        if not type_check_func(obj):
+            msg = (
+                f"Component '{component_class_name}' found but type check failed. "
+                f"Expected type validated by {type_check_func.__name__}"
+            )
+            raise FlextExceptions.TypeError(
+                message=msg,
+                expected_type=component_class_name,
+                actual_type=type(obj).__name__,
+            )
+        return obj
+
     def execute(self, **kwargs: object) -> FlextResult[str]:
         """Execute server detection from connection parameter.
 
@@ -72,7 +135,16 @@ class FlextLdapServerDetector(FlextService[str]):
         if not connection:
             return FlextResult[str].fail("connection parameter required")
 
-        return self.detect_from_connection(connection)  # type: ignore[arg-type]
+        # Type narrowing: verify connection has required attributes
+        # Check for ldap3.Connection attributes instead of isinstance (Connection is TYPE_CHECKING only)
+        if not hasattr(connection, "bound") or not hasattr(connection, "search"):
+            return FlextResult[str].fail(
+                f"connection must be ldap3.Connection, got {type(connection).__name__}"
+            )
+
+        # Cast to Connection type for type checker
+        connection_typed: Connection = cast("Connection", connection)
+        return self.detect_from_connection(connection_typed)
 
     def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
         """Detect server type from live LDAP connection via rootDSE query.
@@ -93,22 +165,42 @@ class FlextLdapServerDetector(FlextService[str]):
             4. Return highest confidence match or "rfc" fallback
 
         """
-        # Validate connection is bound
+        logger.debug(
+            "Detecting server type from connection",
+            operation="detect_from_connection",
+            connection_bound=connection.bound,
+        )
+        
         if not connection.bound:
+            logger.error(
+                "Server detection failed - connection not bound",
+                operation="detect_from_connection",
+            )
             return FlextResult[str].fail(
                 "Connection must be bound before server detection"
             )
 
-        # Step 1: Query rootDSE
         root_dse_result = self._query_root_dse(connection)
         if root_dse_result.is_failure:
+            logger.error(
+                "Server detection failed - rootDSE query failed",
+                operation="detect_from_connection",
+                error=str(root_dse_result.error),
+                error_type=type(root_dse_result.error).__name__ if root_dse_result.error else "Unknown",
+            )
             return FlextResult[str].fail(
                 f"Failed to query rootDSE: {root_dse_result.error}"
             )
 
         root_dse_attrs = root_dse_result.unwrap()
-
-        # Step 2: Extract server-identifying attributes
+        
+        logger.debug(
+            "rootDSE queried successfully",
+            operation="detect_from_connection",
+            rootdse_attributes_count=len(root_dse_attrs),
+            rootdse_attribute_names=list(root_dse_attrs.keys())[:20] if root_dse_attrs else [],
+        )
+        
         vendor_name = self._get_attribute_value(root_dse_attrs, "vendorName")
         vendor_version = self._get_attribute_value(root_dse_attrs, "vendorVersion")
         naming_contexts = self._get_attribute_values(root_dse_attrs, "namingContexts")
@@ -121,21 +213,41 @@ class FlextLdapServerDetector(FlextService[str]):
 
         logger.debug(
             "Extracted rootDSE attributes",
+            operation="detect_from_connection",
             vendor_name=vendor_name,
             vendor_version=vendor_version,
             naming_contexts_count=len(naming_contexts),
+            naming_contexts=naming_contexts[:10] if naming_contexts else [],
             supported_controls_count=len(supported_controls),
+            supported_controls=supported_controls[:10] if supported_controls else [],
             supported_extensions_count=len(supported_extensions),
+            supported_extensions=supported_extensions[:10] if supported_extensions else [],
         )
-
-        # Step 3: Use flext-ldif detector with extracted attributes
-        return self._detect_from_attributes(
+        
+        result = self._detect_from_attributes(
             vendor_name=vendor_name,
             vendor_version=vendor_version,
             naming_contexts=naming_contexts,
             supported_controls=supported_controls,
             supported_extensions=supported_extensions,
         )
+        
+        if result.is_success:
+            detected_type = result.unwrap()
+            logger.info(
+                "Server type detected",
+                operation="detect_from_connection",
+                detected_server_type=detected_type,
+            )
+        else:
+            logger.error(
+                "Server type detection failed",
+                operation="detect_from_connection",
+                error=str(result.error),
+                error_type=type(result.error).__name__ if result.error else "Unknown",
+            )
+        
+        return result
 
     def _query_root_dse(
         self, connection: Connection
@@ -155,8 +267,15 @@ class FlextLdapServerDetector(FlextService[str]):
             FlextResult with rootDSE attributes dict
 
         """
+        logger.debug(
+            "Querying rootDSE",
+            operation="detect_from_connection",
+            search_base="",
+            search_filter="(objectClass=*)",
+            search_scope="BASE",
+        )
+        
         try:
-            # Query rootDSE (base DN "", scope BASE)
             success = connection.search(
                 search_base="",
                 search_filter="(objectClass=*)",
@@ -165,32 +284,51 @@ class FlextLdapServerDetector(FlextService[str]):
             )
 
             if not success:
+                logger.error(
+                    "rootDSE query failed",
+                    operation="detect_from_connection",
+                    connection_result=str(connection.result)[:200],
+                )
                 return FlextResult[dict[str, list[str]]].fail(
                     f"rootDSE query failed: {connection.result}"
                 )
 
-            # Extract first (and only) entry
             if not connection.entries or len(connection.entries) == 0:
+                logger.error(
+                    "rootDSE query returned no entries",
+                    operation="detect_from_connection",
+                )
                 return FlextResult[dict[str, list[str]]].fail(
                     "rootDSE query returned no entries"
                 )
 
             root_dse_entry = connection.entries[0]
 
-            # Convert to dict[str, list[str]]
             attributes: dict[str, list[str]] = {}
             for attr_name in root_dse_entry.entry_attributes:
                 attr_value = getattr(root_dse_entry, attr_name, None)
                 if attr_value is not None:
-                    # Ensure list format
                     if isinstance(attr_value, list):
                         attributes[attr_name] = [str(v) for v in attr_value]
                     else:
                         attributes[attr_name] = [str(attr_value)]
+            
+            logger.debug(
+                "rootDSE entry converted to attributes",
+                operation="detect_from_connection",
+                attributes_count=len(attributes),
+                attribute_names=list(attributes.keys())[:20] if attributes else [],
+            )
 
             return FlextResult[dict[str, list[str]]].ok(attributes)
 
         except Exception as e:
+            logger.exception(
+                "Exception querying rootDSE",
+                operation="detect_from_connection",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[dict[str, list[str]]].fail(
                 f"Exception querying rootDSE: {e!s}"
             )
@@ -269,33 +407,39 @@ class FlextLdapServerDetector(FlextService[str]):
 
         pseudo_ldif_content = "\n".join(pseudo_ldif_lines)
 
-        # Use flext-ldif detector
         try:
-            # Import here to avoid circular dependency issues
-            from flext_ldif.services.detector import (  # noqa: PLC0415
-                FlextLdifDetector,
-            )
-
             detector = FlextLdifDetector()
             detection_result = detector.detect_server_type(
                 ldif_content=pseudo_ldif_content
             )
-
+            
             if detection_result.is_success:
-                # ServerDetectionResult is a Pydantic model with attributes
                 detection_info = detection_result.unwrap()
                 detected_type = detection_info.detected_server_type
 
                 logger.info(
-                    "Server detected via rootDSE",
+                    "Server type detected from attributes",
+                    operation="detect_from_connection",
                     detected_type=detected_type,
                     confidence=detection_info.confidence,
                     patterns_found=detection_info.patterns_found,
                 )
 
                 return FlextResult[str].ok(detected_type)
-
+            
+            logger.error(
+                "Server type detection from attributes failed",
+                operation="detect_from_connection",
+                error=str(detection_result.error),
+                error_type=type(detection_result.error).__name__ if detection_result.error else "Unknown",
+            )
             return FlextResult[str].fail(f"Detection failed: {detection_result.error}")
 
         except Exception as e:
+            logger.exception(
+                "Exception during server type detection",
+                operation="detect_from_connection",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return FlextResult[str].fail(f"Detection exception: {e!s}")

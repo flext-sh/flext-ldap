@@ -84,21 +84,25 @@ def test_flext_ldap_basic_connection(ldap_container: dict[str, object]) -> None:
     from flext_ldap.config import FlextLdapConfig
 
     # Create REAL config from container info
+    port_value = ldap_container["port"]
+    port_int = int(str(port_value)) if isinstance(port_value, (int, str)) else 3390
     config = FlextLdapConfig(
-        ldap_host=str(ldap_container["host"]),
-        ldap_port=int(ldap_container["port"]),
-        ldap_use_ssl=False,
-        ldap_bind_dn=str(ldap_container["bind_dn"]),
-        ldap_bind_password=str(ldap_container["password"]),
+        host=str(ldap_container["host"]),
+        port=port_int,
+        use_ssl=False,
+        bind_dn=str(ldap_container["bind_dn"]),
+        bind_password=str(ldap_container["password"]),
     )
 
     # Create REAL FlextLdap instance
     client = FlextLdap(config=config)
 
     # Create REAL connection config
+    port_value = ldap_container["port"]
+    port_int = int(str(port_value)) if isinstance(port_value, (int, str)) else 3390
     conn_config = FlextLdapModels.ConnectionConfig(
         host=str(ldap_container["host"]),
-        port=int(ldap_container["port"]),
+        port=port_int,
         use_ssl=False,
         bind_dn=str(ldap_container["bind_dn"]),
         bind_password=str(ldap_container["password"]),

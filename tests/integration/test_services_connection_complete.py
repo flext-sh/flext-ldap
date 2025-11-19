@@ -29,8 +29,8 @@ class TestFlextLdapConnectionComplete:
     ) -> None:
         """Test connection initialization with custom config."""
         config = FlextLdapConfig(
-            ldap_host=RFC.DEFAULT_HOST,
-            ldap_port=RFC.DEFAULT_PORT,
+            host=RFC.DEFAULT_HOST,
+            port=RFC.DEFAULT_PORT,
         )
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         assert connection._config == config
@@ -52,10 +52,10 @@ class TestFlextLdapConnectionComplete:
     ) -> None:
         """Test connect using service config."""
         config = FlextLdapConfig(
-            ldap_host=str(ldap_container["host"]),
-            ldap_port=int(str(ldap_container["port"])),
-            ldap_bind_dn=str(ldap_container["bind_dn"]),
-            ldap_bind_password=str(ldap_container["password"]),
+            host=str(ldap_container["host"]),
+            port=int(str(ldap_container["port"])),
+            bind_dn=str(ldap_container["bind_dn"]),
+            bind_password=str(ldap_container["password"]),
         )
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connection_config = FlextLdapModels.ConnectionConfig(
@@ -86,9 +86,9 @@ class TestFlextLdapConnectionComplete:
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect with all config options."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        config = FlextLdapModels.ConnectionConfig(
+        ldap_config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=ldap_config, parser=ldap_parser)
+        connection_config = FlextLdapModels.ConnectionConfig(
             host=str(ldap_container["host"]),
             port=int(str(ldap_container["port"])),
             use_ssl=False,
@@ -99,7 +99,7 @@ class TestFlextLdapConnectionComplete:
             auto_bind=True,
             auto_range=True,
         )
-        result = connection.connect(config)
+        result = connection.connect(connection_config)
         assert result.is_success
         connection.disconnect()
 
@@ -171,9 +171,9 @@ class TestFlextLdapConnectionComplete:
 
     def test_connect_failure_handling(self, ldap_parser: FlextLdifParser) -> None:
         """Test connection failure handling."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        config = FlextLdapModels.ConnectionConfig(
+        ldap_config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=ldap_config, parser=ldap_parser)
+        connection_config = FlextLdapModels.ConnectionConfig(
             host="192.0.2.1",  # TEST-NET-1 reserved IP (instant fail, no DNS lookup)
             port=389,
             use_ssl=False,
@@ -181,6 +181,6 @@ class TestFlextLdapConnectionComplete:
             bind_password="password",
             timeout=2,  # Fast timeout for invalid host test
         )
-        result = connection.connect(config)
+        result = connection.connect(connection_config)
         assert result.is_failure
         assert connection.is_connected is False

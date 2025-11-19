@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_ldif import FlextLdifParser
 from ldap3 import Connection, Server
@@ -104,9 +106,10 @@ class TestLdap3AdapterUnit:
         adapter = Ldap3Adapter(parser=ldap_parser)
 
         # Create real ldap3 connection using fixture
-        real_connection = TestDeduplicationHelpers.create_ldap3_connection(
+        real_connection_obj = TestDeduplicationHelpers.create_ldap3_connection(
             ldap_container,
         )
+        real_connection = cast("Connection", real_connection_obj)
         adapter._connection = real_connection  # type: ignore[assignment]
 
         # Should be connected
@@ -405,8 +408,9 @@ class TestLdap3AdapterUnit:
 
             # Should succeed (covers lines 179-227)
             assert result.is_success, f"Search failed: {result.error}"
-            entries = result.unwrap()
-            assert isinstance(entries, list)
+            search_result = result.unwrap()
+            assert isinstance(search_result, FlextLdapModels.SearchResult)
+            assert isinstance(search_result.entries, list)
         finally:
             adapter.disconnect()
 
@@ -424,8 +428,8 @@ class TestLdap3AdapterUnit:
         try:
             # Use invalid filter to trigger real LDAP error
             search_options = FlextLdapModels.SearchOptions(
-                base_dn=connection_config.host,  # Use host as base_dn to trigger error
-                filter_str="invalid(filter",  # Invalid filter syntax
+                base_dn="dc=flext,dc=local",  # Valid DN format
+                filter_str="invalid(filter",  # Invalid filter syntax triggers error
                 scope="SUBTREE",
             )
             result = adapter.search(search_options)
@@ -1101,8 +1105,10 @@ class TestLdap3AdapterUnit:
         assert result.unwrap() == real_connection
 
         # Cleanup
-        if real_connection.bound:
-            real_connection.unbind()
+        from ldap3 import Connection as Ldap3Connection
+        connection_obj = cast("Ldap3Connection", real_connection)
+        if connection_obj.bound:
+            connection_obj.unbind()
 
     def test_disconnect_with_exception_during_unbind(
         self,
@@ -1163,9 +1169,11 @@ class TestLdap3AdapterUnit:
 
         # TLS may fail with test server (covers line 104 if it fails)
         # If TLS succeeds, we still test the code path
-        if result.is_failure and "TLS" in result.error:
-            # TLS failure path covered (line 104)
-            assert "TLS" in result.error or "Failed" in result.error
+        if result.is_failure:
+            assert result.error is not None
+            if "TLS" in result.error:
+                # TLS failure path covered (line 104)
+                assert "TLS" in result.error or "Failed" in result.error
         # If TLS succeeds, the check was still executed
         # We need to manually test the failure path
         # Create a connection that will fail TLS

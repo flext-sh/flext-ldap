@@ -64,8 +64,10 @@ class TestLdap3AdapterCoverage100:
         result = adapter.connect(config)
 
         # If TLS fails, we cover line 104
-        if result.is_failure and "TLS" in result.error:
-            assert "Failed to start TLS" in result.error or "TLS" in result.error
+        if result.is_failure:
+            assert result.error is not None
+            if "TLS" in result.error:
+                assert "Failed to start TLS" in result.error or "TLS" in result.error
         else:
             # If TLS succeeds, we need to manually test the failure path
             # Create a connection that will fail TLS by using wrong port
@@ -82,6 +84,7 @@ class TestLdap3AdapterCoverage100:
             result_fail = adapter.connect(config_fail)
             # Should fail, potentially with TLS error (covers line 104)
             assert result_fail.is_failure
+            assert result_fail.error is not None
             if "TLS" in result_fail.error:
                 assert "Failed to start TLS" in result_fail.error
 
@@ -125,6 +128,7 @@ class TestLdap3AdapterCoverage100:
         # If it fails at TLS stage (start_tls() returns False), we cover line 105
         if result_tls_fail.is_failure:
             # Check if error is TLS-related (covers line 105)
+            assert result_tls_fail.error is not None
             if "Failed to start TLS" in result_tls_fail.error:
                 # Line 105 is definitely covered - TLS failed
                 assert "Failed to start TLS" in result_tls_fail.error
@@ -144,23 +148,23 @@ class TestLdap3AdapterCoverage100:
                 )
                 result = adapter2.connect(config_with_tls)
                 # Check if we got the TLS failure error (covers line 105)
-                if result.is_failure and "Failed to start TLS" in result.error:
-                    # Line 105 is covered - TLS failed
-                    assert "Failed to start TLS" in result.error
+                if result.is_failure:
+                    assert result.error is not None
+                    if "Failed to start TLS" in result.error:
+                        # Line 105 is covered - TLS failed
+                        assert "Failed to start TLS" in result.error
                 adapter2.disconnect()
 
         adapter.disconnect()
 
-    def test_get_connection_none_despite_connected_coverage(
+    def test_get_connection_when_connected(
         self,
         ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
-        """Test _get_connection defensive check (covers line 164).
+        """Test _get_connection with real connection (covers normal path).
 
-        Creates scenario where _connection is None to test the defensive path
-        that catches race conditions. We directly test the None check by
-        temporarily setting _connection to None and calling _get_connection.
+        Tests the normal path where connection exists and is_connected is True.
         """
         adapter = Ldap3Adapter(parser=ldap_parser)
 
@@ -214,7 +218,9 @@ class TestLdap3AdapterCoverage100:
             return True
 
         # Replace the property on the class
-        type(adapter).is_connected = property(is_connected_always_true)  # type: ignore[assignment]
+        # Type ignore needed because we're intentionally replacing a property for testing
+        # This is a test that intentionally modifies the class for coverage
+        type(adapter).is_connected = property(is_connected_always_true)  # type: ignore[assignment, method-assign]
 
         try:
             # Set _connection to None
@@ -229,10 +235,18 @@ class TestLdap3AdapterCoverage100:
             assert "Connection is None despite is_connected=True" in result.error
         finally:
             # Restore original property
-            type(adapter).is_connected = original_is_connected
+            # Type ignore needed because we're intentionally modifying the class for testing
+            type(adapter).is_connected = original_is_connected  # type: ignore[assignment, method-assign]
             # Restore connection
             adapter._connection = original_connection
             adapter._server = original_server
+
+        # Test _get_connection with real connection (covers normal path)
+        result = adapter._get_connection()
+        assert result.is_success
+        connection = result.unwrap()
+        assert connection is not None
+        assert connection.bound is True
 
         adapter.disconnect()
 
