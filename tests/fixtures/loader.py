@@ -52,7 +52,7 @@ class LdapTestFixtures:
         return ""
 
     @staticmethod
-    def load_base_ldif_entries() -> list[object]:  # type: ignore[type-arg]
+    def load_base_ldif_entries() -> list[object]:
         """Load and parse base LDIF structure to Entry models."""
         ldif_content = LdapTestFixtures.load_base_ldif()
         if not ldif_content:

@@ -254,10 +254,14 @@ class TestFlextLdapEntryAdapterRealLdap3Entry:
 
             # Verify all attributes are lists (ldap3 conversion ensures this)
             for attr_name, attr_values in entry.attributes.attributes.items():
-                assert isinstance(attr_values, list), f"Attribute {attr_name} should be a list"
+                assert isinstance(attr_values, list), (
+                    f"Attribute {attr_name} should be a list"
+                )
                 # All values in list should be strings
                 for value in attr_values:
-                    assert isinstance(value, str), f"Value in {attr_name} should be a string"
+                    assert isinstance(value, str), (
+                        f"Value in {attr_name} should be a string"
+                    )
 
         finally:
             if connection.bound:

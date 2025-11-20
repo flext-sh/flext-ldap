@@ -227,17 +227,17 @@ class TestConfigDefault:
 
         # Create instance and register it directly in namespace instances
         invalid_config = InvalidTypeConfig()
-        
+
         # Temporarily replace the class in the config module
         # Type ignore needed because this test intentionally replaces the class
         # This is intentional to test defensive code path
-        config_module.FlextLdapConfig = InvalidTypeConfig  # type: ignore[assignment]
+        config_module.FlextLdapConfig = InvalidTypeConfig
 
         # Re-register the namespace with the new class
         # Type ignore needed because this test intentionally uses invalid type
-        FlextConfig._namespaces["ldap"] = InvalidTypeConfig  # type: ignore[assignment]
+        FlextConfig._namespaces["ldap"] = InvalidTypeConfig
         # Set the instance directly to bypass singleton pattern
-        FlextConfig._namespace_instances["ldap"] = invalid_config  # type: ignore[assignment]
+        FlextConfig._namespace_instances["ldap"] = invalid_config
         # Note: Do NOT reload models.py - that would re-execute @auto_register
         # which would restore the original class in the namespace
 
@@ -259,7 +259,7 @@ class TestConfigDefault:
         finally:
             # Restore original class
             # Type ignore needed because this test intentionally replaces the class
-            config_module.FlextLdapConfig = original_config_class  # type: ignore[misc]
+            config_module.FlextLdapConfig = original_config_class
             # Restore the namespace with original class
             FlextConfig._namespaces["ldap"] = original_config_class
             # Clear namespace instance to get fresh instance on next access

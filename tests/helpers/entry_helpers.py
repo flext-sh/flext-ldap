@@ -282,7 +282,7 @@ class EntryTestHelpers:
             for dn_str in added_dns:
                 EntryTestHelpers.cleanup_after_test(client, dn_str)
 
-        return results  # type: ignore[return-value]
+        return results
 
     @staticmethod
     def modify_entry_with_verification(

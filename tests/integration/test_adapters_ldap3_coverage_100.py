@@ -220,7 +220,7 @@ class TestLdap3AdapterCoverage100:
         # Replace the property on the class
         # Type ignore needed because we're intentionally replacing a property for testing
         # This is a test that intentionally modifies the class for coverage
-        type(adapter).is_connected = property(is_connected_always_true)  # type: ignore[assignment, method-assign]
+        type(adapter).is_connected = property(is_connected_always_true)
 
         try:
             # Set _connection to None
@@ -236,7 +236,7 @@ class TestLdap3AdapterCoverage100:
         finally:
             # Restore original property
             # Type ignore needed because we're intentionally modifying the class for testing
-            type(adapter).is_connected = original_is_connected  # type: ignore[assignment, method-assign]
+            type(adapter).is_connected = original_is_connected
             # Restore connection
             adapter._connection = original_connection
             adapter._server = original_server
@@ -275,7 +275,7 @@ class TestLdap3AdapterCoverage100:
             error_msg = "Test exception during unbind"
             raise TestDisconnectException(error_msg)
 
-        connected_adapter._connection.unbind = failing_unbind  # type: ignore[assignment]
+        connected_adapter._connection.unbind = failing_unbind
 
         # Disconnect should handle exception gracefully (covers lines 123-124)
         connected_adapter.disconnect()
@@ -344,7 +344,7 @@ class TestLdap3AdapterCoverage100:
                     "Parser failure for testing"
                 )
 
-        connected_adapter._parser = FailingParser()  # type: ignore[assignment]
+        connected_adapter._parser = FailingParser()
 
         try:
             # Search should fail with parse error (covers lines 369-372)

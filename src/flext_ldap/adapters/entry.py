@@ -13,17 +13,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextService
-from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.entry_manipulation import EntryManipulationServices
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_ldif import (
+    EntryManipulationServices,
+    FlextLdif,
+    FlextLdifConfig,
+    FlextLdifConstants,
+    FlextLdifModels,
+)
+from ldap3 import Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
-
-if TYPE_CHECKING:
-    from ldap3 import Entry as Ldap3Entry
 
 logger = FlextLogger(__name__)
 
@@ -47,15 +49,23 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
     def __init__(
         self,
-        server_type: str = FlextLdapConstants.LdapDefaults.SERVER_TYPE,
+        server_type: str | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize entry adapter with FlextLdif integration and quirks.
 
         Args:
             server_type: Server type for normalization (defaults to Constants)
+            **kwargs: Additional keyword arguments passed to parent class
 
         """
-        super().__init__()
+        super().__init__(**kwargs)
+        # Extract server_type from kwargs if not provided directly
+        if server_type is None:
+            server_type = cast("str | None", kwargs.pop("server_type", None))
+        # Use default if still None
+        if server_type is None:
+            server_type = FlextLdapConstants.LdapDefaults.SERVER_TYPE
         # Create FlextLdif with server_type to use correct quirks (OID/OUD/etc)
         config = FlextLdifConfig(quirks_server_type=server_type)
         self._ldif = FlextLdif(config=config)
@@ -76,7 +86,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 and always ready
 
         """
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(data=True)
 
     def _convert_ldap3_value_to_list(
         self,
@@ -88,9 +98,9 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         ascii_threshold: int = 127,
     ) -> list[str]:
         """Convert ldap3 value to list format, tracking conversions.
-        
+
         Helper method to reduce complexity of ldap3_to_ldif_entry.
-        
+
         Args:
             value: Value to convert
             key: Attribute name
@@ -98,22 +108,23 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             converted_attrs: Dict to track conversions
             removed_attrs: List to track removed attributes
             ascii_threshold: ASCII threshold for base64 detection
-            
+
         Returns:
             List of string values
 
         """
-        if isinstance(value, list):
+        if FlextRuntime.is_list_like(value):
+            # Type narrowing: is_list_like ensures list[object]
             converted_values = []
             for v in value:
                 v_str = str(v)
-                is_base64 = v_str.startswith("::") or (
-                    isinstance(v, str) and any(ord(c) > ascii_threshold for c in v_str)
+                is_base64 = v_str.startswith("::") or any(
+                    ord(c) > ascii_threshold for c in v_str
                 )
                 if is_base64:
                     base64_attrs.append(key)
                 converted_values.append(v_str)
-            
+
             # Track if values were converted
             if converted_values != [str(v) for v in value]:
                 converted_attrs[key] = {
@@ -126,19 +137,12 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             removed_attrs.append(key)
             return []
         v_str = str(value)
-        is_base64 = v_str.startswith("::") or (
-            isinstance(value, str) and any(ord(c) > ascii_threshold for c in v_str)
+        is_base64 = v_str.startswith("::") or any(
+            ord(c) > ascii_threshold for c in v_str
         )
         if is_base64:
             base64_attrs.append(key)
 
-        # Track if value was converted
-        if v_str != str(value):
-            converted_attrs[key] = {
-                "original": value,
-                "converted": [v_str],
-                "conversion_type": "string_conversion",
-            }
         return [v_str]
 
     def _build_conversion_metadata(
@@ -150,40 +154,49 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         original_dn: str,
     ) -> dict[str, object]:
         """Build conversion metadata tracking all changes (DRY helper).
-        
+
         Args:
             converted_attrs: Attributes that were converted
             removed_attrs: Attributes that were removed (None values)
             base64_attrs: Attributes detected as base64 encoded
             original_attrs_dict: Original attributes dict
             original_dn: Original DN string
-            
+
         Returns:
             Conversion metadata dict
 
         """
         meta_keys = FlextLdifConstants.MetadataKeys
         conversion_metadata: dict[str, object] = {}
-        
+
         if converted_attrs:
             conversion_metadata["converted_attributes"] = converted_attrs
             conversion_metadata["conversion_count"] = len(converted_attrs)
-        
+
         if removed_attrs:
             conversion_metadata["removed_attributes"] = removed_attrs
             conversion_metadata["removed_count"] = len(removed_attrs)
-        
+
         if base64_attrs:
             conversion_metadata["base64_encoded_attributes"] = list(set(base64_attrs))
-        
+
         # Store original data in metadata
-        conversion_metadata[meta_keys.ENTRY_SOURCE_ATTRIBUTES] = list(original_attrs_dict.keys())
+        conversion_metadata[meta_keys.ENTRY_SOURCE_ATTRIBUTES] = list(
+            original_attrs_dict.keys(),
+        )
         conversion_metadata[meta_keys.ENTRY_SOURCE_DN_CASE] = original_dn
         conversion_metadata["original_attributes_dict"] = {
-            k: (list(v) if isinstance(v, (list, tuple)) else [str(v)] if v is not None else [])
+            k: (
+                list(v)
+                if FlextRuntime.is_list_like(v)
+                or isinstance(v, tuple)  # tuple not covered by is_list_like
+                else [str(v)]
+                if v is not None
+                else []
+            )
             for k, v in original_attrs_dict.items()
         }
-        
+
         return conversion_metadata
 
     def _track_conversion_differences(
@@ -195,7 +208,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         converted_attrs_dict: dict[str, list[str]],
     ) -> None:
         """Track DN and attribute differences (DRY helper).
-        
+
         Args:
             conversion_metadata: Metadata dict to update
             original_dn: Original DN string
@@ -211,23 +224,32 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             conversion_metadata["converted_dn"] = converted_dn
         else:
             conversion_metadata["dn_changed"] = False
-        
+
         # Attribute differences tracking (simple comparison)
         attribute_differences: dict[str, dict[str, object]] = {}
         for attr_name, original_values in original_attrs_dict.items():
             converted_values = converted_attrs_dict.get(attr_name, [])
-            
+
             # Simple comparison - track if values changed
-            original_str = ', '.join(str(v) for v in (original_values if isinstance(original_values, list) else [original_values]))
-            converted_str = ', '.join(str(v) for v in converted_values) if converted_values else ""
-            
+            original_str = ", ".join(
+                str(v)
+                for v in (
+                    original_values
+                    if FlextRuntime.is_list_like(original_values)
+                    else [original_values]
+                )
+            )
+            converted_str = (
+                ", ".join(str(v) for v in converted_values) if converted_values else ""
+            )
+
             if original_str != converted_str:
                 attribute_differences[attr_name] = {
                     "original": original_str,
                     "converted": converted_str,
                     "changed": True,
                 }
-        
+
         if attribute_differences:
             conversion_metadata["attribute_differences"] = attribute_differences
 
@@ -246,6 +268,9 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         Returns:
             FlextResult containing FlextLdifModels.Entry or error
 
+        Raises:
+            ValueError: If entry_dn or entry_attributes_as_dict access fails
+
         Notes:
             - Type annotation ensures ldap3_entry is not None
             - Pydantic/type checker will enforce this at call site
@@ -263,7 +288,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             except Exception as dn_exc:
                 error_msg = f"Failed to access entry_dn: {dn_exc!s}"
                 raise ValueError(error_msg) from dn_exc
-            
+
             # Try to access entry_attributes_as_dict - may raise exception if property raises
             try:
                 attrs_dict = ldap3_entry.entry_attributes_as_dict
@@ -281,10 +306,10 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             converted_attrs: dict[str, dict[str, object]] = {}  # Track conversions
             removed_attrs: list[str] = []  # Track removed attributes
             base64_attrs: list[str] = []  # Track base64 encoded attributes
-            
+
             # ASCII threshold for base64 detection
             ascii_threshold = 127
-            
+
             for key, value in attrs_dict.items():
                 ldif_attrs[key] = self._convert_ldap3_value_to_list(
                     value,
@@ -303,7 +328,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 original_attrs_dict,
                 original_dn,
             )
-            
+
             # Track differences
             self._track_conversion_differences(
                 conversion_metadata,
@@ -312,7 +337,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            
+
             # Create metadata object
             entry_metadata = FlextLdifModels.QuirkMetadata(
                 quirk_type=self._server_type,
@@ -325,7 +350,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 attributes=FlextLdifModels.LdifAttributes(attributes=ldif_attrs),
                 metadata=entry_metadata,
             )
-            
+
             if converted_attrs or removed_attrs or base64_attrs:
                 logger.debug(
                     "Converted ldap3 entry to LDIF entry",
@@ -335,13 +360,13 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     removed_attributes=len(removed_attrs),
                     base64_attributes=len(set(base64_attrs)),
                 )
-            
+
             return FlextResult[FlextLdifModels.Entry].ok(entry)
         except Exception as e:
             # Try to get entry_dn for logging, but handle case where it raises exception
             entry_dn_for_log = "unknown"
             try:
-                if hasattr(ldap3_entry, 'entry_dn'):
+                if hasattr(ldap3_entry, "entry_dn"):
                     entry_dn_for_log = str(ldap3_entry.entry_dn)
             except Exception as dn_exc:
                 # entry_dn access itself raised exception, use default
@@ -350,7 +375,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     error=str(dn_exc),
                     error_type=type(dn_exc).__name__,
                 )
-            
+
             logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation="ldap3_to_ldif_entry",
@@ -359,7 +384,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 error_type=type(e).__name__,
             )
             return FlextResult[FlextLdifModels.Entry].fail(
-                f"Failed to create Entry: {e!s}"
+                f"Failed to create Entry: {e!s}",
             )
 
     def ldif_entry_to_ldap3_attributes(
@@ -395,12 +420,18 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         try:
             # Convert entry.attributes to format expected by convert_ldif_attributes_to_ldap3_format
             # The method accepts LdifAttributes or dict, and entry.attributes is LdifAttributes
-            # Type cast needed: entry.attributes is FlextLdifModels.LdifAttributes which is compatible
-            # but type checker needs explicit cast to match method signature
-            ldap3_attributes = EntryManipulationServices.convert_ldif_attributes_to_ldap3_format(
-                cast("FlextLdifModels.LdifAttributes | dict[str, list[str] | str]", entry.attributes)
+            # Type cast needed: entry.attributes is FlextLdifModels.LdifAttributes (from _models.domain)
+            # but method expects FlextLdifModels.LdifAttributes (from models.py namespace wrapper)
+            # Both are structurally compatible, cast is safe
+            ldap3_attributes = (
+                EntryManipulationServices.convert_ldif_attributes_to_ldap3_format(
+                    cast(
+                        "FlextLdifModels.LdifAttributes | dict[str, str | list[str]]",
+                        entry.attributes,
+                    ),
+                )
             )
-            
+
             return FlextResult[dict[str, list[str]]].ok(ldap3_attributes)
         except Exception as e:
             logger.exception(
@@ -439,7 +470,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         self,
         entry: FlextLdifModels.Entry,  # noqa: ARG002
         server_type: str,  # noqa: ARG002
-        ) -> FlextResult[bool]:
+    ) -> FlextResult[bool]:
         """Validate entry for target server type.
 
         Validates entry structure and server-specific requirements.
@@ -467,4 +498,4 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         # Server-specific validation can be added here if needed
         # For now, if entry passed Pydantic validation, it's valid
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(data=True)

@@ -262,7 +262,7 @@ class TestDeduplicationHelpers:
             TestDeduplicationHelpers.assert_success(result)
 
         """
-        return EntryTestHelpers.add_and_cleanup(client, entry, verify=verify)  # type: ignore[arg-type]
+        return EntryTestHelpers.add_and_cleanup(client, entry, verify=verify)
 
     @staticmethod
     def add_from_dict(
@@ -299,7 +299,7 @@ class TestDeduplicationHelpers:
 
         """
         return EntryTestHelpers.add_entry_from_dict(
-            client,  # type: ignore[arg-type]
+            client,
             entry_dict,
             verify=verify,
             cleanup_before=cleanup_before,
@@ -399,7 +399,7 @@ class TestDeduplicationHelpers:
 
         """
         return EntryTestHelpers.modify_entry_with_verification(
-            client,  # type: ignore[arg-type]
+            client,
             entry_dict,
             changes,
             verify_attribute=verify_attribute,
@@ -439,7 +439,7 @@ class TestDeduplicationHelpers:
 
         """
         return EntryTestHelpers.delete_entry_with_verification(
-            client,  # type: ignore[arg-type]
+            client,
             entry_dict,
             cleanup_before=cleanup_before,
             verify_deletion=verify_deletion,
@@ -798,7 +798,7 @@ class TestDeduplicationHelpers:
 
         """
         return EntryTestHelpers.add_multiple_entries_from_dicts(
-            client,  # type: ignore[arg-type]
+            client,
             entry_dicts,
             adjust_dn=adjust_dn,
             cleanup_before=cleanup_before,
@@ -1236,7 +1236,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def connection_management_complete(
-        client_factory: object,  # type: ignore[type-arg]
+        client_factory: object,
         connection_config: FlextLdapModels.ConnectionConfig | None = None,
         ldap_container: dict[str, object] | None = None,
         *,
@@ -1275,29 +1275,29 @@ class TestDeduplicationHelpers:
                 ldap_container,
             )
 
-        factory: Callable[[], object] = client_factory  # type: ignore[assignment]
+        factory: Callable[[], object] = client_factory
 
         if test_context_manager:
             # Test context manager
-            with factory() as client:  # type: ignore[call-overload,attr-defined]
+            with factory() as client:
                 TestDeduplicationHelpers.connect_and_assert(client, connection_config)
-                assert client.is_connected is True  # type: ignore[attr-defined]
+                assert client.is_connected is True
 
             # Should be disconnected after context exit
-            assert client.is_connected is False  # type: ignore[attr-defined]
+            assert client.is_connected is False
 
         # Test regular connect/disconnect
-        client = factory()  # type: ignore[call-overload]
+        client = factory()
         TestDeduplicationHelpers.connect_and_assert(client, connection_config)
 
         if test_disconnect:
-            client.disconnect()  # type: ignore[attr-defined]
-            assert client.is_connected is False  # type: ignore[attr-defined]
+            client.disconnect()
+            assert client.is_connected is False
 
         if test_reconnect:
             TestDeduplicationHelpers.connect_and_assert(client, connection_config)
-            assert client.is_connected is True  # type: ignore[attr-defined]
-            client.disconnect()  # type: ignore[attr-defined]
+            assert client.is_connected is True
+            client.disconnect()
 
         return client
 
@@ -1379,7 +1379,7 @@ class TestDeduplicationHelpers:
 
         Example:
             config = TestDeduplicationHelpers.create_ldap_config(ldap_container)
-            api = FlextLdap(config=config)  # type: ignore[arg-type]
+            api = FlextLdap(config=config)
 
         """
         from flext_ldap.config import FlextLdapConfig
@@ -1521,7 +1521,7 @@ class TestDeduplicationHelpers:
 
         for server_type in server_types:
             try:
-                result = test_func(server_type)  # type: ignore[operator]
+                result = test_func(server_type)
                 results.append((server_type, result))
 
                 if skip_on_failure and result.is_failure:
@@ -1787,8 +1787,8 @@ class TestDeduplicationHelpers:
             attributes=attributes,
         )
 
-        assert len(ldap_connection.entries) > 0, "No entries found in LDAP search"  # type: ignore[attr-defined]
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]  # type: ignore[attr-defined]
+        assert len(ldap_connection.entries) > 0, "No entries found in LDAP search"
+        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
         return ldap3_entry
 
@@ -1980,7 +1980,7 @@ class TestDeduplicationHelpers:
         from flext_ldap import FlextLdap
         from flext_ldap.config import FlextLdapConfig
 
-        api = FlextLdap(config=config)  # type: ignore[arg-type]
+        api = FlextLdap(config=config)
 
         if verify_config:
             assert api._config is not None
@@ -2121,7 +2121,7 @@ class TestDeduplicationHelpers:
             bind_dn_val = bind_dn
             password_val = password
 
-        server = Server(f"ldap://{host_val}:{port_val}", get_info=get_info)  # type: ignore[arg-type]
+        server = Server(f"ldap://{host_val}:{port_val}", get_info=get_info)
         return Connection(
             server,
             user=bind_dn_val,
@@ -2262,7 +2262,7 @@ class TestDeduplicationHelpers:
             )
 
         """
-        return EntryTestHelpers.create_entry(dn, attributes)  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, attributes)
 
     @staticmethod
     def entry_conversion_roundtrip(
@@ -2448,12 +2448,12 @@ class TestDeduplicationHelpers:
         if cleanup_dns and hasattr(sync_service, "_operations"):
             TestDeduplicationHelpers.cleanup_multiple_entries(
                 sync_service._operations,
-                cleanup_dns,  # type: ignore[attr-defined]
+                cleanup_dns,
             )
 
         # Sync file
         if options:
-            result = sync_service.sync_ldif_file(ldif_file, options)  # type: ignore[call-arg]
+            result = sync_service.sync_ldif_file(ldif_file, options)
         else:
             result = sync_service.sync_ldif_file(ldif_file)
 
@@ -2463,8 +2463,8 @@ class TestDeduplicationHelpers:
                 error_message="Sync failed",
             )
             if expected_total is not None:
-                assert stats.total == expected_total, (  # type: ignore[attr-defined]
-                    f"Expected {expected_total} total entries, got {stats.total}"  # type: ignore[attr-defined]
+                assert stats.total == expected_total, (
+                    f"Expected {expected_total} total entries, got {stats.total}"
                 )
             return stats
 
@@ -2493,7 +2493,7 @@ class TestDeduplicationHelpers:
             )
 
         """
-        return EntryTestHelpers.create_entry(dn, attributes)  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, attributes)
 
     @staticmethod
     def real_ldap_entry_conversion_complete(
@@ -2543,14 +2543,14 @@ class TestDeduplicationHelpers:
             )
 
             if verify_dn_match:
-                assert str(converted_entry.dn) == str(ldap3_entry.entry_dn), (  # type: ignore[attr-defined]
+                assert str(converted_entry.dn) == str(ldap3_entry.entry_dn), (
                     "Converted DN doesn't match original"
                 )
 
             return ldap3_entry, converted_entry
         finally:
             if hasattr(connection, "unbind"):
-                connection.unbind()  # type: ignore[attr-defined]
+                connection.unbind()
 
     @staticmethod
     def real_ldap_entry_roundtrip_complete(
@@ -2598,9 +2598,9 @@ class TestDeduplicationHelpers:
 
             if verify_attributes_match:
                 # Verify attributes match original
-                for attr_name in ldap3_entry.entry_attributes:  # type: ignore[attr-defined]
+                for attr_name in ldap3_entry.entry_attributes:
                     if attr_name in ldap3_attrs:
-                        ldap3_values = list(ldap3_entry[attr_name].values)  # type: ignore[index]
+                        ldap3_values = list(ldap3_entry[attr_name].values)
                         assert ldap3_attrs[attr_name] == [
                             str(v) for v in ldap3_values
                         ], f"Attribute {attr_name} values don't match"
@@ -2608,7 +2608,7 @@ class TestDeduplicationHelpers:
             return ldap3_entry, ldif_entry, ldap3_attrs
         finally:
             if hasattr(connection, "unbind"):
-                connection.unbind()  # type: ignore[attr-defined]
+                connection.unbind()
 
     @staticmethod
     def all_scopes(
@@ -2728,7 +2728,7 @@ class TestDeduplicationHelpers:
 
         # Modify
         if entry.dn:
-            modify_result = operations_service.modify(str(entry.dn), changes)  # type: ignore[attr-defined]
+            modify_result = operations_service.modify(str(entry.dn), changes)
             if verify_all:
                 TestOperationHelpers.assert_operation_result_success(
                     modify_result,
@@ -2740,7 +2740,7 @@ class TestDeduplicationHelpers:
 
         # Delete
         if entry.dn:
-            delete_result = operations_service.delete(str(entry.dn))  # type: ignore[attr-defined]
+            delete_result = operations_service.delete(str(entry.dn))
             if verify_all:
                 TestOperationHelpers.assert_operation_result_success(
                     delete_result,
@@ -2794,7 +2794,7 @@ class TestDeduplicationHelpers:
             filter_str="(objectClass=*)",
             scope="SUBTREE",
         )
-        results["search_invalid_dn"] = operations_service.search(search_options)  # type: ignore[attr-defined]
+        results["search_invalid_dn"] = operations_service.search(search_options)
 
         # Search with invalid filter
         search_options_invalid_filter = TestOperationHelpers.create_search_options(
@@ -2802,7 +2802,7 @@ class TestDeduplicationHelpers:
             filter_str=invalid_filter,
             scope="SUBTREE",
         )
-        results["search_invalid_filter"] = operations_service.search(  # type: ignore[attr-defined]
+        results["search_invalid_filter"] = operations_service.search(
             search_options_invalid_filter,
         )
 
@@ -2813,18 +2813,18 @@ class TestDeduplicationHelpers:
                 {"objectClass": ["top"]},
             )
         )
-        results["add_invalid_entry"] = operations_service.add(invalid_entry)  # type: ignore[attr-defined]
+        results["add_invalid_entry"] = operations_service.add(invalid_entry)
 
         # Modify with invalid DN
         from ldap3 import MODIFY_REPLACE
 
-        results["modify_invalid_dn"] = operations_service.modify(  # type: ignore[attr-defined]
+        results["modify_invalid_dn"] = operations_service.modify(
             invalid_base_dn,
             {"cn": [(MODIFY_REPLACE, ["test"])]},
         )
 
         # Delete with invalid DN
-        results["delete_invalid_dn"] = operations_service.delete(invalid_base_dn)  # type: ignore[attr-defined]
+        results["delete_invalid_dn"] = operations_service.delete(invalid_base_dn)
 
         if verify_graceful:
             for name, result in results.items():
@@ -2900,7 +2900,7 @@ class TestDeduplicationHelpers:
                     return self._operations
 
                 def __exit__(self, *args: object) -> None:
-                    self._connection.disconnect()  # type: ignore[attr-defined]
+                    self._connection.disconnect()
 
             return OperationsWrapper(operations, connection)
 
@@ -3022,10 +3022,10 @@ class TestDeduplicationHelpers:
                 filter_str="(objectClass=*)",
                 scope="BASE",
             )
-            results["search_before"] = api.search(search_options)  # type: ignore[attr-defined]
+            results["search_before"] = api.search(search_options)
 
         # Add
-        results["add"] = api.add(entry)  # type: ignore[attr-defined]
+        results["add"] = api.add(entry)
         if verify_all:
             TestDeduplicationHelpers.assert_success(
                 results["add"],
@@ -3034,7 +3034,7 @@ class TestDeduplicationHelpers:
 
         # Modify
         if entry.dn:
-            results["modify"] = api.modify(str(entry.dn), changes)  # type: ignore[attr-defined]
+            results["modify"] = api.modify(str(entry.dn), changes)
             if verify_all:
                 TestDeduplicationHelpers.assert_success(
                     results["modify"],
@@ -3050,11 +3050,11 @@ class TestDeduplicationHelpers:
                 filter_str="(objectClass=*)",
                 scope="BASE",
             )
-            results["search_after"] = api.search(search_options_after)  # type: ignore[attr-defined]
+            results["search_after"] = api.search(search_options_after)
 
         # Delete
         if entry.dn and cleanup_after:
-            results["delete"] = api.delete(str(entry.dn))  # type: ignore[attr-defined]
+            results["delete"] = api.delete(str(entry.dn))
             if verify_all:
                 TestDeduplicationHelpers.assert_success(
                     results["delete"],
@@ -3116,7 +3116,7 @@ class TestDeduplicationHelpers:
                 raise
 
         if api and verify_disconnect:
-            assert api.is_connected is False, (  # type: ignore[attr-defined]
+            assert api.is_connected is False, (
                 "API should be disconnected after context exit"
             )
 
@@ -3169,15 +3169,15 @@ class TestDeduplicationHelpers:
         api = FlextLdap(config=config)
 
         if verify_config:
-            assert api._config is not None, "API config should not be None"  # type: ignore[attr-defined]
+            assert api._config is not None, "API config should not be None"
             if config:
-                assert api._config == config, "API config should match provided config"  # type: ignore[attr-defined]
+                assert api._config == config, "API config should match provided config"
 
         if verify_connection:
-            assert api._connection is not None, "API connection should not be None"  # type: ignore[attr-defined]
+            assert api._connection is not None, "API connection should not be None"
 
         if verify_operations:
-            assert api._operations is not None, "API operations should not be None"  # type: ignore[attr-defined]
+            assert api._operations is not None, "API operations should not be None"
 
         return api
 
@@ -3240,7 +3240,7 @@ class TestDeduplicationHelpers:
                     return self._adapter
 
                 def __exit__(self, *args: object) -> None:
-                    self._adapter.disconnect()  # type: ignore[attr-defined]
+                    self._adapter.disconnect()
 
             return AdapterWrapper(adapter)
 
@@ -3278,7 +3278,7 @@ class TestDeduplicationHelpers:
 
         """
         # Connect
-        connect_result = api.connect(connection_config)  # type: ignore[attr-defined]
+        connect_result = api.connect(connection_config)
         if verify_connect:
             TestDeduplicationHelpers.assert_success(
                 connect_result,
@@ -3286,15 +3286,13 @@ class TestDeduplicationHelpers:
             )
 
         if verify_state and connect_result.is_success:
-            assert api.is_connected is True, (  # type: ignore[attr-defined]
-                "API should be connected after connect"
-            )
+            assert api.is_connected is True, "API should be connected after connect"
 
         # Disconnect
-        api.disconnect()  # type: ignore[attr-defined]
+        api.disconnect()
 
         if verify_disconnect and verify_state:
-            assert api.is_connected is False, (  # type: ignore[attr-defined]
+            assert api.is_connected is False, (
                 "API should be disconnected after disconnect"
             )
 
@@ -3391,12 +3389,12 @@ class TestDeduplicationHelpers:
             if cleanup_dns and hasattr(sync_service, "_operations"):
                 TestDeduplicationHelpers.cleanup_multiple_entries(
                     sync_service._operations,
-                    cleanup_dns,  # type: ignore[attr-defined]
+                    cleanup_dns,
                 )
 
             # Sync file
             if options:
-                result = sync_service.sync_ldif_file(temp_file, options)  # type: ignore[call-arg]
+                result = sync_service.sync_ldif_file(temp_file, options)
             else:
                 result = sync_service.sync_ldif_file(temp_file)
 
@@ -3406,12 +3404,12 @@ class TestDeduplicationHelpers:
                     error_message="Sync failed",
                 )
                 if expected_total is not None:
-                    assert stats.total == expected_total, (  # type: ignore[attr-defined]
-                        f"Expected {expected_total} total entries, got {stats.total}"  # type: ignore[attr-defined]
+                    assert stats.total == expected_total, (
+                        f"Expected {expected_total} total entries, got {stats.total}"
                     )
                 if expected_skipped is not None:
-                    assert stats.skipped == expected_skipped, (  # type: ignore[attr-defined]
-                        f"Expected {expected_skipped} skipped entries, got {stats.skipped}"  # type: ignore[attr-defined]
+                    assert stats.skipped == expected_skipped, (
+                        f"Expected {expected_skipped} skipped entries, got {stats.skipped}"
                     )
                 return stats, temp_file
 
@@ -3507,8 +3505,8 @@ class TestDeduplicationHelpers:
 
         if verify_stats and result.is_success:
             stats = TestOperationHelpers.unwrap_sync_stats(result)
-            assert stats.total == expected_total, (  # type: ignore[attr-defined]
-                f"Expected {expected_total} total entries, got {stats.total}"  # type: ignore[attr-defined]
+            assert stats.total == expected_total, (
+                f"Expected {expected_total} total entries, got {stats.total}"
             )
             return stats
 
@@ -3548,7 +3546,7 @@ class TestDeduplicationHelpers:
             error_msg = "Sync service does not have _transform_entries_basedn method"
             raise AttributeError(error_msg)
 
-        transformed = sync_service._transform_entries_basedn(  # type: ignore[attr-defined]
+        transformed = sync_service._transform_entries_basedn(
             entries,
             from_basedn,
             to_basedn,
@@ -3613,7 +3611,7 @@ class TestDeduplicationHelpers:
         Replaces:
             api = FlextLdap()
             client = FlextLdap()
-            api = FlextLdap(config=config)  # type: ignore[arg-type]
+            api = FlextLdap(config=config)
 
         Args:
             config: Optional connection config
@@ -4694,7 +4692,7 @@ class TestDeduplicationHelpers:
             client,
             entry,
             verify=False,
-            cleanup_after=False,  # type: ignore[arg-type]
+            cleanup_after=False,
         )
 
         if verify_add_result:
@@ -4710,7 +4708,7 @@ class TestDeduplicationHelpers:
             raise ValueError(error_msg)
 
         dn_str = str(entry.dn)
-        modify_result = client.modify(dn_str, changes)  # type: ignore[attr-defined]
+        modify_result = client.modify(dn_str, changes)
 
         if verify_modify_result:
             TestOperationHelpers.assert_operation_result_success(
@@ -4720,7 +4718,7 @@ class TestDeduplicationHelpers:
             )
 
         # Delete entry
-        delete_result = client.delete(dn_str)  # type: ignore[attr-defined]
+        delete_result = client.delete(dn_str)
 
         if verify_delete_result:
             TestOperationHelpers.assert_operation_result_success(
@@ -4785,7 +4783,7 @@ class TestDeduplicationHelpers:
             scope=scope,
         )
 
-        result = client.search(search_options)  # type: ignore[attr-defined]
+        result = client.search(search_options)
         TestDeduplicationHelpers.assert_success(result, error_message="Search failed")
 
         search_result = TestDeduplicationHelpers.assert_and_unwrap(result)
@@ -4914,7 +4912,7 @@ class TestDeduplicationHelpers:
             client,
             entry,
             verify=False,
-            cleanup_after=cleanup_after,  # type: ignore[arg-type]
+            cleanup_after=cleanup_after,
         )
 
         TestDeduplicationHelpers.assert_success(result, error_message="Add failed")
@@ -4970,7 +4968,7 @@ class TestDeduplicationHelpers:
             client,
             entry,
             verify=False,
-            cleanup_after=False,  # type: ignore[arg-type]
+            cleanup_after=False,
         )
 
         if verify_add_result:
@@ -4986,7 +4984,7 @@ class TestDeduplicationHelpers:
             raise ValueError(error_msg)
 
         dn_str = str(entry.dn)
-        delete_result = client.delete(dn_str)  # type: ignore[attr-defined]
+        delete_result = client.delete(dn_str)
 
         if verify_delete_result:
             TestOperationHelpers.assert_operation_result_success(
@@ -5048,7 +5046,7 @@ class TestDeduplicationHelpers:
             client,
             entry,
             verify=False,
-            cleanup_after=False,  # type: ignore[arg-type]
+            cleanup_after=False,
         )
 
         if verify_add_result:
@@ -5064,7 +5062,7 @@ class TestDeduplicationHelpers:
             raise ValueError(error_msg)
 
         dn_str = str(entry.dn)
-        modify_result = client.modify(dn_str, changes)  # type: ignore[attr-defined]
+        modify_result = client.modify(dn_str, changes)
 
         if verify_modify_result:
             TestOperationHelpers.assert_operation_result_success(
@@ -5075,7 +5073,7 @@ class TestDeduplicationHelpers:
 
         # Cleanup if requested
         if cleanup_after:
-            _ = client.delete(dn_str)  # type: ignore[attr-defined]
+            _ = client.delete(dn_str)
 
         return add_result, modify_result
 
@@ -5206,10 +5204,10 @@ class TestDeduplicationHelpers:
         TestOperationHelpers.connect_and_assert_success(client, connection_config)
 
         if hasattr(client, "disconnect"):
-            client.disconnect()  # type: ignore[attr-defined]
+            client.disconnect()
 
         if hasattr(client, "is_connected"):
-            assert client.is_connected is False  # type: ignore[attr-defined]
+            assert client.is_connected is False
 
     @staticmethod
     def api_add_operation(
@@ -5322,7 +5320,7 @@ class TestDeduplicationHelpers:
         )
 
         if cleanup_after and entry.dn:
-            _ = client.delete(str(entry.dn))  # type: ignore[attr-defined]
+            _ = client.delete(str(entry.dn))
 
         return entry, results
 
@@ -5369,7 +5367,7 @@ class TestDeduplicationHelpers:
             client,
             entry,
             verify=False,
-            cleanup_after=False,  # type: ignore[arg-type]
+            cleanup_after=False,
         )
 
         TestOperationHelpers.assert_result_success(add_result)
@@ -5378,7 +5376,7 @@ class TestDeduplicationHelpers:
             error_msg = "Entry must have DN for delete operation"
             raise ValueError(error_msg)
 
-        delete_result = client.delete(str(entry.dn))  # type: ignore[attr-defined]
+        delete_result = client.delete(str(entry.dn))
         TestOperationHelpers.assert_result_success(delete_result)
 
         return entry, add_result, delete_result

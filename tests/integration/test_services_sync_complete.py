@@ -315,21 +315,6 @@ sn: Test
         ]:
             _ = sync_service._operations.delete(dn)
 
-    def test_transform_entries_basedn_with_entry_no_dn(
-        self,
-        sync_service: FlextLdapSyncService,
-    ) -> None:
-        """Test BaseDN transformation with entry without DN.
-
-        Note: Pydantic v2 prevents creating Entry without DN (required per RFC 2849).
-        This test is skipped as it tests an invalid case that cannot occur.
-        """
-        import pytest
-
-        pytest.skip(
-            "Entry without DN is invalid per RFC 2849 and Pydantic v2 validation"
-        )
-
     def test_transform_entries_basedn_same_basedn(
         self,
         sync_service: FlextLdapSyncService,

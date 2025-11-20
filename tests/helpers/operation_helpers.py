@@ -367,11 +367,13 @@ class TestOperationHelpers:
                     entry_attributes[key] = [str(value)]
 
         # Process individual extra attributes
-        for key, value in extra_attributes.items():  # type: ignore[assignment]
+        for key, value in extra_attributes.items():
             if isinstance(value, list):
                 # Ensure all list items are strings
                 # Type narrowing: value is list[object] at this point
-                str_list: list[str] = [str(item) for item in cast("list[object]", value)]
+                str_list: list[str] = [
+                    str(item) for item in cast("list[object]", value)
+                ]
                 entry_attributes[key] = str_list
             elif value is None:
                 # Skip None values
@@ -380,7 +382,7 @@ class TestOperationHelpers:
                 # Convert single value to list of strings
                 entry_attributes[key] = [str(value)]
 
-        return EntryTestHelpers.create_entry(dn, entry_attributes)  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, entry_attributes)
 
     @staticmethod
     def create_entry_with_uid(
@@ -403,7 +405,7 @@ class TestOperationHelpers:
             uid,
             base_dn,
             use_uid=True,
-            **kwargs,  # type: ignore[arg-type]
+            **kwargs,
         )
 
     @staticmethod
@@ -438,7 +440,7 @@ class TestOperationHelpers:
         for key, value in kwargs.items():
             attributes[key] = [value] if isinstance(value, str) else value
 
-        return EntryTestHelpers.create_entry(dn, attributes)  # type: ignore[arg-type]  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, attributes)
 
     @staticmethod
     def create_entry_with_dn_and_attributes(
@@ -455,7 +457,7 @@ class TestOperationHelpers:
             Entry instance
 
         """
-        return EntryTestHelpers.create_entry(dn, attributes)  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, attributes)
 
     @staticmethod
     def create_entry_dict(
@@ -527,7 +529,7 @@ class TestOperationHelpers:
 
         # Cleanup before
         if entry.dn:
-            EntryTestHelpers.cleanup_entry(client, str(entry.dn))  # type: ignore[arg-type]
+            EntryTestHelpers.cleanup_entry(client, str(entry.dn))
 
         result = client.add(entry)
         TestOperationHelpers.assert_result_success(
@@ -542,7 +544,7 @@ class TestOperationHelpers:
 
         # Cleanup after if requested
         if cleanup_after and entry.dn:
-            EntryTestHelpers.cleanup_after_test(client, str(entry.dn))  # type: ignore[arg-type]
+            EntryTestHelpers.cleanup_after_test(client, str(entry.dn))
 
         return result
 
@@ -658,7 +660,7 @@ class TestOperationHelpers:
             error_msg = "Client does not have delete method"
             raise AttributeError(error_msg)
 
-        delete_result = client.delete(dn_str)  # type: ignore[attr-defined]
+        delete_result = client.delete(dn_str)
         if verify_delete:
             TestOperationHelpers.assert_result_success(
                 delete_result,
@@ -724,7 +726,7 @@ class TestOperationHelpers:
             error_msg = "Client does not have delete method"
             raise AttributeError(error_msg)
 
-        delete_result = client.delete(dn_str)  # type: ignore[attr-defined]
+        delete_result = client.delete(dn_str)
         TestOperationHelpers.assert_result_success(
             delete_result,
             error_message="Delete operation failed",
@@ -759,22 +761,22 @@ class TestOperationHelpers:
             if "search_options" not in kwargs:
                 error_msg = "search_options required for search operation"
                 raise ValueError(error_msg)
-            result = client.search(kwargs["search_options"])  # type: ignore[attr-defined]
+            result = client.search(kwargs["search_options"])
         elif operation == "add":
             if "entry" not in kwargs:
                 error_msg = "entry required for add operation"
                 raise ValueError(error_msg)
-            result = client.add(kwargs["entry"])  # type: ignore[attr-defined]
+            result = client.add(kwargs["entry"])
         elif operation == "modify":
             if "dn" not in kwargs or "changes" not in kwargs:
                 error_msg = "dn and changes required for modify operation"
                 raise ValueError(error_msg)
-            result = client.modify(kwargs["dn"], kwargs["changes"])  # type: ignore[attr-defined]
+            result = client.modify(kwargs["dn"], kwargs["changes"])
         elif operation == "delete":
             if "dn" not in kwargs:
                 error_msg = "dn required for delete operation"
                 raise ValueError(error_msg)
-            result = client.delete(kwargs["dn"])  # type: ignore[attr-defined]
+            result = client.delete(kwargs["dn"])
         else:
             error_msg = f"Unknown operation: {operation}"
             raise ValueError(error_msg)
@@ -844,7 +846,7 @@ class TestOperationHelpers:
             )
 
         """
-        return EntryTestHelpers.create_entry(dn, attributes)  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, attributes)
 
     @staticmethod
     def create_entry_with_ldif_attributes(
@@ -869,7 +871,7 @@ class TestOperationHelpers:
             FlextLdifModels.Entry
 
         """
-        return EntryTestHelpers.create_entry(dn, attributes_dict)  # type: ignore[arg-type]
+        return EntryTestHelpers.create_entry(dn, attributes_dict)
 
     @staticmethod
     def create_test_user_entry(
@@ -904,7 +906,7 @@ class TestOperationHelpers:
             cn_value,
             base_dn,
             use_uid=use_uid,
-            **extra_attributes,  # type: ignore[arg-type]
+            **extra_attributes,
         )
 
     @staticmethod
@@ -940,7 +942,7 @@ class TestOperationHelpers:
             cn_value,
             base_dn,
             members=members,
-            **extra_attributes,  # type: ignore[arg-type]
+            **extra_attributes,
         )
 
     @staticmethod

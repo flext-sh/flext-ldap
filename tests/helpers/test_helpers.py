@@ -124,7 +124,7 @@ class FlextLdapTestHelpers:
             and dns_tracker is not None
             and hasattr(dns_tracker, "add")
         ):
-            dns_tracker.add(dn_str)  # type: ignore[attr-defined]
+            dns_tracker.add(dn_str)
 
         return (entry, result)
 

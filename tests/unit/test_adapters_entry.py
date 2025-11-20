@@ -127,8 +127,8 @@ class TestFlextLdapEntryAdapter:
         # This tests the path where value is not list-like and not falsy (lines 139-144)
         if entry.attributes:
             # Override to test single value path (lines 139-144)
-            entry.attributes.attributes["singleValue"] = "single_string"  # type: ignore[assignment]
-            entry.attributes.attributes["emptyString"] = ""  # type: ignore[assignment]
+            entry.attributes.attributes["singleValue"] = "single_string"
+            entry.attributes.attributes["emptyString"] = ""
 
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attrs = TestOperationHelpers.assert_result_success_and_unwrap(result)
@@ -201,7 +201,7 @@ class TestFlextLdapEntryAdapter:
         )
         # Pydantic should raise ValidationError when trying to set None
         with pytest.raises(ValidationError) as exc_info:
-            entry.attributes = None  # type: ignore[assignment]
+            entry.attributes = None
 
         # Verify it's the correct validation error
         assert "attributes" in str(exc_info.value)
@@ -280,7 +280,7 @@ class TestFlextLdapEntryAdapter:
                 # Access internal dict and add None value
                 if hasattr(ldap3_entry, "entry_attributes_as_dict"):
                     attrs_dict = ldap3_entry.entry_attributes_as_dict
-                    attrs_dict["testNoneAttr"] = None  # type: ignore[assignment]
+                    attrs_dict["testNoneAttr"] = None
 
                 result = adapter.ldap3_to_ldif_entry(ldap3_entry)
                 entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
@@ -329,7 +329,7 @@ class TestFlextLdapEntryAdapter:
                 # Manually add single string value to test conversion (covers line 116-117)
                 if hasattr(ldap3_entry, "entry_attributes_as_dict"):
                     attrs_dict = ldap3_entry.entry_attributes_as_dict
-                    attrs_dict["testSingleAttr"] = "single_value"  # type: ignore[assignment]
+                    attrs_dict["testSingleAttr"] = "single_value"
 
                 result = adapter.ldap3_to_ldif_entry(ldap3_entry)
                 entry = TestOperationHelpers.assert_result_success_and_unwrap(result)

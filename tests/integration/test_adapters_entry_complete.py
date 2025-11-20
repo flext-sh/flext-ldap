@@ -300,7 +300,7 @@ class TestFlextLdapEntryAdapterComplete:
         # Pydantic v2 prevents setting attributes=None - this is correct behavior
         # Test that Pydantic raises ValidationError
         with pytest.raises(ValidationError):
-            entry.attributes = None  # type: ignore[assignment]
+            entry.attributes = None
 
         # Test validation with empty attributes
         # Entry with empty attributes can be created (Pydantic captures violations, doesn't reject)

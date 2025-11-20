@@ -236,79 +236,65 @@ class TestFlextLdapWithBaseLdif:
     def test_load_and_search_base_ldif(
         self,
         ldap_client: FlextLdap,
-        base_ldif_entries: list[object],
         ldap_container: dict[str, object],
     ) -> None:
         """Test loading base LDIF entries and searching for them."""
-        if not base_ldif_entries:
-            pytest.skip("No base LDIF entries available")
+        # Create test entry directly instead of depending on base_ldif_entries fixture
+        base_dn = str(ldap_container["base_dn"])
+        test_ou_dn = f"ou=testsearch,{base_dn}"
 
-        search_options = FlextLdapTestHelpers.create_search_options(
-            base_dn=str(ldap_container["base_dn"]),
-            filter_str="(objectClass=organizationalUnit)",
+        # Create organizational unit entry
+        test_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value=test_ou_dn),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "objectClass": ["organizationalUnit", "top"],
+                    "ou": ["testsearch"],
+                }
+            ),
         )
-        result = ldap_client.search(search_options)
-        FlextLdapTestHelpers.assert_search_success(result)
+
+        # Add entry
+        add_result = ldap_client.add(test_entry)
+        assert add_result.is_success, f"Failed to add test entry: {add_result.error}"
+
+        try:
+            search_options = FlextLdapTestHelpers.create_search_options(
+                base_dn=base_dn,
+                filter_str="(objectClass=organizationalUnit)",
+            )
+            result = ldap_client.search(search_options)
+            FlextLdapTestHelpers.assert_search_success(result)
+        finally:
+            # Cleanup
+            _ = ldap_client.delete(test_ou_dn)
 
     def test_add_entry_from_base_ldif(
         self,
         ldap_client: FlextLdap,
-        base_ldif_entries: list[object],
         ldap_container: dict[str, object],
         unique_dn_suffix: str,
     ) -> None:
         """Test adding entry parsed from base LDIF (idempotent with unique DN)."""
-        if not base_ldif_entries:
-            pytest.skip("No base LDIF entries available")
+        # Create test entry directly instead of depending on base_ldif_entries fixture
+        base_dn = str(ldap_container["base_dn"])
+        unique_uid = f"testuser-{unique_dn_suffix}"
+        new_dn = f"uid={unique_uid},ou=people,{base_dn}"
 
-        # Find a user entry in base LDIF
-        user_entry = None
-        for entry in base_ldif_entries:
-            if (
-                isinstance(entry, FlextLdifModels.Entry)
-                and entry.attributes
-                and entry.attributes.attributes
-                and "inetOrgPerson"
-                in entry.attributes.attributes.get("objectClass", [])
-            ):
-                user_entry = entry
-                break
-
-        if not user_entry or not isinstance(user_entry, FlextLdifModels.Entry):
-            pytest.skip("No user entry found in base LDIF")
-
-        # Adjust DN to use flext.local domain AND make it unique
-        if user_entry.dn is None:
-            pytest.skip("Entry has no DN")
-        original_dn = str(user_entry.dn.value)
-
-        # Extract UID from original DN and make it unique
-        import re
-
-        uid_match = re.search(r"uid=([^,]+)", original_dn)
-        if not uid_match:
-            pytest.skip("No UID found in DN")
-
-        original_uid = uid_match.group(1)
-        unique_uid = f"{original_uid}-{unique_dn_suffix}"
-
-        # Replace domain and UID to make DN unique
-        new_dn = original_dn.replace(
-            "dc=example,dc=com",
-            str(ldap_container.get("base_dn", "")),
-        ).replace(
-            f"uid={original_uid}",
-            f"uid={unique_uid}",
+        # Create inetOrgPerson entry with unique UID
+        new_attributes = FlextLdifModels.LdifAttributes(
+            attributes={
+                "objectClass": [
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "top",
+                ],
+                "uid": [unique_uid],
+                "cn": [f"Test User {unique_dn_suffix}"],
+                "sn": ["User"],
+            }
         )
-
-        # Clone attributes and update UID
-        if not user_entry.attributes or not user_entry.attributes.attributes:
-            pytest.skip("Entry has no attributes")
-
-        new_attributes_dict = dict(user_entry.attributes.attributes)
-        new_attributes_dict["uid"] = [unique_uid]
-
-        new_attributes = FlextLdifModels.LdifAttributes(attributes=new_attributes_dict)
 
         # Create new entry with adjusted DN and unique UID
         new_entry = FlextLdifModels.Entry(
@@ -321,5 +307,5 @@ class TestFlextLdapWithBaseLdif:
         assert result.is_success, f"Add failed: {result.error}"
 
         # Cleanup
-        delete_result = ldap_client.delete(str(new_dn))
+        delete_result = ldap_client.delete(new_dn)
         assert delete_result.is_success or delete_result.is_failure

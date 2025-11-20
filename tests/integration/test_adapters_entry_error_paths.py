@@ -83,7 +83,7 @@ class TestFlextLdapEntryAdapterErrorPaths:
         exception_entry = ExceptionEntry()
 
         # Convert should catch exception and return failure (covers lines 129-130)
-        result = adapter.ldap3_to_ldif_entry(exception_entry)  # type: ignore[arg-type]
+        result = adapter.ldap3_to_ldif_entry(exception_entry)
         assert result.is_failure
         assert result.error is not None
         assert "Failed to create Entry" in result.error
@@ -122,7 +122,7 @@ class TestFlextLdapEntryAdapterErrorPaths:
         entry_with_none = EntryWithNoneValues()
 
         # Convert should handle None values (covers lines 117-120)
-        result = adapter.ldap3_to_ldif_entry(entry_with_none)  # type: ignore[arg-type]
+        result = adapter.ldap3_to_ldif_entry(entry_with_none)
         assert result.is_success
         converted_entry = result.unwrap()
 
@@ -162,7 +162,7 @@ class TestFlextLdapEntryAdapterErrorPaths:
         entry_with_non_list = EntryWithNonListValues()
 
         # Convert should handle non-list values (covers line 120)
-        result = adapter.ldap3_to_ldif_entry(entry_with_non_list)  # type: ignore[arg-type]
+        result = adapter.ldap3_to_ldif_entry(entry_with_non_list)
         assert result.is_success
         converted_entry = result.unwrap()
 
@@ -195,7 +195,10 @@ class TestFlextLdapEntryAdapterErrorPaths:
 
         # Temporarily replace EntryManipulationServices to raise exception
         from flext_ldif.services.entry_manipulation import EntryManipulationServices
-        original_convert = EntryManipulationServices.convert_ldif_attributes_to_ldap3_format
+
+        original_convert = (
+            EntryManipulationServices.convert_ldif_attributes_to_ldap3_format
+        )
 
         def failing_convert(attributes: object) -> dict[str, list[str]]:
             """Conversion method that raises exception."""
@@ -203,7 +206,9 @@ class TestFlextLdapEntryAdapterErrorPaths:
             raise ValueError(error_message)
 
         # Replace the conversion method
-        EntryManipulationServices.convert_ldif_attributes_to_ldap3_format = failing_convert  # type: ignore[assignment]
+        EntryManipulationServices.convert_ldif_attributes_to_ldap3_format = (
+            failing_convert
+        )
 
         try:
             # Convert should catch exception and return failure (covers lines 170-171)
@@ -211,7 +216,11 @@ class TestFlextLdapEntryAdapterErrorPaths:
             assert result.is_failure
             assert result.error is not None
             assert "Failed to convert attributes" in result.error
-            assert "exception" in result.error.lower() or "Test exception" in result.error
+            assert (
+                "exception" in result.error.lower() or "Test exception" in result.error
+            )
         finally:
             # Restore original method
-            EntryManipulationServices.convert_ldif_attributes_to_ldap3_format = original_convert  # type: ignore[assignment]
+            EntryManipulationServices.convert_ldif_attributes_to_ldap3_format = (
+                original_convert
+            )
