@@ -46,14 +46,16 @@ class TestFlextLdapServiceRegistrationErrors:
 
         original_register = container.register_service
 
-        def failing_register_connection(name: str, service: object) -> FlextResult[bool]:
+        def failing_register_connection(
+            name: str, service: object
+        ) -> FlextResult[bool]:
             """Register service that fails for connection."""
             if name == "connection":
                 return FlextResult[bool].fail("Test failure for connection service")
             return original_register(name, service)
 
         # Replace register_service temporarily
-        container.register_service = failing_register_connection  # type: ignore[assignment]
+        container.register_service = failing_register_connection
 
         try:
             # Try to register services again - should raise RuntimeError (covers lines 281-283)
@@ -64,7 +66,7 @@ class TestFlextLdapServiceRegistrationErrors:
             assert "Test failure for connection service" in str(exc_info.value)
         finally:
             # Restore original method
-            container.register_service = original_register  # type: ignore[assignment]
+            container.register_service = original_register
             FlextLdap._reset_instance()
 
     def test_register_core_services_operations_failure(
@@ -91,14 +93,16 @@ class TestFlextLdapServiceRegistrationErrors:
 
         original_register = container.register_service
 
-        def failing_register_operations(name: str, service: object) -> FlextResult[bool]:
+        def failing_register_operations(
+            name: str, service: object
+        ) -> FlextResult[bool]:
             """Register service that fails for operations."""
             if name == "operations":
                 return FlextResult[bool].fail("Test failure for operations service")
             return original_register(name, service)
 
         # Replace register_service temporarily
-        container.register_service = failing_register_operations  # type: ignore[assignment]
+        container.register_service = failing_register_operations
 
         try:
             # Try to register services again - should raise RuntimeError (covers lines 291-293)
@@ -109,7 +113,7 @@ class TestFlextLdapServiceRegistrationErrors:
             assert "Test failure for operations service" in str(exc_info.value)
         finally:
             # Restore original method
-            container.register_service = original_register  # type: ignore[assignment]
+            container.register_service = original_register
             FlextLdap._reset_instance()
 
     def test_register_core_services_parser_failure(
@@ -143,7 +147,7 @@ class TestFlextLdapServiceRegistrationErrors:
             return original_register(name, service)
 
         # Replace register_service temporarily
-        container.register_service = failing_register_parser  # type: ignore[assignment]
+        container.register_service = failing_register_parser
 
         try:
             # Try to register services again - should raise RuntimeError (covers lines 301-303)
@@ -154,7 +158,7 @@ class TestFlextLdapServiceRegistrationErrors:
             assert "Test failure for parser service" in str(exc_info.value)
         finally:
             # Restore original method
-            container.register_service = original_register  # type: ignore[assignment]
+            container.register_service = original_register
             FlextLdap._reset_instance()
 
     def test_setup_services_exception_handling(
@@ -181,7 +185,7 @@ class TestFlextLdapServiceRegistrationErrors:
             """Register services that raises exception."""
             raise ValueError(test_exception_message)
 
-        api._register_core_services = failing_register  # type: ignore[assignment]
+        api._register_core_services = failing_register
 
         try:
             # Try to setup services - should raise exception (covers lines 268-273)
@@ -191,5 +195,5 @@ class TestFlextLdapServiceRegistrationErrors:
             assert "Test exception for coverage" in str(exc_info.value)
         finally:
             # Restore original method
-            api._register_core_services = original_register  # type: ignore[assignment]
+            api._register_core_services = original_register
             FlextLdap._reset_instance()

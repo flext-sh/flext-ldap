@@ -77,7 +77,7 @@ class TestLdap3AdapterUnit:
         real_connection = TestDeduplicationHelpers.create_ldap3_connection(
             ldap_container,
         )
-        adapter._connection = real_connection  # type: ignore[assignment]
+        adapter._connection = real_connection
 
         # Access connection property (covers line 134)
         connection = adapter.connection
@@ -91,7 +91,7 @@ class TestLdap3AdapterUnit:
     def test_connection_property_with_none(self, ldap_parser: FlextLdifParser) -> None:
         """Test connection property returns None when not connected."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         # Access connection property
         connection = adapter.connection
@@ -110,7 +110,7 @@ class TestLdap3AdapterUnit:
             ldap_container,
         )
         real_connection = cast("Connection", real_connection_obj)
-        adapter._connection = real_connection  # type: ignore[assignment]
+        adapter._connection = real_connection
 
         # Should be connected
         assert adapter.is_connected is True
@@ -125,7 +125,7 @@ class TestLdap3AdapterUnit:
     ) -> None:
         """Test is_connected property when not connected."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         # Should not be connected
         assert adapter.is_connected is False
@@ -140,7 +140,7 @@ class TestLdap3AdapterUnit:
         # Create unbound connection
         server = Server("ldap://localhost:389")
         unbound_connection = Connection(server, auto_bind=False)
-        adapter._connection = unbound_connection  # type: ignore[assignment]
+        adapter._connection = unbound_connection
 
         # Should not be connected (not bound)
         assert adapter.is_connected is False
@@ -148,7 +148,7 @@ class TestLdap3AdapterUnit:
     def test_search_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test search when not connected (covers line 175)."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         search_options = FlextLdapModels.SearchOptions(
             base_dn="dc=example,dc=com",
@@ -192,7 +192,7 @@ class TestLdap3AdapterUnit:
     def test_add_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test add when not connected (covers line 254)."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         # Use real helper to create entry
         entry = TestDeduplicationHelpers.create_entry(
@@ -242,7 +242,7 @@ class TestLdap3AdapterUnit:
     def test_modify_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test modify when not connected (covers line 301)."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         # Use real changes structure
         changes: dict[str, list[tuple[str, list[str]]]] = {
@@ -260,7 +260,7 @@ class TestLdap3AdapterUnit:
     def test_delete_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test delete when not connected (covers line 340)."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         result = adapter.delete("cn=test,dc=example,dc=com")
 
@@ -273,7 +273,7 @@ class TestLdap3AdapterUnit:
     def test_execute_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test execute when not connected (covers line 371)."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None  # type: ignore[assignment]
+        adapter._connection = None
 
         result = adapter.execute()
 
@@ -453,6 +453,16 @@ class TestLdap3AdapterUnit:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
         try:
+            # Ensure ou=people exists (test setup)
+            people_ou = TestDeduplicationHelpers.create_entry(
+                "ou=people,dc=flext,dc=local",
+                {
+                    "ou": ["people"],
+                    "objectClass": ["organizationalUnit", "top"],
+                },
+            )
+            _ = adapter.add(people_ou)  # Ignore if already exists
+
             # Create unique entry
             entry = TestDeduplicationHelpers.create_entry(
                 f"cn=testadd{id(self)},ou=people,dc=flext,dc=local",
@@ -995,7 +1005,7 @@ class TestLdap3AdapterUnit:
 
         # Test with invalid scope - should fail
         # Note: Pydantic validates scope in SearchOptions, so we need to call _map_scope directly
-        result = adapter._map_scope("INVALID_SCOPE")  # type: ignore[arg-type]
+        result = adapter._map_scope("INVALID_SCOPE")
 
         assert result.is_failure
         assert result.error is not None
@@ -1050,7 +1060,7 @@ class TestLdap3AdapterUnit:
             search_options = FlextLdapModels.SearchOptions.model_construct(
                 base_dn="dc=flext,dc=local",
                 filter_str="(objectClass=*)",
-                scope="INVALID_SCOPE",  # type: ignore[arg-type]
+                scope="INVALID_SCOPE",
             )
 
             result = adapter.search(search_options)
@@ -1089,7 +1099,7 @@ class TestLdap3AdapterUnit:
         real_connection = TestDeduplicationHelpers.create_ldap3_connection(
             ldap_container
         )
-        adapter._connection = real_connection  # type: ignore[assignment]
+        adapter._connection = real_connection
 
         # Verify is_connected is True
         assert adapter.is_connected is True
@@ -1106,6 +1116,7 @@ class TestLdap3AdapterUnit:
 
         # Cleanup
         from ldap3 import Connection as Ldap3Connection
+
         connection_obj = cast("Ldap3Connection", real_connection)
         if connection_obj.bound:
             connection_obj.unbind()
@@ -1134,7 +1145,7 @@ class TestLdap3AdapterUnit:
                 error_msg = "Test disconnect exception"
                 raise TestDisconnectException(error_msg)
 
-            adapter._connection.unbind = failing_unbind  # type: ignore[assignment]
+            adapter._connection.unbind = failing_unbind
 
             # Disconnect should handle exception gracefully (covers lines 123-124)
             adapter.disconnect()

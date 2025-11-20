@@ -211,4 +211,19 @@
         "examples/",
     ]
 
+    # Allow untyped calls to ldap3 library (external lib without complete type stubs)
+    [[tool.mypy.overrides]]
+    module = "ldap3.*"
+    ignore_missing_imports = true
+
+    [[tool.mypy.overrides]]
+    module = "flext_ldap.adapters.ldap3"
+    allow_untyped_calls = true
+
+    # Pydantic v2 @computed_field with @property is valid but mypy doesn't support it
+    # https://github.com/python/mypy/issues/1362
+    [[tool.mypy.overrides]]
+    module = "flext_ldap.models"
+    disable_error_code = ["prop-decorator"]
+
 

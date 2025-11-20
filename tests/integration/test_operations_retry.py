@@ -28,7 +28,9 @@ class TestOperationsRetry:
         """Test that upsert without retry_on_errors fails immediately on error."""
         # Create entry with INVALID attribute (will cause LDAP error)
         bad_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test-invalid,dc=flext,dc=local"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=test-invalid,dc=flext,dc=local"
+            ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["invalid-objectclass-xyz"],  # Invalid objectClass
@@ -53,7 +55,9 @@ class TestOperationsRetry:
         """Test retry_on_errors retries on matching error pattern."""
         # Create entry that will fail with specific error
         bad_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test-retry,dc=flext,dc=local"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=test-retry,dc=flext,dc=local"
+            ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["nonexistent-class"],
@@ -75,7 +79,12 @@ class TestOperationsRetry:
         assert result.is_failure
         # Should contain retry information in error message
         error_lower = str(result.error).lower()
-        assert "retry" in error_lower or "retries" in error_lower or "objectclass" in error_lower or "object class" in error_lower
+        assert (
+            "retry" in error_lower
+            or "retries" in error_lower
+            or "objectclass" in error_lower
+            or "object class" in error_lower
+        )
 
     def test_upsert_success_without_retry_needed(
         self,
@@ -84,7 +93,9 @@ class TestOperationsRetry:
         """Test successful upsert doesn't trigger retry logic."""
         # Create VALID entry
         good_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test-success,dc=flext,dc=local"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=test-success,dc=flext,dc=local"
+            ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["organizationalPerson", "person", "top"],
@@ -106,8 +117,8 @@ class TestOperationsRetry:
         # Should succeed on first attempt
         assert result.is_success
         operation_info = result.unwrap()
-        # Operation can be "add", "modify", or "skipped" (if entry already exists and identical)
-        assert operation_info["operation"] in {"add", "modify", "skipped"}
+        # Operation can be "added", "modified", or "skipped" (if entry already exists and identical)
+        assert operation_info["operation"] in {"added", "modified", "skipped"}
 
     def test_upsert_no_retry_on_non_matching_error(
         self,
@@ -116,7 +127,9 @@ class TestOperationsRetry:
         """Test retry_on_errors doesn't retry when error doesn't match pattern."""
         # Create entry with invalid objectClass
         bad_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test-nomatch,dc=flext,dc=local"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=test-nomatch,dc=flext,dc=local"
+            ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["invalid-class-xyz"],
@@ -130,7 +143,11 @@ class TestOperationsRetry:
         # Call upsert with retry_on_errors that WON'T match the error
         result = operations.upsert(
             bad_entry,
-            retry_on_errors=["timeout", "busy", "connection"],  # Won't match objectclass error
+            retry_on_errors=[
+                "timeout",
+                "busy",
+                "connection",
+            ],  # Won't match objectclass error
             max_retries=3,
         )
 

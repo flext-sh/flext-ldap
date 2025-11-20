@@ -144,10 +144,11 @@ class TestLdap3AdapterReal:
         from typing import cast
 
         from flext_ldap.typings import LdapClientProtocol
+
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
                 cast("LdapClientProtocol", connected_adapter),
-                entry_dict,  # type: ignore[arg-type]
+                entry_dict,
             )
         )
 

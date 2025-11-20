@@ -122,7 +122,9 @@ class TestFlextLdapBatchUpsert:
         # Track progress
         progress_calls: list[tuple[int, int, str, dict[str, int]]] = []
 
-        def progress_callback(idx: int, total: int, dn: str, stats: dict[str, int]) -> None:
+        def progress_callback(
+            idx: int, total: int, dn: str, stats: dict[str, int]
+        ) -> None:
             """Track progress calls."""
             progress_calls.append((idx, total, dn, stats))
 

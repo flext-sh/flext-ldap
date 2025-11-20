@@ -11,12 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from typing import cast
 
 from flext_core import (
     FlextConfig,
-    FlextExceptions,
     FlextLogger,
     FlextResult,
     FlextService,
@@ -41,59 +39,10 @@ class FlextLdapConnection(FlextService[bool]):
     _config: FlextLdapConfig
     _logger: FlextLogger
 
-    @computed_field  # type: ignore[misc]
+    @computed_field
     def service_config(self) -> FlextConfig:
         """Automatic config binding via Pydantic v2 computed_field."""
         return FlextConfig.get_global_instance()
-
-    @property
-    def project_config(self) -> FlextConfig:
-        """Auto-resolve project-specific configuration by naming convention."""
-        try:
-            return cast(
-                "FlextConfig",
-                self._resolve_project_component(
-                    "Config",
-                    lambda obj: isinstance(obj, FlextConfig),
-                ),
-            )
-        except Exception:
-            # Fast fail: return global config if project config not found
-            return FlextConfig.get_global_instance()
-
-    def _resolve_project_component(
-        self,
-        component_suffix: str,
-        type_check_func: Callable[[object], bool],
-    ) -> object:
-        """Resolve project component by naming convention (DRY helper)."""
-        service_class_name = self.__class__.__name__
-        component_class_name = service_class_name.replace("Service", component_suffix)
-
-        # Fast fail: container must be accessible
-        container = self.container
-
-        # Fast fail: component must exist in container
-        result = container.get(component_class_name)
-        if result.is_failure:
-            raise FlextExceptions.NotFoundError(
-                message=f"Component '{component_class_name}' not found in container",
-                resource_type="component",
-                resource_id=component_class_name,
-            )
-
-        obj = result.unwrap()
-        if not type_check_func(obj):
-            msg = (
-                f"Component '{component_class_name}' found but type check failed. "
-                f"Expected type validated by {type_check_func.__name__}"
-            )
-            raise FlextExceptions.TypeError(
-                message=msg,
-                expected_type=component_class_name,
-                actual_type=type(obj).__name__,
-            )
-        return obj
 
     def __init__(
         self,
@@ -103,19 +52,17 @@ class FlextLdapConnection(FlextService[bool]):
         """Initialize connection service.
 
         Args:
-            config: FlextLdapConfig instance (optional, creates default if not provided)
+            config: FlextLdapConfig instance (optional, uses namespace default if not provided)
             parser: FlextLdifParser instance (optional, creates default if not provided)
 
         """
         super().__init__()
-        # Use new config pattern: access via namespace when config not provided
-        # FlextLdapConfig is imported at top-level, ensuring auto_register decorator executes
-        if config is None:
-            global_config = FlextConfig.get_global_instance()
-            # Type cast needed: namespace returns BaseModel, but we know it's FlextLdapConfig
-            self._config = cast("FlextLdapConfig", global_config.ldap)
-        else:
-            self._config = config
+        # Use FlextConfig namespace pattern: access via namespace when config not provided
+        self._config = (
+            config
+            if config is not None
+            else cast("FlextLdapConfig", FlextConfig.get_global_instance().ldap)
+        )
         self._logger = FlextLogger.create_module_logger(__name__)
         # Pass parser to adapter (optional, creates default if not provided)
         self._adapter = Ldap3Adapter(parser=parser or FlextLdifParser())
@@ -150,12 +97,14 @@ class FlextLdapConnection(FlextService[bool]):
             auto_retry=auto_retry,
             max_retries=max_retries,
             retry_delay=retry_delay,
-            bind_dn=connection_config.bind_dn[:50] if connection_config.bind_dn else None,
+            bind_dn=connection_config.bind_dn[:50]
+            if connection_config.bind_dn
+            else None,
             has_password=connection_config.bind_password is not None,
         )
-        
+
         connect_result = self._adapter.connect(connection_config)
-        
+
         if connect_result.is_success:
             self._logger.debug(
                 "Adapter connection succeeded",
@@ -211,7 +160,7 @@ class FlextLdapConnection(FlextService[bool]):
             time.sleep(retry_delay)
 
             connect_result = self._adapter.connect(connection_config)
-            
+
             if connect_result.is_success:
                 self._detect_server_type_optional()
 
@@ -223,7 +172,7 @@ class FlextLdapConnection(FlextService[bool]):
                     port=connection_config.port,
                 )
                 return connect_result.map(lambda _: True)
-            
+
             self._logger.debug(
                 "Retry attempt failed",
                 operation="connect",
@@ -244,7 +193,7 @@ class FlextLdapConnection(FlextService[bool]):
             final_error=str(last_error)[:200],
         )
         return FlextResult[bool].fail(
-            f"Connection failed after {max_retries} retries: {last_error}"
+            f"Connection failed after {max_retries} retries: {last_error}",
         )
 
     def disconnect(self) -> None:
@@ -254,9 +203,9 @@ class FlextLdapConnection(FlextService[bool]):
             operation="disconnect",
             was_connected=self.is_connected,
         )
-        
+
         self._adapter.disconnect()
-        
+
         self._logger.info(
             "LDAP connection closed",
             operation="disconnect",
@@ -293,12 +242,12 @@ class FlextLdapConnection(FlextService[bool]):
 
         try:
             connection = self._adapter.connection
-            if not connection:
+            if connection is None:
                 return
 
             detector = FlextLdapServerDetector()
             detection_result = detector.detect_from_connection(connection)
-            
+
             if detection_result.is_success:
                 detected_type = detection_result.unwrap()
                 self._logger.info(
@@ -331,5 +280,5 @@ class FlextLdapConnection(FlextService[bool]):
 
         """
         if self.is_connected:
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(data=True)
         return FlextResult[bool].fail("Not connected to LDAP server")

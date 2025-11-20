@@ -10,29 +10,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import cast
 
 from flext_core import (
     FlextConfig,
-    FlextExceptions,
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextUtilities,
 )
-from flext_ldif import FlextLdif, FlextLdifConfig
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
 from pydantic import computed_field
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.services.operations import (
-    FlextLdapOperations,
-    _get_error_message,
-    _is_already_exists_error,
-)
+from flext_ldap.services.operations import FlextLdapOperations
 
 
 class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
@@ -65,71 +59,30 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
     _ldif: FlextLdif
     _logger: FlextLogger
 
-    @computed_field  # type: ignore[misc]
+    @computed_field
     def service_config(self) -> FlextConfig:
         """Automatic config binding via Pydantic v2 computed_field."""
         return FlextConfig.get_global_instance()
 
-    @property
-    def project_config(self) -> FlextConfig:
-        """Auto-resolve project-specific configuration by naming convention."""
-        try:
-            return cast(
-                "FlextConfig",
-                self._resolve_project_component(
-                    "Config",
-                    lambda obj: isinstance(obj, FlextConfig),
-                ),
-            )
-        except Exception:
-            # Fast fail: return global config if project config not found
-            return FlextConfig.get_global_instance()
-
-    def _resolve_project_component(
-        self,
-        component_suffix: str,
-        type_check_func: Callable[[object], bool],
-    ) -> object:
-        """Resolve project component by naming convention (DRY helper)."""
-        service_class_name = self.__class__.__name__
-        component_class_name = service_class_name.replace("Service", component_suffix)
-
-        # Fast fail: container must be accessible
-        container = self.container
-
-        # Fast fail: component must exist in container
-        result = container.get(component_class_name)
-        if result.is_failure:
-            raise FlextExceptions.NotFoundError(
-                message=f"Component '{component_class_name}' not found in container",
-                resource_type="component",
-                resource_id=component_class_name,
-            )
-
-        obj = result.unwrap()
-        if not type_check_func(obj):
-            msg = (
-                f"Component '{component_class_name}' found but type check failed. "
-                f"Expected type validated by {type_check_func.__name__}"
-            )
-            raise FlextExceptions.TypeError(
-                message=msg,
-                expected_type=component_class_name,
-                actual_type=type(obj).__name__,
-            )
-        return obj
-
     def __init__(
         self,
-        operations: FlextLdapOperations,
+        operations: FlextLdapOperations | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize sync service.
 
         Args:
             operations: FlextLdapOperations instance for LDAP operations
+            **kwargs: Additional keyword arguments passed to parent class
 
         """
-        super().__init__()
+        super().__init__(**kwargs)
+        # Extract operations from kwargs if not provided directly
+        if operations is None:
+            operations = cast("FlextLdapOperations | None", kwargs.pop("operations", None))
+        if operations is None:
+            msg = "operations parameter is required"
+            raise TypeError(msg)
         self._operations = operations
         # Create FlextLdif with RFC server type (no quirks/conversions for direct sync)
         config = FlextLdifConfig(quirks_server_type=FlextLdapConstants.ServerTypes.RFC)
@@ -160,11 +113,15 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             operation="sync_ldif_file",
             ldif_file=str(ldif_file),
             batch_size=options.batch_size,
-            source_basedn=options.source_basedn[:100] if options.source_basedn else None,
-            target_basedn=options.target_basedn[:100] if options.target_basedn else None,
+            source_basedn=options.source_basedn[:100]
+            if options.source_basedn
+            else None,
+            target_basedn=options.target_basedn[:100]
+            if options.target_basedn
+            else None,
         )
-        
-        start_time = datetime.now(UTC)
+
+        start_time = FlextUtilities.Generators.generate_datetime_utc()
 
         if not ldif_file.exists():
             self._logger.error(
@@ -177,7 +134,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             )
 
         file_size = ldif_file.stat().st_size if ldif_file.exists() else 0
-        
+
         self._logger.debug(
             "Parsing LDIF file",
             operation="sync_ldif_file",
@@ -197,14 +154,16 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 operation="sync_ldif_file",
                 ldif_file=str(ldif_file),
                 error=str(parse_result.error),
-                error_type=type(parse_result.error).__name__ if parse_result.error else "Unknown",
+                error_type=type(parse_result.error).__name__
+                if parse_result.error
+                else "Unknown",
                 file_size_bytes=file_size,
                 server_type=FlextLdapConstants.ServerTypes.RFC,
             )
             return FlextResult[FlextLdapModels.SyncStats].fail(
                 f"Failed to parse LDIF file: {parse_result.error}",
             )
-        
+
         parsed_entries = parse_result.unwrap()
         self._logger.debug(
             "LDIF file parsed successfully",
@@ -214,7 +173,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             parsed_entries_count=len(parsed_entries),
             server_type=FlextLdapConstants.ServerTypes.RFC,
         )
-        
+
         return self._process_entries(parse_result.unwrap(), options, start_time)
 
     def _process_entries(
@@ -239,10 +198,14 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             operation="sync_ldif_file",
             entries_count=len(entries),
             batch_size=options.batch_size,
-            source_basedn=options.source_basedn[:100] if options.source_basedn else None,
-            target_basedn=options.target_basedn[:100] if options.target_basedn else None,
+            source_basedn=options.source_basedn[:100]
+            if options.source_basedn
+            else None,
+            target_basedn=options.target_basedn[:100]
+            if options.target_basedn
+            else None,
         )
-        
+
         if not entries:
             self._logger.warning(
                 "No entries found in LDIF file",
@@ -260,28 +223,39 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             )
 
         original_entries_count = len(entries)
-        if options.source_basedn.strip() and options.target_basedn.strip():
+        # Validate base DNs are not empty or whitespace-only using FlextUtilities
+        source_result = FlextUtilities.TextProcessor.safe_string(options.source_basedn)
+        target_result = FlextUtilities.TextProcessor.safe_string(options.target_basedn)
+        if source_result.is_success and target_result.is_success:
             self._logger.debug(
                 "Transforming BaseDN for entries",
                 operation="sync_ldif_file",
-                source_basedn=options.source_basedn[:100] if options.source_basedn else None,
-                target_basedn=options.target_basedn[:100] if options.target_basedn else None,
+                source_basedn=options.source_basedn[:100]
+                if options.source_basedn
+                else None,
+                target_basedn=options.target_basedn[:100]
+                if options.target_basedn
+                else None,
                 entries_count_before=original_entries_count,
             )
-            
+
             entries = self._transform_entries_basedn(
                 entries,
                 options.source_basedn,
                 options.target_basedn,
             )
-            
+
             self._logger.debug(
                 "BaseDN transformation completed",
                 operation="sync_ldif_file",
                 entries_count_before=original_entries_count,
                 entries_count_after=len(entries),
-                source_basedn=options.source_basedn[:100] if options.source_basedn else None,
-                target_basedn=options.target_basedn[:100] if options.target_basedn else None,
+                source_basedn=options.source_basedn[:100]
+                if options.source_basedn
+                else None,
+                target_basedn=options.target_basedn[:100]
+                if options.target_basedn
+                else None,
             )
 
         self._logger.info(
@@ -300,7 +274,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                     skipped=stats.skipped,
                     failed=stats.failed,
                     total=stats.total,
-                    duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
+                    duration_seconds=(
+                        FlextUtilities.Generators.generate_datetime_utc() - start_time
+                    ).total_seconds(),
                 ),
             )
             .map(
@@ -312,9 +288,15 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                         skipped=final_stats.skipped,
                         failed=final_stats.failed,
                         total=final_stats.total,
-                        success_rate=f"{(final_stats.added / final_stats.total * 100):.1f}%" if final_stats.total > 0 else "0%",
-                        skip_rate=f"{(final_stats.skipped / final_stats.total * 100):.1f}%" if final_stats.total > 0 else "0%",
-                        failure_rate=f"{(final_stats.failed / final_stats.total * 100):.1f}%" if final_stats.total > 0 else "0%",
+                        success_rate=f"{(final_stats.added / final_stats.total * 100):.1f}%"
+                        if final_stats.total > 0
+                        else "0%",
+                        skip_rate=f"{(final_stats.skipped / final_stats.total * 100):.1f}%"
+                        if final_stats.total > 0
+                        else "0%",
+                        failure_rate=f"{(final_stats.failed / final_stats.total * 100):.1f}%"
+                        if final_stats.total > 0
+                        else "0%",
                         duration_seconds=final_stats.duration_seconds,
                     ),
                     final_stats,
@@ -346,14 +328,14 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             entries_count=len(entries),
             batch_size=options.batch_size,
         )
-        
+
         total_added = 0
         total_skipped = 0
         total_failed = 0
 
         for idx, entry in enumerate(entries, 1):
             entry_dn_str = str(entry.dn) if entry.dn else "unknown"
-            
+
             add_result = self._operations.add(entry)
 
             entry_stats: dict[str, int] = {"added": 0, "skipped": 0, "failed": 0}
@@ -372,9 +354,11 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                     skipped_count=total_skipped,
                 )
             else:
-                error_message = _get_error_message(add_result)
-                is_already_exists = _is_already_exists_error(error_message)
-                
+                error_message = FlextLdapOperations.get_error_message(add_result)
+                is_already_exists = FlextLdapOperations.is_already_exists_error(
+                    error_message,
+                )
+
                 if is_already_exists:
                     total_skipped += 1
                     entry_stats["skipped"] = 1
@@ -398,7 +382,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                         total_entries=len(entries),
                         entry_dn=entry_dn_str[:100] if entry_dn_str else None,
                         error=error_message[:200],
-                        error_type=type(add_result.error).__name__ if add_result.error else "Unknown",
+                        error_type=type(add_result.error).__name__
+                        if add_result.error
+                        else "Unknown",
                         added_count=total_added,
                         failed_count=total_failed,
                         skipped_count=total_skipped,
@@ -415,11 +401,17 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             added_count=total_added,
             skipped_count=total_skipped,
             failed_count=total_failed,
-            success_rate=f"{(total_added / len(entries) * 100):.1f}%" if len(entries) > 0 else "0%",
-            skip_rate=f"{(total_skipped / len(entries) * 100):.1f}%" if len(entries) > 0 else "0%",
-            failure_rate=f"{(total_failed / len(entries) * 100):.1f}%" if len(entries) > 0 else "0%",
+            success_rate=f"{(total_added / len(entries) * 100):.1f}%"
+            if len(entries) > 0
+            else "0%",
+            skip_rate=f"{(total_skipped / len(entries) * 100):.1f}%"
+            if len(entries) > 0
+            else "0%",
+            failure_rate=f"{(total_failed / len(entries) * 100):.1f}%"
+            if len(entries) > 0
+            else "0%",
         )
-        
+
         return FlextResult[FlextLdapModels.SyncStats].ok(
             FlextLdapModels.SyncStats(
                 added=total_added,
@@ -454,7 +446,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             target_basedn=target_basedn[:100] if target_basedn else None,
             entries_count=len(entries),
         )
-        
+
         if source_basedn == target_basedn:
             self._logger.debug(
                 "BaseDN transformation skipped - source equals target",
@@ -463,11 +455,11 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 entries_count=len(entries),
             )
             return entries
-        
+
         transformed = []
         transformed_count = 0
         unchanged_count = 0
-        
+
         for entry in entries:
             # Entry.dn is validated by Pydantic model - guaranteed to exist and non-empty
             # Pydantic validation ensures DN is never empty
@@ -475,7 +467,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
 
             if source_basedn.lower() in dn_str.lower():
                 new_dn_str = dn_str.replace(source_basedn, target_basedn)
-                
+
                 new_entry = entry.model_copy(
                     update={"dn": FlextLdifModels.DistinguishedName(value=new_dn_str)},
                 )

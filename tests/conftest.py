@@ -201,7 +201,9 @@ def test_dns_tracker() -> DNSTracker:
 
 
 @pytest.fixture
-def unique_dn_suffix(worker_id: str, session_id: str, request: pytest.FixtureRequest) -> str:
+def unique_dn_suffix(
+    worker_id: str, session_id: str, request: pytest.FixtureRequest
+) -> str:
     """Generate unique DN suffix for this worker and test (REGRA 3).
 
     Combines worker ID, session ID, test function name, and microsecond timestamp
@@ -227,7 +229,9 @@ def unique_dn_suffix(worker_id: str, session_id: str, request: pytest.FixtureReq
     test_name = request.node.name if hasattr(request, "node") else "unknown"
     # Sanitize test name (remove special chars that could break DN)
     allowed_chars = {"-", "_"}
-    test_name_clean = "".join(c if c.isalnum() or c in allowed_chars else "-" for c in test_name)[:20]
+    test_name_clean = "".join(
+        c if c.isalnum() or c in allowed_chars else "-" for c in test_name
+    )[:20]
 
     # Microsecond precision for intra-second uniqueness
     test_id = int(time.time() * 1000000) % 1000000
@@ -236,7 +240,9 @@ def unique_dn_suffix(worker_id: str, session_id: str, request: pytest.FixtureReq
 
 
 @pytest.fixture
-def make_user_dn(unique_dn_suffix: str, ldap_container: dict[str, object]) -> Callable[[str], str]:
+def make_user_dn(
+    unique_dn_suffix: str, ldap_container: dict[str, object]
+) -> Callable[[str], str]:
     """Factory to create unique user DNs with base DN isolation (REGRA 3).
 
     Uses the base_dn from ldap_container to ensure complete isolation.
@@ -272,7 +278,9 @@ def make_user_dn(unique_dn_suffix: str, ldap_container: dict[str, object]) -> Ca
 
 
 @pytest.fixture
-def make_group_dn(unique_dn_suffix: str, ldap_container: dict[str, object]) -> Callable[[str], str]:
+def make_group_dn(
+    unique_dn_suffix: str, ldap_container: dict[str, object]
+) -> Callable[[str], str]:
     """Factory to create unique group DNs with base DN isolation (REGRA 3).
 
     Uses the base_dn from ldap_container to ensure complete isolation.
@@ -287,7 +295,9 @@ def make_group_dn(unique_dn_suffix: str, ldap_container: dict[str, object]) -> C
 
     Example:
         >>> make_dn = make_group_dn
-        >>> dn = make_dn("testgroup")  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
+        >>> dn = make_dn(
+        ...     "testgroup"
+        ... )  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
 
     """
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
@@ -353,7 +363,7 @@ def ldap_container(
 
     # REGRA: Só recriar se estiver dirty, senão apenas iniciar se não estiver rodando
     is_dirty = docker_control.is_container_dirty(container_name)
-    
+
     if is_dirty:
         # Container está dirty - recriar completamente (down -v + up)
         logger.info(
@@ -373,7 +383,7 @@ def ldap_container(
             and isinstance(status.value, FlextTestDocker.ContainerInfo)
             and status.value.status == FlextTestDocker.ContainerStatus.RUNNING
         )
-        
+
         if not container_running:
             # Container não está rodando mas não está dirty - apenas iniciar (sem recriar volumes)
             logger.info(
@@ -397,18 +407,19 @@ def ldap_container(
     # AGUARDAR container estar pronto antes de permitir testes
     # Usar healthcheck do Docker se disponível, senão tentar conexão LDAP
     import time
-    
+
     max_wait = 60  # segundos
     wait_interval = 2.0  # segundos
     waited = 0
-    
+
     logger.info(f"Waiting for container {container_name} to be ready...")
-    
+
     # Verificar se container está pronto usando conexão LDAP direta
     # (mais confiável que healthcheck do Docker)
     while waited < max_wait:
         try:
             from ldap3 import Connection, Server
+
             server = Server("ldap://localhost:3390", get_info="NONE")
             test_conn = Connection(
                 server,
@@ -426,10 +437,10 @@ def ldap_container(
                 logger.debug(
                     f"Container {container_name} not ready yet (waited {waited:.1f}s): {e}"
                 )
-        
+
         time.sleep(wait_interval)
         waited += wait_interval
-    
+
     if waited >= max_wait:
         pytest.skip(
             f"Container {container_name} did not become ready within {max_wait}s"

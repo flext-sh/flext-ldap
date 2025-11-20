@@ -404,12 +404,10 @@ class TestFlextLdapOperationsComplete:
         self,
         operations_service: FlextLdapOperations,
     ) -> None:
-        """Test _is_already_exists_error with empty string error message."""
-        # _is_already_exists_error is now a module-level function, not a method
+        """Test is_already_exists_error with empty string error message."""
+        # is_already_exists_error is now a static method of FlextLdapOperations class
         # FlextResult contract guarantees error is non-None, so function expects str
-        from flext_ldap.services.operations import _is_already_exists_error
-
-        result = _is_already_exists_error("")
+        result = FlextLdapOperations.is_already_exists_error("")
         assert result is False
 
     def test_upsert_with_schema_modify_success(

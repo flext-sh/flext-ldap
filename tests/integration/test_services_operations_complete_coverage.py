@@ -100,7 +100,8 @@ class TestFlextLdapOperationsCompleteCoverage:
         )
         # Convert to expected type: dict[str, list[str] | str]
         attrs: dict[str, list[str] | str] = {
-            k: v if isinstance(v, (list, str)) else [str(v)] for k, v in attrs_raw.items()
+            k: v if isinstance(v, (list, str)) else [str(v)]
+            for k, v in attrs_raw.items()
         }
         entry = EntryTestHelpers.create_entry(dn_with_spaces, attrs)
 

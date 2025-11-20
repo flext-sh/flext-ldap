@@ -189,7 +189,7 @@ class TestLdap3AdapterComplete:
             },
         )
 
-        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)  # type: ignore[arg-type]  # type: ignore[arg-type]
+        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)
         TestOperationHelpers.assert_result_success(result)
 
     def test_modify_with_add_operation(
@@ -320,7 +320,7 @@ class TestLdap3AdapterComplete:
             {"cn": ["testminimal"], "objectClass": ["top", "person"]},
         )
 
-        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)  # type: ignore[arg-type]
+        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)
         # Should succeed or fail gracefully
         assert result.is_success or result.is_failure
 
@@ -423,9 +423,9 @@ class TestLdap3AdapterComplete:
             """TECH DEBT: Mock ParseResponse with invalid entry (should use REAL data)."""
 
             def __init__(self) -> None:
-                self.entries = [InvalidEntry()]  # type: ignore[list-item]
+                self.entries = [InvalidEntry()]
 
-        result = connected_adapter._convert_parsed_entries(MockParseResponse())  # type: ignore[arg-type]
+        result = connected_adapter._convert_parsed_entries(MockParseResponse())
         assert result.is_failure
         assert result.error is not None
         assert "missing dn" in result.error.lower()
@@ -450,9 +450,9 @@ class TestLdap3AdapterComplete:
             """TECH DEBT: Mock ParseResponse with invalid entry (should use REAL data)."""
 
             def __init__(self) -> None:
-                self.entries = [InvalidEntry()]  # type: ignore[list-item]
+                self.entries = [InvalidEntry()]
 
-        result = connected_adapter._convert_parsed_entries(MockParseResponse())  # type: ignore[arg-type]
+        result = connected_adapter._convert_parsed_entries(MockParseResponse())
         assert result.is_failure
         assert result.error is not None
         assert "missing attributes" in result.error.lower()
