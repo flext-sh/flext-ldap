@@ -28,45 +28,6 @@ class TestFlextLdapServerDetector:
         """Test detector service initialization."""
         assert detector is not None
 
-    def test_get_attribute_value_single(
-        self,
-        detector: FlextLdapServerDetector,
-    ) -> None:
-        """Test _get_attribute_value returns first value."""
-        attributes = {
-            "vendorName": ["OpenLDAP"],
-            "empty": [],
-        }
-
-        value = detector._get_attribute_value(attributes, "vendorName")
-        assert value == "OpenLDAP"
-
-        value = detector._get_attribute_value(attributes, "empty")
-        assert value is None
-
-        value = detector._get_attribute_value(attributes, "nonexistent")
-        assert value is None
-
-    def test_get_attribute_values_list(
-        self,
-        detector: FlextLdapServerDetector,
-    ) -> None:
-        """Test _get_attribute_values returns all values."""
-        attributes = {
-            "namingContexts": ["dc=flext,dc=local", "dc=test,dc=com"],
-            "empty": [],
-        }
-
-        values = detector._get_attribute_values(attributes, "namingContexts")
-        assert len(values) == 2
-        assert "dc=flext,dc=local" in values
-
-        values = detector._get_attribute_values(attributes, "empty")
-        assert len(values) == 0
-
-        values = detector._get_attribute_values(attributes, "nonexistent")
-        assert len(values) == 0
-
     def test_detect_from_attributes_oid(
         self,
         detector: FlextLdapServerDetector,

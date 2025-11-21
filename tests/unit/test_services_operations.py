@@ -14,7 +14,8 @@ from ldap3 import MODIFY_REPLACE
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # Mark all tests in this module as unit tests (fast, no Docker)
 pytestmark = pytest.mark.unit
@@ -40,7 +41,9 @@ class TestFlextLdapOperations:
             base_dn="dc=example,dc=com",
         )
         result = operations.search(search_options)
-        TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
+        TestDeduplicationHelpers.assert_failure_generic(
+            result, expected_error="Not connected"
+        )
 
     def test_add_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test add when not connected."""
@@ -80,4 +83,6 @@ class TestFlextLdapOperations:
         operations = FlextLdapOperations(connection=connection)
         result = operations.execute()
         # Fast-fail: execute() returns failure when not connected
-        TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
+        TestDeduplicationHelpers.assert_failure_generic(
+            result, expected_error="Not connected"
+        )

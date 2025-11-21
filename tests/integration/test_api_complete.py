@@ -14,9 +14,10 @@ from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
-from tests.fixtures.constants import RFC
-from tests.helpers.operation_helpers import TestOperationHelpers
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ..fixtures.constants import RFC
+from ..helpers.operation_helpers import TestOperationHelpers
+from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.integration
 

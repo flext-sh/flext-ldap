@@ -14,7 +14,8 @@ from ldap3 import MODIFY_REPLACE
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # Mark all tests in this module as unit tests (fast, no Docker)
 pytestmark = pytest.mark.unit

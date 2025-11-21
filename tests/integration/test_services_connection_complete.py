@@ -14,8 +14,9 @@ from flext_ldif import FlextLdifParser
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
-from tests.fixtures.constants import RFC
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ..fixtures.constants import RFC
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 

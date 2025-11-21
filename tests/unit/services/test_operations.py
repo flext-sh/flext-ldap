@@ -13,14 +13,15 @@ import pytest
 
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ...helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
-def mock_connection() -> FlextLdapConnection:
-    """Create a mock connection for testing."""
+def ldap_connection() -> FlextLdapConnection:
+    """Create a real LDAP connection instance for testing (not connected)."""
     from flext_ldap.config import FlextLdapConfig
 
     config = FlextLdapConfig()
@@ -31,19 +32,19 @@ class TestFlextLdapOperations:
     """Tests for FlextLdapOperations core functionality."""
 
     def test_operations_initialization(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test operations service initialization."""
-        operations = FlextLdapOperations(connection=mock_connection)
+        operations = FlextLdapOperations(connection=ldap_connection)
         assert operations is not None
         assert operations._connection is not None
-        assert operations._logger is not None
+        assert operations.logger is not None
 
     def test_service_config_property(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test service_config property returns FlextConfig."""
-        operations = FlextLdapOperations(connection=mock_connection)
+        operations = FlextLdapOperations(connection=ldap_connection)
         config = operations.service_config
         assert config is not None
         from flext_core import FlextConfig
@@ -51,14 +52,14 @@ class TestFlextLdapOperations:
         assert isinstance(config, FlextConfig)
 
     def test_is_connected_not_connected(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test is_connected returns False when not connected."""
-        operations = FlextLdapOperations(connection=mock_connection)
+        operations = FlextLdapOperations(connection=ldap_connection)
         assert operations.is_connected is False
 
     def test_is_already_exists_error_detection(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         # Method is now static method of FlextLdapOperations class
@@ -76,10 +77,10 @@ class TestFlextLdapOperations:
         assert FlextLdapOperations.is_already_exists_error("") is False
 
     def test_compare_entries_identical(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test _compare_entries with identical entries returns None."""
-        operations = FlextLdapOperations(connection=mock_connection)
+        operations = FlextLdapOperations(connection=ldap_connection)
 
         entry1 = TestOperationHelpers.create_entry_simple(
             "cn=test,dc=example,dc=com", {"cn": ["test"], "sn": ["User"]}
@@ -91,10 +92,10 @@ class TestFlextLdapOperations:
         assert operations._compare_entries(entry1, entry2) is None
 
     def test_compare_entries_different_attributes(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test _compare_entries with different attributes returns changes dict."""
-        operations = FlextLdapOperations(connection=mock_connection)
+        operations = FlextLdapOperations(connection=ldap_connection)
 
         entry1 = TestOperationHelpers.create_entry_simple(
             "cn=test,dc=example,dc=com", {"cn": ["test"], "sn": ["User"]}
@@ -109,10 +110,10 @@ class TestFlextLdapOperations:
         assert "sn" in changes
 
     def test_execute_method_returns_result(
-        self, mock_connection: FlextLdapConnection
+        self, ldap_connection: FlextLdapConnection
     ) -> None:
         """Test execute method returns a FlextResult."""
-        operations = FlextLdapOperations(connection=mock_connection)
+        operations = FlextLdapOperations(connection=ldap_connection)
         result = operations.execute()
 
         assert result is not None

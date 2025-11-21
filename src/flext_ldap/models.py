@@ -19,28 +19,45 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from flext_core import FlextConfig, FlextLogger, FlextModels, FlextUtilities
+from flext_core import FlextModels, FlextUtilities
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from pydantic import Field, computed_field, field_validator, model_validator
 
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
 
-logger = FlextLogger(__name__)
+# Get nested classes from FlextModels at runtime
+_FlextModels_Config = getattr(FlextModels, "Config", None)
+_FlextModels_Options = getattr(FlextModels, "Options", None)
+_FlextModels_Results = getattr(FlextModels, "Results", None)
+_FlextModels_Statistics = getattr(FlextModels, "Statistics", None)
+
+if _FlextModels_Config is None:
+    msg = "FlextModels.Config not found"
+    raise AttributeError(msg)
+if _FlextModels_Options is None:
+    msg = "FlextModels.Options not found"
+    raise AttributeError(msg)
+if _FlextModels_Results is None:
+    msg = "FlextModels.Results not found"
+    raise AttributeError(msg)
+if _FlextModels_Statistics is None:
+    msg = "FlextModels.Statistics not found"
+    raise AttributeError(msg)
 
 
 class FlextLdapModels(FlextModels):
     """LDAP domain models extending flext-core FlextModels.
 
     Unified namespace class that aggregates all LDAP domain models.
-    Reuses FlextLdifModels for Entry, DN, Attributes, and Schema.
-    Only defines LDAP-specific models for connection and operations.
+    Use FlextLdapServiceBase static methods for config access in defaults.
     """
 
     # =========================================================================
     # CONNECTION MODELS
     # =========================================================================
 
-    class ConnectionConfig(FlextModels.Config):
+    class ConnectionConfig(_FlextModels_Config):
         """Configuration for LDAP connection (frozen, immutable).
 
         Minimal configuration model for establishing LDAP connections.
@@ -126,7 +143,7 @@ class FlextLdapModels(FlextModels):
     # SEARCH MODELS
     # =========================================================================
 
-    class SearchOptions(FlextModels.Options):
+    class SearchOptions(_FlextModels_Options):
         """Options for LDAP search operations (frozen, immutable).
 
         Minimal search configuration model.
@@ -255,7 +272,7 @@ class FlextLdapModels(FlextModels):
     # OPERATION RESULT MODELS
     # =========================================================================
 
-    class OperationResult(FlextModels.Results):
+    class OperationResult(_FlextModels_Results):
         """Result of LDAP operation (frozen, immutable).
 
         Generic result model for all LDAP operations.
@@ -309,7 +326,6 @@ class FlextLdapModels(FlextModels):
         )
 
         @computed_field
-        @property
         def total_count(self) -> int:
             """Total number of entries found (computed from entries list).
 
@@ -324,7 +340,6 @@ class FlextLdapModels(FlextModels):
             return len(self.entries)
 
         @computed_field
-        @property
         def by_objectclass(self) -> dict[str, list[FlextLdifModels.Entry]]:
             """Categorize entries by objectClass attribute.
 
@@ -366,7 +381,7 @@ class FlextLdapModels(FlextModels):
     # SYNC MODELS
     # =========================================================================
 
-    class SyncOptions(FlextModels.Options):
+    class SyncOptions(_FlextModels_Options):
         """Options for LDIF to LDAP synchronization (frozen, immutable).
 
         Configuration for syncing LDIF files to LDAP directory.
@@ -379,13 +394,7 @@ class FlextLdapModels(FlextModels):
         """
 
         batch_size: int = Field(
-            default_factory=lambda: cast(
-                "int",
-                FlextUtilities.Configuration.get_parameter(
-                    cast("FlextLdapConfig", FlextConfig.get_global_instance().ldap),
-                    "chunk_size",
-                ),
-            ),
+            default_factory=lambda: FlextLdapServiceBase.get_ldap_config().chunk_size,
             ge=1,
             description="Number of entries to process in each batch",
         )
@@ -420,7 +429,7 @@ class FlextLdapModels(FlextModels):
             )
         )
 
-    class SyncStats(FlextModels.Statistics):
+    class SyncStats(_FlextModels_Statistics):
         """Statistics for LDIF synchronization operation (frozen, immutable).
 
         Aggregated statistics from syncing LDIF entries to LDAP.
@@ -458,7 +467,6 @@ class FlextLdapModels(FlextModels):
         )
 
         @computed_field
-        @property
         def success_rate(self) -> float:
             """Calculate success rate as percentage.
 

@@ -13,7 +13,8 @@ import pytest
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 

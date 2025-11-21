@@ -25,7 +25,8 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.fixtures.loader import LdapTestFixtures
+
+from .fixtures.loader import LdapTestFixtures
 
 logger = FlextLogger(__name__)
 
@@ -349,11 +350,17 @@ def ldap_container(
     container_name = "flext-openldap-test"
     container_config = FlextTestDocker.SHARED_CONTAINERS.get(container_name)
 
-    if not container_config:
+    if container_config is None:
         pytest.skip(f"Container {container_name} not found in SHARED_CONTAINERS")
 
+    # Type narrowing: ensure container_config is not None
+    assert container_config is not None  # pyrefly type narrowing
+
     # Get compose file path
-    compose_file = str(container_config["compose_file"])
+    compose_file_value = container_config.get("compose_file")
+    if compose_file_value is None:
+        pytest.skip(f"Container {container_name} missing compose_file config")
+    compose_file = str(compose_file_value)
     if not compose_file.startswith("/"):
         # Relative path, make it absolute from workspace root
         # Workspace root is /home/marlonsc/flext
@@ -408,9 +415,9 @@ def ldap_container(
     # Usar healthcheck do Docker se disponível, senão tentar conexão LDAP
     import time
 
-    max_wait = 60  # segundos
-    wait_interval = 2.0  # segundos
-    waited = 0
+    max_wait: int = 60  # segundos
+    wait_interval: float = 2.0  # segundos
+    waited: float = 0.0
 
     logger.info(f"Waiting for container {container_name} to be ready...")
 
@@ -420,7 +427,7 @@ def ldap_container(
         try:
             from ldap3 import Connection, Server
 
-            server = Server("ldap://localhost:3390", get_info="NONE")
+            server = Server("ldap://localhost:3390", get_info="NO_INFO")
             test_conn = Connection(
                 server,
                 user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
@@ -485,8 +492,8 @@ def ldap_parser() -> FlextLdifParser:
 def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
     """Create simple connection config for unit tests (no Docker dependency).
 
-    This is a lightweight fixture for unit tests that mock the adapter.
-    For integration tests, use the 'connection_config' fixture instead.
+    This is a lightweight fixture for unit tests without live LDAP connection.
+    For integration tests with real LDAP server, use the 'connection_config' fixture instead.
     """
     return FlextLdapModels.ConnectionConfig(
         host="localhost",

@@ -10,25 +10,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
-from typing import cast
-
-from flext_core import (
-    FlextConfig,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-)
+from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdifParser
-from pydantic import computed_field
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.detection import FlextLdapServerDetector
 
 
-class FlextLdapConnection(FlextService[bool]):
+class FlextLdapConnection(FlextLdapServiceBase[bool]):
     """LDAP connection service managing connection lifecycle.
 
     Handles connection establishment, binding, and disconnection.
@@ -37,12 +29,6 @@ class FlextLdapConnection(FlextService[bool]):
 
     _adapter: Ldap3Adapter
     _config: FlextLdapConfig
-    _logger: FlextLogger
-
-    @computed_field
-    def service_config(self) -> FlextConfig:
-        """Automatic config binding via Pydantic v2 computed_field."""
-        return FlextConfig.get_global_instance()
 
     def __init__(
         self,
@@ -52,18 +38,13 @@ class FlextLdapConnection(FlextService[bool]):
         """Initialize connection service.
 
         Args:
-            config: FlextLdapConfig instance (optional, uses namespace default if not provided)
+            config: FlextLdapConfig instance (optional, uses ldap_config if not provided)
             parser: FlextLdifParser instance (optional, creates default if not provided)
 
         """
         super().__init__()
-        # Use FlextConfig namespace pattern: access via namespace when config not provided
-        self._config = (
-            config
-            if config is not None
-            else cast("FlextLdapConfig", FlextConfig.get_global_instance().ldap)
-        )
-        self._logger = FlextLogger.create_module_logger(__name__)
+        # Use typed config.ldap property from FlextLdapServiceBase
+        self._config = config if config is not None else self.config.ldap
         # Pass parser to adapter (optional, creates default if not provided)
         self._adapter = Ldap3Adapter(parser=parser or FlextLdifParser())
 
@@ -87,7 +68,7 @@ class FlextLdapConnection(FlextService[bool]):
             FlextResult[bool] indicating connection success
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Connecting to LDAP server",
             operation="connect",
             host=connection_config.host,
@@ -106,14 +87,14 @@ class FlextLdapConnection(FlextService[bool]):
         connect_result = self._adapter.connect(connection_config)
 
         if connect_result.is_success:
-            self._logger.debug(
+            self.logger.debug(
                 "Adapter connection succeeded",
                 operation="connect",
                 host=connection_config.host,
                 port=connection_config.port,
             )
         else:
-            self._logger.debug(
+            self.logger.debug(
                 "Adapter connection failed",
                 operation="connect",
                 host=connection_config.host,
@@ -125,7 +106,7 @@ class FlextLdapConnection(FlextService[bool]):
             if connect_result.is_success:
                 self._detect_server_type_optional()
 
-                self._logger.info(
+                self.logger.info(
                     "LDAP connection established",
                     operation="connect",
                     host=connection_config.host,
@@ -134,7 +115,7 @@ class FlextLdapConnection(FlextService[bool]):
                     use_tls=connection_config.use_tls,
                 )
             else:
-                self._logger.error(
+                self.logger.error(
                     "LDAP connection failed",
                     operation="connect",
                     host=connection_config.host,
@@ -144,53 +125,31 @@ class FlextLdapConnection(FlextService[bool]):
                 )
             return connect_result.map(lambda _: True)
 
-        last_error = connect_result.error
-        for attempt in range(1, max_retries + 1):
-            self._logger.warning(
-                "LDAP connection failed, retrying",
+        # Use FlextUtilities.Reliability.retry for retry logic
+        retry_result = FlextUtilities.Reliability.retry(
+            operation=lambda: self._adapter.connect(connection_config),
+            max_attempts=max_retries,
+            delay_seconds=retry_delay,
+        )
+
+        if retry_result.is_success:
+            self._detect_server_type_optional()
+            self.logger.info(
+                "LDAP connection established after retry",
                 operation="connect",
-                attempt=attempt,
-                max_retries=max_retries,
                 host=connection_config.host,
                 port=connection_config.port,
-                error=str(last_error)[:200],
-                retry_delay=retry_delay,
             )
+            return retry_result.map(lambda _: True)
 
-            time.sleep(retry_delay)
-
-            connect_result = self._adapter.connect(connection_config)
-
-            if connect_result.is_success:
-                self._detect_server_type_optional()
-
-                self._logger.info(
-                    "LDAP connection established after retry",
-                    operation="connect",
-                    attempt=attempt,
-                    host=connection_config.host,
-                    port=connection_config.port,
-                )
-                return connect_result.map(lambda _: True)
-
-            self._logger.debug(
-                "Retry attempt failed",
-                operation="connect",
-                attempt=attempt,
-                host=connection_config.host,
-                port=connection_config.port,
-                error=str(connect_result.error)[:200],
-            )
-
-            last_error = connect_result.error
-
-        self._logger.error(
+        last_error = retry_result.error
+        self.logger.error(
             "LDAP connection failed after all retries",
             operation="connect",
             max_retries=max_retries,
             host=connection_config.host,
             port=connection_config.port,
-            final_error=str(last_error)[:200],
+            final_error=str(last_error)[:200] if last_error else "Unknown error",
         )
         return FlextResult[bool].fail(
             f"Connection failed after {max_retries} retries: {last_error}",
@@ -198,7 +157,7 @@ class FlextLdapConnection(FlextService[bool]):
 
     def disconnect(self) -> None:
         """Close LDAP connection."""
-        self._logger.debug(
+        self.logger.debug(
             "Disconnecting from LDAP server",
             operation="disconnect",
             was_connected=self.is_connected,
@@ -206,7 +165,7 @@ class FlextLdapConnection(FlextService[bool]):
 
         self._adapter.disconnect()
 
-        self._logger.info(
+        self.logger.info(
             "LDAP connection closed",
             operation="disconnect",
         )
@@ -250,19 +209,19 @@ class FlextLdapConnection(FlextService[bool]):
 
             if detection_result.is_success:
                 detected_type = detection_result.unwrap()
-                self._logger.info(
+                self.logger.info(
                     "Server type detected automatically",
                     operation="connect",
                     detected_server_type=detected_type,
                 )
             else:
-                self._logger.debug(
+                self.logger.debug(
                     "Server type detection failed (non-critical)",
                     operation="connect",
                     error=str(detection_result.error),
                 )
         except Exception as e:
-            self._logger.debug(
+            self.logger.debug(
                 "Server type detection exception (non-critical)",
                 operation="connect",
                 error=str(e),

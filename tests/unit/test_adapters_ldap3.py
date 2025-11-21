@@ -17,7 +17,8 @@ from ldap3 import Connection, Server
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.unit
 

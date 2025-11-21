@@ -13,7 +13,7 @@ from __future__ import annotations
 from flext_core import FlextLogger
 from flext_ldif import FlextLdif, FlextLdifConfig
 
-from tests.fixtures import TestFixtures
+from . import TestFixtures
 
 logger = FlextLogger(__name__)
 

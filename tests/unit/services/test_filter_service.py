@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.unit
 

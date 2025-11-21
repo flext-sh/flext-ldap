@@ -14,18 +14,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, TypeVar, cast
 
-from flext_core import (
-    FlextConfig,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextUtilities,
-)
+from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
-from pydantic import computed_field
 
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapConnectionProtocol
@@ -33,7 +26,7 @@ from flext_ldap.typings import LdapConnectionProtocol
 T = TypeVar("T")
 
 
-class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
+class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     """LDAP operations service providing CRUD operations.
 
     Handles search, add, modify, and delete operations.
@@ -42,30 +35,6 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
     """
 
     _connection: LdapConnectionProtocol
-    _logger: FlextLogger
-
-    @computed_field
-    def service_config(self) -> FlextConfig:
-        """Automatic config binding via Pydantic v2 computed_field."""
-        return FlextConfig.get_global_instance()
-
-    @staticmethod
-    def get_error_message[T](result: FlextResult[T]) -> str:
-        """Get error message from FlextResult with type safety.
-
-        FlextResult contract guarantees error is non-None when is_failure is True.
-        This helper provides type-safe access without assert statements.
-
-        Args:
-            result: FlextResult with is_failure=True
-
-        Returns:
-            Error message string (guaranteed non-empty)
-
-        """
-        # FlextResult contract: error is guaranteed non-None when is_failure is True
-        # Use str() for type safety and to handle edge cases
-        return str(result.error) if result.error else "Unknown error"
 
     @staticmethod
     def normalize_dn(
@@ -122,12 +91,13 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         super().__init__(**kwargs)
         # Extract connection from kwargs if not provided directly
         if connection is None:
-            connection = cast("LdapConnectionProtocol | None", kwargs.pop("connection", None))
+            connection = cast(
+                "LdapConnectionProtocol | None", kwargs.pop("connection", None)
+            )
         if connection is None:
             msg = "connection parameter is required"
             raise TypeError(msg)
         self._connection = connection
-        self._logger = FlextLogger.create_module_logger(__name__)
 
     def search(
         self,
@@ -171,23 +141,25 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         if search_result.is_success:
             result = search_result.unwrap()
-            self._logger.debug(
+            self.logger.debug(
                 "LDAP search completed",
                 operation="search",
                 base_dn=normalized_base_dn,
                 entries_found=len(result.entries),
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP search failed",
                 operation="search",
                 base_dn=normalized_base_dn,
-                error=self.get_error_message(search_result),
+                error=str(search_result.error)
+                if search_result.error
+                else "Unknown error",
             )
 
         if search_result.is_failure:
             return FlextResult[FlextLdapModels.SearchResult].fail(
-                self.get_error_message(search_result),
+                str(search_result.error) if search_result.error else "Unknown error",
             )
         # Adapter.search already returns SearchResult - just return it
         return search_result
@@ -214,7 +186,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         add_result = self._connection.adapter.add(entry)
 
         if add_result.is_success:
-            self._logger.debug(
+            self.logger.debug(
                 "LDAP entry added",
                 operation="add",
                 entry_dn=entry_dn_str,
@@ -222,14 +194,14 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         else:
             # Don't log warning for "entryAlreadyExists" - this is expected in upsert context
             # Don't log warning for "session terminated" - this is handled by sync retry logic
-            error_str = self.get_error_message(add_result)
+            error_str = str(add_result.error) if add_result.error else "Unknown error"
             is_expected_error = (
                 self.is_already_exists_error(error_str)
                 or "session terminated" in error_str.lower()
             )
 
             if not is_expected_error:
-                self._logger.error(
+                self.logger.error(
                     "LDAP add entry failed",
                     operation="add",
                     entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -237,7 +209,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                     error_type=type(add_result.error).__name__,
                 )
             else:
-                self._logger.debug(
+                self.logger.debug(
                     "LDAP add entry failed with expected error",
                     operation="add",
                     entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -270,18 +242,20 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         modify_result = self._connection.adapter.modify(dn_model, changes)
 
         if modify_result.is_success:
-            self._logger.debug(
+            self.logger.debug(
                 "LDAP entry modified",
                 operation="modify",
                 entry_dn=str(dn_model),
                 changes_count=len(changes),
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP modify failed",
                 operation="modify",
                 entry_dn=str(dn_model),
-                error=self.get_error_message(modify_result),
+                error=str(modify_result.error)
+                if modify_result.error
+                else "Unknown error",
             )
 
         return modify_result
@@ -307,17 +281,19 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         delete_result = self._connection.adapter.delete(dn_model)
 
         if delete_result.is_success:
-            self._logger.debug(
+            self.logger.debug(
                 "LDAP entry deleted",
                 operation="delete",
                 entry_dn=str(dn_model),
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP delete failed",
                 operation="delete",
                 entry_dn=str(dn_model),
-                error=self.get_error_message(delete_result),
+                error=str(delete_result.error)
+                if delete_result.error
+                else "Unknown error",
             )
 
         return delete_result
@@ -350,7 +326,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         """
         existing_dn = str(existing_entry.dn) if existing_entry.dn else "unknown"
         new_dn = str(new_entry.dn) if new_entry.dn else "unknown"
-        self._logger.debug(
+        self.logger.debug(
             "Comparing entries",
             existing_dn=existing_dn[:100] if existing_dn else None,
             new_dn=new_dn[:100] if new_dn else None,
@@ -360,7 +336,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             not existing_entry.attributes.attributes
             or not new_entry.attributes.attributes
         ):
-            self._logger.debug(
+            self.logger.debug(
                 "Entry comparison skipped - missing attributes",
                 existing_dn=existing_dn[:100] if existing_dn else None,
                 new_dn=new_dn[:100] if new_dn else None,
@@ -372,7 +348,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         existing_attrs = existing_entry.attributes.attributes
         new_attrs = new_entry.attributes.attributes
 
-        self._logger.debug(
+        self.logger.debug(
             "Attributes extracted for comparison",
             existing_dn=existing_dn[:100] if existing_dn else None,
             new_dn=new_dn[:100] if new_dn else None,
@@ -402,7 +378,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         existing_attrs_lower = {k.lower(): (k, v) for k, v in existing_attrs.items()}
         new_attrs_lower = {k.lower(): (k, v) for k, v in new_attrs.items()}
 
-        self._logger.debug(
+        self.logger.debug(
             "Comparing attributes",
             existing_dn=existing_dn[:100] if existing_dn else None,
             new_dn=new_dn[:100] if new_dn else None,
@@ -435,7 +411,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                 has_changes = True
                 modified_attrs.append(existing_attr_name)
 
-                self._logger.debug(
+                self.logger.debug(
                     "Attribute difference found",
                     existing_dn=existing_dn[:100] if existing_dn else None,
                     new_dn=new_dn[:100] if new_dn else None,
@@ -459,14 +435,14 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                 has_changes = True
                 deleted_attrs.append(attr_name)
 
-                self._logger.debug(
+                self.logger.debug(
                     "Attribute deletion detected",
                     existing_dn=existing_dn[:100] if existing_dn else None,
                     new_dn=new_dn[:100] if new_dn else None,
                     attribute_name=attr_name,
                 )
 
-        self._logger.debug(
+        self.logger.debug(
             "Entry comparison completed",
             existing_dn=existing_dn[:100] if existing_dn else None,
             new_dn=new_dn[:100] if new_dn else None,
@@ -514,7 +490,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         if not retry_on_errors or result.is_success:
             if result.is_success:
                 operation_result = result.unwrap()
-                self._logger.debug(
+                self.logger.debug(
                     "Upsert completed",
                     operation="upsert",
                     entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -526,7 +502,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         should_retry = any(pattern.lower() in error_str for pattern in retry_on_errors)
 
         if not should_retry:
-            self._logger.debug(
+            self.logger.debug(
                 "Upsert error not retriable",
                 operation="upsert",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -537,7 +513,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         last_error = result.error
         for attempt in range(1, max_retries + 1):
-            self._logger.warning(
+            self.logger.warning(
                 "Upsert failed, retrying",
                 operation="upsert",
                 attempt=attempt,
@@ -549,7 +525,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             result = self._upsert_internal(entry)
             if result.is_success:
                 operation_result = result.unwrap()
-                self._logger.info(
+                self.logger.info(
                     "Upsert succeeded after retry",
                     operation="upsert",
                     attempt=attempt,
@@ -564,7 +540,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             )
 
             if not should_retry:
-                self._logger.warning(
+                self.logger.warning(
                     "Upsert error changed to non-retriable, stopping retries",
                     operation="upsert",
                     attempt=attempt,
@@ -575,7 +551,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
             last_error = result.error
 
-        self._logger.error(
+        self.logger.error(
             "Upsert failed after all retries",
             operation="upsert",
             max_retries=max_retries,
@@ -628,7 +604,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         # Duplicate detection handled by LDAP server error responses
         add_op = entry.attributes.attributes.get("add", [])
         if not add_op:
-            self._logger.warning(
+            self.logger.warning(
                 "Schema modify entry missing 'add' attribute",
                 operation="schema_modify",
                 entry_dn=str(entry.dn),
@@ -642,7 +618,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         attr_values = entry.attributes.attributes.get(attr_type, [])
 
         if not attr_values:
-            self._logger.warning(
+            self.logger.warning(
                 "Schema modify entry missing attribute values",
                 operation="schema_modify",
                 entry_dn=str(entry.dn),
@@ -655,7 +631,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         filtered_values = [v for v in attr_values if v]
 
         if not filtered_values:
-            self._logger.warning(
+            self.logger.warning(
                 "Schema modify entry has only empty values",
                 operation="schema_modify",
                 entry_dn=str(entry.dn),
@@ -666,7 +642,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                 f"Schema modify entry has only empty values for '{attr_type}'",
             )
 
-        self._logger.debug(
+        self.logger.debug(
             "Performing schema modify operation",
             operation="schema_modify",
             entry_dn=str(entry.dn),
@@ -685,7 +661,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         modify_result = self.modify(str(entry.dn), schema_changes)
         if modify_result.is_success:
-            self._logger.debug(
+            self.logger.debug(
                 "Schema modify operation succeeded",
                 entry_dn=str(entry.dn),
                 attribute_type=attr_type,
@@ -694,16 +670,16 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             return FlextResult[dict[str, str]].ok({"operation": "modified"})
 
         # Check if error is "attribute already exists" - then skip
-        error_str = self.get_error_message(modify_result)
+        error_str = str(modify_result.error) if modify_result.error else "Unknown error"
         if self.is_already_exists_error(error_str):
-            self._logger.debug(
+            self.logger.debug(
                 "Schema modify operation skipped - attribute already exists",
                 entry_dn=str(entry.dn),
                 attribute_type=attr_type,
             )
             return FlextResult[dict[str, str]].ok({"operation": "skipped"})
 
-        self._logger.error(
+        self.logger.error(
             "Schema modify operation failed",
             entry_dn=str(entry.dn),
             error=error_str,
@@ -713,7 +689,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             attribute_type=attr_type,
             values_count=len(filtered_values),
         )
-        return FlextResult[dict[str, str]].fail(self.get_error_message(modify_result))
+        return FlextResult[dict[str, str]].fail(
+            str(modify_result.error) if modify_result.error else "Unknown error",
+        )
 
     def _upsert_regular_add(
         self,
@@ -734,11 +712,11 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         if add_result.is_success:
             return FlextResult[dict[str, str]].ok({"operation": "added"})
 
-        error_str = self.get_error_message(add_result)
+        error_str = str(add_result.error) if add_result.error else "Unknown error"
         is_already_exists = self.is_already_exists_error(error_str)
 
         if not is_already_exists:
-            self._logger.error(
+            self.logger.error(
                 "Add operation failed",
                 operation="upsert",
                 entry_dn=entry_dn_str,
@@ -783,7 +761,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         search_result = self.search(search_options)
 
         if search_result.is_failure:
-            self._logger.error(
+            self.logger.error(
                 "Failed to fetch existing entry for comparison",
                 operation="upsert",
                 entry_dn=entry_dn_str,
@@ -797,21 +775,21 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         existing_entries = search_result.unwrap().entries
 
         if not existing_entries:
-            self._logger.warning(
+            self.logger.warning(
                 "Existing entry not found, retrying add",
                 operation="upsert",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
             )
             add_result_retry = self.add(entry)
             if add_result_retry.is_success:
-                self._logger.debug(
+                self.logger.debug(
                     "Entry added after retry",
                     operation="upsert",
                     entry_dn=entry_dn_str[:100] if entry_dn_str else None,
                 )
                 return FlextResult[dict[str, str]].ok({"operation": "added"})
 
-            self._logger.error(
+            self.logger.error(
                 "Failed to add entry after retry",
                 operation="upsert",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -821,7 +799,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                 else "Unknown",
             )
             return FlextResult[dict[str, str]].fail(
-                self.get_error_message(add_result_retry),
+                str(add_result_retry.error)
+                if add_result_retry.error
+                else "Unknown error",
             )
 
         existing_entry = existing_entries[0]
@@ -830,7 +810,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         changes_or_none = self._compare_entries(existing_entry, entry)
 
         if changes_or_none is None:
-            self._logger.debug(
+            self.logger.debug(
                 "Entry already exists and is identical, skipping",
                 operation="upsert",
                 entry_dn=entry_dn_str,
@@ -844,7 +824,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
         modify_result = self.modify(entry_dn_str, changes)
 
         if modify_result.is_success:
-            self._logger.info(
+            self.logger.info(
                 "Entry updated",
                 operation="upsert",
                 entry_dn=entry_dn_str,
@@ -853,7 +833,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             )
             return FlextResult[dict[str, str]].ok({"operation": "modified"})
 
-        self._logger.error(
+        self.logger.error(
             "Failed to modify existing entry during upsert",
             operation="upsert",
             entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -864,7 +844,9 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             changed_attributes=list(changes.keys())[:20],
             changes_count=len(changes),
         )
-        return FlextResult[dict[str, str]].fail(self.get_error_message(modify_result))
+        return FlextResult[dict[str, str]].fail(
+            str(modify_result.error) if modify_result.error else "Unknown error",
+        )
 
     def batch_upsert(
         self,
@@ -919,7 +901,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                     synced += 1
             else:
                 failed += 1
-                self._logger.error(
+                self.logger.error(
                     "Batch upsert entry failed",
                     entry_index=i,
                     total_entries=total_entries,
@@ -928,7 +910,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                 )
 
                 if stop_on_error:
-                    self._logger.error(
+                    self.logger.error(
                         "Batch upsert stopped on error",
                         operation="batch_upsert",
                         entry_index=i,
@@ -948,7 +930,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
                     }
                     progress_callback(i, total_entries, entry_dn, stats_dict)
                 except Exception as e:
-                    self._logger.warning(
+                    self.logger.warning(
                         "Progress callback failed",
                         operation="batch_upsert",
                         entry_index=i,
@@ -963,7 +945,7 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
             "skipped": skipped,
         }
 
-        self._logger.info(
+        self.logger.info(
             "Batch upsert completed",
             operation="batch_upsert",
             total_entries=total_entries,
@@ -1004,15 +986,13 @@ class FlextLdapOperations(FlextService[FlextLdapModels.SearchResult]):
 
         # Return empty search result as health check indicator
         # Get base_dn from service config or use a safe default
-        # Use FlextConfig.get_global_instance() for namespace access
-        config = FlextConfig.get_global_instance()
-        ldap_config = cast("FlextLdapConfig", config.ldap)
-        base_dn = ldap_config.base_dn or "dc=example,dc=com"
+        base_dn = self.config.ldap.base_dn or "dc=example,dc=com"
 
-        # Validate and clean base_dn using FlextUtilities
-        cleaned_result = FlextUtilities.TextProcessor.safe_string(base_dn)
-        if cleaned_result.is_success:
-            base_dn = cleaned_result.unwrap()
+        # Validate and clean base_dn using FlextUtilities (railway pattern)
+        base_dn_result = FlextUtilities.TextProcessor.safe_string(base_dn)
+        # Type narrowing: ensure result is FlextResult[str]
+        if isinstance(base_dn_result, FlextResult) and base_dn_result.is_success:
+            base_dn = base_dn_result.unwrap()
         else:
             # If base_dn is empty or whitespace-only, use default
             base_dn = "dc=example,dc=com"

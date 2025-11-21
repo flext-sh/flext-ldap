@@ -9,15 +9,30 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar, Self
+
 from flext_core import FlextConfig
+from flext_ldif.config import FlextLdifConfig
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.constants import FlextLdapConstants
 
+# Use FlextConfig.auto_register and FlextConfig.AutoConfig directly
+# These are class attributes that exist at runtime
+_auto_register_decorator = getattr(FlextConfig, "auto_register", None)
+_AutoConfig_class = getattr(FlextConfig, "AutoConfig", None)
 
-@FlextConfig.auto_register("ldap")
-class FlextLdapConfig(FlextConfig.AutoConfig):
+if _auto_register_decorator is None:
+    msg = "FlextConfig.auto_register not found"
+    raise AttributeError(msg)
+if _AutoConfig_class is None:
+    msg = "FlextConfig.AutoConfig not found"
+    raise AttributeError(msg)
+
+
+@_auto_register_decorator("ldap")
+class FlextLdapConfig(_AutoConfig_class):
     """Pydantic v2 configuration for LDAP operations.
 
     **ARCHITECTURAL PATTERN**: Zero-Boilerplate Auto-Registration
@@ -139,4 +154,72 @@ class FlextLdapConfig(FlextConfig.AutoConfig):
     )
 
 
-__all__ = ["FlextLdapConfig"]
+class LdapFlextConfig(FlextConfig):
+    """FlextConfig TIPADO com namespaces do projeto flext-ldap.
+
+    Provides typed access to:
+    - self.ldap → FlextLdapConfig
+    - self.ldif → FlextLdifConfig (consumed dependency)
+
+    Usage in services:
+        class MyService(FlextLdapServiceBase[MyResult]):
+            def execute(self) -> FlextResult[MyResult]:
+                host = self.config.ldap.host  # Typed access!
+                encoding = self.config.ldif.ldif_encoding  # Typed access!
+    """
+
+    _ldap_global: ClassVar[LdapFlextConfig | None] = None
+
+    @property
+    def ldap(self) -> FlextLdapConfig:
+        """Get FlextLdapConfig namespace (typed access)."""
+        config = FlextConfig.get_global_instance()
+        # get_namespace is a method of FlextConfig instances
+        get_namespace_method = getattr(config, "get_namespace", None)
+        if get_namespace_method is None:
+            msg = "FlextConfig instance does not have get_namespace method"
+            raise AttributeError(msg)
+        namespace = get_namespace_method("ldap", FlextLdapConfig)
+        if not isinstance(namespace, FlextLdapConfig):
+            msg = f"Namespace 'ldap' is {type(namespace).__name__}, not FlextLdapConfig"
+            raise TypeError(msg)
+        return namespace
+
+    @property
+    def ldif(self) -> FlextLdifConfig:
+        """Get FlextLdifConfig namespace (typed access)."""
+        config = FlextConfig.get_global_instance()
+        # get_namespace is a method of FlextConfig instances
+        get_namespace_method = getattr(config, "get_namespace", None)
+        if get_namespace_method is None:
+            msg = "FlextConfig instance does not have get_namespace method"
+            raise AttributeError(msg)
+        namespace = get_namespace_method("ldif", FlextLdifConfig)
+        if not isinstance(namespace, FlextLdifConfig):
+            msg = f"Namespace 'ldif' is {type(namespace).__name__}, not FlextLdifConfig"
+            raise TypeError(msg)
+        return namespace
+
+    @classmethod
+    def get_global_instance(cls) -> LdapFlextConfig:
+        """Get singleton instance of LdapFlextConfig."""
+        if cls._ldap_global is None:
+            with cls._lock:
+                if cls._ldap_global is None:
+                    cls._ldap_global = cls()
+        return cls._ldap_global
+
+    def clone(self, **overrides: object) -> Self:
+        """Clone config with overrides."""
+        data = self.model_dump()
+        data.update(overrides)
+        return type(self)(**data)
+
+    @classmethod
+    def reset_for_testing(cls) -> None:
+        """Reset singleton for testing."""
+        with cls._lock:
+            cls._ldap_global = None
+
+
+__all__ = ["FlextLdapConfig", "LdapFlextConfig"]

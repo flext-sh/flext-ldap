@@ -13,20 +13,18 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable
-from typing import ClassVar, Self, cast, override
+from typing import ClassVar, Self, override
 
 from flext_core import (
-    FlextConfig,
     FlextContainer,
     FlextDispatcher,
-    FlextLogger,
     FlextRegistry,
     FlextResult,
-    FlextService,
 )
 from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifUtilities
 from pydantic import PrivateAttr
 
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -34,7 +32,7 @@ from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
 
-class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
+class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     """Main API facade for LDAP operations.
 
     This is the sole entry point for all LDAP operations, coordinating
@@ -88,7 +86,6 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _config: FlextLdapConfig = PrivateAttr()
-    _logger: FlextLogger = PrivateAttr()
     _parser: FlextLdifParser = PrivateAttr()
     _dispatcher: FlextDispatcher = PrivateAttr()
     _registry: FlextRegistry = PrivateAttr()
@@ -209,18 +206,13 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         dispatcher = FlextDispatcher()
         self._dispatcher = dispatcher
         self._registry = FlextRegistry(dispatcher=dispatcher)
-        self._logger = FlextLogger(__name__)
 
         # Initialize config and parser from CLASS variables (set in __init__)
         init_config = FlextLdap._pending_config
         init_parser = FlextLdap._pending_parser
 
-        # Use FlextConfig namespace pattern: access via namespace when config not provided
-        self._config = (
-            init_config
-            if init_config is not None
-            else cast("FlextLdapConfig", FlextConfig.get_global_instance().ldap)
-        )
+        # Use LdapFlextConfig namespace pattern: access via self.config.ldap
+        self._config = init_config if init_config is not None else self.config.ldap
         self._parser = init_parser if init_parser is not None else FlextLdifParser()
 
         # Initialize context and handlers
@@ -321,7 +313,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult[bool] indicating connection success
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Connecting to LDAP server",
             operation="connect",
             host=connection_config.host,
@@ -345,14 +337,14 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         )
 
         if result.is_success:
-            self._logger.info(
+            self.logger.info(
                 "LDAP connection established",
                 operation="connect",
                 host=connection_config.host,
                 port=connection_config.port,
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP connection failed",
                 operation="connect",
                 host=connection_config.host,
@@ -364,7 +356,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
     def disconnect(self) -> None:
         """Close LDAP connection."""
-        self._logger.debug(
+        self.logger.debug(
             "Disconnecting from LDAP server",
             operation="disconnect",
             was_connected=self.is_connected,
@@ -372,7 +364,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
         self._connection.disconnect()
 
-        self._logger.info(
+        self.logger.info(
             "LDAP connection closed",
             operation="disconnect",
         )
@@ -439,7 +431,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
             FlextResult containing SearchResult with Entry models
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Searching LDAP directory",
             operation="search",
             base_dn=search_options.base_dn[:100] if search_options.base_dn else None,
@@ -455,7 +447,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
         if result.is_success:
             search_result = result.unwrap()
-            self._logger.info(
+            self.logger.info(
                 "LDAP search completed",
                 operation="search",
                 base_dn=search_options.base_dn[:100]
@@ -465,7 +457,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
                 entries_found=len(search_result.entries),
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP search failed",
                 operation="search",
                 base_dn=search_options.base_dn[:100]
@@ -490,7 +482,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
         """
         entry_dn_str = str(entry.dn) if entry.dn else "unknown"
-        self._logger.debug(
+        self.logger.debug(
             "Adding LDAP entry",
             operation="add",
             entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -503,13 +495,13 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         result = self._operations.add(entry)
 
         if result.is_success:
-            self._logger.info(
+            self.logger.info(
                 "LDAP entry added",
                 operation="add",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP add entry failed",
                 operation="add",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -535,7 +527,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         """
         # Use FlextLdifUtilities.DN.get_dn_value for consistent DN extraction
         dn_str = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
-        self._logger.debug(
+        self.logger.debug(
             "Modifying LDAP entry",
             operation="modify",
             entry_dn=dn_str[:100] if dn_str else None,
@@ -547,14 +539,14 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         result = self._operations.modify(dn, changes)
 
         if result.is_success:
-            self._logger.info(
+            self.logger.info(
                 "LDAP entry modified",
                 operation="modify",
                 entry_dn=dn_str[:100] if dn_str else None,
                 changes_applied=len(changes),
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP modify entry failed",
                 operation="modify",
                 entry_dn=dn_str[:100] if dn_str else None,
@@ -579,7 +571,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         """
         # Use FlextLdifUtilities.DN.get_dn_value for consistent DN extraction
         dn_str = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
-        self._logger.debug(
+        self.logger.debug(
             "Deleting LDAP entry",
             operation="delete",
             entry_dn=dn_str[:100] if dn_str else None,
@@ -589,13 +581,13 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         result = self._operations.delete(dn)
 
         if result.is_success:
-            self._logger.info(
+            self.logger.info(
                 "LDAP entry deleted",
                 operation="delete",
                 entry_dn=dn_str[:100] if dn_str else None,
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP delete entry failed",
                 operation="delete",
                 entry_dn=dn_str[:100] if dn_str else None,
@@ -630,7 +622,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
         """
         entry_dn_str = str(entry.dn) if entry.dn else "unknown"
-        self._logger.debug(
+        self.logger.debug(
             "Upserting LDAP entry",
             operation="upsert",
             entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -651,14 +643,14 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
         if result.is_success:
             operation_result = result.unwrap()
             operation_type = operation_result.get("operation", "unknown")
-            self._logger.info(
+            self.logger.info(
                 "LDAP upsert completed",
                 operation="upsert",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
                 operation_type=operation_type,
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "LDAP upsert failed",
                 operation="upsert",
                 entry_dn=entry_dn_str[:100] if entry_dn_str else None,
@@ -696,7 +688,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
                 - "skipped": Number of entries skipped (already identical)
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Starting batch upsert",
             operation="batch_upsert",
             entries_count=len(entries),
@@ -717,7 +709,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
 
         if result.is_success:
             stats = result.unwrap()
-            self._logger.info(
+            self.logger.info(
                 "Batch upsert completed",
                 operation="batch_upsert",
                 entries_count=len(entries),
@@ -729,7 +721,7 @@ class FlextLdap(FlextService[FlextLdapModels.SearchResult]):
                 else "0%",
             )
         else:
-            self._logger.error(
+            self.logger.error(
                 "Batch upsert failed",
                 operation="batch_upsert",
                 entries_count=len(entries),

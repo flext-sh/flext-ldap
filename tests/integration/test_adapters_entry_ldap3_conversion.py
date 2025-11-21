@@ -15,7 +15,8 @@ from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from tests.fixtures.constants import RFC
+
+from ..fixtures.constants import RFC
 
 pytestmark = pytest.mark.integration
 
