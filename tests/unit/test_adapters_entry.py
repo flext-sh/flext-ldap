@@ -14,7 +14,8 @@ import pytest
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.constants import FlextLdapConstants
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.unit
 

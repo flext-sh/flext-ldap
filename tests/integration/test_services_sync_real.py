@@ -20,8 +20,9 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
-from tests.fixtures.constants import RFC
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ..fixtures.constants import RFC
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 

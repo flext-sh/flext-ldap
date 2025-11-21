@@ -17,7 +17,8 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.helpers.entry_helpers import EntryTestHelpers
+
+from ..helpers.entry_helpers import EntryTestHelpers
 
 pytestmark = pytest.mark.integration
 

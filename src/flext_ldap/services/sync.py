@@ -14,22 +14,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-from flext_core import (
-    FlextConfig,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextUtilities,
-)
+from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
-from pydantic import computed_field
 
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.operations import FlextLdapOperations
 
 
-class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
+class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
     """LDIF to LDAP synchronization service.
 
     Provides direct synchronization of LDIF files to LDAP directory without
@@ -57,12 +51,6 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
 
     _operations: FlextLdapOperations
     _ldif: FlextLdif
-    _logger: FlextLogger
-
-    @computed_field
-    def service_config(self) -> FlextConfig:
-        """Automatic config binding via Pydantic v2 computed_field."""
-        return FlextConfig.get_global_instance()
 
     def __init__(
         self,
@@ -79,7 +67,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
         super().__init__(**kwargs)
         # Extract operations from kwargs if not provided directly
         if operations is None:
-            operations = cast("FlextLdapOperations | None", kwargs.pop("operations", None))
+            operations = cast(
+                "FlextLdapOperations | None", kwargs.pop("operations", None)
+            )
         if operations is None:
             msg = "operations parameter is required"
             raise TypeError(msg)
@@ -87,7 +77,6 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
         # Create FlextLdif with RFC server type (no quirks/conversions for direct sync)
         config = FlextLdifConfig(quirks_server_type=FlextLdapConstants.ServerTypes.RFC)
         self._ldif = FlextLdif(config=config)
-        self._logger = FlextLogger.create_module_logger(__name__)
 
     def sync_ldif_file(
         self,
@@ -108,7 +97,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             FlextResult containing SyncStats with synchronization statistics
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Starting LDIF file sync",
             operation="sync_ldif_file",
             ldif_file=str(ldif_file),
@@ -121,10 +110,23 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             else None,
         )
 
-        start_time = FlextUtilities.Generators.generate_datetime_utc()
+        # Get generate_datetime_utc from Generators class
+        generators_class = getattr(FlextUtilities, "Generators", None)
+        if generators_class is None:
+            msg = "FlextUtilities.Generators not found"
+            raise AttributeError(msg)
+        generate_datetime_utc_method = getattr(
+            generators_class, "generate_datetime_utc", None
+        )
+        if generate_datetime_utc_method is None:
+            msg = "FlextUtilities.Generators.generate_datetime_utc not found"
+            raise AttributeError(msg)
+        start_time = generate_datetime_utc_method()
+        # Store method for use in lambda closure
+        self._generate_datetime_utc = generate_datetime_utc_method
 
         if not ldif_file.exists():
-            self._logger.error(
+            self.logger.error(
                 "LDIF file not found",
                 operation="sync_ldif_file",
                 ldif_file=str(ldif_file),
@@ -135,7 +137,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
 
         file_size = ldif_file.stat().st_size if ldif_file.exists() else 0
 
-        self._logger.debug(
+        self.logger.debug(
             "Parsing LDIF file",
             operation="sync_ldif_file",
             ldif_file=str(ldif_file),
@@ -149,7 +151,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             server_type=FlextLdapConstants.ServerTypes.RFC,
         )
         if parse_result.is_failure:
-            self._logger.error(
+            self.logger.error(
                 "Failed to parse LDIF file",
                 operation="sync_ldif_file",
                 ldif_file=str(ldif_file),
@@ -165,7 +167,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             )
 
         parsed_entries = parse_result.unwrap()
-        self._logger.debug(
+        self.logger.debug(
             "LDIF file parsed successfully",
             operation="sync_ldif_file",
             ldif_file=str(ldif_file),
@@ -193,7 +195,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             FlextResult containing SyncStats
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Processing entries",
             operation="sync_ldif_file",
             entries_count=len(entries),
@@ -207,7 +209,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
         )
 
         if not entries:
-            self._logger.warning(
+            self.logger.warning(
                 "No entries found in LDIF file",
                 operation="sync_ldif_file",
                 entries_count=0,
@@ -224,41 +226,75 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
 
         original_entries_count = len(entries)
         # Validate base DNs are not empty or whitespace-only using FlextUtilities
-        source_result = FlextUtilities.TextProcessor.safe_string(options.source_basedn)
-        target_result = FlextUtilities.TextProcessor.safe_string(options.target_basedn)
-        if source_result.is_success and target_result.is_success:
-            self._logger.debug(
-                "Transforming BaseDN for entries",
-                operation="sync_ldif_file",
-                source_basedn=options.source_basedn[:100]
-                if options.source_basedn
-                else None,
-                target_basedn=options.target_basedn[:100]
-                if options.target_basedn
-                else None,
-                entries_count_before=original_entries_count,
-            )
-
-            entries = self._transform_entries_basedn(
-                entries,
+        # Fast fail: if base DNs are empty, skip transformation
+        if options.source_basedn and options.target_basedn:
+            # Validate and clean base DNs using FlextUtilities (railway pattern)
+            source_basedn_result = FlextUtilities.TextProcessor.safe_string(
                 options.source_basedn,
+            )
+            target_basedn_result = FlextUtilities.TextProcessor.safe_string(
                 options.target_basedn,
             )
 
-            self._logger.debug(
-                "BaseDN transformation completed",
-                operation="sync_ldif_file",
-                entries_count_before=original_entries_count,
-                entries_count_after=len(entries),
-                source_basedn=options.source_basedn[:100]
-                if options.source_basedn
-                else None,
-                target_basedn=options.target_basedn[:100]
-                if options.target_basedn
-                else None,
-            )
+            # Type narrowing: ensure results are FlextResult[str]
+            if (
+                isinstance(source_basedn_result, FlextResult)
+                and isinstance(target_basedn_result, FlextResult)
+                and source_basedn_result.is_success
+                and target_basedn_result.is_success
+            ):
+                source_basedn_clean = source_basedn_result.unwrap()
+                target_basedn_clean = target_basedn_result.unwrap()
 
-        self._logger.info(
+                # Truncate for logging (max 100 chars)
+                max_log_length = 100
+                source_basedn_log = (
+                    source_basedn_clean[:max_log_length]
+                    if len(source_basedn_clean) > max_log_length
+                    else source_basedn_clean
+                )
+                target_basedn_log = (
+                    target_basedn_clean[:max_log_length]
+                    if len(target_basedn_clean) > max_log_length
+                    else target_basedn_clean
+                )
+
+                self.logger.debug(
+                    "Transforming BaseDN for entries",
+                    operation="sync_ldif_file",
+                    source_basedn=source_basedn_log,
+                    target_basedn=target_basedn_log,
+                    entries_count_before=original_entries_count,
+                )
+
+                entries = self._transform_entries_basedn(
+                    entries,
+                    source_basedn_clean,
+                    target_basedn_clean,
+                )
+
+                self.logger.debug(
+                    "BaseDN transformation completed",
+                    operation="sync_ldif_file",
+                    entries_count_before=original_entries_count,
+                    entries_count_after=len(entries),
+                    source_basedn=source_basedn_log,
+                    target_basedn=target_basedn_log,
+                )
+            else:
+                # If base DNs are invalid, skip transformation
+                self.logger.debug(
+                    "BaseDN transformation skipped - invalid base DNs",
+                    operation="sync_ldif_file",
+                    source_basedn=options.source_basedn[:100]
+                    if options.source_basedn
+                    else None,
+                    target_basedn=options.target_basedn[:100]
+                    if options.target_basedn
+                    else None,
+                )
+
+        self.logger.info(
             "Starting batch sync of entries",
             operation="sync_ldif_file",
             entries_count=len(entries),
@@ -275,13 +311,13 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                     failed=stats.failed,
                     total=stats.total,
                     duration_seconds=(
-                        FlextUtilities.Generators.generate_datetime_utc() - start_time
+                        self._generate_datetime_utc() - start_time
                     ).total_seconds(),
                 ),
             )
             .map(
                 lambda final_stats: (
-                    self._logger.info(
+                    self.logger.info(
                         "LDIF file sync completed",
                         operation="sync_ldif_file",
                         added=final_stats.added,
@@ -322,7 +358,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             FlextResult containing SyncStats
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Starting batch sync",
             operation="sync_ldif_file",
             entries_count=len(entries),
@@ -343,7 +379,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             if add_result.is_success:
                 total_added += 1
                 entry_stats["added"] = 1
-                self._logger.debug(
+                self.logger.debug(
                     "Entry added in batch",
                     operation="sync_ldif_file",
                     entry_index=idx,
@@ -354,7 +390,9 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                     skipped_count=total_skipped,
                 )
             else:
-                error_message = FlextLdapOperations.get_error_message(add_result)
+                error_message = (
+                    str(add_result.error) if add_result.error else "Unknown error"
+                )
                 is_already_exists = FlextLdapOperations.is_already_exists_error(
                     error_message,
                 )
@@ -362,7 +400,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 if is_already_exists:
                     total_skipped += 1
                     entry_stats["skipped"] = 1
-                    self._logger.debug(
+                    self.logger.debug(
                         "Entry skipped - already exists",
                         operation="sync_ldif_file",
                         entry_index=idx,
@@ -375,7 +413,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 else:
                     total_failed += 1
                     entry_stats["failed"] = 1
-                    self._logger.error(
+                    self.logger.error(
                         "Failed to add entry during batch sync",
                         operation="sync_ldif_file",
                         entry_index=idx,
@@ -394,7 +432,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 dn_str = str(entry.dn) if entry.dn else "unknown"
                 options.progress_callback(idx, len(entries), dn_str, entry_stats)
 
-        self._logger.info(
+        self.logger.info(
             "Batch sync completed",
             operation="sync_ldif_file",
             total_entries=len(entries),
@@ -439,7 +477,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
             List of entries with transformed DNs
 
         """
-        self._logger.debug(
+        self.logger.debug(
             "Transforming BaseDN",
             operation="sync_ldif_file",
             source_basedn=source_basedn[:100] if source_basedn else None,
@@ -448,7 +486,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
         )
 
         if source_basedn == target_basedn:
-            self._logger.debug(
+            self.logger.debug(
                 "BaseDN transformation skipped - source equals target",
                 operation="sync_ldif_file",
                 source_basedn=source_basedn[:100] if source_basedn else None,
@@ -477,7 +515,7 @@ class FlextLdapSyncService(FlextService[FlextLdapModels.SyncStats]):
                 transformed.append(entry)
                 unchanged_count += 1
 
-        self._logger.debug(
+        self.logger.debug(
             "BaseDN transformation completed",
             operation="sync_ldif_file",
             entries_count=len(entries),

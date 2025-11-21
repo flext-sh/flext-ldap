@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import cast
 
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
@@ -155,7 +155,7 @@ class EntryTestHelpers:
         verify: bool = True,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Complete workflow: convert dict to entry, cleanup, add, verify, cleanup.
 
         This method replaces the entire pattern of:
@@ -221,7 +221,9 @@ class EntryTestHelpers:
         adjust_dn: dict[str, str] | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> list[tuple[FlextLdifModels.Entry, FlextResult[Any]]]:
+    ) -> list[
+        tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+    ]:
         """Add multiple entries from list of dictionaries.
 
         This method replaces the entire pattern of:
@@ -251,18 +253,25 @@ class EntryTestHelpers:
             )
 
         """
-        results: list[tuple[FlextLdifModels.Entry, FlextResult[Any]]] = []
+        results: list[
+            tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+        ] = []
         added_dns: list[str] = []
 
-        for entry_dict in entry_dicts:
-            # Adjust DN if requested
+        for entry_dict_item in entry_dicts:
+            # Convert to dict if needed (handles both dict and Mapping)
+            if isinstance(entry_dict_item, dict):
+                entry_dict: dict[str, object] = dict(entry_dict_item)
+            else:
+                entry_dict = dict(entry_dict_item)
             if adjust_dn:
                 original_dn = str(entry_dict.get("dn", ""))
                 adjusted_dn = original_dn.replace(
-                    adjust_dn.get("from", ""),
-                    adjust_dn.get("to", ""),
+                    str(adjust_dn.get("from", "")),
+                    str(adjust_dn.get("to", "")),
                 )
-                entry_dict = {**entry_dict, "dn": adjusted_dn}
+                # Update DN in dict
+                entry_dict["dn"] = adjusted_dn
 
             # Add entry using the complete workflow (but don't cleanup after yet)
             entry, add_result = EntryTestHelpers.add_entry_from_dict(
@@ -294,7 +303,11 @@ class EntryTestHelpers:
         verify_value: str | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Complete modify workflow: add entry, modify, verify, cleanup.
 
         This method replaces the entire pattern of:
@@ -398,7 +411,11 @@ class EntryTestHelpers:
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Complete delete workflow: add entry, delete, verify deletion.
 
         This method replaces the entire pattern of:
@@ -500,14 +517,18 @@ class EntryTestHelpers:
         dn_obj = FlextLdifModels.DistinguishedName(value=dn)
         # Convert single values to lists
         attrs_dict: dict[str, list[str]] = {}
-        for key, value in attributes.items():
-            if isinstance(value, list):
-                attrs_dict[key] = value
-            elif isinstance(value, (tuple, set, frozenset)):
+        for key, value_item_raw in attributes.items():
+            # Type narrowing: cast to expected union type
+            value_item: list[str] | str = cast("list[str] | str", value_item_raw)
+            if isinstance(value_item, list):
+                # value_item is list[str] here
+                attrs_dict[key] = [str(item) for item in value_item]
+            elif isinstance(value_item, (tuple, set, frozenset)):
                 # Convert list-like collections to list of strings
-                attrs_dict[key] = [str(item) for item in value]
+                attrs_dict[key] = [str(item) for item in value_item]
             else:
-                attrs_dict[key] = [str(value)]
+                # value_item is str here
+                attrs_dict[key] = [str(value_item)]
         attrs = FlextLdifModels.LdifAttributes.model_validate({
             "attributes": attrs_dict,
         })
@@ -520,7 +541,7 @@ class EntryTestHelpers:
         *,
         verify: bool = False,
         cleanup_after: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add entry with automatic cleanup before and after.
 
         Simplified version for when you already have an Entry object.

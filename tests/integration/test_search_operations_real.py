@@ -13,9 +13,10 @@ import pytest
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
-from tests.fixtures.constants import RFC
-from tests.helpers.entry_helpers import EntryTestHelpers
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ..fixtures.constants import RFC
+from ..helpers.entry_helpers import EntryTestHelpers
+from ..helpers.operation_helpers import TestOperationHelpers
 
 # Integration tests - require Docker LDAP server from conftest.py
 pytestmark = pytest.mark.integration

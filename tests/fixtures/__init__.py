@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult
 
-from tests.fixtures.constants import OID, OUD, RFC, General, OpenLDAP2, TestConstants
+from .constants import OID, OUD, RFC, General, OpenLDAP2, TestConstants
 
 logger = FlextLogger(__name__)
 

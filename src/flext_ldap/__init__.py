@@ -25,6 +25,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldap.api import FlextLdap
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -39,5 +40,6 @@ __all__ = [
     "FlextLdapConstants",  # ✅ Constants
     "FlextLdapModels",  # ✅ Domain models
     "FlextLdapServerDetector",  # ✅ Server detection service
+    "FlextLdapServiceBase",  # ✅ Base class for services with typed config
     "FlextLdapTypes",  # ✅ Type definitions
 ]

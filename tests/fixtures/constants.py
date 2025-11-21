@@ -7,11 +7,11 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from tests.fixtures.general_constants import General
-from tests.fixtures.oid_constants import OID
-from tests.fixtures.openldap2_constants import OpenLDAP2
-from tests.fixtures.oud_constants import OUD
-from tests.fixtures.rfc_constants import RFC
+from .general_constants import General
+from .oid_constants import OID
+from .openldap2_constants import OpenLDAP2
+from .oud_constants import OUD
+from .rfc_constants import RFC
 
 
 class TestConstants:

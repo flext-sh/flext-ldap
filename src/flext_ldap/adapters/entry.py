@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextService
+from flext_core import FlextResult, FlextRuntime, FlextService
 from flext_ldif import (
     EntryManipulationServices,
     FlextLdif,
@@ -26,8 +26,6 @@ from flext_ldif import (
 from ldap3 import Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdapEntryAdapter(FlextService[bool]):
@@ -352,7 +350,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             )
 
             if converted_attrs or removed_attrs or base64_attrs:
-                logger.debug(
+                self.logger.debug(
                     "Converted ldap3 entry to LDIF entry",
                     operation="ldap3_to_ldif_entry",
                     entry_dn=dn_str,
@@ -370,13 +368,13 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     entry_dn_for_log = str(ldap3_entry.entry_dn)
             except Exception as dn_exc:
                 # entry_dn access itself raised exception, use default
-                logger.debug(
+                self.logger.debug(
                     "Could not access entry_dn for error logging",
                     error=str(dn_exc),
                     error_type=type(dn_exc).__name__,
                 )
 
-            logger.exception(
+            self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation="ldap3_to_ldif_entry",
                 entry_dn=entry_dn_for_log,
@@ -408,7 +406,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         # Entry.attributes is validated by Pydantic model - guaranteed to exist
         # Fast fail if attributes dict is empty
         if not entry.attributes.attributes:
-            logger.warning(
+            self.logger.warning(
                 "Entry has no attributes",
                 operation="ldif_entry_to_ldap3_attributes",
                 entry_dn=str(entry.dn) if entry.dn else "unknown",
@@ -434,7 +432,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
             return FlextResult[dict[str, list[str]]].ok(ldap3_attributes)
         except Exception as e:
-            logger.exception(
+            self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
                 operation="ldif_entry_to_ldap3_attributes",
                 entry_dn=str(entry.dn) if entry.dn else "unknown",

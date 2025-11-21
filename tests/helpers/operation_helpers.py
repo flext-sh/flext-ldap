@@ -9,24 +9,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, Literal, TypeVar, cast
+from typing import Literal, TypeVar, cast
 
 import pytest
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.models import FlextLdapModels
-from tests.helpers.entry_helpers import EntryTestHelpers
+from flext_ldap.typings import LdapClientProtocol
+
+from .entry_helpers import EntryTestHelpers
 
 T = TypeVar("T")
+ResultT = TypeVar("ResultT")
 
 
 class TestOperationHelpers:
     """Helper methods for LDAP operation testing to reduce duplication."""
 
     @staticmethod
-    def assert_result_failure(
-        result: FlextResult[Any],
+    def assert_result_failure[T](
+        result: FlextResult[T],
         *,
         expected_error: str | None = None,
     ) -> None:
@@ -47,7 +50,7 @@ class TestOperationHelpers:
             )
 
     @staticmethod
-    def get_error_message(result: FlextResult[Any]) -> str:
+    def get_error_message[T](result: FlextResult[T]) -> str:
         """Get error message from result, raising if None.
 
         Args:
@@ -66,8 +69,8 @@ class TestOperationHelpers:
         return error_msg
 
     @staticmethod
-    def assert_result_success(
-        result: FlextResult[Any],
+    def assert_result_success[T](
+        result: FlextResult[T],
         *,
         error_message: str | None = None,
     ) -> None:
@@ -142,7 +145,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def connect_with_skip_on_failure(
-        client: object,
+        client: LdapClientProtocol,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Connect client and skip test on failure.
@@ -161,7 +164,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def connect_and_assert_success(
-        client: object,
+        client: LdapClientProtocol,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Connect client and assert success.
@@ -183,7 +186,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def search_and_assert_success(
-        client: object,
+        client: LdapClientProtocol,
         base_dn: str,
         *,
         filter_str: str = "(objectClass=*)",
@@ -240,7 +243,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_and_assert_success(
-        client: object,
+        client: LdapClientProtocol,
     ) -> FlextLdapModels.SearchResult:
         """Execute client and assert success.
 
@@ -505,7 +508,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def add_entry_and_assert_success(
-        client: object,
+        client: LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify_operation_result: bool = False,
@@ -550,7 +553,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def add_then_delete_and_assert(
-        client: object,
+        client: LdapClientProtocol,
         entry: FlextLdifModels.Entry,
     ) -> tuple[
         FlextResult[FlextLdapModels.OperationResult],
@@ -618,7 +621,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_add_modify_delete_sequence(
-        client: object,
+        client: LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
@@ -675,10 +678,12 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_crud_sequence(
-        client: object,
+        client: LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
-    ) -> dict[str, FlextResult[Any]]:
+    ) -> dict[
+        str, FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]
+    ]:
         """Execute complete CRUD sequence (add, search, modify, delete).
 
         Args:
@@ -698,7 +703,10 @@ class TestOperationHelpers:
         )
 
         # Search to verify entry was added
-        search_result: FlextResult[Any] | None = None
+        search_result: (
+            FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]
+            | None
+        ) = None
         if hasattr(client, "search") and entry.dn:
             dn_str = str(entry.dn)
             # All clients now use SearchOptions - unified API
@@ -732,7 +740,10 @@ class TestOperationHelpers:
             error_message="Delete operation failed",
         )
 
-        results: dict[str, FlextResult[Any]] = {
+        results: dict[
+            str,
+            FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult],
+        ] = {
             "add": add_result,
             "modify": modify_result,
             "delete": delete_result,
@@ -745,7 +756,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_operation_when_not_connected(
-        client: object,
+        client: LdapClientProtocol,
         operation: str,
         **kwargs: object,
     ) -> None:

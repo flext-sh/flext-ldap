@@ -13,7 +13,8 @@ import pytest
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap import FlextLdap
-from tests.fixtures.constants import RFC
+
+from ..fixtures.constants import RFC
 
 pytestmark = pytest.mark.integration
 

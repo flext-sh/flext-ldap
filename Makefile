@@ -92,8 +92,8 @@ format: ## Format code
 	$(POETRY) run ruff format .
 
 .PHONY: type-check
-type-check: ## Run type checking with Pyrefly (ZERO TOLERANCE)
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run pyrefly check $(SRC_DIR) --ignore-missing-imports true
+type-check: ## Run type checking with Pyrefly (all modules: src, tests, examples, scripts - ZERO TOLERANCE)
+	$(POETRY) run pyrefly check $(SRC_DIR) tests examples scripts
 
 .PHONY: security
 security: ## Run security scanning

@@ -13,8 +13,9 @@ import pytest
 from ldap3 import Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from tests.fixtures.constants import RFC
-from tests.helpers.operation_helpers import TestOperationHelpers
+
+from ..fixtures.constants import RFC
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 

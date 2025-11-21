@@ -11,20 +11,22 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TypeVar
 
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
 
+from flext_ldap import FlextLdap
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
-from tests.helpers.entry_helpers import EntryTestHelpers
-from tests.helpers.operation_helpers import TestOperationHelpers
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
 
-if TYPE_CHECKING:
-    from flext_ldap import FlextLdap
-    from flext_ldap.config import FlextLdapConfig
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.operations import FlextLdapOperations
+from .entry_helpers import EntryTestHelpers
+from .operation_helpers import TestOperationHelpers
+
+# TypeVar for generic FlextResult assertions
+T = TypeVar("T")
 
 
 class TestDeduplicationHelpers:
@@ -60,7 +62,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[Any],
+        result: FlextResult[FlextLdapModels.OperationResult],
         *,
         error_message: str | None = None,
     ) -> None:
@@ -77,7 +79,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[Any],
+        result: FlextResult[FlextLdapModels.OperationResult],
         *,
         expected_error: str | None = None,
     ) -> None:
@@ -96,6 +98,46 @@ class TestDeduplicationHelpers:
             result,
             expected_error=expected_error,
         )
+
+    @staticmethod
+    def assert_success_generic(
+        result: FlextResult[T],
+        *,
+        error_message: str | None = None,
+    ) -> None:
+        """Assert result is success - GENERIC VERSION.
+
+        Works with any FlextResult[T] type.
+
+        Args:
+            result: FlextResult to check
+            error_message: Optional custom error message
+
+        """
+        assert result.is_success, (
+            error_message or f"Expected success but got failure: {result.error}"
+        )
+
+    @staticmethod
+    def assert_failure_generic(
+        result: FlextResult[T],
+        *,
+        expected_error: str | None = None,
+    ) -> None:
+        """Assert result is failure - GENERIC VERSION.
+
+        Works with any FlextResult[T] type.
+
+        Args:
+            result: FlextResult to check
+            expected_error: Optional expected error substring
+
+        """
+        assert result.is_failure, "Expected failure but result was success"
+        if expected_error:
+            assert expected_error in result.error, (
+                f"Expected '{expected_error}' in error, got: {result.error}"
+            )
 
     @staticmethod
     def create_entry(
@@ -242,7 +284,7 @@ class TestDeduplicationHelpers:
         verify: bool = False,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add entry with automatic cleanup - COMPLETE WORKFLOW.
 
         Replaces entire add + cleanup pattern.
@@ -272,7 +314,7 @@ class TestDeduplicationHelpers:
         verify: bool = True,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Add entry from dict - COMPLETE WORKFLOW.
 
         Replaces entire dict -> entry -> add -> verify -> cleanup pattern.
@@ -369,7 +411,11 @@ class TestDeduplicationHelpers:
         verify_value: str | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Modify entry - COMPLETE WORKFLOW.
 
         Replaces entire add + modify + verify pattern.
@@ -415,7 +461,11 @@ class TestDeduplicationHelpers:
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Delete entry - COMPLETE WORKFLOW.
 
         Replaces entire add + delete + verify pattern.
@@ -609,7 +659,7 @@ class TestDeduplicationHelpers:
         changes: dict[str, list[tuple[str, list[str]]]] | None = None,
         *,
         cleanup_after: bool = True,
-    ) -> dict[str, FlextResult[Any]]:
+    ) -> dict[str, FlextResult[FlextLdapModels.OperationResult]]:
         """Execute complete CRUD sequence - MASSIVE CODE REDUCTION.
 
         Replaces entire add + search + modify + delete pattern.
@@ -772,7 +822,9 @@ class TestDeduplicationHelpers:
         adjust_dn: dict[str, str] | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> list[tuple[FlextLdifModels.Entry, FlextResult[Any]]]:
+    ) -> list[
+        tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+    ]:
         """Add multiple entries from list of dictionaries - MASSIVE CODE REDUCTION.
 
         Replaces entire loop + add + cleanup pattern for multiple entries.
@@ -866,7 +918,11 @@ class TestDeduplicationHelpers:
         verify_value: str | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Add entry then modify - COMPLETE WORKFLOW.
 
         Replaces entire add + modify + verify pattern.
@@ -910,7 +966,11 @@ class TestDeduplicationHelpers:
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Add entry then delete - COMPLETE WORKFLOW.
 
         Replaces entire add + delete + verify pattern.
@@ -974,7 +1034,7 @@ class TestDeduplicationHelpers:
         verify_operation_result: bool = True,
         expected_entries_affected: int = 1,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Complete add operation test - REPLACES ENTIRE TEST METHOD (10-20 lines).
 
         Replaces entire test_add_* methods with single call.
@@ -1034,7 +1094,11 @@ class TestDeduplicationHelpers:
         verify_attribute: str | None = None,
         verify_value: str | None = None,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Complete modify operation test - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
         Replaces entire test_modify_* methods with single call.
@@ -1076,7 +1140,11 @@ class TestDeduplicationHelpers:
         entry_dict: Mapping[str, object] | dict[str, object],
         *,
         verify_deletion: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Complete delete operation test - REPLACES ENTIRE TEST METHOD (10-20 lines).
 
         Replaces entire test_delete_* methods with single call.
@@ -1181,7 +1249,7 @@ class TestDeduplicationHelpers:
         verify_search: bool = True,
         verify_modify: bool = True,
         verify_delete: bool = True,
-    ) -> dict[str, FlextResult[Any]]:
+    ) -> dict[str, FlextResult[FlextLdapModels.OperationResult]]:
         """Complete CRUD sequence test - REPLACES ENTIRE TEST METHOD (20-40 lines).
 
         Replaces entire test_all_operations_* methods with single call.
@@ -1491,7 +1559,7 @@ class TestDeduplicationHelpers:
         *,
         base_dn: str | None = None,
         skip_on_failure: bool = True,
-    ) -> list[tuple[str, FlextResult[Any]]]:
+    ) -> list[tuple[str, FlextResult[FlextLdapModels.OperationResult]]]:
         """Test operation with multiple server types - REPLACES ENTIRE PATTERN (10-20 lines).
 
         Replaces repetitive server type testing patterns.
@@ -1517,7 +1585,7 @@ class TestDeduplicationHelpers:
         if server_types is None:
             server_types = ["rfc", "generic"]
 
-        results: list[tuple[str, FlextResult[Any]]] = []
+        results: list[tuple[str, FlextResult[FlextLdapModels.OperationResult]]] = []
 
         for server_type in server_types:
             try:
@@ -1596,7 +1664,7 @@ class TestDeduplicationHelpers:
         fixture_entry: dict[str, object],
         *,
         verify_operation: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Test add from fixture - REPLACES ENTIRE TEST METHOD (5-10 lines).
 
         Replaces repetitive test_add_*_from_fixture methods.
@@ -1631,7 +1699,9 @@ class TestDeduplicationHelpers:
         *,
         limit: int | None = None,
         verify_all: bool = True,
-    ) -> list[tuple[FlextLdifModels.Entry, FlextResult[Any]]]:
+    ) -> list[
+        tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+    ]:
         """Test add multiple entries from fixtures - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
         Replaces entire test_add_multiple_*_from_fixtures methods.
@@ -1687,7 +1757,7 @@ class TestDeduplicationHelpers:
         server_types: list[str] | None = None,
         *,
         verify_result: bool = True,
-    ) -> list[tuple[str, FlextResult[Any]]]:
+    ) -> list[tuple[str, FlextResult[FlextLdapModels.OperationResult]]]:
         """Test adapter operation with multiple server types - REPLACES ENTIRE PATTERN (10-15 lines).
 
         Replaces repetitive adapter testing with server types loops.
@@ -1711,7 +1781,7 @@ class TestDeduplicationHelpers:
         if server_types is None:
             server_types = ["rfc", "openldap2", "generic"]
 
-        results: list[tuple[str, FlextResult[Any]]] = []
+        results: list[tuple[str, FlextResult[FlextLdapModels.OperationResult]]] = []
 
         for server_type in server_types:
             if operation == "normalize":
@@ -1800,7 +1870,7 @@ class TestDeduplicationHelpers:
         add_spaces: bool = True,
         filter_str: str = "(objectClass=*)",
         scope: str = "SUBTREE",
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Test search with normalized DN - REPLACES ENTIRE TEST METHOD (8-12 lines).
 
         Replaces repetitive test_search_with_normalized_* methods.
@@ -1846,7 +1916,7 @@ class TestDeduplicationHelpers:
         *,
         add_spaces: bool = True,
         verify_success: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Test modify with normalized DN - REPLACES ENTIRE TEST METHOD (10-15 lines).
 
         Replaces repetitive test_modify_with_normalized_* methods.
@@ -1905,7 +1975,7 @@ class TestDeduplicationHelpers:
         *,
         add_spaces: bool = True,
         verify_success: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Test delete with normalized DN - REPLACES ENTIRE TEST METHOD (10-15 lines).
 
         Replaces repetitive test_delete_with_normalized_* methods.
@@ -2004,7 +2074,7 @@ class TestDeduplicationHelpers:
         use_all_options: bool = False,
         verify_success: bool = True,
         disconnect_after: bool = True,
-    ) -> tuple[FlextLdap, FlextResult[Any]]:
+    ) -> tuple[FlextLdap, FlextResult[FlextLdapModels.OperationResult]]:
         """Test connect with service config - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
         Replaces repetitive test_connect_with_service_config_* methods.
@@ -2719,7 +2789,7 @@ class TestDeduplicationHelpers:
         )
 
         if verify_all:
-            # add_result is FlextResult[Any], but we need to check if it's OperationResult
+            # add_result is FlextResult[OperationResult], check if it's successful
             # For now, just assert success
             TestDeduplicationHelpers.assert_success(
                 add_result,
@@ -2763,7 +2833,7 @@ class TestDeduplicationHelpers:
         invalid_base_dn: str = "invalid=base,dn=invalid",
         invalid_filter: str = "invalid(filter",
         verify_graceful: bool = True,
-    ) -> dict[str, FlextResult[Any]]:
+    ) -> dict[str, FlextResult[FlextLdapModels.OperationResult]]:
         """Test error handling for all operations - REPLACES ENTIRE TEST CLASS (50-80 lines).
 
         Replaces repetitive test_*_with_failed_* methods.
@@ -2786,7 +2856,7 @@ class TestDeduplicationHelpers:
         """
         from tests.fixtures.constants import RFC
 
-        results: dict[str, FlextResult[Any]] = {}
+        results: dict[str, FlextResult[FlextLdapModels.OperationResult]] = {}
 
         # Search with invalid base DN
         search_options = TestOperationHelpers.create_search_options(
@@ -2984,7 +3054,7 @@ class TestDeduplicationHelpers:
         changes: dict[str, list[tuple[str, list[str]]]] | None = None,
         verify_all: bool = True,
         cleanup_after: bool = True,
-    ) -> dict[str, FlextResult[Any]]:
+    ) -> dict[str, FlextResult[FlextLdapModels.OperationResult]]:
         """Test all API operations - REPLACES ENTIRE TEST CLASS (50-80 lines).
 
         Replaces repetitive test_api_* methods for all operations.
@@ -3013,7 +3083,7 @@ class TestDeduplicationHelpers:
         if changes is None:
             changes = {"mail": [(MODIFY_REPLACE, ["test@example.com"])]}
 
-        results: dict[str, FlextResult[Any]] = {}
+        results: dict[str, FlextResult[FlextLdapModels.OperationResult]] = {}
 
         # Search before add
         if entry.dn:
@@ -3254,7 +3324,7 @@ class TestDeduplicationHelpers:
         verify_connect: bool = True,
         verify_disconnect: bool = True,
         verify_state: bool = True,
-    ) -> tuple[FlextResult[Any], None]:
+    ) -> tuple[FlextResult[FlextLdapModels.OperationResult], None]:
         """Test API connect/disconnect lifecycle - REPLACES ENTIRE TEST METHOD (10-20 lines).
 
         Replaces repetitive test_api_connect_and_disconnect methods.
@@ -3577,7 +3647,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_success_or_failure(
-        result: FlextResult[Any],
+        result: FlextResult[FlextLdapModels.OperationResult],
         *,
         allow_failure: bool = True,
     ) -> None:
@@ -3648,7 +3718,7 @@ class TestDeduplicationHelpers:
         connection_config: FlextLdapModels.ConnectionConfig,
         *,
         assert_success: bool = True,
-    ) -> tuple[FlextLdap, FlextResult[Any]]:
+    ) -> tuple[FlextLdap, FlextResult[FlextLdapModels.OperationResult]]:
         """Create FlextLdap API and connect - COMMON PATTERN.
 
         Replaces:
@@ -3738,7 +3808,7 @@ class TestDeduplicationHelpers:
         *,
         assert_success: bool = True,
         skip_on_failure: bool = False,
-    ) -> tuple[FlextLdapConnection, FlextResult[Any]]:
+    ) -> tuple[FlextLdapConnection, FlextResult[FlextLdapModels.OperationResult]]:
         """Create FlextLdapConnection and connect - COMMON PATTERN.
 
         Replaces:
@@ -3830,7 +3900,7 @@ class TestDeduplicationHelpers:
         entry: FlextLdifModels.Entry,
         *,
         verify: bool = False,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add entry with automatic cleanup - SIMPLIFIED PATTERN.
 
         Replaces:
@@ -3872,7 +3942,7 @@ class TestDeduplicationHelpers:
         verify: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: object,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Create and add user entry - COMPLETE WORKFLOW.
 
         Replaces:
@@ -3927,7 +3997,7 @@ class TestDeduplicationHelpers:
         verify: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: object,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Create and add group entry - COMPLETE WORKFLOW.
 
         Replaces:
@@ -4060,7 +4130,7 @@ class TestDeduplicationHelpers:
         use_uid: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: object,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Create user, add, and assert success - COMPLETE WORKFLOW (3-5 lines -> 1 line).
 
         Replaces:
@@ -4112,7 +4182,7 @@ class TestDeduplicationHelpers:
         *,
         assert_success: bool = True,
         normalize_dn: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify entry with DN normalization - COMMON PATTERN (3-4 lines -> 1 line).
 
         Replaces:
@@ -4157,7 +4227,7 @@ class TestDeduplicationHelpers:
         *,
         assert_success: bool = True,
         normalize_dn: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete entry with DN normalization - COMMON PATTERN (2-3 lines -> 1 line).
 
         Replaces:
@@ -4200,7 +4270,10 @@ class TestDeduplicationHelpers:
         *,
         verify_modify: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Add entry then modify - COMPLETE WORKFLOW (8-12 lines -> 1 line).
 
         Replaces:
@@ -4267,7 +4340,10 @@ class TestDeduplicationHelpers:
         entry: FlextLdifModels.Entry,
         *,
         verify_delete: bool = True,
-    ) -> tuple[FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Add entry then delete - COMPLETE WORKFLOW (6-8 lines -> 1 line).
 
         Replaces:
@@ -4556,7 +4632,7 @@ class TestDeduplicationHelpers:
         spaces_before: int = 2,
         spaces_after: int = 2,
         assert_success: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify entry with DN that has spaces - COMMON PATTERN (3-4 lines -> 1 line).
 
         Replaces:
@@ -4601,7 +4677,7 @@ class TestDeduplicationHelpers:
         spaces_before: int = 2,
         spaces_after: int = 2,
         assert_success: bool = True,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete entry with DN that has spaces - COMMON PATTERN (2-3 lines -> 1 line).
 
         Replaces:
@@ -4645,7 +4721,7 @@ class TestDeduplicationHelpers:
         verify_modify_result: bool = True,
         verify_delete_result: bool = True,
         cleanup_after: bool = True,
-    ) -> dict[str, FlextResult[Any]]:
+    ) -> dict[str, FlextResult[FlextLdapModels.OperationResult]]:
         """Complete add->modify->delete workflow with OperationResult verification - MASSIVE CODE REDUCTION (15-25 lines -> 1 line).
 
         Replaces entire test patterns like:
@@ -4865,7 +4941,7 @@ class TestDeduplicationHelpers:
         verify_operation_result: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: object,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Create user entry, add it, and verify - COMPLETE WORKFLOW (8-12 lines -> 1 line).
 
         Replaces:
@@ -4933,7 +5009,10 @@ class TestDeduplicationHelpers:
         *,
         verify_add_result: bool = True,
         verify_delete_result: bool = True,
-    ) -> tuple[FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Add entry then delete with OperationResult verification - MASSIVE CODE REDUCTION (10-15 lines -> 1 line).
 
         Replaces entire test patterns like:
@@ -5004,7 +5083,10 @@ class TestDeduplicationHelpers:
         verify_add_result: bool = True,
         verify_modify_result: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Add entry then modify with OperationResult verification - MASSIVE CODE REDUCTION (12-18 lines -> 1 line).
 
         Replaces entire test patterns like:
@@ -5217,7 +5299,7 @@ class TestDeduplicationHelpers:
         *,
         sn: str | None = None,
         verify_operation_result: bool = False,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any]]:
+    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Complete API add operation - MASSIVE CODE REDUCTION (8-10 lines -> 1 line).
 
         Replaces entire api_add patterns like:
@@ -5264,7 +5346,9 @@ class TestDeduplicationHelpers:
         *,
         changes: dict[str, list[tuple[str, list[str]]]] | None = None,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, dict[str, FlextResult[Any]]]:
+    ) -> tuple[
+        FlextLdifModels.Entry, dict[str, FlextResult[FlextLdapModels.OperationResult]]
+    ]:
         """Complete API modify operation - MASSIVE CODE REDUCTION (12-18 lines -> 1 line).
 
         Replaces entire api_modify patterns like:
@@ -5329,7 +5413,11 @@ class TestDeduplicationHelpers:
         client: object,
         cn_value: str,
         base_dn: str | None = None,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[Any], FlextResult[Any]]:
+    ) -> tuple[
+        FlextLdifModels.Entry,
+        FlextResult[FlextLdapModels.OperationResult],
+        FlextResult[FlextLdapModels.OperationResult],
+    ]:
         """Complete API delete operation - MASSIVE CODE REDUCTION (10-14 lines -> 1 line).
 
         Replaces entire api_delete patterns like:
