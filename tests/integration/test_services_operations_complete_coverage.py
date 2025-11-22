@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from flext_ldif import FlextLdifParser
@@ -73,8 +74,11 @@ class TestFlextLdapOperationsCompleteCoverage:
             scope="SUBTREE",
         )
 
-        # Disconnect to trigger error
-        operations_service._connection.disconnect()
+        # Disconnect to trigger error (type narrow to concrete type)
+        connection: FlextLdapConnection = cast(
+            "FlextLdapConnection", operations_service._connection
+        )
+        connection.disconnect()
 
         result = operations_service.search(search_options)
         assert result.is_failure
@@ -104,7 +108,13 @@ class TestFlextLdapOperationsCompleteCoverage:
             k: v if isinstance(v, (list, str)) else [str(v)]
             for k, v in attrs_raw.items()
         }
-        entry = EntryTestHelpers.create_entry(dn_with_spaces, attrs)
+        entry = EntryTestHelpers.create_entry(
+            dn_with_spaces,
+            cast(
+                "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
+                attrs,
+            ),
+        )
 
         # Cleanup first
         if entry.dn:
@@ -130,8 +140,11 @@ class TestFlextLdapOperationsCompleteCoverage:
             RFC.DEFAULT_BASE_DN,
         )
 
-        # Disconnect to trigger error
-        operations_service._connection.disconnect()
+        # Disconnect to trigger error (type narrow to concrete type)
+        connection_2: FlextLdapConnection = cast(
+            "FlextLdapConnection", operations_service._connection
+        )
+        connection_2.disconnect()
 
         result = operations_service.add(entry)
         assert result.is_failure
@@ -145,7 +158,7 @@ class TestFlextLdapOperationsCompleteCoverage:
     ) -> None:
         """Test add when adapter.add fails."""
         # Entry that will fail to add (invalid DN format)
-        entry = TestOperationHelpers.create_entry_with_dn_and_attributes(
+        entry = EntryTestHelpers.create_entry(
             "invalid-dn",
             {
                 "cn": ["test"],
@@ -195,8 +208,11 @@ class TestFlextLdapOperationsCompleteCoverage:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
 
-        # Disconnect to trigger error
-        operations_service._connection.disconnect()
+        # Disconnect to trigger error (type narrow to concrete type)
+        connection_3: FlextLdapConnection = cast(
+            "FlextLdapConnection", operations_service._connection
+        )
+        connection_3.disconnect()
 
         result = operations_service.modify("cn=test,dc=flext,dc=local", changes)
         assert result.is_failure
@@ -229,8 +245,11 @@ class TestFlextLdapOperationsCompleteCoverage:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test delete error handling path."""
-        # Disconnect to trigger error
-        operations_service._connection.disconnect()
+        # Disconnect to trigger error (type narrow to concrete type)
+        connection_4: FlextLdapConnection = cast(
+            "FlextLdapConnection", operations_service._connection
+        )
+        connection_4.disconnect()
 
         result = operations_service.delete("cn=test,dc=flext,dc=local")
         assert result.is_failure

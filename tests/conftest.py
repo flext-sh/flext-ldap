@@ -10,13 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Generator
 from pathlib import Path
+from threading import Lock
+from typing import Any
 
 import pytest
 from flext_core import FlextLogger
 from flext_ldif import FlextLdifParser
-from flext_tests import FlextTestDocker
+from flext_core.flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdap
@@ -66,7 +69,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
 def pytest_runtest_makereport(
     item: pytest.Item,
-    call: pytest.CallInfo,
+    call: pytest.CallInfo[Any],
 ) -> None:
     """Mark container dirty on LDAP service failures ONLY (REGRA 4).
 
@@ -142,8 +145,6 @@ def session_id() -> str:
     Used for DN namespacing to ensure test isolation.
 
     """
-    import time
-
     return str(int(time.time() * 1000))
 
 
@@ -152,8 +153,6 @@ class DNSTracker:
 
     def __init__(self) -> None:
         """Initialize tracker with thread-safe structures."""
-        from threading import Lock
-
         self._created_dns: set[str] = set()
         self._lock = Lock()
 
@@ -180,8 +179,6 @@ def test_dns_tracker() -> DNSTracker:
 
     """
     # Legacy code - keeping for compatibility but DNSTracker is now a class
-    from threading import Lock
-
     created_dns: set[str] = set()
     lock = Lock()
 
@@ -224,8 +221,6 @@ def unique_dn_suffix(
         >>> dn = f"uid=testuser-{suffix},ou=people,dc=flext,dc=local"
 
     """
-    import time
-
     # Get test function name for additional isolation
     test_name = request.node.name if hasattr(request, "node") else "unknown"
     # Sanitize test name (remove special chars that could break DN)
@@ -413,8 +408,6 @@ def ldap_container(
 
     # AGUARDAR container estar pronto antes de permitir testes
     # Usar healthcheck do Docker se disponível, senão tentar conexão LDAP
-    import time
-
     max_wait: int = 60  # segundos
     wait_interval: float = 2.0  # segundos
     waited: float = 0.0
@@ -425,9 +418,10 @@ def ldap_container(
     # (mais confiável que healthcheck do Docker)
     while waited < max_wait:
         try:
-            from ldap3 import Connection, Server
-
-            server = Server("ldap://localhost:3390", get_info="NO_INFO")
+            server = Server(
+                "ldap://localhost:3390",
+                get_info="NO_INFO",
+            )
             test_conn = Connection(
                 server,
                 user="cn=admin,dc=flext,dc=local",

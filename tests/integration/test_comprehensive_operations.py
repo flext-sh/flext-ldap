@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.loader import LdapTestFixtures
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -207,7 +210,9 @@ class TestFlextLdapConnectionManagement:
         client = FlextLdap()
 
         # Connect
-        TestOperationHelpers.connect_and_assert_success(client, connection_config)
+        TestOperationHelpers.connect_and_assert_success(
+            cast("LdapClientProtocol", client), connection_config
+        )
 
         # Disconnect
         client.disconnect()
@@ -221,11 +226,15 @@ class TestFlextLdapConnectionManagement:
         client = FlextLdap()
 
         # First connection
-        TestOperationHelpers.connect_and_assert_success(client, connection_config)
+        TestOperationHelpers.connect_and_assert_success(
+            cast("LdapClientProtocol", client), connection_config
+        )
         client.disconnect()
 
         # Reconnect
-        TestOperationHelpers.connect_and_assert_success(client, connection_config)
+        TestOperationHelpers.connect_and_assert_success(
+            cast("LdapClientProtocol", client), connection_config
+        )
 
         client.disconnect()
 

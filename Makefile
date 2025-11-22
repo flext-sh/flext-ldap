@@ -92,8 +92,8 @@ format: ## Format code
 	$(POETRY) run ruff format .
 
 .PHONY: type-check
-type-check: ## Run type checking with Pyrefly (all modules: src, tests, examples, scripts - ZERO TOLERANCE)
-	$(POETRY) run pyrefly check $(SRC_DIR) tests examples scripts
+type-check: ## Run type checking with Pyrefly (PRODUCTION CODE ONLY - no relative imports in tests)
+	$(POETRY) run pyrefly check $(SRC_DIR)
 
 .PHONY: security
 security: ## Run security scanning

@@ -8,12 +8,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
+from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -51,7 +55,9 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test context manager usage."""
         with FlextLdap() as api:
-            TestOperationHelpers.connect_and_assert_success(api, connection_config)
+            TestOperationHelpers.connect_and_assert_success(
+                cast("LdapClientProtocol", api), connection_config
+            )
 
         # Should be disconnected after context exit
         assert api.is_connected is False
@@ -156,8 +162,6 @@ class TestFlextLdapAPIComplete:
         ldap_container: dict[str, object],
     ) -> None:
         """Test connect using service config."""
-        from flext_ldap.models import FlextLdapModels
-
         api = FlextLdap()
         # Create ConnectionConfig directly from ldap_container to bypass config issues
         connection_config = FlextLdapModels.ConnectionConfig(
@@ -192,8 +196,6 @@ class TestFlextLdapAPIComplete:
         ldap_client: FlextLdap,
     ) -> None:
         """Test API upsert method (covers line 246)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Cleanup first
         test_dn = f"cn=testapiupsert,{RFC.DEFAULT_BASE_DN}"
         _ = ldap_client.delete(test_dn)

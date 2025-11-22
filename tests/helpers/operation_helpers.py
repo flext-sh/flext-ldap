@@ -18,6 +18,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapClientProtocol
 
+from ..fixtures.constants import RFC
 from .entry_helpers import EntryTestHelpers
 
 T = TypeVar("T")
@@ -144,8 +145,21 @@ class TestOperationHelpers:
         return TestOperationHelpers.assert_result_success_and_unwrap(result)
 
     @staticmethod
+    def _narrow_client_type(client: object) -> LdapClientProtocol:
+        """Narrow client type from object to LdapClientProtocol.
+
+        Args:
+            client: Client object to narrow
+
+        Returns:
+            Client cast to LdapClientProtocol
+
+        """
+        return cast("LdapClientProtocol", client)
+
+    @staticmethod
     def connect_with_skip_on_failure(
-        client: LdapClientProtocol,
+        client: object,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Connect client and skip test on failure.
@@ -155,16 +169,26 @@ class TestOperationHelpers:
             connection_config: Connection configuration
 
         """
-        if not hasattr(client, "connect"):
+        typed_client = TestOperationHelpers._narrow_client_type(client)
+        if not hasattr(typed_client, "connect"):
             pytest.skip("Client does not have connect method")
 
-        connect_result = client.connect(connection_config)
+        # Handle both 'config' and 'connection_config' parameter names
+        if hasattr(typed_client, "connect"):
+            try:
+                connect_result = typed_client.connect(connection_config)
+            except TypeError:
+                # Try with 'config' parameter name
+                connect_result = typed_client.connect(config=connection_config)
+        else:
+            pytest.skip("Client does not have connect method")
+
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
     @staticmethod
     def connect_and_assert_success(
-        client: LdapClientProtocol,
+        client: object,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Connect client and assert success.
@@ -186,7 +210,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def search_and_assert_success(
-        client: LdapClientProtocol,
+        client: object,
         base_dn: str,
         *,
         filter_str: str = "(objectClass=*)",
@@ -243,7 +267,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_and_assert_success(
-        client: LdapClientProtocol,
+        client: object,
     ) -> FlextLdapModels.SearchResult:
         """Execute client and assert success.
 
@@ -369,46 +393,27 @@ class TestOperationHelpers:
                 else:
                     entry_attributes[key] = [str(value)]
 
-        # Process individual extra attributes
-        for key, value in extra_attributes.items():
-            if isinstance(value, list):
-                # Ensure all list items are strings
-                # Type narrowing: value is list[object] at this point
-                str_list: list[str] = [
-                    str(item) for item in cast("list[object]", value)
-                ]
-                entry_attributes[key] = str_list
-            elif value is None:
-                # Skip None values
-                continue
-            else:
-                # Convert single value to list of strings
-                entry_attributes[key] = [str(value)]
+        # Process individual extra attributes - convert dict[str, object] to dict[str, list[str]]
+        extra_attrs_typed: dict[str, list[str]] = cast(
+            "dict[str, list[str]]",
+            {
+                key: (
+                    [str(item) for item in value]
+                    if isinstance(value, list)
+                    else [str(value)]
+                )
+                for key, value in extra_attributes.items()
+                if value is not None
+            },
+        )
+        entry_attributes.update(extra_attrs_typed)
 
-        return EntryTestHelpers.create_entry(dn, entry_attributes)
-
-    @staticmethod
-    def create_entry_with_uid(
-        uid: str,
-        base_dn: str,
-        **kwargs: object,
-    ) -> FlextLdifModels.Entry:
-        """Create entry with uid - convenience method.
-
-        Args:
-            uid: User ID
-            base_dn: Base DN
-            **kwargs: Additional attributes
-
-        Returns:
-            Entry instance
-
-        """
-        return TestOperationHelpers.create_inetorgperson_entry(
-            uid,
-            base_dn,
-            use_uid=True,
-            **kwargs,
+        return EntryTestHelpers.create_entry(
+            dn,
+            cast(
+                "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
+                entry_attributes,
+            ),
         )
 
     @staticmethod
@@ -441,26 +446,24 @@ class TestOperationHelpers:
             attributes["member"] = members
 
         for key, value in kwargs.items():
-            attributes[key] = [value] if isinstance(value, str) else value
+            # Type narrowing: kwargs is str, so value is str
+            if isinstance(value, str):
+                attributes[key] = [value]
+            elif isinstance(value, list):
+                # Ensure all items are strings
+                str_list: list[str] = [str(item) for item in value]
+                attributes[key] = str_list
+            else:
+                # Convert to string list
+                attributes[key] = [str(value)]
 
-        return EntryTestHelpers.create_entry(dn, attributes)
-
-    @staticmethod
-    def create_entry_with_dn_and_attributes(
-        dn: str,
-        attributes: dict[str, list[str]],
-    ) -> FlextLdifModels.Entry:
-        """Create entry with DN and attributes.
-
-        Args:
-            dn: Distinguished name
-            attributes: Attributes dictionary
-
-        Returns:
-            Entry instance
-
-        """
-        return EntryTestHelpers.create_entry(dn, attributes)
+        return EntryTestHelpers.create_entry(
+            dn,
+            cast(
+                "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
+                attributes,
+            ),
+        )
 
     @staticmethod
     def create_entry_dict(
@@ -508,7 +511,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def add_entry_and_assert_success(
-        client: LdapClientProtocol,
+        client: object,
         entry: FlextLdifModels.Entry,
         *,
         verify_operation_result: bool = False,
@@ -532,7 +535,9 @@ class TestOperationHelpers:
 
         # Cleanup before
         if entry.dn:
-            EntryTestHelpers.cleanup_entry(client, str(entry.dn))
+            EntryTestHelpers.cleanup_entry(
+                TestOperationHelpers._narrow_client_type(client), str(entry.dn)
+            )
 
         result = client.add(entry)
         TestOperationHelpers.assert_result_success(
@@ -547,7 +552,8 @@ class TestOperationHelpers:
 
         # Cleanup after if requested
         if cleanup_after and entry.dn:
-            EntryTestHelpers.cleanup_after_test(client, str(entry.dn))
+            typed_client = TestOperationHelpers._narrow_client_type(client)
+            EntryTestHelpers.cleanup_after_test(typed_client, str(entry.dn))
 
         return result
 
@@ -682,7 +688,9 @@ class TestOperationHelpers:
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
     ) -> dict[
-        str, FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]
+        str,
+        FlextResult[FlextLdapModels.OperationResult]
+        | FlextResult[FlextLdapModels.SearchResult],
     ]:
         """Execute complete CRUD sequence (add, search, modify, delete).
 
@@ -703,10 +711,7 @@ class TestOperationHelpers:
         )
 
         # Search to verify entry was added
-        search_result: (
-            FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]
-            | None
-        ) = None
+        search_result: FlextResult[FlextLdapModels.SearchResult] | None = None
         if hasattr(client, "search") and entry.dn:
             dn_str = str(entry.dn)
             # All clients now use SearchOptions - unified API
@@ -742,7 +747,8 @@ class TestOperationHelpers:
 
         results: dict[
             str,
-            FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult],
+            FlextResult[FlextLdapModels.OperationResult]
+            | FlextResult[FlextLdapModels.SearchResult],
         ] = {
             "add": add_result,
             "modify": modify_result,
@@ -768,26 +774,64 @@ class TestOperationHelpers:
             **kwargs: Operation-specific arguments
 
         """
+        result: FlextResult[
+            FlextLdapModels.OperationResult | FlextLdapModels.SearchResult
+        ]
         if operation == "search":
             if "search_options" not in kwargs:
                 error_msg = "search_options required for search operation"
                 raise ValueError(error_msg)
-            result = client.search(kwargs["search_options"])
+            search_options = kwargs["search_options"]
+            if not isinstance(search_options, FlextLdapModels.SearchOptions):
+                error_msg = "search_options must be FlextLdapModels.SearchOptions"
+                raise TypeError(error_msg)
+            result = cast(
+                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+                client.search(search_options),
+            )
         elif operation == "add":
             if "entry" not in kwargs:
                 error_msg = "entry required for add operation"
                 raise ValueError(error_msg)
-            result = client.add(kwargs["entry"])
+            entry = kwargs["entry"]
+            if not isinstance(entry, FlextLdifModels.Entry):
+                error_msg = "entry must be FlextLdifModels.Entry"
+                raise TypeError(error_msg)
+            result = cast(
+                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+                client.add(entry),
+            )
         elif operation == "modify":
             if "dn" not in kwargs or "changes" not in kwargs:
                 error_msg = "dn and changes required for modify operation"
                 raise ValueError(error_msg)
-            result = client.modify(kwargs["dn"], kwargs["changes"])
+            dn = kwargs["dn"]
+            changes = kwargs["changes"]
+            # Type narrowing: ensure dn is str or DistinguishedName
+            if not isinstance(dn, (str, FlextLdifModels.DistinguishedName)):
+                error_msg = "dn must be str or FlextLdifModels.DistinguishedName"
+                raise TypeError(error_msg)
+            # Type narrowing: ensure changes is dict[str, list[tuple[str, list[str]]]]
+            if not isinstance(changes, dict):
+                error_msg = "changes must be dict"
+                raise TypeError(error_msg)
+            result = cast(
+                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+                client.modify(dn, changes),
+            )
         elif operation == "delete":
             if "dn" not in kwargs:
                 error_msg = "dn required for delete operation"
                 raise ValueError(error_msg)
-            result = client.delete(kwargs["dn"])
+            dn = kwargs["dn"]
+            # Type narrowing: ensure dn is str or DistinguishedName
+            if not isinstance(dn, (str, FlextLdifModels.DistinguishedName)):
+                error_msg = "dn must be str or FlextLdifModels.DistinguishedName"
+                raise TypeError(error_msg)
+            result = cast(
+                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+                client.delete(dn),
+            )
         else:
             error_msg = f"Unknown operation: {operation}"
             raise ValueError(error_msg)
@@ -827,136 +871,6 @@ class TestOperationHelpers:
         )
 
     @staticmethod
-    def create_entry_simple(
-        dn: str,
-        attributes: dict[str, list[str] | str],
-    ) -> FlextLdifModels.Entry:
-        """Create Entry with simple DN string and attributes.
-
-        REPLACES MOST COMMON PATTERN.
-
-        Replaces the repetitive pattern:
-            entry = FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"cn": ["test"], "objectClass": ["top", "person"]}
-                ),
-            )
-
-        Args:
-            dn: Distinguished name as string
-            attributes: Attributes dict (values can be list or single string)
-
-        Returns:
-            FlextLdifModels.Entry
-
-        Example:
-            entry = TestOperationHelpers.create_entry_simple(
-                "cn=test,dc=example,dc=com",
-                {"cn": ["test"], "objectClass": ["top", "person"]}
-            )
-
-        """
-        return EntryTestHelpers.create_entry(dn, attributes)
-
-    @staticmethod
-    def create_entry_with_ldif_attributes(
-        dn: str,
-        attributes_dict: dict[str, list[str]],
-    ) -> FlextLdifModels.Entry:
-        """Create Entry using LdifAttributes.model_validate pattern - COMMON PATTERN.
-
-        Replaces:
-            entry = FlextLdifModels.Entry(
-                dn=FlextLdifModels.DistinguishedName(value=dn),
-                attributes=FlextLdifModels.LdifAttributes.model_validate({
-                    "attributes": attributes_dict
-                }),
-            )
-
-        Args:
-            dn: Distinguished name as string
-            attributes_dict: Attributes dictionary
-
-        Returns:
-            FlextLdifModels.Entry
-
-        """
-        return EntryTestHelpers.create_entry(dn, attributes_dict)
-
-    @staticmethod
-    def create_test_user_entry(
-        cn_value: str | None = None,
-        base_dn: str | None = None,
-        *,
-        use_uid: bool = False,
-        **extra_attributes: object,
-    ) -> FlextLdifModels.Entry:
-        """Create test user entry using constants - COMMON PATTERN.
-
-        Uses RFC constants by default. Replaces repetitive test user creation.
-
-        Args:
-            cn_value: Common name (default: RFC.TEST_USER_CN)
-            base_dn: Base DN (default: RFC.DEFAULT_BASE_DN)
-            use_uid: If True, creates uid-based DN
-            **extra_attributes: Additional attributes
-
-        Returns:
-            FlextLdifModels.Entry
-
-        """
-        from tests.fixtures.constants import RFC
-
-        if cn_value is None:
-            cn_value = RFC.TEST_USER_CN
-        if base_dn is None:
-            base_dn = RFC.DEFAULT_BASE_DN
-
-        return TestOperationHelpers.create_inetorgperson_entry(
-            cn_value,
-            base_dn,
-            use_uid=use_uid,
-            **extra_attributes,
-        )
-
-    @staticmethod
-    def create_test_group_entry(
-        cn_value: str | None = None,
-        base_dn: str | None = None,
-        *,
-        members: list[str] | None = None,
-        **extra_attributes: object,
-    ) -> FlextLdifModels.Entry:
-        """Create test group entry using constants - COMMON PATTERN.
-
-        Uses RFC constants by default. Replaces repetitive test group creation.
-
-        Args:
-            cn_value: Common name (default: RFC.TEST_GROUP_CN)
-            base_dn: Base DN (default: RFC.DEFAULT_BASE_DN)
-            members: List of member DNs
-            **extra_attributes: Additional attributes
-
-        Returns:
-            FlextLdifModels.Entry
-
-        """
-        from tests.fixtures.constants import RFC
-
-        if cn_value is None:
-            cn_value = RFC.TEST_GROUP_CN
-        if base_dn is None:
-            base_dn = RFC.DEFAULT_BASE_DN
-
-        return TestOperationHelpers.create_group_entry(
-            cn_value,
-            base_dn,
-            members=members,
-            **extra_attributes,
-        )
-
-    @staticmethod
     def create_search_options_with_defaults(
         base_dn: str | None = None,
         *,
@@ -978,8 +892,6 @@ class TestOperationHelpers:
             FlextLdapModels.SearchOptions
 
         """
-        from tests.fixtures.constants import RFC
-
         if base_dn is None:
             base_dn = RFC.DEFAULT_BASE_DN
         if filter_str is None:

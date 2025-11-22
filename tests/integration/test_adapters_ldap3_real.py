@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from flext_ldif import FlextLdifParser
+from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -107,8 +110,6 @@ class TestLdap3AdapterReal:
         add_result = connected_adapter.add(entry)
         assert add_result.is_success, f"Add failed: {add_result.error}"
 
-        from ldap3 import MODIFY_REPLACE
-
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["testldap3modify@example.com"])],
         }
@@ -142,9 +143,6 @@ class TestLdap3AdapterReal:
 
         # Ldap3Adapter implements LdapClientProtocol implicitly via duck typing
         # Type ignore needed because mypy doesn't recognize structural subtyping
-        from typing import cast
-
-        from flext_ldap.typings import LdapClientProtocol
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(

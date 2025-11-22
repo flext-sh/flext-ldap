@@ -23,6 +23,19 @@ class EntryTestHelpers:
     """Helper methods for Entry creation and manipulation in tests."""
 
     @staticmethod
+    def _narrow_client_type(client: object) -> LdapClientProtocol:
+        """Narrow client type from object to LdapClientProtocol.
+
+        Args:
+            client: Client object to narrow
+
+        Returns:
+            Client cast to LdapClientProtocol
+
+        """
+        return cast("LdapClientProtocol", client)
+
+    @staticmethod
     def dict_to_entry(
         entry_dict: Mapping[str, object] | dict[str, object],
     ) -> FlextLdifModels.Entry:
@@ -76,8 +89,9 @@ class EntryTestHelpers:
             result = ldap_client.add(entry)
 
         """
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         dn_str = str(dn) if dn else ""
-        _ = client.delete(dn_str)  # Ignore result, just cleanup
+        _ = typed_client.delete(dn_str)  # Ignore result, just cleanup
 
     @staticmethod
     def verify_entry_added(
@@ -104,12 +118,13 @@ class EntryTestHelpers:
         """
         dn_str = str(dn) if dn else ""
         # All clients now use SearchOptions - unified API
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         search_options = FlextLdapModels.SearchOptions(
             base_dn=dn_str,
             filter_str="(objectClass=*)",
             scope="BASE",
         )
-        search_result = client.search(search_options)
+        search_result = typed_client.search(search_options)
         if search_result.is_success:
             unwrapped = search_result.unwrap()
             # Handle both return types: SearchResult or list[Entry]
@@ -142,8 +157,9 @@ class EntryTestHelpers:
             EntryTestHelpers.cleanup_after_test(ldap_client, entry.dn)
 
         """
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         dn_str = str(dn) if dn else ""
-        delete_result = client.delete(dn_str)
+        delete_result = typed_client.delete(dn_str)
         # Ignore result - entry may not exist, that's OK for cleanup
         _ = delete_result
 
@@ -190,26 +206,27 @@ class EntryTestHelpers:
             error_msg = "Entry must have a DN"
             raise ValueError(error_msg)
 
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         # Cleanup before if requested
         if cleanup_before:
             # Convert DN to string to avoid type issues
             dn_str = str(entry.dn) if entry.dn else ""
-            EntryTestHelpers.cleanup_entry(client, dn_str)
+            EntryTestHelpers.cleanup_entry(typed_client, dn_str)
 
         # Add entry
-        add_result = client.add(entry)
+        add_result = typed_client.add(entry)
 
         # Verify if requested and add was successful
         if verify and add_result.is_success:
             dn_str = str(entry.dn) if entry.dn else ""
-            assert EntryTestHelpers.verify_entry_added(client, dn_str), (
+            assert EntryTestHelpers.verify_entry_added(typed_client, dn_str), (
                 "Entry was not found after add"
             )
 
         # Cleanup after if requested
         if cleanup_after:
             dn_str = str(entry.dn) if entry.dn else ""
-            EntryTestHelpers.cleanup_after_test(client, dn_str)
+            EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
 
         return entry, add_result
 
@@ -286,10 +303,11 @@ class EntryTestHelpers:
             if entry.dn:
                 added_dns.append(str(entry.dn))
 
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         # Cleanup all entries at once if requested
         if cleanup_after:
             for dn_str in added_dns:
-                EntryTestHelpers.cleanup_after_test(client, dn_str)
+                EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
 
         return results
 
@@ -360,9 +378,10 @@ class EntryTestHelpers:
                 EntryTestHelpers.cleanup_after_test(client, dn_str)
             return entry, add_result, add_result  # Return add_result as modify_result
 
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         # Modify the entry
         dn_str = str(entry.dn) if entry.dn else ""
-        modify_result = client.modify(dn_str, changes)
+        modify_result = typed_client.modify(dn_str, changes)
 
         # Verify modification if requested
         modify_success = modify_result.is_success
@@ -374,7 +393,7 @@ class EntryTestHelpers:
                 filter_str="(objectClass=*)",
                 scope="BASE",
             )
-            search_result = client.search(search_options)
+            search_result = typed_client.search(search_options)
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
                 # Handle both return types: SearchResult or list[Entry]
@@ -461,9 +480,10 @@ class EntryTestHelpers:
             # If add failed, return early
             return entry, add_result, add_result
 
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         # Delete the entry
         dn_str = str(entry.dn) if entry.dn else ""
-        delete_result = client.delete(dn_str)
+        delete_result = typed_client.delete(dn_str)
 
         # Verify deletion if requested
         if verify_deletion:
@@ -476,7 +496,7 @@ class EntryTestHelpers:
                     filter_str="(objectClass=*)",
                     scope="BASE",
                 )
-                search_result = client.search(search_options)
+                search_result = typed_client.search(search_options)
                 if search_result.is_success:
                     unwrapped = search_result.unwrap()
                     # Handle both return types: SearchResult or list[Entry]
@@ -493,7 +513,10 @@ class EntryTestHelpers:
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: dict[str, list[str] | str],
+        attributes: dict[
+            str,
+            list[str] | str | tuple[str, ...] | set[str] | frozenset[str],
+        ],
     ) -> FlextLdifModels.Entry:
         """Create Entry directly from DN string and attributes dict.
 
@@ -502,7 +525,7 @@ class EntryTestHelpers:
 
         Args:
             dn: Distinguished name as string
-            attributes: Dictionary of attributes (values can be list or single value)
+            attributes: Dictionary of attributes (values can be list, tuple, set, frozenset or single value)
 
         Returns:
             FlextLdifModels.Entry created from parameters
@@ -518,17 +541,16 @@ class EntryTestHelpers:
         # Convert single values to lists
         attrs_dict: dict[str, list[str]] = {}
         for key, value_item_raw in attributes.items():
-            # Type narrowing: cast to expected union type
-            value_item: list[str] | str = cast("list[str] | str", value_item_raw)
-            if isinstance(value_item, list):
-                # value_item is list[str] here
-                attrs_dict[key] = [str(item) for item in value_item]
-            elif isinstance(value_item, (tuple, set, frozenset)):
+            # value_item_raw can be list[str] | str | tuple[str, ...] | set[str] | frozenset[str]
+            if isinstance(value_item_raw, list):
+                # value_item_raw is list[str] here
+                attrs_dict[key] = [str(item) for item in value_item_raw]
+            elif isinstance(value_item_raw, (tuple, set, frozenset)):
                 # Convert list-like collections to list of strings
-                attrs_dict[key] = [str(item) for item in value_item]
+                attrs_dict[key] = [str(item) for item in value_item_raw]
             else:
-                # value_item is str here
-                attrs_dict[key] = [str(value_item)]
+                # value_item_raw is str here
+                attrs_dict[key] = [str(value_item_raw)]
         attrs = FlextLdifModels.LdifAttributes.model_validate({
             "attributes": attrs_dict,
         })
@@ -562,22 +584,23 @@ class EntryTestHelpers:
             result = EntryTestHelpers.add_and_cleanup(ldap_client, entry)
 
         """
+        typed_client = EntryTestHelpers._narrow_client_type(client)
         # Cleanup before
         if entry.dn:
             dn_str = str(entry.dn)
-            EntryTestHelpers.cleanup_entry(client, dn_str)
+            EntryTestHelpers.cleanup_entry(typed_client, dn_str)
 
         # Add entry
-        add_result = client.add(entry)
+        add_result = typed_client.add(entry)
 
         # Verify if requested
         if verify and entry.dn and add_result.is_success:
             dn_str = str(entry.dn)
-            assert EntryTestHelpers.verify_entry_added(client, dn_str)
+            assert EntryTestHelpers.verify_entry_added(typed_client, dn_str)
 
         # Cleanup after if requested
         if cleanup_after and entry.dn:
             dn_str = str(entry.dn)
-            EntryTestHelpers.cleanup_after_test(client, dn_str)
+            EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
 
         return add_result

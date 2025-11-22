@@ -8,6 +8,17 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
+
 pytestmark = pytest.mark.unit
 
 
@@ -16,20 +27,15 @@ class TestVersion:
 
     def test_version_is_string(self) -> None:
         """Test that __version__ is a string."""
-        # Import directly from module
-        from flext_ldap.__version__ import __version__ as version_str
-
-        assert isinstance(version_str, str)
-        assert len(version_str) > 0
+        assert isinstance(__version__, str)
+        assert len(__version__) > 0
 
     def test_version_format(self) -> None:
         """Test that version follows semantic versioning format."""
-        from flext_ldap.__version__ import __version__ as version_str
-
         # Version should be in format X.Y.Z or similar
-        parts = version_str.split(".")
+        parts = __version__.split(".")
         assert len(parts) >= 2, (
-            f"Version {version_str} should have at least major.minor"
+            f"Version {__version__} should have at least major.minor"
         )
         # All parts should be numeric or contain valid version identifiers
         for part in parts:
@@ -37,23 +43,12 @@ class TestVersion:
 
     def test_version_info_exists(self) -> None:
         """Test that version_info can be imported."""
-        from flext_ldap.__version__ import __version_info__
-
         assert __version_info__ is not None
         assert isinstance(__version_info__, tuple)
         assert len(__version_info__) >= 2
 
     def test_version_metadata_imports(self) -> None:
         """Test that all version metadata can be imported."""
-        from flext_ldap.__version__ import (
-            __author__,
-            __author_email__,
-            __description__,
-            __license__,
-            __title__,
-            __url__,
-        )
-
         assert isinstance(__title__, str)
         assert isinstance(__description__, str)
         assert isinstance(__author__, str)
@@ -64,8 +59,6 @@ class TestVersion:
 
     def test_version_info_matches_version(self) -> None:
         """Test that version_info matches version string."""
-        from flext_ldap.__version__ import __version__, __version_info__
-
         version_parts = __version__.split(".")
         version_info_parts = [str(part) for part in __version_info__]
 

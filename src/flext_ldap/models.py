@@ -17,7 +17,6 @@ Notes:
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 from flext_core import FlextModels, FlextUtilities
 from flext_ldif import FlextLdifModels, FlextLdifUtilities
@@ -25,25 +24,6 @@ from pydantic import Field, computed_field, field_validator, model_validator
 
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
-
-# Get nested classes from FlextModels at runtime
-_FlextModels_Config = getattr(FlextModels, "Config", None)
-_FlextModels_Options = getattr(FlextModels, "Options", None)
-_FlextModels_Results = getattr(FlextModels, "Results", None)
-_FlextModels_Statistics = getattr(FlextModels, "Statistics", None)
-
-if _FlextModels_Config is None:
-    msg = "FlextModels.Config not found"
-    raise AttributeError(msg)
-if _FlextModels_Options is None:
-    msg = "FlextModels.Options not found"
-    raise AttributeError(msg)
-if _FlextModels_Results is None:
-    msg = "FlextModels.Results not found"
-    raise AttributeError(msg)
-if _FlextModels_Statistics is None:
-    msg = "FlextModels.Statistics not found"
-    raise AttributeError(msg)
 
 
 class FlextLdapModels(FlextModels):
@@ -57,7 +37,7 @@ class FlextLdapModels(FlextModels):
     # CONNECTION MODELS
     # =========================================================================
 
-    class ConnectionConfig(_FlextModels_Config):
+    class ConnectionConfig(FlextModels.Config):
         """Configuration for LDAP connection (frozen, immutable).
 
         Minimal configuration model for establishing LDAP connections.
@@ -143,7 +123,7 @@ class FlextLdapModels(FlextModels):
     # SEARCH MODELS
     # =========================================================================
 
-    class SearchOptions(_FlextModels_Options):
+    class SearchOptions(FlextModels.Options):
         """Options for LDAP search operations (frozen, immutable).
 
         Minimal search configuration model.
@@ -158,10 +138,7 @@ class FlextLdapModels(FlextModels):
 
         base_dn: str = Field(..., description="Base DN for search")
         scope: FlextLdapConstants.LiteralTypes.SearchScope = Field(
-            default=cast(
-                "FlextLdapConstants.LiteralTypes.SearchScope",
-                FlextLdapConstants.SearchScope.SUBTREE,
-            ),
+            default="SUBTREE",
             description="Search scope (BASE, ONELEVEL, SUBTREE)",
         )
         filter_str: str = Field(
@@ -245,14 +222,7 @@ class FlextLdapModels(FlextModels):
             normalized_base_dn = FlextLdifUtilities.DN.norm_string(base_dn)
 
             # Use defaults if not provided
-            actual_scope = (
-                scope
-                if scope is not None
-                else cast(
-                    "FlextLdapConstants.LiteralTypes.SearchScope",
-                    FlextLdapConstants.SearchScope.SUBTREE,
-                )
-            )
+            actual_scope = scope if scope is not None else "SUBTREE"
             actual_filter = (
                 filter_str
                 if filter_str is not None
@@ -272,7 +242,7 @@ class FlextLdapModels(FlextModels):
     # OPERATION RESULT MODELS
     # =========================================================================
 
-    class OperationResult(_FlextModels_Results):
+    class OperationResult(FlextModels.Results):
         """Result of LDAP operation (frozen, immutable).
 
         Generic result model for all LDAP operations.
@@ -381,7 +351,7 @@ class FlextLdapModels(FlextModels):
     # SYNC MODELS
     # =========================================================================
 
-    class SyncOptions(_FlextModels_Options):
+    class SyncOptions(FlextModels.Options):
         """Options for LDIF to LDAP synchronization (frozen, immutable).
 
         Configuration for syncing LDIF files to LDAP directory.
@@ -429,7 +399,7 @@ class FlextLdapModels(FlextModels):
             )
         )
 
-    class SyncStats(_FlextModels_Statistics):
+    class SyncStats(FlextModels.Statistics):
         """Statistics for LDIF synchronization operation (frozen, immutable).
 
         Aggregated statistics from syncing LDIF entries to LDAP.

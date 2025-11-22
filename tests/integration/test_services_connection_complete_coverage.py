@@ -37,7 +37,6 @@ class TestFlextLdapConnectionCompleteCoverage:
             auto_bind=True,
             auto_range=True,
         )
-        from flext_ldap.models import FlextLdapModels
 
         connection = FlextLdapConnection(config=config)
         # Create ConnectionConfig from service config explicitly (no fallback)

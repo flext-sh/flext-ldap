@@ -9,15 +9,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from flext_ldif import FlextLdifParser
+from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -94,7 +97,9 @@ class TestFlextLdapOperationsComplete:
             "testnorm",
             RFC.DEFAULT_BASE_DN,
         )
-        result = EntryTestHelpers.add_and_cleanup(operations_service, entry)
+        result = EntryTestHelpers.add_and_cleanup(
+            cast("LdapClientProtocol", operations_service), entry
+        )
         TestOperationHelpers.assert_result_success(result)
 
     def test_modify_with_dn_object(
@@ -114,7 +119,7 @@ class TestFlextLdapOperationsComplete:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                operations_service,
+                cast("LdapClientProtocol", operations_service),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -131,7 +136,7 @@ class TestFlextLdapOperationsComplete:
         """Test modify with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testmodnorm")
         add_result = EntryTestHelpers.add_and_cleanup(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
             verify=False,
             cleanup_after=False,
@@ -159,7 +164,7 @@ class TestFlextLdapOperationsComplete:
         )
 
         _add_result, _delete_result = TestOperationHelpers.add_then_delete_and_assert(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
         )
 
@@ -243,8 +248,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with regular entry (covers lines 235-246)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Cleanup first
         test_dn = f"cn=testupsert,{RFC.DEFAULT_BASE_DN}"
         _ = operations_service.delete(test_dn)
@@ -279,8 +282,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with schema modify entry (covers lines 190-233)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create schema modify entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -305,8 +306,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with schema modify entry missing 'add' attribute (covers lines 197-201)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create schema modify entry without 'add' attribute
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -330,8 +329,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with schema modify entry missing attribute values (covers lines 207-210)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create schema modify entry with 'add' but missing attribute values
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
@@ -356,11 +353,9 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with schema modify entry having only empty values (covers line 217)."""
-        from flext_ldif.models import FlextLdifModels
-
         # First, create a base entry so we can modify it
         # Use inetOrgPerson which is a valid objectClass
-        base_entry = TestOperationHelpers.create_entry_simple(
+        base_entry = EntryTestHelpers.create_entry(
             f"cn=testattr,{RFC.DEFAULT_BASE_DN}",
             {
                 "cn": ["testattr"],
@@ -416,8 +411,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with successful schema modify (covers lines 220, 223)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create a regular entry first to modify
         test_dn = f"cn=testschema,{RFC.DEFAULT_BASE_DN}"
         _ = operations_service.delete(test_dn)
@@ -464,8 +457,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with schema modify when attribute already exists (covers lines 227, 229)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create entry with description already
         test_dn = f"cn=testschemaexists,{RFC.DEFAULT_BASE_DN}"
         _ = operations_service.delete(test_dn)
@@ -513,8 +504,6 @@ class TestFlextLdapOperationsComplete:
         operations_service: FlextLdapOperations,
     ) -> None:
         """Test upsert with regular entry that fails for other reason (covers line 244)."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create entry with invalid DN format to trigger error
         # Actually, Pydantic validates DN, so we can't create invalid DN
         # Instead, we'll test with entry that fails for other reasons

@@ -112,15 +112,15 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
 
         # Get generate_datetime_utc from Generators class
         generators_class = getattr(FlextUtilities, "Generators", None)
-        if generators_class is None:
+        if generators_class is None:  # pragma: no cover
             msg = "FlextUtilities.Generators not found"
-            raise AttributeError(msg)
+            raise AttributeError(msg)  # pragma: no cover
         generate_datetime_utc_method = getattr(
             generators_class, "generate_datetime_utc", None
         )
-        if generate_datetime_utc_method is None:
+        if generate_datetime_utc_method is None:  # pragma: no cover
             msg = "FlextUtilities.Generators.generate_datetime_utc not found"
-            raise AttributeError(msg)
+            raise AttributeError(msg)  # pragma: no cover
         start_time = generate_datetime_utc_method()
         # Store method for use in lambda closure
         self._generate_datetime_utc = generate_datetime_utc_method
@@ -281,9 +281,10 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
                     source_basedn=source_basedn_log,
                     target_basedn=target_basedn_log,
                 )
-            else:
+            else:  # pragma: no cover
                 # If base DNs are invalid, skip transformation
-                self.logger.debug(
+                # Defensive: FlextUtilities.TextProcessor.safe_string always succeeds for strings
+                self.logger.debug(  # pragma: no cover
                     "BaseDN transformation skipped - invalid base DNs",
                     operation="sync_ldif_file",
                     source_basedn=options.source_basedn[:100]

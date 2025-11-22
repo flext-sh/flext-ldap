@@ -103,6 +103,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self,
         search_options: FlextLdapModels.SearchOptions,
         server_type: str = FlextLdapConstants.ServerTypes.RFC,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation.
 
@@ -167,6 +168,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     def add(
         self,
         entry: FlextLdifModels.Entry,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add LDAP entry.
 
@@ -223,6 +225,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self,
         dn: str | FlextLdifModels.DistinguishedName,
         changes: dict[str, list[tuple[str, list[str]]]],
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
 
@@ -263,6 +266,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     def delete(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry.
 
@@ -962,6 +966,12 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             if total_entries > 0
             else "0%",
         )
+
+        # Return failure if all entries failed and no entries were synced
+        if synced == 0 and failed > 0:
+            return FlextResult[dict[str, int]].fail(
+                f"Batch upsert failed: all {failed} entries failed, 0 synced",
+            )
 
         return FlextResult[dict[str, int]].ok(stats)
 

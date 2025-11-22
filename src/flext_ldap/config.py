@@ -12,27 +12,15 @@ from __future__ import annotations
 from typing import ClassVar, Self
 
 from flext_core import FlextConfig
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifConfig
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.constants import FlextLdapConstants
 
-# Use FlextConfig.auto_register and FlextConfig.AutoConfig directly
-# These are class attributes that exist at runtime
-_auto_register_decorator = getattr(FlextConfig, "auto_register", None)
-_AutoConfig_class = getattr(FlextConfig, "AutoConfig", None)
 
-if _auto_register_decorator is None:
-    msg = "FlextConfig.auto_register not found"
-    raise AttributeError(msg)
-if _AutoConfig_class is None:
-    msg = "FlextConfig.AutoConfig not found"
-    raise AttributeError(msg)
-
-
-@_auto_register_decorator("ldap")
-class FlextLdapConfig(_AutoConfig_class):
+@FlextConfig.auto_register("ldap")
+class FlextLdapConfig(FlextConfig.AutoConfig):
     """Pydantic v2 configuration for LDAP operations.
 
     **ARCHITECTURAL PATTERN**: Zero-Boilerplate Auto-Registration
@@ -176,11 +164,13 @@ class LdapFlextConfig(FlextConfig):
         config = FlextConfig.get_global_instance()
         # get_namespace is a method of FlextConfig instances
         get_namespace_method = getattr(config, "get_namespace", None)
-        if get_namespace_method is None:
+        if get_namespace_method is None:  # pragma: no cover
+            # Defensive: FlextConfig always has get_namespace method
             msg = "FlextConfig instance does not have get_namespace method"
             raise AttributeError(msg)
         namespace = get_namespace_method("ldap", FlextLdapConfig)
-        if not isinstance(namespace, FlextLdapConfig):
+        if not isinstance(namespace, FlextLdapConfig):  # pragma: no cover
+            # Defensive: namespace always returns FlextLdapConfig for "ldap"
             msg = f"Namespace 'ldap' is {type(namespace).__name__}, not FlextLdapConfig"
             raise TypeError(msg)
         return namespace
@@ -191,11 +181,13 @@ class LdapFlextConfig(FlextConfig):
         config = FlextConfig.get_global_instance()
         # get_namespace is a method of FlextConfig instances
         get_namespace_method = getattr(config, "get_namespace", None)
-        if get_namespace_method is None:
+        if get_namespace_method is None:  # pragma: no cover
+            # Defensive: FlextConfig always has get_namespace method
             msg = "FlextConfig instance does not have get_namespace method"
             raise AttributeError(msg)
         namespace = get_namespace_method("ldif", FlextLdifConfig)
-        if not isinstance(namespace, FlextLdifConfig):
+        if not isinstance(namespace, FlextLdifConfig):  # pragma: no cover
+            # Defensive: namespace always returns FlextLdifConfig for "ldif"
             msg = f"Namespace 'ldif' is {type(namespace).__name__}, not FlextLdifConfig"
             raise TypeError(msg)
         return namespace

@@ -10,11 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -86,7 +89,7 @@ class TestFlextLdapAPI:
             str(ldap_container["base_dn"]),
         )
         TestOperationHelpers.execute_operation_when_not_connected(
-            api,
+            cast("LdapClientProtocol", api),
             "search",
             search_options=search_options,
         )
@@ -97,7 +100,7 @@ class TestFlextLdapAPI:
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
         TestOperationHelpers.execute_operation_when_not_connected(
-            api,
+            cast("LdapClientProtocol", api),
             "add",
             entry=entry,
         )
@@ -107,7 +110,7 @@ class TestFlextLdapAPI:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestOperationHelpers.execute_operation_when_not_connected(
-            api,
+            cast("LdapClientProtocol", api),
             "modify",
             dn="cn=test,dc=example,dc=com",
             changes=changes,
@@ -115,7 +118,7 @@ class TestFlextLdapAPI:
 
         # Delete should fail
         TestOperationHelpers.execute_operation_when_not_connected(
-            api,
+            cast("LdapClientProtocol", api),
             "delete",
             dn="cn=test,dc=example,dc=com",
         )
@@ -157,7 +160,9 @@ class TestFlextLdapAPIWithQuirks:
         )
 
         # Add should work with quirks handled by flext-ldif
-        result = EntryTestHelpers.add_and_cleanup(ldap_client, entry)
+        result = EntryTestHelpers.add_and_cleanup(
+            cast("LdapClientProtocol", ldap_client), entry
+        )
         assert result.is_success, f"Add failed: {result.error}"
 
         # Cleanup

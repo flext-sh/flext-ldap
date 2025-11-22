@@ -9,10 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -42,7 +45,9 @@ class TestFlextLdapAPICoverage:
         """Test context manager enter and exit."""
         with FlextLdap() as client:
             assert client is not None
-            TestOperationHelpers.connect_and_assert_success(client, connection_config)
+            TestOperationHelpers.connect_and_assert_success(
+                cast("LdapClientProtocol", client), connection_config
+            )
 
         # After exit, connection should be closed
         assert not client.is_connected
@@ -56,7 +61,7 @@ class TestFlextLdapAPICoverage:
         try:
             with client:
                 TestOperationHelpers.connect_and_assert_success(
-                    client,
+                    cast("LdapClientProtocol", client),
                     connection_config,
                 )
                 # Simulate exception
@@ -73,7 +78,9 @@ class TestFlextLdapAPICoverage:
         ldap_client: FlextLdap,
     ) -> None:
         """Test execute method for health check."""
-        search_result = TestOperationHelpers.execute_and_assert_success(ldap_client)
+        search_result = TestOperationHelpers.execute_and_assert_success(
+            cast("LdapClientProtocol", ldap_client)
+        )
         assert search_result is not None
         assert hasattr(search_result, "entries")
         assert hasattr(search_result, "total_count")
