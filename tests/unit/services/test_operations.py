@@ -10,11 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextConfig
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
-from ...helpers.operation_helpers import TestOperationHelpers
+from ...helpers.entry_helpers import EntryTestHelpers
 
 pytestmark = pytest.mark.unit
 
@@ -22,8 +24,6 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def ldap_connection() -> FlextLdapConnection:
     """Create a real LDAP connection instance for testing (not connected)."""
-    from flext_ldap.config import FlextLdapConfig
-
     config = FlextLdapConfig()
     return FlextLdapConnection(config=config)
 
@@ -47,7 +47,6 @@ class TestFlextLdapOperations:
         operations = FlextLdapOperations(connection=ldap_connection)
         config = operations.service_config
         assert config is not None
-        from flext_core import FlextConfig
 
         assert isinstance(config, FlextConfig)
 
@@ -82,10 +81,10 @@ class TestFlextLdapOperations:
         """Test _compare_entries with identical entries returns None."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
-        entry1 = TestOperationHelpers.create_entry_simple(
+        entry1 = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com", {"cn": ["test"], "sn": ["User"]}
         )
-        entry2 = TestOperationHelpers.create_entry_simple(
+        entry2 = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com", {"cn": ["test"], "sn": ["User"]}
         )
 
@@ -97,10 +96,10 @@ class TestFlextLdapOperations:
         """Test _compare_entries with different attributes returns changes dict."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
-        entry1 = TestOperationHelpers.create_entry_simple(
+        entry1 = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com", {"cn": ["test"], "sn": ["User"]}
         )
-        entry2 = TestOperationHelpers.create_entry_simple(
+        entry2 = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com", {"cn": ["test"], "sn": ["Different"]}
         )
 

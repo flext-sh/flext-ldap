@@ -13,6 +13,7 @@ from collections.abc import Generator
 import pytest
 from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
+from pydantic import ValidationError
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
@@ -48,8 +49,6 @@ class TestLdap3AdapterErrorHandling:
         """Test search with invalid base DN - Pydantic validation prevents invalid DN."""
         # Pydantic v2 validates base_dn format at model creation
         # Invalid DN will raise ValidationError before reaching adapter
-        import pytest
-        from pydantic_core import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             FlextLdapModels.SearchOptions(
@@ -81,7 +80,7 @@ class TestLdap3AdapterErrorHandling:
     ) -> None:
         """Test add with invalid entry."""
         # Entry with invalid DN format
-        entry = TestOperationHelpers.create_entry_with_dn_and_attributes(
+        entry = EntryTestHelpers.create_entry(
             "invalid-dn",
             {
                 "cn": ["test"],

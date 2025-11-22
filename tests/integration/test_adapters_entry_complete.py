@@ -12,10 +12,12 @@ from collections.abc import Generator
 
 import pytest
 from ldap3 import Connection, Entry as Ldap3Entry, Server
+from pydantic import ValidationError
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 from ..fixtures.constants import RFC
+from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
@@ -123,7 +125,7 @@ class TestFlextLdapEntryAdapterComplete:
         adapter = FlextLdapEntryAdapter()
 
         # Create entry with tuple (list-like)
-        entry = TestOperationHelpers.create_entry_with_ldif_attributes(
+        entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {
                 "cn": ["test"],  # Convert tuple to list
@@ -143,7 +145,7 @@ class TestFlextLdapEntryAdapterComplete:
 
         # LdifAttributes requires all values to be lists
         # Empty string must be represented as empty list or list with empty string
-        entry = TestOperationHelpers.create_entry_with_ldif_attributes(
+        entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {
                 "cn": ["test"],
@@ -252,7 +254,7 @@ class TestFlextLdapEntryAdapterComplete:
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
         """Test conversion with entry having empty attributes dict."""
         adapter = FlextLdapEntryAdapter()
-        entry = TestOperationHelpers.create_entry_simple(
+        entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {},
         )
@@ -273,7 +275,7 @@ class TestFlextLdapEntryAdapterComplete:
         """
         adapter = FlextLdapEntryAdapter()
         # Entry with empty DN can be created (Pydantic captures violations, doesn't reject)
-        entry = TestOperationHelpers.create_entry_simple(
+        entry = EntryTestHelpers.create_entry(
             "",
             {"cn": ["test"]},
         )
@@ -290,18 +292,16 @@ class TestFlextLdapEntryAdapterComplete:
         empty attributes dict instead, which is the valid way to represent
         an entry with no attributes.
         """
-        import pytest
-        from pydantic_core import ValidationError
-
         adapter = FlextLdapEntryAdapter()
-        entry = TestOperationHelpers.create_entry_simple(
+        entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {},
         )
         # Pydantic v2 prevents setting attributes=None - this is correct behavior
         # Test that Pydantic raises ValidationError
+        # Use type: ignore because we're intentionally testing invalid assignment
         with pytest.raises(ValidationError):
-            entry.attributes = None
+            entry.attributes = None  # type: ignore[assignment]
 
         # Test validation with empty attributes
         # Entry with empty attributes can be created (Pydantic captures violations, doesn't reject)
@@ -318,7 +318,7 @@ class TestFlextLdapEntryAdapterComplete:
         it's considered valid (violations are captured in metadata, not rejected).
         """
         adapter = FlextLdapEntryAdapter()
-        entry = TestOperationHelpers.create_entry_simple(
+        entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {},
         )

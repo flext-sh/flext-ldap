@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Protocol
 
 from flext_core import FlextResult, FlextTypes
@@ -14,6 +15,13 @@ from flext_ldif import FlextLdifModels
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+
+__all__ = [
+    "FlextLdapTypes",
+    "LdapAdapterProtocol",
+    "LdapClientProtocol",
+    "LdapConnectionProtocol",
+]
 
 
 class FlextLdapTypes(FlextTypes):
@@ -43,6 +51,33 @@ class FlextLdapTypes(FlextTypes):
 
     type SearchResult = list[FlextLdifModels.Entry]
 
+    # =========================================================================
+    # LDAP OPERATION CALLABLES
+    # =========================================================================
+
+    type LdapAddCallable = Callable[
+        [str, str | None, dict[str, list[str]] | None], bool
+    ]
+    type LdapModifyCallable = Callable[
+        [str, dict[str, list[tuple[str, list[str]]]]], bool
+    ]
+    type LdapDeleteCallable = Callable[[str], bool]
+    type LdapSearchCallable = Callable[
+        [
+            str,
+            str,
+            int,
+            list[str] | None,
+            bool,
+            dict[str, str] | None,
+            int | None,
+            int | None,
+            bool,
+            dict[str, str] | None,
+        ],
+        tuple[bool, dict[str, list[dict[str, list[str]]]]],
+    ]
+
 
 # =========================================================================
 # LDAP CLIENT PROTOCOLS
@@ -55,6 +90,23 @@ class LdapClientProtocol(Protocol):
     This protocol defines the interface for LDAP clients used in test helpers.
     Uses SearchOptions model for type safety and consistency.
     """
+
+    def connect(
+        self,
+        config: FlextLdapModels.ConnectionConfig,
+        **kwargs: object,
+    ) -> FlextResult[bool]:
+        """Connect to LDAP server.
+
+        Args:
+            config: Connection configuration (may be named 'config' or 'connection_config' in implementations)
+            **kwargs: Additional keyword arguments (e.g., auto_retry, max_retries, retry_delay)
+
+        Returns:
+            FlextResult[bool] indicating connection success or failure
+
+        """
+        ...
 
     def search(
         self,

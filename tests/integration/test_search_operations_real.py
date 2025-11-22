@@ -9,10 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -126,12 +129,13 @@ class TestFlextLdapAddRealOperations:
 
     def test_add_user_entry(self, ldap_client: FlextLdap) -> None:
         """Test adding a user entry."""
-        entry = TestOperationHelpers.create_entry_with_uid(
+        entry = TestOperationHelpers.create_inetorgperson_entry(
             "testadd",
             RFC.DEFAULT_BASE_DN,
-            cn="Test Add User",
             sn="Add",
             mail="testadd@internal.invalid",
+            use_uid=True,
+            cn="Test Add User",
         )
 
         result = TestOperationHelpers.add_entry_and_assert_success(
@@ -198,7 +202,7 @@ class TestFlextLdapModifyRealOperations:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                ldap_client,
+                cast("LdapClientProtocol", ldap_client),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -221,11 +225,12 @@ class TestFlextLdapDeleteRealOperations:
         """Test deleting an entry (idempotent with unique DN)."""
         # First add an entry with unique UID
         uid = f"testdelete-{unique_dn_suffix}"
-        entry = TestOperationHelpers.create_entry_with_uid(
+        entry = TestOperationHelpers.create_inetorgperson_entry(
             uid,
             RFC.DEFAULT_BASE_DN,
-            cn="Test Delete User",
             sn="Delete",
+            use_uid=True,
+            cn="Test Delete User",
         )
 
         TestOperationHelpers.add_entry_and_assert_success(

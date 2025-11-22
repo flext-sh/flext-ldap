@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Literal, cast
+
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
 
@@ -82,8 +84,6 @@ class FlextLdapTestHelpers:
             FlextLdapModels.SearchOptions instance
 
         """
-        from typing import Literal, cast
-
         return FlextLdapModels.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
@@ -238,12 +238,21 @@ class FlextLdapTestHelpers:
 
         """
         results = []
-        for entry_dict in entry_dicts:
+        for entry_dict_item in entry_dicts:
+            # Type narrowing: verify entry_dict_item is a dict before use
+            if not isinstance(entry_dict_item, dict):
+                raise TypeError(f"Expected dict, got {type(entry_dict_item)}")
+            entry_dict: dict[str, object] = entry_dict_item
             # Adjust DN if needed
             if adjust_dn:
                 dn_str = str(entry_dict.get("dn", ""))
-                dn_str = dn_str.replace(adjust_dn["from"], adjust_dn["to"])
-                entry_dict = {**entry_dict, "dn": dn_str}
+                from_val = str(adjust_dn.get("from", ""))
+                to_val = str(adjust_dn.get("to", ""))
+                dn_str = dn_str.replace(from_val, to_val)
+                # Create new dict with updated DN
+                entry_dict_new: dict[str, object] = dict(entry_dict)
+                entry_dict_new["dn"] = dn_str
+                entry_dict = entry_dict_new
 
             entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
                 client,

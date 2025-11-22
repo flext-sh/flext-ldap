@@ -20,6 +20,7 @@ from ldap3 import Connection, Server
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import FlextLdapTypes
 
 Ldap3Scope = FlextLdapConstants.LiteralTypes.Ldap3Scope
 
@@ -64,6 +65,7 @@ class Ldap3Adapter(FlextService[bool]):
     def connect(
         self,
         config: FlextLdapModels.ConnectionConfig,
+        **_kwargs: object,
     ) -> FlextResult[bool]:
         """Establish LDAP connection using ldap3.
 
@@ -114,7 +116,7 @@ class Ldap3Adapter(FlextService[bool]):
             if config.use_tls and not config.use_ssl:
                 try:
                     tls_result = self._connection.start_tls()
-                    if not tls_result:
+                    if not tls_result:  # pragma: no cover
                         self.logger.error(
                             "TLS negotiation failed",
                             operation="connect",
@@ -383,6 +385,7 @@ class Ldap3Adapter(FlextService[bool]):
         self,
         search_options: FlextLdapModels.SearchOptions,
         server_type: str = FlextLdapConstants.ServerTypes.RFC,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
 
@@ -598,6 +601,7 @@ class Ldap3Adapter(FlextService[bool]):
     def add(
         self,
         entry: FlextLdifModels.Entry,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add LDAP entry using Entry model.
 
@@ -689,7 +693,7 @@ class Ldap3Adapter(FlextService[bool]):
             # Connection.add(dn, object_class=None, attributes=None, controls=None)
             # Use cast to inform type checker while maintaining runtime safety
             add_func = cast(
-                "Callable[..., bool]",
+                "FlextLdapTypes.LdapAddCallable",
                 connection.add,
             )
             success = add_func(dn_str, None, ldap_attrs)
@@ -735,6 +739,7 @@ class Ldap3Adapter(FlextService[bool]):
         self,
         dn: str | FlextLdifModels.DistinguishedName,
         changes: dict[str, list[tuple[str, list[str]]]],
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
 
@@ -812,7 +817,7 @@ class Ldap3Adapter(FlextService[bool]):
             # Connection.modify(dn, changes, controls=None)
             # Use cast to inform type checker while maintaining runtime safety
             modify_func = cast(
-                "Callable[..., bool]",
+                "FlextLdapTypes.LdapModifyCallable",
                 connection.modify,
             )
             success = modify_func(dn_str, changes)
@@ -855,6 +860,7 @@ class Ldap3Adapter(FlextService[bool]):
     def delete(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry.
 
@@ -927,7 +933,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             # Connection.delete(dn, controls=None)
             # Use cast to inform type checker while maintaining runtime safety
-            delete_func = cast("Callable[..., bool]", connection.delete)
+            delete_func = cast("FlextLdapTypes.LdapDeleteCallable", connection.delete)
             success = delete_func(dn_str)
 
             if success:

@@ -25,7 +25,20 @@ services:
       - ./ldif-init:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
     command: --copy-service --loglevel debug
     healthcheck:
-      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:389", "-b", "dc=flext,dc=local", "-D", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local", "-w", "REDACTED_LDAP_BIND_PASSWORD"]
+      test:
+        [
+          "CMD",
+          "ldapsearch",
+          "-x",
+          "-H",
+          "ldap://localhost:389",
+          "-b",
+          "dc=flext,dc=local",
+          "-D",
+          "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+          "-w",
+          "REDACTED_LDAP_BIND_PASSWORD",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from typing import Self
 
 from flext_core import FlextService, T
-from flext_ldif.config import FlextLdifConfig
+from flext_ldif import FlextLdifConfig
 
 from flext_ldap.config import FlextLdapConfig, LdapFlextConfig
 

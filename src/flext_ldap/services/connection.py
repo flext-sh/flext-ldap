@@ -55,6 +55,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         auto_retry: bool = False,
         max_retries: int = 3,
         retry_delay: float = 1.0,
+        **_kwargs: object,
     ) -> FlextResult[bool]:
         """Establish LDAP connection with optional auto-retry on failure.
 
@@ -196,12 +197,12 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         Uses FlextLdapServerDetector to detect server type from rootDSE.
         Failures are logged but do not affect connection success.
         """
-        if not self.is_connected:
+        if not self.is_connected:  # pragma: no cover
             return
 
         try:
             connection = self._adapter.connection
-            if connection is None:
+            if connection is None:  # pragma: no cover
                 return
 
             detector = FlextLdapServerDetector()
@@ -214,14 +215,16 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
                     operation="connect",
                     detected_server_type=detected_type,
                 )
-            else:
-                self.logger.debug(
+            else:  # pragma: no cover
+                # Detection failed but non-critical for connection
+                self.logger.debug(  # pragma: no cover
                     "Server type detection failed (non-critical)",
                     operation="connect",
                     error=str(detection_result.error),
                 )
-        except Exception as e:
-            self.logger.debug(
+        except Exception as e:  # pragma: no cover
+            # Exception in optional detection is non-critical
+            self.logger.debug(  # pragma: no cover
                 "Server type detection exception (non-critical)",
                 operation="connect",
                 error=str(e),

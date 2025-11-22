@@ -187,7 +187,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         FlextLdap._pending_config = None
         FlextLdap._pending_parser = None
 
-    def model_post_init(self, __context: object, /) -> None:
+    def model_post_init(self, _context: object, /) -> None:
         """Initialize private attributes after Pydantic initialization.
 
         This hook is called by Pydantic after __init__ completes and handles:
@@ -198,7 +198,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         Singleton pattern ensures this is only called once (when the single instance is created).
 
         Args:
-            __context: Pydantic's validation context dictionary or None (unused).
+            _context: Pydantic's validation context dictionary or None (unused).
 
         """
         # Initialize dispatcher, registry, and logger FIRST
@@ -300,6 +300,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         auto_retry: bool = False,
         max_retries: int = 3,
         retry_delay: float = 1.0,
+        **_kwargs: object,
     ) -> FlextResult[bool]:
         """Establish LDAP connection with optional auto-retry.
 
@@ -420,6 +421,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self,
         search_options: FlextLdapModels.SearchOptions,
         server_type: str = FlextLdapConstants.ServerTypes.RFC,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation.
 
@@ -471,6 +473,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     def add(
         self,
         entry: FlextLdifModels.Entry,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add LDAP entry.
 
@@ -514,6 +517,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self,
         dn: str | FlextLdifModels.DistinguishedName,
         changes: dict[str, list[tuple[str, list[str]]]],
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
 
@@ -559,6 +563,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     def delete(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
+        **_kwargs: object,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry.
 
@@ -731,7 +736,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         return result
 
     @override
-    def execute(self, **kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:
+    def execute(self, **_kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:
         """Execute service health check.
 
         Returns:

@@ -15,6 +15,9 @@ from __future__ import annotations
 import pytest
 from ldap3 import Connection, Server
 
+from flext_ldap import FlextLdap, FlextLdapModels
+from flext_ldap.config import FlextLdapConfig
+
 # Mark entire module as smoke tests
 pytestmark = pytest.mark.smoke
 
@@ -30,7 +33,10 @@ def test_ldap_container_health(ldap_container: dict[str, object]) -> None:
 
     """
     # Create REAL ldap3 Server object
-    server = Server(str(ldap_container["server_url"]), get_info="ALL")
+    server = Server(
+        str(ldap_container["server_url"]),
+        get_info="ALL",
+    )
 
     # Create REAL ldap3 Connection
     connection = Connection(
@@ -59,9 +65,6 @@ def test_flext_ldap_api_imports() -> None:
     Verifies that the API can be imported and instantiated.
     Does NOT test connection - that's in test_ldap_container_health.
     """
-    # Import REAL FlextLdap API (NO MOCKS)
-    from flext_ldap import FlextLdap, FlextLdapModels
-
     # Instantiate REAL FlextLdap object (without connection)
     api = FlextLdap()
     assert api is not None, "FlextLdap API instantiation failed"
@@ -80,9 +83,6 @@ def test_flext_ldap_basic_connection(ldap_container: dict[str, object]) -> None:
         ldap_container: Container connection info
 
     """
-    from flext_ldap import FlextLdap, FlextLdapModels
-    from flext_ldap.config import FlextLdapConfig
-
     # Create REAL config from container info
     port_value = ldap_container["port"]
     port_int = int(str(port_value)) if isinstance(port_value, (int, str)) else 3390
