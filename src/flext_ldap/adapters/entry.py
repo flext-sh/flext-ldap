@@ -17,7 +17,6 @@ from typing import cast
 
 from flext_core import FlextResult, FlextRuntime, FlextService
 from flext_ldif import (
-    EntryManipulationServices,
     FlextLdif,
     FlextLdifConfig,
     FlextLdifConstants,
@@ -413,7 +412,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             )
             return FlextResult[dict[str, list[str]]].fail("Entry has no attributes")
 
-        # FASE 1: Reuse EntryManipulationServices.convert_ldif_attributes_to_ldap3_format()
+        # FASE 1: Reuse FlextLdif.entry_manipulation.convert_ldif_attributes_to_ldap3_format()
         # to maximize code reuse and ensure consistency with flext-ldif
         try:
             # Convert entry.attributes to format expected by convert_ldif_attributes_to_ldap3_format
@@ -422,7 +421,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             # but method expects FlextLdifModels.LdifAttributes (from models.py namespace wrapper)
             # Both are structurally compatible, cast is safe
             ldap3_attributes = (
-                EntryManipulationServices.convert_ldif_attributes_to_ldap3_format(
+                FlextLdif.entry_manipulation.convert_ldif_attributes_to_ldap3_format(
                     cast(
                         "FlextLdifModels.LdifAttributes | dict[str, str | list[str]]",
                         entry.attributes,

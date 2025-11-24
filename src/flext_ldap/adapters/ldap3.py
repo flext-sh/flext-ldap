@@ -14,7 +14,8 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core import FlextResult, FlextRuntime, FlextService
-from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifUtilities
+from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -49,17 +50,22 @@ class Ldap3Adapter(FlextService[bool]):
         """Initialize adapter service with parser.
 
         Args:
-            parser: FlextLdifParser instance (optional, creates default if not provided)
+            parser: Parser instance (optional, uses FlextLdif API if not provided)
             **kwargs: Additional keyword arguments passed to parent class
 
         """
         super().__init__(**kwargs)
         # Extract parser from kwargs if not provided directly
         if parser is None:
-            parser = cast("FlextLdifParser | None", kwargs.pop("parser", None))
+            parser_from_kwargs = kwargs.pop("parser", None)
+            if parser_from_kwargs is not None:
+                parser = cast("FlextLdifParser", parser_from_kwargs)
+        if parser is None:
+            ldif = FlextLdif.get_instance()
+            parser = ldif.parser
         self._connection = None
         self._server = None
-        self._parser = parser or FlextLdifParser()
+        self._parser = parser
         self._entry_adapter = FlextLdapEntryAdapter()
 
     def connect(
@@ -752,7 +758,7 @@ class Ldap3Adapter(FlextService[bool]):
             FlextResult[OperationResult] - ok(result) on success, fail(error) on failure
 
         """
-        dn_str = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
+        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
         self.logger.debug(
             "Modifying LDAP entry",
             operation="modify",
@@ -812,7 +818,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         """
         try:
-            dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
+            dn_str = FlextLdif.utilities.DN.get_dn_value(dn)
 
             # Connection.modify(dn, changes, controls=None)
             # Use cast to inform type checker while maintaining runtime safety
@@ -847,7 +853,7 @@ class Ldap3Adapter(FlextService[bool]):
             return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
         except Exception as e:
-            entry_dn_val = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
+            entry_dn_val = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
             self.logger.exception(
                 "LDAP modify exception",
                 entry_dn=entry_dn_val[:100],
@@ -872,7 +878,7 @@ class Ldap3Adapter(FlextService[bool]):
             FlextResult[OperationResult] - ok(result) on success, fail(error) on failure
 
         """
-        dn_str = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
+        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
         self.logger.debug(
             "Deleting LDAP entry",
             operation="delete",
@@ -929,7 +935,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         """
         try:
-            dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
+            dn_str = FlextLdif.utilities.DN.get_dn_value(dn)
 
             # Connection.delete(dn, controls=None)
             # Use cast to inform type checker while maintaining runtime safety
@@ -961,7 +967,7 @@ class Ldap3Adapter(FlextService[bool]):
             return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
         except Exception as e:
-            entry_dn_val = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
+            entry_dn_val = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
             self.logger.exception(
                 "LDAP delete exception",
                 entry_dn=entry_dn_val[:100],

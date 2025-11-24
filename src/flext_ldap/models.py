@@ -19,7 +19,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_core import FlextModels, FlextUtilities
-from flext_ldif import FlextLdifModels, FlextLdifUtilities
+from flext_ldif import FlextLdif, FlextLdifModels
 from pydantic import Field, computed_field, field_validator, model_validator
 
 from flext_ldap.base import FlextLdapServiceBase
@@ -163,7 +163,7 @@ class FlextLdapModels(FlextModels):
         @field_validator("base_dn")
         @classmethod
         def validate_base_dn_format(cls, v: str) -> str:
-            """Validate base_dn format using FlextLdifUtilities.DN.validate.
+            """Validate base_dn format using FlextLdif.utilities.DN.validate.
 
             Pydantic v2 field validator ensures DN format is correct at model creation.
             This replaces runtime validation in service methods.
@@ -178,7 +178,7 @@ class FlextLdapModels(FlextModels):
                 ValueError: If DN format is invalid
 
             """
-            if not FlextLdifUtilities.DN.validate(v):
+            if not FlextLdif.utilities.DN.validate(v):
                 error_msg = f"Invalid base_dn format: {v}"
                 raise ValueError(error_msg)
             return v
@@ -196,7 +196,7 @@ class FlextLdapModels(FlextModels):
             """Factory method to create SearchOptions with normalized base_dn.
 
             Convenient factory that automatically normalizes the base_dn
-            using FlextLdifUtilities.DN.norm_string() to ensure consistent
+            using FlextLdif.utilities.DN.norm_string() to ensure consistent
             DN formatting across LDAP operations.
 
             Args:
@@ -219,7 +219,7 @@ class FlextLdapModels(FlextModels):
 
             """
             # Normalize the base_dn
-            normalized_base_dn = FlextLdifUtilities.DN.norm_string(base_dn)
+            normalized_base_dn = FlextLdif.utilities.DN.norm_string(base_dn)
 
             # Use defaults if not provided
             actual_scope = scope if scope is not None else "SUBTREE"
@@ -486,6 +486,74 @@ class FlextLdapModels(FlextModels):
                 total=total,
                 duration_seconds=duration_seconds,
             )
+
+    # =========================================================================
+    # UPSERT RESULT MODELS
+    # =========================================================================
+
+    class UpsertResult(FlextModels.Results):
+        """Result of individual LDAP upsert operation (frozen, immutable).
+
+        Contains the result of a single upsert operation (add/modify).
+        Uses FlextModels.Results base (Value object) for:
+        - Immutability (frozen=True)
+        - Value-based equality
+        - Hashability for caching
+        """
+
+        success: bool = Field(..., description="Whether the upsert operation succeeded")
+        dn: str = Field(..., description="DN of the entry that was upserted")
+        operation: FlextLdapConstants.LiteralTypes.OperationType = Field(
+            ...,
+            description="Type of operation performed (add, modify, etc.)",
+        )
+        error: str | None = Field(
+            default=None,
+            description="Error message if operation failed",
+        )
+
+    class BatchUpsertResult(FlextModels.Entity):
+        """Result of batch LDAP upsert operation with Entity features.
+
+        Aggregates results from multiple upsert operations.
+        Uses FlextModels.Entity.Core for:
+        - unique_id: Unique identifier (UUID)
+        - created_at/updated_at: Automatic timestamps
+        - version: Optimistic locking
+        - entity_id property: Alias for unique_id
+        """
+
+        total_processed: int = Field(
+            ...,
+            ge=0,
+            description="Total number of entries processed in the batch",
+        )
+        successful: int = Field(
+            ...,
+            ge=0,
+            description="Number of successful operations",
+        )
+        failed: int = Field(
+            ...,
+            ge=0,
+            description="Number of failed operations",
+        )
+        results: list[FlextLdapModels.UpsertResult] = Field(
+            default_factory=list,
+            description="Individual results for each entry",
+        )
+
+        @computed_field
+        def success_rate(self) -> float:
+            """Calculate success rate as percentage.
+
+            Returns:
+                Success rate as float between 0.0 and 1.0
+
+            """
+            if self.total_processed == 0:
+                return 0.0
+            return self.successful / self.total_processed
 
     # =========================================================================
     # NO ALIASES - Use FlextLdifModels directly for clarity

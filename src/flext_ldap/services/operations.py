@@ -15,7 +15,7 @@ from collections.abc import Callable
 from typing import Literal, TypeVar, cast
 
 from flext_core import FlextResult, FlextUtilities
-from flext_ldif import FlextLdifModels, FlextLdifUtilities
+from flext_ldif import FlextLdif, FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 
 from flext_ldap.base import FlextLdapServiceBase
@@ -44,7 +44,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         Converts string DN to DistinguishedName model if needed.
         DN format validation is handled by Pydantic v2 validators during model creation.
-        Uses FlextLdifUtilities.DN.get_dn_value() for consistent DN extraction.
+        Uses FlextLdif.utilities.DN.get_dn_value() for consistent DN extraction.
 
         Args:
             dn: DN as string or DistinguishedName model
@@ -55,7 +55,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         """
         if isinstance(dn, FlextLdifModels.DistinguishedName):
             return dn
-        dn_value = FlextLdifUtilities.DN.get_dn_value(dn)
+        dn_value = FlextLdif.utilities.DN.get_dn_value(dn)
         return FlextLdifModels.DistinguishedName(value=dn_value)
 
     @staticmethod
@@ -121,7 +121,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         """
         # FASE 2: Normalize base_dn using FlextLdifUtilities.DN
         # DN format validation is handled by Pydantic v2 field validator in SearchOptions model
-        normalized_base_dn = FlextLdifUtilities.DN.norm_string(search_options.base_dn)
+        normalized_base_dn = FlextLdif.utilities.DN.norm_string(search_options.base_dn)
 
         # Update search_options with normalized DN for consistency
         normalized_options = FlextLdapModels.SearchOptions(

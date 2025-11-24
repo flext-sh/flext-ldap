@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult, FlextRuntime
-from flext_ldif import FlextLdifDetector
+from flext_ldif import FlextLdif
 from ldap3 import Connection
 
 from flext_ldap.base import FlextLdapServiceBase
@@ -329,7 +329,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         pseudo_ldif_content = "\n".join(pseudo_ldif_lines)
 
         try:
-            detector = FlextLdifDetector()
+            detector = FlextLdif.get_instance().detector
             detection_result = detector.detect_server_type(
                 ldif_content=pseudo_ldif_content,
             )

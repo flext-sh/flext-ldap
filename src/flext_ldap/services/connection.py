@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult, FlextUtilities
-from flext_ldif import FlextLdifParser
+from flext_ldif import FlextLdif
+from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.base import FlextLdapServiceBase
@@ -39,14 +40,17 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
         Args:
             config: FlextLdapConfig instance (optional, uses ldap_config if not provided)
-            parser: FlextLdifParser instance (optional, creates default if not provided)
+            parser: Parser instance (optional, uses FlextLdif API if not provided)
 
         """
         super().__init__()
         # Use typed config.ldap property from FlextLdapServiceBase
         self._config = config if config is not None else self.config.ldap
-        # Pass parser to adapter (optional, creates default if not provided)
-        self._adapter = Ldap3Adapter(parser=parser or FlextLdifParser())
+        # Pass parser to adapter (optional, uses FlextLdif API if not provided)
+        if parser is None:
+            ldif = FlextLdif.get_instance()
+            parser = ldif.parser
+        self._adapter = Ldap3Adapter(parser=parser)
 
     def connect(
         self,

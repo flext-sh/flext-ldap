@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import fcntl
 import inspect
 import tempfile
 from collections.abc import Callable, Iterator, Mapping
@@ -20,6 +21,7 @@ import pytest
 from flext_core import FlextResult, T
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
+from flext_tests import FlextTestsMatchers
 from ldap3 import MODIFY_REPLACE, Connection, Entry as Ldap3Entry, Server
 
 from flext_ldap import FlextLdap
@@ -30,8 +32,8 @@ from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import LdapClientProtocol
 
+from ..fixtures import LdapTestFixtures
 from ..fixtures.constants import RFC
-from ..fixtures.loader import LdapTestFixtures
 from .entry_helpers import EntryTestHelpers
 from .operation_helpers import TestOperationHelpers
 
@@ -98,44 +100,42 @@ class TestDeduplicationHelpers:
         result: FlextResult[U],
         *,
         error_message: str | None = None,
-    ) -> None:
+    ) -> U:
         """Assert result is success - COMMON PATTERN (GENERIC).
 
-        Replaces: assert result.is_success
+        Uses centralized FlextTestsMatchers for consistency.
 
         Args:
             result: FlextResult to check
             error_message: Optional custom error message
 
+        Returns:
+            Unwrapped value from result
+
         """
-        assert result.is_success, (
-            error_message or f"Expected success but got failure: {result.error}"
-        )
+        return FlextTestsMatchers.assert_success(result, error_message)
 
     @staticmethod
     def assert_failure[U](
         result: FlextResult[U],
         *,
         expected_error: str | None = None,
-    ) -> None:
+    ) -> str:
         """Assert result is failure - COMMON PATTERN (GENERIC).
 
-        Replaces:
-            assert result.is_failure
-            assert "error" in result.error
+        Uses centralized FlextTestsMatchers for consistency.
 
         Args:
             result: FlextResult to check
             expected_error: Optional expected error substring
 
+        Returns:
+            Error message from result
+
         """
-        assert result.is_failure, "Expected operation to fail"
-        if expected_error:
-            error_msg = result.error
-            assert error_msg is not None, "Expected error message but got None"
-            assert expected_error in error_msg, (
-                f"Expected error containing '{expected_error}', got: {error_msg}"
-            )
+        return FlextTestsMatchers.assert_failure(
+            cast("FlextResult[object]", result), expected_error
+        )
 
     @staticmethod
     def assert_success_generic(
@@ -181,7 +181,10 @@ class TestDeduplicationHelpers:
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: dict[str, list[str] | str],
+        attributes: dict[
+            str,
+            list[str] | str | tuple[str, ...] | set[str] | frozenset[str],
+        ],
     ) -> FlextLdifModels.Entry:
         """Create Entry - SIMPLEST PATTERN.
 
@@ -284,7 +287,7 @@ class TestDeduplicationHelpers:
             use_uid=use_uid,
             sn=sn,
             mail=mail,
-            **filtered_attrs,
+            additional_attrs=filtered_attrs or None,
         )
 
     @staticmethod
@@ -2235,6 +2238,11 @@ class TestDeduplicationHelpers:
         auto_bind: bool = True,
         get_info: str = "ALL",
     ) -> object:
+        """Create ldap3 Connection with file-based locking for parallel execution.
+
+        Uses file-based locking to prevent multiple workers from creating connections
+        simultaneously, which can overwhelm the LDAP server.
+        """
         """Create ldap3 Connection - REPLACES ENTIRE PATTERN (8-12 lines).
 
         Replaces repetitive Server + Connection creation patterns.
@@ -2288,13 +2296,25 @@ class TestDeduplicationHelpers:
         get_info_literal: Literal["ALL", "DSA", "NO_INFO", "SCHEMA"] = cast(
             "Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']", get_info
         )
-        server = Server(f"ldap://{host_val}:{port_val}", get_info=get_info_literal)
-        return Connection(
-            server,
-            user=bind_dn_val,
-            password=password_val,
-            auto_bind=auto_bind,
-        )
+
+        # File-based locking to prevent parallel workers from overwhelming LDAP server
+        lock_file = Path.home() / ".flext" / f"ldap_connection_{port_val}.lock"
+        lock_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with Path(lock_file).open("w", encoding="utf-8") as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                server = Server(
+                    f"ldap://{host_val}:{port_val}", get_info=get_info_literal
+                )
+                return Connection(
+                    server,
+                    user=bind_dn_val,
+                    password=password_val,
+                    auto_bind=auto_bind,
+                )
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     @staticmethod
     def adapter_conversion_complete(

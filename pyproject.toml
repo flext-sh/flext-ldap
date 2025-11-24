@@ -200,3 +200,7 @@
             "flext_ldap",
         ]
 
+    [tool.pyrefly]
+        # Include tests directory in analysis
+        search_path = ["src", "tests"]
+

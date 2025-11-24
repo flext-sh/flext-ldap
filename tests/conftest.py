@@ -10,16 +10,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import fcntl
 import time
+import types
 from collections.abc import Callable, Generator
 from pathlib import Path
 from threading import Lock
-from typing import Any
+from typing import Any, TextIO
 
 import pytest
 from flext_core import FlextLogger
 from flext_ldif import FlextLdifParser
-from flext_core.flext_tests import FlextTestDocker
+from flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdap
@@ -29,12 +31,47 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
-from .fixtures.loader import LdapTestFixtures
+from .fixtures import LdapTestFixtures
 
 logger = FlextLogger(__name__)
 
 # Register FlextTestDocker pytest fixtures in this module's namespace
 FlextTestDocker.register_pytest_fixtures(namespace=globals())
+
+
+class FileLock:
+    """File-based locking for pytest-xdist parallel execution."""
+
+    def __init__(self, lock_file: Path) -> None:
+        """Initialize file lock.
+
+        Args:
+            lock_file: Path to the lock file
+
+        """
+        self.lock_file = lock_file
+        self._fd: int | None = None
+        self._file_obj: TextIO | None = None
+
+    def __enter__(self) -> None:
+        """Acquire the file lock."""
+        self.lock_file.parent.mkdir(parents=True, exist_ok=True)
+        self._file_obj = self.lock_file.open("w")
+        self._fd = self._file_obj.fileno()
+        fcntl.flock(self._fd, fcntl.LOCK_EX)
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
+        """Release the file lock."""
+        if self._fd is not None:
+            fcntl.flock(self._fd, fcntl.LOCK_UN)
+        if self._file_obj is not None:
+            self._file_obj.close()
+        self.lock_file.unlink(missing_ok=True)
 
 
 # =============================================================================
@@ -52,7 +89,10 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
     REGRA 1: Container DEVE ser recreado TOTALMENTE se estiver dirty.
     """
-    docker = FlextTestDocker()
+    # Get worker ID for isolation
+    worker_input = getattr(session.config, "workerinput", {})
+    worker_id = worker_input.get("workerid", "master")
+    docker = FlextTestDocker(worker_id=worker_id)
 
     # Cleanup any containers marked dirty from previous run
     cleanup_result = docker.cleanup_dirty_containers()
@@ -88,31 +128,49 @@ def pytest_runtest_makereport(
     exc_type = call.excinfo.type
     exc_msg = str(call.excinfo.value).lower()
 
-    # Lista de erros que indicam FALHA DO SERVIÇO LDAP (não de teste)
+    # Lista de erros que indicam FALHA REAL DO SERVIÇO LDAP (não de teste)
+    # Só marcar como dirty para erros graves, não para problemas de conexão temporários
     ldap_service_errors = [
-        "ldapsocketopenerror",
-        "ldapsessionterminatedbyservererror",
-        "ldapcommunicationerror",
-        "ldapserverdownerror",
-        "ldap server is not responding",
-        "connection refused",
-        "connection reset by peer",
-        "broken pipe",
-        "cannot connect to ldap",
-        "ldap bind failed",
+        "ldapsessionterminatedbyservererror",  # Servidor fechou conexão
+        "ldapserverdownerror",  # Servidor realmente down
+        "ldap server is not responding",  # Servidor não responde
+        "broken pipe",  # Conexão quebrada
+        "session terminated by server",  # Servidor terminou sessão
     ]
 
-    # Verificar se é erro de SERVIÇO (não assertion de teste)
+    # Verificar se é erro de SERVIÇO REAL (não assertion de teste ou problema de timing)
     is_service_failure = any(
         err in str(exc_type).lower() or err in exc_msg for err in ldap_service_errors
     )
 
-    if is_service_failure:
-        docker = FlextTestDocker()
+    # NÃO marcar container LDAP como dirty para erros de conexão simples
+    # Esses são geralmente problemas de timing ou configuração, não falhas do container
+    connection_errors = [
+        "connection refused",
+        "connection reset by peer",
+        "cannot connect to ldap",
+        "ldapsocketopenerror",
+        "ldapcommunicationerror",
+        "ldap bind failed",
+    ]
+
+    is_connection_error = any(
+        err in str(exc_type).lower() or err in exc_msg for err in connection_errors
+    )
+
+    if is_service_failure and not is_connection_error:
+        # Get worker ID for isolation
+        worker_input = getattr(item.session.config, "workerinput", {})
+        worker_id = worker_input.get("workerid", "master")
+        docker = FlextTestDocker(worker_id=worker_id)
         docker.mark_container_dirty("flext-openldap-test")
         logger.error(
             f"LDAP SERVICE FAILURE detected in {item.nodeid}, "
             f"container marked DIRTY for recreation: {exc_msg}"
+        )
+    elif is_connection_error:
+        logger.warning(
+            f"LDAP connection error in {item.nodeid} (not marking dirty): {exc_msg}"
         )
 
 
@@ -320,7 +378,6 @@ def make_group_dn(
 
 @pytest.fixture(scope="session")
 def ldap_container(
-    docker_control: FlextTestDocker,  # From FlextTestDocker
     worker_id: str,  # For isolation
 ) -> dict[str, object]:
     """Session-scoped LDAP container configuration with worker isolation.
@@ -333,14 +390,18 @@ def ldap_container(
     NO random ports, NO dynamic containers. All tests share the same container
     but are isolated by unique DNs (via unique_dn_suffix fixture).
 
+    Uses file-based locking to support parallel pytest-xdist execution.
+
     Args:
-        docker_control: FlextTestDocker instance from fixture
         worker_id: Worker ID for logging (e.g., "gw0", "master")
 
     Returns:
         dict with connection parameters
 
     """
+    # Create worker-specific docker instance
+    docker_control = FlextTestDocker(worker_id=worker_id)
+
     # Use the actual container name from SHARED_CONTAINERS
     container_name = "flext-openldap-test"
     container_config = FlextTestDocker.SHARED_CONTAINERS.get(container_name)
@@ -363,89 +424,100 @@ def ldap_container(
         workspace_root = Path("/home/marlonsc/flext")
         compose_file = str(workspace_root / "flext-ldap" / compose_file)
 
-    # REGRA: Só recriar se estiver dirty, senão apenas iniciar se não estiver rodando
-    is_dirty = docker_control.is_container_dirty(container_name)
+    # File-based locking for parallel execution support
+    lock_file = Path.home() / ".flext" / f"{container_name}.lock"
+    lock = FileLock(lock_file)
 
-    if is_dirty:
-        # Container está dirty - recriar completamente (down -v + up)
-        logger.info(
-            f"Container {container_name} is dirty, recreating with fresh volumes"
-        )
-        cleanup_result = docker_control.cleanup_dirty_containers()
-        if cleanup_result.is_failure:
-            pytest.skip(
-                f"Failed to recreate dirty container {container_name}: {cleanup_result.error}"
-            )
-        # cleanup_dirty_containers já faz down -v e up, então container deve estar rodando agora
-    else:
-        # Container não está dirty - apenas verificar se está rodando e iniciar se necessário
-        status = docker_control.get_container_status(container_name)
-        container_running = (
-            status.is_success
-            and isinstance(status.value, FlextTestDocker.ContainerInfo)
-            and status.value.status == FlextTestDocker.ContainerStatus.RUNNING
-        )
+    with lock:
+        # REGRA: Só recriar se estiver dirty, senão apenas iniciar se não estiver rodando
+        is_dirty = docker_control.is_container_dirty(container_name)
 
-        if not container_running:
-            # Container não está rodando mas não está dirty - apenas iniciar (sem recriar volumes)
+        if is_dirty:
+            # Container está dirty - recriar completamente (down -v + up)
             logger.info(
-                f"Container {container_name} is not running (but not dirty), starting..."
+                f"Container {container_name} is dirty, recreating with fresh volumes"
             )
-            # Usar ensure_container_running que é mais inteligente
-            ensure_result = docker_control.ensure_container_running(
-                container_name,
-                max_wait=30,  # Aguardar até 30s para container ficar healthy
-            )
-            if ensure_result.is_failure:
+            cleanup_result = docker_control.cleanup_dirty_containers()
+            if cleanup_result.is_failure:
                 pytest.skip(
-                    f"Failed to start container {container_name}: {ensure_result.error}"
+                    f"Failed to recreate dirty container {container_name}: {cleanup_result.error}"
                 )
+            # cleanup_dirty_containers já faz down -v e up, então container deve estar rodando agora
         else:
-            # Container está rodando e não está dirty - tudo OK
-            logger.debug(
-                f"Container {container_name} is running and clean, no action needed"
+            # Container não está dirty - apenas verificar se está rodando e iniciar se necessário
+            status = docker_control.get_container_status(container_name)
+            container_running = (
+                status.is_success
+                and isinstance(status.value, FlextTestDocker.ContainerInfo)
+                and status.value.status == FlextTestDocker.ContainerStatus.RUNNING
             )
+
+            if not container_running:
+                # Container não está rodando mas não está dirty - apenas iniciar (sem recriar volumes)
+                logger.info(
+                    f"Container {container_name} is not running (but not dirty), starting..."
+                )
+                # Usar compose_up para iniciar o serviço
+                service_name = str(container_config.get("service", ""))
+                compose_result = docker_control.compose_up(
+                    compose_file,
+                    service=service_name or None,
+                )
+                if compose_result.is_failure:
+                    pytest.skip(
+                        f"Failed to start container {container_name}: {compose_result.error}"
+                    )
+            else:
+                # Container está rodando e não está dirty - tudo OK
+                logger.debug(
+                    f"Container {container_name} is running and clean, no action needed"
+                )
 
     # AGUARDAR container estar pronto antes de permitir testes
     # Usar healthcheck do Docker se disponível, senão tentar conexão LDAP
-    max_wait: int = 60  # segundos
-    wait_interval: float = 2.0  # segundos
-    waited: float = 0.0
+    with lock:
+        max_wait: int = 60  # segundos
+        wait_interval: float = 2.0  # segundos
+        waited: float = 0.0
 
-    logger.info(f"Waiting for container {container_name} to be ready...")
+        logger.info(f"Waiting for container {container_name} to be ready...")
 
-    # Verificar se container está pronto usando conexão LDAP direta
-    # (mais confiável que healthcheck do Docker)
-    while waited < max_wait:
-        try:
-            server = Server(
-                "ldap://localhost:3390",
-                get_info="NO_INFO",
-            )
-            test_conn = Connection(
-                server,
-                user="cn=admin,dc=flext,dc=local",
-                password="admin",
-                auto_bind=True,
-                receive_timeout=2,
-            )
-            test_conn.unbind()
-            logger.info(f"Container {container_name} is ready after {waited:.1f}s")
-            break
-        except Exception as e:
-            # Container ainda não está pronto, continuar aguardando
-            if waited % 10 == 0:  # Log a cada 10 segundos
-                logger.debug(
-                    f"Container {container_name} not ready yet (waited {waited:.1f}s): {e}"
+        # Verificar se container está pronto usando conexão LDAP direta
+        # (mais confiável que healthcheck do Docker)
+        while waited < max_wait:
+            try:
+                server = Server(
+                    "ldap://localhost:3390",
+                    get_info="NO_INFO",
                 )
+                test_conn = Connection(
+                    server,
+                    user="cn=admin,dc=flext,dc=local",
+                    password="admin",
+                    auto_bind=True,
+                    receive_timeout=2,
+                )
+                test_conn.unbind()
+                logger.info(f"Container {container_name} is ready after {waited:.1f}s")
+                break
+            except Exception as e:
+                # Container ainda não está pronto, continuar aguardando
+                if waited % 10 == 0:  # Log a cada 10 segundos
+                    logger.debug(
+                        f"Container {container_name} not ready yet (waited {waited:.1f}s): {e}"
+                    )
 
-        time.sleep(wait_interval)
-        waited += wait_interval
+            time.sleep(wait_interval)
+            waited += wait_interval
 
-    if waited >= max_wait:
-        pytest.skip(
-            f"Container {container_name} did not become ready within {max_wait}s"
-        )
+        if waited >= max_wait:
+            pytest.skip(
+                f"Container {container_name} did not become ready within {max_wait}s"
+            )
+
+    # Garantir estrutura básica LDAP
+    with lock:
+        _ensure_basic_ldap_structure()
 
     # Provide connection info (matches docker-compose.yml)
     # ALWAYS use port 3390 - NO random ports
@@ -792,3 +864,73 @@ def flext_ldap_instance(
 ) -> FlextLdap:
     """Get FlextLdap instance without connection."""
     return FlextLdap(config=ldap_config, parser=ldap_parser)
+
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+
+def _ensure_basic_ldap_structure() -> None:
+    """Ensure basic LDAP structure exists for tests.
+
+    Creates ou=people, ou=groups, ou=services if they don't exist.
+    This is called after container is ready to guarantee test environment.
+    """
+    try:
+        server = Server("ldap://localhost:3390", get_info="NO_INFO")
+        conn = Connection(
+            server,
+            user="cn=admin,dc=flext,dc=local",
+            password="admin",
+            auto_bind=True,
+        )
+
+        # Check if ou=people exists
+        conn.search("dc=flext,dc=local", "(ou=people)", attributes=["ou"])
+        if not conn.entries:
+            # Create ou=people
+            conn.add(
+                "ou=people,dc=flext,dc=local",
+                ["organizationalUnit", "top"],
+                {
+                    "ou": "people",
+                    "description": "Organizational unit for people entries",
+                },
+            )
+            logger.debug("Created ou=people")
+
+        # Check if ou=groups exists
+        conn.search("dc=flext,dc=local", "(ou=groups)", attributes=["ou"])
+        if not conn.entries:
+            # Create ou=groups
+            conn.add(
+                "ou=groups,dc=flext,dc=local",
+                ["organizationalUnit", "top"],
+                {
+                    "ou": "groups",
+                    "description": "Organizational unit for group entries",
+                },
+            )
+            logger.debug("Created ou=groups")
+
+        # Check if ou=services exists
+        conn.search("dc=flext,dc=local", "(ou=services)", attributes=["ou"])
+        if not conn.entries:
+            # Create ou=services
+            conn.add(
+                "ou=services,dc=flext,dc=local",
+                ["organizationalUnit", "top"],
+                {
+                    "ou": "services",
+                    "description": "Organizational unit for service entries",
+                },
+            )
+            logger.debug("Created ou=services")
+
+        conn.unbind()
+        logger.info("Basic LDAP structure verified/created")
+
+    except Exception as e:
+        logger.warning(f"Failed to ensure basic LDAP structure: {e}")
+        # Don't fail tests for this - just log warning

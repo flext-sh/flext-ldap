@@ -14,6 +14,7 @@ from typing import Literal, TypeVar, cast
 import pytest
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
+from flext_tests import FlextTestsUtilities
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapClientProtocol
@@ -36,12 +37,14 @@ class TestOperationHelpers:
     ) -> None:
         """Assert result is failure, common pattern.
 
+        Uses centralized FlextTestsUtilities for consistency.
+
         Args:
             result: FlextResult to check
             expected_error: Optional expected error substring
 
         """
-        assert result.is_failure, "Expected operation to fail"
+        FlextTestsUtilities.TestUtilities.assert_result_failure(result)
         if expected_error:
             # FlextResult.error can be None, so we need to check
             error_msg = result.error
@@ -77,15 +80,17 @@ class TestOperationHelpers:
     ) -> None:
         """Assert result is success, common pattern.
 
+        Uses centralized FlextTestsUtilities for consistency.
+
         Args:
             result: FlextResult to check
             error_message: Optional custom error message
 
         """
-        if error_message:
-            assert result.is_success, f"{error_message}: {result.error}"
-        else:
-            assert result.is_success, f"Operation failed: {result.error}"
+        FlextTestsUtilities.TestUtilities.assert_result_success(result)
+        # Custom error message handling if needed
+        if error_message and not result.is_success:
+            pytest.fail(f"{error_message}: {result.error}")
 
     @staticmethod
     def assert_result_success_and_unwrap[T](
@@ -323,7 +328,7 @@ class TestOperationHelpers:
         sn: str | None = None,
         mail: str | None = None,
         use_uid: bool = False,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: dict[str, object] | None = None,
         **extra_attributes: object,
     ) -> FlextLdifModels.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
@@ -394,18 +399,15 @@ class TestOperationHelpers:
                     entry_attributes[key] = [str(value)]
 
         # Process individual extra attributes - convert dict[str, object] to dict[str, list[str]]
-        extra_attrs_typed: dict[str, list[str]] = cast(
-            "dict[str, list[str]]",
-            {
-                key: (
-                    [str(item) for item in value]
-                    if isinstance(value, list)
-                    else [str(value)]
-                )
-                for key, value in extra_attributes.items()
-                if value is not None
-            },
-        )
+        extra_attrs_typed: dict[str, list[str]] = {
+            key: (
+                [str(item) for item in value]
+                if isinstance(value, list)
+                else [str(value)]
+            )
+            for key, value in extra_attributes.items()
+            if value is not None
+        }
         entry_attributes.update(extra_attrs_typed)
 
         return EntryTestHelpers.create_entry(
@@ -422,7 +424,7 @@ class TestOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: str,
+        **kwargs: object,
     ) -> FlextLdifModels.Entry:
         """Create group entry.
 
