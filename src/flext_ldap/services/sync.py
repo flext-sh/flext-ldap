@@ -182,7 +182,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
         self,
         entries: list[FlextLdifModels.Entry],
         options: FlextLdapModels.SyncOptions,
-        start_time: datetime,
+        start_time: datetime | None,
     ) -> FlextResult[FlextLdapModels.SyncStats]:
         """Process entries through sync pipeline.
 

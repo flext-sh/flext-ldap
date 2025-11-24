@@ -21,8 +21,8 @@ from flext_core import (
     FlextRegistry,
     FlextResult,
 )
-from flext_ldif import FlextLdifModels, FlextLdifParser, FlextLdifUtilities
-from pydantic import PrivateAttr
+from flext_ldif import FlextLdif, FlextLdifModels
+from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
@@ -45,7 +45,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         - Search LDAP directories
         - Add, modify, and delete LDAP entries
         - Automatic conversion between LDAP results and Entry models
-        - Reuses FlextLdifParser for parsing operations
+        - Reuses FlextLdif API for parsing operations
         - Service initialization and dependency injection via FlextContainer
         - Context management with correlation tracking
 
@@ -82,11 +82,13 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
     """
 
+    model_config = ConfigDict(extra="allow")
+
     # Private attributes using Pydantic PrivateAttr for proper initialization
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _config: FlextLdapConfig = PrivateAttr()
-    _parser: FlextLdifParser = PrivateAttr()
+    _ldif: FlextLdif = PrivateAttr()
     _dispatcher: FlextDispatcher = PrivateAttr()
     _registry: FlextRegistry = PrivateAttr()
     _context: dict[str, object] = PrivateAttr(default_factory=dict)
@@ -96,19 +98,19 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     _instance: ClassVar[FlextLdap | None] = None
     # Temporary storage for config/parser during __init__ → model_post_init
     _pending_config: ClassVar[FlextLdapConfig | None] = None
-    _pending_parser: ClassVar[FlextLdifParser | None] = None
+    _pending_ldif: ClassVar[FlextLdif | None] = None
 
     @classmethod
     def get_instance(
         cls,
         config: FlextLdapConfig | None = None,
-        parser: FlextLdifParser | None = None,
+        ldif: FlextLdif | None = None,
     ) -> FlextLdap:
         """Get singleton instance of FlextLdap facade.
 
         Args:
             config: Optional FlextLdapConfig (only used on first call)
-            parser: Optional FlextLdifParser (only used on first call)
+            ldif: Optional FlextLdif instance (only used on first call)
 
         Returns:
             Singleton FlextLdap instance
@@ -123,8 +125,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         """
         if cls._instance is None:
-            # Create instance with config/parser if provided
-            cls._instance = cls(config=config, parser=parser)
+            # Create instance with config/ldif if provided
+            cls._instance = cls(config=config, ldif=ldif)
         return cls._instance
 
     @classmethod
@@ -149,7 +151,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     def __init__(
         self,
         config: FlextLdapConfig | None = None,
-        parser: FlextLdifParser | None = None,
+        ldif: FlextLdif | None = None,
         **kwargs: object,
     ) -> None:
         """Initialize LDAP facade - the entry point for all LDAP operations.
@@ -165,19 +167,19 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         Args:
             config: FlextLdapConfig instance (optional, creates default if not provided)
-            parser: FlextLdifParser instance (optional, creates default if not provided)
+            ldif: FlextLdif instance (optional, uses singleton if not provided)
             **kwargs: Configuration parameters (passed to Pydantic)
 
         """
-        # Store config and parser in CLASS variables for use in model_post_init
+        # Store config and ldif in CLASS variables for use in model_post_init
         # Cannot set PrivateAttr before super().__init__() in Pydantic v2
         # Using class variables ensures they survive super().__init__()
         FlextLdap._pending_config = config
-        FlextLdap._pending_parser = parser
+        FlextLdap._pending_ldif = ldif
 
         # Remove config from kwargs to prevent Pydantic from treating it as a field
         _ = kwargs.pop("config", None)
-        _ = kwargs.pop("parser", None)
+        _ = kwargs.pop("ldif", None)
 
         # Call super().__init__() for Pydantic v2 model initialization
         # This will call model_post_init() which initializes all services
@@ -185,7 +187,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         # Clear class variables after initialization
         FlextLdap._pending_config = None
-        FlextLdap._pending_parser = None
+        FlextLdap._pending_ldif = None
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize private attributes after Pydantic initialization.
@@ -207,13 +209,13 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self._dispatcher = dispatcher
         self._registry = FlextRegistry(dispatcher=dispatcher)
 
-        # Initialize config and parser from CLASS variables (set in __init__)
+        # Initialize config and ldif from CLASS variables (set in __init__)
         init_config = FlextLdap._pending_config
-        init_parser = FlextLdap._pending_parser
+        init_ldif = FlextLdap._pending_ldif
 
         # Use LdapFlextConfig namespace pattern: access via self.config.ldap
         self._config = init_config if init_config is not None else self.config.ldap
-        self._parser = init_parser if init_parser is not None else FlextLdifParser()
+        self._ldif = init_ldif if init_ldif is not None else FlextLdif.get_instance()
 
         # Initialize context and handlers
         self._context = {}
@@ -222,7 +224,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         # Initialize service instances
         self._connection = FlextLdapConnection(
             config=self._config,
-            parser=self._parser,
+            parser=self._ldif.parser,
         )
         self._operations = FlextLdapOperations(connection=self._connection)
 
@@ -233,7 +235,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self.logger.info(
             "FlextLdap facade initialized",
             config_available=True,
-            parser_available=True,
+            ldif_available=True,
             connection_ready=True,
             operations_ready=True,
         )
@@ -285,7 +287,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         # Register parser service
         if not container.has("parser"):
-            result = container.register_service("parser", self._parser)
+            result = container.register_service("parser", self._ldif.parser)
             if result.is_failure:
                 error_msg = f"Failed to register parser service: {result.error}"
                 self.logger.error(error_msg, critical=True)
@@ -529,8 +531,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        # Use FlextLdifUtilities.DN.get_dn_value for consistent DN extraction
-        dn_str = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
+        # Use FlextLdif.utilities.DN.get_dn_value for consistent DN extraction
+        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
         self.logger.debug(
             "Modifying LDAP entry",
             operation="modify",
@@ -574,8 +576,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        # Use FlextLdifUtilities.DN.get_dn_value for consistent DN extraction
-        dn_str = FlextLdifUtilities.DN.get_dn_value(dn) if dn else "unknown"
+        # Use FlextLdif.utilities.DN.get_dn_value for consistent DN extraction
+        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
         self.logger.debug(
             "Deleting LDAP entry",
             operation="delete",

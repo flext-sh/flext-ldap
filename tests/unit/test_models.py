@@ -346,3 +346,117 @@ class TestSearchResult:
         # Should have "unknown" category for entries without objectClass
         assert "unknown" in categories
         assert len(categories["unknown"]) == 1
+
+    def test_search_result_empty_list(self) -> None:
+        """Test SearchResult with empty entries list (covers lines 114-120)."""
+        search_result = FlextLdapModels.SearchResult(
+            entries=[],
+            search_options=FlextLdapModels.SearchOptions(
+                base_dn="dc=example,dc=com",
+                filter_str="(objectClass=*)",
+            ),
+        )
+        assert search_result.entries == []
+        assert len(search_result.entries) == 0
+
+    def test_search_result_with_entries(self) -> None:
+        """Test SearchResult with entries (covers lines 181-184)."""
+        entries = [
+            FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(
+                    value="cn=test1,dc=example,dc=com"
+                ),
+                attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test1"]}),
+            )
+        ]
+
+        search_result = FlextLdapModels.SearchResult(
+            entries=entries,
+            search_options=FlextLdapModels.SearchOptions(
+                base_dn="dc=example,dc=com",
+                filter_str="(objectClass=*)",
+            ),
+        )
+        assert len(search_result.entries) == 1
+        assert search_result.entries[0].dn.value == "cn=test1,dc=example,dc=com"
+
+    def test_search_result_by_objectclass_empty(self) -> None:
+        """Test by_objectclass property with empty entries (covers lines 222-232)."""
+        search_result = FlextLdapModels.SearchResult(
+            entries=[],
+            search_options=FlextLdapModels.SearchOptions(
+                base_dn="dc=example,dc=com",
+                filter_str="(objectClass=*)",
+            ),
+        )
+
+        categories = search_result.by_objectclass
+        assert isinstance(categories, dict)
+        # Should be empty for no entries
+        assert len(categories) == 0
+
+    def test_batch_upsert_result_initialization(self) -> None:
+        """Test BatchUpsertResult initialization (covers line 310)."""
+        result = FlextLdapModels.BatchUpsertResult(
+            total_processed=10,
+            successful=8,
+            failed=2,
+            results=[],
+        )
+        assert result.total_processed == 10
+        assert result.successful == 8
+        assert result.failed == 2
+        assert result.results == []
+
+    def test_batch_upsert_result_with_results(self) -> None:
+        """Test BatchUpsertResult with actual results (covers lines 329-348)."""
+        individual_results = [
+            FlextLdapModels.UpsertResult(
+                success=True,
+                dn="cn=test1,dc=example,dc=com",
+                operation="add",
+            ),
+            FlextLdapModels.UpsertResult(
+                success=False,
+                dn="cn=test2,dc=example,dc=com",
+                operation="modify",
+                error="Entry not found",
+            ),
+        ]
+
+        result = FlextLdapModels.BatchUpsertResult(
+            total_processed=2,
+            successful=1,
+            failed=1,
+            results=individual_results,
+        )
+
+        assert len(result.results) == 2
+        assert result.results[0].success is True
+        assert result.results[1].success is False
+        assert result.results[1].error == "Entry not found"
+
+    def test_upsert_result_success(self) -> None:
+        """Test UpsertResult success case (covers lines 447-449)."""
+        result = FlextLdapModels.UpsertResult(
+            success=True,
+            dn="cn=test,dc=example,dc=com",
+            operation="add",
+        )
+        assert result.success is True
+        assert result.dn == "cn=test,dc=example,dc=com"
+        assert result.operation == "add"
+        assert result.error is None
+
+    def test_upsert_result_failure(self) -> None:
+        """Test UpsertResult failure case (covers lines 481-482)."""
+        result = FlextLdapModels.UpsertResult(
+            success=False,
+            dn="cn=test,dc=example,dc=com",
+            operation="modify",
+            error="Entry not found",
+        )
+        assert result.success is False
+        assert result.dn == "cn=test,dc=example,dc=com"
+        assert result.operation == "modify"
+        assert result.error == "Entry not found"

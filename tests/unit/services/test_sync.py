@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -103,12 +104,12 @@ def mock_ldap_operations() -> FlextLdapOperations:
             operation_type="add",
         )
     )
-    ops.add.return_value = add_result_success
+    ops.add.return_value = add_result_success  # type: ignore[missing-attribute]
 
     # Configure is_already_exists_error to return False by default
-    ops.is_already_exists_error.return_value = False
+    ops.is_already_exists_error.return_value = False  # type: ignore[missing-attribute]
 
-    return ops  # type: ignore[return-value]
+    return ops
 
 
 @pytest.fixture
@@ -224,7 +225,7 @@ class TestFlextLdapSyncBatchProcessing:
                     value="uid=user1,ou=users,dc=test,dc=local"
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={
+                    attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
@@ -236,7 +237,7 @@ class TestFlextLdapSyncBatchProcessing:
                     value="uid=user2,ou=users,dc=test,dc=local"
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={
+                    attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user2"],
                         "cn": ["User 2"],
@@ -267,7 +268,7 @@ class TestFlextLdapSyncBatchProcessing:
                     value="uid=user1,ou=users,dc=test,dc=local"
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={
+                    attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
@@ -310,7 +311,7 @@ class TestFlextLdapSyncBatchProcessing:
                     value="uid=user1,ou=users,dc=test,dc=local"
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={
+                    attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
@@ -323,8 +324,8 @@ class TestFlextLdapSyncBatchProcessing:
         error_result = FlextResult[FlextLdapModels.OperationResult].fail(
             "Entry already exists",
         )
-        mock_ldap_operations.add.return_value = error_result  # type: ignore[assignment]
-        mock_ldap_operations.is_already_exists_error.return_value = True  # type: ignore[assignment]
+        mock_ldap_operations.add.return_value = error_result  # type: ignore[missing-attribute]
+        mock_ldap_operations.is_already_exists_error.return_value = True  # type: ignore[missing-attribute]
 
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
@@ -347,7 +348,7 @@ class TestFlextLdapSyncBatchProcessing:
                     value="uid=user1,ou=users,dc=test,dc=local"
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    data={
+                    attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
@@ -360,8 +361,8 @@ class TestFlextLdapSyncBatchProcessing:
         error_result = FlextResult[FlextLdapModels.OperationResult].fail(
             "Connection failed",
         )
-        mock_ldap_operations.add.return_value = error_result  # type: ignore[assignment]
-        mock_ldap_operations.is_already_exists_error.return_value = False  # type: ignore[assignment]
+        mock_ldap_operations.add.return_value = error_result  # type: ignore[missing-attribute]
+        mock_ldap_operations.is_already_exists_error.return_value = False  # type: ignore[missing-attribute]
 
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
@@ -392,7 +393,9 @@ class TestFlextLdapSyncBaseDnTransformation:
                 dn=FlextLdifModels.DistinguishedName(
                     value="uid=user1,ou=users,dc=old,dc=local"
                 ),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user1"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user1"]}
+                ),
             ),
         ]
 
@@ -414,7 +417,9 @@ class TestFlextLdapSyncBaseDnTransformation:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value=original_dn),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user1"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user1"]}
+                ),
             ),
         ]
 
@@ -436,7 +441,9 @@ class TestFlextLdapSyncBaseDnTransformation:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value=original_dn),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user1"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user1"]}
+                ),
             ),
         ]
 
@@ -548,25 +555,33 @@ class TestFlextLdapSyncStatistics:
                 dn=FlextLdifModels.DistinguishedName(
                     value="uid=user1,ou=users,dc=test,dc=local"
                 ),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user1"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user1"]}
+                ),
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
                     value="uid=user2,ou=users,dc=test,dc=local"
                 ),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user2"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user2"]}
+                ),
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
                     value="uid=user3,ou=users,dc=test,dc=local"
                 ),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user3"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user3"]}
+                ),
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
                     value="uid=user4,ou=users,dc=test,dc=local"
                 ),
-                attributes=FlextLdifModels.LdifAttributes(data={"uid": ["user4"]}),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={"uid": ["user4"]}
+                ),
             ),
         ]
 
@@ -584,17 +599,17 @@ class TestFlextLdapSyncStatistics:
             "Operation failed",
         )
 
-        mock_ldap_operations.add.side_effect = [  # type: ignore[assignment]
+        mock_ldap_operations.add.side_effect = [  # type: ignore[missing-attribute]
             success_result,
             success_result,
             dup_result,
             fail_result,
         ]
 
-        def is_dup(msg: str) -> bool:  # type: ignore[arg-type]
+        def is_dup(msg: str) -> bool:
             return "already exists" in msg.lower()
 
-        mock_ldap_operations.is_already_exists_error.side_effect = is_dup  # type: ignore[assignment]
+        mock_ldap_operations.is_already_exists_error.side_effect = is_dup  # type: ignore[missing-attribute]
 
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
@@ -623,7 +638,7 @@ class TestFlextLdapSyncErrorHandling:
         """Test sync with empty entries list."""
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
-        result = sync_service._process_entries([], options, None)  # type: ignore[attr-defined]
+        result = sync_service._process_entries([], options, datetime.now(UTC))
 
         assert result.is_success
         stats = result.unwrap()

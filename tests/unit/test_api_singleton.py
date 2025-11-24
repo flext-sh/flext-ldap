@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifParser
+from flext_ldif import FlextLdif, FlextLdifParser
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
@@ -33,7 +33,8 @@ class TestFlextLdapSingleton:
         FlextLdap._reset_instance()
 
         # First call should create instance
-        instance1 = FlextLdap.get_instance(parser=ldap_parser)
+        ldif = FlextLdif.get_instance()
+        instance1 = FlextLdap.get_instance(ldif=ldif)
         assert instance1 is not None
 
         # Second call should return same instance
@@ -58,11 +59,12 @@ class TestFlextLdapSingleton:
         FlextLdap._reset_instance()
 
         config = FlextLdapConfig(host="test.example.com", port=389)
-        instance = FlextLdap.get_instance(config=config, parser=ldap_parser)
+        ldif = FlextLdif.get_instance()
+        instance = FlextLdap.get_instance(config=config, ldif=ldif)
 
         assert instance is not None
         assert instance._config == config
-        assert instance._parser == ldap_parser
+        assert instance._ldif == ldif
 
         # Cleanup
         FlextLdap._reset_instance()
@@ -76,14 +78,16 @@ class TestFlextLdapSingleton:
         FlextLdap._reset_instance()
 
         # Create instance
-        instance1 = FlextLdap.get_instance(parser=ldap_parser)
+        ldif = FlextLdif.get_instance()
+        instance1 = FlextLdap.get_instance(ldif=ldif)
         assert instance1 is not None
 
         # Reset singleton
         FlextLdap._reset_instance()
 
         # New call should create new instance
-        instance2 = FlextLdap.get_instance(parser=ldap_parser)
+        ldif2 = FlextLdif.get_instance()
+        instance2 = FlextLdap.get_instance(ldif=ldif2)
         assert instance2 is not None
         # Should be different instance (singleton was reset)
         assert instance2 is not instance1

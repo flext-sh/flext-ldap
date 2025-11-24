@@ -20,7 +20,7 @@ from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapClientProtocol
 
-from ..fixtures.loader import LdapTestFixtures
+from ..fixtures import LdapTestFixtures
 from ..helpers.operation_helpers import TestOperationHelpers
 from ..helpers.test_helpers import FlextLdapTestHelpers
 
