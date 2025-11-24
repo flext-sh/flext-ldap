@@ -87,13 +87,12 @@ class TestDeduplicationHelpers:
             Unwrapped result value
 
         Example:
-            entry = TestDeduplicationHelpers.assert_and_unwrap(result)
+            from flext_tests import FlextTestsMatchers
+            entry = FlextTestsMatchers.assert_success(result)
 
         """
-        return TestOperationHelpers.assert_result_success_and_unwrap(
-            result,
-            error_message=error_message,
-        )
+        from flext_tests import FlextTestsMatchers
+        return FlextTestsMatchers.assert_success(result, error_message)
 
     @staticmethod
     def assert_success[U](
@@ -447,7 +446,8 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         search_result = typed_client.search(search_options)
-        result = TestDeduplicationHelpers.assert_and_unwrap(
+        from flext_tests import FlextTestsMatchers
+        result = FlextTestsMatchers.assert_success(
             search_result,
             error_message="Search failed",
         )
@@ -803,7 +803,8 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         search_result = typed_client.search(search_options)
-        result = TestDeduplicationHelpers.assert_and_unwrap(
+        from flext_tests import FlextTestsMatchers
+        result = FlextTestsMatchers.assert_success(
             search_result,
             error_message="Search failed",
         )
@@ -1350,7 +1351,8 @@ class TestDeduplicationHelpers:
         )
 
         if verify_search and "search" in results:
-            search_result = TestDeduplicationHelpers.assert_and_unwrap(
+            from flext_tests import FlextTestsMatchers
+            search_result = FlextTestsMatchers.assert_success(
                 cast(
                     "FlextResult[FlextLdapModels.SearchResult]",
                     results["search"],
@@ -2404,7 +2406,8 @@ class TestDeduplicationHelpers:
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
 
         if verify_success:
-            attrs = TestDeduplicationHelpers.assert_and_unwrap(
+            from flext_tests import FlextTestsMatchers
+            attrs = FlextTestsMatchers.assert_success(
                 result,
                 error_message="Attributes conversion failed",
             )
@@ -2653,7 +2656,8 @@ class TestDeduplicationHelpers:
         result = sync_method(ldif_file, options) if options else sync_method(ldif_file)
 
         if verify_stats:
-            stats = TestDeduplicationHelpers.assert_and_unwrap(
+            from flext_tests import FlextTestsMatchers
+            stats = FlextTestsMatchers.assert_success(
                 result,
                 error_message="Sync failed",
             )
@@ -3646,7 +3650,8 @@ class TestDeduplicationHelpers:
             )
 
             if verify_stats:
-                stats = TestDeduplicationHelpers.assert_and_unwrap(
+                from flext_tests import FlextTestsMatchers
+            stats = FlextTestsMatchers.assert_success(
                     result,
                     error_message="Sync failed",
                 )
@@ -4250,7 +4255,8 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         result = typed_client.search(search_options)
-        return TestDeduplicationHelpers.assert_and_unwrap(
+        from flext_tests import FlextTestsMatchers
+        return FlextTestsMatchers.assert_success(
             result,
             error_message="Base search failed",
         )
@@ -4678,7 +4684,8 @@ class TestDeduplicationHelpers:
         else:
             result = typed_client.search(search_options)
 
-        return TestDeduplicationHelpers.assert_and_unwrap(
+        from flext_tests import FlextTestsMatchers
+        return FlextTestsMatchers.assert_success(
             result,
             error_message="Search failed",
         )
