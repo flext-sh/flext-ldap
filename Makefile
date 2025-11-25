@@ -134,7 +134,7 @@ test-e2e: ## Run end-to-end tests
 
 .PHONY: test-fast
 test-fast: ## Run fast tests only (exclude slow, integration, docker)
-	PYTHONPATH=$(FLEXT_ROOT)/flext-core/src:$(FLEXT_ROOT)/flext-ldif/src $(POETRY) run pytest -m "not slow and not integration and not docker" -v
+	PYTHONPATH=$(SRC_DIR):$(FLEXT_ROOT)/flext-core/src:$(FLEXT_ROOT)/flext-ldif/src $(POETRY) run pytest -m "not slow and not integration and not docker" -v
 
 .PHONY: test-performance
 test-performance: ## Run performance tests (isolated, avoid resource contention)

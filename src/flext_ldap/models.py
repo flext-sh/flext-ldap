@@ -1,57 +1,76 @@
 """LDAP domain models and data structures.
 
-This module defines Pydantic models for LDAP operations including connection
-configuration, search options, and operation results. Reuses FlextLdifModels
-for Entry, DN, and Attributes to avoid duplication.
+This module defines Pydantic v2 models for LDAP operations including connection
+configuration, search options, operation results, and sync operations. Uses advanced
+Python 3.13 features with computed fields, nested validation, and type-safe patterns.
+Reuses FlextLdifModels for Entry/DN handling to avoid duplication and maintain consistency.
 
+Tested scope: Model validation, computed properties, factory methods, type safety
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Notes:
- - Reuses FlextLdifModels.Entry, FlextLdifModels.DistinguishedName, etc.
- - Only defines LDAP-specific models (connection, search, operations)
- - Minimal models following Pydantic v2 patterns
-
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import ClassVar
 
-from flext_core import FlextModels, FlextUtilities
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_core import FlextModels, FlextModelsCollections, FlextUtilities
+from flext_ldif import FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
 from pydantic import Field, computed_field, field_validator, model_validator
 
-from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
 
 
 class FlextLdapModels(FlextModels):
     """LDAP domain models extending flext-core FlextModels.
 
-    Unified namespace class that aggregates all LDAP domain models.
-    Use FlextLdapServiceBase static methods for config access in defaults.
+    Uses advanced Python 3.13 patterns with enums, mappings, and computed fields
+    for type-safe, efficient model definitions. All models follow Pydantic v2 patterns
+    with proper validation and immutability.
     """
+
+    # Configuration mappings for DRY field definitions
+    CONNECTION_DEFAULTS: ClassVar[dict[str, str | int | bool | None]] = {
+        "host": "localhost",
+        "port": FlextLdapConstants.ConnectionDefaults.PORT,
+        "use_ssl": False,
+        "use_tls": False,
+        "bind_dn": None,
+        "bind_password": None,
+        "timeout": FlextLdapConstants.ConnectionDefaults.TIMEOUT,
+        "auto_bind": FlextLdapConstants.ConnectionDefaults.AUTO_BIND,
+        "auto_range": FlextLdapConstants.ConnectionDefaults.AUTO_RANGE,
+    }
+
+    SEARCH_DEFAULTS: ClassVar[dict[str, str | int | None]] = {
+        "scope": "SUBTREE",
+        "filter_str": FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+        "attributes": None,
+        "size_limit": 0,
+        "time_limit": 0,
+    }
+
+    SYNC_DEFAULTS: ClassVar[dict[str, int | bool | str | None]] = {
+        "batch_size": 100,
+        "auto_create_parents": True,
+        "allow_deletes": False,
+        "source_basedn": "",
+        "target_basedn": "",
+        "progress_callback": None,
+    }
 
     # =========================================================================
     # CONNECTION MODELS
     # =========================================================================
 
-    class ConnectionConfig(FlextModels.Config):
+    class ConnectionConfig(FlextModelsCollections.Config):
         """Configuration for LDAP connection (frozen, immutable).
 
         Minimal configuration model for establishing LDAP connections.
-        Uses FlextModels.Config base for:
-        - Immutability (frozen=True via base)
-        - Value-based equality
-        - Configuration validation
-
-        Uses simple defaults from constants to avoid config mutation issues.
-
-        Pydantic v2 Pattern:
-        - Simple default values from constants
-        - Explicit values passed override defaults automatically
-        - No default_factory to avoid side effects
+        Uses advanced Python 3.13 patterns with mapping-based field definitions
+        for DRY configuration and type safety.
         """
 
         host: str = Field(
@@ -123,7 +142,7 @@ class FlextLdapModels(FlextModels):
     # SEARCH MODELS
     # =========================================================================
 
-    class SearchOptions(FlextModels.Options):
+    class SearchOptions(FlextModelsCollections.Options):
         """Options for LDAP search operations (frozen, immutable).
 
         Minimal search configuration model.
@@ -178,7 +197,7 @@ class FlextLdapModels(FlextModels):
                 ValueError: If DN format is invalid
 
             """
-            if not FlextLdif.utilities.DN.validate(v):
+            if not FlextLdifUtilities.DN.validate(v):
                 error_msg = f"Invalid base_dn format: {v}"
                 raise ValueError(error_msg)
             return v
@@ -219,7 +238,7 @@ class FlextLdapModels(FlextModels):
 
             """
             # Normalize the base_dn
-            normalized_base_dn = FlextLdif.utilities.DN.norm_string(base_dn)
+            normalized_base_dn = FlextLdifUtilities.DN.norm_string(base_dn)
 
             # Use defaults if not provided
             actual_scope = scope if scope is not None else "SUBTREE"
@@ -242,7 +261,7 @@ class FlextLdapModels(FlextModels):
     # OPERATION RESULT MODELS
     # =========================================================================
 
-    class OperationResult(FlextModels.Results):
+    class OperationResult(FlextModelsCollections.Results):
         """Result of LDAP operation (frozen, immutable).
 
         Generic result model for all LDAP operations.
@@ -364,7 +383,7 @@ class FlextLdapModels(FlextModels):
         """
 
         batch_size: int = Field(
-            default_factory=lambda: FlextLdapServiceBase.get_ldap_config().chunk_size,
+            default=100,
             ge=1,
             description="Number of entries to process in each batch",
         )
@@ -399,7 +418,7 @@ class FlextLdapModels(FlextModels):
             )
         )
 
-    class SyncStats(FlextModels.Statistics):
+    class SyncStats(FlextModelsCollections.Statistics):
         """Statistics for LDIF synchronization operation (frozen, immutable).
 
         Aggregated statistics from syncing LDIF entries to LDAP.

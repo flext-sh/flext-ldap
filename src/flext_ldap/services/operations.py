@@ -1,29 +1,35 @@
 """LDAP Operations Service.
 
-This service provides LDAP CRUD operations (search, add, modify, delete).
-Delegates to Ldap3Adapter which already handles conversion to Entry models
-using FlextLdifParser, maximizing code reuse.
+This service provides LDAP CRUD operations (search, add, modify, delete, upsert).
+Delegates to Ldap3Adapter which handles conversion to Entry models using FlextLdifParser,
+maximizing code reuse. Supports batch operations and entry comparison for upsert logic.
+
+Modules: FlextLdapOperations
+Scope: LDAP CRUD operations, entry comparison, batch upsert, entry existence checking
+Pattern: Service extending FlextLdapServiceBase, delegates to Ldap3Adapter for actual operations
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal, TypeVar, cast
+from typing import TypeAlias, TypeVar, cast
 
 from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdif, FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 
 from flext_ldap.base import FlextLdapServiceBase
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapConnectionProtocol
 
 T = TypeVar("T")
+
+AttributeValues: TypeAlias = list[str]
 
 
 class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
@@ -35,28 +41,6 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     """
 
     _connection: LdapConnectionProtocol
-
-    @staticmethod
-    def normalize_dn(
-        dn: str | FlextLdifModels.DistinguishedName,
-    ) -> FlextLdifModels.DistinguishedName:
-        """Normalize DN to DistinguishedName model (DRY helper).
-
-        Converts string DN to DistinguishedName model if needed.
-        DN format validation is handled by Pydantic v2 validators during model creation.
-        Uses FlextLdif.utilities.DN.get_dn_value() for consistent DN extraction.
-
-        Args:
-            dn: DN as string or DistinguishedName model
-
-        Returns:
-            DistinguishedName model
-
-        """
-        if isinstance(dn, FlextLdifModels.DistinguishedName):
-            return dn
-        dn_value = FlextLdif.utilities.DN.get_dn_value(dn)
-        return FlextLdifModels.DistinguishedName(value=dn_value)
 
     @staticmethod
     def is_already_exists_error(error_message: str) -> bool:
@@ -91,9 +75,20 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         super().__init__(**kwargs)
         # Extract connection from kwargs if not provided directly
         if connection is None:
-            connection = cast(
-                "LdapConnectionProtocol | None", kwargs.pop("connection", None)
-            )
+            connection_kwarg = kwargs.pop("connection", None)
+            if connection_kwarg is not None:
+                # Type narrowing: verify connection_kwarg implements LdapConnectionProtocol
+                # by checking for required protocol members
+                if (
+                    hasattr(connection_kwarg, "adapter")
+                    and hasattr(connection_kwarg, "is_connected")
+                    and callable(getattr(connection_kwarg, "adapter", None))
+                ):
+                    # Type narrowing: connection_kwarg implements LdapConnectionProtocol
+                    connection = cast("LdapConnectionProtocol", connection_kwarg)
+                else:
+                    msg = f"connection must be LdapConnectionProtocol, got {type(connection_kwarg).__name__}"
+                    raise TypeError(msg)
         if connection is None:
             msg = "connection parameter is required"
             raise TypeError(msg)
@@ -238,8 +233,12 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         """
         # DN format validation is handled by Pydantic v2 validators when converting to DistinguishedName
-        # Use DRY helper to normalize DN
-        dn_model = self.normalize_dn(dn)
+        # Use FlextLdif utilities for DN normalization
+        if isinstance(dn, FlextLdifModels.DistinguishedName):
+            dn_model = dn
+        else:
+            dn_value = FlextLdapServiceBase.safe_dn_string(dn)
+            dn_model = FlextLdifModels.DistinguishedName(value=dn_value)
 
         # Adapter handles connection check via _get_connection() - no duplication
         modify_result = self._connection.adapter.modify(dn_model, changes)
@@ -278,8 +277,12 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         """
         # DN format validation is handled by Pydantic v2 validators when converting to DistinguishedName
-        # Use DRY helper to normalize DN
-        dn_model = self.normalize_dn(dn)
+        # Use FlextLdif utilities for DN normalization
+        if isinstance(dn, FlextLdifModels.DistinguishedName):
+            dn_model = dn
+        else:
+            dn_value = FlextLdapServiceBase.safe_dn_string(dn)
+            dn_model = FlextLdifModels.DistinguishedName(value=dn_value)
 
         # Adapter handles connection check via _get_connection() - no duplication
         delete_result = self._connection.adapter.delete(dn_model)
@@ -402,16 +405,12 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 (attr_name, []),
             )
 
-            # Normalize values for comparison (convert to sets, ignoring order)
-            existing_set = {str(v).lower() for v in existing_values if v}
-            new_set = {str(v).lower() for v in new_values if v}
-
-            if existing_set != new_set:
-                # Replace entire attribute with new values
-                # Use original attribute name from existing entry if available
-                changes[existing_attr_name] = [
-                    (MODIFY_REPLACE, [str(v) for v in new_values if v]),
-                ]
+            # Use helper method for attribute comparison
+            attr_change = self._compare_single_attribute(
+                existing_attr_name, existing_values, new_values
+            )
+            if attr_change:
+                changes[existing_attr_name] = attr_change[1]
                 has_changes = True
                 modified_attrs.append(existing_attr_name)
 
@@ -457,6 +456,33 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         )
 
         return changes if has_changes else None
+
+    def _compare_single_attribute(
+        self,
+        attr_name: str,
+        existing_values: list[str],
+        new_values: list[str],
+    ) -> tuple[str, list[tuple[str, list[str]]]] | None:
+        """Compare single attribute values and return modify operation if different.
+
+        Args:
+            attr_name: Attribute name
+            existing_values: Existing attribute values
+            new_values: New attribute values
+
+        Returns:
+            Tuple of (attr_name, [(operation, [values])]) if different, None if identical
+
+        """
+        # Normalize values for comparison (convert to sets, ignoring order)
+        existing_set = {str(v).lower() for v in existing_values if v}
+        new_set = {str(v).lower() for v in new_values if v}
+
+        if existing_set != new_set:
+            # Replace entire attribute with new values
+            return (attr_name, [(MODIFY_REPLACE, [str(v) for v in new_values if v])])
+
+        return None
 
     def upsert(
         self,
@@ -579,7 +605,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing dict with "operation" key
 
         """
-        changetype_values = (
+        changetype_values: list[str] = (
             entry.attributes.attributes.get("changetype", [])
             if entry.attributes
             else []
@@ -606,7 +632,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         """
         # Schema modify operation using ldap3 MODIFY_ADD
         # Duplicate detection handled by LDAP server error responses
-        add_op = entry.attributes.attributes.get("add", [])
+        add_op: list[str] = entry.attributes.attributes.get("add", [])
         if not add_op:
             self.logger.warning(
                 "Schema modify entry missing 'add' attribute",
@@ -619,7 +645,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         # Extract the attribute being added (e.g., "attributeTypes", "objectClasses")
         attr_type = add_op[0]
-        attr_values = entry.attributes.attributes.get(attr_type, [])
+        attr_values: list[str] = entry.attributes.attributes.get(attr_type, [])
 
         if not attr_values:
             self.logger.warning(
@@ -752,13 +778,12 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         entry_dn_str = str(entry.dn) if entry.dn else "unknown"
 
         # Search for existing entry using BASE scope (exact DN match)
+        # Use enum value directly - it's a string compatible with Literal type
+        base_scope: FlextLdapConstants.LiteralTypes.SearchScope = "BASE"
         search_options = FlextLdapModels.SearchOptions(
             base_dn=entry_dn_str,
             filter_str=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
-            scope=cast(
-                "Literal['BASE', 'ONELEVEL', 'SUBTREE']",
-                str(FlextLdapConstants.SearchScope.BASE),
-            ),
+            scope=base_scope,
             attributes=None,  # Get all attributes
         )
 
@@ -996,7 +1021,8 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         # Return empty search result as health check indicator
         # Get base_dn from service config or use a safe default
-        base_dn = self.config.ldap.base_dn or "dc=example,dc=com"
+        ldap_config = self.config.get_namespace("ldap", FlextLdapConfig)
+        base_dn = getattr(ldap_config, "base_dn", None) or "dc=example,dc=com"
 
         # Validate and clean base_dn using FlextUtilities (railway pattern)
         base_dn_result = FlextUtilities.TextProcessor.safe_string(base_dn)
@@ -1015,4 +1041,4 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             entries=[],
             search_options=empty_options,
         )
-        return FlextResult[FlextLdapModels.SearchResult].ok(data=result)
+        return FlextResult[FlextLdapModels.SearchResult].ok(result)

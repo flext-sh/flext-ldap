@@ -55,17 +55,17 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
     """
 
-    def execute(self, **kwargs: object) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Execute server detection from connection parameter.
 
         Args:
-            **kwargs: Must contain 'connection' key with ldap3.Connection
+            **_kwargs: Must contain 'connection' key with ldap3.Connection
 
         Returns:
             FlextResult[str] with detected server type or error
 
         """
-        connection = kwargs.get("connection")
+        connection = _kwargs.get("connection")
         if connection is None:  # pragma: no cover
             # Defensive: execute() called directly with proper kwargs in practice
             return FlextResult[str].fail("connection parameter required")

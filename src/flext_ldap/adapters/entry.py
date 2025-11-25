@@ -1,19 +1,19 @@
 """Entry adapter for ldap3 ↔ FlextLdif bidirectional conversion.
 
-Provides seamless conversion between ldap3 Entry objects and FlextLdif
-Entry models, enabling integration between LDAP protocol operations and
-LDIF entry manipulation with type safety and error handling.
+Provides seamless conversion between ldap3 Entry objects and FlextLdif Entry models,
+enabling integration between LDAP protocol operations and LDIF entry manipulation with
+type safety and error handling. All operations are generic and work with any LDAP server
+by leveraging flext-ldif's quirks system for server-specific handling.
 
-All operations are generic and work with any LDAP server by leveraging
-flext-ldif's quirks system for server-specific handling.
+Modules: FlextLdapEntryAdapter
+Scope: Bidirectional entry conversion, metadata preservation, server-specific normalization
+Pattern: Service adapter extending FlextService, uses FlextLdif for quirks and conversion
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-from typing import cast
 
 from flext_core import FlextResult, FlextRuntime, FlextService
 from flext_ldif import (
@@ -59,12 +59,21 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         super().__init__(**kwargs)
         # Extract server_type from kwargs if not provided directly
         if server_type is None:
-            server_type = cast("str | None", kwargs.pop("server_type", None))
+            server_type_kwarg = kwargs.pop("server_type", None)
+            if server_type_kwarg is not None:
+                if isinstance(server_type_kwarg, str):
+                    server_type = server_type_kwarg
+                else:
+                    msg = f"server_type must be str, got {type(server_type_kwarg).__name__}"
+                    raise TypeError(msg)
         # Use default if still None
         if server_type is None:
             server_type = FlextLdapConstants.LdapDefaults.SERVER_TYPE
         # Create FlextLdif with server_type to use correct quirks (OID/OUD/etc)
-        config = FlextLdifConfig(quirks_server_type=server_type)
+        # Use model_construct to bypass config_class validation for AutoConfig pattern
+        config = FlextLdifConfig.model_construct(
+            quirks_server_type=server_type,
+        )
         self._ldif = FlextLdif(config=config)
         self._server_type = server_type
 
@@ -83,7 +92,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 and always ready
 
         """
-        return FlextResult[bool].ok(data=True)
+        return FlextResult[bool].ok(True)
 
     def _convert_ldap3_value_to_list(
         self,
@@ -416,16 +425,13 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         # to maximize code reuse and ensure consistency with flext-ldif
         try:
             # Convert entry.attributes to format expected by convert_ldif_attributes_to_ldap3_format
-            # The method accepts LdifAttributes or dict, and entry.attributes is LdifAttributes
-            # Type cast needed: entry.attributes is FlextLdifModels.LdifAttributes (from _models.domain)
-            # but method expects FlextLdifModels.LdifAttributes (from models.py namespace wrapper)
-            # Both are structurally compatible, cast is safe
+            # The method accepts LdifAttributes (from facade) or dict[str, str | list[str]]
+            # entry.attributes is LdifAttributes from _models.domain, so we pass the dict directly
+            # entry.attributes.attributes is dict[str, list[str]] which is compatible
+            attrs_dict: dict[str, str | list[str]] = dict(entry.attributes.attributes)
             ldap3_attributes = (
                 FlextLdif.entry_manipulation.convert_ldif_attributes_to_ldap3_format(
-                    cast(
-                        "FlextLdifModels.LdifAttributes | dict[str, str | list[str]]",
-                        entry.attributes,
-                    ),
+                    attrs_dict,
                 )
             )
 
@@ -495,4 +501,4 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         # Server-specific validation can be added here if needed
         # For now, if entry passed Pydantic validation, it's valid
-        return FlextResult[bool].ok(data=True)
+        return FlextResult[bool].ok(True)

@@ -1,18 +1,21 @@
 """LDIF to LDAP synchronization service.
 
-This service provides direct LDIF to LDAP synchronization without any
-attribute or DN conversions. Works with any LDAP-compatible server.
+This service provides direct LDIF to LDAP synchronization without any attribute
+or DN conversions. Works with any LDAP-compatible server. Supports batch processing,
+progress callbacks, automatic parent DN creation, and comprehensive statistics.
+
+Modules: FlextLdapSyncService
+Scope: LDIF file parsing and synchronization to LDAP, batch operations, statistics
+Pattern: Service extending FlextLdapServiceBase, uses FlextLdapOperations for LDAP ops
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
@@ -67,15 +70,23 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
         super().__init__(**kwargs)
         # Extract operations from kwargs if not provided directly
         if operations is None:
-            operations = cast(
-                "FlextLdapOperations | None", kwargs.pop("operations", None)
-            )
+            operations_kwarg = kwargs.pop("operations", None)
+            if operations_kwarg is not None:
+                # Type narrowing: verify operations_kwarg is FlextLdapOperations
+                if isinstance(operations_kwarg, FlextLdapOperations):
+                    operations = operations_kwarg
+                else:
+                    msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
+                    raise TypeError(msg)
         if operations is None:
             msg = "operations parameter is required"
             raise TypeError(msg)
         self._operations = operations
         # Create FlextLdif with RFC server type (no quirks/conversions for direct sync)
-        config = FlextLdifConfig(quirks_server_type=FlextLdapConstants.ServerTypes.RFC)
+        # Use model_construct to bypass config_class validation for AutoConfig pattern
+        config = FlextLdifConfig.model_construct(
+            quirks_server_type=FlextLdapConstants.ServerTypes.RFC,
+        )
         self._ldif = FlextLdif(config=config)
 
     def sync_ldif_file(
@@ -302,44 +313,42 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             batch_size=options.batch_size,
         )
 
-        # Monadic pattern - chain sync batch and update duration
-        return (
-            self._sync_batch(entries, options)
-            .map(
-                lambda stats: FlextLdapModels.SyncStats(
-                    added=stats.added,
-                    skipped=stats.skipped,
-                    failed=stats.failed,
-                    total=stats.total,
-                    duration_seconds=(
-                        self._generate_datetime_utc() - start_time
-                    ).total_seconds(),
-                ),
-            )
-            .map(
-                lambda final_stats: (
-                    self.logger.info(
-                        "LDIF file sync completed",
-                        operation="sync_ldif_file",
-                        added=final_stats.added,
-                        skipped=final_stats.skipped,
-                        failed=final_stats.failed,
-                        total=final_stats.total,
-                        success_rate=f"{(final_stats.added / final_stats.total * 100):.1f}%"
-                        if final_stats.total > 0
-                        else "0%",
-                        skip_rate=f"{(final_stats.skipped / final_stats.total * 100):.1f}%"
-                        if final_stats.total > 0
-                        else "0%",
-                        failure_rate=f"{(final_stats.failed / final_stats.total * 100):.1f}%"
-                        if final_stats.total > 0
-                        else "0%",
-                        duration_seconds=final_stats.duration_seconds,
-                    ),
-                    final_stats,
-                )[1],
-            )
+        # Get batch result
+        batch_result = self._sync_batch(entries, options)
+        if batch_result.is_failure:
+            return batch_result
+
+        stats = batch_result.unwrap()
+        duration_seconds = (self._generate_datetime_utc() - start_time).total_seconds()
+
+        final_stats = FlextLdapModels.SyncStats(
+            added=stats.added,
+            skipped=stats.skipped,
+            failed=stats.failed,
+            total=stats.total,
+            duration_seconds=duration_seconds,
         )
+
+        self.logger.info(
+            "LDIF file sync completed",
+            operation="sync_ldif_file",
+            added=final_stats.added,
+            skipped=final_stats.skipped,
+            failed=final_stats.failed,
+            total=final_stats.total,
+            success_rate=f"{(final_stats.added / final_stats.total * 100):.1f}%"
+            if final_stats.total > 0
+            else "0%",
+            skip_rate=f"{(final_stats.skipped / final_stats.total * 100):.1f}%"
+            if final_stats.total > 0
+            else "0%",
+            failure_rate=f"{(final_stats.failed / final_stats.total * 100):.1f}%"
+            if final_stats.total > 0
+            else "0%",
+            duration_seconds=final_stats.duration_seconds,
+        )
+
+        return FlextResult[FlextLdapModels.SyncStats].ok(final_stats)
 
     def _sync_batch(
         self,

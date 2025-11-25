@@ -1,6 +1,17 @@
-"""Unit tests for LdapFlextConfig.
+"""Unit tests for FlextLdapConfig.
 
-Tests config namespace access and methods.
+**Modules Tested:**
+- flext_ldap.config.FlextLdapConfig: LDAP configuration management
+
+**Scope:**
+- Singleton pattern (get_instance)
+- Default configuration values
+- Configuration field validation
+- Required attributes presence
+
+**Test Helpers Used:**
+- Config fixture: Provides FlextLdapConfig singleton instance
+- FlextLdapConstants: Centralized constant values for assertions
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,121 +21,92 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap.config import LdapFlextConfig
+from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 
 pytestmark = pytest.mark.unit
 
 
-class TestLdapFlextConfig:
-    """Tests for LdapFlextConfig."""
+@pytest.fixture
+def config() -> FlextLdapConfig:
+    """Provide FlextLdapConfig singleton instance for testing."""
+    return FlextLdapConfig.get_instance()
 
-    def test_ldap_property_success(self) -> None:
-        """Test ldap property with valid config (covers lines 164-174)."""
-        config = LdapFlextConfig.get_global_instance()
-        ldap_config = config.ldap
-        assert ldap_config is not None
-        assert hasattr(ldap_config, "host")
 
-    def test_ldap_property_with_missing_get_namespace(self) -> None:
-        """Test ldap property when get_namespace is missing (covers lines 168-169)."""
-        config = LdapFlextConfig.get_global_instance()
-        # This should work with real FlextConfig
-        # The error path (lines 168-169) is defensive code
-        # that may not execute with real FlextConfig implementation
-        ldap_config = config.ldap
-        assert ldap_config is not None
+class TestFlextLdapConfig:
+    """Tests for FlextLdapConfig covering singleton pattern and configuration values.
 
-    def test_ldap_property_with_wrong_type(self) -> None:
-        """Test ldap property when namespace has wrong type (covers lines 172-173)."""
-        config = LdapFlextConfig.get_global_instance()
-        # This should work with real FlextConfig
-        # The error path (lines 172-173) is defensive code
-        # that may not execute with real FlextConfig implementation
-        ldap_config = config.ldap
-        assert ldap_config is not None
+    Single class per module with parametrized test methods covering:
+    - Singleton pattern (get_instance)
+    - Default configuration values
+    - Configuration field validation
+    - Required attributes presence
+    """
 
-    def test_ldif_property_success(self) -> None:
-        """Test ldif property with valid config (covers lines 179-189)."""
-        config = LdapFlextConfig.get_global_instance()
-        ldif_config = config.ldif
-        assert ldif_config is not None
-        assert hasattr(ldif_config, "ldif_encoding")
+    def test_get_instance_returns_singleton(self) -> None:
+        """Test get_instance returns same singleton instance."""
+        instance1 = FlextLdapConfig.get_instance()
+        instance2 = FlextLdapConfig.get_instance()
 
-    def test_clone_method(self) -> None:
-        """Test clone method (covers lines 202-204)."""
-        config = LdapFlextConfig.get_global_instance()
-        # Clone with overrides - this tests the clone method execution
-        cloned = config.clone(debug=True)
-        assert cloned is not None
-        assert isinstance(cloned, LdapFlextConfig)
-        # Cloned should have overridden values
-        assert cloned.debug is True
-        # Clone method should execute (lines 202-204)
-        # Note: clone creates new instance with same data + overrides
+        assert instance1 is instance2
+        assert isinstance(instance1, FlextLdapConfig)
 
-    def test_reset_for_testing(self) -> None:
-        """Test reset_for_testing method (covers lines 209-210)."""
-        # Get current instance
-        config1 = LdapFlextConfig.get_global_instance()
-        assert config1 is not None
+    @pytest.mark.parametrize(("attr", "expected"), [
+        ("host", "localhost"),
+        ("port", FlextLdapConstants.ConnectionDefaults.PORT),
+        ("use_ssl", False),
+        ("use_tls", False),
+        ("auto_bind", FlextLdapConstants.ConnectionDefaults.AUTO_BIND),
+        ("pool_size", FlextLdapConstants.ConnectionDefaults.POOL_SIZE),
+        ("timeout", FlextLdapConstants.ConnectionDefaults.TIMEOUT),
+    ])
+    def test_default_config_values(
+        self,
+        config: FlextLdapConfig,
+        attr: str,
+        expected: object,
+    ) -> None:
+        """Test default configuration values match expected constants."""
+        assert getattr(config, attr) == expected
 
-        # Reset (covers lines 209-210)
-        LdapFlextConfig.reset_for_testing()
+    @pytest.mark.parametrize("attr", [
+        "bind_dn",
+        "bind_password",
+        "base_dn",
+    ])
+    def test_default_none_values(
+        self,
+        config: FlextLdapConfig,
+        attr: str,
+    ) -> None:
+        """Test optional attributes default to None (no automatic binding)."""
+        assert getattr(config, attr) is None
 
-        # Get new instance
-        config2 = LdapFlextConfig.get_global_instance()
-        assert config2 is not None
-        # reset_for_testing should execute (lines 209-210)
-        # Note: Singleton pattern may return same instance if already created
-        # The important part is that reset_for_testing executes
+    @pytest.mark.parametrize("attr", [
+        "host",
+        "port",
+        "use_ssl",
+        "use_tls",
+        "bind_dn",
+        "bind_password",
+        "timeout",
+        "auto_bind",
+        "auto_range",
+        "pool_size",
+        "pool_lifetime",
+        "max_results",
+        "chunk_size",
+        "base_dn",
+    ])
+    def test_config_has_required_attribute(
+        self,
+        config: FlextLdapConfig,
+        attr: str,
+    ) -> None:
+        """Test config instance has all required LDAP attributes."""
+        assert hasattr(config, attr)
 
-    def test_ldap_property_error_handling(self) -> None:
-        """Test ldap property error handling paths (covers lines 164-176)."""
-        config = LdapFlextConfig.get_global_instance()
-
-        # Test successful path (already covered)
-        ldap_config = config.ldap
-        assert ldap_config is not None
-
-        # The error paths (lines 168-169, 172-173) are defensive code
-        # that may not execute with real FlextConfig implementation
-        # but the method should handle them gracefully if they occur
-
-    def test_ldif_property_error_handling(self) -> None:
-        """Test ldif property error handling paths (covers lines 181-193)."""
-        config = LdapFlextConfig.get_global_instance()
-
-        # Test successful path (already covered)
-        ldif_config = config.ldif
-        assert ldif_config is not None
-
-        # The error paths (lines 185-186, 190-191) are defensive code
-        # that may not execute with real FlextConfig implementation
-        # but the method should handle them gracefully if they occur
-
-    def test_clone_with_multiple_overrides(self) -> None:
-        """Test clone method with multiple overrides (covers lines 198-202)."""
-        config = LdapFlextConfig.get_global_instance()
-
-        # Clone with multiple overrides
-        cloned = config.clone(debug=True, log_level="DEBUG")
-        assert cloned is not None
-        assert isinstance(cloned, LdapFlextConfig)
-        # Clone should execute the method (lines 198-202)
-
-    def test_clone_with_empty_overrides(self) -> None:
-        """Test clone method with empty overrides (covers lines 206-208)."""
-        config = LdapFlextConfig.get_global_instance()
-
-        # Clone with no overrides
-        cloned = config.clone()
-        assert cloned is not None
-        assert isinstance(cloned, LdapFlextConfig)
-        # Should still execute the method (lines 206-208)
-
-    def test_reset_for_testing_execution(self) -> None:
-        """Test that reset_for_testing executes (covers lines 213-214)."""
-        # This method is primarily for testing and may not have observable effects
-        # The important part is that it executes without error (lines 213-214)
-        LdapFlextConfig.reset_for_testing()
-        # Method should execute successfully
+    def test_processing_defaults(self, config: FlextLdapConfig) -> None:
+        """Test processing-related configuration defaults."""
+        assert config.max_results == 1000
+        assert config.chunk_size == 100

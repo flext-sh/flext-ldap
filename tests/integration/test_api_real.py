@@ -51,7 +51,7 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API search operation."""
         TestOperationHelpers.search_and_assert_success(
-            ldap_client,
+            cast("LdapClientProtocol", ldap_client),
             str(ldap_container["base_dn"]),
             expected_min_count=1,
         )

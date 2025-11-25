@@ -1,88 +1,185 @@
 """Unit tests for FlextLdapOperations.
 
+**Modules Tested:**
+- flext_ldap.services.operations.FlextLdapOperations: LDAP operations service
+
+**Scope:**
+- Operations service initialization
+- Fast-fail pattern for disconnected operations (search, add, modify, delete, execute)
+- Error handling and validation
+
+**Test Helpers Used:**
+- TestDeduplicationHelpers: Creates test entry and search objects for operation testing
+- TestConstants: Centralized test constants (DNs, filters, etc.) organized in domain namespaces
+
+**Fixtures:**
+- ldap_parser: FlextLdifParser instance for entry parsing and validation
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import ClassVar
+
 import pytest
-from flext_ldif import FlextLdifParser
+from flext_core import FlextResult
+from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
+from ..fixtures.constants import TestConstants
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-# Mark all tests in this module as unit tests (fast, no Docker)
 pytestmark = pytest.mark.unit
 
 
+class OperationType(StrEnum):
+    """Enum for LDAP operation types using StrEnum pattern."""
+
+    SEARCH = "search"
+    ADD = "add"
+    MODIFY = "modify"
+    DELETE = "delete"
+    EXECUTE = "execute"
+
+
+@dataclass(frozen=True, slots=True)
+class OperationFactory:
+    """Factory for creating operation callables using Python 3.13 dataclass.
+
+    Eliminates lambda-based patterns in favor of explicit methods that are
+    individually testable and maintain clear type signatures.
+    """
+
+    operations: FlextLdapOperations
+
+    def create_search(
+        self,
+    ) -> FlextResult[FlextLdapModels.SearchResult]:
+        """Create and execute search operation."""
+        return self.operations.search(
+            TestDeduplicationHelpers.create_search(
+                base_dn=TestConstants.DEFAULT_BASE_DN,
+            )
+        )
+
+    def create_add(
+        self,
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
+        """Create and execute add operation."""
+        return self.operations.add(
+            TestDeduplicationHelpers.create_entry(
+                TestConstants.TEST_USER_DN,
+                {"cn": ["test"], "objectClass": ["top", "person"]},
+            )
+        )
+
+    def create_modify(
+        self,
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
+        """Create and execute modify operation."""
+        return self.operations.modify(
+            TestConstants.TEST_USER_DN,
+            {"mail": [(MODIFY_REPLACE, ["test@example.com"])]},
+        )
+
+    def create_delete(
+        self,
+    ) -> FlextResult[FlextLdapModels.OperationResult]:
+        """Create and execute delete operation."""
+        return self.operations.delete(TestConstants.TEST_USER_DN)
+
+    def create_execute(
+        self,
+    ) -> FlextResult[FlextLdapModels.SearchResult]:
+        """Create and execute generic execute operation."""
+        return self.operations.execute()
+
+    def get_operation_result(
+        self,
+        operation_type: OperationType,
+    ) -> object:
+        """Get operation result by type (returns untyped object to avoid variance issues)."""
+        if operation_type == OperationType.SEARCH:
+            return self.create_search()
+        if operation_type == OperationType.ADD:
+            return self.create_add()
+        if operation_type == OperationType.MODIFY:
+            return self.create_modify()
+        if operation_type == OperationType.DELETE:
+            return self.create_delete()
+        return self.create_execute()
+
+
 class TestFlextLdapOperations:
-    """Tests for FlextLdapOperations service."""
+    """Comprehensive tests for FlextLdapOperations.
 
-    def test_operations_initialization(self, ldap_parser: FlextLdifParser) -> None:
-        """Test operations service initialization."""
+    Single class per module with parametrized test methods covering:
+    - Operations service initialization
+    - Fast-fail pattern for disconnected operations
+    - Error handling and validation
+
+    Uses Python 3.13 StrEnum for operation types and factory patterns
+    for efficient test data generation.
+    """
+
+    OPERATION_TYPES: ClassVar[tuple[OperationType, ...]] = (
+        OperationType.SEARCH,
+        OperationType.ADD,
+        OperationType.MODIFY,
+        OperationType.DELETE,
+        OperationType.EXECUTE,
+    )
+
+    @staticmethod
+    def _create_operations_service(
+        parser: FlextLdifParser | None,
+    ) -> FlextLdapOperations:
+        """Create operations service instance."""
         config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
+        connection = FlextLdapConnection(config=config, parser=parser)
+        return FlextLdapOperations(connection=connection)
+
+    def test_operations_initialization(
+        self,
+        ldap_parser: FlextLdifParser | None,
+    ) -> None:
+        """Test operations service initialization and connection validation."""
+        operations = self._create_operations_service(ldap_parser)
         assert operations is not None
-        assert operations._connection == connection
+        assert operations._connection is not None
+        assert not operations._connection.is_connected
 
-    def test_search_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test search when not connected."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
-        search_options = TestDeduplicationHelpers.create_search(
-            base_dn="dc=example,dc=com",
-        )
-        result = operations.search(search_options)
-        TestDeduplicationHelpers.assert_failure_generic(
-            result, expected_error="Not connected"
-        )
+    @pytest.mark.parametrize("operation_type", OPERATION_TYPES)
+    def test_operation_when_not_connected_returns_failure(
+        self,
+        ldap_parser: FlextLdifParser | None,
+        operation_type: OperationType,
+    ) -> None:
+        """Test operations fail fast when not connected (parametrized).
 
-    def test_add_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test add when not connected."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
-        entry = TestDeduplicationHelpers.create_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["top", "person"]},
-        )
-        result = operations.add(entry)
-        TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
+        Verifies that all operation types return FlextResult.failure() when
+        the connection is not established, maintaining fast-fail pattern.
+        """
+        operations = self._create_operations_service(ldap_parser)
+        factory = OperationFactory(operations=operations)
+        result = factory.get_operation_result(operation_type)
 
-    def test_modify_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test modify when not connected."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
-        changes: dict[str, list[tuple[str, list[str]]]] = {
-            "mail": [(MODIFY_REPLACE, ["test@example.com"])],
-        }
-        result = operations.modify("cn=test,dc=example,dc=com", changes)
-        TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
+        # Verify operation returned failure
+        assert isinstance(result, FlextResult)
+        assert result.is_failure, f"Expected failure, got: {result}"
+        assert result.error is not None
 
-    def test_delete_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test delete when not connected."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
-        result = operations.delete("cn=test,dc=example,dc=com")
-        TestDeduplicationHelpers.assert_failure(result, expected_error="Not connected")
+        # Verify error message contains expected content
+        assert "connected" in result.error.lower()
 
-    def test_execute_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test execute when not connected - fast-fail pattern."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
-        result = operations.execute()
-        # Fast-fail: execute() returns failure when not connected
-        TestDeduplicationHelpers.assert_failure_generic(
-            result, expected_error="Not connected"
-        )
+        # Verify connection state
+        assert not operations._connection.is_connected

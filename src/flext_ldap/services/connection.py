@@ -44,8 +44,12 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
         """
         super().__init__()
-        # Use typed config.ldap property from FlextLdapServiceBase
-        self._config = config if config is not None else self.config.ldap
+        # Use typed ldap config from namespace
+        self._config = (
+            config
+            if config is not None
+            else self.config.get_namespace("ldap", FlextLdapConfig)
+        )
         # Pass parser to adapter (optional, uses FlextLdif API if not provided)
         if parser is None:
             ldif = FlextLdif.get_instance()
@@ -128,7 +132,11 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
                     error=str(connect_result.error),
                     auto_retry_disabled=True,
                 )
-            return connect_result.map(lambda _: True)
+            return (
+                FlextResult[bool].ok(True)
+                if connect_result.is_success
+                else connect_result
+            )
 
         # Use FlextUtilities.Reliability.retry for retry logic
         retry_result = FlextUtilities.Reliability.retry(
@@ -145,7 +153,9 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
                 host=connection_config.host,
                 port=connection_config.port,
             )
-            return retry_result.map(lambda _: True)
+            return (
+                FlextResult[bool].ok(True) if retry_result.is_success else retry_result
+            )
 
         last_error = retry_result.error
         self.logger.error(
@@ -246,5 +256,5 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
         """
         if self.is_connected:
-            return FlextResult[bool].ok(data=True)
+            return FlextResult[bool].ok(True)
         return FlextResult[bool].fail("Not connected to LDAP server")

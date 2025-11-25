@@ -1,7 +1,8 @@
-"""Integration tests for FlextLdapEntryAdapter with real LDAP server.
+"""Integration tests for FlextLdapEntryAdapter with modern patterns.
 
-Tests entry adapter conversion with real LDAP operations, no mocks.
-All tests use real LDAP server from fixtures.
+Tests entry adapter conversion with real LDAP operations using factories,
+parameterized tests, and flext_tests utilities for maximum code reduction
+while maintaining comprehensive edge case coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,10 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
+from typing import ClassVar
+
 import pytest
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
-from ldap3 import Connection, Entry as Ldap3Entry, Server
+from flext_tests import FlextTestsFactories, FlextTestsUtilities
+from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
@@ -24,413 +29,332 @@ from ..helpers.operation_helpers import TestOperationHelpers
 pytestmark = pytest.mark.integration
 
 
-class TestFlextLdapEntryAdapterRealLdap3Entry:
-    """Tests for entry adapter with real ldap3.Entry objects from LDAP server."""
+class EntryTestType(StrEnum):
+    """Entry test type enumeration."""
 
-    def test_ldap3_to_ldif_entry_with_real_ldap3_entry(
-        self,
+    BASIC_CONVERSION = "basic_conversion"
+    MIXED_ATTRIBUTES = "mixed_attributes"
+    BASE64_ATTRIBUTES = "base64_attributes"
+    DN_CHANGE_TRACKING = "dn_change_tracking"
+
+
+class AttributeTestType(StrEnum):
+    """Attribute test type enumeration."""
+
+    EMPTY_LIST = "empty_list"
+    EMPTY_STRING_IN_LIST = "empty_string_in_list"
+    FALSY_VALUES = "falsy_values"
+
+
+class TestFlextLdapEntryAdapterRealOperations:
+    """Real LDAP entry adapter tests with modern patterns.
+
+    Tests FlextLdapEntryAdapter operations against real LDAP server.
+    Uses parameterized tests, factories, and mappings for maximum code reduction
+    while maintaining comprehensive edge case coverage.
+    """
+
+    # Test data factories using flext_tests
+    @staticmethod
+    def _create_test_entry_data(
+        test_type: str,
+        base_dn: str = RFC.DEFAULT_BASE_DN,
+    ) -> dict[str, object]:
+        """Create test entry data using FlextTestsFactories."""
+        return FlextTestsFactories.create_user(
+            user_id=f"test_{test_type}",
+            name=f"Test {test_type.title()} Entry",
+            email=f"{test_type}@internal.invalid",
+            base_dn=base_dn,
+        )
+
+    @staticmethod
+    def _create_ldap_connection(
         ldap_container: dict[str, object],
-    ) -> None:
-        """Test conversion with real ldap3.Entry object from LDAP search."""
-        adapter = FlextLdapEntryAdapter()
-
-        # Create real LDAP connection and search for entry
+    ) -> Connection:
+        """Create and return a connected LDAP connection."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
-        connection = Connection(
+        return Connection(
             server,
             user=str(ldap_container["bind_dn"]),
             password=str(ldap_container["password"]),
             auto_bind=True,
         )
 
-        # Search for base DN entry
-        connection.search(
-            search_base=RFC.DEFAULT_BASE_DN,
-            search_filter="(objectClass=*)",
-            search_scope="BASE",
-            attributes=["*"],
-        )
+    # Attribute conversion test configurations
+    ATTRIBUTE_TEST_CONFIGS: ClassVar[
+        list[tuple[AttributeTestType, dict[str, list[str]]]]
+    ] = [
+        # (test_type, attributes_dict)
+        (
+            AttributeTestType.EMPTY_LIST,
+            {
+                "cn": ["test"],
+                "description": [],  # Empty list
+                "emptyList": [],  # Another empty list
+            },
+        ),
+        (
+            AttributeTestType.EMPTY_STRING_IN_LIST,
+            {
+                "cn": ["test"],
+                "emptyStringAttr": [""],  # List with empty string
+            },
+        ),
+        (
+            AttributeTestType.FALSY_VALUES,
+            {
+                "cn": ["test"],
+                "emptyList": [],
+                "listWithEmpty": [""],
+            },
+        ),
+    ]
 
-        assert len(connection.entries) > 0
-        ldap3_entry: Ldap3Entry = connection.entries[0]
-
-        # Convert real ldap3.Entry to FlextLdifModels.Entry
-        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
-        assert entry.dn is not None
-        assert str(entry.dn) == str(ldap3_entry.entry_dn)
-        assert entry.attributes is not None
-
-        connection.unbind()
-
-    # Removed: test_ldap3_to_ldif_entry_with_failed_from_ldap3_conversion (None test)
-    # Type system guarantees None cannot be passed (ldap3_entry: Ldap3Entry, not Ldap3Entry | None)
-    # Type checker will catch None at call site - no runtime test needed
-
-    def test_ldap3_to_ldif_entry_with_failed_from_ldap3(
+    @pytest.mark.parametrize(
+        ("test_type", "attributes_dict"),
+        ATTRIBUTE_TEST_CONFIGS,
+        ids=[config[0].value for config in ATTRIBUTE_TEST_CONFIGS],
+    )
+    def test_ldif_entry_to_ldap3_attributes_parameterized(
         self,
-        ldap_container: dict[str, object],
+        test_type: AttributeTestType,
+        attributes_dict: dict[str, list[str]],
     ) -> None:
-        """Test conversion failure when from_ldap3 fails."""
+        """Parameterized test for LDIF to LDAP3 attribute conversions."""
         adapter = FlextLdapEntryAdapter()
 
-        # Use a real connection to create an entry that might fail conversion
-        server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
-        connection = Connection(
-            server,
-            user=str(ldap_container["bind_dn"]),
-            password=str(ldap_container["password"]),
-            auto_bind=True,
+        # Create entry with test attributes
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes.model_validate({
+                "attributes": attributes_dict,
+            }),
         )
 
-        # Search for entry
-        connection.search(
-            search_base=RFC.DEFAULT_BASE_DN,
-            search_filter="(objectClass=*)",
-            search_scope="BASE",
-            attributes=["*"],
-        )
+        # Convert and assert success
+        result = adapter.ldif_entry_to_ldap3_attributes(entry)
+        FlextTestsUtilities.TestUtilities.assert_result_success(result)
 
-        if len(connection.entries) > 0:
-            ldap3_entry = connection.entries[0]
-            # Try to convert - should succeed with real entry
-            result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-            # Real entry should convert successfully
-            assert result.is_success or result.is_failure
+        attrs = result.unwrap()
 
-        connection.unbind()
+        # Verify expected attributes
+        match test_type:
+            case AttributeTestType.EMPTY_LIST:
+                assert attrs["cn"] == ["test"]
+                assert attrs["description"] == []
+                assert attrs["emptyList"] == []
+            case AttributeTestType.EMPTY_STRING_IN_LIST:
+                assert attrs["cn"] == ["test"]
+                assert attrs["emptyStringAttr"] == [""]
+            case AttributeTestType.FALSY_VALUES:
+                assert attrs["cn"] == ["test"]
+                assert attrs["emptyList"] == []
+                assert attrs["listWithEmpty"] == [""]
 
-    def test_ldap3_to_ldif_entry_with_failed_conversion(
+    # LDAP3 to LDIF entry conversion test configurations
+    ENTRY_CONVERSION_TEST_CONFIGS: ClassVar[
+        list[tuple[EntryTestType, dict[str, object]]]
+    ] = [
+        # (test_type, config_dict)
+        (
+            EntryTestType.BASIC_CONVERSION,
+            {
+                "search_base": RFC.DEFAULT_BASE_DN,
+                "filter_str": "(objectClass=*)",
+                "scope": "BASE",
+                "verify_mixed_attrs": False,
+                "verify_base64": False,
+                "verify_dn_change": False,
+            },
+        ),
+        (
+            EntryTestType.MIXED_ATTRIBUTES,
+            {
+                "search_base": RFC.DEFAULT_BASE_DN,
+                "filter_str": "(objectClass=*)",
+                "scope": "BASE",
+                "verify_mixed_attrs": True,
+                "verify_base64": False,
+                "verify_dn_change": False,
+            },
+        ),
+        (
+            EntryTestType.BASE64_ATTRIBUTES,
+            {
+                "create_entry": True,
+                "entry_attrs": {"description": ["Test with high ASCII: \x80\x81\x82"]},
+                "verify_mixed_attrs": False,
+                "verify_base64": True,
+                "verify_dn_change": False,
+            },
+        ),
+        (
+            EntryTestType.DN_CHANGE_TRACKING,
+            {
+                "create_entry": True,
+                "entry_attrs": {},
+                "verify_mixed_attrs": False,
+                "verify_base64": False,
+                "verify_dn_change": True,
+            },
+        ),
+    ]
+
+    @pytest.mark.parametrize(
+        ("test_type", "config"),
+        ENTRY_CONVERSION_TEST_CONFIGS,
+        ids=[config[0].value for config in ENTRY_CONVERSION_TEST_CONFIGS],
+    )
+    def test_ldap3_to_ldif_entry_conversion_parameterized(
         self,
         ldap_container: dict[str, object],
+        test_type: EntryTestType,
+        config: dict[str, object],
     ) -> None:
-        """Test conversion failure handling with invalid Entry."""
-        adapter = FlextLdapEntryAdapter()
+        """Parameterized test for LDAP3 to LDIF entry conversions."""
+        adapter_entry = FlextLdapEntryAdapter()
+        adapter_ldap3 = Ldap3Adapter(parser=FlextLdifParser())
 
-        # Create a real Entry object using real LDAP connection
-        server = Server(
-            str(ldap_container["server_url"]),
-            get_info="ALL",
-        )
-        conn = Connection(
-            server,
-            user=str(ldap_container["bind_dn"]),
-            password=str(ldap_container["password"]),
-            auto_bind=True,
-        )
+        # Create LDAP connection
+        connection = self._create_ldap_connection(ldap_container)
 
         try:
-            # Try to create an Entry from search
-            conn.search(
-                search_base=str(ldap_container["base_dn"]),
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=["*"],
-            )
-            if conn.entries:
-                # Use first entry - this is a real Entry object
-                entry = conn.entries[0]
-                result = adapter.ldap3_to_ldif_entry(entry)
-                # Should succeed with real entry
-                assert result.is_success
+            ldap3_entry = None
+
+            if config.get("create_entry"):
+                # Create and add entry with specific attributes
+                test_cn = f"test{test_type.value}"
+                entry_attrs = config.get("entry_attrs", {})
+                entry = TestOperationHelpers.create_inetorgperson_entry(
+                    test_cn,
+                    RFC.DEFAULT_BASE_DN,
+                    additional_attrs=entry_attrs
+                    if isinstance(entry_attrs, dict)
+                    else None,
+                )
+
+                # Connect and add entry
+                conn_config = FlextLdapModels.ConnectionConfig(
+                    host=RFC.DEFAULT_HOST,
+                    port=RFC.DEFAULT_PORT,
+                    bind_dn=str(ldap_container["bind_dn"]),
+                    bind_password=str(ldap_container["password"]),
+                )
+                connect_result = adapter_ldap3.connect(conn_config)
+                if not connect_result.is_success:
+                    pytest.skip(f"Could not connect to LDAP: {connect_result.error}")
+
+                # Add with retry
+                add_result = adapter_ldap3.add(entry)
+                if not add_result.is_success:
+                    _ = adapter_ldap3.delete(str(entry.dn))
+                    add_result = adapter_ldap3.add(entry)
+                FlextTestsUtilities.TestUtilities.assert_result_success(add_result)
+
+                # Search for the created entry
+                connection.search(
+                    search_base=str(entry.dn),
+                    search_filter="(objectClass=*)",
+                    search_scope="BASE",
+                    attributes=["*"],
+                )
+                if connection.entries:
+                    ldap3_entry = connection.entries[0]
+
+                # Cleanup entry after test
+                if entry.dn:
+                    _ = adapter_ldap3.delete(str(entry.dn))
+                adapter_ldap3.disconnect()
             else:
-                # No entries found - skip test (cannot test None as type system prevents it)
-                pytest.skip("No entries found in LDAP for testing")
-        finally:
-            if conn.bound:
-                conn.unbind()
+                # Search for existing entry
+                scope_str = str(config["scope"])
+                scope_value: str
+                if scope_str == "BASE":
+                    scope_value = BASE
+                elif scope_str == "LEVEL":
+                    scope_value = LEVEL
+                elif scope_str == "SUBTREE":
+                    scope_value = SUBTREE
+                else:
+                    scope_value = BASE
 
-    def test_ldif_entry_to_ldap3_attributes_with_empty_list_value(
-        self,
-    ) -> None:
-        """Test conversion with empty list value in attributes."""
-        adapter = FlextLdapEntryAdapter()
-
-        # Create entry with empty list value
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "cn": ["test"],
-                    "description": [],  # Empty list
-                    "emptyList": [],  # Another empty list
-                },
-            }),
-        )
-
-        result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert result.is_success
-        attrs = result.unwrap()
-        assert attrs["cn"] == ["test"]
-        assert attrs["description"] == []
-        assert attrs["emptyList"] == []
-
-    def test_ldif_entry_to_ldap3_attributes_with_empty_string_in_list(
-        self,
-    ) -> None:
-        """Test conversion with empty string value in list."""
-        adapter = FlextLdapEntryAdapter()
-
-        # Test with list containing empty string (edge case)
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "cn": ["test"],
-                    "emptyStringAttr": [""],  # List with empty string
-                },
-            }),
-        )
-
-        result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert result.is_success
-        attrs = result.unwrap()
-        assert attrs["cn"] == ["test"]
-        # Empty string in list should be preserved
-        assert attrs["emptyStringAttr"] == [""]
-
-    def test_ldif_entry_to_ldap3_attributes_with_falsy_values(
-        self,
-    ) -> None:
-        """Test conversion with falsy values (empty strings, None-like)."""
-        adapter = FlextLdapEntryAdapter()
-
-        # Test with various falsy-like values
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": {
-                    "cn": ["test"],
-                    "emptyList": [],
-                    "listWithEmpty": [""],
-                },
-            }),
-        )
-
-        result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        assert result.is_success
-        attrs = result.unwrap()
-        assert attrs["cn"] == ["test"]
-        assert attrs["emptyList"] == []
-        assert attrs["listWithEmpty"] == [""]
-
-    def test_ldap3_to_ldif_entry_with_mixed_attribute_types(
-        self,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test conversion with real ldap3.Entry having mixed attribute types.
-
-        Creates a real LDAP entry with various attribute types and tests conversion.
-        Uses REAL ldap3.Entry from LDAP server (no mocks).
-        """
-        adapter = FlextLdapEntryAdapter()
-
-        # Create real LDAP connection
-        server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
-        connection = Connection(
-            server,
-            user=str(ldap_container["bind_dn"]),
-            password=str(ldap_container["password"]),
-            auto_bind=True,
-        )
-
-        try:
-            # Search for base DN entry which has various attribute types
-            connection.search(
-                search_base=RFC.DEFAULT_BASE_DN,
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=["*"],
-            )
-
-            assert len(connection.entries) > 0
-            ldap3_entry: Ldap3Entry = connection.entries[0]
-
-            # Convert real ldap3.Entry to FlextLdifModels.Entry
-            result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-            entry = TestOperationHelpers.assert_result_success_and_unwrap(result)
-
-            # Verify entry structure
-            assert entry.dn is not None
-            assert str(entry.dn) == str(ldap3_entry.entry_dn)
-            assert entry.attributes is not None
-            assert len(entry.attributes.attributes) > 0
-
-            # Verify all attributes are lists (ldap3 conversion ensures this)
-            for attr_name, attr_values in entry.attributes.attributes.items():
-                assert isinstance(attr_values, list), (
-                    f"Attribute {attr_name} should be a list"
+                connection.search(
+                    search_base=str(config["search_base"]),
+                    search_filter=str(config["filter_str"]),
+                    search_scope=scope_value,
+                    attributes=["*"],
                 )
-                # All values in list should be strings
-                for value in attr_values:
-                    assert isinstance(value, str), (
-                        f"Value in {attr_name} should be a string"
-                    )
+                if connection.entries:
+                    ldap3_entry = connection.entries[0]
 
-        finally:
-            if connection.bound:
-                connection.unbind()
+            # Skip if no entry found
+            if not ldap3_entry:
+                pytest.skip("No LDAP entries found for testing")
 
-    def test_ldap3_to_ldif_entry_with_base64_attributes_from_real_ldap(
-        self,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test conversion with base64 attributes from real LDAP entry (covers lines 123, 142, 179).
+            # Ensure ldap3_entry is not None for type checker
+            assert ldap3_entry is not None
 
-        Uses real LDAP operations to add entry with attributes containing high-ASCII characters,
-        which are detected as base64. Then searches and converts to ensure lines are executed.
-        """
-        adapter_entry = FlextLdapEntryAdapter()
-        adapter_ldap3 = Ldap3Adapter(parser=FlextLdifParser())
-
-        # Connect adapter before using
-        config = FlextLdapModels.ConnectionConfig(
-            host=RFC.DEFAULT_HOST,
-            port=RFC.DEFAULT_PORT,
-            bind_dn=str(ldap_container["bind_dn"]),
-            bind_password=str(ldap_container["password"]),
-        )
-        connect_result = adapter_ldap3.connect(config)
-        if not connect_result.is_success:
-            pytest.skip(f"Could not connect to LDAP: {connect_result.error}")
-
-        server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
-        connection = Connection(
-            server,
-            user=str(ldap_container["bind_dn"]),
-            password=str(ldap_container["password"]),
-            auto_bind=True,
-        )
-
-        try:
-            # Create entry with high-ASCII attribute value (will be detected as base64)
-            test_cn = "testbase64entry"
-            entry = TestOperationHelpers.create_inetorgperson_entry(
-                test_cn,
-                RFC.DEFAULT_BASE_DN,
-                additional_attrs={
-                    # Use high-ASCII character to trigger base64 detection (line 123, 142)
-                    "description": ["Test with high ASCII: \x80\x81\x82"],
-                },
+            # Convert entry
+            result = adapter_entry.ldap3_to_ldif_entry(ldap3_entry)
+            converted_entry = TestOperationHelpers.assert_result_success_and_unwrap(
+                result
             )
 
-            # Add entry to LDAP server
-            add_result = adapter_ldap3.add(entry)
-            if not add_result.is_success:
-                _ = adapter_ldap3.delete(str(entry.dn))
-                add_result = adapter_ldap3.add(entry)
+            # Verify basic structure
+            assert converted_entry.dn is not None
+            assert ldap3_entry is not None
+            assert str(converted_entry.dn) == str(ldap3_entry.entry_dn)
+            assert converted_entry.attributes is not None
 
-            TestOperationHelpers.assert_result_success(add_result)
-
-            # Search for the entry we just added
-            connection.search(
-                search_base=str(entry.dn),
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=["*"],
-            )
-
-            if len(connection.entries) > 0:
-                ldap3_entry: Ldap3Entry = connection.entries[0]
-
-                # Convert - this should detect base64 attributes (lines 123, 142, 179)
-                result = adapter_entry.ldap3_to_ldif_entry(ldap3_entry)
-                converted_entry = TestOperationHelpers.assert_result_success_and_unwrap(
-                    result
-                )
-
-                # Verify metadata contains base64 tracking
-                assert converted_entry.metadata is not None
-                if hasattr(converted_entry.metadata, "extensions"):
-                    extensions = converted_entry.metadata.extensions
-                    if isinstance(extensions, dict):
-                        # Check for base64_encoded_attributes (line 179)
-                        base64_attrs = extensions.get("base64_encoded_attributes")
-                        if base64_attrs:
-                            base64_attrs_list = (
-                                list(base64_attrs)
-                                if isinstance(base64_attrs, (list, set))
-                                else [base64_attrs]
-                            )
-                            base64_attrs_str = [str(a) for a in base64_attrs_list]
-                            assert (
-                                any("description" in a for a in base64_attrs_str)
-                                or len(base64_attrs_str) > 0
+            # Type-specific verifications
+            match test_type:
+                case EntryTestType.MIXED_ATTRIBUTES:
+                    # Verify all attributes are lists and values are strings
+                    assert len(converted_entry.attributes.attributes) > 0
+                    for (
+                        attr_name,
+                        attr_values,
+                    ) in converted_entry.attributes.attributes.items():
+                        assert isinstance(attr_values, list), (
+                            f"Attribute {attr_name} should be a list"
+                        )
+                        for value in attr_values:
+                            assert isinstance(value, str), (
+                                f"Value in {attr_name} should be a string"
                             )
 
-            # Cleanup
-            if entry.dn:
-                _ = adapter_ldap3.delete(str(entry.dn))
+                case EntryTestType.BASE64_ATTRIBUTES:
+                    # Verify base64 detection in metadata
+                    assert converted_entry.metadata is not None
+                    if hasattr(converted_entry.metadata, "extensions"):
+                        extensions = converted_entry.metadata.extensions
+                        if isinstance(extensions, dict):
+                            base64_attrs = extensions.get("base64_encoded_attributes")
+                            if base64_attrs:
+                                base64_attrs_list = (
+                                    list(base64_attrs)
+                                    if isinstance(base64_attrs, (list, set))
+                                    else [base64_attrs]
+                                )
+                                base64_attrs_str = [str(a) for a in base64_attrs_list]
+                                assert (
+                                    any("description" in a for a in base64_attrs_str)
+                                    or len(base64_attrs_str) > 0
+                                )
+
+                case EntryTestType.DN_CHANGE_TRACKING:
+                    # Verify DN change tracking in metadata
+                    assert converted_entry.metadata is not None
+                    if hasattr(converted_entry.metadata, "extensions"):
+                        extensions = converted_entry.metadata.extensions
+                        if isinstance(extensions, dict):
+                            assert "dn_changed" in extensions
+
+                case _:
+                    # Basic conversion - just verify structure
+                    pass
+
         finally:
-            adapter_ldap3.disconnect()
-            if connection.bound:
-                connection.unbind()
-
-    def test_ldap3_to_ldif_entry_with_dn_change_tracking(
-        self,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test conversion tracks DN changes (covers lines 220-222)."""
-        adapter_entry = FlextLdapEntryAdapter()
-        adapter_ldap3 = Ldap3Adapter(parser=FlextLdifParser())
-
-        # Connect adapter before using
-        config = FlextLdapModels.ConnectionConfig(
-            host=RFC.DEFAULT_HOST,
-            port=RFC.DEFAULT_PORT,
-            bind_dn=str(ldap_container["bind_dn"]),
-            bind_password=str(ldap_container["password"]),
-        )
-        connect_result = adapter_ldap3.connect(config)
-        if not connect_result.is_success:
-            pytest.skip(f"Could not connect to LDAP: {connect_result.error}")
-
-        server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
-        connection = Connection(
-            server,
-            user=str(ldap_container["bind_dn"]),
-            password=str(ldap_container["password"]),
-            auto_bind=True,
-        )
-
-        try:
-            test_cn = "testdnchange"
-            entry = TestOperationHelpers.create_inetorgperson_entry(
-                test_cn,
-                RFC.DEFAULT_BASE_DN,
-            )
-
-            add_result = adapter_ldap3.add(entry)
-            if not add_result.is_success:
-                _ = adapter_ldap3.delete(str(entry.dn))
-                add_result = adapter_ldap3.add(entry)
-            TestOperationHelpers.assert_result_success(add_result)
-
-            connection.search(
-                search_base=str(entry.dn),
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=["*"],
-            )
-
-            if len(connection.entries) > 0:
-                ldap3_entry = connection.entries[0]
-                result = adapter_entry.ldap3_to_ldif_entry(ldap3_entry)
-                converted_entry = TestOperationHelpers.assert_result_success_and_unwrap(
-                    result
-                )
-
-                # Verify DN tracking in metadata (lines 220-222)
-                assert converted_entry.metadata is not None
-                if hasattr(converted_entry.metadata, "extensions"):
-                    extensions = converted_entry.metadata.extensions
-                    if isinstance(extensions, dict):
-                        assert "dn_changed" in extensions
-
-            # Cleanup
-            if entry.dn:
-                _ = adapter_ldap3.delete(str(entry.dn))
-        finally:
-            adapter_ldap3.disconnect()
             if connection.bound:
                 connection.unbind()

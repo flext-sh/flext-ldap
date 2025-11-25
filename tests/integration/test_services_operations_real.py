@@ -1,6 +1,8 @@
 """Integration tests for FlextLdapOperations with real LDAP server.
 
 Tests all operations service methods with real server and flext-ldif integration.
+Modules tested: FlextLdapOperations, FlextLdapConnection, FlextLdapModels
+Scope: Real LDAP operations (search, add, modify, delete, execute) with flext-ldif integration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,10 +12,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import cast
+from enum import StrEnum
+from typing import ClassVar, cast
 
 import pytest
+from flext_core import FlextResult
 from flext_ldif import FlextLdifParser
+from flext_ldif.models import FlextLdifModels
+from flext_tests import FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
@@ -29,8 +35,240 @@ from ..helpers.operation_helpers import TestOperationHelpers
 pytestmark = pytest.mark.integration
 
 
-class TestFlextLdapOperationsSearch:
-    """Tests for FlextLdapOperations search method."""
+class OperationType(StrEnum):
+    """Enumeration of LDAP operation types."""
+
+    SEARCH = "search"
+    ADD = "add"
+    MODIFY = "modify"
+    DELETE = "delete"
+    EXECUTE = "execute"
+
+
+class SearchScope(StrEnum):
+    """Enumeration of LDAP search scopes."""
+
+    BASE = "BASE"
+    ONELEVEL = "ONELEVEL"
+    SUBTREE = "SUBTREE"
+
+
+class TestFlextLdapOperationsRealOperations:
+    """Integration tests for FlextLdapOperations with real LDAP server."""
+
+    # Test configurations as ClassVar for parameterized tests
+    SEARCH_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "all_entries",
+            {
+                "filter_str": "(objectClass=*)",
+                "scope": SearchScope.SUBTREE,
+                "expected_min_count": 1,
+                "assert_total_count": True,
+            },
+        ),
+        (
+            "base_scope",
+            {
+                "filter_str": "(objectClass=*)",
+                "scope": SearchScope.BASE,
+                "expected_max_count": 1,
+            },
+        ),
+        (
+            "onelevel_scope",
+            {
+                "filter_str": "(objectClass=*)",
+                "scope": SearchScope.ONELEVEL,
+                "assert_entries_list": True,
+            },
+        ),
+        (
+            "with_attributes",
+            {
+                "filter_str": "(objectClass=*)",
+                "scope": SearchScope.SUBTREE,
+                "attributes": ["objectClass", "cn"],
+                "expected_min_count": 1,
+            },
+        ),
+        (
+            "with_size_limit",
+            {
+                "filter_str": "(objectClass=*)",
+                "scope": SearchScope.SUBTREE,
+                "size_limit": 2,
+                "expected_max_count": 2,
+            },
+        ),
+    ]
+
+    ADD_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "basic_add",
+            {
+                "cn_value": "testopsadd",
+                "sn": "Test",
+                "expected_operation_type": "add",
+                "expected_entries_affected": 1,
+            },
+        ),
+    ]
+
+    MODIFY_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "basic_modify",
+            {
+                "cn_value": "testopsmodify",
+                "sn": "Test",
+                "changes": {"mail": [(MODIFY_REPLACE, ["modified@example.com"])]},
+                "expected_operation_type": "modify",
+            },
+        ),
+    ]
+
+    DELETE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "basic_delete",
+            {
+                "cn_value": "testopsdelete",
+                "sn": "Test",
+                "expected_operation_type": "delete",
+                "expected_entries_affected": 1,
+            },
+        ),
+    ]
+
+    EXECUTE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "when_connected",
+            {
+                "assert_total_count_zero": True,
+                "assert_entries_empty": True,
+            },
+        ),
+    ]
+
+    class TestDataFactories:
+        """Nested class for test data creation."""
+
+        @staticmethod
+        def create_operations_service(
+            connection_config: FlextLdapModels.ConnectionConfig,
+            ldap_parser: FlextLdifParser,
+        ) -> FlextLdapOperations:
+            """Create and connect operations service."""
+            config = FlextLdapConfig()
+            connection = FlextLdapConnection(config=config, parser=ldap_parser)
+            connect_result = connection.connect(connection_config)
+            if connect_result.is_failure:
+                pytest.skip(f"Failed to connect: {connect_result.error}")
+
+            return FlextLdapOperations(connection=connection)
+
+        @staticmethod
+        def create_test_entry(
+            cn_value: str,
+            base_dn: str,
+            sn: str | None = None,
+        ) -> FlextLdifModels.Entry:
+            """Create test inetOrgPerson entry."""
+            return TestOperationHelpers.create_inetorgperson_entry(
+                cn_value, base_dn, sn=sn
+            )
+
+        @staticmethod
+        def create_test_entry_dict(
+            cn_value: str,
+            base_dn: str,
+            sn: str | None = None,
+        ) -> dict[str, object]:
+            """Create test entry dictionary."""
+            return TestOperationHelpers.create_entry_dict(cn_value, base_dn, sn=sn)
+
+        @staticmethod
+        def create_modify_changes(
+            attribute: str = "mail",
+            value: str = "modified@example.com",
+        ) -> dict[str, list[tuple[str, list[str]]]]:
+            """Create modify changes dictionary."""
+            return {attribute: [(MODIFY_REPLACE, [value])]}
+
+    class TestAssertions:
+        """Nested class for test assertions."""
+
+        @staticmethod
+        def assert_search_result(
+            result: FlextLdapModels.SearchResult,
+            config: dict[str, object],
+        ) -> None:
+            """Assert search result based on configuration."""
+            if config.get("assert_total_count"):
+                assert result.total_count() == len(result.entries)
+
+            if config.get("assert_entries_list"):
+                assert isinstance(result.entries, list)
+
+            if config.get("assert_total_count_zero"):
+                assert result.total_count() == 0
+
+            if config.get("assert_entries_empty"):
+                assert len(result.entries) == 0
+
+        @staticmethod
+        def assert_operation_success(
+            result: FlextResult[FlextLdapModels.OperationResult],
+            config: dict[str, object],
+        ) -> None:
+            """Assert operation result success."""
+            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+
+            if expected_type := config.get("expected_operation_type"):
+                operation_result = result.unwrap()
+                assert operation_result.operation_type == expected_type
+
+            if expected_affected := config.get("expected_entries_affected"):
+                operation_result = result.unwrap()
+                assert operation_result.entries_affected == expected_affected
+
+        @staticmethod
+        def assert_add_modify_sequence(
+            add_result: FlextResult[FlextLdapModels.OperationResult],
+            modify_result: FlextResult[FlextLdapModels.OperationResult],
+        ) -> None:
+            """Assert add and modify sequence results."""
+            assert add_result.is_success
+            TestOperationHelpers.assert_operation_result_success(
+                modify_result,
+                expected_operation_type="modify",
+            )
+
+        @staticmethod
+        def assert_add_delete_sequence(
+            add_result: FlextResult[FlextLdapModels.OperationResult],
+            delete_result: FlextResult[FlextLdapModels.OperationResult],
+            config: dict[str, object],
+        ) -> None:
+            """Assert add and delete sequence results."""
+            assert add_result.is_success
+            TestOperationHelpers.assert_operation_result_unwrapped(
+                delete_result,
+                expected_operation_type=cast(
+                    "str | None", config.get("expected_operation_type")
+                ),
+                expected_entries_affected=cast(
+                    "int | None", config.get("expected_entries_affected")
+                ),
+            )
+
+        @staticmethod
+        def assert_execute_when_not_connected(
+            result: FlextResult[FlextLdapModels.SearchResult],
+        ) -> None:
+            """Assert execute fails when not connected."""
+            assert result.is_failure
+            assert result.error is not None
+            assert "Not connected" in result.error
 
     @pytest.fixture
     def operations_service(
@@ -39,90 +277,40 @@ class TestFlextLdapOperationsSearch:
         ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        connect_result = connection.connect(connection_config)
-        if connect_result.is_failure:
-            pytest.skip(f"Failed to connect: {connect_result.error}")
-
-        operations = FlextLdapOperations(connection=connection)
+        operations = self.TestDataFactories.create_operations_service(
+            connection_config, ldap_parser
+        )
         yield operations
 
         # Cleanup
-        connection.disconnect()
+        if (
+            hasattr(operations, "_connection")
+            and operations._connection
+            and hasattr(operations._connection, "disconnect")
+        ):
+            operations._connection.disconnect()
 
-    def test_search_all_entries(
+    @pytest.mark.parametrize(("test_name", "config"), SEARCH_TEST_CONFIGS)
+    def test_search_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
         ldap_container: dict[str, object],
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test searching all entries."""
+        """Test search operations with different configurations."""
         search_result = TestOperationHelpers.search_and_assert_success(
-            operations_service,
+            operations_service,  # type: ignore[arg-type]
             str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
-            expected_min_count=1,
-        )
-        assert search_result.total_count == len(search_result.entries)
-
-    def test_search_with_base_scope(
-        self,
-        operations_service: FlextLdapOperations,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test search with BASE scope."""
-        _ = TestOperationHelpers.search_and_assert_success(
-            operations_service,
-            str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="BASE",
-            expected_max_count=1,
+            filter_str=str(config.get("filter_str", "(objectClass=*)")),
+            scope=str(config.get("scope", SearchScope.SUBTREE)),
+            attributes=cast("list[str] | None", config.get("attributes")),
+            size_limit=cast("int", config.get("size_limit", 0)),
+            expected_min_count=cast("int", config.get("expected_min_count", 0)),
+            expected_max_count=cast("int | None", config.get("expected_max_count")),
         )
 
-    def test_search_with_onelevel_scope(
-        self,
-        operations_service: FlextLdapOperations,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test search with ONELEVEL scope."""
-        search_result = TestOperationHelpers.search_and_assert_success(
-            operations_service,
-            str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="ONELEVEL",
-        )
-        assert isinstance(search_result.entries, list)
-
-    def test_search_with_attributes(
-        self,
-        operations_service: FlextLdapOperations,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test search with specific attributes."""
-        _ = TestOperationHelpers.search_and_assert_success(
-            operations_service,
-            str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
-            attributes=["objectClass", "cn"],
-            expected_min_count=1,
-        )
-
-    def test_search_with_size_limit(
-        self,
-        operations_service: FlextLdapOperations,
-        ldap_container: dict[str, object],
-    ) -> None:
-        """Test search with size limit."""
-        _ = TestOperationHelpers.search_and_assert_success(
-            operations_service,
-            str(ldap_container["base_dn"]),
-            filter_str="(objectClass=*)",
-            scope="SUBTREE",
-            size_limit=2,
-            expected_max_count=2,
-        )
+        self.TestAssertions.assert_search_result(search_result, config)
 
     def test_search_when_not_connected(
         self,
@@ -137,12 +325,12 @@ class TestFlextLdapOperationsSearch:
         search_options = TestOperationHelpers.create_search_options(
             str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=SearchScope.SUBTREE,
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("LdapClientProtocol", operations),
-            "search",
+            OperationType.SEARCH,
             search_options=search_options,
         )
 
@@ -151,62 +339,36 @@ class TestFlextLdapOperationsSearch:
         operations_service: FlextLdapOperations,
         ldap_container: dict[str, object],
     ) -> None:
-        """Test search when adapter search fails - covers line 87."""
-        # Force adapter to fail by using invalid filter that causes search error
+        """Test search when adapter search fails."""
         search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
-            filter_str="(invalidFilterSyntax)",  # Invalid filter syntax
+            filter_str="(invalidFilterSyntax)",
             scope="SUBTREE",
         )
 
         result = operations_service.search(search_options)
         # Should handle adapter failure gracefully
-        assert (
-            result.is_failure or result.is_success
-        )  # May fail or succeed depending on server
+        assert result.is_failure or result.is_success
 
-
-class TestFlextLdapOperationsAdd:
-    """Tests for FlextLdapOperations add method."""
-
-    @pytest.fixture
-    def operations_service(
-        self,
-        connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
-    ) -> Generator[FlextLdapOperations]:
-        """Get operations service with connected adapter."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        connect_result = connection.connect(connection_config)
-        if connect_result.is_failure:
-            pytest.skip(f"Failed to connect: {connect_result.error}")
-
-        operations = FlextLdapOperations(connection=connection)
-        yield operations
-
-        # Cleanup
-        connection.disconnect()
-
-    def test_add_entry(
+    @pytest.mark.parametrize(("test_name", "config"), ADD_TEST_CONFIGS)
+    def test_add_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test adding an entry."""
-        entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testopsadd",
+        """Test add operations with different configurations."""
+        entry = self.TestDataFactories.create_test_entry(
+            str(config.get("cn_value", "testadd")),
             RFC.DEFAULT_BASE_DN,
-            sn="Test",
+            sn=cast("str | None", config.get("sn")),
         )
 
         result = EntryTestHelpers.add_and_cleanup(
             cast("LdapClientProtocol", operations_service), entry
         )
-        TestOperationHelpers.assert_operation_result_success(
-            result,
-            expected_operation_type="add",
-            expected_entries_affected=1,
-        )
+
+        self.TestAssertions.assert_operation_success(result, config)
 
     def test_add_entry_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
         """Test add when not connected."""
@@ -221,49 +383,32 @@ class TestFlextLdapOperationsAdd:
 
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("LdapClientProtocol", operations),
-            "add",
+            OperationType.ADD,
             entry=entry,
         )
 
-
-class TestFlextLdapOperationsModify:
-    """Tests for FlextLdapOperations modify method."""
-
-    @pytest.fixture
-    def operations_service(
-        self,
-        connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
-    ) -> Generator[FlextLdapOperations]:
-        """Get operations service with connected adapter."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
-
-        operations = FlextLdapOperations(connection=connection)
-        yield operations
-
-        # Cleanup
-        connection.disconnect()
-
-    def test_modify_entry(
+    @pytest.mark.parametrize(("test_name", "config"), MODIFY_TEST_CONFIGS)
+    def test_modify_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test modifying an entry."""
-        entry = TestOperationHelpers.create_inetorgperson_entry(
-            "testopsmodify",
+        """Test modify operations with different configurations."""
+        entry = self.TestDataFactories.create_test_entry(
+            str(config.get("cn_value", "testmodify")),
             RFC.DEFAULT_BASE_DN,
-            sn="Test",
+            sn=cast("str | None", config.get("sn")),
         )
         entry_dict = {
             "dn": str(entry.dn),
             "attributes": entry.attributes.attributes if entry.attributes else {},
         }
 
-        changes: dict[str, list[tuple[str, list[str]]]] = {
-            "mail": [(MODIFY_REPLACE, ["modified@example.com"])],
-        }
+        changes = cast(
+            "dict[str, list[tuple[str, list[str]]]]",
+            config.get("changes", self.TestDataFactories.create_modify_changes()),
+        )
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
@@ -274,42 +419,20 @@ class TestFlextLdapOperationsModify:
             )
         )
 
-        assert add_result.is_success
-        TestOperationHelpers.assert_operation_result_success(
-            modify_result,
-            expected_operation_type="modify",
-        )
+        self.TestAssertions.assert_add_modify_sequence(add_result, modify_result)
 
-
-class TestFlextLdapOperationsDelete:
-    """Tests for FlextLdapOperations delete method."""
-
-    @pytest.fixture
-    def operations_service(
-        self,
-        connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
-    ) -> Generator[FlextLdapOperations]:
-        """Get operations service with connected adapter."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
-
-        operations = FlextLdapOperations(connection=connection)
-        yield operations
-
-        # Cleanup
-        connection.disconnect()
-
-    def test_delete_entry(
+    @pytest.mark.parametrize(("test_name", "config"), DELETE_TEST_CONFIGS)
+    def test_delete_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test deleting an entry."""
-        entry_dict = TestOperationHelpers.create_entry_dict(
-            "testopsdelete",
+        """Test delete operations with different configurations."""
+        entry_dict = self.TestDataFactories.create_test_entry_dict(
+            str(config.get("cn_value", "testdelete")),
             RFC.DEFAULT_BASE_DN,
-            sn="Test",
+            sn=cast("str | None", config.get("sn")),
         )
 
         _entry, add_result, delete_result = (
@@ -319,11 +442,8 @@ class TestFlextLdapOperationsDelete:
             )
         )
 
-        assert add_result.is_success
-        TestOperationHelpers.assert_operation_result_unwrapped(
-            delete_result,
-            expected_operation_type="delete",
-            expected_entries_affected=1,
+        self.TestAssertions.assert_add_delete_sequence(
+            add_result, delete_result, config
         )
 
     def test_delete_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
@@ -334,49 +454,29 @@ class TestFlextLdapOperationsDelete:
 
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("LdapClientProtocol", operations),
-            "delete",
+            OperationType.DELETE,
             dn="cn=test,dc=example,dc=com",
         )
 
-
-class TestFlextLdapOperationsExecute:
-    """Tests for FlextLdapOperations execute method."""
-
-    @pytest.fixture
-    def operations_service(
-        self,
-        connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
-    ) -> Generator[FlextLdapOperations]:
-        """Get operations service with connected adapter."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
-
-        operations = FlextLdapOperations(connection=connection)
-        yield operations
-
-        connection.disconnect()
-
-    def test_execute_when_connected(
+    @pytest.mark.parametrize(("test_name", "config"), EXECUTE_TEST_CONFIGS)
+    def test_execute_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test execute method when connected - covers execute() method."""
+        """Test execute operations with different configurations."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            operations_service,
+            operations_service
         )
-        assert search_result.total_count == 0
-        assert len(search_result.entries) == 0
+
+        self.TestAssertions.assert_search_result(search_result, config)
 
     def test_execute_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
-        """Test execute method when not connected - covers execute() failure path."""
+        """Test execute method when not connected."""
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         operations = FlextLdapOperations(connection=connection)
 
         result = operations.execute()
-        assert result.is_failure
-        # No fallback - FlextResult guarantees error exists when is_failure is True
-        assert result.error is not None
-        assert "Not connected" in result.error
+        self.TestAssertions.assert_execute_when_not_connected(result)

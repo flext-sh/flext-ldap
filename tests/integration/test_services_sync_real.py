@@ -1,7 +1,7 @@
 """Integration tests for FlextLdapSyncService with real LDAP server.
 
-Tests sync service with real LDAP operations, no mocks.
-All tests use real LDAP server and LDIF files from fixtures.
+Modules tested: FlextLdapSyncService, FlextLdapOperations, FlextLdapConnection, FlextLdapModels
+Scope: Real LDAP sync operations with LDIF files, base DN transformations, and error handling scenarios
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,10 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import ClassVar, cast
 
 import pytest
+from flext_core import FlextResult
 from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
@@ -27,8 +30,170 @@ from ..helpers.operation_helpers import TestOperationHelpers
 pytestmark = pytest.mark.integration
 
 
+class SyncTestType(StrEnum):
+    """Enumeration of sync test types."""
+
+    NOT_CONNECTED = "not_connected"
+    PARSE_FAILURE = "parse_failure"
+    EMPTY_FILE = "empty_file"
+    ADD_FAILURE = "add_failure"
+    SAME_BASEDN = "same_basedn"
+    BASEDN_TRANSFORM = "basedn_transform"
+    EXECUTE = "execute"
+
+
 class TestFlextLdapSyncServiceReal:
     """Tests for sync service with real LDAP server."""
+
+    # Test configurations as ClassVar for parameterized tests
+    SYNC_FILE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "not_connected",
+            {
+                "test_type": SyncTestType.NOT_CONNECTED,
+                "use_base_ldif": True,
+                "expect_success": True,
+                "expect_failed": True,
+                "expect_added": 0,
+            },
+        ),
+        (
+            "parse_failure",
+            {
+                "test_type": SyncTestType.PARSE_FAILURE,
+                "ldif_content": "invalid ldif content\nnot a valid entry\n",
+                "expect_success": None,  # Can be success or failure
+            },
+        ),
+        (
+            "empty_file",
+            {
+                "test_type": SyncTestType.EMPTY_FILE,
+                "ldif_content": "",
+                "expect_success": None,  # Can be success or failure
+                "expect_added_zero": True,
+            },
+        ),
+        (
+            "add_failure",
+            {
+                "test_type": SyncTestType.ADD_FAILURE,
+                "use_base_ldif": True,
+                "additional_content": "\ndn: cn=invalid,{}\nobjectClass: top\n# Missing required attributes\n",
+                "expect_success": None,  # Can be success or failure
+            },
+        ),
+        (
+            "same_basedn",
+            {
+                "test_type": SyncTestType.SAME_BASEDN,
+                "ldif_content": "dn: cn=test-same-basedn,{}\nobjectClass: top\nobjectClass: organizationalUnit\nou: test\n",
+                "sync_options": {
+                    "source_basedn": RFC.DEFAULT_BASE_DN,
+                    "target_basedn": RFC.DEFAULT_BASE_DN,
+                },
+                "expect_success": None,  # Can be success or failure
+            },
+        ),
+        (
+            "basedn_transform",
+            {
+                "test_type": SyncTestType.BASEDN_TRANSFORM,
+                "ldif_content": "dn: cn=test-transform,{}\nobjectClass: top\nobjectClass: organizationalUnit\nou: test\n",
+                "sync_options": {
+                    "source_basedn": RFC.DEFAULT_BASE_DN,
+                    "target_basedn": "dc=target,dc=local",
+                },
+                "expect_success": None,  # Can be success or failure
+            },
+        ),
+    ]
+
+    EXECUTE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+        (
+            "execute_method",
+            {
+                "test_type": SyncTestType.EXECUTE,
+                "expect_success": True,
+                "expect_added_zero": True,
+                "expect_failed_zero": True,
+                "expect_skipped_zero": True,
+                "expect_total_zero": True,
+            },
+        ),
+    ]
+
+    class TestDataFactories:
+        """Nested class for test data creation."""
+
+        @staticmethod
+        def create_sync_service(
+            connection_config: FlextLdapModels.ConnectionConfig,
+            ldap_parser: FlextLdifParser,
+        ) -> FlextLdapSyncService:
+            """Create and connect sync service."""
+            config = FlextLdapConfig()
+            connection = FlextLdapConnection(config=config, parser=ldap_parser)
+            connect_result = connection.connect(connection_config)
+            if connect_result.is_failure:
+                pytest.skip(f"Failed to connect: {connect_result.error}")
+
+            operations = FlextLdapOperations(connection=connection)
+            return FlextLdapSyncService(operations=operations)
+
+        @staticmethod
+        def create_sync_service_not_connected(
+            ldap_parser: FlextLdifParser,
+        ) -> FlextLdapSyncService:
+            """Create sync service without connection."""
+            config = FlextLdapConfig()
+            connection = FlextLdapConnection(config=config, parser=ldap_parser)
+            operations = FlextLdapOperations(connection=connection)
+            return FlextLdapSyncService(operations=operations)
+
+        @staticmethod
+        def create_ldif_content(
+            base_content: str | None = None,
+            additional_content: str | None = None,
+        ) -> str:
+            """Create LDIF content for testing."""
+            content = base_content or ""
+            if additional_content:
+                content += additional_content.format(RFC.DEFAULT_BASE_DN)
+            return content
+
+    class TestAssertions:
+        """Nested class for test assertions."""
+
+        @staticmethod
+        def assert_sync_result(
+            result: FlextResult[FlextLdapModels.SyncStats],
+            config: dict[str, object],
+        ) -> None:
+            """Assert sync result based on configuration."""
+            if expected_success := config.get("expect_success"):
+                assert result.is_success == expected_success
+
+            if result.is_success:
+                stats = TestOperationHelpers.unwrap_sync_stats(result)
+
+                if config.get("expect_failed"):
+                    assert stats.failed > 0
+
+                if config.get("expect_added") is not None:
+                    assert stats.added == config["expect_added"]
+
+                if config.get("expect_added_zero"):
+                    assert stats.added == 0
+
+                if config.get("expect_failed_zero"):
+                    assert stats.failed == 0
+
+                if config.get("expect_skipped_zero"):
+                    assert stats.skipped == 0
+
+                if config.get("expect_total_zero"):
+                    assert stats.total == 0
 
     @pytest.fixture
     def sync_service(
@@ -37,148 +202,28 @@ class TestFlextLdapSyncServiceReal:
         ldap_parser: FlextLdifParser,
     ) -> FlextLdapSyncService:
         """Get sync service with connected operations."""
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        connect_result = connection.connect(connection_config)
-        if connect_result.is_failure:
-            pytest.skip(f"Failed to connect: {connect_result.error}")
+        return self.TestDataFactories.create_sync_service(
+            connection_config, ldap_parser
+        )
 
-        operations = FlextLdapOperations(connection=connection)
-        return FlextLdapSyncService(operations=operations)
-
-    def test_sync_ldif_file_when_not_connected(
+    @pytest.mark.parametrize(("test_name", "config"), SYNC_FILE_TEST_CONFIGS)
+    def test_sync_ldif_file_parameterized(
         self,
+        sync_service: FlextLdapSyncService,
         base_ldif_content: str,
         ldap_parser: FlextLdifParser,
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test sync when operations service is not connected.
-
-        Note: sync_service processes entries even when not connected,
-        marking them as failed. The result is success with failed stats.
-        """
-        config = FlextLdapConfig()
-        connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        operations = FlextLdapOperations(connection=connection)
-        sync_service = FlextLdapSyncService(operations=operations)
-
-        # Create temporary LDIF file
-        with NamedTemporaryFile(
-            mode="w",
-            suffix=".ldif",
-            delete=False,
-            encoding="utf-8",
-        ) as f:
-            _ = f.write(base_ldif_content)
-            ldif_file = Path(f.name)
-
-        try:
-            options = FlextLdapModels.SyncOptions()
-            result = sync_service.sync_ldif_file(ldif_file, options)
-            # Sync service processes entries and marks failures, but returns success
-            assert result.is_success
-            stats = result.unwrap()
-            # Should have failed entries because not connected
-            assert stats.failed > 0
-            assert stats.added == 0
-        finally:
-            ldif_file.unlink()
-
-    def test_sync_ldif_file_with_parse_failure(
-        self,
-        sync_service: FlextLdapSyncService,
-    ) -> None:
-        """Test sync with invalid LDIF file that fails to parse."""
-        # Create invalid LDIF file
-        invalid_ldif = "invalid ldif content\nnot a valid entry\n"
-
-        with NamedTemporaryFile(
-            mode="w",
-            suffix=".ldif",
-            delete=False,
-            encoding="utf-8",
-        ) as f:
-            _ = f.write(invalid_ldif)
-            ldif_file = Path(f.name)
-
-        try:
-            options = FlextLdapModels.SyncOptions()
-            result = sync_service.sync_ldif_file(ldif_file, options)
-            # Should handle parse failure gracefully
-            assert result.is_failure or result.is_success
-        finally:
-            ldif_file.unlink()
-
-    def test_sync_ldif_file_with_empty_file(
-        self,
-        sync_service: FlextLdapSyncService,
-    ) -> None:
-        """Test sync with empty LDIF file."""
-        with NamedTemporaryFile(
-            mode="w",
-            suffix=".ldif",
-            delete=False,
-            encoding="utf-8",
-        ) as f:
-            _ = f.write("")
-            ldif_file = Path(f.name)
-
-        try:
-            options = FlextLdapModels.SyncOptions()
-            result = sync_service.sync_ldif_file(ldif_file, options)
-            # Should handle empty file gracefully
-            assert result.is_success or result.is_failure
-            if result.is_success:
-                stats = TestOperationHelpers.unwrap_sync_stats(result)
-                assert stats.added == 0
-        finally:
-            ldif_file.unlink()
-
-    def test_sync_ldif_file_with_add_failure(
-        self,
-        sync_service: FlextLdapSyncService,
-        base_ldif_content: str,
-    ) -> None:
-        """Test sync when add operation fails for some entries."""
-        # Create LDIF with entry that might fail (e.g., missing required attributes)
-        problematic_ldif = f"""{base_ldif_content}
-dn: cn=invalid,{RFC.DEFAULT_BASE_DN}
-objectClass: top
-# Missing required attributes - will fail to add
-"""
-
-        with NamedTemporaryFile(
-            mode="w",
-            suffix=".ldif",
-            delete=False,
-            encoding="utf-8",
-        ) as f:
-            _ = f.write(problematic_ldif)
-            ldif_file = Path(f.name)
-
-        try:
-            options = FlextLdapModels.SyncOptions()
-            result = sync_service.sync_ldif_file(ldif_file, options)
-            # Should continue syncing other entries even if some fail
-            assert result.is_success or result.is_failure
-            if result.is_success:
-                stats = TestOperationHelpers.unwrap_sync_stats(result)
-                # Should have some entries processed
-                assert stats.added >= 0
-                assert stats.failed >= 0 or stats.skipped >= 0
-        finally:
-            ldif_file.unlink()
-
-    def test_sync_ldif_file_with_same_source_target_basedn(
-        self,
-        sync_service: FlextLdapSyncService,
-    ) -> None:
-        """Test sync when source and target base DN are the same."""
-        # Create LDIF file with entry
-        ldif_content = f"""dn: cn=test-same-basedn,{RFC.DEFAULT_BASE_DN}
-objectClass: top
-objectClass: organizationalUnit
-ou: test
-"""
+        """Test sync LDIF file operations with different configurations."""
+        # Create LDIF file based on test configuration
+        if config.get("use_base_ldif"):
+            ldif_content = self.TestDataFactories.create_ldif_content(
+                base_content=base_ldif_content,
+                additional_content=cast("str | None", config.get("additional_content")),
+            )
+        else:
+            ldif_content = cast("str", config.get("ldif_content", ""))
 
         with NamedTemporaryFile(
             mode="w",
@@ -190,67 +235,36 @@ ou: test
             ldif_file = Path(f.name)
 
         try:
-            # Sync with same source and target base DN
-            options = FlextLdapModels.SyncOptions(
-                source_basedn=RFC.DEFAULT_BASE_DN,
-                target_basedn=RFC.DEFAULT_BASE_DN,
-            )
-            result = sync_service.sync_ldif_file(ldif_file, options=options)
+            # Create sync options if specified
+            if sync_options_config := config.get("sync_options"):
+                sync_options_dict = cast("dict[str, object]", sync_options_config)
+                options = FlextLdapModels.SyncOptions(
+                    source_basedn=cast("str", sync_options_dict.get("source_basedn")),
+                    target_basedn=cast("str", sync_options_dict.get("target_basedn")),
+                )
+            else:
+                options = FlextLdapModels.SyncOptions()
 
-            # Should work correctly with same base DN
-            assert result.is_success or result.is_failure
-            if result.is_success:
-                stats = TestOperationHelpers.unwrap_sync_stats(result)
-                assert stats.total >= 0
+            # Handle not connected test case
+            if config.get("test_type") == SyncTestType.NOT_CONNECTED:
+                sync_service = self.TestDataFactories.create_sync_service_not_connected(
+                    ldap_parser
+                )
+
+            result = sync_service.sync_ldif_file(ldif_file, options)
+
+            self.TestAssertions.assert_sync_result(result, config)
         finally:
             ldif_file.unlink()
 
-    def test_sync_ldif_file_with_base_dn_transformation(
+    @pytest.mark.parametrize(("test_name", "config"), EXECUTE_TEST_CONFIGS)
+    def test_execute_operations_parameterized(
         self,
         sync_service: FlextLdapSyncService,
+        test_name: str,
+        config: dict[str, object],
     ) -> None:
-        """Test sync with base DN transformation."""
-        # Create LDIF file with entries that will be transformed
-        ldif_content = f"""dn: cn=test-transform,{RFC.DEFAULT_BASE_DN}
-objectClass: top
-objectClass: organizationalUnit
-ou: test
-"""
-
-        with NamedTemporaryFile(
-            mode="w",
-            suffix=".ldif",
-            delete=False,
-            encoding="utf-8",
-        ) as f:
-            _ = f.write(ldif_content)
-            ldif_file = Path(f.name)
-
-        try:
-            # Sync with different target base DN
-            options = FlextLdapModels.SyncOptions(
-                source_basedn=RFC.DEFAULT_BASE_DN,
-                target_basedn="dc=target,dc=local",
-            )
-            result = sync_service.sync_ldif_file(ldif_file, options=options)
-
-            # Should handle transformation correctly
-            assert result.is_success or result.is_failure
-            if result.is_success:
-                stats = TestOperationHelpers.unwrap_sync_stats(result)
-                assert stats.total >= 0
-        finally:
-            ldif_file.unlink()
-
-    def test_execute_method(
-        self,
-        sync_service: FlextLdapSyncService,
-    ) -> None:
-        """Test execute method for health check."""
+        """Test execute operations with different configurations."""
         result = sync_service.execute()
-        assert result.is_success
-        stats = TestOperationHelpers.unwrap_sync_stats(result)
-        assert stats.added == 0
-        assert stats.failed == 0
-        assert stats.skipped == 0
-        assert stats.total == 0
+
+        self.TestAssertions.assert_sync_result(result, config)

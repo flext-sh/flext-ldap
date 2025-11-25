@@ -213,8 +213,10 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         init_config = FlextLdap._pending_config
         init_ldif = FlextLdap._pending_ldif
 
-        # Use LdapFlextConfig namespace pattern: access via self.config.ldap
-        self._config = init_config if init_config is not None else self.config.ldap
+        # Use FlextConfig namespace pattern: access via self.config.ldap
+        # ldap namespace is registered via @FlextConfig.auto_register
+        ldap_config = self.config.get_namespace("ldap", FlextLdapConfig)
+        self._config = init_config if init_config is not None else ldap_config
         self._ldif = init_ldif if init_ldif is not None else FlextLdif.get_instance()
 
         # Initialize context and handlers
@@ -266,8 +268,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     def _register_core_services(self, container: FlextContainer) -> None:
         """Register core infrastructure services."""
         # Register connection service (check if already exists - container is global)
-        if not container.has("connection"):
-            result = container.register_service("connection", self._connection)
+        if not container.has_service("connection"):
+            result = container.register("connection", self._connection)
             if result.is_failure:
                 error_msg = f"Failed to register connection service: {result.error}"
                 self.logger.error(error_msg, critical=True)
@@ -276,8 +278,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self.logger.debug("Registered connection service in container")
 
         # Register operations service
-        if not container.has("operations"):
-            result = container.register_service("operations", self._operations)
+        if not container.has_service("operations"):
+            result = container.register("operations", self._operations)
             if result.is_failure:
                 error_msg = f"Failed to register operations service: {result.error}"
                 self.logger.error(error_msg, critical=True)
@@ -286,8 +288,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self.logger.debug("Registered operations service in container")
 
         # Register parser service
-        if not container.has("parser"):
-            result = container.register_service("parser", self._ldif.parser)
+        if not container.has_service("parser"):
+            result = container.register("parser", self._ldif.parser)
             if result.is_failure:
                 error_msg = f"Failed to register parser service: {result.error}"
                 self.logger.error(error_msg, critical=True)
@@ -531,8 +533,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        # Use FlextLdif.utilities.DN.get_dn_value for consistent DN extraction
-        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
+        # Use safe DN extraction helper
+        dn_str = FlextLdapServiceBase.safe_dn_string(dn)
         self.logger.debug(
             "Modifying LDAP entry",
             operation="modify",
@@ -576,8 +578,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        # Use FlextLdif.utilities.DN.get_dn_value for consistent DN extraction
-        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
+        # Use safe DN extraction helper
+        dn_str = FlextLdapServiceBase.safe_dn_string(dn)
         self.logger.debug(
             "Deleting LDAP entry",
             operation="delete",

@@ -1,33 +1,37 @@
 """Configuration management for LDAP operations.
 
-This module defines configuration settings using Pydantic models with validation.
+This module defines configuration settings using Pydantic v2 models with validation.
+Provides singleton pattern configuration classes for LDAP operations with environment
+variable support and thread-safe instance management.
+
+Modules: FlextLdapConfig
+Scope: LDAP connection configuration, environment variable loading
+Pattern: Singleton with dependency injection support, Pydantic v2 BaseSettings
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+import threading
 from typing import ClassVar, Self
 
 from flext_core import FlextConfig
-from flext_ldif import FlextLdifConfig
 from pydantic import Field
-from pydantic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_ldap.constants import FlextLdapConstants
 
 
 @FlextConfig.auto_register("ldap")
-class FlextLdapConfig(FlextConfig.AutoConfig):
+class FlextLdapConfig(BaseSettings):
     """Pydantic v2 configuration for LDAP operations.
 
-    **ARCHITECTURAL PATTERN**: Zero-Boilerplate Auto-Registration
+    **ARCHITECTURAL PATTERN**: Zero-Boilerplate Configuration
 
-    This class uses FlextConfig.AutoConfig for automatic:
+    This class provides:
     - Singleton pattern (thread-safe)
-    - Namespace registration (accessible via config.ldap)
     - Environment variable loading from FLEXT_LDAP_* variables
     - .env file loading (production/development)
     - Automatic type conversion and validation via Pydantic v2
@@ -53,14 +57,30 @@ class FlextLdapConfig(FlextConfig.AutoConfig):
         print(config.host, config.port, config.bind_dn)
     """
 
+    # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
-        env_file=".env",
+        env_file=FlextConfig.resolve_env_file(),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         extra="ignore",
         case_sensitive=False,
     )
+
+    # Singleton pattern
+    _instances: ClassVar[dict[type[Self], Self]] = {}
+    _lock: ClassVar[threading.RLock] = threading.RLock()
+
+    @classmethod
+    def get_instance(cls: type[Self]) -> Self:
+        """Get singleton instance (thread-safe)."""
+        if cls not in cls._instances:
+            with cls._lock:
+                if cls not in cls._instances:
+                    cls._instances[cls] = cls()
+        # Type narrowing: dict is typed as dict[type[Self], Self], so instance is Self
+        instance: Self = cls._instances[cls]
+        return instance
 
     # Connection Configuration
     host: str = Field(
@@ -142,76 +162,4 @@ class FlextLdapConfig(FlextConfig.AutoConfig):
     )
 
 
-class LdapFlextConfig(FlextConfig):
-    """FlextConfig TIPADO com namespaces do projeto flext-ldap.
-
-    Provides typed access to:
-    - self.ldap → FlextLdapConfig
-    - self.ldif → FlextLdifConfig (consumed dependency)
-
-    Usage in services:
-        class MyService(FlextLdapServiceBase[MyResult]):
-            def execute(self) -> FlextResult[MyResult]:
-                host = self.config.ldap.host  # Typed access!
-                encoding = self.config.ldif.ldif_encoding  # Typed access!
-    """
-
-    _ldap_global: ClassVar[LdapFlextConfig | None] = None
-
-    @property
-    def ldap(self) -> FlextLdapConfig:
-        """Get FlextLdapConfig namespace (typed access)."""
-        config = FlextConfig.get_global_instance()
-        # get_namespace is a method of FlextConfig instances
-        get_namespace_method = getattr(config, "get_namespace", None)
-        if get_namespace_method is None:  # pragma: no cover
-            # Defensive: FlextConfig always has get_namespace method
-            msg = "FlextConfig instance does not have get_namespace method"
-            raise AttributeError(msg)
-        namespace = get_namespace_method("ldap", FlextLdapConfig)
-        if not isinstance(namespace, FlextLdapConfig):  # pragma: no cover
-            # Defensive: namespace always returns FlextLdapConfig for "ldap"
-            msg = f"Namespace 'ldap' is {type(namespace).__name__}, not FlextLdapConfig"
-            raise TypeError(msg)
-        return namespace
-
-    @property
-    def ldif(self) -> FlextLdifConfig:
-        """Get FlextLdifConfig namespace (typed access)."""
-        config = FlextConfig.get_global_instance()
-        # get_namespace is a method of FlextConfig instances
-        get_namespace_method = getattr(config, "get_namespace", None)
-        if get_namespace_method is None:  # pragma: no cover
-            # Defensive: FlextConfig always has get_namespace method
-            msg = "FlextConfig instance does not have get_namespace method"
-            raise AttributeError(msg)
-        namespace = get_namespace_method("ldif", FlextLdifConfig)
-        if not isinstance(namespace, FlextLdifConfig):  # pragma: no cover
-            # Defensive: namespace always returns FlextLdifConfig for "ldif"
-            msg = f"Namespace 'ldif' is {type(namespace).__name__}, not FlextLdifConfig"
-            raise TypeError(msg)
-        return namespace
-
-    @classmethod
-    def get_global_instance(cls) -> LdapFlextConfig:
-        """Get singleton instance of LdapFlextConfig."""
-        if cls._ldap_global is None:
-            with cls._lock:
-                if cls._ldap_global is None:
-                    cls._ldap_global = cls()
-        return cls._ldap_global
-
-    def clone(self, **overrides: object) -> Self:
-        """Clone config with overrides."""
-        data = self.model_dump()
-        data.update(overrides)
-        return type(self)(**data)
-
-    @classmethod
-    def reset_for_testing(cls) -> None:
-        """Reset singleton for testing."""
-        with cls._lock:
-            cls._ldap_global = None
-
-
-__all__ = ["FlextLdapConfig", "LdapFlextConfig"]
+__all__ = ["FlextLdapConfig"]
