@@ -175,7 +175,7 @@ class TestFlextLdapOperationsComplete:
         """Test delete with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testdelnorm")
         _add_result = TestOperationHelpers.add_entry_and_assert_success(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
             cleanup_after=False,
         )
@@ -193,7 +193,7 @@ class TestFlextLdapOperationsComplete:
         result = operations_service.execute()
         assert result.is_success
         search_result = result.unwrap()
-        assert search_result.total_count == 0
+        assert search_result.total_count() == 0
         assert len(search_result.entries) == 0
 
     def test_add_with_operation_result_success(
@@ -207,7 +207,7 @@ class TestFlextLdapOperationsComplete:
         )
 
         result = TestOperationHelpers.add_entry_and_assert_success(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
             verify_operation_result=True,
         )

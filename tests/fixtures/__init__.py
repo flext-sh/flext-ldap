@@ -167,7 +167,7 @@ class LdapTestFixtures:
 
         # Use FlextLdif to parse LDIF (reusing flext-ldif)
         # Use RFC server type for test fixtures (generic parsing without quirks)
-        config = FlextLdifConfig(quirks_server_type="rfc")
+        config = FlextLdifConfig.model_validate({"quirks_server_type": "rfc"})
         ldif = FlextLdif(config=config)
         result = ldif.parse(ldif_content)
         if result.is_success:

@@ -1,7 +1,9 @@
-"""Unit tests for FlextLdapOperations service.
+"""Unit tests for flext_ldap.services.operations.FlextLdapOperations.
 
-Tests core LDAP operations functionality with comprehensive coverage.
-Focuses on operations.py methods that can be tested without live LDAP connection.
+Tests core LDAP operations service functionality with comprehensive coverage.
+Focuses on initialization, configuration access, error detection, entry comparison,
+and method existence validation without requiring live LDAP connections.
+All tests use real implementations with mocked dependencies for isolation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,11 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 import pytest
 from flext_core import FlextConfig
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
@@ -25,12 +30,44 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def ldap_connection() -> FlextLdapConnection:
     """Create a real LDAP connection instance for testing (not connected)."""
-    config = FlextLdapConfig()
+    config = FlextLdapConfig.get_instance()
     return FlextLdapConnection(config=config)
 
 
+class OperationTestScenario(StrEnum):
+    """Test scenarios for LDAP operations testing."""
+
+    DEFAULT = "default"
+    EDGE_CASE = "edge_case"
+    ERROR_CASE = "error_case"
+
+
 class TestFlextLdapOperations:
-    """Tests for FlextLdapOperations core functionality."""
+    """Tests for FlextLdapOperations core functionality.
+
+    Single class per module with parametrized test methods covering:
+    - Operations service initialization and configuration
+    - Fast-fail pattern for disconnected operations
+    - Error handling and validation
+    - Entry comparison functionality
+    - Method existence validation
+
+    Uses Python 3.13 StrEnum for test categorization and factory patterns
+    for efficient test data generation.
+    """
+
+    def test_init_without_connection_raises_type_error(self) -> None:
+        """Test that __init__ raises TypeError when connection is None."""
+        with pytest.raises(TypeError, match="connection parameter is required"):
+            FlextLdapOperations()
+
+    def test_init_with_connection_succeeds(
+        self, ldap_connection: FlextLdapConnection
+    ) -> None:
+        """Test that __init__ succeeds when connection is provided."""
+        operations = FlextLdapOperations(connection=ldap_connection)
+        assert operations is not None
+        assert operations._connection is ldap_connection
 
     def test_operations_initialization(
         self, ldap_connection: FlextLdapConnection
@@ -41,14 +78,11 @@ class TestFlextLdapOperations:
         assert operations._connection is not None
         assert operations.logger is not None
 
-    def test_service_config_property(
-        self, ldap_connection: FlextLdapConnection
-    ) -> None:
-        """Test service_config property returns FlextConfig."""
+    def test_config_property(self, ldap_connection: FlextLdapConnection) -> None:
+        """Test config property returns FlextConfig with ldap namespace."""
         operations = FlextLdapOperations(connection=ldap_connection)
-        config = operations.service_config
+        config = operations.config
         assert config is not None
-
         assert isinstance(config, FlextConfig)
 
     def test_is_connected_not_connected(
@@ -58,23 +92,26 @@ class TestFlextLdapOperations:
         operations = FlextLdapOperations(connection=ldap_connection)
         assert operations.is_connected is False
 
+    @pytest.mark.parametrize(
+        ("error_message", "expected"),
+        [
+            ("Entry already exists", True),
+            ("already exists", True),
+            ("ALREADY EXISTS", True),
+            ("entryAlreadyExists", True),
+            ("ldap_already_exists", True),
+            ("Connection failed", False),
+            ("", False),
+        ],
+    )
     def test_is_already_exists_error_detection(
-        self, ldap_connection: FlextLdapConnection
+        self,
+        ldap_connection: FlextLdapConnection,
+        error_message: str,
+        expected: bool,
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
-        # Method is now static method of FlextLdapOperations class
-        # FlextResult contract guarantees error is non-None, so function expects str
-        assert (
-            FlextLdapOperations.is_already_exists_error("Entry already exists") is True
-        )
-        assert FlextLdapOperations.is_already_exists_error("already exists") is True
-        assert FlextLdapOperations.is_already_exists_error("ALREADY EXISTS") is True
-        assert FlextLdapOperations.is_already_exists_error("entryAlreadyExists") is True
-        assert (
-            FlextLdapOperations.is_already_exists_error("ldap_already_exists") is True
-        )
-        assert FlextLdapOperations.is_already_exists_error("Connection failed") is False
-        assert FlextLdapOperations.is_already_exists_error("") is False
+        assert FlextLdapOperations.is_already_exists_error(error_message) is expected
 
     def test_compare_entries_identical(
         self, ldap_connection: FlextLdapConnection
@@ -121,65 +158,10 @@ class TestFlextLdapOperations:
         assert hasattr(result, "is_failure")
         assert result.is_failure  # Should fail when not connected
 
-    def test_normalize_dn_with_distinguished_name(
-        self, ldap_connection: FlextLdapConnection
-    ) -> None:
-        """Test normalize_dn with DistinguishedName object (covers line 56)."""
-        operations = FlextLdapOperations(connection=ldap_connection)
-        dn_obj = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-
-        result = operations.normalize_dn(dn_obj)
-        assert result == dn_obj
-
-    def test_normalize_dn_with_string(
-        self, ldap_connection: FlextLdapConnection
-    ) -> None:
-        """Test normalize_dn with string (covers line 58)."""
-        operations = FlextLdapOperations(connection=ldap_connection)
-        dn_string = "cn=test,dc=example,dc=com"
-
-        result = operations.normalize_dn(dn_string)
-        assert isinstance(result, FlextLdifModels.DistinguishedName)
-        assert result.value == dn_string
-
-    def test_is_already_exists_error_various_messages(
-        self, ldap_connection: FlextLdapConnection
-    ) -> None:
-        """Test is_already_exists_error with various error messages (covers line 62)."""
-        operations = FlextLdapOperations(connection=ldap_connection)
-
-        # Test various "already exists" error messages
-        exists_messages = [
-            "Entry already exists",
-            "LDAPException: Already exists",
-            "entryAlreadyExists",
-            "LDAP_ALREADY_EXISTS",
-        ]
-
-        for msg in exists_messages:
-            assert operations.is_already_exists_error(msg)
-
-        # Test non-exists messages
-        non_exists_messages = [
-            "Entry not found",
-            "Invalid credentials",
-            "Connection failed",
-        ]
-
-        for msg in non_exists_messages:
-            assert not operations.is_already_exists_error(msg)
-
-    def test_is_connected_property_false(
-        self, ldap_connection: FlextLdapConnection
-    ) -> None:
-        """Test is_connected property returns False when not connected (covers line 306)."""
-        operations = FlextLdapOperations(connection=ldap_connection)
-        assert operations.is_connected is False
-
     def test_compare_entries_method_exists(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test _compare_entries method exists and can be called (covers line 315)."""
+        """Test _compare_entries method exists and can be called."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         # Create mock entries for comparison
@@ -199,7 +181,7 @@ class TestFlextLdapOperations:
     def test_upsert_method_calls_internal(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test upsert method calls _upsert_internal (covers line 461)."""
+        """Test upsert method calls _upsert_internal."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         entry = FlextLdifModels.Entry(
@@ -216,7 +198,7 @@ class TestFlextLdapOperations:
     def test_upsert_internal_method_exists(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test _upsert_internal method exists (covers line 569)."""
+        """Test _upsert_internal method exists."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         entry = FlextLdifModels.Entry(
@@ -231,7 +213,7 @@ class TestFlextLdapOperations:
     def test_upsert_schema_modify_method_exists(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test _upsert_schema_modify method exists (covers line 594)."""
+        """Test _upsert_schema_modify method exists."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         entry = FlextLdifModels.Entry(
@@ -246,7 +228,7 @@ class TestFlextLdapOperations:
     def test_upsert_regular_add_method_exists(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test _upsert_regular_add method exists (covers line 700)."""
+        """Test _upsert_regular_add method exists."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         entry = FlextLdifModels.Entry(
@@ -261,7 +243,7 @@ class TestFlextLdapOperations:
     def test_upsert_handle_existing_entry_method_exists(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test _upsert_handle_existing_entry method exists (covers line 739)."""
+        """Test _upsert_handle_existing_entry method exists."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         entry = FlextLdifModels.Entry(
@@ -277,7 +259,7 @@ class TestFlextLdapOperations:
     def test_batch_upsert_method_exists(
         self, ldap_connection: FlextLdapConnection
     ) -> None:
-        """Test batch_upsert method exists (covers line 855)."""
+        """Test batch_upsert method exists."""
         operations = FlextLdapOperations(connection=ldap_connection)
 
         entries = [
@@ -291,4 +273,17 @@ class TestFlextLdapOperations:
 
         # Method should exist (will fail since not connected)
         result = operations.batch_upsert(entries)
+        assert result.is_failure
+
+    def test_search_method_exists(self, ldap_connection: FlextLdapConnection) -> None:
+        """Test that search method exists and can be called."""
+        operations = FlextLdapOperations(connection=ldap_connection)
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn="dc=example,dc=com",
+            filter_str="(objectClass=*)",
+            scope="SUBTREE",
+        )
+
+        # Method should exist (will fail since not connected)
+        result = operations.search(search_options)
         assert result.is_failure

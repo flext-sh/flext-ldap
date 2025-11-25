@@ -1,17 +1,19 @@
 """LDAP3 adapter service - Service wrapper for ldap3 library.
 
 This module provides a service adapter around ldap3 following flext-ldif patterns.
-Reuses FlextLdifParser for parsing LDAP results to Entry models.
+Reuses FlextLdifParser for parsing LDAP results to Entry models. Handles connection
+management, search operations, and CRUD operations (add, modify, delete) with proper
+error handling and type safety.
+
+Modules: Ldap3Adapter
+Scope: LDAP3 library integration, connection management, CRUD operations, entry conversion
+Pattern: Service adapter extending FlextService, delegates to FlextLdifParser for parsing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
-
-from collections.abc import Callable
-from typing import cast
 
 from flext_core import FlextResult, FlextRuntime, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
@@ -19,9 +21,9 @@ from flext_ldif.services.parser import FlextLdifParser
 from ldap3 import Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import FlextLdapTypes
 
 Ldap3Scope = FlextLdapConstants.LiteralTypes.Ldap3Scope
 
@@ -59,7 +61,11 @@ class Ldap3Adapter(FlextService[bool]):
         if parser is None:
             parser_from_kwargs = kwargs.pop("parser", None)
             if parser_from_kwargs is not None:
-                parser = cast("FlextLdifParser", parser_from_kwargs)
+                if isinstance(parser_from_kwargs, FlextLdifParser):
+                    parser = parser_from_kwargs
+                else:
+                    msg = f"parser must be FlextLdifParser, got {type(parser_from_kwargs).__name__}"
+                    raise TypeError(msg)
         if parser is None:
             ldif = FlextLdif.get_instance()
             parser = ldif.parser
@@ -155,7 +161,7 @@ class Ldap3Adapter(FlextService[bool]):
                 host=config.host,
                 port=config.port,
             )
-            return FlextResult[bool].ok(data=True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
             _ = self.logger.exception(
@@ -173,10 +179,8 @@ class Ldap3Adapter(FlextService[bool]):
         """Close LDAP connection."""
         if self._connection:
             try:
-                # Connection.unbind()
-                # Use cast to inform type checker while maintaining runtime safety
-                unbind_func = cast("Callable[[], None]", self._connection.unbind)
-                unbind_func()
+                # Connection.unbind() - call directly, type checker understands Connection.unbind
+                self._connection.unbind()
             except Exception as e:
                 _ = self.logger.debug(
                     "Error during disconnect",
@@ -368,10 +372,19 @@ class Ldap3Adapter(FlextService[bool]):
 
             # Preserve metadata if present (NEVER lose metadata)
             if hasattr(parsed_entry, "metadata") and parsed_entry.metadata:
-                entry_metadata = cast(
-                    "FlextLdifModels.QuirkMetadata",
-                    parsed_entry.metadata,
-                )
+                # Type narrowing: parsed_entry.metadata is QuirkMetadata when present
+                if isinstance(parsed_entry.metadata, FlextLdifModels.QuirkMetadata):
+                    entry_metadata = parsed_entry.metadata
+                else:
+                    # Create QuirkMetadata from dict if needed using model_validate
+                    metadata_dict: dict[str, object] = (
+                        parsed_entry.metadata
+                        if isinstance(parsed_entry.metadata, dict)
+                        else {}
+                    )
+                    entry_metadata = FlextLdifModels.QuirkMetadata.model_validate(
+                        metadata_dict
+                    )
                 entry_obj = FlextLdifModels.Entry(
                     dn=dn_obj,
                     attributes=entry_attributes,
@@ -697,12 +710,8 @@ class Ldap3Adapter(FlextService[bool]):
         """
         try:
             # Connection.add(dn, object_class=None, attributes=None, controls=None)
-            # Use cast to inform type checker while maintaining runtime safety
-            add_func = cast(
-                "FlextLdapTypes.LdapAddCallable",
-                connection.add,
-            )
-            success = add_func(dn_str, None, ldap_attrs)
+            # Call directly - connection.add signature matches LdapAddCallable
+            success = connection.add(dn_str, None, ldap_attrs)
 
             if success:
                 return FlextResult[FlextLdapModels.OperationResult].ok(
@@ -758,7 +767,7 @@ class Ldap3Adapter(FlextService[bool]):
             FlextResult[OperationResult] - ok(result) on success, fail(error) on failure
 
         """
-        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
+        dn_str = FlextLdapServiceBase.safe_dn_string(dn)
         self.logger.debug(
             "Modifying LDAP entry",
             operation="modify",
@@ -821,12 +830,8 @@ class Ldap3Adapter(FlextService[bool]):
             dn_str = FlextLdif.utilities.DN.get_dn_value(dn)
 
             # Connection.modify(dn, changes, controls=None)
-            # Use cast to inform type checker while maintaining runtime safety
-            modify_func = cast(
-                "FlextLdapTypes.LdapModifyCallable",
-                connection.modify,
-            )
-            success = modify_func(dn_str, changes)
+            # Call directly - connection.modify signature matches LdapModifyCallable
+            success = connection.modify(dn_str, changes)
 
             if success:
                 result = FlextLdapModels.OperationResult(
@@ -878,7 +883,7 @@ class Ldap3Adapter(FlextService[bool]):
             FlextResult[OperationResult] - ok(result) on success, fail(error) on failure
 
         """
-        dn_str = FlextLdif.utilities.DN.get_dn_value(dn) if dn else "unknown"
+        dn_str = FlextLdapServiceBase.safe_dn_string(dn)
         self.logger.debug(
             "Deleting LDAP entry",
             operation="delete",
@@ -938,9 +943,8 @@ class Ldap3Adapter(FlextService[bool]):
             dn_str = FlextLdif.utilities.DN.get_dn_value(dn)
 
             # Connection.delete(dn, controls=None)
-            # Use cast to inform type checker while maintaining runtime safety
-            delete_func = cast("FlextLdapTypes.LdapDeleteCallable", connection.delete)
-            success = delete_func(dn_str)
+            # Call directly - connection.delete signature matches LdapDeleteCallable
+            success = connection.delete(dn_str)
 
             if success:
                 result = FlextLdapModels.OperationResult(
@@ -989,4 +993,4 @@ class Ldap3Adapter(FlextService[bool]):
         """
         if not self.is_connected:
             return FlextResult[bool].fail("Not connected to LDAP server")
-        return FlextResult[bool].ok(data=True)
+        return FlextResult[bool].ok(True)

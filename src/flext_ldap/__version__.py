@@ -23,7 +23,7 @@ __description__: str = _metadata.get("Summary", "FLEXT LDAP Client Library")
 __author__: str = _metadata.get("Author", "FLEXT Team")
 __author_email__: str = _metadata.get("Author-Email", "")
 __license__: str = _metadata.get("License", "MIT")
-__url__: str = _metadata.get("Home-Page", "")
+__url__: str = _metadata.get("Homepage", "https://github.com/flext-sh/flext")
 
 __all__ = [
     "__author__",

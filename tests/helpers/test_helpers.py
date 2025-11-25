@@ -1,7 +1,8 @@
-"""Test helpers for flext-ldap tests - massive code deduplication.
+"""Advanced test helpers for flext-ldap tests using Python 3.13 features.
 
-This module provides helper methods to reduce code duplication across
-all flext-ldap tests. Each method replaces common patterns used in tests.
+This module provides comprehensive helper methods with factory patterns,
+dataclasses, and generic utilities to maximize code reuse across all
+flext-ldap tests. Built on flext-core patterns for consistency.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Literal, cast
 
 from flext_core import FlextResult
@@ -17,9 +19,78 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 
+from ..fixtures.constants import TestConstants
+
+
+@dataclass(frozen=True, slots=True)
+class LdapTestDataFactory:
+    """Advanced factory for LDAP test data using Python 3.13 dataclasses."""
+
+    base_dn: str = TestConstants.DEFAULT_BASE_DN
+    default_user_dn: str = TestConstants.TEST_USER_DN
+    default_group_dn: str = TestConstants.TEST_GROUP_DN
+
+    def create_entry(
+        self,
+        dn: str | None = None,
+        **attributes: list[str],
+    ) -> FlextLdifModels.Entry:
+        """Factory method for creating test entries with defaults."""
+        entry_dn = dn or self.default_user_dn
+        default_attrs = {
+            "cn": ["testuser"],
+            "sn": ["User"],
+            "givenName": ["Test"],
+            "uid": ["testuser"],
+            "mail": ["testuser@flext.local"],
+            "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+            "userPassword": ["test123"],
+        }
+        default_attrs.update(attributes)
+        return FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value=entry_dn),
+            attributes=FlextLdifModels.LdifAttributes(attributes=default_attrs),
+        )
+
+    def create_search_options(
+        self,
+        base_dn: str | None = None,
+        filter_str: str = TestConstants.DEFAULT_FILTER,
+        scope: str = TestConstants.DEFAULT_SCOPE,
+        attributes: list[str] | None = None,
+    ) -> FlextLdapModels.SearchOptions:
+        """Factory method for creating search options with smart defaults."""
+        return FlextLdapModels.SearchOptions(
+            base_dn=base_dn or self.base_dn,
+            filter_str=filter_str,
+            scope=cast("Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope),
+            attributes=attributes,
+        )
+
+    def create_connection_config(
+        self, **overrides: object
+    ) -> FlextLdapModels.ConnectionConfig:
+        """Factory method for connection configurations."""
+        # Build config with explicit field assignment to ensure type safety
+        host = cast("str", overrides.get("host", TestConstants.DEFAULT_HOST))
+        port = cast("int", overrides.get("port", TestConstants.DEFAULT_PORT))
+        bind_dn = cast("str", overrides.get("bind_dn", TestConstants.DEFAULT_BIND_DN))
+        bind_password = cast(
+            "str", overrides.get("bind_password", TestConstants.DEFAULT_BIND_PASSWORD)
+        )
+        return FlextLdapModels.ConnectionConfig(
+            host=host,
+            port=port,
+            bind_dn=bind_dn,
+            bind_password=bind_password,
+        )
+
 
 class FlextLdapTestHelpers:
-    """Helper methods for flext-ldap tests to reduce code duplication."""
+    """Advanced helper methods for flext-ldap tests with maximum code reuse."""
+
+    # Factory instance for consistent test data generation
+    factory = LdapTestDataFactory()
 
     @staticmethod
     def create_entry(
@@ -28,7 +99,7 @@ class FlextLdapTestHelpers:
     ) -> FlextLdifModels.Entry:
         """Create FlextLdifModels.Entry from DN and attributes dict.
 
-        Replaces repetitive Entry creation code across all tests.
+        Legacy method - prefer using factory.create_entry() for new code.
 
         Args:
             dn: Distinguished name as string
@@ -47,7 +118,7 @@ class FlextLdapTestHelpers:
     def create_entry_from_dict(entry_dict: dict[str, object]) -> FlextLdifModels.Entry:
         """Create FlextLdifModels.Entry from dict format.
 
-        Replaces conversion code from test fixtures.
+        Enhanced version with better type safety and validation.
 
         Args:
             entry_dict: Dict with 'dn' and 'attributes' keys
@@ -61,7 +132,15 @@ class FlextLdapTestHelpers:
         if not isinstance(attrs_dict, dict):
             attrs_dict = {}
 
-        return FlextLdapTestHelpers.create_entry(dn_str, attrs_dict)
+        # Type-safe conversion
+        attributes: dict[str, list[str]] = {}
+        for key, value in attrs_dict.items():
+            if isinstance(value, list):
+                attributes[key] = [str(item) for item in value]
+            else:
+                attributes[key] = [str(value)]
+
+        return FlextLdapTestHelpers.create_entry(dn_str, attributes)
 
     @staticmethod
     def create_search_options(
@@ -72,7 +151,7 @@ class FlextLdapTestHelpers:
     ) -> FlextLdapModels.SearchOptions:
         """Create SearchOptions with common defaults.
 
-        Replaces repetitive SearchOptions creation.
+        Legacy method - prefer using factory.create_search_options() for new code.
 
         Args:
             base_dn: Base DN for search
@@ -190,7 +269,7 @@ class FlextLdapTestHelpers:
         assert result.is_success, f"Search failed: {result.error}"
         search_result = result.unwrap()
         assert len(search_result.entries) >= min_entries
-        assert search_result.total_count == len(search_result.entries)
+        assert search_result.total_count() == len(search_result.entries)
         return search_result
 
     @staticmethod

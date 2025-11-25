@@ -215,7 +215,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def search_and_assert_success(
-        client: object,
+        client: LdapClientProtocol,
         base_dn: str,
         *,
         filter_str: str = "(objectClass=*)",
@@ -241,10 +241,6 @@ class TestOperationHelpers:
             SearchResult
 
         """
-        if not hasattr(client, "search"):
-            error_msg = "Client does not have search method"
-            raise AttributeError(error_msg)
-
         search_options = FlextLdapModels.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
@@ -287,9 +283,10 @@ class TestOperationHelpers:
             error_msg = "Client does not have execute method"
             raise AttributeError(error_msg)
 
-        result = client.execute()
+        execute_method = client.execute
+        result = execute_method()
         return TestOperationHelpers.assert_result_success_and_unwrap(
-            result,
+            cast("FlextResult[FlextLdapModels.SearchResult]", result),
             error_message="Execute failed",
         )
 
@@ -513,7 +510,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def add_entry_and_assert_success(
-        client: object,
+        client: LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify_operation_result: bool = False,
@@ -531,15 +528,9 @@ class TestOperationHelpers:
             OperationResult
 
         """
-        if not hasattr(client, "add"):
-            error_msg = "Client does not have add method"
-            raise AttributeError(error_msg)
-
         # Cleanup before
         if entry.dn:
-            EntryTestHelpers.cleanup_entry(
-                TestOperationHelpers._narrow_client_type(client), str(entry.dn)
-            )
+            EntryTestHelpers.cleanup_entry(client, str(entry.dn))
 
         result = client.add(entry)
         TestOperationHelpers.assert_result_success(
@@ -554,8 +545,7 @@ class TestOperationHelpers:
 
         # Cleanup after if requested
         if cleanup_after and entry.dn:
-            typed_client = TestOperationHelpers._narrow_client_type(client)
-            EntryTestHelpers.cleanup_after_test(typed_client, str(entry.dn))
+            EntryTestHelpers.cleanup_after_test(client, str(entry.dn))
 
         return result
 

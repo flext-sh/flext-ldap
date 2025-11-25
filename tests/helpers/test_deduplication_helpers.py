@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Literal, cast
 
 import pytest
-from flext_core import FlextResult, T
+from flext_core import FlextResult
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsMatchers
@@ -66,116 +66,6 @@ class TestDeduplicationHelpers:
             raise TypeError(error_msg)
         # Operations service doesn't need connect (it uses connection internally)
         return cast("LdapClientProtocol", client)
-
-    @staticmethod
-    def assert_and_unwrap[T](
-        result: FlextResult[T],
-        *,
-        error_message: str | None = None,
-    ) -> T:
-        """Assert success and unwrap - MOST COMMON PATTERN.
-
-        Replaces:
-            assert result.is_success
-            value = result.unwrap()
-
-        Args:
-            result: FlextResult to assert and unwrap
-            error_message: Optional custom error message
-
-        Returns:
-            Unwrapped result value
-
-        Example:
-            from flext_tests import FlextTestsMatchers
-            entry = FlextTestsMatchers.assert_success(result)
-
-        """
-        from flext_tests import FlextTestsMatchers
-        return FlextTestsMatchers.assert_success(result, error_message)
-
-    @staticmethod
-    def assert_success[U](
-        result: FlextResult[U],
-        *,
-        error_message: str | None = None,
-    ) -> U:
-        """Assert result is success - COMMON PATTERN (GENERIC).
-
-        Uses centralized FlextTestsMatchers for consistency.
-
-        Args:
-            result: FlextResult to check
-            error_message: Optional custom error message
-
-        Returns:
-            Unwrapped value from result
-
-        """
-        return FlextTestsMatchers.assert_success(result, error_message)
-
-    @staticmethod
-    def assert_failure[U](
-        result: FlextResult[U],
-        *,
-        expected_error: str | None = None,
-    ) -> str:
-        """Assert result is failure - COMMON PATTERN (GENERIC).
-
-        Uses centralized FlextTestsMatchers for consistency.
-
-        Args:
-            result: FlextResult to check
-            expected_error: Optional expected error substring
-
-        Returns:
-            Error message from result
-
-        """
-        return FlextTestsMatchers.assert_failure(
-            cast("FlextResult[object]", result), expected_error
-        )
-
-    @staticmethod
-    def assert_success_generic(
-        result: FlextResult[T],
-        *,
-        error_message: str | None = None,
-    ) -> None:
-        """Assert result is success - GENERIC VERSION.
-
-        Works with any FlextResult[T] type.
-
-        Args:
-            result: FlextResult to check
-            error_message: Optional custom error message
-
-        """
-        assert result.is_success, (
-            error_message or f"Expected success but got failure: {result.error}"
-        )
-
-    @staticmethod
-    def assert_failure_generic(
-        result: FlextResult[T],
-        *,
-        expected_error: str | None = None,
-    ) -> None:
-        """Assert result is failure - GENERIC VERSION.
-
-        Works with any FlextResult[T] type.
-
-        Args:
-            result: FlextResult to check
-            expected_error: Optional expected error substring
-
-        """
-        assert result.is_failure, "Expected failure but result was success"
-        if expected_error:
-            error_str = result.error if result.error is not None else ""
-            assert expected_error in error_str, (
-                f"Expected '{expected_error}' in error, got: {result.error}"
-            )
 
     @staticmethod
     def create_entry(
@@ -358,7 +248,7 @@ class TestDeduplicationHelpers:
 
         Example:
             result = TestDeduplicationHelpers.add_entry(client, entry)
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
@@ -395,7 +285,7 @@ class TestDeduplicationHelpers:
                     "attributes": {"cn": ["test"]},
                 },
             )
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
@@ -446,10 +336,9 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         search_result = typed_client.search(search_options)
-        from flext_tests import FlextTestsMatchers
         result = FlextTestsMatchers.assert_success(
             search_result,
-            error_message="Search failed",
+            error_msg="Search failed",
         )
 
         assert len(result.entries) >= min_entries, (
@@ -497,8 +386,8 @@ class TestDeduplicationHelpers:
                 verify_attribute="mail",
                 verify_value="new@example.com"
             )
-            TestDeduplicationHelpers.assert_success(add_result)
-            TestDeduplicationHelpers.assert_success(modify_result)
+            FlextTestsMatchers.assert_success(add_result)
+            FlextTestsMatchers.assert_success(modify_result)
 
         """
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
@@ -542,8 +431,8 @@ class TestDeduplicationHelpers:
                 client,
                 {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}}
             )
-            TestDeduplicationHelpers.assert_success(add_result)
-            TestDeduplicationHelpers.assert_success(delete_result)
+            FlextTestsMatchers.assert_success(add_result)
+            FlextTestsMatchers.assert_success(delete_result)
 
         """
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
@@ -747,7 +636,7 @@ class TestDeduplicationHelpers:
                 },
                 changes={"mail": [(MODIFY_REPLACE, ["new@example.com"])]}
             )
-            TestDeduplicationHelpers.assert_success(results["add"])
+            FlextTestsMatchers.assert_success(results["add"])
 
         """
         if entry is None:
@@ -803,10 +692,9 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         search_result = typed_client.search(search_options)
-        from flext_tests import FlextTestsMatchers
         result = FlextTestsMatchers.assert_success(
             search_result,
-            error_message="Search failed",
+            error_msg="Search failed",
         )
 
         if verify_exists:
@@ -908,7 +796,7 @@ class TestDeduplicationHelpers:
                 adjust_dn={"from": "dc=example,dc=com", "to": "dc=flext,dc=local"}
             )
             for entry, result in results:
-                TestDeduplicationHelpers.assert_success(result)
+                FlextTestsMatchers.assert_success(result)
 
         """
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
@@ -1123,7 +1011,7 @@ class TestDeduplicationHelpers:
                     "attributes": {"cn": ["test"]},
                 },
             )
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         if entry is None:
@@ -1340,7 +1228,7 @@ class TestDeduplicationHelpers:
                 {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": ["test"]}},
                 {"mail": [(MODIFY_REPLACE, ["new@example.com"])]}
             )
-            TestDeduplicationHelpers.assert_success(results["add"])
+            FlextTestsMatchers.assert_success(results["add"])
 
         """
         results = TestDeduplicationHelpers.crud_sequence(
@@ -1351,41 +1239,32 @@ class TestDeduplicationHelpers:
         )
 
         if verify_search and "search" in results:
-            from flext_tests import FlextTestsMatchers
             search_result = FlextTestsMatchers.assert_success(
                 cast(
                     "FlextResult[FlextLdapModels.SearchResult]",
                     results["search"],
                 ),
-                error_message="Search failed",
+                error_msg="Search failed",
             )
             assert len(search_result.entries) == 1
 
         if verify_modify:
             modify_result_value = results.get("modify")
             if modify_result_value is not None:
-                # Type narrowing: ensure modify_result is OperationResult
-                if isinstance(modify_result_value, FlextResult):
-                    TestDeduplicationHelpers.assert_success(
-                        cast("FlextResult[object]", modify_result_value),
-                        error_message="Modify failed",
-                    )
-                else:
-                    error_msg = "Modify result is not FlextResult type"
-                    raise TypeError(error_msg)
+                # Type narrowing: result must be OperationResult
+                FlextTestsMatchers.assert_success(
+                    cast("FlextResult[object]", modify_result_value),
+                    error_msg="Modify failed",
+                )
 
         if verify_delete:
             delete_result_value = results.get("delete")
             if delete_result_value is not None:
-                # Type narrowing: ensure delete_result is OperationResult
-                if isinstance(delete_result_value, FlextResult):
-                    TestDeduplicationHelpers.assert_success(
-                        cast("FlextResult[object]", delete_result_value),
-                        error_message="Delete failed",
-                    )
-                else:
-                    error_msg = "Delete result is not FlextResult type"
-                    raise TypeError(error_msg)
+                # Type narrowing: result must be OperationResult
+                FlextTestsMatchers.assert_success(
+                    cast("FlextResult[object]", delete_result_value),
+                    error_msg="Delete failed",
+                )
 
         return results
 
@@ -1863,7 +1742,7 @@ class TestDeduplicationHelpers:
 
         if verify_all:
             for _entry, result in results:
-                TestDeduplicationHelpers.assert_success(result)
+                FlextTestsMatchers.assert_success(result)
 
         return results
 
@@ -1921,7 +1800,7 @@ class TestDeduplicationHelpers:
             results.append((server_type, result))
 
             if verify_result:
-                TestDeduplicationHelpers.assert_success(result)
+                FlextTestsMatchers.assert_success(result)
                 if operation == "validate":
                     assert result.unwrap() is True
 
@@ -2018,7 +1897,7 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         result = typed_client.search(search_options)
-        TestDeduplicationHelpers.assert_success(result)
+        FlextTestsMatchers.assert_success(result)
 
         return result
 
@@ -2057,7 +1936,7 @@ class TestDeduplicationHelpers:
             entry,
             cleanup_after=False,
         )
-        TestDeduplicationHelpers.assert_success(add_result)
+        FlextTestsMatchers.assert_success(add_result)
 
         # Modify with normalized DN
         if entry.dn:
@@ -2068,7 +1947,7 @@ class TestDeduplicationHelpers:
             modify_result = typed_client.modify(normalized_dn, changes)
 
             if verify_success:
-                TestDeduplicationHelpers.assert_success(modify_result)
+                FlextTestsMatchers.assert_success(modify_result)
 
             # Cleanup
             typed_client_cleanup = TestDeduplicationHelpers._narrow_client_type(client)
@@ -2112,7 +1991,7 @@ class TestDeduplicationHelpers:
             entry,
             cleanup_after=False,
         )
-        TestDeduplicationHelpers.assert_success(add_result)
+        FlextTestsMatchers.assert_success(add_result)
 
         # Delete with normalized DN
         if entry.dn:
@@ -2123,7 +2002,7 @@ class TestDeduplicationHelpers:
             delete_result = typed_client.delete(normalized_dn)
 
             if verify_success:
-                TestDeduplicationHelpers.assert_success(delete_result)
+                FlextTestsMatchers.assert_success(delete_result)
 
             return delete_result
 
@@ -2221,7 +2100,7 @@ class TestDeduplicationHelpers:
         result = api.connect(connection_config)
 
         if verify_success:
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         if disconnect_after:
             api.disconnect()
@@ -2354,9 +2233,9 @@ class TestDeduplicationHelpers:
         result = adapter.ldap3_to_ldif_entry(source_entry)
 
         if verify_success:
-            entry = TestDeduplicationHelpers.assert_and_unwrap(
+            entry = FlextTestsMatchers.assert_success(
                 result,
-                error_message="Adapter conversion failed",
+                error_msg="Adapter conversion failed",
             )
         else:
             entry = result.unwrap() if result.is_success else None
@@ -2370,7 +2249,7 @@ class TestDeduplicationHelpers:
         if verify_attributes:
             assert entry.attributes is not None, "Entry attributes is None"
 
-        return entry
+        return cast("FlextLdifModels.Entry", entry)
 
     @staticmethod
     def adapter_attributes_conversion_complete(
@@ -2406,10 +2285,9 @@ class TestDeduplicationHelpers:
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
 
         if verify_success:
-            from flext_tests import FlextTestsMatchers
             attrs = FlextTestsMatchers.assert_success(
                 result,
-                error_message="Attributes conversion failed",
+                error_msg="Attributes conversion failed",
             )
         else:
             attrs = result.unwrap() if result.is_success else None
@@ -2427,7 +2305,7 @@ class TestDeduplicationHelpers:
                     f"expected {expected_values}, got {attrs[attr_name]}"
                 )
 
-        return attrs
+        return cast("dict[str, list[str]]", attrs)
 
     @staticmethod
     def create_entry_with_ldif_attributes_validate(
@@ -2656,10 +2534,9 @@ class TestDeduplicationHelpers:
         result = sync_method(ldif_file, options) if options else sync_method(ldif_file)
 
         if verify_stats:
-            from flext_tests import FlextTestsMatchers
             stats = FlextTestsMatchers.assert_success(
                 result,
-                error_message="Sync failed",
+                error_msg="Sync failed",
             )
             if expected_total is not None:
                 assert stats.total == expected_total, (
@@ -2937,9 +2814,9 @@ class TestDeduplicationHelpers:
         if verify_all:
             # add_result is FlextResult[OperationResult], check if it's successful
             # For now, just assert success
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 add_result,
-                error_message="Add operation failed",
+                error_msg="Add operation failed",
             )
 
         # Modify
@@ -3275,9 +3152,9 @@ class TestDeduplicationHelpers:
         add_result = typed_api.add(entry)
         results["add"] = add_result
         if verify_all:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 cast("FlextResult[object]", results["add"]),
-                error_message="API add failed",
+                error_msg="API add failed",
             )
 
         # Modify
@@ -3285,9 +3162,9 @@ class TestDeduplicationHelpers:
             modify_result = typed_api.modify(str(entry.dn), changes)
             results["modify"] = modify_result
             if verify_all:
-                TestDeduplicationHelpers.assert_success(
+                FlextTestsMatchers.assert_success(
                     cast("FlextResult[object]", results["modify"]),
-                    error_message="API modify failed",
+                    error_msg="API modify failed",
                 )
         else:
             results["modify"] = None
@@ -3307,9 +3184,9 @@ class TestDeduplicationHelpers:
             delete_result = typed_api.delete(str(entry.dn))
             results["delete"] = delete_result
             if verify_all:
-                TestDeduplicationHelpers.assert_success(
+                FlextTestsMatchers.assert_success(
                     cast("FlextResult[object]", results["delete"]),
-                    error_message="API delete failed",
+                    error_msg="API delete failed",
                 )
         else:
             results["delete"] = None
@@ -3351,9 +3228,9 @@ class TestDeduplicationHelpers:
                 api = context_api
                 if verify_connect:
                     result = api.connect(connection_config)
-                    TestDeduplicationHelpers.assert_success(
+                    FlextTestsMatchers.assert_success(
                         result,
-                        error_message="Context manager connect failed",
+                        error_msg="Context manager connect failed",
                     )
 
                 if raise_exception:
@@ -3527,9 +3404,9 @@ class TestDeduplicationHelpers:
         # Connect
         connect_result = typed_api.connect(connection_config)
         if verify_connect:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 connect_result,
-                error_message="API connect failed",
+                error_msg="API connect failed",
             )
 
         if verify_state and connect_result.is_success:
@@ -3650,10 +3527,9 @@ class TestDeduplicationHelpers:
             )
 
             if verify_stats:
-                from flext_tests import FlextTestsMatchers
-            stats = FlextTestsMatchers.assert_success(
+                stats = FlextTestsMatchers.assert_success(
                     result,
-                    error_message="Sync failed",
+                    error_msg="Sync failed",
                 )
                 if expected_total is not None:
                     assert stats.total == expected_total, (
@@ -3750,9 +3626,9 @@ class TestDeduplicationHelpers:
         result = service.execute()
 
         if verify_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 result,
-                error_message="Execute method failed",
+                error_msg="Execute method failed",
             )
 
         if verify_stats and result.is_success:
@@ -3825,7 +3701,7 @@ class TestDeduplicationHelpers:
                             f"DN should be transformed from {from_basedn} to {to_basedn}"
                         )
 
-        return transformed
+        return cast("list[FlextLdifModels.Entry]", transformed)
 
     @staticmethod
     def assert_success_or_failure(
@@ -3852,7 +3728,7 @@ class TestDeduplicationHelpers:
                 f"Result must be success or failure, got: {result}"
             )
         else:
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
     @staticmethod
     def create_api(
@@ -3915,16 +3791,16 @@ class TestDeduplicationHelpers:
             api, result = TestDeduplicationHelpers.create_api_and_connect(
                 connection_config
             )
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         api = TestDeduplicationHelpers.create_api()
         connect_result = api.connect(connection_config)
 
         if assert_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 connect_result,
-                error_message="Connection failed",
+                error_msg="Connection failed",
             )
 
         # Already correctly typed
@@ -4011,9 +3887,9 @@ class TestDeduplicationHelpers:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
         if assert_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 connect_result,
-                error_message="Connection failed",
+                error_msg="Connection failed",
             )
 
         # Cast result to expected return type
@@ -4053,9 +3929,9 @@ class TestDeduplicationHelpers:
             connect_result = api.connect(connection_config)
 
             if assert_success:
-                TestDeduplicationHelpers.assert_success(
+                FlextTestsMatchers.assert_success(
                     connect_result,
-                    error_message="Connection failed",
+                    error_msg="Connection failed",
                 )
 
             try:
@@ -4090,7 +3966,7 @@ class TestDeduplicationHelpers:
 
         Example:
             result = TestDeduplicationHelpers.add_with_cleanup(client, entry)
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         return TestDeduplicationHelpers.add_entry(
@@ -4138,7 +4014,7 @@ class TestDeduplicationHelpers:
 
         Example:
             entry, result = TestDeduplicationHelpers.add_user(client, "john", sn="Doe")
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         entry = TestDeduplicationHelpers.create_user(
@@ -4193,7 +4069,7 @@ class TestDeduplicationHelpers:
             entry, result = TestDeduplicationHelpers.add_group(
                 client, "admins", members=["cn=user1"]
             )
-            TestDeduplicationHelpers.assert_success(result)
+            FlextTestsMatchers.assert_success(result)
 
         """
         entry = TestDeduplicationHelpers.create_group(
@@ -4255,10 +4131,9 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         result = typed_client.search(search_options)
-        from flext_tests import FlextTestsMatchers
         return FlextTestsMatchers.assert_success(
             result,
-            error_message="Base search failed",
+            error_msg="Base search failed",
         )
 
     @staticmethod
@@ -4350,7 +4225,7 @@ class TestDeduplicationHelpers:
             **extra_attributes,
         )
 
-        TestDeduplicationHelpers.assert_success(result, error_message="Add user failed")
+        FlextTestsMatchers.assert_success(result, error_msg="Add user failed")
 
         return entry, result
 
@@ -4394,9 +4269,9 @@ class TestDeduplicationHelpers:
         result = typed_client.modify(dn_str, changes)
 
         if assert_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 result,
-                error_message="Modify operation failed",
+                error_msg="Modify operation failed",
             )
 
         return result
@@ -4443,9 +4318,9 @@ class TestDeduplicationHelpers:
         result = typed_client.delete(dn_str)
 
         if assert_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 result,
-                error_message="Delete operation failed",
+                error_msg="Delete operation failed",
             )
 
         return result
@@ -4500,9 +4375,9 @@ class TestDeduplicationHelpers:
             cleanup_after=False,
         )
 
-        TestDeduplicationHelpers.assert_success(
+        FlextTestsMatchers.assert_success(
             add_result,
-            error_message="Add operation failed",
+            error_msg="Add operation failed",
         )
 
         # Modify entry
@@ -4566,9 +4441,9 @@ class TestDeduplicationHelpers:
             cleanup_after=False,
         )
 
-        TestDeduplicationHelpers.assert_success(
+        FlextTestsMatchers.assert_success(
             add_result,
-            error_message="Add operation failed",
+            error_msg="Add operation failed",
         )
 
         # Delete entry
@@ -4684,10 +4559,9 @@ class TestDeduplicationHelpers:
         else:
             result = typed_client.search(search_options)
 
-        from flext_tests import FlextTestsMatchers
         return FlextTestsMatchers.assert_success(
             result,
-            error_message="Search failed",
+            error_msg="Search failed",
         )
 
     @staticmethod
@@ -4763,9 +4637,9 @@ class TestDeduplicationHelpers:
         delete_result = typed_client.delete(dn_str)
 
         if not ignore_errors:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 delete_result,
-                error_message="Cleanup delete failed",
+                error_msg="Cleanup delete failed",
             )
 
     @staticmethod
@@ -4857,9 +4731,9 @@ class TestDeduplicationHelpers:
         result = typed_client.modify(dn_with_spaces, changes)
 
         if assert_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 result,
-                error_message="Modify with DN spaces failed",
+                error_msg="Modify with DN spaces failed",
             )
 
         return result
@@ -4900,9 +4774,9 @@ class TestDeduplicationHelpers:
         result = typed_client.delete(dn_with_spaces)
 
         if assert_success:
-            TestDeduplicationHelpers.assert_success(
+            FlextTestsMatchers.assert_success(
                 result,
-                error_message="Delete with DN spaces failed",
+                error_msg="Delete with DN spaces failed",
             )
 
         return result
@@ -5058,9 +4932,8 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         result = typed_client.search(search_options)
-        TestDeduplicationHelpers.assert_success(result, error_message="Search failed")
-
-        search_result = TestDeduplicationHelpers.assert_and_unwrap(result)
+        FlextTestsMatchers.assert_success(result, error_msg="Search failed")
+        search_result = FlextTestsMatchers.assert_success(result)
 
         if expected_exact is not None:
             assert len(search_result.entries) == expected_exact, (
@@ -5112,9 +4985,8 @@ class TestDeduplicationHelpers:
             raise AttributeError(error_msg)
 
         result = client.execute()
-        TestDeduplicationHelpers.assert_success(result, error_message="Execute failed")
-
-        search_result = TestDeduplicationHelpers.assert_and_unwrap(result)
+        FlextTestsMatchers.assert_success(result, error_msg="Execute failed")
+        search_result = FlextTestsMatchers.assert_success(result)
 
         assert search_result.total_count == expected_total, (
             f"Expected total_count={expected_total}, got {search_result.total_count}"
@@ -5125,7 +4997,7 @@ class TestDeduplicationHelpers:
                 f"Expected {expected_entries} entries, got {len(search_result.entries)}"
             )
 
-        return search_result
+        return cast("FlextLdapModels.SearchResult", search_result)
 
     @staticmethod
     def create_user_add_and_verify(
@@ -5191,7 +5063,7 @@ class TestDeduplicationHelpers:
             cleanup_after=cleanup_after,
         )
 
-        TestDeduplicationHelpers.assert_success(result, error_message="Add failed")
+        FlextTestsMatchers.assert_success(result, error_msg="Add failed")
 
         if verify_operation_result:
             TestOperationHelpers.assert_operation_result_success(

@@ -9,11 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Generator, Mapping
+from contextlib import contextmanager
 from typing import cast
 
 from flext_core import FlextResult
 from flext_ldif.models import FlextLdifModels
+from ldap3 import Connection, Entry as Ldap3Entry, Server
 
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import LdapClientProtocol
@@ -127,11 +129,8 @@ class EntryTestHelpers:
         search_result = typed_client.search(search_options)
         if search_result.is_success:
             unwrapped = search_result.unwrap()
-            # Handle both return types: SearchResult or list[Entry]
-            if isinstance(unwrapped, FlextLdapModels.SearchResult):
-                entries = unwrapped.entries
-            else:
-                entries = unwrapped
+            # Search always returns SearchResult
+            entries = unwrapped.entries
             return len(entries) == 1
         return False
 
@@ -200,11 +199,6 @@ class EntryTestHelpers:
         """
         # Convert dict to entry
         entry = EntryTestHelpers.dict_to_entry(entry_dict)
-
-        # Ensure entry has DN
-        if entry.dn is None:
-            error_msg = "Entry must have a DN"
-            raise ValueError(error_msg)
 
         typed_client = EntryTestHelpers._narrow_client_type(client)
         # Cleanup before if requested
@@ -276,11 +270,8 @@ class EntryTestHelpers:
         added_dns: list[str] = []
 
         for entry_dict_item in entry_dicts:
-            # Convert to dict if needed (handles both dict and Mapping)
-            if isinstance(entry_dict_item, dict):
-                entry_dict: dict[str, object] = dict(entry_dict_item)
-            else:
-                entry_dict = dict(entry_dict_item)
+            # entry_dicts is list[dict[str, object]], so all items are already dicts
+            entry_dict: dict[str, object] = dict(entry_dict_item)
             if adjust_dn:
                 original_dn = str(entry_dict.get("dn", ""))
                 adjusted_dn = original_dn.replace(
@@ -396,11 +387,8 @@ class EntryTestHelpers:
             search_result = typed_client.search(search_options)
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
-                # Handle both return types: SearchResult or list[Entry]
-                if isinstance(unwrapped, FlextLdapModels.SearchResult):
-                    entries = unwrapped.entries
-                else:
-                    entries = unwrapped
+                # Search always returns SearchResult
+                entries = unwrapped.entries
                 if entries:
                     modified_entry = entries[0]
                     if (
@@ -499,11 +487,8 @@ class EntryTestHelpers:
                 search_result = typed_client.search(search_options)
                 if search_result.is_success:
                     unwrapped = search_result.unwrap()
-                    # Handle both return types: SearchResult or list[Entry]
-                    if isinstance(unwrapped, FlextLdapModels.SearchResult):
-                        entries = unwrapped.entries
-                    else:
-                        entries = unwrapped
+                    # Search always returns SearchResult
+                    entries = unwrapped.entries
                     assert len(entries) == 0, (
                         f"Entry {dn_str} still exists after deletion"
                     )
@@ -604,3 +589,85 @@ class EntryTestHelpers:
             EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
 
         return add_result
+
+    @staticmethod
+    @contextmanager
+    def ldap3_connection_from_container(
+        ldap_container: dict[str, object],
+    ) -> Generator[tuple[Connection, Ldap3Entry | None]]:
+        """Context manager for LDAP3 connection from container fixture.
+
+        Eliminates repetitive connection creation/cleanup pattern used in 112+ places.
+
+        Args:
+            ldap_container: Container fixture dict with host, port, bind_dn, password, base_dn
+
+        Yields:
+            tuple[Connection, Ldap3Entry | None]: Connection and first entry from BASE search
+
+        Example:
+            with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (conn, entry):
+                if entry:
+                    # Modify entry.entry_attributes_as_dict
+                    attrs_dict = entry.entry_attributes_as_dict
+                    attrs_dict["testAttr"] = "value"
+                    # Use entry for testing
+
+        """
+        server = Server(
+            f"ldap://{ldap_container['host']}:{ldap_container['port']}",
+            get_info="ALL",
+        )
+        connection = Connection(
+            server,
+            user=str(ldap_container["bind_dn"]),
+            password=str(ldap_container["password"]),
+            auto_bind=True,
+        )
+        entry: Ldap3Entry | None = None
+        try:
+            connection.search(
+                search_base=str(ldap_container["base_dn"]),
+                search_filter="(objectClass=*)",
+                search_scope="BASE",
+                attributes=["*"],
+            )
+            if len(connection.entries) > 0:
+                entry = connection.entries[0]
+            yield (connection, entry)
+        finally:
+            if connection.bound:
+                cast("Callable[[], None]", connection.unbind)()
+
+    @staticmethod
+    def with_ldap3_entry(
+        ldap_container: dict[str, object],
+        modifier: Callable[[Ldap3Entry], None],
+    ) -> Ldap3Entry | None:
+        """Get LDAP3 entry and apply modification, returning modified entry.
+
+        Consolidates pattern: create connection, search, modify entry, return entry.
+        Connection is automatically cleaned up.
+
+        Args:
+            ldap_container: Container fixture dict
+            modifier: Function to modify entry.entry_attributes_as_dict
+
+        Returns:
+            Modified Ldap3Entry or None if no entry found
+
+        Example:
+            entry = EntryTestHelpers.with_ldap3_entry(
+                ldap_container,
+                lambda e: e.entry_attributes_as_dict.update({"testAttr": "value"}),
+            )
+
+        """
+        with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
+            _,
+            entry,
+        ):
+            if entry and hasattr(entry, "entry_attributes_as_dict"):
+                modifier(entry)
+                return entry
+        return None

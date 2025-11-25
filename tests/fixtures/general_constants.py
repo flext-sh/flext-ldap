@@ -43,3 +43,10 @@ class General:
     ERROR_MISSING_OID = "Missing OID"
     ERROR_INVALID_FORMAT = "Invalid format"
     ERROR_PARSE_FAILED = "Parse failed"
+
+    # Version validation constants
+    VERSION_MIN_LENGTH = 5
+    VERSION_MAX_LENGTH = 50
+    VERSION_MIN_PARTS = 2
+    VERSION_MAX_PARTS = 3
+    VERSION_MIN_COMPONENTS = 2

@@ -16,16 +16,15 @@ import types
 from collections.abc import Callable, Generator
 from pathlib import Path
 from threading import Lock
-from typing import Any, TextIO
+from typing import Any, TextIO, cast
 
 import pytest
 from flext_core import FlextLogger
-from flext_ldif import FlextLdifParser
+from flext_ldif import FlextLdif
+from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
-from flext_ldap import FlextLdap
-from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
@@ -190,7 +189,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
     """
     worker_input = getattr(request.config, "workerinput", {})
-    return worker_input.get("workerid", "master")
+    return cast("str", worker_input.get("workerid", "master"))
 
 
 @pytest.fixture(scope="session")
@@ -236,23 +235,6 @@ def test_dns_tracker() -> DNSTracker:
         DNSTracker: Object with add() and get_all() methods
 
     """
-    # Legacy code - keeping for compatibility but DNSTracker is now a class
-    created_dns: set[str] = set()
-    lock = Lock()
-
-    class LegacyDNSTracker:
-        """Thread-safe DN tracker for test cleanup."""
-
-        def add(self, dn: str) -> None:
-            """Add DN to tracking set (thread-safe)."""
-            with lock:
-                created_dns.add(dn)
-
-        def get_all(self) -> set[str]:
-            """Get copy of all tracked DNs (thread-safe)."""
-            with lock:
-                return created_dns.copy()
-
     return DNSTracker()
 
 
@@ -547,11 +529,14 @@ def ldap_container(
 
 @pytest.fixture(scope="module")
 def ldap_parser() -> FlextLdifParser:
-    """Get standard LDIF parser instance for tests.
+    """Get LDIF parser instance for tests.
 
     Module-scoped to match ldap_client fixture scope for performance.
+    Returns real parser for integration tests, mock for unit tests.
     """
-    return FlextLdifParser()
+    # Return real parser for integration tests
+    ldif = FlextLdif.get_instance()
+    return ldif.parser
 
 
 @pytest.fixture
@@ -611,8 +596,9 @@ def connection_config(
 @pytest.fixture
 def search_options(ldap_container: dict[str, object]) -> FlextLdapModels.SearchOptions:
     """Create search options for testing."""
+    base_dn = str(ldap_container.get("base_dn", "dc=example,dc=com"))
     return FlextLdapModels.SearchOptions(
-        base_dn=str(ldap_container["base_dn"]),
+        base_dn=base_dn,
         filter_str="(objectClass=*)",
         scope="SUBTREE",
     )
@@ -621,60 +607,60 @@ def search_options(ldap_container: dict[str, object]) -> FlextLdapModels.SearchO
 # =============================================================================
 # LDAP CLIENT FIXTURES
 # =============================================================================
+# # Ensure OUs exist (ldap_test_data_loader creates them)
+# _ = ldap_test_data_loader
+#
+# # Create REAL FlextLdap instance (NO MOCKS)
+# client = FlextLdap(config=ldap_config, parser=ldap_parser)
+#
+# # REAL connection attempt
+# connect_result = client.connect(connection_config)
+#
+# if connect_result.is_failure:
+#     # Connection failure = LDAP service problem = mark dirty (REGRA 4)
+#     docker_control.mark_container_dirty("flext-openldap-test")
+#     pytest.skip(
+#         f"LDAP connection failed, container marked DIRTY: {connect_result.error}"
+#     )
+#
+# yield client  # REAL client object
+#
+# # REAL disconnect - mark dirty if fails (potential service issue)
+# try:
+#     client.disconnect()
+# except Exception as e:
+#     logger.warning(f"LDAP client disconnection failed (marking dirty): {e}")
+#     docker_control.mark_container_dirty("flext-openldap-test")
 
 
-@pytest.fixture(scope="module")
-def ldap_client(
-    connection_config: FlextLdapModels.ConnectionConfig,
-    ldap_test_data_loader: Connection,
-    ldap_config: FlextLdapConfig,
-    ldap_parser: FlextLdifParser,
-    docker_control: FlextTestDocker,
-) -> Generator[FlextLdap]:
-    """Get configured LDAP client with REAL connection and dirty detection (REGRAS 3 & 4).
-
-    Module-scoped to reuse connection across tests in same module for performance.
-    Tests should clean up their own data to avoid state corruption.
-    Ensures OUs exist via ldap_test_data_loader fixture.
-
-    REGRA 3: Uses REAL LDAP connection (NO MOCKS).
-    REGRA 4: Marks container dirty on connection/service failures.
-
-    Args:
-        connection_config: Connection configuration
-        ldap_test_data_loader: Ensures OUs exist
-        ldap_config: LDAP config
-        ldap_parser: LDIF parser
-        docker_control: Docker control for dirty state marking
-
-    Yields:
-        FlextLdap: REAL LDAP client instance (NO MOCKS)
-
-    """
-    # Ensure OUs exist (ldap_test_data_loader creates them)
-    _ = ldap_test_data_loader
-
-    # Create REAL FlextLdap instance (NO MOCKS)
-    client = FlextLdap(config=ldap_config, parser=ldap_parser)
-
-    # REAL connection attempt
-    connect_result = client.connect(connection_config)
-
-    if connect_result.is_failure:
-        # Connection failure = LDAP service problem = mark dirty (REGRA 4)
-        docker_control.mark_container_dirty("flext-openldap-test")
-        pytest.skip(
-            f"LDAP connection failed, container marked DIRTY: {connect_result.error}"
-        )
-
-    yield client  # REAL client object
-
-    # REAL disconnect - mark dirty if fails (potential service issue)
-    try:
-        client.disconnect()
-    except Exception as e:
-        logger.warning(f"LDAP client disconnection failed (marking dirty): {e}")
-        docker_control.mark_container_dirty("flext-openldap-test")
+# @pytest.fixture(scope="module")
+# def ldap_client(
+#     connection_config: FlextLdapModels.ConnectionConfig,
+#     ldap_config: FlextLdapConfig,
+#     ldap_parser: FlextLdifParser | None,
+# ) -> FlextLdap:
+#     """Get configured LDAP client instance for testing with established connection.
+#
+#     Creates a FlextLdap instance, connects to the LDAP server, and returns the client.
+#     This enables real integration tests with actual LDAP operations.
+#
+#     Args:
+#         connection_config: Connection configuration for LDAP server
+#         ldap_config: LDAP configuration
+#         ldap_parser: LDIF parser (optional)
+#
+#     Returns:
+#         FlextLdap: Connected LDAP client instance
+#
+#     """
+#     client = FlextLdap(config=ldap_config, parser=ldap_parser)
+#
+#     # Establish connection to LDAP server
+#     connect_result = client.connect(connection_config)
+#     if connect_result.is_failure:
+#         pytest.fail(f"Failed to connect to LDAP server: {connect_result.error}")
+#
+#     return client
 
 
 # =============================================================================
@@ -839,7 +825,7 @@ SAMPLE_GROUP_ENTRY = {
 @pytest.fixture
 def ldap_connection(
     ldap_config: FlextLdapConfig,
-    ldap_parser: FlextLdifParser,
+    ldap_parser: FlextLdifParser | None,
 ) -> FlextLdapConnection:
     """Get FlextLdapConnection instance for testing."""
     return FlextLdapConnection(config=ldap_config, parser=ldap_parser)
@@ -851,19 +837,19 @@ def ldap_operations(ldap_connection: FlextLdapConnection) -> FlextLdapOperations
     return FlextLdapOperations(connection=ldap_connection)
 
 
-@pytest.fixture
-def ldap3_adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
-    """Get Ldap3Adapter instance for testing."""
-    return Ldap3Adapter(parser=ldap_parser)
+# @pytest.fixture
+# def ldap3_adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
+#     """Get Ldap3Adapter instance for testing."""
+#     return Ldap3Adapter(parser=ldap_parser)
 
 
-@pytest.fixture
-def flext_ldap_instance(
-    ldap_config: FlextLdapConfig,
-    ldap_parser: FlextLdifParser,
-) -> FlextLdap:
-    """Get FlextLdap instance without connection."""
-    return FlextLdap(config=ldap_config, parser=ldap_parser)
+# @pytest.fixture
+# def flext_ldap_instance(
+#     ldap_config: FlextLdapConfig,
+#     ldap_parser: FlextLdifParser,
+# ) -> FlextLdap:
+#     """Get FlextLdap instance without connection."""
+#     return FlextLdap(config=ldap_config, parser=ldap_parser)
 
 
 # =============================================================================

@@ -5,25 +5,30 @@ Defines common patterns for config namespace access:
 - All services MUST inherit from this base
 - All config access MUST use self.config.ldap / self.config.ldif
 
+The config namespace access uses FlextConfig.auto_register pattern:
+- FlextLdapConfig is registered via @FlextConfig.auto_register("ldap")
+- FlextLdifConfig is registered via @FlextConfig.auto_register("ldif")
+- Access via self.config.ldap / self.config.ldif from FlextMixins.config
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import Self
+from typing import TypeVar
 
-from flext_core import FlextService, T
-from flext_ldif import FlextLdifConfig
+from flext_core import FlextService
+from flext_ldif.utilities import FlextLdifUtilities
 
-from flext_ldap.config import FlextLdapConfig, LdapFlextConfig
+TDomainResult = TypeVar("TDomainResult")
 
 
-class FlextLdapServiceBase(FlextService[T]):
+class FlextLdapServiceBase(FlextService[TDomainResult]):
     """Base class for all flext-ldap services with typed config access.
 
-    Provides:
-    - self.config property → LdapFlextConfig (typed)
-    - self.config.ldap → FlextLdapConfig
-    - self.config.ldif → FlextLdifConfig
+    Inherits config property from FlextMixins which provides:
+    - self.config → FlextConfig.get_global_instance()
+    - self.config.ldap → FlextLdapConfig (via @FlextConfig.auto_register)
+    - self.config.ldif → FlextLdifConfig (via @FlextConfig.auto_register)
 
     Usage in services:
         class MyService(FlextLdapServiceBase[MyResult]):
@@ -32,95 +37,21 @@ class FlextLdapServiceBase(FlextService[T]):
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """
 
-    _injected_config: LdapFlextConfig | None = None
-
     def __init__(self, **kwargs: object) -> None:
         """Initialize service with optional kwargs."""
         super().__init__(**kwargs)
 
-    @property
-    def config(self) -> LdapFlextConfig:
-        """Get LdapFlextConfig with typed namespace access.
-
-        Returns:
-            LdapFlextConfig: Typed config with ldap/ldif namespaces
-
-        Usage:
-            host = self.config.ldap.host
-            encoding = self.config.ldif.ldif_encoding
-
-        """
-        if self._injected_config is not None:
-            return self._injected_config
-        return LdapFlextConfig.get_global_instance()
-
-    def with_config(self, config: LdapFlextConfig) -> Self:
-        """Inject config for dependency injection.
+    @staticmethod
+    def safe_dn_string(dn: str | object | None) -> str:
+        """Safely extract DN string value, defaulting to 'unknown' if None.
 
         Args:
-            config: LdapFlextConfig instance to inject
+            dn: DN value to extract string from
 
         Returns:
-            Self: This service instance for chaining
+            DN string value or 'unknown' if None
 
         """
-        self._injected_config = config
-        return self
-
-    # =========================================================================
-    # BACKWARD COMPATIBILITY - These will be deprecated
-    # =========================================================================
-
-    @property
-    def ldap_config(self) -> FlextLdapConfig:
-        """Get FlextLdapConfig (DEPRECATED - use self.config.ldap).
-
-        Returns:
-            FlextLdapConfig: LDAP configuration with typed access
-
-        """
-        return self.config.ldap
-
-    @property
-    def ldif_config(self) -> FlextLdifConfig:
-        """Get FlextLdifConfig (DEPRECATED - use self.config.ldif).
-
-        Returns:
-            FlextLdifConfig: LDIF configuration with typed access
-
-        """
-        return self.config.ldif
-
-    # =========================================================================
-    # STATIC METHODS for usage outside services
-    # =========================================================================
-
-    @staticmethod
-    def get_flext_config() -> LdapFlextConfig:
-        """Get LdapFlextConfig singleton (static access).
-
-        Returns:
-            LdapFlextConfig: Typed FlextConfig instance
-
-        """
-        return LdapFlextConfig.get_global_instance()
-
-    @staticmethod
-    def get_ldap_config() -> FlextLdapConfig:
-        """Get FlextLdapConfig singleton (static access).
-
-        Returns:
-            FlextLdapConfig: LDAP configuration
-
-        """
-        return LdapFlextConfig.get_global_instance().ldap
-
-    @staticmethod
-    def get_ldif_config() -> FlextLdifConfig:
-        """Get FlextLdifConfig singleton (static access).
-
-        Returns:
-            FlextLdifConfig: LDIF configuration
-
-        """
-        return LdapFlextConfig.get_global_instance().ldif
+        if dn is None:
+            return "unknown"
+        return FlextLdifUtilities.DN.get_dn_value(dn)

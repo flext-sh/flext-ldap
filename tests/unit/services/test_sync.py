@@ -88,14 +88,14 @@ def empty_ldif_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_ldap_operations() -> FlextLdapOperations:
-    """Create a real FlextLdapOperations instance for testing.
+def mock_ldap_operations() -> Mock:
+    """Create a mock FlextLdapOperations instance for testing.
 
     Uses mocked underlying LDAP connection since we don't need actual connectivity
     for basic sync service logic testing.
     """
     # Create a mock operations instance that tracks calls
-    ops = Mock(spec=FlextLdapOperations)
+    ops: Mock = Mock(spec=FlextLdapOperations)
 
     # Configure mock to return successful results for add operations
     add_result_success = FlextResult[FlextLdapModels.OperationResult].ok(
@@ -104,31 +104,42 @@ def mock_ldap_operations() -> FlextLdapOperations:
             operation_type="add",
         )
     )
-    ops.add.return_value = add_result_success  # type: ignore[missing-attribute]
+    ops.add.return_value = add_result_success
 
     # Configure is_already_exists_error to return False by default
-    ops.is_already_exists_error.return_value = False  # type: ignore[missing-attribute]
+    ops.is_already_exists_error.return_value = False
 
     return ops
 
 
 @pytest.fixture
-def sync_service(mock_ldap_operations: FlextLdapOperations) -> FlextLdapSyncService:
+def sync_service(mock_ldap_operations: Mock) -> FlextLdapSyncService:
     """Create a FlextLdapSyncService instance for testing."""
     return FlextLdapSyncService(operations=mock_ldap_operations)
 
 
 # =============================================================================
-# INITIALIZATION TESTS
+# TEST CLASS
 # =============================================================================
 
 
-class TestFlextLdapSyncServiceInitialization:
-    """Test FlextLdapSyncService initialization."""
+class TestFlextLdapSyncService:
+    """Tests for LDAP sync service.
+
+    Single class with flat test methods covering:
+    - Initialization and configuration
+    - LDIF file parsing and validation
+    - Entry batch processing
+    - Base DN transformation
+    - Error handling and recovery
+    - Statistics reporting
+
+    Previously nested test classes flattened per FLEXT architecture.
+    """
 
     def test_initialization_with_operations(
         self,
-        mock_ldap_operations: FlextLdapOperations,
+        mock_ldap_operations: Mock,
     ) -> None:
         """Test initialization with operations parameter."""
         service = FlextLdapSyncService(operations=mock_ldap_operations)
@@ -142,22 +153,13 @@ class TestFlextLdapSyncServiceInitialization:
 
     def test_initialization_creates_ldif_instance(
         self,
-        mock_ldap_operations: FlextLdapOperations,
+        mock_ldap_operations: Mock,
     ) -> None:
         """Test initialization creates internal FlextLdif instance."""
         service = FlextLdapSyncService(operations=mock_ldap_operations)
         # Verify FlextLdif is initialized with RFC server type
         assert hasattr(service, "_ldif")
         assert isinstance(service._ldif, FlextLdif)
-
-
-# =============================================================================
-# LDIF FILE PARSING TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncLdifParsing:
-    """Test LDIF file parsing in sync service."""
 
     def test_sync_ldif_file_with_valid_file(
         self,
@@ -203,15 +205,6 @@ class TestFlextLdapSyncLdifParsing:
         stats = result.unwrap()
         assert stats.total == 0
         assert stats.added == 0
-
-
-# =============================================================================
-# BATCH PROCESSING TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncBatchProcessing:
-    """Test batch processing in sync service."""
 
     def test_sync_batch_with_successful_entries(
         self,
@@ -302,7 +295,7 @@ class TestFlextLdapSyncBatchProcessing:
     def test_sync_batch_with_duplicate_entries(
         self,
         sync_service: FlextLdapSyncService,
-        mock_ldap_operations: FlextLdapOperations,
+        mock_ldap_operations: Mock,
     ) -> None:
         """Test _sync_batch handles duplicate entries gracefully."""
         entries = [
@@ -324,8 +317,8 @@ class TestFlextLdapSyncBatchProcessing:
         error_result = FlextResult[FlextLdapModels.OperationResult].fail(
             "Entry already exists",
         )
-        mock_ldap_operations.add.return_value = error_result  # type: ignore[missing-attribute]
-        mock_ldap_operations.is_already_exists_error.return_value = True  # type: ignore[missing-attribute]
+        mock_ldap_operations.add.return_value = error_result
+        mock_ldap_operations.is_already_exists_error.return_value = True
 
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
@@ -339,7 +332,7 @@ class TestFlextLdapSyncBatchProcessing:
     def test_sync_batch_with_failed_entries(
         self,
         sync_service: FlextLdapSyncService,
-        mock_ldap_operations: FlextLdapOperations,
+        mock_ldap_operations: Mock,
     ) -> None:
         """Test _sync_batch counts failed entries."""
         entries = [
@@ -361,8 +354,8 @@ class TestFlextLdapSyncBatchProcessing:
         error_result = FlextResult[FlextLdapModels.OperationResult].fail(
             "Connection failed",
         )
-        mock_ldap_operations.add.return_value = error_result  # type: ignore[missing-attribute]
-        mock_ldap_operations.is_already_exists_error.return_value = False  # type: ignore[missing-attribute]
+        mock_ldap_operations.add.return_value = error_result
+        mock_ldap_operations.is_already_exists_error.return_value = False
 
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
@@ -373,15 +366,6 @@ class TestFlextLdapSyncBatchProcessing:
         assert stats.failed == 1
         assert stats.added == 0
         assert stats.skipped == 0
-
-
-# =============================================================================
-# BASE DN TRANSFORMATION TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncBaseDnTransformation:
-    """Test base DN transformation in sync service."""
 
     def test_transform_entries_basedn_with_matching_basedn(
         self,
@@ -456,15 +440,6 @@ class TestFlextLdapSyncBaseDnTransformation:
         assert len(result) == 1
         assert str(result[0].dn) == original_dn
 
-
-# =============================================================================
-# SYNC OPTIONS AND CONFIGURATION TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncOptions:
-    """Test sync options and configuration."""
-
     def test_sync_options_creation(self) -> None:
         """Test SyncOptions model creation."""
         options = FlextLdapModels.SyncOptions(
@@ -485,7 +460,7 @@ class TestFlextLdapSyncOptions:
         """Test SyncOptions with default values."""
         options = FlextLdapModels.SyncOptions()
 
-        # batch_size defaults to FlextLdapServiceBase.get_ldap_config().chunk_size
+        # batch_size defaults to FlextLdapConfig.get_instance().chunk_size
         assert options.batch_size > 0
         assert options.auto_create_parents is True
         assert options.allow_deletes is False
@@ -510,15 +485,6 @@ class TestFlextLdapSyncOptions:
         assert stats.total == 13
         assert stats.duration_seconds == 5.5
 
-
-# =============================================================================
-# HEALTH CHECK TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncHealthCheck:
-    """Test sync service health check."""
-
     def test_execute_returns_empty_stats(
         self,
         sync_service: FlextLdapSyncService,
@@ -534,19 +500,10 @@ class TestFlextLdapSyncHealthCheck:
         assert stats.total == 0
         assert stats.duration_seconds == 0.0
 
-
-# =============================================================================
-# STATISTICS REPORTING TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncStatistics:
-    """Test sync service statistics reporting."""
-
     def test_sync_stats_with_mixed_results(
         self,
         sync_service: FlextLdapSyncService,
-        mock_ldap_operations: FlextLdapOperations,
+        mock_ldap_operations: Mock,
     ) -> None:
         """Test sync statistics with mixed success/skip/fail results."""
         # Setup: 2 successful, 1 skipped (duplicate), 1 failed
@@ -599,7 +556,7 @@ class TestFlextLdapSyncStatistics:
             "Operation failed",
         )
 
-        mock_ldap_operations.add.side_effect = [  # type: ignore[missing-attribute]
+        mock_ldap_operations.add.side_effect = [
             success_result,
             success_result,
             dup_result,
@@ -609,7 +566,7 @@ class TestFlextLdapSyncStatistics:
         def is_dup(msg: str) -> bool:
             return "already exists" in msg.lower()
 
-        mock_ldap_operations.is_already_exists_error.side_effect = is_dup  # type: ignore[missing-attribute]
+        mock_ldap_operations.is_already_exists_error.side_effect = is_dup
 
         options = FlextLdapModels.SyncOptions(batch_size=50)
 
@@ -621,15 +578,6 @@ class TestFlextLdapSyncStatistics:
         assert stats.skipped == 1
         assert stats.failed == 1
         assert stats.total == 4
-
-
-# =============================================================================
-# ERROR HANDLING TESTS
-# =============================================================================
-
-
-class TestFlextLdapSyncErrorHandling:
-    """Test error handling in sync service."""
 
     def test_sync_with_empty_entries_list(
         self,
