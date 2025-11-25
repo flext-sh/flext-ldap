@@ -23,7 +23,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
@@ -247,7 +246,7 @@ class TestFlextLdapEntryAdapter:
         """Parametrized test for ldif_entry_to_ldap3_attributes conversions."""
         entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
-            attrs,
+            attrs,  # type: ignore[arg-type]
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attrs_result = TestOperationHelpers.assert_result_success_and_unwrap(result)
@@ -299,7 +298,7 @@ class TestFlextLdapEntryAdapter:
         assert attrs["emptyString"] == [""]
 
     def test_normalize_entry_for_server(
-        self, adapter: FlextLdapEntryAdapter, test_entry: object
+        self, adapter: FlextLdapEntryAdapter, test_entry: FlextLdifModels.Entry
     ) -> None:
         """Test entry normalization for server type."""
         result = adapter.normalize_entry_for_server(test_entry, "openldap2")
@@ -307,7 +306,7 @@ class TestFlextLdapEntryAdapter:
         assert normalized == test_entry  # Normalization handled by flext-ldif quirks
 
     def test_validate_entry_for_server_with_valid_entry(
-        self, adapter: FlextLdapEntryAdapter, test_entry: object
+        self, adapter: FlextLdapEntryAdapter, test_entry: FlextLdifModels.Entry
     ) -> None:
         """Test validation with valid entry."""
         result = adapter.validate_entry_for_server(test_entry, "openldap2")
