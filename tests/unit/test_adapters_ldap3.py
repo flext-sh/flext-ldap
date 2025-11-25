@@ -36,6 +36,18 @@ from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 pytestmark = pytest.mark.unit
 
 
+@pytest.fixture
+def adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
+    """Provide Ldap3Adapter instance for testing."""
+    return Ldap3Adapter(parser=ldap_parser)
+
+
+@pytest.fixture
+def search_options() -> FlextLdapModels.SearchOptions:
+    """Provide standard search options for testing."""
+    return Ldap3AdapterTestDataFactory.create_search_options()
+
+
 class AdapterTestScenario(StrEnum):
     """Test scenarios for LDAP3 adapter testing."""
 
@@ -143,9 +155,8 @@ class TestLdap3AdapterUnit:
 
     _factory = Ldap3AdapterTestDataFactory()
 
-    def test_adapter_initialization(self, ldap_parser: FlextLdifParser) -> None:
+    def test_adapter_initialization(self, adapter: Ldap3Adapter) -> None:
         """Test adapter initialization creates valid instance."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
         assert adapter is not None
         assert adapter._connection is None
         assert adapter._server is None
@@ -154,12 +165,10 @@ class TestLdap3AdapterUnit:
     @pytest.mark.parametrize("invalid_host", Ldap3AdapterTestDataFactory.INVALID_HOSTS)
     def test_connect_with_invalid_host(
         self,
+        adapter: Ldap3Adapter,
         invalid_host: str,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect with invalid host scenarios (parametrized)."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
-
         # Use parametrized invalid hosts to trigger connection failure
         config = FlextLdapModels.ConnectionConfig(
             host=invalid_host,
@@ -175,11 +184,10 @@ class TestLdap3AdapterUnit:
 
     def test_disconnect_with_real_connection(
         self,
+        adapter: Ldap3Adapter,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test disconnect with real connection."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -192,39 +200,42 @@ class TestLdap3AdapterUnit:
         assert adapter._server is None
         assert adapter.is_connected is False
 
-    def test_connection_property_with_real_connection(
+    @pytest.mark.parametrize(
+        "connection_type",
+        [
+            "connected",
+            "not_connected",
+        ],
+    )
+    def test_connection_property_by_state(
         self,
+        adapter: Ldap3Adapter,
         ldap_container: dict[str, object],
-        ldap_parser: FlextLdifParser,
+        connection_type: str,
     ) -> None:
-        """Test connection property access with real connection."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        """Test connection property with different connection states (parametrized)."""
+        if connection_type == "connected":
+            # Create real ldap3 connection using fixture
+            real_connection = TestDeduplicationHelpers.create_ldap3_connection(
+                ldap_container,
+            )
+            adapter._connection = cast("Connection", real_connection)
 
-        # Create real ldap3 connection using fixture
-        real_connection = TestDeduplicationHelpers.create_ldap3_connection(
-            ldap_container,
-        )
-        adapter._connection = cast("Connection", real_connection)
+            # Access connection property
+            connection = adapter.connection
+            assert connection == real_connection
+            assert isinstance(connection, Connection)
 
-        # Access connection property
-        connection = adapter.connection
-        assert connection == real_connection
-        assert isinstance(connection, Connection)
+            # Cleanup
+            if connection.bound:
+                connection.unbind()
 
-        # Cleanup
-        if connection.bound:
-            connection.unbind()
+        else:  # not_connected
+            adapter._connection = None
 
-    def test_connection_property_when_not_connected(
-        self, ldap_parser: FlextLdifParser
-    ) -> None:
-        """Test connection property returns None when not connected."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
-        adapter._connection = None
-
-        # Access connection property
-        connection = adapter.connection
-        assert connection is None
+            # Access connection property
+            connection = adapter.connection
+            assert connection is None
 
     @pytest.mark.parametrize(
         "connection_state",
@@ -236,13 +247,11 @@ class TestLdap3AdapterUnit:
     )
     def test_is_connected_property_by_state(
         self,
+        adapter: Ldap3Adapter,
         ldap_container: dict[str, object],
-        ldap_parser: FlextLdifParser,
         connection_state: str,
     ) -> None:
         """Test is_connected property with different connection states (parametrized)."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
-
         if connection_state == ConnectionState.CONNECTED.value:
             # Real connected connection
             real_connection_obj = TestDeduplicationHelpers.create_ldap3_connection(
@@ -266,12 +275,14 @@ class TestLdap3AdapterUnit:
             adapter._connection = unbound_connection
             assert adapter.is_connected is False
 
-    def test_search_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
+    def test_search_when_not_connected(
+        self,
+        adapter: Ldap3Adapter,
+        search_options: FlextLdapModels.SearchOptions,
+    ) -> None:
         """Test search when not connected."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
         adapter._connection = None
 
-        search_options = self._factory.create_search_options()
         result = adapter.search(search_options)
 
         # Should fail with not connected error
@@ -281,11 +292,10 @@ class TestLdap3AdapterUnit:
 
     def test_search_with_invalid_base_dn(
         self,
+        adapter: Ldap3Adapter,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test search with invalid base DN - real LDAP error."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -334,7 +344,10 @@ class TestLdap3AdapterUnit:
             # List should remain list
             assert attrs["testList"] == ["a", "b"]
 
-    def test_search_error_in_entry_conversion(self) -> None:
+    def test_search_error_in_entry_conversion(
+        self,
+        search_options: FlextLdapModels.SearchOptions,
+    ) -> None:
         """Test search error handling when entry conversion fails."""
         adapter = Ldap3Adapter()
 
@@ -361,16 +374,13 @@ class TestLdap3AdapterUnit:
         with FlextTestsUtilities.test_context(
             adapter, "_convert_parsed_entries", mock_convert_failure
         ):
-            search_options = self._factory.create_search_options()
-
             # This should trigger the error logging
             result = adapter.search(search_options)
             assert result.is_failure
             assert "Mock conversion failure" in str(result.error)
 
-    def test_add_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
+    def test_add_when_not_connected(self, adapter: Ldap3Adapter) -> None:
         """Test add when not connected."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
         adapter._connection = None
 
         # Use factory to create entry
@@ -385,11 +395,10 @@ class TestLdap3AdapterUnit:
 
     def test_add_with_invalid_entry(
         self,
+        adapter: Ldap3Adapter,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test add with invalid entry - real validation error."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
