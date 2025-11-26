@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import StrEnum
 from typing import ClassVar
 
@@ -59,7 +60,7 @@ class TestFlextLdapEntryAdapterRealOperations:
     def _create_test_entry_data(
         test_type: str,
         base_dn: str = RFC.DEFAULT_BASE_DN,
-    ) -> dict[str, object]:
+    ) -> object:
         """Create test entry data using FlextTestsFactories."""
         return FlextTestsFactories.create_user(
             user_id=f"test_{test_type}",
@@ -357,4 +358,5 @@ class TestFlextLdapEntryAdapterRealOperations:
 
         finally:
             if connection.bound:
-                connection.unbind()
+                unbind_func: Callable[[], None] = connection.unbind
+                unbind_func()

@@ -52,7 +52,7 @@ class TestFlextLdapRealOperations:
     def _create_test_user_data(
         uid_suffix: str,
         operation: str = "test",
-    ) -> dict[str, object]:
+    ) -> object:
         """Create test user data using FlextTestsFactories."""
         return FlextTestsFactories.create_user(
             user_id=f"{operation}_{uid_suffix}",
@@ -63,7 +63,7 @@ class TestFlextLdapRealOperations:
     @staticmethod
     def _create_test_config(
         operation: str = "test",
-    ) -> dict[str, object]:
+    ) -> object:
         """Create test configuration using FlextTestsFactories."""
         return FlextTestsFactories.create_config(
             service_type="ldap",
@@ -151,7 +151,7 @@ class TestFlextLdapRealOperations:
 
         # Execute search and assert success
         search_result = TestOperationHelpers.search_and_assert_success(
-            ldap_client,  # type: ignore[arg-type]
+            ldap_client,
             search_options.base_dn,
             filter_str=search_options.filter_str,
             scope=search_options.scope,
@@ -231,7 +231,7 @@ class TestFlextLdapRealOperations:
 
         # Add entry and verify
         result = TestOperationHelpers.add_entry_and_assert_success(
-            ldap_client,  # type: ignore[arg-type]
+            ldap_client,
             entry,
             verify_operation_result=True,
             cleanup_after=cleanup_expected,
@@ -270,14 +270,16 @@ class TestFlextLdapRealOperations:
                     "top",
                 ],
                 "uid": [uid],
-                "cn": [str(user_data["name"])],
+                "cn": [str(getattr(user_data, "name", str(user_data)))],
                 "sn": ["Modify"],
             },
         }
 
         # Define modification changes
         changes: dict[str, list[tuple[str, list[str]]]] = {
-            "mail": [(MODIFY_REPLACE, [str(user_data["email"])])],
+            "mail": [
+                (MODIFY_REPLACE, [str(getattr(user_data, "email", str(user_data)))])
+            ],
             "telephoneNumber": [(MODIFY_ADD, ["+1234567890"])],
         }
 
@@ -310,9 +312,9 @@ class TestFlextLdapRealOperations:
             uid,
             RFC.DEFAULT_BASE_DN,
             sn="Delete",
-            mail=str(user_data["email"]),
+            mail=str(getattr(user_data, "email", str(user_data))),
             use_uid=True,
-            cn=str(user_data["name"]),
+            cn=str(getattr(user_data, "name", str(user_data))),
         )
 
         # Add entry first
@@ -359,14 +361,19 @@ class TestFlextLdapRealOperations:
             uid,
             RFC.DEFAULT_BASE_DN,
             sn=test_name.title(),
-            mail=str(user_data["email"]),
+            mail=str(getattr(user_data, "email", str(user_data))),
             use_uid=True,
-            cn=str(user_data["name"]),
+            cn=str(getattr(user_data, "name", str(user_data))),
         )
 
         # Define modification changes
         changes: dict[str, list[tuple[str, list[str]]]] = {
-            "mail": [(MODIFY_REPLACE, [f"modified_{user_data['email']!s}"])],
+            "mail": [
+                (
+                    MODIFY_REPLACE,
+                    [f"modified_{getattr(user_data, 'email', str(user_data))!s}"],
+                )
+            ],
             "telephoneNumber": [(MODIFY_ADD, ["+1234567890"])],
         }
 

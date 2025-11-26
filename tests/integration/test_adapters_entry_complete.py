@@ -8,9 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 
 import pytest
+from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 from pydantic import ValidationError
 
@@ -41,7 +42,8 @@ class TestFlextLdapEntryAdapterComplete:
         )
         yield connection
         if connection.bound:
-            connection.unbind()
+            unbind_func: Callable[[], None] = connection.unbind
+            unbind_func()
 
     def test_ldap3_to_ldif_entry_with_real_ldap3_entry(
         self,
@@ -298,10 +300,11 @@ class TestFlextLdapEntryAdapterComplete:
             {},
         )
         # Pydantic v2 prevents setting attributes=None - this is correct behavior
-        # Test that Pydantic raises ValidationError
-        # Use type: ignore because we're intentionally testing invalid assignment
+        # Test that Pydantic raises ValidationError using model_validate
+        invalid_data = entry.model_dump()
+        invalid_data["attributes"] = None
         with pytest.raises(ValidationError):
-            entry.attributes = None  # type: ignore[assignment]
+            FlextLdifModels.Entry.model_validate(invalid_data)
 
         # Test validation with empty attributes
         # Entry with empty attributes can be created (Pydantic captures violations, doesn't reject)

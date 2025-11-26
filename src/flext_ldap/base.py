@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from typing import TypeVar
 
-from flext_core import FlextService
+from flext_core import FlextService, FlextUtilities
 from flext_ldif.utilities import FlextLdifUtilities
 
 TDomainResult = TypeVar("TDomainResult")
@@ -45,6 +45,9 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
     def safe_dn_string(dn: str | object | None) -> str:
         """Safely extract DN string value, defaulting to 'unknown' if None.
 
+        Uses FlextUtilities for type-safe string conversion and FlextLdifUtilities
+        for DN-specific value extraction. Generalizes DN string extraction pattern.
+
         Args:
             dn: DN value to extract string from
 
@@ -54,4 +57,6 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
         """
         if dn is None:
             return "unknown"
+        if FlextUtilities.TypeGuards.is_string_non_empty(dn):
+            return str(dn)
         return FlextLdifUtilities.DN.get_dn_value(dn)

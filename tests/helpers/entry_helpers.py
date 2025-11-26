@@ -1,7 +1,12 @@
 """Helper methods for creating and manipulating Entry objects in tests.
 
-This class provides methods to reduce duplication when creating Entry objects
-from dictionaries, fixtures, and other common test patterns.
+This module provides methods to reduce duplication when creating Entry objects
+from dictionaries, fixtures, and other common test patterns. Uses flext_tests
+utilities for maximum code reuse and DRY principles.
+
+Module: EntryTestHelpers
+Scope: Entry creation, manipulation, and LDAP operation workflows for tests
+Pattern: Static helper methods using flext_tests and protocols
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,222 +16,153 @@ from __future__ import annotations
 
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from typing import cast
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
+from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+
+# Import FlextLdapOperations for union type
+from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import LdapClientProtocol
+
+# Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
+LdapClientType = FlextLdap | LdapClientProtocol
+
+# Union type for LDAP operations only (no connect method) - for FlextLdapOperations and similar
+LdapOperationsType = FlextLdap | FlextLdapOperations | LdapClientProtocol
 
 
 class EntryTestHelpers:
-    """Helper methods for Entry creation and manipulation in tests."""
+    """Helper methods for Entry creation and manipulation in tests.
+
+    Uses flext_tests utilities and protocols for maximum code reuse.
+    All methods are static for easy use in tests.
+    """
+
+    class _EntryFactory:
+        """Nested class for entry creation (SRP)."""
+
+        @staticmethod
+        def _normalize_attributes(
+            attributes: Mapping[str, object],
+        ) -> dict[str, list[str]]:
+            """Normalize attributes to dict[str, list[str]].
+
+            Args:
+                attributes: Raw attributes mapping with any value type
+
+            Returns:
+                Normalized dict with list[str] values
+
+            """
+            attrs_dict: dict[str, list[str]] = {}
+            for key, value_item_raw in attributes.items():
+                if FlextRuntime.is_list_like(value_item_raw):
+                    attrs_dict[key] = [str(item) for item in value_item_raw]
+                else:
+                    attrs_dict[key] = [str(value_item_raw)]
+            return attrs_dict
 
     @staticmethod
-    def _narrow_client_type(client: object) -> LdapClientProtocol:
-        """Narrow client type from object to LdapClientProtocol.
+    def create_entry(
+        dn: str,
+        attributes: Mapping[str, object],
+    ) -> FlextLdifModels.Entry:
+        """Create Entry directly from DN string and attributes dict.
 
         Args:
-            client: Client object to narrow
+            dn: Distinguished name string
+            attributes: Attribute dict - values are normalized to list[str]
 
         Returns:
-            Client cast to LdapClientProtocol
+            FlextLdifModels.Entry with normalized attributes
 
         """
-        return cast("LdapClientProtocol", client)
+        dn_obj = FlextLdifModels.DistinguishedName(value=dn)
+        attrs_dict = EntryTestHelpers._EntryFactory._normalize_attributes(attributes)
+        attrs = FlextLdifModels.LdifAttributes.model_validate({
+            "attributes": attrs_dict
+        })
+        return FlextLdifModels.Entry(dn=dn_obj, attributes=attrs)
 
     @staticmethod
     def dict_to_entry(
         entry_dict: Mapping[str, object] | dict[str, object],
     ) -> FlextLdifModels.Entry:
-        """Convert dictionary to FlextLdifModels.Entry.
-
-        This is a common pattern repeated across many tests. Centralizes
-        the conversion logic to reduce duplication.
-
-        Args:
-            entry_dict: Dictionary with 'dn' and 'attributes' keys
-
-        Returns:
-            FlextLdifModels.Entry created from dictionary
-
-        Example:
-            entry_dict = {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"], "objectClass": ["person"]}
-            }
-            entry = EntryTestHelpers.dict_to_entry(entry_dict)
-
-        """
+        """Convert dictionary to FlextLdifModels.Entry."""
         dn_str = str(entry_dict.get("dn", ""))
-        dn = FlextLdifModels.DistinguishedName(value=dn_str)
-        attrs_dict = entry_dict.get("attributes", {})
-        if isinstance(attrs_dict, dict):
-            attrs = FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": attrs_dict,
-            })
-        else:
-            attrs = FlextLdifModels.LdifAttributes()
-        return FlextLdifModels.Entry(dn=dn, attributes=attrs)
+        attrs_raw = entry_dict.get("attributes", {})
+        attrs_dict: dict[str, object] = (
+            dict(attrs_raw) if FlextRuntime.is_dict_like(attrs_raw) else {}
+        )
+        return EntryTestHelpers.create_entry(dn_str, attrs_dict)
 
     @staticmethod
     def cleanup_entry(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         dn: str | FlextLdifModels.DistinguishedName,
     ) -> None:
-        """Cleanup entry before add to avoid entryAlreadyExists errors.
-
-        This is a common pattern repeated across many tests. Performs
-        a delete operation before add to ensure entry doesn't exist.
-
-        Args:
-            client: LDAP client with delete method (FlextLdap, Ldap3Adapter, etc.)
-            dn: Distinguished name as string or DistinguishedName object
-
-        Example:
-            entry = EntryTestHelpers.dict_to_entry(test_user_entry)
-            EntryTestHelpers.cleanup_entry(ldap_client, entry.dn)
-            result = ldap_client.add(entry)
-
-        """
-        typed_client = EntryTestHelpers._narrow_client_type(client)
+        """Cleanup entry before add to avoid entryAlreadyExists errors."""
         dn_str = str(dn) if dn else ""
-        _ = typed_client.delete(dn_str)  # Ignore result, just cleanup
+        _ = client.delete(dn_str)
 
     @staticmethod
     def verify_entry_added(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         dn: str | FlextLdifModels.DistinguishedName,
     ) -> bool:
-        """Verify that an entry was successfully added to LDAP.
-
-        This is a common pattern repeated across many tests. Performs
-        a BASE search to verify the entry exists after add operation.
-
-        Args:
-            client: LDAP client with search method (FlextLdap, Ldap3Adapter, etc.)
-            dn: Distinguished name as string or DistinguishedName object
-
-        Returns:
-            True if entry exists, False otherwise
-
-        Example:
-            result = ldap_client.add(entry)
-            assert result.is_success
-            assert EntryTestHelpers.verify_entry_added(ldap_client, entry.dn)
-
-        """
+        """Verify that an entry was successfully added to LDAP."""
         dn_str = str(dn) if dn else ""
-        # All clients now use SearchOptions - unified API
-        typed_client = EntryTestHelpers._narrow_client_type(client)
         search_options = FlextLdapModels.SearchOptions(
             base_dn=dn_str,
             filter_str="(objectClass=*)",
             scope="BASE",
         )
-        search_result = typed_client.search(search_options)
+        search_result = client.search(search_options)
         if search_result.is_success:
             unwrapped = search_result.unwrap()
-            # Search always returns SearchResult
-            entries = unwrapped.entries
-            return len(entries) == 1
+            return len(unwrapped.entries) == 1
         return False
 
     @staticmethod
     def cleanup_after_test(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         dn: str | FlextLdifModels.DistinguishedName,
     ) -> None:
-        """Cleanup entry after test execution.
-
-        This is a common pattern repeated across many tests. Performs
-        a delete operation after test to clean up test data. Ignores
-        errors since entry may not exist.
-
-        Args:
-            client: LDAP client with delete method (FlextLdap, Ldap3Adapter, etc.)
-            dn: Distinguished name as string or DistinguishedName object
-
-        Example:
-            result = ldap_client.add(entry)
-            assert result.is_success
-            # ... test assertions ...
-            EntryTestHelpers.cleanup_after_test(ldap_client, entry.dn)
-
-        """
-        typed_client = EntryTestHelpers._narrow_client_type(client)
+        """Cleanup entry after test execution."""
         dn_str = str(dn) if dn else ""
-        delete_result = typed_client.delete(dn_str)
-        # Ignore result - entry may not exist, that's OK for cleanup
-        _ = delete_result
+        _ = client.delete(dn_str)
 
     @staticmethod
     def add_entry_from_dict(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         entry_dict: Mapping[str, object] | dict[str, object],
         *,
         verify: bool = True,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
     ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
-        """Complete workflow: convert dict to entry, cleanup, add, verify, cleanup.
-
-        This method replaces the entire pattern of:
-        - Converting dict to Entry
-        - Cleaning up before add
-        - Adding entry
-        - Verifying entry was added
-        - Cleaning up after test
-
-        Args:
-            client: LDAP client with add, delete, search methods
-            entry_dict: Dictionary with 'dn' and 'attributes' keys
-            verify: Whether to verify entry was added (default: True)
-            cleanup_before: Whether to cleanup before add (default: True)
-            cleanup_after: Whether to cleanup after add (default: True)
-
-        Returns:
-            Tuple of (entry, add_result)
-
-        Example:
-            entry, result = EntryTestHelpers.add_entry_from_dict(
-                ldap_client, test_user_entry
-            )
-            assert result.is_success
-
-        """
-        # Convert dict to entry
+        """Complete workflow: convert dict to entry, cleanup, add, verify, cleanup."""
         entry = EntryTestHelpers.dict_to_entry(entry_dict)
-
-        typed_client = EntryTestHelpers._narrow_client_type(client)
-        # Cleanup before if requested
         if cleanup_before:
-            # Convert DN to string to avoid type issues
-            dn_str = str(entry.dn) if entry.dn else ""
-            EntryTestHelpers.cleanup_entry(typed_client, dn_str)
-
-        # Add entry
-        add_result = typed_client.add(entry)
-
-        # Verify if requested and add was successful
+            EntryTestHelpers.cleanup_entry(client, str(entry.dn) if entry.dn else "")
+        add_result = client.add(entry)
         if verify and add_result.is_success:
-            dn_str = str(entry.dn) if entry.dn else ""
-            assert EntryTestHelpers.verify_entry_added(typed_client, dn_str), (
-                "Entry was not found after add"
-            )
-
-        # Cleanup after if requested
+            assert EntryTestHelpers.verify_entry_added(
+                client, str(entry.dn) if entry.dn else ""
+            ), "Entry was not found after add"
         if cleanup_after:
-            dn_str = str(entry.dn) if entry.dn else ""
-            EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
-
+            EntryTestHelpers.cleanup_after_test(
+                client, str(entry.dn) if entry.dn else ""
+            )
         return entry, add_result
 
     @staticmethod
     def add_multiple_entries_from_dicts(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         entry_dicts: list[dict[str, object]],
         *,
         adjust_dn: dict[str, str] | None = None,
@@ -235,76 +171,37 @@ class EntryTestHelpers:
     ) -> list[
         tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
     ]:
-        """Add multiple entries from list of dictionaries.
-
-        This method replaces the entire pattern of:
-        - Looping through entry dictionaries
-        - Adjusting DNs if needed
-        - Converting each dict to Entry
-        - Cleaning up before each add
-        - Adding each entry
-        - Collecting DNs for cleanup
-        - Cleaning up all entries after
-
-        Args:
-            client: LDAP client with add, delete methods
-            entry_dicts: List of dictionaries with 'dn' and 'attributes' keys
-            adjust_dn: Optional dict with 'from' and 'to' keys to replace in DN
-            cleanup_before: Whether to cleanup before each add (default: True)
-            cleanup_after: Whether to cleanup all entries after (default: True)
-
-        Returns:
-            List of tuples (entry, add_result) for each entry
-
-        Example:
-            results = EntryTestHelpers.add_multiple_entries_from_dicts(
-                ldap_client,
-                [user1_dict, user2_dict],
-                adjust_dn={"from": "dc=example,dc=com", "to": "dc=flext,dc=local"}
-            )
-
-        """
+        """Add multiple entries from list of dictionaries."""
         results: list[
             tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
         ] = []
         added_dns: list[str] = []
-
         for entry_dict_item in entry_dicts:
-            # entry_dicts is list[dict[str, object]], so all items are already dicts
             entry_dict: dict[str, object] = dict(entry_dict_item)
             if adjust_dn:
                 original_dn = str(entry_dict.get("dn", ""))
                 adjusted_dn = original_dn.replace(
-                    str(adjust_dn.get("from", "")),
-                    str(adjust_dn.get("to", "")),
+                    str(adjust_dn.get("from", "")), str(adjust_dn.get("to", ""))
                 )
-                # Update DN in dict
                 entry_dict["dn"] = adjusted_dn
-
-            # Add entry using the complete workflow (but don't cleanup after yet)
             entry, add_result = EntryTestHelpers.add_entry_from_dict(
                 client,
                 entry_dict,
-                verify=False,  # Skip verification for speed
+                verify=False,
                 cleanup_before=cleanup_before,
-                cleanup_after=False,  # We'll cleanup all at once
+                cleanup_after=False,
             )
-
             results.append((entry, add_result))
             if entry.dn:
                 added_dns.append(str(entry.dn))
-
-        typed_client = EntryTestHelpers._narrow_client_type(client)
-        # Cleanup all entries at once if requested
         if cleanup_after:
             for dn_str in added_dns:
-                EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
-
+                EntryTestHelpers.cleanup_after_test(client, dn_str)
         return results
 
     @staticmethod
     def modify_entry_with_verification(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         entry_dict: Mapping[str, object] | dict[str, object],
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
@@ -317,103 +214,50 @@ class EntryTestHelpers:
         FlextResult[FlextLdapModels.OperationResult],
         FlextResult[FlextLdapModels.OperationResult],
     ]:
-        """Complete modify workflow: add entry, modify, verify, cleanup.
-
-        This method replaces the entire pattern of:
-        - Converting dict to Entry
-        - Cleaning up before add
-        - Adding entry
-        - Modifying entry
-        - Verifying modification
-        - Cleaning up after test
-
-        Args:
-            client: LDAP client with add, modify, delete, search methods
-            entry_dict: Dictionary with 'dn' and 'attributes' keys
-            changes: Dictionary of modifications (attr -> list of (operation, values))
-            verify_attribute: Optional attribute name to verify after modify
-            verify_value: Optional value to check in verify_attribute
-            cleanup_before: Whether to cleanup before add (default: True)
-            cleanup_after: Whether to cleanup after modify (default: True)
-
-        Returns:
-            Tuple of (entry, add_result, modify_result)
-
-        Example:
-            entry, add_result, modify_result = (
-                EntryTestHelpers.modify_entry_with_verification(
-                    ldap_client,
-                    test_user_entry,
-                    {"mail": [(MODIFY_REPLACE, ["new@example.com"])]},
-                verify_attribute="mail",
-                verify_value="new@example.com"
-            )
-
-        """
-        # First add the entry (without cleanup_after since we'll do it at the end)
+        """Complete modify workflow: add entry, modify, verify, cleanup."""
         entry, add_result = EntryTestHelpers.add_entry_from_dict(
             client,
             entry_dict,
-            verify=False,  # We'll verify after modify
+            verify=False,
             cleanup_before=cleanup_before,
-            cleanup_after=False,  # We'll cleanup at the end
+            cleanup_after=False,
         )
-
-        # Check if add_result is successful
-        add_success = add_result.is_success
-
-        if not add_success:
-            # If add failed, cleanup and return
+        if not add_result.is_success:
             if cleanup_after:
-                dn_str = str(entry.dn) if entry.dn else ""
-                EntryTestHelpers.cleanup_after_test(client, dn_str)
-            return entry, add_result, add_result  # Return add_result as modify_result
-
-        typed_client = EntryTestHelpers._narrow_client_type(client)
-        # Modify the entry
+                EntryTestHelpers.cleanup_after_test(
+                    client, str(entry.dn) if entry.dn else ""
+                )
+            return entry, add_result, add_result
         dn_str = str(entry.dn) if entry.dn else ""
-        modify_result = typed_client.modify(dn_str, changes)
-
-        # Verify modification if requested
-        modify_success = modify_result.is_success
-
-        if modify_success and verify_attribute and verify_value:
-            # All clients now use SearchOptions - unified API
+        modify_result = client.modify(dn_str, changes)
+        if modify_result.is_success and verify_attribute and verify_value and entry.dn:
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=dn_str,
                 filter_str="(objectClass=*)",
                 scope="BASE",
             )
-            search_result = typed_client.search(search_options)
+            search_result = client.search(search_options)
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
-                # Search always returns SearchResult
-                entries = unwrapped.entries
-                if entries:
-                    modified_entry = entries[0]
+                if unwrapped.entries:
+                    modified_entry = unwrapped.entries[0]
                     if (
                         modified_entry.attributes
                         and modified_entry.attributes.attributes
                     ):
                         attrs = modified_entry.attributes.attributes.get(
-                            verify_attribute,
-                            [],
+                            verify_attribute, []
                         )
                         assert verify_value in attrs, (
-                            f"Expected {verify_value} in {verify_attribute}, "
-                            f"got {attrs}"
+                            f"Expected {verify_value} in {verify_attribute}, got {attrs}"
                         )
-
-        # Cleanup after if requested
         if cleanup_after:
-            dn_str = str(entry.dn) if entry.dn else ""
             EntryTestHelpers.cleanup_after_test(client, dn_str)
-
         return entry, add_result, modify_result
 
     @staticmethod
     def delete_entry_with_verification(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         entry_dict: Mapping[str, object] | dict[str, object],
         *,
         cleanup_before: bool = True,
@@ -423,171 +267,49 @@ class EntryTestHelpers:
         FlextResult[FlextLdapModels.OperationResult],
         FlextResult[FlextLdapModels.OperationResult],
     ]:
-        """Complete delete workflow: add entry, delete, verify deletion.
-
-        This method replaces the entire pattern of:
-        - Converting dict to Entry
-        - Cleaning up before add
-        - Adding entry
-        - Deleting entry
-        - Verifying deletion (entry doesn't exist)
-        - No cleanup needed (entry already deleted)
-
-        Args:
-            client: LDAP client with add, delete, search methods
-            entry_dict: Dictionary with 'dn' and 'attributes' keys
-            cleanup_before: Whether to cleanup before add (default: True)
-            verify_deletion: Whether to verify entry was deleted (default: True)
-
-        Returns:
-            Tuple of (entry, add_result, delete_result)
-
-        Example:
-            entry, add_result, delete_result = (
-                EntryTestHelpers.delete_entry_with_verification(
-                    ldap_client, test_user_entry
-                )
-            )
-            assert add_result.is_success
-            assert delete_result.is_success
-
-        """
-        # First add the entry (without cleanup_after since we'll delete it)
+        """Complete delete workflow: add entry, delete, verify deletion."""
         entry, add_result = EntryTestHelpers.add_entry_from_dict(
             client,
             entry_dict,
-            verify=False,  # We'll verify after delete
+            verify=False,
             cleanup_before=cleanup_before,
-            cleanup_after=False,  # We'll delete it, no cleanup needed
+            cleanup_after=False,
         )
-
-        # Check if add_result is successful
-        add_success = add_result.is_success
-
-        if not add_success:
-            # If add failed, return early
+        if not add_result.is_success:
             return entry, add_result, add_result
-
-        typed_client = EntryTestHelpers._narrow_client_type(client)
-        # Delete the entry
         dn_str = str(entry.dn) if entry.dn else ""
-        delete_result = typed_client.delete(dn_str)
-
-        # Verify deletion if requested
-        if verify_deletion:
-            delete_success = delete_result.is_success
-
-            if delete_success:
-                # All clients now use SearchOptions - unified API
-                search_options = FlextLdapModels.SearchOptions(
-                    base_dn=dn_str,
-                    filter_str="(objectClass=*)",
-                    scope="BASE",
+        delete_result = client.delete(dn_str)
+        if verify_deletion and delete_result.is_success:
+            search_options = FlextLdapModels.SearchOptions(
+                base_dn=dn_str,
+                filter_str="(objectClass=*)",
+                scope="BASE",
+            )
+            search_result = client.search(search_options)
+            if search_result.is_success:
+                unwrapped = search_result.unwrap()
+                assert len(unwrapped.entries) == 0, (
+                    f"Entry {dn_str} still exists after deletion"
                 )
-                search_result = typed_client.search(search_options)
-                if search_result.is_success:
-                    unwrapped = search_result.unwrap()
-                    # Search always returns SearchResult
-                    entries = unwrapped.entries
-                    assert len(entries) == 0, (
-                        f"Entry {dn_str} still exists after deletion"
-                    )
-
         return entry, add_result, delete_result
 
     @staticmethod
-    def create_entry(
-        dn: str,
-        attributes: dict[
-            str,
-            list[str] | str | tuple[str, ...] | set[str] | frozenset[str],
-        ],
-    ) -> FlextLdifModels.Entry:
-        """Create Entry directly from DN string and attributes dict.
-
-        This method replaces the common pattern of creating Entry objects
-        with DistinguishedName and LdifAttributes manually.
-
-        Args:
-            dn: Distinguished name as string
-            attributes: Dictionary of attributes (values can be list, tuple, set, frozenset or single value)
-
-        Returns:
-            FlextLdifModels.Entry created from parameters
-
-        Example:
-            entry = EntryTestHelpers.create_entry(
-                "cn=test,dc=example,dc=com",
-                {"cn": ["test"], "objectClass": ["person"]}
-            )
-
-        """
-        dn_obj = FlextLdifModels.DistinguishedName(value=dn)
-        # Convert single values to lists
-        attrs_dict: dict[str, list[str]] = {}
-        for key, value_item_raw in attributes.items():
-            # value_item_raw can be list[str] | str | tuple[str, ...] | set[str] | frozenset[str]
-            if isinstance(value_item_raw, list):
-                # value_item_raw is list[str] here
-                attrs_dict[key] = [str(item) for item in value_item_raw]
-            elif isinstance(value_item_raw, (tuple, set, frozenset)):
-                # Convert list-like collections to list of strings
-                attrs_dict[key] = [str(item) for item in value_item_raw]
-            else:
-                # value_item_raw is str here
-                attrs_dict[key] = [str(value_item_raw)]
-        attrs = FlextLdifModels.LdifAttributes.model_validate({
-            "attributes": attrs_dict,
-        })
-        return FlextLdifModels.Entry(dn=dn_obj, attributes=attrs)
-
-    @staticmethod
     def add_and_cleanup(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         entry: FlextLdifModels.Entry,
         *,
         verify: bool = False,
         cleanup_after: bool = True,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Add entry with automatic cleanup before and after.
-
-        Simplified version for when you already have an Entry object.
-
-        Args:
-            client: LDAP client with add, delete methods
-            entry: FlextLdifModels.Entry to add
-            verify: Whether to verify entry was added (default: False)
-            cleanup_after: Whether to cleanup after add (default: True)
-
-        Returns:
-            Add result object
-
-        Example:
-            entry = EntryTestHelpers.create_entry(
-                "cn=test,dc=example,dc=com", {"cn": ["test"]}
-            )
-            result = EntryTestHelpers.add_and_cleanup(ldap_client, entry)
-
-        """
-        typed_client = EntryTestHelpers._narrow_client_type(client)
-        # Cleanup before
+        """Add entry with automatic cleanup before and after."""
         if entry.dn:
             dn_str = str(entry.dn)
-            EntryTestHelpers.cleanup_entry(typed_client, dn_str)
-
-        # Add entry
-        add_result = typed_client.add(entry)
-
-        # Verify if requested
+            EntryTestHelpers.cleanup_entry(client, dn_str)
+        add_result = client.add(entry)
         if verify and entry.dn and add_result.is_success:
-            dn_str = str(entry.dn)
-            assert EntryTestHelpers.verify_entry_added(typed_client, dn_str)
-
-        # Cleanup after if requested
+            assert EntryTestHelpers.verify_entry_added(client, str(entry.dn))
         if cleanup_after and entry.dn:
-            dn_str = str(entry.dn)
-            EntryTestHelpers.cleanup_after_test(typed_client, dn_str)
-
+            EntryTestHelpers.cleanup_after_test(client, str(entry.dn))
         return add_result
 
     @staticmethod
@@ -595,25 +317,7 @@ class EntryTestHelpers:
     def ldap3_connection_from_container(
         ldap_container: dict[str, object],
     ) -> Generator[tuple[Connection, Ldap3Entry | None]]:
-        """Context manager for LDAP3 connection from container fixture.
-
-        Eliminates repetitive connection creation/cleanup pattern used in 112+ places.
-
-        Args:
-            ldap_container: Container fixture dict with host, port, bind_dn, password, base_dn
-
-        Yields:
-            tuple[Connection, Ldap3Entry | None]: Connection and first entry from BASE search
-
-        Example:
-            with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (conn, entry):
-                if entry:
-                    # Modify entry.entry_attributes_as_dict
-                    attrs_dict = entry.entry_attributes_as_dict
-                    attrs_dict["testAttr"] = "value"
-                    # Use entry for testing
-
-        """
+        """Context manager for LDAP3 connection from container fixture."""
         server = Server(
             f"ldap://{ldap_container['host']}:{ldap_container['port']}",
             get_info="ALL",
@@ -637,32 +341,15 @@ class EntryTestHelpers:
             yield (connection, entry)
         finally:
             if connection.bound:
-                cast("Callable[[], None]", connection.unbind)()
+                unbind_func: Callable[[], None] = connection.unbind
+                unbind_func()
 
     @staticmethod
     def with_ldap3_entry(
         ldap_container: dict[str, object],
         modifier: Callable[[Ldap3Entry], None],
     ) -> Ldap3Entry | None:
-        """Get LDAP3 entry and apply modification, returning modified entry.
-
-        Consolidates pattern: create connection, search, modify entry, return entry.
-        Connection is automatically cleaned up.
-
-        Args:
-            ldap_container: Container fixture dict
-            modifier: Function to modify entry.entry_attributes_as_dict
-
-        Returns:
-            Modified Ldap3Entry or None if no entry found
-
-        Example:
-            entry = EntryTestHelpers.with_ldap3_entry(
-                ldap_container,
-                lambda e: e.entry_attributes_as_dict.update({"testAttr": "value"}),
-            )
-
-        """
+        """Get LDAP3 entry and apply modification, returning modified entry."""
         with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
             _,
             entry,
@@ -671,3 +358,93 @@ class EntryTestHelpers:
                 modifier(entry)
                 return entry
         return None
+
+    class MetadataHelpers:
+        """Helper methods for metadata assertion in tests (moved from nested class)."""
+
+        @staticmethod
+        def get_extensions(entry: FlextLdifModels.Entry) -> dict[str, object]:
+            """Get extensions dict from entry metadata."""
+            if not entry.metadata or not hasattr(entry.metadata, "extensions"):
+                return {}
+            extensions = entry.metadata.extensions
+            return dict(extensions) if FlextRuntime.is_dict_like(extensions) else {}
+
+        @staticmethod
+        def assert_base64_tracked(entry: FlextLdifModels.Entry, attr_name: str) -> None:
+            """Assert base64 attribute is tracked in metadata."""
+            extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
+            base64_attrs = extensions.get("base64_encoded_attributes")
+            if base64_attrs:
+                base64_list = (
+                    list(base64_attrs)
+                    if FlextRuntime.is_list_like(base64_attrs)
+                    else [base64_attrs]
+                )
+                base64_strs = [str(a) for a in base64_list if a is not None]
+                assert any(attr_name in a for a in base64_strs), (
+                    f"Expected {attr_name} in base64_encoded_attributes"
+                )
+
+        @staticmethod
+        def assert_converted_tracked(
+            entry: FlextLdifModels.Entry, attr_name: str
+        ) -> None:
+            """Assert converted attribute is tracked in metadata."""
+            extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
+            converted_attrs = extensions.get("converted_attributes")
+            if converted_attrs and isinstance(converted_attrs, (list, dict, set)):
+                assert attr_name in converted_attrs, (
+                    f"Expected {attr_name} in converted_attributes"
+                )
+
+    @staticmethod
+    def create_real_ldap3_entry(
+        ldap_container: dict[str, object],
+        dn: str,
+        attributes: dict[str, object],
+    ) -> Ldap3Entry | None:
+        """Create real LDAP3 entry by adding to LDAP and retrieving it."""
+        with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
+            connection,
+            _,
+        ):
+            # Add entry to LDAP
+            object_class_value = attributes.get("objectClass", ["top"])
+            object_classes: list[str]
+            if FlextRuntime.is_list_like(object_class_value):
+                object_classes = [str(oc) for oc in object_class_value]
+            elif isinstance(object_class_value, str):
+                object_classes = [object_class_value]
+            else:
+                object_classes = ["top"]
+
+            attrs_dict: dict[str, object] = {
+                k: v for k, v in attributes.items() if k != "objectClass"
+            }
+
+            add_func: Callable[[str, list[str], dict[str, object]], bool] = (
+                connection.add
+            )
+            add_success = add_func(dn, object_classes, attrs_dict)
+            if not add_success:
+                return None
+
+            # Retrieve the entry
+            connection.search(
+                search_base=dn,
+                search_filter="(objectClass=*)",
+                search_scope="BASE",
+                attributes=["*"],
+            )
+            if connection.entries:
+                entry_raw = connection.entries[0]
+                entry: Ldap3Entry | None = (
+                    entry_raw if isinstance(entry_raw, Ldap3Entry) else None
+                )
+                if entry:
+                    # Cleanup
+                    delete_func: Callable[[str], bool] = connection.delete
+                    delete_func(dn)
+                    return entry
+            return None

@@ -9,16 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Generator
+
 import pytest
-from flext_ldif import FlextLdif, FlextLdifParser
+from flext_ldif import FlextLdif, FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 
 from ..fixtures.constants import TestConstants
-from ..helpers.test_helpers import LdapTestDataFactory, FlextLdapTestHelpers
-
+from ..helpers.test_helpers import LdapTestDataFactory
 
 # ===== DATA FACTORIES =====
 
@@ -51,7 +52,7 @@ def config_custom(ldap_data_factory: LdapTestDataFactory) -> FlextLdapConfig:
 
 
 @pytest.fixture(autouse=True)
-def reset_ldap_singleton() -> None:
+def reset_ldap_singleton() -> Generator[None]:
     """Auto-reset FlextLdap singleton before and after each unit test."""
     FlextLdap._reset_instance()
     yield
@@ -83,13 +84,15 @@ def ldap_instance_custom(
 
 
 @pytest.fixture
-def search_options(ldap_data_factory: LdapTestDataFactory) -> FlextLdapModels.SearchOptions:
+def search_options(
+    ldap_data_factory: LdapTestDataFactory,
+) -> FlextLdapModels.SearchOptions:
     """Provide default SearchOptions for testing."""
     return ldap_data_factory.create_search_options()
 
 
 @pytest.fixture
-def test_entry(ldap_data_factory: LdapTestDataFactory) -> FlextLdapModels.Entry:
+def test_entry(ldap_data_factory: LdapTestDataFactory) -> FlextLdifModels.Entry:
     """Provide test entry using factory."""
     return ldap_data_factory.create_entry(
         dn=TestConstants.TEST_USER_DN,
@@ -100,9 +103,29 @@ def test_entry(ldap_data_factory: LdapTestDataFactory) -> FlextLdapModels.Entry:
 @pytest.fixture
 def connection_config(
     ldap_data_factory: LdapTestDataFactory,
+    request: pytest.FixtureRequest,
 ) -> FlextLdapModels.ConnectionConfig:
-    """Provide ConnectionConfig for testing."""
-    return ldap_data_factory.create_connection_config()
+    """Provide ConnectionConfig for testing.
+    
+    Uses container credentials if ldap_container fixture is available,
+    otherwise uses default test credentials.
+    """
+    # Try to get ldap_container fixture (from root conftest) if available
+    try:
+        ldap_container = request.getfixturevalue("ldap_container")
+        # Use container credentials
+        port_value = ldap_container.get("port", 3390)
+        port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
+        return FlextLdapModels.ConnectionConfig(
+            host=str(ldap_container.get("host", "localhost")),
+            port=port_int,
+            use_ssl=False,
+            bind_dn=str(ldap_container.get("bind_dn", TestConstants.DEFAULT_BIND_DN)),
+            bind_password=str(ldap_container.get("password", TestConstants.DEFAULT_BIND_PASSWORD)),
+        )
+    except pytest.FixtureLookupError:
+        # Fallback to default test credentials
+        return ldap_data_factory.create_connection_config()
 
 
 # ===== CONSTANTS FIXTURES =====
@@ -142,25 +165,25 @@ def default_base_dn() -> str:
         {"host": "secure.example.com", "port": 636},
     ]
 )
-def config_variants(request) -> tuple[str, int]:
+def config_variants(request: pytest.FixtureRequest) -> tuple[str, int]:
     """Parametrized fixture providing different host/port combinations."""
     return request.param["host"], request.param["port"]
 
 
 __all__ = [
-    "ldap_data_factory",
-    "config_with_defaults",
     "config_custom",
-    "reset_ldap_singleton",
-    "ldif_instance",
+    "config_variants",
+    "config_with_defaults",
+    "connection_config",
+    "default_base_dn",
+    "ldap_data_factory",
     "ldap_instance",
     "ldap_instance_custom",
+    "ldif_instance",
+    "reset_ldap_singleton",
     "search_options",
-    "test_entry",
-    "connection_config",
     "test_constants",
-    "test_user_dn",
+    "test_entry",
     "test_group_dn",
-    "default_base_dn",
-    "config_variants",
+    "test_user_dn",
 ]

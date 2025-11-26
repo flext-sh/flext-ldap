@@ -1,14 +1,19 @@
 """Unit tests for LDAP filter validation and operations.
 
-This module tests filter-related functionality using deduplication helpers
-to reduce code duplication.
+**Modules Tested:**
+- `flext_ldap.models.FlextLdapModels.SearchOptions` - LDAP search filter validation and operations
 
-Tested modules:
-- LDAP filter validation and search options
-
-Test scope:
+**Test Scope:**
 - Simple, complex, and wildcard filter validation
 - SearchOptions creation with various parameters
+- Default filter values from constants
+
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+
+Module: TestFilterService
+Scope: Comprehensive filter testing with maximum code reuse
+Pattern: Parametrized tests using factories and constants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,6 +27,10 @@ from typing import ClassVar
 
 import pytest
 
+from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.models import FlextLdapModels
+
+from ...fixtures.constants import TestConstants
 from ...helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.unit
@@ -33,22 +42,12 @@ class FilterTestScenario(StrEnum):
     SIMPLE = "simple"
     COMPLEX = "complex"
     WILDCARD = "wildcard"
-    DEFAULT = "default"
-
-
-class FilterTestCategory(StrEnum):
-    """Test categories for filter operations."""
-
-    BASIC = "basic"
-    VALIDATION = "validation"
-    OPTIONS = "options"
 
 
 @dataclass(frozen=True, slots=True)
 class FilterTestDataFactory:
-    """Factory for creating test data for filter service tests."""
+    """Factory for creating test data for filter service tests using Python 3.13 dataclasses."""
 
-    # Filter test scenarios for parametrization
     FILTER_SCENARIOS: ClassVar[tuple[FilterTestScenario, ...]] = (
         FilterTestScenario.SIMPLE,
         FilterTestScenario.COMPLEX,
@@ -83,13 +82,9 @@ class FilterTestDataFactory:
 
 
 class TestFilterService:
-    """Tests for LDAP filter validation and operations.
+    """Comprehensive tests for LDAP filter validation and operations using factories and DRY principles.
 
-    Single class with flat test methods covering:
-    - Simple, complex, and wildcard filter validation
-    - SearchOptions creation with defaults and custom parameters
-
-    Previously flat test class enhanced with factory pattern and parametrization.
+    Uses parametrized tests and constants for maximum code reuse.
     """
 
     _factory = FilterTestDataFactory()
@@ -113,5 +108,21 @@ class TestFilterService:
         """Test SearchOptions creation using constants."""
         search_options = TestDeduplicationHelpers.create_search()
         assert search_options.base_dn is not None
-        assert search_options.filter_str is not None
-        assert search_options.scope is not None
+        assert search_options.filter_str == TestConstants.DEFAULT_FILTER
+        assert search_options.scope == TestConstants.DEFAULT_SCOPE
+
+    def test_search_options_with_custom_parameters(self) -> None:
+        """Test SearchOptions creation with custom parameters."""
+        custom_base_dn = "ou=test,dc=example,dc=com"
+        custom_filter = "(cn=testuser)"
+        custom_scope: FlextLdapConstants.LiteralTypes.SearchScope = "ONELEVEL"
+
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn=custom_base_dn,
+            filter_str=custom_filter,
+            scope=custom_scope,
+        )
+
+        assert search_options.base_dn == custom_base_dn
+        assert search_options.filter_str == custom_filter
+        assert search_options.scope == custom_scope

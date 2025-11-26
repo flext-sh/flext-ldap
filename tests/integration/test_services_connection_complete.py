@@ -163,7 +163,7 @@ class TestFlextLdapConnectionComplete:
         result = TestOperationHelpers.execute_and_assert_success(
             cast("LdapClientProtocol", connection)
         )
-        assert result is True  # type: ignore[comparison-overlap]
+        assert result is True
 
         connection.disconnect()
 

@@ -153,7 +153,7 @@ class TestFlextLdapOperationsErrorCoverage:
             if config.get("expect_error"):
                 assert result.error is not None
 
-            if error_contains := config.get("error_contains") and result.error:
+            if (error_contains := config.get("error_contains")) and result.error is not None:
                 assert str(error_contains) in result.error
 
             # For operations that may succeed or fail depending on server

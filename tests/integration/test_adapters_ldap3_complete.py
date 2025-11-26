@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from typing import cast
 
 import pytest
@@ -18,6 +18,7 @@ from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, Connection, Server
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -37,7 +38,7 @@ class TestLdap3AdapterComplete:
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        TestOperationHelpers.connect_with_skip_on_failure(adapter, connection_config)
+        TestOperationHelpers.connect_with_skip_on_failure(cast("LdapClientProtocol", adapter), connection_config)
         yield adapter
         adapter.disconnect()
 
@@ -191,7 +192,7 @@ class TestLdap3AdapterComplete:
             },
         )
 
-        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)
+        result = EntryTestHelpers.add_and_cleanup(cast("LdapClientProtocol", connected_adapter), entry)
         TestOperationHelpers.assert_result_success(result)
 
     def test_modify_with_add_operation(
@@ -209,7 +210,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            connected_adapter,
+            cast("LdapClientProtocol", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -238,7 +239,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            connected_adapter,
+            cast("LdapClientProtocol", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -267,7 +268,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            connected_adapter,
+            cast("LdapClientProtocol", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -294,7 +295,7 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test execute when connected."""
-        entry = TestOperationHelpers.execute_and_assert_success(connected_adapter)
+        entry = TestOperationHelpers.execute_and_assert_success(cast("LdapClientProtocol", connected_adapter))
         assert entry is not None
 
     def test_search_with_different_server_types(
@@ -322,7 +323,7 @@ class TestLdap3AdapterComplete:
             {"cn": ["testminimal"], "objectClass": ["top", "person"]},
         )
 
-        result = EntryTestHelpers.add_and_cleanup(connected_adapter, entry)
+        result = EntryTestHelpers.add_and_cleanup(cast("LdapClientProtocol", connected_adapter), entry)
         # Should succeed or fail gracefully
         assert result.is_success or result.is_failure
 
@@ -423,7 +424,7 @@ class TestLdap3AdapterComplete:
             def __init__(self) -> None:
                 self.entries = [InvalidEntryStructure()]
 
-        result = connected_adapter._convert_parsed_entries(
+        result = connected_adapter.ResultConverter.convert_parsed_entries(
             cast("FlextLdifModels.ParseResponse", ParseResponseLike())
         )
         assert result.is_failure
@@ -452,7 +453,7 @@ class TestLdap3AdapterComplete:
             def __init__(self) -> None:
                 self.entries = [InvalidEntryStructure()]
 
-        result = connected_adapter._convert_parsed_entries(
+        result = connected_adapter.ResultConverter.convert_parsed_entries(
             cast("FlextLdifModels.ParseResponse", ParseResponseLike())
         )
         assert result.is_failure
@@ -517,7 +518,7 @@ class TestLdap3AdapterComplete:
             def __init__(self) -> None:
                 self.entries = [InvalidAttributesEntry()]
 
-        result = connected_adapter._convert_parsed_entries(
+        result = connected_adapter.ResultConverter.convert_parsed_entries(
             cast("FlextLdifModels.ParseResponse", ParseResponseLike())
         )
         assert result.is_failure
@@ -542,7 +543,9 @@ class TestLdap3AdapterComplete:
             detected_server_type="openldap2",
         )
 
-        result = connected_adapter._convert_parsed_entries(parse_response)
+        result = connected_adapter.ResultConverter.convert_parsed_entries(
+            parse_response
+        )
         assert result.is_success
         entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
         assert len(entries) == 1
@@ -577,7 +580,9 @@ class TestLdap3AdapterComplete:
             if len(connection.entries) > 0:
                 # Test _convert_ldap3_results with real connection
                 # This will cover lines 282-284 (None values handling)
-                results = connected_adapter._convert_ldap3_results(connection)
+                results = connected_adapter.ResultConverter.convert_ldap3_results(
+                    connection
+                )
                 assert isinstance(results, list)
                 # Results should be list of tuples (dn, attrs_dict)
                 if results:
@@ -586,7 +591,8 @@ class TestLdap3AdapterComplete:
                     assert isinstance(attrs_dict, dict)
         finally:
             if connection.bound:
-                connection.unbind()
+                unbind_func: Callable[[], None] = connection.unbind
+                unbind_func()
 
     def test_convert_ldap3_results_with_single_values(
         self,
@@ -616,7 +622,9 @@ class TestLdap3AdapterComplete:
             if len(connection.entries) > 0:
                 # Test _convert_ldap3_results with real connection
                 # This will cover lines 285-287 (single value handling)
-                results = connected_adapter._convert_ldap3_results(connection)
+                results = connected_adapter.ResultConverter.convert_ldap3_results(
+                    connection
+                )
                 assert isinstance(results, list)
                 # Results should convert single values to lists
                 if results:
@@ -626,4 +634,5 @@ class TestLdap3AdapterComplete:
                         assert isinstance(attr_values, list)
         finally:
             if connection.bound:
-                connection.unbind()
+                unbind_func: Callable[[], None] = connection.unbind
+                unbind_func()

@@ -66,6 +66,10 @@ class TestConstants:
         NORMAL_TIMEOUT = 30
         SLOW_TIMEOUT = 300
 
+        # Connection service test constants
+        INVALID_HOST: ClassVar[str] = "invalid.host"
+        TEST_BIND_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
+
     class Directory:
         """Directory structure and DN constants."""
 
@@ -125,6 +129,48 @@ class TestConstants:
         SUCCESS = 0
         FAILURE = 1
         PARTIAL_SUCCESS = 2
+
+        # Operations service test constants
+        TEST_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
+        TEST_DN_1: ClassVar[str] = "cn=test1,dc=example,dc=com"
+        TEST_DN_2: ClassVar[str] = "cn=test2,dc=example,dc=com"
+        BASE_DN: ClassVar[str] = "dc=example,dc=com"
+        DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
+
+    class Adapter:
+        """Entry adapter test constants."""
+
+        TEST_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
+        STANDARD_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {
+            "cn": ["test"],
+            "objectClass": ["top", "person"],
+        }
+        EMPTY_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {}
+        SERVER_TYPE_OPENLDAP: ClassVar[str] = "openldap"
+        SERVER_TYPE_OPENLDAP2: ClassVar[str] = "openldap2"
+        ERROR_NO_ATTRIBUTES: ClassVar[str] = "no attributes"
+
+    class Singleton:
+        """Singleton pattern test constants."""
+
+        DIFFERENT_HOST: ClassVar[str] = "different.example.com"
+        TEST_HOST: ClassVar[str] = "test.example.com"
+        TEST_PORT: ClassVar[int] = 389
+
+    class Base:
+        """Base service test constants."""
+
+        CONFIG_NAMESPACES: ClassVar[tuple[str, ...]] = ("ldap", "ldif")
+
+    class Ldap3Adapter:
+        """Ldap3Adapter test constants."""
+
+        INVALID_HOSTS: ClassVar[tuple[str, ...]] = (
+            "192.0.2.1",
+            "invalid-host-that-does-not-exist",
+        )
+        INVALID_BASE_DN: ClassVar[str] = "invalid=base,dn=invalid"
+        FAST_TIMEOUT: ClassVar[int] = 1
 
 
 __all__ = ["OID", "OUD", "RFC", "General", "OpenLDAP2", "TestConstants"]

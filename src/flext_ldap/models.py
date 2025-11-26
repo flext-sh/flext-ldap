@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from flext_core import FlextModels, FlextModelsCollections, FlextUtilities
 from flext_ldif import FlextLdifModels
@@ -114,7 +114,7 @@ class FlextLdapModels(FlextModels):
         )
 
         @model_validator(mode="after")
-        def validate_ssl_tls_mutual_exclusion(self) -> FlextLdapModels.ConnectionConfig:
+        def validate_ssl_tls_mutual_exclusion(self) -> Self:
             """Validate that SSL and TLS are mutually exclusive.
 
             SSL (port 636) and TLS/STARTTLS (port 389) are two different
@@ -206,8 +206,8 @@ class FlextLdapModels(FlextModels):
         def normalized(
             cls,
             base_dn: str,
-            scope: FlextLdapConstants.LiteralTypes.SearchScope | None = None,
-            filter_str: str | None = None,
+            scope: FlextLdapConstants.LiteralTypes.SearchScope = "SUBTREE",
+            filter_str: str = FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
             attributes: list[str] | None = None,
             size_limit: int = 0,
             time_limit: int = 0,
@@ -220,11 +220,11 @@ class FlextLdapModels(FlextModels):
 
             Args:
                 base_dn: Base DN for search (will be normalized)
-                scope: Search scope (defaults to SUBTREE if not provided)
-                filter_str: LDAP filter string (defaults to all entries if not provided)
+                scope: Search scope (BASE, ONELEVEL, SUBTREE)
+                filter_str: LDAP filter string
                 attributes: Attributes to retrieve (None = all)
-                size_limit: Maximum number of entries to return
-                time_limit: Maximum time in seconds
+                size_limit: Maximum entries to return (0 = no limit)
+                time_limit: Maximum time in seconds (0 = no limit)
 
             Returns:
                 SearchOptions instance with normalized base_dn
@@ -237,21 +237,11 @@ class FlextLdapModels(FlextModels):
                 'dc=test,dc=local'
 
             """
-            # Normalize the base_dn
-            normalized_base_dn = FlextLdifUtilities.DN.norm_string(base_dn)
-
-            # Use defaults if not provided
-            actual_scope = scope if scope is not None else "SUBTREE"
-            actual_filter = (
-                filter_str
-                if filter_str is not None
-                else FlextLdapConstants.Filters.ALL_ENTRIES_FILTER
-            )
-
+            normalized_base = FlextLdifUtilities.DN.norm_string(base_dn)
             return cls(
-                base_dn=normalized_base_dn,
-                scope=actual_scope,
-                filter_str=actual_filter,
+                base_dn=normalized_base,
+                scope=scope,
+                filter_str=filter_str,
                 attributes=attributes,
                 size_limit=size_limit,
                 time_limit=time_limit,
@@ -474,17 +464,19 @@ class FlextLdapModels(FlextModels):
             skipped: int = 0,
             failed: int = 0,
             duration_seconds: float = 0.0,
+            **kwargs: object,
         ) -> FlextLdapModels.SyncStats:
             """Factory method to create SyncStats with auto-calculated total.
 
             Convenient factory that automatically calculates the total field
-            from the individual counters, ensuring consistency.
+            from the individual counters, ensuring consistency. Uses kwargs for direct model creation.
 
             Args:
                 added: Number of entries successfully added
                 skipped: Number of entries skipped
                 failed: Number of entries that failed
                 duration_seconds: Duration of sync operation in seconds
+                **kwargs: Additional SyncStats fields
 
             Returns:
                 SyncStats instance with total auto-calculated
@@ -497,13 +489,13 @@ class FlextLdapModels(FlextModels):
                 8
 
             """
-            total = added + skipped + failed
             return cls(
                 added=added,
                 skipped=skipped,
                 failed=failed,
-                total=total,
+                total=added + skipped + failed,
                 duration_seconds=duration_seconds,
+                **kwargs,
             )
 
     # =========================================================================

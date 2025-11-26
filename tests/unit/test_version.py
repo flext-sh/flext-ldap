@@ -1,14 +1,21 @@
 """Unit tests for version and package metadata.
 
 **Modules Tested:**
-- flext_ldap.__version__: Package version and metadata exports
+- `flext_ldap.__version__` - Package version and metadata exports
 
-**Scope:**
+**Test Scope:**
 - Version string format and validation (semantic versioning)
 - Version info tuple structure and consistency
 - Package metadata completeness (title, description, author, license, URLs)
 - Version string and version_info tuple alignment
 - Metadata type validation
+
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+
+Module: TestFlextLdapVersion
+Scope: Comprehensive version and metadata testing with maximum code reuse
+Pattern: Parametrized tests using factories and constants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,6 +23,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar
 
@@ -31,33 +39,29 @@ from flext_ldap.__version__ import (
     __version__,
     __version_info__,
 )
-from tests.fixtures.general_constants import General
+
+from ..fixtures.general_constants import General
 
 pytestmark = pytest.mark.unit
 
 
-class MetadataProperty(StrEnum):
-    """Metadata properties to validate."""
-
-    TITLE = "title"
-    DESCRIPTION = "description"
-    AUTHOR = "author"
-    LICENSE = "license"
-    AUTHOR_EMAIL = "author_email"
-    URL = "url"
-
-
 class TestFlextLdapVersion:
-    """Tests for version and package metadata with comprehensive validation.
+    """Comprehensive tests for version and package metadata using factories and DRY principles.
 
-    Single class with flat test methods covering:
-    - Version string format and semantic versioning validation
-    - Version info tuple structure and consistency
-    - Package metadata completeness and type safety
-    - Version consistency between string and tuple formats
+    Uses parametrized tests and constants for maximum code reuse.
+    All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    # Metadata properties for parametrization
+    class MetadataProperty(StrEnum):
+        """Metadata properties to validate."""
+
+        TITLE = "title"
+        DESCRIPTION = "description"
+        AUTHOR = "author"
+        LICENSE = "license"
+        AUTHOR_EMAIL = "author_email"
+        URL = "url"
+
     METADATA_PROPERTIES: ClassVar[tuple[MetadataProperty, ...]] = (
         MetadataProperty.TITLE,
         MetadataProperty.DESCRIPTION,
@@ -67,24 +71,13 @@ class TestFlextLdapVersion:
         MetadataProperty.URL,
     )
 
-    # Metadata property mapping for parametrized tests
-    METADATA_VALUES: ClassVar[dict[MetadataProperty, str]] = {
+    METADATA_VALUES: ClassVar[Mapping[MetadataProperty, str]] = {
         MetadataProperty.TITLE: __title__,
         MetadataProperty.DESCRIPTION: __description__,
         MetadataProperty.AUTHOR: __author__,
         MetadataProperty.LICENSE: __license__,
         MetadataProperty.AUTHOR_EMAIL: __author_email__,
         MetadataProperty.URL: __url__,
-    }
-
-    # Required metadata mapping for validation
-    REQUIRED_METADATA: ClassVar[dict[str, str]] = {
-        "__title__": __title__,
-        "__description__": __description__,
-        "__author__": __author__,
-        "__license__": __license__,
-        "__author_email__": __author_email__,
-        "__url__": __url__,
     }
 
     @staticmethod
@@ -110,8 +103,7 @@ class TestFlextLdapVersion:
 
     def test_version_is_non_empty_string(self) -> None:
         """Test that __version__ is a non-empty string."""
-        assert isinstance(__version__, str)
-        assert len(__version__) > 0
+        assert isinstance(__version__, str) and len(__version__) > 0
 
     @pytest.mark.parametrize(
         "min_parts",
@@ -140,7 +132,6 @@ class TestFlextLdapVersion:
         version_parts = self._get_version_parts()
         version_info_parts = self._get_version_info_parts()
 
-        # Compare only up to minimum length
         min_len = min(len(version_parts), len(version_info_parts))
         for i in range(min_len):
             assert version_parts[i] == version_info_parts[i], (
@@ -155,16 +146,16 @@ class TestFlextLdapVersion:
     ) -> None:
         """Test that each metadata property is a non-empty string (parametrized)."""
         property_value = self.METADATA_VALUES[property_name]
-        assert isinstance(property_value, str), (
-            f"Metadata property '{property_name}' is not a string"
+        assert isinstance(property_value, str) and len(property_value) > 0, (
+            f"Metadata property '{property_name}' must be non-empty string"
         )
-        assert len(property_value) > 0, f"Metadata property '{property_name}' is empty"
 
     def test_all_required_metadata_present(self) -> None:
         """Test that all required metadata properties are defined and non-empty."""
-        for name, value in self.REQUIRED_METADATA.items():
-            assert isinstance(value, str), f"{name} is not a string"
-            assert len(value) > 0, f"{name} is empty"
+        for name, value in self.METADATA_VALUES.items():
+            assert isinstance(value, str) and len(value) > 0, (
+                f"{name} must be non-empty string"
+            )
 
     def test_version_length_reasonable(self) -> None:
         """Test that version string length is reasonable."""

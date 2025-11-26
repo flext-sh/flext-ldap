@@ -56,7 +56,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_tls_connection_failure(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: FlextResult[bool],
     ) -> None:
         """Assert that TLS connection failed as expected."""
         assert result.is_failure, "TLS connection should have failed"
@@ -68,7 +68,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_start_tls_failure(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: FlextResult[bool],
     ) -> None:
         """Assert that the failure is specifically from start_tls() returning False."""
         if result.is_failure and result.error and "Failed to start TLS" in result.error:
@@ -107,7 +107,7 @@ class TestLdap3AdapterTlsFailure:
         # The adapter code at line 124 checks `if not self._connection.start_tls()`
         # If start_tls() returns False, line 125 is executed
         # If start_tls() raises exception, it's caught at line 127
-        TestAssertions.assert_tls_connection_failure(result)  # type: ignore[arg-type]
+        TestAssertions.assert_tls_connection_failure(result)
 
         adapter.disconnect()
 
@@ -130,6 +130,6 @@ class TestLdap3AdapterTlsFailure:
         if result.is_failure:
             assert result.error is not None
             # Check if it's specifically a start_tls failure (covers line 127)
-            TestAssertions.assert_start_tls_failure(result)  # type: ignore[arg-type]
+            TestAssertions.assert_start_tls_failure(result)
 
         adapter.disconnect()

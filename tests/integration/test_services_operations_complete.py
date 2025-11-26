@@ -42,7 +42,10 @@ class TestFlextLdapOperationsComplete:
         """Get operations service with connected adapter."""
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
-        TestOperationHelpers.connect_with_skip_on_failure(connection, connection_config)
+        # Connect directly - FlextLdapConnection.connect uses connection_config param
+        connect_result = connection.connect(connection_config=connection_config)
+        if connect_result.is_failure:
+            pytest.skip(f"Failed to connect: {connect_result.error}")
 
         operations = FlextLdapOperations(connection=connection)
         yield operations
@@ -146,7 +149,7 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.modify_with_dn_spaces(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
             changes,
         )
@@ -180,7 +183,7 @@ class TestFlextLdapOperationsComplete:
             cleanup_after=False,
         )
         if entry.dn:
-            TestDeduplicationHelpers.delete_with_dn_spaces(operations_service, entry)
+            TestDeduplicationHelpers.delete_with_dn_spaces(cast("LdapClientProtocol", operations_service), entry)
 
     def test_execute_when_connected(
         self,
@@ -227,7 +230,7 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
             changes,
         )
@@ -239,7 +242,7 @@ class TestFlextLdapOperationsComplete:
         """Test delete returns proper OperationResult on success."""
         entry = TestDeduplicationHelpers.create_user("testdelresult")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            operations_service,
+            cast("LdapClientProtocol", operations_service),
             entry,
         )
 
