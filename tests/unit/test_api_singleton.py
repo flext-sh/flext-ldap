@@ -1,13 +1,21 @@
 """Unit tests for FlextLdap singleton methods.
 
 **Modules Tested:**
-- flext_ldap.api.FlextLdap: Singleton pattern implementation
+- `flext_ldap.api.FlextLdap` - Singleton pattern implementation
 
-**Scope:**
+**Test Scope:**
 - get_instance method creates and returns singleton instance
-- get_instance with config and parser parameters
+- get_instance with config and ldif parameters
 - _reset_instance method clears singleton for test isolation
-- Singleton pattern behavior with multiple calls
+- Singleton pattern behavior with multiple calls (same instance returned)
+- Config and ldif parameters only used on first creation
+
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+
+Module: TestFlextLdapSingleton
+Scope: Comprehensive singleton pattern testing with maximum code reuse
+Pattern: Parametrized tests using factories and constants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,6 +30,8 @@ from flext_ldif import FlextLdif
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
+
+from ..fixtures.constants import TestConstants
 
 pytestmark = pytest.mark.unit
 
@@ -47,7 +57,10 @@ def ldap_instance(ldif_instance: FlextLdif) -> FlextLdap:
 
 
 class TestFlextLdapSingleton:
-    """Tests for FlextLdap singleton pattern methods."""
+    """Comprehensive tests for FlextLdap singleton pattern using factories and DRY principles.
+
+    Uses parametrized tests and constants for maximum code reuse.
+    """
 
     def test_get_instance_creates_singleton(
         self,
@@ -58,26 +71,25 @@ class TestFlextLdapSingleton:
         Tests that get_instance() creates a singleton and returns the same instance
         on subsequent calls, even with different config (singleton pattern).
         """
-        # Instance provided by fixture is singleton
         instance1 = ldap_instance
         assert instance1 is not None
 
-        # Second call should return same instance
         instance2 = FlextLdap.get_instance()
         assert instance2 is instance1
 
-        # Third call with different config should still return same instance
-        # (singleton pattern - config is only used on first creation)
-        config = FlextLdapConfig(host="different.example.com")
+        config = FlextLdapConfig(host=TestConstants.Singleton.DIFFERENT_HOST)
         instance3 = FlextLdap.get_instance(config=config)
         assert instance3 is instance1
 
-    def test_get_instance_with_config_and_parser(
+    def test_get_instance_with_config_and_ldif(
         self,
         ldif_instance: FlextLdif,
     ) -> None:
-        """Test get_instance with both config and parser."""
-        config = FlextLdapConfig(host="test.example.com", port=389)
+        """Test get_instance with both config and ldif parameters."""
+        config = FlextLdapConfig(
+            host=TestConstants.Singleton.TEST_HOST,
+            port=TestConstants.Singleton.TEST_PORT,
+        )
         instance = FlextLdap.get_instance(config=config, ldif=ldif_instance)
 
         assert instance is not None
@@ -89,16 +101,12 @@ class TestFlextLdapSingleton:
         ldif_instance: FlextLdif,
     ) -> None:
         """Test _reset_instance clears singleton for test isolation."""
-        # Create instance
         instance1 = FlextLdap.get_instance(ldif=ldif_instance)
         assert instance1 is not None
 
-        # Reset singleton
         FlextLdap._reset_instance()
 
-        # New call should create new instance
         ldif2 = FlextLdif.get_instance()
         instance2 = FlextLdap.get_instance(ldif=ldif2)
         assert instance2 is not None
-        # Should be different instance (singleton was reset)
         assert instance2 is not instance1

@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import StrEnum
 
 import pytest
@@ -122,7 +123,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_connection_success(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: FlextResult[bool],
     ) -> None:
         """Assert that connection operation succeeded."""
         assert result.is_success, f"Connection failed: {result.error}"
@@ -160,8 +161,9 @@ class TestFlextLdapSmoke:
         # Verify REAL server info is available (schema loaded)
         TestAssertions.assert_server_info_available(connection)
 
-        # REAL unbind
-        connection.unbind()
+        # REAL unbind (typed wrapper for mypy strict)
+        unbind_func: Callable[[], None] = connection.unbind
+        unbind_func()
 
     def test_flext_ldap_api_imports(self) -> None:
         """SMOKE TEST: FlextLdap API imports without errors (REGRA 5: REAL code).
@@ -201,7 +203,7 @@ class TestFlextLdapSmoke:
         result = client.connect(conn_config)
 
         # Verify success
-        TestAssertions.assert_connection_success(result)  # type: ignore[arg-type]
+        TestAssertions.assert_connection_success(result)
 
         # REAL disconnect
         client.disconnect()

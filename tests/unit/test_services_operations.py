@@ -1,19 +1,19 @@
 """Unit tests for FlextLdapOperations.
 
 **Modules Tested:**
-- flext_ldap.services.operations.FlextLdapOperations: LDAP operations service
+- `flext_ldap.services.operations.FlextLdapOperations` - LDAP operations service
 
-**Scope:**
+**Test Scope:**
 - Operations service initialization
 - Fast-fail pattern for disconnected operations (search, add, modify, delete, execute)
 - Error handling and validation
 
-**Test Helpers Used:**
-- TestDeduplicationHelpers: Creates test entry and search objects for operation testing
-- TestConstants: Centralized test constants (DNs, filters, etc.) organized in domain namespaces
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
 
-**Fixtures:**
-- ldap_parser: FlextLdifParser instance for entry parsing and validation
+Module: TestFlextLdapOperations
+Scope: Comprehensive operations testing with maximum code reuse
+Pattern: Parametrized tests using factories and constants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -106,8 +106,11 @@ class OperationFactory:
     def get_operation_result(
         self,
         operation_type: OperationType,
-    ) -> object:
-        """Get operation result by type (returns untyped object to avoid variance issues)."""
+    ) -> (
+        FlextResult[FlextLdapModels.SearchResult]
+        | FlextResult[FlextLdapModels.OperationResult]
+    ):
+        """Get operation result by type."""
         if operation_type == OperationType.SEARCH:
             return self.create_search()
         if operation_type == OperationType.ADD:
@@ -120,15 +123,9 @@ class OperationFactory:
 
 
 class TestFlextLdapOperations:
-    """Comprehensive tests for FlextLdapOperations.
+    """Comprehensive tests for FlextLdapOperations using factories and DRY principles.
 
-    Single class per module with parametrized test methods covering:
-    - Operations service initialization
-    - Fast-fail pattern for disconnected operations
-    - Error handling and validation
-
-    Uses Python 3.13 StrEnum for operation types and factory patterns
-    for efficient test data generation.
+    Uses parametrized tests and constants for maximum code reuse.
     """
 
     OPERATION_TYPES: ClassVar[tuple[OperationType, ...]] = (
@@ -173,13 +170,8 @@ class TestFlextLdapOperations:
         factory = OperationFactory(operations=operations)
         result = factory.get_operation_result(operation_type)
 
-        # Verify operation returned failure
         assert isinstance(result, FlextResult)
         assert result.is_failure, f"Expected failure, got: {result}"
         assert result.error is not None
-
-        # Verify error message contains expected content
         assert "connected" in result.error.lower()
-
-        # Verify connection state
         assert not operations._connection.is_connected

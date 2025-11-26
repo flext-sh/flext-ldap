@@ -52,15 +52,21 @@ class FlextLdapTypes(FlextTypes):
     type SearchResult = list[FlextLdifModels.Entry]
 
     # =========================================================================
+    # LDAP OPERATION TYPES
+    # =========================================================================
+
+    type LdapModifyChanges = dict[str, list[tuple[str, list[str]]]]
+    type LdapAttributeValues = dict[str, list[str]]
+    type LdapOperationResult = dict[str, str]
+    type LdapBatchStats = dict[str, int]
+    type LdapAttributes = dict[str, list[str]]
+
+    # =========================================================================
     # LDAP OPERATION CALLABLES
     # =========================================================================
 
-    type LdapAddCallable = Callable[
-        [str, str | None, dict[str, list[str]] | None], bool
-    ]
-    type LdapModifyCallable = Callable[
-        [str, dict[str, list[tuple[str, list[str]]]]], bool
-    ]
+    type LdapAddCallable = Callable[[str, str | None, LdapAttributeValues | None], bool]
+    type LdapModifyCallable = Callable[[str, LdapModifyChanges], bool]
     type LdapDeleteCallable = Callable[[str], bool]
     type LdapSearchCallable = Callable[
         [
@@ -143,7 +149,7 @@ class LdapClientProtocol(Protocol):
     def modify(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
-        changes: dict[str, list[tuple[str, list[str]]]],
+        changes: FlextLdapTypes.LdapModifyChanges,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
 
@@ -168,6 +174,28 @@ class LdapClientProtocol(Protocol):
 
         Returns:
             FlextResult containing OperationResult
+
+        """
+        ...
+
+    def execute(self, **_kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:
+        """Execute health check or default operation.
+
+        Args:
+            **_kwargs: Additional keyword arguments
+
+        Returns:
+            FlextResult containing SearchResult
+
+        """
+        ...
+
+    @property
+    def is_connected(self) -> bool:
+        """Check if client is connected.
+
+        Returns:
+            True if connected, False otherwise
 
         """
         ...
@@ -197,7 +225,7 @@ class LdapAdapterProtocol(Protocol):
     def modify(
         self,
         dn: FlextLdifModels.DistinguishedName,
-        changes: dict[str, list[tuple[str, list[str]]]],
+        changes: FlextLdapTypes.LdapModifyChanges,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry."""
         ...
@@ -238,6 +266,15 @@ class LdapConnectionProtocol(Protocol):
 
         Returns:
             True if connected, False otherwise
+
+        """
+        ...
+
+    def disconnect(self) -> None:
+        """Disconnect from LDAP server.
+
+        Closes the connection and releases resources.
+        Safe to call multiple times.
 
         """
         ...

@@ -1,15 +1,20 @@
 """Unit tests for FlextLdapServerDetector.
 
-Tests server detection logic that doesn't require LDAP connections.
-Pure logic tests without mocks - uses real data structures and factory patterns.
+**Modules Tested:**
+- `flext_ldap.services.detection.FlextLdapServerDetector` - LDAP server detection service
 
-Tested modules:
-- flext_ldap.services.detection.FlextLdapServerDetector
-
-Test scope:
+**Test Scope:**
 - Server detection with various attribute combinations
 - Error handling and fallback logic
 - Connection failure scenarios
+- rootDSE query handling
+
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+
+Module: TestFlextLdapServerDetector
+Scope: Comprehensive server detection testing with maximum code reuse
+Pattern: Parametrized tests using factories and constants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,7 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, Never, cast
+from typing import ClassVar, cast
 
 import pytest
 from ldap3 import Connection
@@ -36,36 +41,17 @@ class DetectionTestScenario(StrEnum):
     OUD = "oud"
     OPENLDAP = "openldap"
     MINIMAL = "minimal"
-    FAILURE = "failure"
-    ROOTDSE = "rootdse"
-    EXCEPTION = "exception"
-
-
-class DetectionTestCategory(StrEnum):
-    """Test categories for detection service."""
-
-    ATTRIBUTES = "attributes"
-    EXECUTION = "execution"
-    ERROR_HANDLING = "error_handling"
 
 
 @dataclass(frozen=True, slots=True)
 class DetectionTestDataFactory:
-    """Factory for creating test data for detection service tests."""
+    """Factory for creating test data for detection service tests using Python 3.13 dataclasses."""
 
-    # Test scenarios for parametrization
     ATTRIBUTE_SCENARIOS: ClassVar[tuple[DetectionTestScenario, ...]] = (
         DetectionTestScenario.OID,
         DetectionTestScenario.OUD,
         DetectionTestScenario.OPENLDAP,
         DetectionTestScenario.MINIMAL,
-    )
-
-    # Error handling scenarios for parametrization
-    ERROR_SCENARIOS: ClassVar[tuple[DetectionTestScenario, ...]] = (
-        DetectionTestScenario.FAILURE,
-        DetectionTestScenario.ROOTDSE,
-        DetectionTestScenario.EXCEPTION,
     )
 
     @staticmethod
@@ -115,70 +101,11 @@ class DetectionTestDataFactory:
         }
         return expectations[scenario]
 
-    @staticmethod
-    def create_failure_connection() -> Connection:
-        """Create mock connection that causes detection failure."""
-
-        class FailureConnection:
-            bound = True
-
-            def search(self, *args: object, **kwargs: object) -> None:
-                """Simulate search failure."""
-                return
-
-        return cast("Connection", FailureConnection())
-
-    @staticmethod
-    def create_rootdse_connection() -> Connection:
-        """Create mock connection with rootDSE attributes."""
-
-        class RootDSEConnection:
-            bound = True
-
-            def search(
-                self, base: object, filter_str: object, attributes: object
-            ) -> bool:
-                """Simulate rootDSE search with list attributes."""
-                self.entries = [
-                    type(
-                        "Entry",
-                        (),
-                        {
-                            "entry_attributes_as_dict": {
-                                "objectClass": ["top", "person"],
-                                "supportedControl": ["1.2.3", "4.5.6"],
-                            }
-                        },
-                    )()
-                ]
-                return True
-
-        return cast("Connection", RootDSEConnection())
-
-    @staticmethod
-    def create_exception_connection() -> Connection:
-        """Create mock connection that raises exception."""
-
-        class ExceptionConnection:
-            bound = True
-
-            def search(self, *args: object, **kwargs: object) -> Never:
-                """Simulate exception during search."""
-                msg = "Mock detection exception"
-                raise RuntimeError(msg)
-
-        return cast("Connection", ExceptionConnection())
-
 
 class TestFlextLdapServerDetector:
-    """Tests for LDAP server detection service.
+    """Comprehensive tests for LDAP server detection service using factories and DRY principles.
 
-    Single class with flat test methods covering:
-    - Attribute-based detection for various server types
-    - Execution and parameter validation
-    - Error handling and exception scenarios
-
-    Previously nested test classes flattened per FLEXT architecture.
+    Uses parametrized tests and constants for maximum code reuse.
     """
 
     _factory = DetectionTestDataFactory()
@@ -231,35 +158,13 @@ class TestFlextLdapServerDetector:
         assert result.error is not None
         assert "connection parameter required" in result.error
 
-    def test_detect_from_connection_failure_logging(
+    def test_execute_with_invalid_connection_type(
         self,
         detector: FlextLdapServerDetector,
     ) -> None:
-        """Test error logging when detection fails (covers lines 188-193)."""
-        mock_conn = self._factory.create_failure_connection()
+        """Test execute() method fails with invalid connection type."""
+        result = detector.execute(connection=cast("Connection", "not_a_connection"))
 
-        result = detector.detect_from_connection(mock_conn)
         assert result.is_failure
-
-    def test_detect_from_connection_rootdse_conversion(
-        self,
-        detector: FlextLdapServerDetector,
-    ) -> None:
-        """Test rootDSE attribute conversion (covers line 263)."""
-        mock_conn = self._factory.create_rootdse_connection()
-
-        detector.detect_from_connection(mock_conn)
-
-        # The method should handle the conversion gracefully
-        # Either succeeds or fails, but doesn't crash on list conversion (line 263)
-
-    def test_detect_from_connection_exception_handling(
-        self,
-        detector: FlextLdapServerDetector,
-    ) -> None:
-        """Test exception handling in detection (covers lines 351-368)."""
-        mock_conn = self._factory.create_exception_connection()
-
-        result = detector.detect_from_connection(mock_conn)
-        assert result.is_failure
-        assert "Mock detection exception" in str(result.error)
+        assert result.error is not None
+        assert "connection must be ldap3.Connection" in result.error

@@ -159,6 +159,67 @@ class FlextLdapConstants(FlextConstants):
 
         UNKNOWN_ERROR: Final[str] = "Unknown error"
         NOT_CONNECTED: Final[str] = "Not connected to LDAP server"
+        ENTRY_ALREADY_EXISTS: Final[str] = "already exists"
+        ENTRY_ALREADY_EXISTS_ALT: Final[str] = "entryalreadyexists"
+        ENTRY_ALREADY_EXISTS_LDAP: Final[str] = "ldap_already_exists"
+        SESSION_TERMINATED: Final[str] = "session terminated"
+
+    # =========================================================================
+    # OPERATIONAL ATTRIBUTES (IGNORED IN COMPARISON)
+    # =========================================================================
+
+    class OperationalAttributes:
+        """Operational attributes that should be ignored in entry comparison."""
+
+        IGNORE_SET: Final[frozenset[str]] = frozenset({
+            "changetype",
+            "add",
+            "delete",
+            "replace",
+            "modify",
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
+            "entryUUID",
+            "entryCSN",
+        })
+
+    # =========================================================================
+    # UPSERT OPERATION RESULTS
+    # =========================================================================
+
+    class UpsertOperations:
+        """Upsert operation result types."""
+
+        ADDED: Final[str] = "added"
+        MODIFIED: Final[str] = "modified"
+        SKIPPED: Final[str] = "skipped"
+
+    # =========================================================================
+    # LDAP OPERATION LOGGING CONSTANTS
+    # =========================================================================
+
+    class LdapOperationLogging:
+        """LDAP operation logging constants for structured logging."""
+
+        MAX_LOG_LENGTH: Final[int] = 100
+        OPERATION_SYNC: Final[str] = "sync_ldif_file"
+        OPERATION_CONNECT: Final[str] = "connect"
+        OPERATION_SEARCH: Final[str] = "search"
+        OPERATION_ADD: Final[str] = "add"
+        OPERATION_MODIFY: Final[str] = "modify"
+        OPERATION_DELETE: Final[str] = "delete"
+
+    # =========================================================================
+    # LDAP RESULT CODES
+    # =========================================================================
+
+    class LdapResultCodes:
+        """LDAP result codes (RFC 4511)."""
+
+        SUCCESS: Final[int] = 0
+        PARTIAL_SUCCESS_CODES: Final[frozenset[int]] = frozenset({0, 3, 4, 11})
 
     # =========================================================================
     # ACL ATTRIBUTES

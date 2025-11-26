@@ -95,7 +95,7 @@ class TestDataFactories:
         entry = TestOperationHelpers.create_inetorgperson_entry(
             f"test{dn_handling.value}{test_id}",
             base_dn,
-            mail=str(user_data["email"]),
+            mail=getattr(user_data, "email", str(user_data)),
         )
 
         # Apply DN handling

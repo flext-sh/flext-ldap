@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 
 import pytest
 from flext_ldif.models import FlextLdifModels
@@ -39,7 +39,8 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
         )
         yield connection
         if connection.bound:
-            connection.unbind()
+            unbind_func: Callable[[], None] = connection.unbind
+            unbind_func()
 
     def test_ldap3_entry_to_ldif_entry_with_real_entry(
         self,

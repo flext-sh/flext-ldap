@@ -1,7 +1,7 @@
 """Helper methods for LDAP operation testing to reduce code duplication.
 
-This module provides methods to reduce duplication when testing LDAP operations
-like add, modify, delete, and search across multiple test files.
+This module provides LDAP-specific helpers that extend flext_tests utilities.
+Uses FlextRuntime, FlextTestsUtilities for maximum code reuse.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,21 +9,54 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, TypeVar, cast
+from typing import Literal
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextRuntime
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 
+from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from .entry_helpers import EntryTestHelpers
 
-T = TypeVar("T")
-ResultT = TypeVar("ResultT")
+# Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
+LdapClientType = FlextLdap | LdapClientProtocol
+
+# Union type for LDAP operations only (no connect method) - for FlextLdapOperations and similar
+LdapOperationsType = FlextLdap | FlextLdapOperations | LdapClientProtocol
+
+# Valid search scopes for validation
+_VALID_SCOPES: frozenset[str] = frozenset({"BASE", "ONELEVEL", "SUBTREE"})
+SearchScopeType = Literal["BASE", "ONELEVEL", "SUBTREE"]
+
+
+def _validate_scope(scope: str) -> SearchScopeType:
+    """Validate and return a typed search scope.
+
+    Args:
+        scope: Scope string to validate
+
+    Returns:
+        Validated scope as Literal type
+
+    Raises:
+        ValueError: If scope is not valid
+
+    """
+    if scope not in _VALID_SCOPES:
+        msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"
+        raise ValueError(msg)
+    scope_map: dict[str, SearchScopeType] = {
+        "BASE": "BASE",
+        "ONELEVEL": "ONELEVEL",
+        "SUBTREE": "SUBTREE",
+    }
+    return scope_map[scope]
 
 
 class TestOperationHelpers:
@@ -135,7 +168,7 @@ class TestOperationHelpers:
         return value
 
     @staticmethod
-    def unwrap_sync_stats(
+    def unwrap_sync_stats[T](
         result: FlextResult[T],
     ) -> T:
         """Unwrap sync service stats result.
@@ -150,63 +183,33 @@ class TestOperationHelpers:
         return TestOperationHelpers.assert_result_success_and_unwrap(result)
 
     @staticmethod
-    def _narrow_client_type(client: object) -> LdapClientProtocol:
-        """Narrow client type from object to LdapClientProtocol.
-
-        Args:
-            client: Client object to narrow
-
-        Returns:
-            Client cast to LdapClientProtocol
-
-        """
-        return cast("LdapClientProtocol", client)
-
-    @staticmethod
     def connect_with_skip_on_failure(
-        client: object,
+        client: LdapClientType,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Connect client and skip test on failure.
 
         Args:
-            client: LDAP client with connect method
+            client: LDAP client implementing LdapClientProtocol
             connection_config: Connection configuration
 
         """
-        typed_client = TestOperationHelpers._narrow_client_type(client)
-        if not hasattr(typed_client, "connect"):
-            pytest.skip("Client does not have connect method")
-
-        # Handle both 'config' and 'connection_config' parameter names
-        if hasattr(typed_client, "connect"):
-            try:
-                connect_result = typed_client.connect(connection_config)
-            except TypeError:
-                # Try with 'config' parameter name
-                connect_result = typed_client.connect(config=connection_config)
-        else:
-            pytest.skip("Client does not have connect method")
-
+        connect_result = client.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
     @staticmethod
     def connect_and_assert_success(
-        client: object,
+        client: LdapClientType,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Connect client and assert success.
 
         Args:
-            client: LDAP client with connect method
+            client: LDAP client implementing LdapClientProtocol
             connection_config: Connection configuration
 
         """
-        if not hasattr(client, "connect"):
-            error_msg = "Client does not have connect method"
-            raise AttributeError(error_msg)
-
         connect_result = client.connect(connection_config)
         TestOperationHelpers.assert_result_success(
             connect_result,
@@ -215,7 +218,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def search_and_assert_success(
-        client: LdapClientProtocol,
+        client: LdapOperationsType,
         base_dn: str,
         *,
         filter_str: str = "(objectClass=*)",
@@ -244,7 +247,7 @@ class TestOperationHelpers:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
-            scope=cast("Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope),
+            scope=_validate_scope(scope),
             attributes=attributes,
             size_limit=size_limit,
         )
@@ -268,7 +271,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_and_assert_success(
-        client: object,
+        client: LdapClientType,
     ) -> FlextLdapModels.SearchResult:
         """Execute client and assert success.
 
@@ -279,14 +282,9 @@ class TestOperationHelpers:
             SearchResult
 
         """
-        if not hasattr(client, "execute"):
-            error_msg = "Client does not have execute method"
-            raise AttributeError(error_msg)
-
-        execute_method = client.execute
-        result = execute_method()
+        result: FlextResult[FlextLdapModels.SearchResult] = client.execute()
         return TestOperationHelpers.assert_result_success_and_unwrap(
-            cast("FlextResult[FlextLdapModels.SearchResult]", result),
+            result,
             error_message="Execute failed",
         )
 
@@ -313,7 +311,7 @@ class TestOperationHelpers:
         return FlextLdapModels.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
-            scope=cast("Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope),
+            scope=_validate_scope(scope),
             attributes=attributes,
         )
 
@@ -390,8 +388,8 @@ class TestOperationHelpers:
         # Merge additional_attrs if provided
         if additional_attrs:
             for key, value in additional_attrs.items():
-                if isinstance(value, list):
-                    entry_attributes[key] = value
+                if FlextRuntime.is_list_like(value):
+                    entry_attributes[key] = [str(v) for v in value]
                 else:
                     entry_attributes[key] = [str(value)]
 
@@ -399,7 +397,7 @@ class TestOperationHelpers:
         extra_attrs_typed: dict[str, list[str]] = {
             key: (
                 [str(item) for item in value]
-                if isinstance(value, list)
+                if FlextRuntime.is_list_like(value)
                 else [str(value)]
             )
             for key, value in extra_attributes.items()
@@ -407,13 +405,8 @@ class TestOperationHelpers:
         }
         entry_attributes.update(extra_attrs_typed)
 
-        return EntryTestHelpers.create_entry(
-            dn,
-            cast(
-                "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
-                entry_attributes,
-            ),
-        )
+        # entry_attributes is dict[str, list[str]] which is compatible with create_entry's type
+        return EntryTestHelpers.create_entry(dn, entry_attributes)
 
     @staticmethod
     def create_group_entry(
@@ -445,24 +438,13 @@ class TestOperationHelpers:
             attributes["member"] = members
 
         for key, value in kwargs.items():
-            # Type narrowing: kwargs is str, so value is str
-            if isinstance(value, str):
-                attributes[key] = [value]
-            elif isinstance(value, list):
-                # Ensure all items are strings
-                str_list: list[str] = [str(item) for item in value]
-                attributes[key] = str_list
+            if FlextRuntime.is_list_like(value):
+                attributes[key] = [str(item) for item in value]
             else:
-                # Convert to string list
                 attributes[key] = [str(value)]
 
-        return EntryTestHelpers.create_entry(
-            dn,
-            cast(
-                "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
-                attributes,
-            ),
-        )
+        # attributes is dict[str, list[str]] which is compatible with create_entry's type
+        return EntryTestHelpers.create_entry(dn, attributes)
 
     @staticmethod
     def create_entry_dict(
@@ -502,15 +484,15 @@ class TestOperationHelpers:
         if mail:
             attributes["mail"] = [mail]
         for key, value in extra_attributes.items():
-            if isinstance(value, list):
-                attributes[key] = value
+            if FlextRuntime.is_list_like(value):
+                attributes[key] = [str(v) for v in value]
             else:
                 attributes[key] = [str(value)]
         return {"dn": dn, "attributes": attributes}
 
     @staticmethod
     def add_entry_and_assert_success(
-        client: LdapClientProtocol,
+        client: LdapClientType,
         entry: FlextLdifModels.Entry,
         *,
         verify_operation_result: bool = False,
@@ -551,7 +533,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def add_then_delete_and_assert(
-        client: LdapClientProtocol,
+        client: LdapClientType,
         entry: FlextLdifModels.Entry,
     ) -> tuple[
         FlextResult[FlextLdapModels.OperationResult],
@@ -619,7 +601,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_add_modify_delete_sequence(
-        client: LdapClientProtocol,
+        client: LdapClientType,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
@@ -676,7 +658,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_crud_sequence(
-        client: LdapClientProtocol,
+        client: LdapClientType,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
     ) -> dict[
@@ -754,7 +736,7 @@ class TestOperationHelpers:
 
     @staticmethod
     def execute_operation_when_not_connected(
-        client: LdapClientProtocol,
+        client: LdapClientType,
         operation: str,
         **kwargs: object,
     ) -> None:
@@ -766,9 +748,8 @@ class TestOperationHelpers:
             **kwargs: Operation-specific arguments
 
         """
-        result: FlextResult[
-            FlextLdapModels.OperationResult | FlextLdapModels.SearchResult
-        ]
+        expected_error = "Not connected"
+
         if operation == "search":
             if "search_options" not in kwargs:
                 error_msg = "search_options required for search operation"
@@ -777,9 +758,8 @@ class TestOperationHelpers:
             if not isinstance(search_options, FlextLdapModels.SearchOptions):
                 error_msg = "search_options must be FlextLdapModels.SearchOptions"
                 raise TypeError(error_msg)
-            result = cast(
-                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
-                client.search(search_options),
+            TestOperationHelpers.assert_result_failure(
+                client.search(search_options), expected_error=expected_error
             )
         elif operation == "add":
             if "entry" not in kwargs:
@@ -789,9 +769,8 @@ class TestOperationHelpers:
             if not isinstance(entry, FlextLdifModels.Entry):
                 error_msg = "entry must be FlextLdifModels.Entry"
                 raise TypeError(error_msg)
-            result = cast(
-                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
-                client.add(entry),
+            TestOperationHelpers.assert_result_failure(
+                client.add(entry), expected_error=expected_error
             )
         elif operation == "modify":
             if "dn" not in kwargs or "changes" not in kwargs:
@@ -799,39 +778,30 @@ class TestOperationHelpers:
                 raise ValueError(error_msg)
             dn = kwargs["dn"]
             changes = kwargs["changes"]
-            # Type narrowing: ensure dn is str or DistinguishedName
             if not isinstance(dn, (str, FlextLdifModels.DistinguishedName)):
                 error_msg = "dn must be str or FlextLdifModels.DistinguishedName"
                 raise TypeError(error_msg)
-            # Type narrowing: ensure changes is dict[str, list[tuple[str, list[str]]]]
+            # Protocol requires exact dict type - use isinstance for type narrowing
             if not isinstance(changes, dict):
                 error_msg = "changes must be dict"
                 raise TypeError(error_msg)
-            result = cast(
-                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
-                client.modify(dn, changes),
+            TestOperationHelpers.assert_result_failure(
+                client.modify(dn, changes), expected_error=expected_error
             )
         elif operation == "delete":
             if "dn" not in kwargs:
                 error_msg = "dn required for delete operation"
                 raise ValueError(error_msg)
             dn = kwargs["dn"]
-            # Type narrowing: ensure dn is str or DistinguishedName
             if not isinstance(dn, (str, FlextLdifModels.DistinguishedName)):
                 error_msg = "dn must be str or FlextLdifModels.DistinguishedName"
                 raise TypeError(error_msg)
-            result = cast(
-                "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
-                client.delete(dn),
+            TestOperationHelpers.assert_result_failure(
+                client.delete(dn), expected_error=expected_error
             )
         else:
             error_msg = f"Unknown operation: {operation}"
             raise ValueError(error_msg)
-
-        TestOperationHelpers.assert_result_failure(
-            result,
-            expected_error="Not connected",
-        )
 
     @staticmethod
     def assert_operation_result_unwrapped(
@@ -896,6 +866,6 @@ class TestOperationHelpers:
         return FlextLdapModels.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
-            scope=cast("Literal['BASE', 'ONELEVEL', 'SUBTREE']", scope),
+            scope=_validate_scope(scope),
             attributes=attributes,
         )

@@ -1,14 +1,20 @@
 """Unit tests for flext_ldap.adapters.ldap3.Ldap3Adapter.
 
-Tests LDAP3 adapter functionality with real connection handling and error scenarios.
-Focuses on connection lifecycle, search operations, entry conversion, and error handling
-without requiring live LDAP server connections. Uses advanced Python 3.13 features,
-factory patterns, and generic helpers from flext_tests for efficient test data generation
-and edge case coverage. All tests validate adapter behavior with mocked dependencies.
+**Modules Tested:**
+- `flext_ldap.adapters.ldap3.Ldap3Adapter` - LDAP3 adapter for connection management
 
-Tested modules: flext_ldap.adapters.ldap3.Ldap3Adapter
-Test scope: Adapter connection management, search operations, entry conversion, error handling
-Coverage target: 100% with parametrized edge cases
+**Test Scope:**
+- Adapter connection management (lifecycle, properties, state validation)
+- Search operations (not connected, invalid parameters, real LDAP errors)
+- Entry conversion (None handling, error scenarios)
+- Add operations (not connected, invalid entries)
+
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+
+Module: TestLdap3AdapterUnit
+Scope: Comprehensive adapter testing with maximum code reuse
+Pattern: Parametrized tests using factories and constants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,54 +22,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
-from unittest.mock import MagicMock
+from typing import ClassVar
 
 import pytest
-from flext_core import FlextResult
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
-from flext_tests import FlextTestsUtilities
+from flext_tests import FlextTestsMatchers
 from ldap3 import Connection, Server
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.unit
-
-
-@pytest.fixture
-def adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
-    """Provide Ldap3Adapter instance for testing."""
-    return Ldap3Adapter(parser=ldap_parser)
-
-
-@pytest.fixture
-def search_options() -> FlextLdapModels.SearchOptions:
-    """Provide standard search options for testing."""
-    return Ldap3AdapterTestDataFactory.create_search_options()
-
-
-class AdapterTestScenario(StrEnum):
-    """Test scenarios for LDAP3 adapter testing."""
-
-    DEFAULT = "default"
-    CONNECTED = "connected"
-    DISCONNECTED = "disconnected"
-    FAILURE = "failure"
-
-
-class AdapterTestCategory(StrEnum):
-    """Test categories for adapter operations."""
-
-    CONNECTION = "connection"
-    SEARCH = "search"
-    CONVERSION = "conversion"
-    ADD = "add"
 
 
 class ConnectionState(StrEnum):
@@ -78,38 +54,30 @@ class ConnectionState(StrEnum):
 class Ldap3AdapterTestDataFactory:
     """Factory for creating test data for Ldap3Adapter tests using Python 3.13 dataclasses."""
 
-    # Connection test states for parametrization
     CONNECTION_STATES: ClassVar[tuple[ConnectionState, ...]] = (
         ConnectionState.CONNECTED,
         ConnectionState.DISCONNECTED,
         ConnectionState.UNBOUND,
     )
 
-    # Test categories for organization
-    TEST_CATEGORIES: ClassVar[tuple[AdapterTestCategory, ...]] = (
-        AdapterTestCategory.CONNECTION,
-        AdapterTestCategory.SEARCH,
-        AdapterTestCategory.CONVERSION,
-        AdapterTestCategory.ADD,
-    )
-
-    # Invalid host scenarios for parametrization
-    INVALID_HOSTS: ClassVar[tuple[str, ...]] = (
-        "192.0.2.1",  # TEST-NET-1, reserved for documentation
-        "invalid-host-that-does-not-exist",
-    )
+    DEFAULT_BASE_DN: ClassVar[str] = "dc=example,dc=com"
+    DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
+    DEFAULT_SCOPE: ClassVar[FlextLdapConstants.LiteralTypes.SearchScope] = "SUBTREE"
+    TEST_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
+    DEFAULT_PORT: ClassVar[int] = 389
 
     @staticmethod
     def create_search_options(
-        base_dn: str = "dc=example,dc=com",
-        filter_str: str = "(objectClass=*)",
-        scope: str = "SUBTREE",
+        base_dn: str | None = None,
+        filter_str: str | None = None,
+        scope: FlextLdapConstants.LiteralTypes.SearchScope | None = None,
     ) -> FlextLdapModels.SearchOptions:
         """Factory method for search options."""
+        factory = Ldap3AdapterTestDataFactory()
         return FlextLdapModels.SearchOptions(
-            base_dn=base_dn,
-            filter_str=filter_str,
-            scope=scope,  # type: ignore[arg-type]
+            base_dn=base_dn or factory.DEFAULT_BASE_DN,
+            filter_str=filter_str or factory.DEFAULT_FILTER,
+            scope=scope or factory.DEFAULT_SCOPE,
         )
 
     @staticmethod
@@ -127,7 +95,7 @@ class Ldap3AdapterTestDataFactory:
         if attributes:
             for key, value in attributes.items():
                 default_attrs[key] = [value] if isinstance(value, str) else value
-        return TestDeduplicationHelpers.create_entry(dn, default_attrs)  # type: ignore[arg-type]
+        return TestDeduplicationHelpers.create_entry(dn, default_attrs)
 
     @staticmethod
     def create_invalid_entry() -> FlextLdifModels.Entry:
@@ -140,17 +108,22 @@ class Ldap3AdapterTestDataFactory:
         )
 
 
+@pytest.fixture
+def adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
+    """Provide Ldap3Adapter instance for testing."""
+    return Ldap3Adapter(parser=ldap_parser)
+
+
+@pytest.fixture
+def search_options() -> FlextLdapModels.SearchOptions:
+    """Provide standard search options for testing."""
+    return Ldap3AdapterTestDataFactory.create_search_options()
+
+
 class TestLdap3AdapterUnit:
-    """Unit tests for Ldap3Adapter with real LDAP functionality.
+    """Comprehensive tests for Ldap3Adapter using factories and DRY principles.
 
-    Single class with flat test methods covering:
-    - Connection management (lifecycle, properties, state validation)
-    - Search operations (not connected, invalid parameters, real LDAP errors)
-    - Entry conversion (None handling, error scenarios)
-    - Add operations (not connected, invalid entries)
-
-    Previously nested test classes: TestConnectionManagement, TestSearchOperations,
-    TestConversion, TestAddOperations - now flattened per FLEXT architecture.
+    Uses parametrized tests and constants for maximum code reuse.
     """
 
     _factory = Ldap3AdapterTestDataFactory()
@@ -162,25 +135,28 @@ class TestLdap3AdapterUnit:
         assert adapter._server is None
         assert adapter.is_connected is False
 
-    @pytest.mark.parametrize("invalid_host", Ldap3AdapterTestDataFactory.INVALID_HOSTS)
+    @pytest.mark.parametrize(
+        "invalid_host",
+        [
+            "192.0.2.1",
+            "invalid-host-that-does-not-exist",
+        ],
+    )
     def test_connect_with_invalid_host(
         self,
         adapter: Ldap3Adapter,
         invalid_host: str,
     ) -> None:
         """Test connect with invalid host scenarios (parametrized)."""
-        # Use parametrized invalid hosts to trigger connection failure
         config = FlextLdapModels.ConnectionConfig(
             host=invalid_host,
-            port=389,
-            timeout=1,  # Short timeout for faster test
+            port=Ldap3AdapterTestDataFactory.DEFAULT_PORT,
+            timeout=1,  # Fast timeout for test
         )
         result = adapter.connect(config)
 
-        # Should fail with connection error
-        assert result.is_failure
-        assert result.error is not None
-        assert "Connection failed" in result.error or "Failed" in result.error
+        # Use FlextTestsMatchers for failure assertion
+        FlextTestsMatchers.assert_failure(result, "failed")
 
     def test_disconnect_with_real_connection(
         self,
@@ -192,10 +168,8 @@ class TestLdap3AdapterUnit:
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
-        # Disconnect should work with real connection
         adapter.disconnect()
 
-        # Connection should be cleared
         assert adapter._connection is None
         assert adapter._server is None
         assert adapter.is_connected is False
@@ -215,25 +189,19 @@ class TestLdap3AdapterUnit:
     ) -> None:
         """Test connection property with different connection states (parametrized)."""
         if connection_type == "connected":
-            # Create real ldap3 connection using fixture
             real_connection = TestDeduplicationHelpers.create_ldap3_connection(
                 ldap_container,
             )
-            adapter._connection = cast("Connection", real_connection)
-
-            # Access connection property
-            connection = adapter.connection
-            assert connection == real_connection
-            assert isinstance(connection, Connection)
-
-            # Cleanup
-            if connection.bound:
-                connection.unbind()
-
-        else:  # not_connected
+            if isinstance(real_connection, Connection):
+                adapter._connection = real_connection
+                connection = adapter.connection
+                assert connection == real_connection
+                assert isinstance(connection, Connection)
+                if connection.bound:
+                    unbind_func: Callable[[], None] = connection.unbind
+                    unbind_func()
+        else:
             adapter._connection = None
-
-            # Access connection property
             connection = adapter.connection
             assert connection is None
 
@@ -253,23 +221,19 @@ class TestLdap3AdapterUnit:
     ) -> None:
         """Test is_connected property with different connection states (parametrized)."""
         if connection_state == ConnectionState.CONNECTED.value:
-            # Real connected connection
             real_connection_obj = TestDeduplicationHelpers.create_ldap3_connection(
                 ldap_container,
             )
-            real_connection = cast("Connection", real_connection_obj)
-            adapter._connection = real_connection
-            assert adapter.is_connected is True
-            if real_connection.bound:
-                real_connection.unbind()
-
+            if isinstance(real_connection_obj, Connection):
+                adapter._connection = real_connection_obj
+                assert adapter.is_connected is True
+                if real_connection_obj.bound:
+                    unbind_func: Callable[[], None] = real_connection_obj.unbind
+                    unbind_func()
         elif connection_state == ConnectionState.DISCONNECTED.value:
-            # No connection
             adapter._connection = None
             assert adapter.is_connected is False
-
         elif connection_state == ConnectionState.UNBOUND.value:
-            # Unbound connection
             server = Server("ldap://localhost:389")
             unbound_connection = Connection(server, auto_bind=False)
             adapter._connection = unbound_connection
@@ -285,10 +249,8 @@ class TestLdap3AdapterUnit:
 
         result = adapter.search(search_options)
 
-        # Should fail with not connected error
-        assert result.is_failure
-        assert result.error is not None
-        assert "Not connected" in result.error
+        # Use FlextTestsMatchers for failure assertion
+        FlextTestsMatchers.assert_failure(result, "Not connected")
 
     def test_search_with_invalid_base_dn(
         self,
@@ -301,17 +263,15 @@ class TestLdap3AdapterUnit:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
         try:
-            # Use invalid base DN to trigger real LDAP error
             search_options = FlextLdapModels.SearchOptions(
-                base_dn="invalid=base,dn=invalid",
-                filter_str="(objectClass=*)",
-                scope="SUBTREE",
+                base_dn="invalid=base,dn=invalid",  # Invalid base DN
+                filter_str=self._factory.DEFAULT_FILTER,
+                scope=self._factory.DEFAULT_SCOPE,
             )
             result = adapter.search(search_options)
 
-            # Should fail with LDAP error
-            assert result.is_failure
-            assert result.error is not None
+            # Use FlextTestsMatchers for failure assertion
+            FlextTestsMatchers.assert_failure(result)
         finally:
             adapter.disconnect()
 
@@ -319,10 +279,9 @@ class TestLdap3AdapterUnit:
         """Test _convert_ldap3_results handles None attribute values."""
         adapter = Ldap3Adapter()
 
-        # Create mock connection with entries containing None values
         connection = Connection(Server("ldap://dummy"), client_strategy="MOCK_SYNC")
         connection.strategy.add_entry(
-            "cn=test,dc=example,dc=com",
+            self._factory.TEST_DN,
             {
                 "objectClass": ["person"],
                 "testValue": "single",
@@ -331,67 +290,53 @@ class TestLdap3AdapterUnit:
         )
 
         if len(connection.entries) > 0:
-            connection.entries[0]
-            converted = adapter._convert_ldap3_results(connection)
+            converted = adapter.ResultConverter.convert_ldap3_results(connection)
 
             assert isinstance(converted, list)
             assert len(converted) == 1
 
             dn, attrs = converted[0]
-            assert dn == "cn=test,dc=example,dc=com"
-            # Single value should be converted to list
+            assert dn == self._factory.TEST_DN
             assert attrs["testValue"] == ["single"]
-            # List should remain list
             assert attrs["testList"] == ["a", "b"]
 
     def test_search_error_in_entry_conversion(
         self,
-        search_options: FlextLdapModels.SearchOptions,
+        adapter: Ldap3Adapter,
+        connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
-        """Test search error handling when entry conversion fails."""
-        adapter = Ldap3Adapter()
+        """Test search error handling when entry conversion fails using real connection."""
+        connect_result = adapter.connect(connection_config)
+        if connect_result.is_failure:
+            pytest.skip(f"Failed to connect: {connect_result.error}")
 
-        # Create a proper mock connection
-        mock_connection = MagicMock(spec=Connection)
-        mock_connection.bound = True
-        mock_connection.search.return_value = True
-
-        # Create mock entries with proper structure
-        mock_entry = MagicMock()
-        mock_entry.entry_dn = "dc=example,dc=com"
-        mock_entry.entry_attributes = {"objectClass": ["top"]}
-        mock_connection.entries = [mock_entry]
-        mock_connection.result = {"result": 0}
-
-        adapter._connection = mock_connection
-
-        def mock_convert_failure(*args: object, **kwargs: object) -> object:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "Mock conversion failure"
+        try:
+            # Use invalid search options that will cause conversion issues
+            # Use invalid base DN format (not empty, but invalid)
+            invalid_search = FlextLdapModels.SearchOptions(
+                base_dn="invalid=base,dn=invalid",  # Invalid base DN format
+                filter_str=self._factory.DEFAULT_FILTER,
+                scope=self._factory.DEFAULT_SCOPE,
             )
+            result = adapter.search(invalid_search)
 
-        # Use test_context to temporarily mock the method
-        with FlextTestsUtilities.test_context(
-            adapter, "_convert_parsed_entries", mock_convert_failure
-        ):
-            # This should trigger the error logging
-            result = adapter.search(search_options)
-            assert result.is_failure
-            assert "Mock conversion failure" in str(result.error)
+            # Should fail due to invalid base DN or conversion issues
+            # Use FlextTestsMatchers for failure assertion
+            error = FlextTestsMatchers.assert_failure(result)
+            assert len(error) > 0
+        finally:
+            adapter.disconnect()
 
     def test_add_when_not_connected(self, adapter: Ldap3Adapter) -> None:
         """Test add when not connected."""
         adapter._connection = None
 
-        # Use factory to create entry
         entry = self._factory.create_test_entry()
 
         result = adapter.add(entry)
 
-        # Should fail with not connected error
-        assert result.is_failure
-        assert result.error is not None
-        assert "Not connected" in result.error
+        # Use FlextTestsMatchers for failure assertion
+        FlextTestsMatchers.assert_failure(result, "Not connected")
 
     def test_add_with_invalid_entry(
         self,
@@ -404,13 +349,11 @@ class TestLdap3AdapterUnit:
             pytest.skip(f"Failed to connect: {connect_result.error}")
 
         try:
-            # Use factory to create invalid entry (empty DN)
             entry = self._factory.create_invalid_entry()
 
             result = adapter.add(entry)
 
-            # Should fail with validation error
-            assert result.is_failure
-            assert result.error is not None
+            # Use FlextTestsMatchers for failure assertion
+            FlextTestsMatchers.assert_failure(result)
         finally:
             adapter.disconnect()

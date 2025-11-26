@@ -328,7 +328,7 @@ sn: Test
             ),
         ]
         # Transform with same source and target (covers line 283: early return)
-        transformed = sync_service._transform_entries_basedn(
+        transformed = sync_service.BaseDNTransformer.transform(
             entries,
             "dc=flext,dc=local",
             "dc=flext,dc=local",
@@ -452,7 +452,7 @@ sn: Test
         source_basedn = "dc=flext,dc=local"
         target_basedn = "dc=example,dc=com"
 
-        transformed = sync_service._transform_entries_basedn(
+        transformed = sync_service.BaseDNTransformer.transform(
             [entry],
             source_basedn,
             target_basedn,
@@ -500,7 +500,7 @@ sn: Test
         source_basedn = "dc=example,dc=com"
         target_basedn = "dc=flext,dc=local"
 
-        transformed = sync_service._transform_entries_basedn(
+        transformed = sync_service.BaseDNTransformer.transform(
             entries,
             source_basedn,
             target_basedn,

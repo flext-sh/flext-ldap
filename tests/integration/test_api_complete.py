@@ -104,7 +104,7 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test add returns proper OperationResult."""
         _entry, result = TestDeduplicationHelpers.create_user_add_and_verify(
-            ldap_client,
+            cast("LdapClientProtocol", ldap_client),
             "testapiadd",
             verify_operation_result=True,
         )
@@ -121,7 +121,7 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            ldap_client,
+            cast("LdapClientProtocol", ldap_client),
             entry,
             changes,
         )
@@ -133,7 +133,7 @@ class TestFlextLdapAPIComplete:
         """Test delete with DistinguishedName object."""
         entry = TestDeduplicationHelpers.create_user("testapidel")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            ldap_client,
+            cast("LdapClientProtocol", ldap_client),
             entry,
         )
 
@@ -143,7 +143,7 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test execute when connected."""
         TestDeduplicationHelpers.execute_and_verify_total_count(
-            ldap_client,
+            cast("LdapClientProtocol", ldap_client),
             expected_total=0,
             expected_entries=0,
         )
@@ -186,7 +186,7 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_ADD, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_modify_delete_with_operation_results(
-            ldap_client,
+            cast("LdapClientProtocol", ldap_client),
             entry,
             changes,
         )

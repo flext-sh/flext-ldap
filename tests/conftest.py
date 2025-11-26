@@ -58,6 +58,31 @@ LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
 LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD"
 
 
+# =============================================================================
+# TYPED WRAPPERS FOR LDAP3 UNTYPED METHODS (mypy strict compatibility)
+# =============================================================================
+
+
+def _ldap3_add(
+    conn: Connection, dn: str, object_class: object = None, attributes: object = None
+) -> bool:
+    """Typed wrapper for Connection.add."""
+    add_func: Callable[..., bool] = conn.add
+    return add_func(dn, object_class, attributes)
+
+
+def _ldap3_delete(conn: Connection, dn: str) -> bool:
+    """Typed wrapper for Connection.delete."""
+    delete_func: Callable[[str], bool] = conn.delete
+    return delete_func(dn)
+
+
+def _ldap3_unbind(conn: Connection) -> None:
+    """Typed wrapper for Connection.unbind."""
+    unbind_func: Callable[[], None] = conn.unbind
+    unbind_func()
+
+
 def _get_docker_control(worker_id: str = "master") -> FlextTestDocker:
     """Create FlextTestDocker with correct workspace root for flext-ldap.
 
@@ -493,7 +518,7 @@ def ldap_container(
                     auto_bind=True,
                     receive_timeout=2,
                 )
-                test_conn.unbind()
+                _ldap3_unbind(test_conn)
                 logger.info(
                     f"Container {LDAP_CONTAINER_NAME} is ready after {waited:.1f}s"
                 )
@@ -724,7 +749,8 @@ def ldap_test_data_loader(
 
         for ou_dn, ou_name in ous:
             try:
-                _ = connection.add(  # REAL add operation
+                _ = _ldap3_add(
+                    connection,
                     ou_dn,
                     attributes={
                         "objectClass": ["organizationalUnit", "top"],
@@ -743,7 +769,7 @@ def ldap_test_data_loader(
 
             for dn in all_dns:
                 try:
-                    _ = connection.delete(dn)  # REAL delete operation
+                    _ = _ldap3_delete(connection, dn)
                     logger.debug(f"Cleaned up DN: {dn}")
                 except Exception as e:
                     # Entry might be already deleted by test or not exist
@@ -754,7 +780,7 @@ def ldap_test_data_loader(
 
         # Close REAL connection
         if connection.bound:
-            connection.unbind()
+            _ldap3_unbind(connection)
 
     except Exception as e:
         logger.exception("Failed to initialize test data loader")
@@ -890,7 +916,8 @@ def _ensure_basic_ldap_structure() -> None:
         conn.search(LDAP_BASE_DN, "(ou=people)", attributes=["ou"])
         if not conn.entries:
             # Create ou=people
-            conn.add(
+            _ldap3_add(
+                conn,
                 f"ou=people,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
                 {
@@ -904,7 +931,8 @@ def _ensure_basic_ldap_structure() -> None:
         conn.search(LDAP_BASE_DN, "(ou=groups)", attributes=["ou"])
         if not conn.entries:
             # Create ou=groups
-            conn.add(
+            _ldap3_add(
+                conn,
                 f"ou=groups,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
                 {
@@ -918,7 +946,8 @@ def _ensure_basic_ldap_structure() -> None:
         conn.search(LDAP_BASE_DN, "(ou=services)", attributes=["ou"])
         if not conn.entries:
             # Create ou=services
-            conn.add(
+            _ldap3_add(
+                conn,
                 f"ou=services,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
                 {
@@ -928,7 +957,7 @@ def _ensure_basic_ldap_structure() -> None:
             )
             logger.debug("Created ou=services")
 
-        conn.unbind()
+        _ldap3_unbind(conn)
         logger.info("Basic LDAP structure verified/created")
 
     except Exception as e:

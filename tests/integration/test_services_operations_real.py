@@ -300,7 +300,7 @@ class TestFlextLdapOperationsRealOperations:
     ) -> None:
         """Test search operations with different configurations."""
         search_result = TestOperationHelpers.search_and_assert_success(
-            operations_service,  # type: ignore[arg-type]
+            operations_service,
             str(ldap_container["base_dn"]),
             filter_str=str(config.get("filter_str", "(objectClass=*)")),
             scope=str(config.get("scope", SearchScope.SUBTREE)),
@@ -467,7 +467,7 @@ class TestFlextLdapOperationsRealOperations:
     ) -> None:
         """Test execute operations with different configurations."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            operations_service
+            cast("LdapClientProtocol", operations_service)
         )
 
         self.TestAssertions.assert_search_result(search_result, config)

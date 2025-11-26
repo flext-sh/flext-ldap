@@ -154,9 +154,9 @@ class TestDataFactories:
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "cn": [str(user_data["name"])],
+                    "cn": [str(getattr(user_data, "name", str(user_data)))],
                     "sn": ["Test"],
-                    "mail": [str(user_data["email"])],
+                    "mail": [str(getattr(user_data, "email", str(user_data)))],
                     "objectClass": [
                         "inetOrgPerson",
                         "organizationalPerson",

@@ -99,7 +99,7 @@ class TestFlextLdapConnectionCompleteCoverage:
                 else:
                     config_dict[key] = cast("str | int | bool", value)
 
-            return FlextLdapConfig(**config_dict)  # type: ignore[arg-type]
+            return FlextLdapConfig(**config_dict)
 
         @staticmethod
         def create_connection_config(
