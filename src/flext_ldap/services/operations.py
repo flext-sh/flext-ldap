@@ -15,9 +15,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TypeAlias
 
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextResult, FlextRuntime, FlextUtilities
 from flext_ldif import FlextLdif, FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 
@@ -26,8 +25,6 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes, LdapConnectionProtocol
-
-AttributeValues: TypeAlias = list[str]
 
 
 class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
@@ -41,7 +38,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     _connection: LdapConnectionProtocol
 
     class EntryComparison:
-        """Entry comparison logic using FlextUtilities for generalization."""
+        """Entry comparison logic - detects attribute changes for modify operations."""
 
         @staticmethod
         def compare(
@@ -54,30 +51,38 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 if existing_entry.attributes
                 else {}
             )
-            new_attrs = new_entry.attributes.attributes if new_entry.attributes else {}
+            new_attrs = (
+                new_entry.attributes.attributes if new_entry.attributes else {}
+            )
             if not existing_attrs or not new_attrs:
                 return None
 
-            ignore_attrs = FlextLdapConstants.OperationalAttributes.IGNORE_SET
-            existing_lower = {k.lower(): (k, v) for k, v in existing_attrs.items()}
-            new_lower = {k.lower(): (k, v) for k, v in new_attrs.items()}
+            ignore = FlextLdapConstants.OperationalAttributes.IGNORE_SET
             changes: FlextLdapTypes.LdapModifyChanges = {}
+            processed = set()
 
-            for attr_lower, (attr_name, new_vals) in new_lower.items():
-                if attr_lower in ignore_attrs:
+            for attr_name, new_vals in new_attrs.items():
+                if not FlextRuntime.is_list_like(new_vals):
                     continue
-                existing_attr, existing_vals = existing_lower.get(
-                    attr_lower, (attr_name, [])
+                attr_lower = attr_name.lower()
+                if attr_lower in ignore:
+                    continue
+                processed.add(attr_lower)
+
+                existing_vals = next(
+                    (v for k, v in existing_attrs.items() if k.lower() == attr_lower),
+                    None,
                 )
-                existing_set = {str(v).lower() for v in existing_vals if v}
+                existing_set = {str(v).lower() for v in existing_vals if v} if existing_vals else set()
                 new_set = {str(v).lower() for v in new_vals if v}
                 if existing_set != new_set:
-                    changes[existing_attr] = [
-                        (MODIFY_REPLACE, [str(v) for v in new_vals if v])
-                    ]
+                    changes[attr_name] = [(MODIFY_REPLACE, [str(v) for v in new_vals if v])]
 
-            for attr_lower, (attr_name, _) in existing_lower.items():
-                if attr_lower not in ignore_attrs and attr_lower not in new_lower:
+            for attr_name, existing_vals in existing_attrs.items():
+                if not FlextRuntime.is_list_like(existing_vals):
+                    continue
+                attr_lower = attr_name.lower()
+                if attr_lower not in ignore and attr_lower not in processed:
                     changes[attr_name] = [(MODIFY_DELETE, [])]
 
             return changes or None
@@ -93,11 +98,9 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self, entry: FlextLdifModels.Entry
         ) -> FlextResult[FlextLdapTypes.LdapOperationResult]:
             """Execute upsert operation."""
-            changetype = (
-                entry.attributes.attributes.get("changetype", [])[0].lower()
-                if entry.attributes and entry.attributes.attributes.get("changetype")
-                else ""
-            )
+            attrs = entry.attributes.attributes if entry.attributes else {}
+            changetype_val = attrs.get("changetype", []) if isinstance(attrs, dict) else []
+            changetype = changetype_val[0].lower() if changetype_val else ""
 
             if changetype == "modify":
                 return self.handle_schema_modify(entry)
@@ -107,14 +110,15 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self, entry: FlextLdifModels.Entry
         ) -> FlextResult[FlextLdapTypes.LdapOperationResult]:
             """Handle schema modify operation."""
-            add_op = entry.attributes.attributes.get("add", [])
+            attrs = entry.attributes.attributes if entry.attributes else {}
+            add_op = attrs.get("add", []) if isinstance(attrs, dict) else []
             if not add_op:
                 return FlextResult[FlextLdapTypes.LdapOperationResult].fail(
                     "Schema modify entry missing 'add' attribute"
                 )
 
             attr_type = add_op[0]
-            attr_values = entry.attributes.attributes.get(attr_type, [])
+            attr_values = attrs.get(attr_type, []) if isinstance(attrs, dict) else []
             filtered = [v for v in attr_values if v]
 
             if not filtered:

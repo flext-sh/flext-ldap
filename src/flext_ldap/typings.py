@@ -18,6 +18,7 @@ from flext_ldap.models import FlextLdapModels
 
 __all__ = [
     "FlextLdapTypes",
+    "Ldap3ConnectionProtocol",
     "LdapAdapterProtocol",
     "LdapClientProtocol",
     "LdapConnectionProtocol",
@@ -275,6 +276,22 @@ class LdapConnectionProtocol(Protocol):
 
         Closes the connection and releases resources.
         Safe to call multiple times.
+
+        """
+        ...
+
+
+class Ldap3ConnectionProtocol(Protocol):
+    """Protocol for ldap3.Connection objects.
+
+    Defines the interface for ldap3 Connection with properly typed methods.
+    Used to type-check ldap3.Connection instances without importing ldap3.
+    """
+
+    def unbind(self) -> None:
+        """Unbind from LDAP server.
+
+        Closes the LDAP connection.
 
         """
         ...

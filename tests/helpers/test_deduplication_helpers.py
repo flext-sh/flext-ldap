@@ -15,7 +15,7 @@ import tempfile
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
-from typing import Literal, Union, cast
+from typing import Literal, cast
 
 import pytest
 from flext_core import FlextResult
@@ -32,7 +32,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.typings import Ldap3ConnectionProtocol, LdapClientProtocol
 
 from ..fixtures import LdapTestFixtures
 from ..fixtures.constants import RFC
@@ -1762,7 +1762,7 @@ class TestDeduplicationHelpers:
         server_types: list[str] | None = None,
         *,
         verify_result: bool = True,
-    ) -> list[tuple[str, Union[FlextResult[FlextLdifModels.Entry], FlextResult[bool]]]]:
+    ) -> list[tuple[str, FlextResult[FlextLdifModels.Entry] | FlextResult[bool]]]:
         """Test adapter operation with multiple server types - REPLACES ENTIRE PATTERN (10-15 lines).
 
         Replaces repetitive adapter testing with server types loops.
@@ -1787,7 +1787,7 @@ class TestDeduplicationHelpers:
             server_types = ["rfc", "openldap2", "generic"]
 
         results: list[
-            tuple[str, Union[FlextResult[FlextLdifModels.Entry], FlextResult[bool]]]
+            tuple[str, FlextResult[FlextLdifModels.Entry] | FlextResult[bool]]
         ] = []
 
         for server_type in server_types:
@@ -1797,7 +1797,7 @@ class TestDeduplicationHelpers:
                         "Adapter does not have normalize_entry_for_server method"
                     )
                     raise AttributeError(error_msg)
-                result: Union[FlextResult[FlextLdifModels.Entry], FlextResult[bool]] = (
+                result: FlextResult[FlextLdifModels.Entry] | FlextResult[bool] = (
                     adapter.normalize_entry_for_server(entry, server_type)
                 )
             elif operation == "validate":
@@ -2543,7 +2543,11 @@ class TestDeduplicationHelpers:
             raise AttributeError(error_msg)
 
             # Cleanup before if requested
-            if cleanup_dns and hasattr(sync_service, "_operations") and isinstance(sync_service._operations, FlextLdapOperations):
+            if (
+                cleanup_dns
+                and hasattr(sync_service, "_operations")
+                and isinstance(sync_service._operations, FlextLdapOperations)
+            ):
                 # FlextLdapOperations has delete method, use it directly
                 for dn in cleanup_dns:
                     _ = sync_service._operations.delete(dn)
@@ -2661,7 +2665,10 @@ class TestDeduplicationHelpers:
             return typed_entry, converted_entry
         finally:
             if isinstance(connection, Connection):
-                connection.unbind()
+                typed_conn: Ldap3ConnectionProtocol = cast(
+                    "Ldap3ConnectionProtocol", connection
+                )
+                typed_conn.unbind()
 
     @staticmethod
     def real_ldap_entry_roundtrip_complete(
@@ -2722,7 +2729,10 @@ class TestDeduplicationHelpers:
             return ldap3_entry, ldif_entry, ldap3_attrs
         finally:
             if isinstance(connection, Connection):
-                connection.unbind()
+                typed_conn: Ldap3ConnectionProtocol = cast(
+                    "Ldap3ConnectionProtocol", connection
+                )
+                typed_conn.unbind()
 
     @staticmethod
     def all_scopes(
@@ -5014,10 +5024,11 @@ class TestDeduplicationHelpers:
 
         result = client.execute()
         FlextTestsMatchers.assert_success(result, error_msg="Execute failed")
-        search_result = FlextTestsMatchers.assert_success(result)
+        search_result: FlextLdapModels.SearchResult = FlextTestsMatchers.assert_success(result)
 
-        assert search_result.total_count == expected_total, (
-            f"Expected total_count={expected_total}, got {search_result.total_count}"
+        total = cast("int", search_result.total_count)
+        assert total == expected_total, (
+            f"Expected total_count={expected_total}, got {total}"
         )
 
         if expected_entries is not None:

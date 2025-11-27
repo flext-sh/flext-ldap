@@ -42,7 +42,9 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API connection lifecycle."""
         api = FlextLdap()
-        TestDeduplicationHelpers.connect_and_disconnect(cast("LdapClientProtocol", api), connection_config)
+        TestDeduplicationHelpers.connect_and_disconnect(
+            cast("LdapClientProtocol", api), connection_config
+        )
 
     def test_api_search(
         self,
@@ -61,21 +63,27 @@ class TestFlextLdapAPI:
         ldap_client: FlextLdap,
     ) -> None:
         """Test API add operation."""
-        TestDeduplicationHelpers.api_add_operation(cast("LdapClientProtocol", ldap_client), "testapiadd", sn="Test")
+        TestDeduplicationHelpers.api_add_operation(
+            cast("LdapClientProtocol", ldap_client), "testapiadd", sn="Test"
+        )
 
     def test_api_modify(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test API modify operation."""
-        TestDeduplicationHelpers.api_modify_operation(cast("LdapClientProtocol", ldap_client), "testapimodify")
+        TestDeduplicationHelpers.api_modify_operation(
+            cast("LdapClientProtocol", ldap_client), "testapimodify"
+        )
 
     def test_api_delete(
         self,
         ldap_client: FlextLdap,
     ) -> None:
         """Test API delete operation."""
-        TestDeduplicationHelpers.api_delete_operation(cast("LdapClientProtocol", ldap_client), "testapidelete")
+        TestDeduplicationHelpers.api_delete_operation(
+            cast("LdapClientProtocol", ldap_client), "testapidelete"
+        )
 
     def test_api_operations_when_not_connected(
         self,

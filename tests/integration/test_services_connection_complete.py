@@ -163,7 +163,8 @@ class TestFlextLdapConnectionComplete:
         result = TestOperationHelpers.execute_and_assert_success(
             cast("LdapClientProtocol", connection)
         )
-        assert result is True
+        assert result is not None
+        assert isinstance(result, FlextLdapModels.SearchResult)
 
         connection.disconnect()
 

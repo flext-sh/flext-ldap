@@ -253,6 +253,70 @@ class TestFlextLdapEntryAdapterComplete:
     # Type checker prevents passing None at call site
     # No runtime None check needed - type system guarantees non-None
 
+    def test_round_trip_conversion_ldap3_to_ldif_to_ldap3(
+        self,
+        ldap_connection: Connection,
+    ) -> None:
+        """Test complete round-trip conversion: ldap3 → ldif → ldap3.
+
+        This validates that data is preserved through conversion cycles.
+        """
+        adapter = FlextLdapEntryAdapter()
+
+        # Get a real entry from LDAP
+        ldap_connection.search(
+            search_base=RFC.DEFAULT_BASE_DN,
+            search_filter="(objectClass=*)",
+            search_scope="BASE",
+            attributes=["*"],
+        )
+        assert len(ldap_connection.entries) > 0
+        original_ldap3_entry = ldap_connection.entries[0]
+
+        # Convert ldap3 → ldif
+        ldif_result = adapter.ldap3_to_ldif_entry(original_ldap3_entry)
+        original_ldif_entry = TestOperationHelpers.assert_result_success_and_unwrap(ldif_result)
+
+        # Convert ldif → ldap3
+        ldap3_attrs_result = adapter.ldif_entry_to_ldap3_attributes(original_ldif_entry)
+        converted_ldap3_attrs = TestOperationHelpers.assert_result_success_and_unwrap(ldap3_attrs_result)
+
+        # Create a new ldif entry from the converted ldap3 attributes
+        # (simulating what would happen if we added this to LDAP and retrieved it)
+        test_dn = f"cn=round-trip-test,{RFC.DEFAULT_BASE_DN}"
+        round_trip_entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value=test_dn),
+            attributes=FlextLdifModels.LdifAttributes(attributes=converted_ldap3_attrs),
+        )
+
+        # Convert back to ldap3 attributes again
+        final_ldap3_result = adapter.ldif_entry_to_ldap3_attributes(round_trip_entry)
+        final_ldap3_attrs = TestOperationHelpers.assert_result_success_and_unwrap(final_ldap3_result)
+
+        # Validate that critical attributes are preserved
+        original_attrs = original_ldap3_entry.entry_attributes_as_dict
+
+        # Check DN preservation
+        assert str(round_trip_entry.dn) == test_dn
+
+        # Check that objectClass is preserved (most important attribute)
+        if "objectClass" in original_attrs:
+            original_oc = original_attrs["objectClass"]
+            final_oc = final_ldap3_attrs.get("objectClass", [])
+            # Sort both lists for comparison
+            assert sorted(original_oc) == sorted(final_oc), (
+                f"objectClass not preserved: original={original_oc}, final={final_oc}"
+            )
+
+        # Check that other key attributes are preserved
+        for attr_name in ["cn", "dc"]:
+            if attr_name in original_attrs:
+                original_values = original_attrs[attr_name]
+                final_values = final_ldap3_attrs.get(attr_name, [])
+                assert sorted(original_values) == sorted(final_values), (
+                    f"{attr_name} not preserved: original={original_values}, final={final_values}"
+                )
+
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
         """Test conversion with entry having empty attributes dict."""
         adapter = FlextLdapEntryAdapter()

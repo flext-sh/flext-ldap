@@ -32,24 +32,24 @@ from ..fixtures.constants import TestConstants
 pytestmark = pytest.mark.unit
 
 
-class _TestServiceBase(FlextLdapServiceBase[bool]):
-    """Test service implementation for testing base class."""
-
-    def execute(self, **_kwargs: object) -> FlextResult[bool]:
-        """Execute test service returning success result."""
-        return FlextResult[bool].ok(True)
-
-
 class TestFlextLdapServiceBase:
     """Comprehensive tests for FlextLdapServiceBase using factories and DRY principles.
 
     Uses parametrized tests and constants for maximum code reuse.
+    All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    @staticmethod
-    def _create_test_service() -> FlextLdapServiceBase[bool]:
+    class _TestService(FlextLdapServiceBase[bool]):
+        """Test service implementation for testing base class."""
+
+        def execute(self, **_kwargs: object) -> FlextResult[bool]:
+            """Execute test service returning success result."""
+            return FlextResult[bool].ok(True)
+
+    @classmethod
+    def _create_test_service(cls) -> FlextLdapServiceBase[bool]:
         """Create test service instance."""
-        return _TestServiceBase()
+        return cls._TestService()
 
     @pytest.mark.parametrize("namespace", TestConstants.Base.CONFIG_NAMESPACES)
     def test_service_initialization_and_config_namespaces(self, namespace: str) -> None:

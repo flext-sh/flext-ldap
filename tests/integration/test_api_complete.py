@@ -191,6 +191,104 @@ class TestFlextLdapAPIComplete:
             changes,
         )
 
+    def test_api_crud_operations_with_data_validation(
+        self,
+        connection_config: FlextLdapModels.ConnectionConfig,
+    ) -> None:
+        """Test complete CRUD operations with data validation.
+
+        This test validates that:
+        1. Add operation succeeds and data is stored correctly
+        2. Search operation returns the correct data
+        3. Modify operation changes data correctly
+        4. Delete operation removes data completely
+        """
+        # Create connected LDAP client
+        ldap_client = FlextLdap()
+        TestOperationHelpers.connect_and_assert_success(
+            cast("LdapClientProtocol", ldap_client), connection_config
+        )
+
+        # Create test entry with specific data
+        test_dn = f"cn=test-data-validation,{RFC.DEFAULT_BASE_DN}"
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value=test_dn),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "cn": ["test-data-validation"],
+                    "sn": ["DataValidation"],
+                    "givenName": ["Test"],
+                    "mail": ["test@example.com"],
+                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "userPassword": ["test123"],
+                    "description": ["Test entry for data validation"],
+                },
+            ),
+        )
+
+        # Test ADD operation
+        add_result = ldap_client.add(entry)
+        assert add_result.is_success, f"Add failed: {add_result.error}"
+
+        # Verify data was stored correctly by searching
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn=test_dn,
+            filter_str="(objectClass=*)",
+            scope="BASE",
+            attributes=["*"],
+        )
+        search_result = ldap_client.search(search_options)
+        assert search_result.is_success, f"Search failed: {search_result.error}"
+
+        search_data = search_result.unwrap()
+        assert len(search_data.entries) == 1, "Should find exactly one entry"
+
+        found_entry = search_data.entries[0]
+
+        # Validate all attributes match what was added
+        assert str(found_entry.dn) == test_dn
+        assert found_entry.attributes is not None
+        attrs = found_entry.attributes.attributes
+
+        # Check specific attributes
+        assert attrs.get("cn") == ["test-data-validation"]
+        assert attrs.get("sn") == ["DataValidation"]
+        assert attrs.get("givenName") == ["Test"]
+        assert attrs.get("mail") == ["test@example.com"]
+        assert "inetOrgPerson" in attrs.get("objectClass", [])
+        assert attrs.get("description") == ["Test entry for data validation"]
+
+        # Test MODIFY operation
+        changes = {
+            "description": [("MODIFY_REPLACE", ["Modified description"])],
+            "mail": [("MODIFY_REPLACE", ["modified@example.com"])],
+        }
+        modify_result = ldap_client.modify(test_dn, changes)
+        assert modify_result.is_success, f"Modify failed: {modify_result.error}"
+
+        # Verify modifications
+        search_result2 = ldap_client.search(search_options)
+        assert search_result2.is_success
+        search_data2 = search_result2.unwrap()
+        assert len(search_data2.entries) == 1
+
+        modified_entry = search_data2.entries[0]
+        modified_attrs = modified_entry.attributes.attributes
+        assert modified_attrs.get("description") == ["Modified description"]
+        assert modified_attrs.get("mail") == ["modified@example.com"]
+        # Other attributes should remain unchanged
+        assert modified_attrs.get("cn") == ["test-data-validation"]
+        assert modified_attrs.get("sn") == ["DataValidation"]
+
+        # Test DELETE operation
+        delete_result = ldap_client.delete(test_dn)
+        assert delete_result.is_success, f"Delete failed: {delete_result.error}"
+
+        # Verify entry was deleted - search should fail with noSuchObject
+        search_result3 = ldap_client.search(search_options)
+        assert not search_result3.is_success, "Search should fail after entry deletion"
+        assert "noSuchObject" in str(search_result3.error), f"Expected noSuchObject error, got: {search_result3.error}"
+
     def test_api_upsert_method(
         self,
         ldap_client: FlextLdap,

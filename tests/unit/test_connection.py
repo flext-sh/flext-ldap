@@ -24,12 +24,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
 from flext_ldif import FlextLdif
+from flext_tests import FlextTestsMatchers
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
@@ -40,41 +40,35 @@ from ..fixtures.constants import TestConstants
 pytestmark = pytest.mark.unit
 
 
-class HostScenario(StrEnum):
-    """Host scenarios for parametrized connection testing."""
+class TestFlextLdapConnection:
+    """Comprehensive tests for FlextLdapConnection using factories and DRY principles.
 
-    LOCALHOST = "localhost"
-    INVALID_IP = "192.0.2.1"
+    Uses parametrized tests and constants for maximum code reuse.
+    All helper logic is nested within this single class following FLEXT patterns.
+    """
 
+    class HostScenario(StrEnum):
+        """Host scenarios for parametrized connection testing."""
 
-@dataclass(frozen=True, slots=True)
-class ConnectionTestData:
-    """Test data constants for connection tests using Python 3.13 dataclasses."""
+        LOCALHOST = "localhost"
+        INVALID_IP = "192.0.2.1"
 
     HOST_SCENARIOS: ClassVar[tuple[HostScenario, ...]] = (
         HostScenario.LOCALHOST,
         HostScenario.INVALID_IP,
     )
 
-
-class TestFlextLdapConnection:
-    """Comprehensive tests for FlextLdapConnection using factories and DRY principles.
-
-    Uses parametrized tests and constants for maximum code reuse.
-    """
-
-    _test_data = ConnectionTestData()
-
-    @staticmethod
-    def _create_connection() -> FlextLdapConnection:
+    @classmethod
+    def _create_connection(cls) -> FlextLdapConnection:
         """Factory method for creating connection instances."""
         return FlextLdapConnection(
             config=FlextLdapConfig(),
             parser=FlextLdif.get_instance().parser,
         )
 
-    @staticmethod
+    @classmethod
     def _create_connection_config(
+        cls,
         host: str | None = None,
         port: int | None = None,
         bind_dn: str | None = None,
@@ -108,9 +102,8 @@ class TestFlextLdapConnection:
     def test_connection_execute_when_not_connected(self) -> None:
         """Test execute returns failure when not connected."""
         result = self._create_connection().execute()
-        assert result.is_failure
-        assert result.error is not None
-        assert "Not connected" in result.error
+        FlextTestsMatchers.assert_failure(result)
+        assert "Not connected" in (result.error or "")
 
     def test_connection_connect_debug_logging(self) -> None:
         """Test connection debug logging."""
@@ -120,33 +113,29 @@ class TestFlextLdapConnection:
             bind_dn="cn=test,dc=example,dc=com",
         )
         result = connection.connect(connection_config)
-        assert result.is_failure
+        FlextTestsMatchers.assert_failure(result)
 
-    @pytest.mark.parametrize("host_scenario", ConnectionTestData.HOST_SCENARIOS)
+    @pytest.mark.parametrize("host_scenario", HOST_SCENARIOS)
     def test_connection_with_host_scenario(
         self,
         host_scenario: HostScenario,
-        request: pytest.FixtureRequest,
     ) -> None:
         """Test connection scenarios with different hosts (parametrized)."""
         connection = self._create_connection()
-        # For localhost, use invalid credentials to ensure failure
-        # For invalid IP, connection will fail anyway
-        if host_scenario == HostScenario.LOCALHOST:
-            # Use invalid credentials to ensure failure even with valid host
+        if host_scenario == self.HostScenario.LOCALHOST:
             connection_config = self._create_connection_config(
                 host=host_scenario.value,
                 bind_dn="cn=invalid,dc=example,dc=com",
                 bind_password="wrong_password",
-                timeout=1,  # Fast timeout for test
+                timeout=TestConstants.Connection.FAST_TIMEOUT,
             )
         else:
             connection_config = self._create_connection_config(
                 host=host_scenario.value,
-                timeout=1,  # Fast timeout for test
+                timeout=TestConstants.Connection.FAST_TIMEOUT,
             )
         result = connection.connect(connection_config, auto_retry=True, max_retries=1)
-        assert result.is_failure
+        FlextTestsMatchers.assert_failure(result)
 
     def test_connection_get_connection_when_none(self) -> None:
         """Test _get_connection when connection is None."""
@@ -154,12 +143,11 @@ class TestFlextLdapConnection:
         connection._adapter._connection = None
         connection._adapter._server = None
         result = connection._adapter._get_connection()
-        assert result.is_failure
+        FlextTestsMatchers.assert_failure(result)
 
     def test_connection_health_check(self) -> None:
         """Test health check execution."""
         connection = self._create_connection()
         result = connection.execute()
-        assert result.is_failure
-        assert result.error is not None
-        assert "Not connected" in result.error
+        FlextTestsMatchers.assert_failure(result)
+        assert "Not connected" in (result.error or "")

@@ -106,7 +106,7 @@ def connection_config(
     request: pytest.FixtureRequest,
 ) -> FlextLdapModels.ConnectionConfig:
     """Provide ConnectionConfig for testing.
-    
+
     Uses container credentials if ldap_container fixture is available,
     otherwise uses default test credentials.
     """
@@ -121,7 +121,9 @@ def connection_config(
             port=port_int,
             use_ssl=False,
             bind_dn=str(ldap_container.get("bind_dn", TestConstants.DEFAULT_BIND_DN)),
-            bind_password=str(ldap_container.get("password", TestConstants.DEFAULT_BIND_PASSWORD)),
+            bind_password=str(
+                ldap_container.get("password", TestConstants.DEFAULT_BIND_PASSWORD)
+            ),
         )
     except pytest.FixtureLookupError:
         # Fallback to default test credentials

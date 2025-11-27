@@ -287,7 +287,8 @@ class TestFlextLdapAPI:
         Covers: test_execute_when_not_connected_returns_failure_with_error_message
         """
         result = api_instance.execute()
-        FlextTestsMatchers.assert_result_failure(result, expected_error="Not connected")
+        FlextTestsMatchers.assert_failure(result)
+        assert FlextLdapConstants.ErrorStrings.NOT_CONNECTED in (result.error or "")
 
     def test_disconnect_when_not_connected_succeeds_silently(
         self, api_instance: FlextLdap

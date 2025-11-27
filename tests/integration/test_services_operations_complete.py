@@ -183,7 +183,9 @@ class TestFlextLdapOperationsComplete:
             cleanup_after=False,
         )
         if entry.dn:
-            TestDeduplicationHelpers.delete_with_dn_spaces(cast("LdapClientProtocol", operations_service), entry)
+            TestDeduplicationHelpers.delete_with_dn_spaces(
+                cast("LdapClientProtocol", operations_service), entry
+            )
 
     def test_execute_when_connected(
         self,
