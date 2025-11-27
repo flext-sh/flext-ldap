@@ -120,12 +120,69 @@ class EntryTestHelpers:
             base_dn=dn_str,
             filter_str="(objectClass=*)",
             scope="BASE",
+            attributes=["*"],  # Get all attributes for validation
         )
         search_result = client.search(search_options)
         if search_result.is_success:
             unwrapped = search_result.unwrap()
             return len(unwrapped.entries) == 1
         return False
+
+    @staticmethod
+    def verify_entry_data_matches(
+        client: LdapOperationsType,
+        expected_entry: FlextLdifModels.Entry,
+    ) -> bool:
+        """Verify that entry data in LDAP matches expected entry.
+
+        Args:
+            client: LDAP client with search method
+            expected_entry: Expected entry data
+
+        Returns:
+            True if entry data matches, False otherwise
+
+        """
+        if not expected_entry.dn:
+            return False
+
+        dn_str = str(expected_entry.dn)
+        search_options = FlextLdapModels.SearchOptions(
+            base_dn=dn_str,
+            filter_str="(objectClass=*)",
+            scope="BASE",
+            attributes=["*"],  # Get all attributes
+        )
+        search_result = client.search(search_options)
+        if not search_result.is_success:
+            return False
+
+        unwrapped = search_result.unwrap()
+        if len(unwrapped.entries) != 1:
+            return False
+
+        found_entry = unwrapped.entries[0]
+
+        # Compare DN
+        if str(found_entry.dn) != str(expected_entry.dn):
+            return False
+
+        # Compare attributes
+        if not found_entry.attributes or not expected_entry.attributes:
+            return False
+
+        found_attrs = found_entry.attributes.attributes
+        expected_attrs = expected_entry.attributes.attributes
+
+        # Check that all expected attributes are present with correct values
+        for attr_name, expected_values in expected_attrs.items():
+            if attr_name not in found_attrs:
+                return False
+            found_values = found_attrs[attr_name]
+            if sorted(found_values) != sorted(expected_values):
+                return False
+
+        return True
 
     @staticmethod
     def cleanup_after_test(
@@ -299,15 +356,28 @@ class EntryTestHelpers:
         entry: FlextLdifModels.Entry,
         *,
         verify: bool = False,
+        verify_data: bool = False,
         cleanup_after: bool = True,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Add entry with automatic cleanup before and after."""
+        """Add entry with automatic cleanup before and after.
+
+        Args:
+            client: LDAP client
+            entry: Entry to add
+            verify: Whether to verify entry exists after add
+            verify_data: Whether to verify entry data matches expected data
+            cleanup_after: Whether to cleanup after test
+
+        """
         if entry.dn:
             dn_str = str(entry.dn)
             EntryTestHelpers.cleanup_entry(client, dn_str)
         add_result = client.add(entry)
-        if verify and entry.dn and add_result.is_success:
-            assert EntryTestHelpers.verify_entry_added(client, str(entry.dn))
+        if add_result.is_success:
+            if verify and entry.dn:
+                assert EntryTestHelpers.verify_entry_added(client, str(entry.dn))
+            if verify_data:
+                assert EntryTestHelpers.verify_entry_data_matches(client, entry)
         if cleanup_after and entry.dn:
             EntryTestHelpers.cleanup_after_test(client, str(entry.dn))
         return add_result

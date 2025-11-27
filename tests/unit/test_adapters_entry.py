@@ -37,7 +37,7 @@ from flext_ldap.constants import FlextLdapConstants
 from ..fixtures.constants import TestConstants
 from ..helpers.entry_helpers import EntryTestHelpers
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 class TestFlextLdapEntryAdapter:
@@ -156,37 +156,6 @@ class TestFlextLdapEntryAdapter:
         assert "emptyString" in attrs
         assert attrs["emptyString"] == [""]
 
-    def test_normalize_entry_for_server(
-        self, adapter: FlextLdapEntryAdapter, test_entry: FlextLdifModels.Entry
-    ) -> None:
-        """Test entry normalization for server type."""
-        result = adapter.normalize_entry_for_server(
-            test_entry, TestConstants.Adapter.SERVER_TYPE_OPENLDAP2
-        )
-        normalized = FlextTestsMatchers.assert_success(result)
-        assert normalized == test_entry
-
-    def test_validate_entry_for_server_with_valid_entry(
-        self, adapter: FlextLdapEntryAdapter, test_entry: FlextLdifModels.Entry
-    ) -> None:
-        """Test validation with valid entry."""
-        result = adapter.validate_entry_for_server(
-            test_entry, TestConstants.Adapter.SERVER_TYPE_OPENLDAP2
-        )
-        validated = FlextTestsMatchers.assert_success(result)
-        assert validated is True
-
-    def test_validate_entry_for_server_with_empty_dn(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test validation with empty DN."""
-        entry = EntryTestHelpers.create_entry("", {"cn": ["test"]})
-        result = adapter.validate_entry_for_server(
-            entry, TestConstants.Adapter.SERVER_TYPE_OPENLDAP2
-        )
-        validated = FlextTestsMatchers.assert_success(result)
-        assert validated is True
-
     def test_validate_entry_for_server_pydantic_prevents_none(self) -> None:
         """Test that Pydantic v2 validation prevents None attributes."""
         entry = EntryTestHelpers.create_entry(
@@ -197,25 +166,13 @@ class TestFlextLdapEntryAdapter:
         with pytest.raises(ValidationError):
             FlextLdifModels.Entry.model_validate(invalid_data)
 
-    def test_validate_entry_for_server_with_empty_attributes(
-        self, adapter: FlextLdapEntryAdapter
-    ) -> None:
-        """Test validation with empty attributes dict."""
-        entry = EntryTestHelpers.create_entry(
-            TestConstants.Adapter.TEST_DN, TestConstants.Adapter.EMPTY_ATTRIBUTES
-        )
-        result = adapter.validate_entry_for_server(
-            entry, TestConstants.Adapter.SERVER_TYPE_OPENLDAP2
-        )
-        validated = FlextTestsMatchers.assert_success(result)
-        assert validated is True
-
     def test_execute_method(self, adapter: FlextLdapEntryAdapter) -> None:
         """Test execute method required by FlextService."""
         result = adapter.execute()
         executed = FlextTestsMatchers.assert_success(result)
         assert executed is True
 
+    @pytest.mark.integration
     @pytest.mark.parametrize(
         ("attr_name", "attr_value"),
         [
@@ -252,6 +209,7 @@ class TestFlextLdapEntryAdapter:
                 elif attr_name in entry.attributes.attributes:
                     assert entry.attributes.attributes[attr_name] == [str(attr_value)]
 
+    @pytest.mark.integration
     @pytest.mark.parametrize(
         ("attr_name", "attr_value"),
         [
@@ -278,6 +236,7 @@ class TestFlextLdapEntryAdapter:
                 entry = FlextTestsMatchers.assert_success(result)
                 assert entry.metadata is not None
 
+    @pytest.mark.integration
     @pytest.mark.parametrize(
         ("attr_name", "attr_value", "metadata_key"),
         [
@@ -311,6 +270,7 @@ class TestFlextLdapEntryAdapter:
                 elif metadata_key in extensions:
                     assert extensions[metadata_key] is not None
 
+    @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_dn_changes(
         self, ldap_container: dict[str, object]
     ) -> None:
@@ -326,6 +286,7 @@ class TestFlextLdapEntryAdapter:
                 extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
                 assert "dn_changed" in extensions or "original_dn" in extensions
 
+    @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_string_conversions(
         self, ldap_container: dict[str, object]
     ) -> None:
@@ -345,25 +306,7 @@ class TestFlextLdapEntryAdapter:
                 if converted_attrs is not None:
                     assert isinstance(converted_attrs, dict)
 
-    def test_ldap3_to_ldif_entry_handles_base64_detection(
-        self, ldap_container: dict[str, object]
-    ) -> None:
-        """Test base64 encoding detection for non-ASCII characters."""
-        adapter = FlextLdapEntryAdapter()
-        with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
-            _,
-            ldap3_entry,
-        ):
-            if ldap3_entry and hasattr(ldap3_entry, "entry_attributes_as_dict"):
-                ldap3_entry.entry_attributes_as_dict["testBase64"] = [b"test\x80"]
-                ldap3_entry.entry_attributes_as_dict["testNormal"] = ["normal"]
-                result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-                entry = FlextTestsMatchers.assert_success(result)
-                extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
-                base64_attrs = extensions.get("base64_encoded_attributes")
-                if base64_attrs is not None:
-                    assert isinstance(base64_attrs, dict)
-
+    @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_conversion_counts(
         self, ldap_container: dict[str, object]
     ) -> None:
@@ -386,6 +329,7 @@ class TestFlextLdapEntryAdapter:
                 if conversion_count is not None and isinstance(conversion_count, int):
                     assert conversion_count >= 0
 
+    @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_dn_changes_unit(
         self, ldap_container: dict[str, object]
     ) -> None:
@@ -402,6 +346,7 @@ class TestFlextLdapEntryAdapter:
                 assert original_dn is not None
                 assert isinstance(original_dn, str)
 
+    @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_attribute_differences(
         self, ldap_container: dict[str, object]
     ) -> None:

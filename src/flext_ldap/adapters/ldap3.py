@@ -6,8 +6,10 @@ management, search operations, and CRUD operations (add, modify, delete) with pr
 error handling and type safety.
 
 Modules: Ldap3Adapter
-Scope: LDAP3 library integration, connection management, CRUD operations, entry conversion
-Pattern: Service adapter extending FlextService, delegates to FlextLdifParser for parsing
+Scope: LDAP3 library integration, connection management, CRUD operations,
+    entry conversion
+Pattern: Service adapter extending FlextService, delegates to
+    FlextLdifParser for parsing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -119,12 +121,12 @@ class Ldap3Adapter(FlextService[bool]):
             metadata: object,
         ) -> FlextLdifModels.QuirkMetadata | None:
             """Normalize metadata to public QuirkMetadata type.
-            
+
             Handles both public and internal QuirkMetadata types from parser.
             """
             if not metadata:
                 return None
-            
+
             metadata_type_name = type(metadata).__name__
             if metadata_type_name == "QuirkMetadata":
                 if isinstance(metadata, FlextLdifModels.QuirkMetadata):
@@ -136,10 +138,10 @@ class Ldap3Adapter(FlextService[bool]):
                         dumped = model_dump_method()
                         return FlextLdifModels.QuirkMetadata.model_validate(dumped)
                 return FlextLdifModels.QuirkMetadata.model_validate(metadata)
-            
+
             if isinstance(metadata, dict):
                 return FlextLdifModels.QuirkMetadata.model_validate(metadata)
-            
+
             return None
 
         @staticmethod
@@ -171,13 +173,18 @@ class Ldap3Adapter(FlextService[bool]):
                             attrs_dict[key] = [str(v) for v in value]
                         else:
                             attrs_dict[key] = [str(value)] if value is not None else []
-                    entry_attrs = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
+
+                    entry_attrs = FlextLdifModels.LdifAttributes.model_validate(
+                        {"attributes": attrs_dict}
+                    )
                 else:
+                    attr_type = type(attrs_raw).__name__
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Invalid attributes type at index {idx}: {type(attrs_raw).__name__}"
+                        f"Invalid attributes type at index {idx}: {attr_type}"
                     )
 
-                # Normalize metadata to handle both public and internal QuirkMetadata types
+                # Normalize metadata to handle both public and internal
+                # QuirkMetadata types
                 parsed_metadata = getattr(parsed, "metadata", None)
                 metadata_obj = Ldap3Adapter.ResultConverter.normalize_metadata(
                     parsed_metadata
@@ -373,7 +380,8 @@ class Ldap3Adapter(FlextService[bool]):
             parser_kwarg = kwargs.pop("parser", None)
             if parser_kwarg is not None:
                 if not isinstance(parser_kwarg, FlextLdifParser):
-                    error_msg = f"parser must be FlextLdifParser, got {type(parser_kwarg).__name__}"
+                    parser_type = type(parser_kwarg).__name__
+                    error_msg = f"parser must be FlextLdifParser, got {parser_type}"
                     raise TypeError(error_msg)
                 parser = parser_kwarg
         if parser is None:

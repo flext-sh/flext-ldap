@@ -16,10 +16,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextUtilities
+from flext_ldif import FlextLdifModels
 from flext_tests import FlextTestsMatchers, FlextTestsUtilities
 
 from flext_ldap.constants import FlextLdapConstants
@@ -249,14 +250,17 @@ class TestFlextLdapModels:
         else:
             scope_literal = "SUBTREE"
 
-        kwargs: dict[str, object] = {"scope": scope_literal}
         if filter_str is not None:
-            kwargs["filter_str"] = filter_str
-
-        options = FlextLdapModels.SearchOptions.normalized(
-            base_dn=TestConstants.DEFAULT_BASE_DN,
-            **kwargs,
-        )
+            options = FlextLdapModels.SearchOptions.normalized(
+                base_dn=TestConstants.DEFAULT_BASE_DN,
+                scope=scope_literal,
+                filter_str=filter_str,
+            )
+        else:
+            options = FlextLdapModels.SearchOptions.normalized(
+                base_dn=TestConstants.DEFAULT_BASE_DN,
+                scope=scope_literal,
+            )
 
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
             options, {"scope": expected_scope, "filter_str": expected_filter}
@@ -368,8 +372,9 @@ class TestFlextLdapModels:
             duration_seconds=0.0,
         )
 
-        # Access computed property directly (mypy sees as callable but it's a computed field)
-        assert stats.success_rate == expected_rate
+        # Access computed property - Pydantic computed_field accessed via getattr
+        success_rate_value = cast("float", stats.success_rate)
+        assert success_rate_value == expected_rate
 
     def test_sync_stats_from_counters(self) -> None:
         """Test SyncStats.from_counters factory method."""
@@ -409,8 +414,9 @@ class TestFlextLdapModels:
 
         result = FlextLdapModels.SearchResult(entries=entries, search_options=options)
 
-        # Access computed property directly (mypy sees as callable but it's a computed field)
-        assert result.total_count == 2
+        # Access computed property - Pydantic computed_field accessed via getattr
+        total_count_value = cast("int", result.total_count)
+        assert total_count_value == 2
 
     @pytest.mark.parametrize(
         ("entries_data", "expected_categories"),
@@ -444,8 +450,8 @@ class TestFlextLdapModels:
         )
 
         result = FlextLdapModels.SearchResult(entries=entries, search_options=options)
-        # Access computed property - Pydantic computed_field returns dict directly
-        categories = result.by_objectclass
+        # Access computed property - Pydantic computed_field accessed via getattr
+        categories = cast("dict[str, list[FlextLdifModels.Entry]]", result.by_objectclass)
 
         for oc, expected_count in expected_categories.items():
             assert len(categories.get(oc, [])) == expected_count
@@ -461,8 +467,8 @@ class TestFlextLdapModels:
         )
 
         result = FlextLdapModels.SearchResult(entries=[entry], search_options=options)
-        # Access computed property - Pydantic computed_field returns dict directly
-        categories = result.by_objectclass
+        # Access computed property - Pydantic computed_field accessed via getattr
+        categories = cast("dict[str, list[FlextLdifModels.Entry]]", result.by_objectclass)
 
         assert "unknown" in categories
         assert len(categories["unknown"]) == 1

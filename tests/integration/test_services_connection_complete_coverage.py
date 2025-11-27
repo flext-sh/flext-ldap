@@ -83,23 +83,39 @@ class TestFlextLdapConnectionCompleteCoverage:
             container: dict[str, object],
         ) -> FlextLdapConfig:
             """Create service config with container values."""
-            # Cast base_config to avoid type issues with **kwargs
-            config_dict: dict[str, str | int | bool] = {
-                "host": str(container["host"]),
-                "port": int(str(container["port"])),
-                "bind_dn": str(container["bind_dn"]),
-                "bind_password": str(container["password"]),
-            }
-            # Merge with base_config, casting to expected types
-            for key, value in base_config.items():
-                if key in {"use_ssl", "use_tls", "auto_bind", "auto_range"}:
-                    config_dict[key] = cast("bool", value)
-                elif key == "timeout":
-                    config_dict[key] = cast("int", value)
-                else:
-                    config_dict[key] = cast("str | int | bool", value)
+            # Build config with properly typed fields
+            host: str = str(container["host"])
+            port: int = int(str(container["port"]))
+            bind_dn: str = str(container["bind_dn"])
+            bind_password: str = str(container["password"])
 
-            return FlextLdapConfig(**config_dict)
+            # Extract optional fields from base_config with proper types
+            use_ssl_value = base_config.get("use_ssl", False)
+            use_ssl: bool = bool(use_ssl_value) if use_ssl_value is not None else False
+
+            use_tls_value = base_config.get("use_tls", False)
+            use_tls: bool = bool(use_tls_value) if use_tls_value is not None else False
+
+            timeout_value = base_config.get("timeout", 30)
+            timeout: int = int(str(timeout_value)) if timeout_value is not None else 30
+
+            auto_bind_value = base_config.get("auto_bind", True)
+            auto_bind: bool = bool(auto_bind_value) if auto_bind_value is not None else True
+
+            auto_range_value = base_config.get("auto_range", True)
+            auto_range: bool = bool(auto_range_value) if auto_range_value is not None else True
+
+            return FlextLdapConfig(
+                host=host,
+                port=port,
+                bind_dn=bind_dn,
+                bind_password=bind_password,
+                use_ssl=use_ssl,
+                use_tls=use_tls,
+                timeout=timeout,
+                auto_bind=auto_bind,
+                auto_range=auto_range,
+            )
 
         @staticmethod
         def create_connection_config(

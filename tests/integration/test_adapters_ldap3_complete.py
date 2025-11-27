@@ -38,7 +38,9 @@ class TestLdap3AdapterComplete:
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter(parser=ldap_parser)
-        TestOperationHelpers.connect_with_skip_on_failure(cast("LdapClientProtocol", adapter), connection_config)
+        TestOperationHelpers.connect_with_skip_on_failure(
+            cast("LdapClientProtocol", adapter), connection_config
+        )
         yield adapter
         adapter.disconnect()
 
@@ -192,7 +194,9 @@ class TestLdap3AdapterComplete:
             },
         )
 
-        result = EntryTestHelpers.add_and_cleanup(cast("LdapClientProtocol", connected_adapter), entry)
+        result = EntryTestHelpers.add_and_cleanup(
+            cast("LdapClientProtocol", connected_adapter), entry
+        )
         TestOperationHelpers.assert_result_success(result)
 
     def test_modify_with_add_operation(
@@ -295,7 +299,9 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test execute when connected."""
-        entry = TestOperationHelpers.execute_and_assert_success(cast("LdapClientProtocol", connected_adapter))
+        entry = TestOperationHelpers.execute_and_assert_success(
+            cast("LdapClientProtocol", connected_adapter)
+        )
         assert entry is not None
 
     def test_search_with_different_server_types(
@@ -323,7 +329,9 @@ class TestLdap3AdapterComplete:
             {"cn": ["testminimal"], "objectClass": ["top", "person"]},
         )
 
-        result = EntryTestHelpers.add_and_cleanup(cast("LdapClientProtocol", connected_adapter), entry)
+        result = EntryTestHelpers.add_and_cleanup(
+            cast("LdapClientProtocol", connected_adapter), entry
+        )
         # Should succeed or fail gracefully
         assert result.is_success or result.is_failure
 

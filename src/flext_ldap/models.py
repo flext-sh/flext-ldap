@@ -275,10 +275,6 @@ class FlextLdapModels(FlextModels):
             ge=0,
             description="Number of entries affected",
         )
-        data: dict[str, str | int | float | bool | list[str]] = Field(
-            default_factory=dict,
-            description="Additional operation data",
-        )
 
     # =========================================================================
     # SEARCH RESULT MODELS
@@ -565,6 +561,38 @@ class FlextLdapModels(FlextModels):
             if self.total_processed == 0:
                 return 0.0
             return self.successful / self.total_processed
+
+    class ConversionMetadata(FlextModels.Config):
+        """Metadata tracking attribute conversions during ldap3 to LDIF conversion."""
+
+        source_attributes: list[str] = Field(
+            default_factory=list,
+            description="Original attributes from ldap3 entry",
+        )
+        source_dn: str = Field(
+            default="",
+            description="Original DN from ldap3 entry (preserves case)",
+        )
+        removed_attributes: list[str] = Field(
+            default_factory=list,
+            description="Attributes that were removed (had None values)",
+        )
+        base64_encoded_attributes: list[str] = Field(
+            default_factory=list,
+            description="List of attributes detected as base64-encoded",
+        )
+        dn_changed: bool = Field(
+            default=False,
+            description="Whether DN was normalized/changed",
+        )
+        converted_dn: str = Field(
+            default="",
+            description="DN after normalization (if different from source)",
+        )
+        attribute_changes: list[str] = Field(
+            default_factory=list,
+            description="List of attributes that had value changes during conversion",
+        )
 
     # =========================================================================
     # NO ALIASES - Use FlextLdifModels directly for clarity

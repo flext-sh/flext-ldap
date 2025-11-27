@@ -200,7 +200,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         - Context and handler initialization
         - Logging configuration
 
-        Singleton pattern ensures this is only called once (when the single instance is created).
+        Singleton pattern ensures this is only called once
+        (when the single instance is created).
 
         Args:
             _context: Pydantic's validation context dictionary or None (unused).
@@ -248,57 +249,6 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             "Services setup completed",
             services_registered=["connection", "operations", "parser"],
         )
-
-    # =========================================================================
-    # PRIVATE: Helpers
-    # =========================================================================
-
-    def _log_operation_result(
-        self,
-        operation: str,
-        result: FlextResult[TResult],
-        entry_dn: str | None = None,
-        *,
-        extra_debug: dict[str, object] | None = None,
-        extra_info: dict[str, object] | None = None,
-        extra_error: dict[str, object] | None = None,
-    ) -> FlextResult[TResult]:
-        """Generalized helper for logging operation results."""
-        dn_truncated = entry_dn[:100] if entry_dn else None
-        debug_fields: dict[str, object] = {
-            "operation": operation,
-            "entry_dn": dn_truncated,
-            "is_connected": self.is_connected,
-        }
-        if extra_debug:
-            debug_fields.update(extra_debug)
-        self.logger.debug(
-            f"LDAP {operation} operation", return_result=False, **debug_fields
-        )
-
-        if result.is_success:
-            info_fields: dict[str, object] = {
-                "operation": operation,
-                "entry_dn": dn_truncated,
-            }
-            if extra_info:
-                info_fields.update(extra_info)
-            self.logger.info(
-                f"LDAP {operation} completed", return_result=False, **info_fields
-            )
-        else:
-            error_fields: dict[str, object] = {
-                "operation": operation,
-                "entry_dn": dn_truncated,
-                "error": str(result.error),
-            }
-            if extra_error:
-                error_fields.update(extra_error)
-            self.logger.error(
-                f"LDAP {operation} failed", return_result=False, **error_fields
-            )
-
-        return result
 
     # =========================================================================
     # PRIVATE: Service Setup
@@ -476,41 +426,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing SearchResult with Entry models
 
         """
-        base_dn = search_options.base_dn[:100] if search_options.base_dn else None
-        result = self._operations.search(search_options, server_type)
-        if result.is_success:
-            search_result = result.unwrap()
-            return self._log_operation_result(
-                operation="search",
-                result=result,
-                entry_dn=base_dn,
-                extra_debug={
-                    "base_dn": base_dn,
-                    "filter_str": search_options.filter_str[:100]
-                    if search_options.filter_str
-                    else None,
-                    "scope": search_options.scope,
-                    "server_type": server_type,
-                },
-                extra_info={
-                    "base_dn": base_dn,
-                    "total_entries": search_result.total_count,
-                    "entries_found": len(search_result.entries),
-                },
-            )
-        return self._log_operation_result(
-            operation="search",
-            result=result,
-            entry_dn=base_dn,
-            extra_debug={
-                "base_dn": base_dn,
-                "filter_str": search_options.filter_str[:100]
-                if search_options.filter_str
-                else None,
-                "scope": search_options.scope,
-                "server_type": server_type,
-            },
-        )
+        return self._operations.search(search_options, server_type)
 
     def add(
         self,
@@ -526,19 +442,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        entry_dn_str = FlextLdapServiceBase.safe_dn_string(entry.dn)
-        result = self._operations.add(entry)
-        self._log_operation_result(
-            operation="add",
-            result=result,
-            entry_dn=entry_dn_str,
-            extra_debug={
-                "attributes_count": len(entry.attributes.attributes)
-                if entry.attributes
-                else 0
-            },
-        )
-        return result
+        return self._operations.add(entry)
 
     def modify(
         self,
@@ -556,20 +460,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        dn_str = FlextLdapServiceBase.safe_dn_string(dn)
-        result = self._operations.modify(dn, changes)
-        self._log_operation_result(
-            operation="modify",
-            result=result,
-            entry_dn=dn_str,
-            extra_debug={
-                "changes_count": len(changes),
-                "changed_attributes": list(changes.keys())[:20] if changes else [],
-            },
-            extra_info={"changes_applied": len(changes)},
-            extra_error={"changes_count": len(changes)},
-        )
-        return result
+        return self._operations.modify(dn, changes)
 
     def delete(
         self,
@@ -585,10 +476,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        dn_str = FlextLdapServiceBase.safe_dn_string(dn)
-        result = self._operations.delete(dn)
-        self._log_operation_result(operation="delete", result=result, entry_dn=dn_str)
-        return result
+        return self._operations.delete(dn)
 
     def upsert(
         self,
@@ -605,7 +493,8 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         Args:
             entry: Entry model to upsert
-            retry_on_errors: List of error patterns to retry on (default: None = no retry)
+            retry_on_errors: List of error patterns to retry on
+                (default: None = no retry)
             max_retries: Maximum number of retry attempts (default: 1)
 
         Returns:
@@ -615,40 +504,9 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 - "skipped": Entry already exists
 
         """
-        entry_dn_str = FlextLdapServiceBase.safe_dn_string(entry.dn)
-        result = self._operations.upsert(
+        return self._operations.upsert(
             entry, retry_on_errors=retry_on_errors, max_retries=max_retries
         )
-        if result.is_success:
-            operation_result = result.unwrap()
-            operation_type = operation_result.get("operation", "unknown")
-            self._log_operation_result(
-                operation="upsert",
-                result=result,
-                entry_dn=entry_dn_str,
-                extra_debug={
-                    "attributes_count": len(entry.attributes.attributes)
-                    if entry.attributes
-                    else 0,
-                    "retry_on_errors": retry_on_errors,
-                    "max_retries": max_retries,
-                },
-                extra_info={"operation_type": operation_type},
-            )
-        else:
-            self._log_operation_result(
-                operation="upsert",
-                result=result,
-                entry_dn=entry_dn_str,
-                extra_debug={
-                    "attributes_count": len(entry.attributes.attributes)
-                    if entry.attributes
-                    else 0,
-                    "retry_on_errors": retry_on_errors,
-                    "max_retries": max_retries,
-                },
-            )
-        return result
 
     def batch_upsert(
         self,
@@ -669,7 +527,9 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         Args:
             entries: List of entries to upsert
-            progress_callback: Optional callback(idx: int, total: int, dn: str, stats: FlextLdapTypes.LdapBatchStats) after each entry
+            progress_callback: Optional callback(idx: int, total: int,
+                dn: str, stats: FlextLdapTypes.LdapBatchStats)
+                after each entry
             retry_on_errors: Error patterns to retry on (passed to each upsert)
             max_retries: Maximum retries per entry (default: 1)
             stop_on_error: Stop processing on first error (default: False)
@@ -681,50 +541,13 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 - "skipped": Number of entries skipped (already identical)
 
         """
-        result = self._operations.batch_upsert(
+        return self._operations.batch_upsert(
             entries,
             progress_callback=progress_callback,
             retry_on_errors=retry_on_errors,
             max_retries=max_retries,
             stop_on_error=stop_on_error,
         )
-        if result.is_success:
-            stats = result.unwrap()
-            self._log_operation_result(
-                operation="batch_upsert",
-                result=result,
-                entry_dn=None,
-                extra_debug={
-                    "entries_count": len(entries),
-                    "has_progress_callback": progress_callback is not None,
-                    "retry_on_errors": retry_on_errors,
-                    "max_retries": max_retries,
-                    "stop_on_error": stop_on_error,
-                },
-                extra_info={
-                    "entries_count": len(entries),
-                    "synced": stats.get("synced", 0),
-                    "failed": stats.get("failed", 0),
-                    "skipped": stats.get("skipped", 0),
-                    "success_rate": f"{(stats.get('synced', 0) / len(entries) * 100):.1f}%"
-                    if entries
-                    else "0%",
-                },
-            )
-        else:
-            self._log_operation_result(
-                operation="batch_upsert",
-                result=result,
-                entry_dn=None,
-                extra_debug={
-                    "entries_count": len(entries),
-                    "has_progress_callback": progress_callback is not None,
-                    "retry_on_errors": retry_on_errors,
-                    "max_retries": max_retries,
-                    "stop_on_error": stop_on_error,
-                },
-            )
-        return result
 
     @override
     def execute(self, **_kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:
@@ -736,3 +559,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         """
         # Fast fail - delegate to operations, no fallback
         return self._operations.execute()
+
+
+# Forward references are resolved automatically by Pydantic v2 with 'from __future__ import annotations'
+# No manual model_rebuild() needed when using proper string annotations

@@ -866,9 +866,53 @@ SAMPLE_GROUP_ENTRY = {
 def ldap_connection(
     ldap_config: FlextLdapConfig,
     ldap_parser: FlextLdifParser | None,
-) -> FlextLdapConnection:
-    """Get FlextLdapConnection instance for testing."""
-    return FlextLdapConnection(config=ldap_config, parser=ldap_parser)
+    ldap_container: dict[str, object],
+) -> Generator[FlextLdapConnection]:
+    """Get FlextLdapConnection instance with established connection for testing.
+
+    Creates a FlextLdapConnection, establishes a real connection to LDAP server,
+    and yields the connected object for tests.
+    Properly disconnects on teardown.
+
+    Args:
+        ldap_config: LDAP configuration
+        ldap_parser: LDIF parser (optional)
+        ldap_container: Container configuration (ensures container is ready first)
+
+    Yields:
+        FlextLdapConnection: Connected LDAP connection object
+
+    """
+    connection = FlextLdapConnection(config=ldap_config, parser=ldap_parser)
+
+    # Establish actual connection to LDAP server
+    try:
+        connection_config = FlextLdapModels.ConnectionConfig(
+            host=ldap_config.host,
+            port=ldap_config.port,
+            use_ssl=ldap_config.use_ssl,
+            bind_dn=ldap_config.bind_dn,
+            bind_password=ldap_config.bind_password,
+        )
+
+        connect_result = connection.connect(connection_config)
+
+        if connect_result.is_failure:
+            logger.error(f"Failed to connect to LDAP: {connect_result.error}")
+            pytest.skip(f"LDAP connection failed: {connect_result.error}")
+
+        yield connection
+
+    except Exception as e:
+        logger.exception("Error in ldap_connection fixture")
+        pytest.skip(f"LDAP connection fixture error: {e}")
+
+    finally:
+        # Cleanup: disconnect from LDAP server
+        try:
+            connection.disconnect()
+        except Exception as cleanup_error:
+            logger.warning(f"Error during LDAP disconnect: {cleanup_error}")
 
 
 @pytest.fixture
