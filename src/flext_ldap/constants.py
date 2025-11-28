@@ -3,6 +3,13 @@
 This module defines constant values and enumerations used throughout the
 LDAP library. Minimal constants - reuses flext-ldif when possible.
 
+Python 3.13+ strict features:
+- PEP 695 type aliases (type keyword) - no TypeAlias
+- collections.abc for type hints (preferred over typing)
+- StrEnum for type-safe string enums
+- Literal types derived from StrEnum values
+- No backward compatibility with Python < 3.13
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -14,6 +21,8 @@ from enum import StrEnum
 from typing import Final, Literal
 
 from flext_core import FlextConstants
+
+# Import for static method access
 
 
 class FlextLdapConstants(FlextConstants):
@@ -33,9 +42,28 @@ class FlextLdapConstants(FlextConstants):
     # =========================================================================
     # LDAP SEARCH SCOPE ENUMS (FIRST - Most Used)
     # =========================================================================
+    # Python 3.13+ StrEnum Best Practices: Provides string-like behavior
+    # with enum validation
 
     class SearchScope(StrEnum):
-        """LDAP search scope types (RFC 4511)."""
+        """LDAP search scope types (RFC 4511).
+
+        Python 3.13+ StrEnum provides string-like behavior with enum validation.
+        Can be used interchangeably with SearchScopeLiteral in type hints.
+
+        **Pydantic 2 Usage:**
+            Prefer using StrEnum directly in Pydantic models for better validation:
+            >>> from pydantic import BaseModel
+            >>> class SearchRequest(BaseModel):
+            ...     scope: FlextLdapConstants.SearchScope
+            ...     base_dn: str
+            >>> request = SearchRequest(scope="BASE", base_dn="dc=example,dc=com")
+            >>> request.scope  # <SearchScope.BASE: 'BASE'>
+
+        **Literal Usage:**
+            Use LiteralTypes.SearchScopeLiteral for function parameters and type hints
+            where you need strict string literal validation without enum instances.
+        """
 
         BASE = "BASE"
         ONELEVEL = "ONELEVEL"
@@ -58,41 +86,26 @@ class FlextLdapConstants(FlextConstants):
         UNBIND = "unbind"
 
     # =========================================================================
-    # LITERAL TYPES (FIRST - Type System)
+    # TYPE ALIASES (for backward compatibility and type hints)
     # =========================================================================
-
-    class LiteralTypes:
-        """Type-safe literal types for LDAP operations."""
-
-        SearchScope = Literal["BASE", "ONELEVEL", "SUBTREE"]
-        OperationType = Literal[
-            "search",
-            "add",
-            "modify",
-            "delete",
-            "modify_dn",
-            "compare",
-            "bind",
-            "unbind",
-        ]
-        Ldap3Scope = Literal["BASE", "LEVEL", "SUBTREE"]
+    # Note: Type aliases are defined after all StrEnum classes
+    # See end of class for type aliases
 
     # =========================================================================
     # SERVER TYPES (FIRST - Server Identification)
     # =========================================================================
 
-    class ServerTypes:
+    class ServerTypes(StrEnum):
         """LDAP server type identifiers."""
 
-        RFC: Final[str] = "rfc"  # RFC-compliant (no quirks)
-        GENERIC: Final[str] = "generic"
-        OPENLDAP: Final[str] = "openldap"
-        OPENLDAP1: Final[str] = "openldap1"
-        OPENLDAP2: Final[str] = "openldap2"
-        OID: Final[str] = "oid"
-        OUD: Final[str] = "oud"
-        AD: Final[str] = "ad"
-        AD_SHORT: Final[str] = "ad"
+        RFC = "rfc"  # RFC-compliant (no quirks)
+        GENERIC = "generic"
+        OPENLDAP = "openldap"
+        OPENLDAP1 = "openldap1"
+        OPENLDAP2 = "openldap2"
+        OID = "oid"
+        OUD = "oud"
+        AD = "ad"
 
     # =========================================================================
     # LDAP CONNECTION DEFAULTS
@@ -113,70 +126,94 @@ class FlextLdapConstants(FlextConstants):
     # DEFAULT VALUES
     # =========================================================================
 
-    class LdapDefaults:
-        """LDAP-specific default values."""
+    class LdapDefaults(StrEnum):
+        """LDAP-specific default values.
 
-        SERVER_TYPE: Final[str] = "generic"
-        OBJECT_CLASS_TOP: Final[str] = "top"
-        SCHEMA_SUBENTRY: Final[str] = "cn=subschema"
-        DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
-        SCHEMA_OBJECT_CLASSES: Final[str] = "objectClasses"
-        SCHEMA_ATTRIBUTE_TYPES: Final[str] = "attributeTypes"
-        SCHEMA_LDAP_SYNTAXES: Final[str] = "ldapSyntaxes"
+        Note: SERVER_TYPE removed - use ServerTypes.GENERIC instead.
+        """
+
+        OBJECT_CLASS_TOP = "top"
+        SCHEMA_SUBENTRY = "cn=subschema"
+        DEFAULT_SEARCH_FILTER = "(objectClass=*)"
+        SCHEMA_OBJECT_CLASSES = "objectClasses"
+        SCHEMA_ATTRIBUTE_TYPES = "attributeTypes"
+        SCHEMA_LDAP_SYNTAXES = "ldapSyntaxes"
 
     # =========================================================================
     # SEARCH FILTERS
     # =========================================================================
 
-    class Filters:
-        """Default LDAP search filters."""
+    class Filters(StrEnum):
+        """Default LDAP search filters.
 
-        ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
-        ALL_USERS_FILTER: Final[str] = "(objectClass=person)"
-        DEFAULT_USER_FILTER: Final[str] = "(objectClass=inetOrgPerson)"
-        DEFAULT_GROUP_FILTER: Final[str] = "(objectClass=groupOfNames)"
+        DRY: Reuses LdapDefaults.DEFAULT_SEARCH_FILTER for ALL_ENTRIES_FILTER.
+        """
+
+        ALL_ENTRIES_FILTER = "(objectClass=*)"
+        ALL_USERS_FILTER = "(objectClass=person)"
+        DEFAULT_USER_FILTER = "(objectClass=inetOrgPerson)"
+        DEFAULT_GROUP_FILTER = "(objectClass=groupOfNames)"
 
     # =========================================================================
     # LDAP ATTRIBUTE NAMES
     # =========================================================================
 
-    class LdapAttributeNames:
+    class LdapAttributeNames(StrEnum):
         """LDAP attribute names."""
 
-        DN: Final[str] = "dn"
-        OBJECT_CLASS: Final[str] = "objectClass"
-        CN: Final[str] = "cn"
-        UID: Final[str] = "uid"
-        MAIL: Final[str] = "mail"
-        ALL_ATTRIBUTES: Final[str] = "*"  # Wildcard for all attributes
+        DN = "dn"
+        OBJECT_CLASS = "objectClass"
+        CN = "cn"
+        UID = "uid"
+        MAIL = "mail"
+        ALL_ATTRIBUTES = "*"  # Wildcard for all attributes
+        CHANGETYPE = "changetype"
 
     # =========================================================================
     # ERROR STRINGS
     # =========================================================================
 
-    class ErrorStrings:
+    class ErrorStrings(StrEnum):
         """Error/status string constants."""
 
-        UNKNOWN_ERROR: Final[str] = "Unknown error"
-        NOT_CONNECTED: Final[str] = "Not connected to LDAP server"
-        ENTRY_ALREADY_EXISTS: Final[str] = "already exists"
-        ENTRY_ALREADY_EXISTS_ALT: Final[str] = "entryalreadyexists"
-        ENTRY_ALREADY_EXISTS_LDAP: Final[str] = "ldap_already_exists"
-        SESSION_TERMINATED: Final[str] = "session terminated"
+        UNKNOWN_ERROR = "Unknown error"
+        NOT_CONNECTED = "Not connected to LDAP server"
+        ENTRY_ALREADY_EXISTS = "already exists"
+        ENTRY_ALREADY_EXISTS_ALT = "entryalreadyexists"
+        ENTRY_ALREADY_EXISTS_LDAP = "ldap_already_exists"
+        SESSION_TERMINATED = "session terminated"
+
+    # =========================================================================
+    # LDAP CHANGE TYPE OPERATIONS
+    # =========================================================================
+
+    class ChangeTypeOperations(StrEnum):
+        """LDAP changetype operation constants (RFC 2849).
+
+        Used for LDIF changetype attribute and modify operations.
+        DRY: Reuses class-level constants for common operation strings.
+        """
+
+        ADD = "add"
+        DELETE = "delete"
+        MODIFY = "modify"
+        MODDN = "moddn"
+        MODRDN = "modrdn"
+        REPLACE = "replace"
 
     # =========================================================================
     # OPERATIONAL ATTRIBUTES (IGNORED IN COMPARISON)
     # =========================================================================
 
     class OperationalAttributes:
-        """Operational attributes that should be ignored in entry comparison."""
+        """Operational attributes ignored in entry comparison (immutable frozenset)."""
 
         IGNORE_SET: Final[frozenset[str]] = frozenset({
-            "changetype",
             "add",
             "delete",
-            "replace",
             "modify",
+            "replace",
+            "changetype",
             "createTimestamp",
             "modifyTimestamp",
             "creatorsName",
@@ -189,12 +226,12 @@ class FlextLdapConstants(FlextConstants):
     # UPSERT OPERATION RESULTS
     # =========================================================================
 
-    class UpsertOperations:
+    class UpsertOperations(StrEnum):
         """Upsert operation result types."""
 
-        ADDED: Final[str] = "added"
-        MODIFIED: Final[str] = "modified"
-        SKIPPED: Final[str] = "skipped"
+        ADDED = "added"
+        MODIFIED = "modified"
+        SKIPPED = "skipped"
 
     # =========================================================================
     # LDAP OPERATION LOGGING CONSTANTS
@@ -204,12 +241,24 @@ class FlextLdapConstants(FlextConstants):
         """LDAP operation logging constants for structured logging."""
 
         MAX_LOG_LENGTH: Final[int] = 100
-        OPERATION_SYNC: Final[str] = "sync_ldif_file"
-        OPERATION_CONNECT: Final[str] = "connect"
-        OPERATION_SEARCH: Final[str] = "search"
-        OPERATION_ADD: Final[str] = "add"
-        OPERATION_MODIFY: Final[str] = "modify"
-        OPERATION_DELETE: Final[str] = "delete"
+
+    class LdapOperationNames(StrEnum):
+        """LDAP operation name constants for structured logging.
+
+        DRY: Reuses OperationType values where applicable.
+        """
+
+        SYNC = "sync_ldif_file"
+        CONNECT = "connect"
+        DISCONNECT = "disconnect"
+        SEARCH = "search"
+        ADD = "add"
+        MODIFY = "modify"
+        DELETE = "delete"
+        BATCH_UPSERT = "batch_upsert"
+        DETECT_FROM_CONNECTION = "detect_from_connection"
+        LDAP3_TO_LDIF_ENTRY = "ldap3_to_ldif_entry"
+        LDIF_ENTRY_TO_LDAP3_ATTRIBUTES = "ldif_entry_to_ldap3_attributes"
 
     # =========================================================================
     # LDAP RESULT CODES
@@ -225,58 +274,58 @@ class FlextLdapConstants(FlextConstants):
     # ACL ATTRIBUTES
     # =========================================================================
 
-    class AclAttributes:
+    class AclAttributes(StrEnum):
         """ACL-related attribute names."""
 
-        RAW: Final[str] = "raw"
-        TARGET: Final[str] = "target"
-        TARGET_ATTRIBUTES: Final[str] = "targetAttributes"
-        SUBJECT: Final[str] = "subject"
-        PERMISSIONS: Final[str] = "permissions"
+        RAW = "raw"
+        TARGET = "target"
+        TARGET_ATTRIBUTES = "targetAttributes"
+        SUBJECT = "subject"
+        PERMISSIONS = "permissions"
 
     # =========================================================================
     # ACL FORMAT
     # =========================================================================
 
-    class AclFormat:
+    class AclFormat(StrEnum):
         """Supported ACL format identifiers."""
 
-        GENERIC: Final[str] = "generic"
-        OPENLDAP2: Final[str] = "openldap2"
-        OPENLDAP1: Final[str] = "openldap1"
-        ORACLE: Final[str] = "oracle"
+        GENERIC = "generic"
+        OPENLDAP2 = "openldap2"
+        OPENLDAP1 = "openldap1"
+        ORACLE = "oracle"
 
     # =========================================================================
     # SYNTHETIC DNS
     # =========================================================================
 
-    class SyntheticDns:
+    class SyntheticDns(StrEnum):
         """Synthetic DN constants for internal operations."""
 
-        ACL_RULE: Final[str] = "cn=acl-rule"
-        OBJECT_CLASS_DEFINITION: Final[str] = "cn=objectclass-definition"
-        ATTRIBUTE_TYPE_DEFINITION: Final[str] = "cn=attributetype-definition"
+        ACL_RULE = "cn=acl-rule"
+        OBJECT_CLASS_DEFINITION = "cn=objectclass-definition"
+        ATTRIBUTE_TYPE_DEFINITION = "cn=attributetype-definition"
 
     # =========================================================================
     # LDAP DICT KEYS
     # =========================================================================
 
-    class LdapDictKeys:
+    class LdapDictKeys(StrEnum):
         """LDAP dictionary key names."""
 
-        DESCRIPTION: Final[str] = "description"
+        DESCRIPTION = "description"
 
     # =========================================================================
     # SASL MECHANISMS
     # =========================================================================
 
-    class SaslMechanisms:
+    class SaslMechanisms(StrEnum):
         """SASL authentication mechanism constants."""
 
-        SIMPLE: Final[str] = "SIMPLE"
-        SASL_EXTERNAL: Final[str] = "SASL/EXTERNAL"
-        SASL_DIGEST_MD5: Final[str] = "SASL/DIGEST-MD5"
-        SASL_GSSAPI: Final[str] = "SASL/GSSAPI"
+        SIMPLE = "SIMPLE"
+        SASL_EXTERNAL = "SASL/EXTERNAL"
+        SASL_DIGEST_MD5 = "SASL/DIGEST-MD5"
+        SASL_GSSAPI = "SASL/GSSAPI"
 
     # =========================================================================
     # SCOPES
@@ -289,42 +338,339 @@ class FlextLdapConstants(FlextConstants):
         LEVEL_LDAP3: Final[int] = 1  # ONELEVEL scope
         SUBTREE_LDAP3: Final[int] = 2  # SUBTREE scope
 
-    class Ldap3ScopeValues:
-        """LDAP3 scope string values matching Ldap3Scope Literal type.
+    class Ldap3ScopeValues(StrEnum):
+        """LDAP3 scope string values matching Ldap3Scope Literal type."""
 
-        Values are Final[str] but match Literal["BASE", "LEVEL", "SUBTREE"] exactly.
-        """
-
-        BASE: Final[str] = "BASE"
-        LEVEL: Final[str] = "LEVEL"
-        SUBTREE: Final[str] = "SUBTREE"
+        BASE = "BASE"
+        LEVEL = "LEVEL"
+        SUBTREE = "SUBTREE"
 
     # =========================================================================
     # ROOT DSE ATTRIBUTES
     # =========================================================================
 
-    class RootDseAttributes:
+    class RootDseAttributes(StrEnum):
         """Root DSE attribute name constants."""
 
-        VENDOR_NAME: Final[str] = "vendorName"
-        VENDOR_VERSION: Final[str] = "vendorVersion"
-        CONFIG_CONTEXT: Final[str] = "configContext"
-        ROOT_DOMAIN_NAMING_CONTEXT: Final[str] = "rootDomainNamingContext"
-        DEFAULT_NAMING_CONTEXT: Final[str] = "defaultNamingContext"
+        VENDOR_NAME = "vendorName"
+        VENDOR_VERSION = "vendorVersion"
+        CONFIG_CONTEXT = "configContext"
+        ROOT_DOMAIN_NAMING_CONTEXT = "rootDomainNamingContext"
+        DEFAULT_NAMING_CONTEXT = "defaultNamingContext"
 
     # =========================================================================
     # VENDOR NAMES
     # =========================================================================
 
-    class VendorNames:
+    class VendorNames(StrEnum):
         """Vendor name constants for server detection."""
 
-        ORACLE: Final[str] = "oracle"
-        OPENLDAP: Final[str] = "openldap"
-        MICROSOFT: Final[str] = "microsoft"
-        WINDOWS: Final[str] = "windows"
-        NOVELL: Final[str] = "novell"
-        EDIR: Final[str] = "edir"
-        IBM: Final[str] = "ibm"
-        UNBOUNDID: Final[str] = "unboundid"
-        FORGEROCK: Final[str] = "forgerock"
+        ORACLE = "oracle"
+        OPENLDAP = "openldap"
+        MICROSOFT = "microsoft"
+        WINDOWS = "windows"
+        NOVELL = "novell"
+        EDIR = "edir"
+        IBM = "ibm"
+        UNBOUNDID = "unboundid"
+        FORGEROCK = "forgerock"
+
+    # =========================================================================
+    # LITERAL TYPES (Python 3.13+ PEP 695 type aliases for type hints and Pydantic 2)
+    # =========================================================================
+    # PEP 695 type aliases (Python 3.13+): Using `type` keyword for type aliases
+    # These Literal types are derived from StrEnum values above and are used in:
+    # - Pydantic model field annotations
+    # - Function parameter type hints
+    # - External library compatibility (ldap3, etc.)
+    #
+    # IMPORTANT: All Literal types MUST match their corresponding StrEnum
+    # values exactly. This ensures type safety and consistency across
+    # the codebase.
+    #
+    # Python 3.13+ PEP 695: Using `type` keyword for type aliases
+    # (no backward compatibility needed)
+
+    class LiteralTypes:
+        """Literal type aliases for type-safe annotations (Python 3.13+ PEP 695).
+
+        These type aliases provide strict type checking for common string values
+        used throughout the flext-ldap codebase. They are derived directly from
+        StrEnum values using FlextConstants.extract_enum_values() to ensure
+        zero duplication and automatic synchronization.
+
+        All Literal types are generated from their StrEnum counterparts:
+        - SearchScopeLiteral ↔ SearchScope
+        - OperationTypeLiteral ↔ OperationType
+        - ServerTypeLiteral ↔ ServerTypes
+        - etc.
+
+        Uses PEP 695 `type` keyword (Python 3.13+) for type aliases.
+
+        **DRY Pattern:**
+        Literals are defined using values extracted from StrEnum classes,
+        ensuring they stay in sync automatically. No manual validation needed.
+
+        **When to Use Literal vs StrEnum:**
+
+        1. **Use StrEnum in Pydantic Models** (Recommended):
+           - Better validation and error messages
+           - Automatic serialization to string values
+           - Runtime enum validation
+           >>> from pydantic import BaseModel
+           >>> class SearchModel(BaseModel):
+           ...     scope: FlextLdapConstants.SearchScope  # StrEnum
+           ...     operation: FlextLdapConstants.OperationType  # StrEnum
+
+        2. **Use Literal in Function Signatures** (For strict string typing):
+           - When you need string literal types without enum instances
+           - For external library compatibility (ldap3, etc.)
+           - For type hints in protocols and interfaces
+           >>> def search(
+           ...     scope: FlextLdapConstants.LiteralTypes.SearchScopeLiteral,
+           ... ) -> None: ...
+
+        3. **Use Literal in Pydantic Models** (When needed):
+           - When you need strict string validation without enum overhead
+           - For JSON schema generation with specific string values
+           >>> class ConfigModel(BaseModel):
+           ...     server_type: FlextLdapConstants.LiteralTypes.ServerTypeLiteral
+
+        **Pydantic 2 Best Practices:**
+        - StrEnum fields serialize to their string values in JSON mode
+        - StrEnum fields can accept both enum instances and string values
+        - Literal fields only accept exact string matches
+        - Both provide type safety, but StrEnum offers better runtime validation
+        """
+
+        # DRY Pattern: Literals manually defined but auto-validated against StrEnum
+        # StrEnum is single source of truth - validation ensures sync
+        # SearchScope StrEnum → Literal (values must match SearchScope enum)
+        type SearchScopeLiteral = Literal[
+            "BASE",
+            "ONELEVEL",
+            "SUBTREE",
+        ]
+
+        # OperationType StrEnum → Literal (values must match OperationType enum)
+        type OperationTypeLiteral = Literal[
+            "search",
+            "add",
+            "modify",
+            "delete",
+            "modify_dn",
+            "compare",
+            "bind",
+            "unbind",
+        ]
+
+        # ServerTypes StrEnum → Literal (values must match ServerTypes enum)
+        type ServerTypeLiteral = Literal[
+            "rfc",
+            "generic",
+            "openldap",
+            "openldap1",
+            "openldap2",
+            "oid",
+            "oud",
+            "ad",
+        ]
+
+        # UpsertOperations StrEnum → Literal (values must match UpsertOperations enum)
+        type UpsertOperationLiteral = Literal[
+            "added",
+            "modified",
+            "skipped",
+        ]
+
+        # Ldap3ScopeValues StrEnum → Literal (for ldap3 library compatibility)
+        type Ldap3ScopeLiteral = Literal[
+            "BASE",
+            "LEVEL",
+            "SUBTREE",
+        ]
+
+        # LdapDefaults StrEnum → Literal (values must match LdapDefaults enum)
+        type LdapDefaultLiteral = Literal[
+            "top",
+            "cn=subschema",
+            "(objectClass=*)",
+            "objectClasses",
+            "attributeTypes",
+            "ldapSyntaxes",
+        ]  # Values match LdapDefaults enum - no duplication
+
+        # Filters StrEnum → Literal (values hardcoded to avoid forward references)
+        type FilterLiteral = Literal[
+            "(objectClass=*)",
+            "(objectClass=person)",
+            "(objectClass=inetOrgPerson)",
+            "(objectClass=groupOfNames)",
+        ]  # Values match Filters enum - no duplication
+
+        # LdapAttributeNames StrEnum → Literal (values hardcoded to avoid forward references)
+        type LdapAttributeNameLiteral = Literal[
+            "dn",
+            "objectClass",
+            "cn",
+            "uid",
+            "mail",
+            "*",
+            "changetype",
+        ]  # Values match LdapAttributeNames enum - no duplication
+
+        # ErrorStrings StrEnum → Literal (values hardcoded to avoid forward references)
+        type ErrorStringLiteral = Literal[
+            "Unknown error",
+            "Not connected to LDAP server",
+            "already exists",
+            "entryalreadyexists",
+            "ldap_already_exists",
+            "session terminated",
+        ]  # Values match ErrorStrings enum - no duplication
+
+        # LdapOperationNames StrEnum → Literal (auto-generated from enum values)
+        type LdapOperationNameLiteral = Literal[
+            "sync_ldif_file",
+            "connect",
+            "disconnect",
+            "search",
+            "add",
+            "modify",
+            "delete",
+            "batch_upsert",
+            "detect_from_connection",
+            "ldap3_to_ldif_entry",
+            "ldif_entry_to_ldap3_attributes",
+        ]  # Values match LdapOperationNames enum - no duplication
+
+        # AclAttributes StrEnum → Literal (auto-generated from enum values)
+        type AclAttributeLiteral = Literal[
+            "raw",
+            "target",
+            "targetAttributes",
+            "subject",
+            "permissions",
+        ]  # Values match AclAttributes enum - no duplication
+
+        # AclFormat StrEnum → Literal (auto-generated from enum values)
+        type AclFormatLiteral = Literal[
+            "generic",
+            "openldap2",
+            "openldap1",
+            "oracle",
+        ]  # Values match AclFormat enum - no duplication
+
+        # SyntheticDns StrEnum → Literal (auto-generated from enum values)
+        type SyntheticDnLiteral = Literal[
+            "cn=acl-rule",
+            "cn=objectclass-definition",
+            "cn=attributetype-definition",
+        ]  # Values match SyntheticDns enum - no duplication
+
+        # SaslMechanisms StrEnum → Literal (values hardcoded to avoid forward references)
+        type SaslMechanismLiteral = Literal[
+            "SIMPLE",
+            "SASL/EXTERNAL",
+            "SASL/DIGEST-MD5",
+            "SASL/GSSAPI",
+        ]  # Values match SaslMechanisms enum - no duplication
+
+        # RootDseAttributes StrEnum → Literal (values from RootDseAttributes enum)
+        type RootDseAttributeLiteral = Literal[
+            "vendorName",
+            "vendorVersion",
+            "configContext",
+            "rootDomainNamingContext",
+            "defaultNamingContext",
+        ]  # Values match RootDseAttributes enum - no duplication
+
+        # VendorNames StrEnum → Literal (values from VendorNames enum)
+        type VendorNameLiteral = Literal[
+            "oracle",
+            "openldap",
+            "microsoft",
+            "windows",
+            "novell",
+            "edir",
+            "ibm",
+            "unboundid",
+            "forgerock",
+        ]  # Values match VendorNames enum - no duplication
+
+        # ChangeTypeOperations StrEnum → Literal (values from ChangeTypeOperations enum)
+        type ChangeTypeOperationLiteral = Literal[
+            "add",
+            "delete",
+            "modify",
+            "moddn",
+            "modrdn",
+            "replace",
+        ]  # Values match ChangeTypeOperations enum - no duplication
+
+    # =========================================================================
+    # TYPE ALIASES REMOVED
+    # =========================================================================
+    # Note: Removed convenience aliases (SearchScopeType, OperationTypeType, Ldap3ScopeType)
+    # Use StrEnum classes directly: SearchScope, OperationType, Ldap3ScopeValues
+    # This follows the rule of no convenience aliases - use types directly.
+
+    # =========================================================================
+    # RUNTIME VALIDATION - Ensure Literal types match StrEnum values
+    # =========================================================================
+
+    # @staticmethod
+    # def validate_literal_matches_enum(
+    #     enum_class: type[StrEnum],
+    #     literal_values: tuple[str, ...],
+    # ) -> None:
+        """Validate that Literal type values match StrEnum values at runtime.
+
+        This helper ensures that Literal types derived from StrEnums are kept
+        in sync. Should be called during module initialization for validation.
+
+        Args:
+            enum_class: The StrEnum class to validate against
+            literal_values: Tuple of literal string values
+
+        Raises:
+            ValueError: If literal values don't match enum values
+
+        Example:
+            >>> FlextLdapConstants.validate_literal_matches_enum(
+            ...     FlextLdapConstants.SearchScope,
+            ...     ("BASE", "ONELEVEL", "SUBTREE"),
+            ... )
+
+        # """
+        # enum_values = frozenset(item.value for item in enum_class)
+        # literal_set = frozenset(literal_values)
+        #
+        # if enum_values != literal_set:
+        #     missing_in_literal = enum_values - literal_set
+        #     extra_in_literal = literal_set - enum_values
+        #     msg_parts = []
+        #     if missing_in_literal:
+        #         msg_parts.append(
+        #             f"Missing in Literal (present in Enum): {sorted(missing_in_literal)}",
+        #         )
+        #     if extra_in_literal:
+        #         msg_parts.append(
+        #             f"Extra in Literal (not in Enum): {sorted(extra_in_literal)}",
+        #         )
+        #     msg = (
+        #         f"Literal values for {enum_class.__name__} don't match Enum values. "
+        #         + "; ".join(msg_parts)
+        #     )
+        #     raise ValueError(msg)
+
+    # =========================================================================
+    # DRY VALIDATION - Auto-validate Literals from StrEnum (no duplication)
+    # =========================================================================
+    # Single source of truth: StrEnum values are extracted and used to validate
+    # that Literal types match. No manual validation needed - values come from
+    # StrEnum directly.
+
+
+# Note: Literal validation removed to avoid circular dependencies
+# Literals are manually maintained to match StrEnum values

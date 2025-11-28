@@ -13,6 +13,7 @@ import pytest
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap import FlextLdap
+from flext_ldap.models import FlextLdapModels
 
 from ..fixtures.constants import RFC
 
@@ -74,10 +75,10 @@ class TestFlextLdapBatchUpsert:
         result = ldap_client.batch_upsert(entries)
         assert result.is_success
         stats = result.unwrap()
-        assert stats["synced"] >= 0
-        assert stats["failed"] == 0
-        assert stats["skipped"] >= 0
-        assert stats["synced"] + stats["skipped"] == 3
+        assert stats.synced >= 0
+        assert stats.failed == 0
+        assert stats.skipped >= 0
+        assert stats.synced + stats.skipped == 3
 
         # Cleanup
         for dn in test_dns:
@@ -121,10 +122,13 @@ class TestFlextLdapBatchUpsert:
         ]
 
         # Track progress
-        progress_calls: list[tuple[int, int, str, dict[str, int]]] = []
+        progress_calls: list[tuple[int, int, str, FlextLdapModels.LdapBatchStats]] = []
 
         def progress_callback(
-            idx: int, total: int, dn: str, stats: dict[str, int]
+            idx: int,
+            total: int,
+            dn: str,
+            stats: FlextLdapModels.LdapBatchStats,
         ) -> None:
             """Track progress calls."""
             progress_calls.append((idx, total, dn, stats))

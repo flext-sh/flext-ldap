@@ -122,7 +122,7 @@ def connection_config(
             use_ssl=False,
             bind_dn=str(ldap_container.get("bind_dn", TestConstants.DEFAULT_BIND_DN)),
             bind_password=str(
-                ldap_container.get("password", TestConstants.DEFAULT_BIND_PASSWORD)
+                ldap_container.get("password", TestConstants.DEFAULT_BIND_PASSWORD),
             ),
         )
     except pytest.FixtureLookupError:
@@ -165,7 +165,7 @@ def default_base_dn() -> str:
         {"host": "localhost", "port": 389},
         {"host": "ldap.example.com", "port": 389},
         {"host": "secure.example.com", "port": 636},
-    ]
+    ],
 )
 def config_variants(request: pytest.FixtureRequest) -> tuple[str, int]:
     """Parametrized fixture providing different host/port combinations."""

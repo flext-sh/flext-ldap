@@ -29,6 +29,7 @@ from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldap.typings import FlextLdapTypes
 
@@ -39,6 +40,7 @@ __all__ = [
     "FlextLdapConfig",  # ✅ Configuration
     "FlextLdapConstants",  # ✅ Constants
     "FlextLdapModels",  # ✅ Domain models
+    "FlextLdapProtocols",  # ✅ Protocol definitions
     "FlextLdapServerDetector",  # ✅ Server detection service
     "FlextLdapServiceBase",  # ✅ Base class for services with typed config
     "FlextLdapTypes",  # ✅ Type definitions

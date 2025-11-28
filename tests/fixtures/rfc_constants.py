@@ -7,12 +7,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_ldap.constants import FlextLdapConstants
+
 
 class RFC:
     """Flat namespace for RFC server test constants - no type checking."""
 
-    # Server type
-    SERVER_TYPE = "rfc"
+    # Server type - reuse production StrEnum
+    SERVER_TYPE = FlextLdapConstants.ServerTypes.RFC.value
 
     # LDAP connection defaults
     DEFAULT_HOST = "localhost"
@@ -21,9 +23,9 @@ class RFC:
     DEFAULT_BIND_DN = "cn=admin,dc=flext,dc=local"
     DEFAULT_BIND_PASSWORD = "admin123"
 
-    # Search defaults
+    # Search defaults - reuse production StrEnum
     DEFAULT_FILTER = "(objectClass=*)"
-    DEFAULT_SCOPE = "SUBTREE"
+    DEFAULT_SCOPE = FlextLdapConstants.SearchScope.SUBTREE.value
     DEFAULT_ATTRIBUTES = ("objectClass", "cn")
 
     # Test entry defaults

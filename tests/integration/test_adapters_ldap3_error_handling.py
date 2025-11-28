@@ -16,7 +16,9 @@ from ldap3 import MODIFY_REPLACE
 from pydantic import ValidationError
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -54,7 +56,7 @@ class TestLdap3AdapterErrorHandling:
             FlextLdapModels.SearchOptions(
                 base_dn="invalid-dn-format",
                 filter_str="(objectClass=*)",
-                scope="SUBTREE",
+                scope=FlextLdapConstants.SearchScope.SUBTREE,
             )
         # Verify it's the correct validation error
         assert "base_dn" in str(exc_info.value)
@@ -68,7 +70,7 @@ class TestLdap3AdapterErrorHandling:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="invalid(filter",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = connected_adapter.search(search_options)
         # Should handle gracefully
@@ -144,7 +146,7 @@ class TestLdap3AdapterErrorHandling:
 
     def test_connect_with_invalid_credentials(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test connect with invalid credentials."""
         adapter = Ldap3Adapter()
@@ -170,7 +172,7 @@ class TestLdap3AdapterErrorHandling:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",  # Valid scope - Pydantic prevents invalid values
+            scope=FlextLdapConstants.SearchScope.SUBTREE,  # Valid scope - Pydantic prevents invalid values
         )
         result = connected_adapter.search(search_options)
         # Should handle gracefully
@@ -246,7 +248,7 @@ class TestLdap3AdapterErrorHandling:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = adapter.search(search_options)
         assert result.is_failure

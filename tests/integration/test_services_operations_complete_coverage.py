@@ -22,9 +22,11 @@ from flext_tests import FlextTestsFactories, FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -55,7 +57,7 @@ class TestDataFactories:
     """Factory methods for generating test data and configurations."""
 
     # Configuration templates for different test scenarios
-    CONFIG_TEMPLATES: ClassVar[dict[str, dict[str, object]]] = {
+    CONFIG_TEMPLATES: ClassVar[dict[str, GenericFieldsDict]] = {
         "default": {},
         "with_parser": {"parser": True},
     }
@@ -187,7 +189,8 @@ class TestFlextLdapOperationsCompleteCoverage:
         """Parameterized test for all operations with different handling types."""
         # Get operations service
         operations_service_gen = TestDataFactories.create_operations_service(
-            connection_config, ldap_parser
+            connection_config,
+            ldap_parser,
         )
         operations_service = next(operations_service_gen)
 
@@ -226,11 +229,11 @@ class TestFlextLdapOperationsCompleteCoverage:
                 search_options = FlextLdapModels.SearchOptions(
                     base_dn=f"  {RFC.DEFAULT_BASE_DN}  ",
                     filter_str="(objectClass=*)",
-                    scope="SUBTREE",
+                    scope=FlextLdapConstants.SearchScope.SUBTREE,
                 )
                 result = operations_service.search(search_options)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", result)
+                    cast("FlextResult[object]", result),
                 )
 
             case DNHandlingType.ERROR_HANDLING:
@@ -243,11 +246,12 @@ class TestFlextLdapOperationsCompleteCoverage:
                 search_options = FlextLdapModels.SearchOptions(
                     base_dn=RFC.DEFAULT_BASE_DN,
                     filter_str="(objectClass=*)",
-                    scope="SUBTREE",
+                    scope=FlextLdapConstants.SearchScope.SUBTREE,
                 )
                 result = operations_service.search(search_options)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result), "Not connected"
+                    cast("FlextResult[object]", result),
+                    "Not connected",
                 )
 
     @staticmethod
@@ -260,7 +264,7 @@ class TestFlextLdapOperationsCompleteCoverage:
             case DNHandlingType.NORMALIZED_WHITESPACE:
                 # Test add with DN that needs normalization
                 dn_str, entry = TestDataFactories.create_test_entry_with_dn_handling(
-                    DNHandlingType.NORMALIZED_WHITESPACE
+                    DNHandlingType.NORMALIZED_WHITESPACE,
                 )
 
                 # Cleanup first
@@ -268,7 +272,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", result)
+                    cast("FlextResult[object]", result),
                 )
 
                 # Verify DN was normalized
@@ -291,7 +295,8 @@ class TestFlextLdapOperationsCompleteCoverage:
                 )
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result), "Not connected"
+                    cast("FlextResult[object]", result),
+                    "Not connected",
                 )
 
             case DNHandlingType.ADAPTER_FAILURE:
@@ -299,7 +304,8 @@ class TestFlextLdapOperationsCompleteCoverage:
                 entry = TestDataFactories.create_invalid_entry()
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result), ""
+                    cast("FlextResult[object]", result),
+                    "",
                 )
 
     @staticmethod
@@ -312,7 +318,7 @@ class TestFlextLdapOperationsCompleteCoverage:
             case DNHandlingType.NORMALIZED_WHITESPACE:
                 # First add an entry
                 _, entry = TestDataFactories.create_test_entry_with_dn_handling(
-                    DNHandlingType.NORMALIZED_WHITESPACE
+                    DNHandlingType.NORMALIZED_WHITESPACE,
                 )
 
                 # Cleanup first
@@ -320,7 +326,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 add_result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", add_result)
+                    cast("FlextResult[object]", add_result),
                 )
 
                 # Modify with DN that needs normalization
@@ -328,7 +334,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 dn_with_spaces = f"  {entry.dn!s}  "
                 modify_result = operations_service.modify(dn_with_spaces, changes)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", modify_result)
+                    cast("FlextResult[object]", modify_result),
                 )
 
                 # Cleanup
@@ -345,7 +351,8 @@ class TestFlextLdapOperationsCompleteCoverage:
                 changes = TestDataFactories.create_modify_changes()
                 result = operations_service.modify("cn=test,dc=flext,dc=local", changes)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result), "Not connected"
+                    cast("FlextResult[object]", result),
+                    "Not connected",
                 )
 
     @staticmethod
@@ -358,7 +365,7 @@ class TestFlextLdapOperationsCompleteCoverage:
             case DNHandlingType.NORMALIZED_WHITESPACE:
                 # Test delete with DN that needs normalization
                 dn_str, entry = TestDataFactories.create_test_entry_with_dn_handling(
-                    DNHandlingType.NORMALIZED_WHITESPACE
+                    DNHandlingType.NORMALIZED_WHITESPACE,
                 )
 
                 # Cleanup first
@@ -366,13 +373,13 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 add_result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", add_result)
+                    cast("FlextResult[object]", add_result),
                 )
 
                 # Delete with DN that needs normalization
                 delete_result = operations_service.delete(dn_str)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", delete_result)
+                    cast("FlextResult[object]", delete_result),
                 )
 
             case DNHandlingType.ERROR_HANDLING:
@@ -384,7 +391,8 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 result = operations_service.delete("cn=test,dc=flext,dc=local")
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result), "Not connected"
+                    cast("FlextResult[object]", result),
+                    "Not connected",
                 )
 
     @staticmethod
@@ -398,7 +406,8 @@ class TestFlextLdapOperationsCompleteCoverage:
                 # Test execute error handling (not connected)
                 result = operations_service.execute()
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result), "Not connected"
+                    cast("FlextResult[object]", result),
+                    "Not connected",
                 )
 
 

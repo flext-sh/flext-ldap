@@ -142,7 +142,8 @@ class TestFlextLdapVersion:
 
     @pytest.mark.parametrize("property_name", METADATA_PROPERTIES)
     def test_metadata_property_is_non_empty_string(
-        self, property_name: MetadataProperty
+        self,
+        property_name: MetadataProperty,
     ) -> None:
         """Test that each metadata property is a non-empty string (parametrized)."""
         property_value = self.METADATA_VALUES[property_name]

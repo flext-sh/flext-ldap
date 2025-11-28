@@ -22,19 +22,21 @@ import types
 from collections.abc import Callable, Generator
 from pathlib import Path
 from threading import Lock
-from typing import Any, TextIO, cast
+from typing import TextIO, cast
 
 import pytest
 from flext_core import FlextLogger
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from tests.fixtures.typing import GenericFieldsDict
 
 from .fixtures import LdapTestFixtures
 
@@ -64,7 +66,10 @@ LDAP_ADMIN_PASSWORD = "admin"
 
 
 def _ldap3_add(
-    conn: Connection, dn: str, object_class: object = None, attributes: object = None
+    conn: Connection,
+    dn: str,
+    object_class: str | list[str] | None = None,
+    attributes: dict[str, list[str]] | None = None,
 ) -> bool:
     """Typed wrapper for Connection.add."""
     add_func: Callable[..., bool] = conn.add
@@ -172,7 +177,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
     if is_dirty:
         logger.info(
-            f"Container {LDAP_CONTAINER_NAME} is dirty, recreating with fresh volumes"
+            "Container %s is dirty, recreating with fresh volumes",
+            LDAP_CONTAINER_NAME,
         )
         # Cleanup dirty containers (will down + up with fresh volumes)
         cleanup_result = docker_control.cleanup_dirty_containers()
@@ -182,7 +188,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         else:
             cleaned = cleanup_result.unwrap()
             if cleaned:
-                logger.info(f"Recreated dirty containers: {cleaned}")
+                logger.info("Recreated dirty containers: %s", cleaned)
     else:
         # Not dirty - try to start existing container first (without recreation)
         start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
@@ -192,7 +198,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         else:
             # Container doesn't exist - create it with compose_up
             logger.info(
-                f"Container {LDAP_CONTAINER_NAME} not found, creating with compose..."
+                "Container %s not found, creating with compose...",
+                LDAP_CONTAINER_NAME,
             )
             create_result = docker_control.compose_up(
                 str(LDAP_COMPOSE_FILE),
@@ -201,12 +208,12 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             if create_result.is_failure:
                 logger.warning(f"Container create failed: {create_result.error}")
             else:
-                logger.info(f"Container {LDAP_CONTAINER_NAME} created")
+                logger.info("Container %s created", LDAP_CONTAINER_NAME)
 
 
 def pytest_runtest_makereport(
     item: pytest.Item,
-    call: pytest.CallInfo[Any],
+    call: pytest.CallInfo[None],
 ) -> None:
     """Mark container dirty on LDAP infrastructure failures ONLY.
 
@@ -273,11 +280,11 @@ def pytest_runtest_makereport(
 
         logger.error(
             f"LDAP INFRASTRUCTURE FAILURE in {item.nodeid}, "
-            f"container marked DIRTY for recreation on next session: {exc_msg}"
+            f"container marked DIRTY for recreation on next session: {exc_msg}",
         )
     elif is_transient:
         logger.warning(
-            f"LDAP transient error in {item.nodeid} (not marking dirty): {exc_msg}"
+            f"LDAP transient error in {item.nodeid} (not marking dirty): {exc_msg}",
         )
 
 
@@ -348,7 +355,9 @@ def test_dns_tracker() -> DNSTracker:
 
 @pytest.fixture
 def unique_dn_suffix(
-    worker_id: str, session_id: str, request: pytest.FixtureRequest
+    worker_id: str,
+    session_id: str,
+    request: pytest.FixtureRequest,
 ) -> str:
     """Generate unique DN suffix for this worker and test (REGRA 3).
 
@@ -385,7 +394,8 @@ def unique_dn_suffix(
 
 @pytest.fixture
 def make_user_dn(
-    unique_dn_suffix: str, ldap_container: dict[str, object]
+    unique_dn_suffix: str,
+    ldap_container: GenericFieldsDict,
 ) -> Callable[[str], str]:
     """Factory to create unique user DNs with base DN isolation (REGRA 3).
 
@@ -423,7 +433,8 @@ def make_user_dn(
 
 @pytest.fixture
 def make_group_dn(
-    unique_dn_suffix: str, ldap_container: dict[str, object]
+    unique_dn_suffix: str,
+    ldap_container: GenericFieldsDict,
 ) -> Callable[[str], str]:
     """Factory to create unique group DNs with base DN isolation (REGRA 3).
 
@@ -469,7 +480,7 @@ def make_group_dn(
 @pytest.fixture(scope="session")
 def ldap_container(
     worker_id: str,  # For isolation
-) -> dict[str, object]:
+) -> GenericFieldsDict:
     """Session-scoped LDAP container configuration with worker isolation.
 
     Container lifecycle is managed by pytest_sessionstart hook:
@@ -502,7 +513,7 @@ def ldap_container(
         wait_interval: float = 2.0  # seconds
         waited: float = 0.0
 
-        logger.info(f"Waiting for container {LDAP_CONTAINER_NAME} to be ready...")
+        logger.info("Waiting for container %s to be ready...", LDAP_CONTAINER_NAME)
 
         # Test LDAP connection (more reliable than Docker healthcheck)
         while waited < max_wait:
@@ -520,7 +531,7 @@ def ldap_container(
                 )
                 _ldap3_unbind(test_conn)
                 logger.info(
-                    f"Container {LDAP_CONTAINER_NAME} is ready after {waited:.1f}s"
+                    f"Container {LDAP_CONTAINER_NAME} is ready after {waited:.1f}s",
                 )
                 break
             except Exception as e:
@@ -528,7 +539,7 @@ def ldap_container(
                 if waited % 10 == 0:  # Log every 10 seconds
                     logger.debug(
                         f"Container {LDAP_CONTAINER_NAME} not ready yet "
-                        f"(waited {waited:.1f}s): {e}"
+                        f"(waited {waited:.1f}s): {e}",
                     )
 
             time.sleep(wait_interval)
@@ -537,7 +548,7 @@ def ldap_container(
         if waited >= max_wait:
             pytest.skip(
                 f"Container {LDAP_CONTAINER_NAME} did not become ready "
-                f"within {max_wait}s"
+                f"within {max_wait}s",
             )
 
     # Ensure basic LDAP structure exists
@@ -545,7 +556,7 @@ def ldap_container(
         _ensure_basic_ldap_structure()
 
     # Return connection info (matches docker-compose.yml)
-    container_info: dict[str, object] = {
+    container_info: GenericFieldsDict = {
         "server_url": f"ldap://localhost:{LDAP_PORT}",
         "host": "localhost",
         "bind_dn": LDAP_ADMIN_DN,
@@ -557,8 +568,10 @@ def ldap_container(
     }
 
     logger.info(
-        f"LDAP container configured for worker {worker_id}: "
-        f"{LDAP_CONTAINER_NAME} on port {LDAP_PORT}"
+        "LDAP container configured for worker %s: %s on port %s",
+        worker_id,
+        LDAP_CONTAINER_NAME,
+        LDAP_PORT,
     )
 
     # NO TEARDOWN - container stays running after tests
@@ -599,7 +612,7 @@ def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture(scope="module")
-def ldap_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
+def ldap_config(ldap_container: GenericFieldsDict) -> FlextLdapConfig:
     """Get standard LDAP connection configuration.
 
     Module-scoped to match ldap_client fixture scope for performance.
@@ -618,7 +631,7 @@ def ldap_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
 
 @pytest.fixture(scope="module")
 def connection_config(
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
 ) -> FlextLdapModels.ConnectionConfig:
     """Create connection configuration for testing.
 
@@ -637,13 +650,13 @@ def connection_config(
 
 
 @pytest.fixture
-def search_options(ldap_container: dict[str, object]) -> FlextLdapModels.SearchOptions:
+def search_options(ldap_container: GenericFieldsDict) -> FlextLdapModels.SearchOptions:
     """Create search options for testing."""
     base_dn = str(ldap_container.get("base_dn", "dc=example,dc=com"))
     return FlextLdapModels.SearchOptions(
         base_dn=base_dn,
         filter_str="(objectClass=*)",
-        scope="SUBTREE",
+        scope=FlextLdapConstants.SearchScope.SUBTREE,
     )
 
 
@@ -713,7 +726,7 @@ def search_options(ldap_container: dict[str, object]) -> FlextLdapModels.SearchO
 
 @pytest.fixture(scope="session")
 def ldap_test_data_loader(
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
     test_dns_tracker: DNSTracker,
 ) -> Generator[Connection]:
     """Session-scoped test data loader with intelligent cleanup.
@@ -770,13 +783,13 @@ def ldap_test_data_loader(
             for dn in all_dns:
                 try:
                     _ = _ldap3_delete(connection, dn)
-                    logger.debug(f"Cleaned up DN: {dn}")
+                    logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
                     # Entry might be already deleted by test or not exist
-                    logger.debug(f"Cleanup skip for {dn}: {e}")
+                    logger.debug("Cleanup skip for %s: %s", dn, e)
 
         except Exception as e:
-            logger.warning(f"Cleanup failed (non-critical): {e}")
+            logger.warning("Cleanup failed (non-critical): %s", e)
 
         # Close REAL connection
         if connection.bound:
@@ -793,13 +806,13 @@ def ldap_test_data_loader(
 
 
 @pytest.fixture
-def test_users_json() -> list[dict[str, object]]:
+def test_users_json() -> list[GenericFieldsDict]:
     """Load test users from JSON fixture file."""
     return LdapTestFixtures.load_users_json()
 
 
 @pytest.fixture
-def test_groups_json() -> list[dict[str, object]]:
+def test_groups_json() -> list[GenericFieldsDict]:
     """Load test groups from JSON fixture file."""
     return LdapTestFixtures.load_groups_json()
 
@@ -811,13 +824,13 @@ def base_ldif_content() -> str:
 
 
 @pytest.fixture
-def base_ldif_entries() -> list[object]:
+def base_ldif_entries() -> list[FlextLdifModels.Entry]:
     """Load and parse base LDIF structure to Entry models."""
     return LdapTestFixtures.load_base_ldif_entries()
 
 
 @pytest.fixture
-def test_user_entry(test_users_json: list[dict[str, object]]) -> dict[str, object]:
+def test_user_entry(test_users_json: list[GenericFieldsDict]) -> GenericFieldsDict:
     """Get first test user as Entry-compatible dict."""
     if not test_users_json:
         pytest.skip("No test users available")
@@ -826,7 +839,7 @@ def test_user_entry(test_users_json: list[dict[str, object]]) -> dict[str, objec
 
 
 @pytest.fixture
-def test_group_entry(test_groups_json: list[dict[str, object]]) -> dict[str, object]:
+def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFieldsDict:
     """Get first test group as Entry-compatible dict."""
     if not test_groups_json:
         pytest.skip("No test groups available")
@@ -866,7 +879,7 @@ SAMPLE_GROUP_ENTRY = {
 def ldap_connection(
     ldap_config: FlextLdapConfig,
     ldap_parser: FlextLdifParser | None,
-    ldap_container: dict[str, object],
+    ldap_container: GenericFieldsDict,
 ) -> Generator[FlextLdapConnection]:
     """Get FlextLdapConnection instance with established connection for testing.
 
@@ -912,7 +925,7 @@ def ldap_connection(
         try:
             connection.disconnect()
         except Exception as cleanup_error:
-            logger.warning(f"Error during LDAP disconnect: {cleanup_error}")
+            logger.warning("Error during LDAP disconnect: %s", cleanup_error)
 
 
 @pytest.fixture
@@ -1005,5 +1018,5 @@ def _ensure_basic_ldap_structure() -> None:
         logger.info("Basic LDAP structure verified/created")
 
     except Exception as e:
-        logger.warning(f"Failed to ensure basic LDAP structure: {e}")
+        logger.warning("Failed to ensure basic LDAP structure: %s", e)
         # Don't fail tests for this - just log warning

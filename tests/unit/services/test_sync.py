@@ -178,7 +178,7 @@ class TestFlextLdapSyncService:
     ) -> None:
         """Test sync_ldif_file with non-existent LDIF file."""
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
         nonexistent_file = Path(self._test_data.NONEXISTENT_FILE)
 
@@ -194,7 +194,7 @@ class TestFlextLdapSyncService:
     ) -> None:
         """Test sync_ldif_file with empty LDIF file."""
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
 
         result = sync_service.sync_ldif_file(empty_ldif_file, options)
@@ -212,32 +212,32 @@ class TestFlextLdapSyncService:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
-                    }
+                    },
                 ),
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}2{self._test_data.TEST_DN_SUFFIX}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}2{self._test_data.TEST_DN_SUFFIX}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user2"],
                         "cn": ["User 2"],
-                    }
+                    },
                 ),
             ),
         ]
 
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
 
         # Will fail fast because not connected (unit test)
@@ -257,14 +257,14 @@ class TestFlextLdapSyncService:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
-                    }
+                    },
                 ),
             ),
         ]
@@ -299,20 +299,20 @@ class TestFlextLdapSyncService:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
-                    }
+                    },
                 ),
             ),
         ]
 
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
 
         # Will fail fast because not connected (unit test)
@@ -329,20 +329,20 @@ class TestFlextLdapSyncService:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}1{self._test_data.TEST_DN_SUFFIX}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "objectClass": ["inetOrgPerson", "person"],
                         "uid": ["user1"],
                         "cn": ["User 1"],
-                    }
+                    },
                 ),
             ),
         ]
 
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
 
         # Will fail fast because not connected (unit test)
@@ -359,10 +359,10 @@ class TestFlextLdapSyncService:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}1,ou=users,{self._test_data.OLD_BASE_DN}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}1,ou=users,{self._test_data.OLD_BASE_DN}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"uid": ["user1"]}
+                    attributes={"uid": ["user1"]},
                 ),
             ),
         ]
@@ -391,7 +391,7 @@ class TestFlextLdapSyncService:
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value=original_dn),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"uid": ["user1"]}
+                    attributes={"uid": ["user1"]},
                 ),
             ),
         ]
@@ -415,7 +415,7 @@ class TestFlextLdapSyncService:
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value=original_dn),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"uid": ["user1"]}
+                    attributes={"uid": ["user1"]},
                 ),
             ),
         ]
@@ -495,17 +495,17 @@ class TestFlextLdapSyncService:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"{self._test_data.TEST_DN_PREFIX}{i}{self._test_data.TEST_DN_SUFFIX}"
+                    value=f"{self._test_data.TEST_DN_PREFIX}{i}{self._test_data.TEST_DN_SUFFIX}",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"uid": [f"user{i}"]}
+                    attributes={"uid": [f"user{i}"]},
                 ),
             )
             for i in range(1, 5)
         ]
 
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
 
         # Will fail fast because not connected (unit test)
@@ -520,7 +520,7 @@ class TestFlextLdapSyncService:
     ) -> None:
         """Test sync with empty entries list."""
         options = FlextLdapModels.SyncOptions(
-            batch_size=self._test_data.DEFAULT_BATCH_SIZE
+            batch_size=self._test_data.DEFAULT_BATCH_SIZE,
         )
 
         result = sync_service._process_entries([], options, datetime.now(UTC))

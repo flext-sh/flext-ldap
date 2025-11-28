@@ -17,15 +17,16 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Literal, cast
 
 from flext_core import FlextResult, FlextUtilities
-from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
 
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
@@ -50,25 +51,25 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             """Sync entries in batch mode."""
             added = skipped = failed = 0
             for idx, entry in enumerate(entries, 1):
-                entry_dn = FlextLdapServiceBase.safe_dn_string(entry.dn)
+                entry_dn = FlextLdifUtilities.DN.get_dn_value(entry.dn)
                 add_result = self._ops.add(entry)
-                entry_stats: FlextLdapTypes.LdapBatchStats = {
-                    "added": 0,
-                    "skipped": 0,
-                    "failed": 0,
-                }
-
                 if add_result.is_success:
                     added += 1
-                    entry_stats["added"] = 1
+                    entry_stats = FlextLdapModels.LdapBatchStats(
+                        synced=1, skipped=0, failed=0
+                    )
                 else:
                     error_str = str(add_result.error) if add_result.error else ""
                     if FlextLdapOperations.is_already_exists_error(error_str):
                         skipped += 1
-                        entry_stats["skipped"] = 1
+                        entry_stats = FlextLdapModels.LdapBatchStats(
+                            synced=0, skipped=1, failed=0
+                        )
                     else:
                         failed += 1
-                        entry_stats["failed"] = 1
+                        entry_stats = FlextLdapModels.LdapBatchStats(
+                            synced=0, skipped=0, failed=1
+                        )
 
                 if options.progress_callback:
                     options.progress_callback(idx, len(entries), entry_dn, entry_stats)
@@ -94,7 +95,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
 
             transformed = []
             for entry in entries:
-                dn_str = FlextLdapServiceBase.safe_dn_string(entry.dn)
+                dn_str = FlextLdifUtilities.DN.get_dn_value(entry.dn)
                 if source_basedn.lower() in dn_str.lower():
                     transformed.append(
                         entry.model_copy(
@@ -116,9 +117,12 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
     def __init__(
         self,
         operations: FlextLdapOperations | None = None,
-        **kwargs: object,
+        **kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize sync service."""
+        """Initialize sync service.
+
+        Additional kwargs are passed to base class for extensibility.
+        """
         super().__init__(**kwargs)
         if operations is None:
             operations_kwarg = kwargs.pop("operations", None)
@@ -131,10 +135,8 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             error_msg = "operations parameter is required"
             raise TypeError(error_msg)
         self._operations = operations
-        config = FlextLdifConfig.model_construct(
-            quirks_server_type=FlextLdapConstants.ServerTypes.RFC,
-        )
-        self._ldif = FlextLdif(config=config)
+        # FlextLdif accepts config via kwargs, not as direct parameter
+        self._ldif = FlextLdif.get_instance()
         self._generate_datetime_utc = FlextUtilities.Generators.generate_datetime_utc
 
     def sync_ldif_file(
@@ -150,7 +152,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
 
         start_time = self._generate_datetime_utc()
         parse_result = self._ldif.parse(
-            source=ldif_file, server_type=FlextLdapConstants.ServerTypes.RFC
+            source=ldif_file, server_type=cast("Literal['389ds', 'active_directory', 'apache_directory', 'generic', 'ibm_tivoli', 'novell_edirectory', 'oid', 'openldap', 'openldap1', 'openldap2', 'oracle_oid', 'oracle_oud', 'oud', 'relaxed', 'rfc'] | None", FlextLdapConstants.ServerTypes.RFC.value)
         )
 
         if parse_result.is_failure:
@@ -187,8 +189,13 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             stats.model_copy(update={"duration_seconds": duration})
         )
 
-    def execute(self, **_kwargs: object) -> FlextResult[FlextLdapModels.SyncStats]:
-        """Execute service health check."""
+    def execute(
+        self, **_kwargs: str | float | bool | None
+    ) -> FlextResult[FlextLdapModels.SyncStats]:
+        """Execute service health check.
+
+        Additional kwargs are for extensibility and future use.
+        """
         return FlextResult[FlextLdapModels.SyncStats].ok(
             FlextLdapModels.SyncStats.from_counters()
         )

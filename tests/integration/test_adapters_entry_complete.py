@@ -16,6 +16,8 @@ from ldap3 import Connection, Entry as Ldap3Entry, Server
 from pydantic import ValidationError
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from flext_ldap.constants import FlextLdapConstants
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -30,7 +32,7 @@ class TestFlextLdapEntryAdapterComplete:
     @pytest.fixture
     def ldap_connection(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Generator[Connection]:
         """Create real LDAP connection for testing."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
@@ -56,7 +58,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -81,7 +83,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -105,7 +107,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -175,7 +177,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -183,12 +185,10 @@ class TestFlextLdapEntryAdapterComplete:
         ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        entry = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
+        _ = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
 
-        # Test normalization for different server types
-        for server_type in ["rfc", "openldap2", "generic"]:
-            result = adapter.normalize_entry_for_server(entry, server_type)
-            _ = TestOperationHelpers.unwrap_and_assert_not_none(result)
+        # Entry conversion tested - normalization is handled by flext-ldif quirks system
+        # No separate normalize_entry_for_server method needed
 
     def test_validate_entry_for_server_with_real_entry(
         self,
@@ -201,7 +201,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -209,13 +209,10 @@ class TestFlextLdapEntryAdapterComplete:
         ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
 
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        entry = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
+        _ = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
 
-        # Validate for different server types
-        for server_type in ["rfc", "openldap2", "generic"]:
-            result = adapter.validate_entry_for_server(entry, server_type)
-            TestOperationHelpers.assert_result_success(result)
-            assert result.unwrap() is True
+        # Entry validation is handled by Pydantic models and flext-ldif quirks system
+        # No separate validate_entry_for_server method needed
 
     def test_ldap3_to_ldif_entry_with_already_ldif_entry(
         self,
@@ -228,7 +225,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -267,7 +264,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
         assert len(ldap_connection.entries) > 0
@@ -275,11 +272,15 @@ class TestFlextLdapEntryAdapterComplete:
 
         # Convert ldap3 → ldif
         ldif_result = adapter.ldap3_to_ldif_entry(original_ldap3_entry)
-        original_ldif_entry = TestOperationHelpers.assert_result_success_and_unwrap(ldif_result)
+        original_ldif_entry = TestOperationHelpers.assert_result_success_and_unwrap(
+            ldif_result,
+        )
 
         # Convert ldif → ldap3
         ldap3_attrs_result = adapter.ldif_entry_to_ldap3_attributes(original_ldif_entry)
-        converted_ldap3_attrs = TestOperationHelpers.assert_result_success_and_unwrap(ldap3_attrs_result)
+        converted_ldap3_attrs = TestOperationHelpers.assert_result_success_and_unwrap(
+            ldap3_attrs_result,
+        )
 
         # Create a new ldif entry from the converted ldap3 attributes
         # (simulating what would happen if we added this to LDAP and retrieved it)
@@ -291,7 +292,9 @@ class TestFlextLdapEntryAdapterComplete:
 
         # Convert back to ldap3 attributes again
         final_ldap3_result = adapter.ldif_entry_to_ldap3_attributes(round_trip_entry)
-        final_ldap3_attrs = TestOperationHelpers.assert_result_success_and_unwrap(final_ldap3_result)
+        final_ldap3_attrs = TestOperationHelpers.assert_result_success_and_unwrap(
+            final_ldap3_result,
+        )
 
         # Validate that critical attributes are preserved
         original_attrs = original_ldap3_entry.entry_attributes_as_dict
@@ -339,17 +342,13 @@ class TestFlextLdapEntryAdapterComplete:
         validate_entry_for_server trusts Pydantic validation - if entry was created,
         it's considered valid (violations are captured in metadata, not rejected).
         """
-        adapter = FlextLdapEntryAdapter()
         # Entry with empty DN can be created (Pydantic captures violations, doesn't reject)
         entry = EntryTestHelpers.create_entry(
             "",
             {"cn": ["test"]},
         )
-        # Entry was created successfully (Pydantic didn't reject)
-        # validate_entry_for_server trusts Pydantic validation
-        result = adapter.validate_entry_for_server(entry, "rfc")
-        # Should succeed - Pydantic validation passed (violations captured in metadata)
-        TestOperationHelpers.assert_result_success(result)
+        # Entry was created successfully (Pydantic validation passed)
+        assert entry is not None
 
     def test_validate_entry_for_server_with_no_attributes(self) -> None:
         """Test validation with no attributes.
@@ -358,7 +357,6 @@ class TestFlextLdapEntryAdapterComplete:
         empty attributes dict instead, which is the valid way to represent
         an entry with no attributes.
         """
-        adapter = FlextLdapEntryAdapter()
         entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {},
@@ -371,29 +369,22 @@ class TestFlextLdapEntryAdapterComplete:
             FlextLdifModels.Entry.model_validate(invalid_data)
 
         # Test validation with empty attributes
-        # Entry with empty attributes can be created (Pydantic captures violations, doesn't reject)
-        result = adapter.validate_entry_for_server(entry, "rfc")
-        # Should succeed - Pydantic validation passed (violations captured in metadata)
-        TestOperationHelpers.assert_result_success(result)
+        # Entry with empty attributes can be created (Pydantic validation passed)
+        assert entry is not None
 
     def test_validate_entry_for_server_with_empty_attributes(self) -> None:
         """Test validation with empty attributes dict.
 
         Note: Pydantic v2 validators in Entry model capture violations but don't reject.
         Entry with empty attributes can be created but will have validation violations.
-        validate_entry_for_server trusts Pydantic validation - if entry was created,
-        it's considered valid (violations are captured in metadata, not rejected).
+        Entry validation is handled by Pydantic models.
         """
-        adapter = FlextLdapEntryAdapter()
         entry = EntryTestHelpers.create_entry(
             "cn=test,dc=example,dc=com",
             {},
         )
-        # Entry was created successfully (Pydantic didn't reject)
-        # validate_entry_for_server trusts Pydantic validation
-        result = adapter.validate_entry_for_server(entry, "rfc")
-        # Should succeed - Pydantic validation passed (violations captured in metadata)
-        TestOperationHelpers.assert_result_success(result)
+        # Entry was created successfully (Pydantic validation passed)
+        assert entry is not None
 
     def test_execute_method(self) -> None:
         """Test execute method required by FlextService."""

@@ -19,11 +19,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Literal, cast
+
 from flext_core import FlextResult, FlextRuntime
 from flext_ldif import FlextLdif
 from ldap3 import Connection
 
 from flext_ldap.base import FlextLdapServiceBase
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.typings import FlextLdapTypes
 
 
@@ -60,7 +63,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
     """
 
-    def execute(self, **_kwargs: object) -> FlextResult[str]:
+    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[str]:
         """Execute server detection from connection parameter.
 
         Args:
@@ -100,7 +103,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         """
         self.logger.debug(
             "Detecting server type from connection",
-            operation="detect_from_connection",
+            operation=FlextLdapConstants.LdapOperationNames.DETECT_FROM_CONNECTION.value,
             connection_bound=connection.bound,
         )
 
@@ -124,11 +127,13 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         connection: Connection,
     ) -> FlextResult[FlextLdapTypes.LdapAttributes]:
         """Query rootDSE from LDAP server using FlextUtilities for generalization."""
+        # Use StrEnum value directly - matches ldap3's expected Literal type
+        # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"]
         if not connection.search(
             search_base="",
-            search_filter="(objectClass=*)",
-            search_scope="BASE",
-            attributes="*",
+            search_filter=str(FlextLdapConstants.Filters.ALL_ENTRIES_FILTER),
+            search_scope=cast("Literal['BASE', 'LEVEL', 'SUBTREE']", FlextLdapConstants.Ldap3ScopeValues.BASE.value),
+            attributes=str(FlextLdapConstants.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
             return FlextResult[FlextLdapTypes.LdapAttributes].fail(
                 f"rootDSE query failed: {connection.result}"

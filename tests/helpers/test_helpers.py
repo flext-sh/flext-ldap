@@ -16,13 +16,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Protocol
 
 from flext_core import FlextResult, FlextRuntime
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap import FlextLdap
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import TestConstants
 
@@ -35,11 +37,15 @@ class DnsTrackerProtocol(Protocol):
         ...
 
 
-# Type alias for search scope
-SearchScopeType = Literal["BASE", "ONELEVEL", "SUBTREE"]
+# Type alias for search scope - reuse production types
+SearchScopeType = FlextLdapConstants.LiteralTypes.SearchScopeLiteral
 
-# Valid scopes for runtime validation
-VALID_SCOPES: frozenset[str] = frozenset({"BASE", "ONELEVEL", "SUBTREE"})
+# Valid scopes for runtime validation - reuse production StrEnum
+VALID_SCOPES: frozenset[str] = frozenset({
+    FlextLdapConstants.SearchScope.BASE.value,
+    FlextLdapConstants.SearchScope.ONELEVEL.value,
+    FlextLdapConstants.SearchScope.SUBTREE.value,
+})
 
 
 def _validate_scope(scope: str) -> SearchScopeType:
@@ -156,7 +162,7 @@ class FlextLdapTestHelpers:
         )
 
     @staticmethod
-    def create_entry_from_dict(entry_dict: dict[str, object]) -> FlextLdifModels.Entry:
+    def create_entry_from_dict(entry_dict: GenericFieldsDict) -> FlextLdifModels.Entry:
         """Create FlextLdifModels.Entry from dict format.
 
         Enhanced version with better type safety and validation.
@@ -186,7 +192,7 @@ class FlextLdapTestHelpers:
     def create_search_options(
         base_dn: str,
         filter_str: str = "(objectClass=*)",
-        scope: str = "SUBTREE",
+        scope: str = FlextLdapConstants.SearchScope.SUBTREE.value,
         attributes: list[str] | None = None,
     ) -> FlextLdapModels.SearchOptions:
         """Create SearchOptions with common defaults.
@@ -245,7 +251,7 @@ class FlextLdapTestHelpers:
     @staticmethod
     def add_entry_from_dict_with_cleanup(
         client: FlextLdap,
-        entry_dict: dict[str, object],
+        entry_dict: GenericFieldsDict,
         dns_tracker: DnsTrackerProtocol | None = None,
     ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
         """Add entry from dict with automatic cleanup and tracking.
@@ -333,7 +339,7 @@ class FlextLdapTestHelpers:
     @staticmethod
     def add_multiple_entries_from_dicts(
         client: FlextLdap,
-        entry_dicts: list[dict[str, object]],
+        entry_dicts: list[GenericFieldsDict],
         adjust_dn: dict[str, str] | None = None,
     ) -> list[
         tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
@@ -359,7 +365,7 @@ class FlextLdapTestHelpers:
             if not FlextRuntime.is_dict_like(entry_dict_item):
                 msg = f"Expected dict, got {type(entry_dict_item)}"
                 raise TypeError(msg)
-            entry_dict: dict[str, object] = dict(entry_dict_item)
+            entry_dict: GenericFieldsDict = dict(entry_dict_item)
 
             # Adjust DN if needed
             if adjust_dn:
@@ -379,7 +385,7 @@ class FlextLdapTestHelpers:
     @staticmethod
     def modify_entry_with_verification(
         client: FlextLdap,
-        entry_dict: dict[str, object],
+        entry_dict: GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
     ) -> tuple[
         FlextLdifModels.Entry,
@@ -417,7 +423,7 @@ class FlextLdapTestHelpers:
     @staticmethod
     def delete_entry_with_verification(
         client: FlextLdap,
-        entry_dict: dict[str, object],
+        entry_dict: GenericFieldsDict,
     ) -> tuple[
         FlextLdifModels.Entry,
         FlextResult[FlextLdapModels.OperationResult],

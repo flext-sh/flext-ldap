@@ -22,7 +22,9 @@ from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -71,7 +73,7 @@ class TestFlextLdapEntryAdapterRealOperations:
 
     @staticmethod
     def _create_ldap_connection(
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Connection:
         """Create and return a connected LDAP connection."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
@@ -155,7 +157,7 @@ class TestFlextLdapEntryAdapterRealOperations:
 
     # LDAP3 to LDIF entry conversion test configurations
     ENTRY_CONVERSION_TEST_CONFIGS: ClassVar[
-        list[tuple[EntryTestType, dict[str, object]]]
+        list[tuple[EntryTestType, GenericFieldsDict]]
     ] = [
         # (test_type, config_dict)
         (
@@ -209,9 +211,9 @@ class TestFlextLdapEntryAdapterRealOperations:
     )
     def test_ldap3_to_ldif_entry_conversion_parameterized(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         test_type: EntryTestType,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Parameterized test for LDAP3 to LDIF entry conversions."""
         adapter_entry = FlextLdapEntryAdapter()
@@ -257,7 +259,7 @@ class TestFlextLdapEntryAdapterRealOperations:
                 connection.search(
                     search_base=str(entry.dn),
                     search_filter="(objectClass=*)",
-                    search_scope="BASE",
+                    search_scope=FlextLdapConstants.SearchScope.BASE.value,
                     attributes=["*"],
                 )
                 if connection.entries:
@@ -299,7 +301,7 @@ class TestFlextLdapEntryAdapterRealOperations:
             # Convert entry
             result = adapter_entry.ldap3_to_ldif_entry(ldap3_entry)
             converted_entry = TestOperationHelpers.assert_result_success_and_unwrap(
-                result
+                result,
             )
 
             # Verify basic structure

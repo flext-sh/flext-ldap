@@ -31,6 +31,7 @@ from flext_core import FlextConfig
 from flext_tests import FlextTestsMatchers
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -72,7 +73,8 @@ class TestFlextLdapOperations:
 
     @classmethod
     def _create_operations(
-        cls, connection: FlextLdapConnection | None = None
+        cls,
+        connection: FlextLdapConnection | None = None,
     ) -> FlextLdapOperations:
         """Factory method for creating operations service instances."""
         conn = connection or cls._create_connection()
@@ -81,7 +83,8 @@ class TestFlextLdapOperations:
     def test_init_without_connection_raises_type_error(self) -> None:
         """Test that __init__ raises TypeError when connection is not provided."""
         cls = __import__(
-            "flext_ldap.services.operations", fromlist=["FlextLdapOperations"]
+            "flext_ldap.services.operations",
+            fromlist=["FlextLdapOperations"],
         ).FlextLdapOperations
         with pytest.raises(TypeError, match="missing 1 required positional argument"):
             cls()
@@ -117,7 +120,9 @@ class TestFlextLdapOperations:
         [(msg, expected) for msg, expected in _ERROR_DETECTION_SCENARIOS.items()],
     )
     def test_is_already_exists_error_detection(
-        self, error_message: str, expected: bool
+        self,
+        error_message: str,
+        expected: bool,
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
@@ -131,7 +136,8 @@ class TestFlextLdapOperations:
         """Test EntryComparison.compare with identical/different entries."""
         attrs = self._ENTRY_SCENARIOS[scenario]
         entry1 = EntryTestHelpers.create_entry(
-            TestConstants.Operations.TEST_DN, self._ENTRY_SCENARIOS["identical"]
+            TestConstants.Operations.TEST_DN,
+            self._ENTRY_SCENARIOS["identical"],
         )
         entry2 = EntryTestHelpers.create_entry(TestConstants.Operations.TEST_DN, attrs)
         changes = FlextLdapOperations.EntryComparison.compare(entry1, entry2)
@@ -163,8 +169,9 @@ class TestFlextLdapOperations:
         operations = self._create_operations()
         entries = [
             EntryTestHelpers.create_entry(
-                TestConstants.Operations.TEST_DN_1, {"cn": ["test1"]}
-            )
+                TestConstants.Operations.TEST_DN_1,
+                {"cn": ["test1"]},
+            ),
         ]
         result = operations.batch_upsert(entries)
         FlextTestsMatchers.assert_failure(result)
@@ -175,7 +182,7 @@ class TestFlextLdapOperations:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=TestConstants.Operations.BASE_DN,
             filter_str=TestConstants.Operations.DEFAULT_FILTER,
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = operations.search(search_options)
         FlextTestsMatchers.assert_failure(result)

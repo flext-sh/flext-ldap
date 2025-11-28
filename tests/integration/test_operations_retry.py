@@ -23,6 +23,7 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap
+from flext_ldap.models import FlextLdapModels
 
 # Mark all tests in this module as integration tests requiring Docker
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -36,13 +37,13 @@ class TestDataFactories:
         """Factory for entry with invalid objectClass to cause LDAP errors."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn={dn_suffix},dc=flext,dc=local"
+                value=f"cn={dn_suffix},dc=flext,dc=local",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["invalid-objectclass-xyz"],  # Invalid objectClass
                     "cn": [dn_suffix],
-                }
+                },
             ),
         )
 
@@ -53,13 +54,13 @@ class TestDataFactories:
         """Factory for entry with nonexistent objectClass."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn={dn_suffix},dc=flext,dc=local"
+                value=f"cn={dn_suffix},dc=flext,dc=local",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["nonexistent-class"],
                     "cn": [dn_suffix],
-                }
+                },
             ),
         )
 
@@ -68,14 +69,14 @@ class TestDataFactories:
         """Factory for valid entry that should succeed."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn={dn_suffix},dc=flext,dc=local"
+                value=f"cn={dn_suffix},dc=flext,dc=local",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectClass": ["organizationalPerson", "person", "top"],
                     "cn": [dn_suffix],
                     "sn": ["Success"],
-                }
+                },
             ),
         )
 
@@ -102,15 +103,18 @@ class TestAssertions:
         ), f"Expected retry indicators in error: {result.error}"
 
     @staticmethod
-    def assert_successful_operation(result: FlextResult[dict[str, object]]) -> None:
+    def assert_successful_operation(
+        result: FlextResult[FlextLdapModels.LdapOperationResult],
+    ) -> None:
         """Assert that operation succeeded and return operation info."""
         assert result.is_success, f"Operation should have succeeded: {result.error}"
         operation_info = result.unwrap()
-        assert operation_info["operation"] in {"added", "modified", "skipped"}
+        assert operation_info.operation in {"added", "modified", "skipped"}
 
     @staticmethod
     def assert_no_retry_attempted(
-        result: FlextResult[object], max_retries: int = 3
+        result: FlextResult[object],
+        max_retries: int = 3,
     ) -> None:
         """Assert that no retry was attempted."""
         assert result.is_failure, "Operation should have failed"
@@ -136,7 +140,7 @@ class TestOperationsRetry:
     ) -> None:
         """Test that upsert without retry_on_errors fails immediately on error."""
         bad_entry = TestDataFactories.create_invalid_entry()
-        operations = ldap_client.client
+        operations = ldap_client._operations
 
         # Call upsert without retry_on_errors (default behavior)
         result = operations.upsert(bad_entry)
@@ -150,7 +154,7 @@ class TestOperationsRetry:
     ) -> None:
         """Test retry_on_errors retries on matching error pattern."""
         bad_entry = TestDataFactories.create_nonexistent_class_entry()
-        operations = ldap_client.client
+        operations = ldap_client._operations
 
         # Call upsert with retry_on_errors for "objectclass" errors
         result = operations.upsert(
@@ -168,7 +172,7 @@ class TestOperationsRetry:
     ) -> None:
         """Test successful upsert doesn't trigger retry logic."""
         good_entry = TestDataFactories.create_valid_entry()
-        operations = ldap_client.client
+        operations = ldap_client._operations
 
         # Call upsert with retry_on_errors (shouldn't need it)
         result = operations.upsert(
@@ -179,7 +183,7 @@ class TestOperationsRetry:
 
         # Should succeed on first attempt
         TestAssertions.assert_successful_operation(
-            cast("FlextResult[dict[str, object]]", result)
+            cast("FlextResult[FlextLdapModels.LdapOperationResult]", result),
         )
 
     def test_upsert_no_retry_on_non_matching_error(
@@ -188,7 +192,7 @@ class TestOperationsRetry:
     ) -> None:
         """Test retry_on_errors doesn't retry when error doesn't match pattern."""
         bad_entry = TestDataFactories.create_invalid_entry("test-nomatch")
-        operations = ldap_client.client
+        operations = ldap_client._operations
 
         # Call upsert with retry_on_errors that WON'T match the error
         result = operations.upsert(
@@ -203,5 +207,6 @@ class TestOperationsRetry:
 
         # Should fail immediately without retrying
         TestAssertions.assert_no_retry_attempted(
-            cast("FlextResult[object]", result), max_retries=3
+            cast("FlextResult[object]", result),
+            max_retries=3,
         )

@@ -15,8 +15,9 @@ from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldap.typings import LdapClientProtocol
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -51,7 +52,7 @@ class TestFlextLdapConnectionComplete:
 
     def test_connect_with_service_config(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect using service config."""
@@ -86,7 +87,7 @@ class TestFlextLdapConnectionComplete:
 
     def test_connect_with_all_config_options(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect with all config options."""
@@ -126,7 +127,8 @@ class TestFlextLdapConnectionComplete:
         assert connection.is_connected is False
 
         TestOperationHelpers.connect_and_assert_success(
-            cast("LdapClientProtocol", connection), connection_config
+            cast("FlextLdapProtocols.LdapClient", connection),
+            connection_config,
         )
 
         connection.disconnect()
@@ -161,7 +163,7 @@ class TestFlextLdapConnectionComplete:
         assert connect_result.is_success
 
         result = TestOperationHelpers.execute_and_assert_success(
-            cast("LdapClientProtocol", connection)
+            cast("FlextLdapProtocols.LdapClient", connection),
         )
         assert result is not None
         assert isinstance(result, FlextLdapModels.SearchResult)

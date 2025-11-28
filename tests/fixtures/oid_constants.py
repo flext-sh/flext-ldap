@@ -7,12 +7,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_ldap.constants import FlextLdapConstants
+
 
 class OID:
     """Flat namespace for OID server test constants - no type checking."""
 
-    # Server type
-    SERVER_TYPE = "oid"
+    # Server type - reuse production StrEnum
+    SERVER_TYPE = FlextLdapConstants.ServerTypes.OID.value
 
     # LDAP connection defaults
     DEFAULT_HOST = "localhost"
@@ -21,9 +23,9 @@ class OID:
     DEFAULT_BIND_DN = "cn=orcladmin"
     DEFAULT_BIND_PASSWORD = "password"
 
-    # Search defaults
+    # Search defaults - reuse production StrEnum
     DEFAULT_FILTER = "(objectClass=*)"
-    DEFAULT_SCOPE = "SUBTREE"
+    DEFAULT_SCOPE = FlextLdapConstants.SearchScope.SUBTREE.value
     DEFAULT_ATTRIBUTES = ("objectClass", "cn")
 
     # Test entry defaults

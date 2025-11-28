@@ -20,8 +20,9 @@ from flext_tests import FlextTestsFactories, FlextTestsUtilities
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.protocols import FlextLdapProtocols
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -180,7 +181,8 @@ class TestFlextLdapRealOperations:
                 for entry in search_result.entries:
                     if entry.attributes and entry.attributes.attributes:
                         object_classes = entry.attributes.attributes.get(
-                            "objectClass", []
+                            "objectClass",
+                            [],
                         )
                         if isinstance(object_classes, list):
                             assert "organizationalUnit" in object_classes
@@ -240,7 +242,7 @@ class TestFlextLdapRealOperations:
         # Assert operation result
         TestOperationHelpers.assert_operation_result_success(
             result,
-            expected_operation_type="add",
+            expected_operation_type=FlextLdapConstants.OperationType.ADD.value,
             expected_entries_affected=1,
         )
 
@@ -278,7 +280,7 @@ class TestFlextLdapRealOperations:
         # Define modification changes
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [
-                (MODIFY_REPLACE, [str(getattr(user_data, "email", str(user_data)))])
+                (MODIFY_REPLACE, [str(getattr(user_data, "email", str(user_data)))]),
             ],
             "telephoneNumber": [(MODIFY_ADD, ["+1234567890"])],
         }
@@ -286,7 +288,7 @@ class TestFlextLdapRealOperations:
         # Execute modify sequence with verification
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("LdapClientProtocol", ldap_client),
+                cast("FlextLdapProtocols.LdapClient", ldap_client),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -319,7 +321,7 @@ class TestFlextLdapRealOperations:
 
         # Add entry first
         TestOperationHelpers.add_entry_and_assert_success(
-            cast("LdapClientProtocol", ldap_client),
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
             entry,
             cleanup_after=False,  # We'll delete it manually
         )
@@ -328,7 +330,7 @@ class TestFlextLdapRealOperations:
         delete_result = ldap_client.delete(f"uid={uid},ou=people,{RFC.DEFAULT_BASE_DN}")
         TestOperationHelpers.assert_operation_result_success(
             delete_result,
-            expected_operation_type="delete",
+            expected_operation_type=FlextLdapConstants.OperationType.DELETE.value,
             expected_entries_affected=1,
         )
 
@@ -372,7 +374,7 @@ class TestFlextLdapRealOperations:
                 (
                     MODIFY_REPLACE,
                     [f"modified_{getattr(user_data, 'email', str(user_data))!s}"],
-                )
+                ),
             ],
             "telephoneNumber": [(MODIFY_ADD, ["+1234567890"])],
         }
@@ -385,7 +387,7 @@ class TestFlextLdapRealOperations:
         ]
         if with_search:
             crud_results = TestOperationHelpers.execute_crud_sequence(
-                cast("LdapClientProtocol", ldap_client),
+                cast("FlextLdapProtocols.LdapClient", ldap_client),
                 entry,
                 changes,
             )
@@ -395,7 +397,7 @@ class TestFlextLdapRealOperations:
         else:
             add_modify_delete_results = (
                 TestOperationHelpers.execute_add_modify_delete_sequence(
-                    cast("LdapClientProtocol", ldap_client),
+                    cast("FlextLdapProtocols.LdapClient", ldap_client),
                     entry,
                     changes,
                 )
@@ -411,5 +413,5 @@ class TestFlextLdapRealOperations:
         # Assert all operations succeeded using flext_tests
         for result in results.values():
             FlextTestsUtilities.TestUtilities.assert_result_success(
-                cast("FlextResult[object]", result)
+                cast("FlextResult[object]", result),
             )

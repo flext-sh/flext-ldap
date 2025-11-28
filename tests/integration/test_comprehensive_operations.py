@@ -18,7 +18,8 @@ from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.protocols import FlextLdapProtocols
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures import LdapTestFixtures
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -34,7 +35,7 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_all_entries(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test searching all entries in base DN."""
         search_options = FlextLdapTestHelpers.create_search_options(
@@ -46,8 +47,8 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_with_fixture_filter(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
-        base_ldif_entries: list[object],
+        ldap_container: GenericFieldsDict,
+        base_ldif_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test search using filter from fixture data."""
         search_options = FlextLdapTestHelpers.create_search_options(
@@ -60,7 +61,7 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_users_only(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test searching for user entries only."""
         search_options = FlextLdapTestHelpers.create_search_options(
@@ -81,7 +82,7 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_groups_only(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test searching for group entries only."""
         search_options = FlextLdapTestHelpers.create_search_options(
@@ -105,7 +106,7 @@ class TestFlextLdapComprehensiveAdd:
     def test_add_user_from_fixture(
         self,
         ldap_client: FlextLdap,
-        test_user_entry: dict[str, object],
+        test_user_entry: GenericFieldsDict,
     ) -> None:
         """Test adding user entry from fixture data."""
         _entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
@@ -117,7 +118,7 @@ class TestFlextLdapComprehensiveAdd:
     def test_add_group_from_fixture(
         self,
         ldap_client: FlextLdap,
-        test_group_entry: dict[str, object],
+        test_group_entry: GenericFieldsDict,
     ) -> None:
         """Test adding group entry from fixture data."""
         _entry, result = FlextLdapTestHelpers.add_entry_from_dict_with_cleanup(
@@ -129,8 +130,8 @@ class TestFlextLdapComprehensiveAdd:
     def test_add_multiple_users_from_fixtures(
         self,
         ldap_client: FlextLdap,
-        test_users_json: list[dict[str, object]],
-        ldap_container: dict[str, object],
+        test_users_json: list[GenericFieldsDict],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test adding multiple users from fixture JSON."""
         # Convert all users to entry dicts
@@ -157,7 +158,7 @@ class TestFlextLdapComprehensiveModify:
     def test_modify_user_attributes(
         self,
         ldap_client: FlextLdap,
-        test_user_entry: dict[str, object],
+        test_user_entry: GenericFieldsDict,
     ) -> None:
         """Test modifying user entry attributes."""
         # Complete modify workflow using helper: add, modify, verify, cleanup
@@ -184,7 +185,7 @@ class TestFlextLdapComprehensiveDelete:
     def test_delete_user_entry(
         self,
         ldap_client: FlextLdap,
-        test_user_entry: dict[str, object],
+        test_user_entry: GenericFieldsDict,
     ) -> None:
         """Test deleting user entry."""
         # Complete delete workflow using helper: add, delete, verify deletion
@@ -211,7 +212,8 @@ class TestFlextLdapConnectionManagement:
 
         # Connect
         TestOperationHelpers.connect_and_assert_success(
-            cast("LdapClientProtocol", client), connection_config
+            cast("FlextLdapProtocols.LdapClient", client),
+            connection_config,
         )
 
         # Disconnect
@@ -227,13 +229,15 @@ class TestFlextLdapConnectionManagement:
 
         # First connection
         TestOperationHelpers.connect_and_assert_success(
-            cast("LdapClientProtocol", client), connection_config
+            cast("FlextLdapProtocols.LdapClient", client),
+            connection_config,
         )
         client.disconnect()
 
         # Reconnect
         TestOperationHelpers.connect_and_assert_success(
-            cast("LdapClientProtocol", client), connection_config
+            cast("FlextLdapProtocols.LdapClient", client),
+            connection_config,
         )
 
         client.disconnect()
@@ -246,7 +250,7 @@ class TestFlextLdapWithBaseLdif:
     def test_load_and_search_base_ldif(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test loading base LDIF entries and searching for them."""
         # Create test entry directly instead of depending on base_ldif_entries fixture
@@ -260,7 +264,7 @@ class TestFlextLdapWithBaseLdif:
                 attributes={
                     "objectClass": ["organizationalUnit", "top"],
                     "ou": ["testsearch"],
-                }
+                },
             ),
         )
 
@@ -282,7 +286,7 @@ class TestFlextLdapWithBaseLdif:
     def test_add_entry_from_base_ldif(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         unique_dn_suffix: str,
     ) -> None:
         """Test adding entry parsed from base LDIF (idempotent with unique DN)."""
@@ -303,7 +307,7 @@ class TestFlextLdapWithBaseLdif:
                 "uid": [unique_uid],
                 "cn": [f"Test User {unique_dn_suffix}"],
                 "sn": ["User"],
-            }
+            },
         )
 
         # Create new entry with adjusted DN and unique UID

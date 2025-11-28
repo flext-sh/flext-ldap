@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
@@ -27,7 +27,9 @@ from flext_tests import FlextTestsFactories, FlextTestsUtilities
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.typing import GenericFieldsDict
 
 pytestmark = pytest.mark.integration
 
@@ -56,26 +58,32 @@ class TestDataFactories:
     """
 
     # Configuration templates using ClassVar for reuse
-    CONFIG_TEMPLATES: ClassVar[dict[ConfigType, dict[str, object]]] = {
-        ConfigType.BASIC: {
-            "use_ssl": False,
-            "use_tls": False,
-            "timeout": 30,
-        },
-        ConfigType.FULL: {
-            "use_ssl": False,
-            "use_tls": False,
-            "timeout": 30,
-            "auto_bind": True,
-            "auto_range": True,
-        },
+    CONFIG_TEMPLATES: ClassVar[dict[ConfigType, GenericFieldsDict]] = {
+        ConfigType.BASIC: cast(
+            "GenericFieldsDict",
+            {
+                "use_ssl": False,
+                "use_tls": False,
+                "timeout": 30,
+            },
+        ),
+        ConfigType.FULL: cast(
+            "GenericFieldsDict",
+            {
+                "use_ssl": False,
+                "use_tls": False,
+                "timeout": 30,
+                "auto_bind": True,
+                "auto_range": True,
+            },
+        ),
     }
 
     @classmethod
     def create_config_by_type(
         cls,
         config_type: ConfigType,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> FlextLdapConfig:
         """Factory for FlextLdapConfig using config type and flext_tests patterns."""
         if config_type == ConfigType.FULL:
@@ -99,12 +107,12 @@ class TestDataFactories:
         )
 
     @staticmethod
-    def create_full_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
+    def create_full_config(ldap_container: GenericFieldsDict) -> FlextLdapConfig:
         """Factory for complete FlextLdapConfig with all options."""
         return TestDataFactories.create_config_by_type(ConfigType.FULL, ldap_container)
 
     @staticmethod
-    def create_basic_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
+    def create_basic_config(ldap_container: GenericFieldsDict) -> FlextLdapConfig:
         """Factory for basic FlextLdapConfig with essential options."""
         return TestDataFactories.create_config_by_type(ConfigType.BASIC, ldap_container)
 
@@ -129,7 +137,7 @@ class TestDataFactories:
     def create_search_options(
         base_dn: str,
         filter_str: str = "(objectClass=*)",
-        scope: Literal["BASE", "ONELEVEL", "SUBTREE"] = "SUBTREE",
+        scope: FlextLdapConstants.SearchScope = FlextLdapConstants.SearchScope.SUBTREE,
     ) -> FlextLdapModels.SearchOptions:
         """Factory for SearchOptions with smart defaults."""
         return FlextLdapModels.SearchOptions(
@@ -242,7 +250,7 @@ class TestFlextLdapAPICompleteCoverage:
     )
     def test_api_initialization_with_config_types(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         config_type: ConfigType,
         expect_success: bool,
     ) -> None:
@@ -254,7 +262,7 @@ class TestFlextLdapAPICompleteCoverage:
 
         # Test connection with the config
         connection_config = TestDataFactories.create_connection_config_from_config(
-            config
+            config,
         )
         result = api.connect(connection_config)
 
@@ -275,14 +283,14 @@ class TestFlextLdapAPICompleteCoverage:
     def test_connect_with_service_config_all_options(
         self,
         ldap_parser: FlextLdifParser,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test connect using service config with all options."""
         config = TestDataFactories.create_full_config(ldap_container)
 
         api = FlextLdap(config=config, parser=ldap_parser)
         connection_config = TestDataFactories.create_connection_config_from_config(
-            config
+            config,
         )
 
         result = api.connect(connection_config)
@@ -300,7 +308,8 @@ class TestFlextLdapAPICompleteCoverage:
         result = ldap_client.execute()
         # Fast fail - should return failure when not connected
         TestAssertions.assert_operation_failure(
-            cast("FlextResult[object]", result), "Not connected"
+            cast("FlextResult[object]", result),
+            "Not connected",
         )
 
     # Operation sequence test parameters
@@ -326,7 +335,7 @@ class TestFlextLdapAPICompleteCoverage:
     )
     def test_operation_sequences_parameterized(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         test_name: str,
         operations: list[OperationType],
     ) -> None:
@@ -334,7 +343,7 @@ class TestFlextLdapAPICompleteCoverage:
         config = TestDataFactories.create_basic_config(ldap_container)
         api = FlextLdap(config=config)
         connection_config = TestDataFactories.create_connection_config_from_config(
-            config
+            config,
         )
 
         try:
@@ -367,7 +376,7 @@ class TestFlextLdapAPICompleteCoverage:
                     case OperationType.EXECUTE:
                         execute_result = api.execute()
                         FlextTestsUtilities.TestUtilities.assert_result_success(
-                            execute_result
+                            execute_result,
                         )
 
         finally:
@@ -375,14 +384,14 @@ class TestFlextLdapAPICompleteCoverage:
 
     def test_all_operations_with_service_config(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test all operations using service config."""
         config = TestDataFactories.create_basic_config(ldap_container)
         api = FlextLdap(config=config)
 
         connection_config = TestDataFactories.create_connection_config_from_config(
-            config
+            config,
         )
 
         # Connect using service config
