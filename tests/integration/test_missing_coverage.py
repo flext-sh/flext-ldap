@@ -35,7 +35,7 @@ class TestApiErrorPaths:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["person"], "cn": ["test"]}
+                attributes={"objectClass": ["person"], "cn": ["test"]},
             ),
         )
 
@@ -53,10 +53,10 @@ class TestApiErrorPaths:
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"cn=test{i},dc=example,dc=com"
+                    value=f"cn=test{i},dc=example,dc=com",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"objectClass": ["person"], "cn": [f"test{i}"]}
+                    attributes={"objectClass": ["person"], "cn": [f"test{i}"]},
                 ),
             )
             for i in range(3)

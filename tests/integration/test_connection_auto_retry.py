@@ -15,6 +15,7 @@ from flext_ldif import FlextLdifParser
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
+from tests.fixtures.typing import GenericFieldsDict
 
 # Mark all tests in this module as integration tests requiring Docker
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -26,7 +27,7 @@ class TestConnectionAutoRetry:
     def test_connect_auto_retry_disabled_with_invalid_credentials(
         self,
         ldap_parser: FlextLdifParser,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test that auto_retry is disabled by default with invalid credentials."""
         config = FlextLdapConfig()
@@ -84,7 +85,7 @@ class TestConnectionAutoRetry:
     def test_connect_succeeds_with_valid_credentials(
         self,
         ldap_parser: FlextLdifParser,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test successful connection with valid credentials (baseline test)."""
         config = FlextLdapConfig()

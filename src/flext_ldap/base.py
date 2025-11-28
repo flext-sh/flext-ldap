@@ -16,8 +16,7 @@ SPDX-License-Identifier: MIT
 
 from typing import TypeVar
 
-from flext_core import FlextService, FlextUtilities
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_core import FlextService
 
 TDomainResult = TypeVar("TDomainResult")
 
@@ -37,26 +36,9 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """
 
-    def __init__(self, **kwargs: object) -> None:
-        """Initialize service with optional kwargs."""
-        super().__init__(**kwargs)
+    def __init__(self, **kwargs: str | float | bool | None) -> None:
+        """Initialize service with optional kwargs.
 
-    @staticmethod
-    def safe_dn_string(dn: str | object | None) -> str:
-        """Safely extract DN string value, defaulting to 'unknown' if None.
-
-        Uses FlextUtilities for type-safe string conversion and FlextLdifUtilities
-        for DN-specific value extraction. Generalizes DN string extraction pattern.
-
-        Args:
-            dn: DN value to extract string from
-
-        Returns:
-            DN string value or 'unknown' if None
-
+        Additional kwargs are passed to base FlextService for extensibility.
         """
-        if dn is None:
-            return "unknown"
-        if FlextUtilities.TypeGuards.is_string_non_empty(dn):
-            return str(dn)
-        return FlextLdifUtilities.DN.get_dn_value(dn)
+        super().__init__(**kwargs)

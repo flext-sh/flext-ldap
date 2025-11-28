@@ -168,7 +168,8 @@ class TestFlextLdapModels:
 
         # Use ModelTestHelpers.assert_attr_values for attribute validation
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            config, dict(self._CONN_SCENARIOS[scenario])
+            config,
+            dict(self._CONN_SCENARIOS[scenario]),
         )
 
     @pytest.mark.parametrize("mode", _SSL_TLS_PARAMS)
@@ -190,7 +191,8 @@ class TestFlextLdapModels:
                 use_tls=use_tls,
             )
             FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-                config, {"use_ssl": use_ssl, "use_tls": use_tls}
+                config,
+                {"use_ssl": use_ssl, "use_tls": use_tls},
             )
 
     # === SearchOptions Tests ===
@@ -205,7 +207,7 @@ class TestFlextLdapModels:
             model_class=FlextLdapModels.SearchOptions,
             explicit_options=None,
             default_factory=lambda: FlextLdapModels.SearchOptions(
-                base_dn=TestConstants.DEFAULT_BASE_DN
+                base_dn=TestConstants.DEFAULT_BASE_DN,
             ),
             **data,
         )
@@ -214,7 +216,8 @@ class TestFlextLdapModels:
 
         # Use ModelTestHelpers for attribute validation
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            options, dict(self._SEARCH_SCENARIOS[scenario])
+            options,
+            dict(self._SEARCH_SCENARIOS[scenario]),
         )
 
     def test_search_options_invalid_base_dn(self) -> None:
@@ -223,7 +226,7 @@ class TestFlextLdapModels:
             FlextLdapModels.SearchOptions(
                 base_dn="invalid-dn-format",
                 filter_str="(objectClass=*)",
-                scope="SUBTREE",
+                scope=FlextLdapConstants.SearchScope.SUBTREE,
             )
 
     @pytest.mark.parametrize(
@@ -242,13 +245,13 @@ class TestFlextLdapModels:
         expected_filter: str,
     ) -> None:
         """Test SearchOptions.normalized with various inputs."""
-        scope_literal: FlextLdapConstants.LiteralTypes.SearchScope
-        if scope == "BASE":
-            scope_literal = "BASE"
-        elif scope == "ONELEVEL":
-            scope_literal = "ONELEVEL"
+        scope_literal: FlextLdapConstants.SearchScope
+        if scope == FlextLdapConstants.SearchScope.BASE:
+            scope_literal = FlextLdapConstants.SearchScope.BASE
+        elif scope == FlextLdapConstants.SearchScope.ONELEVEL:
+            scope_literal = FlextLdapConstants.SearchScope.ONELEVEL
         else:
-            scope_literal = "SUBTREE"
+            scope_literal = FlextLdapConstants.SearchScope.SUBTREE
 
         if filter_str is not None:
             options = FlextLdapModels.SearchOptions.normalized(
@@ -263,7 +266,8 @@ class TestFlextLdapModels:
             )
 
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            options, {"scope": expected_scope, "filter_str": expected_filter}
+            options,
+            {"scope": expected_scope, "filter_str": expected_filter},
         )
 
     # === OperationResult Tests ===
@@ -278,26 +282,29 @@ class TestFlextLdapModels:
         ],
     )
     def test_operation_result_scenarios(
-        self, success: bool, op_type: str, entries: int
+        self,
+        success: bool,
+        op_type: str,
+        entries: int,
     ) -> None:
         """Test OperationResult with various scenarios."""
-        operation_type_literal: FlextLdapConstants.LiteralTypes.OperationType
+        operation_type_literal: FlextLdapConstants.OperationType
         if op_type == "add":
-            operation_type_literal = "add"
+            operation_type_literal = FlextLdapConstants.OperationType.ADD
         elif op_type == "modify":
-            operation_type_literal = "modify"
+            operation_type_literal = FlextLdapConstants.OperationType.MODIFY
         elif op_type == "delete":
-            operation_type_literal = "delete"
+            operation_type_literal = FlextLdapConstants.OperationType.DELETE
         elif op_type == "modify_dn":
-            operation_type_literal = "modify_dn"
+            operation_type_literal = FlextLdapConstants.OperationType.MODIFY_DN
         elif op_type == "compare":
-            operation_type_literal = "compare"
+            operation_type_literal = FlextLdapConstants.OperationType.COMPARE
         elif op_type == "bind":
-            operation_type_literal = "bind"
+            operation_type_literal = FlextLdapConstants.OperationType.BIND
         elif op_type == "unbind":
-            operation_type_literal = "unbind"
+            operation_type_literal = FlextLdapConstants.OperationType.UNBIND
         else:
-            operation_type_literal = "search"
+            operation_type_literal = FlextLdapConstants.OperationType.SEARCH
         result = FlextLdapModels.OperationResult(
             success=success,
             operation_type=operation_type_literal,
@@ -324,7 +331,12 @@ class TestFlextLdapModels:
         ],
     )
     def test_sync_stats_initialization(
-        self, added: int, skipped: int, failed: int, total: int, duration: float
+        self,
+        added: int,
+        skipped: int,
+        failed: int,
+        total: int,
+        duration: float,
     ) -> None:
         """Test SyncStats initialization with various values."""
         stats = FlextLdapModels.SyncStats(
@@ -379,7 +391,10 @@ class TestFlextLdapModels:
     def test_sync_stats_from_counters(self) -> None:
         """Test SyncStats.from_counters factory method."""
         stats = FlextLdapModels.SyncStats.from_counters(
-            added=10, skipped=5, failed=2, duration_seconds=1.5
+            added=10,
+            skipped=5,
+            failed=2,
+            duration_seconds=1.5,
         )
 
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
@@ -441,7 +456,8 @@ class TestFlextLdapModels:
         # Use TestDeduplicationHelpers.create_entry
         entries = [
             TestDeduplicationHelpers.create_entry(
-                dn, {"cn": ["test"], "objectClass": oc}
+                dn,
+                {"cn": ["test"], "objectClass": oc},
             )
             for dn, oc in entries_data
         ]
@@ -451,7 +467,10 @@ class TestFlextLdapModels:
 
         result = FlextLdapModels.SearchResult(entries=entries, search_options=options)
         # Access computed property - Pydantic computed_field accessed via getattr
-        categories = cast("dict[str, list[FlextLdifModels.Entry]]", result.by_objectclass)
+        categories = cast(
+            "dict[str, list[FlextLdifModels.Entry]]",
+            result.by_objectclass,
+        )
 
         for oc, expected_count in expected_categories.items():
             assert len(categories.get(oc, [])) == expected_count
@@ -468,7 +487,10 @@ class TestFlextLdapModels:
 
         result = FlextLdapModels.SearchResult(entries=[entry], search_options=options)
         # Access computed property - Pydantic computed_field accessed via getattr
-        categories = cast("dict[str, list[FlextLdifModels.Entry]]", result.by_objectclass)
+        categories = cast(
+            "dict[str, list[FlextLdifModels.Entry]]",
+            result.by_objectclass,
+        )
 
         assert "unknown" in categories
         assert len(categories["unknown"]) == 1
@@ -480,7 +502,10 @@ class TestFlextLdapModels:
         [(10, 8, 2), (0, 0, 0), (5, 5, 0)],
     )
     def test_batch_upsert_result(
-        self, total: int, successful: int, failed: int
+        self,
+        total: int,
+        successful: int,
+        failed: int,
     ) -> None:
         """Test BatchUpsertResult basic properties."""
         result = FlextLdapModels.BatchUpsertResult(
@@ -505,18 +530,23 @@ class TestFlextLdapModels:
         """Test BatchUpsertResult with individual results."""
         results = [
             FlextLdapModels.UpsertResult(
-                success=True, dn="cn=t1,dc=example,dc=com", operation="add"
+                success=True,
+                dn="cn=t1,dc=example,dc=com",
+                operation=FlextLdapConstants.OperationType.ADD,
             ),
             FlextLdapModels.UpsertResult(
                 success=False,
                 dn="cn=t2,dc=example,dc=com",
-                operation="modify",
+                operation=FlextLdapConstants.OperationType.MODIFY,
                 error="Entry not found",
             ),
         ]
 
         batch = FlextLdapModels.BatchUpsertResult(
-            total_processed=2, successful=1, failed=1, results=results
+            total_processed=2,
+            successful=1,
+            failed=1,
+            results=results,
         )
 
         assert len(batch.results) == 2
@@ -532,26 +562,29 @@ class TestFlextLdapModels:
         ],
     )
     def test_upsert_result(
-        self, success: bool, operation: str, error: str | None
+        self,
+        success: bool,
+        operation: str,
+        error: str | None,
     ) -> None:
         """Test UpsertResult scenarios."""
-        operation_type_literal: FlextLdapConstants.LiteralTypes.OperationType
+        operation_type_literal: FlextLdapConstants.OperationType
         if operation == "add":
-            operation_type_literal = "add"
+            operation_type_literal = FlextLdapConstants.OperationType.ADD
         elif operation == "modify":
-            operation_type_literal = "modify"
+            operation_type_literal = FlextLdapConstants.OperationType.MODIFY
         elif operation == "delete":
-            operation_type_literal = "delete"
+            operation_type_literal = FlextLdapConstants.OperationType.DELETE
         elif operation == "modify_dn":
-            operation_type_literal = "modify_dn"
+            operation_type_literal = FlextLdapConstants.OperationType.MODIFY_DN
         elif operation == "compare":
-            operation_type_literal = "compare"
+            operation_type_literal = FlextLdapConstants.OperationType.COMPARE
         elif operation == "bind":
-            operation_type_literal = "bind"
+            operation_type_literal = FlextLdapConstants.OperationType.BIND
         elif operation == "unbind":
-            operation_type_literal = "unbind"
+            operation_type_literal = FlextLdapConstants.OperationType.UNBIND
         else:
-            operation_type_literal = "search"
+            operation_type_literal = FlextLdapConstants.OperationType.SEARCH
         result = FlextLdapModels.UpsertResult(
             success=success,
             dn="cn=test,dc=example,dc=com",
@@ -560,5 +593,6 @@ class TestFlextLdapModels:
         )
 
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            result, {"success": success, "operation": operation, "error": error}
+            result,
+            {"success": success, "operation": operation, "error": error},
         )

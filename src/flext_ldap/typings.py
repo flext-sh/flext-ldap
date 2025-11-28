@@ -1,5 +1,8 @@
 """LDAP Type Definitions - Type System for FLEXT LDAP Operations.
 
+Python 3.13+ strict: Uses PEP 695 type aliases (type keyword) exclusively.
+No backward compatibility with Python < 3.13.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -7,21 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Protocol
+from collections.abc import Callable, Mapping, Sequence
 
-from flext_core import FlextResult, FlextTypes
-from flext_ldif import FlextLdifModels
-
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_core import FlextTypes
+from flext_ldif import FlextLdifTypes
 
 __all__ = [
     "FlextLdapTypes",
-    "Ldap3ConnectionProtocol",
-    "LdapAdapterProtocol",
-    "LdapClientProtocol",
-    "LdapConnectionProtocol",
 ]
 
 
@@ -30,268 +25,105 @@ class FlextLdapTypes(FlextTypes):
 
     Domain-specific type system for LDAP operations.
     Minimal types - reuses FlextLdifTypes when possible.
+
+    Uses Python 3.13+ strict best practices:
+    - PEP 695 type aliases (type keyword) - no TypeAlias
+    - collections.ABC types (Mapping, Sequence) for read-only semantics
+    - Proper type annotations following Pydantic 2 patterns
+    - No backward compatibility with Python < 3.13
     """
 
     # =========================================================================
-    # SERVICE RETURN TYPE ALIASES
+    # LDAP SEARCH RESULT TYPES (Python 3.13+ collections.ABC)
     # =========================================================================
 
-    type EntryOrString = FlextLdifModels.Entry | str
-    type DnInput = str | FlextLdifModels.DistinguishedName
+    # Using Sequence for read-only list semantics (Python 3.13 best practice)
+    type SearchResult = Sequence[FlextLdifTypes.ModelInstance]
+    """Read-only sequence of LDAP entries from search operation."""
 
     # =========================================================================
-    # LDAP OPERATION TYPES
+    # LDAP OPERATION DATA TYPES
     # =========================================================================
-
-    SearchScope = FlextLdapConstants.LiteralTypes.SearchScope
-    OperationType = FlextLdapConstants.LiteralTypes.OperationType
-
-    # =========================================================================
-    # LDAP SEARCH RESULT TYPES
-    # =========================================================================
-
-    type SearchResult = list[FlextLdifModels.Entry]
-
-    # =========================================================================
-    # LDAP OPERATION TYPES
-    # =========================================================================
+    # Note: LdapModifyChanges, LdapAttributes, LdapAttributeValues remain as dict
+    # for compatibility with ldap3 library's native format (mutable dict required)
+    # Use FlextLdapModels.LdapOperationResult and FlextLdapModels.LdapBatchStats
+    # directly for model-based operations
 
     type LdapModifyChanges = dict[str, list[tuple[str, list[str]]]]
+    """LDAP modify changes format (mutable dict for ldap3 compatibility).
+
+    Format: {attribute_name: [(operation, [values])]}
+    Operations: 'add', 'delete', 'replace'
+    """
+
     type LdapAttributeValues = dict[str, list[str]]
-    type LdapOperationResult = dict[str, str]
-    type LdapBatchStats = dict[str, int]
+    """LDAP attribute values (mutable dict for ldap3 compatibility).
+
+    Format: {attribute_name: [value1, value2, ...]}
+    """
+
     type LdapAttributes = dict[str, list[str]]
+    """LDAP attributes dictionary (mutable dict for ldap3 compatibility).
+
+    Format: {attribute_name: [value1, value2, ...]}
+    """
+
+    # Read-only version for type hints where mutation is not needed
+    # Using Mapping and Sequence from collections.ABC (Python 3.13 best practice)
+    type LdapAttributesReadOnly = Mapping[str, Sequence[str]]
+    """Read-only LDAP attributes mapping (Python 3.13+ collections.ABC).
+
+    Use this for function parameters where attributes should not be modified.
+    Format: {attribute_name: [value1, value2, ...]}
+    """
 
     # =========================================================================
-    # LDAP OPERATION CALLABLES
+    # LDAP OPERATION CALLABLES (Python 3.13+ collections.ABC.Callable)
     # =========================================================================
 
-    type LdapAddCallable = Callable[[str, str | None, LdapAttributeValues | None], bool]
+    type LdapAddCallable = Callable[
+        [str, str | None, LdapAttributeValues | None],
+        bool,
+    ]
+    """Callable for LDAP add operation.
+
+    Signature: (dn, controls, attributes) -> bool
+    """
+
     type LdapModifyCallable = Callable[[str, LdapModifyChanges], bool]
+    """Callable for LDAP modify operation.
+
+    Signature: (dn, changes) -> bool
+    """
+
     type LdapDeleteCallable = Callable[[str], bool]
+    """Callable for LDAP delete operation.
+
+    Signature: (dn) -> bool
+    """
+
     type LdapSearchCallable = Callable[
         [
-            str,
-            str,
-            int,
-            list[str] | None,
-            bool,
-            dict[str, str] | None,
-            int | None,
-            int | None,
-            bool,
-            dict[str, str] | None,
+            str,  # base_dn
+            str,  # filter_str
+            int,  # scope
+            Sequence[str] | None,  # attributes
+            bool,  # dereference_aliases
+            Mapping[str, str] | None,  # controls
+            int | None,  # size_limit
+            int | None,  # time_limit
+            bool,  # types_only
+            Mapping[str, str] | None,  # extended_attributes
         ],
-        tuple[bool, dict[str, list[dict[str, list[str]]]]],
+        tuple[bool, Mapping[str, Sequence[Mapping[str, Sequence[str]]]]],
     ]
+    """Callable for LDAP search operation.
 
-
-# =========================================================================
-# LDAP CLIENT PROTOCOLS
-# =========================================================================
-
-
-class LdapClientProtocol(Protocol):
-    """Protocol for LDAP clients that support CRUD operations.
-
-    This protocol defines the interface for LDAP clients used in test helpers.
-    Uses SearchOptions model for type safety and consistency.
+    Returns:
+        (success: bool, results: Mapping[str, Sequence[Mapping[str, Sequence[str]]]])
+    Results format: {dn: [{attribute: [values]}]}
     """
 
-    def connect(
-        self,
-        config: FlextLdapModels.ConnectionConfig,
-        **kwargs: object,
-    ) -> FlextResult[bool]:
-        """Connect to LDAP server.
-
-        Args:
-            config: Connection configuration (may be named 'config' or 'connection_config' in implementations)
-            **kwargs: Additional keyword arguments (e.g., auto_retry, max_retries, retry_delay)
-
-        Returns:
-            FlextResult[bool] indicating connection success or failure
-
-        """
-        ...
-
-    def search(
-        self,
-        search_options: FlextLdapModels.SearchOptions,
-        server_type: str = FlextLdapConstants.ServerTypes.RFC,
-    ) -> FlextResult[FlextLdapModels.SearchResult]:
-        """Perform LDAP search operation.
-
-        Args:
-            search_options: Search configuration (required)
-            server_type: LDAP server type for parsing (default: RFC)
-
-        Returns:
-            FlextResult containing SearchResult with Entry models
-
-        """
-        ...
-
-    def add(
-        self,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Add LDAP entry.
-
-        Args:
-            entry: Entry model to add
-
-        Returns:
-            FlextResult containing OperationResult
-
-        """
-        ...
-
-    def modify(
-        self,
-        dn: str | FlextLdifModels.DistinguishedName,
-        changes: FlextLdapTypes.LdapModifyChanges,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Modify LDAP entry.
-
-        Args:
-            dn: Distinguished name of entry to modify
-            changes: Modification changes in ldap3 format
-
-        Returns:
-            FlextResult containing OperationResult
-
-        """
-        ...
-
-    def delete(
-        self,
-        dn: str | FlextLdifModels.DistinguishedName,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Delete LDAP entry.
-
-        Args:
-            dn: Distinguished name of entry to delete
-
-        Returns:
-            FlextResult containing OperationResult
-
-        """
-        ...
-
-    def execute(self, **_kwargs: object) -> FlextResult[FlextLdapModels.SearchResult]:
-        """Execute health check or default operation.
-
-        Args:
-            **_kwargs: Additional keyword arguments
-
-        Returns:
-            FlextResult containing SearchResult
-
-        """
-        ...
-
-    @property
-    def is_connected(self) -> bool:
-        """Check if client is connected.
-
-        Returns:
-            True if connected, False otherwise
-
-        """
-        ...
-
-
-class LdapAdapterProtocol(Protocol):
-    """Protocol for LDAP adapters.
-
-    This protocol defines the interface for LDAP adapters used by connection services.
-    """
-
-    def search(
-        self,
-        search_options: FlextLdapModels.SearchOptions,
-        server_type: str = FlextLdapConstants.ServerTypes.RFC,
-    ) -> FlextResult[FlextLdapModels.SearchResult]:
-        """Perform LDAP search operation."""
-        ...
-
-    def add(
-        self,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Add LDAP entry."""
-        ...
-
-    def modify(
-        self,
-        dn: FlextLdifModels.DistinguishedName,
-        changes: FlextLdapTypes.LdapModifyChanges,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Modify LDAP entry."""
-        ...
-
-    def delete(
-        self,
-        dn: FlextLdifModels.DistinguishedName,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Delete LDAP entry."""
-        ...
-
-    @property
-    def is_connected(self) -> bool:
-        """Check if adapter is connected."""
-        ...
-
-
-class LdapConnectionProtocol(Protocol):
-    """Protocol for LDAP connection services.
-
-    This protocol defines the interface for LDAP connection services used
-    by operations services to break circular imports.
-    """
-
-    @property
-    def adapter(self) -> LdapAdapterProtocol:
-        """Get LDAP adapter instance.
-
-        Returns:
-            LDAP adapter (Ldap3Adapter) instance
-
-        """
-        ...
-
-    @property
-    def is_connected(self) -> bool:
-        """Check if connection is active.
-
-        Returns:
-            True if connected, False otherwise
-
-        """
-        ...
-
-    def disconnect(self) -> None:
-        """Disconnect from LDAP server.
-
-        Closes the connection and releases resources.
-        Safe to call multiple times.
-
-        """
-        ...
-
-
-class Ldap3ConnectionProtocol(Protocol):
-    """Protocol for ldap3.Connection objects.
-
-    Defines the interface for ldap3 Connection with properly typed methods.
-    Used to type-check ldap3.Connection instances without importing ldap3.
-    """
-
-    def unbind(self) -> None:
-        """Unbind from LDAP server.
-
-        Closes the LDAP connection.
-
-        """
-        ...
+    # Note: LdapProgressCallback moved to models.py to avoid circular import
+    # Import from models: from flext_ldap.models import FlextLdapModels
+    # Use: FlextLdapModels.LdapProgressCallback

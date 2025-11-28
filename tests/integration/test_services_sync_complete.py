@@ -18,6 +18,7 @@ from flext_ldif.models import FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -165,7 +166,7 @@ sn: Test
                 FlextLdapModels.SearchOptions(
                     base_dn=RFC.DEFAULT_BASE_DN,
                     filter_str="(cn=testtransform)",
-                    scope="SUBTREE",
+                    scope=FlextLdapConstants.SearchScope.SUBTREE,
                 ),
             )
             if search_result.is_success:
@@ -473,26 +474,26 @@ sn: Test
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value="cn=entry1,dc=example,dc=com"
+                    value="cn=entry1,dc=example,dc=com",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"cn": ["entry1"]}
+                    attributes={"cn": ["entry1"]},
                 ),
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value="cn=entry2,dc=example,dc=com"
+                    value="cn=entry2,dc=example,dc=com",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"cn": ["entry2"]}
+                    attributes={"cn": ["entry2"]},
                 ),
             ),
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value="cn=entry3,ou=other,dc=test,dc=com"
+                    value="cn=entry3,ou=other,dc=test,dc=com",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes={"cn": ["entry3"]}
+                    attributes={"cn": ["entry3"]},
                 ),
             ),
         ]

@@ -19,6 +19,7 @@ from flext_ldif import FlextLdifParser
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
+from tests.fixtures.typing import GenericFieldsDict
 
 pytestmark = pytest.mark.integration
 
@@ -35,42 +36,51 @@ class TestFlextLdapConnectionCompleteCoverage:
     """Complete coverage tests for FlextLdapConnection."""
 
     # Test configurations as ClassVar for parameterized tests
-    CONNECTION_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    CONNECTION_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "service_config_all_options",
-            {
-                "test_type": ConnectionTestType.SERVICE_CONFIG_ALL_OPTIONS,
-                "service_config": {
-                    "use_ssl": False,
-                    "use_tls": False,
-                    "timeout": 30,
-                    "auto_bind": True,
-                    "auto_range": True,
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ConnectionTestType.SERVICE_CONFIG_ALL_OPTIONS,
+                    "service_config": {
+                        "use_ssl": False,
+                        "use_tls": False,
+                        "timeout": 30,
+                        "auto_bind": True,
+                        "auto_range": True,
+                    },
+                    "expect_success": True,
                 },
-                "expect_success": True,
-            },
+            ),
         ),
         (
             "connection_config_overrides",
-            {
-                "test_type": ConnectionTestType.CONNECTION_CONFIG_OVERRIDES,
-                "service_config": {
-                    "host": "wrong-host",
-                    "port": 9999,
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ConnectionTestType.CONNECTION_CONFIG_OVERRIDES,
+                    "service_config": {
+                        "host": "wrong-host",
+                        "port": 9999,
+                    },
+                    "connection_config_override": {
+                        "use_ssl": False,
+                    },
+                    "expect_success": True,
                 },
-                "connection_config_override": {
-                    "use_ssl": False,
-                },
-                "expect_success": True,
-            },
+            ),
         ),
         (
             "parser_reuse",
-            {
-                "test_type": ConnectionTestType.PARSER_REUSE,
-                "parser_reuse": True,
-                "expect_success": None,  # Can be success or failure depending on server
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ConnectionTestType.PARSER_REUSE,
+                    "parser_reuse": True,
+                    "expect_success": None,  # Can be success or failure depending on server
+                },
+            ),
         ),
     ]
 
@@ -79,8 +89,8 @@ class TestFlextLdapConnectionCompleteCoverage:
 
         @staticmethod
         def create_service_config(
-            base_config: dict[str, object],
-            container: dict[str, object],
+            base_config: GenericFieldsDict,
+            container: GenericFieldsDict,
         ) -> FlextLdapConfig:
             """Create service config with container values."""
             # Build config with properly typed fields
@@ -100,10 +110,14 @@ class TestFlextLdapConnectionCompleteCoverage:
             timeout: int = int(str(timeout_value)) if timeout_value is not None else 30
 
             auto_bind_value = base_config.get("auto_bind", True)
-            auto_bind: bool = bool(auto_bind_value) if auto_bind_value is not None else True
+            auto_bind: bool = (
+                bool(auto_bind_value) if auto_bind_value is not None else True
+            )
 
             auto_range_value = base_config.get("auto_range", True)
-            auto_range: bool = bool(auto_range_value) if auto_range_value is not None else True
+            auto_range: bool = (
+                bool(auto_range_value) if auto_range_value is not None else True
+            )
 
             return FlextLdapConfig(
                 host=host,
@@ -119,11 +133,11 @@ class TestFlextLdapConnectionCompleteCoverage:
 
         @staticmethod
         def create_connection_config(
-            container: dict[str, object],
-            overrides: dict[str, object] | None = None,
+            container: GenericFieldsDict,
+            overrides: GenericFieldsDict | None = None,
         ) -> FlextLdapModels.ConnectionConfig:
             """Create connection config from container."""
-            config_dict: dict[str, object] = {
+            config_dict: GenericFieldsDict = {
                 "host": str(container["host"]),
                 "port": int(str(container["port"])),
                 "use_ssl": False,
@@ -155,7 +169,7 @@ class TestFlextLdapConnectionCompleteCoverage:
         @staticmethod
         def assert_connection_result(
             result: FlextResult[bool],
-            config: dict[str, object],
+            config: GenericFieldsDict,
         ) -> None:
             """Assert connection result based on configuration."""
             if expected_success := config.get("expect_success"):
@@ -168,19 +182,21 @@ class TestFlextLdapConnectionCompleteCoverage:
     @pytest.mark.parametrize(("test_name", "config"), CONNECTION_TEST_CONFIGS)
     def test_connection_operations_parameterized(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         connection_config: FlextLdapModels.ConnectionConfig,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test connection operations with different configurations."""
         if config.get("test_type") == ConnectionTestType.SERVICE_CONFIG_ALL_OPTIONS:
             # Test service config with all options
             service_config_dict = cast(
-                "dict[str, object]", config.get("service_config", {})
+                "dict[str, object]",
+                config.get("service_config", {}),
             )
             service_config = self.TestDataFactories.create_service_config(
-                service_config_dict, ldap_container
+                service_config_dict,
+                ldap_container,
             )
             connection = FlextLdapConnection(config=service_config)
 
@@ -200,7 +216,8 @@ class TestFlextLdapConnectionCompleteCoverage:
         elif config.get("test_type") == ConnectionTestType.CONNECTION_CONFIG_OVERRIDES:
             # Test connection config overrides
             service_config_dict = cast(
-                "dict[str, object]", config.get("service_config", {})
+                "dict[str, object]",
+                config.get("service_config", {}),
             )
             service_config = FlextLdapConfig(
                 host=cast("str", service_config_dict.get("host", "")),
@@ -209,10 +226,12 @@ class TestFlextLdapConnectionCompleteCoverage:
             connection = FlextLdapConnection(config=service_config)
 
             overrides = cast(
-                "dict[str, object]", config.get("connection_config_override", {})
+                "dict[str, object]",
+                config.get("connection_config_override", {}),
             )
             connection_config_to_use = self.TestDataFactories.create_connection_config(
-                ldap_container, overrides
+                ldap_container,
+                overrides,
             )
 
         elif config.get("test_type") == ConnectionTestType.PARSER_REUSE:

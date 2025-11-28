@@ -103,7 +103,7 @@ class ApiTestDataFactory:
     def create_search_options(
         base_dn: str | None = None,
         filter_str: str = TestConstants.DEFAULT_FILTER,
-        scope: FlextLdapConstants.LiteralTypes.SearchScope = "SUBTREE",
+        scope: FlextLdapConstants.SearchScope = FlextLdapConstants.SearchScope.SUBTREE,
     ) -> FlextLdapModels.SearchOptions:
         """Factory method for search options."""
         return FlextLdapModels.SearchOptions(
@@ -210,7 +210,8 @@ class TestFlextLdapAPI:
 
     @staticmethod
     def _execute_operation_check_failure(
-        api: FlextLdap, operation: LdapOperation
+        api: FlextLdap,
+        operation: LdapOperation,
     ) -> bool:
         """Execute LDAP operation and check if it fails.
 
@@ -250,7 +251,8 @@ class TestFlextLdapAPI:
         """
         if use_custom and host is not None and port is not None:
             config: FlextLdapConfig = FlextLdapConfig.model_construct(
-                host=host, port=port
+                host=host,
+                port=port,
             )
             api = ApiTestDataFactory.create_api_instance(config, None)
             assert api._config == config
@@ -260,7 +262,7 @@ class TestFlextLdapAPI:
         else:
             api = ApiTestDataFactory.create_api_instance(default_config, None)
             # Validate default initialization state
-            assert api.is_connected is False
+            assert api._connection.is_connected is False
             assert api._connection is not None
             assert api._operations is not None
             assert api._config is not None
@@ -280,7 +282,8 @@ class TestFlextLdapAPI:
         assert is_failure, f"Operation {operation} should fail when not connected"
 
     def test_execute_when_not_connected_returns_failure(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test execute fails when not connected.
 
@@ -291,17 +294,19 @@ class TestFlextLdapAPI:
         assert FlextLdapConstants.ErrorStrings.NOT_CONNECTED in (result.error or "")
 
     def test_disconnect_when_not_connected_succeeds_silently(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test disconnect succeeds silently when already disconnected.
 
         Covers: test_disconnect_when_not_connected_succeeds_silently
         """
         api_instance.disconnect()
-        assert api_instance.is_connected is False
+        assert api_instance._connection.is_connected is False
 
     def test_connect_method_returns_result_with_valid_config(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test connect returns FlextResult with valid connection config.
 
@@ -323,15 +328,15 @@ class TestFlextLdapAPI:
         assert hasattr(result, "is_failure")
 
     def test_client_property_returns_operations_instance(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test client property returns the operations service instance.
 
         Covers TestApiProperties::test_client_property_returns_operations_instance
         """
-        client = api_instance.client
+        client = api_instance._operations
         assert client is not None
-        assert client is api_instance._operations
 
     def test_context_manager_enter_returns_self(self, api_instance: FlextLdap) -> None:
         """Test context manager __enter__ returns the API instance.
@@ -342,21 +347,23 @@ class TestFlextLdapAPI:
             assert entered is api_instance
 
     def test_context_manager_exit_disconnects_properly(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test context manager __exit__ properly disconnects.
 
         Unit test verifies __exit__ behavior without requiring real LDAP server.
         """
         # Before __exit__, verify not connected
-        assert api_instance.is_connected is False
+        assert api_instance._connection.is_connected is False
         # Call __exit__ when already disconnected
         api_instance.__exit__(None, None, None)
         # Should still be disconnected
-        assert api_instance.is_connected is False
+        assert api_instance._connection.is_connected is False
 
     def test_context_manager_with_statement_manages_lifecycle(
-        self, default_config: FlextLdapConfig
+        self,
+        default_config: FlextLdapConfig,
     ) -> None:
         """Test context manager lifecycle properly manages disconnection.
 
@@ -367,10 +374,11 @@ class TestFlextLdapAPI:
             assert api is not None
             assert api._connection is not None
         # After context manager exits, should be properly disconnected
-        assert api.is_connected is False
+        assert api._connection.is_connected is False
 
     def test_register_core_services_success_with_empty_container(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test successful registration of core services in empty container.
 
@@ -384,7 +392,8 @@ class TestFlextLdapAPI:
             )
 
     def test_register_core_services_skips_existing_services(
-        self, api_instance: FlextLdap
+        self,
+        api_instance: FlextLdap,
     ) -> None:
         """Test service registration skips already registered services.
 
@@ -410,7 +419,9 @@ class TestFlextLdapAPI:
 
     @pytest.mark.parametrize("service_name", _SERVICE_NAMES)
     def test_register_core_services_raises_on_service_failure(
-        self, api_instance: FlextLdap, service_name: str
+        self,
+        api_instance: FlextLdap,
+        service_name: str,
     ) -> None:
         """Test RuntimeError when service registration fails (dynamic parametrization).
 
@@ -431,7 +442,9 @@ class TestFlextLdapAPI:
             return original_register(name, service)
 
         with FlextTestsUtilities.test_context(
-            container, "register", mock_register_failure
+            container,
+            "register",
+            mock_register_failure,
         ):
             with pytest.raises(RuntimeError, match=error_pattern):
                 api_instance._register_core_services(container)

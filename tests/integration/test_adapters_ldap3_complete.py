@@ -17,8 +17,10 @@ from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, Connection, Server
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.protocols import FlextLdapProtocols
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -39,7 +41,8 @@ class TestLdap3AdapterComplete:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter(parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(
-            cast("LdapClientProtocol", adapter), connection_config
+            cast("FlextLdapProtocols.LdapClient", adapter),
+            connection_config,
         )
         yield adapter
         adapter.disconnect()
@@ -53,7 +56,7 @@ class TestLdap3AdapterComplete:
 
     def test_connect_with_use_ssl(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with SSL enabled."""
@@ -72,7 +75,7 @@ class TestLdap3AdapterComplete:
 
     def test_connect_with_use_tls(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with TLS enabled (covers line 104)."""
@@ -144,7 +147,7 @@ class TestLdap3AdapterComplete:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
             time_limit=5,
         )
         result = connected_adapter.search(search_options)
@@ -158,7 +161,7 @@ class TestLdap3AdapterComplete:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
             attributes=["*"],  # All attributes (use "*" instead of None)
         )
         result = connected_adapter.search(search_options)
@@ -174,7 +177,7 @@ class TestLdap3AdapterComplete:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(cn=nonexistententry12345)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = connected_adapter.search(search_options)
         search_result = TestOperationHelpers.assert_result_success_and_unwrap(result)
@@ -195,7 +198,8 @@ class TestLdap3AdapterComplete:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("LdapClientProtocol", connected_adapter), entry
+            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            entry,
         )
         TestOperationHelpers.assert_result_success(result)
 
@@ -214,7 +218,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            cast("LdapClientProtocol", connected_adapter),
+            cast("FlextLdapProtocols.LdapClient", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -243,7 +247,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            cast("LdapClientProtocol", connected_adapter),
+            cast("FlextLdapProtocols.LdapClient", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -272,7 +276,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            cast("LdapClientProtocol", connected_adapter),
+            cast("FlextLdapProtocols.LdapClient", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -300,7 +304,7 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test execute when connected."""
         entry = TestOperationHelpers.execute_and_assert_success(
-            cast("LdapClientProtocol", connected_adapter)
+            cast("FlextLdapProtocols.LdapClient", connected_adapter),
         )
         assert entry is not None
 
@@ -314,9 +318,12 @@ class TestLdap3AdapterComplete:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
-        result = connected_adapter.search(search_options, server_type="rfc")
+        result = connected_adapter.search(
+            search_options,
+            server_type=FlextLdapConstants.ServerTypes.RFC,
+        )
         assert result.is_success
 
     def test_add_entry_with_empty_attributes(
@@ -330,7 +337,8 @@ class TestLdap3AdapterComplete:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("LdapClientProtocol", connected_adapter), entry
+            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            entry,
         )
         # Should succeed or fail gracefully
         assert result.is_success or result.is_failure
@@ -390,9 +398,12 @@ class TestLdap3AdapterComplete:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
-        result = connected_adapter.search(search_options, server_type="rfc")
+        result = connected_adapter.search(
+            search_options,
+            server_type=FlextLdapConstants.ServerTypes.RFC,
+        )
         # Should succeed with valid server type
         assert result.is_success or result.is_failure
 
@@ -412,7 +423,7 @@ class TestLdap3AdapterComplete:
         FlextLdifModels.ParseResponse(
             entries=[valid_entry],
             statistics=FlextLdifModels.Statistics(),
-            detected_server_type="openldap2",
+            detected_server_type=FlextLdapConstants.ServerTypes.OPENLDAP2.value,
         )
 
         # Test defensive code path: entry without dn attribute
@@ -423,7 +434,7 @@ class TestLdap3AdapterComplete:
 
             def __init__(self) -> None:
                 self.attributes = FlextLdifModels.LdifAttributes(
-                    attributes={"cn": ["test"]}
+                    attributes={"cn": ["test"]},
                 )
 
         class ParseResponseLike:
@@ -433,7 +444,7 @@ class TestLdap3AdapterComplete:
                 self.entries = [InvalidEntryStructure()]
 
         result = connected_adapter.ResultConverter.convert_parsed_entries(
-            cast("FlextLdifModels.ParseResponse", ParseResponseLike())
+            cast("FlextLdifModels.ParseResponse", ParseResponseLike()),
         )
         assert result.is_failure
         assert result.error is not None
@@ -452,7 +463,7 @@ class TestLdap3AdapterComplete:
 
             def __init__(self) -> None:
                 self.dn = FlextLdifModels.DistinguishedName(
-                    value="cn=test,dc=example,dc=com"
+                    value="cn=test,dc=example,dc=com",
                 )
 
         class ParseResponseLike:
@@ -462,7 +473,7 @@ class TestLdap3AdapterComplete:
                 self.entries = [InvalidEntryStructure()]
 
         result = connected_adapter.ResultConverter.convert_parsed_entries(
-            cast("FlextLdifModels.ParseResponse", ParseResponseLike())
+            cast("FlextLdifModels.ParseResponse", ParseResponseLike()),
         )
         assert result.is_failure
         assert result.error is not None
@@ -481,7 +492,7 @@ class TestLdap3AdapterComplete:
         FlextLdapModels.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",  # Valid scope
+            scope=FlextLdapConstants.SearchScope.SUBTREE,  # Valid scope
         )
 
         # Force scope mapping failure by temporarily replacing _map_scope
@@ -515,7 +526,7 @@ class TestLdap3AdapterComplete:
 
             def __init__(self) -> None:
                 self.dn = FlextLdifModels.DistinguishedName(
-                    value="cn=test,dc=example,dc=com"
+                    value="cn=test,dc=example,dc=com",
                 )
                 # Use invalid type (list instead of LdifAttributes or dict)
                 self.attributes = ["invalid", "type"]
@@ -527,7 +538,7 @@ class TestLdap3AdapterComplete:
                 self.entries = [InvalidAttributesEntry()]
 
         result = connected_adapter.ResultConverter.convert_parsed_entries(
-            cast("FlextLdifModels.ParseResponse", ParseResponseLike())
+            cast("FlextLdifModels.ParseResponse", ParseResponseLike()),
         )
         assert result.is_failure
         assert result.error is not None
@@ -548,11 +559,11 @@ class TestLdap3AdapterComplete:
         parse_response = FlextLdifModels.ParseResponse(
             entries=[entry_without_metadata],
             statistics=FlextLdifModels.Statistics(),
-            detected_server_type="openldap2",
+            detected_server_type=FlextLdapConstants.ServerTypes.OPENLDAP2.value,
         )
 
         result = connected_adapter.ResultConverter.convert_parsed_entries(
-            parse_response
+            parse_response,
         )
         assert result.is_success
         entries = TestOperationHelpers.assert_result_success_and_unwrap(result)
@@ -563,7 +574,7 @@ class TestLdap3AdapterComplete:
     def test_convert_ldap3_results_with_none_values(
         self,
         connected_adapter: Ldap3Adapter,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test _convert_ldap3_results with None values (covers lines 282-284)."""
         server = Server(
@@ -581,7 +592,7 @@ class TestLdap3AdapterComplete:
             connection.search(
                 search_base=str(ldap_container["base_dn"]),
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapConstants.SearchScope.BASE.value,
                 attributes=["*"],
             )
 
@@ -589,7 +600,7 @@ class TestLdap3AdapterComplete:
                 # Test _convert_ldap3_results with real connection
                 # This will cover lines 282-284 (None values handling)
                 results = connected_adapter.ResultConverter.convert_ldap3_results(
-                    connection
+                    connection,
                 )
                 assert isinstance(results, list)
                 # Results should be list of tuples (dn, attrs_dict)
@@ -605,7 +616,7 @@ class TestLdap3AdapterComplete:
     def test_convert_ldap3_results_with_single_values(
         self,
         connected_adapter: Ldap3Adapter,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test _convert_ldap3_results with single values (covers lines 285-287)."""
         server = Server(
@@ -623,7 +634,7 @@ class TestLdap3AdapterComplete:
             connection.search(
                 search_base=str(ldap_container["base_dn"]),
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapConstants.SearchScope.BASE.value,
                 attributes=["*"],
             )
 
@@ -631,7 +642,7 @@ class TestLdap3AdapterComplete:
                 # Test _convert_ldap3_results with real connection
                 # This will cover lines 285-287 (single value handling)
                 results = connected_adapter.ResultConverter.convert_ldap3_results(
-                    connection
+                    connection,
                 )
                 assert isinstance(results, list)
                 # Results should convert single values to lists

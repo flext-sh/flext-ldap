@@ -15,6 +15,7 @@ import pytest
 from ldap3 import Connection, Server
 
 from flext_ldap.services.detection import FlextLdapServerDetector
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 
@@ -43,7 +44,7 @@ class TestFlextLdapServerDetectorReal:
     @pytest.fixture
     def real_ldap_connection(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Connection:
         """Create real LDAP connection for testing."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
@@ -79,7 +80,7 @@ class TestFlextLdapServerDetectorReal:
     def test_detect_connection_not_bound(
         self,
         detector: FlextLdapServerDetector,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test detection fails when connection not bound."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")

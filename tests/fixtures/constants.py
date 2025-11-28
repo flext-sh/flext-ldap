@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from flext_ldap.constants import FlextLdapConstants
+
 from .general_constants import General
 from .oid_constants import OID
 from .openldap2_constants import OpenLDAP2
@@ -36,13 +38,17 @@ class TestConstants:
     TEST_GROUP_DN: ClassVar[str] = RFC.TEST_GROUP_DN
 
     class ServerTypes:
-        """Server type constants for LDAP server variants."""
+        """Server type constants for LDAP server variants.
 
-        RFC = "rfc"
-        GENERIC = "generic"
-        OID = "oid"
-        OUD = "oud"
-        OPENLDAP2 = "openldap2"
+        Reuses production StrEnum values from FlextLdapConstants.ServerTypes.
+        """
+
+        # Reuse production StrEnum values for consistency
+        RFC = FlextLdapConstants.ServerTypes.RFC.value
+        GENERIC = FlextLdapConstants.ServerTypes.GENERIC.value
+        OID = FlextLdapConstants.ServerTypes.OID.value
+        OUD = FlextLdapConstants.ServerTypes.OUD.value
+        OPENLDAP2 = FlextLdapConstants.ServerTypes.OPENLDAP2.value
 
         # Valid server types for testing (only those registered in quirks)
         VALID = (RFC, GENERIC)
@@ -75,9 +81,9 @@ class TestConstants:
 
         BASE_DN = RFC.DEFAULT_BASE_DN
         FILTER_ALL = RFC.DEFAULT_FILTER
-        SCOPE_SUBTREE = RFC.DEFAULT_SCOPE
-        SCOPE_ONELEVEL = "ONELEVEL"
-        SCOPE_BASE = "BASE"
+        SCOPE_SUBTREE = RFC.DEFAULT_SCOPE  # Already uses SearchScope.SUBTREE.value
+        SCOPE_ONELEVEL = FlextLdapConstants.SearchScope.ONELEVEL.value
+        SCOPE_BASE = FlextLdapConstants.SearchScope.BASE.value
 
         class OrganizationalUnits:
             """Organizational unit constants."""
@@ -146,8 +152,12 @@ class TestConstants:
             "objectClass": ["top", "person"],
         }
         EMPTY_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {}
-        SERVER_TYPE_OPENLDAP: ClassVar[str] = "openldap"
-        SERVER_TYPE_OPENLDAP2: ClassVar[str] = "openldap2"
+        SERVER_TYPE_OPENLDAP: ClassVar[str] = (
+            FlextLdapConstants.ServerTypes.OPENLDAP.value
+        )
+        SERVER_TYPE_OPENLDAP2: ClassVar[str] = (
+            FlextLdapConstants.ServerTypes.OPENLDAP2.value
+        )
         ERROR_NO_ATTRIBUTES: ClassVar[str] = "no attributes"
 
     class Singleton:

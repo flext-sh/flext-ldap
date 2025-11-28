@@ -28,6 +28,7 @@ from ldap3 import Connection, Server
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
@@ -99,7 +100,8 @@ class TestLdap3AdapterUnit:
         """Factory method for test entries."""
         entry_dn = dn or TestLdap3AdapterUnit._CONSTANTS["TEST_DN"]
         default_attrs: dict[
-            str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]
+            str,
+            list[str] | str | tuple[str, ...] | set[str] | frozenset[str],
         ] = {
             "cn": ["test"],
             "objectClass": ["top", "person"],
@@ -124,7 +126,11 @@ class TestLdap3AdapterUnit:
     @staticmethod
     def _ensure_disconnected(adapter: Ldap3Adapter) -> None:
         """Ensure adapter is disconnected and clean up connection if needed."""
-        if adapter._connection and isinstance(adapter._connection, Connection) and adapter._connection.bound:
+        if (
+            adapter._connection
+            and isinstance(adapter._connection, Connection)
+            and adapter._connection.bound
+        ):
             unbind_func: Callable[[], None] = adapter._connection.unbind
             unbind_func()
         adapter._connection = None
@@ -186,7 +192,7 @@ class TestLdap3AdapterUnit:
     def test_connection_property_by_state(
         self,
         adapter: Ldap3Adapter,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         connection_type: str,
     ) -> None:
         """Test connection property with different connection states (parametrized)."""
@@ -210,7 +216,7 @@ class TestLdap3AdapterUnit:
     def test_is_connected_property_by_state(
         self,
         adapter: Ldap3Adapter,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         connection_state: str,
     ) -> None:
         """Test is_connected property with different connection states (parametrized)."""

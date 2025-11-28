@@ -68,7 +68,7 @@ class OperationFactory:
         return self.operations.search(
             TestDeduplicationHelpers.create_search(
                 base_dn=TestConstants.DEFAULT_BASE_DN,
-            )
+            ),
         )
 
     def create_add(
@@ -79,7 +79,7 @@ class OperationFactory:
             TestDeduplicationHelpers.create_entry(
                 TestConstants.TEST_USER_DN,
                 {"cn": ["test"], "objectClass": ["top", "person"]},
-            )
+            ),
         )
 
     def create_modify(

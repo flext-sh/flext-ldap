@@ -15,6 +15,8 @@ from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from flext_ldap.constants import FlextLdapConstants
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 
@@ -27,7 +29,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
     @pytest.fixture
     def ldap_connection(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Generator[Connection]:
         """Create real LDAP connection for testing."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
@@ -53,7 +55,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 
@@ -83,7 +85,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
             ldap_connection.search(
                 search_base=RFC.DEFAULT_BASE_DN,
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapConstants.SearchScope.BASE.value,
                 attributes=["*"],
             )
 
@@ -107,7 +109,7 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope="BASE",
+            search_scope=FlextLdapConstants.SearchScope.BASE.value,
             attributes=["*"],
         )
 

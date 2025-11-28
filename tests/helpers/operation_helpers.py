@@ -9,54 +9,68 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
-
 import pytest
 from flext_core import FlextResult, FlextRuntime
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdap
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.typings import LdapClientProtocol
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from .entry_helpers import EntryTestHelpers
 
 # Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
-LdapClientType = FlextLdap | LdapClientProtocol
+LdapClientType = FlextLdap | FlextLdapProtocols.LdapClient
 
 # Union type for LDAP operations only (no connect method) - for FlextLdapOperations and similar
-LdapOperationsType = FlextLdap | FlextLdapOperations | LdapClientProtocol
+LdapOperationsType = FlextLdap | FlextLdapOperations | FlextLdapProtocols.LdapClient
 
-# Valid search scopes for validation
-_VALID_SCOPES: frozenset[str] = frozenset({"BASE", "ONELEVEL", "SUBTREE"})
-SearchScopeType = Literal["BASE", "ONELEVEL", "SUBTREE"]
+# Valid search scopes for validation - reuse production StrEnum
+
+_VALID_SCOPES: frozenset[str] = frozenset({
+    FlextLdapConstants.SearchScope.BASE.value,
+    FlextLdapConstants.SearchScope.ONELEVEL.value,
+    FlextLdapConstants.SearchScope.SUBTREE.value,
+})
+# Reuse production Literal type
+SearchScopeType = FlextLdapConstants.LiteralTypes.SearchScopeLiteral
 
 
-def _validate_scope(scope: str) -> SearchScopeType:
-    """Validate and return a typed search scope.
+def _validate_scope(
+    scope: str | FlextLdapConstants.SearchScope,
+) -> FlextLdapConstants.SearchScope:
+    """Validate and return a SearchScope StrEnum.
 
     Args:
-        scope: Scope string to validate
+        scope: Scope string or StrEnum to validate
 
     Returns:
-        Validated scope as Literal type
+        Validated scope as SearchScope StrEnum
 
     Raises:
         ValueError: If scope is not valid
 
     """
+    # If already a StrEnum, return it
+    if isinstance(scope, FlextLdapConstants.SearchScope):
+        return scope
+
+    # Validate string and convert to StrEnum
     if scope not in _VALID_SCOPES:
         msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"
         raise ValueError(msg)
-    scope_map: dict[str, SearchScopeType] = {
-        "BASE": "BASE",
-        "ONELEVEL": "ONELEVEL",
-        "SUBTREE": "SUBTREE",
-    }
-    return scope_map[scope]
+
+    # Map string to StrEnum
+    if scope == FlextLdapConstants.SearchScope.BASE.value:
+        return FlextLdapConstants.SearchScope.BASE
+    if scope == FlextLdapConstants.SearchScope.ONELEVEL.value:
+        return FlextLdapConstants.SearchScope.ONELEVEL
+    return FlextLdapConstants.SearchScope.SUBTREE
 
 
 class TestOperationHelpers:
@@ -190,7 +204,7 @@ class TestOperationHelpers:
         """Connect client and skip test on failure.
 
         Args:
-            client: LDAP client implementing LdapClientProtocol
+            client: LDAP client implementing FlextLdapProtocols.LdapClient
             connection_config: Connection configuration
 
         """
@@ -206,7 +220,7 @@ class TestOperationHelpers:
         """Connect client and assert success.
 
         Args:
-            client: LDAP client implementing LdapClientProtocol
+            client: LDAP client implementing FlextLdapProtocols.LdapClient
             connection_config: Connection configuration
 
         """
@@ -224,7 +238,7 @@ class TestOperationHelpers:
         filter_str: str = "(objectClass=*)",
         expected_min_count: int = 0,
         expected_max_count: int | None = None,
-        scope: str = "SUBTREE",
+        scope: str = FlextLdapConstants.SearchScope.SUBTREE.value,
         attributes: list[str] | None = None,
         size_limit: int = 0,
     ) -> FlextLdapModels.SearchResult:
@@ -293,7 +307,7 @@ class TestOperationHelpers:
         base_dn: str,
         *,
         filter_str: str = "(objectClass=*)",
-        scope: str = "SUBTREE",
+        scope: str = FlextLdapConstants.SearchScope.SUBTREE.value,
         attributes: list[str] | None = None,
     ) -> FlextLdapModels.SearchOptions:
         """Create SearchOptions with common defaults.
@@ -323,7 +337,7 @@ class TestOperationHelpers:
         sn: str | None = None,
         mail: str | None = None,
         use_uid: bool = False,
-        additional_attrs: dict[str, object] | None = None,
+        additional_attrs: GenericFieldsDict | None = None,
         **extra_attributes: object,
     ) -> FlextLdifModels.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
@@ -454,7 +468,7 @@ class TestOperationHelpers:
         sn: str | None = None,
         mail: str | None = None,
         **extra_attributes: object,
-    ) -> dict[str, object]:
+    ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
         Replaces repetitive entry dict creation across tests.
@@ -692,7 +706,7 @@ class TestOperationHelpers:
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=dn_str,
                 filter_str="(objectClass=*)",
-                scope="BASE",
+                scope=FlextLdapConstants.SearchScope.BASE,
             )
             search_result = client.search(search_options)
 
@@ -759,7 +773,8 @@ class TestOperationHelpers:
                 error_msg = "search_options must be FlextLdapModels.SearchOptions"
                 raise TypeError(error_msg)
             TestOperationHelpers.assert_result_failure(
-                client.search(search_options), expected_error=expected_error
+                client.search(search_options),
+                expected_error=expected_error,
             )
         elif operation == "add":
             if "entry" not in kwargs:
@@ -770,7 +785,8 @@ class TestOperationHelpers:
                 error_msg = "entry must be FlextLdifModels.Entry"
                 raise TypeError(error_msg)
             TestOperationHelpers.assert_result_failure(
-                client.add(entry), expected_error=expected_error
+                client.add(entry),
+                expected_error=expected_error,
             )
         elif operation == "modify":
             if "dn" not in kwargs or "changes" not in kwargs:
@@ -786,7 +802,8 @@ class TestOperationHelpers:
                 error_msg = "changes must be dict"
                 raise TypeError(error_msg)
             TestOperationHelpers.assert_result_failure(
-                client.modify(dn, changes), expected_error=expected_error
+                client.modify(dn, changes),
+                expected_error=expected_error,
             )
         elif operation == "delete":
             if "dn" not in kwargs:
@@ -797,7 +814,8 @@ class TestOperationHelpers:
                 error_msg = "dn must be str or FlextLdifModels.DistinguishedName"
                 raise TypeError(error_msg)
             TestOperationHelpers.assert_result_failure(
-                client.delete(dn), expected_error=expected_error
+                client.delete(dn),
+                expected_error=expected_error,
             )
         else:
             error_msg = f"Unknown operation: {operation}"

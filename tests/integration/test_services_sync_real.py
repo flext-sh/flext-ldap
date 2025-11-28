@@ -23,6 +23,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -46,80 +47,101 @@ class TestFlextLdapSyncServiceReal:
     """Tests for sync service with real LDAP server."""
 
     # Test configurations as ClassVar for parameterized tests
-    SYNC_FILE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    SYNC_FILE_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "not_connected",
-            {
-                "test_type": SyncTestType.NOT_CONNECTED,
-                "use_base_ldif": True,
-                "expect_success": True,
-                "expect_failed": True,
-                "expect_added": 0,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.NOT_CONNECTED,
+                    "use_base_ldif": True,
+                    "expect_success": True,
+                    "expect_failed": True,
+                    "expect_added": 0,
+                },
+            ),
         ),
         (
             "parse_failure",
-            {
-                "test_type": SyncTestType.PARSE_FAILURE,
-                "ldif_content": "invalid ldif content\nnot a valid entry\n",
-                "expect_success": None,  # Can be success or failure
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.PARSE_FAILURE,
+                    "ldif_content": "invalid ldif content\nnot a valid entry\n",
+                    "expect_success": None,  # Can be success or failure
+                },
+            ),
         ),
         (
             "empty_file",
-            {
-                "test_type": SyncTestType.EMPTY_FILE,
-                "ldif_content": "",
-                "expect_success": None,  # Can be success or failure
-                "expect_added_zero": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.EMPTY_FILE,
+                    "ldif_content": "",
+                    "expect_success": None,  # Can be success or failure
+                    "expect_added_zero": True,
+                },
+            ),
         ),
         (
             "add_failure",
-            {
-                "test_type": SyncTestType.ADD_FAILURE,
-                "use_base_ldif": True,
-                "additional_content": "\ndn: cn=invalid,{}\nobjectClass: top\n# Missing required attributes\n",
-                "expect_success": None,  # Can be success or failure
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.ADD_FAILURE,
+                    "use_base_ldif": True,
+                    "additional_content": "\ndn: cn=invalid,{}\nobjectClass: top\n# Missing required attributes\n",
+                    "expect_success": None,  # Can be success or failure
+                },
+            ),
         ),
         (
             "same_basedn",
-            {
-                "test_type": SyncTestType.SAME_BASEDN,
-                "ldif_content": "dn: cn=test-same-basedn,{}\nobjectClass: top\nobjectClass: organizationalUnit\nou: test\n",
-                "sync_options": {
-                    "source_basedn": RFC.DEFAULT_BASE_DN,
-                    "target_basedn": RFC.DEFAULT_BASE_DN,
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.SAME_BASEDN,
+                    "ldif_content": "dn: cn=test-same-basedn,{}\nobjectClass: top\nobjectClass: organizationalUnit\nou: test\n",
+                    "sync_options": {
+                        "source_basedn": RFC.DEFAULT_BASE_DN,
+                        "target_basedn": RFC.DEFAULT_BASE_DN,
+                    },
+                    "expect_success": None,  # Can be success or failure
                 },
-                "expect_success": None,  # Can be success or failure
-            },
+            ),
         ),
         (
             "basedn_transform",
-            {
-                "test_type": SyncTestType.BASEDN_TRANSFORM,
-                "ldif_content": "dn: cn=test-transform,{}\nobjectClass: top\nobjectClass: organizationalUnit\nou: test\n",
-                "sync_options": {
-                    "source_basedn": RFC.DEFAULT_BASE_DN,
-                    "target_basedn": "dc=target,dc=local",
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.BASEDN_TRANSFORM,
+                    "ldif_content": "dn: cn=test-transform,{}\nobjectClass: top\nobjectClass: organizationalUnit\nou: test\n",
+                    "sync_options": {
+                        "source_basedn": RFC.DEFAULT_BASE_DN,
+                        "target_basedn": "dc=target,dc=local",
+                    },
+                    "expect_success": None,  # Can be success or failure
                 },
-                "expect_success": None,  # Can be success or failure
-            },
+            ),
         ),
     ]
 
-    EXECUTE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    EXECUTE_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "execute_method",
-            {
-                "test_type": SyncTestType.EXECUTE,
-                "expect_success": True,
-                "expect_added_zero": True,
-                "expect_failed_zero": True,
-                "expect_skipped_zero": True,
-                "expect_total_zero": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": SyncTestType.EXECUTE,
+                    "expect_success": True,
+                    "expect_added_zero": True,
+                    "expect_failed_zero": True,
+                    "expect_skipped_zero": True,
+                    "expect_total_zero": True,
+                },
+            ),
         ),
     ]
 
@@ -168,7 +190,7 @@ class TestFlextLdapSyncServiceReal:
         @staticmethod
         def assert_sync_result(
             result: FlextResult[FlextLdapModels.SyncStats],
-            config: dict[str, object],
+            config: GenericFieldsDict,
         ) -> None:
             """Assert sync result based on configuration."""
             if expected_success := config.get("expect_success"):
@@ -203,7 +225,8 @@ class TestFlextLdapSyncServiceReal:
     ) -> FlextLdapSyncService:
         """Get sync service with connected operations."""
         return self.TestDataFactories.create_sync_service(
-            connection_config, ldap_parser
+            connection_config,
+            ldap_parser,
         )
 
     @pytest.mark.parametrize(("test_name", "config"), SYNC_FILE_TEST_CONFIGS)
@@ -213,7 +236,7 @@ class TestFlextLdapSyncServiceReal:
         base_ldif_content: str,
         ldap_parser: FlextLdifParser,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test sync LDIF file operations with different configurations."""
         # Create LDIF file based on test configuration
@@ -248,7 +271,7 @@ class TestFlextLdapSyncServiceReal:
             # Handle not connected test case
             if config.get("test_type") == SyncTestType.NOT_CONNECTED:
                 sync_service = self.TestDataFactories.create_sync_service_not_connected(
-                    ldap_parser
+                    ldap_parser,
                 )
 
             result = sync_service.sync_ldif_file(ldif_file, options)
@@ -262,7 +285,7 @@ class TestFlextLdapSyncServiceReal:
         self,
         sync_service: FlextLdapSyncService,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test execute operations with different configurations."""
         result = sync_service.execute()

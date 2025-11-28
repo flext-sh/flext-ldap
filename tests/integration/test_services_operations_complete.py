@@ -17,10 +17,11 @@ from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.typings import LdapClientProtocol
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -62,7 +63,7 @@ class TestFlextLdapOperationsComplete:
         search_options = TestOperationHelpers.create_search_options(
             base_dn=f"  {RFC.DEFAULT_BASE_DN}  ",  # With spaces (will be normalized)
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
 
         result = operations_service.search(search_options)
@@ -84,11 +85,14 @@ class TestFlextLdapOperationsComplete:
         search_options = TestOperationHelpers.create_search_options(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
 
         # Only test with 'rfc' which is always registered in quirks
-        result = operations_service.search(search_options, server_type="rfc")
+        result = operations_service.search(
+            search_options,
+            server_type=FlextLdapConstants.ServerTypes.RFC,
+        )
         TestOperationHelpers.assert_result_success(result)
 
     def test_add_with_normalized_dn(
@@ -101,7 +105,8 @@ class TestFlextLdapOperationsComplete:
             RFC.DEFAULT_BASE_DN,
         )
         result = EntryTestHelpers.add_and_cleanup(
-            cast("LdapClientProtocol", operations_service), entry
+            cast("FlextLdapProtocols.LdapClient", operations_service),
+            entry,
         )
         TestOperationHelpers.assert_result_success(result)
 
@@ -122,7 +127,7 @@ class TestFlextLdapOperationsComplete:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("LdapClientProtocol", operations_service),
+                cast("FlextLdapProtocols.LdapClient", operations_service),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -139,7 +144,7 @@ class TestFlextLdapOperationsComplete:
         """Test modify with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testmodnorm")
         add_result = EntryTestHelpers.add_and_cleanup(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
             verify=False,
             cleanup_after=False,
@@ -149,7 +154,7 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.modify_with_dn_spaces(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
             changes,
         )
@@ -167,7 +172,7 @@ class TestFlextLdapOperationsComplete:
         )
 
         _add_result, _delete_result = TestOperationHelpers.add_then_delete_and_assert(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
         )
 
@@ -178,13 +183,14 @@ class TestFlextLdapOperationsComplete:
         """Test delete with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testdelnorm")
         _add_result = TestOperationHelpers.add_entry_and_assert_success(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
             cleanup_after=False,
         )
         if entry.dn:
             TestDeduplicationHelpers.delete_with_dn_spaces(
-                cast("LdapClientProtocol", operations_service), entry
+                cast("FlextLdapProtocols.LdapClient", operations_service),
+                entry,
             )
 
     def test_execute_when_connected(
@@ -212,13 +218,13 @@ class TestFlextLdapOperationsComplete:
         )
 
         result = TestOperationHelpers.add_entry_and_assert_success(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
             verify_operation_result=True,
         )
         TestOperationHelpers.assert_operation_result_success(
             result,
-            expected_operation_type="add",
+            expected_operation_type=FlextLdapConstants.OperationType.ADD.value,
             expected_entries_affected=1,
         )
 
@@ -232,7 +238,7 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
             changes,
         )
@@ -244,7 +250,7 @@ class TestFlextLdapOperationsComplete:
         """Test delete returns proper OperationResult on success."""
         entry = TestDeduplicationHelpers.create_user("testdelresult")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            cast("LdapClientProtocol", operations_service),
+            cast("FlextLdapProtocols.LdapClient", operations_service),
             entry,
         )
 
@@ -272,12 +278,12 @@ class TestFlextLdapOperationsComplete:
         # First upsert should add (covers line 238)
         result = operations_service.upsert(entry)
         assert result.is_success
-        assert result.unwrap()["operation"] == "added"
+        assert result.unwrap().operation == "added"
 
         # Second upsert should skip (covers lines 241-243)
         result2 = operations_service.upsert(entry)
         assert result2.is_success
-        assert result2.unwrap()["operation"] == "skipped"
+        assert result2.unwrap().operation == "skipped"
 
         # Cleanup
         _ = operations_service.delete(test_dn)
@@ -290,7 +296,7 @@ class TestFlextLdapOperationsComplete:
         # Create schema modify entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}"
+                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -314,7 +320,7 @@ class TestFlextLdapOperationsComplete:
         # Create schema modify entry without 'add' attribute
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}"
+                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -337,7 +343,7 @@ class TestFlextLdapOperationsComplete:
         # Create schema modify entry with 'add' but missing attribute values
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}"
+                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -377,7 +383,7 @@ class TestFlextLdapOperationsComplete:
         # Use only empty strings (no spaces) so filter results in empty list (covers line 217)
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}"
+                value=f"cn=testattr,{RFC.DEFAULT_BASE_DN}",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -452,7 +458,7 @@ class TestFlextLdapOperationsComplete:
         # May succeed or fail depending on LDAP server capabilities
         assert result.is_success or result.is_failure
         if result.is_success:
-            assert result.unwrap()["operation"] in {"modified", "skipped"}
+            assert result.unwrap().operation in {"modified", "skipped"}
 
         # Cleanup
         _ = operations_service.delete(test_dn)
@@ -499,7 +505,7 @@ class TestFlextLdapOperationsComplete:
         # May succeed with "skipped" or fail
         assert result.is_success or result.is_failure
         if result.is_success:
-            assert result.unwrap()["operation"] in {"modified", "skipped"}
+            assert result.unwrap().operation in {"modified", "skipped"}
 
         # Cleanup
         _ = operations_service.delete(test_dn)

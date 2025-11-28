@@ -23,10 +23,12 @@ from flext_tests import FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.typings import LdapClientProtocol
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -57,95 +59,122 @@ class TestFlextLdapOperationsRealOperations:
     """Integration tests for FlextLdapOperations with real LDAP server."""
 
     # Test configurations as ClassVar for parameterized tests
-    SEARCH_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    SEARCH_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "all_entries",
-            {
-                "filter_str": "(objectClass=*)",
-                "scope": SearchScope.SUBTREE,
-                "expected_min_count": 1,
-                "assert_total_count": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "filter_str": "(objectClass=*)",
+                    "scope": SearchScope.SUBTREE,
+                    "expected_min_count": 1,
+                    "assert_total_count": True,
+                },
+            ),
         ),
         (
             "base_scope",
-            {
-                "filter_str": "(objectClass=*)",
-                "scope": SearchScope.BASE,
-                "expected_max_count": 1,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "filter_str": "(objectClass=*)",
+                    "scope": SearchScope.BASE,
+                    "expected_max_count": 1,
+                },
+            ),
         ),
         (
             "onelevel_scope",
-            {
-                "filter_str": "(objectClass=*)",
-                "scope": SearchScope.ONELEVEL,
-                "assert_entries_list": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "filter_str": "(objectClass=*)",
+                    "scope": SearchScope.ONELEVEL,
+                    "assert_entries_list": True,
+                },
+            ),
         ),
         (
             "with_attributes",
-            {
-                "filter_str": "(objectClass=*)",
-                "scope": SearchScope.SUBTREE,
-                "attributes": ["objectClass", "cn"],
-                "expected_min_count": 1,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "filter_str": "(objectClass=*)",
+                    "scope": SearchScope.SUBTREE,
+                    "attributes": ["objectClass", "cn"],
+                    "expected_min_count": 1,
+                },
+            ),
         ),
         (
             "with_size_limit",
-            {
-                "filter_str": "(objectClass=*)",
-                "scope": SearchScope.SUBTREE,
-                "size_limit": 2,
-                "expected_max_count": 2,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "filter_str": "(objectClass=*)",
+                    "scope": SearchScope.SUBTREE,
+                    "size_limit": 2,
+                    "expected_max_count": 2,
+                },
+            ),
         ),
     ]
 
-    ADD_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    ADD_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "basic_add",
-            {
-                "cn_value": "testopsadd",
-                "sn": "Test",
-                "expected_operation_type": "add",
-                "expected_entries_affected": 1,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "cn_value": "testopsadd",
+                    "sn": "Test",
+                    "expected_operation_type": "add",
+                    "expected_entries_affected": 1,
+                },
+            ),
         ),
     ]
 
-    MODIFY_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    MODIFY_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "basic_modify",
-            {
-                "cn_value": "testopsmodify",
-                "sn": "Test",
-                "changes": {"mail": [(MODIFY_REPLACE, ["modified@example.com"])]},
-                "expected_operation_type": "modify",
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "cn_value": "testopsmodify",
+                    "sn": "Test",
+                    "changes": {"mail": [(MODIFY_REPLACE, ["modified@example.com"])]},
+                    "expected_operation_type": "modify",
+                },
+            ),
         ),
     ]
 
-    DELETE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    DELETE_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "basic_delete",
-            {
-                "cn_value": "testopsdelete",
-                "sn": "Test",
-                "expected_operation_type": "delete",
-                "expected_entries_affected": 1,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "cn_value": "testopsdelete",
+                    "sn": "Test",
+                    "expected_operation_type": "delete",
+                    "expected_entries_affected": 1,
+                },
+            ),
         ),
     ]
 
-    EXECUTE_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    EXECUTE_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "when_connected",
-            {
-                "assert_total_count_zero": True,
-                "assert_entries_empty": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "assert_total_count_zero": True,
+                    "assert_entries_empty": True,
+                },
+            ),
         ),
     ]
 
@@ -174,7 +203,9 @@ class TestFlextLdapOperationsRealOperations:
         ) -> FlextLdifModels.Entry:
             """Create test inetOrgPerson entry."""
             return TestOperationHelpers.create_inetorgperson_entry(
-                cn_value, base_dn, sn=sn
+                cn_value,
+                base_dn,
+                sn=sn,
             )
 
         @staticmethod
@@ -182,7 +213,7 @@ class TestFlextLdapOperationsRealOperations:
             cn_value: str,
             base_dn: str,
             sn: str | None = None,
-        ) -> dict[str, object]:
+        ) -> GenericFieldsDict:
             """Create test entry dictionary."""
             return TestOperationHelpers.create_entry_dict(cn_value, base_dn, sn=sn)
 
@@ -200,7 +231,7 @@ class TestFlextLdapOperationsRealOperations:
         @staticmethod
         def assert_search_result(
             result: FlextLdapModels.SearchResult,
-            config: dict[str, object],
+            config: GenericFieldsDict,
         ) -> None:
             """Assert search result based on configuration."""
             if config.get("assert_total_count"):
@@ -218,7 +249,7 @@ class TestFlextLdapOperationsRealOperations:
         @staticmethod
         def assert_operation_success(
             result: FlextResult[FlextLdapModels.OperationResult],
-            config: dict[str, object],
+            config: GenericFieldsDict,
         ) -> None:
             """Assert operation result success."""
             FlextTestsUtilities.TestUtilities.assert_result_success(result)
@@ -240,24 +271,26 @@ class TestFlextLdapOperationsRealOperations:
             assert add_result.is_success
             TestOperationHelpers.assert_operation_result_success(
                 modify_result,
-                expected_operation_type="modify",
+                expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value,
             )
 
         @staticmethod
         def assert_add_delete_sequence(
             add_result: FlextResult[FlextLdapModels.OperationResult],
             delete_result: FlextResult[FlextLdapModels.OperationResult],
-            config: dict[str, object],
+            config: GenericFieldsDict,
         ) -> None:
             """Assert add and delete sequence results."""
             assert add_result.is_success
             TestOperationHelpers.assert_operation_result_unwrapped(
                 delete_result,
                 expected_operation_type=cast(
-                    "str | None", config.get("expected_operation_type")
+                    "str | None",
+                    config.get("expected_operation_type"),
                 ),
                 expected_entries_affected=cast(
-                    "int | None", config.get("expected_entries_affected")
+                    "int | None",
+                    config.get("expected_entries_affected"),
                 ),
             )
 
@@ -278,7 +311,8 @@ class TestFlextLdapOperationsRealOperations:
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
         operations = self.TestDataFactories.create_operations_service(
-            connection_config, ldap_parser
+            connection_config,
+            ldap_parser,
         )
         yield operations
 
@@ -294,9 +328,9 @@ class TestFlextLdapOperationsRealOperations:
     def test_search_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test search operations with different configurations."""
         search_result = TestOperationHelpers.search_and_assert_success(
@@ -314,7 +348,7 @@ class TestFlextLdapOperationsRealOperations:
 
     def test_search_when_not_connected(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test search when not connected."""
@@ -329,7 +363,7 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("LdapClientProtocol", operations),
+            cast("FlextLdapProtocols.LdapClient", operations),
             OperationType.SEARCH,
             search_options=search_options,
         )
@@ -337,13 +371,13 @@ class TestFlextLdapOperationsRealOperations:
     def test_search_with_failed_adapter_search(
         self,
         operations_service: FlextLdapOperations,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test search when adapter search fails."""
         search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(invalidFilterSyntax)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
 
         result = operations_service.search(search_options)
@@ -355,7 +389,7 @@ class TestFlextLdapOperationsRealOperations:
         self,
         operations_service: FlextLdapOperations,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test add operations with different configurations."""
         entry = self.TestDataFactories.create_test_entry(
@@ -365,7 +399,8 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("LdapClientProtocol", operations_service), entry
+            cast("FlextLdapProtocols.LdapClient", operations_service),
+            entry,
         )
 
         self.TestAssertions.assert_operation_success(result, config)
@@ -382,7 +417,7 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("LdapClientProtocol", operations),
+            cast("FlextLdapProtocols.LdapClient", operations),
             OperationType.ADD,
             entry=entry,
         )
@@ -392,7 +427,7 @@ class TestFlextLdapOperationsRealOperations:
         self,
         operations_service: FlextLdapOperations,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test modify operations with different configurations."""
         entry = self.TestDataFactories.create_test_entry(
@@ -412,7 +447,7 @@ class TestFlextLdapOperationsRealOperations:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("LdapClientProtocol", operations_service),
+                cast("FlextLdapProtocols.LdapClient", operations_service),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -426,7 +461,7 @@ class TestFlextLdapOperationsRealOperations:
         self,
         operations_service: FlextLdapOperations,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test delete operations with different configurations."""
         entry_dict = self.TestDataFactories.create_test_entry_dict(
@@ -437,13 +472,15 @@ class TestFlextLdapOperationsRealOperations:
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                cast("LdapClientProtocol", operations_service),
+                cast("FlextLdapProtocols.LdapClient", operations_service),
                 entry_dict,
             )
         )
 
         self.TestAssertions.assert_add_delete_sequence(
-            add_result, delete_result, config
+            add_result,
+            delete_result,
+            config,
         )
 
     def test_delete_when_not_connected(self, ldap_parser: FlextLdifParser) -> None:
@@ -453,7 +490,7 @@ class TestFlextLdapOperationsRealOperations:
         operations = FlextLdapOperations(connection=connection)
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("LdapClientProtocol", operations),
+            cast("FlextLdapProtocols.LdapClient", operations),
             OperationType.DELETE,
             dn="cn=test,dc=example,dc=com",
         )
@@ -463,11 +500,11 @@ class TestFlextLdapOperationsRealOperations:
         self,
         operations_service: FlextLdapOperations,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test execute operations with different configurations."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            cast("LdapClientProtocol", operations_service)
+            cast("FlextLdapProtocols.LdapClient", operations_service),
         )
 
         self.TestAssertions.assert_search_result(search_result, config)

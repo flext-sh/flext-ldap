@@ -7,12 +7,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_ldap.constants import FlextLdapConstants
+
 
 class OpenLDAP2:
     """Flat namespace for OpenLDAP 2 server test constants - no type checking."""
 
-    # Server type
-    SERVER_TYPE = "openldap2"
+    # Server type - reuse production StrEnum
+    SERVER_TYPE = FlextLdapConstants.ServerTypes.OPENLDAP2.value
 
     # LDAP connection defaults
     DEFAULT_HOST = "localhost"
@@ -21,9 +23,9 @@ class OpenLDAP2:
     DEFAULT_BIND_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
     DEFAULT_BIND_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD"
 
-    # Search defaults
+    # Search defaults - reuse production StrEnum
     DEFAULT_FILTER = "(objectClass=*)"
-    DEFAULT_SCOPE = "SUBTREE"
+    DEFAULT_SCOPE = FlextLdapConstants.SearchScope.SUBTREE.value
     DEFAULT_ATTRIBUTES = ("objectClass", "cn")
 
     # Test entry defaults

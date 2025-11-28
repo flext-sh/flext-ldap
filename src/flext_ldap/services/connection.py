@@ -58,7 +58,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         auto_retry: bool = False,
         max_retries: int = 3,
         retry_delay: float = 1.0,
-        **_kwargs: object,
+        **_kwargs: str | float | bool | None,
     ) -> FlextResult[bool]:
         """Establish LDAP connection with optional auto-retry on failure."""
 
@@ -106,18 +106,20 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         if detection_result.is_success:
             self.logger.info(
                 "Server type detected automatically",
-                operation=FlextLdapConstants.LdapOperationLogging.OPERATION_CONNECT,
+                operation=FlextLdapConstants.LdapOperationNames.CONNECT,
                 detected_server_type=detection_result.unwrap(),
             )
         else:
             self.logger.debug(
                 "Server type detection failed (non-critical)",
-                operation=FlextLdapConstants.LdapOperationLogging.OPERATION_CONNECT,
+                operation=FlextLdapConstants.LdapOperationNames.CONNECT,
                 error=str(detection_result.error) if detection_result.error else "",
             )
 
-    def execute(self, **_kwargs: object) -> FlextResult[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
         """Execute service health check."""
         if self.is_connected:
             return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(FlextLdapConstants.ErrorStrings.NOT_CONNECTED)
+        return FlextResult[bool].fail(
+            str(FlextLdapConstants.ErrorStrings.NOT_CONNECTED)
+        )

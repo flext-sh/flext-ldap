@@ -15,7 +15,7 @@ import pytest
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.protocols import FlextLdapProtocols
 
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -46,7 +46,8 @@ class TestFlextLdapAPICoverage:
         with FlextLdap() as client:
             assert client is not None
             TestOperationHelpers.connect_and_assert_success(
-                cast("LdapClientProtocol", client), connection_config
+                cast("FlextLdapProtocols.LdapClient", client),
+                connection_config,
             )
 
         # After exit, connection should be closed
@@ -61,7 +62,7 @@ class TestFlextLdapAPICoverage:
         try:
             with client:
                 TestOperationHelpers.connect_and_assert_success(
-                    cast("LdapClientProtocol", client),
+                    cast("FlextLdapProtocols.LdapClient", client),
                     connection_config,
                 )
                 # Simulate exception
@@ -79,7 +80,7 @@ class TestFlextLdapAPICoverage:
     ) -> None:
         """Test execute method for health check."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            cast("LdapClientProtocol", ldap_client)
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
         )
         assert search_result is not None
         assert hasattr(search_result, "entries")

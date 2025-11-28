@@ -115,7 +115,9 @@ class TestFilterService:
         """Test SearchOptions creation with custom parameters."""
         custom_base_dn = "ou=test,dc=example,dc=com"
         custom_filter = "(cn=testuser)"
-        custom_scope: FlextLdapConstants.LiteralTypes.SearchScope = "ONELEVEL"
+        custom_scope: FlextLdapConstants.SearchScope = (
+            FlextLdapConstants.SearchScope.ONELEVEL
+        )
 
         search_options = FlextLdapModels.SearchOptions(
             base_dn=custom_base_dn,

@@ -17,8 +17,10 @@ from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.protocols import FlextLdapProtocols
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -61,13 +63,13 @@ class TestLdap3AdapterReal:
     def test_search_with_real_server(
         self,
         connected_adapter: Ldap3Adapter,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test search with real LDAP server."""
         search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = connected_adapter.search(search_options)
         search_result = TestOperationHelpers.assert_result_success_and_unwrap(
@@ -141,12 +143,12 @@ class TestLdap3AdapterReal:
             },
         }
 
-        # Ldap3Adapter implements LdapClientProtocol implicitly via duck typing
+        # Ldap3Adapter implements FlextLdapProtocols.LdapClient implicitly via duck typing
         # Type ignore needed because mypy doesn't recognize structural subtyping
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                cast("LdapClientProtocol", connected_adapter),
+                cast("FlextLdapProtocols.LdapClient", connected_adapter),
                 entry_dict,
             )
         )
@@ -157,14 +159,14 @@ class TestLdap3AdapterReal:
     @pytest.mark.timeout(30)
     def test_search_when_not_connected(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test search when not connected."""
         adapter = Ldap3Adapter()
         search_options = FlextLdapModels.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = adapter.search(search_options)
         assert result.is_failure

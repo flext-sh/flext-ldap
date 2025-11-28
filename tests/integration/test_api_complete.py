@@ -16,8 +16,10 @@ from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldap.typings import LdapClientProtocol
+from flext_ldap.protocols import FlextLdapProtocols
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.operation_helpers import TestOperationHelpers
@@ -56,7 +58,8 @@ class TestFlextLdapAPIComplete:
         """Test context manager usage."""
         with FlextLdap() as api:
             TestOperationHelpers.connect_and_assert_success(
-                cast("LdapClientProtocol", api), connection_config
+                cast("FlextLdapProtocols.LdapClient", api),
+                connection_config,
             )
 
         # Should be disconnected after context exit
@@ -85,17 +88,20 @@ class TestFlextLdapAPIComplete:
     def test_search_with_different_server_types(
         self,
         ldap_client: FlextLdap,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test search with different server types."""
         search_options = TestOperationHelpers.create_search_options(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(objectClass=*)",
-            scope="SUBTREE",
+            scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
 
         # Only test with 'rfc' which is always registered in quirks
-        result = ldap_client.search(search_options, server_type="rfc")
+        result = ldap_client.search(
+            search_options,
+            server_type=FlextLdapConstants.ServerTypes.RFC,
+        )
         TestOperationHelpers.assert_result_success(result)
 
     def test_add_with_operation_result(
@@ -104,7 +110,7 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test add returns proper OperationResult."""
         _entry, result = TestDeduplicationHelpers.create_user_add_and_verify(
-            cast("LdapClientProtocol", ldap_client),
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
             "testapiadd",
             verify_operation_result=True,
         )
@@ -121,7 +127,7 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            cast("LdapClientProtocol", ldap_client),
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
             entry,
             changes,
         )
@@ -133,7 +139,7 @@ class TestFlextLdapAPIComplete:
         """Test delete with DistinguishedName object."""
         entry = TestDeduplicationHelpers.create_user("testapidel")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            cast("LdapClientProtocol", ldap_client),
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
             entry,
         )
 
@@ -143,7 +149,7 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test execute when connected."""
         TestDeduplicationHelpers.execute_and_verify_total_count(
-            cast("LdapClientProtocol", ldap_client),
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
             expected_total=0,
             expected_entries=0,
         )
@@ -159,7 +165,7 @@ class TestFlextLdapAPIComplete:
 
     def test_connect_with_service_config(
         self,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """Test connect using service config."""
         api = FlextLdap()
@@ -186,7 +192,7 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_ADD, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_modify_delete_with_operation_results(
-            cast("LdapClientProtocol", ldap_client),
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
             entry,
             changes,
         )
@@ -206,7 +212,8 @@ class TestFlextLdapAPIComplete:
         # Create connected LDAP client
         ldap_client = FlextLdap()
         TestOperationHelpers.connect_and_assert_success(
-            cast("LdapClientProtocol", ldap_client), connection_config
+            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            connection_config,
         )
 
         # Create test entry with specific data
@@ -219,7 +226,12 @@ class TestFlextLdapAPIComplete:
                     "sn": ["DataValidation"],
                     "givenName": ["Test"],
                     "mail": ["test@example.com"],
-                    "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+                    "objectClass": [
+                        "inetOrgPerson",
+                        "organizationalPerson",
+                        "person",
+                        "top",
+                    ],
                     "userPassword": ["test123"],
                     "description": ["Test entry for data validation"],
                 },
@@ -234,7 +246,7 @@ class TestFlextLdapAPIComplete:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=test_dn,
             filter_str="(objectClass=*)",
-            scope="BASE",
+            scope=FlextLdapConstants.SearchScope.BASE,
             attributes=["*"],
         )
         search_result = ldap_client.search(search_options)
@@ -287,7 +299,9 @@ class TestFlextLdapAPIComplete:
         # Verify entry was deleted - search should fail with noSuchObject
         search_result3 = ldap_client.search(search_options)
         assert not search_result3.is_success, "Search should fail after entry deletion"
-        assert "noSuchObject" in str(search_result3.error), f"Expected noSuchObject error, got: {search_result3.error}"
+        assert "noSuchObject" in str(search_result3.error), (
+            f"Expected noSuchObject error, got: {search_result3.error}"
+        )
 
     def test_api_upsert_method(
         self,
@@ -313,7 +327,7 @@ class TestFlextLdapAPIComplete:
         # Test upsert through API (covers line 246)
         result = ldap_client.upsert(entry)
         assert result.is_success
-        assert result.unwrap()["operation"] in {"added", "skipped"}
+        assert result.unwrap().operation in {"added", "skipped"}
 
         # Cleanup
         _ = ldap_client.delete(test_dn)

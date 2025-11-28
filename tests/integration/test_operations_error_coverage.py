@@ -24,6 +24,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..helpers.entry_helpers import EntryTestHelpers
 
@@ -44,61 +45,76 @@ class TestFlextLdapOperationsErrorCoverage:
     """Tests for operations service error handling coverage."""
 
     # Test configurations as ClassVar for parameterized tests
-    ERROR_TEST_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
+    ERROR_TEST_CONFIGS: ClassVar[list[tuple[str, GenericFieldsDict]]] = [
         (
             "search_failed_adapter",
-            {
-                "test_type": ErrorTestType.SEARCH_FAILED_ADAPTER,
-                "operation": "search",
-                "search_options": {
-                    "base_dn": "invalid=base,dn=invalid",
-                    "filter_str": "(objectClass=*)",
-                    "scope": "SUBTREE",
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ErrorTestType.SEARCH_FAILED_ADAPTER,
+                    "operation": "search",
+                    "search_options": {
+                        "base_dn": "invalid=base,dn=invalid",
+                        "filter_str": "(objectClass=*)",
+                        "scope": "SUBTREE",
+                    },
+                    "expect_failure": None,  # Can be success or failure depending on server
                 },
-                "expect_failure": None,  # Can be success or failure depending on server
-            },
+            ),
         ),
         (
             "add_failed_adapter",
-            {
-                "test_type": ErrorTestType.ADD_FAILED_ADAPTER,
-                "operation": "add",
-                "entry_dn": "invalid=dn",
-                "entry_attrs": {"objectClass": ["top"]},
-                "expect_failure": True,
-                "expect_error": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ErrorTestType.ADD_FAILED_ADAPTER,
+                    "operation": "add",
+                    "entry_dn": "invalid=dn",
+                    "entry_attrs": {"objectClass": ["top"]},
+                    "expect_failure": True,
+                    "expect_error": True,
+                },
+            ),
         ),
         (
             "modify_failed_adapter",
-            {
-                "test_type": ErrorTestType.MODIFY_FAILED_ADAPTER,
-                "operation": "modify",
-                "dn": "cn=nonexistent,dc=flext,dc=local",
-                "changes": {"cn": [(MODIFY_REPLACE, ["modified"])]},
-                "expect_failure": True,
-                "expect_error": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ErrorTestType.MODIFY_FAILED_ADAPTER,
+                    "operation": "modify",
+                    "dn": "cn=nonexistent,dc=flext,dc=local",
+                    "changes": {"cn": [(MODIFY_REPLACE, ["modified"])]},
+                    "expect_failure": True,
+                    "expect_error": True,
+                },
+            ),
         ),
         (
             "delete_failed_adapter",
-            {
-                "test_type": ErrorTestType.DELETE_FAILED_ADAPTER,
-                "operation": "delete",
-                "dn": "cn=nonexistent,dc=flext,dc=local",
-                "expect_failure": True,
-                "expect_error": True,
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ErrorTestType.DELETE_FAILED_ADAPTER,
+                    "operation": "delete",
+                    "dn": "cn=nonexistent,dc=flext,dc=local",
+                    "expect_failure": True,
+                    "expect_error": True,
+                },
+            ),
         ),
         (
             "execute_not_connected",
-            {
-                "test_type": ErrorTestType.EXECUTE_NOT_CONNECTED,
-                "operation": "execute",
-                "expect_failure": True,
-                "expect_error": True,
-                "error_contains": "Not connected",
-            },
+            cast(
+                "GenericFieldsDict",
+                {
+                    "test_type": ErrorTestType.EXECUTE_NOT_CONNECTED,
+                    "operation": "execute",
+                    "expect_failure": True,
+                    "expect_error": True,
+                    "error_contains": "Not connected",
+                },
+            ),
         ),
     ]
 
@@ -132,7 +148,8 @@ class TestFlextLdapOperationsErrorCoverage:
         def create_test_entry(
             dn: str,
             attrs: dict[
-                str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]
+                str,
+                list[str] | str | tuple[str, ...] | set[str] | frozenset[str],
             ],
         ) -> FlextLdifModels.Entry:
             """Create test entry for error scenarios."""
@@ -144,7 +161,7 @@ class TestFlextLdapOperationsErrorCoverage:
         @staticmethod
         def assert_error_result(
             result: FlextResult[object],
-            config: dict[str, object],
+            config: GenericFieldsDict,
         ) -> None:
             """Assert error result based on configuration."""
             if config.get("expect_failure") is True:
@@ -168,17 +185,18 @@ class TestFlextLdapOperationsErrorCoverage:
         connection_config: FlextLdapModels.ConnectionConfig,
         ldap_parser: FlextLdifParser,
         test_name: str,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> None:
         """Test operations error coverage with different failure scenarios."""
         # Create operations service based on test type
         if config.get("test_type") == ErrorTestType.EXECUTE_NOT_CONNECTED:
             operations = self.TestDataFactories.create_operations_service_not_connected(
-                ldap_parser
+                ldap_parser,
             )
         else:
             operations = self.TestDataFactories.create_operations_service(
-                connection_config, ldap_parser
+                connection_config,
+                ldap_parser,
             )
 
         # Execute operation based on test configuration
@@ -186,7 +204,8 @@ class TestFlextLdapOperationsErrorCoverage:
 
         # Assert result based on configuration
         self.TestAssertions.assert_error_result(
-            cast("FlextResult[object]", result), config
+            cast("FlextResult[object]", result),
+            config,
         )
 
         # Cleanup connection if it was created
@@ -200,7 +219,7 @@ class TestFlextLdapOperationsErrorCoverage:
     def _execute_operation(
         self,
         operations: FlextLdapOperations,
-        config: dict[str, object],
+        config: GenericFieldsDict,
     ) -> (
         FlextResult[FlextLdapModels.OperationResult]
         | FlextResult[FlextLdapModels.SearchResult]
@@ -210,7 +229,8 @@ class TestFlextLdapOperationsErrorCoverage:
 
         if operation == "search":
             search_options_config = cast(
-                "dict[str, object]", config.get("search_options", {})
+                "dict[str, object]",
+                config.get("search_options", {}),
             )
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=str(search_options_config.get("base_dn", "")),
@@ -219,13 +239,14 @@ class TestFlextLdapOperationsErrorCoverage:
                     search_options_config.get("scope", "SUBTREE"),
                 ),
                 filter_str=str(
-                    search_options_config.get("filter_str", "(objectClass=*)")
+                    search_options_config.get("filter_str", "(objectClass=*)"),
                 ),
                 attributes=cast(
-                    "list[str] | None", search_options_config.get("attributes")
+                    "list[str] | None",
+                    search_options_config.get("attributes"),
                 ),
                 size_limit=int(
-                    cast("int | str", search_options_config.get("size_limit", 0))
+                    cast("int | str", search_options_config.get("size_limit", 0)),
                 ),
             )
             return operations.search(search_options)
@@ -233,11 +254,13 @@ class TestFlextLdapOperationsErrorCoverage:
         if operation == "add":
             entry_dn = str(config.get("entry_dn", ""))
             entry_attrs_raw = cast(
-                "dict[str, list[str]]", config.get("entry_attrs", {})
+                "dict[str, list[str]]",
+                config.get("entry_attrs", {}),
             )
             # Convert to proper type for EntryTestHelpers
             entry_attrs: dict[
-                str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]
+                str,
+                list[str] | str | tuple[str, ...] | set[str] | frozenset[str],
             ] = dict(entry_attrs_raw)
             entry = self.TestDataFactories.create_test_entry(entry_dn, entry_attrs)
             return operations.add(entry)
@@ -245,7 +268,8 @@ class TestFlextLdapOperationsErrorCoverage:
         if operation == "modify":
             dn = str(config.get("dn", ""))
             changes = cast(
-                "dict[str, list[tuple[str, list[str]]]]", config.get("changes", {})
+                "dict[str, list[tuple[str, list[str]]]]",
+                config.get("changes", {}),
             )
             return operations.modify(dn, changes)
 

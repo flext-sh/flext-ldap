@@ -29,6 +29,7 @@ from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdap, FlextLdapModels
 from flext_ldap.config import FlextLdapConfig
+from tests.fixtures.typing import GenericFieldsDict
 
 # Mark entire module as smoke tests
 pytestmark = pytest.mark.smoke
@@ -46,7 +47,7 @@ class TestDataFactories:
     """Factory methods for generating test data across all smoke tests."""
 
     @staticmethod
-    def create_ldap3_server(ldap_container: dict[str, object]) -> Server:
+    def create_ldap3_server(ldap_container: GenericFieldsDict) -> Server:
         """Factory for ldap3 Server objects."""
         return Server(
             str(ldap_container["server_url"]),
@@ -56,7 +57,7 @@ class TestDataFactories:
     @staticmethod
     def create_ldap3_connection(
         server: Server,
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Connection:
         """Factory for ldap3 Connection objects."""
         return Connection(
@@ -67,7 +68,7 @@ class TestDataFactories:
         )
 
     @staticmethod
-    def create_flext_config(ldap_container: dict[str, object]) -> FlextLdapConfig:
+    def create_flext_config(ldap_container: GenericFieldsDict) -> FlextLdapConfig:
         """Factory for FlextLdapConfig objects."""
         port_value = ldap_container["port"]
         port_int = int(str(port_value)) if isinstance(port_value, (int, str)) else 3390
@@ -81,7 +82,7 @@ class TestDataFactories:
 
     @staticmethod
     def create_connection_config(
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> FlextLdapModels.ConnectionConfig:
         """Factory for ConnectionConfig objects."""
         port_value = ldap_container["port"]
@@ -136,7 +137,7 @@ class TestFlextLdapSmoke:
     Python 3.13 features for maximum code reuse and test coverage.
     """
 
-    def test_ldap_container_health(self, ldap_container: dict[str, object]) -> None:
+    def test_ldap_container_health(self, ldap_container: GenericFieldsDict) -> None:
         """SMOKE TEST: LDAP container is responsive (REGRA 5: REAL connection).
 
         This is the minimal test that must pass for ANY other test to work.
@@ -179,7 +180,8 @@ class TestFlextLdapSmoke:
         TestAssertions.assert_models_accessible(FlextLdapModels)
 
     def test_flext_ldap_basic_connection(
-        self, ldap_container: dict[str, object]
+        self,
+        ldap_container: GenericFieldsDict,
     ) -> None:
         """SMOKE TEST: FlextLdap can connect to container (REGRA 5: REAL operations).
 

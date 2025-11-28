@@ -18,10 +18,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from flext_core import FlextResult, FlextRuntime, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.utilities import FlextLdifUtilities
 from ldap3 import Connection, Server
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -29,7 +32,8 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
 
-Ldap3Scope = FlextLdapConstants.LiteralTypes.Ldap3Scope
+# ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"]
+# We use StrEnum internally and pass validated string values to ldap3
 
 
 class Ldap3Adapter(FlextService[bool]):
@@ -61,7 +65,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def create_connection(
-            server: Server, config: FlextLdapModels.ConnectionConfig
+            server: Server,
+            config: FlextLdapModels.ConnectionConfig,
         ) -> Connection:
             """Create ldap3 Connection object."""
             return Connection(
@@ -75,7 +80,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def handle_tls(
-            connection: Connection, config: FlextLdapModels.ConnectionConfig
+            connection: Connection,
+            config: FlextLdapModels.ConnectionConfig,
         ) -> FlextResult[bool]:
             """Handle STARTTLS if requested."""
             if not config.use_tls or config.use_ssl:
@@ -118,31 +124,41 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_metadata(
-            metadata: object,
+            metadata: (
+                FlextLdifModels.QuirkMetadata
+                | dict[str, str | int | float | bool | None]
+                | None
+            ),
         ) -> FlextLdifModels.QuirkMetadata | None:
             """Normalize metadata to public QuirkMetadata type.
 
             Handles both public and internal QuirkMetadata types from parser.
+            Accepts QuirkMetadata model, dict (for validation), or None.
             """
             if not metadata:
                 return None
 
-            metadata_type_name = type(metadata).__name__
-            if metadata_type_name == "QuirkMetadata":
-                if isinstance(metadata, FlextLdifModels.QuirkMetadata):
-                    return metadata
-                if hasattr(metadata, "model_dump"):
-                    # Type narrowing: metadata has model_dump method
-                    model_dump_method = getattr(metadata, "model_dump", None)
-                    if model_dump_method is not None and callable(model_dump_method):
-                        dumped = model_dump_method()
-                        return FlextLdifModels.QuirkMetadata.model_validate(dumped)
-                return FlextLdifModels.QuirkMetadata.model_validate(metadata)
+            # Type narrowing: check if already correct type
+            if isinstance(metadata, FlextLdifModels.QuirkMetadata):
+                return metadata
 
+            # Type narrowing: check if dict (can be validated)
             if isinstance(metadata, dict):
                 return FlextLdifModels.QuirkMetadata.model_validate(metadata)
 
-            return None
+            # Handle objects with model_dump method (internal QuirkMetadata types)
+            if hasattr(metadata, "model_dump"):
+                model_dump_method = getattr(metadata, "model_dump", None)
+                if model_dump_method is not None and callable(model_dump_method):
+                    dumped = model_dump_method()
+                    if isinstance(dumped, dict):
+                        return FlextLdifModels.QuirkMetadata.model_validate(dumped)
+
+            # Try direct validation as fallback
+            try:
+                return FlextLdifModels.QuirkMetadata.model_validate(metadata)
+            except Exception:
+                return None
 
         @staticmethod
         def convert_parsed_entries(
@@ -154,7 +170,7 @@ class Ldap3Adapter(FlextService[bool]):
             for idx, parsed in enumerate(parse_response.entries):
                 if not hasattr(parsed, "dn") or not hasattr(parsed, "attributes"):
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Invalid entry structure from parser at index {idx}"
+                        f"Invalid entry structure from parser at index {idx}",
                     )
 
                 dn_obj = (
@@ -174,20 +190,20 @@ class Ldap3Adapter(FlextService[bool]):
                         else:
                             attrs_dict[key] = [str(value)] if value is not None else []
 
-                    entry_attrs = FlextLdifModels.LdifAttributes.model_validate(
-                        {"attributes": attrs_dict}
-                    )
+                    entry_attrs = FlextLdifModels.LdifAttributes.model_validate({
+                        "attributes": attrs_dict,
+                    })
                 else:
                     attr_type = type(attrs_raw).__name__
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Invalid attributes type at index {idx}: {attr_type}"
+                        f"Invalid attributes type at index {idx}: {attr_type}",
                     )
 
                 # Normalize metadata to handle both public and internal
                 # QuirkMetadata types
                 parsed_metadata = getattr(parsed, "metadata", None)
                 metadata_obj = Ldap3Adapter.ResultConverter.normalize_metadata(
-                    parsed_metadata
+                    parsed_metadata,
                 )
 
                 if metadata_obj:
@@ -224,10 +240,10 @@ class Ldap3Adapter(FlextService[bool]):
                     return FlextResult[FlextLdapModels.OperationResult].ok(
                         FlextLdapModels.OperationResult(
                             success=True,
-                            operation_type="add",
+                            operation_type=FlextLdapConstants.OperationType.ADD,
                             message="Entry added successfully",
                             entries_affected=1,
-                        )
+                        ),
                     )
 
                 return self._extract_error_result(connection, "Add failed")
@@ -243,7 +259,7 @@ class Ldap3Adapter(FlextService[bool]):
         ) -> FlextResult[FlextLdapModels.OperationResult]:
             """Execute LDAP modify operation."""
             try:
-                dn_str = FlextLdif.utilities.DN.get_dn_value(dn)
+                dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
                 modify_func: FlextLdapTypes.LdapModifyCallable = connection.modify
                 success = modify_func(dn_str, changes)
 
@@ -251,10 +267,10 @@ class Ldap3Adapter(FlextService[bool]):
                     return FlextResult[FlextLdapModels.OperationResult].ok(
                         FlextLdapModels.OperationResult(
                             success=True,
-                            operation_type="modify",
+                            operation_type=FlextLdapConstants.OperationType.MODIFY,
                             message="Entry modified successfully",
                             entries_affected=1,
-                        )
+                        ),
                     )
 
                 return self._extract_error_result(connection, "Modify failed")
@@ -269,7 +285,7 @@ class Ldap3Adapter(FlextService[bool]):
         ) -> FlextResult[FlextLdapModels.OperationResult]:
             """Execute LDAP delete operation."""
             try:
-                dn_str = FlextLdif.utilities.DN.get_dn_value(dn)
+                dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
                 delete_func: FlextLdapTypes.LdapDeleteCallable = connection.delete
                 success = delete_func(dn_str)
 
@@ -277,10 +293,10 @@ class Ldap3Adapter(FlextService[bool]):
                     return FlextResult[FlextLdapModels.OperationResult].ok(
                         FlextLdapModels.OperationResult(
                             success=True,
-                            operation_type="delete",
+                            operation_type=FlextLdapConstants.OperationType.DELETE,
                             message="Entry deleted successfully",
                             entries_affected=1,
-                        )
+                        ),
                     )
 
                 return self._extract_error_result(connection, "Delete failed")
@@ -290,7 +306,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def _extract_error_result(
-            connection: Connection, prefix: str
+            connection: Connection,
+            prefix: str,
         ) -> FlextResult[FlextLdapModels.OperationResult]:
             """Extract error message from connection result."""
             error_msg = f"{prefix}: LDAP operation returned failure status"
@@ -306,16 +323,48 @@ class Ldap3Adapter(FlextService[bool]):
             """Initialize with adapter instance."""
             self._adapter = adapter
 
+        @staticmethod
+        def _normalize_to_ldif_server_type(
+            server_type: str,
+        ) -> FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None:
+            """Normalize server type string to parser-compatible ServerTypeLiteral.
+
+            Returns only parser-compatible server types (excludes oracle_oid/oracle_oud).
+            This matches the exact type expected by FlextLdifParser.parse_ldap3_results.
+            """
+            # Parser accepts only these server types (without oracle_* variants)
+            # Use centralized Literal type from flext-ldif constants
+            parser_compatible_types: dict[
+                str,
+                FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
+            ] = {
+                "oid": "oid",
+                "oud": "oud",
+                "openldap": "openldap",
+                "openldap1": "openldap1",
+                "openldap2": "openldap2",
+                "active_directory": "active_directory",
+                "apache_directory": "apache_directory",
+                "generic": "generic",
+                "rfc": "rfc",
+                "389ds": "389ds",
+                "relaxed": "relaxed",
+                "novell_edirectory": "novell_edirectory",
+                "ibm_tivoli": "ibm_tivoli",
+            }
+            # Type checker understands dict.get() returns the mapped Literal type or None
+            return parser_compatible_types.get(server_type)
+
         def execute(
             self,
             connection: Connection,
             base_dn: str,
             filter_str: str,
-            ldap_scope: Ldap3Scope,
+            ldap_scope: FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral,
             search_attributes: list[str],
             size_limit: int,
             time_limit: int,
-            server_type: str,
+            server_type: FlextLdapConstants.ServerTypes | str,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Execute LDAP search and convert results."""
             try:
@@ -336,27 +385,51 @@ class Ldap3Adapter(FlextService[bool]):
                     error_msg = connection.result.get("message", "LDAP search failed")
                     error_desc = connection.result.get("description", "unknown")
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"LDAP search failed: {error_desc} - {error_msg}"
+                        f"LDAP search failed: {error_desc} - {error_msg}",
                     )
 
                 ldap3_results = self._adapter.ResultConverter.convert_ldap3_results(
-                    connection
+                    connection,
+                )
+                # Convert server_type to ServerTypeLiteral for parser
+                # Map flext-ldap ServerTypes to flext-ldif ServerTypeLiteral
+                server_type_str = (
+                    server_type.value
+                    if isinstance(server_type, FlextLdapConstants.ServerTypes)
+                    else str(server_type)
+                )
+                # Normalize server type (map oracle_oid/oracle_oud to oid/oud)
+                # Use ServerTypes StrEnum values for type safety
+                normalized_server_type = (
+                    FlextLdapConstants.ServerTypes.OID.value
+                    if server_type_str
+                    in {FlextLdapConstants.ServerTypes.OID.value, "oracle_oid"}
+                    else FlextLdapConstants.ServerTypes.OUD.value
+                    if server_type_str
+                    in {FlextLdapConstants.ServerTypes.OUD.value, "oracle_oud"}
+                    else server_type_str
+                )
+                # Convert to flext-ldif ServerTypeLiteral using helper function
+                # Helper returns only parser-compatible types (excludes oracle_* variants)
+                server_type_literal = self._normalize_to_ldif_server_type(
+                    normalized_server_type,
                 )
                 parse_result = self._adapter.parser.parse_ldap3_results(
-                    ldap3_results, server_type
+                    ldap3_results,
+                    server_type_literal,
                 )
 
                 if parse_result.is_failure:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        str(parse_result.error) if parse_result.error else ""
+                        str(parse_result.error) if parse_result.error else "",
                     )
 
                 return self._adapter.ResultConverter.convert_parsed_entries(
-                    parse_result.unwrap()
+                    parse_result.unwrap(),
                 )
             except Exception as e:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Search failed: {e!s}"
+                    f"Search failed: {e!s}",
                 )
 
     _connection: Connection | None
@@ -372,7 +445,7 @@ class Ldap3Adapter(FlextService[bool]):
     def __init__(
         self,
         parser: FlextLdifParser | None = None,
-        **kwargs: object,
+        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize adapter service with parser."""
         super().__init__(**kwargs)
@@ -394,13 +467,14 @@ class Ldap3Adapter(FlextService[bool]):
     def connect(
         self,
         config: FlextLdapModels.ConnectionConfig,
-        **_kwargs: object,
+        **_kwargs: str | float | bool | None,
     ) -> FlextResult[bool]:
         """Establish LDAP connection using ldap3."""
         try:
             self._server = self.ConnectionManager.create_server(config)
             self._connection = self.ConnectionManager.create_connection(
-                self._server, config
+                self._server,
+                config,
             )
 
             tls_result = self.ConnectionManager.handle_tls(self._connection, config)
@@ -440,41 +514,76 @@ class Ldap3Adapter(FlextService[bool]):
         """Get connection with fast fail if not available."""
         if not self.is_connected or self._connection is None:
             return FlextResult[Connection].fail(
-                FlextLdapConstants.ErrorStrings.NOT_CONNECTED
+                FlextLdapConstants.ErrorStrings.NOT_CONNECTED,
             )
         return FlextResult[Connection].ok(self._connection)
 
-    def _map_scope(self, scope: str) -> FlextResult[Ldap3Scope]:
-        """Map scope string to ldap3 scope constant."""
-        scope_map: dict[str, Ldap3Scope] = {
-            FlextLdapConstants.SearchScope.BASE: "BASE",
-            FlextLdapConstants.SearchScope.ONELEVEL: "LEVEL",
-            FlextLdapConstants.SearchScope.SUBTREE: "SUBTREE",
-        }
-        mapped = scope_map.get(scope.upper())
-        return (
-            FlextResult[Ldap3Scope].ok(mapped)
-            if mapped
-            else FlextResult[Ldap3Scope].fail(f"Invalid LDAP scope: {scope}")
+    def _map_scope(
+        self,
+        scope: FlextLdapConstants.SearchScope | str,
+    ) -> FlextResult[FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral]:
+        """Map scope string to ldap3 scope constant.
+
+        Uses direct StrEnum value mapping for type-safe conversion.
+        """
+        # Normalize to StrEnum if string provided
+        if isinstance(scope, str):
+            try:
+                scope_enum = FlextLdapConstants.SearchScope(scope.upper())
+            except ValueError:
+                return FlextResult[
+                    FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral
+                ].fail(f"Invalid LDAP scope: {scope}")
+        else:
+            scope_enum = scope
+
+        # Direct mapping using StrEnum values
+        if scope_enum == FlextLdapConstants.SearchScope.BASE:
+            return FlextResult[FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral].ok(
+                cast(
+                    "FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral",
+                    FlextLdapConstants.Ldap3ScopeValues.BASE.value,
+                )
+            )
+
+        if scope_enum == FlextLdapConstants.SearchScope.ONELEVEL:
+            return FlextResult[FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral].ok(
+                cast(
+                    "FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral",
+                    FlextLdapConstants.Ldap3ScopeValues.LEVEL.value,
+                )
+            )
+
+        if scope_enum == FlextLdapConstants.SearchScope.SUBTREE:
+            return FlextResult[FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral].ok(
+                cast(
+                    "FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral",
+                    FlextLdapConstants.Ldap3ScopeValues.SUBTREE.value,
+                )
+            )
+
+        return FlextResult[FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral].fail(
+            f"Invalid LDAP scope: {scope}",
         )
 
     def search(
         self,
         search_options: FlextLdapModels.SearchOptions,
-        server_type: str = FlextLdapConstants.ServerTypes.RFC,
-        **_kwargs: object,
+        server_type: FlextLdapConstants.ServerTypes
+        | str = FlextLdapConstants.ServerTypes.RFC,
+        **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation and convert to Entry models."""
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return FlextResult[FlextLdapModels.SearchResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
 
         scope_result = self._map_scope(search_options.scope)
         if scope_result.is_failure:
             return FlextResult[FlextLdapModels.SearchResult].fail(
-                str(scope_result.error) if scope_result.error else ""
+                str(scope_result.error) if scope_result.error else "",
             )
 
         entries_result = self.SearchExecutor(self).execute(
@@ -490,31 +599,32 @@ class Ldap3Adapter(FlextService[bool]):
 
         if entries_result.is_failure:
             return FlextResult[FlextLdapModels.SearchResult].fail(
-                str(entries_result.error) if entries_result.error else ""
+                str(entries_result.error) if entries_result.error else "",
             )
 
         return FlextResult[FlextLdapModels.SearchResult].ok(
             FlextLdapModels.SearchResult(
-                entries=entries_result.unwrap(), search_options=search_options
-            )
+                entries=entries_result.unwrap(),
+                search_options=search_options,
+            ),
         )
 
     def add(
         self,
         entry: FlextLdifModels.Entry,
-        **_kwargs: object,
+        **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add LDAP entry using Entry model."""
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
 
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                f"Failed to convert entry attributes: {attrs_result.error}"
+                f"Failed to convert entry attributes: {attrs_result.error}",
             )
 
         return self.OperationExecutor(self).execute_add(
@@ -527,34 +637,37 @@ class Ldap3Adapter(FlextService[bool]):
         self,
         dn: str | FlextLdifModels.DistinguishedName,
         changes: FlextLdapTypes.LdapModifyChanges,
-        **_kwargs: object,
+        **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry."""
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_modify(
-            connection_result.unwrap(), dn, changes
+            connection_result.unwrap(),
+            dn,
+            changes,
         )
 
     def delete(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
-        **_kwargs: object,
+        **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry."""
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return FlextResult[FlextLdapModels.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_delete(
-            connection_result.unwrap(), dn
+            connection_result.unwrap(),
+            dn,
         )
 
-    def execute(self, **_kwargs: object) -> FlextResult[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
         """Execute service health check."""
         if not self.is_connected:
             return FlextResult[bool].fail(FlextLdapConstants.ErrorStrings.NOT_CONNECTED)

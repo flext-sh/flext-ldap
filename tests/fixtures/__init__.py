@@ -14,7 +14,9 @@ import json
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult
-from flext_ldif import FlextLdif, FlextLdifConfig
+from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
+
+from tests.fixtures.typing import GenericFieldsDict, GenericTestCaseDict
 
 from .constants import OID, OUD, RFC, General, OpenLDAP2, TestConstants
 
@@ -27,12 +29,17 @@ class TestFixtures:
     """Centralized test fixtures loader following FLEXT patterns."""
 
     @staticmethod
-    def load_json(filename: str) -> FlextResult[list[dict[str, object]]]:
-        """Load JSON test data from fixtures directory."""
+    def load_json(filename: str) -> FlextResult[list[GenericFieldsDict]]:
+        """Load JSON test data from fixtures directory.
+
+        Returns:
+            FlextResult containing list of dictionaries or error
+
+        """
         try:
             filepath = FIXTURES_DIR / filename
             if not filepath.exists():
-                return FlextResult[list[dict[str, object]]].fail(
+                return FlextResult[list[GenericFieldsDict]].fail(
                     f"Fixture file not found: {filename}",
                 )
 
@@ -40,19 +47,24 @@ class TestFixtures:
                 data = json.load(f)
 
             if not isinstance(data, list):
-                return FlextResult[list[dict[str, object]]].fail(
+                return FlextResult[list[GenericFieldsDict]].fail(
                     f"Expected list in {filename}, got {type(data)}",
                 )
 
-            return FlextResult[list[dict[str, object]]].ok(data)
-        except Exception as e:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[GenericFieldsDict]].ok(data)
+        except (OSError, json.JSONDecodeError) as e:
+            return FlextResult[list[GenericFieldsDict]].fail(
                 f"Failed to load JSON fixture {filename}: {e}",
             )
 
     @staticmethod
     def load_ldif(filename: str) -> FlextResult[str]:
-        """Load LDIF test data from fixtures directory."""
+        """Load LDIF test data from fixtures directory.
+
+        Returns:
+            FlextResult containing LDIF content as string or error
+
+        """
         try:
             filepath = FIXTURES_DIR / filename
             if not filepath.exists():
@@ -62,30 +74,35 @@ class TestFixtures:
                 content = f.read()
 
             return FlextResult[str].ok(content)
-        except Exception as e:
+        except OSError as e:
             return FlextResult[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> FlextResult[dict[str, object]]:
-        """Load Docker configuration for test container."""
+    def load_docker_config() -> FlextResult[GenericFieldsDict]:
+        """Load Docker configuration for test container.
+
+        Returns:
+            FlextResult containing Docker config dictionary or error
+
+        """
         try:
             filepath = FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[GenericFieldsDict].fail(
                     "Docker config file not found",
                 )
 
             with Path(filepath).open(encoding="utf-8") as f:
                 config = json.load(f)
 
-            return FlextResult[dict[str, object]].ok(config)
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[GenericFieldsDict].ok(config)
+        except (OSError, json.JSONDecodeError) as e:
+            return FlextResult[GenericFieldsDict].fail(
                 f"Failed to load Docker config: {e}",
             )
 
     @classmethod
-    def get_test_users(cls) -> FlextResult[list[dict[str, object]]]:
+    def get_test_users(cls) -> FlextResult[list[GenericFieldsDict]]:
         """Get test users list (convenience method).
 
         Returns:
@@ -95,7 +112,7 @@ class TestFixtures:
         return cls.load_json("test_users.json")
 
     @classmethod
-    def get_test_groups(cls) -> FlextResult[list[dict[str, object]]]:
+    def get_test_groups(cls) -> FlextResult[list[GenericFieldsDict]]:
         """Get test groups list (convenience method).
 
         Returns:
@@ -115,7 +132,7 @@ class TestFixtures:
         return cls.load_ldif("test_base.ldif")
 
     @classmethod
-    def get_docker_config(cls) -> FlextResult[dict[str, object]]:
+    def get_docker_config(cls) -> FlextResult[GenericFieldsDict]:
         """Get Docker configuration (convenience method).
 
         Returns:
@@ -132,7 +149,7 @@ class LdapTestFixtures:
     """
 
     @staticmethod
-    def load_users_json() -> list[dict[str, object]]:
+    def load_users_json() -> list[GenericFieldsDict]:
         """Load test users from JSON file."""
         result = TestFixtures.load_json("test_users.json")
         if result.is_success:
@@ -141,7 +158,7 @@ class LdapTestFixtures:
         return []
 
     @staticmethod
-    def load_groups_json() -> list[dict[str, object]]:
+    def load_groups_json() -> list[GenericFieldsDict]:
         """Load test groups from JSON file."""
         result = TestFixtures.load_json("test_groups.json")
         if result.is_success:
@@ -159,8 +176,13 @@ class LdapTestFixtures:
         return ""
 
     @staticmethod
-    def load_base_ldif_entries() -> list[object]:
-        """Load and parse base LDIF structure to Entry models."""
+    def load_base_ldif_entries() -> list[FlextLdifModels.Entry]:
+        """Load and parse base LDIF structure to Entry models.
+
+        Returns:
+            List of parsed Entry models or empty list on failure
+
+        """
         ldif_content = LdapTestFixtures.load_base_ldif()
         if not ldif_content:
             return []
@@ -177,7 +199,7 @@ class LdapTestFixtures:
         return []
 
     @staticmethod
-    def convert_user_json_to_entry(user_data: dict[str, object]) -> dict[str, object]:
+    def convert_user_json_to_entry(user_data: GenericFieldsDict) -> GenericFieldsDict:
         """Convert user JSON data to Entry-compatible format."""
         # Map JSON fields to LDAP attributes
         object_classes = user_data.get("object_classes", [])
@@ -214,7 +236,7 @@ class LdapTestFixtures:
         }
 
     @staticmethod
-    def convert_group_json_to_entry(group_data: dict[str, object]) -> dict[str, object]:
+    def convert_group_json_to_entry(group_data: GenericFieldsDict) -> GenericFieldsDict:
         """Convert group JSON data to Entry-compatible format."""
         object_classes = group_data.get("object_classes", [])
         if not isinstance(object_classes, list):
@@ -246,6 +268,7 @@ __all__ = [
     "OUD",
     "RFC",
     "General",
+    "GenericTestCaseDict",
     "LdapTestFixtures",
     "OpenLDAP2",
     "TestConstants",

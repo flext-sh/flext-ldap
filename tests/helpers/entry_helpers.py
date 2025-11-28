@@ -16,23 +16,21 @@ from __future__ import annotations
 
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
+from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
 from flext_ldap import FlextLdap
+from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-
-# Import FlextLdapOperations for union type
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.typings import LdapClientProtocol
+from tests.fixtures.typing import GenericFieldsDict
 
-# Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
-LdapClientType = FlextLdap | LdapClientProtocol
-
-# Union type for LDAP operations only (no connect method) - for FlextLdapOperations and similar
-LdapOperationsType = FlextLdap | FlextLdapOperations | LdapClientProtocol
+LdapClientType = FlextLdap | FlextLdapProtocols.LdapClient
+LdapOperationsType = FlextLdap | FlextLdapOperations | FlextLdapProtocols.LdapClient
 
 
 class EntryTestHelpers:
@@ -84,19 +82,20 @@ class EntryTestHelpers:
         dn_obj = FlextLdifModels.DistinguishedName(value=dn)
         attrs_dict = EntryTestHelpers._EntryFactory._normalize_attributes(attributes)
         attrs = FlextLdifModels.LdifAttributes.model_validate({
-            "attributes": attrs_dict
+            "attributes": attrs_dict,
         })
         return FlextLdifModels.Entry(dn=dn_obj, attributes=attrs)
 
     @staticmethod
     def dict_to_entry(
-        entry_dict: Mapping[str, object] | dict[str, object],
+        entry_dict: Mapping[str, object] | GenericFieldsDict,
     ) -> FlextLdifModels.Entry:
         """Convert dictionary to FlextLdifModels.Entry."""
         dn_str = str(entry_dict.get("dn", ""))
         attrs_raw = entry_dict.get("attributes", {})
-        attrs_dict: dict[str, object] = (
-            dict(attrs_raw) if FlextRuntime.is_dict_like(attrs_raw) else {}
+        attrs_dict: GenericFieldsDict = cast(
+            "GenericFieldsDict",
+            dict(attrs_raw) if FlextRuntime.is_dict_like(attrs_raw) else {},
         )
         return EntryTestHelpers.create_entry(dn_str, attrs_dict)
 
@@ -119,10 +118,12 @@ class EntryTestHelpers:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=dn_str,
             filter_str="(objectClass=*)",
-            scope="BASE",
+            scope=FlextLdapConstants.SearchScope.BASE,
             attributes=["*"],  # Get all attributes for validation
         )
-        search_result = client.search(search_options)
+        search_result = client.search(
+            cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+        )
         if search_result.is_success:
             unwrapped = search_result.unwrap()
             return len(unwrapped.entries) == 1
@@ -150,10 +151,12 @@ class EntryTestHelpers:
         search_options = FlextLdapModels.SearchOptions(
             base_dn=dn_str,
             filter_str="(objectClass=*)",
-            scope="BASE",
+            scope=FlextLdapConstants.SearchScope.BASE,
             attributes=["*"],  # Get all attributes
         )
-        search_result = client.search(search_options)
+        search_result = client.search(
+            cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+        )
         if not search_result.is_success:
             return False
 
@@ -171,8 +174,16 @@ class EntryTestHelpers:
         if not found_entry.attributes or not expected_entry.attributes:
             return False
 
-        found_attrs = found_entry.attributes.attributes
-        expected_attrs = expected_entry.attributes.attributes
+        found_attrs = (
+            found_entry.attributes.attributes
+            if hasattr(found_entry.attributes, "attributes")
+            else dict(found_entry.attributes)
+        )
+        expected_attrs = (
+            expected_entry.attributes.attributes
+            if hasattr(expected_entry.attributes, "attributes")
+            else dict(expected_entry.attributes)
+        )
 
         # Check that all expected attributes are present with correct values
         for attr_name, expected_values in expected_attrs.items():
@@ -196,7 +207,7 @@ class EntryTestHelpers:
     @staticmethod
     def add_entry_from_dict(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, object] | dict[str, object],
+        entry_dict: Mapping[str, object] | GenericFieldsDict,
         *,
         verify: bool = True,
         cleanup_before: bool = True,
@@ -206,21 +217,23 @@ class EntryTestHelpers:
         entry = EntryTestHelpers.dict_to_entry(entry_dict)
         if cleanup_before:
             EntryTestHelpers.cleanup_entry(client, str(entry.dn) if entry.dn else "")
-        add_result = client.add(entry)
+        add_result = client.add(cast("FlextLdapProtocols.EntryProtocol", entry))
         if verify and add_result.is_success:
             assert EntryTestHelpers.verify_entry_added(
-                client, str(entry.dn) if entry.dn else ""
+                client,
+                str(entry.dn) if entry.dn else "",
             ), "Entry was not found after add"
         if cleanup_after:
             EntryTestHelpers.cleanup_after_test(
-                client, str(entry.dn) if entry.dn else ""
+                client,
+                str(entry.dn) if entry.dn else "",
             )
         return entry, add_result
 
     @staticmethod
     def add_multiple_entries_from_dicts(
         client: LdapOperationsType,
-        entry_dicts: list[dict[str, object]],
+        entry_dicts: list[GenericFieldsDict],
         *,
         adjust_dn: dict[str, str] | None = None,
         cleanup_before: bool = True,
@@ -234,11 +247,12 @@ class EntryTestHelpers:
         ] = []
         added_dns: list[str] = []
         for entry_dict_item in entry_dicts:
-            entry_dict: dict[str, object] = dict(entry_dict_item)
+            entry_dict: GenericFieldsDict = dict(entry_dict_item)
             if adjust_dn:
                 original_dn = str(entry_dict.get("dn", ""))
                 adjusted_dn = original_dn.replace(
-                    str(adjust_dn.get("from", "")), str(adjust_dn.get("to", ""))
+                    str(adjust_dn.get("from", "")),
+                    str(adjust_dn.get("to", "")),
                 )
                 entry_dict["dn"] = adjusted_dn
             entry, add_result = EntryTestHelpers.add_entry_from_dict(
@@ -259,7 +273,7 @@ class EntryTestHelpers:
     @staticmethod
     def modify_entry_with_verification(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, object] | dict[str, object],
+        entry_dict: Mapping[str, object] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
@@ -282,7 +296,8 @@ class EntryTestHelpers:
         if not add_result.is_success:
             if cleanup_after:
                 EntryTestHelpers.cleanup_after_test(
-                    client, str(entry.dn) if entry.dn else ""
+                    client,
+                    str(entry.dn) if entry.dn else "",
                 )
             return entry, add_result, add_result
         dn_str = str(entry.dn) if entry.dn else ""
@@ -291,20 +306,22 @@ class EntryTestHelpers:
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=dn_str,
                 filter_str="(objectClass=*)",
-                scope="BASE",
+                scope=FlextLdapConstants.SearchScope.BASE,
             )
-            search_result = client.search(search_options)
+            search_result = client.search(
+                cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+            )
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
                 if unwrapped.entries:
                     modified_entry = unwrapped.entries[0]
-                    if (
-                        modified_entry.attributes
-                        and modified_entry.attributes.attributes
-                    ):
-                        attrs = modified_entry.attributes.attributes.get(
-                            verify_attribute, []
+                    if modified_entry.attributes:
+                        entry_attrs = (
+                            modified_entry.attributes.attributes
+                            if hasattr(modified_entry.attributes, "attributes")
+                            else dict(modified_entry.attributes)
                         )
+                        attrs = entry_attrs.get(verify_attribute, [])
                         assert verify_value in attrs, (
                             f"Expected {verify_value} in {verify_attribute}, got {attrs}"
                         )
@@ -315,7 +332,7 @@ class EntryTestHelpers:
     @staticmethod
     def delete_entry_with_verification(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, object] | dict[str, object],
+        entry_dict: Mapping[str, object] | GenericFieldsDict,
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
@@ -340,9 +357,11 @@ class EntryTestHelpers:
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=dn_str,
                 filter_str="(objectClass=*)",
-                scope="BASE",
+                scope=FlextLdapConstants.SearchScope.BASE,
             )
-            search_result = client.search(search_options)
+            search_result = client.search(
+                cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+            )
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
                 assert len(unwrapped.entries) == 0, (
@@ -372,7 +391,7 @@ class EntryTestHelpers:
         if entry.dn:
             dn_str = str(entry.dn)
             EntryTestHelpers.cleanup_entry(client, dn_str)
-        add_result = client.add(entry)
+        add_result = client.add(cast("FlextLdapProtocols.EntryProtocol", entry))
         if add_result.is_success:
             if verify and entry.dn:
                 assert EntryTestHelpers.verify_entry_added(client, str(entry.dn))
@@ -385,7 +404,7 @@ class EntryTestHelpers:
     @staticmethod
     @contextmanager
     def ldap3_connection_from_container(
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
     ) -> Generator[tuple[Connection, Ldap3Entry | None]]:
         """Context manager for LDAP3 connection from container fixture."""
         server = Server(
@@ -403,7 +422,7 @@ class EntryTestHelpers:
             connection.search(
                 search_base=str(ldap_container["base_dn"]),
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapConstants.SearchScope.BASE.value,
                 attributes=["*"],
             )
             if len(connection.entries) > 0:
@@ -416,7 +435,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def with_ldap3_entry(
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         modifier: Callable[[Ldap3Entry], None],
     ) -> Ldap3Entry | None:
         """Get LDAP3 entry and apply modification, returning modified entry."""
@@ -433,7 +452,7 @@ class EntryTestHelpers:
         """Helper methods for metadata assertion in tests (moved from nested class)."""
 
         @staticmethod
-        def get_extensions(entry: FlextLdifModels.Entry) -> dict[str, object]:
+        def get_extensions(entry: FlextLdifModels.Entry) -> GenericFieldsDict:
             """Get extensions dict from entry metadata."""
             if not entry.metadata or not hasattr(entry.metadata, "extensions"):
                 return {}
@@ -458,7 +477,8 @@ class EntryTestHelpers:
 
         @staticmethod
         def assert_converted_tracked(
-            entry: FlextLdifModels.Entry, attr_name: str
+            entry: FlextLdifModels.Entry,
+            attr_name: str,
         ) -> None:
             """Assert converted attribute is tracked in metadata."""
             extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
@@ -470,9 +490,9 @@ class EntryTestHelpers:
 
     @staticmethod
     def create_real_ldap3_entry(
-        ldap_container: dict[str, object],
+        ldap_container: GenericFieldsDict,
         dn: str,
-        attributes: dict[str, object],
+        attributes: GenericFieldsDict,
     ) -> Ldap3Entry | None:
         """Create real LDAP3 entry by adding to LDAP and retrieving it."""
         with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
@@ -489,11 +509,11 @@ class EntryTestHelpers:
             else:
                 object_classes = ["top"]
 
-            attrs_dict: dict[str, object] = {
+            attrs_dict: GenericFieldsDict = {
                 k: v for k, v in attributes.items() if k != "objectClass"
             }
 
-            add_func: Callable[[str, list[str], dict[str, object]], bool] = (
+            add_func: Callable[[str, list[str], GenericFieldsDict], bool] = (
                 connection.add
             )
             add_success = add_func(dn, object_classes, attrs_dict)
@@ -504,7 +524,7 @@ class EntryTestHelpers:
             connection.search(
                 search_base=dn,
                 search_filter="(objectClass=*)",
-                search_scope="BASE",
+                search_scope=FlextLdapConstants.SearchScope.BASE.value,
                 attributes=["*"],
             )
             if connection.entries:
