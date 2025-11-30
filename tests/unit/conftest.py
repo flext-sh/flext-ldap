@@ -12,11 +12,11 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif import FlextLdif, FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdif, FlextLdifModels
 
 from ..fixtures.constants import TestConstants
 from ..helpers.test_helpers import LdapTestDataFactory

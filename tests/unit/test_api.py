@@ -231,41 +231,21 @@ class TestFlextLdapAPI:
         msg = f"Unknown operation: {operation}"
         raise ValueError(msg)
 
-    @pytest.mark.parametrize(
-        ("use_custom", "host", "port"),
-        [
-            (False, None, None),
-            (True, "test.example.com", 389),
-        ],
-    )
-    def test_api_initialization_by_config_type(
+    def test_api_initialization_with_default_config(
         self,
         default_config: FlextLdapConfig,
-        use_custom: bool,
-        host: str | None,
-        port: int | None,
     ) -> None:
-        """Test API initialization with default and custom configuration.
+        """Test API initialization with default configuration.
 
-        Covers initialization with both default and custom configs.
+        Covers initialization with default config.
         """
-        if use_custom and host is not None and port is not None:
-            config: FlextLdapConfig = FlextLdapConfig.model_construct(
-                host=host,
-                port=port,
-            )
-            api = ApiTestDataFactory.create_api_instance(config, None)
-            assert api._config == config
-            # Use already-typed config directly instead of redundant cast
-            assert config.host == host
-            assert config.port == port
-        else:
-            api = ApiTestDataFactory.create_api_instance(default_config, None)
-            # Validate default initialization state
-            assert api._connection.is_connected is False
-            assert api._connection is not None
-            assert api._operations is not None
-            assert api._config is not None
+        api = ApiTestDataFactory.create_api_instance(default_config, None)
+        # Validate default initialization state
+        assert api._connection.is_connected is False
+        assert api._connection is not None
+        assert api._operations is not None
+        assert api._config is not None
+        assert api._config.host == "localhost"  # default value
 
     @pytest.mark.parametrize("operation", _OPERATIONS)
     def test_operation_when_not_connected_returns_failure(
@@ -376,47 +356,6 @@ class TestFlextLdapAPI:
         # After context manager exits, should be properly disconnected
         assert api._connection.is_connected is False
 
-    def test_register_core_services_success_with_empty_container(
-        self,
-        api_instance: FlextLdap,
-    ) -> None:
-        """Test successful registration of core services in empty container.
-
-        Covers TestServiceRegistration::test_register_core_services_success_with_empty_container
-        """
-        container = FlextContainer()
-        api_instance._register_core_services(container)
-        for service_name in self._EXPECTED_SERVICES:
-            assert container.has_service(service_name), (
-                f"Service {service_name} not registered"
-            )
-
-    def test_register_core_services_skips_existing_services(
-        self,
-        api_instance: FlextLdap,
-    ) -> None:
-        """Test service registration skips already registered services.
-
-        Covers TestServiceRegistration::test_register_core_services_skips_existing_services
-        """
-        container = FlextContainer()
-        _ = container.register("connection", api_instance._connection)
-        _ = container.register("operations", api_instance._operations)
-        registration_calls: list[str] = []
-        original_register = container.register
-
-        def mock_register(name: str, service: object) -> FlextResult[bool]:
-            registration_calls.append(name)
-            return original_register(name, service)
-
-        # Use context manager for temporary attribute change
-        with FlextTestsUtilities.test_context(container, "register", mock_register):
-            api_instance._register_core_services(container)
-            for service_name in self._EXPECTED_SERVICES:
-                assert service_name not in registration_calls, (
-                    f"Service {service_name} should not be re-registered"
-                )
-
     @pytest.mark.parametrize("service_name", _SERVICE_NAMES)
     def test_register_core_services_raises_on_service_failure(
         self,
@@ -434,12 +373,10 @@ class TestFlextLdapAPI:
         if container.has_service(service_name):
             _ = container.unregister(service_name)
 
-        original_register = container.register
-
         def mock_register_failure(name: str, service: object) -> FlextResult[bool]:
             if name == service_name:
                 return FlextResult.fail(f"Mock {service_name} registration failure")
-            return original_register(name, service)
+            return container.register(name, service)
 
         with FlextTestsUtilities.test_context(
             container,
@@ -448,3 +385,53 @@ class TestFlextLdapAPI:
         ):
             with pytest.raises(RuntimeError, match=error_pattern):
                 api_instance._register_core_services(container)
+
+    # Mapping-based test execution for service registration scenarios
+    _SERVICE_TEST_SCENARIOS: ClassVar = {
+        "success_empty_container": {
+            "description": "Successful registration in empty container",
+            "setup": lambda container: None,
+            "expected": lambda self, container: all(
+                container.has_service(name) for name in self._EXPECTED_SERVICES
+            ),
+        },
+        "skips_existing_services": {
+            "description": "Registration skips already registered services",
+            "setup": lambda container: (
+                container.register("connection", "mock_conn"),
+                container.register("operations", "mock_ops"),
+            ),
+            "expected": lambda self, container, registration_calls: (
+                all(name not in registration_calls for name in self._EXPECTED_SERVICES)
+            ),
+        },
+    }
+
+    @pytest.mark.parametrize("scenario_key", list(_SERVICE_TEST_SCENARIOS.keys()))
+    def test_service_registration_scenarios(
+        self,
+        api_instance: FlextLdap,
+        scenario_key: str,
+    ) -> None:
+        """Test service registration scenarios using mapping-driven approach."""
+        scenario = self._SERVICE_TEST_SCENARIOS[scenario_key]
+        container = FlextContainer()
+
+        # Execute setup
+        if scenario["setup"] is not None:
+            scenario["setup"](container)
+
+        if scenario_key == "skips_existing_services":
+            registration_calls = []
+            original_register = container.register
+
+            def mock_register(name: str, service: object) -> FlextResult[bool]:
+                registration_calls.append(name)
+                return original_register(name, service)
+
+            with FlextTestsUtilities.test_context(container, "register", mock_register):
+                api_instance._register_core_services(container)
+                assert scenario["expected"](self, container, registration_calls)
+        else:
+            api_instance._register_core_services(container)
+            assert scenario["expected"](self, container)

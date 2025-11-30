@@ -19,7 +19,6 @@ from typing import Literal, cast
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsMatchers
 from ldap3 import MODIFY_REPLACE, Connection, Entry as Ldap3Entry, Server
@@ -34,6 +33,7 @@ from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
+from flext_ldif import FlextLdifParser
 
 from ..fixtures import LdapTestFixtures
 from ..fixtures.constants import RFC

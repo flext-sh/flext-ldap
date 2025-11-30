@@ -122,7 +122,7 @@ class EntryTestHelpers:
             attributes=["*"],  # Get all attributes for validation
         )
         search_result = client.search(
-            cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+            cast("FlextLdapProtocols.SearchOptionsProtocol", search_options),
         )
         if search_result.is_success:
             unwrapped = search_result.unwrap()
@@ -155,7 +155,7 @@ class EntryTestHelpers:
             attributes=["*"],  # Get all attributes
         )
         search_result = client.search(
-            cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+            cast("FlextLdapProtocols.SearchOptionsProtocol", search_options),
         )
         if not search_result.is_success:
             return False
@@ -309,7 +309,7 @@ class EntryTestHelpers:
                 scope=FlextLdapConstants.SearchScope.BASE,
             )
             search_result = client.search(
-                cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+                cast("FlextLdapProtocols.SearchOptionsProtocol", search_options),
             )
             if search_result.is_success:
                 unwrapped = search_result.unwrap()
@@ -360,7 +360,7 @@ class EntryTestHelpers:
                 scope=FlextLdapConstants.SearchScope.BASE,
             )
             search_result = client.search(
-                cast("FlextLdapProtocols.SearchOptionsProtocol", search_options)
+                cast("FlextLdapProtocols.SearchOptionsProtocol", search_options),
             )
             if search_result.is_success:
                 unwrapped = search_result.unwrap()

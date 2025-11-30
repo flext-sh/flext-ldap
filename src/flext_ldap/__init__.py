@@ -32,6 +32,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities
 
 __email__ = "dev@flext.com"
 
@@ -44,4 +45,5 @@ __all__ = [
     "FlextLdapServerDetector",  # ✅ Server detection service
     "FlextLdapServiceBase",  # ✅ Base class for services with typed config
     "FlextLdapTypes",  # ✅ Type definitions
+    "FlextLdapUtilities",  # ✅ Advanced utilities
 ]

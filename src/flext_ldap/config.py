@@ -15,17 +15,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 from flext_core import FlextConfig
 from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.constants import FlextLdapConstants
 
 
 @FlextConfig.auto_register("ldap")
-class FlextLdapConfig(BaseSettings):
+class FlextLdapConfig(FlextConfig):
     """Pydantic v2 configuration for LDAP operations.
 
     **ARCHITECTURAL PATTERN**: Zero-Boilerplate Configuration
@@ -60,15 +60,15 @@ class FlextLdapConfig(BaseSettings):
     # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
-        env_file=FlextConfig.resolve_env_file(),
+        env_file=".env",
         env_file_encoding="utf-8",
         env_ignore_empty=True,
-        extra="ignore",
+        extra="forbid",
         case_sensitive=False,
+        use_enum_values=True,
     )
 
-    # Singleton pattern
-    _instances: ClassVar[dict[type[Self], Self]] = {}
+    # Singleton pattern - inherits _instances from parent class
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     @classmethod
@@ -78,8 +78,8 @@ class FlextLdapConfig(BaseSettings):
             with cls._lock:
                 if cls not in cls._instances:
                     cls._instances[cls] = cls()
-        # Type narrowing: dict is typed as dict[type[Self], Self], so instance is Self
-        instance: Self = cls._instances[cls]
+        # Cast to Self since we know the instance is of the correct type
+        instance: Self = cast("Self", cls._instances[cls])
         return instance
 
     # Connection Configuration

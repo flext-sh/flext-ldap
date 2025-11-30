@@ -11,13 +11,13 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 from pydantic import ValidationError
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC

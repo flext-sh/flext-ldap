@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifModels, FlextLdifParser
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifModels, FlextLdifParser
 
 
 class TestApiErrorPaths:

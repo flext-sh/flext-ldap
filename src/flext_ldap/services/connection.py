@@ -12,9 +12,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from typing import cast
 
 from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdif
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
@@ -49,7 +51,10 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         )
         if parser is None:
             parser = FlextLdif.get_instance().parser
-        self._adapter = Ldap3Adapter(parser=parser)
+        # Create adapter bypassing FlextService auto-execution
+        adapter_instance = Ldap3Adapter.__new__(Ldap3Adapter)
+        adapter_instance.__init__(parser=parser)
+        self._adapter = cast("Ldap3Adapter", adapter_instance)
 
     def connect(
         self,
@@ -101,7 +106,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             return
 
         detector = FlextLdapServerDetector()
-        detection_result = detector.detect_from_connection(connection)
+        detection_result = cast(FlextResult[str], detector.detect_from_connection(connection))
 
         if detection_result.is_success:
             self.logger.info(
@@ -121,5 +126,5 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         if self.is_connected:
             return FlextResult[bool].ok(True)
         return FlextResult[bool].fail(
-            str(FlextLdapConstants.ErrorStrings.NOT_CONNECTED)
+            str(FlextLdapConstants.ErrorStrings.NOT_CONNECTED),
         )

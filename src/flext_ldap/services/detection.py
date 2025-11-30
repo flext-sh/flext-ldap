@@ -22,7 +22,6 @@ from __future__ import annotations
 from typing import Literal, cast
 
 from flext_core import FlextResult, FlextRuntime
-from flext_ldif import FlextLdif
 from ldap3 import Connection
 
 from flext_ldap.base import FlextLdapServiceBase
@@ -78,7 +77,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             return FlextResult[str].fail("connection parameter required")
         if not isinstance(connection, Connection):
             return FlextResult[str].fail(
-                f"connection must be ldap3.Connection, got {type(connection).__name__}"
+                f"connection must be ldap3.Connection, got {type(connection).__name__}",
             )
         return self.detect_from_connection(connection)
 
@@ -110,7 +109,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         root_dse_result = self._query_root_dse(connection)
         if root_dse_result.is_failure:
             return FlextResult[str].fail(
-                f"Failed to query rootDSE: {root_dse_result.error}"
+                f"Failed to query rootDSE: {root_dse_result.error}",
             )
 
         root_dse_attrs = root_dse_result.unwrap()
@@ -125,23 +124,26 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
     def _query_root_dse(
         self,
         connection: Connection,
-    ) -> FlextResult[FlextLdapTypes.LdapAttributes]:
+    ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
         """Query rootDSE from LDAP server using FlextUtilities for generalization."""
         # Use StrEnum value directly - matches ldap3's expected Literal type
         # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"]
         if not connection.search(
             search_base="",
             search_filter=str(FlextLdapConstants.Filters.ALL_ENTRIES_FILTER),
-            search_scope=cast("Literal['BASE', 'LEVEL', 'SUBTREE']", FlextLdapConstants.Ldap3ScopeValues.BASE.value),
+            search_scope=cast(
+                "Literal['BASE', 'LEVEL', 'SUBTREE']",
+                FlextLdapConstants.Ldap3ScopeValues.BASE.value,
+            ),
             attributes=str(FlextLdapConstants.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
-            return FlextResult[FlextLdapTypes.LdapAttributes].fail(
-                f"rootDSE query failed: {connection.result}"
+            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
+                f"rootDSE query failed: {connection.result}",
             )
 
         if not connection.entries:
-            return FlextResult[FlextLdapTypes.LdapAttributes].fail(
-                "rootDSE query returned no entries"
+            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
+                "rootDSE query returned no entries",
             )
 
         root_dse_entry = connection.entries[0]
@@ -155,10 +157,10 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
                     else [str(attr_value)]
                 )
 
-        return FlextResult[FlextLdapTypes.LdapAttributes].ok(attributes)
+        return FlextResult[FlextLdapTypes.Ldap.Attributes].ok(attributes)
 
     @staticmethod
-    def _get_first_value(attrs: FlextLdapTypes.LdapAttributes, key: str) -> str | None:
+    def _get_first_value(attrs: FlextLdapTypes.Ldap.Attributes, key: str) -> str | None:
         """Extract first value from attribute list if present."""
         values = attrs.get(key)
         if not values:
@@ -187,10 +189,45 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             f"supportedExtension: {extension}" for extension in supported_extensions
         )
 
-        detection_result = FlextLdif.get_instance().detector.detect_server_type(
-            ldif_content="\n".join(pseudo_ldif_lines),
+        # Simple server type detection based on common attributes
+        # This avoids dependency on the broken flext-ldif detector
+        detected_type = self._detect_server_type_from_attributes_simple(
+            supported_extensions, naming_contexts
         )
+        return FlextResult[str].ok(detected_type)
 
-        if detection_result.is_success:
-            return FlextResult[str].ok(detection_result.unwrap().detected_server_type)
-        return FlextResult[str].fail(f"Detection failed: {detection_result.error}")
+    def _detect_server_type_from_attributes_simple(
+        self,
+        supported_extensions: list[str],
+        naming_contexts: list[str],
+    ) -> str:
+        """Simple server type detection based on LDAP attributes.
+
+        This is a fallback implementation that avoids the complex flext-ldif
+        detector which has issues with server type normalization.
+        """
+        # Check for OpenLDAP extensions
+        if any("openldap" in ext.lower() for ext in supported_extensions):
+            return "openldap"
+
+        # Check for Oracle OID extensions
+        if any("oracle" in ext.lower() or "oid" in ext.lower() for ext in supported_extensions):
+            return "oid"
+
+        # Check for Oracle OUD extensions
+        if any("oud" in ext.lower() for ext in supported_extensions):
+            return "oud"
+
+        # Check for Active Directory (Microsoft)
+        if any("microsoft" in ext.lower() or "windows" in ext.lower() for ext in supported_extensions):
+            return "ad"
+
+        # Check naming contexts for clues
+        context_str = " ".join(naming_contexts).lower()
+        if "oracle" in context_str:
+            return "oid"  # Assume OID if Oracle in context
+        if "microsoft" in context_str or "windows" in context_str:
+            return "ad"
+
+        # Default to RFC-compliant generic server
+        return "rfc"

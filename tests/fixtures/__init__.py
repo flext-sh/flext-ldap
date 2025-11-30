@@ -14,8 +14,8 @@ import json
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult
-from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
 
+from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
 from tests.fixtures.typing import GenericFieldsDict, GenericTestCaseDict
 
 from .constants import OID, OUD, RFC, General, OpenLDAP2, TestConstants

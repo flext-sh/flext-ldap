@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from flext_ldif.constants import FlextLdifConstants
+
 from flext_ldap.constants import FlextLdapConstants
 
 from .general_constants import General
@@ -40,18 +42,17 @@ class TestConstants:
     class ServerTypes:
         """Server type constants for LDAP server variants.
 
-        Reuses production StrEnum values from FlextLdapConstants.ServerTypes.
+        Reuses production StrEnum values from FlextLdifConstants.ServerTypes.
         """
 
-        # Reuse production StrEnum values for consistency
-        RFC = FlextLdapConstants.ServerTypes.RFC.value
-        GENERIC = FlextLdapConstants.ServerTypes.GENERIC.value
-        OID = FlextLdapConstants.ServerTypes.OID.value
-        OUD = FlextLdapConstants.ServerTypes.OUD.value
-        OPENLDAP2 = FlextLdapConstants.ServerTypes.OPENLDAP2.value
+        # Reuse production StrEnum values for consistency (from flext-ldif)
+        RFC = FlextLdifConstants.ServerTypes.RFC.value
+        OID = FlextLdifConstants.ServerTypes.OID.value
+        OUD = FlextLdifConstants.ServerTypes.OUD.value
+        OPENLDAP = FlextLdifConstants.ServerTypes.OPENLDAP.value
 
         # Valid server types for testing (only those registered in quirks)
-        VALID = (RFC, GENERIC)
+        VALID = (RFC,)
 
     class Connection:
         """LDAP connection-related constants."""
@@ -153,10 +154,10 @@ class TestConstants:
         }
         EMPTY_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {}
         SERVER_TYPE_OPENLDAP: ClassVar[str] = (
-            FlextLdapConstants.ServerTypes.OPENLDAP.value
+            FlextLdifConstants.ServerTypes.OPENLDAP.value
         )
         SERVER_TYPE_OPENLDAP2: ClassVar[str] = (
-            FlextLdapConstants.ServerTypes.OPENLDAP2.value
+            FlextLdifConstants.ServerTypes.OPENLDAP.value  # OPENLDAP2 not in flext-ldif
         )
         ERROR_NO_ATTRIBUTES: ClassVar[str] = "no attributes"
 
