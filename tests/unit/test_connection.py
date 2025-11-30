@@ -28,12 +28,12 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif import FlextLdif
 from flext_tests import FlextTestsMatchers
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldif import FlextLdif
 
 from ..fixtures.constants import TestConstants
 

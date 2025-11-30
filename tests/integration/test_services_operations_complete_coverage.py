@@ -16,7 +16,6 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
@@ -26,6 +25,7 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC

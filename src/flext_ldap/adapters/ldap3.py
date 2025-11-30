@@ -233,7 +233,7 @@ class Ldap3Adapter(FlextService[bool]):
         ) -> FlextResult[FlextLdapModels.OperationResult]:
             """Execute LDAP add operation."""
             try:
-                add_func: FlextLdapTypes.LdapAddCallable = connection.add
+                add_func: FlextLdapTypes.Ldap.AddCallable = connection.add
                 success = add_func(dn_str, None, ldap_attrs)
 
                 if success:
@@ -255,12 +255,12 @@ class Ldap3Adapter(FlextService[bool]):
             self,
             connection: Connection,
             dn: str | FlextLdifModels.DistinguishedName,
-            changes: FlextLdapTypes.LdapModifyChanges,
+            changes: FlextLdapTypes.Ldap.ModifyChanges,
         ) -> FlextResult[FlextLdapModels.OperationResult]:
             """Execute LDAP modify operation."""
             try:
                 dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
-                modify_func: FlextLdapTypes.LdapModifyCallable = connection.modify
+                modify_func: FlextLdapTypes.Ldap.ModifyCallable = connection.modify
                 success = modify_func(dn_str, changes)
 
                 if success:
@@ -286,7 +286,7 @@ class Ldap3Adapter(FlextService[bool]):
             """Execute LDAP delete operation."""
             try:
                 dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
-                delete_func: FlextLdapTypes.LdapDeleteCallable = connection.delete
+                delete_func: FlextLdapTypes.Ldap.DeleteCallable = connection.delete
                 success = delete_func(dn_str)
 
                 if success:
@@ -334,24 +334,24 @@ class Ldap3Adapter(FlextService[bool]):
             """
             # Parser accepts only these server types (without oracle_* variants)
             # Use centralized Literal type from flext-ldif constants
-            parser_compatible_types: dict[
-                str,
-                FlextLdifConstants.LiteralTypes.ServerTypeLiteral,
-            ] = {
-                "oid": "oid",
-                "oud": "oud",
-                "openldap": "openldap",
-                "openldap1": "openldap1",
-                "openldap2": "openldap2",
-                "active_directory": "active_directory",
-                "apache_directory": "apache_directory",
-                "generic": "generic",
-                "rfc": "rfc",
-                "389ds": "389ds",
-                "relaxed": "relaxed",
-                "novell_edirectory": "novell_edirectory",
-                "ibm_tivoli": "ibm_tivoli",
-            }
+            parser_compatible_types = cast(
+                "dict[str, FlextLdifConstants.LiteralTypes.ServerTypeLiteral]",
+                {
+                    "oid": "oid",
+                    "oud": "oud",
+                    "openldap": "openldap",
+                    "openldap1": "openldap1",
+                    "openldap2": "openldap2",
+                    "active_directory": "active_directory",
+                    "apache_directory": "apache_directory",
+                    "generic": "generic",
+                    "rfc": "rfc",
+                    "389ds": "389ds",
+                    "relaxed": "relaxed",
+                    "novell_edirectory": "novell_edirectory",
+                    "ibm_tivoli": "ibm_tivoli",
+                },
+            )
             # Type checker understands dict.get() returns the mapped Literal type or None
             return parser_compatible_types.get(server_type)
 
@@ -364,7 +364,7 @@ class Ldap3Adapter(FlextService[bool]):
             search_attributes: list[str],
             size_limit: int,
             time_limit: int,
-            server_type: FlextLdapConstants.ServerTypes | str,
+            server_type: FlextLdifConstants.ServerTypes | str,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Execute LDAP search and convert results."""
             try:
@@ -395,18 +395,18 @@ class Ldap3Adapter(FlextService[bool]):
                 # Map flext-ldap ServerTypes to flext-ldif ServerTypeLiteral
                 server_type_str = (
                     server_type.value
-                    if isinstance(server_type, FlextLdapConstants.ServerTypes)
+                    if isinstance(server_type, FlextLdifConstants.ServerTypes)
                     else str(server_type)
                 )
                 # Normalize server type (map oracle_oid/oracle_oud to oid/oud)
                 # Use ServerTypes StrEnum values for type safety
                 normalized_server_type = (
-                    FlextLdapConstants.ServerTypes.OID.value
+                    FlextLdifConstants.ServerTypes.OID.value
                     if server_type_str
-                    in {FlextLdapConstants.ServerTypes.OID.value, "oracle_oid"}
-                    else FlextLdapConstants.ServerTypes.OUD.value
+                    in {FlextLdifConstants.ServerTypes.OID.value, "oracle_oid"}
+                    else FlextLdifConstants.ServerTypes.OUD.value
                     if server_type_str
-                    in {FlextLdapConstants.ServerTypes.OUD.value, "oracle_oud"}
+                    in {FlextLdifConstants.ServerTypes.OUD.value, "oracle_oud"}
                     else server_type_str
                 )
                 # Convert to flext-ldif ServerTypeLiteral using helper function
@@ -462,7 +462,10 @@ class Ldap3Adapter(FlextService[bool]):
         self._connection = None
         self._server = None
         self._parser = parser
-        self._entry_adapter = FlextLdapEntryAdapter()
+        # Create adapter instance bypassing potential auto-execution
+        adapter = FlextLdapEntryAdapter.__new__(FlextLdapEntryAdapter)
+        adapter.__init__()
+        self._entry_adapter = adapter  # type: ignore[assignment]
 
     def connect(
         self,
@@ -543,7 +546,7 @@ class Ldap3Adapter(FlextService[bool]):
                 cast(
                     "FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral",
                     FlextLdapConstants.Ldap3ScopeValues.BASE.value,
-                )
+                ),
             )
 
         if scope_enum == FlextLdapConstants.SearchScope.ONELEVEL:
@@ -551,7 +554,7 @@ class Ldap3Adapter(FlextService[bool]):
                 cast(
                     "FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral",
                     FlextLdapConstants.Ldap3ScopeValues.LEVEL.value,
-                )
+                ),
             )
 
         if scope_enum == FlextLdapConstants.SearchScope.SUBTREE:
@@ -559,7 +562,7 @@ class Ldap3Adapter(FlextService[bool]):
                 cast(
                     "FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral",
                     FlextLdapConstants.Ldap3ScopeValues.SUBTREE.value,
-                )
+                ),
             )
 
         return FlextResult[FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral].fail(
@@ -569,8 +572,8 @@ class Ldap3Adapter(FlextService[bool]):
     def search(
         self,
         search_options: FlextLdapModels.SearchOptions,
-        server_type: FlextLdapConstants.ServerTypes
-        | str = FlextLdapConstants.ServerTypes.RFC,
+        server_type: FlextLdifConstants.ServerTypes
+        | str = FlextLdifConstants.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
         """Perform LDAP search operation and convert to Entry models."""
@@ -636,7 +639,7 @@ class Ldap3Adapter(FlextService[bool]):
     def modify(
         self,
         dn: str | FlextLdifModels.DistinguishedName,
-        changes: FlextLdapTypes.LdapModifyChanges,
+        changes: FlextLdapTypes.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry."""

@@ -7,14 +7,16 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_ldif.constants import FlextLdifConstants
+
 from flext_ldap.constants import FlextLdapConstants
 
 
 class RFC:
     """Flat namespace for RFC server test constants - no type checking."""
 
-    # Server type - reuse production StrEnum
-    SERVER_TYPE = FlextLdapConstants.ServerTypes.RFC.value
+    # Server type - reuse production StrEnum from flext-ldif
+    SERVER_TYPE = FlextLdifConstants.ServerTypes.RFC.value
 
     # LDAP connection defaults
     DEFAULT_HOST = "localhost"

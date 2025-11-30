@@ -18,7 +18,13 @@ from typing import Self
 from flext_core import FlextModels, FlextModelsCollections, FlextUtilities
 from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
-from pydantic import Field, computed_field, field_validator, model_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from flext_ldap.constants import FlextLdapConstants
 
@@ -29,7 +35,23 @@ class FlextLdapModels(FlextModels):
     Uses advanced Python 3.13 patterns with enums, mappings, and computed fields
     for type-safe, efficient model definitions. All models follow Pydantic v2 patterns
     with proper validation and immutability.
+
+    **Pydantic 2 Integration:**
+    - use_enum_values=True: StrEnum fields serialize as strings
+    - validate_default=True: Validates default values
+    - arbitrary_types_allowed=True: Allows custom types
+    - str_strip_whitespace=True: Strips whitespace from strings
+    - extra="forbid": Rejects extra fields
     """
+
+    model_config = ConfigDict(
+        frozen=True,  # Immutable models
+        use_enum_values=True,  # StrEnum → string serialization
+        validate_default=True,  # Validate defaults
+        arbitrary_types_allowed=True,  # Custom types allowed
+        str_strip_whitespace=True,  # Strip whitespace
+        extra="forbid",  # Reject extra fields
+    )
 
     # =========================================================================
     # CONNECTION MODELS
@@ -76,8 +98,8 @@ class FlextLdapModels(FlextModels):
         """Options for LDAP search operations (frozen value object with DN validation)."""
 
         base_dn: str = Field(...)
-        scope: FlextLdapConstants.SearchScope = Field(
-            default=FlextLdapConstants.SearchScope.SUBTREE,
+        scope: str = Field(
+            default="SUBTREE",
         )
         filter_str: str = Field(default=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER)
         attributes: list[str] | None = Field(default=None)
@@ -97,7 +119,7 @@ class FlextLdapModels(FlextModels):
         def normalized(
             cls,
             base_dn: str,
-            scope: FlextLdapConstants.SearchScope = FlextLdapConstants.SearchScope.SUBTREE,
+            scope: str = "SUBTREE",
             filter_str: str = FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
             attributes: list[str] | None = None,
             size_limit: int = 0,
@@ -300,7 +322,7 @@ class FlextLdapModels(FlextModels):
         """Aggregated result of synchronizing multiple LDIF phase files to LDAP."""
 
         phase_results: dict[str, FlextLdapModels.PhaseSyncResult] = Field(
-            default_factory=dict
+            default_factory=dict,
         )
         total_entries: int = Field(ge=0)
         total_synced: int = Field(ge=0)

@@ -11,12 +11,12 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC

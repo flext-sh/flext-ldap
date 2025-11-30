@@ -24,6 +24,7 @@ from flext_ldif import (
     FlextLdif,
     FlextLdifModels,
 )
+from flext_ldif.constants import FlextLdifConstants
 from ldap3 import Entry as Ldap3Entry
 
 from flext_ldap.constants import FlextLdapConstants
@@ -55,7 +56,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
     This adapter provides bidirectional conversion with universal server support:
     - ldap3.Entry → FlextLdifModels.Entry (for result processing)
-    - FlextLdifModels.Entry → FlextLdapTypes.LdapAttributes (for ldap3 operations)
+    - FlextLdifModels.Entry → FlextLdapTypes.Ldap.Attributes (for ldap3 operations)
     - Server-specific entry normalization using quirks
     - Entry validation for target server types
     - Entry format conversion between different servers
@@ -137,7 +138,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         """
         super().__init__(**kwargs)
         # Use provided server_type or default from constants
-        resolved_type: str = server_type or FlextLdapConstants.ServerTypes.GENERIC
+        resolved_type: str = server_type or FlextLdifConstants.ServerTypes.RFC
         # FlextLdif accepts config via kwargs, not as direct parameter
         self._ldif = FlextLdif.get_instance()
         self._server_type = resolved_type
@@ -346,24 +347,22 @@ class FlextLdapEntryAdapter(FlextService[bool]):
     def ldif_entry_to_ldap3_attributes(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdapTypes.LdapAttributes]:
+    ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
         """Convert FlextLdifModels.Entry to ldap3 attributes format."""
         if not entry.attributes.attributes:
-            return FlextResult[FlextLdapTypes.LdapAttributes].fail(
+            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
                 "Entry has no attributes",
             )
         try:
             # Build dict from DynamicMetadata items, filtering for list values
             # LDIF attributes are always lists of strings
-            attributes_dict: FlextLdapTypes.LdapAttributes = {}
+            attributes_dict: FlextLdapTypes.Ldap.Attributes = {}
             for key, value in entry.attributes.attributes.items():
                 if FlextRuntime.is_list_like(value):
                     # Convert list elements to strings (LDIF format)
                     attributes_dict[key] = [str(v) for v in value]
-            return FlextResult[FlextLdapTypes.LdapAttributes].ok(
-                FlextLdif.entry_manipulation.convert_ldif_attributes_to_ldap3_format(
-                    attributes_dict,
-                ),
+            return FlextResult[FlextLdapTypes.Ldap.Attributes].ok(
+                attributes_dict,
             )
         except Exception as e:
             entry_dn_str = str(entry.dn) if entry.dn else "unknown"
@@ -374,6 +373,6 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return FlextResult[FlextLdapTypes.LdapAttributes].fail(
+            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
                 f"Failed to convert attributes to ldap3 format: {e!s}",
             )

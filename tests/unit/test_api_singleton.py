@@ -26,10 +26,10 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif import FlextLdif
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
+from flext_ldif import FlextLdif
 
 from ..fixtures.constants import TestConstants
 

@@ -20,10 +20,10 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifModels
 
 # Mark all tests in this module as integration tests requiring Docker
 pytestmark = [pytest.mark.integration, pytest.mark.docker]

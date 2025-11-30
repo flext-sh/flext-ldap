@@ -18,10 +18,10 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifParser
 
 pytestmark = pytest.mark.integration
 

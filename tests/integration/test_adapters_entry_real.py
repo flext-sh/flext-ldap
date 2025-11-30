@@ -15,7 +15,6 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
@@ -24,6 +23,7 @@ from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC

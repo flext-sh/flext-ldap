@@ -7,14 +7,16 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from flext_ldif.constants import FlextLdifConstants
+
 from flext_ldap.constants import FlextLdapConstants
 
 
 class OpenLDAP2:
     """Flat namespace for OpenLDAP 2 server test constants - no type checking."""
 
-    # Server type - reuse production StrEnum
-    SERVER_TYPE = FlextLdapConstants.ServerTypes.OPENLDAP2.value
+    # Server type - reuse production StrEnum from flext-ldif
+    SERVER_TYPE = FlextLdifConstants.ServerTypes.OPENLDAP.value
 
     # LDAP connection defaults
     DEFAULT_HOST = "localhost"

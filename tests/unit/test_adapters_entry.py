@@ -28,11 +28,11 @@ from __future__ import annotations
 
 import pytest
 from flext_ldif import FlextLdifModels
+from flext_ldif.constants import FlextLdifConstants
 from flext_tests import FlextTestsMatchers
 from pydantic import ValidationError
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_ldap.constants import FlextLdapConstants
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import TestConstants
@@ -64,8 +64,8 @@ class TestFlextLdapEntryAdapter:
         """Test adapter initialization with default server_type."""
         assert adapter is not None
         assert adapter._ldif is not None
-        assert adapter._server_type == FlextLdapConstants.ServerTypes.GENERIC.value
-        assert adapter._server_type == TestConstants.ServerTypes.GENERIC
+        assert adapter._server_type == FlextLdifConstants.ServerTypes.RFC.value
+        assert adapter._server_type == TestConstants.ServerTypes.RFC
 
     def test_adapter_initialization_with_server_type(self) -> None:
         """Test adapter initialization with server type."""

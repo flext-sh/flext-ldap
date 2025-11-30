@@ -1,129 +1,102 @@
-"""LDAP Type Definitions - Type System for FLEXT LDAP Operations.
-
-Python 3.13+ strict: Uses PEP 695 type aliases (type keyword) exclusively.
-No backward compatibility with Python < 3.13.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""[PACKAGE] type definitions module - PEP 695 type aliases."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from typing import TypeVar
 
-from flext_core import FlextTypes
-from flext_ldif import FlextLdifTypes
+from flext_core import FlextResult, FlextTypes
 
-__all__ = [
-    "FlextLdapTypes",
-]
+from flext_ldap.protocols import FlextLdapProtocols
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TYPEVARS: Único objeto permitido fora da classe
+# ═══════════════════════════════════════════════════════════════════════════
+# Reutilize de FlextTypes quando existir
+
+# Apenas TypeVars específicos do domínio
+TEntry = TypeVar("TEntry", bound="FlextLdapProtocols.LdapEntry.EntryProtocol")
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# CLASSE ÚNICA COM NESTED CLASSES
+# ═══════════════════════════════════════════════════════════════════════════
 class FlextLdapTypes(FlextTypes):
-    """LDAP-specific type definitions extending FlextTypes.
+    """[Package] type definitions composing with FlextTypes.
 
-    Domain-specific type system for LDAP operations.
-    Minimal types - reuses FlextLdifTypes when possible.
-
-    Uses Python 3.13+ strict best practices:
-    - PEP 695 type aliases (type keyword) - no TypeAlias
-    - collections.ABC types (Mapping, Sequence) for read-only semantics
-    - Proper type annotations following Pydantic 2 patterns
-    - No backward compatibility with Python < 3.13
+    REGRAS:
+    ───────
+    1. TypeVars fora da classe (único caso permitido)
+    2. Type aliases PEP 695 dentro de nested classes
+    3. Tipos complexos compostos com Protocols
+    4. ZERO aliases simples - use tipos diretos
+    5. Composição com FlextTypes, não duplicação
     """
 
-    # =========================================================================
-    # LDAP SEARCH RESULT TYPES (Python 3.13+ collections.ABC)
-    # =========================================================================
+    class Entry:
+        """Entry-related type aliases."""
 
-    # Using Sequence for read-only list semantics (Python 3.13 best practice)
-    type SearchResult = Sequence[FlextLdifTypes.ModelInstance]
-    """Read-only sequence of LDAP entries from search operation."""
+        # Tipos usando Protocols (evita import circular)
+        type Instance = FlextLdapProtocols.LdapEntry.EntryProtocol
+        type Collection = Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]
+        type EntryMapping = Mapping[str, FlextLdapProtocols.LdapEntry.EntryProtocol]
 
-    # =========================================================================
-    # LDAP OPERATION DATA TYPES
-    # =========================================================================
-    # Note: LdapModifyChanges, LdapAttributes, LdapAttributeValues remain as dict
-    # for compatibility with ldap3 library's native format (mutable dict required)
-    # Use FlextLdapModels.LdapOperationResult and FlextLdapModels.LdapBatchStats
-    # directly for model-based operations
+        # Tipos genéricos
+        type Handler[T] = Callable[
+            [FlextLdapProtocols.LdapEntry.EntryProtocol], FlextResult[T]
+        ]
+        type Transformer = Callable[
+            [FlextLdapProtocols.LdapEntry.EntryProtocol],
+            FlextLdapProtocols.LdapEntry.EntryProtocol,
+        ]
+        type Filter = Callable[[FlextLdapProtocols.LdapEntry.EntryProtocol], bool]
+        type Processor = Callable[
+            [Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
+            FlextResult[Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
+        ]
 
-    type LdapModifyChanges = dict[str, list[tuple[str, list[str]]]]
-    """LDAP modify changes format (mutable dict for ldap3 compatibility).
+    class Operation:
+        """Operation-related type aliases."""
 
-    Format: {attribute_name: [(operation, [values])]}
-    Operations: 'add', 'delete', 'replace'
-    """
+        # Composição com FlextTypes
+        type Result[T] = FlextResult[T]
+        type Callback[T] = Callable[[], FlextResult[T]]
 
-    type LdapAttributeValues = dict[str, list[str]]
-    """LDAP attribute values (mutable dict for ldap3 compatibility).
+        # Tipos específicos do domínio
+        type EntryProcessor = Callable[
+            [FlextLdapProtocols.LdapEntry.EntryProtocol],
+            FlextResult[bool],
+        ]
+        type BatchProcessor = Callable[
+            [Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
+            FlextResult[int],
+        ]
 
-    Format: {attribute_name: [value1, value2, ...]}
-    """
+    class Ldap:
+        """LDAP-specific type aliases."""
 
-    type LdapAttributes = dict[str, list[str]]
-    """LDAP attributes dictionary (mutable dict for ldap3 compatibility).
+        # Operation data types (ldap3 compatibility)
+        type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+        type AttributeValues = dict[str, list[str]]
+        type Attributes = dict[str, list[str]]
+        type AttributesReadOnly = Mapping[str, Sequence[str]]
 
-    Format: {attribute_name: [value1, value2, ...]}
-    """
-
-    # Read-only version for type hints where mutation is not needed
-    # Using Mapping and Sequence from collections.ABC (Python 3.13 best practice)
-    type LdapAttributesReadOnly = Mapping[str, Sequence[str]]
-    """Read-only LDAP attributes mapping (Python 3.13+ collections.ABC).
-
-    Use this for function parameters where attributes should not be modified.
-    Format: {attribute_name: [value1, value2, ...]}
-    """
-
-    # =========================================================================
-    # LDAP OPERATION CALLABLES (Python 3.13+ collections.ABC.Callable)
-    # =========================================================================
-
-    type LdapAddCallable = Callable[
-        [str, str | None, LdapAttributeValues | None],
-        bool,
-    ]
-    """Callable for LDAP add operation.
-
-    Signature: (dn, controls, attributes) -> bool
-    """
-
-    type LdapModifyCallable = Callable[[str, LdapModifyChanges], bool]
-    """Callable for LDAP modify operation.
-
-    Signature: (dn, changes) -> bool
-    """
-
-    type LdapDeleteCallable = Callable[[str], bool]
-    """Callable for LDAP delete operation.
-
-    Signature: (dn) -> bool
-    """
-
-    type LdapSearchCallable = Callable[
-        [
-            str,  # base_dn
-            str,  # filter_str
-            int,  # scope
-            Sequence[str] | None,  # attributes
-            bool,  # dereference_aliases
-            Mapping[str, str] | None,  # controls
-            int | None,  # size_limit
-            int | None,  # time_limit
-            bool,  # types_only
-            Mapping[str, str] | None,  # extended_attributes
-        ],
-        tuple[bool, Mapping[str, Sequence[Mapping[str, Sequence[str]]]]],
-    ]
-    """Callable for LDAP search operation.
-
-    Returns:
-        (success: bool, results: Mapping[str, Sequence[Mapping[str, Sequence[str]]]])
-    Results format: {dn: [{attribute: [values]}]}
-    """
-
-    # Note: LdapProgressCallback moved to models.py to avoid circular import
-    # Import from models: from flext_ldap.models import FlextLdapModels
-    # Use: FlextLdapModels.LdapProgressCallback
+        # Callables
+        type AddCallable = Callable[[str, str | None, AttributeValues | None], bool]
+        type ModifyCallable = Callable[[str, ModifyChanges], bool]
+        type DeleteCallable = Callable[[str], bool]
+        type SearchCallable = Callable[
+            [
+                str,
+                str,
+                int,
+                Sequence[str] | None,
+                bool,
+                Mapping[str, str] | None,
+                int | None,
+                int | None,
+                bool,
+                Mapping[str, str] | None,
+            ],
+            tuple[bool, Mapping[str, Sequence[Mapping[str, Sequence[str]]]]],
+        ]

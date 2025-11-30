@@ -21,7 +21,6 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 
@@ -29,6 +28,7 @@ from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 pytestmark = pytest.mark.integration
