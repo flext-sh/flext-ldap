@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 from flext_tests import FlextTestsMatchers
 
 from flext_ldap.base import FlextLdapServiceBase
@@ -42,7 +43,7 @@ class TestFlextLdapServiceBase:
     class _TestService(FlextLdapServiceBase[bool]):
         """Test service implementation for testing base class."""
 
-        def execute(self, **_kwargs: object) -> FlextResult[bool]:
+        def execute(self, **_kwargs: FlextTypes.GeneralValueType) -> FlextResult[bool]:
             """Execute test service returning success result."""
             return FlextResult[bool].ok(True)
 

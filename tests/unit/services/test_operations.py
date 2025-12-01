@@ -69,7 +69,7 @@ class TestFlextLdapOperations:
     @classmethod
     def _create_connection(cls) -> FlextLdapConnection:
         """Factory method for creating connection instances."""
-        return FlextLdapConnection(config=FlextLdapConfig.get_instance())
+        return FlextLdapConnection(config=FlextLdapConfig())
 
     @classmethod
     def _create_operations(

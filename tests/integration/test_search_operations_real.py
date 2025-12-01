@@ -23,6 +23,7 @@ from flext_ldap import FlextLdap
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -53,7 +54,7 @@ class TestFlextLdapRealOperations:
     def _create_test_user_data(
         uid_suffix: str,
         operation: str = "test",
-    ) -> object:
+    ) -> GenericFieldsDict:
         """Create test user data using FlextTestsFactories."""
         return FlextTestsFactories.create_user(
             user_id=f"{operation}_{uid_suffix}",
@@ -64,7 +65,7 @@ class TestFlextLdapRealOperations:
     @staticmethod
     def _create_test_config(
         operation: str = "test",
-    ) -> object:
+    ) -> GenericFieldsDict:
         """Create test configuration using FlextTestsFactories."""
         return FlextTestsFactories.create_config(
             service_type="ldap",
@@ -288,7 +289,7 @@ class TestFlextLdapRealOperations:
         # Execute modify sequence with verification
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("FlextLdapProtocols.LdapClient", ldap_client),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -321,7 +322,7 @@ class TestFlextLdapRealOperations:
 
         # Add entry first
         TestOperationHelpers.add_entry_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             entry,
             cleanup_after=False,  # We'll delete it manually
         )
@@ -387,7 +388,7 @@ class TestFlextLdapRealOperations:
         ]
         if with_search:
             crud_results = TestOperationHelpers.execute_crud_sequence(
-                cast("FlextLdapProtocols.LdapClient", ldap_client),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
                 entry,
                 changes,
             )
@@ -397,7 +398,7 @@ class TestFlextLdapRealOperations:
         else:
             add_modify_delete_results = (
                 TestOperationHelpers.execute_add_modify_delete_sequence(
-                    cast("FlextLdapProtocols.LdapClient", ldap_client),
+                    cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
                     entry,
                     changes,
                 )
@@ -413,5 +414,5 @@ class TestFlextLdapRealOperations:
         # Assert all operations succeeded using flext_tests
         for result in results.values():
             FlextTestsUtilities.TestUtilities.assert_result_success(
-                cast("FlextResult[object]", result),
+                cast("FlextResult[FlextLdapModels.OperationResult]", result),
             )

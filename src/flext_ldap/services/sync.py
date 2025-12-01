@@ -17,13 +17,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextResult, FlextUtilities
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.utilities import FlextLdifUtilities
+from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.models import FlextLdapModels
@@ -36,6 +35,16 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
     Provides direct synchronization of LDIF files to LDAP directory without
     any attribute or DN conversions. Works with any LDAP-compatible server.
     """
+
+    model_config = ConfigDict(
+        frozen=False,  # Service needs mutable state for operations and ldif references
+        extra="allow",
+        arbitrary_types_allowed=True,
+    )
+
+    _operations: FlextLdapOperations = PrivateAttr()
+    _ldif: FlextLdif = PrivateAttr()
+    _generate_datetime_utc: Callable[[], datetime] = PrivateAttr()
 
     class BatchSync:
         """Batch synchronization logic using FlextUtilities for generalization."""
@@ -120,10 +129,6 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
                     transformed.append(entry)
             return transformed
 
-    _operations: FlextLdapOperations
-    _ldif: FlextLdif
-    _generate_datetime_utc: Callable[[], datetime]
-
     def __init__(
         self,
         operations: FlextLdapOperations | None = None,
@@ -162,12 +167,14 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
 
         start_time = self._generate_datetime_utc()
         # Use FlextLdif API parse method (avoids broken parse_source)
+        # Use ServerTypes Literal type directly (FlextLdif.parse accepts Literal)
+        # Use the literal value from the enum
+        server_type_literal: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = (
+            "rfc"  # Literal matching FlextLdifConstants.ServerTypes.RFC.value
+        )
         parse_result = self._ldif.parse(
             source=ldif_file,
-            server_type=cast(
-                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral",
-                FlextLdifConstants.ServerTypes.RFC.value,
-            ),
+            server_type=server_type_literal,
         )
 
         if parse_result.is_failure:
@@ -208,7 +215,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             stats.model_copy(update={"duration_seconds": duration}),
         )
 
-    def execute(
+    def execute(  # noqa: PLR6301
         self,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.SyncStats]:

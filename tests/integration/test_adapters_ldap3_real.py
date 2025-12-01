@@ -13,13 +13,13 @@ from collections.abc import Generator
 from typing import cast
 
 import pytest
+from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
@@ -143,12 +143,12 @@ class TestLdap3AdapterReal:
             },
         }
 
-        # Ldap3Adapter implements FlextLdapProtocols.LdapClient implicitly via duck typing
+        # Ldap3Adapter implements FlextLdapProtocols.LdapService.LdapClientProtocol implicitly via duck typing
         # Type ignore needed because mypy doesn't recognize structural subtyping
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                cast("FlextLdapProtocols.LdapClient", connected_adapter),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
                 entry_dict,
             )
         )

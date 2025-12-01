@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import pytest
+from flext_ldif import FlextLdifModels, FlextLdifParser
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
-from flext_ldif import FlextLdifModels, FlextLdifParser
 
 
 class TestApiErrorPaths:
@@ -15,7 +15,14 @@ class TestApiErrorPaths:
 
     def test_connect_failure_logs_error(self) -> None:
         """Test api.py line 347: logger.error when connect fails."""
-        api = FlextLdap()
+        from flext_ldap.config import FlextLdapConfig
+        from flext_ldap.services.connection import FlextLdapConnection
+        from flext_ldap.services.operations import FlextLdapOperations
+
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config)
+        operations = FlextLdapOperations(connection=connection)
+        api = FlextLdap(connection=connection, operations=operations)
 
         # Create invalid connection config to force failure
         bad_config = FlextLdapModels.ConnectionConfig(
@@ -30,7 +37,14 @@ class TestApiErrorPaths:
 
     def test_upsert_failure_logs_error(self) -> None:
         """Test api.py line 653: logger.error when upsert fails."""
-        api = FlextLdap()
+        from flext_ldap.config import FlextLdapConfig
+        from flext_ldap.services.connection import FlextLdapConnection
+        from flext_ldap.services.operations import FlextLdapOperations
+
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config)
+        operations = FlextLdapOperations(connection=connection)
+        api = FlextLdap(connection=connection, operations=operations)
         # Upsert without connection should fail
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -46,9 +60,14 @@ class TestApiErrorPaths:
     def test_batch_upsert_failure_logs_error(self) -> None:
         """Test api.py line 724: logger.error when batch_upsert fails."""
         # Create API with parser (required)
+        from flext_ldap.services.connection import FlextLdapConnection
+        from flext_ldap.services.operations import FlextLdapOperations
+
         config = FlextLdapConfig()
         parser = FlextLdifParser()
-        api = FlextLdap(config=config, parser=parser)
+        connection = FlextLdapConnection(config=config, parser=parser)
+        operations = FlextLdapOperations(connection=connection)
+        api = FlextLdap(connection=connection, operations=operations, ldif=parser)
 
         entries = [
             FlextLdifModels.Entry(

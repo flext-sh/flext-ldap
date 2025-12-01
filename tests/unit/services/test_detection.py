@@ -24,10 +24,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
-from ldap3 import Connection
 
 from flext_ldap.services.detection import FlextLdapServerDetector
 
@@ -163,7 +162,9 @@ class TestFlextLdapServerDetector:
         detector: FlextLdapServerDetector,
     ) -> None:
         """Test execute() method fails with invalid connection type."""
-        result = detector.execute(connection=cast("Connection", "not_a_connection"))
+        # execute() accepts kwargs, so pass connection as keyword argument
+        invalid_connection: str = "not_a_connection"
+        result = detector.execute(connection=invalid_connection)  # type: ignore[arg-type]
 
         assert result.is_failure
         assert result.error is not None

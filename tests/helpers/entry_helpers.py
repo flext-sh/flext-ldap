@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
+from flext_core.typings import FlextTypes
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
@@ -29,8 +30,10 @@ from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.operations import FlextLdapOperations
 from tests.fixtures.typing import GenericFieldsDict
 
-LdapClientType = FlextLdap | FlextLdapProtocols.LdapClient
-LdapOperationsType = FlextLdap | FlextLdapOperations | FlextLdapProtocols.LdapClient
+LdapClientType = FlextLdap | FlextLdapProtocols.LdapService.LdapClientProtocol
+LdapOperationsType = (
+    FlextLdap | FlextLdapOperations | FlextLdapProtocols.LdapService.LdapClientProtocol
+)
 
 
 class EntryTestHelpers:
@@ -45,7 +48,7 @@ class EntryTestHelpers:
 
         @staticmethod
         def _normalize_attributes(
-            attributes: Mapping[str, object],
+            attributes: Mapping[str, FlextTypes.GeneralValueType],
         ) -> dict[str, list[str]]:
             """Normalize attributes to dict[str, list[str]].
 
@@ -67,7 +70,7 @@ class EntryTestHelpers:
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: Mapping[str, object],
+        attributes: Mapping[str, FlextTypes.GeneralValueType],
     ) -> FlextLdifModels.Entry:
         """Create Entry directly from DN string and attributes dict.
 
@@ -88,7 +91,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def dict_to_entry(
-        entry_dict: Mapping[str, object] | GenericFieldsDict,
+        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
     ) -> FlextLdifModels.Entry:
         """Convert dictionary to FlextLdifModels.Entry."""
         dn_str = str(entry_dict.get("dn", ""))
@@ -130,7 +133,7 @@ class EntryTestHelpers:
         return False
 
     @staticmethod
-    def verify_entry_data_matches(
+    def verify_entry_data_matches(  # noqa: PLR0911
         client: LdapOperationsType,
         expected_entry: FlextLdifModels.Entry,
     ) -> bool:
@@ -207,7 +210,7 @@ class EntryTestHelpers:
     @staticmethod
     def add_entry_from_dict(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, object] | GenericFieldsDict,
+        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
         *,
         verify: bool = True,
         cleanup_before: bool = True,
@@ -271,9 +274,9 @@ class EntryTestHelpers:
         return results
 
     @staticmethod
-    def modify_entry_with_verification(
+    def modify_entry_with_verification(  # noqa: PLR0913
         client: LdapOperationsType,
-        entry_dict: Mapping[str, object] | GenericFieldsDict,
+        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
@@ -332,7 +335,7 @@ class EntryTestHelpers:
     @staticmethod
     def delete_entry_with_verification(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, object] | GenericFieldsDict,
+        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,

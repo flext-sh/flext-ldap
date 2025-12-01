@@ -29,6 +29,8 @@ from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdap, FlextLdapModels
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
 from tests.fixtures.typing import GenericFieldsDict
 
 # Mark entire module as smoke tests
@@ -118,7 +120,7 @@ class TestAssertions:
         assert api is not None, "FlextLdap API instantiation failed"
 
     @staticmethod
-    def assert_models_accessible(models: object) -> None:
+    def assert_models_accessible(models: FlextLdapModels) -> None:
         """Assert that FlextLdapModels are accessible."""
         assert models is not None, "FlextLdapModels not accessible"
 
@@ -172,8 +174,11 @@ class TestFlextLdapSmoke:
         Verifies that the API can be imported and instantiated.
         Does NOT test connection - that's in test_ldap_container_health.
         """
-        # Instantiate REAL FlextLdap object (without connection)
-        api = FlextLdap()
+        # Instantiate REAL FlextLdap object (requires connection and operations)
+        config = FlextLdapConfig()
+        connection = FlextLdapConnection(config=config)
+        operations = FlextLdapOperations(connection=connection)
+        api = FlextLdap(connection=connection, operations=operations)
         TestAssertions.assert_api_instantiated(api)
 
         # Verify models are accessible
@@ -195,8 +200,12 @@ class TestFlextLdapSmoke:
         # Create REAL config from container info
         config = TestDataFactories.create_flext_config(ldap_container)
 
-        # Create REAL FlextLdap instance
-        client = FlextLdap(config=config)
+        # Create REAL connection and operations instances
+        connection = FlextLdapConnection(config=config)
+        operations = FlextLdapOperations(connection=connection)
+
+        # Create REAL FlextLdap instance with dependency injection
+        client = FlextLdap(connection=connection, operations=operations)
 
         # Create REAL connection config
         conn_config = TestDataFactories.create_connection_config(ldap_container)

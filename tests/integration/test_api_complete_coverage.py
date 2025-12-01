@@ -21,6 +21,7 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 
@@ -28,7 +29,6 @@ from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 pytestmark = pytest.mark.integration
@@ -277,7 +277,9 @@ class TestFlextLdapAPICompleteCoverage:
     ) -> None:
         """Test API initialization with default config."""
         # Create a simple FlextLdap instance for config testing
-        instance = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        instance = create_flext_ldap_instance()
         TestAssertions.assert_config_initialized(instance)
 
     def test_connect_with_service_config_all_options(
@@ -308,7 +310,7 @@ class TestFlextLdapAPICompleteCoverage:
         result = ldap_client.execute()
         # Fast fail - should return failure when not connected
         TestAssertions.assert_operation_failure(
-            cast("FlextResult[object]", result),
+            cast("FlextResult[FlextLdapModels.OperationResult]", result),
             "Not connected",
         )
 

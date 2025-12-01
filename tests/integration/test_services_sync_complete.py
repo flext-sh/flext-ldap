@@ -13,6 +13,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap import FlextLdap
@@ -22,7 +23,6 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
-from flext_ldif import FlextLdifParser
 
 from ..fixtures.constants import RFC
 from ..helpers.operation_helpers import TestOperationHelpers

@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Protocol
 
 import pytest
+from flext_core.typings import FlextTypes
 from ldap3 import Connection, Server
 
 from flext_ldap.services.detection import FlextLdapServerDetector
@@ -25,7 +26,7 @@ class ConnectionWithUnbind(Protocol):
 
     bound: bool
 
-    def unbind(self, controls: object | None = None) -> None:
+    def unbind(self, controls: FlextTypes.GeneralValueType | None = None) -> None:
         """Unbind from LDAP server."""
         ...
 

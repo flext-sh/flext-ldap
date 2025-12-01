@@ -31,12 +31,13 @@ from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestDocker
 from ldap3 import Connection, Server
 
+from flext_ldap.api import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.fixtures.typing import GenericFieldsDict
+from tests.fixtures.typing import GenericFieldsDict, LdapContainerDict
 
 from .fixtures import LdapTestFixtures
 
@@ -52,12 +53,12 @@ FLEXT_WORKSPACE_ROOT = FLEXT_LDAP_ROOT.parent  # /home/marlonsc/flext
 
 # Container configuration (matches SHARED_CONTAINERS in FlextTestDocker)
 LDAP_CONTAINER_NAME = "flext-openldap-test"
-LDAP_COMPOSE_FILE = FLEXT_LDAP_ROOT / "docker" / "docker-compose.yml"
+LDAP_COMPOSE_FILE = FLEXT_WORKSPACE_ROOT / "docker" / "docker-compose.openldap.yml"
 LDAP_SERVICE_NAME = "openldap"
 LDAP_PORT = 3390
 LDAP_BASE_DN = "dc=flext,dc=local"
 LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD"
+LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"  # Matches docker-compose.openldap.yml
 
 
 # =============================================================================
@@ -91,8 +92,8 @@ def _ldap3_unbind(conn: Connection) -> None:
 def _get_docker_control(worker_id: str = "master") -> FlextTestDocker:
     """Create FlextTestDocker with correct workspace root for flext-ldap.
 
-    Always uses the flext-ldap project root as workspace_root to ensure
-    relative paths in SHARED_CONTAINERS resolve correctly.
+    Uses FLEXT_WORKSPACE_ROOT to ensure docker-compose paths resolve correctly.
+    The compose file is at docker/docker-compose.openldap.yml relative to workspace root.
 
     Args:
         worker_id: pytest-xdist worker ID for parallel execution isolation
@@ -102,7 +103,7 @@ def _get_docker_control(worker_id: str = "master") -> FlextTestDocker:
 
     """
     return FlextTestDocker(
-        workspace_root=FLEXT_LDAP_ROOT,
+        workspace_root=FLEXT_WORKSPACE_ROOT,
         worker_id=worker_id,
     )
 
@@ -180,15 +181,21 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             "Container %s is dirty, recreating with fresh volumes",
             LDAP_CONTAINER_NAME,
         )
-        # Cleanup dirty containers (will down + up with fresh volumes)
-        cleanup_result = docker_control.cleanup_dirty_containers()
-
-        if cleanup_result.is_failure:
-            logger.warning(f"Dirty container cleanup failed: {cleanup_result.error}")
+        # Use relative path from workspace_root
+        compose_file_rel = str(LDAP_COMPOSE_FILE.relative_to(FLEXT_WORKSPACE_ROOT))
+        compose_result = docker_control.compose_down(compose_file_rel)
+        if compose_result.is_failure:
+            logger.warning(f"Compose down failed: {compose_result.error}")
+        create_result = docker_control.compose_up(
+            compose_file_rel,
+            service=LDAP_SERVICE_NAME,
+            force_recreate=True,
+        )
+        if create_result.is_failure:
+            logger.warning(f"Container recreate failed: {create_result.error}")
         else:
-            cleaned = cleanup_result.unwrap()
-            if cleaned:
-                logger.info("Recreated dirty containers: %s", cleaned)
+            docker_control.mark_container_clean(LDAP_CONTAINER_NAME)
+            logger.info("Recreated dirty container: %s", LDAP_CONTAINER_NAME)
     else:
         # Not dirty - try to start existing container first (without recreation)
         start_result = docker_control.start_existing_container(LDAP_CONTAINER_NAME)
@@ -201,8 +208,9 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                 "Container %s not found, creating with compose...",
                 LDAP_CONTAINER_NAME,
             )
+            compose_file_rel = str(LDAP_COMPOSE_FILE.relative_to(FLEXT_WORKSPACE_ROOT))
             create_result = docker_control.compose_up(
-                str(LDAP_COMPOSE_FILE),
+                compose_file_rel,
                 service=LDAP_SERVICE_NAME,
             )
             if create_result.is_failure:
@@ -395,7 +403,7 @@ def unique_dn_suffix(
 @pytest.fixture
 def make_user_dn(
     unique_dn_suffix: str,
-    ldap_container: GenericFieldsDict,
+    ldap_container: LdapContainerDict,
 ) -> Callable[[str], str]:
     """Factory to create unique user DNs with base DN isolation (REGRA 3).
 
@@ -434,7 +442,7 @@ def make_user_dn(
 @pytest.fixture
 def make_group_dn(
     unique_dn_suffix: str,
-    ldap_container: GenericFieldsDict,
+    ldap_container: LdapContainerDict,
 ) -> Callable[[str], str]:
     """Factory to create unique group DNs with base DN isolation (REGRA 3).
 
@@ -480,7 +488,7 @@ def make_group_dn(
 @pytest.fixture(scope="session")
 def ldap_container(
     worker_id: str,  # For isolation
-) -> GenericFieldsDict:
+) -> LdapContainerDict:
     """Session-scoped LDAP container configuration with worker isolation.
 
     Container lifecycle is managed by pytest_sessionstart hook:
@@ -508,14 +516,26 @@ def ldap_container(
     lock = FileLock(lock_file)
 
     # Wait for container to be ready (started by pytest_sessionstart)
+    docker_control = _get_docker_control(worker_id)
+    
     with lock:
-        max_wait: int = 60  # seconds
+        max_wait: int = 90  # seconds - increased for LDAP initialization
         wait_interval: float = 2.0  # seconds
-        waited: float = 0.0
 
         logger.info("Waiting for container %s to be ready...", LDAP_CONTAINER_NAME)
 
-        # Test LDAP connection (more reliable than Docker healthcheck)
+        # Step 1: Wait for port to be accessible
+        port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, max_wait)
+        if port_result.is_failure or not port_result.value:
+            pytest.skip(
+                f"Container {LDAP_CONTAINER_NAME} port {LDAP_PORT} not ready "
+                f"within {max_wait}s: {port_result.error or 'timeout'}",
+            )
+
+        # Step 2: Wait for LDAP service to accept connections and bind
+        waited: float = 0.0
+        ldap_ready = False
+        
         while waited < max_wait:
             try:
                 server = Server(
@@ -527,13 +547,16 @@ def ldap_container(
                     user=LDAP_ADMIN_DN,
                     password=LDAP_ADMIN_PASSWORD,
                     auto_bind=True,
-                    receive_timeout=2,
+                    receive_timeout=5,  # Increased timeout for bind
                 )
-                _ldap3_unbind(test_conn)
-                logger.info(
-                    f"Container {LDAP_CONTAINER_NAME} is ready after {waited:.1f}s",
-                )
-                break
+                # Verify connection is actually bound
+                if test_conn.bound:
+                    _ldap3_unbind(test_conn)
+                    logger.info(
+                        f"Container {LDAP_CONTAINER_NAME} is ready after {waited:.1f}s",
+                    )
+                    ldap_ready = True
+                    break
             except Exception as e:
                 # Container not ready yet, keep waiting
                 if waited % 10 == 0:  # Log every 10 seconds
@@ -545,9 +568,9 @@ def ldap_container(
             time.sleep(wait_interval)
             waited += wait_interval
 
-        if waited >= max_wait:
+        if not ldap_ready:
             pytest.skip(
-                f"Container {LDAP_CONTAINER_NAME} did not become ready "
+                f"Container {LDAP_CONTAINER_NAME} LDAP service not ready "
                 f"within {max_wait}s",
             )
 
@@ -556,7 +579,8 @@ def ldap_container(
         _ensure_basic_ldap_structure()
 
     # Return connection info (matches docker-compose.yml)
-    container_info: GenericFieldsDict = {
+
+    container_info: LdapContainerDict = {
         "server_url": f"ldap://localhost:{LDAP_PORT}",
         "host": "localhost",
         "bind_dn": LDAP_ADMIN_DN,
@@ -612,7 +636,7 @@ def sample_connection_config() -> FlextLdapModels.ConnectionConfig:
 
 
 @pytest.fixture(scope="module")
-def ldap_config(ldap_container: GenericFieldsDict) -> FlextLdapConfig:
+def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapConfig:
     """Get standard LDAP connection configuration.
 
     Module-scoped to match ldap_client fixture scope for performance.
@@ -631,7 +655,7 @@ def ldap_config(ldap_container: GenericFieldsDict) -> FlextLdapConfig:
 
 @pytest.fixture(scope="module")
 def connection_config(
-    ldap_container: GenericFieldsDict,
+    ldap_container: LdapContainerDict,
 ) -> FlextLdapModels.ConnectionConfig:
     """Create connection configuration for testing.
 
@@ -650,7 +674,7 @@ def connection_config(
 
 
 @pytest.fixture
-def search_options(ldap_container: GenericFieldsDict) -> FlextLdapModels.SearchOptions:
+def search_options(ldap_container: LdapContainerDict) -> FlextLdapModels.SearchOptions:
     """Create search options for testing."""
     base_dn = str(ldap_container.get("base_dn", "dc=example,dc=com"))
     return FlextLdapModels.SearchOptions(
@@ -726,7 +750,7 @@ def search_options(ldap_container: GenericFieldsDict) -> FlextLdapModels.SearchO
 
 @pytest.fixture(scope="session")
 def ldap_test_data_loader(
-    ldap_container: GenericFieldsDict,
+    ldap_container: LdapContainerDict,
     test_dns_tracker: DNSTracker,
 ) -> Generator[Connection]:
     """Session-scoped test data loader with intelligent cleanup.
@@ -767,7 +791,7 @@ def ldap_test_data_loader(
                     ou_dn,
                     attributes={
                         "objectClass": ["organizationalUnit", "top"],
-                        "ou": ou_name,
+                        "ou": [ou_name],
                     },
                 )
             except Exception:
@@ -879,7 +903,7 @@ SAMPLE_GROUP_ENTRY = {
 def ldap_connection(
     ldap_config: FlextLdapConfig,
     ldap_parser: FlextLdifParser | None,
-    ldap_container: GenericFieldsDict,
+    ldap_container: LdapContainerDict,
 ) -> Generator[FlextLdapConnection]:
     """Get FlextLdapConnection instance with established connection for testing.
 
@@ -934,6 +958,61 @@ def ldap_operations(ldap_connection: FlextLdapConnection) -> FlextLdapOperations
     return FlextLdapOperations(connection=ldap_connection)
 
 
+@pytest.fixture
+def ldap_client(
+    ldap_connection: FlextLdapConnection,
+    ldap_parser: FlextLdifParser | None,
+) -> FlextLdap:
+    """Get configured LDAP client instance for testing with established connection.
+
+    Creates a FlextLdap instance with injected dependencies.
+    This enables real integration tests with actual LDAP operations.
+
+    Args:
+        ldap_connection: LDAP connection instance
+        ldap_parser: LDIF parser (optional)
+
+    Returns:
+        FlextLdap: Configured LDAP client instance
+
+    """
+    operations = FlextLdapOperations(connection=ldap_connection)
+    return FlextLdap(
+        connection=ldap_connection,
+        operations=operations,
+        ldif=ldap_parser,
+    )
+
+
+# =============================================================================
+# HELPER FUNCTIONS FOR TEST CREATION
+# =============================================================================
+
+
+def create_flext_ldap_instance(
+    config: FlextLdapConfig | None = None,
+    parser: FlextLdifParser | None = None,
+) -> FlextLdap:
+    """Create a FlextLdap instance for testing without connection.
+
+    Helper function to create FlextLdap instances in tests that don't use fixtures.
+    The instance will not be connected - call connect() separately if needed.
+
+    Args:
+        config: Optional LDAP configuration (defaults to FlextLdapConfig())
+        parser: Optional LDIF parser
+
+    Returns:
+        FlextLdap: Unconnected FlextLdap instance
+
+    """
+    if config is None:
+        config = FlextLdapConfig()
+    connection = FlextLdapConnection(config=config, parser=parser)
+    operations = FlextLdapOperations(connection=connection)
+    return FlextLdap(connection=connection, operations=operations, ldif=parser)
+
+
 # @pytest.fixture
 # def ldap3_adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
 #     """Get Ldap3Adapter instance for testing."""
@@ -978,8 +1057,8 @@ def _ensure_basic_ldap_structure() -> None:
                 f"ou=people,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
                 {
-                    "ou": "people",
-                    "description": "Organizational unit for people entries",
+                    "ou": ["people"],
+                    "description": ["Organizational unit for people entries"],
                 },
             )
             logger.debug("Created ou=people")
@@ -993,8 +1072,8 @@ def _ensure_basic_ldap_structure() -> None:
                 f"ou=groups,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
                 {
-                    "ou": "groups",
-                    "description": "Organizational unit for group entries",
+                    "ou": ["groups"],
+                    "description": ["Organizational unit for group entries"],
                 },
             )
             logger.debug("Created ou=groups")
@@ -1008,8 +1087,8 @@ def _ensure_basic_ldap_structure() -> None:
                 f"ou=services,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
                 {
-                    "ou": "services",
-                    "description": "Organizational unit for service entries",
+                    "ou": ["services"],
+                    "description": ["Organizational unit for service entries"],
                 },
             )
             logger.debug("Created ou=services")

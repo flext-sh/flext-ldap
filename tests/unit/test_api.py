@@ -22,15 +22,19 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextContainer, FlextResult
+from flext_core import FlextResult
+from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
-from flext_tests import FlextTestsMatchers, FlextTestsUtilities
+from flext_ldif.services.parser import FlextLdifParser
+from flext_tests import FlextTestsMatchers
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
 
 from ..fixtures.constants import TestConstants
 
@@ -64,12 +68,7 @@ class LdapOperation(StrEnum):
     DELETE = "delete"
 
 
-class ServiceName(StrEnum):
-    """Service names for registration testing."""
-
-    CONNECTION = "connection"
-    OPERATIONS = "operations"
-    PARSER = "parser"
+# ServiceName enum removed - service registration functionality no longer exists
 
 
 class ApiTestScenario(StrEnum):
@@ -149,10 +148,14 @@ class ApiTestDataFactory:
     @staticmethod
     def create_api_instance(
         config: FlextLdapConfig,
-        parser: object | None = None,
+        parser: FlextLdifParser | None = None,
     ) -> FlextLdap:
         """Factory method to create API instance."""
-        return FlextLdap(config=config, parser=parser)
+        connection = FlextLdapConnection(config=config, parser=parser)
+        operations = FlextLdapOperations(connection=connection)
+        # Get FlextLdif instance (parser is used by connection, ldif is separate)
+        ldif_instance = FlextLdif.get_instance()
+        return FlextLdap(connection=connection, operations=operations, ldif=ldif_instance)
 
 
 class TestFlextLdapAPI:
@@ -170,27 +173,12 @@ class TestFlextLdapAPI:
 
     _factory = ApiTestDataFactory()
 
-    # Service registration error patterns mapping
-    _SERVICE_ERROR_PATTERNS: ClassVar[dict[ServiceName, str]] = {
-        ServiceName.CONNECTION: "Failed to register connection service",
-        ServiceName.OPERATIONS: "Failed to register operations service",
-        ServiceName.PARSER: "Failed to register parser service",
-    }
-
-    # Expected service names for registration tests
-    _EXPECTED_SERVICES: ClassVar[tuple[str, ...]] = (
-        "connection",
-        "operations",
-        "parser",
-    )
-
     # API test categories for test organization
     TEST_CATEGORIES: ClassVar[tuple[ApiTestCategory, ...]] = (
         ApiTestCategory.INITIALIZATION,
         ApiTestCategory.CONNECTION_MGMT,
         ApiTestCategory.PROPERTIES,
         ApiTestCategory.CONTEXT_MGR,
-        ApiTestCategory.SERVICE_REG,
     )
 
     # Explicit operation values for parametrization (hard-coded to avoid pyrefly issues)
@@ -199,13 +187,6 @@ class TestFlextLdapAPI:
         LdapOperation.ADD.value,
         LdapOperation.MODIFY.value,
         LdapOperation.DELETE.value,
-    )
-
-    # Explicit service names for parametrization (hard-coded to avoid pyrefly issues)
-    _SERVICE_NAMES: ClassVar[tuple[str, ...]] = (
-        ServiceName.CONNECTION.value,
-        ServiceName.OPERATIONS.value,
-        ServiceName.PARSER.value,
     )
 
     @staticmethod
@@ -356,82 +337,6 @@ class TestFlextLdapAPI:
         # After context manager exits, should be properly disconnected
         assert api._connection.is_connected is False
 
-    @pytest.mark.parametrize("service_name", _SERVICE_NAMES)
-    def test_register_core_services_raises_on_service_failure(
-        self,
-        api_instance: FlextLdap,
-        service_name: str,
-    ) -> None:
-        """Test RuntimeError when service registration fails (dynamic parametrization).
-
-        Covers TestServiceRegistration::test_register_core_services_raises_on_service_failure
-        """
-        container = FlextContainer()
-        service_enum = ServiceName(service_name)
-        error_pattern = self._SERVICE_ERROR_PATTERNS[service_enum]
-
-        if container.has_service(service_name):
-            _ = container.unregister(service_name)
-
-        def mock_register_failure(name: str, service: object) -> FlextResult[bool]:
-            if name == service_name:
-                return FlextResult.fail(f"Mock {service_name} registration failure")
-            return container.register(name, service)
-
-        with FlextTestsUtilities.test_context(
-            container,
-            "register",
-            mock_register_failure,
-        ):
-            with pytest.raises(RuntimeError, match=error_pattern):
-                api_instance._register_core_services(container)
-
-    # Mapping-based test execution for service registration scenarios
-    _SERVICE_TEST_SCENARIOS: ClassVar = {
-        "success_empty_container": {
-            "description": "Successful registration in empty container",
-            "setup": lambda container: None,
-            "expected": lambda self, container: all(
-                container.has_service(name) for name in self._EXPECTED_SERVICES
-            ),
-        },
-        "skips_existing_services": {
-            "description": "Registration skips already registered services",
-            "setup": lambda container: (
-                container.register("connection", "mock_conn"),
-                container.register("operations", "mock_ops"),
-            ),
-            "expected": lambda self, container, registration_calls: (
-                all(name not in registration_calls for name in self._EXPECTED_SERVICES)
-            ),
-        },
-    }
-
-    @pytest.mark.parametrize("scenario_key", list(_SERVICE_TEST_SCENARIOS.keys()))
-    def test_service_registration_scenarios(
-        self,
-        api_instance: FlextLdap,
-        scenario_key: str,
-    ) -> None:
-        """Test service registration scenarios using mapping-driven approach."""
-        scenario = self._SERVICE_TEST_SCENARIOS[scenario_key]
-        container = FlextContainer()
-
-        # Execute setup
-        if scenario["setup"] is not None:
-            scenario["setup"](container)
-
-        if scenario_key == "skips_existing_services":
-            registration_calls = []
-            original_register = container.register
-
-            def mock_register(name: str, service: object) -> FlextResult[bool]:
-                registration_calls.append(name)
-                return original_register(name, service)
-
-            with FlextTestsUtilities.test_context(container, "register", mock_register):
-                api_instance._register_core_services(container)
-                assert scenario["expected"](self, container, registration_calls)
-        else:
-            api_instance._register_core_services(container)
-            assert scenario["expected"](self, container)
+    # NOTE: Service registration tests removed - _register_core_services method
+    # no longer exists in FlextLdap API. The API now uses dependency injection
+    # pattern instead of service container registration.

@@ -19,6 +19,7 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from tests.conftest import create_flext_ldap_instance
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
@@ -37,8 +38,7 @@ class TestFlextLdapAPIComplete:
             host=RFC.DEFAULT_HOST,
             port=RFC.DEFAULT_PORT,
         )
-        api = FlextLdap(config=config)
-        assert api._config == config
+        api = create_flext_ldap_instance(config=config)
         assert api._connection is not None
         assert api._operations is not None
 
@@ -56,9 +56,10 @@ class TestFlextLdapAPIComplete:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test context manager usage."""
-        with FlextLdap() as api:
+        api = create_flext_ldap_instance()
+        with api:
             TestOperationHelpers.connect_and_assert_success(
-                cast("FlextLdapProtocols.LdapClient", api),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
                 connection_config,
             )
 
@@ -71,8 +72,9 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test context manager with exception."""
         test_exception = ValueError("Test exception")
+        api = create_flext_ldap_instance()
         try:
-            with FlextLdap() as api:
+            with api:
                 result = api.connect(connection_config)
                 TestOperationHelpers.assert_result_success(result)
                 raise test_exception
@@ -80,7 +82,7 @@ class TestFlextLdapAPIComplete:
             pass
 
         # Should still be disconnected
-        api = FlextLdap()
+        api = create_flext_ldap_instance()
         result = api.connect(connection_config)
         if result.is_success:
             api.disconnect()
@@ -110,7 +112,7 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test add returns proper OperationResult."""
         _entry, result = TestDeduplicationHelpers.create_user_add_and_verify(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             "testapiadd",
             verify_operation_result=True,
         )
@@ -127,7 +129,7 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             entry,
             changes,
         )
@@ -139,7 +141,7 @@ class TestFlextLdapAPIComplete:
         """Test delete with DistinguishedName object."""
         entry = TestDeduplicationHelpers.create_user("testapidel")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             entry,
         )
 
@@ -149,14 +151,14 @@ class TestFlextLdapAPIComplete:
     ) -> None:
         """Test execute when connected."""
         TestDeduplicationHelpers.execute_and_verify_total_count(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             expected_total=0,
             expected_entries=0,
         )
 
     def test_execute_when_not_connected(self) -> None:
         """Test execute when not connected - should return failure."""
-        api = FlextLdap()
+        api = create_flext_ldap_instance()
         result = api.execute()
         # Fast fail - should return failure when not connected
         assert result.is_failure
@@ -168,7 +170,7 @@ class TestFlextLdapAPIComplete:
         ldap_container: GenericFieldsDict,
     ) -> None:
         """Test connect using service config."""
-        api = FlextLdap()
+        api = create_flext_ldap_instance()
         # Create ConnectionConfig directly from ldap_container to bypass config issues
         connection_config = FlextLdapModels.ConnectionConfig(
             host=str(ldap_container["host"]),
@@ -192,13 +194,14 @@ class TestFlextLdapAPIComplete:
             "mail": [(MODIFY_ADD, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_modify_delete_with_operation_results(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             entry,
             changes,
         )
 
     def test_api_crud_operations_with_data_validation(
         self,
+        ldap_client: FlextLdap,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test complete CRUD operations with data validation.
@@ -209,10 +212,10 @@ class TestFlextLdapAPIComplete:
         3. Modify operation changes data correctly
         4. Delete operation removes data completely
         """
-        # Create connected LDAP client
-        ldap_client = FlextLdap()
+        # Create connected LDAP client using fixture
+        # Note: ldap_client fixture is already connected
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             connection_config,
         )
 

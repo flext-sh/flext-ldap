@@ -20,10 +20,10 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
-from flext_ldif import FlextLdifModels
 
 # Mark all tests in this module as integration tests requiring Docker
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -146,7 +146,7 @@ class TestOperationsRetry:
         result = operations.upsert(bad_entry)
 
         # Should fail immediately
-        TestAssertions.assert_immediate_failure(cast("FlextResult[object]", result))
+        TestAssertions.assert_immediate_failure(cast("FlextResult[FlextLdapModels.OperationResult]", result))
 
     def test_upsert_with_retry_on_specific_error(
         self,
@@ -164,7 +164,7 @@ class TestOperationsRetry:
         )
 
         # Should still fail after retries (error is persistent)
-        TestAssertions.assert_retry_attempted(cast("FlextResult[object]", result))
+        TestAssertions.assert_retry_attempted(cast("FlextResult[FlextLdapModels.OperationResult]", result))
 
     def test_upsert_success_without_retry_needed(
         self,
@@ -207,6 +207,6 @@ class TestOperationsRetry:
 
         # Should fail immediately without retrying
         TestAssertions.assert_no_retry_attempted(
-            cast("FlextResult[object]", result),
+            cast("FlextResult[FlextLdapModels.OperationResult]", result),
             max_retries=3,
         )

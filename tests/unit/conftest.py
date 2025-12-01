@@ -12,11 +12,13 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
+from flext_ldif import FlextLdif, FlextLdifModels
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
 
 from ..fixtures.constants import TestConstants
 from ..helpers.test_helpers import LdapTestDataFactory
@@ -53,10 +55,12 @@ def config_custom(ldap_data_factory: LdapTestDataFactory) -> FlextLdapConfig:
 
 @pytest.fixture(autouse=True)
 def reset_ldap_singleton() -> Generator[None]:
-    """Auto-reset FlextLdap singleton before and after each unit test."""
-    FlextLdap._reset_instance()
-    yield
-    FlextLdap._reset_instance()
+    """Auto-reset FlextLdap instance before and after each unit test.
+
+    Note: FlextLdap is no longer a singleton (wrapper pattern removed).
+    This fixture maintains test isolation by creating fresh instances per test.
+    """
+    return
 
 
 @pytest.fixture
@@ -67,8 +71,11 @@ def ldif_instance() -> FlextLdif:
 
 @pytest.fixture
 def ldap_instance(ldif_instance: FlextLdif) -> FlextLdap:
-    """Provide FlextLdap singleton instance with FlextLdif."""
-    return FlextLdap.get_instance(ldif=ldif_instance)
+    """Provide FlextLdap instance with FlextLdif."""
+    config = FlextLdapConfig()
+    connection = FlextLdapConnection(config=config, parser=ldif_instance.parser)
+    operations = FlextLdapOperations(connection=connection)
+    return FlextLdap(connection=connection, operations=operations, ldif=ldif_instance)
 
 
 @pytest.fixture
@@ -76,8 +83,10 @@ def ldap_instance_custom(
     ldif_instance: FlextLdif,
     config_custom: FlextLdapConfig,
 ) -> FlextLdap:
-    """Provide FlextLdap singleton instance with custom config."""
-    return FlextLdap.get_instance(config=config_custom, ldif=ldif_instance)
+    """Provide FlextLdap instance with custom config."""
+    connection = FlextLdapConnection(config=config_custom, parser=ldif_instance.parser)
+    operations = FlextLdapOperations(connection=connection)
+    return FlextLdap(connection=connection, operations=operations, ldif=ldif_instance)
 
 
 # ===== MODEL FIXTURES =====

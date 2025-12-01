@@ -46,7 +46,7 @@ class TestFlextLdapAPICoverage:
         with FlextLdap() as client:
             assert client is not None
             TestOperationHelpers.connect_and_assert_success(
-                cast("FlextLdapProtocols.LdapClient", client),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
                 connection_config,
             )
 
@@ -58,11 +58,13 @@ class TestFlextLdapAPICoverage:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test context manager with exception handling."""
-        client = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        client = create_flext_ldap_instance()
         try:
             with client:
                 TestOperationHelpers.connect_and_assert_success(
-                    cast("FlextLdapProtocols.LdapClient", client),
+                    cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
                     connection_config,
                 )
                 # Simulate exception
@@ -80,7 +82,7 @@ class TestFlextLdapAPICoverage:
     ) -> None:
         """Test execute method for health check."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
         )
         assert search_result is not None
         assert hasattr(search_result, "entries")

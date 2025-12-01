@@ -27,6 +27,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_core.typings import FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_tests import FlextTestsMatchers
@@ -190,7 +191,7 @@ class TestFlextLdapEntryAdapter:
         self,
         ldap_container: GenericFieldsDict,
         attr_name: str,
-        attr_value: object,
+        attr_value: FlextTypes.GeneralValueType,
     ) -> None:
         """Parametrized test for value conversions using real LDAP3 entries."""
         adapter = FlextLdapEntryAdapter()
@@ -228,7 +229,7 @@ class TestFlextLdapEntryAdapter:
         self,
         ldap_container: GenericFieldsDict,
         attr_name: str,
-        attr_value: object,
+        attr_value: FlextTypes.GeneralValueType,
     ) -> None:
         """Parametrized test for base64 encoding detection."""
         adapter = FlextLdapEntryAdapter()
@@ -255,7 +256,7 @@ class TestFlextLdapEntryAdapter:
         self,
         ldap_container: GenericFieldsDict,
         attr_name: str,
-        attr_value: object,
+        attr_value: FlextTypes.GeneralValueType,
         metadata_key: str,
     ) -> None:
         """Parametrized test for metadata tracking."""

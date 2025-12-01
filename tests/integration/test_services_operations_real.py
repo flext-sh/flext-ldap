@@ -17,6 +17,7 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
@@ -27,7 +28,6 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
@@ -363,7 +363,7 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", operations),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
             OperationType.SEARCH,
             search_options=search_options,
         )
@@ -399,7 +399,7 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
         )
 
@@ -417,7 +417,7 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", operations),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
             OperationType.ADD,
             entry=entry,
         )
@@ -447,7 +447,7 @@ class TestFlextLdapOperationsRealOperations:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("FlextLdapProtocols.LdapClient", operations_service),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -472,7 +472,7 @@ class TestFlextLdapOperationsRealOperations:
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                cast("FlextLdapProtocols.LdapClient", operations_service),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
                 entry_dict,
             )
         )
@@ -490,7 +490,7 @@ class TestFlextLdapOperationsRealOperations:
         operations = FlextLdapOperations(connection=connection)
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", operations),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
             OperationType.DELETE,
             dn="cn=test,dc=example,dc=com",
         )
@@ -504,7 +504,7 @@ class TestFlextLdapOperationsRealOperations:
     ) -> None:
         """Test execute operations with different configurations."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
         )
 
         self.TestAssertions.assert_search_result(search_result, config)
