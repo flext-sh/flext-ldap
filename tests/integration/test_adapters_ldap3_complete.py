@@ -12,6 +12,7 @@ from collections.abc import Callable, Generator
 from typing import cast
 
 import pytest
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, Connection, Server
 
@@ -19,7 +20,6 @@ from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
@@ -41,7 +41,7 @@ class TestLdap3AdapterComplete:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter(parser=ldap_parser)
         TestOperationHelpers.connect_with_skip_on_failure(
-            cast("FlextLdapProtocols.LdapClient", adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", adapter),
             connection_config,
         )
         yield adapter
@@ -198,7 +198,7 @@ class TestLdap3AdapterComplete:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
             entry,
         )
         TestOperationHelpers.assert_result_success(result)
@@ -218,7 +218,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -247,7 +247,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -276,7 +276,7 @@ class TestLdap3AdapterComplete:
         }
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
-            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
             entry,
             changes,
             verify_delete=False,
@@ -304,7 +304,7 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test execute when connected."""
         entry = TestOperationHelpers.execute_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
         )
         assert entry is not None
 
@@ -337,7 +337,7 @@ class TestLdap3AdapterComplete:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapClient", connected_adapter),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
             entry,
         )
         # Should succeed or fail gracefully

@@ -14,9 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
-from typing import ClassVar, Self, cast
-
 from flext_core import FlextConfig
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -67,20 +64,6 @@ class FlextLdapConfig(FlextConfig):
         case_sensitive=False,
         use_enum_values=True,
     )
-
-    # Singleton pattern - inherits _instances from parent class
-    _lock: ClassVar[threading.RLock] = threading.RLock()
-
-    @classmethod
-    def get_instance(cls: type[Self]) -> Self:
-        """Get singleton instance (thread-safe)."""
-        if cls not in cls._instances:
-            with cls._lock:
-                if cls not in cls._instances:
-                    cls._instances[cls] = cls()
-        # Cast to Self since we know the instance is of the correct type
-        instance: Self = cast("Self", cls._instances[cls])
-        return instance
 
     # Connection Configuration
     host: str = Field(

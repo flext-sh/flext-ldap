@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult, FlextRuntime
+from flext_core.typings import FlextTypes
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 
@@ -25,10 +26,10 @@ from ..fixtures.constants import RFC
 from .entry_helpers import EntryTestHelpers
 
 # Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
-LdapClientType = FlextLdap | FlextLdapProtocols.LdapClient
+LdapClientType = FlextLdap | FlextLdapProtocols.LdapService.LdapClientProtocol
 
 # Union type for LDAP operations only (no connect method) - for FlextLdapOperations and similar
-LdapOperationsType = FlextLdap | FlextLdapOperations | FlextLdapProtocols.LdapClient
+LdapOperationsType = FlextLdap | FlextLdapOperations | FlextLdapProtocols.LdapService.LdapClientProtocol
 
 # Valid search scopes for validation - reuse production StrEnum
 
@@ -73,7 +74,7 @@ def _validate_scope(
     return FlextLdapConstants.SearchScope.SUBTREE
 
 
-class TestOperationHelpers:
+class TestOperationHelpers:  # noqa: PLR0904
     """Helper methods for LDAP operation testing to reduce duplication."""
 
     @staticmethod
@@ -204,7 +205,7 @@ class TestOperationHelpers:
         """Connect client and skip test on failure.
 
         Args:
-            client: LDAP client implementing FlextLdapProtocols.LdapClient
+            client: LDAP client implementing FlextLdapProtocols.LdapService.LdapClientProtocol
             connection_config: Connection configuration
 
         """
@@ -220,7 +221,7 @@ class TestOperationHelpers:
         """Connect client and assert success.
 
         Args:
-            client: LDAP client implementing FlextLdapProtocols.LdapClient
+            client: LDAP client implementing FlextLdapProtocols.LdapService.LdapClientProtocol
             connection_config: Connection configuration
 
         """
@@ -231,7 +232,7 @@ class TestOperationHelpers:
         )
 
     @staticmethod
-    def search_and_assert_success(
+    def search_and_assert_success(  # noqa: PLR0913
         client: LdapOperationsType,
         base_dn: str,
         *,
@@ -330,7 +331,7 @@ class TestOperationHelpers:
         )
 
     @staticmethod
-    def create_inetorgperson_entry(
+    def create_inetorgperson_entry(  # noqa: PLR0913
         cn_value: str,
         base_dn: str,
         *,
@@ -338,7 +339,7 @@ class TestOperationHelpers:
         mail: str | None = None,
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
-        **extra_attributes: object,
+        **extra_attributes: FlextTypes.GeneralValueType,
     ) -> FlextLdifModels.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
@@ -428,7 +429,7 @@ class TestOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: object,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextLdifModels.Entry:
         """Create group entry.
 
@@ -467,7 +468,7 @@ class TestOperationHelpers:
         *,
         sn: str | None = None,
         mail: str | None = None,
-        **extra_attributes: object,
+        **extra_attributes: FlextTypes.GeneralValueType,
     ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
@@ -752,7 +753,7 @@ class TestOperationHelpers:
     def execute_operation_when_not_connected(
         client: LdapClientType,
         operation: str,
-        **kwargs: object,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Execute operation when not connected and assert failure.
 

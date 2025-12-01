@@ -41,10 +41,10 @@ class FlextLdapConstants(FlextConstants):
             FAILED = "failed"
 
         type StatusLiteral = Literal[
-            Status.PENDING,
-            Status.RUNNING,
-            Status.COMPLETED,
-            Status.FAILED,
+            "pending",
+            "running",
+            "completed",
+            "failed",
         ]
 
     # ═══════════════════════════════════════════════════════════════════
@@ -56,11 +56,20 @@ class FlextLdapConstants(FlextConstants):
 
         @staticmethod
         def is_valid_status(
-            value: object,
+            value: str
+            | FlextLdapConstants.LdapCqrs.Status
+            | FlextLdapConstants.LdapCqrs.StatusLiteral,
         ) -> TypeIs[FlextLdapConstants.LdapCqrs.StatusLiteral]:
             """TypeIs narrowing - works in both if/else branches."""
+            if isinstance(value, FlextLdapConstants.LdapCqrs.Status):
+                return True
             if isinstance(value, str):
-                return value in FlextLdapConstants.LdapCqrs.Status._value2member_map_
+                return value in {
+                    FlextLdapConstants.LdapCqrs.Status.PENDING,
+                    FlextLdapConstants.LdapCqrs.Status.RUNNING,
+                    FlextLdapConstants.LdapCqrs.Status.COMPLETED,
+                    FlextLdapConstants.LdapCqrs.Status.FAILED,
+                }
             return False
 
     # ═══════════════════════════════════════════════════════════════════
@@ -564,6 +573,34 @@ class FlextLdapConstants(FlextConstants):
             "modrdn",
             "replace",
         ]  # Values match ChangeTypeOperations enum - no duplication
+
+    # ═══════════════════════════════════════════════════════════════════
+    # SERVER TYPE MAPPINGS (flext-ldap ↔ flext-ldif compatibility)
+    # ═══════════════════════════════════════════════════════════════════
+
+    class ServerTypeMappings:
+        """Mappings between flext-ldap server type strings and flext-ldif ServerTypeLiteral.
+
+        Used in adapters/ldap3.py SearchExecutor for normalizing server types
+        for flext-ldif parser compatibility.
+        """
+
+        LDIF_COMPATIBLE: Final[dict[str, str]] = {
+            "oid": "oid",
+            "oud": "oud",
+            "openldap": "openldap",
+            "openldap1": "openldap1",
+            "openldap2": "openldap2",
+            "active_directory": "active_directory",
+            "apache_directory": "apache_directory",
+            "generic": "generic",
+            "rfc": "rfc",
+            "389ds": "ds389",
+            "ds389": "ds389",
+            "relaxed": "relaxed",
+            "novell_edirectory": "novell_edirectory",
+            "ibm_tivoli": "ibm_tivoli",
+        }
 
     # ═══════════════════════════════════════════════════════════════════
     # REFERÊNCIAS A FLEXT-CORE (quando necessário reutilizar)

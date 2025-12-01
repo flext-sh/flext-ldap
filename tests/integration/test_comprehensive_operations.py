@@ -208,11 +208,13 @@ class TestFlextLdapConnectionManagement:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test connection lifecycle."""
-        client = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        client = create_flext_ldap_instance()
 
         # Connect
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
             connection_config,
         )
 
@@ -225,18 +227,20 @@ class TestFlextLdapConnectionManagement:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test reconnecting after disconnect."""
-        client = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        client = create_flext_ldap_instance()
 
         # First connection
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
             connection_config,
         )
         client.disconnect()
 
         # Reconnect
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
             connection_config,
         )
 

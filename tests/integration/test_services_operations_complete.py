@@ -12,6 +12,7 @@ from collections.abc import Generator
 from typing import cast
 
 import pytest
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_REPLACE
 
@@ -21,7 +22,6 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import FlextLdifParser
 
 from ..fixtures.constants import RFC
 from ..helpers.entry_helpers import EntryTestHelpers
@@ -105,7 +105,7 @@ class TestFlextLdapOperationsComplete:
             RFC.DEFAULT_BASE_DN,
         )
         result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
         )
         TestOperationHelpers.assert_result_success(result)
@@ -127,7 +127,7 @@ class TestFlextLdapOperationsComplete:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("FlextLdapProtocols.LdapClient", operations_service),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
                 entry_dict,
                 changes,
                 verify_attribute=None,
@@ -144,7 +144,7 @@ class TestFlextLdapOperationsComplete:
         """Test modify with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testmodnorm")
         add_result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
             verify=False,
             cleanup_after=False,
@@ -154,7 +154,7 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.modify_with_dn_spaces(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
             changes,
         )
@@ -172,7 +172,7 @@ class TestFlextLdapOperationsComplete:
         )
 
         _add_result, _delete_result = TestOperationHelpers.add_then_delete_and_assert(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
         )
 
@@ -183,13 +183,13 @@ class TestFlextLdapOperationsComplete:
         """Test delete with normalized DN."""
         entry = TestDeduplicationHelpers.create_user("testdelnorm")
         _add_result = TestOperationHelpers.add_entry_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
             cleanup_after=False,
         )
         if entry.dn:
             TestDeduplicationHelpers.delete_with_dn_spaces(
-                cast("FlextLdapProtocols.LdapClient", operations_service),
+                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
                 entry,
             )
 
@@ -218,7 +218,7 @@ class TestFlextLdapOperationsComplete:
         )
 
         result = TestOperationHelpers.add_entry_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
             verify_operation_result=True,
         )
@@ -238,7 +238,7 @@ class TestFlextLdapOperationsComplete:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
             changes,
         )
@@ -250,7 +250,7 @@ class TestFlextLdapOperationsComplete:
         """Test delete returns proper OperationResult on success."""
         entry = TestDeduplicationHelpers.create_user("testdelresult")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
-            cast("FlextLdapProtocols.LdapClient", operations_service),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
             entry,
         )
 

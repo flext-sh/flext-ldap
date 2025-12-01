@@ -26,6 +26,7 @@ from flext_ldif import (
 )
 from flext_ldif.constants import FlextLdifConstants
 from ldap3 import Entry as Ldap3Entry
+from pydantic import PrivateAttr
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -121,8 +122,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 return [str(v) for v in value] if value else []
             return [str(value)] if value is not None else []
 
-    _ldif: FlextLdif
-    _server_type: str
+    _ldif: FlextLdif = PrivateAttr()
+    _server_type: str = PrivateAttr()
 
     def __init__(
         self,
@@ -140,10 +141,11 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         # Use provided server_type or default from constants
         resolved_type: str = server_type or FlextLdifConstants.ServerTypes.RFC
         # FlextLdif accepts config via kwargs, not as direct parameter
-        self._ldif = FlextLdif.get_instance()
-        self._server_type = resolved_type
+        # Use object.__setattr__ for frozen model compatibility
+        object.__setattr__(self, "_ldif", FlextLdif.get_instance())
+        object.__setattr__(self, "_server_type", resolved_type)
 
-    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:  # noqa: PLR6301
         """Execute method required by FlextService.
 
         Entry adapter does not perform operations itself - it converts between
@@ -195,8 +197,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             base64_attrs.append(key)
         return converted_values
 
+    @staticmethod
     def _build_conversion_metadata(
-        self,
         removed_attrs: Sequence[str],
         base64_attrs: Sequence[str],
         original_attrs_dict: Mapping[str, Ldap3EntryValue],
@@ -221,8 +223,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             base64_encoded_attributes=list(set(base64_attrs)),
         )
 
+    @staticmethod
     def _track_conversion_differences(
-        self,
         conversion_metadata: FlextLdapModels.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
@@ -304,13 +306,13 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     base64_attrs,
                     removed_attrs,
                 )
-            conversion_metadata = self._build_conversion_metadata(
+            conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
                 removed_attrs,
                 base64_attrs,
                 original_attrs_dict,
                 dn_str,
             )
-            self._track_conversion_differences(
+            FlextLdapEntryAdapter._track_conversion_differences(
                 conversion_metadata,
                 dn_str,
                 dn_str,
@@ -331,8 +333,13 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     metadata=metadata_obj,
                 ),
             )
-        except Exception as e:
-            entry_dn_for_log = str(getattr(ldap3_entry, "entry_dn", "unknown"))
+        except (ValueError, TypeError, AttributeError) as e:
+            # Safe access for logging - use hasattr check before direct access
+            entry_dn_for_log = (
+                str(ldap3_entry.entry_dn)
+                if hasattr(ldap3_entry, "entry_dn")
+                else "unknown"
+            )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=FlextLdapConstants.LdapOperationNames.LDAP3_TO_LDIF_ENTRY.value,
@@ -364,7 +371,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             return FlextResult[FlextLdapTypes.Ldap.Attributes].ok(
                 attributes_dict,
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             entry_dn_str = str(entry.dn) if entry.dn else "unknown"
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",

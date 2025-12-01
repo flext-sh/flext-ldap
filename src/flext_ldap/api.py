@@ -1,8 +1,7 @@
 """FLEXT-LDAP API - Unified Facade for LDAP Operations.
 
 This module provides the primary entry point for all LDAP operations.
-The FlextLdap class serves as the sole facade for the FLEXT LDAP library,
-coordinating connection management and LDAP operations.
+The FlextLdap class serves as a facade for LDAP operations using dependency injection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,25 +10,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import types
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar, Self, TypeVar, cast, override
+from typing import Self, override
 
-from flext_core import (
-    FlextContainer,
-    FlextDispatcher,
-    FlextRegistry,
-    FlextResult,
-)
+from flext_core import FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
@@ -37,245 +32,86 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
 
-TResult = TypeVar("TResult")
+# Constants for callback parameter counting
+MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
+
+
+@dataclass(frozen=True)
+class SyncPhaseConfig:
+    """Configuration for phase synchronization operations."""
+
+    server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc"
+    progress_callback: (
+        Callable[[str, int, int, str, FlextLdapModels.LdapBatchStats], None]
+        | FlextLdapModels.Types.LdapProgressCallback
+        | None
+    ) = None
+    retry_on_errors: list[str] | None = None
+    max_retries: int = 5
+    stop_on_error: bool = False
 
 
 class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
-    """Main API facade for LDAP operations (connect, search, add, modify, delete)."""
+    """Main API facade for LDAP operations using dependency injection.
 
-    model_config = ConfigDict(extra="allow")
+    Uses FlextLdapConnection and FlextLdapOperations directly without wrapper logic.
+    Implements clean composition pattern for orchestrating lower-layer services.
 
-    _connection: FlextLdapConnection | None = PrivateAttr()
-    _operations: FlextLdapOperations | None = PrivateAttr()
-    _config: FlextLdapConfig | None = PrivateAttr()
+    Usage:
+        connection = FlextLdapConnection(config=config, parser=ldif.parser)
+        operations = FlextLdapOperations(connection=connection)
+        api = FlextLdap(connection=connection, operations=operations, ldif=ldif)
+
+        async with api:
+            result = api.search(search_options)
+    """
+
+    @classmethod
+    def _get_service_config_type(cls) -> type[FlextLdapConfig]:
+        """Get FlextLdapConfig as the service-specific config type."""
+        return FlextLdapConfig
+
+    model_config = ConfigDict(
+        frozen=False,  # Facade needs mutable state for logging
+        extra="forbid",
+        arbitrary_types_allowed=True,
+    )
+
+    _connection: FlextLdapConnection = PrivateAttr()
+    _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
-    _dispatcher: FlextDispatcher = PrivateAttr()
-    _registry: FlextRegistry = PrivateAttr()
-    _context: dict[
-        str,
-        str
-        | int
-        | float
-        | bool
-        | list[str]
-        | dict[str, str | int | float | bool | list[str]]
-        | None,
-    ] = PrivateAttr(default_factory=dict)
-    _handlers: dict[
-        str,
-        Callable[
-            ...,
-            FlextResult[FlextLdapModels.SearchResult | FlextLdapModels.OperationResult],
-        ],
-    ] = PrivateAttr(default_factory=dict)
-    _instance: ClassVar[FlextLdap | None] = None
-    _pending_config: ClassVar[FlextLdapConfig | None] = None
-    _pending_ldif: ClassVar[FlextLdif | None] = None
-
-    @classmethod
-    def get_instance(
-        cls,
-        config: FlextLdapConfig | None = None,
-        ldif: FlextLdif | None = None,
-    ) -> FlextLdap:
-        """Get singleton instance of FlextLdap facade."""
-        if cls._instance is None:
-            # Create instance bypassing Pydantic/FlextService auto-execution
-            instance: FlextLdap = cls.__new__(cls)  # type: ignore[call-arg]
-            # Manually initialize required attributes for singleton pattern
-            instance._config = config
-            instance._ldif = ldif or FlextLdif.get_instance()
-            instance._context = {}
-            instance._handlers = {}
-            instance._connection = None
-            instance._operations = None
-            cls._instance = instance
-        return cls._instance
-
-    @classmethod
-    def _reset_instance(cls) -> None:
-        """Reset singleton instance (testing only)."""
-        cls._instance = None
+    _config: FlextLdapConfig = PrivateAttr()
 
     def __init__(
         self,
         *,
-        _bypass_init: bool = False,
+        connection: FlextLdapConnection,
+        operations: FlextLdapOperations,
+        ldif: FlextLdif | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize LDAP facade entry point."""
-        if not _bypass_init:
-            super().__init__(**kwargs)
-
-    def model_post_init(
-        self,
-        _context: dict[str, str | int | float | bool | None] | None,
-        /,
-    ) -> None:
-        """Initialize private attributes after Pydantic initialization."""
-        dispatcher = FlextDispatcher()
-        self._dispatcher = dispatcher
-        self._registry = FlextRegistry(dispatcher=dispatcher)
-
-        # Get configuration from container or use defaults
-        if hasattr(self, "_config") and self._config is not None:
-            ldap_config = self._config
-        else:
-            ldap_config = self.config.get_namespace("ldap", FlextLdapConfig)
-        self._config = ldap_config
-        self._ldif = getattr(self, "_ldif", None) or FlextLdif.get_instance()
-
-        self._context = {}
-        self._handlers = {}
-
-        # Initialize services only if we have required dependencies
-        if self._config is not None and self._ldif is not None:
-            # Create services bypassing FlextService auto-execution
-            connection = FlextLdapConnection.__new__(FlextLdapConnection)
-            connection.__init__(config=self._config, parser=self._ldif.parser)
-            self._connection = cast("FlextLdapConnection | None", connection)
-
-            operations = FlextLdapOperations.__new__(FlextLdapOperations)
-            operations.__init__(connection=connection)
-            self._operations = cast("FlextLdapOperations | None", operations)
-            self._setup_services()
-            self.logger.info(
-                "FlextLdap facade initialized",
-                config_available=True,
-                ldif_available=True,
-                connection_ready=True,
-                operations_ready=True,
-            )
-        else:
-            self.logger.warning(
-                "FlextLdap facade partially initialized",
-                config_available=self._config is not None,
-                ldif_available=self._ldif is not None,
-            )
-            # Set dummy values to avoid attribute errors
-            self._connection = None  # type: ignore[assignment]
-            self._operations = None  # type: ignore[assignment]
-
-    # =========================================================================
-    # PRIVATE: Service Setup
-    # =========================================================================
-
-    def _setup_services(self) -> None:
-        """Register all services using FlextContainer patterns with metadata."""
-        container = self.container
-
-        # Execute service registration with error handling
-        try:
-            self._register_core_services(container)
-        except Exception as e:
-            self.logger.exception(
-                "Failed to setup services - critical initialization error",
-                exception=e,
-            )
-            raise
-
-    def _register_core_services(self, container: FlextContainer) -> None:
-        """Register core infrastructure services using generalized helper."""
-        services = [
-            ("connection", self._connection),
-            ("operations", self._operations),
-            ("parser", self._ldif.parser),
-        ]
-        for service_name, _service_instance in services:
-            if not container.has_service(service_name):
-                # Register service name as string (container expects basic types)
-                result = container.register(service_name, service_name)
-                if result.is_failure:
-                    error_msg = (
-                        f"Failed to register {service_name} service: {result.error}"
-                    )
-                    self.logger.error(error_msg, critical=True)
-                    raise RuntimeError(error_msg)
-                self.logger.debug("Registered %s service in container", service_name)
-
-    def connect(
-        self,
-        connection_config: FlextLdapModels.ConnectionConfig,
-        *,
-        auto_retry: bool = False,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
-        **_kwargs: str | float | bool | None,
-    ) -> FlextResult[bool]:
-        """Establish LDAP connection with optional auto-retry.
+        """Initialize LDAP facade with injected dependencies.
 
         Args:
-            connection_config: Connection configuration (required, no fallback)
-            auto_retry: Enable automatic retry on connection failure (default: False)
-            max_retries: Maximum number of retry attempts (default: 3)
-            retry_delay: Delay between retries in seconds (default: 1.0)
-
-        Returns:
-            FlextResult[bool] indicating connection success
+            connection: Initialized FlextLdapConnection instance
+            operations: Initialized FlextLdapOperations instance
+            ldif: FlextLdif instance (defaults to get_instance())
+            **kwargs: Additional kwargs for FlextService base
 
         """
-        self.logger.debug(
-            "Connecting to LDAP server",
-            operation=FlextLdapConstants.LdapOperationNames.CONNECT.value,
-            host=connection_config.host,
-            port=connection_config.port,
-            use_ssl=connection_config.use_ssl,
-            use_tls=connection_config.use_tls,
-            auto_retry=auto_retry,
-            max_retries=max_retries,
-            retry_delay=retry_delay,
-            bind_dn=connection_config.bind_dn[:50]
-            if connection_config.bind_dn
-            else None,
-            has_password=connection_config.bind_password is not None,
-        )
-
-        if self._connection is None:
-            return FlextResult.fail("LDAP connection not initialized")
-        result = self._connection.connect(
-            connection_config,
-            auto_retry=auto_retry,
-            max_retries=max_retries,
-            retry_delay=retry_delay,
-        )
-
-        if result.is_success:
-            self.logger.info(
-                "LDAP connection established",
-                operation=FlextLdapConstants.LdapOperationNames.CONNECT.value,
-                host=connection_config.host,
-                port=connection_config.port,
-            )
-        else:
-            self.logger.error(
-                "LDAP connection failed",
-                operation=FlextLdapConstants.LdapOperationNames.CONNECT.value,
-                host=connection_config.host,
-                port=connection_config.port,
-                error=str(result.error),
-            )
-
-        return result
-
-    def disconnect(self) -> None:
-        """Close LDAP connection."""
-        if self._connection is None:
-            self.logger.warning(
-                "LDAP connection not initialized, nothing to disconnect"
-            )
-            return
-
-        self.logger.debug(
-            "Disconnecting from LDAP server",
-            operation=FlextLdapConstants.LdapOperationNames.DISCONNECT.value,
-            was_connected=self._connection.is_connected,
-        )
-
-        self._connection.disconnect()
-
+        super().__init__(**kwargs)
+        self._connection = connection
+        self._operations = operations
+        self._ldif = ldif or FlextLdif.get_instance()
+        # Use connection's config if available for consistency
+        # Otherwise, super().__init__() already created proper FlextLdapConfig via _get_service_config_type()
+        if hasattr(connection, "_config") and isinstance(connection._config, FlextLdapConfig):  # noqa: SLF001
+            object.__setattr__(self, "_config", connection._config)  # noqa: SLF001
         self.logger.info(
-            "LDAP connection closed",
-            operation=FlextLdapConstants.LdapOperationNames.DISCONNECT.value,
+            "FlextLdap facade initialized",
+            connection_ready=True,
+            operations_ready=True,
+            ldif_available=True,
         )
 
     def __enter__(self) -> Self:
@@ -305,6 +141,78 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         """
         self.disconnect()
 
+    def connect(
+        self,
+        connection_config: FlextLdapModels.ConnectionConfig | FlextLdapConfig,
+        *,
+        auto_retry: bool = False,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+        **_kwargs: str | float | bool | None,
+    ) -> FlextResult[bool]:
+        """Establish LDAP connection with optional auto-retry.
+
+        Args:
+            connection_config: Connection configuration (ConnectionConfig or FlextLdapConfig)
+            auto_retry: Enable automatic retry on connection failure (default: False)
+            max_retries: Maximum number of retry attempts (default: 3)
+            retry_delay: Delay between retries in seconds (default: 1.0)
+
+        Returns:
+            FlextResult[bool] indicating connection success
+
+        """
+        # Convert FlextLdapConfig to ConnectionConfig if needed
+        if isinstance(connection_config, FlextLdapConfig):
+            connection_config = FlextLdapModels.ConnectionConfig(
+                host=connection_config.host,
+                port=connection_config.port,
+                use_ssl=connection_config.use_ssl,
+                use_tls=connection_config.use_tls,
+                bind_dn=connection_config.bind_dn,
+                bind_password=connection_config.bind_password,
+                timeout=connection_config.timeout,
+                auto_bind=connection_config.auto_bind,
+                auto_range=connection_config.auto_range,
+            )
+
+        self.logger.debug(
+            "Connecting to LDAP server",
+            host=connection_config.host,
+            port=connection_config.port,
+            use_ssl=connection_config.use_ssl,
+            use_tls=connection_config.use_tls,
+        )
+
+        result = self._connection.connect(
+            connection_config,
+            auto_retry=auto_retry,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+        )
+
+        if result.is_success:
+            self.logger.info(
+                "LDAP connection established",
+                host=connection_config.host,
+                port=connection_config.port,
+            )
+        else:
+            self.logger.error(
+                "LDAP connection failed",
+                host=connection_config.host,
+                port=connection_config.port,
+                error=str(result.error),
+            )
+
+        return result
+
+    def disconnect(self) -> None:
+        """Close LDAP connection."""
+        self.logger.debug("Disconnecting from LDAP server")
+        self._connection.disconnect()
+        self.logger.info("LDAP connection closed")
+
     @FlextLdapUtilities.Args.validated_with_result
     def search(
         self,
@@ -315,14 +223,12 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         Args:
             search_options: Search configuration
-            server_type: LDAP server type for parsing (default: RFC constant)
+            server_type: LDAP server type for parsing (default: RFC)
 
         Returns:
             FlextResult containing SearchResult with Entry models
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
         return self._operations.search(search_options, server_type)
 
     @FlextLdapUtilities.Args.validated_with_result
@@ -339,14 +245,12 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
         return self._operations.add(entry)
 
     @FlextLdapUtilities.Args.validated_with_result
     def modify(
         self,
-        dn: str | FlextLdifModels.DistinguishedName,
+        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
         changes: FlextLdapTypes.Ldap.ModifyChanges,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
@@ -359,14 +263,12 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
         return self._operations.modify(dn, changes)
 
     @FlextLdapUtilities.Args.validated_with_result
     def delete(
         self,
-        dn: str | FlextLdifModels.DistinguishedName,
+        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry.
 
@@ -377,8 +279,6 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing OperationResult
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
         return self._operations.delete(dn)
 
     @FlextLdapUtilities.Args.validated_with_result
@@ -389,27 +289,17 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
     ) -> FlextResult[FlextLdapModels.LdapOperationResult]:
-        """Upsert LDAP entry (add if doesn't exist, skip if exists) with optional retry.
-
-        Generic method that handles both regular entries and schema modifications.
-        For regular entries: tries add, returns "added" or "skipped" if already exists.
-        For schema entries (changetype=modify): applies modify operation.
+        """Upsert LDAP entry (add if doesn't exist, skip if exists).
 
         Args:
             entry: Entry model to upsert
             retry_on_errors: List of error patterns to retry on
-                (default: None = no retry)
             max_retries: Maximum number of retry attempts (default: 1)
 
         Returns:
-            FlextResult containing dict with "operation" key:
-                - "added": Entry was added
-                - "modified": Entry was modified (for schema)
-                - "skipped": Entry already exists
+            FlextResult containing operation result
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
         return self._operations.upsert(
             entry,
             retry_on_errors=retry_on_errors,
@@ -421,38 +311,24 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self,
         entries: list[FlextLdifModels.Entry],
         *,
-        progress_callback: Callable[
-            [int, int, str, FlextLdapModels.LdapBatchStats],
-            None,
-        ]
-        | None = None,
+        progress_callback: FlextLdapModels.Types.LdapProgressCallback | None = None,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> FlextResult[FlextLdapModels.LdapBatchStats]:
-        """Batch upsert multiple LDAP entries with progress tracking and retry.
-
-        Processes entries sequentially, applying retry logic per-entry if configured.
-        Aggregates results into synced/failed/skipped counters.
+        """Batch upsert multiple LDAP entries.
 
         Args:
             entries: List of entries to upsert
-            progress_callback: Optional callback(idx: int, total: int,
-                dn: str, stats: FlextLdapTypes.LdapBatchStats)
-                after each entry
-            retry_on_errors: Error patterns to retry on (passed to each upsert)
+            progress_callback: Optional callback for progress tracking
+            retry_on_errors: Error patterns to retry on
             max_retries: Maximum retries per entry (default: 1)
             stop_on_error: Stop processing on first error (default: False)
 
         Returns:
-            FlextResult with dict containing:
-                - "synced": Number of entries successfully added/modified
-                - "failed": Number of entries that failed
-                - "skipped": Number of entries skipped (already identical)
+            FlextResult containing batch statistics
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
         return self._operations.batch_upsert(
             entries,
             progress_callback=progress_callback,
@@ -467,54 +343,32 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         ldif_file_path: Path,
         phase_name: str,
         *,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
-        progress_callback: Callable[
-            [int, int, str, FlextLdapModels.LdapBatchStats],
-            None,
-        ]
-        | None = None,
-        retry_on_errors: list[str] | None = None,
-        max_retries: int = 5,
-        stop_on_error: bool = False,
+        config: SyncPhaseConfig | None = None,
     ) -> FlextResult[FlextLdapModels.PhaseSyncResult]:
-        """Synchronize all entries from an LDIF file to LDAP with comprehensive reporting.
-
-        Generic method for phase-based LDIF synchronization that parses the file,
-        performs batch upsert operations, and provides detailed statistics.
+        """Synchronize entries from LDIF file to LDAP.
 
         Args:
-            ldif_file_path: Path to LDIF file containing entries to sync
-            phase_name: Name of the phase (for logging and reporting)
-            server_type: Server type for LDIF parsing (default: "rfc")
-            progress_callback: Optional callback(current, total, dn, stats) for progress tracking
-            retry_on_errors: List of error patterns to retry on
-            max_retries: Maximum retry attempts per entry
-            stop_on_error: Whether to stop processing on first error
+            ldif_file_path: Path to LDIF file
+            phase_name: Name of the phase
+            config: Sync configuration (defaults to SyncPhaseConfig())
 
         Returns:
-            FlextResult containing PhaseSyncResult with:
-            - phase_name: Name of the phase
-            - total_entries: Total entries in LDIF file
-            - synced: Number of entries successfully synced
-            - failed: Number of entries that failed to sync
-            - skipped: Number of entries skipped (already exist)
-            - duration_seconds: Time taken for sync operation
-            - success_rate: Percentage of successful operations
+            FlextResult containing phase sync result
 
         """
+        if config is None:
+            config = SyncPhaseConfig()
+
         start_time = datetime.now(UTC)
 
-        # Parse LDIF file using integrated FlextLdif
-        parse_result = self._ldif.parse(ldif_file_path, server_type=server_type)
+        parse_result = self._ldif.parse(ldif_file_path, server_type=config.server_type)
         if parse_result.is_failure:
             return FlextResult[FlextLdapModels.PhaseSyncResult].fail(
-                f"Failed to parse LDIF file {ldif_file_path}: {parse_result.error}",
+                f"Failed to parse LDIF file: {parse_result.error}",
             )
 
         entries = parse_result.unwrap()
-        total_entries = len(entries)
-
-        if total_entries == 0:
+        if not entries:
             return FlextResult[FlextLdapModels.PhaseSyncResult].ok(
                 FlextLdapModels.PhaseSyncResult(
                     phase_name=phase_name,
@@ -527,140 +381,167 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 ),
             )
 
-        # Perform batch upsert
+        # Convert multi-phase callback to single-phase if needed
+        single_phase_callback: FlextLdapModels.Types.LdapProgressCallback | None = None
+        if config.progress_callback is not None:
+            try:
+                sig = inspect.signature(config.progress_callback)
+                param_count = len(sig.parameters)
+                if param_count == MULTI_PHASE_CALLBACK_PARAM_COUNT:
+                    # Multi-phase callback - wrap to single-phase
+                    multi_phase_cb: Callable[
+                        [str, int, int, str, FlextLdapModels.LdapBatchStats], None
+                    ] = config.progress_callback  # type: ignore[assignment]
+
+                    def wrapped_cb(
+                        current: int,
+                        total: int,
+                        dn: str,
+                        stats: FlextLdapModels.LdapBatchStats,
+                    ) -> None:
+                        multi_phase_cb(phase_name, current, total, dn, stats)
+
+                    single_phase_callback = wrapped_cb
+                else:
+                    # Single-phase callback - use directly
+                    single_phase_callback = config.progress_callback  # type: ignore[assignment]
+            except (TypeError, ValueError, AttributeError):
+                # Fallback: assume single-phase
+                single_phase_callback = config.progress_callback  # type: ignore[assignment]
+
         batch_result = self.batch_upsert(
             entries,
-            progress_callback=progress_callback,
-            retry_on_errors=retry_on_errors
+            progress_callback=single_phase_callback,
+            retry_on_errors=config.retry_on_errors
             or [
                 "session terminated",
                 "not connected",
                 "invalid messageid",
                 "socket",
             ],
-            max_retries=max_retries,
-            stop_on_error=stop_on_error,
+            max_retries=config.max_retries,
+            stop_on_error=config.stop_on_error,
         )
 
         if batch_result.is_failure:
             return FlextResult[FlextLdapModels.PhaseSyncResult].fail(
-                f"Batch sync failed for phase {phase_name}: {batch_result.error}",
+                f"Batch sync failed: {batch_result.error}",
             )
 
         batch_stats = batch_result.unwrap()
-        # Type narrowing: unwrap() returns object but actual type is LdapBatchStats
-        if not isinstance(batch_stats, FlextLdapModels.LdapBatchStats):
-            return FlextResult[FlextLdapModels.PhaseSyncResult].fail(
-                f"Invalid batch stats type: {type(batch_stats).__name__}",
-            )
         duration = (datetime.now(UTC) - start_time).total_seconds()
 
-        synced = batch_stats.synced
-        failed = batch_stats.failed
-        skipped = batch_stats.skipped
-
-        total_processed = synced + failed + skipped
+        total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped
         success_rate = (
-            (synced + skipped) / total_processed * 100 if total_processed > 0 else 0.0
+            (batch_stats.synced + batch_stats.skipped) / total_processed * 100
+            if total_processed > 0
+            else 0.0
         )
 
         return FlextResult[FlextLdapModels.PhaseSyncResult].ok(
             FlextLdapModels.PhaseSyncResult(
                 phase_name=phase_name,
-                total_entries=total_entries,
-                synced=synced,
-                failed=failed,
-                skipped=skipped,
+                total_entries=len(entries),
+                synced=batch_stats.synced,
+                failed=batch_stats.failed,
+                skipped=batch_stats.skipped,
                 duration_seconds=duration,
                 success_rate=success_rate,
             ),
         )
 
-    def sync_multiple_phases(
-        self,
-        phase_files: dict[str, Path],
-        *,
-        server_type: FlextLdifConstants.LiteralTypes.ServerTypeLiteral = "rfc",
-        progress_callback: Callable[
-            [str, int, int, str, FlextLdapModels.LdapBatchStats],
-            None,
-        ]
-        | None = None,
-        retry_on_errors: list[str] | None = None,
-        max_retries: int = 5,
-        stop_on_error: bool = False,
-    ) -> FlextResult[FlextLdapModels.MultiPhaseSyncResult]:
-        """Synchronize multiple LDIF phase files with aggregated reporting.
+    @staticmethod
+    def _make_phase_progress_callback(
+        phase: str,
+        config: SyncPhaseConfig,
+    ) -> FlextLdapModels.Types.LdapProgressCallback | None:
+        """Create progress callback for a phase, handling both single and multi-phase signatures."""
+        if config.progress_callback is None:
+            return None
 
-        Generic method for multi-phase synchronization that processes each phase file
-        and aggregates results across all phases.
-
-        Args:
-            phase_files: Dict mapping phase names to LDIF file paths
-            server_type: Server type for LDIF parsing (default: "rfc")
-            progress_callback: Optional callback(phase_name, current, total, dn, stats)
-            retry_on_errors: List of error patterns to retry on
-            max_retries: Maximum retry attempts per entry
-            stop_on_error: Whether to stop processing on first error
-
-        Returns:
-            FlextResult containing MultiPhaseSyncResult with:
-            - phase_results: Dict of phase_name -> PhaseSyncResult
-            - total_entries: Sum of all entries across phases
-            - total_synced: Sum of synced entries across phases
-            - total_failed: Sum of failed entries across phases
-            - total_skipped: Sum of skipped entries across phases
-            - overall_success_rate: Weighted average success rate
-
-        """
-        start_time = datetime.now(UTC)
-        phase_results: dict[str, FlextLdapModels.PhaseSyncResult] = {}
-        overall_success = True
-
-        # Enhanced progress callback to include phase name
-        def enhanced_progress_callback(
-            phase_name: str,
+        # Check if callback accepts phase name (multi-phase) or just batch stats (single-phase)
+        def progress_cb(
             current: int,
             total: int,
             dn: str,
             stats: FlextLdapModels.LdapBatchStats,
         ) -> None:
-            if progress_callback:
-                progress_callback(phase_name, current, total, dn, stats)
+            if config.progress_callback is None:
+                return
+            try:
+                sig = inspect.signature(config.progress_callback)
+                param_count = len(sig.parameters)
+                multi_phase_param_count = MULTI_PHASE_CALLBACK_PARAM_COUNT
+                if param_count == multi_phase_param_count:
+                    # Multi-phase callback: (phase: str, current: int, total: int, dn: str, stats: LdapBatchStats)
+                    # Type narrowing: callback accepts 5 parameters
+                    multi_phase_cb: Callable[
+                        [str, int, int, str, FlextLdapModels.LdapBatchStats], None
+                    ] = config.progress_callback  # type: ignore[assignment]
+                    multi_phase_cb(phase, current, total, dn, stats)
+                else:
+                    # Single-phase callback: (current: int, total: int, dn: str, stats: LdapBatchStats)
+                    single_phase_cb: FlextLdapModels.Types.LdapProgressCallback = (
+                        config.progress_callback  # type: ignore[assignment]
+                    )
+                    single_phase_cb(current, total, dn, stats)
+            except (TypeError, ValueError, AttributeError):
+                # Fallback: try single-phase signature
+                fallback_cb: FlextLdapModels.Types.LdapProgressCallback = (
+                    config.progress_callback  # type: ignore[assignment]
+                )
+                fallback_cb(current, total, dn, stats)
+
+        return progress_cb
+
+    def sync_multiple_phases(
+        self,
+        phase_files: dict[str, Path],
+        *,
+        config: SyncPhaseConfig | None = None,
+    ) -> FlextResult[FlextLdapModels.MultiPhaseSyncResult]:
+        """Synchronize multiple LDIF phase files.
+
+        Args:
+            phase_files: Dict mapping phase names to LDIF file paths
+            config: Sync configuration (defaults to SyncPhaseConfig())
+
+        Returns:
+            FlextResult containing multi-phase sync result
+
+        """
+        if config is None:
+            config = SyncPhaseConfig()
+
+        start_time = datetime.now(UTC)
+        phase_results: dict[str, FlextLdapModels.PhaseSyncResult] = {}
+        overall_success = True
 
         for phase_name, ldif_path in phase_files.items():
             if not ldif_path.exists():
                 self.logger.warning(
-                    "Phase file not found, skipping",
+                    "Phase file not found",
                     phase=phase_name,
                     file=str(ldif_path),
                 )
                 continue
 
-            # Create phase-specific progress callback with captured phase_name
-            def make_phase_progress(
-                phase: str,
-            ) -> Callable[[int, int, str, FlextLdapModels.LdapBatchStats], None]:
-                def progress_cb(
-                    current: int,
-                    total: int,
-                    dn: str,
-                    stats: FlextLdapModels.LdapBatchStats,
-                ) -> None:
-                    enhanced_progress_callback(phase, current, total, dn, stats)
-
-                return progress_cb
-
-            phase_progress = make_phase_progress(phase_name)
-
+            phase_progress_cb = FlextLdap._make_phase_progress_callback(
+                phase_name, config
+            )
+            phase_config = SyncPhaseConfig(
+                server_type=config.server_type,
+                progress_callback=phase_progress_cb
+                if phase_progress_cb is not None
+                else config.progress_callback,
+                retry_on_errors=config.retry_on_errors,
+                max_retries=config.max_retries,
+                stop_on_error=config.stop_on_error,
+            )
             phase_result = self.sync_phase_entries(
                 ldif_path,
                 phase_name,
-                server_type=server_type,
-                progress_callback=phase_progress,
-                retry_on_errors=retry_on_errors,
-                max_retries=max_retries,
-                stop_on_error=stop_on_error,
+                config=phase_config,
             )
 
             if phase_result.is_failure:
@@ -670,23 +551,16 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                     error=str(phase_result.error),
                 )
                 overall_success = False
-                if stop_on_error:
+                if config.stop_on_error:
                     break
                 continue
 
-            phase_result_value = phase_result.unwrap()
-            # Type narrowing: unwrap() returns object but actual type is PhaseSyncResult
-            if not isinstance(phase_result_value, FlextLdapModels.PhaseSyncResult):
-                return FlextResult[FlextLdapModels.MultiPhaseSyncResult].fail(
-                    f"Invalid phase result type: {type(phase_result_value).__name__}",
-                )
-            phase_results[phase_name] = phase_result_value
+            phase_results[phase_name] = phase_result.unwrap()
 
-        # Calculate aggregated statistics
-        total_entries = sum(result.total_entries for result in phase_results.values())
-        total_synced = sum(result.synced for result in phase_results.values())
-        total_failed = sum(result.failed for result in phase_results.values())
-        total_skipped = sum(result.skipped for result in phase_results.values())
+        total_entries = sum(r.total_entries for r in phase_results.values())
+        total_synced = sum(r.synced for r in phase_results.values())
+        total_failed = sum(r.failed for r in phase_results.values())
+        total_skipped = sum(r.skipped for r in phase_results.values())
 
         total_processed = total_synced + total_failed + total_skipped
         overall_success_rate = (
@@ -694,8 +568,6 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             if total_processed > 0
             else 0.0
         )
-
-        total_duration = (datetime.now(UTC) - start_time).total_seconds()
 
         return FlextResult[FlextLdapModels.MultiPhaseSyncResult].ok(
             FlextLdapModels.MultiPhaseSyncResult(
@@ -705,7 +577,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 total_failed=total_failed,
                 total_skipped=total_skipped,
                 overall_success_rate=overall_success_rate,
-                total_duration_seconds=total_duration,
+                total_duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
                 overall_success=overall_success,
             ),
         )
@@ -721,11 +593,4 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             FlextResult containing service status
 
         """
-        if self._operations is None:
-            return FlextResult.fail("LDAP operations not initialized")
-        # Fast fail - delegate to operations, no fallback
         return self._operations.execute()
-
-
-# Forward references are resolved automatically by Pydantic v2 with 'from __future__ import annotations'
-# No manual model_rebuild() needed when using proper string annotations

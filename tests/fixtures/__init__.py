@@ -14,8 +14,8 @@ import json
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult
+from flext_ldif import FlextLdif, FlextLdifModels
 
-from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifModels
 from tests.fixtures.typing import GenericFieldsDict, GenericTestCaseDict
 
 from .constants import OID, OUD, RFC, General, OpenLDAP2, TestConstants
@@ -189,9 +189,9 @@ class LdapTestFixtures:
 
         # Use FlextLdif to parse LDIF (reusing flext-ldif)
         # Use RFC server type for test fixtures (generic parsing without quirks)
-        config = FlextLdifConfig.model_validate({"quirks_server_type": "rfc"})
-        ldif = FlextLdif(config=config)
-        result = ldif.parse(ldif_content)
+        # FlextLdif uses singleton pattern, get instance directly
+        ldif = FlextLdif.get_instance()
+        result = ldif.parse(ldif_content, server_type="rfc")
         if result.is_success:
             entries = result.unwrap()
             return list(entries)
@@ -199,7 +199,7 @@ class LdapTestFixtures:
         return []
 
     @staticmethod
-    def convert_user_json_to_entry(user_data: GenericFieldsDict) -> GenericFieldsDict:
+    def convert_user_json_to_entry(user_data: GenericFieldsDict) -> dict[str, object]:
         """Convert user JSON data to Entry-compatible format."""
         # Map JSON fields to LDAP attributes
         object_classes = user_data.get("object_classes", [])
@@ -213,30 +213,33 @@ class LdapTestFixtures:
             "sn": [str(user_data.get("sn", ""))],
         }
 
+        # Use .get() for GenericFieldsDict to avoid mypy errors
         if "given_name" in user_data:
-            attributes["givenName"] = [str(user_data["given_name"])]
+            attributes["givenName"] = [str(user_data.get("given_name", ""))]
         if "mail" in user_data:
-            attributes["mail"] = [str(user_data["mail"])]
+            attributes["mail"] = [str(user_data.get("mail", ""))]
         if "telephone_number" in user_data:
-            attributes["telephoneNumber"] = [str(user_data["telephone_number"])]
+            attributes["telephoneNumber"] = [str(user_data.get("telephone_number", ""))]
         if "mobile" in user_data:
-            attributes["mobile"] = [str(user_data["mobile"])]
+            attributes["mobile"] = [str(user_data.get("mobile", ""))]
         if "department" in user_data:
-            attributes["departmentNumber"] = [str(user_data["department"])]
+            attributes["departmentNumber"] = [str(user_data.get("department", ""))]
         if "title" in user_data:
-            attributes["title"] = [str(user_data["title"])]
+            attributes["title"] = [str(user_data.get("title", ""))]
         if "organization" in user_data:
-            attributes["o"] = [str(user_data["organization"])]
+            attributes["o"] = [str(user_data.get("organization", ""))]
         if "organizational_unit" in user_data:
-            attributes["ou"] = [str(user_data["organizational_unit"])]
+            attributes["ou"] = [str(user_data.get("organizational_unit", ""))]
 
-        return {
+        # Return dict - cast to GenericFieldsDict if needed by callers
+        result: dict[str, object] = {
             "dn": str(user_data.get("dn", "")),
             "attributes": attributes,
         }
+        return result
 
     @staticmethod
-    def convert_group_json_to_entry(group_data: GenericFieldsDict) -> GenericFieldsDict:
+    def convert_group_json_to_entry(group_data: GenericFieldsDict) -> dict[str, object]:
         """Convert group JSON data to Entry-compatible format."""
         object_classes = group_data.get("object_classes", [])
         if not isinstance(object_classes, list):
@@ -247,19 +250,22 @@ class LdapTestFixtures:
             "cn": [str(group_data.get("cn", ""))],
         }
 
+        # Use .get() for GenericFieldsDict to avoid mypy errors
         if "description" in group_data:
-            attributes["description"] = [str(group_data["description"])]
+            attributes["description"] = [str(group_data.get("description", ""))]
         if "member_dns" in group_data:
-            member_dns = group_data["member_dns"]
+            member_dns = group_data.get("member_dns", [])
             if isinstance(member_dns, list):
                 attributes["member"] = [str(m) for m in member_dns]
             else:
                 attributes["member"] = [str(member_dns)]
 
-        return {
+        # Return dict - cast to GenericFieldsDict if needed by callers
+        result: dict[str, object] = {
             "dn": str(group_data.get("dn", "")),
             "attributes": attributes,
         }
+        return result
 
 
 __all__ = [

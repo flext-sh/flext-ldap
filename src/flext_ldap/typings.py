@@ -43,7 +43,8 @@ class FlextLdapTypes(FlextTypes):
 
         # Tipos genéricos
         type Handler[T] = Callable[
-            [FlextLdapProtocols.LdapEntry.EntryProtocol], FlextResult[T]
+            [FlextLdapProtocols.LdapEntry.EntryProtocol],
+            FlextResult[T],
         ]
         type Transformer = Callable[
             [FlextLdapProtocols.LdapEntry.EntryProtocol],
@@ -100,3 +101,27 @@ class FlextLdapTypes(FlextTypes):
             ],
             tuple[bool, Mapping[str, Sequence[Mapping[str, Sequence[str]]]]],
         ]
+
+    class Protocol:
+        """Protocol type aliases for easier access (PEP 695).
+
+        These type aliases provide convenient access to nested protocol classes
+        without needing to reference the full nested path.
+        """
+
+        # Configuration protocols
+        type ConnectionConfig = FlextLdapProtocols.Config.ConnectionConfigProtocol
+        type SearchOptions = FlextLdapProtocols.Config.SearchOptionsProtocol
+
+        # Entry protocols
+        type Entry = FlextLdapProtocols.LdapEntry.EntryProtocol
+        type DistinguishedName = FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol
+
+        # Service protocols
+        type LdapClient = FlextLdapProtocols.LdapService.LdapClientProtocol
+        type LdapAdapter = FlextLdapProtocols.LdapService.LdapAdapterProtocol
+        type LdapConnection = FlextLdapProtocols.LdapService.LdapConnectionProtocol
+
+        # Result protocols
+        type OperationResult = FlextLdapProtocols.Result.OperationResultProtocol
+        type SearchResult = FlextLdapProtocols.Result.SearchResultProtocol

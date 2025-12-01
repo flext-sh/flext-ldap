@@ -19,8 +19,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, cast
-
 from flext_core import FlextResult, FlextRuntime
 from ldap3 import Connection
 
@@ -106,35 +104,36 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             connection_bound=connection.bound,
         )
 
-        root_dse_result = self._query_root_dse(connection)
+        root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
         if root_dse_result.is_failure:
             return FlextResult[str].fail(
                 f"Failed to query rootDSE: {root_dse_result.error}",
             )
 
         root_dse_attrs = root_dse_result.unwrap()
-        return self._detect_from_attributes(
-            vendor_name=self._get_first_value(root_dse_attrs, "vendorName"),
-            vendor_version=self._get_first_value(root_dse_attrs, "vendorVersion"),
+        return FlextLdapServerDetector._detect_from_attributes(
+            vendor_name=FlextLdapServerDetector._get_first_value(
+                root_dse_attrs, "vendorName"
+            ),
+            vendor_version=FlextLdapServerDetector._get_first_value(
+                root_dse_attrs, "vendorVersion"
+            ),
             naming_contexts=list(root_dse_attrs.get("namingContexts", [])),
             supported_controls=list(root_dse_attrs.get("supportedControl", [])),
             supported_extensions=list(root_dse_attrs.get("supportedExtension", [])),
         )
 
+    @staticmethod
     def _query_root_dse(
-        self,
         connection: Connection,
     ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
         """Query rootDSE from LDAP server using FlextUtilities for generalization."""
-        # Use StrEnum value directly - matches ldap3's expected Literal type
-        # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"]
+        # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
+        search_scope: FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral = "BASE"
         if not connection.search(
             search_base="",
             search_filter=str(FlextLdapConstants.Filters.ALL_ENTRIES_FILTER),
-            search_scope=cast(
-                "Literal['BASE', 'LEVEL', 'SUBTREE']",
-                FlextLdapConstants.Ldap3ScopeValues.BASE.value,
-            ),
+            search_scope=search_scope,
             attributes=str(FlextLdapConstants.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
             return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
@@ -147,15 +146,16 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             )
 
         root_dse_entry = connection.entries[0]
-        attributes: dict[str, list[str]] = {}
-        for attr_name in root_dse_entry.entry_attributes:
-            attr_value = getattr(root_dse_entry, attr_name, None)
-            if attr_value is not None:
-                attributes[attr_name] = (
-                    [str(v) for v in attr_value]
-                    if FlextRuntime.is_list_like(attr_value)
-                    else [str(attr_value)]
-                )
+        attrs_dict = root_dse_entry.entry_attributes_as_dict
+        attributes: dict[str, list[str]] = {
+            attr_name: (
+                [str(v) for v in attr_value]
+                if FlextRuntime.is_list_like(attr_value)
+                else [str(attr_value)]
+            )
+            for attr_name, attr_value in attrs_dict.items()
+            if attr_value is not None
+        }
 
         return FlextResult[FlextLdapTypes.Ldap.Attributes].ok(attributes)
 
@@ -167,8 +167,8 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             return None
         return str(values[0])
 
+    @staticmethod
     def _detect_from_attributes(
-        self,
         vendor_name: str | None,
         vendor_version: str | None,
         naming_contexts: list[str],
@@ -191,43 +191,70 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
         # Simple server type detection based on common attributes
         # This avoids dependency on the broken flext-ldif detector
-        detected_type = self._detect_server_type_from_attributes_simple(
-            supported_extensions, naming_contexts
+        detected_type = (
+            FlextLdapServerDetector._detect_server_type_from_attributes_simple(
+                supported_extensions,
+                naming_contexts,
+                vendor_name,
+                vendor_version,
+            )
         )
         return FlextResult[str].ok(detected_type)
 
+    @staticmethod
     def _detect_server_type_from_attributes_simple(
-        self,
         supported_extensions: list[str],
         naming_contexts: list[str],
+        vendor_name: str | None = None,
+        vendor_version: str | None = None,
     ) -> str:
         """Simple server type detection based on LDAP attributes.
 
         This is a fallback implementation that avoids the complex flext-ldif
         detector which has issues with server type normalization.
         """
-        # Check for OpenLDAP extensions
-        if any("openldap" in ext.lower() for ext in supported_extensions):
-            return "openldap"
+        # Check vendor info first (most reliable)
+        vendor_parts = [v for v in [vendor_name, vendor_version] if v]
+        vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
 
-        # Check for Oracle OID extensions
-        if any("oracle" in ext.lower() or "oid" in ext.lower() for ext in supported_extensions):
-            return "oid"
+        # Vendor-based detection (priority order)
+        vendor_checks = [
+            (
+                "oid",
+                lambda v: "oracle" in v and ("internet directory" in v or "oid" in v),
+            ),
+            ("oud", lambda v: "oracle" in v and "unified directory" in v),
+            ("openldap", lambda v: "openldap" in v),
+            ("ad", lambda v: "microsoft" in v or "active directory" in v),
+            ("ds389", lambda v: "389" in v or "dirsrv" in v),
+        ]
 
-        # Check for Oracle OUD extensions
-        if any("oud" in ext.lower() for ext in supported_extensions):
-            return "oud"
+        for server_type, check_func in vendor_checks:
+            if vendor_info and check_func(vendor_info):
+                return server_type
 
-        # Check for Active Directory (Microsoft)
-        if any("microsoft" in ext.lower() or "windows" in ext.lower() for ext in supported_extensions):
-            return "ad"
-
-        # Check naming contexts for clues
+        # Check extensions and naming contexts for server type indicators
+        ext_str = " ".join(ext.lower() for ext in supported_extensions)
         context_str = " ".join(naming_contexts).lower()
-        if "oracle" in context_str:
-            return "oid"  # Assume OID if Oracle in context
-        if "microsoft" in context_str or "windows" in context_str:
-            return "ad"
+
+        # Extension/context-based detection (priority order)
+        extension_checks = [
+            ("openldap", lambda e, _c: "openldap" in e),
+            ("oid", lambda e, c: "oracle" in e or "oid" in e or "oracle" in c),
+            ("oud", lambda e, _c: "oud" in e),
+            (
+                "ad",
+                lambda e, c: "microsoft" in e
+                or "windows" in e
+                or "microsoft" in c
+                or "windows" in c,
+            ),
+            ("ds389", lambda e, _c: "389" in e or "dirsrv" in e),
+        ]
+
+        for server_type, check_func in extension_checks:
+            if check_func(ext_str, context_str):
+                return server_type
 
         # Default to RFC-compliant generic server
         return "rfc"

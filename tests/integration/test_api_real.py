@@ -34,7 +34,9 @@ class TestFlextLdapAPI:
 
     def test_api_initialization(self) -> None:
         """Test API initialization."""
-        api = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        api = create_flext_ldap_instance()
         assert api is not None
         assert api.is_connected is False
 
@@ -43,9 +45,11 @@ class TestFlextLdapAPI:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test API connection lifecycle."""
-        api = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        api = create_flext_ldap_instance()
         TestDeduplicationHelpers.connect_and_disconnect(
-            cast("FlextLdapProtocols.LdapClient", api),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             connection_config,
         )
 
@@ -56,7 +60,7 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API search operation."""
         TestOperationHelpers.search_and_assert_success(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             str(ldap_container["base_dn"]),
             expected_min_count=1,
         )
@@ -67,7 +71,7 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API add operation."""
         TestDeduplicationHelpers.api_add_operation(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             "testapiadd",
             sn="Test",
         )
@@ -78,7 +82,7 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API modify operation."""
         TestDeduplicationHelpers.api_modify_operation(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             "testapimodify",
         )
 
@@ -88,7 +92,7 @@ class TestFlextLdapAPI:
     ) -> None:
         """Test API delete operation."""
         TestDeduplicationHelpers.api_delete_operation(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             "testapidelete",
         )
 
@@ -97,14 +101,16 @@ class TestFlextLdapAPI:
         ldap_container: GenericFieldsDict,
     ) -> None:
         """Test API operations when not connected."""
-        api = FlextLdap()
+        from tests.conftest import create_flext_ldap_instance
+
+        api = create_flext_ldap_instance()
 
         # Search should fail
         search_options = TestOperationHelpers.create_search_options(
             str(ldap_container["base_dn"]),
         )
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", api),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             "search",
             search_options=search_options,
         )
@@ -115,7 +121,7 @@ class TestFlextLdapAPI:
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", api),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             "add",
             entry=entry,
         )
@@ -125,7 +131,7 @@ class TestFlextLdapAPI:
             "mail": [(MODIFY_REPLACE, ["test@example.com"])],
         }
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", api),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             "modify",
             dn="cn=test,dc=example,dc=com",
             changes=changes,
@@ -133,7 +139,7 @@ class TestFlextLdapAPI:
 
         # Delete should fail
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapClient", api),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             "delete",
             dn="cn=test,dc=example,dc=com",
         )
@@ -176,7 +182,7 @@ class TestFlextLdapAPIWithQuirks:
 
         # Add should work with quirks handled by flext-ldif
         result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapClient", ldap_client),
+            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
             entry,
         )
         assert result.is_success, f"Add failed: {result.error}"

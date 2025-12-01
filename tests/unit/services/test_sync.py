@@ -31,6 +31,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextLogger
+from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.services.parser import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
@@ -38,7 +39,6 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
-from flext_ldif import FlextLdif, FlextLdifModels
 
 logger = FlextLogger(__name__)
 

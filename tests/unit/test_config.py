@@ -27,6 +27,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
+from flext_core.typings import FlextTypes
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -82,7 +83,8 @@ class TestFlextLdapConfig:
     @staticmethod
     def _get_config() -> FlextLdapConfig:
         """Factory method for getting config singleton instance."""
-        return FlextLdapConfig.get_instance()
+        # FlextConfig uses singleton pattern via __new__, so instantiation returns singleton
+        return FlextLdapConfig()
 
     def test_get_instance_returns_singleton(self) -> None:
         """Test get_instance returns same singleton instance."""
@@ -95,7 +97,7 @@ class TestFlextLdapConfig:
         ("attr", "expected"),
         [(attr, expected) for attr, expected in _DEFAULT_VALUES.items()],
     )
-    def test_default_config_values(self, attr: str, expected: object) -> None:
+    def test_default_config_values(self, attr: str, expected: FlextTypes.GeneralValueType) -> None:
         """Test default configuration values match expected constants."""
         config = self._get_config()
         assert getattr(config, attr) == expected

@@ -16,6 +16,7 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
@@ -25,7 +26,6 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
@@ -233,7 +233,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 )
                 result = operations_service.search(search_options)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                 )
 
             case DNHandlingType.ERROR_HANDLING:
@@ -250,7 +250,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 )
                 result = operations_service.search(search_options)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "Not connected",
                 )
 
@@ -272,7 +272,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                 )
 
                 # Verify DN was normalized
@@ -295,7 +295,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 )
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "Not connected",
                 )
 
@@ -304,7 +304,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 entry = TestDataFactories.create_invalid_entry()
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "",
                 )
 
@@ -326,7 +326,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 add_result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", add_result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", add_result),
                 )
 
                 # Modify with DN that needs normalization
@@ -334,7 +334,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 dn_with_spaces = f"  {entry.dn!s}  "
                 modify_result = operations_service.modify(dn_with_spaces, changes)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", modify_result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", modify_result),
                 )
 
                 # Cleanup
@@ -351,7 +351,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 changes = TestDataFactories.create_modify_changes()
                 result = operations_service.modify("cn=test,dc=flext,dc=local", changes)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "Not connected",
                 )
 
@@ -373,13 +373,13 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 add_result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", add_result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", add_result),
                 )
 
                 # Delete with DN that needs normalization
                 delete_result = operations_service.delete(dn_str)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[object]", delete_result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", delete_result),
                 )
 
             case DNHandlingType.ERROR_HANDLING:
@@ -391,7 +391,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 result = operations_service.delete("cn=test,dc=flext,dc=local")
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "Not connected",
                 )
 
@@ -406,7 +406,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 # Test execute error handling (not connected)
                 result = operations_service.execute()
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[object]", result),
+                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "Not connected",
                 )
 

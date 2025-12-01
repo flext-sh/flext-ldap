@@ -14,20 +14,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import cast
+from collections.abc import Callable, Mapping, Sequence
 
 from flext_core import FlextResult, FlextRuntime, FlextUtilities
 from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.utilities import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
+from pydantic import ConfigDict
 
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.typings import FlextLdapTypes
 
 
@@ -39,7 +40,13 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     This maximizes code reuse - adapter handles all parsing logic.
     """
 
-    _connection: FlextLdapProtocols.LdapConnection
+    model_config = ConfigDict(
+        frozen=False,  # Service needs mutable state for connection reference
+        extra="allow",
+        arbitrary_types_allowed=True,
+    )
+
+    _connection: FlextLdapConnection
 
     class EntryComparison:
         """Entry comparison logic - detects attribute changes for modify operations."""
@@ -47,7 +54,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         @staticmethod
         def extract_attributes(
             entry: FlextLdapProtocols.LdapEntry.EntryProtocol | FlextLdifModels.Entry,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, Sequence[str]]:
             """Extract attributes from entry in normalized dict format."""
             if not entry.attributes:
                 return {}
@@ -55,18 +62,19 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             if isinstance(entry, FlextLdifModels.Entry):
                 # LdifAttributes has .attributes: dict[str, list[str]]
                 ldif_attrs = entry.attributes
-                if hasattr(ldif_attrs, "attributes") and isinstance(
-                    ldif_attrs.attributes, dict
+                if (
+                    ldif_attrs
+                    and hasattr(ldif_attrs, "attributes")
+                    and isinstance(ldif_attrs.attributes, dict)
                 ):
                     return ldif_attrs.attributes
                 return {}
             # EntryProtocol has attributes: Mapping[str, Sequence[str]]
-            if hasattr(entry, "attributes"):
-                attrs = entry.attributes
-                if hasattr(attrs, "items"):
-                    return {k: list(v) for k, v in attrs.items()}
-                if hasattr(attrs, "attributes"):
-                    return attrs.attributes
+            attrs = entry.attributes
+            if isinstance(attrs, Mapping):
+                return {k: list(v) for k, v in attrs.items()}
+            if hasattr(attrs, "attributes") and isinstance(attrs.attributes, Mapping):
+                return {k: list(v) for k, v in attrs.attributes.items()}
             return {}
 
         @staticmethod
@@ -77,19 +85,21 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         @staticmethod
         def find_existing_values(
             attr_name: str,
-            existing_attrs: dict[str, list[str]],
+            existing_attrs: Mapping[str, Sequence[str]],
         ) -> list[str] | None:
             """Find existing attribute values by case-insensitive name."""
             attr_lower = attr_name.lower()
-            return next(
+            found = next(
                 (v for k, v in existing_attrs.items() if k.lower() == attr_lower),
                 None,
             )
+            # Convert Sequence[str] to list[str] for return type compatibility
+            return list(found) if found is not None else None
 
         @staticmethod
         def process_new_attributes(
-            new_attrs: dict[str, list[str]],
-            existing_attrs: dict[str, list[str]],
+            new_attrs: Mapping[str, Sequence[str]],
+            existing_attrs: Mapping[str, Sequence[str]],
             ignore: frozenset[str],
         ) -> tuple[FlextLdapTypes.Ldap.ModifyChanges, set[str]]:
             """Process new attributes and detect changes."""
@@ -130,7 +140,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         @staticmethod
         def process_deleted_attributes(
-            existing_attrs: dict[str, list[str]],
+            existing_attrs: Mapping[str, Sequence[str]],
             ignore: frozenset[str],
             processed: set[str],
         ) -> FlextLdapTypes.Ldap.ModifyChanges:
@@ -148,16 +158,25 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         @staticmethod
         def compare(
-            existing_entry: FlextLdapProtocols.EntryProtocol | FlextLdifModels.Entry,
-            new_entry: FlextLdapProtocols.EntryProtocol | FlextLdifModels.Entry,
+            existing_entry: FlextLdapProtocols.LdapEntry.EntryProtocol
+            | FlextLdifModels.Entry,
+            new_entry: FlextLdapProtocols.LdapEntry.EntryProtocol
+            | FlextLdifModels.Entry,
         ) -> FlextLdapTypes.Ldap.ModifyChanges | None:
             """Compare two entries and return modify changes if different."""
-            existing_attrs = FlextLdapOperations.EntryComparison.extract_attributes(
+            existing_attrs_raw = FlextLdapOperations.EntryComparison.extract_attributes(
                 existing_entry,
             )
-            new_attrs = FlextLdapOperations.EntryComparison.extract_attributes(
+            new_attrs_raw = FlextLdapOperations.EntryComparison.extract_attributes(
                 new_entry,
             )
+            # Convert to dict for processing
+            existing_attrs: dict[str, list[str]] = {
+                k: list(v) for k, v in existing_attrs_raw.items()
+            }
+            new_attrs: dict[str, list[str]] = {
+                k: list(v) for k, v in new_attrs_raw.items()
+            }
 
             if not existing_attrs or not new_attrs:
                 return None
@@ -339,7 +358,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
     def __init__(
         self,
-        connection: FlextLdapProtocols.LdapConnection,
+        connection: FlextLdapConnection,
         **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize operations service."""
@@ -364,9 +383,10 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             normalized_options,
             server_type=server_type,
         )
-        # Type narrowing: adapter returns FlextResult[object] but actual type is SearchResult
+        # Adapter returns FlextResult[SearchResultProtocol] - unwrap directly
         if result.is_success:
             search_result = result.unwrap()
+            # Type narrowing: SearchResultProtocol is compatible with SearchResult model
             if isinstance(search_result, FlextLdapModels.SearchResult):
                 return FlextResult[FlextLdapModels.SearchResult].ok(search_result)
         error_msg = str(result.error) if result.error else "Unknown error"
@@ -379,7 +399,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Add LDAP entry."""
         result = self._connection.adapter.add(entry)
-        # Type narrowing: adapter returns FlextResult[object] but actual type is OperationResult
+        # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
             operation_result = result.unwrap()
             if isinstance(operation_result, FlextLdapModels.OperationResult):
@@ -389,23 +409,25 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
     def modify(
         self,
-        dn: str | FlextLdifModels.DistinguishedName,
+        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
         changes: FlextLdapTypes.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry."""
-        dn_model = (
-            dn
-            if isinstance(dn, FlextLdifModels.DistinguishedName)
-            else FlextLdifModels.DistinguishedName(
-                value=FlextLdifUtilities.DN.get_dn_value(dn),
+        # Type narrowing: convert str to DistinguishedName model if needed
+        if isinstance(dn, str):
+            dn_model: FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol = (
+                FlextLdifModels.DistinguishedName(
+                    value=FlextLdifUtilities.DN.get_dn_value(dn),
+                )
             )
-        )
+        else:
+            dn_model = dn
         result = self._connection.adapter.modify(
             dn_model,
             changes,
         )
-        # Type narrowing: adapter returns FlextResult[object] but actual type is OperationResult
+        # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
             operation_result = result.unwrap()
             if isinstance(operation_result, FlextLdapModels.OperationResult):
@@ -415,21 +437,21 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
     def delete(
         self,
-        dn: str | FlextLdifModels.DistinguishedName,
+        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry."""
-        dn_model = (
-            dn
-            if isinstance(dn, FlextLdifModels.DistinguishedName)
-            else FlextLdifModels.DistinguishedName(
-                value=FlextLdifUtilities.DN.get_dn_value(dn),
+        # Type narrowing: convert str to DistinguishedName model if needed
+        if isinstance(dn, str):
+            dn_model: FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol = (
+                FlextLdifModels.DistinguishedName(
+                    value=FlextLdifUtilities.DN.get_dn_value(dn),
+                )
             )
-        )
-        result = self._connection.adapter.delete(
-            cast("FlextLdapProtocols.DistinguishedNameProtocol", dn_model),
-        )
-        # Type narrowing: adapter returns FlextResult[object] but actual type is OperationResult
+        else:
+            dn_model = dn
+        result = self._connection.adapter.delete(dn_model)
+        # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
             operation_result = result.unwrap()
             if isinstance(operation_result, FlextLdapModels.OperationResult):
@@ -526,7 +548,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                         skipped=skipped,
                     )
                     progress_callback(i, total_entries, entry_dn, callback_stats)
-                except Exception as e:
+                except (RuntimeError, TypeError, ValueError) as e:
                     self.logger.warning(
                         "Progress callback failed",
                         operation=FlextLdapConstants.LdapOperationNames.SYNC,
@@ -567,7 +589,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             )
 
         ldap_config = self.config.get_namespace("ldap", FlextLdapConfig)
-        base_dn = getattr(ldap_config, "base_dn", None) or "dc=example,dc=com"
+        base_dn = ldap_config.base_dn or "dc=example,dc=com"
         return FlextResult[FlextLdapModels.SearchResult].ok(
             FlextLdapModels.SearchResult(
                 entries=[],

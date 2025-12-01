@@ -20,11 +20,11 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextUtilities
+from flext_ldif import FlextLdifModels
 from flext_tests import FlextTestsMatchers, FlextTestsUtilities
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from flext_ldif import FlextLdifModels
 
 from ..fixtures.constants import TestConstants
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
@@ -254,15 +254,21 @@ class TestFlextLdapModels:
             scope_literal = FlextLdapConstants.SearchScope.SUBTREE
 
         if filter_str is not None:
-            options = FlextLdapModels.SearchOptions.normalized(
-                base_dn=TestConstants.DEFAULT_BASE_DN,
+            config = FlextLdapModels.SearchOptions.NormalizedConfig(
                 scope=scope_literal,
                 filter_str=filter_str,
             )
-        else:
             options = FlextLdapModels.SearchOptions.normalized(
                 base_dn=TestConstants.DEFAULT_BASE_DN,
+                config=config,
+            )
+        else:
+            config = FlextLdapModels.SearchOptions.NormalizedConfig(
                 scope=scope_literal,
+            )
+            options = FlextLdapModels.SearchOptions.normalized(
+                base_dn=TestConstants.DEFAULT_BASE_DN,
+                config=config,
             )
 
         FlextTestsUtilities.ModelTestHelpers.assert_attr_values(

@@ -13,9 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Self
 
-from flext_core import FlextModels, FlextModelsCollections, FlextUtilities
+from flext_core import FlextModels, FlextUtilities
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.entity import FlextModelsEntity
 from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 from pydantic import (
@@ -115,25 +118,37 @@ class FlextLdapModels(FlextModels):
                 raise ValueError(error_msg)
             return v
 
+        @dataclass(frozen=True)
+        class NormalizedConfig:
+            """Configuration for normalized SearchOptions factory."""
+
+            scope: str | None = None
+            filter_str: str | None = None
+            attributes: list[str] | None = None
+            size_limit: int | None = None
+            time_limit: int | None = None
+
         @classmethod
         def normalized(
             cls,
             base_dn: str,
-            scope: str = "SUBTREE",
-            filter_str: str = FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
-            attributes: list[str] | None = None,
-            size_limit: int = 0,
-            time_limit: int = 0,
+            *,
+            config: NormalizedConfig | None = None,
         ) -> FlextLdapModels.SearchOptions:
             """Factory method with normalized base_dn using DN.norm_string()."""
+            if config is None:
+                config = cls.NormalizedConfig()
+
             normalized_base = FlextLdifUtilities.DN.norm_string(base_dn)
             return cls(
                 base_dn=normalized_base,
-                scope=scope,
-                filter_str=filter_str,
-                attributes=attributes,
-                size_limit=size_limit,
-                time_limit=time_limit,
+                scope=config.scope if config.scope is not None else "SUBTREE",
+                filter_str=config.filter_str
+                if config.filter_str is not None
+                else FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                attributes=config.attributes,
+                size_limit=config.size_limit if config.size_limit is not None else 0,
+                time_limit=config.time_limit if config.time_limit is not None else 0,
             )
 
     # =========================================================================
@@ -169,7 +184,7 @@ class FlextLdapModels(FlextModels):
     # SEARCH RESULT MODELS
     # =========================================================================
 
-    class SearchResult(FlextModels.Entity):
+    class SearchResult(FlextModelsEntity.Core):
         """Result of LDAP search operation with Entity features."""
 
         entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
@@ -203,7 +218,7 @@ class FlextLdapModels(FlextModels):
     # SYNC MODELS
     # =========================================================================
 
-    class SyncOptions(FlextModels.Options):
+    class SyncOptions(FlextModelsCollections.Options):
         """Options for LDIF to LDAP synchronization (frozen, immutable)."""
 
         batch_size: int = Field(default=100, ge=1)
@@ -211,7 +226,7 @@ class FlextLdapModels(FlextModels):
         allow_deletes: bool = Field(default=False)
         source_basedn: str = Field(default="")
         target_basedn: str = Field(default="")
-        progress_callback: FlextLdapModels.LdapProgressCallback | None = Field(
+        progress_callback: FlextLdapModels.Types.LdapProgressCallback | None = Field(
             default=None,
         )
 
@@ -257,7 +272,7 @@ class FlextLdapModels(FlextModels):
     # UPSERT RESULT MODELS
     # =========================================================================
 
-    class UpsertResult(FlextModels.Results):
+    class UpsertResult(FlextModelsCollections.Results):
         """Result of individual LDAP upsert operation (frozen, immutable)."""
 
         success: bool
@@ -265,7 +280,7 @@ class FlextLdapModels(FlextModels):
         operation: FlextLdapConstants.OperationType
         error: str | None = None
 
-    class BatchUpsertResult(FlextModels.Entity):
+    class BatchUpsertResult(FlextModelsEntity.Core):
         """Result of batch LDAP upsert operation with Entity features."""
 
         total_processed: int = Field(ge=0)
@@ -280,7 +295,7 @@ class FlextLdapModels(FlextModels):
                 return 0.0
             return self.successful / self.total_processed
 
-    class ConversionMetadata(FlextModels.Config):
+    class ConversionMetadata(FlextModelsCollections.Config):
         """Metadata tracking attribute conversions during ldap3 to LDIF conversion."""
 
         source_attributes: list[str] = Field(default_factory=list)
@@ -336,16 +351,19 @@ class FlextLdapModels(FlextModels):
     # TYPE ALIASES (Python 3.13+ PEP 695)
     # =========================================================================
 
-    type LdapProgressCallback = Callable[
-        [int, int, str, LdapBatchStats],
-        None,
-    ]
-    """Progress callback for batch operations (Python 3.13+ PEP 695 type alias).
+    class Types:
+        """Type aliases for FlextLdapModels (Python 3.13+ PEP 695)."""
 
-    Signature: (index: int, total: int, dn: str, stats: LdapBatchStats) -> None
+        type LdapProgressCallback = Callable[
+            [int, int, str, FlextLdapModels.LdapBatchStats],
+            None,
+        ]
+        """Progress callback for batch operations (Python 3.13+ PEP 695 type alias).
 
-    Defined in models.py to avoid circular import with typings.py.
-    """
+        Signature: (index: int, total: int, dn: str, stats: LdapBatchStats) -> None
+
+        Defined in models.py to avoid circular import with typings.py.
+        """
 
 
 __all__ = ["FlextLdapModels"]

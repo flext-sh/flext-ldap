@@ -35,10 +35,3 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
                 host = self.config.ldap.host  # Typed access!
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """
-
-    def __init__(self, **kwargs: str | float | bool | None) -> None:
-        """Initialize service with optional kwargs.
-
-        Additional kwargs are passed to base FlextService for extensibility.
-        """
-        super().__init__(**kwargs)

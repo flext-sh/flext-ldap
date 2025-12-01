@@ -14,11 +14,11 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
+from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldif import FlextLdifParser
 from tests.fixtures.typing import GenericFieldsDict
 
 pytestmark = pytest.mark.integration
@@ -94,10 +94,11 @@ class TestFlextLdapConnectionCompleteCoverage:
         ) -> FlextLdapConfig:
             """Create service config with container values."""
             # Build config with properly typed fields
-            host: str = str(container["host"])
-            port: int = int(str(container["port"]))
-            bind_dn: str = str(container["bind_dn"])
-            bind_password: str = str(container["password"])
+            # GenericFieldsDict allows any keys via __extra_items__, use get with defaults
+            host: str = str(container.get("host", "localhost"))
+            port: int = int(str(container.get("port", 389)))
+            bind_dn: str = str(container.get("bind_dn", ""))
+            bind_password: str = str(container.get("password", ""))
 
             # Extract optional fields from base_config with proper types
             use_ssl_value = base_config.get("use_ssl", False)
@@ -137,30 +138,34 @@ class TestFlextLdapConnectionCompleteCoverage:
             overrides: GenericFieldsDict | None = None,
         ) -> FlextLdapModels.ConnectionConfig:
             """Create connection config from container."""
-            config_dict: GenericFieldsDict = {
-                "host": str(container["host"]),
-                "port": int(str(container["port"])),
+            # Use get() for GenericFieldsDict to avoid mypy errors
+            # Build config dict - GenericFieldsDict is TypedDict with total=False
+            # Use dict literal and cast to GenericFieldsDict
+            config_data: dict[str, object] = {
+                "host": str(container.get("host", "localhost")),
+                "port": int(str(container.get("port", 389))),
                 "use_ssl": False,
                 "use_tls": False,
-                "bind_dn": str(container["bind_dn"]),
-                "bind_password": str(container["password"]),
+                "bind_dn": str(container.get("bind_dn", "")),
+                "bind_password": str(container.get("password", "")),
                 "timeout": 30,
                 "auto_bind": True,
                 "auto_range": True,
             }
             if overrides:
-                config_dict.update(overrides)
-            # Cast to expected types for ConnectionConfig constructor
+                config_data.update(overrides)
+            config_dict = cast("GenericFieldsDict", config_data)
+            # Use .get() for GenericFieldsDict to avoid mypy errors
             return FlextLdapModels.ConnectionConfig(
-                host=cast("str", config_dict["host"]),
-                port=cast("int", config_dict["port"]),
-                use_ssl=cast("bool", config_dict["use_ssl"]),
-                use_tls=cast("bool", config_dict["use_tls"]),
-                bind_dn=cast("str", config_dict["bind_dn"]),
-                bind_password=cast("str", config_dict["bind_password"]),
-                timeout=cast("int", config_dict["timeout"]),
-                auto_bind=cast("bool", config_dict["auto_bind"]),
-                auto_range=cast("bool", config_dict["auto_range"]),
+                host=cast("str", config_dict.get("host", "localhost")),
+                port=cast("int", config_dict.get("port", 389)),
+                use_ssl=cast("bool", config_dict.get("use_ssl", False)),
+                use_tls=cast("bool", config_dict.get("use_tls", False)),
+                bind_dn=cast("str", config_dict.get("bind_dn", "")),
+                bind_password=cast("str", config_dict.get("bind_password", "")),
+                timeout=cast("int", config_dict.get("timeout", 30)),
+                auto_bind=cast("bool", config_dict.get("auto_bind", True)),
+                auto_range=cast("bool", config_dict.get("auto_range", True)),
             )
 
     class TestAssertions:
@@ -190,10 +195,9 @@ class TestFlextLdapConnectionCompleteCoverage:
         """Test connection operations with different configurations."""
         if config.get("test_type") == ConnectionTestType.SERVICE_CONFIG_ALL_OPTIONS:
             # Test service config with all options
-            service_config_dict = cast(
-                "dict[str, object]",
-                config.get("service_config", {}),
-            )
+            service_config_dict_raw = config.get("service_config", {})
+            # Cast to GenericFieldsDict for type compatibility
+            service_config_dict = cast("GenericFieldsDict", service_config_dict_raw)
             service_config = self.TestDataFactories.create_service_config(
                 service_config_dict,
                 ldap_container,
@@ -215,20 +219,18 @@ class TestFlextLdapConnectionCompleteCoverage:
 
         elif config.get("test_type") == ConnectionTestType.CONNECTION_CONFIG_OVERRIDES:
             # Test connection config overrides
-            service_config_dict = cast(
-                "dict[str, object]",
-                config.get("service_config", {}),
-            )
+            service_config_dict_raw = config.get("service_config", {})
+            # Cast to GenericFieldsDict for type compatibility
+            service_config_dict = cast("GenericFieldsDict", service_config_dict_raw)
             service_config = FlextLdapConfig(
                 host=cast("str", service_config_dict.get("host", "")),
                 port=cast("int", service_config_dict.get("port", 0)),
             )
             connection = FlextLdapConnection(config=service_config)
 
-            overrides = cast(
-                "dict[str, object]",
-                config.get("connection_config_override", {}),
-            )
+            overrides_raw = config.get("connection_config_override", {})
+            # Cast to GenericFieldsDict for type compatibility
+            overrides = cast("GenericFieldsDict | None", overrides_raw or None)
             connection_config_to_use = self.TestDataFactories.create_connection_config(
                 ldap_container,
                 overrides,
