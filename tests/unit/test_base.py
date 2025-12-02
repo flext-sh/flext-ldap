@@ -60,7 +60,8 @@ class TestFlextLdapServiceBase:
         and namespace validation using dynamic parametrization.
         """
         service = self._create_test_service()
-        FlextTestsMatchers.assert_success(FlextResult[object].ok(service))
+        result: FlextResult[object] = FlextResult[object].ok(service)
+        _ = FlextTestsMatchers.assert_success(result)
         assert service.config is not None
         assert hasattr(service.config, namespace), (
             f"Config missing namespace: {namespace}"

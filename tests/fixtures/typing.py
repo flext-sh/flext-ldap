@@ -129,6 +129,10 @@ class GenericFieldsDict(TypedDict, total=False):
     flexible field dictionaries with any key-value pairs.
     """
 
+    # Common fields that may be present
+    dn: str
+    attributes: dict[str, list[str]]
+
     # Allow any additional keys for maximum flexibility
     __extra_items__: dict[str, object]
 

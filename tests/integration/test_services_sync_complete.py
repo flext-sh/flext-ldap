@@ -39,7 +39,7 @@ class TestFlextLdapSyncServiceComplete:
         ldap_client: FlextLdap,
     ) -> FlextLdapSyncService:
         """Get sync service with connected operations."""
-        operations = ldap_client.client
+        operations = ldap_client._operations
         return FlextLdapSyncService(operations=operations)
 
     @pytest.fixture
@@ -192,7 +192,7 @@ sn: Test
             current: int,
             total: int,
             dn: str,
-            stats: dict[str, int],
+            stats: FlextLdapModels.LdapBatchStats,
         ) -> None:
             progress_calls.append((current, total, dn, stats))
 
@@ -214,8 +214,11 @@ sn: Test
             assert current == idx + 1
             assert total == 2
             assert isinstance(dn, str)
-            assert isinstance(stats, dict)
-            assert "added" in stats or "skipped" in stats or "failed" in stats
+            assert isinstance(stats, FlextLdapModels.LdapBatchStats)
+            # Verify stats object has expected attributes
+            assert hasattr(stats, "synced")
+            assert hasattr(stats, "failed")
+            assert hasattr(stats, "skipped")
 
         # Cleanup
         for dn in [

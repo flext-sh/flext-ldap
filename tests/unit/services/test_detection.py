@@ -164,7 +164,7 @@ class TestFlextLdapServerDetector:
         """Test execute() method fails with invalid connection type."""
         # execute() accepts kwargs, so pass connection as keyword argument
         invalid_connection: str = "not_a_connection"
-        result = detector.execute(connection=invalid_connection)  # type: ignore[arg-type]
+        result = detector.execute(connection=invalid_connection)
 
         assert result.is_failure
         assert result.error is not None

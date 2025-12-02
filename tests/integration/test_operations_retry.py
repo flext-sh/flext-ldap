@@ -85,13 +85,17 @@ class TestAssertions:
     """Comprehensive assertion helpers for retry behavior validation across all test methods."""
 
     @staticmethod
-    def assert_immediate_failure(result: FlextResult[object]) -> None:
+    def assert_immediate_failure(
+        result: FlextResult[FlextLdapModels.OperationResult],
+    ) -> None:
         """Assert that operation failed immediately without retries."""
         assert result.is_failure, "Operation should have failed"
         assert result.error is not None, "Error message should be present"
 
     @staticmethod
-    def assert_retry_attempted(result: FlextResult[object]) -> None:
+    def assert_retry_attempted(
+        result: FlextResult[FlextLdapModels.OperationResult],
+    ) -> None:
         """Assert that retry logic was attempted based on error message."""
         assert result.is_failure, "Operation should have failed"
         error_lower = str(result.error).lower()
@@ -113,7 +117,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_no_retry_attempted(
-        result: FlextResult[object],
+        result: FlextResult[FlextLdapModels.OperationResult],
         max_retries: int = 3,
     ) -> None:
         """Assert that no retry was attempted."""
@@ -146,7 +150,9 @@ class TestOperationsRetry:
         result = operations.upsert(bad_entry)
 
         # Should fail immediately
-        TestAssertions.assert_immediate_failure(cast("FlextResult[FlextLdapModels.OperationResult]", result))
+        TestAssertions.assert_immediate_failure(
+            cast("FlextResult[FlextLdapModels.OperationResult]", result),
+        )
 
     def test_upsert_with_retry_on_specific_error(
         self,
@@ -164,7 +170,9 @@ class TestOperationsRetry:
         )
 
         # Should still fail after retries (error is persistent)
-        TestAssertions.assert_retry_attempted(cast("FlextResult[FlextLdapModels.OperationResult]", result))
+        TestAssertions.assert_retry_attempted(
+            cast("FlextResult[FlextLdapModels.OperationResult]", result),
+        )
 
     def test_upsert_success_without_retry_needed(
         self,
@@ -183,7 +191,7 @@ class TestOperationsRetry:
 
         # Should succeed on first attempt
         TestAssertions.assert_successful_operation(
-            cast("FlextResult[FlextLdapModels.LdapOperationResult]", result),
+            result,
         )
 
     def test_upsert_no_retry_on_non_matching_error(

@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
@@ -26,9 +26,11 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict
+
+from typing import cast
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -57,7 +59,7 @@ class TestDataFactories:
     """Factory methods for generating test data and configurations."""
 
     # Configuration templates for different test scenarios
-    CONFIG_TEMPLATES: ClassVar[dict[str, GenericFieldsDict]] = {
+    CONFIG_TEMPLATES: ClassVar[dict[str, dict[str, object]]] = {
         "default": {},
         "with_parser": {"parser": True},
     }
@@ -110,14 +112,16 @@ class TestDataFactories:
                     if entry.attributes and entry.attributes.attributes
                     else {}
                 )
-                attrs = cast(
-                    "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
-                    {
-                        k: v if isinstance(v, (list, str)) else [str(v)]
-                        for k, v in attrs_raw.items()
-                    },
+                attrs_dict = {
+                    k: v if isinstance(v, (list, str)) else [str(v)]
+                    for k, v in attrs_raw.items()
+                }
+                # Convert dict to Mapping[str, GeneralValueType] for EntryTestHelpers.create_entry
+                attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
+                    "Mapping[str, FlextTypes.GeneralValueType]",
+                    attrs_dict,
                 )
-                entry = EntryTestHelpers.create_entry(dn_str, attrs)
+                entry = EntryTestHelpers.create_entry(dn_str, attrs_mapping)
                 return dn_str, entry
             case _:
                 return str(entry.dn), entry
@@ -125,16 +129,16 @@ class TestDataFactories:
     @staticmethod
     def create_invalid_entry() -> FlextLdifModels.Entry:
         """Create entry that will fail to add (invalid DN format)."""
-        return EntryTestHelpers.create_entry(
-            "invalid-dn",
-            cast(
-                "dict[str, list[str] | str | tuple[str, ...] | set[str] | frozenset[str]]",
-                {
-                    "cn": ["test"],
-                    "objectClass": ["top", "person"],
-                },
-            ),
+        attrs_dict = {
+            "cn": ["test"],
+            "objectClass": ["top", "person"],
+        }
+        # Convert dict to Mapping[str, GeneralValueType] for EntryTestHelpers.create_entry
+        attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
+            "Mapping[str, FlextTypes.GeneralValueType]",
+            attrs_dict,
         )
+        return EntryTestHelpers.create_entry("invalid-dn", attrs_mapping)
 
     @staticmethod
     def create_modify_changes() -> dict[str, list[tuple[str, list[str]]]]:
@@ -404,7 +408,13 @@ class TestFlextLdapOperationsCompleteCoverage:
         match dn_handling:
             case DNHandlingType.ERROR_HANDLING:
                 # Test execute error handling (not connected)
-                result = operations_service.execute()
+                # Create a new operations service without connection for error test
+                config = FlextLdapConfig()
+                unconnected_connection = FlextLdapConnection(config=config)
+                unconnected_operations = FlextLdapOperations(
+                    connection=unconnected_connection,
+                )
+                result = unconnected_operations.execute()
                 TestAssertions.assert_operation_failure(
                     cast("FlextResult[FlextLdapModels.OperationResult]", result),
                     "Not connected",

@@ -13,7 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextUtilities
+from typing import cast
+
+from flext_core import FlextConfig, FlextResult, FlextTypes, FlextUtilities
 from flext_ldif import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
 from pydantic import ConfigDict, PrivateAttr
@@ -40,7 +42,9 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
     )
 
     _adapter: Ldap3Adapter
-    _config: FlextLdapConfig = PrivateAttr()
+    _config: FlextConfig | None = PrivateAttr(
+        default=None,
+    )  # Compatible with base class
 
     def __init__(
         self,
@@ -50,12 +54,19 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         """Initialize connection service."""
         super().__init__()
         # Create config instance if not provided
-        resolved_config = config if config is not None else FlextLdapConfig()
+        resolved_config: FlextLdapConfig = (
+            config if config is not None else FlextLdapConfig()
+        )
         object.__setattr__(self, "_config", resolved_config)
         if parser is None:
             parser = FlextLdif.get_instance().parser
         # Create adapter directly
-        self._adapter = Ldap3Adapter(parser=parser)
+        # Pass parser as part of kwargs (Ldap3Adapter.__init__ extracts it from kwargs)
+        # Use cast to satisfy type checker - parser is extracted and validated in Ldap3Adapter.__init__
+        kwargs_with_parser: dict[str, FlextTypes.GeneralValueType] = {
+            "parser": cast("FlextTypes.GeneralValueType", parser),
+        }
+        self._adapter = Ldap3Adapter(**kwargs_with_parser)
 
     def connect(
         self,

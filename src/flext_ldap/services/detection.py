@@ -19,6 +19,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from flext_core import FlextResult, FlextRuntime
 from ldap3 import Connection
 
@@ -113,10 +115,10 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         root_dse_attrs = root_dse_result.unwrap()
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs, "vendorName"
+                root_dse_attrs, "vendorName",
             ),
             vendor_version=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs, "vendorVersion"
+                root_dse_attrs, "vendorVersion",
             ),
             naming_contexts=list(root_dse_attrs.get("namingContexts", [])),
             supported_controls=list(root_dse_attrs.get("supportedControl", [])),
@@ -218,7 +220,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
 
         # Vendor-based detection (priority order)
-        vendor_checks = [
+        vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
             (
                 "oid",
                 lambda v: "oracle" in v and ("internet directory" in v or "oid" in v),
@@ -229,8 +231,8 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             ("ds389", lambda v: "389" in v or "dirsrv" in v),
         ]
 
-        for server_type, check_func in vendor_checks:
-            if vendor_info and check_func(vendor_info):
+        for server_type, vendor_check_func in vendor_checks:
+            if vendor_info and vendor_check_func(vendor_info):
                 return server_type
 
         # Check extensions and naming contexts for server type indicators
@@ -238,7 +240,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         context_str = " ".join(naming_contexts).lower()
 
         # Extension/context-based detection (priority order)
-        extension_checks = [
+        extension_checks: list[tuple[str, Callable[[str, str], bool]]] = [
             ("openldap", lambda e, _c: "openldap" in e),
             ("oid", lambda e, c: "oracle" in e or "oid" in e or "oracle" in c),
             ("oud", lambda e, _c: "oud" in e),
@@ -252,8 +254,8 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             ("ds389", lambda e, _c: "389" in e or "dirsrv" in e),
         ]
 
-        for server_type, check_func in extension_checks:
-            if check_func(ext_str, context_str):
+        for server_type, extension_check_func in extension_checks:
+            if extension_check_func(ext_str, context_str):
                 return server_type
 
         # Default to RFC-compliant generic server

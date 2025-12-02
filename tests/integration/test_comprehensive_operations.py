@@ -19,9 +19,10 @@ from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from tests.fixtures.typing import GenericFieldsDict
+from ..conftest import create_flext_ldap_instance
 
 from ..fixtures import LdapTestFixtures
+from ..fixtures.typing import GenericFieldsDict, LdapContainerDict
 from ..helpers.operation_helpers import TestOperationHelpers
 from ..helpers.test_helpers import FlextLdapTestHelpers
 
@@ -35,11 +36,11 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_all_entries(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test searching all entries in base DN."""
         search_options = FlextLdapTestHelpers.create_search_options(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=ldap_container["base_dn"],
         )
         result = ldap_client.search(search_options)
         FlextLdapTestHelpers.assert_search_success(result, min_entries=1)
@@ -47,12 +48,12 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_with_fixture_filter(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         base_ldif_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test search using filter from fixture data."""
         search_options = FlextLdapTestHelpers.create_search_options(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=ldap_container["base_dn"],
             filter_str="(objectClass=organizationalUnit)",
         )
         result = ldap_client.search(search_options)
@@ -61,11 +62,11 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_users_only(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test searching for user entries only."""
         search_options = FlextLdapTestHelpers.create_search_options(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=ldap_container["base_dn"],
             filter_str="(objectClass=inetOrgPerson)",
         )
         result = ldap_client.search(search_options)
@@ -82,11 +83,11 @@ class TestFlextLdapComprehensiveSearch:
     def test_search_groups_only(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test searching for group entries only."""
         search_options = FlextLdapTestHelpers.create_search_options(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=ldap_container["base_dn"],
             filter_str="(objectClass=groupOfNames)",
         )
         result = ldap_client.search(search_options)
@@ -131,16 +132,20 @@ class TestFlextLdapComprehensiveAdd:
         self,
         ldap_client: FlextLdap,
         test_users_json: list[GenericFieldsDict],
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test adding multiple users from fixture JSON."""
         # Convert all users to entry dicts
-        entry_dicts = [
+        entry_dicts_raw = [
             LdapTestFixtures.convert_user_json_to_entry(user_data)
             for user_data in test_users_json[:2]  # Limit to 2 for test speed
         ]
+        # Cast to GenericFieldsDict for type compatibility
+        entry_dicts: list[GenericFieldsDict] = [
+            cast("GenericFieldsDict", entry_dict) for entry_dict in entry_dicts_raw
+        ]
 
-        base_dn = str(ldap_container.get("base_dn", ""))
+        base_dn = ldap_container["base_dn"]
         results = FlextLdapTestHelpers.add_multiple_entries_from_dicts(
             ldap_client,
             entry_dicts,
@@ -208,8 +213,6 @@ class TestFlextLdapConnectionManagement:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test connection lifecycle."""
-        from tests.conftest import create_flext_ldap_instance
-
         client = create_flext_ldap_instance()
 
         # Connect
@@ -220,15 +223,13 @@ class TestFlextLdapConnectionManagement:
 
         # Disconnect
         client.disconnect()
-        assert client.is_connected is False
+        assert client._connection.is_connected is False
 
     def test_reconnect_after_disconnect(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test reconnecting after disconnect."""
-        from tests.conftest import create_flext_ldap_instance
-
         client = create_flext_ldap_instance()
 
         # First connection
@@ -254,11 +255,11 @@ class TestFlextLdapWithBaseLdif:
     def test_load_and_search_base_ldif(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test loading base LDIF entries and searching for them."""
         # Create test entry directly instead of depending on base_ldif_entries fixture
-        base_dn = str(ldap_container["base_dn"])
+        base_dn = ldap_container["base_dn"]
         test_ou_dn = f"ou=testsearch,{base_dn}"
 
         # Create organizational unit entry
@@ -290,12 +291,12 @@ class TestFlextLdapWithBaseLdif:
     def test_add_entry_from_base_ldif(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         unique_dn_suffix: str,
     ) -> None:
         """Test adding entry parsed from base LDIF (idempotent with unique DN)."""
         # Create test entry directly instead of depending on base_ldif_entries fixture
-        base_dn = str(ldap_container["base_dn"])
+        base_dn = ldap_container["base_dn"]
         unique_uid = f"testuser-{unique_dn_suffix}"
         new_dn = f"uid={unique_uid},ou=people,{base_dn}"
 

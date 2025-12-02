@@ -19,7 +19,8 @@ from flext_ldif import FlextLdifParser
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
-from tests.fixtures.typing import GenericFieldsDict
+
+from ..fixtures.typing import GenericFieldsDict
 
 pytestmark = pytest.mark.integration
 

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifModels, FlextLdifParser
+from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser
 
 from flext_ldap import FlextLdap
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
 
 
 class TestApiErrorPaths:
@@ -15,10 +17,6 @@ class TestApiErrorPaths:
 
     def test_connect_failure_logs_error(self) -> None:
         """Test api.py line 347: logger.error when connect fails."""
-        from flext_ldap.config import FlextLdapConfig
-        from flext_ldap.services.connection import FlextLdapConnection
-        from flext_ldap.services.operations import FlextLdapOperations
-
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config)
         operations = FlextLdapOperations(connection=connection)
@@ -37,10 +35,6 @@ class TestApiErrorPaths:
 
     def test_upsert_failure_logs_error(self) -> None:
         """Test api.py line 653: logger.error when upsert fails."""
-        from flext_ldap.config import FlextLdapConfig
-        from flext_ldap.services.connection import FlextLdapConnection
-        from flext_ldap.services.operations import FlextLdapOperations
-
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config)
         operations = FlextLdapOperations(connection=connection)
@@ -60,14 +54,14 @@ class TestApiErrorPaths:
     def test_batch_upsert_failure_logs_error(self) -> None:
         """Test api.py line 724: logger.error when batch_upsert fails."""
         # Create API with parser (required)
-        from flext_ldap.services.connection import FlextLdapConnection
-        from flext_ldap.services.operations import FlextLdapOperations
-
         config = FlextLdapConfig()
         parser = FlextLdifParser()
         connection = FlextLdapConnection(config=config, parser=parser)
         operations = FlextLdapOperations(connection=connection)
-        api = FlextLdap(connection=connection, operations=operations, ldif=parser)
+        # FlextLdap expects FlextLdif instance, not parser
+        api = FlextLdap(
+            connection=connection, operations=operations, ldif=FlextLdif.get_instance()
+        )
 
         entries = [
             FlextLdifModels.Entry(

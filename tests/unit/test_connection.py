@@ -102,7 +102,7 @@ class TestFlextLdapConnection:
     def test_connection_execute_when_not_connected(self) -> None:
         """Test execute returns failure when not connected."""
         result = self._create_connection().execute()
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
         assert "Not connected" in (result.error or "")
 
     def test_connection_connect_debug_logging(self) -> None:
@@ -113,7 +113,7 @@ class TestFlextLdapConnection:
             bind_dn="cn=test,dc=example,dc=com",
         )
         result = connection.connect(connection_config)
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
 
     @pytest.mark.parametrize("host_scenario", HOST_SCENARIOS)
     def test_connection_with_host_scenario(
@@ -135,7 +135,7 @@ class TestFlextLdapConnection:
                 timeout=TestConstants.Connection.FAST_TIMEOUT,
             )
         result = connection.connect(connection_config, auto_retry=True, max_retries=1)
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
 
     def test_connection_get_connection_when_none(self) -> None:
         """Test _get_connection when connection is None."""
@@ -143,11 +143,11 @@ class TestFlextLdapConnection:
         connection._adapter._connection = None
         connection._adapter._server = None
         result = connection._adapter._get_connection()
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
 
     def test_connection_health_check(self) -> None:
         """Test health check execution."""
         connection = self._create_connection()
         result = connection.execute()
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
         assert "Not connected" in (result.error or "")

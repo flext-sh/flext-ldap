@@ -125,7 +125,7 @@ class FlextLdapProtocols(FlextProtocols):
             """
 
             base_dn: str
-            scope: str | FlextLdapProtocols.Config.SearchScopeProtocol
+            scope: str  # Normalized to str after validation
             filter_str: str
             attributes: list[str] | None
             size_limit: int

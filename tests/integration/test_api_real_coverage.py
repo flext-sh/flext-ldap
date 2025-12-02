@@ -16,6 +16,7 @@ import pytest
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
+from ..conftest import create_flext_ldap_instance
 
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -29,9 +30,9 @@ class TestFlextLdapAPICoverage:
         self,
         ldap_client: FlextLdap,
     ) -> None:
-        """Test operations access via client property."""
-        # Operations are accessed via client property
-        operations = ldap_client.client
+        """Test operations access via _operations attribute."""
+        # Operations are accessed via _operations attribute
+        operations = ldap_client._operations
         assert operations is not None
         assert hasattr(operations, "search")
         assert hasattr(operations, "add")
@@ -43,7 +44,8 @@ class TestFlextLdapAPICoverage:
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test context manager enter and exit."""
-        with FlextLdap() as client:
+        client = create_flext_ldap_instance()
+        with client:
             assert client is not None
             TestOperationHelpers.connect_and_assert_success(
                 cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
@@ -51,15 +53,13 @@ class TestFlextLdapAPICoverage:
             )
 
         # After exit, connection should be closed
-        assert not client.is_connected
+        assert not client._connection.is_connected
 
     def test_context_manager_with_exception(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test context manager with exception handling."""
-        from tests.conftest import create_flext_ldap_instance
-
         client = create_flext_ldap_instance()
         try:
             with client:
@@ -74,7 +74,7 @@ class TestFlextLdapAPICoverage:
             pass
 
         # Connection should still be closed after exception
-        assert not client.is_connected
+        assert not client._connection.is_connected
 
     def test_execute_method(
         self,

@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, override
 
-from flext_core import FlextResult
+from flext_core import FlextConfig, FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from pydantic import ConfigDict, PrivateAttr
@@ -31,6 +31,9 @@ from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import FlextLdapTypes
 from flext_ldap.utilities import FlextLdapUtilities
+
+# Protocol alias for type annotations
+DistinguishedNameProtocol = FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol
 
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
@@ -80,7 +83,9 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
-    _config: FlextLdapConfig = PrivateAttr()
+    _config: FlextConfig | None = PrivateAttr(
+        default=None,
+    )  # Compatible with base class
 
     def __init__(
         self,
@@ -105,7 +110,10 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self._ldif = ldif or FlextLdif.get_instance()
         # Use connection's config if available for consistency
         # Otherwise, super().__init__() already created proper FlextLdapConfig via _get_service_config_type()
-        if hasattr(connection, "_config") and isinstance(connection._config, FlextLdapConfig):  # noqa: SLF001
+        if (
+            hasattr(connection, "_config")
+            and isinstance(connection._config, FlextLdapConfig)  # noqa: SLF001
+        ):
             object.__setattr__(self, "_config", connection._config)  # noqa: SLF001
         self.logger.info(
             "FlextLdap facade initialized",
@@ -250,7 +258,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     @FlextLdapUtilities.Args.validated_with_result
     def modify(
         self,
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        dn: str | DistinguishedNameProtocol,
         changes: FlextLdapTypes.Ldap.ModifyChanges,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Modify LDAP entry.
@@ -268,7 +276,7 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     @FlextLdapUtilities.Args.validated_with_result
     def delete(
         self,
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        dn: str | DistinguishedNameProtocol,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete LDAP entry.
 
@@ -383,31 +391,35 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         # Convert multi-phase callback to single-phase if needed
         single_phase_callback: FlextLdapModels.Types.LdapProgressCallback | None = None
-        if config.progress_callback is not None:
+        callback = config.progress_callback
+        if callback is not None:
             try:
-                sig = inspect.signature(config.progress_callback)
+                sig = inspect.signature(callback)
                 param_count = len(sig.parameters)
                 if param_count == MULTI_PHASE_CALLBACK_PARAM_COUNT:
                     # Multi-phase callback - wrap to single-phase
-                    multi_phase_cb: Callable[
-                        [str, int, int, str, FlextLdapModels.LdapBatchStats], None
-                    ] = config.progress_callback  # type: ignore[assignment]
-
+                    # Type narrowing: callback accepts 5 parameters (phase, current, total, dn, stats)
+                    # Create wrapper that adapts multi-phase signature to single-phase
                     def wrapped_cb(
                         current: int,
                         total: int,
                         dn: str,
                         stats: FlextLdapModels.LdapBatchStats,
                     ) -> None:
-                        multi_phase_cb(phase_name, current, total, dn, stats)
+                        # Call with phase_name as first parameter
+                        # Type narrowing: callback is not None at this point
+                        if callback is not None:
+                            _ = callback(phase_name, current, total, dn, stats)  # type: ignore[call-arg,arg-type]  # pyright: ignore[reportCallIssue]
 
                     single_phase_callback = wrapped_cb
                 else:
                     # Single-phase callback - use directly
-                    single_phase_callback = config.progress_callback  # type: ignore[assignment]
+                    # Type narrowing: callback accepts 4 parameters (current, total, dn, stats)
+                    # Cast to LdapProgressCallback since we verified it has 4 parameters
+                    single_phase_callback = callback  # type: ignore[assignment]  # pyright: ignore[reportAssignmentType]
             except (TypeError, ValueError, AttributeError):
                 # Fallback: assume single-phase
-                single_phase_callback = config.progress_callback  # type: ignore[assignment]
+                single_phase_callback = callback  # type: ignore[assignment]  # pyright: ignore[reportAssignmentType]
 
         batch_result = self.batch_upsert(
             entries,
@@ -460,37 +472,33 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             return None
 
         # Check if callback accepts phase name (multi-phase) or just batch stats (single-phase)
+        callback = config.progress_callback
+        # Type narrowing: callback is guaranteed to be not None after the check above
+
         def progress_cb(
             current: int,
             total: int,
             dn: str,
             stats: FlextLdapModels.LdapBatchStats,
         ) -> None:
-            if config.progress_callback is None:
-                return
+            # callback is captured from outer scope, guaranteed to be not None
             try:
-                sig = inspect.signature(config.progress_callback)
+                sig = inspect.signature(callback)
                 param_count = len(sig.parameters)
                 multi_phase_param_count = MULTI_PHASE_CALLBACK_PARAM_COUNT
                 if param_count == multi_phase_param_count:
                     # Multi-phase callback: (phase: str, current: int, total: int, dn: str, stats: LdapBatchStats)
                     # Type narrowing: callback accepts 5 parameters
-                    multi_phase_cb: Callable[
-                        [str, int, int, str, FlextLdapModels.LdapBatchStats], None
-                    ] = config.progress_callback  # type: ignore[assignment]
-                    multi_phase_cb(phase, current, total, dn, stats)
+                    # Call with phase as first parameter
+                    _ = callback(phase, current, total, dn, stats)  # type: ignore[arg-type,call-arg]  # pyright: ignore[reportCallIssue]
                 else:
                     # Single-phase callback: (current: int, total: int, dn: str, stats: LdapBatchStats)
-                    single_phase_cb: FlextLdapModels.Types.LdapProgressCallback = (
-                        config.progress_callback  # type: ignore[assignment]
-                    )
-                    single_phase_cb(current, total, dn, stats)
+                    # Type narrowing: callback accepts 4 parameters
+                    _ = callback(current, total, dn, stats)  # type: ignore[arg-type,call-arg]  # pyright: ignore[reportCallIssue]
             except (TypeError, ValueError, AttributeError):
                 # Fallback: try single-phase signature
-                fallback_cb: FlextLdapModels.Types.LdapProgressCallback = (
-                    config.progress_callback  # type: ignore[assignment]
-                )
-                fallback_cb(current, total, dn, stats)
+                # Type narrowing: callback may have different signature, runtime handles it
+                _ = callback(current, total, dn, stats)  # type: ignore[arg-type,call-arg]  # pyright: ignore[reportCallIssue]
 
         return progress_cb
 
@@ -527,13 +535,22 @@ class FlextLdap(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
                 continue
 
             phase_progress_cb = FlextLdap._make_phase_progress_callback(
-                phase_name, config
+                phase_name, config,
+            )
+            # Use phase_progress_cb if available, otherwise fall back to original callback
+            # Type narrowing: both are compatible callback types
+            final_callback: (
+                Callable[[str, int, int, str, FlextLdapModels.LdapBatchStats], None]
+                | FlextLdapModels.Types.LdapProgressCallback
+                | None
+            ) = (
+                phase_progress_cb
+                if phase_progress_cb is not None
+                else config.progress_callback
             )
             phase_config = SyncPhaseConfig(
                 server_type=config.server_type,
-                progress_callback=phase_progress_cb
-                if phase_progress_cb is not None
-                else config.progress_callback,
+                progress_callback=final_callback,
                 retry_on_errors=config.retry_on_errors,
                 max_retries=config.max_retries,
                 stop_on_error=config.stop_on_error,

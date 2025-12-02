@@ -152,7 +152,7 @@ class TestFlextLdapOperations:
         """Test execute method returns a FlextResult."""
         operations = self._create_operations()
         result = operations.execute()
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
 
     def test_upsert_method_calls_internal(self) -> None:
         """Test upsert method calls internal implementation."""
@@ -162,7 +162,7 @@ class TestFlextLdapOperations:
             {"cn": ["test"], "objectClass": ["person"]},
         )
         result = operations.upsert(entry)
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
 
     def test_batch_upsert_method_exists(self) -> None:
         """Test batch_upsert method exists."""
@@ -174,7 +174,7 @@ class TestFlextLdapOperations:
             ),
         ]
         result = operations.batch_upsert(entries)
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
 
     def test_search_method_exists(self) -> None:
         """Test that search method exists and can be called."""
@@ -185,4 +185,4 @@ class TestFlextLdapOperations:
             scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = operations.search(search_options)
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)

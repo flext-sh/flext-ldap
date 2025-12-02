@@ -20,9 +20,9 @@ from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict, LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -63,11 +63,11 @@ class TestLdap3AdapterReal:
     def test_search_with_real_server(
         self,
         connected_adapter: Ldap3Adapter,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test search with real LDAP server."""
         search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
@@ -129,7 +129,7 @@ class TestLdap3AdapterReal:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test deleting entry with real LDAP server."""
-        entry_dict = {
+        entry_dict: GenericFieldsDict = {
             "dn": "cn=testldap3delete,ou=people,dc=flext,dc=local",
             "attributes": {
                 "cn": ["testldap3delete"],
@@ -148,7 +148,10 @@ class TestLdap3AdapterReal:
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter),
+                cast(
+                    "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                    connected_adapter,
+                ),
                 entry_dict,
             )
         )
@@ -159,12 +162,12 @@ class TestLdap3AdapterReal:
     @pytest.mark.timeout(30)
     def test_search_when_not_connected(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test search when not connected."""
         adapter = Ldap3Adapter()
         search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
         )

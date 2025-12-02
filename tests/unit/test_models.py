@@ -179,7 +179,7 @@ class TestFlextLdapModels:
 
         if should_fail:
             with pytest.raises(ValueError, match="mutually exclusive"):
-                FlextLdapModels.ConnectionConfig(
+                _ = FlextLdapModels.ConnectionConfig(
                     host="test.example.com",
                     use_ssl=use_ssl,
                     use_tls=use_tls,
@@ -223,7 +223,7 @@ class TestFlextLdapModels:
     def test_search_options_invalid_base_dn(self) -> None:
         """Test SearchOptions rejects malformed base DN."""
         with pytest.raises(ValueError, match="Invalid base_dn format"):
-            FlextLdapModels.SearchOptions(
+            _ = FlextLdapModels.SearchOptions(
                 base_dn="invalid-dn-format",
                 filter_str="(objectClass=*)",
                 scope=FlextLdapConstants.SearchScope.SUBTREE,

@@ -17,6 +17,7 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
@@ -28,9 +29,9 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict, LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -235,13 +236,13 @@ class TestFlextLdapOperationsRealOperations:
         ) -> None:
             """Assert search result based on configuration."""
             if config.get("assert_total_count"):
-                assert result.total_count() == len(result.entries)
+                assert result.total_count == len(result.entries)
 
             if config.get("assert_entries_list"):
                 assert isinstance(result.entries, list)
 
             if config.get("assert_total_count_zero"):
-                assert result.total_count() == 0
+                assert result.total_count == 0
 
             if config.get("assert_entries_empty"):
                 assert len(result.entries) == 0
@@ -328,16 +329,24 @@ class TestFlextLdapOperationsRealOperations:
     def test_search_operations_parameterized(
         self,
         operations_service: FlextLdapOperations,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         test_name: str,
         config: GenericFieldsDict,
     ) -> None:
         """Test search operations with different configurations."""
+        # Extract scope - handle both StrEnum and string
+        scope_value = config.get("scope", SearchScope.SUBTREE)
+        scope_str = scope_value.value if isinstance(scope_value, SearchScope) else str(scope_value)
+
+        # Extract filter_str
+        filter_str_value = config.get("filter_str", "(objectClass=*)")
+        filter_str = str(filter_str_value) if filter_str_value is not None else "(objectClass=*)"
+
         search_result = TestOperationHelpers.search_and_assert_success(
             operations_service,
-            str(ldap_container["base_dn"]),
-            filter_str=str(config.get("filter_str", "(objectClass=*)")),
-            scope=str(config.get("scope", SearchScope.SUBTREE)),
+            ldap_container["base_dn"],
+            filter_str=filter_str,
+            scope=scope_str,
             attributes=cast("list[str] | None", config.get("attributes")),
             size_limit=cast("int", config.get("size_limit", 0)),
             expected_min_count=cast("int", config.get("expected_min_count", 0)),
@@ -348,7 +357,7 @@ class TestFlextLdapOperationsRealOperations:
 
     def test_search_when_not_connected(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test search when not connected."""
@@ -357,21 +366,21 @@ class TestFlextLdapOperationsRealOperations:
         operations = FlextLdapOperations(connection=connection)
 
         search_options = TestOperationHelpers.create_search_options(
-            str(ldap_container["base_dn"]),
+            ldap_container["base_dn"],
             filter_str="(objectClass=*)",
-            scope=SearchScope.SUBTREE,
+            scope=SearchScope.SUBTREE.value,
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
             OperationType.SEARCH,
-            search_options=search_options,
+            search_options=cast("FlextTypes.GeneralValueType", search_options),
         )
 
     def test_search_with_failed_adapter_search(
         self,
         operations_service: FlextLdapOperations,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test search when adapter search fails."""
         search_options = FlextLdapModels.SearchOptions(
@@ -399,7 +408,9 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         result = EntryTestHelpers.add_and_cleanup(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
+            cast(
+                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+            ),
             entry,
         )
 
@@ -419,7 +430,7 @@ class TestFlextLdapOperationsRealOperations:
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
             OperationType.ADD,
-            entry=entry,
+            entry=cast("FlextTypes.GeneralValueType", entry),
         )
 
     @pytest.mark.parametrize(("test_name", "config"), MODIFY_TEST_CONFIGS)
@@ -447,8 +458,11 @@ class TestFlextLdapOperationsRealOperations:
 
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
-                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
-                entry_dict,
+                cast(
+                    "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                    operations_service,
+                ),
+                cast("GenericFieldsDict", entry_dict),
                 changes,
                 verify_attribute=None,
             )
@@ -472,7 +486,10 @@ class TestFlextLdapOperationsRealOperations:
 
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
-                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
+                cast(
+                    "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                    operations_service,
+                ),
                 entry_dict,
             )
         )
@@ -504,7 +521,9 @@ class TestFlextLdapOperationsRealOperations:
     ) -> None:
         """Test execute operations with different configurations."""
         search_result = TestOperationHelpers.execute_and_assert_success(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service),
+            cast(
+                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+            ),
         )
 
         self.TestAssertions.assert_search_result(search_result, config)

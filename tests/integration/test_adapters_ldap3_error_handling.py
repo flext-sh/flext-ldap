@@ -18,9 +18,9 @@ from pydantic import ValidationError
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -146,7 +146,7 @@ class TestLdap3AdapterErrorHandling:
 
     def test_connect_with_invalid_credentials(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test connect with invalid credentials."""
         adapter = Ldap3Adapter()

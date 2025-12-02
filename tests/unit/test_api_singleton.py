@@ -68,13 +68,17 @@ class TestFlextLdapInstantiation:
         config1 = FlextLdapConfig()
         connection1 = FlextLdapConnection(config=config1, parser=ldif_instance.parser)
         operations1 = FlextLdapOperations(connection=connection1)
-        instance1 = FlextLdap(connection=connection1, operations=operations1, ldif=ldif_instance)
+        instance1 = FlextLdap(
+            connection=connection1, operations=operations1, ldif=ldif_instance,
+        )
         assert instance1 is not None
 
         config2 = FlextLdapConfig(host=TestConstants.Singleton.DIFFERENT_HOST)
         connection2 = FlextLdapConnection(config=config2, parser=ldif_instance.parser)
         operations2 = FlextLdapOperations(connection=connection2)
-        instance2 = FlextLdap(connection=connection2, operations=operations2, ldif=ldif_instance)
+        instance2 = FlextLdap(
+            connection=connection2, operations=operations2, ldif=ldif_instance,
+        )
         assert instance2 is not None
         assert instance2 is not instance1
 
@@ -89,7 +93,9 @@ class TestFlextLdapInstantiation:
         )
         connection = FlextLdapConnection(config=config, parser=ldif_instance.parser)
         operations = FlextLdapOperations(connection=connection)
-        instance = FlextLdap(connection=connection, operations=operations, ldif=ldif_instance)
+        instance = FlextLdap(
+            connection=connection, operations=operations, ldif=ldif_instance,
+        )
 
         assert instance is not None
         assert instance._ldif == ldif_instance
@@ -102,12 +108,16 @@ class TestFlextLdapInstantiation:
         config1 = FlextLdapConfig(host="host1.example.com")
         connection1 = FlextLdapConnection(config=config1, parser=ldif_instance.parser)
         operations1 = FlextLdapOperations(connection=connection1)
-        instance1 = FlextLdap(connection=connection1, operations=operations1, ldif=ldif_instance)
+        instance1 = FlextLdap(
+            connection=connection1, operations=operations1, ldif=ldif_instance,
+        )
 
         config2 = FlextLdapConfig(host="host2.example.com")
         connection2 = FlextLdapConnection(config=config2, parser=ldif_instance.parser)
         operations2 = FlextLdapOperations(connection=connection2)
-        instance2 = FlextLdap(connection=connection2, operations=operations2, ldif=ldif_instance)
+        instance2 = FlextLdap(
+            connection=connection2, operations=operations2, ldif=ldif_instance,
+        )
 
         assert instance1 is not None
         assert instance2 is not None

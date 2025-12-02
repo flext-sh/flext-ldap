@@ -19,8 +19,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from typing import cast
 
 from flext_core import FlextResult, FlextRuntime, FlextService
+from flext_core.typings import FlextTypes
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif._models.results import (
     FlextLdifModelsResults,  # Private import required for ParseResponse type
@@ -142,17 +144,21 @@ class Ldap3Adapter(FlextService[bool]):
             if not hasattr(parsed, "dn"):
                 return FlextLdifModels.DistinguishedName.model_validate({"value": ""})
 
-            dn_raw = parsed.dn
+            # Type narrowing: parsed has dn attribute
+            # Use getattr to satisfy pyright type checking for object type
+            dn_raw: object = getattr(parsed, "dn", None)
+            if dn_raw is None:
+                return FlextLdifModels.DistinguishedName.model_validate({"value": ""})
             # Check if already DistinguishedName instance
             # DistinguishedName is an alias, so we use runtime check
             dn_type = type(
-                FlextLdifModels.DistinguishedName.model_validate({"value": ""})
+                FlextLdifModels.DistinguishedName.model_validate({"value": ""}),
             )
             if isinstance(dn_raw, dn_type):
                 return dn_raw
             # Create new DistinguishedName from string
             return FlextLdifModels.DistinguishedName.model_validate({
-                "value": str(dn_raw)
+                "value": str(dn_raw),
             })
 
         @staticmethod
@@ -161,16 +167,24 @@ class Ldap3Adapter(FlextService[bool]):
             if not hasattr(parsed, "attributes"):
                 return FlextLdifModels.LdifAttributes.model_validate({"attributes": {}})
 
-            attrs_raw = parsed.attributes
+            # Type narrowing: parsed has attributes attribute
+            # Use getattr to satisfy pyright type checking for object type
+            attrs_raw: object = getattr(parsed, "attributes", None)
+            if attrs_raw is None:
+                return FlextLdifModels.LdifAttributes.model_validate({"attributes": {}})
             if isinstance(attrs_raw, FlextLdifModels.LdifAttributes):
                 return attrs_raw
 
             # Extract attributes dict from various formats
             attrs_dict: dict[str, list[str]] = {}
-            if hasattr(attrs_raw, "attributes") and isinstance(
-                attrs_raw.attributes, dict
-            ):
-                attrs_dict = attrs_raw.attributes
+            # Type narrowing: check if attrs_raw has attributes attribute
+            if hasattr(attrs_raw, "attributes"):
+                # Use getattr to satisfy pyright type checking for object type
+                attrs_attr: object = getattr(attrs_raw, "attributes", None)
+                if attrs_attr is None:
+                    attrs_attr = {}
+                if isinstance(attrs_attr, dict):
+                    attrs_dict = attrs_attr
             elif FlextRuntime.is_dict_like(attrs_raw):
                 attrs_dict = {
                     k: [str(item) for item in v]
@@ -180,7 +194,7 @@ class Ldap3Adapter(FlextService[bool]):
                 }
 
             return FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": attrs_dict
+                "attributes": attrs_dict,
             })
 
         @staticmethod
@@ -194,19 +208,37 @@ class Ldap3Adapter(FlextService[bool]):
             if not hasattr(parsed, "metadata"):
                 return None
 
-            metadata_raw = parsed.metadata
+            # Type narrowing: parsed has metadata attribute
+            # Use getattr to satisfy pyright type checking for object type
+            metadata_raw: object = getattr(parsed, "metadata", None)
             if not metadata_raw:
                 return None
 
             # Check if already QuirkMetadata instance
             # QuirkMetadata is an alias, so we use runtime check
             metadata_type = type(
-                FlextLdifModels.QuirkMetadata.model_validate({"quirk_type": "rfc"})
+                FlextLdifModels.QuirkMetadata.model_validate({"quirk_type": "rfc"}),
             )
             if isinstance(metadata_raw, metadata_type):
                 return metadata_raw
 
-            normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
+            # Type narrowing: normalize_metadata accepts dict, Mapping, or None
+            # metadata_raw is object, need to check type before passing
+            metadata_for_normalize: (
+                dict[str, str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None]
+                | None
+            )
+            if isinstance(metadata_raw, (dict, Mapping)):
+                metadata_for_normalize = cast(
+                    "dict[str, str | int | float | bool | None] | Mapping[str, str | int | float | bool | None]",
+                    metadata_raw,
+                )
+            else:
+                metadata_for_normalize = None
+            normalized = Ldap3Adapter.ResultConverter.normalize_metadata(
+                metadata_for_normalize,
+            )
             if normalized:
                 return FlextLdifModels.QuirkMetadata.model_validate(normalized)
             return None
@@ -243,8 +275,11 @@ class Ldap3Adapter(FlextService[bool]):
                 return result
 
             # Handle objects with model_dump method (Pydantic models)
-            if hasattr(metadata, "model_dump"):
-                dumped = metadata.model_dump()
+            # Type narrowing: check if metadata has model_dump method
+            model_dump_method = getattr(metadata, "model_dump", None)
+            if model_dump_method is not None and callable(model_dump_method):
+                # Type narrowing: metadata has model_dump callable
+                dumped: object = model_dump_method()
                 if isinstance(dumped, dict):
                     return dumped
 
@@ -278,12 +313,17 @@ class Ldap3Adapter(FlextService[bool]):
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(parsed)
 
                 # Create Entry with extracted objects
-                # Type ignores are necessary due to alias types (DistinguishedName, QuirkMetadata)
-                # Runtime validation ensures type safety
+                # DistinguishedName and QuirkMetadata are type aliases, runtime validation ensures correctness
+                # Type narrowing via cast for pyright compatibility
+                # mypy doesn't support type aliases in cast, so we use type: ignore[valid-type]
+                dn_typed = cast("FlextLdifModels.DistinguishedName | None", dn_obj)  # type: ignore[valid-type]  # DistinguishedName alias
+                metadata_typed = cast(
+                    "FlextLdifModels.QuirkMetadata | None", metadata_obj
+                )  # type: ignore[valid-type]  # QuirkMetadata alias
                 entry = FlextLdifModels.Entry(
-                    dn=dn_obj,  # type: ignore[arg-type]  # DistinguishedName alias
+                    dn=dn_typed,
                     attributes=attrs_obj,
-                    metadata=metadata_obj,  # type: ignore[arg-type]  # QuirkMetadata alias
+                    metadata=metadata_typed,
                 )
                 entries.append(entry)
 
@@ -415,9 +455,16 @@ class Ldap3Adapter(FlextService[bool]):
             This matches the exact type expected by FlextLdifParser.parse_ldap3_results.
             """
             # Use Constants.ServerTypeMappings for flext-ldif compatibility
-            return FlextLdapConstants.ServerTypeMappings.LDIF_COMPATIBLE.get(
-                server_type
-            )  # type: ignore[return-value]
+            result_raw = FlextLdapConstants.ServerTypeMappings.LDIF_COMPATIBLE.get(
+                server_type,
+            )
+            # Type narrowing: result_raw is str | None, but we need ServerTypeLiteral | None
+            # ServerTypeLiteral is a Literal type, so we cast the result
+            result: FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None = cast(
+                "FlextLdifConstants.LiteralTypes.ServerTypeLiteral | None",
+                result_raw,
+            )
+            return result
 
         def execute(
             self,
@@ -503,19 +550,24 @@ class Ldap3Adapter(FlextService[bool]):
 
     def __init__(
         self,
-        parser: FlextLdifParser | None = None,
-        **kwargs: str | float | bool | None,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
-        """Initialize adapter service with parser."""
+        """Initialize adapter service with parser.
+
+        Args:
+            **kwargs: Keyword arguments including:
+                - parser: Optional FlextLdifParser instance. If None, uses default from FlextLdif.
+                - Additional service configuration parameters (delegated to FlextService).
+
+        """
+        # Extract parser from kwargs if provided
+        parser_raw = kwargs.pop("parser", None)
+        parser: FlextLdifParser | None = (
+            parser_raw if isinstance(parser_raw, FlextLdifParser) else None
+        )
+        # Initialize parent with remaining kwargs
         super().__init__(**kwargs)
-        if parser is None:
-            parser_kwarg = kwargs.pop("parser", None)
-            if parser_kwarg is not None:
-                if not isinstance(parser_kwarg, FlextLdifParser):
-                    parser_type = type(parser_kwarg).__name__
-                    error_msg = f"parser must be FlextLdifParser, got {parser_type}"
-                    raise TypeError(error_msg)
-                parser = parser_kwarg
+        # Set parser - use default if not provided
         if parser is None:
             parser = FlextLdif.get_instance().parser
         self._connection = None
@@ -587,15 +639,20 @@ class Ldap3Adapter(FlextService[bool]):
         Uses direct StrEnum value mapping for type-safe conversion.
         """
         # Normalize to StrEnum if string provided
-        if isinstance(scope, str):
+        # Type narrowing: scope is str | SearchScope
+        # SearchScope is a StrEnum (subclass of str), so check for SearchScope first
+        if isinstance(scope, FlextLdapConstants.SearchScope):
+            # Type narrowing: scope is SearchScope
+            scope_enum = scope
+        else:
+            # Type narrowing: scope is str (SearchScope is also str, but already handled above)
+            # Convert string to SearchScope enum
             try:
                 scope_enum = FlextLdapConstants.SearchScope(scope.upper())
             except ValueError:
                 return FlextResult[
                     FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral
                 ].fail(f"Invalid LDAP scope: {scope}")
-        else:
-            scope_enum = scope
 
         # Direct mapping using StrEnum values with proper type narrowing
         ldap3_scope_mapping: dict[
@@ -631,7 +688,11 @@ class Ldap3Adapter(FlextService[bool]):
                 str(connection_result.error) if connection_result.error else "",
             )
 
-        scope_result = Ldap3Adapter._map_scope(search_options.scope)
+        # Convert scope to str or SearchScope for _map_scope
+        # SearchOptions.scope is str, but may need conversion to SearchScope enum
+        # Type narrowing: scope is str from SearchOptions model
+        scope_for_mapping: str | FlextLdapConstants.SearchScope = search_options.scope
+        scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
             return FlextResult[FlextLdapModels.SearchResult].fail(
                 str(scope_result.error) if scope_result.error else "",

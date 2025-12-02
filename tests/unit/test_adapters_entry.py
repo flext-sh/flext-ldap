@@ -34,9 +34,9 @@ from flext_tests import FlextTestsMatchers
 from pydantic import ValidationError
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import TestConstants
+from ..fixtures.typing import LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 
 pytestmark = pytest.mark.unit
@@ -86,7 +86,7 @@ class TestFlextLdapEntryAdapter:
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         # Use FlextTestsMatchers for failure assertion
-        FlextTestsMatchers.assert_failure(
+        _ = FlextTestsMatchers.assert_failure(
             result,
             TestConstants.Adapter.ERROR_NO_ATTRIBUTES,
         )
@@ -171,7 +171,7 @@ class TestFlextLdapEntryAdapter:
         invalid_data = entry.model_dump()
         invalid_data["attributes"] = None
         with pytest.raises(ValidationError):
-            FlextLdifModels.Entry.model_validate(invalid_data)
+            _ = FlextLdifModels.Entry.model_validate(invalid_data)
 
     def test_execute_method(self, adapter: FlextLdapEntryAdapter) -> None:
         """Test execute method required by FlextService."""
@@ -189,7 +189,7 @@ class TestFlextLdapEntryAdapter:
     )
     def test_ldap3_to_ldif_entry_value_conversions(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         attr_name: str,
         attr_value: FlextTypes.GeneralValueType,
     ) -> None:
@@ -227,7 +227,7 @@ class TestFlextLdapEntryAdapter:
     )
     def test_ldap3_to_ldif_entry_base64_detection(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         attr_name: str,
         attr_value: FlextTypes.GeneralValueType,
     ) -> None:
@@ -254,7 +254,7 @@ class TestFlextLdapEntryAdapter:
     )
     def test_ldap3_to_ldif_entry_metadata_tracking(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         attr_name: str,
         attr_value: FlextTypes.GeneralValueType,
         metadata_key: str,
@@ -280,7 +280,7 @@ class TestFlextLdapEntryAdapter:
     @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_dn_changes(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test conversion tracks DN changes in metadata."""
         adapter = FlextLdapEntryAdapter()
@@ -297,7 +297,7 @@ class TestFlextLdapEntryAdapter:
     @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_string_conversions(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test tracking of string conversions in conversion metadata."""
         adapter = FlextLdapEntryAdapter()
@@ -318,7 +318,7 @@ class TestFlextLdapEntryAdapter:
     @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_conversion_counts(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test tracking of conversion counts in metadata."""
         adapter = FlextLdapEntryAdapter()
@@ -342,7 +342,7 @@ class TestFlextLdapEntryAdapter:
     @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_dn_changes_unit(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test tracking of DN changes in conversion metadata."""
         adapter = FlextLdapEntryAdapter()
@@ -360,7 +360,7 @@ class TestFlextLdapEntryAdapter:
     @pytest.mark.integration
     def test_ldap3_to_ldif_entry_tracks_attribute_differences(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test tracking of attribute differences."""
         adapter = FlextLdapEntryAdapter()

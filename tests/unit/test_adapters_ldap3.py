@@ -28,8 +28,8 @@ from ldap3 import Connection, Server
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from tests.fixtures.typing import GenericFieldsDict
 
+from ..fixtures.typing import GenericFieldsDict
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 pytestmark = pytest.mark.unit
@@ -83,13 +83,13 @@ class TestLdap3AdapterUnit:
     def _create_search_options(
         base_dn: str | None = None,
         filter_str: str | None = None,
-        scope: FlextLdapConstants.LiteralTypes.SearchScope | None = None,
+        scope: FlextLdapConstants.SearchScope | None = None,
     ) -> FlextLdapModels.SearchOptions:
         """Factory method for search options using constants."""
         return FlextLdapModels.SearchOptions(
             base_dn=base_dn or TestLdap3AdapterUnit._CONSTANTS["DEFAULT_BASE_DN"],
             filter_str=filter_str or TestLdap3AdapterUnit._CONSTANTS["DEFAULT_FILTER"],
-            scope=scope or "SUBTREE",
+            scope=scope or FlextLdapConstants.SearchScope.SUBTREE,
         )
 
     @staticmethod
@@ -126,12 +126,13 @@ class TestLdap3AdapterUnit:
     @staticmethod
     def _ensure_disconnected(adapter: Ldap3Adapter) -> None:
         """Ensure adapter is disconnected and clean up connection if needed."""
+        connection_obj = adapter._connection
         if (
-            adapter._connection
-            and isinstance(adapter._connection, Connection)
-            and adapter._connection.bound
+            connection_obj is not None
+            and isinstance(connection_obj, Connection)
+            and connection_obj.bound
         ):
-            unbind_func: Callable[[], None] = adapter._connection.unbind
+            unbind_func: Callable[[], None] = connection_obj.unbind
             unbind_func()
         adapter._connection = None
         adapter._server = None
@@ -168,7 +169,7 @@ class TestLdap3AdapterUnit:
             timeout=1,  # Fast timeout for test
         )
         result = adapter.connect(config)
-        FlextTestsMatchers.assert_failure(result, "failed")
+        _ = FlextTestsMatchers.assert_failure(result, "failed")
 
     def test_disconnect_with_real_connection(
         self,
@@ -200,8 +201,8 @@ class TestLdap3AdapterUnit:
             real_connection = TestDeduplicationHelpers.create_ldap3_connection(
                 ldap_container,
             )
-            if not isinstance(real_connection, Connection):
-                return
+            # Type narrowing: create_ldap3_connection returns Connection
+            # No need to check isinstance - it's guaranteed to be Connection
             adapter._connection = real_connection
             connection = adapter.connection
             assert connection == real_connection
@@ -224,7 +225,9 @@ class TestLdap3AdapterUnit:
             real_connection_obj = TestDeduplicationHelpers.create_ldap3_connection(
                 ldap_container,
             )
-            if isinstance(real_connection_obj, Connection):
+            # Type narrowing: create_ldap3_connection returns Connection
+            # No need to check isinstance - it's guaranteed to be Connection
+            if real_connection_obj is not None:
                 adapter._connection = real_connection_obj
                 assert adapter.is_connected is True
                 self._ensure_disconnected(adapter)
@@ -245,7 +248,7 @@ class TestLdap3AdapterUnit:
         adapter._connection = None
         search_options = self._create_search_options()
         result = adapter.search(search_options)
-        FlextTestsMatchers.assert_failure(result, "Not connected")
+        _ = FlextTestsMatchers.assert_failure(result, "Not connected")
 
     def test_search_with_invalid_base_dn(
         self,
@@ -259,7 +262,7 @@ class TestLdap3AdapterUnit:
                 base_dn="invalid=base,dn=invalid",
             )
             result = adapter.search(search_options)
-            FlextTestsMatchers.assert_failure(result)
+            _ = FlextTestsMatchers.assert_failure(result)
         finally:
             adapter.disconnect()
 
@@ -306,7 +309,7 @@ class TestLdap3AdapterUnit:
         adapter._connection = None
         entry = self._create_test_entry()
         result = adapter.add(entry)
-        FlextTestsMatchers.assert_failure(result, "Not connected")
+        _ = FlextTestsMatchers.assert_failure(result, "Not connected")
 
     def test_add_with_invalid_entry(
         self,
@@ -318,6 +321,6 @@ class TestLdap3AdapterUnit:
         try:
             entry = self._create_invalid_entry()
             result = adapter.add(entry)
-            FlextTestsMatchers.assert_failure(result)
+            _ = FlextTestsMatchers.assert_failure(result)
         finally:
             adapter.disconnect()

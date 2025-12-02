@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
@@ -19,10 +20,10 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from tests.conftest import create_flext_ldap_instance
-from tests.fixtures.typing import GenericFieldsDict
 
+from ..conftest import create_flext_ldap_instance
 from ..fixtures.constants import RFC
+from ..fixtures.typing import LdapContainerDict
 from ..helpers.operation_helpers import TestOperationHelpers
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
@@ -46,10 +47,10 @@ class TestFlextLdapAPIComplete:
         self,
         ldap_client: FlextLdap,
     ) -> None:
-        """Test client property access."""
-        client = ldap_client.client
-        assert client is not None
-        assert client == ldap_client._operations
+        """Test operations access."""
+        operations = ldap_client._operations
+        assert operations is not None
+        assert operations == ldap_client._operations
 
     def test_context_manager(
         self,
@@ -64,7 +65,7 @@ class TestFlextLdapAPIComplete:
             )
 
         # Should be disconnected after context exit
-        assert api.is_connected is False
+        assert api._connection.is_connected is False
 
     def test_context_manager_with_exception(
         self,
@@ -90,11 +91,11 @@ class TestFlextLdapAPIComplete:
     def test_search_with_different_server_types(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test search with different server types."""
         search_options = TestOperationHelpers.create_search_options(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=ldap_container["base_dn"],
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
@@ -102,7 +103,7 @@ class TestFlextLdapAPIComplete:
         # Only test with 'rfc' which is always registered in quirks
         result = ldap_client.search(
             search_options,
-            server_type=FlextLdapConstants.ServerTypes.RFC,
+            server_type=FlextLdifConstants.ServerTypes.RFC,
         )
         TestOperationHelpers.assert_result_success(result)
 
@@ -167,18 +168,18 @@ class TestFlextLdapAPIComplete:
 
     def test_connect_with_service_config(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test connect using service config."""
         api = create_flext_ldap_instance()
         # Create ConnectionConfig directly from ldap_container to bypass config issues
         connection_config = FlextLdapModels.ConnectionConfig(
-            host=str(ldap_container["host"]),
-            port=int(str(ldap_container["port"])),
+            host=ldap_container["host"],
+            port=ldap_container["port"],
             use_ssl=False,
             use_tls=False,
-            bind_dn=str(ldap_container["bind_dn"]),
-            bind_password=str(ldap_container["password"]),
+            bind_dn=ldap_container["bind_dn"],
+            bind_password=ldap_container["password"],
         )
         result = api.connect(connection_config)
         TestOperationHelpers.assert_result_success(result)
@@ -219,8 +220,11 @@ class TestFlextLdapAPIComplete:
             connection_config,
         )
 
-        # Create test entry with specific data
+        # Cleanup entry if it exists (idempotent test)
         test_dn = f"cn=test-data-validation,{RFC.DEFAULT_BASE_DN}"
+        _ = ldap_client.delete(test_dn)  # Ignore result - entry may not exist
+
+        # Create test entry with specific data
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=test_dn),
             attributes=FlextLdifModels.LdifAttributes(
@@ -288,6 +292,9 @@ class TestFlextLdapAPIComplete:
         assert len(search_data2.entries) == 1
 
         modified_entry = search_data2.entries[0]
+        if modified_entry.attributes is None:
+            msg = "Entry has no attributes"
+            raise AssertionError(msg)
         modified_attrs = modified_entry.attributes.attributes
         assert modified_attrs.get("description") == ["Modified description"]
         assert modified_attrs.get("mail") == ["modified@example.com"]

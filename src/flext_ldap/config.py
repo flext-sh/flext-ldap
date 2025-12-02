@@ -55,12 +55,14 @@ class FlextLdapConfig(FlextConfig):
     """
 
     # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
+    # extra="ignore" allows other FLEXT_* env vars to be present without causing errors
+    # Only FLEXT_LDAP_* vars are loaded as fields due to env_prefix
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
-        env_file=".env",
+        env_file=FlextConfig.resolve_env_file(),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
-        extra="forbid",
+        extra="ignore",  # Ignore extra fields from .env that don't match env_prefix
         case_sensitive=False,
         use_enum_values=True,
     )

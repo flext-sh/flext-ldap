@@ -62,19 +62,18 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             if isinstance(entry, FlextLdifModels.Entry):
                 # LdifAttributes has .attributes: dict[str, list[str]]
                 ldif_attrs = entry.attributes
-                if (
-                    ldif_attrs
-                    and hasattr(ldif_attrs, "attributes")
-                    and isinstance(ldif_attrs.attributes, dict)
-                ):
+                if ldif_attrs and hasattr(ldif_attrs, "attributes"):
+                    # Type is already dict[str, list[str]], no isinstance needed
                     return ldif_attrs.attributes
                 return {}
             # EntryProtocol has attributes: Mapping[str, Sequence[str]]
             attrs = entry.attributes
             if isinstance(attrs, Mapping):
                 return {k: list(v) for k, v in attrs.items()}
-            if hasattr(attrs, "attributes") and isinstance(attrs.attributes, Mapping):
-                return {k: list(v) for k, v in attrs.attributes.items()}
+            if hasattr(attrs, "attributes"):
+                attrs_dict = attrs.attributes
+                # Type is already Mapping[str, Sequence[str]], isinstance check redundant
+                return {k: list(v) for k, v in attrs_dict.items()}
             return {}
 
         @staticmethod
@@ -205,6 +204,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         def __init__(self, operations: FlextLdapOperations) -> None:
             """Initialize with operations service."""
+            super().__init__()
             self._ops = operations
 
         def execute(
@@ -387,8 +387,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         if result.is_success:
             search_result = result.unwrap()
             # Type narrowing: SearchResultProtocol is compatible with SearchResult model
-            if isinstance(search_result, FlextLdapModels.SearchResult):
-                return FlextResult[FlextLdapModels.SearchResult].ok(search_result)
+            return FlextResult[FlextLdapModels.SearchResult].ok(search_result)
         error_msg = str(result.error) if result.error else "Unknown error"
         return FlextResult[FlextLdapModels.SearchResult].fail(error_msg)
 
@@ -402,8 +401,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
             operation_result = result.unwrap()
-            if isinstance(operation_result, FlextLdapModels.OperationResult):
-                return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
+            return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
         error_msg = str(result.error) if result.error else "Unknown error"
         return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
@@ -430,8 +428,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
             operation_result = result.unwrap()
-            if isinstance(operation_result, FlextLdapModels.OperationResult):
-                return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
+            return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
         error_msg = str(result.error) if result.error else "Unknown error"
         return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 
@@ -454,8 +451,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
             operation_result = result.unwrap()
-            if isinstance(operation_result, FlextLdapModels.OperationResult):
-                return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
+            return FlextResult[FlextLdapModels.OperationResult].ok(operation_result)
         error_msg = str(result.error) if result.error else "Unknown error"
         return FlextResult[FlextLdapModels.OperationResult].fail(error_msg)
 

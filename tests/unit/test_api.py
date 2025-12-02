@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, assert_never
 
 import pytest
 from flext_core import FlextResult
@@ -155,7 +155,9 @@ class ApiTestDataFactory:
         operations = FlextLdapOperations(connection=connection)
         # Get FlextLdif instance (parser is used by connection, ldif is separate)
         ldif_instance = FlextLdif.get_instance()
-        return FlextLdap(connection=connection, operations=operations, ldif=ldif_instance)
+        return FlextLdap(
+            connection=connection, operations=operations, ldif=ldif_instance,
+        )
 
 
 class TestFlextLdapAPI:
@@ -209,8 +211,9 @@ class TestFlextLdapAPI:
             ).is_failure
         if operation == LdapOperation.DELETE:
             return api.delete(TestConstants.TEST_USER_DN).is_failure
-        msg = f"Unknown operation: {operation}"
-        raise ValueError(msg)
+        # Type narrowing: all enum values have been handled
+        # This should never be reached at runtime, but satisfies type checker
+        assert_never(operation)
 
     def test_api_initialization_with_default_config(
         self,
@@ -226,6 +229,8 @@ class TestFlextLdapAPI:
         assert api._connection is not None
         assert api._operations is not None
         assert api._config is not None
+        # Type narrowing: ensure _config is FlextLdapConfig before accessing .host
+        assert isinstance(api._config, FlextLdapConfig)
         assert api._config.host == "localhost"  # default value
 
     @pytest.mark.parametrize("operation", _OPERATIONS)
@@ -251,7 +256,7 @@ class TestFlextLdapAPI:
         Covers: test_execute_when_not_connected_returns_failure_with_error_message
         """
         result = api_instance.execute()
-        FlextTestsMatchers.assert_failure(result)
+        _ = FlextTestsMatchers.assert_failure(result)
         assert FlextLdapConstants.ErrorStrings.NOT_CONNECTED in (result.error or "")
 
     def test_disconnect_when_not_connected_succeeds_silently(

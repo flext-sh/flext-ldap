@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, cast
 
 from flext_core import FlextModels, FlextUtilities
 from flext_core._models.collections import FlextModelsCollections
@@ -118,6 +118,17 @@ class FlextLdapModels(FlextModels):
                 raise ValueError(error_msg)
             return v
 
+        @field_validator("scope", mode="before")
+        @classmethod
+        def normalize_scope(
+            cls,
+            v: str | FlextLdapConstants.SearchScope,
+        ) -> str:
+            """Normalize scope to string (accepts StrEnum or str)."""
+            if isinstance(v, FlextLdapConstants.SearchScope):
+                return v.value
+            return v
+
         @dataclass(frozen=True)
         class NormalizedConfig:
             """Configuration for normalized SearchOptions factory."""
@@ -204,7 +215,20 @@ class FlextLdapModels(FlextModels):
                 FlextModelsCollections.Categories()
             )
             for entry in self.entries:
-                object_classes = entry.attributes.get("objectClass", [])
+                if entry.attributes is None:
+                    categories.add_entries("unknown", [entry])
+                    continue
+                # Type narrowing: LdifAttributes has .attributes property
+                # entry.attributes can be LdifAttributes | Mapping[str, Sequence[str]] | None
+                # None already handled above, so remaining types are LdifAttributes | Mapping
+                if isinstance(entry.attributes, FlextLdifModels.LdifAttributes):
+                    attrs_dict = entry.attributes.attributes
+                else:
+                    # Type narrowing: entry.attributes is Mapping[str, Sequence[str]]
+                    # After LdifAttributes check, remaining type is Mapping
+                    # Use cast to satisfy type checker while maintaining runtime safety
+                    attrs_dict = cast("dict[str, list[str]]", entry.attributes)
+                object_classes = attrs_dict.get("objectClass", [])
                 category = (
                     object_classes[0]
                     if object_classes

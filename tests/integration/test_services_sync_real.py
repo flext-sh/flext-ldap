@@ -24,9 +24,9 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict
 from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
@@ -203,8 +203,9 @@ class TestFlextLdapSyncServiceReal:
                 if config.get("expect_failed"):
                     assert stats.failed > 0
 
-                if config.get("expect_added") is not None:
-                    assert stats.added == config["expect_added"]
+                expect_added = config.get("expect_added")
+                if expect_added is not None:
+                    assert stats.added == expect_added
 
                 if config.get("expect_added_zero"):
                     assert stats.added == 0
@@ -261,7 +262,9 @@ class TestFlextLdapSyncServiceReal:
         try:
             # Create sync options if specified
             if sync_options_config := config.get("sync_options"):
-                sync_options_dict = cast("dict[str, FlextTypes.GeneralValueType]", sync_options_config)
+                sync_options_dict = cast(
+                    "dict[str, FlextTypes.GeneralValueType]", sync_options_config,
+                )
                 options = FlextLdapModels.SyncOptions(
                     source_basedn=cast("str", sync_options_dict.get("source_basedn")),
                     target_basedn=cast("str", sync_options_dict.get("target_basedn")),

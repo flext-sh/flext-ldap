@@ -98,7 +98,7 @@ givenName: Test
 mail: testuser2@internal.invalid
 """
     ldif_file = tmp_path / "test_entries.ldif"
-    ldif_file.write_text(ldif_content)
+    _ = ldif_file.write_text(ldif_content)
     return ldif_file
 
 
@@ -106,7 +106,7 @@ mail: testuser2@internal.invalid
 def empty_ldif_file(tmp_path: Path) -> Path:
     """Create an empty LDIF file for testing."""
     ldif_file = tmp_path / "empty.ldif"
-    ldif_file.write_text("")
+    _ = ldif_file.write_text("")
     return ldif_file
 
 
@@ -144,7 +144,7 @@ class TestFlextLdapSyncService:
     def test_initialization_without_operations_raises_error(self) -> None:
         """Test initialization without operations raises TypeError."""
         with pytest.raises(TypeError, match="operations parameter is required"):
-            FlextLdapSyncService()
+            _ = FlextLdapSyncService()
 
     def test_initialization_creates_ldif_instance(
         self,
@@ -269,13 +269,13 @@ class TestFlextLdapSyncService:
             ),
         ]
 
-        progress_calls: list[tuple[int, int, str, dict[str, int]]] = []
+        progress_calls: list[tuple[int, int, str, FlextLdapModels.LdapBatchStats]] = []
 
         def progress_callback(
             current: int,
             total: int,
             dn: str,
-            stats: dict[str, int],
+            stats: FlextLdapModels.LdapBatchStats,
         ) -> None:
             progress_calls.append((current, total, dn, stats))
 

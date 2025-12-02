@@ -51,6 +51,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
 
         def __init__(self, operations: FlextLdapOperations) -> None:
             """Initialize with operations service."""
+            super().__init__()
             self._ops = operations
 
         def sync(

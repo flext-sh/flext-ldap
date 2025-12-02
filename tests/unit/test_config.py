@@ -97,14 +97,20 @@ class TestFlextLdapConfig:
         ("attr", "expected"),
         [(attr, expected) for attr, expected in _DEFAULT_VALUES.items()],
     )
-    def test_default_config_values(self, attr: str, expected: FlextTypes.GeneralValueType) -> None:
+    def test_default_config_values(
+        self, attr: str, expected: FlextTypes.GeneralValueType,
+    ) -> None:
         """Test default configuration values match expected constants."""
+        # Reset singleton to ensure clean state for default value testing
+        FlextLdapConfig._reset_instance()
         config = self._get_config()
         assert getattr(config, attr) == expected
 
     @pytest.mark.parametrize("attr", _NONE_ATTRIBUTES)
     def test_default_none_values(self, attr: str) -> None:
         """Test optional attributes default to None (no automatic binding)."""
+        # Reset singleton to ensure clean state for default value testing
+        FlextLdapConfig._reset_instance()
         config = self._get_config()
         assert getattr(config, attr) is None
 
@@ -116,6 +122,8 @@ class TestFlextLdapConfig:
 
     def test_processing_defaults(self) -> None:
         """Test processing-related configuration defaults."""
+        # Reset singleton to ensure clean state for default value testing
+        FlextLdapConfig._reset_instance()
         config = self._get_config()
         assert config.max_results == self._DEFAULT_VALUES["max_results"]
         assert config.chunk_size == self._DEFAULT_VALUES["chunk_size"]

@@ -9,11 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
@@ -24,8 +25,8 @@ from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests.fixtures.typing import GenericFieldsDict
 
+from ..fixtures.typing import GenericFieldsDict
 from ..helpers.entry_helpers import EntryTestHelpers
 
 pytestmark = pytest.mark.integration
@@ -153,14 +154,19 @@ class TestFlextLdapOperationsErrorCoverage:
             ],
         ) -> FlextLdifModels.Entry:
             """Create test entry for error scenarios."""
-            return EntryTestHelpers.create_entry(dn, attrs)
+            # Convert dict to Mapping[str, GeneralValueType] for EntryTestHelpers.create_entry
+            attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
+                "Mapping[str, FlextTypes.GeneralValueType]",
+                attrs,
+            )
+            return EntryTestHelpers.create_entry(dn, attrs_mapping)
 
     class TestAssertions:
         """Nested class for test assertions."""
 
         @staticmethod
         def assert_error_result(
-            result: FlextResult[object],
+            result: FlextResult[FlextLdapModels.OperationResult],
             config: GenericFieldsDict,
         ) -> None:
             """Assert error result based on configuration."""
@@ -235,7 +241,7 @@ class TestFlextLdapOperationsErrorCoverage:
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=str(search_options_config.get("base_dn", "")),
                 scope=cast(
-                    "FlextLdapConstants.LiteralTypes.SearchScope",
+                    "FlextLdapConstants.LiteralTypes.SearchScopeLiteral",
                     search_options_config.get("scope", "SUBTREE"),
                 ),
                 filter_str=str(

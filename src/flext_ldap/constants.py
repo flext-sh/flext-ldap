@@ -60,17 +60,23 @@ class FlextLdapConstants(FlextConstants):
             | FlextLdapConstants.LdapCqrs.Status
             | FlextLdapConstants.LdapCqrs.StatusLiteral,
         ) -> TypeIs[FlextLdapConstants.LdapCqrs.StatusLiteral]:
-            """TypeIs narrowing - works in both if/else branches."""
+            """TypeIs narrowing - works in both if/else branches.
+
+            Since StatusLiteral is a subtype of str, after checking isinstance(value, Status),
+            the remaining type is str | StatusLiteral. We can check membership directly
+            without another isinstance check.
+            """
+            valid_statuses = {
+                FlextLdapConstants.LdapCqrs.Status.PENDING,
+                FlextLdapConstants.LdapCqrs.Status.RUNNING,
+                FlextLdapConstants.LdapCqrs.Status.COMPLETED,
+                FlextLdapConstants.LdapCqrs.Status.FAILED,
+            }
             if isinstance(value, FlextLdapConstants.LdapCqrs.Status):
                 return True
-            if isinstance(value, str):
-                return value in {
-                    FlextLdapConstants.LdapCqrs.Status.PENDING,
-                    FlextLdapConstants.LdapCqrs.Status.RUNNING,
-                    FlextLdapConstants.LdapCqrs.Status.COMPLETED,
-                    FlextLdapConstants.LdapCqrs.Status.FAILED,
-                }
-            return False
+            # Type narrowing: value is str | StatusLiteral after Status check
+            # Check membership directly - valid strings are StatusLiteral values
+            return value in valid_statuses
 
     # ═══════════════════════════════════════════════════════════════════
     # COMPOSITION: Use FlextLdifConstants directly (no duplication)

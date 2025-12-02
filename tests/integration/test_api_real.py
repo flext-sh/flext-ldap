@@ -13,15 +13,17 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_core import FlextTypes
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from tests.fixtures.typing import GenericFieldsDict
 
+from ..conftest import create_flext_ldap_instance
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict, LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
@@ -34,19 +36,15 @@ class TestFlextLdapAPI:
 
     def test_api_initialization(self) -> None:
         """Test API initialization."""
-        from tests.conftest import create_flext_ldap_instance
-
         api = create_flext_ldap_instance()
         assert api is not None
-        assert api.is_connected is False
+        assert api._connection.is_connected is False
 
     def test_api_connect_and_disconnect(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test API connection lifecycle."""
-        from tests.conftest import create_flext_ldap_instance
-
         api = create_flext_ldap_instance()
         TestDeduplicationHelpers.connect_and_disconnect(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
@@ -56,12 +54,12 @@ class TestFlextLdapAPI:
     def test_api_search(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test API search operation."""
         TestOperationHelpers.search_and_assert_success(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
-            str(ldap_container["base_dn"]),
+            ldap_container["base_dn"],
             expected_min_count=1,
         )
 
@@ -98,21 +96,19 @@ class TestFlextLdapAPI:
 
     def test_api_operations_when_not_connected(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test API operations when not connected."""
-        from tests.conftest import create_flext_ldap_instance
-
         api = create_flext_ldap_instance()
 
         # Search should fail
         search_options = TestOperationHelpers.create_search_options(
-            str(ldap_container["base_dn"]),
+            ldap_container["base_dn"],
         )
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             "search",
-            search_options=search_options,
+            search_options=cast("FlextTypes.GeneralValueType", search_options),
         )
 
         # Add should fail
@@ -123,7 +119,7 @@ class TestFlextLdapAPI:
         TestOperationHelpers.execute_operation_when_not_connected(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", api),
             "add",
-            entry=entry,
+            entry=cast("FlextTypes.GeneralValueType", entry),
         )
 
         # Modify should fail
@@ -151,11 +147,11 @@ class TestFlextLdapAPIWithQuirks:
     def test_search_with_different_server_types(
         self,
         ldap_client: FlextLdap,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> None:
         """Test search with different server type detections."""
         search_options = FlextLdapModels.SearchOptions(
-            base_dn=str(ldap_container["base_dn"]),
+            base_dn=ldap_container["base_dn"],
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
@@ -174,10 +170,14 @@ class TestFlextLdapAPIWithQuirks:
     ) -> None:
         """Test adding entry with server-specific quirks handling."""
         # Entry that might need quirks processing
+        additional_attrs: GenericFieldsDict = cast(
+            "GenericFieldsDict",
+            {"mail": ["test@example.com"]},
+        )
         entry = TestOperationHelpers.create_inetorgperson_entry(
             "testquirks",
             RFC.DEFAULT_BASE_DN,
-            additional_attrs={"mail": ["test@example.com"]},
+            additional_attrs=additional_attrs,
         )
 
         # Add should work with quirks handled by flext-ldif

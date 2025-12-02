@@ -517,7 +517,7 @@ def ldap_container(
 
     # Wait for container to be ready (started by pytest_sessionstart)
     docker_control = _get_docker_control(worker_id)
-    
+
     with lock:
         max_wait: int = 90  # seconds - increased for LDAP initialization
         wait_interval: float = 2.0  # seconds
@@ -525,7 +525,9 @@ def ldap_container(
         logger.info("Waiting for container %s to be ready...", LDAP_CONTAINER_NAME)
 
         # Step 1: Wait for port to be accessible
-        port_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, max_wait)
+        port_result = docker_control.wait_for_port_ready(
+            "localhost", LDAP_PORT, max_wait,
+        )
         if port_result.is_failure or not port_result.value:
             pytest.skip(
                 f"Container {LDAP_CONTAINER_NAME} port {LDAP_PORT} not ready "
@@ -535,7 +537,7 @@ def ldap_container(
         # Step 2: Wait for LDAP service to accept connections and bind
         waited: float = 0.0
         ldap_ready = False
-        
+
         while waited < max_wait:
             try:
                 server = Server(

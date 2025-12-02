@@ -20,6 +20,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_core import FlextResult, FlextRuntime, FlextService
+from flext_core.typings import FlextTypes
 from flext_ldif import (
     FlextLdif,
     FlextLdifModels,
@@ -127,16 +128,21 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
     def __init__(
         self,
-        server_type: str | None = None,
-        **kwargs: str | float | bool | None,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize entry adapter with FlextLdif integration and quirks.
 
         Args:
-            server_type: Server type for normalization (defaults to Constants)
-            **kwargs: Additional keyword arguments passed to parent class
+            **kwargs: Keyword arguments including:
+                - server_type: Server type for normalization (defaults to Constants)
+                - Additional keyword arguments passed to parent class
 
         """
+        # Extract server_type from kwargs if provided
+        server_type_raw = kwargs.pop("server_type", None)
+        server_type: str | None = (
+            str(server_type_raw) if isinstance(server_type_raw, str) else None
+        )
         super().__init__(**kwargs)
         # Use provided server_type or default from constants
         resolved_type: str = server_type or FlextLdifConstants.ServerTypes.RFC
@@ -356,6 +362,10 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
         """Convert FlextLdifModels.Entry to ldap3 attributes format."""
+        if entry.attributes is None:
+            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
+                "Entry has no attributes",
+            )
         if not entry.attributes.attributes:
             return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
                 "Entry has no attributes",

@@ -23,9 +23,9 @@ from flext_ldap import FlextLdap
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -56,22 +56,24 @@ class TestFlextLdapRealOperations:
         operation: str = "test",
     ) -> GenericFieldsDict:
         """Create test user data using FlextTestsFactories."""
-        return FlextTestsFactories.create_user(
+        user = FlextTestsFactories.create_user(
             user_id=f"{operation}_{uid_suffix}",
             name=f"Test {operation.title()} User",
             email=f"{operation}{uid_suffix}@internal.invalid",
         )
+        return cast("GenericFieldsDict", user.model_dump())
 
     @staticmethod
     def _create_test_config(
         operation: str = "test",
     ) -> GenericFieldsDict:
         """Create test configuration using FlextTestsFactories."""
-        return FlextTestsFactories.create_config(
+        config = FlextTestsFactories.create_config(
             service_type="ldap",
             environment="integration",
             operation=operation,
         )
+        return cast("GenericFieldsDict", config.model_dump())
 
     # Search operation test configurations
     SEARCH_TEST_CONFIGS: ClassVar[
@@ -146,8 +148,11 @@ class TestFlextLdapRealOperations:
         )
 
         if size_limit:
+            # Create new SearchOptions with size_limit, excluding it from model_dump to avoid duplicate
+            options_dict = search_options.model_dump()
+            options_dict.pop("size_limit", None)  # Remove if present to avoid duplicate
             search_options = FlextLdapModels.SearchOptions(
-                **search_options.model_dump(),
+                **options_dict,
                 size_limit=size_limit,
             )
 
@@ -290,7 +295,7 @@ class TestFlextLdapRealOperations:
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
                 cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
-                entry_dict,
+                cast("GenericFieldsDict", entry_dict),
                 changes,
                 verify_attribute=None,
             )
@@ -398,7 +403,9 @@ class TestFlextLdapRealOperations:
         else:
             add_modify_delete_results = (
                 TestOperationHelpers.execute_add_modify_delete_sequence(
-                    cast("FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client),
+                    cast(
+                        "FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client,
+                    ),
                     entry,
                     changes,
                 )

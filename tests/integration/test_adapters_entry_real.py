@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, Literal, cast
 
 import pytest
 from flext_ldif import FlextLdifParser
@@ -24,12 +24,38 @@ from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import GenericFieldsDict, LdapContainerDict
 from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
+
+# Type alias for ldap3 search scope literal
+Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
+
+
+def _to_ldap3_scope(
+    scope: FlextLdapConstants.SearchScope,
+) -> Ldap3SearchScope:
+    """Convert FlextLdapConstants.SearchScope to ldap3 search scope literal.
+
+    Args:
+        scope: Search scope enum value
+
+    Returns:
+        Literal string value expected by ldap3
+
+    """
+    scope_value = scope.value
+    if scope_value == "ONELEVEL":
+        return "LEVEL"
+    if scope_value == "BASE":
+        return "BASE"
+    if scope_value == "SUBTREE":
+        return "SUBTREE"
+    msg = f"Unknown scope value: {scope_value}"
+    raise ValueError(msg)
 
 
 class EntryTestType(StrEnum):
@@ -64,16 +90,19 @@ class TestFlextLdapEntryAdapterRealOperations:
         base_dn: str = RFC.DEFAULT_BASE_DN,
     ) -> GenericFieldsDict:
         """Create test entry data using FlextTestsFactories."""
-        return FlextTestsFactories.create_user(
+        user = FlextTestsFactories.create_user(
             user_id=f"test_{test_type}",
             name=f"Test {test_type.title()} Entry",
             email=f"{test_type}@internal.invalid",
             base_dn=base_dn,
         )
+        # Convert User model to GenericFieldsDict
+        # GenericFieldsDict allows extra items via __extra_items__
+        return cast("GenericFieldsDict", user.model_dump())
 
     @staticmethod
     def _create_ldap_connection(
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> Connection:
         """Create and return a connected LDAP connection."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
@@ -157,7 +186,7 @@ class TestFlextLdapEntryAdapterRealOperations:
 
     # LDAP3 to LDIF entry conversion test configurations
     ENTRY_CONVERSION_TEST_CONFIGS: ClassVar[
-        list[tuple[EntryTestType, GenericFieldsDict]]
+        list[tuple[EntryTestType, dict[str, object]]]
     ] = [
         # (test_type, config_dict)
         (
@@ -211,9 +240,9 @@ class TestFlextLdapEntryAdapterRealOperations:
     )
     def test_ldap3_to_ldif_entry_conversion_parameterized(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         test_type: EntryTestType,
-        config: GenericFieldsDict,
+        config: dict[str, object],
     ) -> None:
         """Parameterized test for LDAP3 to LDIF entry conversions."""
         adapter_entry = FlextLdapEntryAdapter()
@@ -228,13 +257,16 @@ class TestFlextLdapEntryAdapterRealOperations:
             if config.get("create_entry"):
                 # Create and add entry with specific attributes
                 test_cn = f"test{test_type.value}"
-                entry_attrs = config.get("entry_attrs", {})
+                entry_attrs_raw = config.get("entry_attrs", {})
+                entry_attrs: GenericFieldsDict | None = None
+                if isinstance(entry_attrs_raw, dict):
+                    # Convert dict[str, object] to GenericFieldsDict
+                    # GenericFieldsDict allows extra items via __extra_items__
+                    entry_attrs = cast("GenericFieldsDict", entry_attrs_raw)
                 entry = TestOperationHelpers.create_inetorgperson_entry(
                     test_cn,
                     RFC.DEFAULT_BASE_DN,
-                    additional_attrs=entry_attrs
-                    if isinstance(entry_attrs, dict)
-                    else None,
+                    additional_attrs=entry_attrs,
                 )
 
                 # Connect and add entry
@@ -259,7 +291,7 @@ class TestFlextLdapEntryAdapterRealOperations:
                 connection.search(
                     search_base=str(entry.dn),
                     search_filter="(objectClass=*)",
-                    search_scope=FlextLdapConstants.SearchScope.BASE.value,
+                    search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
                     attributes=["*"],
                 )
                 if connection.entries:

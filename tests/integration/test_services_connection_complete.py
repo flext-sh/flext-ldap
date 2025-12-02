@@ -17,9 +17,9 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import LdapContainerDict
 from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
@@ -52,22 +52,22 @@ class TestFlextLdapConnectionComplete:
 
     def test_connect_with_service_config(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect using service config."""
         config = FlextLdapConfig(
-            host=str(ldap_container["host"]),
-            port=int(str(ldap_container["port"])),
-            bind_dn=str(ldap_container["bind_dn"]),
-            bind_password=str(ldap_container["password"]),
+            host=ldap_container["host"],
+            port=ldap_container["port"],
+            bind_dn=ldap_container["bind_dn"],
+            bind_password=ldap_container["password"],
         )
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         connection_config = FlextLdapModels.ConnectionConfig(
-            host=str(ldap_container["host"]),
-            port=int(str(ldap_container["port"])),
-            bind_dn=str(ldap_container["bind_dn"]),
-            bind_password=str(ldap_container["password"]),
+            host=ldap_container["host"],
+            port=ldap_container["port"],
+            bind_dn=ldap_container["bind_dn"],
+            bind_password=ldap_container["password"],
         )
         result = connection.connect(connection_config)
         assert result.is_success
@@ -87,19 +87,19 @@ class TestFlextLdapConnectionComplete:
 
     def test_connect_with_all_config_options(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
         ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect with all config options."""
         ldap_config = FlextLdapConfig()
         connection = FlextLdapConnection(config=ldap_config, parser=ldap_parser)
         connection_config = FlextLdapModels.ConnectionConfig(
-            host=str(ldap_container["host"]),
-            port=int(str(ldap_container["port"])),
+            host=ldap_container["host"],
+            port=ldap_container["port"],
             use_ssl=False,
             use_tls=False,
-            bind_dn=str(ldap_container["bind_dn"]),
-            bind_password=str(ldap_container["password"]),
+            bind_dn=ldap_container["bind_dn"],
+            bind_password=ldap_container["password"],
             timeout=30,
             auto_bind=True,
             auto_range=True,
@@ -162,11 +162,10 @@ class TestFlextLdapConnectionComplete:
         connect_result = connection.connect(connection_config)
         assert connect_result.is_success
 
-        result = TestOperationHelpers.execute_and_assert_success(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", connection),
-        )
-        assert result is not None
-        assert isinstance(result, FlextLdapModels.SearchResult)
+        # execute() returns FlextResult[bool] for health check, not SearchResult
+        result = connection.execute()
+        assert result.is_success
+        assert result.value is True
 
         connection.disconnect()
 

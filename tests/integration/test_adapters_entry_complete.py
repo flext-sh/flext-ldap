@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Generator
+from typing import Literal
 
 import pytest
 from flext_ldif.models import FlextLdifModels
@@ -17,13 +18,39 @@ from pydantic import ValidationError
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.constants import FlextLdapConstants
-from tests.fixtures.typing import GenericFieldsDict
 
 from ..fixtures.constants import RFC
+from ..fixtures.typing import LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
+
+# Type alias for ldap3 search scope literal
+Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
+
+
+def _to_ldap3_scope(
+    scope: FlextLdapConstants.SearchScope,
+) -> Ldap3SearchScope:
+    """Convert FlextLdapConstants.SearchScope to ldap3 search scope literal.
+
+    Args:
+        scope: Search scope enum value
+
+    Returns:
+        Literal string value expected by ldap3
+
+    """
+    scope_value = scope.value
+    if scope_value == "ONELEVEL":
+        return "LEVEL"
+    if scope_value == "BASE":
+        return "BASE"
+    if scope_value == "SUBTREE":
+        return "SUBTREE"
+    msg = f"Unknown scope value: {scope_value}"
+    raise ValueError(msg)
 
 
 class TestFlextLdapEntryAdapterComplete:
@@ -32,7 +59,7 @@ class TestFlextLdapEntryAdapterComplete:
     @pytest.fixture
     def ldap_connection(
         self,
-        ldap_container: GenericFieldsDict,
+        ldap_container: LdapContainerDict,
     ) -> Generator[Connection]:
         """Create real LDAP connection for testing."""
         server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
@@ -58,7 +85,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
@@ -83,7 +110,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
@@ -107,7 +134,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
@@ -177,7 +204,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
@@ -201,7 +228,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
@@ -225,7 +252,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
@@ -264,7 +291,7 @@ class TestFlextLdapEntryAdapterComplete:
         ldap_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=FlextLdapConstants.SearchScope.BASE.value,
+            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
         assert len(ldap_connection.entries) > 0
