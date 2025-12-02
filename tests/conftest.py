@@ -526,7 +526,9 @@ def ldap_container(
 
         # Step 1: Wait for port to be accessible
         port_result = docker_control.wait_for_port_ready(
-            "localhost", LDAP_PORT, max_wait,
+            "localhost",
+            LDAP_PORT,
+            max_wait,
         )
         if port_result.is_failure or not port_result.value:
             pytest.skip(
@@ -812,10 +814,11 @@ def ldap_test_data_loader(
                     logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
                     # Entry might be already deleted by test or not exist
-                    logger.debug("Cleanup skip for %s: %s", dn, e)
+                    # str() required: Exception is not GeneralValueType for debug()
+                    logger.debug("Cleanup skip for %s: %s", dn, str(e))  # noqa: RUF065
 
         except Exception as e:
-            logger.warning("Cleanup failed (non-critical): %s", e)
+            logger.warning("Cleanup failed (non-critical)", error=e)
 
         # Close REAL connection
         if connection.bound:
@@ -861,7 +864,10 @@ def test_user_entry(test_users_json: list[GenericFieldsDict]) -> GenericFieldsDi
     if not test_users_json:
         pytest.skip("No test users available")
 
-    return LdapTestFixtures.convert_user_json_to_entry(test_users_json[0])
+    return cast(
+        "GenericFieldsDict",
+        LdapTestFixtures.convert_user_json_to_entry(test_users_json[0]),
+    )
 
 
 @pytest.fixture
@@ -870,7 +876,10 @@ def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFields
     if not test_groups_json:
         pytest.skip("No test groups available")
 
-    return LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0])
+    return cast(
+        "GenericFieldsDict",
+        LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0]),
+    )
 
 
 # =============================================================================
@@ -951,7 +960,39 @@ def ldap_connection(
         try:
             connection.disconnect()
         except Exception as cleanup_error:
-            logger.warning("Error during LDAP disconnect: %s", cleanup_error)
+            logger.warning("Error during LDAP disconnect", error=cleanup_error)
+
+
+@pytest.fixture
+def ldap3_connection(
+    ldap_container: LdapContainerDict,
+) -> Generator[Connection]:
+    """Create real ldap3.Connection for testing.
+
+    Provides direct ldap3.Connection for tests that need low-level ldap3 API access.
+    Reuses container configuration from ldap_container fixture.
+
+    Args:
+        ldap_container: Container configuration
+
+    Yields:
+        Connection: Connected ldap3.Connection object
+
+    """
+    server = Server(
+        f"ldap://{ldap_container['host']}:{ldap_container['port']}",
+        get_info="ALL",
+    )
+    connection = Connection(
+        server,
+        user=str(ldap_container["bind_dn"]),
+        password=str(ldap_container["password"]),
+        auto_bind=True,
+    )
+    yield connection
+    if connection.bound:
+        unbind_func: Callable[[], None] = connection.unbind
+        unbind_func()
 
 
 @pytest.fixture
@@ -979,10 +1020,12 @@ def ldap_client(
 
     """
     operations = FlextLdapOperations(connection=ldap_connection)
+    # FlextLdap expects FlextLdif, not FlextLdifParser
+    # The parser was already used to create the connection, so we use get_instance()
     return FlextLdap(
         connection=ldap_connection,
         operations=operations,
-        ldif=ldap_parser,
+        ldif=FlextLdif.get_instance(),
     )
 
 
@@ -1012,7 +1055,11 @@ def create_flext_ldap_instance(
         config = FlextLdapConfig()
     connection = FlextLdapConnection(config=config, parser=parser)
     operations = FlextLdapOperations(connection=connection)
-    return FlextLdap(connection=connection, operations=operations, ldif=parser)
+    # FlextLdap expects FlextLdif, not FlextLdifParser
+    # The parser was already used to create the connection, so we use get_instance()
+    return FlextLdap(
+        connection=connection, operations=operations, ldif=FlextLdif.get_instance()
+    )
 
 
 # @pytest.fixture
@@ -1099,5 +1146,5 @@ def _ensure_basic_ldap_structure() -> None:
         logger.info("Basic LDAP structure verified/created")
 
     except Exception as e:
-        logger.warning("Failed to ensure basic LDAP structure: %s", e)
+        logger.warning("Failed to ensure basic LDAP structure", error=e)
         # Don't fail tests for this - just log warning

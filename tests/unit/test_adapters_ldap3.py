@@ -38,7 +38,9 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def adapter(ldap_parser: FlextLdifParser) -> Ldap3Adapter:
     """Provide Ldap3Adapter instance for testing."""
-    return Ldap3Adapter(parser=ldap_parser)
+    # Ldap3Adapter.__init__ accepts parser via kwargs and validates it internally
+    # Type checking: parser is extracted from kwargs before passing to super().__init__()
+    return Ldap3Adapter(parser=ldap_parser)  # type: ignore[arg-type]  # Parser is validated internally
 
 
 class TestLdap3AdapterUnit:

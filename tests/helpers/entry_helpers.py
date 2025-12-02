@@ -137,7 +137,7 @@ class EntryTestHelpers:
         # SearchOptions is structurally compatible with SearchOptionsProtocol
         # Protocol expects settable attributes, but SearchOptions is frozen (read-only)
         # Runtime compatibility is guaranteed via structural typing
-        search_result = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions structurally compatible, protocol mismatch is false positive
+        search_result = client.search(search_options)
         if search_result.is_success:
             unwrapped = search_result.unwrap()
             return len(unwrapped.entries) == 1
@@ -171,7 +171,7 @@ class EntryTestHelpers:
         # SearchOptions is structurally compatible with SearchOptionsProtocol
         # Protocol expects settable attributes, but SearchOptions is frozen (read-only)
         # Runtime compatibility is guaranteed via structural typing
-        search_result = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions structurally compatible, protocol mismatch is false positive
+        search_result = client.search(search_options)
         if not search_result.is_success:
             return False
 
@@ -205,11 +205,11 @@ class EntryTestHelpers:
         expected_attrs: dict[str, list[str]]
         if isinstance(expected_entry.attributes, FlextLdifModels.LdifAttributes):
             expected_attrs = expected_entry.attributes.attributes
-        elif isinstance(expected_entry.attributes, Mapping):  # type: ignore[unreachable]  # mypy false positive: Mapping check is reachable
+        elif isinstance(expected_entry.attributes, Mapping):
             # Type narrowing: Mapping[str, Sequence[str]] - convert to dict[str, list[str]]
             # Sequence[str] can be list[str], tuple[str, ...], etc.
             # Convert all to list[str] for comparison
-            expected_attrs = {  # type: ignore[unreachable]  # mypy false positive: code is reachable
+            expected_attrs = {
                 k: list(v)  # Convert Sequence[str] to list[str] for comparison
                 for k, v in expected_entry.attributes.items()
             }
@@ -369,7 +369,7 @@ class EntryTestHelpers:
             # SearchOptions is structurally compatible with SearchOptionsProtocol
             # Protocol expects settable attributes, but SearchOptions is frozen (read-only)
             # Runtime compatibility is guaranteed via structural typing
-            search_result_raw = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions structurally compatible, protocol mismatch is false positive
+            search_result_raw = client.search(search_options)
             search_result: FlextResult[FlextLdapModels.SearchResult] = (
                 FlextLdapTestHelpers._ensure_flext_result(search_result_raw)
             )
@@ -385,11 +385,11 @@ class EntryTestHelpers:
                             FlextLdifModels.LdifAttributes,
                         ):
                             entry_attrs = modified_entry.attributes.attributes
-                        elif isinstance(modified_entry.attributes, Mapping):  # type: ignore[unreachable]  # mypy false positive: Mapping check is reachable
+                        elif isinstance(modified_entry.attributes, Mapping):
                             # Type narrowing: Mapping[str, Sequence[str]] - convert to dict[str, list[str]]
                             # Sequence[str] can be list[str], tuple[str, ...], etc.
                             # Convert all to list[str] for comparison
-                            entry_attrs = {  # type: ignore[unreachable]  # mypy false positive: code is reachable
+                            entry_attrs = {
                                 k: [
                                     str(item) for item in v
                                 ]  # Convert Sequence[str] to list[str] for comparison
@@ -441,7 +441,7 @@ class EntryTestHelpers:
             # SearchOptions is structurally compatible with SearchOptionsProtocol
             # Protocol expects settable attributes, but SearchOptions is frozen (read-only)
             # Runtime compatibility is guaranteed via structural typing
-            search_result_raw = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions structurally compatible, protocol mismatch is false positive
+            search_result_raw = client.search(search_options)
             search_result: FlextResult[FlextLdapModels.SearchResult] = (
                 FlextLdapTestHelpers._ensure_flext_result(search_result_raw)
             )
@@ -559,7 +559,13 @@ class EntryTestHelpers:
             if not entry.metadata or not hasattr(entry.metadata, "extensions"):
                 return {}
             extensions = entry.metadata.extensions
-            return dict(extensions) if FlextRuntime.is_dict_like(extensions) else {}
+            # Type narrowing: cast to GeneralValueType for FlextRuntime methods
+            extensions_typed: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", extensions
+            )
+            return (
+                dict(extensions) if FlextRuntime.is_dict_like(extensions_typed) else {}
+            )
 
         @staticmethod
         def assert_base64_tracked(entry: FlextLdifModels.Entry, attr_name: str) -> None:
@@ -567,9 +573,13 @@ class EntryTestHelpers:
             extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
             base64_attrs = extensions.get("base64_encoded_attributes")
             if base64_attrs:
+                # Type narrowing: cast to GeneralValueType for FlextRuntime methods
+                base64_attrs_typed: FlextTypes.GeneralValueType = cast(
+                    "FlextTypes.GeneralValueType", base64_attrs
+                )
                 base64_list: list[object] = (
-                    list(base64_attrs)
-                    if FlextRuntime.is_list_like(base64_attrs)
+                    list(base64_attrs_typed)
+                    if FlextRuntime.is_list_like(base64_attrs_typed)
                     else [base64_attrs]
                 )
                 base64_strs = [str(a) for a in base64_list if a is not None]
@@ -604,8 +614,12 @@ class EntryTestHelpers:
             # Add entry to LDAP
             object_class_value = attributes.get("objectClass", ["top"])
             object_classes: list[str]
-            if FlextRuntime.is_list_like(object_class_value):
-                object_classes = [str(oc) for oc in object_class_value]
+            # Type narrowing: cast to GeneralValueType for FlextRuntime methods
+            object_class_typed: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", object_class_value
+            )
+            if FlextRuntime.is_list_like(object_class_typed):
+                object_classes = [str(oc) for oc in object_class_typed]
             elif isinstance(object_class_value, str):
                 object_classes = [object_class_value]
             else:

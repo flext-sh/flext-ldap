@@ -60,7 +60,7 @@ def reset_ldap_singleton() -> Generator[None]:
     Note: FlextLdap is no longer a singleton (wrapper pattern removed).
     This fixture maintains test isolation by creating fresh instances per test.
     """
-    return
+    yield None  # noqa: PT022  # Fixture is intentionally empty but needed for test isolation
 
 
 @pytest.fixture

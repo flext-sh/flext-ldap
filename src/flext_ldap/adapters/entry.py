@@ -1,15 +1,27 @@
 """Entry adapter for ldap3 ↔ FlextLdif bidirectional conversion.
 
 Provides seamless conversion between ldap3 Entry objects and FlextLdif Entry models,
-enabling integration between LDAP protocol operations and LDIF entry manipulation with
-type safety and error handling. All operations are generic and work with any LDAP server
-by leveraging flext-ldif's quirks system for server-specific handling.
+enabling integration between LDAP protocol operations and LDIF entry manipulation.
 
-Module: FlextLdapEntryAdapter
-Scope: Bidirectional entry conversion, metadata preservation,
-    server-specific normalization
-Pattern: Service adapter extending FlextService, uses FlextLdif
-    for quirks and conversion
+Business Rules:
+    - ldap3.Entry → FlextLdifModels.Entry conversion preserves all attributes
+    - FlextLdifModels.Entry → ldap3 attributes uses dict[str, list[str]] format
+    - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
+    - Server-specific normalization uses flext-ldif quirks system
+    - DN normalization via FlextLdifUtilities.DN.norm_string() for consistency
+    - Empty attribute values are preserved (important for schema compliance)
+
+Audit Implications:
+    - Entry conversion maintains attribute fidelity for data integrity
+    - Base64 encoding of binary values ensures transport safety
+    - Server-specific quirks enable cross-server migration auditing
+    - Conversion operations are stateless (no side effects)
+
+Architecture Notes:
+    - Implements Adapter pattern between ldap3 and FlextLdif domains
+    - Uses FlextRuntime type guards for safe type narrowing (not isinstance)
+    - Extends FlextService[bool] for health check capability
+    - Inner class _ConversionHelpers follows SRP for value processing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,6 +37,9 @@ from flext_ldif import (
     FlextLdif,
     FlextLdifModels,
 )
+from flext_ldif._models.domain import (
+    FlextLdifModelsDomains,  # noqa: PLC2701  # Required for isinstance and model_validate - no public API available
+)
 from flext_ldif.constants import FlextLdifConstants
 from ldap3 import Entry as Ldap3Entry
 from pydantic import PrivateAttr
@@ -32,25 +47,6 @@ from pydantic import PrivateAttr
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.typings import FlextLdapTypes
-
-# =========================================================================
-# TYPE ALIASES (Python 3.13+ PEP 695)
-# =========================================================================
-type Ldap3EntryValue = (
-    str | bytes | int | float | bool | Sequence[str | bytes | int | float | bool] | None
-)
-"""Type alias for ldap3 entry attribute values.
-
-Supports all common LDAP attribute value types:
-- Scalar: str, bytes, int, float, bool, None
-- Multi-valued: Sequence of scalar types
-"""
-
-type AttributeDict = dict[str, list[str]]
-"""Type alias for LDIF/LDAP attribute mappings (attribute names to string lists)."""
-
-type ConversionState = tuple[list[str], list[str]]
-"""Type alias for conversion state: (removed_attrs, base64_attrs)."""
 
 
 class FlextLdapEntryAdapter(FlextService[bool]):
@@ -81,27 +77,59 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         def is_base64_encoded(value: str, threshold: int = ASCII_THRESHOLD) -> bool:
             """Check if value requires base64 encoding.
 
+            Business Rules:
+                - Values starting with "::" are base64 encoded (LDIF marker)
+                - Values with characters > threshold (127) require encoding
+                - ASCII threshold detects non-printable characters
+                - Binary values (non-ASCII) must be base64 encoded per RFC 2849
+
+            Audit Implications:
+                - Base64 encoding detection affects LDIF output format
+                - Binary values are properly encoded for transport safety
+                - Encoding detection enables proper LDIF serialization
+
+            Architecture:
+                - Uses ord() for character code checking
+                - Threshold of 127 detects non-ASCII characters
+                - Returns bool for simple predicate usage
+
             Args:
-                value: String value to check
-                threshold: ASCII threshold for non-printable detection
+                value: String value to check for base64 encoding requirement.
+                threshold: ASCII threshold for non-printable detection (default: 127).
 
             Returns:
-                True if value contains LDIF base64 marker or non-ASCII characters
+                True if value requires base64 encoding, False otherwise.
 
             """
             return value.startswith("::") or any(ord(c) > threshold for c in value)
 
         @staticmethod
-        def convert_value_to_strings(value: Ldap3EntryValue) -> Sequence[str]:
+        def convert_value_to_strings(
+            value: FlextLdapTypes.Ldap.Ldap3EntryValue,
+        ) -> Sequence[str]:
             """Convert ldap3 entry value to sequence of strings.
 
-            Uses FlextRuntime type guards for safe conversion without isinstance.
+            Business Rules:
+                - List-like values are converted to list[str]
+                - Single values are wrapped in single-item list [str(value)]
+                - None values become empty list []
+                - Uses FlextRuntime.is_list_like() for type-safe handling
+
+            Audit Implications:
+                - All values normalized to string lists for consistency
+                - Value type information may be lost (all become strings)
+                - Empty lists preserve attribute presence
+
+            Architecture:
+                - Uses FlextRuntime.is_list_like() for type narrowing (not isinstance)
+                - Returns Sequence[str] for flexible return type
+                - No network calls - pure data transformation
 
             Args:
-                value: ldap3 attribute value (str, list, bytes, or mixed)
+                value: ldap3 attribute value (str, list, bytes, or mixed).
 
             Returns:
-                Sequence of string values (empty if value is None/empty)
+                Sequence of string values (empty if value is None/empty).
 
             """
             if FlextRuntime.is_list_like(value):
@@ -109,14 +137,32 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             return [str(value)] if value is not None else []
 
         @staticmethod
-        def normalize_original_attr_value(value: Ldap3EntryValue) -> Sequence[str]:
+        def normalize_original_attr_value(
+            value: FlextLdapTypes.Ldap.Ldap3EntryValue,
+        ) -> Sequence[str]:
             """Normalize attribute value preserving original form for metadata.
 
+            Business Rules:
+                - Preserves original value form for metadata tracking
+                - Handles tuple types in addition to list-like values
+                - Converts all values to strings for consistency
+                - Empty values become empty list []
+
+            Audit Implications:
+                - Original value form preserved for audit trail
+                - Metadata tracking enables value transformation auditing
+                - Used for conversion metadata generation
+
+            Architecture:
+                - Uses FlextRuntime.is_list_like() and isinstance(tuple) checks
+                - Returns Sequence[str] for flexible return type
+                - No network calls - pure data transformation
+
             Args:
-                value: Original ldap3 attribute value
+                value: Original ldap3 attribute value (preserved form).
 
             Returns:
-                Sequence of string values from original attribute
+                Sequence of string values from original attribute.
 
             """
             if FlextRuntime.is_list_like(value) or isinstance(value, tuple):
@@ -154,9 +200,21 @@ class FlextLdapEntryAdapter(FlextService[bool]):
     def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:  # noqa: PLR6301
         """Execute method required by FlextService.
 
-        Entry adapter does not perform operations itself - it converts between
-        entry formats. The conversion methods (ldap3_to_ldif_entry, etc.) should be
-        called directly instead of using execute().
+        Business Rules:
+            - Entry adapter is stateless and performs no operations
+            - Conversion methods (ldap3_to_ldif_entry, etc.) should be called directly
+            - Always returns success (True) as adapter is always ready
+            - No remote operations performed - pure data transformation adapter
+
+        Audit Implications:
+            - This method exists for FlextService protocol compliance only
+            - No LDAP operations are performed - no audit trail needed
+            - Conversion methods are called directly by service layer
+
+        Architecture:
+            - Stateless adapter pattern - no internal state to manage
+            - Conversion methods handle bidirectional entry transformation
+            - No network calls - pure data transformation
 
         Args:
             **_kwargs: Unused - adapter is stateless and requires no configuration
@@ -170,7 +228,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
     def _convert_ldap3_value_to_list(
         self,
-        value: Ldap3EntryValue,
+        value: FlextLdapTypes.Ldap.Ldap3EntryValue,
         key: str,
         base64_attrs: MutableSequence[str],
         removed_attrs: MutableSequence[str],
@@ -178,18 +236,33 @@ class FlextLdapEntryAdapter(FlextService[bool]):
     ) -> list[str]:
         """Convert ldap3 attribute value to list format, tracking metadata.
 
-        Mutates base64_attrs and removed_attrs lists with tracking information.
-        Uses type guards for safe value type narrowing.
+        Business Rules:
+            - None values are tracked in removed_attrs and return []
+            - Values are converted using _ConversionHelpers.convert_value_to_strings()
+            - Base64 encoding detection uses ASCII threshold (127)
+            - Attributes requiring base64 are tracked in base64_attrs
+            - Mutates tracking lists for conversion metadata generation
+
+        Audit Implications:
+            - Base64 attributes tracked for proper LDIF encoding
+            - Removed attributes tracked for conversion metadata
+            - Tracking enables audit trail of value transformations
+
+        Architecture:
+            - Uses _ConversionHelpers for value conversion
+            - Mutates base64_attrs and removed_attrs lists (side effect)
+            - Uses type guards for safe value type narrowing
+            - Returns list[str] for consistent format
 
         Args:
-            value: ldap3 attribute value to convert
-            key: Attribute name for tracking
-            base64_attrs: Mutable list to track attributes needing base64
-            removed_attrs: Mutable list to track empty/None attributes
-            ascii_threshold: ASCII threshold for base64 detection
+            value: ldap3 attribute value to convert.
+            key: Attribute name for tracking in metadata lists.
+            base64_attrs: Mutable list to track attributes needing base64 encoding.
+            removed_attrs: Mutable list to track empty/None attributes.
+            ascii_threshold: ASCII threshold for base64 detection (default: 127).
 
         Returns:
-            List of string values (empty if None)
+            List of string values (empty if None).
 
         """
         if value is None:
@@ -207,19 +280,37 @@ class FlextLdapEntryAdapter(FlextService[bool]):
     def _build_conversion_metadata(
         removed_attrs: Sequence[str],
         base64_attrs: Sequence[str],
-        original_attrs_dict: Mapping[str, Ldap3EntryValue],
+        original_attrs_dict: Mapping[str, FlextLdapTypes.Ldap.Ldap3EntryValue],
         original_dn: str,
     ) -> FlextLdapModels.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation.
 
+        Business Rules:
+            - Source attributes extracted from original_attrs_dict keys
+            - Removed attributes (None values) tracked for audit
+            - Base64 attributes deduplicated using set() for uniqueness
+            - Source DN preserved for transformation tracking
+            - Metadata enables audit trail of conversion process
+
+        Audit Implications:
+            - Conversion metadata enables forensic analysis
+            - Removed attributes indicate data loss during conversion
+            - Base64 attributes indicate binary value handling
+            - Source DN enables entry tracking across transformations
+
+        Architecture:
+            - Uses FlextLdapModels.ConversionMetadata Pydantic model
+            - Returns validated metadata model
+            - No network calls - pure metadata construction
+
         Args:
-            removed_attrs: Attributes removed during conversion (None values)
-            base64_attrs: Attributes requiring base64 encoding
-            original_attrs_dict: Original ldap3 attributes mapping
-            original_dn: Original ldap3 entry distinguished name
+            removed_attrs: Attributes removed during conversion (None values).
+            base64_attrs: Attributes requiring base64 encoding.
+            original_attrs_dict: Original ldap3 attributes mapping.
+            original_dn: Original ldap3 entry distinguished name.
 
         Returns:
-            ConversionMetadata model with transformation tracking
+            ConversionMetadata model with transformation tracking.
 
         """
         return FlextLdapModels.ConversionMetadata(
@@ -234,20 +325,36 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         conversion_metadata: FlextLdapModels.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
-        original_attrs_dict: Mapping[str, Ldap3EntryValue],
+        original_attrs_dict: Mapping[str, FlextLdapTypes.Ldap.Ldap3EntryValue],
         converted_attrs_dict: Mapping[str, list[str]],
     ) -> None:
         """Track DN and attribute differences in conversion metadata.
 
-        Mutates conversion_metadata to record DN changes and attribute modifications
-        detected during ldap3 to LDIF conversion.
+        Business Rules:
+            - DN changes are detected by comparing original_dn vs converted_dn
+            - Attribute changes detected by comparing string representations
+            - Uses FlextRuntime.is_list_like() for type-safe value handling
+            - Mutates conversion_metadata to record differences
+            - Changes tracked for audit trail generation
+
+        Audit Implications:
+            - DN changes indicate normalization or transformation occurred
+            - Attribute changes indicate value transformation during conversion
+            - Tracking enables forensic analysis of conversion process
+            - Metadata mutations are side effects (no return value)
+
+        Architecture:
+            - Mutates conversion_metadata object (side effect)
+            - Uses FlextRuntime.is_list_like() for type narrowing
+            - Compares string representations for change detection
+            - No network calls - pure metadata tracking
 
         Args:
-            conversion_metadata: Metadata model to update with changes
-            original_dn: Original ldap3 entry DN
-            converted_dn: Converted LDIF entry DN
-            original_attrs_dict: Original ldap3 attributes
-            converted_attrs_dict: Converted LDIF attributes (lists of strings)
+            conversion_metadata: Metadata model to update with changes (mutated).
+            original_dn: Original ldap3 entry DN.
+            converted_dn: Converted LDIF entry DN.
+            original_attrs_dict: Original ldap3 attributes.
+            converted_attrs_dict: Converted LDIF attributes (lists of strings).
 
         """
         if converted_dn != original_dn:
@@ -280,29 +387,41 @@ class FlextLdapEntryAdapter(FlextService[bool]):
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Convert ldap3.Entry to FlextLdifModels.Entry.
 
-        Delegates to FlextLdifModels.Entry.from_ldap3() for conversion.
-        Uses railway pattern for error handling.
+        Business Rules:
+            - DN is extracted from entry.entry_dn (string conversion)
+            - Attributes are extracted from entry.entry_attributes_as_dict
+            - Attribute values are normalized to list[str] format
+            - Base64 encoding detection uses ASCII threshold (127) for non-printable chars
+            - Removed attributes (None values) are tracked in conversion metadata
+            - Conversion metadata includes source DN, removed attrs, base64 attrs
+            - Server type from adapter instance is stored in QuirkMetadata
+
+        Audit Implications:
+            - Conversion failures are logged with entry DN and error details
+            - Conversion metadata enables audit trail of transformations
+            - Base64 attributes are tracked for proper LDIF encoding
+            - DN changes are tracked if normalization occurs
+
+        Architecture:
+            - Uses _convert_ldap3_value_to_list() for value normalization
+            - Uses _build_conversion_metadata() for tracking transformations
+            - Returns FlextResult pattern - no exceptions raised
+            - Server type from adapter._server_type stored in metadata
 
         Args:
-            ldap3_entry: ldap3 Entry object (required, no fallback)
+            ldap3_entry: ldap3 Entry object (required, no fallback).
+                Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:
-            FlextResult containing FlextLdifModels.Entry or error
-
-        Raises:
-            ValueError: If entry_dn or entry_attributes_as_dict access fails
-
-        Notes:
-            - Type annotation ensures ldap3_entry is not None
-            - Pydantic/type checker will enforce this at call site
-            - No runtime None check needed - type system guarantees non-None
+            FlextResult[FlextLdifModels.Entry]: Converted entry with metadata
+            or error if conversion fails (ValueError, TypeError, AttributeError).
 
         """
         try:
             dn_str = str(ldap3_entry.entry_dn)
             attrs_dict = ldap3_entry.entry_attributes_as_dict
             original_attrs_dict = dict(attrs_dict)
-            ldif_attrs: dict[str, list[str]] = {}
+            ldif_attrs: FlextLdapTypes.Ldap.AttributeDict = {}
             removed_attrs: list[str] = []
             base64_attrs: list[str] = []
             for key, value in attrs_dict.items():
@@ -328,13 +447,13 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             ldf_attrs_obj = FlextLdifModels.LdifAttributes.model_validate({
                 "attributes": ldif_attrs,
             })
-            metadata_obj = FlextLdifModels.QuirkMetadata.model_validate({
+            metadata_obj = FlextLdifModelsDomains.QuirkMetadata.model_validate({
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
             return FlextResult[FlextLdifModels.Entry].ok(
                 FlextLdifModels.Entry(
-                    dn=FlextLdifModels.DistinguishedName(value=dn_str),
+                    dn=FlextLdifModelsDomains.DistinguishedName(value=dn_str),
                     attributes=ldf_attrs_obj,
                     metadata=metadata_obj,
                 ),
@@ -361,7 +480,36 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         self,
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
-        """Convert FlextLdifModels.Entry to ldap3 attributes format."""
+        """Convert FlextLdifModels.Entry to ldap3 attributes format.
+
+        Business Rules:
+            - Entry must have attributes (LdifAttributes model)
+            - Attributes must have non-empty attributes dict
+            - Attribute values are already list[str] in LDIF format
+            - Values are converted to strings (handles any value types)
+            - Empty attributes dict returns failure (no attributes to convert)
+            - Uses FlextRuntime.is_list_like() for type-safe value handling
+
+        Audit Implications:
+            - Conversion failures are logged with entry DN and error details
+            - Empty attributes are detected before conversion attempt
+            - Value type conversion errors are caught and logged
+
+        Architecture:
+            - Accesses entry.attributes.attributes dict directly
+            - Uses FlextRuntime.is_list_like() for type narrowing
+            - Returns FlextResult pattern - no exceptions raised
+            - Returns dict[str, list[str]] format expected by ldap3
+
+        Args:
+            entry: FlextLdifModels.Entry with attributes to convert.
+                Must have non-empty attributes.attributes dict.
+
+        Returns:
+            FlextResult[Attributes]: Dict mapping attribute names to list[str] values
+            or error if entry has no attributes or conversion fails.
+
+        """
         if entry.attributes is None:
             return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
                 "Entry has no attributes",

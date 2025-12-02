@@ -17,12 +17,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Protocol, cast
+from typing import Literal, Protocol, cast
 
 from flext_core import FlextResult, FlextRuntime
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
 from flext_ldif.models import FlextLdifModels
+from ldap3 import Connection, Entry as Ldap3Entry
 
 from flext_ldap import FlextLdap
 from flext_ldap.constants import FlextLdapConstants
@@ -32,6 +33,9 @@ from flext_ldap.services.operations import FlextLdapOperations
 
 from ..fixtures.constants import TestConstants
 from ..fixtures.typing import GenericFieldsDict
+
+# Type alias for ldap3 search scope literal - shared across tests
+Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
 
 
 class DnsTrackerProtocol(Protocol):
@@ -76,6 +80,75 @@ def _validate_scope(scope: str) -> SearchScopeType:
         "SUBTREE": "SUBTREE",
     }
     return scope_map[scope]
+
+
+def to_ldap3_scope(
+    scope: FlextLdapConstants.SearchScope,
+) -> Ldap3SearchScope:
+    """Convert FlextLdapConstants.SearchScope to ldap3 search scope literal.
+
+    Shared helper to avoid duplication across test files.
+    Replaces local _to_ldap3_scope functions in test files.
+
+    Args:
+        scope: Search scope enum value
+
+    Returns:
+        Literal string value expected by ldap3
+
+    Raises:
+        ValueError: If scope value is unknown
+
+    """
+    scope_value = scope.value
+    if scope_value == "ONELEVEL":
+        return "LEVEL"
+    if scope_value == "BASE":
+        return "BASE"
+    if scope_value == "SUBTREE":
+        return "SUBTREE"
+    msg = f"Unknown scope value: {scope_value}"
+    raise ValueError(msg)
+
+
+class Ldap3TestHelpers:
+    """Helper methods for ldap3.Connection testing patterns.
+
+    Provides common patterns for LDAP operations using ldap3.Connection
+    to reduce duplication across test files.
+    """
+
+    @staticmethod
+    def search_base_entry(
+        connection: Connection,
+        base_dn: str,
+        scope: FlextLdapConstants.SearchScope = FlextLdapConstants.SearchScope.BASE,
+        attributes: list[str] | None = None,
+    ) -> list[Ldap3Entry]:
+        """Search for base DN entry using ldap3.Connection.
+
+        Common pattern for getting base DN entry in tests.
+        Reduces duplication of search calls across test files.
+
+        Args:
+            connection: ldap3.Connection instance
+            base_dn: Base DN to search
+            scope: Search scope (defaults to BASE)
+            attributes: Attributes to retrieve (defaults to ["*"])
+
+        Returns:
+            List of ldap3.Entry objects from search
+
+        """
+        if attributes is None:
+            attributes = ["*"]
+        connection.search(
+            search_base=base_dn,
+            search_filter="(objectClass=*)",
+            search_scope=to_ldap3_scope(scope),
+            attributes=attributes,
+        )
+        return list(connection.entries) if connection.entries else []
 
 
 @dataclass(frozen=True, slots=True)
@@ -354,7 +427,8 @@ class FlextLdapTestHelpers:
         """
         if isinstance(result, FlextResult):
             # Type narrowing: isinstance check ensures FlextResult[T]
-            return result
+            # Use cast to satisfy pyright's invariant type parameter check
+            return cast("FlextResult[T]", result)
         # Convert protocol result to FlextResult
         if result.is_success:
             unwrapped = result.unwrap()
@@ -368,7 +442,7 @@ class FlextLdapTestHelpers:
     @staticmethod
     def delete_entry_safe(
         client: FlextLdap,
-        dn: str | FlextLdifModels.DistinguishedName,  # type: ignore[valid-type]
+        dn: str | FlextLdifModels.DistinguishedName,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
         """Delete entry safely (ignores errors if not exists).
 
@@ -459,8 +533,11 @@ class FlextLdapTestHelpers:
             tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
         ] = []
         for entry_dict_item in entry_dicts:
-            # Type narrowing: verify entry_dict_item is a dict before use
-            if not FlextRuntime.is_dict_like(entry_dict_item):
+            # Type narrowing: cast to GeneralValueType for FlextRuntime methods
+            entry_dict_typed: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", entry_dict_item
+            )
+            if not FlextRuntime.is_dict_like(entry_dict_typed):
                 msg = f"Expected dict, got {type(entry_dict_item)}"
                 raise TypeError(msg)
             # Cast to GenericFieldsDict - GenericFieldsDict allows any keys via __extra_items__

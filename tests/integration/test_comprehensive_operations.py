@@ -19,8 +19,8 @@ from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from ..conftest import create_flext_ldap_instance
 
+from ..conftest import create_flext_ldap_instance
 from ..fixtures import LdapTestFixtures
 from ..fixtures.typing import GenericFieldsDict, LdapContainerDict
 from ..helpers.operation_helpers import TestOperationHelpers

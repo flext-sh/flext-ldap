@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 from pydantic import ValidationError
 
@@ -33,11 +32,10 @@ class TestLdap3AdapterErrorHandling:
     @pytest.fixture
     def connected_adapter(
         self,
-        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")

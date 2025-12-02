@@ -156,7 +156,9 @@ class ApiTestDataFactory:
         # Get FlextLdif instance (parser is used by connection, ldif is separate)
         ldif_instance = FlextLdif.get_instance()
         return FlextLdap(
-            connection=connection, operations=operations, ldif=ldif_instance,
+            connection=connection,
+            operations=operations,
+            ldif=ldif_instance,
         )
 
 

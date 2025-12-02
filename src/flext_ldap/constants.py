@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Final, Literal, TypeIs
 
@@ -591,7 +592,7 @@ class FlextLdapConstants(FlextConstants):
         for flext-ldif parser compatibility.
         """
 
-        LDIF_COMPATIBLE: Final[dict[str, str]] = {
+        LDIF_COMPATIBLE: Final[Mapping[str, str]] = {
             "oid": "oid",
             "oud": "oud",
             "openldap": "openldap",

@@ -263,7 +263,8 @@ class TestFlextLdapSyncServiceReal:
             # Create sync options if specified
             if sync_options_config := config.get("sync_options"):
                 sync_options_dict = cast(
-                    "dict[str, FlextTypes.GeneralValueType]", sync_options_config,
+                    "dict[str, FlextTypes.GeneralValueType]",
+                    sync_options_config,
                 )
                 options = FlextLdapModels.SyncOptions(
                     source_basedn=cast("str", sync_options_dict.get("source_basedn")),

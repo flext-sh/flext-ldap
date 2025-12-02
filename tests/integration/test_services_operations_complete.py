@@ -107,7 +107,8 @@ class TestFlextLdapOperationsComplete:
         )
         result = EntryTestHelpers.add_and_cleanup(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
         )
@@ -151,7 +152,8 @@ class TestFlextLdapOperationsComplete:
         entry = TestDeduplicationHelpers.create_user("testmodnorm")
         add_result = EntryTestHelpers.add_and_cleanup(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
             verify=False,
@@ -163,7 +165,8 @@ class TestFlextLdapOperationsComplete:
         }
         TestDeduplicationHelpers.modify_with_dn_spaces(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
             changes,
@@ -183,7 +186,8 @@ class TestFlextLdapOperationsComplete:
 
         _add_result, _delete_result = TestOperationHelpers.add_then_delete_and_assert(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
         )
@@ -196,7 +200,8 @@ class TestFlextLdapOperationsComplete:
         entry = TestDeduplicationHelpers.create_user("testdelnorm")
         _add_result = TestOperationHelpers.add_entry_and_assert_success(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
             cleanup_after=False,
@@ -221,7 +226,8 @@ class TestFlextLdapOperationsComplete:
         result = operations_service.execute()
         assert result.is_success
         search_result = result.unwrap()
-        assert search_result.total_count == 0
+        # total_count is @computed_field that returns len(entries)
+        # Use len(entries) directly to avoid mypy strict mode issues with @computed_field
         assert len(search_result.entries) == 0
 
     def test_add_with_operation_result_success(
@@ -236,7 +242,8 @@ class TestFlextLdapOperationsComplete:
 
         result = TestOperationHelpers.add_entry_and_assert_success(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
             verify_operation_result=True,
@@ -258,7 +265,8 @@ class TestFlextLdapOperationsComplete:
         }
         TestDeduplicationHelpers.add_then_modify_with_operation_results(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
             changes,
@@ -272,7 +280,8 @@ class TestFlextLdapOperationsComplete:
         entry = TestDeduplicationHelpers.create_user("testdelresult")
         TestDeduplicationHelpers.add_then_delete_with_operation_results(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", operations_service,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                operations_service,
             ),
             entry,
         )

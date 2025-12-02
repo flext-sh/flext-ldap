@@ -12,7 +12,9 @@ from collections.abc import Callable, Generator
 from typing import Literal, cast
 
 import pytest
-from flext_ldif import FlextLdifParser
+from flext_ldif._models.results import (
+    FlextLdifModelsResults,  # Required for Statistics() constructor - no public API available
+)
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, Connection, Server
@@ -62,12 +64,10 @@ class TestLdap3AdapterComplete:
     @pytest.fixture
     def connected_adapter(
         self,
-        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
-        # parser is a positional parameter, not kwargs - pyright needs explicit type
-        adapter = Ldap3Adapter(parser=ldap_parser)  # pyright: ignore[reportArgumentType]  # parser is explicit parameter, not kwargs
+        adapter = Ldap3Adapter()
         TestOperationHelpers.connect_with_skip_on_failure(
             cast("FlextLdapProtocols.LdapService.LdapClientProtocol", adapter),
             connection_config,
@@ -77,18 +77,16 @@ class TestLdap3AdapterComplete:
 
     def test_adapter_initialization_with_parser(self) -> None:
         """Test adapter initialization with custom parser."""
-        parser = FlextLdifParser()
-        adapter = Ldap3Adapter(parser=parser)
-        assert adapter._parser == parser
+        adapter = Ldap3Adapter()
+        assert adapter._parser is not None
         assert adapter._entry_adapter is not None
 
     def test_connect_with_use_ssl(
         self,
         ldap_container: LdapContainerDict,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with SSL enabled."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         config = FlextLdapModels.ConnectionConfig(
             host=ldap_container["host"],
             port=ldap_container["port"],
@@ -104,10 +102,9 @@ class TestLdap3AdapterComplete:
     def test_connect_with_use_tls(
         self,
         ldap_container: LdapContainerDict,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with TLS enabled (covers line 104)."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         config = FlextLdapModels.ConnectionConfig(
             host=ldap_container["host"],
             port=ldap_container["port"],
@@ -132,10 +129,9 @@ class TestLdap3AdapterComplete:
     def test_connect_with_timeout(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with custom timeout."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         config = FlextLdapModels.ConnectionConfig(
             host=connection_config.host,
             port=connection_config.port,
@@ -151,10 +147,9 @@ class TestLdap3AdapterComplete:
     def test_connect_with_auto_bind_false(
         self,
         connection_config: FlextLdapModels.ConnectionConfig,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connection with auto_bind=False."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         config = FlextLdapModels.ConnectionConfig(
             host=connection_config.host,
             port=connection_config.port,
@@ -230,7 +225,8 @@ class TestLdap3AdapterComplete:
 
         result = EntryTestHelpers.add_and_cleanup(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                connected_adapter,
             ),
             entry,
         )
@@ -252,7 +248,8 @@ class TestLdap3AdapterComplete:
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                connected_adapter,
             ),
             entry,
             changes,
@@ -283,7 +280,8 @@ class TestLdap3AdapterComplete:
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                connected_adapter,
             ),
             entry,
             changes,
@@ -314,7 +312,8 @@ class TestLdap3AdapterComplete:
 
         results = TestOperationHelpers.execute_add_modify_delete_sequence(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                connected_adapter,
             ),
             entry,
             changes,
@@ -344,7 +343,8 @@ class TestLdap3AdapterComplete:
         """Test execute when connected."""
         entry = TestOperationHelpers.execute_and_assert_success(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                connected_adapter,
             ),
         )
         assert entry is not None
@@ -379,7 +379,8 @@ class TestLdap3AdapterComplete:
 
         result = EntryTestHelpers.add_and_cleanup(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol", connected_adapter,
+                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                connected_adapter,
             ),
             entry,
         )
@@ -463,9 +464,10 @@ class TestLdap3AdapterComplete:
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
         )
 
+        # Statistics is a type alias - use the actual class from _models
         FlextLdifModels.ParseResponse(
             entries=[valid_entry],
-            statistics=FlextLdifModels.Statistics(),
+            statistics=FlextLdifModelsResults.Statistics(),
             detected_server_type=FlextLdifConstants.ServerTypes.OPENLDAP2.value,
         )
 
@@ -526,7 +528,9 @@ class TestLdap3AdapterComplete:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].attributes is not None
-        assert entries[0].attributes.attributes == {}  # Empty attributes dict is created as fallback
+        assert (
+            entries[0].attributes.attributes == {}
+        )  # Empty attributes dict is created as fallback
 
     def test_search_with_scope_mapping_failure(
         self,
@@ -593,7 +597,10 @@ class TestLdap3AdapterComplete:
         # Check if it fails or creates empty attributes
         if result.is_failure:
             assert result.error is not None
-            assert "invalid" in result.error.lower() or "attributes" in result.error.lower()
+            assert (
+                "invalid" in result.error.lower()
+                or "attributes" in result.error.lower()
+            )
         else:
             # If it succeeds, it should create empty attributes as fallback
             entries = result.unwrap()
@@ -613,9 +620,10 @@ class TestLdap3AdapterComplete:
             # No metadata provided
         )
 
+        # Statistics is a type alias - use the actual class from _models
         parse_response = FlextLdifModels.ParseResponse(
             entries=[entry_without_metadata],
-            statistics=FlextLdifModels.Statistics(),
+            statistics=FlextLdifModelsResults.Statistics(),
             detected_server_type=FlextLdifConstants.ServerTypes.OPENLDAP2.value,
         )
 

@@ -3,6 +3,29 @@
 The service inspects ``rootDSE`` attributes and applies lightweight heuristics
 so callers can classify a live directory server without relying on external
 detectors. Results are returned as :class:`flext_core.FlextResult` instances.
+
+Business Rules:
+    - Connection MUST be bound before detection (queries rootDSE base DN "")
+    - Vendor-based detection is prioritized over extension/context checks
+    - Detection priority order: OID > OUD > OpenLDAP > AD > DS389 > RFC
+    - Defaults to "rfc" (RFC-compliant generic server) if no match
+    - Case-insensitive matching for all vendor info and extensions
+
+Audit Implications:
+    - Detection queries are logged at DEBUG level (not ERROR on failure)
+    - Server type affects LDIF parsing quirks and entry normalization
+    - Detection results enable server-specific optimizations and audit trails
+    - Failed rootDSE queries return error result with connection.result details
+
+Architecture Notes:
+    - Uses static methods for testability (_query_root_dse, _detect_from_attributes)
+    - Returns FlextResult pattern - no exceptions raised from detection logic
+    - Extends FlextLdapServiceBase[str] for health check capability
+    - Detection is non-blocking (failures don't affect connection state)
+    - ldap3 Connection import is required here (infrastructure layer)
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -26,7 +49,24 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
     """
 
     def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[str]:
-        """Detect server type using a provided ``ldap3.Connection`` instance."""
+        """Detect server type using a provided ``ldap3.Connection`` instance.
+
+        Business Rules:
+            - Requires 'connection' parameter in kwargs (ldap3.Connection instance)
+            - Delegates to detect_from_connection() for actual detection logic
+            - Returns FlextResult.fail() if connection parameter missing or invalid type
+            - Connection must be bound before detection (validated by detect_from_connection)
+
+        Audit Implications:
+            - Detection queries are logged at DEBUG level
+            - Server type detection affects quirk application for entry parsing
+            - Failed detection returns error message for troubleshooting
+
+        Architecture:
+            - Entry point for FlextService.execute() protocol compliance
+            - Delegates to detect_from_connection() for actual implementation
+            - Uses FlextResult pattern for consistent error handling
+        """
         connection = _kwargs.get("connection")
         if connection is None:
             return FlextResult[str].fail("connection parameter required")
@@ -37,7 +77,35 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         return self.detect_from_connection(connection)
 
     def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
-        """Query ``rootDSE`` and return a detected server label."""
+        """Query ``rootDSE`` and return a detected server label.
+
+        Business Rules:
+            - Connection must be bound before detection (queries rootDSE)
+            - Queries base DN "" with BASE scope to fetch rootDSE attributes
+            - Extracts vendorName, vendorVersion, namingContexts, supportedControl, supportedExtension
+            - Applies heuristic detection based on vendor info and extensions
+            - Returns normalized server type string (oid, oud, openldap, ad, ds389, rfc)
+            - Defaults to "rfc" if no vendor-specific indicators found
+
+        Audit Implications:
+            - Detection queries are logged at DEBUG level
+            - Failed rootDSE queries return error result (not logged at ERROR)
+            - Detection results enable server-specific quirk application
+            - Server type affects LDIF parsing and entry normalization
+
+        Architecture:
+            - Uses static methods for testability (_query_root_dse, _detect_from_attributes)
+            - Returns FlextResult pattern - no exceptions raised
+            - Detection is non-blocking (failures don't affect connection)
+
+        Args:
+            connection: Active ldap3.Connection instance (must be bound).
+
+        Returns:
+            FlextResult[str]: Normalized server type string (oid, oud, openldap, ad, ds389, rfc)
+            or error if rootDSE query fails.
+
+        """
         self.logger.debug(
             "Detecting server type from connection",
             operation=FlextLdapConstants.LdapOperationNames.DETECT_FROM_CONNECTION.value,
@@ -53,10 +121,12 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         root_dse_attrs = root_dse_result.unwrap()
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs, "vendorName",
+                root_dse_attrs,
+                "vendorName",
             ),
             vendor_version=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs, "vendorVersion",
+                root_dse_attrs,
+                "vendorVersion",
             ),
             naming_contexts=list(root_dse_attrs.get("namingContexts", [])),
             supported_controls=list(root_dse_attrs.get("supportedControl", [])),
@@ -67,7 +137,34 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
     def _query_root_dse(
         connection: Connection,
     ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
-        """Fetch ``rootDSE`` attributes from the active connection."""
+        """Fetch ``rootDSE`` attributes from the active connection.
+
+        Business Rules:
+            - Queries base DN "" with BASE scope to fetch rootDSE
+            - Uses (objectClass=*) filter to match all entries
+            - Requests ALL_ATTRIBUTES to get complete rootDSE information
+            - Normalizes attribute values to list[str] format
+            - Filters out None values from attribute dict
+            - Returns failure if search fails or no entries returned
+
+        Audit Implications:
+            - rootDSE queries are logged at DEBUG level
+            - Failed queries return error with connection.result details
+            - Attribute normalization preserves original values
+
+        Architecture:
+            - Uses ldap3 Connection.search() directly
+            - Uses FlextRuntime.is_list_like() for type-safe value handling
+            - Returns FlextResult pattern - no exceptions raised
+
+        Args:
+            connection: Active ldap3.Connection instance (must be bound).
+
+        Returns:
+            FlextResult[Attributes]: Dict mapping attribute names to list[str] values
+            or error if rootDSE query fails.
+
+        """
         # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
         search_scope: FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral = "BASE"
         if not connection.search(
@@ -115,7 +212,35 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         supported_controls: list[str],
         supported_extensions: list[str],
     ) -> FlextResult[str]:
-        """Classify the server using collected ``rootDSE`` attributes."""
+        """Classify the server using collected ``rootDSE`` attributes.
+
+        Business Rules:
+            - Delegates to _detect_server_type_from_attributes_simple() for heuristics
+            - Vendor info is prioritized over extension/context checks
+            - Returns normalized server type string (oid, oud, openldap, ad, ds389, rfc)
+            - Always returns success (defaults to "rfc" if no match)
+
+        Audit Implications:
+            - Detection logic is deterministic (no randomness)
+            - Server type affects LDIF parsing quirks and entry normalization
+            - Detection results enable server-specific optimizations
+
+        Architecture:
+            - Uses static method for testability
+            - Always returns success (no failures from detection logic)
+            - Delegates to simple detection to avoid broken flext-ldif detector
+
+        Args:
+            vendor_name: Vendor name from rootDSE (e.g., "Oracle Corporation").
+            vendor_version: Vendor version from rootDSE (e.g., "12.2.1.4.0").
+            naming_contexts: List of naming contexts from rootDSE.
+            supported_controls: List of supported LDAP controls.
+            supported_extensions: List of supported LDAP extensions.
+
+        Returns:
+            FlextResult[str]: Always success with normalized server type string.
+
+        """
         pseudo_ldif_lines: list[str] = []
         if vendor_name:
             pseudo_ldif_lines.append(f"vendorName: {vendor_name}")
@@ -148,7 +273,35 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         vendor_name: str | None = None,
         vendor_version: str | None = None,
     ) -> str:
-        """Apply heuristic detection to map attributes to a server label."""
+        """Apply heuristic detection to map attributes to a server label.
+
+        Business Rules:
+            - Vendor-based detection is checked FIRST (most reliable)
+            - Extension/context-based detection is checked SECOND (fallback)
+            - Priority order: OID > OUD > OpenLDAP > AD > DS389 > RFC
+            - Case-insensitive matching for vendor info and extensions
+            - Defaults to "rfc" if no vendor-specific indicators found
+
+        Audit Implications:
+            - Detection results affect LDIF parsing quirks
+            - Server type enables server-specific optimizations
+            - Detection is deterministic (no randomness)
+
+        Architecture:
+            - Uses lambda functions for vendor/extension checks
+            - Priority order ensures consistent detection
+            - Returns normalized string (not enum) for flexibility
+
+        Args:
+            supported_extensions: List of supported LDAP extensions from rootDSE.
+            naming_contexts: List of naming contexts from rootDSE.
+            vendor_name: Optional vendor name from rootDSE.
+            vendor_version: Optional vendor version from rootDSE.
+
+        Returns:
+            str: Normalized server type (oid, oud, openldap, ad, ds389, rfc).
+
+        """
         # Check vendor info first (most reliable)
         vendor_parts = [v for v in [vendor_name, vendor_version] if v]
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""

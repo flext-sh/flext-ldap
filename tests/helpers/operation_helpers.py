@@ -350,7 +350,7 @@ class TestOperationHelpers:
         )
 
         # SearchOptions is structurally compatible with SearchOptionsProtocol
-        search_result_raw = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions is structurally compatible
+        search_result_raw = client.search(search_options)
         search_result: FlextResult[FlextLdapModels.SearchResult] = (
             FlextLdapTestHelpers._ensure_flext_result(search_result_raw)
         )
@@ -492,21 +492,27 @@ class TestOperationHelpers:
         # Merge additional_attrs if provided
         if additional_attrs:
             for key, value in additional_attrs.items():
-                if FlextRuntime.is_list_like(value):
-                    entry_attributes[key] = [str(v) for v in value]
+                # Type narrowing: cast object to GeneralValueType for FlextRuntime methods
+                value_typed: FlextTypes.GeneralValueType = cast(
+                    "FlextTypes.GeneralValueType", value
+                )
+                if FlextRuntime.is_list_like(value_typed):
+                    entry_attributes[key] = [str(v) for v in value_typed]
                 else:
-                    entry_attributes[key] = [str(value)]
+                    entry_attributes[key] = [str(value_typed)]
 
         # Process individual extra attributes - convert dict[str, object] to dict[str, list[str]]
-        extra_attrs_typed: dict[str, list[str]] = {
-            key: (
-                [str(item) for item in value]
-                if FlextRuntime.is_list_like(value)
-                else [str(value)]
-            )
-            for key, value in extra_attributes.items()
-            if value is not None
-        }
+        extra_attrs_typed: dict[str, list[str]] = {}
+        for key, extra_value in extra_attributes.items():
+            if extra_value is not None:
+                # Type narrowing: cast object to GeneralValueType for FlextRuntime methods
+                extra_value_typed: FlextTypes.GeneralValueType = cast(
+                    "FlextTypes.GeneralValueType", extra_value
+                )
+                if FlextRuntime.is_list_like(extra_value_typed):
+                    extra_attrs_typed[key] = [str(v) for v in extra_value_typed]
+                else:
+                    extra_attrs_typed[key] = [str(extra_value_typed)]
         entry_attributes.update(extra_attrs_typed)
 
         # entry_attributes is dict[str, list[str]] which is compatible with create_entry's type
@@ -834,7 +840,7 @@ class TestOperationHelpers:
             # SearchOptions is structurally compatible with SearchOptionsProtocol
             # Protocol expects settable attributes, but SearchOptions is frozen (read-only)
             # Runtime compatibility is guaranteed via structural typing
-            search_result_raw = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions structurally compatible, protocol mismatch is false positive
+            search_result_raw = client.search(search_options)
             search_result_optional = FlextLdapTestHelpers._ensure_flext_result(
                 search_result_raw,
             )
@@ -891,7 +897,7 @@ class TestOperationHelpers:
     ) -> None:
         """Execute search operation when not connected and assert failure."""
         # SearchOptions is structurally compatible with SearchOptionsProtocol
-        search_result_raw = client.search(search_options)  # type: ignore[arg-type]  # SearchOptions is structurally compatible
+        search_result_raw = client.search(search_options)
         search_result: FlextResult[FlextLdapModels.SearchResult] = (
             FlextLdapTestHelpers._ensure_flext_result(search_result_raw)
         )
@@ -1025,8 +1031,7 @@ class TestOperationHelpers:
                 error_msg = "search_options must be FlextLdapModels.SearchOptions"
                 raise TypeError(error_msg)
             # Type narrowing: search_options_raw is SearchOptions after isinstance check
-            # mypy false positive: code is reachable after isinstance check
-            TestOperationHelpers._execute_search_when_not_connected(  # type: ignore[unreachable]
+            TestOperationHelpers._execute_search_when_not_connected(
                 client,
                 search_options_raw,
                 expected_error,
@@ -1040,8 +1045,7 @@ class TestOperationHelpers:
                 error_msg = "entry must be FlextLdifModels.Entry"
                 raise TypeError(error_msg)
             # Type narrowing: entry_raw is Entry after isinstance check
-            # mypy false positive: code is reachable after isinstance check
-            TestOperationHelpers._execute_add_when_not_connected(  # type: ignore[unreachable]
+            TestOperationHelpers._execute_add_when_not_connected(
                 client,
                 entry_raw,
                 expected_error,

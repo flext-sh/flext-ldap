@@ -15,7 +15,6 @@ from enum import StrEnum
 from typing import ClassVar, Literal, cast
 
 import pytest
-from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
@@ -246,7 +245,7 @@ class TestFlextLdapEntryAdapterRealOperations:
     ) -> None:
         """Parameterized test for LDAP3 to LDIF entry conversions."""
         adapter_entry = FlextLdapEntryAdapter()
-        adapter_ldap3 = Ldap3Adapter(parser=FlextLdifParser())
+        adapter_ldap3 = Ldap3Adapter()
 
         # Create LDAP connection
         connection = self._create_ldap_connection(ldap_container)

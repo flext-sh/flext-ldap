@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifParser
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.models import FlextLdapModels
@@ -88,7 +87,6 @@ class TestLdap3AdapterTlsFailure:
 
     def test_connect_tls_start_fails_returns_false(
         self,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect when start_tls() returns False (covers line 125).
 
@@ -97,7 +95,7 @@ class TestLdap3AdapterTlsFailure:
         The adapter code checks `if not self._connection.start_tls()` which
         covers line 125 when start_tls() returns False.
         """
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         config = TestDataFactories.create_tls_failure_config()
 
         result = adapter.connect(config)
@@ -113,14 +111,13 @@ class TestLdap3AdapterTlsFailure:
 
     def test_connect_tls_failure_with_real_server_no_starttls(
         self,
-        ldap_parser: FlextLdifParser,
     ) -> None:
         """Test connect when server doesn't support STARTTLS (covers line 127).
 
         Connects to a server/port that doesn't support STARTTLS,
         which will cause start_tls() to return False, triggering line 127.
         """
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         config = TestDataFactories.create_tls_failure_config()
 
         result = adapter.connect(config)

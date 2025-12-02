@@ -8,89 +8,40 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Generator
-from typing import Literal
-
 import pytest
 from flext_ldif.models import FlextLdifModels
-from ldap3 import Connection, Entry as Ldap3Entry, Server
+from ldap3 import Connection, Entry as Ldap3Entry
 from pydantic import ValidationError
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.constants import FlextLdapConstants
 
 from ..fixtures.constants import RFC
-from ..fixtures.typing import LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
+from ..helpers.test_helpers import Ldap3TestHelpers, to_ldap3_scope
 
 pytestmark = pytest.mark.integration
-
-# Type alias for ldap3 search scope literal
-Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
-
-
-def _to_ldap3_scope(
-    scope: FlextLdapConstants.SearchScope,
-) -> Ldap3SearchScope:
-    """Convert FlextLdapConstants.SearchScope to ldap3 search scope literal.
-
-    Args:
-        scope: Search scope enum value
-
-    Returns:
-        Literal string value expected by ldap3
-
-    """
-    scope_value = scope.value
-    if scope_value == "ONELEVEL":
-        return "LEVEL"
-    if scope_value == "BASE":
-        return "BASE"
-    if scope_value == "SUBTREE":
-        return "SUBTREE"
-    msg = f"Unknown scope value: {scope_value}"
-    raise ValueError(msg)
 
 
 class TestFlextLdapEntryAdapterComplete:
     """Complete tests for FlextLdapEntryAdapter with real LDAP server."""
 
-    @pytest.fixture
-    def ldap_connection(
-        self,
-        ldap_container: LdapContainerDict,
-    ) -> Generator[Connection]:
-        """Create real LDAP connection for testing."""
-        server = Server(f"ldap://{RFC.DEFAULT_HOST}:{RFC.DEFAULT_PORT}", get_info="ALL")
-        connection = Connection(
-            server,
-            user=str(ldap_container["bind_dn"]),
-            password=str(ldap_container["password"]),
-            auto_bind=True,
-        )
-        yield connection
-        if connection.bound:
-            unbind_func: Callable[[], None] = connection.unbind
-            unbind_func()
-
     def test_ldap3_to_ldif_entry_with_real_ldap3_entry(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test conversion with real ldap3.Entry from LDAP search."""
         adapter = FlextLdapEntryAdapter()
 
-        # Search for base DN entry
-        ldap_connection.search(
-            search_base=RFC.DEFAULT_BASE_DN,
-            search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
-            attributes=["*"],
+        # Search for base DN entry using shared helper
+        entries = Ldap3TestHelpers.search_base_entry(
+            ldap3_connection,
+            RFC.DEFAULT_BASE_DN,
+            scope=FlextLdapConstants.SearchScope.BASE,
         )
-
-        assert len(ldap_connection.entries) > 0
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
+        assert len(entries) > 0
+        ldap3_entry: Ldap3Entry = entries[0]
 
         # Convert real ldap3.Entry to FlextLdifModels.Entry
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -101,21 +52,21 @@ class TestFlextLdapEntryAdapterComplete:
 
     def test_ldap3_to_ldif_entry_with_dict_from_real_search(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test conversion with dict format from real LDAP search."""
         adapter = FlextLdapEntryAdapter()
 
         # Search for entries
-        ldap_connection.search(
+        ldap3_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
+            search_scope=to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
-        assert len(ldap_connection.entries) > 0
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
+        assert len(ldap3_connection.entries) > 0
+        ldap3_entry: Ldap3Entry = ldap3_connection.entries[0]
 
         # Use ldap3 Entry directly (not dict) - API direta
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -125,21 +76,21 @@ class TestFlextLdapEntryAdapterComplete:
 
     def test_ldif_entry_to_ldap3_attributes_with_real_entry(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test conversion with entry from real LDAP search."""
         adapter = FlextLdapEntryAdapter()
 
         # Search for entry
-        ldap_connection.search(
+        ldap3_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
+            search_scope=to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
-        assert len(ldap_connection.entries) > 0
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
+        assert len(ldap3_connection.entries) > 0
+        ldap3_entry: Ldap3Entry = ldap3_connection.entries[0]
 
         # Convert to FlextLdifModels.Entry
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -195,21 +146,21 @@ class TestFlextLdapEntryAdapterComplete:
 
     def test_normalize_entry_for_server_with_real_entry(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test normalization with entry from real LDAP."""
         adapter = FlextLdapEntryAdapter()
 
         # Get real entry
-        ldap_connection.search(
+        ldap3_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
+            search_scope=to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
-        assert len(ldap_connection.entries) > 0
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
+        assert len(ldap3_connection.entries) > 0
+        ldap3_entry: Ldap3Entry = ldap3_connection.entries[0]
 
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         _ = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
@@ -219,21 +170,21 @@ class TestFlextLdapEntryAdapterComplete:
 
     def test_validate_entry_for_server_with_real_entry(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test validation with entry from real LDAP."""
         adapter = FlextLdapEntryAdapter()
 
         # Get real entry
-        ldap_connection.search(
+        ldap3_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
+            search_scope=to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
-        assert len(ldap_connection.entries) > 0
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
+        assert len(ldap3_connection.entries) > 0
+        ldap3_entry: Ldap3Entry = ldap3_connection.entries[0]
 
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         _ = TestOperationHelpers.assert_result_success_and_unwrap(entry_result)
@@ -243,21 +194,21 @@ class TestFlextLdapEntryAdapterComplete:
 
     def test_ldap3_to_ldif_entry_with_already_ldif_entry(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test conversion when entry is already FlextLdifModels.Entry."""
         adapter = FlextLdapEntryAdapter()
 
         # Get real entry
-        ldap_connection.search(
+        ldap3_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
+            search_scope=to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
 
-        assert len(ldap_connection.entries) > 0
-        ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
+        assert len(ldap3_connection.entries) > 0
+        ldap3_entry: Ldap3Entry = ldap3_connection.entries[0]
 
         # Convert to FlextLdifModels.Entry - API direta
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -279,7 +230,7 @@ class TestFlextLdapEntryAdapterComplete:
 
     def test_round_trip_conversion_ldap3_to_ldif_to_ldap3(
         self,
-        ldap_connection: Connection,
+        ldap3_connection: Connection,
     ) -> None:
         """Test complete round-trip conversion: ldap3 → ldif → ldap3.
 
@@ -288,14 +239,14 @@ class TestFlextLdapEntryAdapterComplete:
         adapter = FlextLdapEntryAdapter()
 
         # Get a real entry from LDAP
-        ldap_connection.search(
+        ldap3_connection.search(
             search_base=RFC.DEFAULT_BASE_DN,
             search_filter="(objectClass=*)",
-            search_scope=_to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
+            search_scope=to_ldap3_scope(FlextLdapConstants.SearchScope.BASE),
             attributes=["*"],
         )
-        assert len(ldap_connection.entries) > 0
-        original_ldap3_entry = ldap_connection.entries[0]
+        assert len(ldap3_connection.entries) > 0
+        original_ldap3_entry = ldap3_connection.entries[0]
 
         # Convert ldap3 → ldif
         ldif_result = adapter.ldap3_to_ldif_entry(original_ldap3_entry)

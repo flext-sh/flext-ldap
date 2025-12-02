@@ -98,7 +98,9 @@ class TestFlextLdapConfig:
         [(attr, expected) for attr, expected in _DEFAULT_VALUES.items()],
     )
     def test_default_config_values(
-        self, attr: str, expected: FlextTypes.GeneralValueType,
+        self,
+        attr: str,
+        expected: FlextTypes.GeneralValueType,
     ) -> None:
         """Test default configuration values match expected constants."""
         # Reset singleton to ensure clean state for default value testing

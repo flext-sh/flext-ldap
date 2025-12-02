@@ -404,7 +404,8 @@ class TestFlextLdapRealOperations:
             add_modify_delete_results = (
                 TestOperationHelpers.execute_add_modify_delete_sequence(
                     cast(
-                        "FlextLdapProtocols.LdapService.LdapClientProtocol", ldap_client,
+                        "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                        ldap_client,
                     ),
                     entry,
                     changes,

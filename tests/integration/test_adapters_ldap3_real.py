@@ -13,7 +13,6 @@ from collections.abc import Generator
 from typing import cast
 
 import pytest
-from flext_ldif import FlextLdifParser
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
@@ -35,11 +34,10 @@ class TestLdap3AdapterReal:
     @pytest.fixture
     def connected_adapter(
         self,
-        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         connect_result = adapter.connect(connection_config)
         if connect_result.is_failure:
             pytest.skip(f"Failed to connect: {connect_result.error}")
@@ -49,11 +47,10 @@ class TestLdap3AdapterReal:
     @pytest.mark.timeout(30)
     def test_connect_with_real_server(
         self,
-        ldap_parser: FlextLdifParser,
         connection_config: FlextLdapModels.ConnectionConfig,
     ) -> None:
         """Test connection with real LDAP server."""
-        adapter = Ldap3Adapter(parser=ldap_parser)
+        adapter = Ldap3Adapter()
         result = adapter.connect(connection_config)
         assert result.is_success, f"Connect failed: {result.error}"
         assert adapter.is_connected is True

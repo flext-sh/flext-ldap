@@ -21,7 +21,6 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
-from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
 
@@ -284,13 +283,12 @@ class TestFlextLdapAPICompleteCoverage:
 
     def test_connect_with_service_config_all_options(
         self,
-        ldap_parser: FlextLdifParser,
         ldap_container: LdapContainerDict,
     ) -> None:
         """Test connect using service config with all options."""
         config = TestDataFactories.create_full_config(ldap_container)
 
-        api = create_flext_ldap_instance(config=config, parser=ldap_parser)
+        api = create_flext_ldap_instance(config=config)
         connection_config = TestDataFactories.create_connection_config_from_config(
             config,
         )

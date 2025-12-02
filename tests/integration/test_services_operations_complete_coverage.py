@@ -233,9 +233,8 @@ class TestFlextLdapOperationsCompleteCoverage:
                     scope=FlextLdapConstants.SearchScope.SUBTREE,
                 )
                 result = operations_service.search(search_options)
-                TestAssertions.assert_operation_success(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
-                )
+                # search() returns FlextResult[SearchResult], not OperationResult
+                TestAssertions.assert_search_success(result)
 
             case DNHandlingType.ERROR_HANDLING:
                 # Disconnect to trigger error
@@ -250,8 +249,8 @@ class TestFlextLdapOperationsCompleteCoverage:
                     scope=FlextLdapConstants.SearchScope.SUBTREE,
                 )
                 result = operations_service.search(search_options)
-                TestAssertions.assert_operation_failure(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
+                TestAssertions.assert_search_failure(
+                    result,
                     "Not connected",
                 )
 
@@ -272,9 +271,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 _ = operations_service.delete(dn_str.strip())
 
                 result = operations_service.add(entry)
-                TestAssertions.assert_operation_success(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
-                )
+                TestAssertions.assert_operation_success(result)
 
                 # Verify DN was normalized
                 # DN normalization check would go here if needed
@@ -296,7 +293,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 )
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
+                    result,
                     "Not connected",
                 )
 
@@ -305,7 +302,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 entry = TestDataFactories.create_invalid_entry()
                 result = operations_service.add(entry)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
+                    result,
                     "",
                 )
 
@@ -327,7 +324,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 add_result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", add_result),
+                    add_result,
                 )
 
                 # Modify with DN that needs normalization
@@ -335,7 +332,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 dn_with_spaces = f"  {entry.dn!s}  "
                 modify_result = operations_service.modify(dn_with_spaces, changes)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", modify_result),
+                    modify_result,
                 )
 
                 # Cleanup
@@ -352,7 +349,7 @@ class TestFlextLdapOperationsCompleteCoverage:
                 changes = TestDataFactories.create_modify_changes()
                 result = operations_service.modify("cn=test,dc=flext,dc=local", changes)
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
+                    result,
                     "Not connected",
                 )
 
@@ -374,13 +371,13 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 add_result = operations_service.add(entry)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", add_result),
+                    add_result,
                 )
 
                 # Delete with DN that needs normalization
                 delete_result = operations_service.delete(dn_str)
                 TestAssertions.assert_operation_success(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", delete_result),
+                    delete_result,
                 )
 
             case DNHandlingType.ERROR_HANDLING:
@@ -392,7 +389,7 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 result = operations_service.delete("cn=test,dc=flext,dc=local")
                 TestAssertions.assert_operation_failure(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
+                    result,
                     "Not connected",
                 )
 
@@ -412,8 +409,9 @@ class TestFlextLdapOperationsCompleteCoverage:
                     connection=unconnected_connection,
                 )
                 result = unconnected_operations.execute()
-                TestAssertions.assert_operation_failure(
-                    cast("FlextResult[FlextLdapModels.OperationResult]", result),
+                # execute() returns FlextResult[SearchResult], not OperationResult
+                TestAssertions.assert_search_failure(
+                    result,
                     "Not connected",
                 )
 
@@ -434,6 +432,34 @@ class TestAssertions:
         expected_error_contains: str,
     ) -> None:
         """Assert that operation failed with expected error."""
+        FlextTestsUtilities.TestUtilities.assert_result_failure(result)
+        assert result.error is not None
+        assert expected_error_contains in result.error
+
+    @staticmethod
+    def assert_search_success(
+        result: FlextResult[FlextLdapModels.SearchResult],
+    ) -> FlextLdapModels.SearchResult:
+        """Assert that search operation succeeded and return unwrapped result.
+
+        Business Rules:
+            - Uses flext_tests utilities for consistent assertion patterns
+            - Returns unwrapped SearchResult for further assertions
+            - Validates result is success before unwrapping
+
+        Returns:
+            Unwrapped SearchResult instance.
+
+        """
+        FlextTestsUtilities.TestUtilities.assert_result_success(result)
+        return result.unwrap()
+
+    @staticmethod
+    def assert_search_failure(
+        result: FlextResult[FlextLdapModels.SearchResult],
+        expected_error_contains: str,
+    ) -> None:
+        """Assert that search operation failed with expected error."""
         FlextTestsUtilities.TestUtilities.assert_result_failure(result)
         assert result.error is not None
         assert expected_error_contains in result.error

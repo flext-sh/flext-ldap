@@ -5,16 +5,37 @@ configuration, search options, operation results, and sync operations. Uses adva
 Python 3.13 features with computed fields, nested validation, and type-safe patterns.
 Reuses FlextLdifModels for Entry/DN handling to avoid duplication and maintain consistency.
 
-Tested scope: Model validation, computed properties, factory methods, type safety
+Business Rules:
+    - ConnectionConfig enforces SSL/TLS mutual exclusion (cannot use both simultaneously)
+    - SearchOptions validates base_dn format via FlextLdifUtilities.DN.validate()
+    - SearchOptions.normalized() factory uses DN.norm_string() for consistency
+    - SyncStats.success_rate computed as (added + skipped) / total (skipped = already exists)
+    - BatchUpsertResult.success_rate computed as successful / total_processed
+    - All models are frozen (immutable) unless mutability is required for service state
+
+Audit Implications:
+    - OperationResult tracks entries_affected for audit trail
+    - ConversionMetadata preserves source_dn, removed_attributes, attribute_changes
+    - PhaseSyncResult tracks per-phase duration and success rate for compliance reporting
+    - MultiPhaseSyncResult aggregates all phases with overall_success_rate metric
+
+Architecture Notes:
+    - Uses FlextModelsCollections base classes (Config, Options, Results, Statistics)
+    - Uses FlextModelsEntity.Core for models requiring entity identity (SearchResult, BatchUpsertResult)
+    - Reuses FlextLdifModels.Entry for LDAP entries (no duplication)
+    - Python 3.13+ PEP 695 type aliases in nested Types class
+    - @computed_field for derived values (success_rate, total_count, by_objectclass)
+    - Factory methods (normalized, from_counters) encapsulate common creation patterns
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Self, cast
+from typing import Self
 
 from flext_core import FlextModels, FlextUtilities
 from flext_core._models.collections import FlextModelsCollections
@@ -124,7 +145,26 @@ class FlextLdapModels(FlextModels):
             cls,
             v: str | FlextLdapConstants.SearchScope,
         ) -> str:
-            """Normalize scope to string (accepts StrEnum or str)."""
+            """Normalize scope to string (accepts StrEnum or str).
+
+            Business Rules:
+                - StrEnum values are converted to their string value
+                - String values are returned as-is
+                - Used by Pydantic field_validator for automatic normalization
+                - Ensures consistent string format for scope field
+
+            Architecture:
+                - Uses isinstance check for StrEnum detection
+                - Returns str for consistent field type
+                - No network calls - pure data normalization
+
+            Args:
+                v: Scope value (StrEnum or string).
+
+            Returns:
+                Normalized string value.
+
+            """
             if isinstance(v, FlextLdapConstants.SearchScope):
                 return v.value
             return v
@@ -146,7 +186,33 @@ class FlextLdapModels(FlextModels):
             *,
             config: NormalizedConfig | None = None,
         ) -> FlextLdapModels.SearchOptions:
-            """Factory method with normalized base_dn using DN.norm_string()."""
+            """Factory method with normalized base_dn using DN.norm_string().
+
+            Business Rules:
+                - Base DN is normalized using FlextLdifUtilities.DN.norm_string()
+                - Default scope is "SUBTREE" if not provided
+                - Default filter is ALL_ENTRIES_FILTER if not provided
+                - Default size_limit and time_limit are 0 (unlimited)
+                - Uses NormalizedConfig dataclass for optional parameters
+
+            Audit Implications:
+                - DN normalization ensures consistent format across operations
+                - Normalized DNs enable proper LDAP directory targeting
+                - Factory method provides type-safe SearchOptions creation
+
+            Architecture:
+                - Uses FlextLdifUtilities.DN.norm_string() for DN normalization
+                - Returns validated SearchOptions instance
+                - No network calls - pure factory method
+
+            Args:
+                base_dn: Base distinguished name to normalize.
+                config: Optional NormalizedConfig with scope, filter, attributes, limits.
+
+            Returns:
+                SearchOptions instance with normalized base_dn.
+
+            """
             if config is None:
                 config = cls.NormalizedConfig()
 
@@ -203,14 +269,51 @@ class FlextLdapModels(FlextModels):
 
         @computed_field
         def total_count(self) -> int:
-            """Total number of entries found."""
+            """Total number of entries found.
+
+            Business Rules:
+                - Returns length of entries list
+                - Always >= 0 (empty list returns 0)
+                - Computed field (no storage, calculated on access)
+
+            Architecture:
+                - Uses Pydantic computed_field decorator
+                - Returns int for count value
+                - No network calls - pure computed property
+
+            Returns:
+                Number of entries in search result.
+
+            """
             return len(self.entries)
 
         @computed_field
         def by_objectclass(
             self,
         ) -> FlextModelsCollections.Categories[FlextLdifModels.Entry]:
-            """Categorize entries by objectClass attribute."""
+            """Categorize entries by objectClass attribute.
+
+            Business Rules:
+                - Entries are grouped by first objectClass value
+                - Entries without objectClass are categorized as "unknown"
+                - Uses FlextModelsCollections.Categories for grouping
+                - Handles both LdifAttributes and Mapping types
+
+            Audit Implications:
+                - Categorization enables entry analysis by object type
+                - Unknown category indicates missing objectClass attribute
+                - Categories can be used for compliance reporting
+
+            Architecture:
+                - Uses FlextModelsCollections.Categories for grouping
+                - Handles LdifAttributes and Mapping types safely
+                - Returns Categories[Entry] for type-safe access
+                - No network calls - pure data categorization
+
+            Returns:
+                Categories instance with entries grouped by objectClass.
+
+            """
             categories: FlextModelsCollections.Categories[FlextLdifModels.Entry] = (
                 FlextModelsCollections.Categories()
             )
@@ -223,11 +326,13 @@ class FlextLdapModels(FlextModels):
                 # None already handled above, so remaining types are LdifAttributes | Mapping
                 if isinstance(entry.attributes, FlextLdifModels.LdifAttributes):
                     attrs_dict = entry.attributes.attributes
-                else:
+                elif isinstance(entry.attributes, Mapping):
                     # Type narrowing: entry.attributes is Mapping[str, Sequence[str]]
-                    # After LdifAttributes check, remaining type is Mapping
-                    # Use cast to satisfy type checker while maintaining runtime safety
-                    attrs_dict = cast("dict[str, list[str]]", entry.attributes)
+                    # Convert Mapping to dict[str, list[str]] for processing
+                    attrs_dict = {k: list(v) for k, v in entry.attributes.items()}
+                else:
+                    # Fallback: empty dict if type is unexpected
+                    attrs_dict = {}
                 object_classes = attrs_dict.get("objectClass", [])
                 category = (
                     object_classes[0]
@@ -265,7 +370,28 @@ class FlextLdapModels(FlextModels):
 
         @computed_field
         def success_rate(self) -> float:
-            """Calculate success rate as float (0.0-1.0)."""
+            """Calculate success rate as float (0.0-1.0).
+
+            Business Rules:
+                - Returns 0.0 if total is 0 (no operations performed)
+                - Success rate = (added + skipped) / total
+                - Skipped entries count as successful (not failures)
+                - Result is float between 0.0 and 1.0
+
+            Audit Implications:
+                - Success rate indicates operation reliability
+                - Skipped entries are considered successful (not errors)
+                - Used for performance and compliance reporting
+
+            Architecture:
+                - Uses Pydantic computed_field decorator
+                - Returns float for percentage calculation
+                - No network calls - pure computed property
+
+            Returns:
+                Success rate as float (0.0-1.0).
+
+            """
             if self.total == 0:
                 return 0.0
             return (self.added + self.skipped) / self.total
@@ -314,7 +440,27 @@ class FlextLdapModels(FlextModels):
 
         @computed_field
         def success_rate(self) -> float:
-            """Calculate success rate as percentage."""
+            """Calculate success rate as percentage.
+
+            Business Rules:
+                - Returns 0.0 if total_processed is 0 (no operations performed)
+                - Success rate = successful / total_processed
+                - Result is float between 0.0 and 1.0 (can be multiplied by 100 for percentage)
+
+            Audit Implications:
+                - Success rate indicates batch operation reliability
+                - Used for performance and compliance reporting
+                - Failed operations reduce success rate
+
+            Architecture:
+                - Uses Pydantic computed_field decorator
+                - Returns float for percentage calculation
+                - No network calls - pure computed property
+
+            Returns:
+                Success rate as float (0.0-1.0).
+
+            """
             if self.total_processed == 0:
                 return 0.0
             return self.successful / self.total_processed

@@ -6,7 +6,9 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
 from flext_core import FlextResult, FlextTypes
+from flext_ldif import FlextLdifModels
 
+from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -82,6 +84,43 @@ class FlextLdapTypes(FlextTypes):
         type Attributes = dict[str, list[str]]
         type AttributesReadOnly = Mapping[str, Sequence[str]]
 
+        # Progress callback types
+        type MultiPhaseProgressCallback = Callable[
+            [str, int, int, str, FlextLdapModels.LdapBatchStats],
+            None,
+        ]
+        """Type alias for multi-phase progress callback (5 parameters)."""
+
+        type ProgressCallbackUnion = (
+            MultiPhaseProgressCallback
+            | FlextLdapModels.Types.LdapProgressCallback
+            | None
+        )
+        """Union type for progress callbacks supporting both single and multi-phase signatures."""
+
+        # ldap3 entry value types (for adapter conversion)
+        type Ldap3EntryValue = (
+            str
+            | bytes
+            | int
+            | float
+            | bool
+            | Sequence[str | bytes | int | float | bool]
+            | None
+        )
+        """Type alias for ldap3 entry attribute values.
+
+        Supports all common LDAP attribute value types:
+        - Scalar: str, bytes, int, float, bool, None
+        - Multi-valued: Sequence of scalar types
+        """
+
+        type AttributeDict = dict[str, list[str]]
+        """Type alias for LDIF/LDAP attribute mappings (attribute names to string lists)."""
+
+        type ConversionState = tuple[list[str], list[str]]
+        """Type alias for conversion state: (removed_attrs, base64_attrs)."""
+
         # Callables
         type AddCallable = Callable[[str, str | None, AttributeValues | None], bool]
         type ModifyCallable = Callable[[str, ModifyChanges], bool]
@@ -125,3 +164,17 @@ class FlextLdapTypes(FlextTypes):
         # Result protocols
         type OperationResult = FlextLdapProtocols.Result.OperationResultProtocol
         type SearchResult = FlextLdapProtocols.Result.SearchResultProtocol
+
+    class Ldif:
+        """LDIF model type aliases for type hints (PEP 695).
+
+        These type aliases provide proper type hints for FlextLdifModels types
+        that are class attributes, making them usable in type annotations.
+        """
+
+        # LDIF Entry and related types
+        # Direct type references - use FlextLdifModels types directly
+        type Entry = FlextLdifModels.Entry
+        type LdifAttributes = FlextLdifModels.LdifAttributes
+        # DistinguishedName, QuirkMetadata, ParseResponse are class attribute aliases
+        # Use directly: FlextLdifModels.DistinguishedName (no type alias - mypy limitation)
