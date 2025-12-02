@@ -1,66 +1,72 @@
 # Architecture Documentation
 
-**Version**: 1.0
-**Date**: 2025-01-24
-**Target Release**: v0.10.0
+**Version**: 1.1  
+**Date**: 2025-03-15  
+**Target Release**: v0.11.0
 
 ## Overview
 
-This directory contains comprehensive architecture documentation for flext-ldap, covering the Clean Architecture implementation, module patterns, server-specific operations, and design principles.
+This directory houses the living architecture documentation for flext-ldap. The
+current codebase centers on a lightweight service layer that orchestrates
+`ldap3` operations and `flext-ldif` parsing through a small set of composable
+services and adapters. Documentation here reflects the runtime architecture
+shipped in the source tree rather than legacy server-specific stacks.
 
 ## Table of Contents
 
 ### Core Architecture
 
-1. **[Clean Architecture](clean-architecture.md)** - Layer separation and dependency rules
-2. **[Module Patterns](module-patterns.md)** - Consistent FlextXxx namespace patterns
-3. **[Dependency Flow](dependency-flow.md)** - Module dependencies and integration points
+1. **[C4: System Context](c4-system-context.md)** - External dependencies and boundaries
+2. **[C4: Containers](c4-containers.md)** - Major runtime blocks and their contracts
+3. **[C4: Components](c4-components.md)** - Service and adapter composition
+4. **[C4: Code](c4-code.md)** - Pointers to source files and entry points
 
 ### Implementation Details
 
-4. **[Server Operations](server-operations.md)** - Server-specific architecture
-5. **[Entry Adapter](entry-adapter.md)** - ldap3 ↔ flext-ldif conversion pattern
-6. **[ACL Architecture](acl-architecture.md)** - Server-specific ACL handling
+5. **[Service Layer](service-layer.md)** - Connection, operations, detection, and sync services
+6. **[Adapters](adapters.md)** - How ldap3 integration is wrapped in flext services
 
 ### Design Principles
 
-7. **[Railway-Oriented Programming](railway-programming.md)** - FlextResult[T] pattern
-8. **[Type Safety](type-safety.md)** - Python 3.13+ strict typing
-9. **[Zero Duplication](zero-duplication.md)** - flext-core integration
+7. **[arc42 Views](arc42-03-system-scope-system-scope-and-context.md)** - System scope and context
+8. **[Quality Requirements](arc42-10-quality-quality-requirements.md)** - Cross-cutting quality criteria
+9. **[Risks and Decisions](arc42-09-decisions-architecture-decisions.md)** - Notable ADRs and open risks
 
 ## Quick Reference
 
 ### Architecture Layers
 
 ```
-Application Layer → Domain Layer → Infrastructure Layer → Protocol Layer
-     ↓                  ↓                ↓                    ↓
-   FlextLdap    FlextLdapModels    ServerOperations        ldap3
+API Facade → Service Layer → Adapter Layer → Protocol + Models
+   FlextLdap     Connection/Ops     Ldap3Adapter       ldap3 / flext-ldif
 ```
 
-### Module Structure (v0.10.0)
+### Module Structure (v0.11.0)
 
-**12 Root Modules**:
+**Root Modules**:
 
-- api.py, services.py, handlers.py
-- clients.py (Authentication, Search)
-- models.py (Domain, Validations)
-- schema.py (Sync)
-- acl.py (Manager, Parsers, Converters)
-- entry_adapter.py, quirks_integration.py
-- repositories.py, config.py, utilities.py
+- `api.py` (FlextLdap facade)
+- `config.py`, `constants.py`, `models.py`, `protocols.py`, `typings.py`
+- `utilities.py` and `base.py` for shared helpers
 
-**1 Subdirectory**:
+**Service Packages**:
 
-- servers/ - Server-specific implementations
+- `services/connection.py` – connection lifecycle and server detection integration
+- `services/operations.py` – CRUD, search, and batch upsert operations
+- `services/sync.py` – LDIF-driven synchronization utilities
+- `services/detection.py` – runtime server-type detection from rootDSE
+
+**Adapters**:
+
+- `adapters/ldap3.py` – typed wrapper around ldap3 connections and operations
+- `adapters/entry.py` – normalization between ldap3 entries and flext-ldif models
 
 ## Related Documentation
 
-- [Refactoring Plan](../refactoring/REFACTORING_PLAN.md)
-- [Architecture Changes](../refactoring/ARCHITECTURE_CHANGES.md)
 - [API Reference](../api/)
 - [Development Guides](../development/)
+- [Maintenance](../maintenance/)
 
 ---
 
-**Last Updated**: 2025-01-24
+**Last Updated**: 2025-03-15

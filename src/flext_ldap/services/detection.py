@@ -1,20 +1,8 @@
-"""LDAP server detection service via rootDSE introspection.
+"""Detect LDAP server type from a bound ``ldap3`` connection.
 
-Provides server type detection from live LDAP connections by querying rootDSE
-and using flext-ldif server quirks detection patterns.
-
-This is the flext-ldap complement to flext-ldif's LDIF content detection:
-- flext-ldif: Detects server from LDIF file content
-- flext-ldap: Detects server from live LDAP connection (rootDSE)
-
-Both use the SAME detection constants from flext-ldif servers/quirks.
-
-Module: FlextLdapServerDetector
-Scope: Server type detection from live LDAP connections via rootDSE
-Pattern: Service extending FlextLdapServiceBase, delegates to flext-ldif detector
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+The service inspects ``rootDSE`` attributes and applies lightweight heuristics
+so callers can classify a live directory server without relying on external
+detectors. Results are returned as :class:`flext_core.FlextResult` instances.
 """
 
 from __future__ import annotations
@@ -28,48 +16,15 @@ from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServerDetector(FlextLdapServiceBase[str]):
-    """Detect LDAP server type from live connection via rootDSE.
+    """Identify a directory server by querying ``rootDSE`` attributes.
 
-    Uses flext-ldif server quirks detection constants to identify server types.
-    This provides the "live LDAP" complement to flext-ldif's "LDIF file" detection.
-
-    Architecture:
-    - Queries rootDSE (base DN "", scope BASE) from live LDAP connection
-    - Extracts server-identifying attributes (vendorName, vendorVersion, etc.)
-    - Uses detection patterns from flext-ldif servers/quirks Constants
-    - Returns detected server type string (oid, oud, openldap, ad, etc.)
-
-    Supported Servers:
-    - Oracle Internet Directory (OID)
-    - Oracle Unified Directory (OUD)
-    - OpenLDAP 1.x/2.x
-    - Active Directory (AD)
-    - 389 Directory Server
-    - Apache Directory Server
-    - Novell eDirectory
-    - IBM Tivoli Directory Server
-
-    Example:
-        >>> detector = FlextLdapServerDetector()
-        >>> connection = Connection(server, user="...", password="...")
-        >>> connection.bind()
-        >>> result = detector.detect_from_connection(connection)
-        >>> if result.is_success:
-        ...     server_type = result.unwrap()
-        ...     print(f"Detected: {server_type}")
-
+    The detector queries the base DN on a bound :class:`ldap3.Connection`,
+    extracts vendor attributes, and applies internal heuristics to return a
+    normalized server label (for example, ``openldap`` or ``ad``).
     """
 
     def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[str]:
-        """Execute server detection from connection parameter.
-
-        Args:
-            **_kwargs: Must contain 'connection' key with ldap3.Connection
-
-        Returns:
-            FlextResult[str] with detected server type or error
-
-        """
+        """Detect server type using a provided ``ldap3.Connection`` instance."""
         connection = _kwargs.get("connection")
         if connection is None:
             return FlextResult[str].fail("connection parameter required")
@@ -80,24 +35,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         return self.detect_from_connection(connection)
 
     def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
-        """Detect server type from live LDAP connection via rootDSE query.
-
-        Queries rootDSE and uses flext-ldif server quirks detection patterns
-        to identify the server type.
-
-        Args:
-            connection: Active ldap3.Connection (must be bound)
-
-        Returns:
-            FlextResult[str] with detected server type or RFC fallback
-
-        Architecture:
-            1. Query rootDSE (base="", scope=BASE)
-            2. Extract identifying attributes
-            3. Score against flext-ldif quirks detection patterns
-            4. Return highest confidence match or "rfc" fallback
-
-        """
+        """Query ``rootDSE`` and return a detected server label."""
         self.logger.debug(
             "Detecting server type from connection",
             operation=FlextLdapConstants.LdapOperationNames.DETECT_FROM_CONNECTION.value,
@@ -127,7 +65,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
     def _query_root_dse(
         connection: Connection,
     ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
-        """Query rootDSE from LDAP server using FlextUtilities for generalization."""
+        """Fetch ``rootDSE`` attributes from the active connection."""
         # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
         search_scope: FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral = "BASE"
         if not connection.search(
@@ -161,7 +99,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
     @staticmethod
     def _get_first_value(attrs: FlextLdapTypes.Ldap.Attributes, key: str) -> str | None:
-        """Extract first value from attribute list if present."""
+        """Return the first attribute value for ``key`` when present."""
         values = attrs.get(key)
         if not values:
             return None
@@ -175,7 +113,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         supported_controls: list[str],
         supported_extensions: list[str],
     ) -> FlextResult[str]:
-        """Detect server type from rootDSE attributes using flext-ldif patterns."""
+        """Classify the server using collected ``rootDSE`` attributes."""
         pseudo_ldif_lines: list[str] = []
         if vendor_name:
             pseudo_ldif_lines.append(f"vendorName: {vendor_name}")
@@ -208,11 +146,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         vendor_name: str | None = None,
         vendor_version: str | None = None,
     ) -> str:
-        """Simple server type detection based on LDAP attributes.
-
-        This is a fallback implementation that avoids the complex flext-ldif
-        detector which has issues with server type normalization.
-        """
+        """Apply heuristic detection to map attributes to a server label."""
         # Check vendor info first (most reliable)
         vendor_parts = [v for v in [vendor_name, vendor_version] if v]
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""

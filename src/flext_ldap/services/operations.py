@@ -1,15 +1,7 @@
-"""LDAP Operations Service.
+"""Search, CRUD, and upsert helpers built on ``Ldap3Adapter``.
 
-This service provides LDAP CRUD operations (search, add, modify, delete, upsert).
-Delegates to Ldap3Adapter which handles conversion to Entry models using FlextLdifParser,
-maximizing code reuse. Supports batch operations and entry comparison for upsert logic.
-
-Modules: FlextLdapOperations
-Scope: LDAP CRUD operations, entry comparison, batch upsert, entry existence checking
-Pattern: Service extending FlextLdapServiceBase, delegates to Ldap3Adapter for actual operations
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+This module keeps protocol concerns inside the adapter while exposing typed
+inputs, normalized results, and reusable comparison utilities for callers.
 """
 
 from __future__ import annotations
@@ -33,11 +25,11 @@ from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
-    """LDAP operations service providing CRUD operations.
+    """Coordinate LDAP operations on an active connection.
 
-    Handles search, add, modify, and delete operations.
-    Delegates to Ldap3Adapter which already uses FlextLdifParser for conversion.
-    This maximizes code reuse - adapter handles all parsing logic.
+    Protocol calls are delegated to :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`
+    so this layer can concentrate on typed arguments, predictable
+    :class:`flext_core.FlextResult` responses, and shared comparison helpers.
     """
 
     model_config = ConfigDict(
@@ -49,13 +41,18 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
     _connection: FlextLdapConnection
 
     class EntryComparison:
-        """Entry comparison logic - detects attribute changes for modify operations."""
+        """Compute attribute-level differences between entries.
+
+        Utilities normalize attribute keys and values to build precise
+        ``MODIFY`` payloads without duplicating comparison logic across
+        services or tests.
+        """
 
         @staticmethod
         def extract_attributes(
             entry: FlextLdapProtocols.LdapEntry.EntryProtocol | FlextLdifModels.Entry,
         ) -> Mapping[str, Sequence[str]]:
-            """Extract attributes from entry in normalized dict format."""
+            """Return entry attributes as a normalized mapping of lists."""
             if not entry.attributes:
                 return {}
             # Type narrowing: FlextLdifModels.Entry has LdifAttributes with .attributes
@@ -79,7 +76,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
         @staticmethod
         def normalize_value_set(values: list[str]) -> set[str]:
-            """Normalize attribute values to lowercase set for comparison."""
+            """Normalize attribute values to a lowercase set for comparison."""
             return {str(v).lower() for v in values if v}
 
         @staticmethod
@@ -102,7 +99,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             existing_attrs: Mapping[str, Sequence[str]],
             ignore: frozenset[str],
         ) -> tuple[FlextLdapTypes.Ldap.ModifyChanges, set[str]]:
-            """Process new attributes and detect changes."""
+            """Process new attributes and detect replacement changes."""
             changes: FlextLdapTypes.Ldap.ModifyChanges = {}
             processed = set()
 
@@ -144,7 +141,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             ignore: frozenset[str],
             processed: set[str],
         ) -> FlextLdapTypes.Ldap.ModifyChanges:
-            """Process attributes that exist in old but not in new (deletions)."""
+            """Capture deletions for attributes missing from the new entry."""
             changes: FlextLdapTypes.Ldap.ModifyChanges = {}
 
             for attr_name, existing_vals in existing_attrs.items():
@@ -163,7 +160,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             new_entry: FlextLdapProtocols.LdapEntry.EntryProtocol
             | FlextLdifModels.Entry,
         ) -> FlextLdapTypes.Ldap.ModifyChanges | None:
-            """Compare two entries and return modify changes if different."""
+            """Compare two entries and return modify changes when needed."""
             existing_attrs_raw = FlextLdapOperations.EntryComparison.extract_attributes(
                 existing_entry,
             )
@@ -201,17 +198,17 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             return changes or None
 
     class _UpsertHandler:
-        """Upsert operation handler (SRP)."""
+        """Handle add-or-modify flows for upsert calls."""
 
         def __init__(self, operations: FlextLdapOperations) -> None:
-            """Initialize with operations service."""
+            """Store a reference to the operations service."""
             self._ops = operations
 
         def execute(
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdapModels.LdapOperationResult]:
-            """Execute upsert operation."""
+            """Execute an upsert operation for the provided entry."""
             attrs = entry.attributes.attributes if entry.attributes else {}
             changetype_val = attrs.get(
                 FlextLdapConstants.LdapAttributeNames.CHANGETYPE,
@@ -227,7 +224,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdapModels.LdapOperationResult]:
-            """Handle schema modify operation."""
+            """Apply a schema modification entry."""
             attrs = entry.attributes.attributes if entry.attributes else {}
             add_op = attrs.get(FlextLdapConstants.ChangeTypeOperations.ADD, [])
             if not add_op:
@@ -272,7 +269,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdapModels.LdapOperationResult]:
-            """Handle regular add operation."""
+            """Add a standard entry or fall back to existing-entry handling."""
             add_result = self._ops.add(entry)
 
             if add_result.is_success:
@@ -292,7 +289,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdapModels.LdapOperationResult]:
-            """Handle upsert when entry already exists."""
+            """Handle an upsert when the entry already exists in LDAP."""
             entry_dn = str(entry.dn) if entry.dn else "unknown"
             search_options = FlextLdapModels.SearchOptions(
                 base_dn=entry_dn,
@@ -346,7 +343,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
     @staticmethod
     def is_already_exists_error(error_message: str) -> bool:
-        """Check if error message indicates entry already exists."""
+        """Return ``True`` when the error indicates an existing entry."""
         error_lower = error_message.lower()
         return (
             str(FlextLdapConstants.ErrorStrings.ENTRY_ALREADY_EXISTS) in error_lower
@@ -361,7 +358,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         connection: FlextLdapConnection,
         **kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize operations service."""
+        """Initialize the operations service with a live connection."""
         super().__init__(**kwargs)
         self._connection = connection
         self._upsert_handler = self._UpsertHandler(self)
@@ -373,7 +370,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         | str = FlextLdifConstants.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
-        """Perform LDAP search operation."""
+        """Perform an LDAP search using normalized search options."""
         normalized_options = search_options.model_copy(
             update={
                 "base_dn": FlextLdifUtilities.DN.norm_string(search_options.base_dn),
@@ -397,7 +394,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         entry: FlextLdifModels.Entry,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Add LDAP entry."""
+        """Add an LDAP entry using the active adapter connection."""
         result = self._connection.adapter.add(entry)
         # Adapter returns FlextResult[OperationResultProtocol] - unwrap directly
         if result.is_success:
@@ -413,7 +410,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         changes: FlextLdapTypes.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Modify LDAP entry."""
+        """Modify an LDAP entry with the provided change set."""
         # Type narrowing: convert str to DistinguishedName model if needed
         if isinstance(dn, str):
             dn_model: FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol = (
@@ -440,7 +437,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.OperationResult]:
-        """Delete LDAP entry."""
+        """Delete an LDAP entry identified by DN."""
         # Type narrowing: convert str to DistinguishedName model if needed
         if isinstance(dn, str):
             dn_model: FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol = (
@@ -461,7 +458,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
 
     @property
     def is_connected(self) -> bool:
-        """Check if operations service has active connection."""
+        """Return ``True`` when the underlying connection is bound."""
         return self._connection.is_connected
 
     def upsert(
@@ -471,7 +468,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
     ) -> FlextResult[FlextLdapModels.LdapOperationResult]:
-        """Upsert LDAP entry with retry logic."""
+        """Upsert an entry, optionally retrying for configured error patterns."""
         if not retry_on_errors or max_retries <= 1:
             return self._upsert_handler.execute(entry)
 
@@ -502,7 +499,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> FlextResult[FlextLdapModels.LdapBatchStats]:
-        """Batch upsert multiple LDAP entries with progress tracking."""
+        """Upsert multiple entries and track per-item progress."""
         synced = 0
         failed = 0
         skipped = 0
@@ -582,7 +579,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         self,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.SearchResult]:
-        """Execute service health check."""
+        """Report readiness; fails when the connection is not bound."""
         if not self._connection.is_connected:
             return FlextResult[FlextLdapModels.SearchResult].fail(
                 FlextLdapConstants.ErrorStrings.NOT_CONNECTED,
