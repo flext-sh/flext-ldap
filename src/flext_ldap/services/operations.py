@@ -200,8 +200,7 @@ class FlextLdapOperations(FlextLdapServiceBase[FlextLdapModels.SearchResult]):
         """Handle add-or-modify flows for upsert calls."""
 
         def __init__(self, operations: FlextLdapOperations) -> None:
-            """Store a reference to the operations service."""
-            super().__init__()
+            """Initialize with operations service."""
             self._ops = operations
 
         def execute(
