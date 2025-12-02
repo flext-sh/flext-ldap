@@ -28,9 +28,6 @@ from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
 from ..fixtures.constants import RFC
-from ..fixtures.typing import GenericFieldsDict
-
-from typing import cast
 from ..helpers.entry_helpers import EntryTestHelpers
 from ..helpers.operation_helpers import TestOperationHelpers
 
@@ -425,13 +422,15 @@ class TestAssertions:
     """Comprehensive assertion helpers for operations service tests."""
 
     @staticmethod
-    def assert_operation_success(result: FlextResult[object]) -> None:
+    def assert_operation_success(
+        result: FlextResult[FlextLdapModels.OperationResult],
+    ) -> None:
         """Assert that operation succeeded using flext_tests."""
         FlextTestsUtilities.TestUtilities.assert_result_success(result)
 
     @staticmethod
     def assert_operation_failure(
-        result: FlextResult[object],
+        result: FlextResult[FlextLdapModels.OperationResult],
         expected_error_contains: str,
     ) -> None:
         """Assert that operation failed with expected error."""

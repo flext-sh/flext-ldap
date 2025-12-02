@@ -16,8 +16,8 @@ import pytest
 from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
-from ..conftest import create_flext_ldap_instance
 
+from ..conftest import create_flext_ldap_instance
 from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration

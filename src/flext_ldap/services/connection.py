@@ -1,14 +1,9 @@
-"""LDAP Connection Service.
+"""LDAP connection lifecycle service.
 
-This service manages LDAP connections using the ldap3 adapter.
-Provides connection lifecycle management and status checking.
-
-Module: FlextLdapConnection
-Scope: LDAP connection lifecycle, auto-retry, server detection
-Pattern: Service extending FlextLdapServiceBase, uses Ldap3Adapter
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Encapsulates connection creation, binding, and teardown while delegating the
+protocol surface to :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`. The
+service keeps retries and optional heuristic server detection close to the
+connection so callers interact with a single, typed entry point.
 """
 
 from __future__ import annotations
@@ -29,10 +24,12 @@ from flext_ldap.services.detection import FlextLdapServerDetector
 
 
 class FlextLdapConnection(FlextLdapServiceBase[bool]):
-    """LDAP connection service managing connection lifecycle.
+    """Manage the LDAP connection lifecycle with typed ergonomics.
 
-    Handles connection establishment, binding, and disconnection.
-    Uses Ldap3Adapter for low-level ldap3 operations.
+    The service wraps `Ldap3Adapter` to create/bind connections, optionally
+    retry transient errors, and perform lightweight server detection after a
+    successful bind. It is intentionally minimal so that callers can swap the
+    adapter or parser during tests without changing behaviour at the API level.
     """
 
     model_config = ConfigDict(
@@ -51,7 +48,14 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         config: FlextLdapConfig | None = None,
         parser: FlextLdifParser | None = None,
     ) -> None:
-        """Initialize connection service."""
+        """Create a connection service.
+
+        Args:
+            config: Optional LDAP configuration; defaults to a new
+                :class:`FlextLdapConfig` instance when omitted.
+            parser: Optional LDIF parser to reuse for adapter conversions. When
+                ``None``, the shared :class:`FlextLdif` singleton parser is used.
+        """
         super().__init__()
         # Create config instance if not provided
         resolved_config: FlextLdapConfig = (
@@ -77,7 +81,24 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         retry_delay: float = 1.0,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[bool]:
-        """Establish LDAP connection with optional auto-retry on failure."""
+        """Establish an LDAP connection.
+
+        The adapter is asked to connect using the supplied configuration. When
+        ``auto_retry`` is enabled, transient failures are retried using
+        ``FlextUtilities.Reliability.retry`` semantics.
+
+        Args:
+            connection_config: Connection parameters including host, port, and
+                bind credentials.
+            auto_retry: When ``True``, retry using ``max_retries`` and
+                ``retry_delay``.
+            max_retries: Maximum retry attempts when ``auto_retry`` is enabled.
+            retry_delay: Delay (seconds) between retries.
+
+        Returns:
+            FlextResult[bool]: ``True`` when the connection is established;
+            otherwise a failure describing the adapter error.
+        """
 
         def attempt_connect() -> FlextResult[bool]:
             return self._adapter.connect(connection_config)
@@ -98,7 +119,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         return result
 
     def disconnect(self) -> None:
-        """Close LDAP connection."""
+        """Close the active LDAP connection if present."""
         self._adapter.disconnect()
 
     @property

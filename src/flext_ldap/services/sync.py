@@ -1,16 +1,4 @@
-"""LDIF to LDAP synchronization service.
-
-This service provides direct LDIF to LDAP synchronization without any attribute
-or DN conversions. Works with any LDAP-compatible server. Supports batch processing,
-progress callbacks, automatic parent DN creation, and comprehensive statistics.
-
-Modules: FlextLdapSyncService
-Scope: LDIF file parsing and synchronization to LDAP, batch operations, statistics
-Pattern: Service extending FlextLdapServiceBase, uses FlextLdapOperations for LDAP ops
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Synchronize LDIF content into LDAP through the operations service."""
 
 from __future__ import annotations
 
@@ -30,10 +18,12 @@ from flext_ldap.services.operations import FlextLdapOperations
 
 
 class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
-    """LDIF to LDAP synchronization service.
+    """Stream LDIF entries into LDAP while tracking progress and totals.
 
-    Provides direct synchronization of LDIF files to LDAP directory without
-    any attribute or DN conversions. Works with any LDAP-compatible server.
+    All LDAP mutations are delegated to :class:`FlextLdapOperations`, keeping
+    this service focused on batching, optional base-DN translation, and runtime
+    statistics. Syncs rely on ``add`` operations with idempotent handling for
+    existing entries, mirroring the current runtime behaviour in code.
     """
 
     model_config = ConfigDict(
@@ -47,10 +37,10 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
     _generate_datetime_utc: Callable[[], datetime] = PrivateAttr()
 
     class BatchSync:
-        """Batch synchronization logic using FlextUtilities for generalization."""
+        """Batch synchronization helper."""
 
         def __init__(self, operations: FlextLdapOperations) -> None:
-            """Initialize with operations service."""
+            """Store the operations service reference."""
             super().__init__()
             self._ops = operations
 
@@ -101,7 +91,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             )
 
     class BaseDNTransformer:
-        """BaseDN transformation logic using FlextUtilities."""
+        """Transform entry base DNs when source and target differ."""
 
         @staticmethod
         def transform(
@@ -109,7 +99,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
             source_basedn: str,
             target_basedn: str,
         ) -> list[FlextLdifModels.Entry]:
-            """Transform BaseDN in entry DNs."""
+            """Rewrite entry DNs from ``source_basedn`` to ``target_basedn``."""
             if source_basedn == target_basedn:
                 return entries
 
@@ -135,10 +125,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
         operations: FlextLdapOperations | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize sync service.
-
-        Additional kwargs are passed to base class for extensibility.
-        """
+        """Initialize the sync service with the provided operations instance."""
         super().__init__(**kwargs)
         if operations is None:
             operations_kwarg = kwargs.pop("operations", None)
@@ -160,7 +147,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
         ldif_file: Path,
         options: FlextLdapModels.SyncOptions,
     ) -> FlextResult[FlextLdapModels.SyncStats]:
-        """Sync LDIF file to LDAP directory."""
+        """Parse and sync an LDIF file into the directory."""
         if not ldif_file.exists():
             return FlextResult[FlextLdapModels.SyncStats].fail(
                 f"LDIF file not found: {ldif_file}",
@@ -193,7 +180,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
         options: FlextLdapModels.SyncOptions,
         start_time: datetime,
     ) -> FlextResult[FlextLdapModels.SyncStats]:
-        """Process entries through sync pipeline."""
+        """Process parsed entries through the sync pipeline."""
         if not entries:
             return FlextResult[FlextLdapModels.SyncStats].ok(
                 FlextLdapModels.SyncStats.from_counters(),
@@ -220,10 +207,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[FlextLdapModels.SyncStats]):
         self,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[FlextLdapModels.SyncStats]:
-        """Execute service health check.
-
-        Additional kwargs are for extensibility and future use.
-        """
+        """Return an empty stats payload to indicate service readiness."""
         return FlextResult[FlextLdapModels.SyncStats].ok(
             FlextLdapModels.SyncStats.from_counters(),
         )
