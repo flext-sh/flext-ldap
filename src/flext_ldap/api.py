@@ -733,13 +733,12 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
 
         parse_result = self._ldif.parse(ldif_file_path, server_type=config.server_type)
         if parse_result.is_failure:
-            return r[m.PhaseSyncResult].fail(
-                f"Failed to parse LDIF file: {parse_result.error}",
-            )
+            return u.fail(f"Failed to parse LDIF file: {u.err(parse_result, default='')}")
 
         entries = parse_result.unwrap()
-        if not entries:
-            return r[m.PhaseSyncResult].ok(
+        # Use u.empty() mnemonic: check if collection is empty
+        if u.empty(entries):
+            return u.ok(
                 m.PhaseSyncResult(
                     phase_name=phase_name,
                     total_entries=0,
@@ -791,9 +790,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         )
 
         if batch_result.is_failure:
-            return r[m.PhaseSyncResult].fail(
-                f"Batch sync failed: {batch_result.error}",
-            )
+            return u.fail(f"Batch sync failed: {u.err(batch_result, default='')}")
 
         batch_stats = batch_result.unwrap()
         duration = (datetime.now(UTC) - start_time).total_seconds()
@@ -805,7 +802,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
             else 0.0
         )
 
-        return r[m.PhaseSyncResult].ok(
+        return u.ok(
             m.PhaseSyncResult(
                 phase_name=phase_name,
                 total_entries=len(entries),
@@ -919,27 +916,38 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         """
         config = config or SyncPhaseConfig()
         start_time = datetime.now(UTC)
+        # Builder pattern: accumulate phase results using DSL
         phase_results: dict[str, m.PhaseSyncResult] = {}
         overall_success = True
+        stop_requested = False
 
-        for phase_name, ldif_path in phase_files.items():
+        # DSL pattern: process phases with builder accumulator
+        def process_phase(phase_item: tuple[str, Path]) -> None:
+            """Process single phase and update accumulator."""
+            nonlocal overall_success, stop_requested
+            if stop_requested:
+                return
+
+            phase_name, ldif_path = phase_item
             if not ldif_path.exists():
                 self.logger.warning(
                     "Phase file not found",
                     phase=phase_name,
                     file=str(ldif_path),
                 )
-                continue
+                return
 
+            # DSL pattern: builder for phase config with defaults
+            phase_callback = (
+                FlextLdap._make_phase_progress_callback(phase_name, config)
+                or config.progress_callback
+            )
             phase_result = self.sync_phase_entries(
                 ldif_path,
                 phase_name,
                 config=SyncPhaseConfig(
                     server_type=config.server_type,
-                    progress_callback=FlextLdap._make_phase_progress_callback(
-                        phase_name, config
-                    )
-                    or config.progress_callback,
+                    progress_callback=phase_callback,
                     retry_on_errors=config.retry_on_errors,
                     max_retries=config.max_retries,
                     stop_on_error=config.stop_on_error,
@@ -954,26 +962,26 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
                 )
                 overall_success = False
                 if config.stop_on_error:
-                    break
-                continue
+                    stop_requested = True
+                return
 
             phase_results[phase_name] = phase_result.unwrap()
 
-        # Use u.map() for efficient aggregation - consolidate to reduce locals
+        # Process all phases using u.process() with accumulator
+        u.process(
+            list(phase_files.items()),
+            processor=process_phase,
+            on_error="collect",
+        )
+
+        # Use u.agg() with DSL pattern: extract and aggregate fields uniformly
         phase_values = list(phase_results.values())
+        # DSL pattern: field_name -> extractor, aggregate with sum (default)
         totals = {
-            "entries": sum(
-                cast("list[int]", u.map(phase_values, mapper=lambda r: r.total_entries))
-            ),
-            "synced": sum(
-                cast("list[int]", u.map(phase_values, mapper=lambda r: r.synced))
-            ),
-            "failed": sum(
-                cast("list[int]", u.map(phase_values, mapper=lambda r: r.failed))
-            ),
-            "skipped": sum(
-                cast("list[int]", u.map(phase_values, mapper=lambda r: r.skipped))
-            ),
+            "entries": cast("int", u.agg(phase_values, "total_entries")),
+            "synced": cast("int", u.agg(phase_values, "synced")),
+            "failed": cast("int", u.agg(phase_values, "failed")),
+            "skipped": cast("int", u.agg(phase_values, "skipped")),
         }
         total_processed = totals["synced"] + totals["failed"] + totals["skipped"]
         overall_success_rate = (
@@ -982,7 +990,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
             else 0.0
         )
 
-        return r[m.MultiPhaseSyncResult].ok(
+        return u.ok(
             m.MultiPhaseSyncResult(
                 phase_results=phase_results,
                 total_entries=totals["entries"],

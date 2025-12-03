@@ -170,45 +170,48 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
                 counts and zero duration (caller updates).
 
             """
-            added = skipped = failed = 0
-            for idx, entry in enumerate(entries, 1):
+            # Builder pattern: accumulate stats using DSL
+            stats_builder: dict[str, int] = {"added": 0, "skipped": 0, "failed": 0}
+
+            # DSL pattern: process entries with accumulator builder
+            def process_entry(idx_entry: tuple[int, FlextLdifModels.Entry]) -> m.LdapBatchStats:
+                """Process single entry and update accumulator."""
+                idx, entry = idx_entry
                 entry_dn = FlextLdifUtilities.DN.get_dn_value(entry.dn)
                 add_result = self._ops.add(entry)
+                # DSL pattern: builder for stats based on result
                 if add_result.is_success:
-                    added += 1
-                    entry_stats = m.LdapBatchStats(
-                        synced=1,
-                        skipped=0,
-                        failed=0,
-                    )
+                    stats_builder["added"] += 1
+                    entry_stats = m.LdapBatchStats(synced=1, skipped=0, failed=0)
                 else:
-                    # Use u.ensure_str for safe error string extraction
                     error_str = cast(
                         "str", u.ensure(add_result.error, target_type="str", default="")
                     )
-                    if FlextLdapOperations.is_already_exists_error(error_str):
-                        skipped += 1
-                        entry_stats = m.LdapBatchStats(
-                            synced=0,
-                            skipped=1,
-                            failed=0,
-                        )
+                    # DSL pattern: determine stats based on error type
+                    is_skipped = FlextLdapOperations.is_already_exists_error(error_str)
+                    if is_skipped:
+                        stats_builder["skipped"] += 1
+                        entry_stats = m.LdapBatchStats(synced=0, skipped=1, failed=0)
                     else:
-                        failed += 1
-                        entry_stats = m.LdapBatchStats(
-                            synced=0,
-                            skipped=0,
-                            failed=1,
-                        )
+                        stats_builder["failed"] += 1
+                        entry_stats = m.LdapBatchStats(synced=0, skipped=0, failed=1)
 
                 if options.progress_callback:
                     options.progress_callback(idx, len(entries), entry_dn, entry_stats)
+                return entry_stats
 
-            return r[m.SyncStats].ok(
+            # Process all entries using u.process() with accumulator
+            u.process(
+                list(enumerate(entries, 1)),
+                processor=process_entry,
+                on_error="skip",
+            )
+
+            return u.ok(
                 m.SyncStats.from_counters(
-                    added=added,
-                    skipped=skipped,
-                    failed=failed,
+                    added=stats_builder["added"],
+                    skipped=stats_builder["skipped"],
+                    failed=stats_builder["failed"],
                     duration_seconds=0.0,
                 ),
             )
@@ -313,10 +316,18 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
 
         """
         super().__init__(**kwargs)
+        # Use u.get() mnemonic: extract from kwargs with fallback
         if operations is None:
-            operations_kwarg = kwargs.pop("operations", None)
+            operations_kwarg = u.get(kwargs, "operations")
             if operations_kwarg is not None:
-                if not isinstance(operations_kwarg, FlextLdapOperations):
+                # Use u.guard() mnemonic: type validation
+                guard_result = u.guard(
+                    operations_kwarg,
+                    FlextLdapOperations,
+                    context_name="operations",
+                    return_value=True,
+                )
+                if guard_result is None:
                     error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
                     raise TypeError(error_msg)
                 operations = operations_kwarg
@@ -363,9 +374,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
 
         """
         if not ldif_file.exists():
-            return r[m.SyncStats].fail(
-                f"LDIF file not found: {ldif_file}",
-            )
+            return u.fail(f"LDIF file not found: {ldif_file}")
 
         start_time = self._generate_datetime_utc()
         # Use FlextLdif API parse method (avoids broken parse_source)
@@ -380,9 +389,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
         )
 
         if parse_result.is_failure:
-            return r[m.SyncStats].fail(
-                f"Failed to parse LDIF file: {parse_result.error}",
-            )
+            return u.fail(f"Failed to parse LDIF file: {u.err(parse_result, default='')}")
 
         # API parse returns list[Entry] directly
         entries = parse_result.unwrap()
@@ -427,7 +434,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
 
         """
         if not entries:
-            return r[m.SyncStats].ok(
+            return u.ok(
                 m.SyncStats.from_counters(),
             )
 
@@ -444,9 +451,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
 
         stats = batch_result.unwrap()
         duration = (self._generate_datetime_utc() - start_time).total_seconds()
-        return r[m.SyncStats].ok(
-            stats.model_copy(update={"duration_seconds": duration}),
-        )
+        return u.ok(stats.model_copy(update={"duration_seconds": duration}))
 
     def execute(  # noqa: PLR6301
         self,
@@ -478,6 +483,4 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
             (added=0, skipped=0, failed=0, duration_seconds=0.0).
 
         """
-        return r[m.SyncStats].ok(
-            m.SyncStats.from_counters(),
-        )
+        return u.ok(m.SyncStats.from_counters())

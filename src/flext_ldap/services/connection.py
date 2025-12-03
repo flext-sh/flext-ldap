@@ -130,12 +130,11 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         """
         super().__init__()
         # Create config instance if not provided
-        resolved_config: FlextLdapConfig = (
-            config if config is not None else FlextLdapConfig()
-        )
+        # Use u.or_() mnemonic: fallback chain
+        resolved_config: FlextLdapConfig = cast("FlextLdapConfig", u.or_(config, default=FlextLdapConfig()))
         object.__setattr__(self, "_config", resolved_config)
-        if parser is None:
-            parser = FlextLdif.get_instance().parser
+        # Use u.or_() mnemonic: fallback chain
+        parser = cast("FlextLdifParser", u.or_(parser, default=FlextLdif.get_instance().parser))
         # Create adapter directly
         # Pass parser as part of kwargs (Ldap3Adapter.__init__ extracts it from kwargs)
         # Use cast to satisfy type checker - parser is extracted and validated in Ldap3Adapter.__init__
@@ -206,7 +205,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
         if result.is_success:
             self._detect_server_type_optional()
-            return r[bool].ok(True)
+            return u.ok(True)
         return result
 
     def disconnect(self) -> None:
@@ -320,7 +319,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             self.logger.debug(
                 "Server type detection failed (non-critical)",
                 operation=c.LdapOperationNames.CONNECT,
-                error=str(detection_result.error) if detection_result.error else "",
+                error=cast("str", u.ensure(detection_result.error, target_type="str", default="")),
             )
 
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
@@ -352,8 +351,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             ``fail(NOT_CONNECTED)`` if disconnected or never connected.
 
         """
+        # Use u.ok()/u.fail() mnemonic: create results
         if self.is_connected:
-            return r[bool].ok(True)
-        return r[bool].fail(
-            str(c.ErrorStrings.NOT_CONNECTED),
-        )
+            return u.ok(True)
+        return u.fail(str(c.ErrorStrings.NOT_CONNECTED))

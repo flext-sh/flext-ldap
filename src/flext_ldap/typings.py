@@ -181,4 +181,5 @@ class FlextLdapTypes(t):
 
 
 # Convenience alias for common usage pattern
-t = FlextLdapTypes
+# Note: This alias is exported via __init__.py, not used directly in type annotations
+t = FlextLdapTypes  # type: ignore[misc]  # mypy limitation: cannot assign to type

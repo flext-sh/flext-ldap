@@ -99,7 +99,10 @@ class FlextLdapEntryAdapter(s[bool]):
                 True if value requires base64 encoding, False otherwise.
 
             """
-            return value.startswith("::") or any(ord(c) > threshold for c in value)
+            # Use u.find() for efficient character checking
+            return value.startswith("::") or u.find(
+                list(value), predicate=lambda c: ord(c) > threshold
+            ) is not None
 
         @staticmethod
         def convert_value_to_strings(
@@ -131,7 +134,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
             """
             if FlextRuntime.is_list_like(value):
-                # Use u.ensure_str_list for consistent conversion
+                # Use u.ensure() for consistent conversion
                 return cast(
                     "Sequence[str]", u.ensure(value, target_type="str_list", default=[])
                 )
@@ -167,7 +170,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
             """
             if FlextRuntime.is_list_like(value) or isinstance(value, tuple):
-                # Use u.ensure_str_list for consistent conversion
+                # Use u.ensure() for consistent conversion
                 return (
                     cast(
                         "Sequence[str]",
@@ -194,10 +197,10 @@ class FlextLdapEntryAdapter(s[bool]):
 
         """
         # Extract server_type from kwargs if provided
-        server_type_raw = kwargs.pop("server_type", None)
-        server_type: str | None = (
-            str(server_type_raw) if isinstance(server_type_raw, str) else None
-        )
+        # Use u.get() mnemonic: extract from kwargs with default
+        server_type_raw = u.get(kwargs, "server_type")
+        # DSL pattern: ensure string type with None default
+        server_type: str | None = cast("str | None", u.ensure(server_type_raw, target_type="str", default=None))
         super().__init__(**kwargs)
         # Use provided server_type or default from constants
         resolved_type: str = server_type or FlextLdifConstants.ServerTypes.RFC
@@ -233,7 +236,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 and always ready
 
         """
-        return r[bool].ok(True)
+        return u.ok(True)
 
     def _convert_ldap3_value_to_list(
         self,
@@ -278,10 +281,11 @@ class FlextLdapEntryAdapter(s[bool]):
             removed_attrs.append(key)
             return []
         converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
-        if any(
-            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
-            for v in converted_values
-        ):
+        # Use u.find() to check if any value requires base64 encoding
+        if u.find(
+            converted_values,
+            predicate=lambda v: self._ConversionHelpers.is_base64_encoded(v, ascii_threshold),
+        ) is not None:
             base64_attrs.append(key)
         return converted_values
 
@@ -413,19 +417,19 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_str = ", ".join(filtered_str_values) or ""
             return attr_name if original_str != converted_str else None
 
+        # DSL pattern: process attributes and filter None values
         process_result = u.process(
             original_attrs_dict,
             processor=check_attr_changed,
             on_error="skip",
         )
-        changed_attrs = [
-            attr_name
-            for attr_name in cast(
-                "dict[str, str | None]",
-                process_result.value if process_result.is_success else {},
-            ).values()
-            if attr_name is not None
-        ]
+        # Use u.val() mnemonic: extract value with default
+        result_dict = cast("dict[str, str | None]", u.val(process_result, default={}))
+        filtered_dict = cast(
+            "dict[str, str]",
+            u.filter(result_dict, predicate=lambda _k, v: v is not None),
+        )
+        changed_attrs = list(filtered_dict.values())
 
         if changed_attrs:
             conversion_metadata.attribute_changes = changed_attrs
@@ -489,8 +493,8 @@ class FlextLdapEntryAdapter(s[bool]):
                 processor=convert_attr,
                 on_error="skip",
             )
-            if process_result.is_success:
-                ldif_attrs = cast("t.Ldap.AttributeDict", process_result.value)
+            # Use u.val() mnemonic: extract value with type cast
+            ldif_attrs = cast("t.Ldap.AttributeDict", u.val(process_result, default={}))
             conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
                 removed_attrs,
                 base64_attrs,
@@ -511,7 +515,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
-            return r[FlextLdifModels.Entry].ok(
+            return u.ok(
                 FlextLdifModels.Entry(
                     dn=FlextLdifModelsDomains.DistinguishedName(value=dn_str),
                     attributes=ldf_attrs_obj,
@@ -532,9 +536,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[FlextLdifModels.Entry].fail(
-                f"Failed to create Entry: {e!s}",
-            )
+            return u.fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
         self,
@@ -570,14 +572,9 @@ class FlextLdapEntryAdapter(s[bool]):
             or error if entry has no attributes or conversion fails.
 
         """
-        if entry.attributes is None:
-            return r[t.Ldap.Attributes].fail(
-                "Entry has no attributes",
-            )
-        if not entry.attributes.attributes:
-            return r[t.Ldap.Attributes].fail(
-                "Entry has no attributes",
-            )
+        # Use u.empty() mnemonic: check if attributes are empty
+        if entry.attributes is None or u.empty(entry.attributes.attributes):
+            return u.fail("Entry has no attributes")
         try:
             # Build dict from DynamicMetadata items, filtering for list values
             # LDIF attributes are always lists of strings
@@ -608,11 +605,11 @@ class FlextLdapEntryAdapter(s[bool]):
                     ),
                 ),
             )
-            return r[t.Ldap.Attributes].ok(
+            return u.ok(
                 attributes_dict,
             )
         except (ValueError, TypeError, AttributeError) as e:
-            entry_dn_str = str(entry.dn) if entry.dn else "unknown"
+            entry_dn_str = cast("str", u.ensure(entry.dn, target_type="str", default="unknown"))
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
                 operation=c.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES.value,
@@ -620,6 +617,6 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[t.Ldap.Attributes].fail(
+            return u.fail(
                 f"Failed to convert attributes to ldap3 format: {e!s}",
             )

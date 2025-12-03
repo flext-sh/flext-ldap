@@ -360,7 +360,7 @@ class FlextLdapModels(FlextModels):
                 else:
                     # Fallback: empty dict if type is unexpected
                     attrs_dict = {}
-                # Use u.get and u.ensure_str_list for safer nested access
+                # Use u.get and u.ensure() for safer nested access
                 object_classes_raw: flext_types.GeneralValueType = u.get(
                     attrs_dict, "objectClass", default=[]
                 )
