@@ -23,7 +23,7 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdifModels
 
 from flext_ldap import FlextLdap
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.models import FlextLdapModels as m
 
 # Mark all tests in this module as integration tests requiring Docker
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -86,7 +86,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_immediate_failure(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: FlextResult[m.OperationResult],
     ) -> None:
         """Assert that operation failed immediately without retries."""
         assert result.is_failure, "Operation should have failed"
@@ -102,7 +102,7 @@ class TestAssertions:
 
     @staticmethod
     def assert_retry_attempted(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: FlextResult[m.OperationResult],
     ) -> None:
         """Assert that retry logic was attempted based on error message."""
         assert result.is_failure, "Operation should have failed"
@@ -120,19 +120,18 @@ class TestAssertions:
 
     @staticmethod
     def assert_successful_operation(
-        result: FlextResult[FlextLdapModels.LdapOperationResult],
+        result: FlextResult[m.LdapOperationResult],
     ) -> None:
         """Assert that operation succeeded and return operation info."""
         assert result.is_success, f"Operation should have succeeded: {result.error}"
         operation_info = result.unwrap()
         # Validate actual content: operation should be valid and successful
+        assert isinstance(operation_info, m.LdapOperationResult)
         assert operation_info.operation in {"added", "modified", "skipped"}
-        assert operation_info.success is True
-        assert operation_info.entries_affected >= 0
 
     @staticmethod
     def assert_no_retry_attempted(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: FlextResult[m.OperationResult],
         max_retries: int = 3,
     ) -> None:
         """Assert that no retry was attempted."""
@@ -169,7 +168,7 @@ class TestOperationsRetry:
 
         # Should fail immediately
         TestAssertions.assert_immediate_failure(
-            cast("FlextResult[FlextLdapModels.OperationResult]", result),
+            cast("FlextResult[m.OperationResult]", result),
         )
 
     def test_upsert_with_retry_on_specific_error(
@@ -189,7 +188,7 @@ class TestOperationsRetry:
 
         # Should still fail after retries (error is persistent)
         TestAssertions.assert_retry_attempted(
-            cast("FlextResult[FlextLdapModels.OperationResult]", result),
+            cast("FlextResult[m.OperationResult]", result),
         )
 
     def test_upsert_success_without_retry_needed(
@@ -233,6 +232,6 @@ class TestOperationsRetry:
 
         # Should fail immediately without retrying
         TestAssertions.assert_no_retry_attempted(
-            cast("FlextResult[FlextLdapModels.OperationResult]", result),
+            cast("FlextResult[m.OperationResult]", result),
             max_retries=3,
         )

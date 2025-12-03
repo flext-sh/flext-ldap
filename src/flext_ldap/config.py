@@ -18,7 +18,7 @@ from flext_core import FlextConfig
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from flext_ldap import c
+from flext_ldap.constants import FlextLdapConstants as c
 
 
 @FlextConfig.auto_register("ldap")

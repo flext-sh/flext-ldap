@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
-from flext_core import FlextResult as r, FlextTypes as t
+from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.models import FlextLdapModels

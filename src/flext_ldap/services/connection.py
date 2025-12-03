@@ -29,15 +29,19 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextConfig
+from flext_core.result import FlextResult as r
 from flext_ldif import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import c, m, r, t, u
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.models import FlextLdapModels as m
 from flext_ldap.services.detection import FlextLdapServerDetector
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 
 class FlextLdapConnection(FlextLdapServiceBase[bool]):
@@ -354,4 +358,4 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         # Use u.ok()/u.fail() mnemonic: create results
         if self.is_connected:
             return u.ok(True)
-        return u.fail(str(c.ErrorStrings.NOT_CONNECTED))
+        return r[bool].fail(str(c.ErrorStrings.NOT_CONNECTED))

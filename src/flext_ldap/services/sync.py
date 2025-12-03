@@ -32,14 +32,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
+from flext_core.result import FlextResult as r, r as r_type
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.utilities import FlextLdifUtilities
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import m, r, u
 from flext_ldap.base import FlextLdapServiceBase
+from flext_ldap.models import FlextLdapModels as m
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 
 class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
@@ -320,14 +322,8 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
         if operations is None:
             operations_kwarg = u.get(kwargs, "operations")
             if operations_kwarg is not None:
-                # Use u.guard() mnemonic: type validation
-                guard_result = u.guard(
-                    operations_kwarg,
-                    FlextLdapOperations,
-                    context_name="operations",
-                    return_value=True,
-                )
-                if guard_result is None:
+                # Use isinstance for type validation (u.guard doesn't support external types)
+                if not isinstance(operations_kwarg, FlextLdapOperations):
                     error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
                     raise TypeError(error_msg)
                 operations = operations_kwarg
@@ -374,7 +370,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
 
         """
         if not ldif_file.exists():
-            return u.fail(f"LDIF file not found: {ldif_file}")
+            return r[m.SyncStats].fail(f"LDIF file not found: {ldif_file}")
 
         start_time = self._generate_datetime_utc()
         # Use FlextLdif API parse method (avoids broken parse_source)
@@ -389,7 +385,7 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
         )
 
         if parse_result.is_failure:
-            return u.fail(f"Failed to parse LDIF file: {u.err(parse_result, default='')}")
+            return r[m.SyncStats].fail(f"Failed to parse LDIF file: {u.err(cast('r_type[object]', parse_result), default='')}")
 
         # API parse returns list[Entry] directly
         entries = parse_result.unwrap()

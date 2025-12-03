@@ -17,7 +17,7 @@ from ldap3 import MODIFY_REPLACE
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.models import FlextLdapModels as m
 from flext_ldap.protocols import FlextLdapProtocols
 
 from ..fixtures.constants import RFC
@@ -34,7 +34,7 @@ class TestLdap3AdapterReal:
     @pytest.fixture
     def connected_adapter(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter()
@@ -47,7 +47,7 @@ class TestLdap3AdapterReal:
     @pytest.mark.timeout(30)
     def test_connect_with_real_server(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> None:
         """Test connection with real LDAP server."""
         adapter = Ldap3Adapter()
@@ -64,7 +64,7 @@ class TestLdap3AdapterReal:
         ldap_container: LdapContainerDict,
     ) -> None:
         """Test search with real LDAP server."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
@@ -122,8 +122,8 @@ class TestLdap3AdapterReal:
         add_result = connected_adapter.add(entry)
         TestOperationHelpers.assert_result_success(add_result)
         add_op_result = add_result.unwrap()
+        assert isinstance(add_op_result, m.LdapOperationResult)
         assert add_op_result.operation == "added"
-        assert add_op_result.success is True
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["testldap3modify@example.com"])],
@@ -133,8 +133,8 @@ class TestLdap3AdapterReal:
         TestOperationHelpers.assert_result_success(modify_result)
         modify_op_result = modify_result.unwrap()
         # Validate actual content: modify should succeed
+        assert isinstance(modify_op_result, m.LdapOperationResult)
         assert modify_op_result.operation == "modified"
-        assert modify_op_result.success is True
         assert modify_op_result.entries_affected == 1
 
         # Cleanup
@@ -182,14 +182,14 @@ class TestLdap3AdapterReal:
 
         TestOperationHelpers.assert_result_success(add_result)
         add_op_result = add_result.unwrap()
+        assert isinstance(add_op_result, m.LdapOperationResult)
         assert add_op_result.operation == "added"
-        assert add_op_result.success is True
 
         TestOperationHelpers.assert_result_success(delete_result)
         delete_op_result = delete_result.unwrap()
         # Validate actual content: delete should succeed
+        assert isinstance(delete_op_result, m.LdapOperationResult)
         assert delete_op_result.operation == "deleted"
-        assert delete_op_result.success is True
         assert delete_op_result.entries_affected == 1
 
     @pytest.mark.timeout(30)
@@ -199,7 +199,7 @@ class TestLdap3AdapterReal:
     ) -> None:
         """Test search when not connected."""
         adapter = Ldap3Adapter()
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,

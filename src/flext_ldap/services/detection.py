@@ -34,10 +34,13 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core import FlextRuntime
+from flext_core.result import FlextResult as r
 from ldap3 import Connection
 
-from flext_ldap import c, r, t, u
 from flext_ldap.base import FlextLdapServiceBase
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 
 class FlextLdapServerDetector(FlextLdapServiceBase[str]):
@@ -70,17 +73,10 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         # Use u.get() mnemonic: extract from kwargs with default
         connection = u.get(_kwargs, "connection")
         if connection is None:
-            return u.fail("connection parameter required")
-        # Use u.guard() mnemonic: type validation with error message
-        guard_result = u.guard(
-            connection,
-            Connection,
-            context_name="connection",
-            error_msg=f"connection must be ldap3.Connection, got {type(connection).__name__}",
-            return_value=True,
-        )
-        if guard_result is None:
-            return u.fail(f"connection must be ldap3.Connection, got {type(connection).__name__}")
+            return r[str].fail("connection parameter required")
+        # Use isinstance for type validation (u.guard doesn't support external types)
+        if not isinstance(connection, Connection):
+            return r[str].fail(f"connection must be ldap3.Connection, got {type(connection).__name__}")
         return self.detect_from_connection(connection)
 
     def detect_from_connection(self, connection: Connection) -> r[str]:
@@ -121,7 +117,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
         root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
         if root_dse_result.is_failure:
-            return u.fail(
+            return r[str].fail(
                 f"Failed to query rootDSE: {root_dse_result.error}",
             )
 
@@ -221,13 +217,13 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
         # Use u.empty() mnemonic: check if collection is empty
         if u.empty(connection.entries):
-            return u.fail("rootDSE query returned no entries")
+            return r[t.Ldap.Attributes].fail("rootDSE query returned no entries")
 
         root_dse_entry = connection.entries[0]
         attrs_dict = root_dse_entry.entry_attributes_as_dict
 
-        # Use u.filter() and u.map() for efficient processing
-        filtered_attrs = u.filter(attrs_dict, predicate=lambda _k, v: v is not None)
+        # DSL pattern: builder for not-none filtering
+        filtered_attrs = u.filter_not_none(attrs_dict)
         attributes = u.map(
             cast("dict[str, object]", filtered_attrs),
             mapper=lambda _k, v: cast(
@@ -240,7 +236,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             else [str(v)],
         )
 
-        return u.ok(cast("t.Ldap.Attributes", attributes))
+        return u.ok(attributes)
 
     @staticmethod
     def _get_first_value(attrs: t.Ldap.Attributes, key: str) -> str | None:
@@ -257,10 +253,14 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         # Use u.val() mnemonic: extract value with default
         values: list[str] | None = u.val(values_result, default=None)
         # DSL pattern: use empty for collection check, then extract first
-        if u.empty(values):
+        if values is None or u.empty(values):
             return None
         # DSL pattern: conditional value extraction with when
-        return cast("str | None", u.when(condition=not u.empty(values), then_value=str(values[0]) if values else None, else_value=None))
+        return u.when(
+            condition=not u.empty(values),
+            then_value=str(values[0]) if values else None,
+            else_value=None,
+        )
 
     @staticmethod
     def _detect_from_attributes(
@@ -347,16 +347,10 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             str: Normalized server type (oid, oud, openldap, ad, ds389, rfc).
 
         """
-        # Check vendor info first (most reliable)
-        # Use u.filter() for efficient filtering
+        # DSL pattern: builder for filtering vendor parts
         vendor_parts: list[str] = cast(
             "list[str]",
-            u.filter(
-                u.ensure(
-                    [vendor_name, vendor_version], target_type="str_list", default=[]
-                ),
-                predicate=bool,
-            ),
+            u.filter_truthy(cast("dict[str, object] | list[object]", u.to_str_list([vendor_name, vendor_version]))),
         )
         # Use u.normalize() for consistent case handling
         vendor_info = (
@@ -378,32 +372,15 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
                 ("ds389", lambda v: "389" in v or "dirsrv" in v),
             ]
 
-            found_check = u.find(
-                vendor_checks,
-                predicate=lambda _idx, check: check[1](vendor_info),
-            )
+            # DSL pattern: builder for callable matching
+            found_check = u.find_callable(vendor_checks, vendor_info)
             if found_check is not None:
-                return found_check[0]
+                return found_check
 
-        # Check extensions and naming contexts for server type indicators
-        # Use u.filter() with mapper for efficient conversion
-        ext_str = " ".join(
-            cast(
-                "list[str]",
-                u.filter(
-                    supported_extensions,
-                    lambda _: True,  # No filtering, just mapping
-                    mapper=str.lower,
-                ),
-            )
-        )
-        # Use normalize() for consistent case handling
-        normalized_context = u.normalize(" ".join(naming_contexts), case="lower")
-        context_str = (
-            cast("str", normalized_context)
-            if isinstance(normalized_context, str)
-            else " ".join(naming_contexts).lower()
-        )
+        # DSL pattern: builder for string mapping with normalization and join
+        ext_str = u.map_str(supported_extensions, case="lower", join=" ")
+        # DSL pattern: builder for normalization and join
+        context_str = u.norm_join(naming_contexts, case="lower")
 
         # Extension/context-based detection (priority order)
         # DSL pattern: server_type -> predicate function, find first match
@@ -418,12 +395,10 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             "ds389": lambda e, _c: "389" in e or "dirsrv" in e,
         }
 
-        # Use u.find() with DSL pattern: find first matching server type
-        found = u.find(
-            extension_checks,
-            predicate=lambda _k, pred: pred(ext_str, context_str),
-        )
+        # DSL pattern: builder for callable matching
+        found = u.find_callable(extension_checks, ext_str, context_str)
 
         # Return found server type or default to RFC-compliant generic server
         # DSL pattern: use when for conditional default
-        return cast("str", u.when(condition=found is not None, then_value=found, else_value="rfc") or "rfc")
+        # DSL pattern: conditional default
+        return found if found is not None else "rfc"

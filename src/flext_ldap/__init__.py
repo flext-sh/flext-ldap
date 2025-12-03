@@ -29,9 +29,9 @@ from flext_core import (
     FlextExceptions,
     FlextHandlers,
     FlextMixins,
-    FlextResult,
     FlextService,
 )
+from flext_core.result import FlextResult
 
 from flext_ldap.api import FlextLdap
 from flext_ldap.base import FlextLdapServiceBase

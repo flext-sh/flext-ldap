@@ -21,7 +21,7 @@ from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE, Connection, Server
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
+from flext_ldap.models import FlextLdapModels as m
 from flext_ldap.protocols import FlextLdapProtocols
 
 from ..fixtures.constants import RFC
@@ -64,7 +64,7 @@ class TestLdap3AdapterComplete:
     @pytest.fixture
     def connected_adapter(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> Generator[Ldap3Adapter]:
         """Get connected adapter for testing."""
         adapter = Ldap3Adapter()
@@ -87,7 +87,7 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test connection with SSL enabled."""
         adapter = Ldap3Adapter()
-        config = FlextLdapModels.ConnectionConfig(
+        config = m.ConnectionConfig(
             host=ldap_container["host"],
             port=ldap_container["port"],
             use_ssl=True,
@@ -105,7 +105,7 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test connection with TLS enabled (covers line 104)."""
         adapter = Ldap3Adapter()
-        config = FlextLdapModels.ConnectionConfig(
+        config = m.ConnectionConfig(
             host=ldap_container["host"],
             port=ldap_container["port"],
             use_tls=True,
@@ -132,11 +132,11 @@ class TestLdap3AdapterComplete:
 
     def test_connect_with_timeout(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> None:
         """Test connection with custom timeout."""
         adapter = Ldap3Adapter()
-        config = FlextLdapModels.ConnectionConfig(
+        config = m.ConnectionConfig(
             host=connection_config.host,
             port=connection_config.port,
             use_ssl=connection_config.use_ssl,
@@ -152,11 +152,11 @@ class TestLdap3AdapterComplete:
 
     def test_connect_with_auto_bind_false(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> None:
         """Test connection with auto_bind=False."""
         adapter = Ldap3Adapter()
-        config = FlextLdapModels.ConnectionConfig(
+        config = m.ConnectionConfig(
             host=connection_config.host,
             port=connection_config.port,
             use_ssl=connection_config.use_ssl,
@@ -173,7 +173,7 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with time limit."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
@@ -187,7 +187,7 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with all attributes."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
@@ -203,7 +203,7 @@ class TestLdap3AdapterComplete:
         connected_adapter: Ldap3Adapter,
     ) -> None:
         """Test search with filter that returns no results."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(cn=nonexistententry12345)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
@@ -369,7 +369,7 @@ class TestLdap3AdapterComplete:
         """Test search with different server types."""
         # Only test server types that are registered in quirks
         # 'rfc' is the default and always works
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
@@ -408,18 +408,11 @@ class TestLdap3AdapterComplete:
         if result.is_success:
             operation_result = result.unwrap()
             # Validate actual content: check if OperationResult or LdapOperationResult
-            # add() returns OperationResult (has operation_type), upsert() returns LdapOperationResult (has operation)
-            if hasattr(operation_result, "success"):
-                # OperationResult has success and operation_type fields
-                assert operation_result.success is True
+            # add() returns OperationResult (has entries_affected), upsert() returns LdapOperationResult (has operation)
+            if isinstance(operation_result, m.OperationResult):
+                # OperationResult has entries_affected field
                 assert operation_result.entries_affected >= 0
-                if hasattr(operation_result, "operation_type"):
-                    assert operation_result.operation_type in {
-                        "add",
-                        "modify",
-                        "delete",
-                    }
-            elif hasattr(operation_result, "operation"):
+            elif isinstance(operation_result, m.LdapOperationResult):
                 # LdapOperationResult has only operation field
                 assert operation_result.operation in {"added", "skipped", "modified"}
         else:
@@ -479,7 +472,7 @@ class TestLdap3AdapterComplete:
     ) -> None:
         """Test search handles parse failures gracefully."""
         # Search should work normally
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,
@@ -582,7 +575,7 @@ class TestLdap3AdapterComplete:
         directly modify the adapter to force a scope mapping failure.
         """
         # Create SearchOptions with valid scope (Pydantic validation)
-        FlextLdapModels.SearchOptions(
+        m.SearchOptions(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str="(objectClass=*)",
             scope=FlextLdapConstants.SearchScope.SUBTREE,  # Valid scope

@@ -491,12 +491,20 @@ class TestOperationHelpers:
 
             def process_additional_attr(
                 key: str, value: object
-            ) -> tuple[str, list[str]]:
+            ) -> list[str]:
                 """Process additional attribute value."""
                 value_typed: t_core.GeneralValueType = cast("t_core.GeneralValueType", value)
                 if FlextRuntime.is_list_like(value_typed):
-                    return (key, [str(v) for v in value_typed])
-                return (key, [str(value_typed)])
+                    # If already a list, check if it's list[str] or needs conversion
+                    if isinstance(value_typed, list):
+                        # Check if all items are already strings
+                        if all(isinstance(v, str) for v in value_typed):
+                            return cast("list[str]", value_typed)
+                        # Convert non-string items to strings
+                        return [str(v) for v in value_typed]
+                    # For tuple/set/frozenset, convert to list[str]
+                    return [str(v) for v in value_typed]
+                return [str(value_typed)]
 
             processed_attrs = u.process(
                 additional_attrs,
@@ -504,9 +512,9 @@ class TestOperationHelpers:
                 on_error="skip",
             )
             if processed_attrs.is_success:
-                entry_attributes.update(
-                    dict(cast("list[tuple[str, list[str]]]", processed_attrs.value))
-                )
+                # u.process returns dict[str, list[str]] when input is dict
+                processed_dict = cast("dict[str, list[str]]", processed_attrs.value)
+                entry_attributes.update(processed_dict)
 
         # Process individual extra attributes - convert dict[str, object] to dict[str, list[str]]
         def process_extra_attr(
@@ -520,6 +528,14 @@ class TestOperationHelpers:
                 "t_core.GeneralValueType", extra_value
             )
             if FlextRuntime.is_list_like(extra_value_typed):
+                # If already a list, check if it's list[str] or needs conversion
+                if isinstance(extra_value_typed, list):
+                    # Check if all items are already strings
+                    if all(isinstance(v, str) for v in extra_value_typed):
+                        return (key, cast("list[str]", extra_value_typed))
+                    # Convert non-string items to strings
+                    return (key, [str(v) for v in extra_value_typed])
+                # For tuple/set/frozenset, convert to list[str]
                 return (key, [str(v) for v in extra_value_typed])
             return (key, [str(extra_value_typed)])
 

@@ -54,7 +54,8 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldap import c, u
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 
 class FlextLdapModels(FlextModels):
@@ -224,19 +225,22 @@ class FlextLdapModels(FlextModels):
                 SearchOptions instance with normalized base_dn.
 
             """
-            if config is None:
-                config = cls.NormalizedConfig()
+            # Use u.or_() mnemonic: fallback chain for config
+            resolved_config = u.or_(config, default=cls.NormalizedConfig())
+            config = cast("m.SearchOptions.NormalizedConfig", resolved_config)
 
             normalized_base = FlextLdifUtilities.DN.norm_string(base_dn)
             return cls(
                 base_dn=normalized_base,
-                scope=config.scope if config.scope is not None else "SUBTREE",
-                filter_str=config.filter_str
-                if config.filter_str is not None
-                else c.Filters.ALL_ENTRIES_FILTER,
+                # Use u.or_() mnemonic: fallback chain for scope
+                scope=cast("str", u.or_(config.scope, default="SUBTREE")),
+                # Use u.or_() mnemonic: fallback chain for filter_str
+                filter_str=cast("str", u.or_(config.filter_str, default=c.Filters.ALL_ENTRIES_FILTER)),
                 attributes=config.attributes,
-                size_limit=config.size_limit if config.size_limit is not None else 0,
-                time_limit=config.time_limit if config.time_limit is not None else 0,
+                # Use u.or_() mnemonic: fallback chain for size_limit
+                size_limit=cast("int", u.or_(config.size_limit, default=0)),
+                # Use u.or_() mnemonic: fallback chain for time_limit
+                time_limit=cast("int", u.or_(config.time_limit, default=0)),
             )
 
     # =========================================================================
@@ -334,7 +338,14 @@ class FlextLdapModels(FlextModels):
                 entry: FlextLdifModels.Entry,
             ) -> tuple[str, FlextLdifModels.Entry]:
                 """Process entry and return (category, entry) tuple."""
+                # Use u.empty() mnemonic: check if attributes are None
                 if entry.attributes is None:
+                    return ("unknown", entry)
+                # Check if attributes dict is empty
+                attrs_dict = entry.attributes.attributes if hasattr(entry.attributes, "attributes") else entry.attributes
+                # Convert Mapping to dict for u.empty compatibility
+                attrs_dict_converted = dict(attrs_dict) if isinstance(attrs_dict, Mapping) else attrs_dict
+                if u.empty(cast("dict[str, object]", attrs_dict_converted)):
                     return ("unknown", entry)
                 # Type narrowing: LdifAttributes has .attributes property
                 # entry.attributes can be LdifAttributes | Mapping[str, Sequence[str]] | None
@@ -364,10 +375,7 @@ class FlextLdapModels(FlextModels):
                 object_classes_raw: flext_types.GeneralValueType = u.get(
                     attrs_dict, "objectClass", default=[]
                 )
-                object_classes: list[str] = cast(
-                    "list[str]",
-                    u.ensure(object_classes_raw, target_type="str_list", default=[]),
-                )
+                object_classes = u.to_str_list(object_classes_raw)
                 # Use u.find() to get first valid object class, fallback to "unknown"
                 found_category = u.find(
                     object_classes, predicate=u.TypeGuards.is_string_non_empty

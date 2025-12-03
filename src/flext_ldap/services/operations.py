@@ -34,16 +34,22 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import cast
 
 from flext_core import FlextRuntime
+from flext_core.result import FlextResult as r, r as r_type
+from flext_core.typings import FlextTypes
 from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.utilities import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
 
-from flext_ldap import c, m, p, r, t, u
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 
 class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
@@ -136,7 +142,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
 
             """
             # Use u.empty() mnemonic: check if attributes are empty
-            if u.empty(entry.attributes):
+            if entry.attributes is None or u.empty(cast("dict[str, object] | None", entry.attributes)):
                 return {}
             # Type narrowing: FlextLdifModels.Entry has LdifAttributes with .attributes
             if isinstance(entry, FlextLdifModels.Entry):
@@ -158,9 +164,12 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     on_error="collect",
                 )
                 # Use u.val() mnemonic: extract value with fallback
+                transformed_raw = u.val(transform_result, default=None)
+                # Convert Mapping to dict for type compatibility
+                attrs_dict_fallback = {k: list(v) for k, v in attrs.items()}
                 transformed = cast(
                     "dict[str, list[str]]",
-                    u.val(transform_result, default=cast("dict[str, list[str]]", dict(attrs))),
+                    transformed_raw if transformed_raw is not None else attrs_dict_fallback,
                 )
                 return cast("Mapping[str, Sequence[str]]", transformed)
             if hasattr(attrs, "attributes"):
@@ -175,9 +184,12 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     on_error="collect",
                 )
                 # Use u.val() mnemonic: extract value with fallback
+                transformed_raw = u.val(transform_result, default=None)
+                # Convert Mapping to dict for type compatibility
+                attrs_dict_fallback = {k: list(v) for k, v in attrs_dict.items()}
                 transformed = cast(
                     "dict[str, list[str]]",
-                    u.val(transform_result, default=cast("dict[str, list[str]]", dict(attrs_dict))),
+                    transformed_raw if transformed_raw is not None else attrs_dict_fallback,
                 )
                 return cast("Mapping[str, Sequence[str]]", transformed)
             return {}
@@ -194,19 +206,8 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                 Lowercase normalization ensures consistent comparison regardless
                 of source system case conventions.
             """
-            # Use u.filter() and u.map() for consistent processing
-            filtered = u.filter(values, predicate=bool)
-            normalized = u.map(
-                cast("list[str]", filtered),
-                mapper=lambda v: cast(
-                    "str",
-                    u.normalize(
-                        cast("str", u.ensure(v, target_type="str", default="")),
-                        case="lower",
-                    ),
-                ),
-            )
-            return set(cast("list[str]", normalized))
+            # DSL pattern: builder for list normalization with filter and set conversion
+            return cast("set[str]", u.norm_list(values, case="lower", filter_truthy=True, to_set=True))
 
         @staticmethod
         def find_existing_values(
@@ -238,7 +239,8 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                 if isinstance(found_result, Sequence) and not isinstance(
                     found_result, str
                 ):
-                    return list(cast("Sequence[str]", found_result))
+                    # Type narrowing: Sequence[str] → list[str]
+                    return [str(item) for item in found_result]
                 # Single string value - wrap in list (shouldn't happen with Sequence[str] values)
                 if isinstance(found_result, str):
                     return [found_result]
@@ -277,7 +279,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     new_attrs,
                     predicate=lambda k, v: (
                         FlextRuntime.is_list_like(v)
-                        and not cast("bool", u.normalize(k, list(ignore)))
+                        and not u.norm_in(k, list(ignore), case="lower")
                     ),
                 ),
             )
@@ -288,7 +290,8 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             ) -> tuple[str, list[tuple[str, list[str]]] | None]:
                 """Process single attribute and return change if needed."""
                 # Use u.normalize for consistent case handling
-                normalized_name = cast("str", u.normalize(attr_name, case="lower"))
+                # DSL pattern: builder for string normalization
+                normalized_name = u.norm_str(attr_name, case="lower")
                 processed.add(normalized_name)
 
                 existing_vals = (
@@ -304,11 +307,11 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                             cast(
                                 "list[str]",
                                 u.filter(
-                                    u.ensure(
+                                    cast("list[str]", u.ensure(
                                         existing_vals,
                                         target_type="str_list",
                                         default=[],
-                                    ),
+                                    )),
                                     predicate=bool,
                                 ),
                             )
@@ -318,13 +321,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     existing_set = set()
                 # Use u.filter() for efficient filtering
                 new_set = FlextLdapOperations.EntryComparison.normalize_value_set(
-                    cast(
-                        "list[str]",
-                        u.filter(
-                            u.ensure(new_vals, target_type="str_list", default=[]),
-                            predicate=bool,
-                        ),
-                    )
+                    # DSL pattern: builder for truthy filtering
+                    # DSL pattern: builder for combined conversion+filter
+                    u.to_str_list_truthy(new_vals)
                 )
                 if existing_set != new_set:
                     return (
@@ -335,9 +334,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                                 cast(
                                     "list[str]",
                                     u.filter(
-                                        u.ensure(
+                                        cast("list[str]", u.ensure(
                                             new_vals, target_type="str_list", default=[]
-                                        ),
+                                        )),
                                         predicate=bool,
                                     ),
                                 ),
@@ -394,15 +393,15 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                 existing_attrs,
                 predicate=lambda k, v: (
                     FlextRuntime.is_list_like(v)
-                    and not cast("bool", u.normalize(k, list(ignore)))
-                    and not cast("bool", u.normalize(k, list(processed)))
+                    and not u.norm_in(k, list(ignore), case="lower")
+                    and not u.norm_in(k, list(processed), case="lower")
                 ),
             )
             # Transform to MODIFY_DELETE operations
             changes_dict = cast(
                 "dict[str, list[tuple[int, list[str]]]]",
                 u.map(
-                    cast("dict[str, Sequence[str]]", filtered_attrs),
+                    filtered_attrs,
                     mapper=lambda _k, _v: [(MODIFY_DELETE, [])],
                 )
                 if isinstance(filtered_attrs, dict)
@@ -448,7 +447,10 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
 
             def normalize_attr(_k: str, v: object) -> list[object]:
                 """Normalize attribute value to list."""
-                return list(v) if FlextRuntime.is_list_like(v) else [v]
+                v_typed = cast("FlextTypes.GeneralValueType", v)
+                if FlextRuntime.is_list_like(v_typed):
+                    return list(cast("Sequence[object]", v))
+                return [v]
 
             existing_result = u.process(
                 existing_attrs_raw,
@@ -460,10 +462,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                 "t.Ldap.AttributeDict",
                 u.val(existing_result, default={}),
             )
-            existing_attrs: t.Ldap.AttributeDict = cast(
-                "t.Ldap.AttributeDict",
-                existing_attrs_transformed,
-            )
+            existing_attrs = existing_attrs_transformed
             new_result = u.process(
                 new_attrs_raw,
                 processor=normalize_attr,
@@ -480,7 +479,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             )
 
             # Use u.any_() mnemonic: check if any collection is empty
-            if u.any_(u.empty(existing_attrs), u.empty(new_attrs)):
+            if u.any_(u.empty(cast("dict[str, object]", existing_attrs)), u.empty(cast("dict[str, object]", new_attrs))):
                 return None
 
             ignore = c.OperationalAttributes.IGNORE_SET
@@ -549,7 +548,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
         def execute(
             self,
             entry: FlextLdifModels.Entry,
-        ) -> r[m.LdapOperationResult]:
+        ) -> r_type[m.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
             Business Rules:
@@ -567,7 +566,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             """
             attrs = entry.attributes.attributes if entry.attributes else {}
             # Use u.extract for safer nested access
-            changetype_result: r[list[str] | None] = u.extract(
+            changetype_result: r_type[list[str] | None] = u.extract(
                 attrs,
                 c.LdapAttributeNames.CHANGETYPE,
                 default=[],
@@ -576,7 +575,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             changetype_val: list[str] = cast("list[str]", u.val(changetype_result, default=[]))
             # Use u.normalize for consistent case handling
             changetype = (
-                cast("str", u.normalize(changetype_val[0], case="lower"))
+                u.norm_str(changetype_val[0], case="lower")
                 if changetype_val
                 else ""
             )
@@ -588,7 +587,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
         def handle_schema_modify(
             self,
             entry: FlextLdifModels.Entry,
-        ) -> r[m.LdapOperationResult]:
+        ) -> r_type[m.LdapOperationResult]:
             """Apply a schema modification entry.
 
             Business Rules:
@@ -607,7 +606,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             """
             attrs = entry.attributes.attributes if entry.attributes else {}
             # Use u.extract for safer nested access
-            add_op_result: r[list[str] | None] = u.extract(
+            add_op_result: r_type[list[str] | None] = u.extract(
                 attrs,
                 c.ChangeTypeOperations.ADD,
                 default=[],
@@ -615,12 +614,12 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             # DSL pattern: extract value with default (u.val handles None)
             add_op: list[str] = cast("list[str]", u.val(add_op_result, default=[]))
             # Use u.empty() mnemonic: check if collection is empty
-            if u.empty(add_op):
-                return u.fail("Schema modify entry missing 'add' attribute")
+            if u.empty(cast("list[object]", add_op)):
+                return r[m.LdapOperationResult].fail("Schema modify entry missing 'add' attribute")
 
             attr_type = add_op[0]
             # Use u.extract for safer nested access
-            attr_values_result: r[list[str] | None] = u.extract(
+            attr_values_result: r_type[list[str] | None] = u.extract(
                 attrs,
                 attr_type,
                 default=[],
@@ -629,17 +628,13 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             # DSL pattern: extract value with default (u.val handles None)
             attr_values: list[str] = cast("list[str]", u.val(attr_values_result, default=[]))
             # Use u.filter() for efficient filtering
-            filtered: list[str] = cast(
-                "list[str]",
-                u.filter(
-                    u.ensure(attr_values, target_type="str_list", default=[]),
-                    predicate=bool,
-                ),
-            )
+            # DSL pattern: builder for truthy filtering
+            # DSL pattern: builder for combined conversion+filter
+            filtered: list[str] = u.to_str_list_truthy(attr_values)
 
             # Use u.empty() mnemonic: check if collection is empty
-            if u.empty(filtered):
-                return u.fail(f"Schema modify entry has only empty values for '{attr_type}'")
+            if u.empty(cast("list[object]", filtered)):
+                return r[m.LdapOperationResult].fail(f"Schema modify entry has only empty values for '{attr_type}'")
 
             changes: t.Ldap.ModifyChanges = {
                 attr_type: [(MODIFY_ADD, filtered)],
@@ -651,16 +646,17 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                 return u.ok(m.LdapOperationResult(operation=c.UpsertOperations.MODIFIED))
 
             # DSL pattern: builder for result based on error type
-            error_str = cast("str", u.ensure(modify_result.error, target_type="str", default=""))
+            # DSL pattern: builder for str conversion
+            error_str = u.to_str(modify_result.error)
             if self._ops.is_already_exists_error(error_str):
                 return u.ok(m.LdapOperationResult(operation=c.UpsertOperations.SKIPPED))
 
-            return u.fail(error_str or c.ErrorStrings.UNKNOWN_ERROR)
+            return r[m.LdapOperationResult].fail(error_str or c.ErrorStrings.UNKNOWN_ERROR)
 
         def handle_regular_add(
             self,
             entry: FlextLdifModels.Entry,
-        ) -> r[m.LdapOperationResult]:
+        ) -> r_type[m.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
             Business Rules:
@@ -683,17 +679,18 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             if add_result.is_success:
                 return u.ok(m.LdapOperationResult(operation=c.UpsertOperations.ADDED))
 
-            error_str = cast("str", u.ensure(add_result.error, target_type="str", default=""))
+            # DSL pattern: builder for str conversion
+            error_str = u.to_str(add_result.error)
             # DSL pattern: early return for non-existing-entry errors
             if not self._ops.is_already_exists_error(error_str):
-                return u.fail(error_str)
+                return r[m.LdapOperationResult].fail(error_str)
 
             return self.handle_existing_entry(entry)
 
         def handle_existing_entry(
             self,
             entry: FlextLdifModels.Entry,
-        ) -> r[m.LdapOperationResult]:
+        ) -> r_type[m.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
             Business Rules:
@@ -713,7 +710,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
 
             """
             # DSL pattern: ensure string with default
-            entry_dn = cast("str", u.ensure(entry.dn, target_type="str", default="unknown"))
+            dn_value = entry.dn.value if entry.dn else "unknown"
+            # DSL pattern: builder for str conversion
+            entry_dn = u.to_str(dn_value, default="unknown")
             search_options = m.SearchOptions(
                 base_dn=entry_dn,
                 filter_str=c.Filters.ALL_ENTRIES_FILTER,
@@ -728,28 +727,31 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             # DSL pattern: extract value and access property with default
             search_data = u.val(search_result, default=None)
             # DSL pattern: conditional property access with default
-            existing_entries = cast("list[object]", u.when(condition=search_data is not None, then_value=search_data.entries if search_data else None, else_value=[]))
+            # DSL pattern: builder for safe conditional
+            existing_entries = cast("list[object]", u.when_safe(search_data is not None, search_data.entries if search_data else None, else_value=[]))
             # Use u.empty() mnemonic: check if collection is empty
             if u.empty(existing_entries):
                 retry_result = self._ops.add(entry)
                 # Use u.ok()/u.fail() mnemonic: create results
                 if retry_result.is_success:
                     return u.ok(m.LdapOperationResult(operation=c.UpsertOperations.ADDED))
-                return u.fail(cast("str", u.ensure(retry_result.error, target_type="str", default="")))
+                # DSL pattern: builder for str conversion
+                return r[m.LdapOperationResult].fail(u.to_str(retry_result.error))
 
+            existing_entry = cast("FlextLdifModels.Entry", existing_entries[0])
             changes = FlextLdapOperations.EntryComparison.compare(
-                existing_entries[0],
+                existing_entry,
                 entry,
             )
             # DSL pattern: use empty() for dict check
-            if u.empty(changes):
+            if changes is None or u.empty(cast("dict[str, object]", changes)):
                 return u.ok(
                     m.LdapOperationResult(
                         operation=c.UpsertOperations.SKIPPED,
                     ),
                 )
 
-            modify_result = self._ops.modify(entry_dn, changes)
+            modify_result = self._ops.modify(entry_dn, cast("t.Ldap.ModifyChanges", changes))
             if modify_result.is_success:
                 return u.ok(
                     m.LdapOperationResult(
@@ -757,8 +759,8 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     ),
                 )
 
-            return u.fail(
-                cast("str", u.ensure(modify_result.error, target_type="str", default="")),
+            return r[m.LdapOperationResult].fail(
+                u.to_str(modify_result.error),
             )
 
     @staticmethod
@@ -782,7 +784,8 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
 
         """
         # Use u.normalize for consistent case handling
-        error_lower = cast("str", u.normalize(error_message, case="lower"))
+        # DSL pattern: builder for string normalization
+        error_lower = u.norm_str(error_message, case="lower")
         return (
             str(c.ErrorStrings.ENTRY_ALREADY_EXISTS) in error_lower
             or str(c.ErrorStrings.ENTRY_ALREADY_EXISTS_ALT) in error_lower
@@ -848,14 +851,15 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             # Type narrowing: SearchResultProtocol is compatible with SearchResult model
             return u.ok(search_result)
         # DSL pattern: ensure error message with default
-        error_msg = cast("str", u.ensure(result.error, target_type="str", default="Unknown error"))
-        return u.fail(error_msg)
+        # DSL pattern: builder for str conversion
+        error_msg = u.to_str(result.error, default="Unknown error")
+        return r[m.SearchResult].fail(error_msg)
 
     def add(
         self,
         entry: FlextLdifModels.Entry,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.OperationResult]:
+    ) -> r_type[m.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
         Business Rules:
@@ -887,15 +891,16 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             operation_result = result.unwrap()
             return u.ok(operation_result)
         # DSL pattern: ensure error message with default
-        error_msg = cast("str", u.ensure(result.error, target_type="str", default="Unknown error"))
-        return u.fail(error_msg)
+        # DSL pattern: builder for str conversion
+        error_msg = u.to_str(result.error, default="Unknown error")
+        return r[m.OperationResult].fail(error_msg)
 
     def modify(
         self,
         dn: str | p.LdapEntry.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.OperationResult]:
+    ) -> r_type[m.OperationResult]:
         """Modify an LDAP entry with the provided change set.
 
         Business Rules:
@@ -941,14 +946,15 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             operation_result = result.unwrap()
             return u.ok(operation_result)
         # DSL pattern: ensure error message with default
-        error_msg = cast("str", u.ensure(result.error, target_type="str", default="Unknown error"))
-        return u.fail(error_msg)
+        # DSL pattern: builder for str conversion
+        error_msg = u.to_str(result.error, default="Unknown error")
+        return r[m.OperationResult].fail(error_msg)
 
     def delete(
         self,
         dn: str | p.LdapEntry.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.OperationResult]:
+    ) -> r_type[m.OperationResult]:
         """Delete an LDAP entry identified by DN.
 
         Business Rules:
@@ -990,8 +996,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             operation_result = result.unwrap()
             return u.ok(operation_result)
         # DSL pattern: ensure error message with default
-        error_msg = cast("str", u.ensure(result.error, target_type="str", default="Unknown error"))
-        return u.fail(error_msg)
+        # DSL pattern: builder for str conversion
+        error_msg = u.to_str(result.error, default="Unknown error")
+        return r[m.OperationResult].fail(error_msg)
 
     @property
     def is_connected(self) -> bool:
@@ -1062,11 +1069,16 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             return result
 
         # Use u.normalize for consistent case handling
-        error_str = cast("str", u.normalize(str(result.error), case="lower"))
+        # DSL pattern: builder for string normalization
+        error_str = u.norm_str(str(result.error), case="lower")
         # Use u.find() to check if error matches any retry pattern
+        if retry_on_errors is None:
+            return result
+        # Convert retry_on_errors to tuple for u.find compatibility
+        retry_patterns = tuple(retry_on_errors)
         if u.find(
-            retry_on_errors,
-            predicate=lambda pattern: cast("bool", u.normalize(error_str, pattern)),
+            retry_patterns,
+            predicate=lambda pattern: u.norm_in(error_str, [pattern], case="lower"),
         ) is None:
             return result
 
@@ -1088,7 +1100,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
-    ) -> r[m.LdapBatchStats]:
+    ) -> r_type[m.LdapBatchStats]:
         """Upsert multiple entries and track per-item progress.
 
         Business Rules:
@@ -1130,7 +1142,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
         def process_entry(idx_entry: tuple[int, FlextLdifModels.Entry]) -> None:
             """Process single entry and update accumulator."""
             i, entry = idx_entry
-            entry_dn = entry.dn.value if entry.dn else "unknown"
+            # Use u.when() mnemonic: conditional DN extraction
+            # DSL pattern: builder for DN string extraction
+            entry_dn = u.dn_str(entry.dn)
             upsert_result = self.upsert(
                 entry,
                 retry_on_errors=retry_on_errors,
@@ -1152,7 +1166,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     "Batch upsert entry failed",
                     entry_index=i,
                     total_entries=total_entries,
-                    entry_dn=entry_dn[:100] if entry_dn else None,
+                    # Use u.when() mnemonic: conditional string slicing
+                    # DSL pattern: builder for safe conditional
+                    entry_dn=cast("str | None", u.when_safe(entry_dn is not None, entry_dn[:100] if entry_dn else None)),
                     error=cast(
                         "str",
                         u.ensure(upsert_result.error, target_type="str", default=""),
@@ -1161,7 +1177,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
 
                 if stop_on_error:
                     # Store error for early return check
-                    stats_builder["_stop_error"] = i  # type: ignore[typeddict-item]
+                    stats_builder["_stop_error"] = i
                     return
 
             if progress_callback:
@@ -1191,7 +1207,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
         # Check for stop_on_error condition (early exit detected)
         if stop_on_error and "_stop_error" in stats_builder:
             error_idx = cast("int", stats_builder["_stop_error"])
-            return u.fail(f"Batch upsert stopped on error at entry {error_idx}/{total_entries}")
+            return r[m.LdapBatchStats].fail(f"Batch upsert stopped on error at entry {error_idx}/{total_entries}")
 
         stats = m.LdapBatchStats(
             synced=stats_builder["synced"],
@@ -1209,7 +1225,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
         )
 
         if stats_builder["synced"] == 0 and stats_builder["failed"] > 0:
-            return u.fail(f"Batch upsert failed: all {stats_builder['failed']} entries failed, 0 synced")
+            return r[m.LdapBatchStats].fail(f"Batch upsert failed: all {stats_builder['failed']} entries failed, 0 synced")
 
         return u.ok(stats)
 
@@ -1234,7 +1250,7 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
 
         """
         if not self._connection.is_connected:
-            return u.fail(c.ErrorStrings.NOT_CONNECTED)
+            return r[m.SearchResult].fail(c.ErrorStrings.NOT_CONNECTED)
 
         ldap_config = self.config.get_namespace("ldap", FlextLdapConfig)
         base_dn = ldap_config.base_dn or "dc=example,dc=com"

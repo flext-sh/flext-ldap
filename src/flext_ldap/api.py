@@ -41,15 +41,19 @@ from pathlib import Path
 from typing import Self, TypeGuard, cast, override
 
 from flext_core import FlextConfig
+from flext_core.result import FlextResult as r, r as r_type
 from flext_ldif import FlextLdif, FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import m, p, r, t, u
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 # Use p.LdapEntry.DistinguishedNameProtocol directly - no aliases
 # Use t.Ldap.MultiPhaseProgressCallback and ProgressCallbackUnion from typings.py
@@ -311,7 +315,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         max_retries: int = 3,
         retry_delay: float = 1.0,
         **_kwargs: str | float | bool | None,
-    ) -> r[bool]:
+    ) -> r_type[bool]:
         """Establish LDAP connection with optional auto-retry.
 
         Business Rules:
@@ -439,7 +443,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         self,
         search_options: m.SearchOptions,
         server_type: FlextLdifConstants.ServerTypes = FlextLdifConstants.ServerTypes.RFC,
-    ) -> r[m.SearchResult]:
+    ) -> r_type[m.SearchResult]:
         """Perform LDAP search operation.
 
         Business Rules:
@@ -477,7 +481,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
     def add(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> r[m.OperationResult]:
+    ) -> r_type[m.OperationResult]:
         """Add LDAP entry.
 
         Business Rules:
@@ -515,7 +519,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         self,
         dn: str | p.LdapEntry.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
-    ) -> r[m.OperationResult]:
+    ) -> r_type[m.OperationResult]:
         """Modify LDAP entry.
 
         Business Rules:
@@ -554,7 +558,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
     def delete(
         self,
         dn: str | p.LdapEntry.DistinguishedNameProtocol,
-    ) -> r[m.OperationResult]:
+    ) -> r_type[m.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -593,7 +597,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
-    ) -> r[m.LdapOperationResult]:
+    ) -> r_type[m.LdapOperationResult]:
         """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).
 
         Business Rules:
@@ -642,7 +646,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
-    ) -> r[m.LdapBatchStats]:
+    ) -> r_type[m.LdapBatchStats]:
         """Batch upsert multiple LDAP entries with progress tracking.
 
         Business Rules:
@@ -693,7 +697,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         phase_name: str,
         *,
         config: SyncPhaseConfig | None = None,
-    ) -> r[m.PhaseSyncResult]:
+    ) -> r_type[m.PhaseSyncResult]:
         """Synchronize entries from LDIF file to LDAP server.
 
         Business Rules:
@@ -733,11 +737,11 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
 
         parse_result = self._ldif.parse(ldif_file_path, server_type=config.server_type)
         if parse_result.is_failure:
-            return u.fail(f"Failed to parse LDIF file: {u.err(parse_result, default='')}")
+            return r[m.PhaseSyncResult].fail(f"Failed to parse LDIF file: {u.err(cast('r_type[object]', parse_result), default='')}")
 
         entries = parse_result.unwrap()
         # Use u.empty() mnemonic: check if collection is empty
-        if u.empty(entries):
+        if u.empty(cast("list[object]", entries)):
             return u.ok(
                 m.PhaseSyncResult(
                     phase_name=phase_name,
@@ -790,7 +794,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         )
 
         if batch_result.is_failure:
-            return u.fail(f"Batch sync failed: {u.err(batch_result, default='')}")
+            return r[m.PhaseSyncResult].fail(f"Batch sync failed: {u.err(cast('r_type[object]', batch_result), default='')}")
 
         batch_stats = batch_result.unwrap()
         duration = (datetime.now(UTC) - start_time).total_seconds()
@@ -882,7 +886,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         phase_files: dict[str, Path],
         *,
         config: SyncPhaseConfig | None = None,
-    ) -> r[m.MultiPhaseSyncResult]:
+    ) -> r_type[m.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially.
 
         Processes multiple LDIF files (phases) in the order provided by the
@@ -974,7 +978,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
             on_error="collect",
         )
 
-        # Use u.agg() with DSL pattern: extract and aggregate fields uniformly
+        # Use u.values() mnemonic: extract values from dict
         phase_values = list(phase_results.values())
         # DSL pattern: field_name -> extractor, aggregate with sum (default)
         totals = {
@@ -1007,7 +1011,7 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
     def execute(
         self,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.SearchResult]:
+    ) -> r_type[m.SearchResult]:
         """Execute service health check for FlextService pattern compliance.
 
         Implements the ``FlextService.execute()`` contract by delegating to
