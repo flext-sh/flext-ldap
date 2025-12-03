@@ -52,7 +52,8 @@ class TestLdap3AdapterReal:
         """Test connection with real LDAP server."""
         adapter = Ldap3Adapter()
         result = adapter.connect(connection_config)
-        assert result.is_success, f"Connect failed: {result.error}"
+        TestOperationHelpers.assert_result_success(result)
+        # Validate actual content: adapter should be connected
         assert adapter.is_connected is True
         adapter.disconnect()
 
@@ -88,11 +89,23 @@ class TestLdap3AdapterReal:
         )
 
         result = connected_adapter.add(entry)
-        assert result.is_success, f"Add failed: {result.error}"
+        TestOperationHelpers.assert_result_success(result)
+        operation_result = result.unwrap()
+        # Validate actual content: add() returns OperationResult with operation_type field
+        assert operation_result.operation_type == FlextLdapConstants.OperationType.ADD
+        assert operation_result.success is True
+        assert operation_result.entries_affected == 1
 
         # Cleanup
         delete_result = connected_adapter.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        if delete_result.is_success:
+            delete_op_result = delete_result.unwrap()
+            assert delete_op_result.success is True
+            assert delete_op_result.entries_affected == 1
+        else:
+            # If delete fails, validate error message
+            error_msg = TestOperationHelpers.get_error_message(delete_result)
+            assert len(error_msg) > 0
 
     @pytest.mark.timeout(30)
     def test_modify_entry_with_real_server(
@@ -107,18 +120,32 @@ class TestLdap3AdapterReal:
         )
 
         add_result = connected_adapter.add(entry)
-        assert add_result.is_success, f"Add failed: {add_result.error}"
+        TestOperationHelpers.assert_result_success(add_result)
+        add_op_result = add_result.unwrap()
+        assert add_op_result.operation == "added"
+        assert add_op_result.success is True
 
         changes: dict[str, list[tuple[str, list[str]]]] = {
             "mail": [(MODIFY_REPLACE, ["testldap3modify@example.com"])],
         }
 
         modify_result = connected_adapter.modify(str(entry.dn), changes)
-        assert modify_result.is_success, f"Modify failed: {modify_result.error}"
+        TestOperationHelpers.assert_result_success(modify_result)
+        modify_op_result = modify_result.unwrap()
+        # Validate actual content: modify should succeed
+        assert modify_op_result.operation == "modified"
+        assert modify_op_result.success is True
+        assert modify_op_result.entries_affected == 1
 
         # Cleanup
         delete_result = connected_adapter.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        if delete_result.is_success:
+            delete_op_result = delete_result.unwrap()
+            assert delete_op_result.success is True
+            assert delete_op_result.entries_affected == 1
+        else:
+            error_msg = TestOperationHelpers.get_error_message(delete_result)
+            assert len(error_msg) > 0
 
     @pytest.mark.timeout(30)
     def test_delete_entry_with_real_server(
@@ -153,8 +180,17 @@ class TestLdap3AdapterReal:
             )
         )
 
-        assert add_result.is_success
-        assert delete_result.is_success, f"Delete failed: {delete_result.error}"
+        TestOperationHelpers.assert_result_success(add_result)
+        add_op_result = add_result.unwrap()
+        assert add_op_result.operation == "added"
+        assert add_op_result.success is True
+
+        TestOperationHelpers.assert_result_success(delete_result)
+        delete_op_result = delete_result.unwrap()
+        # Validate actual content: delete should succeed
+        assert delete_op_result.operation == "deleted"
+        assert delete_op_result.success is True
+        assert delete_op_result.entries_affected == 1
 
     @pytest.mark.timeout(30)
     def test_search_when_not_connected(
@@ -169,10 +205,10 @@ class TestLdap3AdapterReal:
             scope=FlextLdapConstants.SearchScope.SUBTREE,
         )
         result = adapter.search(search_options)
-        assert result.is_failure
-        # No fallback - FlextResult guarantees error exists when is_failure is True
-        assert result.error is not None
-        assert "Not connected" in result.error
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate not connected
+        assert "Not connected" in error_msg or "not connected" in error_msg.lower()
 
     @pytest.mark.timeout(30)
     def test_disconnect_when_not_connected(self) -> None:

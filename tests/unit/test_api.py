@@ -30,6 +30,7 @@ from flext_tests import FlextTestsMatchers
 from ldap3 import MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
+from flext_ldap.api import _is_multi_phase_callback, _is_single_phase_callback
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
@@ -347,3 +348,128 @@ class TestFlextLdapAPI:
     # NOTE: Service registration tests removed - _register_core_services method
     # no longer exists in FlextLdap API. The API now uses dependency injection
     # pattern instead of service container registration.
+
+    def test_is_connected_property(self, api_instance: FlextLdap) -> None:
+        """Test is_connected property returns connection state.
+
+        Covers line 436 in api.py.
+        """
+        assert api_instance.is_connected is False
+        # After connecting (if successful), should be True
+        # This is tested in integration tests, here we just verify the property exists
+
+    def test_connect_with_flext_ldap_config_conversion(
+        self,
+        api_instance: FlextLdap,
+    ) -> None:
+        """Test connect method converts FlextLdapConfig to ConnectionConfig.
+
+        Covers lines 349-350 in api.py.
+        """
+        # Create FlextLdapConfig instead of ConnectionConfig
+        ldap_config = FlextLdapConfig(
+            host="localhost",
+            port=389,
+            use_ssl=False,
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
+            bind_password="test123",
+        )
+        # Pass FlextLdapConfig - should be converted internally
+        result = api_instance.connect(ldap_config)
+        # Verify it returns FlextResult (conversion happens internally)
+        assert isinstance(result, FlextResult)
+
+
+class TestCallbackTypeGuards:
+    """Tests for callback type guard functions (_is_multi_phase_callback, _is_single_phase_callback).
+
+    These tests cover the exception handling paths in the type guard functions.
+    """
+
+    def test_is_multi_phase_callback_with_none(self) -> None:
+        """Test _is_multi_phase_callback returns False for None.
+
+        Covers line 83-84 in api.py.
+        """
+        result = _is_multi_phase_callback(None)
+        assert result is False
+
+    def test_is_multi_phase_callback_with_exception(self) -> None:
+        """Test _is_multi_phase_callback handles exceptions gracefully.
+
+        Covers lines 85-89 in api.py (exception handling).
+        """
+        # Create a callback that will raise TypeError when inspecting signature
+        error_msg = "Cannot inspect signature"
+
+        class BadCallback:
+            """Callback that raises exception on signature inspection."""
+
+            def __call__(self, *args: object) -> None:
+                pass
+
+            def __getattr__(self, name: str) -> None:
+                if name == "__signature__":
+                    raise TypeError(error_msg)
+                raise AttributeError(f"{name} not found")
+
+        bad_cb = BadCallback()
+        # Should return False, not raise exception
+        result = _is_multi_phase_callback(bad_cb)
+        assert result is False
+
+    def test_is_single_phase_callback_with_none(self) -> None:
+        """Test _is_single_phase_callback returns False for None.
+
+        Covers line 110-111 in api.py.
+        """
+        result = _is_single_phase_callback(None)
+        assert result is False
+
+    def test_is_single_phase_callback_with_exception(self) -> None:
+        """Test _is_single_phase_callback handles exceptions gracefully.
+
+        Covers lines 112-116 in api.py (exception handling).
+        """
+        # Create a callback that will raise ValueError when inspecting signature
+        error_msg = "Cannot inspect signature"
+
+        class BadCallback:
+            """Callback that raises exception on signature inspection."""
+
+            def __call__(self, *args: object) -> None:
+                pass
+
+            def __getattr__(self, name: str) -> None:
+                if name == "__signature__":
+                    raise ValueError(error_msg)
+                raise AttributeError(f"{name} not found")
+
+        bad_cb = BadCallback()
+        # Should return False, not raise exception
+        result = _is_single_phase_callback(bad_cb)
+        assert result is False
+
+    def test_is_multi_phase_callback_with_attribute_error(self) -> None:
+        """Test _is_multi_phase_callback handles AttributeError.
+
+        Covers exception handling in lines 85-89.
+        """
+        # Create a callback that will raise AttributeError when inspecting signature
+        error_msg = "Cannot access signature"
+
+        class BadCallback:
+            """Callback that raises AttributeError on signature inspection."""
+
+            def __call__(self, *args: object) -> None:
+                pass
+
+            def __getattr__(self, name: str) -> None:
+                if name == "__signature__":
+                    raise AttributeError(error_msg)
+                raise AttributeError(f"{name} not found")
+
+        bad_cb = BadCallback()
+        # Should return False, not raise exception
+        result = _is_multi_phase_callback(bad_cb)
+        assert result is False

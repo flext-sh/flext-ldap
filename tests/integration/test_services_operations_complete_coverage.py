@@ -15,7 +15,7 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult, t
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsFactories, FlextTestsUtilities
@@ -114,8 +114,8 @@ class TestDataFactories:
                     for k, v in attrs_raw.items()
                 }
                 # Convert dict to Mapping[str, GeneralValueType] for EntryTestHelpers.create_entry
-                attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
-                    "Mapping[str, FlextTypes.GeneralValueType]",
+                attrs_mapping: Mapping[str, t.GeneralValueType] = cast(
+                    "Mapping[str, t.GeneralValueType]",
                     attrs_dict,
                 )
                 entry = EntryTestHelpers.create_entry(dn_str, attrs_mapping)
@@ -131,8 +131,8 @@ class TestDataFactories:
             "objectClass": ["top", "person"],
         }
         # Convert dict to Mapping[str, GeneralValueType] for EntryTestHelpers.create_entry
-        attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]",
+        attrs_mapping: Mapping[str, t.GeneralValueType] = cast(
+            "Mapping[str, t.GeneralValueType]",
             attrs_dict,
         )
         return EntryTestHelpers.create_entry("invalid-dn", attrs_mapping)
@@ -278,7 +278,14 @@ class TestFlextLdapOperationsCompleteCoverage:
 
                 # Cleanup
                 delete_result = operations_service.delete(dn_str.strip())
-                assert delete_result.is_success or delete_result.is_failure
+                if delete_result.is_success:
+                    delete_op_result = delete_result.unwrap()
+                    assert delete_op_result.success is True
+                    assert delete_op_result.entries_affected >= 0
+                else:
+                    # Validate failure: error message should be present
+                    error_msg = TestOperationHelpers.get_error_message(delete_result)
+                    assert len(error_msg) > 0
 
             case DNHandlingType.ERROR_HANDLING:
                 # Disconnect to trigger error

@@ -20,6 +20,7 @@ from flext_ldap.constants import FlextLdapConstants
 
 from ..fixtures.constants import RFC
 from ..fixtures.typing import LdapContainerDict
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -91,12 +92,13 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
 
         # Convert to FlextLdifModels.Entry
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert result.is_success
-
+        TestOperationHelpers.assert_result_success(result)
         entry = result.unwrap()
+        # Validate actual content: entry should have DN and attributes
         assert isinstance(entry, FlextLdifModels.Entry)
         assert str(entry.dn) == str(ldap3_entry.entry_dn)
         assert entry.attributes is not None
+        assert entry.attributes.attributes is not None
 
     def test_ldap3_entry_conversion_failure_handling(
         self,
@@ -120,7 +122,11 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
                 ldap3_entry: Ldap3Entry = ldap_connection.entries[0]
                 result = adapter.ldap3_to_ldif_entry(ldap3_entry)
                 # Should succeed with real entry
-                assert result.is_success
+                TestOperationHelpers.assert_result_success(result)
+                entry = result.unwrap()
+                # Validate actual content: entry should have DN and attributes
+                assert entry.dn is not None
+                assert entry.attributes is not None
         except Exception:
             # If conversion fails, that's OK - we're testing error handling
             pass
@@ -145,8 +151,11 @@ class TestFlextLdapEntryAdapterLdap3Conversion:
 
         # Convert to FlextLdifModels.Entry
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert entry_result.is_success
+        TestOperationHelpers.assert_result_success(entry_result)
         entry = entry_result.unwrap()
+        # Validate actual content: entry should have DN and attributes
+        assert entry.dn is not None
+        assert entry.attributes is not None
 
         # Convert back to ldap3 attributes
         attrs_result = adapter.ldif_entry_to_ldap3_attributes(entry)

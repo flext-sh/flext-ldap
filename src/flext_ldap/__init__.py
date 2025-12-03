@@ -24,6 +24,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import (
+    FlextDecorators,
+    FlextExceptions,
+    FlextHandlers,
+    FlextMixins,
+    FlextResult,
+    FlextService,
+)
+
 from flext_ldap.api import FlextLdap
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
@@ -36,6 +45,35 @@ from flext_ldap.utilities import FlextLdapUtilities
 
 __email__ = "dev@flext.com"
 
+# ═══════════════════════════════════════════════════════════════════════════
+# CONVENIENCE ALIASES - Short names for common usage
+# ═══════════════════════════════════════════════════════════════════════════
+# Use these aliases for concise code:
+#   from flext_ldap import u, t, c, m, p, r, e, d, s, x, h
+#   result = u.filter(data, predicate)
+#   typed_value: t.Ldap.Attributes = {...}
+#   status = c.OperationType.ADD
+#   model = m.SearchOptions(...)
+#   protocol: p.LdapEntry.EntryProtocol = entry
+#   success = r.ok("value")
+#   error = e.ValidationError("message")
+#   decorator = d.validate()
+#   class MyService(s): ...  # s = FlextService base class
+#   mixin = x.Cacheable()
+#   handler = h.CommandHandler()
+
+u = FlextLdapUtilities
+t = FlextLdapTypes
+c = FlextLdapConstants
+m = FlextLdapModels
+p = FlextLdapProtocols
+r = FlextResult
+e = FlextExceptions
+d = FlextDecorators
+s = FlextService
+x = FlextMixins
+h = FlextHandlers
+
 __all__ = [
     "FlextLdap",  # ✅ Facade (single entry point)
     "FlextLdapConfig",  # ✅ Configuration
@@ -46,4 +84,16 @@ __all__ = [
     "FlextLdapServiceBase",  # ✅ Base class for services with typed config
     "FlextLdapTypes",  # ✅ Type definitions
     "FlextLdapUtilities",  # ✅ Advanced utilities
+    # Convenience aliases
+    "c",  # ✅ Constants alias
+    "d",  # ✅ Decorators alias
+    "e",  # ✅ Exceptions alias
+    "h",  # ✅ Handlers alias
+    "m",  # ✅ Models alias
+    "p",  # ✅ Protocols alias
+    "r",  # ✅ Result alias
+    "s",  # ✅ Service alias
+    "t",  # ✅ Types alias
+    "u",  # ✅ Utilities alias
+    "x",  # ✅ Mixins alias
 ]

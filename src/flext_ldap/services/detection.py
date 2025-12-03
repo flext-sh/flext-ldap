@@ -31,13 +31,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
-from flext_core import FlextResult, FlextRuntime
+from flext_core import FlextRuntime
 from ldap3 import Connection
 
+from flext_ldap import c, r, t, u
 from flext_ldap.base import FlextLdapServiceBase
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.typings import FlextLdapTypes
 
 
 class FlextLdapServerDetector(FlextLdapServiceBase[str]):
@@ -48,13 +48,13 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
     normalized server label (for example, ``openldap`` or ``ad``).
     """
 
-    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[str]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[str]:
         """Detect server type using a provided ``ldap3.Connection`` instance.
 
         Business Rules:
             - Requires 'connection' parameter in kwargs (ldap3.Connection instance)
             - Delegates to detect_from_connection() for actual detection logic
-            - Returns FlextResult.fail() if connection parameter missing or invalid type
+            - Returns r.fail() if connection parameter missing or invalid type
             - Connection must be bound before detection (validated by detect_from_connection)
 
         Audit Implications:
@@ -69,14 +69,14 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         """
         connection = _kwargs.get("connection")
         if connection is None:
-            return FlextResult[str].fail("connection parameter required")
+            return r[str].fail("connection parameter required")
         if not isinstance(connection, Connection):
-            return FlextResult[str].fail(
+            return r[str].fail(
                 f"connection must be ldap3.Connection, got {type(connection).__name__}",
             )
         return self.detect_from_connection(connection)
 
-    def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
+    def detect_from_connection(self, connection: Connection) -> r[str]:
         """Query ``rootDSE`` and return a detected server label.
 
         Business Rules:
@@ -102,23 +102,58 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             connection: Active ldap3.Connection instance (must be bound).
 
         Returns:
-            FlextResult[str]: Normalized server type string (oid, oud, openldap, ad, ds389, rfc)
+            r[str]: Normalized server type string (oid, oud, openldap, ad, ds389, rfc)
             or error if rootDSE query fails.
 
         """
         self.logger.debug(
             "Detecting server type from connection",
-            operation=FlextLdapConstants.LdapOperationNames.DETECT_FROM_CONNECTION.value,
+            operation=c.LdapOperationNames.DETECT_FROM_CONNECTION.value,
             connection_bound=connection.bound,
         )
 
         root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
         if root_dse_result.is_failure:
-            return FlextResult[str].fail(
+            return r[str].fail(
                 f"Failed to query rootDSE: {root_dse_result.error}",
             )
 
         root_dse_attrs = root_dse_result.unwrap()
+        # Use u.extract for safer nested access
+        naming_contexts_result: r[list[str] | None] = u.extract(
+            root_dse_attrs,
+            "namingContexts",
+            default=[],
+        )
+        supported_controls_result: r[list[str] | None] = u.extract(
+            root_dse_attrs,
+            "supportedControl",
+            default=[],
+        )
+        supported_extensions_result: r[list[str] | None] = u.extract(
+            root_dse_attrs,
+            "supportedExtension",
+            default=[],
+        )
+        # Extract values from results
+        naming_contexts: list[str] = (
+            list(naming_contexts_result.value)
+            if naming_contexts_result.is_success
+            and naming_contexts_result.value is not None
+            else []
+        )
+        supported_controls: list[str] = (
+            list(supported_controls_result.value)
+            if supported_controls_result.is_success
+            and supported_controls_result.value is not None
+            else []
+        )
+        supported_extensions: list[str] = (
+            list(supported_extensions_result.value)
+            if supported_extensions_result.is_success
+            and supported_extensions_result.value is not None
+            else []
+        )
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
                 root_dse_attrs,
@@ -128,15 +163,15 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
                 root_dse_attrs,
                 "vendorVersion",
             ),
-            naming_contexts=list(root_dse_attrs.get("namingContexts", [])),
-            supported_controls=list(root_dse_attrs.get("supportedControl", [])),
-            supported_extensions=list(root_dse_attrs.get("supportedExtension", [])),
+            naming_contexts=naming_contexts,
+            supported_controls=supported_controls,
+            supported_extensions=supported_extensions,
         )
 
     @staticmethod
     def _query_root_dse(
         connection: Connection,
-    ) -> FlextResult[FlextLdapTypes.Ldap.Attributes]:
+    ) -> r[t.Ldap.Attributes]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
         Business Rules:
@@ -161,45 +196,59 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             connection: Active ldap3.Connection instance (must be bound).
 
         Returns:
-            FlextResult[Attributes]: Dict mapping attribute names to list[str] values
+            r[Attributes]: Dict mapping attribute names to list[str] values
             or error if rootDSE query fails.
 
         """
         # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
-        search_scope: FlextLdapConstants.LiteralTypes.Ldap3ScopeLiteral = "BASE"
+        search_scope: c.LiteralTypes.Ldap3ScopeLiteral = "BASE"
         if not connection.search(
             search_base="",
-            search_filter=str(FlextLdapConstants.Filters.ALL_ENTRIES_FILTER),
+            search_filter=str(c.Filters.ALL_ENTRIES_FILTER),
             search_scope=search_scope,
-            attributes=str(FlextLdapConstants.LdapAttributeNames.ALL_ATTRIBUTES),
+            attributes=str(c.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
-            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
+            return r[t.Ldap.Attributes].fail(
                 f"rootDSE query failed: {connection.result}",
             )
 
         if not connection.entries:
-            return FlextResult[FlextLdapTypes.Ldap.Attributes].fail(
+            return r[t.Ldap.Attributes].fail(
                 "rootDSE query returned no entries",
             )
 
         root_dse_entry = connection.entries[0]
         attrs_dict = root_dse_entry.entry_attributes_as_dict
-        attributes: dict[str, list[str]] = {
-            attr_name: (
-                [str(v) for v in attr_value]
-                if FlextRuntime.is_list_like(attr_value)
-                else [str(attr_value)]
-            )
-            for attr_name, attr_value in attrs_dict.items()
-            if attr_value is not None
-        }
 
-        return FlextResult[FlextLdapTypes.Ldap.Attributes].ok(attributes)
+        # Use u.filter() and u.map() for efficient processing
+        filtered_attrs = u.filter(attrs_dict, predicate=lambda _k, v: v is not None)
+        attributes = u.map(
+            cast("dict[str, object]", filtered_attrs),
+            mapper=lambda _k, v: cast(
+                "list[str]",
+                u.ensure(cast("t.GeneralValueType", v), target_type="str_list", default=[]),
+            )
+            if FlextRuntime.is_list_like(cast("t.GeneralValueType", v))
+            else [str(v)],
+        )
+
+        return r[t.Ldap.Attributes].ok(cast("t.Ldap.Attributes", attributes))
 
     @staticmethod
-    def _get_first_value(attrs: FlextLdapTypes.Ldap.Attributes, key: str) -> str | None:
-        """Return the first attribute value for ``key`` when present."""
-        values = attrs.get(key)
+    def _get_first_value(attrs: t.Ldap.Attributes, key: str) -> str | None:
+        """Return the first attribute value for ``key`` when present.
+
+        Uses u.extract for safer nested access.
+        """
+        # Use u.extract for safer nested access
+        values_result: r[list[str] | None] = u.extract(
+            attrs,
+            key,
+            default=None,
+        )
+        values: list[str] | None = (
+            values_result.value if values_result.is_success else None
+        )
         if not values:
             return None
         return str(values[0])
@@ -211,7 +260,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         naming_contexts: list[str],
         supported_controls: list[str],
         supported_extensions: list[str],
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Classify the server using collected ``rootDSE`` attributes.
 
         Business Rules:
@@ -238,7 +287,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             supported_extensions: List of supported LDAP extensions.
 
         Returns:
-            FlextResult[str]: Always success with normalized server type string.
+            r[str]: Always success with normalized server type string.
 
         """
         pseudo_ldif_lines: list[str] = []
@@ -264,7 +313,7 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
                 vendor_version,
             )
         )
-        return FlextResult[str].ok(detected_type)
+        return r[str].ok(detected_type)
 
     @staticmethod
     def _detect_server_type_from_attributes_simple(
@@ -303,30 +352,63 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
 
         """
         # Check vendor info first (most reliable)
-        vendor_parts = [v for v in [vendor_name, vendor_version] if v]
-        vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
+        # Use u.filter() for efficient filtering
+        vendor_parts: list[str] = cast(
+            "list[str]",
+            u.filter(
+                u.ensure([vendor_name, vendor_version], target_type="str_list", default=[]),
+                predicate=bool,
+            ),
+        )
+        # Use u.normalize() for consistent case handling
+        vendor_info = (
+            u.normalize(" ".join(vendor_parts), case="lower") if vendor_parts else ""
+        )
 
         # Vendor-based detection (priority order)
-        vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
-            (
-                "oid",
-                lambda v: "oracle" in v and ("internet directory" in v or "oid" in v),
-            ),
-            ("oud", lambda v: "oracle" in v and "unified directory" in v),
-            ("openldap", lambda v: "openldap" in v),
-            ("ad", lambda v: "microsoft" in v or "active directory" in v),
-            ("ds389", lambda v: "389" in v or "dirsrv" in v),
-        ]
+        # Use u.find() for efficient vendor check detection
+        if vendor_info and isinstance(vendor_info, str):
+            vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
+                (
+                    "oid",
+                    lambda v: "oracle" in v
+                    and ("internet directory" in v or "oid" in v),
+                ),
+                ("oud", lambda v: "oracle" in v and "unified directory" in v),
+                ("openldap", lambda v: "openldap" in v),
+                ("ad", lambda v: "microsoft" in v or "active directory" in v),
+                ("ds389", lambda v: "389" in v or "dirsrv" in v),
+            ]
 
-        for server_type, vendor_check_func in vendor_checks:
-            if vendor_info and vendor_check_func(vendor_info):
-                return server_type
+            found_check = u.find(
+                vendor_checks,
+                predicate=lambda _idx, check: check[1](vendor_info),
+            )
+            if found_check is not None:
+                return found_check[0]
 
         # Check extensions and naming contexts for server type indicators
-        ext_str = " ".join(ext.lower() for ext in supported_extensions)
-        context_str = " ".join(naming_contexts).lower()
+        # Use u.filter() with mapper for efficient conversion
+        ext_str = " ".join(
+            cast(
+                "list[str]",
+                u.filter(
+                    supported_extensions,
+                    lambda _: True,  # No filtering, just mapping
+                    mapper=str.lower,
+                ),
+            )
+        )
+        # Use normalize() for consistent case handling
+        normalized_context = u.normalize(" ".join(naming_contexts), case="lower")
+        context_str = (
+            cast("str", normalized_context)
+            if isinstance(normalized_context, str)
+            else " ".join(naming_contexts).lower()
+        )
 
         # Extension/context-based detection (priority order)
+        # Use u.find() for efficient server type detection
         extension_checks: list[tuple[str, Callable[[str, str], bool]]] = [
             ("openldap", lambda e, _c: "openldap" in e),
             ("oid", lambda e, c: "oracle" in e or "oid" in e or "oracle" in c),
@@ -341,9 +423,12 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             ("ds389", lambda e, _c: "389" in e or "dirsrv" in e),
         ]
 
-        for server_type, extension_check_func in extension_checks:
-            if extension_check_func(ext_str, context_str):
-                return server_type
+        found_check = u.find(
+            extension_checks,
+            predicate=lambda check: check[1](ext_str, context_str),
+        )
+        if found_check is not None:
+            return found_check[0]
 
         # Default to RFC-compliant generic server
         return "rfc"

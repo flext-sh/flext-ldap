@@ -90,7 +90,15 @@ class TestLdap3AdapterErrorHandling:
 
         result = connected_adapter.add(entry)
         # Should fail gracefully
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate invalid DN or entry
+        assert len(error_msg) > 0
+        assert (
+            "invalid" in error_msg.lower()
+            or "dn" in error_msg.lower()
+            or "entry" in error_msg.lower()
+        )
 
     def test_add_with_missing_objectclass(
         self,
@@ -108,7 +116,15 @@ class TestLdap3AdapterErrorHandling:
 
         result = connected_adapter.add(entry)
         # Should fail (objectClass required)
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate missing objectClass
+        assert len(error_msg) > 0
+        assert (
+            "objectclass" in error_msg.lower()
+            or "object class" in error_msg.lower()
+            or "required" in error_msg.lower()
+        )
 
     def test_modify_with_invalid_dn(
         self,
@@ -120,7 +136,11 @@ class TestLdap3AdapterErrorHandling:
         }
 
         result = connected_adapter.modify("invalid-dn", changes)
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate invalid DN
+        assert len(error_msg) > 0
+        assert "invalid" in error_msg.lower() or "dn" in error_msg.lower()
 
     def test_modify_with_invalid_changes(
         self,
@@ -131,8 +151,19 @@ class TestLdap3AdapterErrorHandling:
         changes: dict[str, list[tuple[str, list[str]]]] = {}
 
         result = connected_adapter.modify(f"cn=test,{RFC.DEFAULT_BASE_DN}", changes)
-        # Should handle gracefully
-        assert result.is_success or result.is_failure
+        # Should handle gracefully - validate actual behavior
+        if result.is_success:
+            operation_result = result.unwrap()
+            # Validate actual content: modify() returns OperationResult with operation_type field
+            assert (
+                operation_result.operation_type
+                == FlextLdapConstants.OperationType.MODIFY
+            )
+            assert operation_result.success is True
+        else:
+            # Validate failure: error message should be present
+            error_msg = TestOperationHelpers.get_error_message(result)
+            assert len(error_msg) > 0
 
     def test_delete_with_invalid_dn(
         self,
@@ -140,7 +171,11 @@ class TestLdap3AdapterErrorHandling:
     ) -> None:
         """Test delete with invalid DN."""
         result = connected_adapter.delete("invalid-dn")
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate invalid DN
+        assert len(error_msg) > 0
+        assert "invalid" in error_msg.lower() or "dn" in error_msg.lower()
 
     def test_connect_with_invalid_credentials(
         self,
@@ -192,7 +227,18 @@ class TestLdap3AdapterErrorHandling:
 
         # Add should work or fail gracefully
         result = connected_adapter.add(entry)
-        assert result.is_success or result.is_failure
+        if result.is_success:
+            operation_result = result.unwrap()
+            # Validate actual content: add() returns OperationResult with operation_type field
+            assert (
+                operation_result.operation_type == FlextLdapConstants.OperationType.ADD
+            )
+            assert operation_result.success is True
+            assert operation_result.entries_affected == 1
+        else:
+            # Validate failure: error message should be present
+            error_msg = TestOperationHelpers.get_error_message(result)
+            assert len(error_msg) > 0
 
         # Cleanup
         _ = connected_adapter.delete(str(entry.dn))
@@ -212,7 +258,15 @@ class TestLdap3AdapterErrorHandling:
             changes,
         )
         # Should fail gracefully
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate entry not found
+        assert len(error_msg) > 0
+        assert (
+            "not found" in error_msg.lower()
+            or "nosuchobject" in error_msg.lower()
+            or "does not exist" in error_msg.lower()
+        )
 
     def test_delete_exception_handling(
         self,
@@ -222,7 +276,15 @@ class TestLdap3AdapterErrorHandling:
         # Try to delete non-existent entry
         result = connected_adapter.delete("cn=nonexistent12345,dc=flext,dc=local")
         # Should fail gracefully
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate entry not found
+        assert len(error_msg) > 0
+        assert (
+            "not found" in error_msg.lower()
+            or "nosuchobject" in error_msg.lower()
+            or "does not exist" in error_msg.lower()
+        )
 
     def test_connect_exception_handling(self) -> None:
         """Test connect exception handling."""
@@ -236,7 +298,15 @@ class TestLdap3AdapterErrorHandling:
             bind_password="password",
         )
         result = adapter.connect(config)
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate connection failure
+        assert len(error_msg) > 0
+        assert (
+            "connection" in error_msg.lower()
+            or "connect" in error_msg.lower()
+            or "refused" in error_msg.lower()
+        )
         adapter.disconnect()
 
     def test_search_without_connection(self) -> None:

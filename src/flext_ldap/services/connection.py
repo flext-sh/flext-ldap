@@ -8,7 +8,7 @@ connection so callers interact with a single, typed entry point.
 Business Rules:
     - Connection binding uses ldap3 library through Ldap3Adapter abstraction
     - Server type detection is optional and non-blocking after successful bind
-    - Retry logic uses FlextUtilities.Reliability.retry() for transient failures
+    - Retry logic uses u.Reliability.retry() for transient failures
     - Parser defaults to FlextLdif.get_instance().parser singleton
     - Connection state is tracked via is_connected property
 
@@ -28,16 +28,15 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextConfig, FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextConfig
 from flext_ldif import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
 from pydantic import ConfigDict, PrivateAttr
 
+from flext_ldap import c, m, r, t, u
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.base import FlextLdapServiceBase
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.detection import FlextLdapServerDetector
 
 
@@ -51,7 +50,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
     Business Rules:
         - Connection credentials (bind DN and password) are passed via
-          :class:`FlextLdapModels.ConnectionConfig`, never stored in service state
+          :class:`m.ConnectionConfig`, never stored in service state
         - Parser instance is resolved once at construction time and shared with
           the adapter for LDIF↔ldap3 conversions
         - Configuration defaults to ``FlextLdapConfig()`` when not provided,
@@ -67,13 +66,13 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
     Architecture Notes:
         - Implements FlextService pattern via ``FlextLdapServiceBase[bool]``
-        - Returns ``FlextResult[bool]`` for composable error handling
+        - Returns ``r[bool]`` for composable error handling
         - Adapter injection enables test doubles without modifying service logic
         - Uses ``PrivateAttr`` for ``_config`` to maintain base class compatibility
 
     Example:
         >>> connection = FlextLdapConnection()
-        >>> config = FlextLdapModels.ConnectionConfig(
+        >>> config = m.ConnectionConfig(
         ...     host="ldap.example.com",
         ...     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         ...     bind_password="secret",
@@ -140,63 +139,63 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         # Create adapter directly
         # Pass parser as part of kwargs (Ldap3Adapter.__init__ extracts it from kwargs)
         # Use cast to satisfy type checker - parser is extracted and validated in Ldap3Adapter.__init__
-        kwargs_with_parser: dict[str, FlextTypes.GeneralValueType] = {
-            "parser": cast("FlextTypes.GeneralValueType", parser),
+        kwargs_with_parser: dict[str, t.GeneralValueType] = {
+            "parser": cast("t.GeneralValueType", parser),
         }
         self._adapter = Ldap3Adapter(**kwargs_with_parser)
 
     def connect(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         auto_retry: bool = False,
         max_retries: int = 3,
         retry_delay: float = 1.0,
         **_kwargs: str | float | bool | None,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Establish an LDAP connection with optional automatic retry.
 
         The adapter is asked to connect using the supplied configuration. When
         ``auto_retry`` is enabled, transient failures are retried using
-        ``FlextUtilities.Reliability.retry`` semantics with exponential backoff.
+        ``uretry`` semantics with exponential backoff.
 
         Business Rules:
             - Connection attempt is delegated entirely to ``Ldap3Adapter.connect()``
             - When ``auto_retry=True``, uses flext-core's Reliability.retry() which
               implements exponential backoff for transient network errors
             - Server type detection runs ONLY after successful connection (non-blocking)
-            - On success, returns fresh ``FlextResult[bool].ok(True)`` (not adapter's result)
+            - On success, returns fresh ``r[bool].ok(True)`` (not adapter's result)
             - On failure, returns adapter's failure result unchanged for error propagation
             - ``_kwargs`` absorbs extra arguments for future extensibility
 
         Audit Implications:
             - Connection success triggers INFO log with detected server type
             - Connection failure is logged at ERROR level with adapter error details
-            - Retry attempts are logged by FlextUtilities.Reliability.retry()
+            - Retry attempts are logged by uretry()
             - Server detection failures are logged at DEBUG (non-critical operation)
 
         Args:
             connection_config: Connection parameters including host, port, and
-                bind credentials. See :class:`FlextLdapModels.ConnectionConfig`.
+                bind credentials. See :class:`m.ConnectionConfig`.
             auto_retry: When ``True``, retry transient failures using
                 ``max_retries`` and ``retry_delay``. Defaults to ``False``.
             max_retries: Maximum retry attempts when ``auto_retry`` is enabled.
                 Defaults to 3. Only effective when ``auto_retry=True``.
             retry_delay: Delay in seconds between retry attempts. Defaults to 1.0.
-                FlextUtilities.Reliability.retry() may apply backoff multiplier.
+                uretry() may apply backoff multiplier.
 
         Returns:
-            FlextResult[bool]: ``True`` when the connection is established and
+            r[bool]: ``True`` when the connection is established and
             bind succeeds; otherwise a failure containing the adapter error
             message for troubleshooting.
 
         """
 
-        def attempt_connect() -> FlextResult[bool]:
+        def attempt_connect() -> r[bool]:
             return self._adapter.connect(connection_config)
 
         result = (
-            FlextUtilities.Reliability.retry(
+            u.Reliability.retry(
                 operation=attempt_connect,
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,
@@ -207,7 +206,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
         if result.is_success:
             self._detect_server_type_optional()
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         return result
 
     def disconnect(self) -> None:
@@ -309,22 +308,22 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             return
 
         detector = FlextLdapServerDetector()
-        detection_result: FlextResult[str] = detector.detect_from_connection(connection)
+        detection_result: r[str] = detector.detect_from_connection(connection)
 
         if detection_result.is_success:
             self.logger.info(
                 "Server type detected automatically",
-                operation=FlextLdapConstants.LdapOperationNames.CONNECT,
+                operation=c.LdapOperationNames.CONNECT,
                 detected_server_type=detection_result.unwrap(),
             )
         else:
             self.logger.debug(
                 "Server type detection failed (non-critical)",
-                operation=FlextLdapConstants.LdapOperationNames.CONNECT,
+                operation=c.LdapOperationNames.CONNECT,
                 error=str(detection_result.error) if detection_result.error else "",
             )
 
-    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
         """Execute service health check for FlextService pattern compliance.
 
         Implements the ``FlextService.execute()`` contract to report service
@@ -335,7 +334,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             - Implements FlextService abstract method for service orchestration
             - Health is determined solely by ``is_connected`` property
             - Does not attempt reconnection or network round-trip
-            - Error message uses ``FlextLdapConstants.ErrorStrings.NOT_CONNECTED``
+            - Error message uses ``c.ErrorStrings.NOT_CONNECTED``
               for consistent error handling across the ecosystem
             - ``_kwargs`` absorbs extra arguments for interface compatibility
 
@@ -349,12 +348,12 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
                 Not used by this implementation.
 
         Returns:
-            FlextResult[bool]: ``ok(True)`` if connection is active and bound;
+            r[bool]: ``ok(True)`` if connection is active and bound;
             ``fail(NOT_CONNECTED)`` if disconnected or never connected.
 
         """
         if self.is_connected:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(
-            str(FlextLdapConstants.ErrorStrings.NOT_CONNECTED),
+            return r[bool].ok(True)
+        return r[bool].fail(
+            str(c.ErrorStrings.NOT_CONNECTED),
         )

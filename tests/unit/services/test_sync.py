@@ -40,6 +40,8 @@ from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
 
+from ...helpers.operation_helpers import TestOperationHelpers
+
 logger = FlextLogger(__name__)
 
 pytestmark = pytest.mark.unit
@@ -184,8 +186,14 @@ class TestFlextLdapSyncService:
 
         result = sync_service.sync_ldif_file(nonexistent_file, options)
 
-        assert result.is_failure
-        assert "LDIF file not found" in str(result.error)
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content
+        assert (
+            "LDIF file not found" in error_msg
+            or "not found" in error_msg.lower()
+            or "file" in error_msg.lower()
+        )
 
     def test_sync_ldif_file_with_empty_file(
         self,

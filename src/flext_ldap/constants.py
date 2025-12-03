@@ -626,3 +626,7 @@ class FlextLdapConstants(FlextConstants):
 
 # Note: Literal validation removed to avoid circular dependencies
 # Literals are manually maintained to match StrEnum values
+
+
+# Convenience alias for common usage pattern
+c = FlextLdapConstants

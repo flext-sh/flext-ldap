@@ -16,7 +16,7 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_ldif import FlextLdifParser
 
 from flext_ldap.config import FlextLdapConfig
@@ -193,31 +193,72 @@ class TestFlextLdapSyncServiceReal:
             result: FlextResult[FlextLdapModels.SyncStats],
             config: GenericFieldsDict,
         ) -> None:
-            """Assert sync result based on configuration."""
+            """Assert sync result based on configuration with comprehensive validation."""
             if expected_success := config.get("expect_success"):
-                assert result.is_success == expected_success
+                assert result.is_success == expected_success, (
+                    f"Expected success={expected_success}, got is_success={result.is_success}, "
+                    f"error={result.error}"
+                )
+                # Validate actual content based on expected success
+                if expected_success and result.is_success:
+                    stats = TestOperationHelpers.unwrap_sync_stats(result)
+                    # Validate all stats fields are non-negative
+                    assert stats.total >= 0
+                    assert stats.added >= 0
+                    assert stats.failed >= 0
+                    assert stats.skipped >= 0
+                    assert stats.duration_seconds >= 0.0
+                elif not expected_success and result.is_failure:
+                    # Validate failure: error message should be present
+                    error_msg = TestOperationHelpers.get_error_message(result)
+                    assert len(error_msg) > 0
 
             if result.is_success:
                 stats = TestOperationHelpers.unwrap_sync_stats(result)
 
+                # Validate actual content: all stats should be non-negative
+                assert stats.total >= 0, f"Total should be >= 0, got {stats.total}"
+                assert stats.added >= 0, f"Added should be >= 0, got {stats.added}"
+                assert stats.failed >= 0, f"Failed should be >= 0, got {stats.failed}"
+                assert stats.skipped >= 0, (
+                    f"Skipped should be >= 0, got {stats.skipped}"
+                )
+                assert stats.duration_seconds >= 0.0, (
+                    f"Duration should be >= 0, got {stats.duration_seconds}"
+                )
+                # Validate consistency: added + failed + skipped should equal total
+                assert stats.added + stats.failed + stats.skipped == stats.total, (
+                    f"Stats inconsistency: added={stats.added}, failed={stats.failed}, "
+                    f"skipped={stats.skipped}, total={stats.total}"
+                )
+
                 if config.get("expect_failed"):
-                    assert stats.failed > 0
+                    assert stats.failed > 0, f"Expected failed > 0, got {stats.failed}"
 
                 expect_added = config.get("expect_added")
                 if expect_added is not None:
-                    assert stats.added == expect_added
+                    assert stats.added == expect_added, (
+                        f"Expected added={expect_added}, got {stats.added}"
+                    )
 
                 if config.get("expect_added_zero"):
-                    assert stats.added == 0
+                    assert stats.added == 0, f"Expected added=0, got {stats.added}"
 
                 if config.get("expect_failed_zero"):
-                    assert stats.failed == 0
+                    assert stats.failed == 0, f"Expected failed=0, got {stats.failed}"
 
                 if config.get("expect_skipped_zero"):
-                    assert stats.skipped == 0
+                    assert stats.skipped == 0, (
+                        f"Expected skipped=0, got {stats.skipped}"
+                    )
 
                 if config.get("expect_total_zero"):
-                    assert stats.total == 0
+                    assert stats.total == 0, f"Expected total=0, got {stats.total}"
+            else:
+                # Validate failure: error message should be present
+                TestOperationHelpers.assert_result_failure(result)
+                error_msg = TestOperationHelpers.get_error_message(result)
+                assert len(error_msg) > 0, "Error message should not be empty"
 
     @pytest.fixture
     def sync_service(
@@ -263,7 +304,7 @@ class TestFlextLdapSyncServiceReal:
             # Create sync options if specified
             if sync_options_config := config.get("sync_options"):
                 sync_options_dict = cast(
-                    "dict[str, FlextTypes.GeneralValueType]",
+                    "dict[str, t.GeneralValueType]",
                     sync_options_config,
                 )
                 options = FlextLdapModels.SyncOptions(

@@ -27,7 +27,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_tests import FlextTestsMatchers
@@ -38,6 +38,7 @@ from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from ..fixtures.constants import TestConstants
 from ..fixtures.typing import LdapContainerDict
 from ..helpers.entry_helpers import EntryTestHelpers
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.unit
 
@@ -191,7 +192,7 @@ class TestFlextLdapEntryAdapter:
         self,
         ldap_container: LdapContainerDict,
         attr_name: str,
-        attr_value: FlextTypes.GeneralValueType,
+        attr_value: t.GeneralValueType,
     ) -> None:
         """Parametrized test for value conversions using real LDAP3 entries."""
         adapter = FlextLdapEntryAdapter()
@@ -229,7 +230,7 @@ class TestFlextLdapEntryAdapter:
         self,
         ldap_container: LdapContainerDict,
         attr_name: str,
-        attr_value: FlextTypes.GeneralValueType,
+        attr_value: t.GeneralValueType,
     ) -> None:
         """Parametrized test for base64 encoding detection."""
         adapter = FlextLdapEntryAdapter()
@@ -256,7 +257,7 @@ class TestFlextLdapEntryAdapter:
         self,
         ldap_container: LdapContainerDict,
         attr_name: str,
-        attr_value: FlextTypes.GeneralValueType,
+        attr_value: t.GeneralValueType,
         metadata_key: str,
     ) -> None:
         """Parametrized test for metadata tracking."""
@@ -386,3 +387,248 @@ class TestFlextLdapEntryAdapter:
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         assert result.is_success or result.is_failure
+
+    def test_ldif_entry_to_ldap3_attributes_with_none_attributes(
+        self,
+        adapter: FlextLdapEntryAdapter,
+    ) -> None:
+        """Test ldif_entry_to_ldap3_attributes with None attributes.
+
+        Covers line 514 in adapters/entry.py.
+        """
+        entry = EntryTestHelpers.create_entry(
+            TestConstants.Adapter.TEST_DN,
+            {"cn": ["test"]},
+        )
+        # Set attributes to None to trigger the None check
+        entry.attributes = None
+        result = adapter.ldif_entry_to_ldap3_attributes(entry)
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content
+        assert "no attributes" in error_msg.lower() or "attributes" in error_msg.lower()
+
+    def test_ldif_entry_to_ldap3_attributes_exception_handling(
+        self,
+        adapter: FlextLdapEntryAdapter,
+    ) -> None:
+        """Test exception handling in ldif_entry_to_ldap3_attributes.
+
+        Covers lines 532-541 in adapters/entry.py.
+        """
+        entry = EntryTestHelpers.create_entry(
+            TestConstants.Adapter.TEST_DN,
+            {"cn": ["test"], "objectClass": ["person"]},
+        )
+        # Create entry with invalid attribute that will cause exception
+        if entry.attributes:
+            # Add attribute that will cause TypeError during conversion
+            entry.attributes.attributes["invalidAttr"] = object()  # type: ignore[assignment]
+        result = adapter.ldif_entry_to_ldap3_attributes(entry)
+        # Should handle exception gracefully - validate actual behavior
+        if result.is_failure:
+            error_msg = TestOperationHelpers.get_error_message(result)
+            # Validate error message indicates conversion failure
+            assert len(error_msg) > 0
+            assert "convert" in error_msg.lower() or "failed" in error_msg.lower()
+        else:
+            # If succeeded, validate attributes were converted correctly
+            attrs = result.unwrap()
+            assert isinstance(attrs, dict)
+            # Valid attributes should still be present
+            assert "cn" in attrs or "objectClass" in attrs
+
+    @pytest.mark.integration
+    def test_ldap3_to_ldif_entry_exception_handling(
+        self,
+        ldap_container: LdapContainerDict,
+    ) -> None:
+        """Test exception handling in ldap3_to_ldif_entry.
+
+        Covers lines 461-475 in adapters/entry.py.
+        """
+        adapter = FlextLdapEntryAdapter()
+        error_msg = "Cannot access attributes"
+        with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
+            _,
+            ldap3_entry,
+        ):
+            if ldap3_entry:
+                # Create a mock entry that will cause exception
+                class BadEntry:
+                    """Entry that raises exception on access."""
+
+                    def __init__(self) -> None:
+                        self.entry_dn = "cn=test,dc=example,dc=com"
+
+                    @property
+                    def entry_attributes_as_dict(self) -> dict[str, object]:
+                        """Raise exception when accessing attributes."""
+                        raise ValueError(error_msg)
+
+                bad_entry = BadEntry()
+                result = adapter.ldap3_to_ldif_entry(bad_entry)  # type: ignore[arg-type]
+                TestOperationHelpers.assert_result_failure(result)
+                error_msg = TestOperationHelpers.get_error_message(result)
+                # Validate error message content
+                assert (
+                    "Failed to create Entry" in error_msg
+                    or "create" in error_msg.lower()
+                )
+                assert "Entry" in error_msg or "entry" in error_msg.lower()
+
+    @pytest.mark.integration
+    def test_ldap3_to_ldif_entry_with_dn_change_tracking(
+        self,
+        ldap_container: LdapContainerDict,
+    ) -> None:
+        """Test DN change tracking in conversion metadata.
+
+        Covers lines 361-362 in adapters/entry.py.
+        """
+        adapter = FlextLdapEntryAdapter()
+        with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
+            _,
+            ldap3_entry,
+        ):
+            if ldap3_entry:
+                # Modify DN to trigger DN change tracking
+                original_dn = ldap3_entry.entry_dn
+                ldap3_entry.entry_dn = "cn=modified,dc=flext,dc=local"
+                result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+                entry = FlextTestsMatchers.assert_success(result)
+                # Validate actual content: DN should be converted
+                assert entry.dn is not None
+                assert str(entry.dn) == "cn=modified,dc=flext,dc=local"
+                extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
+                # DN change should be tracked in metadata
+                if "dn_changed" in extensions:
+                    assert extensions["dn_changed"] is True
+                if "converted_dn" in extensions:
+                    assert extensions["converted_dn"] == "cn=modified,dc=flext,dc=local"
+                # Restore original DN
+                ldap3_entry.entry_dn = original_dn
+
+    @pytest.mark.integration
+    def test_ldap3_to_ldif_entry_with_attribute_change_tracking(
+        self,
+        ldap_container: LdapContainerDict,
+    ) -> None:
+        """Test attribute change tracking in conversion metadata.
+
+        Covers lines 379, 382 in adapters/entry.py.
+        """
+        adapter = FlextLdapEntryAdapter()
+        with EntryTestHelpers.ldap3_connection_from_container(ldap_container) as (
+            _,
+            ldap3_entry,
+        ):
+            if ldap3_entry and hasattr(ldap3_entry, "entry_attributes_as_dict"):
+                # Set attribute to value that will change during conversion
+                ldap3_entry.entry_attributes_as_dict["testChangeAttr"] = [
+                    123
+                ]  # int will be converted to string
+                result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+                entry = FlextTestsMatchers.assert_success(result)
+                # Validate actual content: attribute should be converted
+                assert entry.attributes is not None
+                if "testChangeAttr" in entry.attributes.attributes:
+                    # Value should be converted from int to string
+                    attr_values = entry.attributes.attributes["testChangeAttr"]
+                    assert isinstance(attr_values, list)
+                    assert len(attr_values) > 0
+                    assert attr_values[0] == "123"  # int converted to string
+                extensions = EntryTestHelpers.MetadataHelpers.get_extensions(entry)
+                # Attribute changes should be tracked in metadata
+                if "attribute_changes" in extensions:
+                    changes = extensions["attribute_changes"]
+                    assert isinstance(changes, list)
+                    # testChangeAttr should be in changes if conversion occurred
+                    if changes:
+                        assert "testChangeAttr" in changes
+
+    def test_convert_value_to_strings_with_non_list_value(
+        self,
+        adapter: FlextLdapEntryAdapter,
+    ) -> None:
+        """Test convert_value_to_strings with non-list value.
+
+        Covers line 137 in adapters/entry.py (return [str(value)] path).
+        """
+        # Test the _ConversionHelpers.convert_value_to_strings method indirectly
+        # by using ldap3_to_ldif_entry with single string value
+
+        # Create a mock ldap3 entry with single string value (not list)
+        class MockLdap3Entry:
+            """Mock ldap3 entry with single string value."""
+
+            def __init__(self) -> None:
+                self.entry_dn = "cn=test,dc=example,dc=com"
+                self.entry_attributes_as_dict = {
+                    "cn": "single_string_value",  # Single string, not list
+                    "objectClass": ["top", "person"],
+                }
+
+        mock_entry = MockLdap3Entry()
+        result = adapter.ldap3_to_ldif_entry(mock_entry)  # type: ignore[arg-type]
+        entry = FlextTestsMatchers.assert_success(result)
+        assert entry.attributes is not None
+        # Single string should be converted to list[str]
+        assert entry.attributes.attributes["cn"] == ["single_string_value"]
+
+    def test_normalize_original_attr_value_with_tuple(
+        self,
+        adapter: FlextLdapEntryAdapter,
+    ) -> None:
+        """Test normalize_original_attr_value with tuple value.
+
+        Covers lines 168-170 in adapters/entry.py.
+        """
+
+        # Create a mock ldap3 entry with tuple value
+        class MockLdap3Entry:
+            """Mock ldap3 entry with tuple value."""
+
+            def __init__(self) -> None:
+                self.entry_dn = "cn=test,dc=example,dc=com"
+                self.entry_attributes_as_dict = {
+                    "cn": ("value1", "value2"),  # Tuple value
+                    "objectClass": ["top", "person"],
+                }
+
+        mock_entry = MockLdap3Entry()
+        result = adapter.ldap3_to_ldif_entry(mock_entry)  # type: ignore[arg-type]
+        entry = FlextTestsMatchers.assert_success(result)
+        assert entry.attributes is not None
+        # Tuple should be converted to list[str]
+        assert entry.attributes.attributes["cn"] == ["value1", "value2"]
+
+    def test_convert_attribute_value_with_none(
+        self,
+        adapter: FlextLdapEntryAdapter,
+    ) -> None:
+        """Test _convert_attribute_value with None value.
+
+        Covers lines 269-270 in adapters/entry.py.
+        """
+
+        # Create a mock ldap3 entry with None value
+        class MockLdap3Entry:
+            """Mock ldap3 entry with None value."""
+
+            def __init__(self) -> None:
+                self.entry_dn = "cn=test,dc=example,dc=com"
+                self.entry_attributes_as_dict = {
+                    "cn": None,  # None value should be removed
+                    "objectClass": ["top", "person"],
+                }
+
+        mock_entry = MockLdap3Entry()
+        result = adapter.ldap3_to_ldif_entry(mock_entry)  # type: ignore[arg-type]
+        entry = FlextTestsMatchers.assert_success(result)
+        assert entry.attributes is not None
+        # None value should be removed (not in attributes or empty list)
+        assert (
+            "cn" not in entry.attributes.attributes
+            or entry.attributes.attributes["cn"] == []
+        )

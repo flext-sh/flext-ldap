@@ -35,9 +35,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, cast
 
-from flext_core import FlextModels, FlextUtilities
+from flext_core import (
+    FlextModels,
+    FlextRuntime,
+)
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from flext_ldif import FlextLdifModels
@@ -50,7 +53,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_ldap.constants import FlextLdapConstants
+from flext_ldap import c, u
 
 
 class FlextLdapModels(FlextModels):
@@ -86,7 +89,7 @@ class FlextLdapModels(FlextModels):
 
         host: str = Field(default="localhost")
         port: int = Field(
-            default=FlextLdapConstants.ConnectionDefaults.PORT,
+            default=c.ConnectionDefaults.PORT,
             ge=1,
             le=65535,
         )
@@ -95,12 +98,12 @@ class FlextLdapModels(FlextModels):
         bind_dn: str | None = Field(default=None)
         bind_password: str | None = Field(default=None)
         timeout: int = Field(
-            default=FlextLdapConstants.ConnectionDefaults.TIMEOUT,
+            default=c.ConnectionDefaults.TIMEOUT,
             ge=1,
         )
-        auto_bind: bool = Field(default=FlextLdapConstants.ConnectionDefaults.AUTO_BIND)
+        auto_bind: bool = Field(default=c.ConnectionDefaults.AUTO_BIND)
         auto_range: bool = Field(
-            default=FlextLdapConstants.ConnectionDefaults.AUTO_RANGE,
+            default=c.ConnectionDefaults.AUTO_RANGE,
         )
 
         @model_validator(mode="after")
@@ -125,7 +128,7 @@ class FlextLdapModels(FlextModels):
         scope: str = Field(
             default="SUBTREE",
         )
-        filter_str: str = Field(default=FlextLdapConstants.Filters.ALL_ENTRIES_FILTER)
+        filter_str: str = Field(default=c.Filters.ALL_ENTRIES_FILTER)
         attributes: list[str] | None = Field(default=None)
         size_limit: int = Field(default=0, ge=0)
         time_limit: int = Field(default=0, ge=0)
@@ -143,18 +146,18 @@ class FlextLdapModels(FlextModels):
         @classmethod
         def normalize_scope(
             cls,
-            v: str | FlextLdapConstants.SearchScope,
+            v: str | c.SearchScope,
         ) -> str:
             """Normalize scope to string (accepts StrEnum or str).
 
             Business Rules:
                 - StrEnum values are converted to their string value
-                - String values are returned as-is
+                - String values are parsed using u.Enum.parse
                 - Used by Pydantic field_validator for automatic normalization
                 - Ensures consistent string format for scope field
 
             Architecture:
-                - Uses isinstance check for StrEnum detection
+                - Uses u.Enum.parse for unified enum parsing
                 - Returns str for consistent field type
                 - No network calls - pure data normalization
 
@@ -165,9 +168,16 @@ class FlextLdapModels(FlextModels):
                 Normalized string value.
 
             """
-            if isinstance(v, FlextLdapConstants.SearchScope):
+            if isinstance(v, c.SearchScope):
                 return v.value
-            return v
+            # Use u.Enum.parse for unified enum parsing
+            parse_result = u.Enum.parse(
+                c.SearchScope,
+                v,
+            )
+            if parse_result.is_success:
+                return parse_result.value.value
+            return str(v)
 
         @dataclass(frozen=True)
         class NormalizedConfig:
@@ -185,7 +195,7 @@ class FlextLdapModels(FlextModels):
             base_dn: str,
             *,
             config: NormalizedConfig | None = None,
-        ) -> FlextLdapModels.SearchOptions:
+        ) -> m.SearchOptions:
             """Factory method with normalized base_dn using DN.norm_string().
 
             Business Rules:
@@ -222,7 +232,7 @@ class FlextLdapModels(FlextModels):
                 scope=config.scope if config.scope is not None else "SUBTREE",
                 filter_str=config.filter_str
                 if config.filter_str is not None
-                else FlextLdapConstants.Filters.ALL_ENTRIES_FILTER,
+                else c.Filters.ALL_ENTRIES_FILTER,
                 attributes=config.attributes,
                 size_limit=config.size_limit if config.size_limit is not None else 0,
                 time_limit=config.time_limit if config.time_limit is not None else 0,
@@ -243,7 +253,7 @@ class FlextLdapModels(FlextModels):
         """
 
         success: bool = Field(..., description="Whether operation succeeded")
-        operation_type: FlextLdapConstants.OperationType = Field(
+        operation_type: c.OperationType = Field(
             ...,
             description="Type of operation performed",
         )
@@ -265,7 +275,7 @@ class FlextLdapModels(FlextModels):
         """Result of LDAP search operation with Entity features."""
 
         entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
-        search_options: FlextLdapModels.SearchOptions
+        search_options: m.SearchOptions
 
         @computed_field
         def total_count(self) -> int:
@@ -317,10 +327,12 @@ class FlextLdapModels(FlextModels):
             categories: FlextModelsCollections.Categories[FlextLdifModels.Entry] = (
                 FlextModelsCollections.Categories()
             )
-            for entry in self.entries:
+
+            # Use u.process() to process all entries and extract categories
+            def process_entry(entry: FlextLdifModels.Entry) -> tuple[str, FlextLdifModels.Entry]:
+                """Process entry and return (category, entry) tuple."""
                 if entry.attributes is None:
-                    categories.add_entries("unknown", [entry])
-                    continue
+                    return ("unknown", entry)
                 # Type narrowing: LdifAttributes has .attributes property
                 # entry.attributes can be LdifAttributes | Mapping[str, Sequence[str]] | None
                 # None already handled above, so remaining types are LdifAttributes | Mapping
@@ -329,18 +341,55 @@ class FlextLdapModels(FlextModels):
                 elif isinstance(entry.attributes, Mapping):
                     # Type narrowing: entry.attributes is Mapping[str, Sequence[str]]
                     # Convert Mapping to dict[str, list[str]] for processing
-                    attrs_dict = {k: list(v) for k, v in entry.attributes.items()}
+                    # Use u.process() for consistent conversion
+                    transform_result = u.process(
+                        entry.attributes,
+                        processor=lambda _k, v: list(v)
+                        if FlextRuntime.is_list_like(v)
+                        else [v],
+                        on_error="collect",
+                    )
+                    attrs_dict = (
+                        transform_result.value
+                        if transform_result.is_success
+                        else dict(entry.attributes)
+                    )
                 else:
                     # Fallback: empty dict if type is unexpected
                     attrs_dict = {}
-                object_classes = attrs_dict.get("objectClass", [])
-                category = (
-                    object_classes[0]
-                    if object_classes
-                    and FlextUtilities.TypeGuards.is_string_non_empty(object_classes[0])
-                    else "unknown"
+                # Use u.get and u.ensure_str_list for safer nested access
+                object_classes_raw: t.GeneralValueType = u.get(attrs_dict, "objectClass", default=[])
+                object_classes: list[str] = cast(
+                    "list[str]",
+                    u.ensure(object_classes_raw, target_type="str_list", default=[]),
                 )
-                categories.add_entries(category, [entry])
+                # Use u.find() to get first valid object class, fallback to "unknown"
+                found_category = u.find(object_classes, predicate=u.TypeGuards.is_string_non_empty)
+                category = cast("str", found_category) if found_category is not None else "unknown"
+                return (category, entry)
+
+            # Process all entries using u.process()
+            process_result = u.process(
+                self.entries,
+                processor=process_entry,
+                on_error="skip",
+            )
+            if process_result.is_success:
+                processed_entries = cast(
+                    "list[tuple[str, FlextLdifModels.Entry]]",
+                    process_result.value,
+                )
+                # Group entries by category using u.process() for efficient grouping
+
+                def group_by_category(
+                    category_entry: tuple[str, FlextLdifModels.Entry]
+                ) -> None:
+                    """Group entry by category."""
+                    category, entry = category_entry
+                    categories.add_entries(category, [entry])
+
+                # Process all category-entry pairs
+                u.process(processed_entries, processor=group_by_category, on_error="skip")
             return categories
 
     # =========================================================================
@@ -355,7 +404,7 @@ class FlextLdapModels(FlextModels):
         allow_deletes: bool = Field(default=False)
         source_basedn: str = Field(default="")
         target_basedn: str = Field(default="")
-        progress_callback: FlextLdapModels.Types.LdapProgressCallback | None = Field(
+        progress_callback: m.Types.LdapProgressCallback | None = Field(
             default=None,
         )
 
@@ -404,7 +453,7 @@ class FlextLdapModels(FlextModels):
             failed: int = 0,
             duration_seconds: float = 0.0,
             **kwargs: str | float | bool | None,
-        ) -> FlextLdapModels.SyncStats:
+        ) -> m.SyncStats:
             """Factory method with auto-calculated total from counters.
 
             Additional kwargs are passed to Pydantic model constructor for field updates.
@@ -427,7 +476,7 @@ class FlextLdapModels(FlextModels):
 
         success: bool
         dn: str
-        operation: FlextLdapConstants.OperationType
+        operation: c.OperationType
         error: str | None = None
 
     class BatchUpsertResult(FlextModelsEntity.Core):
@@ -436,7 +485,7 @@ class FlextLdapModels(FlextModels):
         total_processed: int = Field(ge=0)
         successful: int = Field(ge=0)
         failed: int = Field(ge=0)
-        results: list[FlextLdapModels.UpsertResult] = Field(default_factory=list)
+        results: list[m.UpsertResult] = Field(default_factory=list)
 
         @computed_field
         def success_rate(self) -> float:
@@ -479,7 +528,7 @@ class FlextLdapModels(FlextModels):
     class LdapOperationResult(FlextModelsCollections.Results):
         """Result of LDAP operation as simple key-value structure."""
 
-        operation: FlextLdapConstants.UpsertOperations
+        operation: c.UpsertOperations
 
     class LdapBatchStats(FlextModelsCollections.Statistics):
         """Batch operation statistics (frozen, immutable)."""
@@ -506,7 +555,7 @@ class FlextLdapModels(FlextModels):
     class MultiPhaseSyncResult(FlextModelsCollections.Results):
         """Aggregated result of synchronizing multiple LDIF phase files to LDAP."""
 
-        phase_results: dict[str, FlextLdapModels.PhaseSyncResult] = Field(
+        phase_results: dict[str, m.PhaseSyncResult] = Field(
             default_factory=dict,
         )
         total_entries: int = Field(ge=0)
@@ -525,7 +574,7 @@ class FlextLdapModels(FlextModels):
         """Type aliases for FlextLdapModels (Python 3.13+ PEP 695)."""
 
         type LdapProgressCallback = Callable[
-            [int, int, str, FlextLdapModels.LdapBatchStats],
+            [int, int, str, m.LdapBatchStats],
             None,
         ]
         """Progress callback for batch operations (Python 3.13+ PEP 695 type alias).
@@ -537,3 +586,6 @@ class FlextLdapModels(FlextModels):
 
 
 __all__ = ["FlextLdapModels"]
+
+# Convenience alias for common usage pattern
+m = FlextLdapModels

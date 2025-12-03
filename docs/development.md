@@ -309,7 +309,7 @@ class SearchRequest:
     base_dn: str
     filter_str: str
     scope: str
-    attributes: FlextTypes.StringList
+    attributes: t.StringList
     size_limit: int = 100
     time_limit: int = 30
 
@@ -318,7 +318,7 @@ def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]
 
 # ❌ WRONG - Multiple parameters
 def search_entries(self, base_dn: str, filter_str: str, scope: str,
-                        attributes: FlextTypes.StringList, size_limit: int, time_limit: int):
+                        attributes: t.StringList, size_limit: int, time_limit: int):
     # FORBIDDEN - use parameter objects
 ```
 
@@ -381,18 +381,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 
 # Local imports
 from flext_ldap.entities import FlextLdapUser
@@ -519,18 +519,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
 
 @pytest.fixture(scope="session")

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult as r, FlextTypes as t
 from flext_ldif import FlextLdifModels
 
 from flext_ldap.models import FlextLdapModels
@@ -14,7 +14,7 @@ from flext_ldap.protocols import FlextLdapProtocols
 # ═══════════════════════════════════════════════════════════════════════════
 # TYPEVARS: Único objeto permitido fora da classe
 # ═══════════════════════════════════════════════════════════════════════════
-# Reutilize de FlextTypes quando existir
+# Reutilize de t quando existir
 
 # Apenas TypeVars específicos do domínio
 TEntry = TypeVar("TEntry", bound="FlextLdapProtocols.LdapEntry.EntryProtocol")
@@ -23,8 +23,8 @@ TEntry = TypeVar("TEntry", bound="FlextLdapProtocols.LdapEntry.EntryProtocol")
 # ═══════════════════════════════════════════════════════════════════════════
 # CLASSE ÚNICA COM NESTED CLASSES
 # ═══════════════════════════════════════════════════════════════════════════
-class FlextLdapTypes(FlextTypes):
-    """[Package] type definitions composing with FlextTypes.
+class FlextLdapTypes(t):
+    """[Package] type definitions composing with t.
 
     REGRAS:
     ───────
@@ -32,7 +32,7 @@ class FlextLdapTypes(FlextTypes):
     2. Type aliases PEP 695 dentro de nested classes
     3. Tipos complexos compostos com Protocols
     4. ZERO aliases simples - use tipos diretos
-    5. Composição com FlextTypes, não duplicação
+    5. Composição com t, não duplicação
     """
 
     class Entry:
@@ -46,7 +46,7 @@ class FlextLdapTypes(FlextTypes):
         # Tipos genéricos
         type Handler[T] = Callable[
             [FlextLdapProtocols.LdapEntry.EntryProtocol],
-            FlextResult[T],
+            r[T],
         ]
         type Transformer = Callable[
             [FlextLdapProtocols.LdapEntry.EntryProtocol],
@@ -55,24 +55,24 @@ class FlextLdapTypes(FlextTypes):
         type Filter = Callable[[FlextLdapProtocols.LdapEntry.EntryProtocol], bool]
         type Processor = Callable[
             [Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
-            FlextResult[Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
+            r[Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
         ]
 
     class Operation:
         """Operation-related type aliases."""
 
-        # Composição com FlextTypes
-        type Result[T] = FlextResult[T]
-        type Callback[T] = Callable[[], FlextResult[T]]
+        # Composição com t
+        type Result[T] = r[T]
+        type Callback[T] = Callable[[], r[T]]
 
         # Tipos específicos do domínio
         type EntryProcessor = Callable[
             [FlextLdapProtocols.LdapEntry.EntryProtocol],
-            FlextResult[bool],
+            r[bool],
         ]
         type BatchProcessor = Callable[
             [Sequence[FlextLdapProtocols.LdapEntry.EntryProtocol]],
-            FlextResult[int],
+            r[int],
         ]
 
     class Ldap:
@@ -178,3 +178,7 @@ class FlextLdapTypes(FlextTypes):
         type LdifAttributes = FlextLdifModels.LdifAttributes
         # DistinguishedName, QuirkMetadata, ParseResponse are class attribute aliases
         # Use directly: FlextLdifModels.DistinguishedName (no type alias - mypy limitation)
+
+
+# Convenience alias for common usage pattern
+t = FlextLdapTypes

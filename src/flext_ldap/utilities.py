@@ -1,8 +1,7 @@
 """FLEXT_LDAP utilities module - Domain-specific utilities.
 
-This module provides LDAP-specific utilities that extend or compose with
-FlextUtilities from flext-core. All generic utilities (Enum, Collection, Args, Model)
-are delegated to FlextUtilities to avoid duplication.
+This module provides LDAP-specific utilities that extend FlextUtilities from flext-core.
+All generic utilities are inherited from FlextUtilities for convenience.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,46 +12,52 @@ from __future__ import annotations
 from flext_core import FlextUtilities
 
 # ═══════════════════════════════════════════════════════════════════
-# FLEXT_LDAP UTILITIES - Pure delegation to FlextUtilities
+# FLEXT_LDAP UTILITIES - Extends FlextUtilities
 # ═══════════════════════════════════════════════════════════════════
-# All generic utilities delegate to flext-core to avoid duplication.
+# All generic utilities inherited from flext-core.
 # Only LDAP-specific utilities should be added here if needed.
 
 
-class FlextLdapUtilities:
-    """FlextLdap utilities - delegates to FlextUtilities from flext-core.
+class FlextLdapUtilities(FlextUtilities):
+    """FlextLdap utilities - extends FlextUtilities.
 
     ARCHITECTURE:
     ────────────
-    - Pure delegation to FlextUtilities (no duplication)
-    - All generic utilities (Enum, Collection, Args, Model) use flext-core
+    - Extends FlextUtilities methods
+    - All generic utilities (Enum, Collection, Args, Model) inherited from flext-core
     - Only LDAP-specific utilities should be added here
 
     USAGE:
     ──────
-    Use FlextLdapUtilities exactly like FlextUtilities:
-        from flext_ldap.utilities import FlextLdapUtilities
+    Use FlextLdapUtilities exactly like FlextUtilities
+        from flext_ldap.utilities import FlextLdapUtilities as u
+
+        # Generic utilities (inherited)
+        result = u.filter(items, predicate=lambda x: x > 0)
+        normalized = u.normalize("Hello", case="lower")
+        found = u.find(items, predicate=lambda x: x == target)
+        processed = u.process(items, processor=lambda x: x * 2)
 
         # Enum utilities
-        result = FlextLdapUtilities.Enum.parse(Status, "active")
-        if FlextLdapUtilities.Enum.is_member(Status, value):
+        result = u.Enum.parse(Status, "active")
+        if u.Enum.is_member(Status, value):
             ...
 
         # Args utilities
-        @FlextLdapUtilities.Args.validated_with_result
-        def method(...) -> FlextResult[T]:
+        @u.Args.validated_with_result
+        def method(...) -> r[T]:
             ...
 
         # Model utilities
-        result = FlextLdapUtilities.Model.from_dict(Model, data)
-        result = FlextLdapUtilities.Model.merge_defaults(Model, defaults, overrides)
+        result = u.Model.from_dict(Model, data)
+        result = u.Model.merge_defaults(Model, defaults, overrides)
 
         # Collection utilities
-        validator = FlextLdapUtilities.Collection.coerce_list_validator(Status)
+        validator = u.Collection.coerce_list_validator(Status)
     """
 
-    # Pure delegation to FlextUtilities - no wrapper logic
-    Enum = FlextUtilities.Enum
-    Collection = FlextUtilities.Collection
-    Args = FlextUtilities.Args
-    Model = FlextUtilities.Model
+    # All methods inherited from FlextUtilities
+
+
+# Convenience alias for common usage pattern
+u = FlextLdapUtilities

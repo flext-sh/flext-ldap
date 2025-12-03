@@ -179,7 +179,18 @@ class TestFlextLdapConnectionCompleteCoverage:
         ) -> None:
             """Assert connection result based on configuration."""
             if expected_success := config.get("expect_success"):
-                assert result.is_success == expected_success
+                assert result.is_success == expected_success, (
+                    f"Expected success={expected_success}, got is_success={result.is_success}, "
+                    f"error={result.error}"
+                )
+                # Validate actual content: if success expected, validate connection
+                if expected_success and result.is_success:
+                    connection_result = result.unwrap()
+                    assert connection_result is True
+                elif not expected_success and result.is_failure:
+                    # Validate failure: error message should be present
+                    error_msg = str(result.error) if result.error else ""
+                    assert len(error_msg) > 0
 
             if config.get("parser_reuse"):
                 # Parser reuse test - just check that method completes

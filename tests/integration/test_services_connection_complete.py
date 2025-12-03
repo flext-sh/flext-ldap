@@ -70,7 +70,9 @@ class TestFlextLdapConnectionComplete:
             bind_password=ldap_container["password"],
         )
         result = connection.connect(connection_config)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        # Validate actual content: connection should be connected
+        assert connection.is_connected is True
         connection.disconnect()
 
     def test_connect_with_connection_config(
@@ -82,7 +84,9 @@ class TestFlextLdapConnectionComplete:
         config = FlextLdapConfig()
         connection = FlextLdapConnection(config=config, parser=ldap_parser)
         result = connection.connect(connection_config)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        # Validate actual content: connection should be connected
+        assert connection.is_connected is True
         connection.disconnect()
 
     def test_connect_with_all_config_options(
@@ -105,7 +109,9 @@ class TestFlextLdapConnectionComplete:
             auto_range=True,
         )
         result = connection.connect(connection_config)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        # Validate actual content: connection should be connected
+        assert connection.is_connected is True
         connection.disconnect()
 
     def test_disconnect_multiple_times(self, ldap_parser: FlextLdifParser) -> None:

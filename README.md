@@ -105,7 +105,7 @@ FLEXT-LDAP serves as the **universal LDAP operations foundation** for all enterp
 
 ### Integration Points
 
-- **flext-core** → FlextResult, FlextService, FlextMixins, FlextLogger patterns
+- **flext-core** → FlextResult, FlextService, x, FlextLogger patterns
 - **flext-ldif** → LDIF entry models, quirks detection, server-specific handling
 - **ldap3** → Low-level LDAP protocol (wrapped, not exposed to ecosystem)
 - **flext-auth** → LDAP authentication provider for SSO systems
@@ -694,7 +694,7 @@ Use pytest markers to control test execution:
 
 - [ ] Use FlextResult[T] for all operations (no exceptions)
 - [ ] Follow Clean Architecture layer separation
-- [ ] Use FlextMixins inherited properties (logger, config, container)
+- [ ] Use x inherited properties (logger, config, container)
 - [ ] Implement domain entities with Pydantic v2
 - [ ] Follow Python 3.13+ type syntax
 - [ ] Use Pydantic native types (PositiveInt, EmailStr, etc.)

@@ -16,6 +16,7 @@ from flext_ldap import FlextLdap
 from flext_ldap.models import FlextLdapModels
 
 from ..fixtures.constants import RFC
+from ..helpers.operation_helpers import TestOperationHelpers
 
 pytestmark = pytest.mark.integration
 
@@ -73,12 +74,16 @@ class TestFlextLdapBatchUpsert:
 
         # Test batch_upsert through API (covers line 511)
         result = ldap_client.batch_upsert(entries)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
         stats = result.unwrap()
+        # Validate actual content: batch stats should be consistent
         assert stats.synced >= 0
         assert stats.failed == 0
         assert stats.skipped >= 0
-        assert stats.synced + stats.skipped == 3
+        # LdapBatchStats has synced, failed, skipped (no total_entries field)
+        assert stats.synced + stats.skipped == 3, (
+            f"Expected synced+skipped=3, got synced={stats.synced}, skipped={stats.skipped}"
+        )
 
         # Cleanup
         for dn in test_dns:
@@ -135,7 +140,16 @@ class TestFlextLdapBatchUpsert:
 
         # Test batch_upsert with progress callback
         result = ldap_client.batch_upsert(entries, progress_callback=progress_callback)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        stats = result.unwrap()
+        # Validate actual content: batch stats should be consistent
+        assert stats.synced >= 0
+        assert stats.failed == 0
+        assert stats.skipped >= 0
+        # LdapBatchStats has synced, failed, skipped (no total_entries field)
+        assert stats.synced + stats.skipped == 2, (
+            f"Expected synced+skipped=2, got synced={stats.synced}, skipped={stats.skipped}"
+        )
 
         # Verify progress callback was called
         assert len(progress_calls) == 2
@@ -143,6 +157,19 @@ class TestFlextLdapBatchUpsert:
         assert progress_calls[0][1] == 2
         assert progress_calls[1][0] == 2
         assert progress_calls[1][1] == 2
+        # Validate callback stats
+        for idx, (current, total, dn, callback_stats) in enumerate(progress_calls):
+            assert current == idx + 1, (
+                f"Callback {idx}: expected current={idx + 1}, got {current}"
+            )
+            assert total == 2, f"Callback {idx}: expected total=2, got {total}"
+            assert isinstance(dn, str), f"Callback {idx}: DN should be string"
+            # Validate callback stats structure
+            assert callback_stats.synced >= 0, f"Callback {idx}: synced should be >= 0"
+            assert callback_stats.failed >= 0, f"Callback {idx}: failed should be >= 0"
+            assert callback_stats.skipped >= 0, (
+                f"Callback {idx}: skipped should be >= 0"
+            )
 
         # Cleanup
         for dn in test_dns:

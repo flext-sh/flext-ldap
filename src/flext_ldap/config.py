@@ -18,7 +18,7 @@ from flext_core import FlextConfig
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from flext_ldap.constants import FlextLdapConstants
+from flext_ldap import c
 
 
 @FlextConfig.auto_register("ldap")
@@ -74,7 +74,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     port: int = Field(
-        default=FlextLdapConstants.ConnectionDefaults.PORT,
+        default=c.ConnectionDefaults.PORT,
         ge=1,
         le=65535,
         description="LDAP server port",
@@ -101,29 +101,29 @@ class FlextLdapConfig(FlextConfig):
     )
 
     timeout: int = Field(
-        default=FlextLdapConstants.ConnectionDefaults.TIMEOUT,
+        default=c.ConnectionDefaults.TIMEOUT,
         ge=1,
         description="Connection timeout in seconds",
     )
 
     auto_bind: bool = Field(
-        default=FlextLdapConstants.ConnectionDefaults.AUTO_BIND,
+        default=c.ConnectionDefaults.AUTO_BIND,
         description="Automatically bind after connection",
     )
 
     auto_range: bool = Field(
-        default=FlextLdapConstants.ConnectionDefaults.AUTO_RANGE,
+        default=c.ConnectionDefaults.AUTO_RANGE,
         description="Automatically handle range queries",
     )
 
     pool_size: int = Field(
-        default=FlextLdapConstants.ConnectionDefaults.POOL_SIZE,
+        default=c.ConnectionDefaults.POOL_SIZE,
         ge=1,
         description="Connection pool size",
     )
 
     pool_lifetime: int = Field(
-        default=FlextLdapConstants.ConnectionDefaults.POOL_LIFETIME,
+        default=c.ConnectionDefaults.POOL_LIFETIME,
         ge=1,
         description="Connection pool lifetime in seconds",
     )

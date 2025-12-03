@@ -68,18 +68,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 from flext_ldap import get_flext_ldap_api
 
 class UserService:
@@ -90,19 +90,19 @@ class UserService:
         self._ldap_api = get_flext_ldap_api()
         self._container = FlextContainer.get_global()
 
-    def process_user_authentication(self, username: str, password: str) -> FlextResult[FlextTypes.Dict]:
+    def process_user_authentication(self, username: str, password: str) -> FlextResult[t.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
         auth_result = self._ldap_api.authenticate_user(username, password)
         if auth_result.is_failure:
             self.logger.error("Authentication failed", extra={"error": auth_result.error})
-            return FlextResult[FlextTypes.Dict].fail(f"Authentication failed: {auth_result.error}")
+            return FlextResult[t.Dict].fail(f"Authentication failed: {auth_result.error}")
 
         user = auth_result.unwrap()
         self.logger.info("User authenticated successfully", extra={"uid": user.uid})
 
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[t.Dict].ok({
             "uid": user.uid,
             "cn": user.cn,
             "email": user.mail,
@@ -166,18 +166,18 @@ from flext_core import FlextContext
 from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import FlextLogger
-from flext_core import FlextMixins
+from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
-from flext_core import FlextProtocols
+from flext_core import p
 from flext_core import FlextRegistry
 from flext_core import FlextResult
 from flext_core import FlextRuntime
 from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import t
+from flext_core import u
 
 app = FastAPI(title="FLEXT LDAP API")
 security = HTTPBearer()

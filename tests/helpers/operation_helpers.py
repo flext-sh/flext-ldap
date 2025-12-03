@@ -13,8 +13,8 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult, FlextRuntime
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import FlextTypes as t
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 
@@ -24,6 +24,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import FlextLdapTypes
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 from ..fixtures.constants import RFC
 from ..fixtures.typing import GenericFieldsDict
@@ -53,6 +54,8 @@ def _validate_scope(
 ) -> FlextLdapConstants.SearchScope:
     """Validate and return a SearchScope StrEnum.
 
+    Uses u.Enum.parse for unified enum parsing.
+
     Args:
         scope: Scope string or StrEnum to validate
 
@@ -67,17 +70,17 @@ def _validate_scope(
     if isinstance(scope, FlextLdapConstants.SearchScope):
         return scope
 
-    # Validate string and convert to StrEnum
-    if scope not in _VALID_SCOPES:
-        msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"
-        raise ValueError(msg)
+    # Use u.Enum.parse for unified enum parsing
+    parse_result = u.Enum.parse(
+        FlextLdapConstants.SearchScope,
+        scope,
+    )
+    if parse_result.is_success:
+        return parse_result.value
 
-    # Map string to StrEnum
-    if scope == FlextLdapConstants.SearchScope.BASE.value:
-        return FlextLdapConstants.SearchScope.BASE
-    if scope == FlextLdapConstants.SearchScope.ONELEVEL.value:
-        return FlextLdapConstants.SearchScope.ONELEVEL
-    return FlextLdapConstants.SearchScope.SUBTREE
+    # If parsing failed, raise ValueError with helpful message
+    msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"
+    raise ValueError(msg)
 
 
 class TestOperationHelpers:
@@ -428,7 +431,7 @@ class TestOperationHelpers:
         mail: str | None = None,
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
-        **extra_attributes: FlextTypes.GeneralValueType,
+        **extra_attributes: t.GeneralValueType,
     ) -> FlextLdifModels.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
@@ -491,28 +494,52 @@ class TestOperationHelpers:
 
         # Merge additional_attrs if provided
         if additional_attrs:
-            for key, value in additional_attrs.items():
-                # Type narrowing: cast object to GeneralValueType for FlextRuntime methods
-                value_typed: FlextTypes.GeneralValueType = cast(
-                    "FlextTypes.GeneralValueType", value
-                )
+
+            def process_additional_attr(
+                key: str, value: object
+            ) -> tuple[str, list[str]]:
+                """Process additional attribute value."""
+                value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
                 if FlextRuntime.is_list_like(value_typed):
-                    entry_attributes[key] = [str(v) for v in value_typed]
-                else:
-                    entry_attributes[key] = [str(value_typed)]
+                    return (key, [str(v) for v in value_typed])
+                return (key, [str(value_typed)])
+
+            processed_attrs = u.process(
+                additional_attrs,
+                processor=process_additional_attr,
+                on_error="skip",
+            )
+            if processed_attrs.is_success:
+                entry_attributes.update(
+                    dict(cast("list[tuple[str, list[str]]]", processed_attrs.value))
+                )
 
         # Process individual extra attributes - convert dict[str, object] to dict[str, list[str]]
-        extra_attrs_typed: dict[str, list[str]] = {}
-        for key, extra_value in extra_attributes.items():
-            if extra_value is not None:
-                # Type narrowing: cast object to GeneralValueType for FlextRuntime methods
-                extra_value_typed: FlextTypes.GeneralValueType = cast(
-                    "FlextTypes.GeneralValueType", extra_value
-                )
-                if FlextRuntime.is_list_like(extra_value_typed):
-                    extra_attrs_typed[key] = [str(v) for v in extra_value_typed]
-                else:
-                    extra_attrs_typed[key] = [str(extra_value_typed)]
+        def process_extra_attr(
+            key: str, extra_value: object
+        ) -> tuple[str, list[str]] | None:
+            """Process extra attribute value."""
+            if extra_value is None:
+                return None
+            # Type narrowing: cast object to GeneralValueType for FlextRuntime methods
+            extra_value_typed: t.GeneralValueType = cast(
+                "t.GeneralValueType", extra_value
+            )
+            if FlextRuntime.is_list_like(extra_value_typed):
+                return (key, [str(v) for v in extra_value_typed])
+            return (key, [str(extra_value_typed)])
+
+        processed_extra = u.process(
+            extra_attributes,
+            processor=process_extra_attr,
+            on_error="skip",
+        )
+        extra_attrs_typed = dict(
+            cast(
+                "list[tuple[str, list[str]]]",
+                processed_extra.value if processed_extra.is_success else [],
+            )
+        )
         entry_attributes.update(extra_attrs_typed)
 
         # entry_attributes is dict[str, list[str]] which is compatible with create_entry's type
@@ -524,7 +551,7 @@ class TestOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> FlextLdifModels.Entry:
         """Create group entry.
 
@@ -547,11 +574,22 @@ class TestOperationHelpers:
         if members:
             attributes["member"] = members
 
-        for key, value in kwargs.items():
-            if FlextRuntime.is_list_like(value):
-                attributes[key] = [str(item) for item in value]
-            else:
-                attributes[key] = [str(value)]
+        def process_kwarg(key: str, value: object) -> tuple[str, list[str]]:
+            """Process kwargs attribute value."""
+            value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+            if FlextRuntime.is_list_like(value_typed):
+                return (key, [str(item) for item in value_typed])
+            return (key, [str(value_typed)])
+
+        processed_kwargs = u.process(
+            kwargs,
+            processor=process_kwarg,
+            on_error="skip",
+        )
+        if processed_kwargs.is_success:
+            attributes.update(
+                dict(cast("list[tuple[str, list[str]]]", processed_kwargs.value))
+            )
 
         # attributes is dict[str, list[str]] which is compatible with create_entry's type
         return FlextLdapTestHelpers.create_entry(dn, attributes)
@@ -563,7 +601,7 @@ class TestOperationHelpers:
         *,
         sn: str | None = None,
         mail: str | None = None,
-        **extra_attributes: FlextTypes.GeneralValueType,
+        **extra_attributes: t.GeneralValueType,
     ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
@@ -593,11 +631,23 @@ class TestOperationHelpers:
         }
         if mail:
             attributes["mail"] = [mail]
-        for key, value in extra_attributes.items():
-            if FlextRuntime.is_list_like(value):
-                attributes[key] = [str(v) for v in value]
-            else:
-                attributes[key] = [str(value)]
+
+        def process_extra_attr_value(key: str, value: object) -> tuple[str, list[str]]:
+            """Process extra attribute value."""
+            value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+            if FlextRuntime.is_list_like(value_typed):
+                return (key, [str(v) for v in value_typed])
+            return (key, [str(value_typed)])
+
+        processed_extra_attrs = u.process(
+            extra_attributes,
+            processor=process_extra_attr_value,
+            on_error="skip",
+        )
+        if processed_extra_attrs.is_success:
+            attributes.update(
+                dict(cast("list[tuple[str, list[str]]]", processed_extra_attrs.value))
+            )
         # TypedDict with total=False allows extra keys via __extra_items__
         # Return dict[str, object] for flexible test data
         return {
@@ -926,7 +976,7 @@ class TestOperationHelpers:
         add_result: FlextResult[FlextLdapModels.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(
                 cast(
-                    "FlextResult[FlextLdapModels.OperationResult] | FlextProtocols.ResultProtocol[FlextLdapModels.OperationResult] | FlextProtocols.ResultProtocol[object]",
+                    "FlextResult[FlextLdapModels.OperationResult] | p.ResultProtocol[FlextLdapModels.OperationResult] | p.ResultProtocol[object]",
                     add_result_raw,
                 ),
             )
@@ -938,14 +988,17 @@ class TestOperationHelpers:
 
     @staticmethod
     def _convert_changes_to_modify_format(
-        changes: dict[str, FlextTypes.GeneralValueType],
+        changes: dict[str, t.GeneralValueType],
     ) -> FlextLdapTypes.Ldap.ModifyChanges:
         """Convert dict changes to ModifyChanges format."""
-        modify_changes: FlextLdapTypes.Ldap.ModifyChanges = {}
-        for key, value_raw in changes.items():
+
+        def process_change(
+            key: str, value_raw: object
+        ) -> tuple[str, list[tuple[str, list[str]]] | None] | None:
+            """Process change value."""
             if value_raw is None:
-                continue
-            value: FlextTypes.GeneralValueType = value_raw
+                return None
+            value: t.GeneralValueType = cast("t.GeneralValueType", value_raw)
             if isinstance(value, list) and all(
                 isinstance(item, tuple)
                 and len(item) == 2
@@ -964,19 +1017,30 @@ class TestOperationHelpers:
                         else:
                             tup_1_list = [str(tup_1)]
                         typed_value.append((tup_0, tup_1_list))
-                modify_changes[key] = typed_value
-            elif isinstance(value, (list, tuple)):
+                return (key, typed_value)
+            if isinstance(value, (list, tuple)):
                 value_list: list[str] = [str(v) for v in value]
-                modify_changes[key] = [("MODIFY_REPLACE", value_list)]
-            else:
-                modify_changes[key] = [("MODIFY_REPLACE", [str(value)])]
+                return (key, [("MODIFY_REPLACE", value_list)])
+            return (key, [("MODIFY_REPLACE", [str(value)])])
+
+        processed_changes = u.process(
+            changes,
+            processor=process_change,
+            on_error="skip",
+        )
+        modify_changes: FlextLdapTypes.Ldap.ModifyChanges = dict(
+            cast(
+                "list[tuple[str, list[tuple[str, list[str]]] | None]]",
+                processed_changes.value if processed_changes.is_success else [],
+            )
+        )
         return modify_changes
 
     @staticmethod
     def _execute_modify_when_not_connected(
         client: LdapClientType,
         dn: str,
-        changes: dict[str, FlextTypes.GeneralValueType],
+        changes: dict[str, t.GeneralValueType],
         expected_error: str,
     ) -> None:
         """Execute modify operation when not connected and assert failure."""
@@ -1010,7 +1074,7 @@ class TestOperationHelpers:
     def execute_operation_when_not_connected(
         client: LdapClientType,
         operation: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> None:
         """Execute operation when not connected and assert failure.
 

@@ -14,7 +14,7 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult, t
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
@@ -155,8 +155,8 @@ class TestFlextLdapOperationsErrorCoverage:
         ) -> FlextLdifModels.Entry:
             """Create test entry for error scenarios."""
             # Convert dict to Mapping[str, GeneralValueType] for EntryTestHelpers.create_entry
-            attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
-                "Mapping[str, FlextTypes.GeneralValueType]",
+            attrs_mapping: Mapping[str, t.GeneralValueType] = cast(
+                "Mapping[str, t.GeneralValueType]",
                 attrs,
             )
             return EntryTestHelpers.create_entry(dn, attrs_mapping)
@@ -183,7 +183,25 @@ class TestFlextLdapOperationsErrorCoverage:
 
             # For operations that may succeed or fail depending on server
             if config.get("expect_failure") is None:
-                assert result.is_failure or result.is_success
+                if result.is_success:
+                    operation_result = result.unwrap()
+                    # Validate actual content: if succeeded, should have operation result
+                    # Note: upsert returns LdapOperationResult (only 'operation'), others return OperationResult
+                    if hasattr(operation_result, "success"):
+                        # OperationResult has success field
+                        assert operation_result.success is True
+                        assert operation_result.entries_affected >= 0
+                    # LdapOperationResult only has operation field
+                    assert operation_result.operation in {
+                        "added",
+                        "modified",
+                        "deleted",
+                        "skipped",
+                    }
+                else:
+                    # Validate failure: error message should be present
+                    error_msg = str(result.error) if result.error else ""
+                    assert len(error_msg) > 0
 
     @pytest.mark.parametrize(("test_name", "config"), ERROR_TEST_CONFIGS)
     def test_operations_error_coverage_parameterized(

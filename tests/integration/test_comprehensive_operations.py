@@ -17,8 +17,9 @@ from flext_ldif.models import FlextLdifModels
 from ldap3 import MODIFY_ADD, MODIFY_REPLACE
 
 from flext_ldap import FlextLdap
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.protocols import FlextLdapProtocols as p
 
 from ..conftest import create_flext_ldap_instance
 from ..fixtures import LdapTestFixtures
@@ -210,14 +211,14 @@ class TestFlextLdapConnectionManagement:
 
     def test_connect_and_disconnect(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> None:
         """Test connection lifecycle."""
         client = create_flext_ldap_instance()
 
         # Connect
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
+            cast("p.LdapService.LdapClientProtocol", client),
             connection_config,
         )
 
@@ -227,21 +228,21 @@ class TestFlextLdapConnectionManagement:
 
     def test_reconnect_after_disconnect(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
     ) -> None:
         """Test reconnecting after disconnect."""
         client = create_flext_ldap_instance()
 
         # First connection
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
+            cast("p.LdapService.LdapClientProtocol", client),
             connection_config,
         )
         client.disconnect()
 
         # Reconnect
         TestOperationHelpers.connect_and_assert_success(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
+            cast("p.LdapService.LdapClientProtocol", client),
             connection_config,
         )
 
@@ -275,7 +276,12 @@ class TestFlextLdapWithBaseLdif:
 
         # Add entry
         add_result = ldap_client.add(test_entry)
-        assert add_result.is_success, f"Failed to add test entry: {add_result.error}"
+        TestOperationHelpers.assert_result_success(add_result)
+        operation_result = add_result.unwrap()
+        # Validate actual content: add() returns OperationResult with operation_type field
+        assert operation_result.operation_type == c.OperationType.ADD
+        assert operation_result.success is True
+        assert operation_result.entries_affected == 1
 
         try:
             search_options = FlextLdapTestHelpers.create_search_options(
@@ -323,8 +329,20 @@ class TestFlextLdapWithBaseLdif:
 
         # Add entry
         result = ldap_client.add(new_entry)
-        assert result.is_success, f"Add failed: {result.error}"
+        TestOperationHelpers.assert_result_success(result)
+        operation_result = result.unwrap()
+        # Validate actual content: add() returns OperationResult with operation_type field
+        assert operation_result.operation_type == c.OperationType.ADD
+        assert operation_result.success is True
+        assert operation_result.entries_affected == 1
 
         # Cleanup
         delete_result = ldap_client.delete(new_dn)
-        assert delete_result.is_success or delete_result.is_failure
+        if delete_result.is_success:
+            delete_op_result = delete_result.unwrap()
+            assert delete_op_result.success is True
+            assert delete_op_result.entries_affected == 1
+        else:
+            # If delete fails, validate error message
+            error_msg = TestOperationHelpers.get_error_message(delete_result)
+            assert len(error_msg) > 0

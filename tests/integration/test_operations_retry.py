@@ -90,7 +90,15 @@ class TestAssertions:
     ) -> None:
         """Assert that operation failed immediately without retries."""
         assert result.is_failure, "Operation should have failed"
+        # Validate actual content: error message should be present and meaningful
         assert result.error is not None, "Error message should be present"
+        error_msg = str(result.error)
+        assert len(error_msg) > 0, "Error message should not be empty"
+        # Validate that error doesn't indicate retries were attempted
+        error_lower = error_msg.lower()
+        assert "after" not in error_lower or "retries" not in error_lower, (
+            f"Expected immediate failure without retries, got: {error_msg}"
+        )
 
     @staticmethod
     def assert_retry_attempted(
@@ -98,13 +106,17 @@ class TestAssertions:
     ) -> None:
         """Assert that retry logic was attempted based on error message."""
         assert result.is_failure, "Operation should have failed"
-        error_lower = str(result.error).lower()
+        # Validate actual content: error message should indicate retry was attempted
+        assert result.error is not None, "Error message should be present"
+        error_msg = str(result.error)
+        assert len(error_msg) > 0, "Error message should not be empty"
+        error_lower = error_msg.lower()
         assert (
             "retry" in error_lower
             or "retries" in error_lower
             or "objectclass" in error_lower
             or "object class" in error_lower
-        ), f"Expected retry indicators in error: {result.error}"
+        ), f"Expected retry indicators in error: {error_msg}"
 
     @staticmethod
     def assert_successful_operation(
@@ -113,7 +125,10 @@ class TestAssertions:
         """Assert that operation succeeded and return operation info."""
         assert result.is_success, f"Operation should have succeeded: {result.error}"
         operation_info = result.unwrap()
+        # Validate actual content: operation should be valid and successful
         assert operation_info.operation in {"added", "modified", "skipped"}
+        assert operation_info.success is True
+        assert operation_info.entries_affected >= 0
 
     @staticmethod
     def assert_no_retry_attempted(
@@ -122,9 +137,12 @@ class TestAssertions:
     ) -> None:
         """Assert that no retry was attempted."""
         assert result.is_failure, "Operation should have failed"
-        error_str = str(result.error)
-        assert f"after {max_retries} retries" not in error_str, (
-            f"Should not show retry attempts in error: {error_str}"
+        # Validate actual content: error message should not indicate retries
+        assert result.error is not None, "Error message should be present"
+        error_msg = str(result.error)
+        assert len(error_msg) > 0, "Error message should not be empty"
+        assert f"after {max_retries} retries" not in error_msg, (
+            f"Should not show retry attempts in error: {error_msg}"
         )
 
 

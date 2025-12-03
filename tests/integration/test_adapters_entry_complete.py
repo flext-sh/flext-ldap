@@ -212,16 +212,26 @@ class TestFlextLdapEntryAdapterComplete:
 
         # Convert to FlextLdifModels.Entry - API direta
         entry_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert entry_result.is_success
+        TestOperationHelpers.assert_result_success(entry_result)
         entry = entry_result.unwrap()
+        # Validate actual content: entry should have DN and attributes
+        assert entry.dn is not None
+        assert entry.attributes is not None
+        assert str(entry.dn) == str(ldap3_entry.entry_dn)
 
         # Pass same ldap3_entry again (should convert again, not return as-is)
         # API direta: método aceita apenas Ldap3Entry, não Entry já convertido
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
         converted_entry = result.unwrap()
-        # Entries devem ser equivalentes (mesmo DN e atributos)
+        # Validate actual content: entries devem ser equivalentes (mesmo DN e atributos)
         assert str(converted_entry.dn) == str(entry.dn)
+        assert converted_entry.attributes is not None
+        assert entry.attributes is not None
+        # Validate attributes are equivalent
+        assert set(converted_entry.attributes.attributes) == set(
+            entry.attributes.attributes
+        )
 
     # Removed: test_ldap3_to_ldif_entry_with_none
     # Type system guarantees ldap3_entry is a valid Ldap3Entry (not None)

@@ -59,11 +59,14 @@ class TestAssertions:
     ) -> None:
         """Assert that TLS connection failed as expected."""
         assert result.is_failure, "TLS connection should have failed"
+        # Validate actual content: error message should be present and TLS-related
         assert result.error is not None, "Error message should be present"
+        error_msg = str(result.error)
+        assert len(error_msg) > 0, "Error message should not be empty"
         # Should have TLS-related error
-        assert "TLS" in result.error or "Failed" in result.error, (
-            f"Expected TLS-related error, got: {result.error}"
-        )
+        assert (
+            "TLS" in error_msg or "Failed" in error_msg or "tls" in error_msg.lower()
+        ), f"Expected TLS-related error, got: {error_msg}"
 
     @staticmethod
     def assert_start_tls_failure(
@@ -125,7 +128,10 @@ class TestLdap3AdapterTlsFailure:
         # This should fail with "Failed to start TLS" if start_tls() returns False (covers line 127)
         # Or it may fail at connection stage before TLS
         if result.is_failure:
-            assert result.error is not None
+            # Validate actual content: error message should be present
+            assert result.error is not None, "Error message should be present"
+            error_msg = str(result.error)
+            assert len(error_msg) > 0, "Error message should not be empty"
             # Check if it's specifically a start_tls failure (covers line 127)
             TestAssertions.assert_start_tls_failure(result)
 

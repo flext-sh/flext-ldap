@@ -27,7 +27,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants
@@ -100,7 +100,7 @@ class TestFlextLdapConfig:
     def test_default_config_values(
         self,
         attr: str,
-        expected: FlextTypes.GeneralValueType,
+        expected: t.GeneralValueType,
     ) -> None:
         """Test default configuration values match expected constants."""
         # Reset singleton to ensure clean state for default value testing

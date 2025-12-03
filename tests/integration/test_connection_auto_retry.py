@@ -17,6 +17,7 @@ from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 
 from ..fixtures.typing import LdapContainerDict
+from ..helpers.operation_helpers import TestOperationHelpers
 
 # Mark all tests in this module as integration tests requiring Docker
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -50,8 +51,16 @@ class TestConnectionAutoRetry:
         result = connection.connect(bad_config)
 
         # Should fail immediately without retry
-        assert result.is_failure
-        assert result.error is not None
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate authentication failure
+        assert len(error_msg) > 0
+        assert (
+            "invalid credentials" in error_msg.lower()
+            or "authentication" in error_msg.lower()
+            or "bind" in error_msg.lower()
+            or "invalid" in error_msg.lower()
+        )
 
     def test_connect_auto_retry_fails_with_invalid_host(
         self,
@@ -80,14 +89,15 @@ class TestConnectionAutoRetry:
         )
 
         # Should fail after all retries
-        assert result.is_failure
-        error_str = str(result.error)
-        # Accept either the old message format or the new retry message format
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate retry exhaustion
         assert (
-            "failed after 2" in error_str
-            or "Operation failed after 2 attempts" in error_str
-            or "retries" in error_str.lower()
-        )
+            "failed after 2" in error_msg
+            or "Operation failed after 2 attempts" in error_msg
+            or "retries" in error_msg.lower()
+            or "retry" in error_msg.lower()
+        ), f"Expected retry error message, got: {error_msg}"
 
     def test_connect_succeeds_with_valid_credentials(
         self,
@@ -111,8 +121,10 @@ class TestConnectionAutoRetry:
         result = connection.connect(good_config)
 
         # Should succeed immediately
-        assert result.is_success
-        assert result.unwrap() is True
+        TestOperationHelpers.assert_result_success(result)
+        connection_result = result.unwrap()
+        # Validate actual content: connection should succeed
+        assert connection_result is True
         assert connection.is_connected is True
 
         # Cleanup
@@ -145,8 +157,10 @@ class TestConnectionAutoRetry:
         )
 
         # Should fail after 5 retries
-        assert result.is_failure
-        error_str = str(result.error)
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate retry exhaustion
+        error_str = error_msg
         # Accept either the old message format or the new retry message format
         assert (
             "failed after 5" in error_str

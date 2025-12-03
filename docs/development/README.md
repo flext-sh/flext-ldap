@@ -154,7 +154,7 @@ def my_operation(data: dict) -> FlextResult[ProcessedData]:
     )
 ```
 
-### Use FlextMixins
+### Use x
 
 ```python
 from flext_core import FlextService
@@ -164,9 +164,9 @@ class MyService(FlextService[None]):
 
     def operation(self):
         # ✅ Use inherited properties
-        self.logger.info("message")  # From FlextMixins
-        timeout = self.config.timeout  # From FlextMixins
-        service = self.container.get("service")  # From FlextMixins
+        self.logger.info("message")  # From x
+        timeout = self.config.timeout  # From x
+        service = self.container.get("service")  # From x
 ```
 
 ### Pydantic v2 Models

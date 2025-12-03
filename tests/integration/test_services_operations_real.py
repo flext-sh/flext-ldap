@@ -1,7 +1,7 @@
 """Integration tests for FlextLdapOperations with real LDAP server.
 
 Tests all operations service methods with real server and flext-ldif integration.
-Modules tested: FlextLdapOperations, FlextLdapConnection, FlextLdapModels
+Modules tested: FlextLdapOperations, FlextLdapConnection, m
 Scope: Real LDAP operations (search, add, modify, delete, execute) with flext-ldif integration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,17 +16,15 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult as r
+from flext_core.typings import FlextTypes as t
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 from ldap3 import MODIFY_REPLACE
 
+from flext_ldap import c, m, p
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 
@@ -184,7 +182,7 @@ class TestFlextLdapOperationsRealOperations:
 
         @staticmethod
         def create_operations_service(
-            connection_config: FlextLdapModels.ConnectionConfig,
+            connection_config: m.ConnectionConfig,
             ldap_parser: FlextLdifParser,
         ) -> FlextLdapOperations:
             """Create and connect operations service."""
@@ -231,7 +229,7 @@ class TestFlextLdapOperationsRealOperations:
 
         @staticmethod
         def assert_search_result(
-            result: FlextLdapModels.SearchResult,
+            result: m.SearchResult,
             config: GenericFieldsDict,
         ) -> None:
             """Assert search result based on configuration."""
@@ -253,7 +251,7 @@ class TestFlextLdapOperationsRealOperations:
 
         @staticmethod
         def assert_operation_success(
-            result: FlextResult[FlextLdapModels.OperationResult],
+            result: r[m.OperationResult],
             config: GenericFieldsDict,
         ) -> None:
             """Assert operation result success."""
@@ -269,24 +267,34 @@ class TestFlextLdapOperationsRealOperations:
 
         @staticmethod
         def assert_add_modify_sequence(
-            add_result: FlextResult[FlextLdapModels.OperationResult],
-            modify_result: FlextResult[FlextLdapModels.OperationResult],
+            add_result: r[m.OperationResult],
+            modify_result: r[m.OperationResult],
         ) -> None:
             """Assert add and modify sequence results."""
-            assert add_result.is_success
+            TestOperationHelpers.assert_result_success(add_result)
+            add_op_result = add_result.unwrap()
+            # Validate actual content: add() returns OperationResult with operation_type field
+            assert add_op_result.operation_type == c.OperationType.ADD
+            assert add_op_result.success is True
+            assert add_op_result.entries_affected == 1
             TestOperationHelpers.assert_operation_result_success(
                 modify_result,
-                expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value,
+                expected_operation_type=c.OperationType.MODIFY.value,
             )
 
         @staticmethod
         def assert_add_delete_sequence(
-            add_result: FlextResult[FlextLdapModels.OperationResult],
-            delete_result: FlextResult[FlextLdapModels.OperationResult],
+            add_result: r[m.OperationResult],
+            delete_result: r[m.OperationResult],
             config: GenericFieldsDict,
         ) -> None:
             """Assert add and delete sequence results."""
-            assert add_result.is_success
+            TestOperationHelpers.assert_result_success(add_result)
+            add_op_result = add_result.unwrap()
+            # Validate actual content: add() returns OperationResult with operation_type field
+            assert add_op_result.operation_type == c.OperationType.ADD
+            assert add_op_result.success is True
+            assert add_op_result.entries_affected == 1
             TestOperationHelpers.assert_operation_result_unwrapped(
                 delete_result,
                 expected_operation_type=cast(
@@ -301,7 +309,7 @@ class TestFlextLdapOperationsRealOperations:
 
         @staticmethod
         def assert_execute_when_not_connected(
-            result: FlextResult[FlextLdapModels.SearchResult],
+            result: r[m.SearchResult],
         ) -> None:
             """Assert execute fails when not connected."""
             assert result.is_failure
@@ -311,7 +319,7 @@ class TestFlextLdapOperationsRealOperations:
     @pytest.fixture
     def operations_service(
         self,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         ldap_parser: FlextLdifParser,
     ) -> Generator[FlextLdapOperations]:
         """Get operations service with connected adapter."""
@@ -382,9 +390,9 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
+            cast("p.LdapService.LdapClientProtocol", operations),
             OperationType.SEARCH,
-            search_options=cast("FlextTypes.GeneralValueType", search_options),
+            search_options=cast("t.GeneralValueType", search_options),
         )
 
     def test_search_with_failed_adapter_search(
@@ -393,10 +401,10 @@ class TestFlextLdapOperationsRealOperations:
         ldap_container: LdapContainerDict,
     ) -> None:
         """Test search when adapter search fails."""
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=str(ldap_container["base_dn"]),
             filter_str="(invalidFilterSyntax)",
-            scope=FlextLdapConstants.SearchScope.SUBTREE,
+            scope=c.SearchScope.SUBTREE,
         )
 
         result = operations_service.search(search_options)
@@ -419,7 +427,7 @@ class TestFlextLdapOperationsRealOperations:
 
         result = EntryTestHelpers.add_and_cleanup(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                "p.LdapService.LdapClientProtocol",
                 operations_service,
             ),
             entry,
@@ -439,9 +447,9 @@ class TestFlextLdapOperationsRealOperations:
         )
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
+            cast("p.LdapService.LdapClientProtocol", operations),
             OperationType.ADD,
-            entry=cast("FlextTypes.GeneralValueType", entry),
+            entry=cast("t.GeneralValueType", entry),
         )
 
     @pytest.mark.parametrize(("test_name", "config"), MODIFY_TEST_CONFIGS)
@@ -470,7 +478,7 @@ class TestFlextLdapOperationsRealOperations:
         _entry, add_result, modify_result = (
             EntryTestHelpers.modify_entry_with_verification(
                 cast(
-                    "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                    "p.LdapService.LdapClientProtocol",
                     operations_service,
                 ),
                 cast("GenericFieldsDict", entry_dict),
@@ -498,7 +506,7 @@ class TestFlextLdapOperationsRealOperations:
         _entry, add_result, delete_result = (
             EntryTestHelpers.delete_entry_with_verification(
                 cast(
-                    "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                    "p.LdapService.LdapClientProtocol",
                     operations_service,
                 ),
                 entry_dict,
@@ -518,7 +526,7 @@ class TestFlextLdapOperationsRealOperations:
         operations = FlextLdapOperations(connection=connection)
 
         TestOperationHelpers.execute_operation_when_not_connected(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", operations),
+            cast("p.LdapService.LdapClientProtocol", operations),
             OperationType.DELETE,
             dn="cn=test,dc=example,dc=com",
         )
@@ -533,7 +541,7 @@ class TestFlextLdapOperationsRealOperations:
         """Test execute operations with different configurations."""
         search_result = TestOperationHelpers.execute_and_assert_success(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                "p.LdapService.LdapClientProtocol",
                 operations_service,
             ),
         )

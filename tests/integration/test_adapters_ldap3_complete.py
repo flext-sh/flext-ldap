@@ -115,15 +115,19 @@ class TestLdap3AdapterComplete:
         # TLS might fail on test server (covers line 104: Failed to start TLS)
         result = adapter.connect(config)
         # Should fail with TLS error or succeed
-        assert result.is_failure or result.is_success
         if result.is_failure:
-            # May fail with "Failed to start TLS" (covers line 104)
-            assert result.error is not None
+            # Validate failure: error message should indicate TLS or connection issue
+            error_msg = TestOperationHelpers.get_error_message(result)
             assert (
-                "TLS" in result.error
-                or "Failed" in result.error
-                or "Connection" in result.error
-            )
+                "TLS" in error_msg
+                or "Failed" in error_msg
+                or "Connection" in error_msg
+                or "tls" in error_msg.lower()
+            ), f"Expected TLS/connection error, got: {error_msg}"
+        else:
+            # Validate success: adapter should be connected
+            TestOperationHelpers.assert_result_success(result)
+            assert adapter.is_connected is True
         adapter.disconnect()
 
     def test_connect_with_timeout(
@@ -141,7 +145,9 @@ class TestLdap3AdapterComplete:
             timeout=30,
         )
         result = adapter.connect(config)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        # Validate actual content: adapter should be connected
+        assert adapter.is_connected is True
         adapter.disconnect()
 
     def test_connect_with_auto_bind_false(
@@ -334,7 +340,14 @@ class TestLdap3AdapterComplete:
         """Test deleting non-existent entry."""
         result = connected_adapter.delete("cn=nonexistent12345,dc=flext,dc=local")
         # Should fail gracefully
-        assert result.is_failure
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content: should indicate entry not found
+        assert (
+            "not found" in error_msg.lower()
+            or "noSuchObject" in error_msg
+            or "does not exist" in error_msg.lower()
+        ), f"Expected 'not found' error, got: {error_msg}"
 
     def test_execute_when_connected(
         self,
@@ -365,7 +378,14 @@ class TestLdap3AdapterComplete:
             search_options,
             server_type=FlextLdifConstants.ServerTypes.RFC,
         )
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        search_result = result.unwrap()
+        # Validate actual content: search should return SearchResult
+        assert search_result is not None
+        assert hasattr(search_result, "entries")
+        assert hasattr(search_result, "total_count")
+        assert isinstance(search_result.entries, list)
+        assert search_result.total_count == len(search_result.entries)
 
     def test_add_entry_with_empty_attributes(
         self,
@@ -385,7 +405,27 @@ class TestLdap3AdapterComplete:
             entry,
         )
         # Should succeed or fail gracefully
-        assert result.is_success or result.is_failure
+        if result.is_success:
+            operation_result = result.unwrap()
+            # Validate actual content: check if OperationResult or LdapOperationResult
+            # add() returns OperationResult (has operation_type), upsert() returns LdapOperationResult (has operation)
+            if hasattr(operation_result, "success"):
+                # OperationResult has success and operation_type fields
+                assert operation_result.success is True
+                assert operation_result.entries_affected >= 0
+                if hasattr(operation_result, "operation_type"):
+                    assert operation_result.operation_type in {
+                        "add",
+                        "modify",
+                        "delete",
+                    }
+            elif hasattr(operation_result, "operation"):
+                # LdapOperationResult has only operation field
+                assert operation_result.operation in {"added", "skipped", "modified"}
+        else:
+            # Validate failure: error message should be present
+            error_msg = TestOperationHelpers.get_error_message(result)
+            assert len(error_msg) > 0
 
     def test_disconnect_with_exception_handling(
         self,

@@ -41,7 +41,7 @@ password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-pa
     - [FlextLdapEntryAdapter](#flextldapentryadapter)
       - [`ldap3_to_ldif_entry(ldap3_entry) -> FlextResult[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
 - [Search with ldap3](#search-with-ldap3) - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextResult[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str,
-FlextTypes.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
+t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
 - [Create FlextLdif entry](#create-flextldif-entry)
 - [Convert to ldap3 attributes](#convert-to-ldap3-attributes) - [`convert_ldif_file_to_entries(ldif_file_path) -> FlextResult[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries,
 output_path) -> FlextResult[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
@@ -54,17 +54,17 @@ server_type=None) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entry_for_s
       - [Connection Operations](#connection-operations)
         - [`get_default_port(use_ssl=False) -> int`](#get_default_portuse_sslfalse---int)
         - [`supports_start_tls() -> bool`](#supports_start_tls---bool)
-        - [`get_bind_mechanisms() -> FlextTypes.StringList`](#get_bind_mechanisms---flexttypesstringlist)
+        - [`get_bind_mechanisms() -> t.StringList`](#get_bind_mechanisms---flexttypesstringlist)
       - [Schema Operations](#schema-operations)
         - [`get_schema_dn() -> str`](#get_schema_dn---str)
-        - [`discover_schema(connection) -> FlextResult[FlextTypes.Dict]`](#discover_schemaconnection---flextresultflexttypesdict)
-        - [`parse_object_class(object_class_def) -> FlextResult[FlextTypes.Dict]`](#parse_object_classobject_class_def---flextresultflexttypesdict)
-        - [`parse_attribute_type(attribute_def) -> FlextResult[FlextTypes.Dict]`](#parse_attribute_typeattribute_def---flextresultflexttypesdict)
+        - [`discover_schema(connection) -> FlextResult[t.Dict]`](#discover_schemaconnection---flextresultflexttypesdict)
+        - [`parse_object_class(object_class_def) -> FlextResult[t.Dict]`](#parse_object_classobject_class_def---flextresultflexttypesdict)
+        - [`parse_attribute_type(attribute_def) -> FlextResult[t.Dict]`](#parse_attribute_typeattribute_def---flextresultflexttypesdict)
       - [ACL Operations](#acl-operations)
         - [`get_acl_attribute_name() -> str`](#get_acl_attribute_name---str)
         - [`get_acl_format() -> str`](#get_acl_format---str)
-        - [`get_acls(connection, dn) -> FlextResult[list[FlextTypes.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry) - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[FlextTypes.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - [Entry Operations](#entry-operations) - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - [Search Operations](#search-operations) - [`get_max_page_size() -> int`](#get_max_page_size---int) - [`supports_paged_results() -> bool`](#supports_paged_results---bool) - [`supports_vlv() -> bool`](#supports_vlv---bool) - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
+        - [`get_acls(connection, dn) -> FlextResult[list[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
+- [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry) - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - [Entry Operations](#entry-operations) - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - [Search Operations](#search-operations) - [`get_max_page_size() -> int`](#get_max_page_size---int) - [`supports_paged_results() -> bool`](#supports_paged_results---bool) - [`supports_vlv() -> bool`](#supports_vlv---bool) - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
 page_size=100) -> FlextResult[list[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - [Server-Specific Implementations](#server-specific-implementations)
     - [OpenLDAP2Operations](#openldap2operations)
@@ -209,7 +209,7 @@ Search criteria for LDAP operations.
 - `base_dn` (str): Base distinguished name for search
 - `filter_str` (str): LDAP search filter
 - `scope` (str): Search scope ("base", "onelevel", "subtree")
-- `attributes` (FlextTypes.StringList): Attributes to retrieve
+- `attributes` (t.StringList): Attributes to retrieve
 - `size_limit` (int, optional): Maximum results to return
 - `time_limit` (int, optional): Search timeout in seconds
 
@@ -224,7 +224,7 @@ User creation request data.
 - `cn` (str): Common name
 - `sn` (str): Surname
 - `mail` (str, optional): Email address
-- `object_classes` (FlextTypes.StringList, optional): LDAP object classes
+- `object_classes` (t.StringList, optional): LDAP object classes
 
 #### FlextLdapUser
 
@@ -238,7 +238,7 @@ LDAP user entity.
 - `sn` (str): Surname
 - `given_name` (str, optional): First name
 - `mail` (str, optional): Email address
-- `member_of` (FlextTypes.StringList, optional): Group memberships
+- `member_of` (t.StringList, optional): Group memberships
 
 **Methods:**
 
@@ -253,7 +253,7 @@ LDAP group entity.
 
 - `dn` (str): Distinguished name
 - `cn` (str): Common name
-- `members` (FlextTypes.StringList): Member distinguished names
+- `members` (t.StringList): Member distinguished names
 - `description` (str, optional): Group description
 
 **Methods:**
@@ -546,7 +546,7 @@ Batch convert multiple ldap3 entries to FlextLdif entries.
 
 **Returns:** FlextResult containing list of FlextLdifModels.Entry
 
-#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str, FlextTypes.List]]`
+#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str, t.List]]`
 
 Convert FlextLdif entry to ldap3 attributes dictionary.
 
@@ -739,7 +739,7 @@ Get default port for server type.
 
 Check if server supports START_TLS.
 
-##### `get_bind_mechanisms() -> FlextTypes.StringList`
+##### `get_bind_mechanisms() -> t.StringList`
 
 Get supported BIND mechanisms (SIMPLE, SASL/EXTERNAL, etc.).
 
@@ -749,7 +749,7 @@ Get supported BIND mechanisms (SIMPLE, SASL/EXTERNAL, etc.).
 
 Get schema discovery DN for server type.
 
-##### `discover_schema(connection) -> FlextResult[FlextTypes.Dict]`
+##### `discover_schema(connection) -> FlextResult[t.Dict]`
 
 Discover schema from server.
 
@@ -782,11 +782,11 @@ if schema_result.is_success:
     print(f"Attribute types: {len(schema['attribute_types'])}")
 ```
 
-##### `parse_object_class(object_class_def) -> FlextResult[FlextTypes.Dict]`
+##### `parse_object_class(object_class_def) -> FlextResult[t.Dict]`
 
 Parse objectClass definition string.
 
-##### `parse_attribute_type(attribute_def) -> FlextResult[FlextTypes.Dict]`
+##### `parse_attribute_type(attribute_def) -> FlextResult[t.Dict]`
 
 Parse attributeType definition string.
 
@@ -800,7 +800,7 @@ Get ACL attribute name for server type.
 
 Get ACL format identifier.
 
-##### `get_acls(connection, dn) -> FlextResult[list[FlextTypes.Dict]]`
+##### `get_acls(connection, dn) -> FlextResult[list[t.Dict]]`
 
 Retrieve ACLs from entry.
 
@@ -838,7 +838,7 @@ new_acls = [
 result = ops.set_acls(connection, dn, acls=new_acls)
 ```
 
-##### `parse(acl_string) -> FlextResult[FlextTypes.Dict]`
+##### `parse(acl_string) -> FlextResult[t.Dict]`
 
 Parse server-specific ACL string to dictionary.
 

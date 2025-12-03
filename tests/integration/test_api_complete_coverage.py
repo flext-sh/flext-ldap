@@ -371,7 +371,16 @@ class TestFlextLdapAPICompleteCoverage:
                         entry = TestDataFactories.create_test_entry(f"test_{test_name}")
                         delete_result = api.delete(str(entry.dn))
                         # Delete may succeed or fail depending on entry existence
-                        assert delete_result.is_success or delete_result.is_failure
+                        if delete_result.is_success:
+                            delete_op_result = delete_result.unwrap()
+                            assert delete_op_result.success is True
+                            assert delete_op_result.entries_affected >= 0
+                        else:
+                            # Validate failure: error message should be present
+                            error_msg = (
+                                str(delete_result.error) if delete_result.error else ""
+                            )
+                            assert len(error_msg) > 0
 
                     case OperationType.EXECUTE:
                         execute_result = api.execute()
@@ -416,6 +425,13 @@ class TestFlextLdapAPICompleteCoverage:
 
         # Cleanup
         delete_result = api.delete(str(entry.dn))
-        assert delete_result.is_success or delete_result.is_failure
+        if delete_result.is_success:
+            delete_op_result = delete_result.unwrap()
+            assert delete_op_result.success is True
+            assert delete_op_result.entries_affected >= 0
+        else:
+            # Validate failure: error message should be present
+            error_msg = str(delete_result.error) if delete_result.error else ""
+            assert len(error_msg) > 0
 
         api.disconnect()

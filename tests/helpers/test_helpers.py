@@ -6,7 +6,7 @@ flext-ldap tests. Built on flext-core patterns for consistency.
 
 **Modules Tested:**
 - FlextLdap: LDAP API facade
-- FlextLdapModels: LDAP domain models
+- m: LDAP domain models
 - FlextLdifModels: LDIF entry models
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -19,16 +19,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, Protocol, cast
 
-from flext_core import FlextResult, FlextRuntime
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core import FlextRuntime
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry
 
-from flext_ldap import FlextLdap
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
+from flext_ldap import FlextLdap, c, m, p, r, t, u
 from flext_ldap.services.operations import FlextLdapOperations
 
 from ..fixtures.constants import TestConstants
@@ -47,18 +42,20 @@ class DnsTrackerProtocol(Protocol):
 
 
 # Type alias for search scope - reuse production types
-SearchScopeType = FlextLdapConstants.LiteralTypes.SearchScopeLiteral
+SearchScopeType = c.LiteralTypes.SearchScopeLiteral
 
 # Valid scopes for runtime validation - reuse production StrEnum
 VALID_SCOPES: frozenset[str] = frozenset({
-    FlextLdapConstants.SearchScope.BASE.value,
-    FlextLdapConstants.SearchScope.ONELEVEL.value,
-    FlextLdapConstants.SearchScope.SUBTREE.value,
+    c.SearchScope.BASE.value,
+    c.SearchScope.ONELEVEL.value,
+    c.SearchScope.SUBTREE.value,
 })
 
 
 def _validate_scope(scope: str) -> SearchScopeType:
     """Validate and return a typed search scope.
+
+    Uses u.Enum.parse for unified enum parsing.
 
     Args:
         scope: Scope string to validate
@@ -70,22 +67,26 @@ def _validate_scope(scope: str) -> SearchScopeType:
         ValueError: If scope is not valid
 
     """
-    if scope not in VALID_SCOPES:
-        msg = f"Invalid scope: {scope}. Must be one of {VALID_SCOPES}"
-        raise ValueError(msg)
-    # Use FlextLdapConstants for type-safe mapping
-    scope_map: dict[str, SearchScopeType] = {
-        "BASE": "BASE",
-        "ONELEVEL": "ONELEVEL",
-        "SUBTREE": "SUBTREE",
-    }
-    return scope_map[scope]
+    # Use u.Enum.parse for unified enum parsing
+    parse_result = u.Enum.parse(
+        c.SearchScope,
+        scope,
+    )
+    if parse_result.is_success:
+        # Convert StrEnum to Literal type
+        scope_value = parse_result.value.value
+        if scope_value in VALID_SCOPES:
+            return cast("SearchScopeType", scope_value)
+
+    # If parsing failed, raise ValueError with helpful message
+    msg = f"Invalid scope: {scope}. Must be one of {VALID_SCOPES}"
+    raise ValueError(msg)
 
 
 def to_ldap3_scope(
-    scope: FlextLdapConstants.SearchScope,
+    scope: c.SearchScope,
 ) -> Ldap3SearchScope:
-    """Convert FlextLdapConstants.SearchScope to ldap3 search scope literal.
+    """Convert c.SearchScope to ldap3 search scope literal.
 
     Shared helper to avoid duplication across test files.
     Replaces local _to_ldap3_scope functions in test files.
@@ -122,7 +123,7 @@ class Ldap3TestHelpers:
     def search_base_entry(
         connection: Connection,
         base_dn: str,
-        scope: FlextLdapConstants.SearchScope = FlextLdapConstants.SearchScope.BASE,
+        scope: c.SearchScope = c.SearchScope.BASE,
         attributes: list[str] | None = None,
     ) -> list[Ldap3Entry]:
         """Search for base DN entry using ldap3.Connection.
@@ -187,10 +188,10 @@ class LdapTestDataFactory:
         filter_str: str = TestConstants.DEFAULT_FILTER,
         scope: str = TestConstants.DEFAULT_SCOPE,
         attributes: list[str] | None = None,
-    ) -> FlextLdapModels.SearchOptions:
+    ) -> m.SearchOptions:
         """Factory method for creating search options with smart defaults."""
         validated_scope = _validate_scope(scope)
-        return FlextLdapModels.SearchOptions(
+        return m.SearchOptions(
             base_dn=base_dn or self.base_dn,
             filter_str=filter_str,
             scope=validated_scope,
@@ -203,9 +204,9 @@ class LdapTestDataFactory:
         port: int = TestConstants.DEFAULT_PORT,
         bind_dn: str = TestConstants.DEFAULT_BIND_DN,
         bind_password: str = TestConstants.DEFAULT_BIND_PASSWORD,
-    ) -> FlextLdapModels.ConnectionConfig:
+    ) -> m.ConnectionConfig:
         """Factory method for connection configurations with explicit parameters."""
-        return FlextLdapModels.ConnectionConfig(
+        return m.ConnectionConfig(
             host=host,
             port=port,
             bind_dn=bind_dn,
@@ -258,11 +259,23 @@ class FlextLdapTestHelpers:
         # Type-safe conversion using FlextRuntime
         attributes: dict[str, list[str]] = {}
         if FlextRuntime.is_dict_like(attrs_raw):
-            for key, value in attrs_raw.items():
-                if FlextRuntime.is_list_like(value):
-                    attributes[str(key)] = [str(item) for item in value]
-                else:
-                    attributes[str(key)] = [str(value)]
+
+            def process_attr(key: object, value: object) -> tuple[str, list[str]]:
+                """Process attribute value."""
+                value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+                if FlextRuntime.is_list_like(value_typed):
+                    return (str(key), [str(item) for item in value_typed])
+                return (str(key), [str(value_typed)])
+
+            processed_attrs = u.process(
+                cast("dict[object, object]", attrs_raw),
+                processor=process_attr,
+                on_error="skip",
+            )
+            if processed_attrs.is_success:
+                attributes.update(
+                    dict(cast("list[tuple[str, list[str]]]", processed_attrs.value))
+                )
 
         return FlextLdapTestHelpers.create_entry(dn_str, attributes)
 
@@ -270,9 +283,9 @@ class FlextLdapTestHelpers:
     def create_search_options(
         base_dn: str,
         filter_str: str = "(objectClass=*)",
-        scope: str = FlextLdapConstants.SearchScope.SUBTREE.value,
+        scope: str = c.SearchScope.SUBTREE.value,
         attributes: list[str] | None = None,
-    ) -> FlextLdapModels.SearchOptions:
+    ) -> m.SearchOptions:
         """Create SearchOptions with common defaults.
 
         Args:
@@ -282,11 +295,11 @@ class FlextLdapTestHelpers:
             attributes: Attributes to retrieve
 
         Returns:
-            FlextLdapModels.SearchOptions instance
+            m.SearchOptions instance
 
         """
         validated_scope = _validate_scope(scope)
-        return FlextLdapModels.SearchOptions(
+        return m.SearchOptions(
             base_dn=base_dn,
             filter_str=filter_str,
             scope=validated_scope,
@@ -298,7 +311,7 @@ class FlextLdapTestHelpers:
         client: FlextLdap,
         entry: FlextLdifModels.Entry,
         dns_tracker: DnsTrackerProtocol | None = None,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Add entry with automatic cleanup and tracking.
 
         Replaces add + cleanup pattern used in many tests.
@@ -331,7 +344,7 @@ class FlextLdapTestHelpers:
         client: FlextLdap,
         entry_dict: GenericFieldsDict,
         dns_tracker: DnsTrackerProtocol | None = None,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Add entry from dict with automatic cleanup and tracking.
 
         Combines create_entry_from_dict + add_entry_with_cleanup.
@@ -352,7 +365,7 @@ class FlextLdapTestHelpers:
     @staticmethod
     def create_entry_with_normalization(
         dn: str,
-        attributes: Mapping[str, FlextTypes.GeneralValueType],
+        attributes: Mapping[str, t.GeneralValueType],
     ) -> FlextLdifModels.Entry:
         """Create Entry with attribute normalization from any value type.
 
@@ -365,11 +378,25 @@ class FlextLdapTestHelpers:
 
         """
         attrs_dict: dict[str, list[str]] = {}
-        for key, value_item_raw in attributes.items():
-            if FlextRuntime.is_list_like(value_item_raw):
-                attrs_dict[key] = [str(item) for item in value_item_raw]
-            else:
-                attrs_dict[key] = [str(value_item_raw)]
+
+        def process_attr_item(
+            key: str, value_item_raw: object
+        ) -> tuple[str, list[str]]:
+            """Process attribute item value."""
+            value_typed: t.GeneralValueType = cast("t.GeneralValueType", value_item_raw)
+            if FlextRuntime.is_list_like(value_typed):
+                return (key, [str(item) for item in value_typed])
+            return (key, [str(value_item_raw)])
+
+        processed_attrs = u.process(
+            attributes,
+            processor=process_attr_item,
+            on_error="skip",
+        )
+        if processed_attrs.is_success:
+            attrs_dict.update(
+                dict(cast("list[tuple[str, list[str]]]", processed_attrs.value))
+            )
         return FlextLdapTestHelpers.create_entry(dn, attrs_dict)
 
     @staticmethod
@@ -377,9 +404,9 @@ class FlextLdapTestHelpers:
         client: (
             FlextLdap
             | FlextLdapOperations
-            | FlextLdapProtocols.LdapService.LdapClientProtocol
+            | p.LdapService.LdapClientProtocol
         ),
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        dn: str | p.LdapEntry.DistinguishedNameProtocol,
     ) -> None:
         """Cleanup entry before add to avoid entryAlreadyExists errors.
 
@@ -396,9 +423,9 @@ class FlextLdapTestHelpers:
         client: (
             FlextLdap
             | FlextLdapOperations
-            | FlextLdapProtocols.LdapService.LdapClientProtocol
+            | p.LdapService.LdapClientProtocol
         ),
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        dn: str | p.LdapEntry.DistinguishedNameProtocol,
     ) -> None:
         """Cleanup entry after test execution.
 
@@ -412,38 +439,36 @@ class FlextLdapTestHelpers:
 
     @staticmethod
     def _ensure_flext_result[T](
-        result: FlextResult[T]
-        | FlextProtocols.ResultProtocol[T]
-        | FlextProtocols.ResultProtocol[object],
-    ) -> FlextResult[T]:
+        result: r[T] | p.ResultProtocol[T] | p.ResultProtocol[object],
+    ) -> r[T]:
         """Ensure result is FlextResult, converting from protocol if needed.
 
         Args:
             result: Result that may be FlextResult or ResultProtocol
 
         Returns:
-            FlextResult[T] guaranteed
+            r[T] guaranteed
 
         """
-        if isinstance(result, FlextResult):
-            # Type narrowing: isinstance check ensures FlextResult[T]
+        if isinstance(result, r):
+            # Type narrowing: isinstance check ensures r[T]
             # Use cast to satisfy pyright's invariant type parameter check
-            return cast("FlextResult[T]", result)
-        # Convert protocol result to FlextResult
+            return cast("r[T]", result)
+        # Convert protocol result to r
         if result.is_success:
             unwrapped = result.unwrap()
             # Type narrowing: unwrapped is T from protocol contract
-            # Use FlextResult.ok with explicit type parameter via cast
+            # Use r.ok with explicit type parameter via cast
             typed_unwrapped: T = cast("T", unwrapped)
-            return FlextResult.ok(typed_unwrapped)
+            return r.ok(typed_unwrapped)
         error_msg = str(result.error) if result.error else "Unknown error"
-        return FlextResult.fail(error_msg)
+        return r.fail(error_msg)
 
     @staticmethod
     def delete_entry_safe(
         client: FlextLdap,
         dn: str | FlextLdifModels.DistinguishedName,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Delete entry safely (ignores errors if not exists).
 
         Replaces try/except delete patterns.
@@ -460,9 +485,9 @@ class FlextLdapTestHelpers:
 
     @staticmethod
     def assert_search_success(
-        result: FlextResult[FlextLdapModels.SearchResult],
+        result: r[m.SearchResult],
         min_entries: int = 0,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Assert search result is successful and return unwrapped result.
 
         Replaces repetitive assert + unwrap patterns.
@@ -487,9 +512,9 @@ class FlextLdapTestHelpers:
 
     @staticmethod
     def assert_operation_success(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: r[m.OperationResult],
         expected_affected: int = 1,
-    ) -> FlextLdapModels.OperationResult:
+    ) -> m.OperationResult:
         """Assert operation result is successful and return unwrapped result.
 
         Replaces repetitive assert + unwrap patterns for operations.
@@ -513,9 +538,7 @@ class FlextLdapTestHelpers:
         client: FlextLdap,
         entry_dicts: list[GenericFieldsDict],
         adjust_dn: dict[str, str] | None = None,
-    ) -> list[
-        tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
-    ]:
+    ) -> list[tuple[FlextLdifModels.Entry, r[m.OperationResult]]]:
         """Add multiple entries from dicts with DN adjustment.
 
         Replaces loops of add_entry_from_dict_with_cleanup.
@@ -530,12 +553,12 @@ class FlextLdapTestHelpers:
 
         """
         results: list[
-            tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+            tuple[FlextLdifModels.Entry, r[m.OperationResult]]
         ] = []
         for entry_dict_item in entry_dicts:
             # Type narrowing: cast to GeneralValueType for FlextRuntime methods
-            entry_dict_typed: FlextTypes.GeneralValueType = cast(
-                "FlextTypes.GeneralValueType", entry_dict_item
+            entry_dict_typed: t.GeneralValueType = cast(
+                "t.GeneralValueType", entry_dict_item
             )
             if not FlextRuntime.is_dict_like(entry_dict_typed):
                 msg = f"Expected dict, got {type(entry_dict_item)}"
@@ -574,8 +597,8 @@ class FlextLdapTestHelpers:
         changes: dict[str, list[tuple[str, list[str]]]],
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry, modify it, and verify changes.
 
@@ -598,7 +621,7 @@ class FlextLdapTestHelpers:
             return (
                 entry,
                 add_result,
-                FlextResult[FlextLdapModels.OperationResult].fail("Add failed"),
+                r[m.OperationResult].fail("Add failed"),
             )
 
         dn_str = str(entry.dn)
@@ -611,8 +634,8 @@ class FlextLdapTestHelpers:
         entry_dict: GenericFieldsDict,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry, delete it, and verify deletion.
 
@@ -634,7 +657,7 @@ class FlextLdapTestHelpers:
             return (
                 entry,
                 add_result,
-                FlextResult[FlextLdapModels.OperationResult].fail("Add failed"),
+                r[m.OperationResult].fail("Add failed"),
             )
 
         dn_str = str(entry.dn)

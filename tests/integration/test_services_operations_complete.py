@@ -224,11 +224,17 @@ class TestFlextLdapOperationsComplete:
         assert operations_service.is_connected is True
 
         result = operations_service.execute()
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
         search_result = result.unwrap()
+        # Validate actual content: execute should return SearchResult
+        assert search_result is not None
+        assert hasattr(search_result, "entries")
+        assert hasattr(search_result, "total_count")
         # total_count is @computed_field that returns len(entries)
         # Use len(entries) directly to avoid mypy strict mode issues with @computed_field
         assert len(search_result.entries) == 0
+        # Validate total_count matches entries length
+        assert search_result.total_count == len(search_result.entries)
 
     def test_add_with_operation_result_success(
         self,
@@ -309,13 +315,17 @@ class TestFlextLdapOperationsComplete:
 
         # First upsert should add (covers line 238)
         result = operations_service.upsert(entry)
-        assert result.is_success
-        assert result.unwrap().operation == "added"
+        TestOperationHelpers.assert_result_success(result)
+        operation_result = result.unwrap()
+        # Validate actual content: upsert returns LdapOperationResult (only 'operation' field)
+        assert operation_result.operation == "added"
 
         # Second upsert should skip (covers lines 241-243)
         result2 = operations_service.upsert(entry)
-        assert result2.is_success
-        assert result2.unwrap().operation == "skipped"
+        TestOperationHelpers.assert_result_success(result2)
+        operation_result2 = result2.unwrap()
+        # Validate actual content: upsert returns LdapOperationResult (only 'operation' field)
+        assert operation_result2.operation == "skipped"
 
         # Cleanup
         _ = operations_service.delete(test_dn)
@@ -342,7 +352,14 @@ class TestFlextLdapOperationsComplete:
         # Upsert should handle schema modify (covers lines 193-233)
         result = operations_service.upsert(entry)
         # May succeed or fail depending on LDAP server capabilities
-        assert result.is_success or result.is_failure
+        if result.is_success:
+            operation_result = result.unwrap()
+            # Validate actual content: upsert returns LdapOperationResult (only 'operation' field)
+            assert operation_result.operation in {"added", "modified", "skipped"}
+        else:
+            # Validate failure: error message should be present
+            error_msg = TestOperationHelpers.get_error_message(result)
+            assert len(error_msg) > 0
 
     def test_upsert_with_schema_modify_missing_add(
         self,
@@ -437,10 +454,15 @@ class TestFlextLdapOperationsComplete:
 
         result = operations_service.upsert(entry)
         # Should fail with empty values error (covers line 217)
-        assert result.is_failure
-        assert result.error is not None
-        error_lower = result.error.lower()
-        assert "only empty values" in error_lower or "empty values" in error_lower
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content
+        error_lower = error_msg.lower()
+        assert (
+            "only empty values" in error_lower
+            or "empty values" in error_lower
+            or "empty" in error_lower
+        )
 
         # Cleanup
         operations_service.delete(f"cn=testattr,{RFC.DEFAULT_BASE_DN}")

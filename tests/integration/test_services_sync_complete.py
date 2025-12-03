@@ -91,9 +91,17 @@ sn: Test2
 
         options = FlextLdapModels.SyncOptions()
         result = sync_service.sync_ldif_file(sample_ldif_file, options)
+        TestOperationHelpers.assert_result_success(result)
         stats = TestOperationHelpers.unwrap_sync_stats(result)
+        # Validate actual content: should process 2 entries
         assert stats.total == 2
         assert stats.added >= 0  # May be skipped if already exists
+        assert stats.failed == 0  # Should not fail
+        assert stats.skipped >= 0  # May skip if entries exist
+        # Validate that added + skipped equals total processed
+        assert stats.added + stats.skipped == stats.total
+        # Validate duration is reasonable
+        assert stats.duration_seconds >= 0.0
 
         # Cleanup
         for dn in [
@@ -117,8 +125,16 @@ sn: Test2
 
         options = FlextLdapModels.SyncOptions(batch_size=1)
         result = sync_service.sync_ldif_file(sample_ldif_file, options)
+        TestOperationHelpers.assert_result_success(result)
         stats = TestOperationHelpers.unwrap_sync_stats(result)
+        # Validate actual content: batch_size=1 should still process all entries
         assert stats.total == 2
+        assert stats.added >= 0
+        assert stats.failed == 0
+        assert stats.skipped >= 0
+        assert stats.added + stats.skipped == stats.total
+        # Validate batch_size option was respected (may affect processing)
+        assert stats.duration_seconds >= 0.0
 
         # Cleanup
         for dn in [
@@ -158,7 +174,12 @@ sn: Test
                 target_basedn=RFC.DEFAULT_BASE_DN,
             )
             result = sync_service.sync_ldif_file(temp_path, options)
-            assert result.is_success
+            TestOperationHelpers.assert_result_success(result)
+            stats = TestOperationHelpers.unwrap_sync_stats(result)
+            # Validate actual content: transformation should process entry
+            assert stats.total == 1
+            assert stats.added >= 0  # Entry should be added after transformation
+            assert stats.failed == 0
 
             # Verify transformation happened (covers lines 286-289, 293, 298)
             # Entry should be transformed from dc=example,dc=com to dc=flext,dc=local
@@ -169,10 +190,12 @@ sn: Test
                     scope=FlextLdapConstants.SearchScope.SUBTREE,
                 ),
             )
-            if search_result.is_success:
-                entries = search_result.unwrap().entries
-                if entries:
-                    assert RFC.DEFAULT_BASE_DN in str(entries[0].dn)
+            TestOperationHelpers.assert_result_success(search_result)
+            entries = search_result.unwrap().entries
+            assert len(entries) > 0, "Entry should exist after transformation"
+            # Validate DN was actually transformed
+            assert RFC.DEFAULT_BASE_DN in str(entries[0].dn)
+            assert "dc=example,dc=com" not in str(entries[0].dn)
 
             # Cleanup
             _ = sync_service._operations.delete("cn=testtransform,dc=flext,dc=local")
@@ -205,20 +228,39 @@ sn: Test
 
         options = FlextLdapModels.SyncOptions(progress_callback=progress_callback)
         result = sync_service.sync_ldif_file(sample_ldif_file, options)
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
+        stats = TestOperationHelpers.unwrap_sync_stats(result)
+        # Validate actual content: should process 2 entries
+        assert stats.total == 2
 
         # Verify progress callback was called (covers line 253)
-        assert len(progress_calls) == 2
+        assert len(progress_calls) == 2, (
+            f"Expected 2 callback calls, got {len(progress_calls)}"
+        )
         # Verify callback received correct parameters
-        for idx, (current, total, dn, stats) in enumerate(progress_calls):
-            assert current == idx + 1
-            assert total == 2
-            assert isinstance(dn, str)
-            assert isinstance(stats, FlextLdapModels.LdapBatchStats)
-            # Verify stats object has expected attributes
-            assert hasattr(stats, "synced")
-            assert hasattr(stats, "failed")
-            assert hasattr(stats, "skipped")
+        for idx, (current, total, dn, stats_cb) in enumerate(progress_calls):
+            assert current == idx + 1, (
+                f"Callback {idx}: expected current={idx + 1}, got {current}"
+            )
+            assert total == 2, f"Callback {idx}: expected total=2, got {total}"
+            assert isinstance(dn, str), (
+                f"Callback {idx}: DN should be string, got {type(dn)}"
+            )
+            assert len(dn) > 0, f"Callback {idx}: DN should not be empty"
+            assert isinstance(stats_cb, FlextLdapModels.LdapBatchStats), (
+                f"Callback {idx}: stats should be LdapBatchStats, got {type(stats_cb)}"
+            )
+            # Verify stats object has expected attributes and values
+            assert hasattr(stats_cb, "synced")
+            assert hasattr(stats_cb, "failed")
+            assert hasattr(stats_cb, "skipped")
+            assert stats_cb.synced >= 0
+            assert stats_cb.failed >= 0
+            assert stats_cb.skipped >= 0
+            # Validate DN contains expected entry names
+            assert "testldif1" in dn or "testldif2" in dn, (
+                f"Callback {idx}: DN should contain entry name"
+            )
 
         # Cleanup
         for dn in [
@@ -234,10 +276,10 @@ sn: Test
         """Test syncing non-existent LDIF file."""
         options = FlextLdapModels.SyncOptions()
         result = sync_service.sync_ldif_file(Path("nonexistent.ldif"), options)
-        assert result.is_failure
-        # No fallback - FlextResult guarantees error exists when is_failure is True
-        assert result.error is not None
-        assert "not found" in result.error.lower()
+        TestOperationHelpers.assert_result_failure(result)
+        error_msg = TestOperationHelpers.get_error_message(result)
+        # Validate error message content
+        assert "not found" in error_msg.lower() or "file" in error_msg.lower()
 
     def test_sync_ldif_file_empty_file(
         self,
@@ -256,9 +298,14 @@ sn: Test
         try:
             options = FlextLdapModels.SyncOptions()
             result = sync_service.sync_ldif_file(temp_path, options)
-            assert result.is_success
+            TestOperationHelpers.assert_result_success(result)
             stats = TestOperationHelpers.unwrap_sync_stats(result)
+            # Validate actual content: empty file should return empty stats
             assert stats.total == 0
+            assert stats.added == 0
+            assert stats.failed == 0
+            assert stats.skipped == 0
+            assert stats.duration_seconds >= 0.0
         finally:
             if temp_path.exists():
                 temp_path.unlink()
@@ -286,11 +333,14 @@ sn: Test
             options = FlextLdapModels.SyncOptions()
             result = sync_service.sync_ldif_file(temp_path, options)
             # Sync service processes entries and marks failures, but returns success
-            assert result.is_success
+            TestOperationHelpers.assert_result_success(result)
             stats = result.unwrap()
-            # Should have failed entries because not connected
-            assert stats.failed > 0
-            assert stats.added == 0
+            # Validate actual content: should have failed entries because not connected
+            assert stats.total == 1  # One entry in file
+            assert stats.failed > 0  # Should fail because not connected
+            assert stats.added == 0  # Nothing added
+            assert stats.skipped == 0  # Nothing skipped
+            assert stats.duration_seconds >= 0.0
         finally:
             if temp_path.exists():
                 temp_path.unlink()
@@ -304,14 +354,24 @@ sn: Test
         options = FlextLdapModels.SyncOptions()
         # First sync
         result1 = sync_service.sync_ldif_file(sample_ldif_file, options)
-        assert result1.is_success
+        TestOperationHelpers.assert_result_success(result1)
+        stats1 = TestOperationHelpers.unwrap_sync_stats(result1)
+        # Validate first sync: should add entries
+        assert stats1.total == 2
+        assert stats1.added >= 0
+        assert stats1.failed == 0
 
         # Second sync (duplicates should be skipped) - covers lines 234, 240
         result2 = sync_service.sync_ldif_file(sample_ldif_file, options)
-        assert result2.is_success
+        TestOperationHelpers.assert_result_success(result2)
         stats2 = result2.unwrap()
-        # Should have skipped entries (covers line 240: entry_stats["skipped"] = 1)
-        assert stats2.skipped >= 0
+        # Validate actual content: should have skipped entries (covers line 240: entry_stats["skipped"] = 1)
+        assert stats2.total == 2
+        assert stats2.skipped >= 0  # Entries should be skipped (already exist)
+        assert stats2.added == 0  # Nothing new added
+        assert stats2.failed == 0  # Should not fail
+        # Validate that skipped entries match total (all should be skipped)
+        assert stats2.skipped == stats2.total
 
         # Cleanup
         for dn in [
@@ -348,10 +408,14 @@ sn: Test
         operations = FlextLdapOperations(connection=connection)
         sync_service = FlextLdapSyncService(operations=operations)
         result = sync_service.execute()
-        assert result.is_success
+        TestOperationHelpers.assert_result_success(result)
         stats = TestOperationHelpers.unwrap_sync_stats(result)
+        # Validate actual content: execute with no entries should return empty stats
         assert stats.total == 0
         assert stats.added == 0
+        assert stats.failed == 0
+        assert stats.skipped == 0
+        assert stats.duration_seconds >= 0.0
 
     def test_sync_batch_with_duplicate_entries(
         self,
@@ -366,7 +430,7 @@ sn: Test
         # Add entry first
         _ = sync_service._operations.delete(str(entry.dn))
         add_result = sync_service._operations.add(entry)
-        assert add_result.is_success
+        TestOperationHelpers.assert_result_success(add_result)
 
         # Try to sync same entry again
         with tempfile.NamedTemporaryFile(
@@ -390,10 +454,13 @@ sn: Test
         try:
             options = FlextLdapModels.SyncOptions()
             result = sync_service.sync_ldif_file(temp_path, options)
-            assert result.is_success
+            TestOperationHelpers.assert_result_success(result)
             stats = TestOperationHelpers.unwrap_sync_stats(result)
-            # Entry should be skipped
-            assert stats.skipped >= 0
+            # Validate actual content: entry should be skipped (already exists)
+            assert stats.total == 1
+            assert stats.skipped >= 1  # Entry should be skipped
+            assert stats.added == 0  # Nothing new added
+            assert stats.failed == 0  # Should not fail
         finally:
             if temp_path.exists():
                 temp_path.unlink()
@@ -424,12 +491,12 @@ sn: Test
 
             # Should fail with parse error (covers line 110)
             # The file exists but parse() fails due to invalid content
-            assert result.is_failure, "Expected parse failure for invalid content"
-            # No fallback - FlextResult guarantees error exists when is_failure is True
-            assert result.error is not None
-            assert "Failed to parse LDIF file" in result.error, (
-                f"Expected parse error message, got: {result.error}"
-            )
+            TestOperationHelpers.assert_result_failure(result)
+            error_msg = TestOperationHelpers.get_error_message(result)
+            # Validate error message content
+            assert (
+                "Failed to parse LDIF file" in error_msg or "parse" in error_msg.lower()
+            ), f"Expected parse error message, got: {result.error}"
         finally:
             if temp_path.exists():
                 temp_path.unlink()

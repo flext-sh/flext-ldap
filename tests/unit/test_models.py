@@ -1,6 +1,6 @@
 """Unit tests for FlextLdapModels domain validation.
 
-Uses FlextUtilities, FlextTestsMatchers, and FlextTestsUtilities.ModelTestHelpers
+Uses u, FlextTestsMatchers, and FlextTestsUtilities.ModelTestHelpers
 for maximum code reduction. All factories, validation and assertions use centralized
 flext-core patterns.
 
@@ -19,12 +19,12 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextUtilities
 from flext_ldif import FlextLdifModels
 from flext_tests import FlextTestsMatchers, FlextTestsUtilities
 
 from flext_ldap.constants import FlextLdapConstants
 from flext_ldap.models import FlextLdapModels
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 from ..fixtures.constants import TestConstants
 from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
@@ -67,7 +67,7 @@ _SSL_TLS_PARAMS: tuple[SSLTLSMode, ...] = (
 class TestFlextLdapModels:
     """Comprehensive tests for FLEXT-LDAP domain models.
 
-    Uses FlextUtilities.Configuration.build_options_from_kwargs for model creation.
+    Uses u.Configuration.build_options_from_kwargs for model creation.
     Uses FlextTestsMatchers and FlextTestsUtilities.ModelTestHelpers for assertions.
     """
 
@@ -155,8 +155,8 @@ class TestFlextLdapModels:
         """Test ConnectionConfig creation with all scenarios."""
         data = dict(self._CONN_SCENARIOS[scenario])
 
-        # Use FlextUtilities for building model from kwargs
-        result = FlextUtilities.Configuration.build_options_from_kwargs(
+        # Use u model from kwargs
+        result = u.Configuration.build_options_from_kwargs(
             model_class=FlextLdapModels.ConnectionConfig,
             explicit_options=None,
             default_factory=FlextLdapModels.ConnectionConfig,
@@ -202,8 +202,8 @@ class TestFlextLdapModels:
         """Test SearchOptions creation with all scenarios."""
         data = dict(self._SEARCH_SCENARIOS[scenario])
 
-        # Use FlextUtilities for building model from kwargs
-        result = FlextUtilities.Configuration.build_options_from_kwargs(
+        # Use u model from kwargs
+        result = u.Configuration.build_options_from_kwargs(
             model_class=FlextLdapModels.SearchOptions,
             explicit_options=None,
             default_factory=lambda: FlextLdapModels.SearchOptions(

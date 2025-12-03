@@ -19,20 +19,22 @@ from pathlib import Path
 from typing import Literal, cast
 
 import pytest
-from flext_core import FlextResult
-from flext_core.typings import FlextTypes
 from flext_ldif import FlextLdifParser
 from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsMatchers
 from ldap3 import MODIFY_REPLACE, Connection, Entry as Ldap3Entry, Server
 
-from flext_ldap import FlextLdap
+from flext_ldap import (
+    FlextLdap,
+    c,
+    m,
+    p,
+    r,
+    t,
+)
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
@@ -53,15 +55,15 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def _narrow_client_type(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol | FlextLdapOperations,
-    ) -> FlextLdapProtocols.LdapService.LdapClientProtocol:
-        """Narrow client type from object to FlextLdapProtocols.LdapService.LdapClientProtocol.
+        client: p.LdapService.LdapClientProtocol | FlextLdapOperations,
+    ) -> p.LdapService.LdapClientProtocol:
+        """Narrow client type from object to p.LdapService.LdapClientProtocol.
 
         Args:
             client: Client object to narrow
 
         Returns:
-            Client cast to FlextLdapProtocols.LdapService.LdapClientProtocol
+            Client cast to p.LdapService.LdapClientProtocol
 
         Raises:
             TypeError: If client doesn't have required methods
@@ -77,7 +79,7 @@ class TestDeduplicationHelpers:
             error_msg = "client must have add, delete, search, and modify methods"
             raise TypeError(error_msg)
         # Operations service doesn't need connect (it uses connection internally)
-        return cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client)
+        return cast("p.LdapService.LdapClientProtocol", client)
 
     @staticmethod
     def create_entry(
@@ -106,7 +108,7 @@ class TestDeduplicationHelpers:
 
         """
         # Convert attributes to GeneralValueType-compatible mapping
-        normalized_attrs: dict[str, FlextTypes.GeneralValueType] = {}
+        normalized_attrs: dict[str, t.GeneralValueType] = {}
         for key, value in attributes.items():
             if isinstance(value, (frozenset, set, tuple)):
                 normalized_attrs[key] = list(value)
@@ -121,7 +123,7 @@ class TestDeduplicationHelpers:
         filter_str: str | None = None,
         scope: str | None = None,
         attributes: list[str] | None = None,
-    ) -> FlextLdapModels.SearchOptions:
+    ) -> m.SearchOptions:
         """Create SearchOptions - SIMPLEST PATTERN WITH CONSTANTS.
 
         Uses RFC constants by default. Replaces all SearchOptions creation.
@@ -133,7 +135,7 @@ class TestDeduplicationHelpers:
             attributes: Attributes to retrieve (default: RFC.DEFAULT_ATTRIBUTES)
 
         Returns:
-            FlextLdapModels.SearchOptions
+            m.SearchOptions
 
         Example:
             options = TestDeduplicationHelpers.create_search()
@@ -236,8 +238,8 @@ class TestDeduplicationHelpers:
 
         # Direct delegation to generalized method with RFC defaults
         # Convert filtered_attrs to GeneralValueType-compatible kwargs
-        kwargs: dict[str, FlextTypes.GeneralValueType] = cast(
-            "dict[str, FlextTypes.GeneralValueType]",
+        kwargs: dict[str, t.GeneralValueType] = cast(
+            "dict[str, t.GeneralValueType]",
             filtered_attrs,
         )
         return TestOperationHelpers.create_group_entry(
@@ -249,13 +251,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_entry(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify: bool = False,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Add entry with automatic cleanup - COMPLETE WORKFLOW.
 
         Replaces entire add + cleanup pattern.
@@ -280,13 +282,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_from_dict(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         *,
         verify: bool = True,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Add entry from dict - COMPLETE WORKFLOW.
 
         Replaces entire dict -> entry -> add -> verify -> cleanup pattern.
@@ -323,14 +325,14 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_and_unwrap(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
         scope: str | None = None,
         attributes: list[str] | None = None,
         min_entries: int = 0,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Search and unwrap result - COMPLETE WORKFLOW.
 
         Replaces entire search + assert + unwrap pattern.
@@ -361,8 +363,8 @@ class TestDeduplicationHelpers:
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         # SearchOptions is compatible with SearchOptionsProtocol structurally
         search_result_raw = typed_client.search(search_options)
-        search_result: FlextResult[FlextLdapModels.SearchResult] = cast(
-            "FlextResult[FlextLdapModels.SearchResult]",
+        search_result: r[m.SearchResult] = cast(
+            "r[m.SearchResult]",
             search_result_raw,
         )
         result = FlextTestsMatchers.assert_success(
@@ -378,8 +380,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def modify_entry(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
@@ -388,8 +390,8 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Modify entry - COMPLETE WORKFLOW.
 
@@ -432,15 +434,15 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def delete_entry(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Delete entry - COMPLETE WORKFLOW.
 
@@ -474,11 +476,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_operation(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: r[m.OperationResult],
         *,
         operation_type: str | None = None,
         entries_affected: int | None = None,
-    ) -> FlextLdapModels.OperationResult:
+    ) -> m.OperationResult:
         """Assert operation result - COMPLETE VERIFICATION.
 
         Replaces entire operation result verification pattern.
@@ -493,7 +495,7 @@ class TestDeduplicationHelpers:
 
         Example:
             op_result = TestDeduplicationHelpers.assert_operation(
-                result, operation_type=FlextLdapConstants.OperationType.ADD.value, entries_affected=1
+                result, operation_type=c.OperationType.ADD.value, entries_affected=1
             )
 
         """
@@ -519,7 +521,7 @@ class TestDeduplicationHelpers:
         timeout: int = 30,
         auto_bind: bool = True,
         auto_range: bool = True,
-    ) -> FlextLdapModels.ConnectionConfig:
+    ) -> m.ConnectionConfig:
         """Create ConnectionConfig - MASSIVE CODE REDUCTION.
 
         Replaces all ConnectionConfig creation patterns across tests.
@@ -540,7 +542,7 @@ class TestDeduplicationHelpers:
             auto_range: Auto range (default: True)
 
         Returns:
-            FlextLdapModels.ConnectionConfig
+            m.ConnectionConfig
 
         Example:
             # Using container fixture
@@ -580,7 +582,7 @@ class TestDeduplicationHelpers:
             bind_dn_val = bind_dn
             bind_password_val = bind_password
 
-        return FlextLdapModels.ConnectionConfig(
+        return m.ConnectionConfig(
             host=host_val,
             port=port_val,
             use_ssl=use_ssl,
@@ -594,8 +596,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def connect_and_assert(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        client: p.LdapService.LdapClientProtocol,
+        connection_config: m.ConnectionConfig | None = None,
         ldap_container: GenericFieldsDict | None = None,
     ) -> None:
         """Connect client and assert success - COMPLETE WORKFLOW.
@@ -630,7 +632,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def crud_sequence(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry | None = None,
         entry_dict: Mapping[str, object] | GenericFieldsDict | None = None,
         changes: dict[str, list[tuple[str, list[str]]]] | None = None,
@@ -638,8 +640,8 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> dict[
         str,
-        FlextResult[FlextLdapModels.OperationResult]
-        | FlextResult[FlextLdapModels.SearchResult],
+        r[m.OperationResult]
+        | r[m.SearchResult],
     ]:
         """Execute complete CRUD sequence - MASSIVE CODE REDUCTION.
 
@@ -675,7 +677,7 @@ class TestDeduplicationHelpers:
             entry, _ = TestDeduplicationHelpers.add_from_dict(
                 client,
                 cast(
-                    "Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict",
+                    "Mapping[str, t.GeneralValueType] | GenericFieldsDict",
                     entry_dict,
                 ),
                 cleanup_after=False,
@@ -691,11 +693,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_entry_by_dn(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         dn: str,
         *,
         verify_exists: bool = True,
-    ) -> FlextLdapModels.SearchResult | None:
+    ) -> m.SearchResult | None:
         """Search for entry by DN - COMMON PATTERN.
 
         Replaces BASE search pattern for specific DN.
@@ -716,17 +718,17 @@ class TestDeduplicationHelpers:
             assert len(result.entries) == 1
 
         """
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=dn,
             filter_str="(objectClass=*)",
-            scope=FlextLdapConstants.SearchScope.BASE,
+            scope=c.SearchScope.BASE,
         )
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         # SearchOptions is compatible with SearchOptionsProtocol structurally
         search_result_raw = typed_client.search(search_options)
-        search_result: FlextResult[FlextLdapModels.SearchResult] = cast(
-            "FlextResult[FlextLdapModels.SearchResult]",
+        search_result: r[m.SearchResult] = cast(
+            "r[m.SearchResult]",
             search_result_raw,
         )
         result = FlextTestsMatchers.assert_success(
@@ -743,7 +745,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def verify_entry_exists(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         dn: str,
     ) -> bool:
         """Verify entry exists - COMMON PATTERN.
@@ -773,7 +775,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def verify_entry_not_exists(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         dn: str,
     ) -> bool:
         """Verify entry does not exist - COMMON PATTERN.
@@ -803,14 +805,14 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_multiple_entries(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry_dicts: list[GenericFieldsDict],
         *,
         adjust_dn: dict[str, str] | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
     ) -> list[
-        tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+        tuple[FlextLdifModels.Entry, r[m.OperationResult]]
     ]:
         """Add multiple entries from list of dictionaries - MASSIVE CODE REDUCTION.
 
@@ -847,7 +849,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_with_assertions(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
@@ -855,7 +857,7 @@ class TestDeduplicationHelpers:
         attributes: list[str] | None = None,
         min_count: int = 0,
         max_count: int | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Search with automatic assertions - COMPLETE WORKFLOW.
 
         Replaces entire search + assert + count check pattern.
@@ -899,8 +901,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_then_modify(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
@@ -909,8 +911,8 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry then modify - COMPLETE WORKFLOW.
 
@@ -950,15 +952,15 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_then_delete(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry then delete - COMPLETE WORKFLOW.
 
@@ -989,7 +991,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def execute_operation_when_disconnected(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         operation: str,
         **kwargs: str | float | bool | None,
     ) -> None:
@@ -1017,14 +1019,14 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_operation_complete(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry | None = None,
         entry_dict: Mapping[str, object] | GenericFieldsDict | None = None,
         *,
         verify_operation_result: bool = True,
         expected_entries_affected: int = 1,
         cleanup_after: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Complete add operation test - REPLACES ENTIRE TEST METHOD (10-20 lines).
 
         Replaces entire test_add_* methods with single call.
@@ -1058,7 +1060,7 @@ class TestDeduplicationHelpers:
             entry, add_result = TestDeduplicationHelpers.add_from_dict(
                 client,
                 cast(
-                    "Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict",
+                    "Mapping[str, t.GeneralValueType] | GenericFieldsDict",
                     entry_dict,
                 ),
                 cleanup_after=cleanup_after,
@@ -1080,8 +1082,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def modify_operation_complete(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
@@ -1089,8 +1091,8 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Complete modify operation test - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
@@ -1129,14 +1131,14 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def delete_operation_complete(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         *,
         verify_deletion: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Complete delete operation test - REPLACES ENTIRE TEST METHOD (10-20 lines).
 
@@ -1166,7 +1168,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_operation_complete(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
@@ -1176,7 +1178,7 @@ class TestDeduplicationHelpers:
         max_count: int | None = None,
         verify_entry_attributes: bool = False,
         expected_object_classes: list[str] | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Complete search operation test - REPLACES ENTIRE TEST METHOD (10-30 lines).
 
         Replaces entire test_search_* methods with single call.
@@ -1235,8 +1237,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def crud_sequence_complete(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        client: p.LdapService.LdapClientProtocol,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_search: bool = True,
@@ -1244,8 +1246,8 @@ class TestDeduplicationHelpers:
         verify_delete: bool = True,
     ) -> dict[
         str,
-        FlextResult[FlextLdapModels.OperationResult]
-        | FlextResult[FlextLdapModels.SearchResult],
+        r[m.OperationResult]
+        | r[m.SearchResult],
     ]:
         """Complete CRUD sequence test - REPLACES ENTIRE TEST METHOD (20-40 lines).
 
@@ -1281,7 +1283,7 @@ class TestDeduplicationHelpers:
         if verify_search and "search" in results:
             search_result = FlextTestsMatchers.assert_success(
                 cast(
-                    "FlextResult[FlextLdapModels.SearchResult]",
+                    "r[m.SearchResult]",
                     results["search"],
                 ),
                 error_msg="Search failed",
@@ -1294,7 +1296,7 @@ class TestDeduplicationHelpers:
                 # Type narrowing: result must be OperationResult
                 FlextTestsMatchers.assert_success(
                     cast(
-                        "FlextResult[FlextLdapModels.OperationResult]",
+                        "r[m.OperationResult]",
                         modify_result_value,
                     ),
                     error_msg="Modify failed",
@@ -1306,7 +1308,7 @@ class TestDeduplicationHelpers:
                 # Type narrowing: result must be OperationResult
                 FlextTestsMatchers.assert_success(
                     cast(
-                        "FlextResult[FlextLdapModels.OperationResult]",
+                        "r[m.OperationResult]",
                         delete_result_value,
                     ),
                     error_msg="Delete failed",
@@ -1317,7 +1319,7 @@ class TestDeduplicationHelpers:
     @staticmethod
     def connection_management_complete(
         client_factory: Callable[[], FlextLdap],
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        connection_config: m.ConnectionConfig | None = None,
         ldap_container: GenericFieldsDict | None = None,
         *,
         test_context_manager: bool = True,
@@ -1379,7 +1381,7 @@ class TestDeduplicationHelpers:
                     error_msg = "Client must have is_connected and connect attributes"
                     raise TypeError(error_msg)
                 TestDeduplicationHelpers.connect_and_assert(
-                    cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
+                    cast("p.LdapService.LdapClientProtocol", client),
                     connection_config,
                 )
                 is_connected = getattr(client, "is_connected", False)
@@ -1402,7 +1404,7 @@ class TestDeduplicationHelpers:
             )
             raise TypeError(error_msg)
         TestDeduplicationHelpers.connect_and_assert(
-            cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
+            cast("p.LdapService.LdapClientProtocol", client),
             connection_config,
         )
 
@@ -1415,7 +1417,7 @@ class TestDeduplicationHelpers:
 
         if test_reconnect:
             TestDeduplicationHelpers.connect_and_assert(
-                cast("FlextLdapProtocols.LdapService.LdapClientProtocol", client),
+                cast("p.LdapService.LdapClientProtocol", client),
                 connection_config,
             )
             is_connected = getattr(client, "is_connected", False)
@@ -1428,7 +1430,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_operations_service_fixture(
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        connection_config: m.ConnectionConfig | None = None,
         ldap_container: GenericFieldsDict | None = None,
     ) -> FlextLdapOperations:
         """Create operations service fixture - REPLACES ENTIRE FIXTURE (10-15 lines).
@@ -1456,9 +1458,9 @@ class TestDeduplicationHelpers:
         config = FlextLdapConfig()
         parser = FlextLdifParser()
         connection = FlextLdapConnection(config=config, parser=parser)
-        # Type narrowing: FlextLdapConnection implements FlextLdapProtocols.LdapService.LdapClientProtocol
+        # Type narrowing: FlextLdapConnection implements p.LdapService.LdapClientProtocol
         typed_connection = cast(
-            "FlextLdapProtocols.LdapService.LdapClientProtocol",
+            "p.LdapService.LdapClientProtocol",
             connection,
         )
         TestOperationHelpers.connect_with_skip_on_failure(
@@ -1609,13 +1611,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def with_multiple_server_types(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        test_func: Callable[[str], FlextResult[FlextLdapModels.OperationResult]],
+        client: p.LdapService.LdapClientProtocol,
+        test_func: Callable[[str], r[m.OperationResult]],
         server_types: list[str] | None = None,
         *,
         base_dn: str | None = None,
         skip_on_failure: bool = True,
-    ) -> list[tuple[str, FlextResult[FlextLdapModels.OperationResult]]]:
+    ) -> list[tuple[str, r[m.OperationResult]]]:
         """Test operation with multiple server types - REPLACES ENTIRE PATTERN (10-20 lines).
 
         Replaces repetitive server type testing patterns.
@@ -1647,7 +1649,7 @@ class TestDeduplicationHelpers:
 
         typed_test_func = test_func
 
-        results: list[tuple[str, FlextResult[FlextLdapModels.OperationResult]]] = []
+        results: list[tuple[str, r[m.OperationResult]]] = []
 
         for server_type in server_types:
             try:
@@ -1719,11 +1721,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_from_fixture(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         fixture_entry: GenericFieldsDict,
         *,
         verify_operation: bool = True,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Test add from fixture - REPLACES ENTIRE TEST METHOD (5-10 lines).
 
         Replaces repetitive test_add_*_from_fixture methods.
@@ -1751,7 +1753,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_multiple_from_fixtures(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         fixture_data: list[GenericFieldsDict],
         fixture_type: str = "user",
         ldap_container: GenericFieldsDict | None = None,
@@ -1759,7 +1761,7 @@ class TestDeduplicationHelpers:
         limit: int | None = None,
         verify_all: bool = True,
     ) -> list[
-        tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]
+        tuple[FlextLdifModels.Entry, r[m.OperationResult]]
     ]:
         """Test add multiple entries from fixtures - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
@@ -1814,7 +1816,7 @@ class TestDeduplicationHelpers:
         server_types: list[str] | None = None,
         *,
         verify_result: bool = True,
-    ) -> list[tuple[str, FlextResult[FlextLdifModels.Entry] | FlextResult[bool]]]:
+    ) -> list[tuple[str, r[FlextLdifModels.Entry] | r[bool]]]:
         """Test adapter operation with multiple server types - REPLACES ENTIRE PATTERN (10-15 lines).
 
         Replaces repetitive adapter testing with server types loops.
@@ -1839,7 +1841,7 @@ class TestDeduplicationHelpers:
             server_types = ["rfc", "openldap2", "generic"]
 
         results: list[
-            tuple[str, FlextResult[FlextLdifModels.Entry] | FlextResult[bool]]
+            tuple[str, r[FlextLdifModels.Entry] | r[bool]]
         ] = []
 
         for server_type in server_types:
@@ -1851,8 +1853,8 @@ class TestDeduplicationHelpers:
                     "normalize_entry_for_server method was removed. "
                     "Use FlextLdif parser with server_type parameter instead."
                 )
-                result: FlextResult[FlextLdifModels.Entry] | FlextResult[bool] = (
-                    FlextResult[FlextLdifModels.Entry].fail(error_msg)
+                result: r[FlextLdifModels.Entry] | r[bool] = (
+                    r[FlextLdifModels.Entry].fail(error_msg)
                 )
             elif operation == "validate":
                 # NOTE: validate_entry_for_server method was removed during refactoring.
@@ -1862,10 +1864,10 @@ class TestDeduplicationHelpers:
                     "validate_entry_for_server method was removed. "
                     "Use FlextLdif parser with server_type parameter instead."
                 )
-                result = FlextResult[bool].fail(error_msg)
+                result = r[bool].fail(error_msg)
             else:
                 error_msg = f"Unknown operation: {operation}"
-                result = FlextResult[bool].fail(error_msg)
+                result = r[bool].fail(error_msg)
 
             results.append((server_type, result))
 
@@ -1881,7 +1883,7 @@ class TestDeduplicationHelpers:
         base_dn: str | None = None,
         *,
         filter_str: str = "(objectClass=*)",
-        scope: FlextLdapConstants.SearchScope = FlextLdapConstants.SearchScope.BASE,
+        scope: c.SearchScope = c.SearchScope.BASE,
         attributes: list[str] | None = None,
     ) -> Ldap3Entry:
         """Get real LDAP entry from connection - REPLACES ENTIRE PATTERN (8-12 lines).
@@ -1918,7 +1920,7 @@ class TestDeduplicationHelpers:
         # Convert SearchScope to literal string for ldap3.Connection.search
         scope_str: str = (
             scope.value
-            if isinstance(scope, FlextLdapConstants.SearchScope)
+            if isinstance(scope, c.SearchScope)
             else str(scope)
         )
         # Type narrowing: ldap3.Connection.search expects Literal['BASE', 'LEVEL', 'SUBTREE']
@@ -1940,13 +1942,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_with_normalized_dn(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str,
         *,
         add_spaces: bool = True,
         filter_str: str = "(objectClass=*)",
-        scope: str = FlextLdapConstants.SearchScope.SUBTREE.value,
-    ) -> FlextResult[FlextLdapModels.SearchResult]:
+        scope: str = c.SearchScope.SUBTREE.value,
+    ) -> r[m.SearchResult]:
         """Test search with normalized DN - REPLACES ENTIRE TEST METHOD (8-12 lines).
 
         Replaces repetitive test_search_with_normalized_* methods.
@@ -1977,8 +1979,8 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         search_result_raw = typed_client.search(search_options)
-        result: FlextResult[FlextLdapModels.SearchResult] = cast(
-            "FlextResult[FlextLdapModels.SearchResult]",
+        result: r[m.SearchResult] = cast(
+            "r[m.SearchResult]",
             search_result_raw,
         )
         FlextTestsMatchers.assert_success(result)
@@ -1987,13 +1989,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def modify_with_normalized_dn(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         add_spaces: bool = True,
         verify_success: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Test modify with normalized DN - REPLACES ENTIRE TEST METHOD (10-15 lines).
 
         Replaces repetitive test_modify_with_normalized_* methods.
@@ -2031,9 +2033,9 @@ class TestDeduplicationHelpers:
             modify_result = typed_client.modify(normalized_dn, changes)
 
             if verify_success:
-                modify_result_typed: FlextResult[FlextLdapModels.OperationResult] = (
+                modify_result_typed: r[m.OperationResult] = (
                     cast(
-                        "FlextResult[FlextLdapModels.OperationResult]",
+                        "r[m.OperationResult]",
                         modify_result,
                     )
                 )
@@ -2043,8 +2045,8 @@ class TestDeduplicationHelpers:
             typed_client_cleanup = TestDeduplicationHelpers._narrow_client_type(client)
             _ = typed_client_cleanup.delete(dn_str)
 
-            modify_result_return: FlextResult[FlextLdapModels.OperationResult] = cast(
-                "FlextResult[FlextLdapModels.OperationResult]",
+            modify_result_return: r[m.OperationResult] = cast(
+                "r[m.OperationResult]",
                 modify_result,
             )
             return modify_result_return
@@ -2054,12 +2056,12 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def delete_with_normalized_dn(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         add_spaces: bool = True,
         verify_success: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Test delete with normalized DN - REPLACES ENTIRE TEST METHOD (10-15 lines).
 
         Replaces repetitive test_delete_with_normalized_* methods.
@@ -2096,16 +2098,16 @@ class TestDeduplicationHelpers:
             delete_result = typed_client.delete(normalized_dn)
 
             if verify_success:
-                delete_result_typed: FlextResult[FlextLdapModels.OperationResult] = (
+                delete_result_typed: r[m.OperationResult] = (
                     cast(
-                        "FlextResult[FlextLdapModels.OperationResult]",
+                        "r[m.OperationResult]",
                         delete_result,
                     )
                 )
                 FlextTestsMatchers.assert_success(delete_result_typed)
 
-            delete_result_return: FlextResult[FlextLdapModels.OperationResult] = cast(
-                "FlextResult[FlextLdapModels.OperationResult]",
+            delete_result_return: r[m.OperationResult] = cast(
+                "r[m.OperationResult]",
                 delete_result,
             )
             return delete_result_return
@@ -2164,7 +2166,7 @@ class TestDeduplicationHelpers:
         use_all_options: bool = False,
         verify_success: bool = True,
         disconnect_after: bool = True,
-    ) -> tuple[FlextLdap, FlextResult[bool]]:
+    ) -> tuple[FlextLdap, r[bool]]:
         """Test connect with service config - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
         Replaces repetitive test_connect_with_service_config_* methods.
@@ -2194,7 +2196,7 @@ class TestDeduplicationHelpers:
         operations = FlextLdapOperations(connection=connection)
         api = FlextLdap(connection=connection, operations=operations)
         # Create ConnectionConfig from service config explicitly (no fallback)
-        connection_config = FlextLdapModels.ConnectionConfig(
+        connection_config = m.ConnectionConfig(
             host=config.host,
             port=config.port,
             use_ssl=config.use_ssl,
@@ -2449,7 +2451,7 @@ class TestDeduplicationHelpers:
 
         """
         # Convert attributes to GeneralValueType-compatible mapping
-        normalized_attrs: dict[str, FlextTypes.GeneralValueType] = {}
+        normalized_attrs: dict[str, t.GeneralValueType] = {}
         for key, value in attributes.items():
             if isinstance(value, (frozenset, set, tuple)):
                 normalized_attrs[key] = list(value)
@@ -2512,7 +2514,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_and_verify_entries(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
@@ -2520,7 +2522,7 @@ class TestDeduplicationHelpers:
         min_count: int = 0,
         verify_object_classes: list[str] | None = None,
         verify_attributes_present: list[str] | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Test search and verify entries - REPLACES ENTIRE TEST METHOD (15-30 lines).
 
         Replaces repetitive search + verification patterns.
@@ -2577,7 +2579,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def cleanup_multiple_entries(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         dns: list[str],
         *,
         ignore_errors: bool = True,
@@ -2704,7 +2706,7 @@ class TestDeduplicationHelpers:
 
         """
         # Convert attributes to GeneralValueType-compatible mapping
-        normalized_attrs: dict[str, FlextTypes.GeneralValueType] = {}
+        normalized_attrs: dict[str, t.GeneralValueType] = {}
         for key, value in attributes.items():
             if isinstance(value, (frozenset, set, tuple)):
                 normalized_attrs[key] = list(value)
@@ -2839,12 +2841,12 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def all_scopes(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
         verify_results: bool = True,
-    ) -> dict[str, FlextLdapModels.SearchResult]:
+    ) -> dict[str, m.SearchResult]:
         """Test all search scopes - REPLACES ENTIRE TEST CLASS (30-50 lines).
 
         Replaces repetitive test_search_with_*_scope methods.
@@ -2860,9 +2862,9 @@ class TestDeduplicationHelpers:
 
         Example:
             results = TestDeduplicationHelpers.test_all_scopes(client)
-            assert FlextLdapConstants.SearchScope.BASE.value in results
-            assert FlextLdapConstants.SearchScope.ONELEVEL.value in results
-            assert FlextLdapConstants.SearchScope.SUBTREE.value in results
+            assert c.SearchScope.BASE.value in results
+            assert c.SearchScope.ONELEVEL.value in results
+            assert c.SearchScope.SUBTREE.value in results
 
         """
         if base_dn is None:
@@ -2873,11 +2875,11 @@ class TestDeduplicationHelpers:
         filter_str_val = filter_str
 
         scopes = [
-            FlextLdapConstants.SearchScope.BASE.value,
-            FlextLdapConstants.SearchScope.ONELEVEL.value,
-            FlextLdapConstants.SearchScope.SUBTREE.value,
+            c.SearchScope.BASE.value,
+            c.SearchScope.ONELEVEL.value,
+            c.SearchScope.SUBTREE.value,
         ]
-        results: dict[str, FlextLdapModels.SearchResult] = {}
+        results: dict[str, m.SearchResult] = {}
 
         for scope in scopes:
             result = TestDeduplicationHelpers.search_with_assertions(
@@ -2890,15 +2892,15 @@ class TestDeduplicationHelpers:
             results[scope] = result
 
             if verify_results:
-                if scope == FlextLdapConstants.SearchScope.BASE.value:
+                if scope == c.SearchScope.BASE.value:
                     assert len(result.entries) <= 1, (
                         "BASE scope should return at most 1 entry"
                     )
-                elif scope == FlextLdapConstants.SearchScope.ONELEVEL.value:
+                elif scope == c.SearchScope.ONELEVEL.value:
                     assert isinstance(result.entries, list), (
                         "ONELEVEL should return list"
                     )
-                elif scope == FlextLdapConstants.SearchScope.SUBTREE.value:
+                elif scope == c.SearchScope.SUBTREE.value:
                     assert isinstance(result.entries, list), (
                         "SUBTREE should return list"
                     )
@@ -2949,7 +2951,7 @@ class TestDeduplicationHelpers:
         # Add
         _, add_result = TestDeduplicationHelpers.add_operation_complete(
             cast(
-                "FlextLdapProtocols.LdapService.LdapClientProtocol",
+                "p.LdapService.LdapClientProtocol",
                 operations_service,
             ),
             entry,
@@ -2957,7 +2959,7 @@ class TestDeduplicationHelpers:
         )
 
         if verify_all:
-            # add_result is FlextResult[OperationResult], check if it's successful
+            # add_result is r[OperationResult], check if it's successful
             # For now, just assert success
             FlextTestsMatchers.assert_success(
                 add_result,
@@ -2970,7 +2972,7 @@ class TestDeduplicationHelpers:
             if verify_all:
                 TestOperationHelpers.assert_operation_result_success(
                     modify_result,
-                    expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value,
+                    expected_operation_type=c.OperationType.MODIFY.value,
                     expected_entries_affected=1,
                 )
         else:
@@ -2982,7 +2984,7 @@ class TestDeduplicationHelpers:
             if verify_all:
                 TestOperationHelpers.assert_operation_result_success(
                     delete_result,
-                    expected_operation_type=FlextLdapConstants.OperationType.DELETE.value,
+                    expected_operation_type=c.OperationType.DELETE.value,
                     expected_entries_affected=1,
                 )
         else:
@@ -3003,7 +3005,7 @@ class TestDeduplicationHelpers:
         verify_graceful: bool = True,
     ) -> dict[
         str,
-        FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult],
+        r[m.OperationResult | m.SearchResult],
     ]:
         """Test error handling for all operations - REPLACES ENTIRE TEST CLASS (50-80 lines).
 
@@ -3027,24 +3029,24 @@ class TestDeduplicationHelpers:
         """
         # Type narrowing: operations_service has required methods
         typed_service = cast(
-            "FlextLdapProtocols.LdapService.LdapClientProtocol",
+            "p.LdapService.LdapClientProtocol",
             operations_service,
         )
 
         results: dict[
             str,
-            FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult],
+            r[m.OperationResult | m.SearchResult],
         ] = {}
 
         # Search with invalid base DN
         search_options = TestOperationHelpers.create_search_options(
             base_dn=invalid_base_dn,
             filter_str="(objectClass=*)",
-            scope=FlextLdapConstants.SearchScope.SUBTREE,
+            scope=c.SearchScope.SUBTREE,
         )
         search_result_raw = typed_service.search(search_options)
         results["search_invalid_dn"] = cast(
-            "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+            "r[m.OperationResult | m.SearchResult]",
             search_result_raw,
         )
 
@@ -3052,10 +3054,10 @@ class TestDeduplicationHelpers:
         search_options_invalid_filter = TestOperationHelpers.create_search_options(
             base_dn=RFC.DEFAULT_BASE_DN,
             filter_str=invalid_filter,
-            scope=FlextLdapConstants.SearchScope.SUBTREE,
+            scope=c.SearchScope.SUBTREE,
         )
         results["search_invalid_filter"] = cast(
-            "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+            "r[m.OperationResult | m.SearchResult]",
             typed_service.search(search_options_invalid_filter),
         )
 
@@ -3074,20 +3076,20 @@ class TestDeduplicationHelpers:
             error_msg = "Entry must have attributes for add operation"
             raise ValueError(error_msg)
         # Cast to EntryProtocol-compatible type
-        entry_protocol: FlextLdapProtocols.LdapEntry.EntryProtocol = cast(
-            "FlextLdapProtocols.LdapEntry.EntryProtocol",
+        entry_protocol: p.LdapEntry.EntryProtocol = cast(
+            "p.LdapEntry.EntryProtocol",
             invalid_entry,
         )
         add_result_raw = typed_service.add(entry_protocol)
         results["add_invalid_entry"] = cast(
-            "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+            "r[m.OperationResult | m.SearchResult]",
             add_result_raw,
         )
 
         # Modify with invalid DN
 
         results["modify_invalid_dn"] = cast(
-            "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+            "r[m.OperationResult | m.SearchResult]",
             typed_service.modify(
                 invalid_base_dn,
                 {"cn": [(MODIFY_REPLACE, ["test"])]},
@@ -3096,7 +3098,7 @@ class TestDeduplicationHelpers:
 
         # Delete with invalid DN
         results["delete_invalid_dn"] = cast(
-            "FlextResult[FlextLdapModels.OperationResult | FlextLdapModels.SearchResult]",
+            "r[m.OperationResult | m.SearchResult]",
             typed_service.delete(invalid_base_dn),
         )
 
@@ -3110,11 +3112,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_operations_service_fixture_generic(
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        connection_config: m.ConnectionConfig | None = None,
         *,
         skip_on_failure: bool = True,
         disconnect_after: bool = True,
-    ) -> FlextLdapOperations | FlextTypes.GeneralValueType:
+    ) -> FlextLdapOperations | t.GeneralValueType:
         """Create operations service fixture - REPLACES ALL operations_service FIXTURES (10-15 lines).
 
         Replaces repetitive @pytest.fixture operations_service methods.
@@ -3171,16 +3173,16 @@ class TestDeduplicationHelpers:
                     self._operations = ops
                     self._connection = conn
 
-                def __getattr__(self, name: str) -> FlextTypes.GeneralValueType:
+                def __getattr__(self, name: str) -> t.GeneralValueType:
                     attr_value = getattr(self._operations, name)
                     # Type narrowing: ensure return type is GeneralValueType
                     if isinstance(attr_value, (str, int, float, bool, type(None))):
                         return attr_value
                     if isinstance(attr_value, (list, tuple)):
-                        return cast("FlextTypes.GeneralValueType", attr_value)
+                        return cast("t.GeneralValueType", attr_value)
                     if isinstance(attr_value, dict):
-                        return cast("FlextTypes.GeneralValueType", attr_value)
-                    return cast("FlextTypes.GeneralValueType", attr_value)
+                        return cast("t.GeneralValueType", attr_value)
+                    return cast("t.GeneralValueType", attr_value)
 
                 def __enter__(self) -> FlextLdapOperations:
                     return self._operations
@@ -3207,13 +3209,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_with_all_attributes_options(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
         attribute_sets: list[list[str]] | None = None,
         verify_results: bool = True,
-    ) -> dict[str, FlextLdapModels.SearchResult]:
+    ) -> dict[str, m.SearchResult]:
         """Test search with different attribute options - REPLACES ENTIRE TEST METHOD (20-40 lines).
 
         Replaces repetitive test_search_with_attributes methods.
@@ -3245,7 +3247,7 @@ class TestDeduplicationHelpers:
         base_dn_val = base_dn
         filter_str_val = filter_str
 
-        results: dict[str, FlextLdapModels.SearchResult] = {}
+        results: dict[str, m.SearchResult] = {}
         names = ["all_attributes", "specific_attributes", "no_attributes"]
 
         for name, attributes in zip(names, attribute_sets, strict=True):
@@ -3283,8 +3285,8 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> dict[
         str,
-        FlextResult[FlextLdapModels.OperationResult]
-        | FlextResult[FlextLdapModels.SearchResult]
+        r[m.OperationResult]
+        | r[m.SearchResult]
         | None,
     ]:
         """Test all API operations - REPLACES ENTIRE TEST CLASS (50-80 lines).
@@ -3318,8 +3320,8 @@ class TestDeduplicationHelpers:
 
         results: dict[
             str,
-            FlextResult[FlextLdapModels.OperationResult]
-            | FlextResult[FlextLdapModels.SearchResult]
+            r[m.OperationResult]
+            | r[m.SearchResult]
             | None,
         ] = {}
 
@@ -3328,10 +3330,10 @@ class TestDeduplicationHelpers:
             search_options = TestOperationHelpers.create_search_options(
                 base_dn=str(entry.dn),
                 filter_str="(objectClass=*)",
-                scope=FlextLdapConstants.SearchScope.BASE,
+                scope=c.SearchScope.BASE,
             )
             # SearchOptions is compatible with SearchOptionsProtocol structurally
-            search_result: FlextResult[FlextLdapModels.SearchResult] = typed_api.search(
+            search_result: r[m.SearchResult] = typed_api.search(
                 search_options,
             )
             results["search_before"] = search_result
@@ -3341,7 +3343,7 @@ class TestDeduplicationHelpers:
         results["add"] = add_result
         if verify_all:
             FlextTestsMatchers.assert_success(
-                cast("FlextResult[FlextLdapModels.OperationResult]", results["add"]),
+                cast("r[m.OperationResult]", results["add"]),
                 error_msg="API add failed",
             )
 
@@ -3352,7 +3354,7 @@ class TestDeduplicationHelpers:
             if verify_all:
                 FlextTestsMatchers.assert_success(
                     cast(
-                        "FlextResult[FlextLdapModels.OperationResult]",
+                        "r[m.OperationResult]",
                         results["modify"],
                     ),
                     error_msg="API modify failed",
@@ -3365,7 +3367,7 @@ class TestDeduplicationHelpers:
             search_options_after = TestOperationHelpers.create_search_options(
                 base_dn=str(entry.dn),
                 filter_str="(objectClass=*)",
-                scope=FlextLdapConstants.SearchScope.BASE,
+                scope=c.SearchScope.BASE,
             )
             search_result_after = typed_api.search(search_options_after)
             results["search_after"] = search_result_after
@@ -3377,7 +3379,7 @@ class TestDeduplicationHelpers:
             if verify_all:
                 FlextTestsMatchers.assert_success(
                     cast(
-                        "FlextResult[FlextLdapModels.OperationResult]",
+                        "r[m.OperationResult]",
                         results["delete"],
                     ),
                     error_msg="API delete failed",
@@ -3389,7 +3391,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_context_manager_complete(
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         verify_connect: bool = True,
         verify_disconnect: bool = True,
@@ -3518,12 +3520,12 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_connected_adapter_fixture_generic(
-        connection_config: FlextLdapModels.ConnectionConfig | None = None,
+        connection_config: m.ConnectionConfig | None = None,
         *,
         adapter_class: type | None = None,
         skip_on_failure: bool = True,
         disconnect_after: bool = True,
-    ) -> Ldap3Adapter | FlextTypes.GeneralValueType:
+    ) -> Ldap3Adapter | t.GeneralValueType:
         """Create connected adapter fixture - REPLACES ALL connected_adapter FIXTURES (10-15 lines).
 
         Replaces repetitive @pytest.fixture connected_adapter methods.
@@ -3564,16 +3566,16 @@ class TestDeduplicationHelpers:
                 def __init__(self, adpt: Ldap3Adapter) -> None:
                     self._adapter = adpt
 
-                def __getattr__(self, name: str) -> FlextTypes.GeneralValueType:
+                def __getattr__(self, name: str) -> t.GeneralValueType:
                     attr_value = getattr(self._adapter, name)
                     # Type narrowing: ensure return type is GeneralValueType
                     if isinstance(attr_value, (str, int, float, bool, type(None))):
                         return attr_value
                     if isinstance(attr_value, (list, tuple)):
-                        return cast("FlextTypes.GeneralValueType", attr_value)
+                        return cast("t.GeneralValueType", attr_value)
                     if isinstance(attr_value, dict):
-                        return cast("FlextTypes.GeneralValueType", attr_value)
-                    return cast("FlextTypes.GeneralValueType", attr_value)
+                        return cast("t.GeneralValueType", attr_value)
+                    return cast("t.GeneralValueType", attr_value)
 
                 def __enter__(self) -> Ldap3Adapter:
                     return self._adapter
@@ -3603,12 +3605,12 @@ class TestDeduplicationHelpers:
     @staticmethod
     def api_connect_disconnect_lifecycle(
         api: FlextLdap,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         verify_connect: bool = True,
         verify_disconnect: bool = True,
         verify_state: bool = True,
-    ) -> tuple[FlextResult[bool], None]:
+    ) -> tuple[r[bool], None]:
         """Test API connect/disconnect lifecycle - REPLACES ENTIRE TEST METHOD (10-20 lines).
 
         Replaces repetitive test_api_connect_and_disconnect methods.
@@ -3722,7 +3724,7 @@ class TestDeduplicationHelpers:
         expected_skipped: int | None = None,
         options: GenericFieldsDict | None = None,
         cleanup_file: bool = True,
-    ) -> tuple[FlextLdapModels.SyncStats | GenericFieldsDict | None, Path]:
+    ) -> tuple[m.SyncStats | GenericFieldsDict | None, Path]:
         r"""Test sync LDIF file with all scenarios - REPLACES ENTIRE TEST CLASS (60-100 lines).
 
         Replaces repetitive test_sync_ldif_file_* methods.
@@ -3807,7 +3809,7 @@ class TestDeduplicationHelpers:
         property_name: str = "client",
         verify_not_none: bool = True,
         verify_equals: str | None = None,
-    ) -> FlextTypes.GeneralValueType:
+    ) -> t.GeneralValueType:
         """Test API property access - REPLACES ENTIRE TEST METHOD (5-10 lines).
 
         Replaces repetitive test_client_property, test_*_property methods.
@@ -3846,23 +3848,23 @@ class TestDeduplicationHelpers:
             )
 
         # Type narrowing: ensure return type is GeneralValueType
-        value: FlextTypes.GeneralValueType
+        value: t.GeneralValueType
         if isinstance(value_raw, (str, int, float, bool, type(None))):
             value = value_raw
         elif isinstance(value_raw, (list, tuple, dict)):
-            value = cast("FlextTypes.GeneralValueType", value_raw)
+            value = cast("t.GeneralValueType", value_raw)
         else:
-            value = cast("FlextTypes.GeneralValueType", value_raw)
+            value = cast("t.GeneralValueType", value_raw)
         return value
 
     @staticmethod
     def execute_method_all_services(
-        service: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        service: p.LdapService.LdapClientProtocol,
         *,
         verify_success: bool = True,
         verify_stats: bool = True,
         expected_total: int = 0,
-    ) -> FlextLdapModels.SyncStats | FlextTypes.GeneralValueType | None:
+    ) -> m.SyncStats | t.GeneralValueType | None:
         """Test execute method for all services - REPLACES ENTIRE TEST METHOD (5-15 lines).
 
         Replaces repetitive test_execute_method methods.
@@ -3889,9 +3891,9 @@ class TestDeduplicationHelpers:
 
         result = service.execute()
 
-        # Type narrowing: result is ResultProtocol, cast to FlextResult
-        result_typed: FlextResult[FlextLdapModels.SyncStats | object] = cast(
-            "FlextResult[FlextLdapModels.SyncStats | object]",
+        # Type narrowing: result is ResultProtocol, cast to r
+        result_typed: r[m.SyncStats | object] = cast(
+            "r[m.SyncStats | object]",
             result,
         )
 
@@ -3903,7 +3905,7 @@ class TestDeduplicationHelpers:
 
         if verify_stats and result_typed.is_success:
             unwrapped = result_typed.unwrap()
-            if not isinstance(unwrapped, FlextLdapModels.SyncStats):
+            if not isinstance(unwrapped, m.SyncStats):
                 error_msg = f"Expected SyncStats, got {type(unwrapped).__name__}"
                 raise TypeError(error_msg)
             stats = unwrapped
@@ -3915,7 +3917,7 @@ class TestDeduplicationHelpers:
         if result_typed.is_success:
             unwrapped = result_typed.unwrap()
             # Type narrowing: unwrapped could be SyncStats or other types
-            if isinstance(unwrapped, FlextLdapModels.SyncStats):
+            if isinstance(unwrapped, m.SyncStats):
                 return unwrapped
             # For other types, return None (not compatible with return type)
             return None
@@ -3982,7 +3984,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def assert_success_or_failure(
-        result: FlextResult[FlextLdapModels.OperationResult],
+        result: r[m.OperationResult],
         *,
         allow_failure: bool = True,
     ) -> None:
@@ -3993,7 +3995,7 @@ class TestDeduplicationHelpers:
             assert result.is_failure or result.is_success
 
         Args:
-            result: FlextResult to check
+            result: r to check
             allow_failure: If True, allows both success and failure (default: True)
 
         Example:
@@ -4009,7 +4011,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_api(
-        config: FlextLdapModels.ConnectionConfig | None = None,
+        config: m.ConnectionConfig | None = None,
     ) -> FlextLdap:
         """Create FlextLdap API instance - COMMON PATTERN.
 
@@ -4050,10 +4052,10 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_api_and_connect(
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         assert_success: bool = True,
-    ) -> tuple[FlextLdap, FlextResult[bool]]:
+    ) -> tuple[FlextLdap, r[bool]]:
         """Create FlextLdap API and connect - COMMON PATTERN.
 
         Replaces:
@@ -4089,7 +4091,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_connection(
-        config: FlextLdapModels.ConnectionConfig | None = None,
+        config: m.ConnectionConfig | None = None,
     ) -> FlextLdapConnection:
         """Create FlextLdapConnection instance - COMMON PATTERN.
 
@@ -4131,11 +4133,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_connection_and_connect(
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         assert_success: bool = True,
         skip_on_failure: bool = False,
-    ) -> tuple[FlextLdapConnection, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdapConnection, r[m.OperationResult]]:
         """Create FlextLdapConnection and connect - COMMON PATTERN.
 
         Replaces:
@@ -4175,13 +4177,13 @@ class TestDeduplicationHelpers:
 
         # Cast result to expected return type
         return connection, cast(
-            "FlextResult[FlextLdapModels.OperationResult]",
+            "r[m.OperationResult]",
             connect_result,
         )
 
     @staticmethod
     def with_api_context(
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         assert_success: bool = True,
     ) -> AbstractContextManager[FlextLdap]:
@@ -4225,11 +4227,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_with_cleanup(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify: bool = False,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Add entry with automatic cleanup - SIMPLIFIED PATTERN.
 
         Replaces:
@@ -4261,7 +4263,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_user(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str | None = None,
         base_dn: str | None = None,
         *,
@@ -4271,7 +4273,7 @@ class TestDeduplicationHelpers:
         verify: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: LdapAttributeValue,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Create and add user entry - COMPLETE WORKFLOW.
 
         Replaces:
@@ -4319,7 +4321,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_group(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str | None = None,
         base_dn: str | None = None,
         *,
@@ -4327,7 +4329,7 @@ class TestDeduplicationHelpers:
         verify: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: LdapAttributeValue,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Create and add group entry - COMPLETE WORKFLOW.
 
         Replaces:
@@ -4372,22 +4374,22 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_base(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         dn: str,
         *,
         filter_str: str = "(objectClass=*)",
         attributes: list[str] | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Search BASE scope - COMMON PATTERN.
 
         Replaces:
-            search_options = FlextLdapModels.SearchOptions(
+            search_options = m.SearchOptions(
                 base_dn=dn,
                 filter_str="(objectClass=*)",
-                scope=FlextLdapConstants.SearchScope.BASE,
+                scope=c.SearchScope.BASE,
             )
             # SearchOptions is compatible with SearchOptionsProtocol structurally
-            result: FlextResult[FlextLdapModels.SearchResult] = client.search(search_options)
+            result: r[m.SearchResult] = client.search(search_options)
             assert result.is_success
             return result.unwrap()
 
@@ -4405,18 +4407,18 @@ class TestDeduplicationHelpers:
             assert len(result.entries) == 1
 
         """
-        search_options = FlextLdapModels.SearchOptions(
+        search_options = m.SearchOptions(
             base_dn=dn,
             filter_str=filter_str,
-            scope=FlextLdapConstants.SearchScope.BASE,
+            scope=c.SearchScope.BASE,
             attributes=attributes,
         )
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         # SearchOptions is compatible with SearchOptionsProtocol structurally
         search_result_raw = typed_client.search(search_options)
-        search_result: FlextResult[FlextLdapModels.SearchResult] = cast(
-            "FlextResult[FlextLdapModels.SearchResult]",
+        search_result: r[m.SearchResult] = cast(
+            "r[m.SearchResult]",
             search_result_raw,
         )
         return FlextTestsMatchers.assert_success(
@@ -4426,7 +4428,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def disconnect_safely(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
     ) -> None:
         """Disconnect client safely - COMMON PATTERN.
 
@@ -4464,7 +4466,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_user_and_assert(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str | None = None,
         base_dn: str | None = None,
         *,
@@ -4473,7 +4475,7 @@ class TestDeduplicationHelpers:
         use_uid: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: LdapAttributeValue,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Create user, add, and assert success - COMPLETE WORKFLOW (3-5 lines -> 1 line).
 
         Replaces:
@@ -4519,13 +4521,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def modify_entry_simple(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        client: p.LdapService.LdapClientProtocol,
+        dn: str | p.LdapEntry.DistinguishedNameProtocol,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         assert_success: bool = True,
         normalize_dn: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Modify entry with DN normalization - COMMON PATTERN (3-4 lines -> 1 line).
 
         Replaces:
@@ -4557,8 +4559,8 @@ class TestDeduplicationHelpers:
         result = typed_client.modify(dn_str, changes)
 
         if assert_success:
-            result_typed: FlextResult[FlextLdapModels.OperationResult] = cast(
-                "FlextResult[FlextLdapModels.OperationResult]",
+            result_typed: r[m.OperationResult] = cast(
+                "r[m.OperationResult]",
                 result,
             )
             FlextTestsMatchers.assert_success(
@@ -4566,20 +4568,20 @@ class TestDeduplicationHelpers:
                 error_msg="Modify operation failed",
             )
 
-        result_return: FlextResult[FlextLdapModels.OperationResult] = cast(
-            "FlextResult[FlextLdapModels.OperationResult]",
+        result_return: r[m.OperationResult] = cast(
+            "r[m.OperationResult]",
             result,
         )
         return result_return
 
     @staticmethod
     def delete_entry_simple(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        client: p.LdapService.LdapClientProtocol,
+        dn: str | p.LdapEntry.DistinguishedNameProtocol,
         *,
         assert_success: bool = True,
         normalize_dn: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Delete entry with DN normalization - COMMON PATTERN (2-3 lines -> 1 line).
 
         Replaces:
@@ -4615,8 +4617,8 @@ class TestDeduplicationHelpers:
         result = typed_client.delete(dn_str)
 
         if assert_success:
-            result_typed: FlextResult[FlextLdapModels.OperationResult] = cast(
-                "FlextResult[FlextLdapModels.OperationResult]",
+            result_typed: r[m.OperationResult] = cast(
+                "r[m.OperationResult]",
                 result,
             )
             FlextTestsMatchers.assert_success(
@@ -4624,23 +4626,23 @@ class TestDeduplicationHelpers:
                 error_msg="Delete operation failed",
             )
 
-        result_return: FlextResult[FlextLdapModels.OperationResult] = cast(
-            "FlextResult[FlextLdapModels.OperationResult]",
+        result_return: r[m.OperationResult] = cast(
+            "r[m.OperationResult]",
             result,
         )
         return result_return
 
     @staticmethod
     def add_then_modify_entry(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_modify: bool = True,
         cleanup_after: bool = True,
     ) -> tuple[
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry then modify - COMPLETE WORKFLOW (8-12 lines -> 1 line).
 
@@ -4708,13 +4710,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_then_delete_entry(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify_delete: bool = True,
     ) -> tuple[
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry then delete - COMPLETE WORKFLOW (6-8 lines -> 1 line).
 
@@ -4809,14 +4811,14 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_with_server_type(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
         scope: str | None = None,
         server_type: str | None = None,
         attributes: list[str] | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Search with optional server_type - COMMON PATTERN (4-6 lines -> 1 line).
 
         Replaces:
@@ -4826,7 +4828,7 @@ class TestDeduplicationHelpers:
                 filter_str = RFC.DEFAULT_FILTER
             if scope is None:
                 scope = RFC.DEFAULT_SCOPE
-            search_options = FlextLdapModels.SearchOptions(
+            search_options = m.SearchOptions(
                 base_dn=base_dn,
                 filter_str=filter_str,
                 scope=scope,
@@ -4872,8 +4874,8 @@ class TestDeduplicationHelpers:
                 result_raw = typed_client.search(search_options)
         else:
             result_raw = typed_client.search(search_options)
-        result: FlextResult[FlextLdapModels.SearchResult] = cast(
-            "FlextResult[FlextLdapModels.SearchResult]",
+        result: r[m.SearchResult] = cast(
+            "r[m.SearchResult]",
             result_raw,
         )
 
@@ -4884,7 +4886,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_operations_service(
-        connection_config: FlextLdapModels.ConnectionConfig,
+        connection_config: m.ConnectionConfig,
         *,
         assert_connection: bool = True,
         skip_on_failure: bool = False,
@@ -4930,8 +4932,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def cleanup_dn(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        dn: str | FlextLdapProtocols.LdapEntry.DistinguishedNameProtocol,
+        client: p.LdapService.LdapClientProtocol,
+        dn: str | p.LdapEntry.DistinguishedNameProtocol,
         *,
         ignore_errors: bool = True,
     ) -> None:
@@ -4953,8 +4955,8 @@ class TestDeduplicationHelpers:
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         dn_str = str(dn) if dn else ""
         delete_result_raw = typed_client.delete(dn_str)
-        # Type narrowing: ensure FlextResult
-        delete_result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        delete_result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
         )
 
@@ -5005,7 +5007,7 @@ class TestDeduplicationHelpers:
             else {}
         )
         # Normalize attributes to GeneralValueType for create_entry
-        attrs: dict[str, FlextTypes.GeneralValueType] = {}
+        attrs: dict[str, t.GeneralValueType] = {}
         for key, value in attrs_raw.items():
             if isinstance(value, (str, int, float, bool, type(None))):
                 attrs[key] = value
@@ -5016,20 +5018,20 @@ class TestDeduplicationHelpers:
                 # Convert set/frozenset to list for GeneralValueType
                 attrs[key] = list(value)
             else:
-                attrs[key] = cast("FlextTypes.GeneralValueType", value)
+                attrs[key] = cast("t.GeneralValueType", value)
 
         return EntryTestHelpers.create_entry(dn_with_spaces, attrs)
 
     @staticmethod
     def modify_with_dn_spaces(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         spaces_before: int = 2,
         spaces_after: int = 2,
         assert_success: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Modify entry with DN that has spaces - COMMON PATTERN (3-4 lines -> 1 line).
 
         Replaces:
@@ -5058,8 +5060,8 @@ class TestDeduplicationHelpers:
         dn_with_spaces = " " * spaces_before + dn_str + " " * spaces_after
 
         result_raw = typed_client.modify(dn_with_spaces, changes)
-        # Type narrowing: ensure FlextResult
-        result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(result_raw)
         )
 
@@ -5073,13 +5075,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def delete_with_dn_spaces(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         spaces_before: int = 2,
         spaces_after: int = 2,
         assert_success: bool = True,
-    ) -> FlextResult[FlextLdapModels.OperationResult]:
+    ) -> r[m.OperationResult]:
         """Delete entry with DN that has spaces - COMMON PATTERN (2-3 lines -> 1 line).
 
         Replaces:
@@ -5105,8 +5107,8 @@ class TestDeduplicationHelpers:
         dn_with_spaces = " " * spaces_before + dn_str + " " * spaces_after
 
         result_raw = typed_client.delete(dn_with_spaces)
-        # Type narrowing: ensure FlextResult
-        result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(result_raw)
         )
 
@@ -5120,7 +5122,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_modify_delete_with_operation_results(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
@@ -5128,7 +5130,7 @@ class TestDeduplicationHelpers:
         verify_modify_result: bool = True,
         verify_delete_result: bool = True,
         cleanup_after: bool = True,
-    ) -> dict[str, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> dict[str, r[m.OperationResult]]:
         """Complete add->modify->delete workflow with OperationResult verification - MASSIVE CODE REDUCTION (15-25 lines -> 1 line).
 
         Replaces entire test patterns like:
@@ -5136,18 +5138,18 @@ class TestDeduplicationHelpers:
             add_result = EntryTestHelpers.add_and_cleanup(TestDeduplicationHelpers._narrow_client_type(client), entry, cleanup_after=False)
             assert add_result.is_success
             TestOperationHelpers.assert_operation_result_success(
-                add_result, expected_operation_type=FlextLdapConstants.OperationType.ADD.value, expected_entries_affected=1
+                add_result, expected_operation_type=c.OperationType.ADD.value, expected_entries_affected=1
             )
             changes = {"mail": [(MODIFY_REPLACE, ["test@example.com"])]}
             modify_result = client.modify(str(entry.dn), changes)
             assert modify_result.is_success
             TestOperationHelpers.assert_operation_result_success(
-                modify_result, expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value, expected_entries_affected=1
+                modify_result, expected_operation_type=c.OperationType.MODIFY.value, expected_entries_affected=1
             )
             delete_result = client.delete(str(entry.dn))
             assert delete_result.is_success
             TestOperationHelpers.assert_operation_result_success(
-                delete_result, expected_operation_type=FlextLdapConstants.OperationType.DELETE.value, expected_entries_affected=1
+                delete_result, expected_operation_type=c.OperationType.DELETE.value, expected_entries_affected=1
             )
 
         Args:
@@ -5182,7 +5184,7 @@ class TestDeduplicationHelpers:
         if verify_add_result:
             TestOperationHelpers.assert_operation_result_success(
                 add_result,
-                expected_operation_type=FlextLdapConstants.OperationType.ADD.value,
+                expected_operation_type=c.OperationType.ADD.value,
                 expected_entries_affected=1,
             )
 
@@ -5193,29 +5195,29 @@ class TestDeduplicationHelpers:
 
         dn_str = str(entry.dn)
         modify_result_raw = typed_client.modify(dn_str, changes)
-        # Type narrowing: ensure FlextResult
-        modify_result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        modify_result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
         )
 
         if verify_modify_result:
             TestOperationHelpers.assert_operation_result_success(
                 modify_result,
-                expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value,
+                expected_operation_type=c.OperationType.MODIFY.value,
                 expected_entries_affected=1,
             )
 
         # Delete entry
         delete_result_raw = typed_client.delete(dn_str)
-        # Type narrowing: ensure FlextResult
-        delete_result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        delete_result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
         )
 
         if verify_delete_result:
             TestOperationHelpers.assert_operation_result_success(
                 delete_result,
-                expected_operation_type=FlextLdapConstants.OperationType.DELETE.value,
+                expected_operation_type=c.OperationType.DELETE.value,
                 expected_entries_affected=1,
             )
 
@@ -5227,7 +5229,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def search_and_verify_count(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         base_dn: str | None = None,
         *,
         filter_str: str | None = None,
@@ -5235,17 +5237,17 @@ class TestDeduplicationHelpers:
         expected_min: int = 0,
         expected_max: int | None = None,
         expected_exact: int | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Search with count verification - MASSIVE CODE REDUCTION (8-12 lines -> 1 line).
 
         Replaces entire test patterns like:
-            search_options = FlextLdapModels.SearchOptions(
+            search_options = m.SearchOptions(
                 base_dn=base_dn or RFC.DEFAULT_BASE_DN,
                 filter_str=filter_str or RFC.DEFAULT_FILTER,
                 scope=scope or RFC.DEFAULT_SCOPE,
             )
             # SearchOptions is compatible with SearchOptionsProtocol structurally
-            result: FlextResult[FlextLdapModels.SearchResult] = client.search(search_options)
+            result: r[m.SearchResult] = client.search(search_options)
             assert result.is_success
             search_result = result.unwrap()
             assert len(search_result.entries) >= expected_min
@@ -5278,12 +5280,12 @@ class TestDeduplicationHelpers:
 
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         result_raw = typed_client.search(search_options)
-        # Type narrowing: ensure FlextResult
-        result: FlextResult[FlextLdapModels.SearchResult] = (
+        # Type narrowing: ensure r
+        result: r[m.SearchResult] = (
             FlextLdapTestHelpers._ensure_flext_result(result_raw)
         )
         FlextTestsMatchers.assert_success(result, error_msg="Search failed")
-        search_result: FlextLdapModels.SearchResult = result.unwrap()
+        search_result: m.SearchResult = result.unwrap()
 
         if expected_exact is not None:
             assert len(search_result.entries) == expected_exact, (
@@ -5302,11 +5304,11 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def execute_and_verify_total_count(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         *,
         expected_total: int = 0,
         expected_entries: int | None = None,
-    ) -> FlextLdapModels.SearchResult:
+    ) -> m.SearchResult:
         """Execute and verify total_count - COMMON PATTERN (4-6 lines -> 1 line).
 
         Replaces:
@@ -5335,12 +5337,12 @@ class TestDeduplicationHelpers:
             raise AttributeError(error_msg)
 
         result_raw = client.execute()
-        # Type narrowing: ensure FlextResult
-        result: FlextResult[FlextLdapModels.SearchResult] = (
+        # Type narrowing: ensure r
+        result: r[m.SearchResult] = (
             FlextLdapTestHelpers._ensure_flext_result(result_raw)
         )
         FlextTestsMatchers.assert_success(result, error_msg="Execute failed")
-        search_result: FlextLdapModels.SearchResult = result.unwrap()
+        search_result: m.SearchResult = result.unwrap()
 
         total = cast("int", search_result.total_count)
         assert total == expected_total, (
@@ -5356,7 +5358,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def create_user_add_and_verify(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str | None = None,
         base_dn: str | None = None,
         *,
@@ -5366,7 +5368,7 @@ class TestDeduplicationHelpers:
         verify_operation_result: bool = False,
         cleanup_after: bool = True,
         **extra_attributes: LdapAttributeValue,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Create user entry, add it, and verify - COMPLETE WORKFLOW (8-12 lines -> 1 line).
 
         Replaces:
@@ -5378,7 +5380,7 @@ class TestDeduplicationHelpers:
             assert result.is_success
             if verify_operation_result:
                 TestOperationHelpers.assert_operation_result_success(
-                    result, expected_operation_type=FlextLdapConstants.OperationType.ADD.value, expected_entries_affected=1
+                    result, expected_operation_type=c.OperationType.ADD.value, expected_entries_affected=1
                 )
 
         Args:
@@ -5423,7 +5425,7 @@ class TestDeduplicationHelpers:
         if verify_operation_result:
             TestOperationHelpers.assert_operation_result_success(
                 result,
-                expected_operation_type=FlextLdapConstants.OperationType.ADD.value,
+                expected_operation_type=c.OperationType.ADD.value,
                 expected_entries_affected=1,
             )
 
@@ -5431,14 +5433,14 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_then_delete_with_operation_results(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         *,
         verify_add_result: bool = True,
         verify_delete_result: bool = True,
     ) -> tuple[
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry then delete with OperationResult verification - MASSIVE CODE REDUCTION (10-15 lines -> 1 line).
 
@@ -5450,7 +5452,7 @@ class TestDeduplicationHelpers:
                 delete_result = client.delete(str(entry.dn))
                 TestOperationHelpers.assert_operation_result_success(
                     delete_result,
-                    expected_operation_type=FlextLdapConstants.OperationType.DELETE.value,
+                    expected_operation_type=c.OperationType.DELETE.value,
                     expected_entries_affected=1,
                 )
 
@@ -5481,7 +5483,7 @@ class TestDeduplicationHelpers:
         if verify_add_result:
             TestOperationHelpers.assert_operation_result_success(
                 add_result,
-                expected_operation_type=FlextLdapConstants.OperationType.ADD.value,
+                expected_operation_type=c.OperationType.ADD.value,
                 expected_entries_affected=1,
             )
 
@@ -5492,15 +5494,15 @@ class TestDeduplicationHelpers:
 
         dn_str = str(entry.dn)
         delete_result_raw = typed_client.delete(dn_str)
-        # Type narrowing: ensure FlextResult
-        delete_result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        delete_result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
         )
 
         if verify_delete_result:
             TestOperationHelpers.assert_operation_result_success(
                 delete_result,
-                expected_operation_type=FlextLdapConstants.OperationType.DELETE.value,
+                expected_operation_type=c.OperationType.DELETE.value,
                 expected_entries_affected=1,
             )
 
@@ -5508,7 +5510,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def add_then_modify_with_operation_results(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         entry: FlextLdifModels.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
@@ -5516,8 +5518,8 @@ class TestDeduplicationHelpers:
         verify_modify_result: bool = True,
         cleanup_after: bool = True,
     ) -> tuple[
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Add entry then modify with OperationResult verification - MASSIVE CODE REDUCTION (12-18 lines -> 1 line).
 
@@ -5530,7 +5532,7 @@ class TestDeduplicationHelpers:
             assert results["add"].is_success
             TestOperationHelpers.assert_operation_result_success(
                 results["modify"],
-                expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value,
+                expected_operation_type=c.OperationType.MODIFY.value,
                 expected_entries_affected=1,
             )
             if entry.dn:
@@ -5567,7 +5569,7 @@ class TestDeduplicationHelpers:
         if verify_add_result:
             TestOperationHelpers.assert_operation_result_success(
                 add_result,
-                expected_operation_type=FlextLdapConstants.OperationType.ADD.value,
+                expected_operation_type=c.OperationType.ADD.value,
                 expected_entries_affected=1,
             )
 
@@ -5578,15 +5580,15 @@ class TestDeduplicationHelpers:
 
         dn_str = str(entry.dn)
         modify_result_raw = typed_client.modify(dn_str, changes)
-        # Type narrowing: ensure FlextResult
-        modify_result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Type narrowing: ensure r
+        modify_result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
         )
 
         if verify_modify_result:
             TestOperationHelpers.assert_operation_result_success(
                 modify_result,
-                expected_operation_type=FlextLdapConstants.OperationType.MODIFY.value,
+                expected_operation_type=c.OperationType.MODIFY.value,
                 expected_entries_affected=1,
             )
 
@@ -5660,7 +5662,7 @@ class TestDeduplicationHelpers:
             else {}
         )
         # Normalize attributes to GeneralValueType for create_entry
-        normalized_attrs: dict[str, FlextTypes.GeneralValueType] = {}
+        normalized_attrs: dict[str, t.GeneralValueType] = {}
         for key, value in attrs_raw.items():
             if isinstance(value, (str, int, float, bool, type(None))):
                 normalized_attrs[key] = value
@@ -5673,18 +5675,18 @@ class TestDeduplicationHelpers:
                 # Convert set/frozenset to list for GeneralValueType
                 normalized_attrs[key] = list(value)
             else:
-                normalized_attrs[key] = cast("FlextTypes.GeneralValueType", value)
+                normalized_attrs[key] = cast("t.GeneralValueType", value)
 
         return EntryTestHelpers.create_entry(dn_with_spaces, normalized_attrs)
 
     @staticmethod
     def create_connection_config_from_container(
         ldap_container: GenericFieldsDict,
-    ) -> FlextLdapModels.ConnectionConfig:
+    ) -> m.ConnectionConfig:
         """Create ConnectionConfig from ldap_container fixture - COMMON PATTERN (6-8 lines -> 1 line).
 
         Replaces:
-            connection_config = FlextLdapModels.ConnectionConfig(
+            connection_config = m.ConnectionConfig(
                 host=str(ldap_container["host"]),
                 port=int(str(ldap_container["port"])),
                 use_ssl=False,
@@ -5707,7 +5709,7 @@ class TestDeduplicationHelpers:
         port_value = ldap_container.get("port", 3390)
         port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
 
-        return FlextLdapModels.ConnectionConfig(
+        return m.ConnectionConfig(
             host=str(ldap_container.get("host", "localhost")),
             port=port_int,
             use_ssl=bool(ldap_container.get("use_ssl")),
@@ -5717,8 +5719,8 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def connect_and_disconnect(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
-        connection_config: FlextLdapModels.ConnectionConfig,
+        client: p.LdapService.LdapClientProtocol,
+        connection_config: m.ConnectionConfig,
     ) -> None:
         """Connect client, verify, then disconnect - COMMON PATTERN (4-6 lines -> 1 line).
 
@@ -5769,13 +5771,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_add_operation(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str,
         base_dn: str | None = None,
         *,
         sn: str | None = None,
         verify_operation_result: bool = False,
-    ) -> tuple[FlextLdifModels.Entry, FlextResult[FlextLdapModels.OperationResult]]:
+    ) -> tuple[FlextLdifModels.Entry, r[m.OperationResult]]:
         """Complete API add operation - MASSIVE CODE REDUCTION (8-10 lines -> 1 line).
 
         Replaces entire api_add patterns like:
@@ -5817,7 +5819,7 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_modify_operation(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str,
         base_dn: str | None = None,
         *,
@@ -5825,7 +5827,7 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> tuple[
         FlextLdifModels.Entry,
-        dict[str, FlextResult[FlextLdapModels.OperationResult]],
+        dict[str, r[m.OperationResult]],
     ]:
         """Complete API modify operation - MASSIVE CODE REDUCTION (12-18 lines -> 1 line).
 
@@ -5888,13 +5890,13 @@ class TestDeduplicationHelpers:
 
     @staticmethod
     def api_delete_operation(
-        client: FlextLdapProtocols.LdapService.LdapClientProtocol,
+        client: p.LdapService.LdapClientProtocol,
         cn_value: str,
         base_dn: str | None = None,
     ) -> tuple[
         FlextLdifModels.Entry,
-        FlextResult[FlextLdapModels.OperationResult],
-        FlextResult[FlextLdapModels.OperationResult],
+        r[m.OperationResult],
+        r[m.OperationResult],
     ]:
         """Complete API delete operation - MASSIVE CODE REDUCTION (10-14 lines -> 1 line).
 
@@ -5943,8 +5945,8 @@ class TestDeduplicationHelpers:
             raise ValueError(error_msg)
 
         delete_result_raw = typed_client.delete(str(entry.dn))
-        # Convert protocol result to FlextResult if needed
-        delete_result: FlextResult[FlextLdapModels.OperationResult] = (
+        # Convert protocol result to r if needed
+        delete_result: r[m.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
         )
         TestOperationHelpers.assert_result_success(delete_result)

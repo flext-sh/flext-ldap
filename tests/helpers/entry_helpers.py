@@ -19,8 +19,8 @@ from contextlib import contextmanager
 from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core.protocols import p
+from flext_core.typings import t
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Entry as Ldap3Entry, Server
 
@@ -55,7 +55,7 @@ class EntryTestHelpers:
 
         @staticmethod
         def _normalize_attributes(
-            attributes: Mapping[str, FlextTypes.GeneralValueType],
+            attributes: Mapping[str, t.GeneralValueType],
         ) -> dict[str, list[str]]:
             """Normalize attributes to dict[str, list[str]].
 
@@ -77,7 +77,7 @@ class EntryTestHelpers:
     @staticmethod
     def create_entry(
         dn: str,
-        attributes: Mapping[str, FlextTypes.GeneralValueType],
+        attributes: Mapping[str, t.GeneralValueType],
     ) -> FlextLdifModels.Entry:
         """Create Entry directly from DN string and attributes dict.
 
@@ -98,7 +98,7 @@ class EntryTestHelpers:
 
     @staticmethod
     def dict_to_entry(
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
     ) -> FlextLdifModels.Entry:
         """Convert dictionary to FlextLdifModels.Entry."""
         dn_str = str(entry_dict.get("dn", ""))
@@ -106,8 +106,8 @@ class EntryTestHelpers:
         attrs_dict: dict[str, object] = (
             dict(attrs_raw) if FlextRuntime.is_dict_like(attrs_raw) else {}
         )
-        attrs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]",
+        attrs_mapping: Mapping[str, t.GeneralValueType] = cast(
+            "Mapping[str, t.GeneralValueType]",
             attrs_dict,
         )
         return EntryTestHelpers.create_entry(dn_str, attrs_mapping)
@@ -238,7 +238,7 @@ class EntryTestHelpers:
     @staticmethod
     def add_entry_from_dict(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         *,
         verify: bool = True,
         cleanup_before: bool = True,
@@ -262,7 +262,7 @@ class EntryTestHelpers:
         add_result: FlextResult[FlextLdapModels.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(
                 cast(
-                    "FlextResult[FlextLdapModels.OperationResult] | FlextProtocols.ResultProtocol[FlextLdapModels.OperationResult] | FlextProtocols.ResultProtocol[object]",
+                    "FlextResult[FlextLdapModels.OperationResult] | p.ResultProtocol[FlextLdapModels.OperationResult] | p.ResultProtocol[object]",
                     add_result_raw,
                 ),
             )
@@ -304,10 +304,8 @@ class EntryTestHelpers:
                     str(adjust_dn.get("to", "")),
                 )
                 entry_dict_raw["dn"] = adjusted_dn
-            entry_dict: (
-                Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict
-            ) = cast(
-                "Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict",
+            entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict = cast(
+                "Mapping[str, t.GeneralValueType] | GenericFieldsDict",
                 entry_dict_raw,
             )
             entry, add_result = EntryTestHelpers.add_entry_from_dict(
@@ -328,7 +326,7 @@ class EntryTestHelpers:
     @staticmethod
     def modify_entry_with_verification(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_attribute: str | None = None,
@@ -408,7 +406,7 @@ class EntryTestHelpers:
     @staticmethod
     def delete_entry_with_verification(
         client: LdapOperationsType,
-        entry_dict: Mapping[str, FlextTypes.GeneralValueType] | GenericFieldsDict,
+        entry_dict: Mapping[str, t.GeneralValueType] | GenericFieldsDict,
         *,
         cleanup_before: bool = True,
         verify_deletion: bool = True,
@@ -488,7 +486,7 @@ class EntryTestHelpers:
         add_result: FlextResult[FlextLdapModels.OperationResult] = (
             FlextLdapTestHelpers._ensure_flext_result(
                 cast(
-                    "FlextResult[FlextLdapModels.OperationResult] | FlextProtocols.ResultProtocol[FlextLdapModels.OperationResult] | FlextProtocols.ResultProtocol[object]",
+                    "FlextResult[FlextLdapModels.OperationResult] | p.ResultProtocol[FlextLdapModels.OperationResult] | p.ResultProtocol[object]",
                     add_result_raw,
                 ),
             )
@@ -560,8 +558,8 @@ class EntryTestHelpers:
                 return {}
             extensions = entry.metadata.extensions
             # Type narrowing: cast to GeneralValueType for FlextRuntime methods
-            extensions_typed: FlextTypes.GeneralValueType = cast(
-                "FlextTypes.GeneralValueType", extensions
+            extensions_typed: t.GeneralValueType = cast(
+                "t.GeneralValueType", extensions
             )
             return (
                 dict(extensions) if FlextRuntime.is_dict_like(extensions_typed) else {}
@@ -574,8 +572,8 @@ class EntryTestHelpers:
             base64_attrs = extensions.get("base64_encoded_attributes")
             if base64_attrs:
                 # Type narrowing: cast to GeneralValueType for FlextRuntime methods
-                base64_attrs_typed: FlextTypes.GeneralValueType = cast(
-                    "FlextTypes.GeneralValueType", base64_attrs
+                base64_attrs_typed: t.GeneralValueType = cast(
+                    "t.GeneralValueType", base64_attrs
                 )
                 base64_list: list[object] = (
                     list(base64_attrs_typed)
@@ -615,8 +613,8 @@ class EntryTestHelpers:
             object_class_value = attributes.get("objectClass", ["top"])
             object_classes: list[str]
             # Type narrowing: cast to GeneralValueType for FlextRuntime methods
-            object_class_typed: FlextTypes.GeneralValueType = cast(
-                "FlextTypes.GeneralValueType", object_class_value
+            object_class_typed: t.GeneralValueType = cast(
+                "t.GeneralValueType", object_class_value
             )
             if FlextRuntime.is_list_like(object_class_typed):
                 object_classes = [str(oc) for oc in object_class_typed]

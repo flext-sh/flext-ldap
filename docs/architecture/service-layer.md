@@ -7,6 +7,7 @@ The service layer contains the composable building blocks that power the
 ## Services
 
 ### Connection
+
 - **File**: `src/flext_ldap/services/connection.py`
 - **Responsibility**: Manage the `ldap3` connection lifecycle (create, bind,
   disconnect) while optionally retrying transient errors.
@@ -14,6 +15,7 @@ The service layer contains the composable building blocks that power the
 - **Outputs**: `FlextResult[bool]` plus logging and optional server detection.
 
 ### Operations
+
 - **File**: `src/flext_ldap/services/operations.py`
 - **Responsibility**: Perform search, add, modify, delete, and upsert
   operations against an active connection.
@@ -23,6 +25,7 @@ The service layer contains the composable building blocks that power the
   entries.
 
 ### Synchronization
+
 - **File**: `src/flext_ldap/services/sync.py`
 - **Responsibility**: Stream LDIF data into LDAP, emitting progress callbacks,
   tracking per-entry statistics, and supporting multi-phase syncs.
@@ -30,6 +33,7 @@ The service layer contains the composable building blocks that power the
 - **Outputs**: `FlextLdapModels.SyncStats` and `MultiPhaseSyncResult` models.
 
 ### Server Detection
+
 - **File**: `src/flext_ldap/services/detection.py`
 - **Responsibility**: Inspect `rootDSE` attributes from a live connection and
   infer the directory server type using in-project heuristics instead of the
