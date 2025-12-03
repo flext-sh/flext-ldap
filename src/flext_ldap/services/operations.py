@@ -198,7 +198,11 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
             normalized = u.map(
                 cast("list[str]", filtered),
                 mapper=lambda v: cast(
-                    "str", u.normalize(cast("str", u.ensure(v, target_type="str", default="")), case="lower")
+                    "str",
+                    u.normalize(
+                        cast("str", u.ensure(v, target_type="str", default="")),
+                        case="lower",
+                    ),
                 ),
             )
             return set(cast("list[str]", normalized))
@@ -299,7 +303,11 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                             cast(
                                 "list[str]",
                                 u.filter(
-                                    u.ensure(existing_vals, target_type="str_list", default=[]),
+                                    u.ensure(
+                                        existing_vals,
+                                        target_type="str_list",
+                                        default=[],
+                                    ),
                                     predicate=bool,
                                 ),
                             )
@@ -326,7 +334,9 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                                 cast(
                                     "list[str]",
                                     u.filter(
-                                        u.ensure(new_vals, target_type="str_list", default=[]),
+                                        u.ensure(
+                                            new_vals, target_type="str_list", default=[]
+                                        ),
                                         predicate=bool,
                                     ),
                                 ),
@@ -1165,7 +1175,10 @@ class FlextLdapOperations(FlextLdapServiceBase[m.SearchResult]):
                     entry_index=i,
                     total_entries=total_entries,
                     entry_dn=entry_dn[:100] if entry_dn else None,
-                    error=cast("str", u.ensure(upsert_result.error, target_type="str", default=""))[:200],
+                    error=cast(
+                        "str",
+                        u.ensure(upsert_result.error, target_type="str", default=""),
+                    )[:200],
                 )
 
                 if stop_on_error:

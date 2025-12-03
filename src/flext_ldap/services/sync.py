@@ -183,7 +183,9 @@ class FlextLdapSyncService(FlextLdapServiceBase[m.SyncStats]):
                     )
                 else:
                     # Use u.ensure_str for safe error string extraction
-                    error_str = cast("str", u.ensure(add_result.error, target_type="str", default=""))
+                    error_str = cast(
+                        "str", u.ensure(add_result.error, target_type="str", default="")
+                    )
                     if FlextLdapOperations.is_already_exists_error(error_str):
                         skipped += 1
                         entry_stats = m.LdapBatchStats(

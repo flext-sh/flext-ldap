@@ -936,7 +936,10 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
                 phase_name,
                 config=SyncPhaseConfig(
                     server_type=config.server_type,
-                    progress_callback=FlextLdap._make_phase_progress_callback(phase_name, config) or config.progress_callback,
+                    progress_callback=FlextLdap._make_phase_progress_callback(
+                        phase_name, config
+                    )
+                    or config.progress_callback,
                     retry_on_errors=config.retry_on_errors,
                     max_retries=config.max_retries,
                     stop_on_error=config.stop_on_error,
@@ -959,14 +962,24 @@ class FlextLdap(FlextLdapServiceBase[m.SearchResult]):
         # Use u.map() for efficient aggregation - consolidate to reduce locals
         phase_values = list(phase_results.values())
         totals = {
-            "entries": sum(cast("list[int]", u.map(phase_values, mapper=lambda r: r.total_entries))),
-            "synced": sum(cast("list[int]", u.map(phase_values, mapper=lambda r: r.synced))),
-            "failed": sum(cast("list[int]", u.map(phase_values, mapper=lambda r: r.failed))),
-            "skipped": sum(cast("list[int]", u.map(phase_values, mapper=lambda r: r.skipped))),
+            "entries": sum(
+                cast("list[int]", u.map(phase_values, mapper=lambda r: r.total_entries))
+            ),
+            "synced": sum(
+                cast("list[int]", u.map(phase_values, mapper=lambda r: r.synced))
+            ),
+            "failed": sum(
+                cast("list[int]", u.map(phase_values, mapper=lambda r: r.failed))
+            ),
+            "skipped": sum(
+                cast("list[int]", u.map(phase_values, mapper=lambda r: r.skipped))
+            ),
         }
         total_processed = totals["synced"] + totals["failed"] + totals["skipped"]
         overall_success_rate = (
-            (totals["synced"] + totals["skipped"]) / total_processed * 100 if total_processed > 0 else 0.0
+            (totals["synced"] + totals["skipped"]) / total_processed * 100
+            if total_processed > 0
+            else 0.0
         )
 
         return r[m.MultiPhaseSyncResult].ok(

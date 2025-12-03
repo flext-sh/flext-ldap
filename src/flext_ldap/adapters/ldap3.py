@@ -228,14 +228,33 @@ class Ldap3Adapter(s[bool]):
                 entry_attrs = entry.entry_attributes  # type: ignore[attr-defined]
                 # Build attrs dict - dict comprehension is most efficient for this pattern
                 attrs_dict = {
-                    attr: entry[attr].values for attr in entry_attrs  # type: ignore[index]
+                    attr: entry[attr].values
+                    for attr in entry_attrs  # type: ignore[index]
                 }
                 # Process values using u.process()
-                attrs_result: r[dict[str, list[str]]] = u.process(
+                attrs_result = u.process(
                     attrs_dict,
-                    processor=lambda _k, v: u.ensure(cast("t.GeneralValueType", v), target_type="str_list", default=[])
+                    processor=lambda _k, v: cast(
+                        "list[str]",
+                        u.ensure(
+                            cast("t.GeneralValueType", v),
+                            target_type="str_list",
+                            default=[],
+                        ),
+                    )
                     if v is not None
-                    else (u.ensure(cast("t.GeneralValueType", [v]), target_type="str_list", default=[]) if v is not None else []),
+                    else (
+                        cast(
+                            "list[str]",
+                            u.ensure(
+                                cast("t.GeneralValueType", [v]),
+                                target_type="str_list",
+                                default=[],
+                            ),
+                        )
+                        if v is not None
+                        else []
+                    ),
                     on_error="skip",
                 )
                 attrs = cast(
@@ -372,22 +391,44 @@ class Ldap3Adapter(s[bool]):
                     )
                     if isinstance(attrs_value, dict):
                         # Convert to AttributeDict format using u.map()
-                        result: dict[str, list[str]] = u.map(
-                            attrs_value,
-                            mapper=lambda _k, v: u.ensure(cast("t.GeneralValueType", v), target_type="str_list", default=[])
-                    if FlextRuntime.is_list_like(cast("t.GeneralValueType", v))
-                    else [str(v)],
+                        result = cast(
+                            "dict[str, list[str]]",
+                            u.map(
+                                cast("dict[str, object]", attrs_value),
+                                mapper=lambda _k, v: cast(
+                                    "list[str]",
+                                    u.ensure(
+                                        cast("t.GeneralValueType", v),
+                                        target_type="str_list",
+                                        default=[],
+                                    ),
+                                )
+                                if FlextRuntime.is_list_like(
+                                    cast("t.GeneralValueType", v)
+                                )
+                                else [str(v)],
+                            ),
                         )
                         return cast("t.Ldap.AttributeDict", result)
                     return {}
 
             # Check if attrs is Mapping directly - use u.map() for conversion
             if isinstance(attrs, Mapping):
-                result = u.map(
-                    attrs,
-                            mapper=lambda _k, v: u.ensure(cast("t.GeneralValueType", v), target_type="str_list", default=[])
-                    if FlextRuntime.is_list_like(cast("t.GeneralValueType", v))
-                    else [str(v)],
+                result = cast(
+                    "dict[str, list[str]]",
+                    u.map(
+                        cast("dict[str, object]", attrs),
+                        mapper=lambda _k, v: cast(
+                            "list[str]",
+                            u.ensure(
+                                cast("t.GeneralValueType", v),
+                                target_type="str_list",
+                                default=[],
+                            ),
+                        )
+                        if FlextRuntime.is_list_like(cast("t.GeneralValueType", v))
+                        else [str(v)],
+                    ),
                 )
                 return cast("t.Ldap.AttributeDict", result)
             return {}

@@ -640,8 +640,7 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> dict[
         str,
-        r[m.OperationResult]
-        | r[m.SearchResult],
+        r[m.OperationResult] | r[m.SearchResult],
     ]:
         """Execute complete CRUD sequence - MASSIVE CODE REDUCTION.
 
@@ -811,9 +810,7 @@ class TestDeduplicationHelpers:
         adjust_dn: dict[str, str] | None = None,
         cleanup_before: bool = True,
         cleanup_after: bool = True,
-    ) -> list[
-        tuple[FlextLdifModels.Entry, r[m.OperationResult]]
-    ]:
+    ) -> list[tuple[FlextLdifModels.Entry, r[m.OperationResult]]]:
         """Add multiple entries from list of dictionaries - MASSIVE CODE REDUCTION.
 
         Replaces entire loop + add + cleanup pattern for multiple entries.
@@ -1246,8 +1243,7 @@ class TestDeduplicationHelpers:
         verify_delete: bool = True,
     ) -> dict[
         str,
-        r[m.OperationResult]
-        | r[m.SearchResult],
+        r[m.OperationResult] | r[m.SearchResult],
     ]:
         """Complete CRUD sequence test - REPLACES ENTIRE TEST METHOD (20-40 lines).
 
@@ -1760,9 +1756,7 @@ class TestDeduplicationHelpers:
         *,
         limit: int | None = None,
         verify_all: bool = True,
-    ) -> list[
-        tuple[FlextLdifModels.Entry, r[m.OperationResult]]
-    ]:
+    ) -> list[tuple[FlextLdifModels.Entry, r[m.OperationResult]]]:
         """Test add multiple entries from fixtures - REPLACES ENTIRE TEST METHOD (15-25 lines).
 
         Replaces entire test_add_multiple_*_from_fixtures methods.
@@ -1840,9 +1834,7 @@ class TestDeduplicationHelpers:
         if server_types is None:
             server_types = ["rfc", "openldap2", "generic"]
 
-        results: list[
-            tuple[str, r[FlextLdifModels.Entry] | r[bool]]
-        ] = []
+        results: list[tuple[str, r[FlextLdifModels.Entry] | r[bool]]] = []
 
         for server_type in server_types:
             if operation == "normalize":
@@ -1853,9 +1845,9 @@ class TestDeduplicationHelpers:
                     "normalize_entry_for_server method was removed. "
                     "Use FlextLdif parser with server_type parameter instead."
                 )
-                result: r[FlextLdifModels.Entry] | r[bool] = (
-                    r[FlextLdifModels.Entry].fail(error_msg)
-                )
+                result: r[FlextLdifModels.Entry] | r[bool] = r[
+                    FlextLdifModels.Entry
+                ].fail(error_msg)
             elif operation == "validate":
                 # NOTE: validate_entry_for_server method was removed during refactoring.
                 # Entry validation is now handled by flext-ldif parser with server-specific quirks.
@@ -1918,11 +1910,7 @@ class TestDeduplicationHelpers:
         connection: Connection = cast("Connection", ldap_connection)
 
         # Convert SearchScope to literal string for ldap3.Connection.search
-        scope_str: str = (
-            scope.value
-            if isinstance(scope, c.SearchScope)
-            else str(scope)
-        )
+        scope_str: str = scope.value if isinstance(scope, c.SearchScope) else str(scope)
         # Type narrowing: ldap3.Connection.search expects Literal['BASE', 'LEVEL', 'SUBTREE']
         scope_literal: Literal["BASE", "LEVEL", "SUBTREE"] = cast(
             "Literal['BASE', 'LEVEL', 'SUBTREE']",
@@ -2033,11 +2021,9 @@ class TestDeduplicationHelpers:
             modify_result = typed_client.modify(normalized_dn, changes)
 
             if verify_success:
-                modify_result_typed: r[m.OperationResult] = (
-                    cast(
-                        "r[m.OperationResult]",
-                        modify_result,
-                    )
+                modify_result_typed: r[m.OperationResult] = cast(
+                    "r[m.OperationResult]",
+                    modify_result,
                 )
                 FlextTestsMatchers.assert_success(modify_result_typed)
 
@@ -2098,11 +2084,9 @@ class TestDeduplicationHelpers:
             delete_result = typed_client.delete(normalized_dn)
 
             if verify_success:
-                delete_result_typed: r[m.OperationResult] = (
-                    cast(
-                        "r[m.OperationResult]",
-                        delete_result,
-                    )
+                delete_result_typed: r[m.OperationResult] = cast(
+                    "r[m.OperationResult]",
+                    delete_result,
                 )
                 FlextTestsMatchers.assert_success(delete_result_typed)
 
@@ -3285,9 +3269,7 @@ class TestDeduplicationHelpers:
         cleanup_after: bool = True,
     ) -> dict[
         str,
-        r[m.OperationResult]
-        | r[m.SearchResult]
-        | None,
+        r[m.OperationResult] | r[m.SearchResult] | None,
     ]:
         """Test all API operations - REPLACES ENTIRE TEST CLASS (50-80 lines).
 
@@ -3320,9 +3302,7 @@ class TestDeduplicationHelpers:
 
         results: dict[
             str,
-            r[m.OperationResult]
-            | r[m.SearchResult]
-            | None,
+            r[m.OperationResult] | r[m.SearchResult] | None,
         ] = {}
 
         # Search before add
@@ -4956,8 +4936,8 @@ class TestDeduplicationHelpers:
         dn_str = str(dn) if dn else ""
         delete_result_raw = typed_client.delete(dn_str)
         # Type narrowing: ensure r
-        delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+        delete_result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            delete_result_raw
         )
 
         if not ignore_errors:
@@ -5061,8 +5041,8 @@ class TestDeduplicationHelpers:
 
         result_raw = typed_client.modify(dn_with_spaces, changes)
         # Type narrowing: ensure r
-        result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(result_raw)
+        result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            result_raw
         )
 
         if assert_success:
@@ -5108,8 +5088,8 @@ class TestDeduplicationHelpers:
 
         result_raw = typed_client.delete(dn_with_spaces)
         # Type narrowing: ensure r
-        result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(result_raw)
+        result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            result_raw
         )
 
         if assert_success:
@@ -5196,8 +5176,8 @@ class TestDeduplicationHelpers:
         dn_str = str(entry.dn)
         modify_result_raw = typed_client.modify(dn_str, changes)
         # Type narrowing: ensure r
-        modify_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
+        modify_result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            modify_result_raw
         )
 
         if verify_modify_result:
@@ -5210,8 +5190,8 @@ class TestDeduplicationHelpers:
         # Delete entry
         delete_result_raw = typed_client.delete(dn_str)
         # Type narrowing: ensure r
-        delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+        delete_result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            delete_result_raw
         )
 
         if verify_delete_result:
@@ -5281,8 +5261,8 @@ class TestDeduplicationHelpers:
         typed_client = TestDeduplicationHelpers._narrow_client_type(client)
         result_raw = typed_client.search(search_options)
         # Type narrowing: ensure r
-        result: r[m.SearchResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(result_raw)
+        result: r[m.SearchResult] = FlextLdapTestHelpers._ensure_flext_result(
+            result_raw
         )
         FlextTestsMatchers.assert_success(result, error_msg="Search failed")
         search_result: m.SearchResult = result.unwrap()
@@ -5338,8 +5318,8 @@ class TestDeduplicationHelpers:
 
         result_raw = client.execute()
         # Type narrowing: ensure r
-        result: r[m.SearchResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(result_raw)
+        result: r[m.SearchResult] = FlextLdapTestHelpers._ensure_flext_result(
+            result_raw
         )
         FlextTestsMatchers.assert_success(result, error_msg="Execute failed")
         search_result: m.SearchResult = result.unwrap()
@@ -5495,8 +5475,8 @@ class TestDeduplicationHelpers:
         dn_str = str(entry.dn)
         delete_result_raw = typed_client.delete(dn_str)
         # Type narrowing: ensure r
-        delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+        delete_result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            delete_result_raw
         )
 
         if verify_delete_result:
@@ -5581,8 +5561,8 @@ class TestDeduplicationHelpers:
         dn_str = str(entry.dn)
         modify_result_raw = typed_client.modify(dn_str, changes)
         # Type narrowing: ensure r
-        modify_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
+        modify_result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            modify_result_raw
         )
 
         if verify_modify_result:
@@ -5946,8 +5926,8 @@ class TestDeduplicationHelpers:
 
         delete_result_raw = typed_client.delete(str(entry.dn))
         # Convert protocol result to r if needed
-        delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+        delete_result: r[m.OperationResult] = FlextLdapTestHelpers._ensure_flext_result(
+            delete_result_raw
         )
         TestOperationHelpers.assert_result_success(delete_result)
 

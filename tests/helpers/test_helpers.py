@@ -401,11 +401,7 @@ class FlextLdapTestHelpers:
 
     @staticmethod
     def cleanup_entry(
-        client: (
-            FlextLdap
-            | FlextLdapOperations
-            | p.LdapService.LdapClientProtocol
-        ),
+        client: (FlextLdap | FlextLdapOperations | p.LdapService.LdapClientProtocol),
         dn: str | p.LdapEntry.DistinguishedNameProtocol,
     ) -> None:
         """Cleanup entry before add to avoid entryAlreadyExists errors.
@@ -420,11 +416,7 @@ class FlextLdapTestHelpers:
 
     @staticmethod
     def cleanup_after_test(
-        client: (
-            FlextLdap
-            | FlextLdapOperations
-            | p.LdapService.LdapClientProtocol
-        ),
+        client: (FlextLdap | FlextLdapOperations | p.LdapService.LdapClientProtocol),
         dn: str | p.LdapEntry.DistinguishedNameProtocol,
     ) -> None:
         """Cleanup entry after test execution.
@@ -552,9 +544,7 @@ class FlextLdapTestHelpers:
             List of (entry, result) tuples
 
         """
-        results: list[
-            tuple[FlextLdifModels.Entry, r[m.OperationResult]]
-        ] = []
+        results: list[tuple[FlextLdifModels.Entry, r[m.OperationResult]]] = []
         for entry_dict_item in entry_dicts:
             # Type narrowing: cast to GeneralValueType for FlextRuntime methods
             entry_dict_typed: t.GeneralValueType = cast(

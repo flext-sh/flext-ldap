@@ -43,6 +43,7 @@ from flext_core import (
 )
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.typings import t as flext_types
 from flext_ldif import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 from pydantic import (
@@ -329,7 +330,9 @@ class FlextLdapModels(FlextModels):
             )
 
             # Use u.process() to process all entries and extract categories
-            def process_entry(entry: FlextLdifModels.Entry) -> tuple[str, FlextLdifModels.Entry]:
+            def process_entry(
+                entry: FlextLdifModels.Entry,
+            ) -> tuple[str, FlextLdifModels.Entry]:
                 """Process entry and return (category, entry) tuple."""
                 if entry.attributes is None:
                     return ("unknown", entry)
@@ -358,14 +361,22 @@ class FlextLdapModels(FlextModels):
                     # Fallback: empty dict if type is unexpected
                     attrs_dict = {}
                 # Use u.get and u.ensure_str_list for safer nested access
-                object_classes_raw: t.GeneralValueType = u.get(attrs_dict, "objectClass", default=[])
+                object_classes_raw: flext_types.GeneralValueType = u.get(
+                    attrs_dict, "objectClass", default=[]
+                )
                 object_classes: list[str] = cast(
                     "list[str]",
                     u.ensure(object_classes_raw, target_type="str_list", default=[]),
                 )
                 # Use u.find() to get first valid object class, fallback to "unknown"
-                found_category = u.find(object_classes, predicate=u.TypeGuards.is_string_non_empty)
-                category = cast("str", found_category) if found_category is not None else "unknown"
+                found_category = u.find(
+                    object_classes, predicate=u.TypeGuards.is_string_non_empty
+                )
+                category = (
+                    cast("str", found_category)
+                    if found_category is not None
+                    else "unknown"
+                )
                 return (category, entry)
 
             # Process all entries using u.process()
@@ -382,14 +393,16 @@ class FlextLdapModels(FlextModels):
                 # Group entries by category using u.process() for efficient grouping
 
                 def group_by_category(
-                    category_entry: tuple[str, FlextLdifModels.Entry]
+                    category_entry: tuple[str, FlextLdifModels.Entry],
                 ) -> None:
                     """Group entry by category."""
                     category, entry = category_entry
                     categories.add_entries(category, [entry])
 
                 # Process all category-entry pairs
-                u.process(processed_entries, processor=group_by_category, on_error="skip")
+                u.process(
+                    processed_entries, processor=group_by_category, on_error="skip"
+                )
             return categories
 
     # =========================================================================

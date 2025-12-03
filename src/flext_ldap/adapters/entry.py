@@ -132,7 +132,9 @@ class FlextLdapEntryAdapter(s[bool]):
             """
             if FlextRuntime.is_list_like(value):
                 # Use u.ensure_str_list for consistent conversion
-                return cast("Sequence[str]", u.ensure(value, target_type="str_list", default=[]))
+                return cast(
+                    "Sequence[str]", u.ensure(value, target_type="str_list", default=[])
+                )
             return [str(value)] if value is not None else []
 
         @staticmethod
@@ -166,7 +168,14 @@ class FlextLdapEntryAdapter(s[bool]):
             """
             if FlextRuntime.is_list_like(value) or isinstance(value, tuple):
                 # Use u.ensure_str_list for consistent conversion
-                return cast("Sequence[str]", u.ensure(value, target_type="str_list", default=[])) if value else []
+                return (
+                    cast(
+                        "Sequence[str]",
+                        u.ensure(value, target_type="str_list", default=[]),
+                    )
+                    if value
+                    else []
+                )
             return [str(value)] if value is not None else []
 
     _ldif: FlextLdif = PrivateAttr()
@@ -371,18 +380,26 @@ class FlextLdapEntryAdapter(s[bool]):
             if FlextRuntime.is_list_like(cast("t.GeneralValueType", original_values)):
                 original_values_list = cast(
                     "list[str]",
-                    u.ensure(cast("t.GeneralValueType", original_values), target_type="str_list", default=[]),
+                    u.ensure(
+                        cast("t.GeneralValueType", original_values),
+                        target_type="str_list",
+                        default=[],
+                    ),
                 )
             else:
                 # Single value - wrap in list
                 original_values_list = (
                     [str(original_values)] if original_values is not None else []
                 )
-            original_str = ", ".join(u.map(cast("list[str]", original_values_list), mapper=str))
+            original_str = ", ".join(
+                u.map(cast("list[str]", original_values_list), mapper=str)
+            )
             attr_values_list = cast(
                 "list[str]",
                 u.ensure(
-                    converted_attrs_dict.get(attr_name, []), target_type="str_list", default=[]
+                    converted_attrs_dict.get(attr_name, []),
+                    target_type="str_list",
+                    default=[],
                 ),
             )
             filtered_str_values = cast(

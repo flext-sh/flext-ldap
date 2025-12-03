@@ -226,7 +226,9 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             cast("dict[str, object]", filtered_attrs),
             mapper=lambda _k, v: cast(
                 "list[str]",
-                u.ensure(cast("t.GeneralValueType", v), target_type="str_list", default=[]),
+                u.ensure(
+                    cast("t.GeneralValueType", v), target_type="str_list", default=[]
+                ),
             )
             if FlextRuntime.is_list_like(cast("t.GeneralValueType", v))
             else [str(v)],
@@ -356,7 +358,9 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
         vendor_parts: list[str] = cast(
             "list[str]",
             u.filter(
-                u.ensure([vendor_name, vendor_version], target_type="str_list", default=[]),
+                u.ensure(
+                    [vendor_name, vendor_version], target_type="str_list", default=[]
+                ),
                 predicate=bool,
             ),
         )
@@ -423,12 +427,10 @@ class FlextLdapServerDetector(FlextLdapServiceBase[str]):
             ("ds389", lambda e, _c: "389" in e or "dirsrv" in e),
         ]
 
-        found_check = u.find(
-            extension_checks,
-            predicate=lambda check: check[1](ext_str, context_str),
-        )
-        if found_check is not None:
-            return found_check[0]
+        # Use manual loop instead of u.find() due to complex tuple type
+        for check in extension_checks:
+            if check[1](ext_str, context_str):
+                return check[0]
 
         # Default to RFC-compliant generic server
         return "rfc"
