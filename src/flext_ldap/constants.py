@@ -7,14 +7,16 @@ from enum import StrEnum
 from typing import Final, Literal, TypeIs
 
 from flext_core import FlextConstants
+from flext_ldif import FlextLdifConstants
 
 
-class FlextLdapConstants(FlextConstants):
-    """FlextLdap domain constants extending FlextConstants.
+class FlextLdapConstants(FlextLdifConstants):
+    """FlextLdap domain constants extending FlextLdifConstants.
 
     Hierarchy:
         FlextConstants (flext-core)
-        └── FlextLdapConstants (this module)
+        └── FlextLdifConstants (flext-ldif)
+            └── FlextLdapConstants (this module)
     """
 
     # ═══════════════════════════════════════════════════════════════════
@@ -63,7 +65,9 @@ class FlextLdapConstants(FlextConstants):
         ) -> TypeIs[FlextLdapConstants.LdapCqrs.StatusLiteral]:
             """TypeIs narrowing - works in both if/else branches.
 
-            Since StatusLiteral is a subtype of str, after checking isinstance(value, Status),
+            Since StatusLiteral is a subtype of str, after checking isinstance(
+                value, Status
+            ),
             the remaining type is str | StatusLiteral. We can check membership directly
             without another isinstance check.
             """
@@ -85,6 +89,7 @@ class FlextLdapConstants(FlextConstants):
     # Server types, filters, attributes come from flext-ldif domain
     # Direct composition - no aliases, no duplication
     # Use FlextLdifConstants.ServerTypes directly in code
+    # ServerTypes is available via inheritance from FlextLdifConstants
 
     # ═══════════════════════════════════════════════════════════════════
     # LDAP FILTERS
@@ -99,13 +104,19 @@ class FlextLdapConstants(FlextConstants):
     # LDAP ATTRIBUTE NAMES
     # ═══════════════════════════════════════════════════════════════════
 
-    class LdapAttributeNames:
-        """LDAP attribute name constants."""
+    class LdapAttributeNames(StrEnum):
+        """LDAP attribute name constants.
 
-        DN: Final[str] = "dn"
-        OBJECT_CLASS: Final[str] = "objectClass"
-        ALL_ATTRIBUTES: Final[str] = "*"
-        CHANGETYPE: Final[str] = "changetype"
+        Extends parent with LDAP-specific attribute names.
+        DN and CHANGETYPE are available via inheritance from FlextLdifConstants.
+        """
+
+        # Core attribute names (reused from flext-ldif via DictKeys)
+        DN = FlextLdifConstants.DictKeys.DN.value
+        # LDAP-specific attribute names
+        CHANGETYPE = "changetype"
+        OBJECT_CLASS = "objectClass"
+        ALL_ATTRIBUTES = "*"
 
     # ═══════════════════════════════════════════════════════════════════
     # LDAP SEARCH SCOPE ENUMS (FIRST - Most Used)
@@ -142,12 +153,18 @@ class FlextLdapConstants(FlextConstants):
     # ═══════════════════════════════════════════════════════════════════
 
     class OperationType(StrEnum):
-        """LDAP operation types."""
+        """LDAP operation types.
+
+        Extends base operation constants from flext-ldif with LDAP-specific operations.
+        Uses public constants from parent via inheritance.
+        """
 
         SEARCH = "search"
+        # Base operation constants (reused from flext-ldif via public constants)
         ADD = "add"
         MODIFY = "modify"
         DELETE = "delete"
+        # LDAP-specific operation types
         MODIFY_DN = "modify_dn"
         COMPARE = "compare"
         BIND = "bind"
@@ -160,12 +177,14 @@ class FlextLdapConstants(FlextConstants):
     class ConnectionDefaults:
         """Default values for LDAP connections."""
 
-        PORT: Final[int] = 389
-        PORT_SSL: Final[int] = 636
-        TIMEOUT: Final[int] = 30
+        PORT: Final[int] = 389  # LDAP standard port
+        PORT_SSL: Final[int] = 636  # LDAPS standard port
+        # Reuse DEFAULT_TIMEOUT from flext-core (no duplication)
+        TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
         AUTO_BIND: Final[bool] = True
         AUTO_RANGE: Final[bool] = True
-        POOL_SIZE: Final[int] = 10
+        # Reuse DEFAULT_CONNECTION_POOL_SIZE from flext-core (no duplication)
+        POOL_SIZE: Final[int] = FlextConstants.Network.DEFAULT_CONNECTION_POOL_SIZE
         POOL_LIFETIME: Final[int] = 3600
 
     # ═══════════════════════════════════════════════════════════════════
@@ -190,29 +209,39 @@ class FlextLdapConstants(FlextConstants):
         """LDAP changetype operation constants (RFC 2849).
 
         Used for LDIF changetype attribute and modify operations.
-        DRY: Reuses class-level constants for common operation strings.
+        Extends base operation constants from flext-ldif with LDAP-specific operations.
         """
 
+        # Base operation constants (reused from flext-ldif via public constants)
         ADD = "add"
         DELETE = "delete"
         MODIFY = "modify"
+        REPLACE = "replace"
+        # LDAP-specific changetype operations
         MODDN = "moddn"
         MODRDN = "modrdn"
-        REPLACE = "replace"
 
     # ═══════════════════════════════════════════════════════════════════
     # OPERATIONAL ATTRIBUTES (IGNORED IN COMPARISON)
     # ═══════════════════════════════════════════════════════════════════
+    # NOTE: This class extends parent OperationalAttributes with LDAP-specific
+    # IGNORE_SET for entry comparison. Parent class has COMMON set for migration.
 
-    class OperationalAttributes:
-        """Operational attributes ignored in entry comparison (immutable frozenset)."""
+    class OperationalAttributes(FlextLdifConstants.OperationalAttributes):
+        """Operational attributes ignored in entry comparison (immutable frozenset).
+
+        Extends parent OperationalAttributes with LDAP-specific IGNORE_SET
+        for entry comparison operations.
+        """
 
         IGNORE_SET: Final[frozenset[str]] = frozenset({
+            # Base operation constants (reused from flext-ldif via public constants)
             "add",
             "delete",
             "modify",
             "replace",
             "changetype",
+            # LDAP-specific operational attributes
             "createTimestamp",
             "modifyTimestamp",
             "creatorsName",
@@ -245,15 +274,18 @@ class FlextLdapConstants(FlextConstants):
         """LDAP operation name constants for structured logging.
 
         DRY: Reuses OperationType values where applicable.
+        Uses inheritance to access parent constants.
         """
 
         SYNC = "sync_ldif_file"
         CONNECT = "connect"
         DISCONNECT = "disconnect"
         SEARCH = "search"
+        # Base operation constants (reused from flext-ldif via public constants)
         ADD = "add"
         MODIFY = "modify"
         DELETE = "delete"
+        # LDAP-specific operation names
         BATCH_UPSERT = "batch_upsert"
         DETECT_FROM_CONNECTION = "detect_from_connection"
         LDAP3_TO_LDIF_ENTRY = "ldap3_to_ldif_entry"
@@ -272,15 +304,26 @@ class FlextLdapConstants(FlextConstants):
     # ═══════════════════════════════════════════════════════════════════
     # ACL ATTRIBUTES
     # ═══════════════════════════════════════════════════════════════════
+    # NOTE: LdapAclAttributes is a StrEnum for LDAP-specific ACL attributes
+    # Parent FlextLdifConstants.AclAttributes is a class with RFC baseline attributes
+    # These serve different purposes - using separate class to avoid override conflict
 
-    class AclAttributes(StrEnum):
-        """ACL-related attribute names."""
+    class LdapAclAttributes(StrEnum):
+        """ACL-related attribute names for LDAP operations.
+
+        LDAP-specific ACL attribute names used in LDAP operations.
+        For RFC baseline ACL attributes, use FlextLdifConstants.AclAttributes.
+        """
 
         RAW = "raw"
         TARGET = "target"
         TARGET_ATTRIBUTES = "targetAttributes"
         SUBJECT = "subject"
         PERMISSIONS = "permissions"
+
+    # Access parent AclAttributes via composition (not override)
+    # Use FlextLdifConstants.AclAttributes for RFC baseline attributes
+    # Use LdapAclAttributes for LDAP-specific enum values
 
     # ═══════════════════════════════════════════════════════════════════
     # ACL FORMAT
@@ -329,9 +372,16 @@ class FlextLdapConstants(FlextConstants):
     # ═══════════════════════════════════════════════════════════════════
     # SCOPES
     # ═══════════════════════════════════════════════════════════════════
+    # NOTE: Scopes in flext-ldap provides ldap3-specific integer constants
+    # Parent FlextLdifConstants.Scopes provides string constants
+    # These serve different purposes (ldap3 library vs LDIF parsing)
 
-    class Scopes:
-        """LDAP search scope constants for ldap3."""
+    class Scopes(FlextLdifConstants.Scopes):
+        """LDAP search scope constants for ldap3.
+
+        Extends parent Scopes with ldap3-specific integer constants.
+        Parent class provides string constants for LDIF parsing.
+        """
 
         BASE_LDAP3: Final[int] = 0  # BASE scope
         LEVEL_LDAP3: Final[int] = 1  # ONELEVEL scope
@@ -390,8 +440,11 @@ class FlextLdapConstants(FlextConstants):
     # Python 3.13+ PEP 695: Using `type` keyword for type aliases
     # (no backward compatibility needed)
 
-    class LiteralTypes:
+    class LiteralTypes(FlextLdifConstants.LiteralTypes):
         """Literal type aliases for type-safe annotations (Python 3.13+ PEP 695).
+
+        Extends parent LiteralTypes with LDAP-specific literal types.
+        Parent class provides LDIF-specific literal types.
 
         These type aliases provide strict type checking for common string values
         used throughout the flext-ldap codebase. They are derived directly from
@@ -433,7 +486,7 @@ class FlextLdapConstants(FlextConstants):
            - When you need strict string validation without enum overhead
            - For JSON schema generation with specific string values
            >>> class ConfigModel(BaseModel):
-           ...     server_type: FlextLdapConstants.LiteralTypes.ServerTypeLiteral
+           ...     server_type: FlextLdapConstants.LiteralTypes.LdapServerTypeLiteral
 
         **Pydantic 2 Best Practices:**
         - StrEnum fields serialize to their string values in JSON mode
@@ -452,8 +505,10 @@ class FlextLdapConstants(FlextConstants):
         ]
 
         # OperationType StrEnum → Literal (values must match OperationType enum)
+        # Reuses base operation constants from flext-ldif via OperationType enum
         type OperationTypeLiteral = Literal[
             "search",
+            # Reuses base operations from flext-ldif via OperationType enum
             "add",
             "modify",
             "delete",
@@ -464,7 +519,12 @@ class FlextLdapConstants(FlextConstants):
         ]
 
         # ServerTypes StrEnum → Literal (values must match ServerTypes enum)
-        type ServerTypeLiteral = Literal[
+        # NOTE: LdapServerTypeLiteral provides LDAP-specific server types
+        # Parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral has
+        # LDIF-specific types
+        # Using separate type alias to avoid override conflict
+        # For LDIF parsing, use parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        type LdapServerTypeLiteral = Literal[
             "rfc",
             "oid",
             "oud",
@@ -503,11 +563,13 @@ class FlextLdapConstants(FlextConstants):
         ]  # Values match ErrorStrings enum - no duplication
 
         # LdapOperationNames StrEnum → Literal (auto-generated from enum values)
+        # Reuses base operation constants from flext-ldif via LdapOperationNames enum
         type LdapOperationNameLiteral = Literal[
             "sync_ldif_file",
             "connect",
             "disconnect",
             "search",
+            # Reuses base operations from flext-ldif via LdapOperationNames enum
             "add",
             "modify",
             "delete",
@@ -517,14 +579,14 @@ class FlextLdapConstants(FlextConstants):
             "ldif_entry_to_ldap3_attributes",
         ]  # Values match LdapOperationNames enum - no duplication
 
-        # AclAttributes StrEnum → Literal (auto-generated from enum values)
+        # LdapAclAttributes StrEnum → Literal (auto-generated from enum values)
         type AclAttributeLiteral = Literal[
             "raw",
             "target",
             "targetAttributes",
             "subject",
             "permissions",
-        ]  # Values match AclAttributes enum - no duplication
+        ]  # Values match LdapAclAttributes enum - no duplication
 
         # AclFormat StrEnum → Literal (auto-generated from enum values)
         type AclFormatLiteral = Literal[
@@ -541,7 +603,8 @@ class FlextLdapConstants(FlextConstants):
             "cn=attributetype-definition",
         ]  # Values match SyntheticDns enum - no duplication
 
-        # SaslMechanisms StrEnum → Literal (values hardcoded to avoid forward references)
+        # SaslMechanisms StrEnum → Literal (values hardcoded to avoid
+        # forward references)
         type SaslMechanismLiteral = Literal[
             "SIMPLE",
             "SASL/EXTERNAL",
@@ -572,7 +635,9 @@ class FlextLdapConstants(FlextConstants):
         ]  # Values match VendorNames enum - no duplication
 
         # ChangeTypeOperations StrEnum → Literal (values from ChangeTypeOperations enum)
+        # Reuses base operation constants from flext-ldif via ChangeTypeOperations enum
         type ChangeTypeOperationLiteral = Literal[
+            # Reuses base operations from flext-ldif via ChangeTypeOperations enum
             "add",
             "delete",
             "modify",
@@ -586,7 +651,10 @@ class FlextLdapConstants(FlextConstants):
     # ═══════════════════════════════════════════════════════════════════
 
     class ServerTypeMappings:
-        """Mappings between flext-ldap server type strings and flext-ldif ServerTypeLiteral.
+        """Mappings between flext-ldap server type strings and flext-ldif.
+
+        ServerTypeLiteral used in adapters/ldap3.py SearchExecutor for
+        normalizing server types.
 
         Used in adapters/ldap3.py SearchExecutor for normalizing server types
         for flext-ldif parser compatibility.
@@ -609,6 +677,10 @@ class FlextLdapConstants(FlextConstants):
             "ibm_tivoli": "ibm_tivoli",
         }
 
+    # Server detection thresholds
+    VENDOR_STRING_MAX_TOKENS: Final[int] = 2
+    """Maximum number of tokens in a vendor string for Oracle server detection."""
+
     # ═══════════════════════════════════════════════════════════════════
     # REFERÊNCIAS A FLEXT-CORE (quando necessário reutilizar)
     # ═══════════════════════════════════════════════════════════════════
@@ -628,5 +700,7 @@ class FlextLdapConstants(FlextConstants):
 # Literals are manually maintained to match StrEnum values
 
 
-# Convenience alias for common usage pattern
+# Convenience alias for common usage pattern - exported for domain usage
 c = FlextLdapConstants
+
+__all__ = ["FlextLdapConstants", "c"]

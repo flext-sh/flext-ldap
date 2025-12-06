@@ -178,6 +178,21 @@
             "unit: Unit tests (fast, no external dependencies)",
         ]
         minversion = "8.0"
+        norecursedirs = [
+            ".git",
+            ".pytest_cache",
+            "__pycache__",
+            "build",
+            "dist",
+            ".venv",
+            "*.egg-info",
+            ".bak",
+            ".bak*",
+            "helpers.bak",
+            "fixtures.bak",
+            "unit.bak",
+            "integration.bak",
+        ]
         python_classes = [
             "Test*",
         ]
@@ -192,6 +207,24 @@
             "tests",
         ]
 
+    [tool.mypy]
+        check_untyped_defs = true
+        disallow_incomplete_defs = true
+        disallow_untyped_calls = false
+        disallow_untyped_defs = false
+        explicit_package_bases = true
+        follow_imports = "normal"
+        ignore_missing_imports = false
+        incremental = true
+        mypy_path = "$MYPYPATH:../typings"
+        namespace_packages = true
+        no_implicit_optional = true
+        python_version = "3.13"
+        warn_redundant_casts = true
+        warn_return_any = true
+        warn_unused_configs = true
+        warn_unused_ignores = true
+
     [tool.ruff]
         extend = "../ruff-shared.toml"
 
@@ -201,6 +234,9 @@
         ]
 
     [tool.pyrefly]
-        # Include tests directory in analysis
-        search_path = ["src", "tests"]
+        search-path = [
+            ".",
+            "src",
+            "tests",
+        ]
 

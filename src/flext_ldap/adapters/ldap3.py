@@ -8,7 +8,7 @@ Business Rules:
     - ldap3 library is ONLY imported here (zero tolerance for direct imports elsewhere)
     - Connection binding uses ldap3.Connection with auto_bind and auto_range options
     - STARTTLS is handled separately from SSL (mutual exclusion enforced in config)
-    - Search results are converted to FlextLdifModels.Entry via FlextLdifParser
+    - Search results are converted to m.Entry via FlextLdifParser
     - CRUD operations (add, modify, delete) return FlextResult for consistency
     - LDAPException is caught and converted to r.fail() (no exceptions leak)
 
@@ -34,29 +34,25 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import cast
 
-from flext_core import FlextRuntime
-from flext_core.result import FlextResult as r, r as r_type
-from flext_core.service import FlextService as s
-from flext_ldif import FlextLdif, FlextLdifModels
-from flext_ldif._models.domain import (
-    FlextLdifModelsDomains,  # noqa: PLC2701  # Required for isinstance and model_validate - no public API available
+from flext_core import FlextRuntime, r
+from flext_ldif import (
+    FlextLdif,
+    FlextLdifParser,
+    FlextLdifUtilities,
 )
-from flext_ldif._models.results import (
-    FlextLdifModelsResults,  # Required for ParseResponse type - no public API available
+from flext_ldif.models import (
+    FlextLdifModels,
 )
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.utilities import FlextLdifUtilities
 from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_ldap.constants import FlextLdapConstants as c
-from flext_ldap.models import FlextLdapModels as m
-from flext_ldap.protocols import FlextLdapProtocols as p
-from flext_ldap.typings import FlextLdapTypes as t
-from flext_ldap.utilities import FlextLdapUtilities as u
+from flext_ldap.base import s
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"]
 # We use StrEnum internally and pass validated string values to ldap3
@@ -179,12 +175,12 @@ class Ldap3Adapter(s[bool]):
 
             """
             if not config.use_tls or config.use_ssl:
-                return u.ok(True)
+                return r[bool].ok(True)
 
             try:
                 if not connection.start_tls():
                     return r[bool].fail("Failed to start TLS")
-                return u.ok(True)
+                return r[bool].ok(True)
             except LDAPException as tls_error:
                 error_msg = f"Failed to start TLS: {tls_error}"
                 return r[bool].fail(error_msg)
@@ -223,67 +219,36 @@ class Ldap3Adapter(s[bool]):
                 List of (dn, attributes_dict) tuples in parser format.
 
             """
-
-            # Use u.process() for efficient entry processing
-            def process_entry(entry: object) -> tuple[str, dict[str, list[str]]]:
-                """Process single entry to (dn, attrs) tuple."""
+            # Process entries efficiently
+            results: list[tuple[str, dict[str, list[str]]]] = []
+            for entry in connection.entries:
                 # Type narrowing: entry is ldap3.Entry with dynamic attributes
-                entry_typed = cast("Mapping[str, object]", entry)
                 # Use getattr for safe attribute access (ldap3.Entry has entry_dn attribute)
                 dn_raw = getattr(entry, "entry_dn", None)
                 dn = str(dn_raw) if dn_raw is not None else ""
 
-                # Process attributes using u.map() and u.process()
+                # Process attributes
                 entry_attrs = getattr(entry, "entry_attributes", [])
-                # Build attrs dict - dict comprehension is most efficient for this pattern
-                # ldap3.Entry attributes have .values attribute
                 attrs_dict: dict[str, list[str]] = {}
                 for attr in entry_attrs:
-                    attr_obj = entry_typed.get(attr)
+                    attr_obj = getattr(entry, attr, None)
                     if attr_obj is not None:
                         attr_values = getattr(attr_obj, "values", [])
-                        attrs_dict[attr] = list(attr_values) if isinstance(attr_values, (list, tuple)) else [str(attr_values)]
-                # Process values using u.process()
-                attrs_result = u.process(
-                    attrs_dict,
-                    processor=lambda _k, v: cast(
-                        "list[str]",
-                        u.ensure(
-                            cast("t.GeneralValueType", v),
-                            target_type="str_list",
-                            default=[],
-                        ),
-                    )
-                    if v is not None
-                    else (
-                        cast(
-                            "list[str]",
-                            u.ensure(
-                                cast("t.GeneralValueType", [v]),
-                                target_type="str_list",
-                                default=[],
-                            ),
-                        )
-                        if v is not None
-                        else []
-                    ),
-                    on_error="skip",
-                )
-                # Use u.val() mnemonic: extract value with default
-                attrs = cast("dict[str, list[str]]", u.val(attrs_result, default={}))
-                return (dn, attrs)
-
-            # Process all entries using u.map()
-            return u.map(list(connection.entries), mapper=process_entry)
+                        if isinstance(attr_values, (list, tuple)):
+                            attrs_dict[attr] = [str(v) for v in attr_values]
+                        else:
+                            attrs_dict[attr] = [str(attr_values)]
+                results.append((dn, attrs_dict))
+            return results
 
         @staticmethod
         def extract_dn(
-            parsed: p.LdapEntry.EntryProtocol | FlextLdifModels.Entry,
-        ) -> FlextLdifModelsDomains.DistinguishedName:
+            parsed: p.LdapEntry.EntryProtocol | m.Entry,
+        ) -> FlextLdifModels.DistinguishedName:
             """Extract Distinguished Name from LDAP entry.
 
             Business Rules:
-                - Extracts DN from FlextLdifModels.Entry instances directly
+                - Extracts DN from m.Entry instances directly
                 - Handles protocol-based entries via hasattr() checks
                 - Uses FlextLdifUtilities.DN.get_dn_value() for normalization
                 - Returns empty DistinguishedName("") when extraction fails (no exception)
@@ -292,12 +257,12 @@ class Ldap3Adapter(s[bool]):
             Audit Implications:
                 - DN extraction is critical for LDAP operations targeting specific entries
                 - Empty DN ("") returned when extraction fails - caller must validate
-                - Uses FlextLdifModelsDomains.DistinguishedName for type-safe DN handling
+                - Uses m.DistinguishedName for type-safe DN handling
                 - Remote LDAP operations depend on correct DN for targeting entries
 
             Architecture:
                 - Delegates to FlextLdifUtilities.DN.get_dn_value() for normalization
-                - Returns FlextLdifModelsDomains.DistinguishedName (Pydantic model)
+                - Returns m.DistinguishedName (Pydantic model)
                 - No network calls - pure data extraction from local objects
 
             Args:
@@ -307,39 +272,67 @@ class Ldap3Adapter(s[bool]):
                 DistinguishedName instance with extracted or empty value.
 
             """
-            # Direct access for FlextLdifModels.Entry
-            if isinstance(parsed, FlextLdifModels.Entry):
-                return (
-                    parsed.dn
-                    or FlextLdifModelsDomains.DistinguishedName.model_validate({
-                        "value": ""
+            # Direct access for m.Entry
+            if isinstance(parsed, m.Entry):
+                if parsed.dn is not None:
+                    # Use m.DistinguishedName (public API)
+                    if isinstance(parsed.dn, m.DistinguishedName):
+                        return parsed.dn
+                    # Convert to m.DistinguishedName (public API)
+                    return m.DistinguishedName.model_validate({
+                        "value": parsed.dn.value,
                     })
-                )
+                return m.DistinguishedName.model_validate({"value": ""})
 
             # Protocol-based entry - extract DN value using utilities
             if not hasattr(parsed, "dn"):
-                return FlextLdifModelsDomains.DistinguishedName.model_validate({
-                    "value": ""
-                })
+                return m.DistinguishedName.model_validate({"value": ""})
 
-            # Use u.get() mnemonic: extract dn with None check
+            # Extract dn with None check
             dn_raw = getattr(parsed, "dn", None)
-            # Use u.when() mnemonic: conditional DN creation
             if dn_raw is None:
-                return FlextLdifModelsDomains.DistinguishedName.model_validate({
-                    "value": ""
-                })
+                return m.DistinguishedName.model_validate({"value": ""})
 
-            # Use u.as_() mnemonic: type conversion with guard
-            dn_typed = u.as_(dn_raw, FlextLdifModelsDomains.DistinguishedName)
-            if dn_typed is not None:
-                return dn_typed
+            # Check if already DistinguishedName instance - use m.DistinguishedName (public API)
+            if isinstance(dn_raw, m.DistinguishedName):
+                return dn_raw
+            # Check if it has value attribute (duck typing for DistinguishedName-like objects)
+            if hasattr(dn_raw, "value"):
+                # Convert to m.DistinguishedName (public API)
+                return m.DistinguishedName.model_validate({"value": dn_raw.value})
 
             # Use FlextLdifUtilities.DN for conversion
             dn_value = FlextLdifUtilities.DN.get_dn_value(dn_raw)
-            return FlextLdifModelsDomains.DistinguishedName.model_validate({
-                "value": dn_value
-            })
+            return m.DistinguishedName.model_validate({"value": dn_value})
+
+        @staticmethod
+        def normalize_attr_values(
+            attrs_dict: dict[str, object] | Mapping[str, object],
+        ) -> t.Ldap.AttributeDict:
+            """Normalize attribute values to list[str] format.
+
+            Args:
+                attrs_dict: Dictionary or Mapping with attribute values
+
+            Returns:
+                Normalized dict[str, list[str]]
+
+            """
+            result: dict[str, list[str]] = {}
+            for k, v in attrs_dict.items():
+                # Type narrowing: v is object, check if list-like before iterating
+                # Cast object to GeneralValueType for is_list_like
+                v_typed: t.GeneralValueType = cast("t.GeneralValueType", v)
+                if FlextRuntime.is_list_like(v_typed):
+                    # Type narrowing: v is list-like, iterate safely
+                    if isinstance(v, (list, tuple, set, frozenset)):
+                        result[k] = [str(item) for item in v if item is not None]
+                    else:
+                        # Fallback: convert to list
+                        result[k] = [str(v)] if v is not None else []
+                else:
+                    result[k] = [str(v)] if v is not None else []
+            return result
 
         @staticmethod
         def extract_attrs_dict(
@@ -367,64 +360,37 @@ class Ldap3Adapter(s[bool]):
                 - No network calls - pure data transformation
 
             """
-            # Use u.get() mnemonic: extract attributes property with default
+            # Extract attributes property with default
             attrs_attr = getattr(attrs, "attributes", None)
-            # Use u.as_() mnemonic: type conversion with guard
-            if attrs_attr is not None and u.as_(attrs_attr, dict) is not None:
-                # Use u.process() for consistent conversion
-                transform_result = u.process(
-                    attrs_attr,
-                    processor=lambda _k, v: list(v)
-                    if FlextRuntime.is_list_like(v)
-                    else [v],
-                    on_error="collect",
-                )
-                transformed = (
-                    transform_result.value
-                    if transform_result.is_success
-                    else dict(attrs_attr)
-                )
-                return cast("dict[str, list[str]]", transformed)
+            if attrs_attr is not None and isinstance(attrs_attr, (dict, Mapping)):
+                return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
 
             # Check for Pydantic model with model_dump method
             if isinstance(attrs, BaseModel):
                 dumped = attrs.model_dump()
                 if isinstance(dumped, dict):
-                    # Use u.extract for safer nested access
-                    attrs_value_result: r[dict[str, object] | None] = u.extract(
-                        dumped,
-                        "attributes",
-                        default={},
-                    )
-                    attrs_value = (
-                        attrs_value_result.value
-                        if attrs_value_result.is_success
-                        and attrs_value_result.value is not None
-                        else {}
-                    )
+                    attrs_value = dumped.get("attributes", {})
                     if isinstance(attrs_value, dict):
-                        # DSL pattern: builder for attribute conversion
-                        return u.attr_to_str_list(attrs_value)
+                        return Ldap3Adapter.ResultConverter.normalize_attr_values(
+                            attrs_value,
+                        )
                     return {}
 
-            # Check if attrs is Mapping directly - use DSL pattern for conversion
+            # Check if attrs is Mapping directly
             if isinstance(attrs, Mapping):
-                # DSL pattern: builder for attribute conversion
-                # Cast Mapping to dict for type safety
-                attrs_dict = cast("dict[str, object] | dict[str, list[str]]", dict(attrs))
-                return u.attr_to_str_list(attrs_dict)
+                return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs)
             return {}
 
         @staticmethod
         def extract_attributes(
-            parsed: p.LdapEntry.EntryProtocol | FlextLdifModels.Entry,
+            parsed: p.LdapEntry.EntryProtocol | m.Entry,
         ) -> FlextLdifModels.LdifAttributes:
-            """Extract LDAP attributes as FlextLdifModels.LdifAttributes.
+            """Extract LDAP attributes as m.LdifAttributes.
 
             Business Rules:
-                - Extracts attributes from FlextLdifModels.Entry or protocol entries
+                - Extracts attributes from m.Entry or protocol entries
                 - Delegates to extract_attrs_dict() for raw dict extraction
-                - Wraps result in FlextLdifModels.LdifAttributes Pydantic model
+                - Wraps result in m.LdifAttributes Pydantic model
                 - Empty attributes {} returned when extraction fails (not an error)
                 - Pydantic validation ensures attribute structure correctness
 
@@ -436,35 +402,31 @@ class Ldap3Adapter(s[bool]):
 
             Architecture:
                 - Delegates to extract_attrs_dict() for raw dict extraction
-                - Returns FlextLdifModels.LdifAttributes (validated Pydantic model)
+                - Returns m.LdifAttributes (validated Pydantic model)
                 - No network calls - pure data transformation
 
             """
             # Get attributes from entry
             attrs_raw: object | None = None
-            if isinstance(parsed, FlextLdifModels.Entry) or hasattr(
-                parsed, "attributes"
-            ):
+            if isinstance(parsed, m.Entry) or hasattr(parsed, "attributes"):
                 attrs_raw = parsed.attributes
 
             # Handle None case
             if attrs_raw is None:
-                return FlextLdifModels.LdifAttributes.model_validate({"attributes": {}})
+                return m.LdifAttributes.model_validate({"attributes": {}})
 
             # Already correct type
-            if isinstance(attrs_raw, FlextLdifModels.LdifAttributes):
+            if isinstance(attrs_raw, m.LdifAttributes):
                 return attrs_raw
 
             # Extract attributes dict and create new instance
             attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
-            return FlextLdifModels.LdifAttributes.model_validate({
-                "attributes": attrs_dict
-            })
+            return m.LdifAttributes.model_validate({"attributes": attrs_dict})
 
         @staticmethod
         def extract_metadata(
-            parsed: p.LdapEntry.EntryProtocol | FlextLdifModels.Entry,
-        ) -> FlextLdifModelsDomains.QuirkMetadata | None:
+            parsed: p.LdapEntry.EntryProtocol | m.Entry,
+        ) -> FlextLdifModels.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
             Business Rules:
@@ -482,8 +444,7 @@ class Ldap3Adapter(s[bool]):
 
             Architecture:
                 - Delegates to normalize_metadata() for safe value filtering
-                - Returns FlextLdifModelsDomains.QuirkMetadata (Pydantic model) or None
-                - Uses FlextLdifModelsDomains from internal module for mypy compatibility
+                - Returns m.QuirkMetadata (Pydantic model) or None
                 - No network calls - pure data extraction
 
             Returns:
@@ -498,13 +459,13 @@ class Ldap3Adapter(s[bool]):
                 return None
 
             # Already QuirkMetadata instance - use directly
-            if isinstance(metadata_raw, FlextLdifModelsDomains.QuirkMetadata):
+            if isinstance(metadata_raw, m.QuirkMetadata):
                 return metadata_raw
 
             # Normalize metadata using normalize_metadata() - handles all filtering and conversion
             normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
             if normalized:
-                return FlextLdifModelsDomains.QuirkMetadata.model_validate(normalized)
+                return m.QuirkMetadata.model_validate(normalized)
             return None
 
         @staticmethod
@@ -560,20 +521,18 @@ class Ldap3Adapter(s[bool]):
                 return None
 
             # Filter to ensure all values are valid types for QuirkMetadata
-            # Use u.filter() for consistent filtering pattern
-            filtered = u.filter(
-                metadata_dict,
-                predicate=lambda k, v: (
-                    isinstance(k, str)
-                    and (isinstance(v, (str, int, float, bool)) or v is None)
-                ),
-            )
-            return cast("t.MetadataAttributeValue | None", filtered or None)
+            filtered: dict[str, str | int | float | bool | None] = {
+                k: v
+                for k, v in metadata_dict.items()
+                if isinstance(k, str)
+                and (isinstance(v, (str, int, float, bool)) or v is None)
+            }
+            return filtered or None
 
         @staticmethod
         def convert_parsed_entries(
-            parse_response: FlextLdifModelsResults.ParseResponse,
-        ) -> r[list[FlextLdifModels.Entry]]:
+            parse_response: FlextLdifModels.ParseResponse | object,
+        ) -> r[list[m.Entry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
             Business Rules:
@@ -581,19 +540,19 @@ class Ldap3Adapter(s[bool]):
                 - Handles properly typed entries from parser (direct conversion)
                 - Defensively converts invalid structures for edge cases (tests, manual)
                 - Empty list returned when parse_response has no entries
-                - All entries validated as FlextLdifModels.Entry instances
+                - All entries validated as m.Entry instances
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
 
             Audit Implications:
                 - This is the main entry point for LDAP search result processing
-                - All entries returned are validated FlextLdifModels.Entry instances
+                - All entries returned are validated m.Entry instances
                 - Defensive conversion handles edge cases (tests, manual construction)
                 - Empty list returned when parse_response has no entries
                 - Uses FlextResult pattern for consistent error handling
 
             Architecture:
-                - Input: FlextLdifModelsResults.ParseResponse from FlextLdifParser
-                - Output: r[list[FlextLdifModels.Entry]] (railway pattern)
+                - Input: m.ParseResponse from FlextLdifParser
+                - Output: r[list[m.Entry]] (railway pattern)
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
                 - No network calls - processes pre-fetched LDAP results
 
@@ -605,50 +564,38 @@ class Ldap3Adapter(s[bool]):
             """
             # Access entries attribute - ParseResponse has entries: list[Entry]
             entries_raw = getattr(parse_response, "entries", [])
-            # Use u.empty() mnemonic: check if collection is empty
-            if u.empty(entries_raw):
-                return u.ok([])
+            if not entries_raw:
+                return r[list[m.Entry]].ok([])
 
-            # Use u.process() for efficient entry conversion
-            def convert_entry(entry_raw: object) -> FlextLdifModels.Entry:
-                """Convert entry_raw to Entry model."""
+            # Convert entries efficiently
+            entries: list[m.Entry] = []
+            for entry_raw in entries_raw:
                 # Already valid Entry instance - use directly
-                if isinstance(entry_raw, FlextLdifModels.Entry):
-                    return entry_raw
+                if isinstance(entry_raw, m.Entry):
+                    entries.append(entry_raw)
+                    continue
 
                 # Defensive conversion for invalid structures (e.g., from tests or manual construction)
                 # Extract DN, attributes, and metadata using helper methods
                 # Type narrowing: entry_raw is not Entry, so it might be EntryProtocol or invalid structure
-                entry_for_extraction: (
-                    p.LdapEntry.EntryProtocol | FlextLdifModels.Entry
-                ) = cast("p.LdapEntry.EntryProtocol | FlextLdifModels.Entry", entry_raw)
+                entry_for_extraction: p.LdapEntry.EntryProtocol | m.Entry = entry_raw
                 dn_obj = Ldap3Adapter.ResultConverter.extract_dn(entry_for_extraction)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
-                    entry_for_extraction
+                    entry_for_extraction,
                 )
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
-                    entry_for_extraction
+                    entry_for_extraction,
                 )
 
                 # Create Entry with extracted objects
-                return FlextLdifModels.Entry(
+                entry = m.Entry(
                     dn=dn_obj,
                     attributes=attrs_obj,
                     metadata=metadata_obj,
                 )
+                entries.append(entry)
 
-            # Process all entries using u.process()
-            process_result = u.process(
-                entries_raw,
-                processor=convert_entry,
-                on_error="collect",
-            )
-            # Use u.val() mnemonic: extract entries or return empty list
-            entries = cast(
-                "list[FlextLdifModels.Entry]",
-                u.val(process_result, default=[]),
-            )
-            return u.ok(entries)
+            return r[list[m.Entry]].ok(entries)
 
     class OperationExecutor:
         """LDAP operation execution logic (SRP)."""
@@ -693,9 +640,9 @@ class Ldap3Adapter(s[bool]):
                 add_func: t.Ldap.AddCallable = connection.add
                 success = add_func(dn_str, None, ldap_attrs)
 
-                # Use u.ok()/u.fail() mnemonic: create results
+                # Create results
                 if success:
-                    return u.ok(
+                    return r[m.OperationResult].ok(
                         m.OperationResult(
                             success=True,
                             operation_type=c.OperationType.ADD,
@@ -747,9 +694,9 @@ class Ldap3Adapter(s[bool]):
                 modify_func: t.Ldap.ModifyCallable = connection.modify
                 success = modify_func(dn_str, changes)
 
-                # Use u.ok()/u.fail() mnemonic: create results
+                # Create results
                 if success:
-                    return u.ok(
+                    return r[m.OperationResult].ok(
                         m.OperationResult(
                             success=True,
                             operation_type=c.OperationType.MODIFY,
@@ -799,9 +746,9 @@ class Ldap3Adapter(s[bool]):
                 delete_func: t.Ldap.DeleteCallable = connection.delete
                 success = delete_func(dn_str)
 
-                # Use u.ok()/u.fail() mnemonic: create results
+                # Create results
                 if success:
-                    return u.ok(
+                    return r[m.OperationResult].ok(
                         m.OperationResult(
                             success=True,
                             operation_type=c.OperationType.DELETE,
@@ -849,14 +796,8 @@ class Ldap3Adapter(s[bool]):
             error_msg = f"{prefix}: LDAP operation returned failure status"
             result_dict = connection.result
             if FlextRuntime.is_dict_like(result_dict):
-                # Use u.extract for safer nested access
-                description_result: r[str | None] = u.extract(
-                    result_dict,
-                    "description",
-                    default=None,
-                )
-                # Use u.val() mnemonic: extract value with default
-                description: str | None = u.val(description_result, default=None)
+                # Extract description from result dict
+                description = result_dict.get("description")
                 if isinstance(description, str):
                     error_msg = f"{prefix}: {description}"
             return r[m.OperationResult].fail(error_msg)
@@ -899,14 +840,14 @@ class Ldap3Adapter(s[bool]):
             self,
             connection: Connection,
             params: SearchParams,
-            server_type: FlextLdifConstants.ServerTypes | str,
-        ) -> r[list[FlextLdifModels.Entry]]:
+            server_type: c.ServerTypes | str,
+        ) -> r[list[m.Entry]]:
             """Execute LDAP search and convert results.
 
             Business Rules:
                 - Performs ldap3 Connection.search() with provided parameters
                 - Validates LDAP result codes (allows partial success codes)
-                - Converts server_type to ServerTypeLiteral using FlextLdifConstants.normalize_server_type()
+                - Converts server_type to ServerTypeLiteral using c.normalize_server_type()
                 - Parses results using FlextLdifParser.parse_ldap3_results()
                 - Converts ParseResponse to list[Entry] via ResultConverter
                 - LDAPException is caught and converted to r.fail()
@@ -942,70 +883,51 @@ class Ldap3Adapter(s[bool]):
                     time_limit=params.time_limit,
                 )
 
-                # Use u.extract for safer nested access
-                result_code_result: r[int | None] = u.extract(
-                    connection.result,
-                    "result",
-                    default=-1,
-                )
-                result_code: int = (
-                    result_code_result.value
-                    if result_code_result.is_success
-                    and result_code_result.value is not None
-                    else -1
-                )
+                # Extract result code from connection result
+                result_code = connection.result.get("result", -1)
                 if result_code not in c.LdapResultCodes.PARTIAL_SUCCESS_CODES:
-                    error_msg_result: r[str | None] = u.extract(
-                        connection.result,
-                        "message",
-                        default="LDAP search failed",
+                    error_msg = connection.result.get("message", "LDAP search failed")
+                    error_desc = connection.result.get("description", "unknown")
+                    return r[list[m.Entry]].fail(
+                        f"LDAP search failed: {error_desc} - {error_msg}",
                     )
-                    error_msg: str = (
-                        error_msg_result.value
-                        if error_msg_result.is_success
-                        and error_msg_result.value is not None
-                        else "LDAP search failed"
-                    )
-                    error_desc_result: r[str | None] = u.extract(
-                        connection.result,
-                        "description",
-                        default="unknown",
-                    )
-                    # DSL pattern: extract value with default (u.val handles None)
-                    error_desc: str = cast("str", u.val(error_desc_result, default="unknown"))
-                    return r[list[FlextLdifModels.Entry]].fail(f"LDAP search failed: {error_desc} - {error_msg}")
 
                 ldap3_results = self._adapter.ResultConverter.convert_ldap3_results(
                     connection,
                 )
                 # Convert server_type to ServerTypeLiteral for parser
-                # Use FlextLdifConstants.normalize_server_type() directly - handles all mappings
+                # Use c.normalize_server_type() directly - handles all mappings
                 server_type_str = (
                     server_type.value
-                    if isinstance(server_type, FlextLdifConstants.ServerTypes)
+                    if isinstance(server_type, c.ServerTypes)
                     else str(server_type)
                 )
-                # Use FlextLdifConstants.normalize_server_type() directly - no duplication
+                # Use c.normalize_server_type() directly - no duplication
                 # This handles oracle_oid/oracle_oud → oid/oud mapping automatically
                 try:
-                    server_type_literal = FlextLdifConstants.normalize_server_type(
+                    server_type_literal = c.normalize_server_type(
                         server_type_str,
                     )
                 except ValueError:
-                    return r[list[FlextLdifModels.Entry]].fail(f"Unsupported server type: {server_type_str}")
+                    return r[list[m.Entry]].fail(
+                        f"Unsupported server type: {server_type_str}",
+                    )
                 parse_result = self._adapter.parser.parse_ldap3_results(
                     ldap3_results,
                     server_type_literal,
                 )
 
                 if parse_result.is_failure:
-                    return r[list[FlextLdifModels.Entry]].fail(u.err(cast("r_type[object]", parse_result), default=""))
+                    error_msg = str(parse_result.error) if parse_result.error else ""
+                    return r[list[m.Entry]].fail(error_msg)
 
+                # Use parse_response directly - m.ParseResponse is the public API
+                parse_response = parse_result.unwrap()
                 return self._adapter.ResultConverter.convert_parsed_entries(
-                    parse_result.unwrap(),
+                    parse_response,
                 )
             except LDAPException as e:
-                return r[list[FlextLdifModels.Entry]].fail(f"Search failed: {e!s}")
+                return r[list[m.Entry]].fail(f"Search failed: {e!s}")
 
     _connection: Connection | None
     _server: Server | None
@@ -1030,14 +952,16 @@ class Ldap3Adapter(s[bool]):
 
         """
         # Extract parser from kwargs if provided
-        # Use u.get() mnemonic: extract from kwargs with default
-        parser_raw = u.get(kwargs, "parser")
-        # Use u.when() for conditional type check
-        parser: FlextLdifParser | None = cast("FlextLdifParser | None", u.when(condition=isinstance(parser_raw, FlextLdifParser), then_value=parser_raw, else_value=None))
+        # Extract parser from kwargs if provided
+        parser_raw = kwargs.pop("parser", None)
+        parser: FlextLdifParser | None = (
+            parser_raw if isinstance(parser_raw, FlextLdifParser) else None
+        )
         # Initialize parent with remaining kwargs
         super().__init__(**kwargs)
-        # Use u.or_() mnemonic: fallback chain for parser
-        parser = cast("FlextLdifParser", u.or_(parser, default=FlextLdif.get_instance().parser))
+        # Use default parser if not provided
+        if parser is None:
+            parser = FlextLdif().parser
         self._connection = None
         self._server = None
         self._parser = parser
@@ -1088,11 +1012,11 @@ class Ldap3Adapter(s[bool]):
             if tls_result.is_failure:
                 return tls_result
 
-            # Use u.when() mnemonic: conditional result based on bound state
+            # Check bound state
             if not self._connection.bound:
                 return r[bool].fail("Failed to bind to LDAP server")
 
-            return u.ok(True)
+            return r[bool].ok(True)
         except LDAPException as e:
             return r[bool].fail(f"Connection failed: {e!s}")
 
@@ -1138,10 +1062,10 @@ class Ldap3Adapter(s[bool]):
 
     def _get_connection(self) -> r[Connection]:
         """Get connection with fast fail if not available."""
-        # Use u.when() mnemonic: conditional result based on connection state
+        # Check connection state
         if not self.is_connected or self._connection is None:
-            return u.fail(c.ErrorStrings.NOT_CONNECTED)
-        return u.ok(self._connection)
+            return r[Connection].fail(c.ErrorStrings.NOT_CONNECTED)
+        return r[Connection].ok(self._connection)
 
     @staticmethod
     def _map_scope(
@@ -1161,13 +1085,15 @@ class Ldap3Adapter(s[bool]):
             # Type narrowing: scope is str (SearchScope is also str, but already handled above)
             # Convert string to SearchScope enum
             try:
-                # Use u.normalize for consistent case handling
-                normalized_scope = u.normalize(scope, case="upper")
-                # Type narrowing: normalize with single str returns str
-                scope_str = normalized_scope if isinstance(normalized_scope, str) else str(scope)
+                # Normalize scope to uppercase for enum lookup
+                scope_str = (
+                    scope.upper() if isinstance(scope, str) else str(scope).upper()
+                )
                 scope_enum = c.SearchScope(scope_str)
             except ValueError:
-                return r[c.LiteralTypes.Ldap3ScopeLiteral].fail(f"Invalid LDAP scope: {scope}")
+                return r[c.LiteralTypes.Ldap3ScopeLiteral].fail(
+                    f"Invalid LDAP scope: {scope}",
+                )
 
         # Direct mapping using StrEnum values with proper type narrowing
         ldap3_scope_mapping: Mapping[
@@ -1179,18 +1105,17 @@ class Ldap3Adapter(s[bool]):
             c.SearchScope.SUBTREE: "SUBTREE",
         }
 
-        # Use u.ok()/u.fail() mnemonic: create results
+        # Create results
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]
-            return u.ok(ldap3_value)
+            return r[c.LiteralTypes.Ldap3ScopeLiteral].ok(ldap3_value)
 
         return r[c.LiteralTypes.Ldap3ScopeLiteral].fail(f"Invalid LDAP scope: {scope}")
 
     def search(
         self,
         search_options: m.SearchOptions,
-        server_type: FlextLdifConstants.ServerTypes
-        | str = FlextLdifConstants.ServerTypes.RFC,
+        server_type: c.ServerTypes | str = c.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
     ) -> r[m.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
@@ -1224,7 +1149,8 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.SearchResult].fail(u.err(cast("r_type[object]", connection_result), default=""))
+            error_msg = str(connection_result.error) if connection_result.error else ""
+            return r[m.SearchResult].fail(error_msg)
 
         # Convert scope to str or SearchScope for _map_scope
         # SearchOptions.scope is str, but may need conversion to SearchScope enum
@@ -1232,7 +1158,9 @@ class Ldap3Adapter(s[bool]):
         scope_for_mapping: str | c.SearchScope = search_options.scope
         scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
-            return u.fail(u.err(cast("r_type[object]", scope_result), default=""))
+            return r[m.SearchResult].fail(
+                str(scope_result.error) if scope_result.error else "",
+            )
 
         search_params = self.SearchExecutor.SearchParams(
             base_dn=search_options.base_dn,
@@ -1249,24 +1177,30 @@ class Ldap3Adapter(s[bool]):
         )
 
         if entries_result.is_failure:
-            return u.fail(u.err(cast("r_type[object]", entries_result), default=""))
+            return r[m.SearchResult].fail(
+                str(entries_result.error) if entries_result.error else "",
+            )
 
-        return u.ok(
+        # Use entries directly - m.Entry is the public API
+        # so all entries are compatible via duck-typing (same interface)
+        entries_raw = entries_result.unwrap()
+
+        return r[m.SearchResult].ok(
             m.SearchResult(
-                entries=entries_result.unwrap(),
+                entries=list(entries_raw),
                 search_options=search_options,
             ),
         )
 
     def add(
         self,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         **_kwargs: str | float | bool | None,
     ) -> r[m.OperationResult]:
         """Add LDAP entry using Entry model.
 
         Business Rules:
-            - Entry attributes are converted from FlextLdifModels.Entry to ldap3 format
+            - Entry attributes are converted from m.Entry to ldap3 format
             - DN is extracted using FlextLdifUtilities.DN.get_dn_value()
             - Entry must be unique (LDAP error 68 if entry already exists)
             - Entry must conform to LDAP schema constraints
@@ -1292,11 +1226,17 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.OperationResult].fail(u.err(cast("r_type[object]", connection_result), default=""))
+            return r[m.OperationResult].fail(
+                str(connection_result.error) if connection_result.error else "",
+            )
 
+        # entry is already m.Entry from signature - use directly
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
-            return r[m.OperationResult].fail(f"Failed to convert entry attributes: {u.err(cast('r_type[object]', attrs_result), default='')}")
+            error_msg = str(attrs_result.error) if attrs_result.error else ""
+            return r[m.OperationResult].fail(
+                f"Failed to convert entry attributes: {error_msg}",
+            )
 
         # Extract DN value using FlextLdifUtilities.DN.get_dn_value() - handles all DN types
         # DSL pattern: conditional default
@@ -1346,10 +1286,12 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.OperationResult].fail(u.err(cast("r_type[object]", connection_result), default=""))
+            return r[m.OperationResult].fail(
+                str(connection_result.error) if connection_result.error else "",
+            )
         return self.OperationExecutor(self).execute_modify(
             connection_result.unwrap(),
-            dn,  # Type: str | DistinguishedNameProtocol (runtime validated)
+            dn,
             changes,
         )
 
@@ -1386,7 +1328,9 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.OperationResult].fail(u.err(cast("r_type[object]", connection_result), default=""))
+            return r[m.OperationResult].fail(
+                str(connection_result.error) if connection_result.error else "",
+            )
         return self.OperationExecutor(self).execute_delete(
             connection_result.unwrap(),
             dn,
@@ -1418,7 +1362,7 @@ class Ldap3Adapter(s[bool]):
             r[bool]: Success if connected, failure with NOT_CONNECTED if not.
 
         """
-        # Use u.ok()/u.fail() mnemonic: create results
+        # Create results
         if not self.is_connected:
-            return u.fail(c.ErrorStrings.NOT_CONNECTED)
-        return u.ok(True)
+            return r[bool].fail(c.ErrorStrings.NOT_CONNECTED)
+        return r[bool].ok(True)

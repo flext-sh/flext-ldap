@@ -9,7 +9,7 @@ Business Rules:
     - Connection binding uses ldap3 library through Ldap3Adapter abstraction
     - Server type detection is optional and non-blocking after successful bind
     - Retry logic uses u.Reliability.retry() for transient failures
-    - Parser defaults to FlextLdif.get_instance().parser singleton
+    - Parser defaults to FlextLdif().parser instance
     - Connection state is tracked via is_connected property
 
 Audit Implications:
@@ -28,23 +28,21 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextConfig
-from flext_core.result import FlextResult as r
-from flext_ldif import FlextLdif
-from flext_ldif.services.parser import FlextLdifParser
+from flext_core import FlextConfig, r
+from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
-from flext_ldap.base import FlextLdapServiceBase
+from flext_ldap.base import s
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants as c
-from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.constants import c
+from flext_ldap.models import m
 from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_ldap.typings import FlextLdapTypes as t
-from flext_ldap.utilities import FlextLdapUtilities as u
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
-class FlextLdapConnection(FlextLdapServiceBase[bool]):
+class FlextLdapConnection(s[bool]):
     """Manage the LDAP connection lifecycle with typed ergonomics.
 
     The service wraps ``Ldap3Adapter`` to create/bind connections, optionally
@@ -113,7 +111,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         Business Rules:
             - Configuration is resolved once and stored in ``_config`` private
               attribute using ``object.__setattr__`` for Pydantic compatibility
-            - Parser defaults to ``FlextLdif.get_instance().parser`` singleton to
+            - Parser defaults to ``FlextLdif().parser`` instance to
               ensure consistent LDIF parsing across the ecosystem
             - Adapter is created eagerly (not lazy) to fail-fast on configuration
               errors during service instantiation
@@ -134,16 +132,22 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         """
         super().__init__()
         # Create config instance if not provided
-        # Use u.or_() mnemonic: fallback chain
-        resolved_config: FlextLdapConfig = cast("FlextLdapConfig", u.or_(config, default=FlextLdapConfig()))
+        resolved_config: FlextLdapConfig = (
+            config if config is not None else FlextLdapConfig()
+        )
         object.__setattr__(self, "_config", resolved_config)
-        # Use u.or_() mnemonic: fallback chain
-        parser = cast("FlextLdifParser", u.or_(parser, default=FlextLdif.get_instance().parser))
+        # Use default parser if not provided
+        resolved_parser: FlextLdifParser = (
+            parser if parser is not None else FlextLdif().parser
+        )
         # Create adapter directly
         # Pass parser as part of kwargs (Ldap3Adapter.__init__ extracts it from kwargs)
         # Use cast to satisfy type checker - parser is extracted and validated in Ldap3Adapter.__init__
+        _ = resolved_parser  # Used in adapter creation
+        # Cast parser to GeneralValueType for dict compatibility
+        parser_typed: t.GeneralValueType = cast("t.GeneralValueType", resolved_parser)
         kwargs_with_parser: dict[str, t.GeneralValueType] = {
-            "parser": cast("t.GeneralValueType", parser),
+            "parser": parser_typed,
         }
         self._adapter = Ldap3Adapter(**kwargs_with_parser)
 
@@ -197,7 +201,10 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
         def attempt_connect() -> r[bool]:
             return self._adapter.connect(connection_config)
 
-        result = (
+        # Type narrowing: retry accepts Callable[[], r[TResult] | TResult]
+        # attempt_connect returns r[bool], which matches r[TResult] when TResult=bool
+        # The type checker sees Callable[[], r[bool]] which is compatible with Callable[[], r[TResult]]
+        result: r[bool] = (
             u.Reliability.retry(
                 operation=attempt_connect,
                 max_attempts=max_retries,
@@ -209,7 +216,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
 
         if result.is_success:
             self._detect_server_type_optional()
-            return u.ok(True)
+            return r[bool].ok(True)
         return result
 
     def disconnect(self) -> None:
@@ -323,7 +330,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             self.logger.debug(
                 "Server type detection failed (non-critical)",
                 operation=c.LdapOperationNames.CONNECT,
-                error=cast("str", u.ensure(detection_result.error, target_type="str", default="")),
+                error=str(detection_result.error) if detection_result.error else "",
             )
 
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
@@ -355,7 +362,7 @@ class FlextLdapConnection(FlextLdapServiceBase[bool]):
             ``fail(NOT_CONNECTED)`` if disconnected or never connected.
 
         """
-        # Use u.ok()/u.fail() mnemonic: create results
+        # Create results
         if self.is_connected:
-            return u.ok(True)
+            return r[bool].ok(True)
         return r[bool].fail(str(c.ErrorStrings.NOT_CONNECTED))

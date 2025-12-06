@@ -3,26 +3,33 @@
 This module defines Pydantic v2 models for LDAP operations including connection
 configuration, search options, operation results, and sync operations. Uses advanced
 Python 3.13 features with computed fields, nested validation, and type-safe patterns.
-Reuses FlextLdifModels for Entry/DN handling to avoid duplication and maintain consistency.
+Reuses FlextLdifModels for Entry/DN handling to avoid duplication
+and maintain consistency.
 
 Business Rules:
-    - ConnectionConfig enforces SSL/TLS mutual exclusion (cannot use both simultaneously)
+    - ConnectionConfig enforces SSL/TLS mutual exclusion
+      (cannot use both simultaneously)
     - SearchOptions validates base_dn format via FlextLdifUtilities.DN.validate()
     - SearchOptions.normalized() factory uses DN.norm_string() for consistency
-    - SyncStats.success_rate computed as (added + skipped) / total (skipped = already exists)
+    - SyncStats.success_rate computed as (added + skipped) / total
+      (skipped = already exists)
     - BatchUpsertResult.success_rate computed as successful / total_processed
     - All models are frozen (immutable) unless mutability is required for service state
 
 Audit Implications:
     - OperationResult tracks entries_affected for audit trail
     - ConversionMetadata preserves source_dn, removed_attributes, attribute_changes
-    - PhaseSyncResult tracks per-phase duration and success rate for compliance reporting
+    - PhaseSyncResult tracks per-phase duration and success rate
+      for compliance reporting
     - MultiPhaseSyncResult aggregates all phases with overall_success_rate metric
 
 Architecture Notes:
-    - Uses FlextModelsCollections base classes (Config, Options, Results, Statistics)
-    - Uses FlextModelsEntity.Core for models requiring entity identity (SearchResult, BatchUpsertResult)
-    - Reuses FlextLdifModels.Entry for LDAP entries (no duplication)
+    - Uses m.Collections base classes
+      (Config, Options, Results, Statistics)
+    - Uses FlextModels.Entity for models requiring entity identity
+      (SearchResult, BatchUpsertResult)
+    - Uses m.Entry via inheritance (no duplication)
+      (no duplication, full hierarchy exposed)
     - Python 3.13+ PEP 695 type aliases in nested Types class
     - @computed_field for derived values (success_rate, total_count, by_objectclass)
     - Factory methods (normalized, from_counters) encapsulate common creation patterns
@@ -33,19 +40,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Self, cast
+from typing import Self
 
-from flext_core import (
-    FlextModels,
-    FlextRuntime,
-)
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.typings import t as flext_types
-from flext_ldif import FlextLdifModels
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_core import FlextModels, FlextRuntime
+from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from pydantic import (
     ConfigDict,
     Field,
@@ -55,11 +56,12 @@ from pydantic import (
 )
 
 from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.typings import FlextLdapTypes as t
 from flext_ldap.utilities import FlextLdapUtilities as u
 
 
-class FlextLdapModels(FlextModels):
-    """LDAP domain models extending flext-core FlextModels.
+class FlextLdapModels(FlextLdifModels):
+    """LDAP domain models extending FlextLdifModels.
 
     Uses advanced Python 3.13 patterns with enums, mappings, and computed fields
     for type-safe, efficient model definitions. All models follow Pydantic v2 patterns
@@ -83,10 +85,91 @@ class FlextLdapModels(FlextModels):
     )
 
     # =========================================================================
+    # COLLECTIONS - Expose FlextModels.Collections via inheritance
+    # =========================================================================
+
+    class Collections(FlextModels.Collections):
+        """Collections base classes extending FlextModels.Collections.
+
+        Exposes Config, Options, Results, Statistics, Categories via inheritance
+        to enable access via m.Collections.* namespace.
+        """
+
+        class Config(FlextModels.Collections.Config):
+            """Collections config - real inheritance."""
+
+        class Rules(FlextModels.Collections.Rules):
+            """Collections rules - real inheritance."""
+
+        class Statistics(FlextModels.Collections.Statistics):
+            """Collections statistics - real inheritance."""
+
+        class Results(FlextModels.Collections.Results):
+            """Collections results - real inheritance."""
+
+        class Options(FlextModels.Collections.Options):
+            """Collections options - real inheritance."""
+
+        class ParseOptions(FlextModels.Collections.ParseOptions):
+            """Collections parse options - real inheritance."""
+
+        class Categories[T](FlextModels.Collections.Categories[T]):
+            """Categories collection with real inheritance - generic class."""
+
+    # =========================================================================
+    # ENTITY - Expose FlextModels.Entity via inheritance
+    # =========================================================================
+
+    class Entity(FlextModels.Entity):
+        """Entity base class extending FlextModels.Entity.
+
+        Exposes Entity base class via inheritance to enable access via
+        m.Entity namespace.
+        """
+
+    # =========================================================================
+    # LDIF MODELS - Expose FlextLdifModels via inheritance
+    # =========================================================================
+    # BaseEntry is inherited from FlextLdifModels (no need to redeclare per rule 19)
+
+    class Entry(FlextLdifModels.Entry):
+        """LDAP entry model extending public API Entry from flext-ldif.
+
+        Exposes Entry model via inheritance to enable access via
+        m.Entry namespace. Uses public API (m.Entry) internally.
+        """
+
+    # Direct re-export aliases from FlextLdifModels
+    # These are type aliases, not subclasses - provides m.DistinguishedName syntax
+    DistinguishedName = FlextLdifModels.DistinguishedName
+    """Distinguished name model alias from flext-ldif.
+
+    Direct re-export to enable access via m.DistinguishedName namespace.
+    """
+
+    LdifAttributes = FlextLdifModels.LdifAttributes
+    """LDIF attributes model alias from flext-ldif.
+
+    Direct re-export to enable access via m.LdifAttributes namespace.
+    """
+
+    QuirkMetadata = FlextLdifModels.QuirkMetadata
+    """Quirk metadata model alias from flext-ldif.
+
+    Direct re-export to enable access via m.QuirkMetadata namespace.
+    """
+
+    ParseResponse = FlextLdifModels.ParseResponse
+    """Parse response model alias from flext-ldif.
+
+    Direct re-export to enable access via m.ParseResponse namespace.
+    """
+
+    # =========================================================================
     # CONNECTION MODELS
     # =========================================================================
 
-    class ConnectionConfig(FlextModelsCollections.Config):
+    class ConnectionConfig(Collections.Config):
         """Configuration for LDAP connection (frozen, immutable)."""
 
         host: str = Field(default="localhost")
@@ -123,8 +206,11 @@ class FlextLdapModels(FlextModels):
     # SEARCH MODELS
     # =========================================================================
 
-    class SearchOptions(FlextModelsCollections.Options):
-        """Options for LDAP search operations (frozen value object with DN validation)."""
+    class SearchOptions(Collections.Options):
+        """Options for LDAP search operations.
+
+        Frozen value object with DN validation.
+        """
 
         base_dn: str = Field(...)
         scope: str = Field(
@@ -172,7 +258,7 @@ class FlextLdapModels(FlextModels):
             """
             if isinstance(v, c.SearchScope):
                 return v.value
-            # Use u.Enum.parse for unified enum parsing
+            # Use FlextLdapUtilities.Enum.parse for unified enum parsing
             parse_result = u.Enum.parse(
                 c.SearchScope,
                 v,
@@ -197,8 +283,8 @@ class FlextLdapModels(FlextModels):
             base_dn: str,
             *,
             config: NormalizedConfig | None = None,
-        ) -> m.SearchOptions:
-            """Factory method with normalized base_dn using DN.norm_string().
+        ) -> Self:
+            """Create SearchOptions with normalized base_dn using DN.norm_string().
 
             Business Rules:
                 - Base DN is normalized using FlextLdifUtilities.DN.norm_string()
@@ -219,35 +305,32 @@ class FlextLdapModels(FlextModels):
 
             Args:
                 base_dn: Base distinguished name to normalize.
-                config: Optional NormalizedConfig with scope, filter, attributes, limits.
+                config: Optional NormalizedConfig with scope, filter,
+                    attributes, limits.
 
             Returns:
                 SearchOptions instance with normalized base_dn.
 
             """
-            # Use u.or_() mnemonic: fallback chain for config
-            resolved_config = u.or_(config, default=cls.NormalizedConfig())
-            config = cast("m.SearchOptions.NormalizedConfig", resolved_config)
+            # Use default config if None
+            if config is None:
+                config = cls.NormalizedConfig()
 
             normalized_base = FlextLdifUtilities.DN.norm_string(base_dn)
             return cls(
                 base_dn=normalized_base,
-                # Use u.or_() mnemonic: fallback chain for scope
-                scope=cast("str", u.or_(config.scope, default="SUBTREE")),
-                # Use u.or_() mnemonic: fallback chain for filter_str
-                filter_str=cast("str", u.or_(config.filter_str, default=c.Filters.ALL_ENTRIES_FILTER)),
+                scope=config.scope or "SUBTREE",
+                filter_str=config.filter_str or c.Filters.ALL_ENTRIES_FILTER,
                 attributes=config.attributes,
-                # Use u.or_() mnemonic: fallback chain for size_limit
-                size_limit=cast("int", u.or_(config.size_limit, default=0)),
-                # Use u.or_() mnemonic: fallback chain for time_limit
-                time_limit=cast("int", u.or_(config.time_limit, default=0)),
+                size_limit=config.size_limit or 0,
+                time_limit=config.time_limit or 0,
             )
 
     # =========================================================================
     # OPERATION RESULT MODELS
     # =========================================================================
 
-    class OperationResult(FlextModelsCollections.Results):
+    class OperationResult(Collections.Results):
         """Result of LDAP operation (frozen, immutable).
 
         Generic result model for all LDAP operations.
@@ -276,10 +359,10 @@ class FlextLdapModels(FlextModels):
     # SEARCH RESULT MODELS
     # =========================================================================
 
-    class SearchResult(FlextModelsEntity.Core):
+    class SearchResult(Entity):
         """Result of LDAP search operation with Entity features."""
 
-        entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
+        entries: list[m.Entry] = Field(default_factory=list)
         search_options: m.SearchOptions
 
         @computed_field
@@ -305,13 +388,13 @@ class FlextLdapModels(FlextModels):
         @computed_field
         def by_objectclass(
             self,
-        ) -> FlextModelsCollections.Categories[FlextLdifModels.Entry]:
+        ) -> m.Collections.Categories[m.Entry]:
             """Categorize entries by objectClass attribute.
 
             Business Rules:
                 - Entries are grouped by first objectClass value
                 - Entries without objectClass are categorized as "unknown"
-                - Uses FlextModelsCollections.Categories for grouping
+                - Uses m.Collections.Categories for grouping
                 - Handles both LdifAttributes and Mapping types
 
             Audit Implications:
@@ -320,7 +403,7 @@ class FlextLdapModels(FlextModels):
                 - Categories can be used for compliance reporting
 
             Architecture:
-                - Uses FlextModelsCollections.Categories for grouping
+                - Uses m.Collections.Categories for grouping
                 - Handles LdifAttributes and Mapping types safely
                 - Returns Categories[Entry] for type-safe access
                 - No network calls - pure data categorization
@@ -329,95 +412,132 @@ class FlextLdapModels(FlextModels):
                 Categories instance with entries grouped by objectClass.
 
             """
-            categories: FlextModelsCollections.Categories[FlextLdifModels.Entry] = (
-                FlextModelsCollections.Categories()
-            )
+            categories: m.Collections.Categories[m.Entry] = m.Collections.Categories[
+                m.Entry
+            ]()
 
-            # Use u.process() to process all entries and extract categories
-            def process_entry(
-                entry: FlextLdifModels.Entry,
-            ) -> tuple[str, FlextLdifModels.Entry]:
-                """Process entry and return (category, entry) tuple."""
-                # Use u.empty() mnemonic: check if attributes are None
-                if entry.attributes is None:
-                    return ("unknown", entry)
-                # Check if attributes dict is empty
-                attrs_dict = entry.attributes.attributes if hasattr(entry.attributes, "attributes") else entry.attributes
-                # Convert Mapping to dict for u.empty compatibility
-                attrs_dict_converted = dict(attrs_dict) if isinstance(attrs_dict, Mapping) else attrs_dict
-                if u.empty(cast("dict[str, object]", attrs_dict_converted)):
-                    return ("unknown", entry)
-                # Type narrowing: LdifAttributes has .attributes property
-                # entry.attributes can be LdifAttributes | Mapping[str, Sequence[str]] | None
-                # None already handled above, so remaining types are LdifAttributes | Mapping
-                if isinstance(entry.attributes, FlextLdifModels.LdifAttributes):
-                    attrs_dict = entry.attributes.attributes
-                elif isinstance(entry.attributes, Mapping):
-                    # Type narrowing: entry.attributes is Mapping[str, Sequence[str]]
-                    # Convert Mapping to dict[str, list[str]] for processing
-                    # Use u.process() for consistent conversion
-                    transform_result = u.process(
-                        entry.attributes,
-                        processor=lambda _k, v: list(v)
-                        if FlextRuntime.is_list_like(v)
-                        else [v],
-                        on_error="collect",
-                    )
-                    attrs_dict = (
-                        transform_result.value
-                        if transform_result.is_success
-                        else dict(entry.attributes)
-                    )
-                else:
-                    # Fallback: empty dict if type is unexpected
-                    attrs_dict = {}
-                # Use u.get and u.ensure() for safer nested access
-                object_classes_raw: flext_types.GeneralValueType = u.get(
-                    attrs_dict, "objectClass", default=[]
-                )
-                object_classes = u.to_str_list(object_classes_raw)
-                # Use u.find() to get first valid object class, fallback to "unknown"
-                found_category = u.find(
-                    object_classes, predicate=u.TypeGuards.is_string_non_empty
-                )
-                category = (
-                    cast("str", found_category)
-                    if found_category is not None
-                    else "unknown"
-                )
-                return (category, entry)
-
-            # Process all entries using u.process()
-            process_result = u.process(
-                self.entries,
-                processor=process_entry,
-                on_error="skip",
-            )
-            if process_result.is_success:
-                processed_entries = cast(
-                    "list[tuple[str, FlextLdifModels.Entry]]",
-                    process_result.value,
-                )
-                # Group entries by category using u.process() for efficient grouping
-
-                def group_by_category(
-                    category_entry: tuple[str, FlextLdifModels.Entry],
-                ) -> None:
-                    """Group entry by category."""
-                    category, entry = category_entry
+            logger = logging.getLogger(__name__)
+            for entry in self.entries:
+                try:
+                    category = self.__class__.get_entry_category(entry)
                     categories.add_entries(category, [entry])
-
-                # Process all category-entry pairs
-                u.process(
-                    processed_entries, processor=group_by_category, on_error="skip"
-                )
+                except Exception as e:
+                    logger.debug(
+                        "Failed to process entry, skipping",
+                        exc_info=e,
+                    )
+                    continue
             return categories
+
+        @classmethod
+        def extract_attrs_dict_from_entry(
+            cls,
+            entry: m.Entry,
+        ) -> dict[str, list[str]]:
+            """Extract attributes dict from entry.
+
+            Uses duck-typing to handle m.LdifAttributes (public API)
+            which has the same structure with .attributes property.
+
+            Args:
+                entry: Entry to extract attributes from
+
+            Returns:
+                Attributes dict or empty dict
+
+            """
+            if entry.attributes is None:
+                return {}
+            # Try primary approach: LdifAttributes-like object with .attributes dict
+            if hasattr(entry.attributes, "attributes"):
+                inner_attrs = getattr(entry.attributes, "attributes", None)
+                if isinstance(inner_attrs, Mapping):
+                    return cls._convert_attrs_mapping(inner_attrs)
+            # Fallback: try direct dict-like access
+            if hasattr(entry.attributes, "items"):
+                return cls._convert_items_method(entry.attributes)
+            return {}
+
+        @classmethod
+        def _convert_attrs_mapping(
+            cls,
+            attrs: Mapping[str, object],
+        ) -> dict[str, list[str]]:
+            """Convert attributes mapping to dict[str, list[str]]."""
+            result: dict[str, list[str]] = {}
+            for k, v in attrs.items():
+                if FlextRuntime.is_list_like(v):
+                    result[k] = [str(item) for item in v]
+                else:
+                    result[k] = [str(v)]
+            return result
+
+        @classmethod
+        def _convert_items_method(
+            cls,
+            attrs: object,
+        ) -> dict[str, list[str]]:
+            """Convert items method result to dict[str, list[str]]."""
+            try:
+                items_method = getattr(attrs, "items", None)
+                if items_method is not None and callable(items_method):
+                    items_result = items_method()
+                    if isinstance(items_result, (list, tuple)):
+                        return cls._convert_attrs_mapping(dict(items_result))
+            except (AttributeError, TypeError):
+                pass
+            return {}
+
+        @classmethod
+        def extract_objectclass_category(
+            cls,
+            attrs_dict: dict[str, list[str]],
+        ) -> str:
+            """Extract objectClass category from attributes.
+
+            Args:
+                attrs_dict: Attributes dictionary
+
+            Returns:
+                Category name or "unknown"
+
+            """
+            if not attrs_dict:
+                return "unknown"
+            object_classes_raw = attrs_dict.get("objectClass", [])
+            if FlextRuntime.is_list_like(object_classes_raw):
+                object_classes = [str(item) for item in object_classes_raw if item]
+            else:
+                object_classes = [str(object_classes_raw)] if object_classes_raw else []
+            found_category = next(
+                (oc for oc in object_classes if oc and oc.strip()),
+                None,
+            )
+            return found_category or "unknown"
+
+        @classmethod
+        def get_entry_category(
+            cls,
+            entry: m.Entry,
+        ) -> str:
+            """Get category for entry based on objectClass.
+
+            Args:
+                entry: Entry to categorize
+
+            Returns:
+                Category name or "unknown"
+
+            """
+            # Use class methods directly via composition
+            attrs_dict = cls.extract_attrs_dict_from_entry(entry)
+            return cls.extract_objectclass_category(attrs_dict)
 
     # =========================================================================
     # SYNC MODELS
     # =========================================================================
 
-    class SyncOptions(FlextModelsCollections.Options):
+    class SyncOptions(Collections.Options):
         """Options for LDIF to LDAP synchronization (frozen, immutable)."""
 
         batch_size: int = Field(default=100, ge=1)
@@ -429,7 +549,7 @@ class FlextLdapModels(FlextModels):
             default=None,
         )
 
-    class SyncStats(FlextModelsCollections.Statistics):
+    class SyncStats(Collections.Statistics):
         """Statistics for LDIF synchronization operation (frozen, immutable)."""
 
         added: int = Field(default=0, ge=0)
@@ -474,10 +594,11 @@ class FlextLdapModels(FlextModels):
             failed: int = 0,
             duration_seconds: float = 0.0,
             **kwargs: str | float | bool | None,
-        ) -> m.SyncStats:
+        ) -> Self:
             """Factory method with auto-calculated total from counters.
 
-            Additional kwargs are passed to Pydantic model constructor for field updates.
+            Additional kwargs are passed to Pydantic model constructor
+            for field updates.
             """
             return cls(
                 added=added,
@@ -492,7 +613,7 @@ class FlextLdapModels(FlextModels):
     # UPSERT RESULT MODELS
     # =========================================================================
 
-    class UpsertResult(FlextModelsCollections.Results):
+    class UpsertResult(Collections.Results):
         """Result of individual LDAP upsert operation (frozen, immutable)."""
 
         success: bool
@@ -500,7 +621,7 @@ class FlextLdapModels(FlextModels):
         operation: c.OperationType
         error: str | None = None
 
-    class BatchUpsertResult(FlextModelsEntity.Core):
+    class BatchUpsertResult(Entity):
         """Result of batch LDAP upsert operation with Entity features."""
 
         total_processed: int = Field(ge=0)
@@ -515,7 +636,8 @@ class FlextLdapModels(FlextModels):
             Business Rules:
                 - Returns 0.0 if total_processed is 0 (no operations performed)
                 - Success rate = successful / total_processed
-                - Result is float between 0.0 and 1.0 (can be multiplied by 100 for percentage)
+                - Result is float between 0.0 and 1.0
+                  (can be multiplied by 100 for percentage)
 
             Audit Implications:
                 - Success rate indicates batch operation reliability
@@ -535,7 +657,50 @@ class FlextLdapModels(FlextModels):
                 return 0.0
             return self.successful / self.total_processed
 
-    class ConversionMetadata(FlextModelsCollections.Config):
+    class SyncPhaseConfig(Collections.Config):
+        """Configuration for phase synchronization operations.
+
+        Immutable dataclass holding settings for sync_phase_entries() and
+        sync_multiple_phases() operations. Frozen for hashability and thread safety.
+
+        Business Rules:
+            - server_type controls LDIF parsing quirks (RFC, OUD, OID, OpenLDAP)
+            - progress_callback can be single-phase (4 params) or multi-phase (5 params)
+            - retry_on_errors defaults to None (uses method-level defaults)
+            - max_retries defaults to 5 for robust network handling
+            - stop_on_error=False enables batch continuation on failures
+
+        Attributes:
+            server_type: LDAP server type for LDIF parsing (default: "rfc").
+            progress_callback: Optional callback for progress tracking.
+            retry_on_errors: Error patterns to retry (None uses defaults).
+            max_retries: Maximum retry attempts per entry (default: 5).
+            stop_on_error: Abort batch on first error (default: False).
+
+        """
+
+        server_type: c.LiteralTypes.ServerTypeLiteral = Field(
+            default="rfc",
+            description="LDAP server type for LDIF parsing",
+        )
+        progress_callback: t.Ldap.ProgressCallbackUnion = Field(
+            default=None,
+            description="Optional callback for progress tracking",
+        )
+        retry_on_errors: list[str] | None = Field(
+            default=None,
+            description="Error patterns to retry (None uses defaults)",
+        )
+        max_retries: int = Field(
+            default=5,
+            description="Maximum retry attempts per entry",
+        )
+        stop_on_error: bool = Field(
+            default=False,
+            description="Abort batch on first error",
+        )
+
+    class ConversionMetadata(Collections.Config):
         """Metadata tracking attribute conversions during ldap3 to LDIF conversion."""
 
         source_attributes: list[str] = Field(default_factory=list)
@@ -546,12 +711,12 @@ class FlextLdapModels(FlextModels):
         converted_dn: str = ""
         attribute_changes: list[str] = Field(default_factory=list)
 
-    class LdapOperationResult(FlextModelsCollections.Results):
+    class LdapOperationResult(Collections.Results):
         """Result of LDAP operation as simple key-value structure."""
 
         operation: c.UpsertOperations
 
-    class LdapBatchStats(FlextModelsCollections.Statistics):
+    class LdapBatchStats(Collections.Statistics):
         """Batch operation statistics (frozen, immutable)."""
 
         synced: int = Field(default=0, ge=0)
@@ -562,7 +727,7 @@ class FlextLdapModels(FlextModels):
     # PHASE SYNC MODELS
     # =========================================================================
 
-    class PhaseSyncResult(FlextModelsCollections.Results):
+    class PhaseSyncResult(Collections.Results):
         """Result of synchronizing a single LDIF phase file to LDAP."""
 
         phase_name: str
@@ -573,7 +738,7 @@ class FlextLdapModels(FlextModels):
         duration_seconds: float = Field(ge=0.0)
         success_rate: float = Field(ge=0.0, le=100.0)
 
-    class MultiPhaseSyncResult(FlextModelsCollections.Results):
+    class MultiPhaseSyncResult(Collections.Results):
         """Aggregated result of synchronizing multiple LDIF phase files to LDAP."""
 
         phase_results: dict[str, m.PhaseSyncResult] = Field(
@@ -606,7 +771,7 @@ class FlextLdapModels(FlextModels):
         """
 
 
-__all__ = ["FlextLdapModels"]
-
-# Convenience alias for common usage pattern
+# Convenience alias for common usage pattern - exported for domain usage
 m = FlextLdapModels
+
+__all__ = ["FlextLdapModels", "m"]

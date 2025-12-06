@@ -14,11 +14,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import TypeVar
-
 from flext_core import FlextService
 
-TDomainResult = TypeVar("TDomainResult")
+from flext_ldap.typings import TDomainResult
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult]):
@@ -35,3 +33,9 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
                 host = self.config.ldap.host  # Typed access!
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """
+
+
+# Convenience alias for common usage pattern - exported for domain usage
+s = FlextLdapServiceBase
+
+__all__ = ["FlextLdapServiceBase", "s"]

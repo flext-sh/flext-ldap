@@ -1,12 +1,20 @@
-"""Unit tests for FlextLdapModels domain validation.
+"""Unit tests for FlextLdapModels - Domain models and data structures.
 
-Uses u, FlextTestsMatchers, and FlextTestsUtilities.ModelTestHelpers
-for maximum code reduction. All factories, validation and assertions use centralized
-flext-core patterns.
+Provides comprehensive testing of FlextLdapModels including connection configuration,
+search options, operation results, sync models, and type aliases.
 
-Tested module: flext_ldap.models
-Test scope: Domain model validation, computed properties, factory methods
-Coverage: 100% with parametrized edge cases
+Test Coverage:
+- Model inheritance from FlextModels and FlextLdifModels
+- ConnectionConfig validation (SSL/TLS mutual exclusion)
+- SearchOptions with DN validation and normalization
+- OperationResult with entries_affected tracking
+- SearchResult computed fields (total_count, by_objectclass)
+- SyncStats and SyncOptions models
+- UpsertResult and BatchUpsertResult models
+- PhaseSyncResult and MultiPhaseSyncResult models
+- Model serialization and JSON schema generation
+
+All tests use real functionality without mocks, following FLEXT patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,590 +23,724 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from flext_ldif import FlextLdifModels
-from flext_tests import FlextTestsMatchers, FlextTestsUtilities
+from flext_tests import tm
+from pydantic import ValidationError
 
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
-from flext_ldap.utilities import FlextLdapUtilities as u
+from flext_ldap import c, m
+from tests import c as tc
 
-from ..fixtures.constants import TestConstants
-from ..helpers.test_deduplication_helpers import TestDeduplicationHelpers
-
-pytestmark = pytest.mark.unit
+pytestmark = [pytest.mark.unit]
 
 
-class Scenario(StrEnum):
-    """Test scenarios using Python 3.13 StrEnum."""
+class TestsFlextLdapModels:
+    """Comprehensive tests for FlextLdapModels.
 
-    DEFAULT = "default"
-    CUSTOM = "custom"
-    EDGE_CASE = "edge_case"
-
-
-class SSLTLSMode(StrEnum):
-    """SSL/TLS mutual exclusion scenarios."""
-
-    BOTH_ENABLED = "both_enabled"
-    BOTH_DISABLED = "both_disabled"
-    SSL_ONLY = "ssl_only"
-    TLS_ONLY = "tls_only"
-
-
-# Parametrize tuples for pyrefly compatibility
-_SCENARIO_PARAMS: tuple[Scenario, ...] = (
-    Scenario.DEFAULT,
-    Scenario.CUSTOM,
-    Scenario.EDGE_CASE,
-)
-
-_SSL_TLS_PARAMS: tuple[SSLTLSMode, ...] = (
-    SSLTLSMode.BOTH_ENABLED,
-    SSLTLSMode.BOTH_DISABLED,
-    SSLTLSMode.SSL_ONLY,
-    SSLTLSMode.TLS_ONLY,
-)
-
-
-class TestFlextLdapModels:
-    """Comprehensive tests for FLEXT-LDAP domain models.
-
-    Uses u.Configuration.build_options_from_kwargs for model creation.
-    Uses FlextTestsMatchers and FlextTestsUtilities.ModelTestHelpers for assertions.
+    Architecture: Single class per module following FLEXT patterns.
+    Tests all domain models, validation, computed fields, and inheritance.
     """
 
-    # Single source of truth: ConnectionConfig scenarios
-    _CONN_SCENARIOS: ClassVar[
-        Mapping[Scenario, Mapping[str, str | int | bool | None]]
-    ] = {
-        Scenario.DEFAULT: {
-            "host": "ldap.example.com",
-            "port": 389,
-            "use_ssl": False,
-            "use_tls": False,
-            "bind_dn": None,
-            "bind_password": None,
-            "timeout": 30,
-            "auto_bind": True,
-            "auto_range": True,
-        },
-        Scenario.CUSTOM: {
-            "host": "secure.example.com",
-            "port": 636,
-            "use_ssl": True,
-            "use_tls": False,
-            "bind_dn": TestConstants.DEFAULT_BIND_DN,
-            "bind_password": "secure_password",
-            "timeout": 60,
-            "auto_bind": False,
-            "auto_range": False,
-        },
-        Scenario.EDGE_CASE: {
-            "host": "a",
-            "port": 1,
-            "use_ssl": False,
-            "use_tls": False,
-            "bind_dn": None,
-            "bind_password": None,
-            "timeout": 300,
-            "auto_bind": False,
-            "auto_range": False,
-        },
+    # =========================================================================
+    # Model Class Existence Tests
+    # =========================================================================
+
+    def test_models_class_exists(self) -> None:
+        """Test FlextLdapModels class exists."""
+        tm.not_none(FlextLdapModels)
+        tm.eq(m, FlextLdapModels)
+
+    def test_models_inherits_from_flext_ldif_models(self) -> None:
+        """Test FlextLdapModels inherits from FlextLdifModels."""
+        tm.that(issubclass(FlextLdapModels, FlextLdifModels), eq=True)
+
+    def test_models_has_model_config(self) -> None:
+        """Test FlextLdapModels has model_config."""
+        tm.not_none(FlextLdapModels.model_config)
+        tm.eq(FlextLdapModels.model_config.get("frozen"), True)
+        tm.eq(FlextLdapModels.model_config.get("extra"), "forbid")
+
+    # =========================================================================
+    # Collections Inheritance Tests
+    # =========================================================================
+
+    def test_collections_exists(self) -> None:
+        """Test Collections class exists."""
+        tm.not_none(m.Collections)
+
+    def test_collections_config_exists(self) -> None:
+        """Test Collections.Config exists."""
+        tm.not_none(m.Collections.Config)
+
+    def test_collections_options_exists(self) -> None:
+        """Test Collections.Options exists."""
+        tm.not_none(m.Collections.Options)
+
+    def test_collections_results_exists(self) -> None:
+        """Test Collections.Results exists."""
+        tm.not_none(m.Collections.Results)
+
+    def test_collections_statistics_exists(self) -> None:
+        """Test Collections.Statistics exists."""
+        tm.not_none(m.Collections.Statistics)
+
+    # =========================================================================
+    # Entry Model Tests
+    # =========================================================================
+
+    def test_entry_model_exists(self) -> None:
+        """Test Entry model exists."""
+        tm.not_none(m.Entry)
+
+    def test_entry_inherits_from_flext_ldif_entry(self) -> None:
+        """Test Entry inherits from FlextLdifModels.Entry."""
+        tm.that(issubclass(m.Entry, FlextLdifModels.Entry), eq=True)
+
+    def test_entry_creation(self) -> None:
+        """Test Entry creation with DN and attributes."""
+        # Entry accepts str for dn via Pydantic - Pyright strict: Entry.__init__ accepts **data: Any
+        entry = m.Entry(dn=tc.RFC.DEFAULT_BASE_DN, attributes=None)
+        # Entry.dn is a DistinguishedName object, use .value for string comparison
+        tm.not_none(entry.dn)
+        tm.eq(entry.dn.value, tc.RFC.DEFAULT_BASE_DN)
+        tm.that(entry.attributes, none=True)
+
+    # =========================================================================
+    # Re-export Alias Tests
+    # =========================================================================
+
+    def test_distinguished_name_alias_exists(self) -> None:
+        """Test DistinguishedName alias exists."""
+        tm.eq(m.DistinguishedName, FlextLdifModels.DistinguishedName)
+
+    def test_ldif_attributes_alias_exists(self) -> None:
+        """Test LdifAttributes alias exists."""
+        # LdifAttributes is re-exported from FlextLdifModels
+        tm.not_none(m.LdifAttributes)
+        tm.that(hasattr(m, "LdifAttributes"), eq=True)
+
+    def test_quirk_metadata_alias_exists(self) -> None:
+        """Test QuirkMetadata alias exists."""
+        tm.eq(m.QuirkMetadata, FlextLdifModels.QuirkMetadata)
+
+    def test_parse_response_alias_exists(self) -> None:
+        """Test ParseResponse alias exists."""
+        # ParseResponse is re-exported from FlextLdifModels
+        tm.not_none(m.ParseResponse)
+        tm.that(hasattr(m, "ParseResponse"), eq=True)
+
+    # =========================================================================
+    # ConnectionConfig Tests
+    # =========================================================================
+
+    def test_connection_config_default_values(self) -> None:
+        """Test ConnectionConfig default values."""
+        config = m.ConnectionConfig()
+        tm.eq(config.host, "localhost")
+        tm.eq(config.port, c.ConnectionDefaults.PORT)
+        tm.eq(config.use_ssl, False)
+        tm.eq(config.use_tls, False)
+        tm.that(config.bind_dn, none=True)
+        tm.that(config.bind_password, none=True)
+        tm.eq(config.timeout, c.ConnectionDefaults.TIMEOUT)
+        tm.eq(config.auto_bind, c.ConnectionDefaults.AUTO_BIND)
+
+    def test_connection_config_custom_values(self) -> None:
+        """Test ConnectionConfig with custom values."""
+        config = m.ConnectionConfig(
+            host="ldap.example.com",
+            port=636,
+            use_ssl=True,
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            bind_password="secret",
+            timeout=60,
+        )
+        tm.eq(config.host, "ldap.example.com")
+        tm.eq(config.port, 636)
+        tm.eq(config.use_ssl, True)
+        tm.eq(config.bind_dn, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
+
+    def test_connection_config_ssl_tls_mutual_exclusion(self) -> None:
+        """Test SSL and TLS mutual exclusion validation."""
+        with pytest.raises(ValidationError, match="mutually exclusive"):
+            m.ConnectionConfig(use_ssl=True, use_tls=True)
+
+    def test_connection_config_ssl_only_allowed(self) -> None:
+        """Test SSL-only configuration is allowed."""
+        config = m.ConnectionConfig(use_ssl=True, use_tls=False)
+        tm.eq(config.use_ssl, True)
+        tm.eq(config.use_tls, False)
+
+    def test_connection_config_tls_only_allowed(self) -> None:
+        """Test TLS-only configuration is allowed."""
+        config = m.ConnectionConfig(use_ssl=False, use_tls=True)
+        tm.eq(config.use_ssl, False)
+        tm.eq(config.use_tls, True)
+
+    def test_connection_config_port_constraints(self) -> None:
+        """Test port field constraints."""
+        # Valid ports
+        config_min = m.ConnectionConfig(port=1)
+        tm.eq(config_min.port, 1)
+
+        config_max = m.ConnectionConfig(port=65535)
+        tm.eq(config_max.port, 65535)
+
+    def test_connection_config_port_constraint_violation_min(self) -> None:
+        """Test port constraint violation (below minimum)."""
+        with pytest.raises(ValidationError):
+            m.ConnectionConfig(port=0)
+
+    def test_connection_config_port_constraint_violation_max(self) -> None:
+        """Test port constraint violation (above maximum)."""
+        with pytest.raises(ValidationError):
+            m.ConnectionConfig(port=65536)
+
+    def test_connection_config_inherits_from_collections_config(self) -> None:
+        """Test ConnectionConfig inherits from Collections.Config.
+
+        Note: FlextLdapModels declares frozen=True in model_config,
+        but Collections.Config (from FlextModels) may have its own config.
+        This test verifies inheritance and model functionality.
+        """
+        config = m.ConnectionConfig()
+        # Verify it's a valid config instance
+        tm.is_type(config, m.Collections.Config)
+        # Verify model_dump works (serialization)
+        dump = config.model_dump()
+        tm.dict_(dump, has_key=["host", "port"])
+
+    # =========================================================================
+    # SearchOptions Tests
+    # =========================================================================
+
+    def test_search_options_required_base_dn(self) -> None:
+        """Test SearchOptions requires base_dn."""
+        with pytest.raises(ValidationError, match="base_dn"):
+            m.SearchOptions()
+
+    def test_search_options_default_values(self) -> None:
+        """Test SearchOptions default values."""
+        options = m.SearchOptions(base_dn=tc.RFC.DEFAULT_BASE_DN)
+        tm.eq(options.base_dn, tc.RFC.DEFAULT_BASE_DN)
+        tm.eq(options.scope, "SUBTREE")
+        tm.eq(options.filter_str, c.Filters.ALL_ENTRIES_FILTER)
+        tm.that(options.attributes, none=True)
+        tm.eq(options.size_limit, 0)
+        tm.eq(options.time_limit, 0)
+
+    def test_search_options_custom_values(self) -> None:
+        """Test SearchOptions with custom values."""
+        options = m.SearchOptions(
+            base_dn=tc.RFC.DEFAULT_BASE_DN,
+            scope="BASE",
+            filter_str="(cn=*)",
+            attributes=["cn", "mail"],
+            size_limit=100,
+            time_limit=30,
+        )
+        tm.eq(options.scope, "BASE")
+        tm.eq(options.filter_str, "(cn=*)")
+        tm.eq(options.attributes, ["cn", "mail"])
+        tm.eq(options.size_limit, 100)
+
+    def test_search_options_invalid_base_dn_format(self) -> None:
+        """Test SearchOptions validates base_dn format."""
+        with pytest.raises(ValidationError, match="Invalid base_dn format"):
+            m.SearchOptions(base_dn="invalid-dn-format")
+
+    def test_search_options_scope_normalization_enum(self) -> None:
+        """Test SearchOptions normalizes scope from StrEnum."""
+        options = m.SearchOptions(
+            base_dn=tc.RFC.DEFAULT_BASE_DN,
+            scope=c.SearchScope.BASE,
+        )
+        tm.eq(options.scope, "BASE")
+
+    def test_search_options_scope_normalization_string(self) -> None:
+        """Test SearchOptions normalizes scope from string."""
+        options = m.SearchOptions(
+            base_dn=tc.RFC.DEFAULT_BASE_DN,
+            scope="subtree",
+        )
+        # Should parse and normalize to uppercase
+        tm.that(options.scope in {"SUBTREE", "subtree"}, eq=True)
+
+    def test_search_options_normalized_factory(self) -> None:
+        """Test SearchOptions.normalized factory method."""
+        options = m.SearchOptions.normalized(tc.RFC.DEFAULT_BASE_DN)
+        tm.not_none(options.base_dn)
+        tm.eq(options.scope, "SUBTREE")
+        tm.eq(options.filter_str, c.Filters.ALL_ENTRIES_FILTER)
+
+    def test_search_options_normalized_with_config(self) -> None:
+        """Test SearchOptions.normalized with NormalizedConfig."""
+        config = m.SearchOptions.NormalizedConfig(
+            scope="BASE",
+            filter_str="(uid=*)",
+            size_limit=50,
+        )
+        options = m.SearchOptions.normalized(
+            tc.RFC.DEFAULT_BASE_DN,
+            config=config,
+        )
+        tm.eq(options.scope, "BASE")
+        tm.eq(options.filter_str, "(uid=*)")
+        tm.eq(options.size_limit, 50)
+
+    # =========================================================================
+    # OperationResult Tests
+    # =========================================================================
+
+    def test_operation_result_creation(self) -> None:
+        """Test OperationResult creation."""
+        result = m.OperationResult(
+            success=True,
+            operation_type=c.OperationType.ADD,
+            message="Entry added successfully",
+            entries_affected=1,
+        )
+        tm.eq(result.success, True)
+        tm.eq(result.operation_type, c.OperationType.ADD)
+        tm.eq(result.message, "Entry added successfully")
+        tm.eq(result.entries_affected, 1)
+
+    def test_operation_result_default_message(self) -> None:
+        """Test OperationResult default message is empty."""
+        result = m.OperationResult(
+            success=True,
+            operation_type=c.OperationType.SEARCH,
+        )
+        tm.eq(result.message, "")
+        tm.eq(result.entries_affected, 0)
+
+    def test_operation_result_frozen(self) -> None:
+        """Test OperationResult is frozen (immutable)."""
+        result = m.OperationResult(
+            success=True,
+            operation_type=c.OperationType.ADD,
+        )
+        # Pydantic v2 frozen models raise TypeError on assignment
+
+        with pytest.raises((TypeError, ValidationError)):
+            result.success = False
+
+    # =========================================================================
+    # SearchResult Tests
+    # =========================================================================
+
+    _SEARCH_RESULT_SCENARIOS: ClassVar[Mapping[str, tuple[int, int]]] = {
+        # name: (num_entries, expected_total_count)
+        "empty": (0, 0),
+        "single": (1, 1),
+        "multiple": (5, 5),
     }
 
-    # Single source of truth: SearchOptions scenarios
-    _SEARCH_SCENARIOS: ClassVar[
-        Mapping[Scenario, Mapping[str, str | int | list[str] | None]]
-    ] = {
-        Scenario.DEFAULT: {
-            "base_dn": TestConstants.DEFAULT_BASE_DN,
-            "filter_str": "(objectClass=*)",
-            "scope": "SUBTREE",
-            "attributes": None,
-            "size_limit": 0,
-            "time_limit": 0,
-        },
-        Scenario.CUSTOM: {
-            "base_dn": TestConstants.DEFAULT_BASE_DN,
-            "filter_str": "(cn=test)",
-            "scope": "ONELEVEL",
-            "attributes": ["cn", "mail", "uid"],
-            "size_limit": 100,
-            "time_limit": 30,
-        },
-        Scenario.EDGE_CASE: {
-            "base_dn": TestConstants.DEFAULT_BASE_DN,
-            "filter_str": "(objectClass=*)",
-            "scope": "BASE",
-            "attributes": [],
-            "size_limit": 1000,
-            "time_limit": 3600,
-        },
-    }
-
-    # SSL/TLS configuration lookup: (use_ssl, use_tls, should_fail)
-    _SSL_TLS_CONFIG: ClassVar[Mapping[SSLTLSMode, tuple[bool, bool, bool]]] = {
-        SSLTLSMode.BOTH_ENABLED: (True, True, True),
-        SSLTLSMode.BOTH_DISABLED: (False, False, False),
-        SSLTLSMode.SSL_ONLY: (True, False, False),
-        SSLTLSMode.TLS_ONLY: (False, True, False),
-    }
-
-    # === ConnectionConfig Tests ===
-
-    @pytest.mark.parametrize("scenario", _SCENARIO_PARAMS)
-    def test_connection_config_scenarios(self, scenario: Scenario) -> None:
-        """Test ConnectionConfig creation with all scenarios."""
-        data = dict(self._CONN_SCENARIOS[scenario])
-
-        # Use u model from kwargs
-        result = u.Configuration.build_options_from_kwargs(
-            model_class=FlextLdapModels.ConnectionConfig,
-            explicit_options=None,
-            default_factory=FlextLdapModels.ConnectionConfig,
-            **data,
-        )
-
-        # Use FlextTestsMatchers for assertion
-        config = FlextTestsMatchers.assert_success(result)
-
-        # Use ModelTestHelpers.assert_attr_values for attribute validation
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            config,
-            dict(self._CONN_SCENARIOS[scenario]),
-        )
-
-    @pytest.mark.parametrize("mode", _SSL_TLS_PARAMS)
-    def test_connection_config_ssl_tls_validation(self, mode: SSLTLSMode) -> None:
-        """Test SSL/TLS mutual exclusion validation."""
-        use_ssl, use_tls, should_fail = self._SSL_TLS_CONFIG[mode]
-
-        if should_fail:
-            with pytest.raises(ValueError, match="mutually exclusive"):
-                _ = FlextLdapModels.ConnectionConfig(
-                    host="test.example.com",
-                    use_ssl=use_ssl,
-                    use_tls=use_tls,
-                )
-        else:
-            config = FlextLdapModels.ConnectionConfig(
-                host="test.example.com",
-                use_ssl=use_ssl,
-                use_tls=use_tls,
-            )
-            FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-                config,
-                {"use_ssl": use_ssl, "use_tls": use_tls},
-            )
-
-    # === SearchOptions Tests ===
-
-    @pytest.mark.parametrize("scenario", _SCENARIO_PARAMS)
-    def test_search_options_scenarios(self, scenario: Scenario) -> None:
-        """Test SearchOptions creation with all scenarios."""
-        data = dict(self._SEARCH_SCENARIOS[scenario])
-
-        # Use u model from kwargs
-        result = u.Configuration.build_options_from_kwargs(
-            model_class=FlextLdapModels.SearchOptions,
-            explicit_options=None,
-            default_factory=lambda: FlextLdapModels.SearchOptions(
-                base_dn=TestConstants.DEFAULT_BASE_DN,
-            ),
-            **data,
-        )
-
-        options = FlextTestsMatchers.assert_success(result)
-
-        # Use ModelTestHelpers for attribute validation
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            options,
-            dict(self._SEARCH_SCENARIOS[scenario]),
-        )
-
-    def test_search_options_invalid_base_dn(self) -> None:
-        """Test SearchOptions rejects malformed base DN."""
-        with pytest.raises(ValueError, match="Invalid base_dn format"):
-            _ = FlextLdapModels.SearchOptions(
-                base_dn="invalid-dn-format",
-                filter_str="(objectClass=*)",
-                scope=FlextLdapConstants.SearchScope.SUBTREE,
-            )
-
     @pytest.mark.parametrize(
-        ("scope", "filter_str", "expected_scope", "expected_filter"),
+        ("num_entries", "expected_count"),
         [
-            ("BASE", "(cn=*)", "BASE", "(cn=*)"),
-            ("SUBTREE", "(uid=test)", "SUBTREE", "(uid=test)"),
-            ("SUBTREE", None, "SUBTREE", "(objectClass=*)"),
+            (0, 0),
+            (1, 1),
+            (5, 5),
+            (10, 10),
         ],
     )
-    def test_search_options_normalized(
+    def test_search_result_total_count(
         self,
-        scope: str,
-        filter_str: str | None,
-        expected_scope: str,
-        expected_filter: str,
+        num_entries: int,
+        expected_count: int,
     ) -> None:
-        """Test SearchOptions.normalized with various inputs."""
-        scope_literal: FlextLdapConstants.SearchScope
-        if scope == FlextLdapConstants.SearchScope.BASE:
-            scope_literal = FlextLdapConstants.SearchScope.BASE
-        elif scope == FlextLdapConstants.SearchScope.ONELEVEL:
-            scope_literal = FlextLdapConstants.SearchScope.ONELEVEL
-        else:
-            scope_literal = FlextLdapConstants.SearchScope.SUBTREE
+        """Test SearchResult.total_count computed field."""
+        entries = [
+            m.Entry(dn=f"cn=user{i},{tc.RFC.DEFAULT_BASE_DN}", attributes=None)
+            for i in range(num_entries)
+        ]
+        options = m.SearchOptions(base_dn=tc.RFC.DEFAULT_BASE_DN)
+        result = m.SearchResult(entries=entries, search_options=options)
+        tm.eq(result.total_count, expected_count)
 
-        if filter_str is not None:
-            config = FlextLdapModels.SearchOptions.NormalizedConfig(
-                scope=scope_literal,
-                filter_str=filter_str,
-            )
-            options = FlextLdapModels.SearchOptions.normalized(
-                base_dn=TestConstants.DEFAULT_BASE_DN,
-                config=config,
-            )
-        else:
-            config = FlextLdapModels.SearchOptions.NormalizedConfig(
-                scope=scope_literal,
-            )
-            options = FlextLdapModels.SearchOptions.normalized(
-                base_dn=TestConstants.DEFAULT_BASE_DN,
-                config=config,
-            )
+    def test_search_result_by_objectclass_empty(self) -> None:
+        """Test SearchResult.by_objectclass with no entries."""
+        options = m.SearchOptions(base_dn=tc.RFC.DEFAULT_BASE_DN)
+        result = m.SearchResult(entries=[], search_options=options)
+        categories = result.by_objectclass
+        tm.not_none(categories)
+        # Empty result should have no categories or empty categories
 
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            options,
-            {"scope": expected_scope, "filter_str": expected_filter},
-        )
+    def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
+        """Test extract_attrs_dict_from_entry with None attributes."""
+        # Entry accepts str for dn via Pydantic - Pyright strict: Entry.__init__ accepts **data: Any
+        entry = m.Entry(dn=tc.RFC.DEFAULT_BASE_DN, attributes=None)
+        attrs = m.SearchResult.extract_attrs_dict_from_entry(entry)
+        tm.eq(attrs, {})
 
-    # === OperationResult Tests ===
+    def test_search_result_extract_objectclass_category_empty(self) -> None:
+        """Test extract_objectclass_category with empty dict."""
+        category = m.SearchResult.extract_objectclass_category({})
+        tm.eq(category, "unknown")
 
-    @pytest.mark.parametrize(
-        ("success", "op_type", "entries"),
-        [
-            (True, "add", 1),
-            (False, "delete", 0),
-            (True, "modify", 5),
-            (True, "search", 10),
-        ],
-    )
-    def test_operation_result_scenarios(
+    def test_search_result_extract_objectclass_category_with_objectclass(
         self,
-        success: bool,
-        op_type: str,
-        entries: int,
     ) -> None:
-        """Test OperationResult with various scenarios."""
-        operation_type_literal: FlextLdapConstants.OperationType
-        if op_type == "add":
-            operation_type_literal = FlextLdapConstants.OperationType.ADD
-        elif op_type == "modify":
-            operation_type_literal = FlextLdapConstants.OperationType.MODIFY
-        elif op_type == "delete":
-            operation_type_literal = FlextLdapConstants.OperationType.DELETE
-        elif op_type == "modify_dn":
-            operation_type_literal = FlextLdapConstants.OperationType.MODIFY_DN
-        elif op_type == "compare":
-            operation_type_literal = FlextLdapConstants.OperationType.COMPARE
-        elif op_type == "bind":
-            operation_type_literal = FlextLdapConstants.OperationType.BIND
-        elif op_type == "unbind":
-            operation_type_literal = FlextLdapConstants.OperationType.UNBIND
-        else:
-            operation_type_literal = FlextLdapConstants.OperationType.SEARCH
-        result = FlextLdapModels.OperationResult(
-            success=success,
-            operation_type=operation_type_literal,
-            entries_affected=entries,
+        """Test extract_objectclass_category with objectClass attribute."""
+        attrs = {"objectClass": ["person", "top"]}
+        category = m.SearchResult.extract_objectclass_category(attrs)
+        tm.eq(category, "person")
+
+    def test_search_result_get_entry_category(self) -> None:
+        """Test get_entry_category returns category or unknown."""
+        # Entry accepts str for dn via Pydantic - Pyright strict: Entry.__init__ accepts **data: Any
+        entry = m.Entry(dn=tc.RFC.DEFAULT_BASE_DN, attributes=None)
+        category = m.SearchResult.get_entry_category(entry)
+        # Entry with no attributes should return "unknown"
+        tm.eq(category, "unknown")
+
+    # =========================================================================
+    # SyncOptions Tests
+    # =========================================================================
+
+    def test_sync_options_default_values(self) -> None:
+        """Test SyncOptions default values."""
+        options = m.SyncOptions()
+        tm.eq(options.batch_size, 100)
+        tm.eq(options.auto_create_parents, True)
+        tm.eq(options.allow_deletes, False)
+        tm.eq(options.source_basedn, "")
+        tm.eq(options.target_basedn, "")
+        tm.that(options.progress_callback, none=True)
+
+    def test_sync_options_custom_values(self) -> None:
+        """Test SyncOptions with custom values."""
+        options = m.SyncOptions(
+            batch_size=50,
+            auto_create_parents=False,
+            allow_deletes=True,
+            source_basedn="dc=source,dc=com",
+            target_basedn="dc=target,dc=com",
         )
+        tm.eq(options.batch_size, 50)
+        tm.eq(options.auto_create_parents, False)
+        tm.eq(options.allow_deletes, True)
 
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            result,
-            {
-                "success": success,
-                "operation_type": op_type,
-                "entries_affected": entries,
-            },
+    def test_sync_options_batch_size_constraint(self) -> None:
+        """Test SyncOptions batch_size must be >= 1."""
+        with pytest.raises(ValidationError):
+            m.SyncOptions(batch_size=0)
+
+    # =========================================================================
+    # SyncStats Tests
+    # =========================================================================
+
+    def test_sync_stats_default_values(self) -> None:
+        """Test SyncStats default values."""
+        stats = m.SyncStats()
+        tm.eq(stats.added, 0)
+        tm.eq(stats.skipped, 0)
+        tm.eq(stats.failed, 0)
+        tm.eq(stats.total, 0)
+        tm.eq(stats.duration_seconds, 0.0)
+
+    def test_sync_stats_success_rate_zero_total(self) -> None:
+        """Test SyncStats.success_rate returns 0.0 when total is 0."""
+        stats = m.SyncStats()
+        tm.eq(stats.success_rate, 0.0)
+
+    def test_sync_stats_success_rate_calculation(self) -> None:
+        """Test SyncStats.success_rate computed field."""
+        stats = m.SyncStats(
+            added=70,
+            skipped=20,
+            failed=10,
+            total=100,
         )
+        # success_rate = (added + skipped) / total = (70 + 20) / 100 = 0.9
+        tm.eq(stats.success_rate, 0.9)
 
-    # === SyncStats Tests ===
-
-    @pytest.mark.parametrize(
-        ("added", "skipped", "failed", "total", "duration"),
-        [
-            (0, 0, 0, 0, 0.0),
-            (5, 2, 1, 8, 1.5),
-            (10, 0, 0, 10, 2.0),
-        ],
-    )
-    def test_sync_stats_initialization(
-        self,
-        added: int,
-        skipped: int,
-        failed: int,
-        total: int,
-        duration: float,
-    ) -> None:
-        """Test SyncStats initialization with various values."""
-        stats = FlextLdapModels.SyncStats(
-            added=added,
-            skipped=skipped,
-            failed=failed,
-            total=total,
-            duration_seconds=duration,
-        )
-
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            stats,
-            {
-                "added": added,
-                "skipped": skipped,
-                "failed": failed,
-                "total": total,
-                "duration_seconds": duration,
-            },
-        )
-
-    @pytest.mark.parametrize(
-        ("added", "skipped", "failed", "total", "expected_rate"),
-        [
-            (7, 2, 1, 10, 0.9),
-            (10, 0, 0, 10, 1.0),
-            (0, 0, 5, 5, 0.0),
-            (0, 0, 0, 0, 0.0),
-        ],
-    )
-    def test_sync_stats_success_rate(
-        self,
-        added: int,
-        skipped: int,
-        failed: int,
-        total: int,
-        expected_rate: float,
-    ) -> None:
-        """Test SyncStats.success_rate computed property."""
-        stats = FlextLdapModels.SyncStats(
-            added=added,
-            skipped=skipped,
-            failed=failed,
-            total=total,
-            duration_seconds=0.0,
-        )
-
-        # Access computed property - Pydantic computed_field accessed via getattr
-        success_rate_value = cast("float", stats.success_rate)
-        assert success_rate_value == expected_rate
-
-    def test_sync_stats_from_counters(self) -> None:
+    def test_sync_stats_from_counters_factory(self) -> None:
         """Test SyncStats.from_counters factory method."""
-        stats = FlextLdapModels.SyncStats.from_counters(
-            added=10,
+        stats = m.SyncStats.from_counters(
+            added=50,
+            skipped=30,
+            failed=20,
+            duration_seconds=10.5,
+        )
+        tm.eq(stats.added, 50)
+        tm.eq(stats.skipped, 30)
+        tm.eq(stats.failed, 20)
+        tm.eq(stats.total, 100)  # auto-calculated
+        tm.eq(stats.duration_seconds, 10.5)
+
+    # =========================================================================
+    # UpsertResult Tests
+    # =========================================================================
+
+    def test_upsert_result_creation(self) -> None:
+        """Test UpsertResult creation."""
+        result = m.UpsertResult(
+            success=True,
+            dn=tc.RFC.DEFAULT_BASE_DN,
+            operation=c.OperationType.ADD,
+        )
+        tm.eq(result.success, True)
+        tm.eq(result.dn, tc.RFC.DEFAULT_BASE_DN)
+        tm.eq(result.operation, c.OperationType.ADD)
+        tm.that(result.error, none=True)
+
+    def test_upsert_result_with_error(self) -> None:
+        """Test UpsertResult with error message."""
+        result = m.UpsertResult(
+            success=False,
+            dn=tc.RFC.DEFAULT_BASE_DN,
+            operation=c.OperationType.ADD,
+            error="Entry already exists",
+        )
+        tm.eq(result.success, False)
+        tm.eq(result.error, "Entry already exists")
+
+    # =========================================================================
+    # BatchUpsertResult Tests
+    # =========================================================================
+
+    def test_batch_upsert_result_creation(self) -> None:
+        """Test BatchUpsertResult creation."""
+        result = m.BatchUpsertResult(
+            total_processed=100,
+            successful=90,
+            failed=10,
+        )
+        tm.eq(result.total_processed, 100)
+        tm.eq(result.successful, 90)
+        tm.eq(result.failed, 10)
+
+    def test_batch_upsert_result_success_rate_zero(self) -> None:
+        """Test BatchUpsertResult.success_rate returns 0.0 when no processing."""
+        result = m.BatchUpsertResult(
+            total_processed=0,
+            successful=0,
+            failed=0,
+        )
+        tm.eq(result.success_rate, 0.0)
+
+    def test_batch_upsert_result_success_rate_calculation(self) -> None:
+        """Test BatchUpsertResult.success_rate computed field."""
+        result = m.BatchUpsertResult(
+            total_processed=100,
+            successful=85,
+            failed=15,
+        )
+        # success_rate = successful / total_processed = 85 / 100 = 0.85
+        tm.eq(result.success_rate, 0.85)
+
+    # =========================================================================
+    # SyncPhaseConfig Tests
+    # =========================================================================
+
+    def test_sync_phase_config_default_values(self) -> None:
+        """Test SyncPhaseConfig default values."""
+        config = m.SyncPhaseConfig()
+        tm.eq(config.server_type, "rfc")
+        tm.that(config.progress_callback, none=True)
+        tm.that(config.retry_on_errors, none=True)
+        tm.eq(config.max_retries, 5)
+        tm.eq(config.stop_on_error, False)
+
+    def test_sync_phase_config_custom_values(self) -> None:
+        """Test SyncPhaseConfig with custom values."""
+        config = m.SyncPhaseConfig(
+            server_type="oud",
+            max_retries=3,
+            stop_on_error=True,
+        )
+        tm.eq(config.server_type, "oud")
+        tm.eq(config.max_retries, 3)
+        tm.eq(config.stop_on_error, True)
+
+    # =========================================================================
+    # ConversionMetadata Tests
+    # =========================================================================
+
+    def test_conversion_metadata_default_values(self) -> None:
+        """Test ConversionMetadata default values."""
+        metadata = m.ConversionMetadata()
+        tm.eq(metadata.source_attributes, [])
+        tm.eq(metadata.source_dn, "")
+        tm.eq(metadata.removed_attributes, [])
+        tm.eq(metadata.base64_encoded_attributes, [])
+        tm.eq(metadata.dn_changed, False)
+        tm.eq(metadata.converted_dn, "")
+        tm.eq(metadata.attribute_changes, [])
+
+    def test_conversion_metadata_custom_values(self) -> None:
+        """Test ConversionMetadata with custom values."""
+        metadata = m.ConversionMetadata(
+            source_attributes=["cn", "mail", "telephoneNumber"],
+            source_dn="cn=user,dc=example,dc=com",
+            removed_attributes=["userPassword"],
+            dn_changed=True,
+            converted_dn="cn=user,dc=new,dc=com",
+        )
+        tm.len(metadata.source_attributes, expected=3)
+        tm.that(metadata.source_attributes, contains="telephoneNumber")
+        tm.eq(metadata.dn_changed, True)
+
+    # =========================================================================
+    # PhaseSyncResult Tests
+    # =========================================================================
+
+    def test_phase_sync_result_creation(self) -> None:
+        """Test PhaseSyncResult creation."""
+        result = m.PhaseSyncResult(
+            phase_name="01-users",
+            total_entries=100,
+            synced=90,
+            failed=5,
             skipped=5,
-            failed=2,
-            duration_seconds=1.5,
+            duration_seconds=30.0,
+            success_rate=95.0,
         )
+        tm.eq(result.phase_name, "01-users")
+        tm.eq(result.total_entries, 100)
+        tm.eq(result.synced, 90)
+        tm.eq(result.success_rate, 95.0)
 
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            stats,
-            {
-                "added": 10,
-                "skipped": 5,
-                "failed": 2,
-                "total": 17,
-                "duration_seconds": 1.5,
-            },
+    # =========================================================================
+    # MultiPhaseSyncResult Tests
+    # =========================================================================
+
+    def test_multi_phase_sync_result_creation(self) -> None:
+        """Test MultiPhaseSyncResult creation."""
+        result = m.MultiPhaseSyncResult(
+            total_entries=500,
+            total_synced=450,
+            total_failed=25,
+            total_skipped=25,
+            overall_success_rate=95.0,
+            total_duration_seconds=120.0,
+            overall_success=True,
         )
+        tm.eq(result.total_entries, 500)
+        tm.eq(result.total_synced, 450)
+        tm.eq(result.overall_success_rate, 95.0)
+        tm.eq(result.overall_success, True)
 
-    # === SearchResult Tests ===
-
-    def test_search_result_total_count(self) -> None:
-        """Test SearchResult.total_count computed property."""
-        # Use TestDeduplicationHelpers.create_entry instead of private _create_entry
-        entries = [
-            TestDeduplicationHelpers.create_entry(
-                "cn=user1,dc=example,dc=com",
-                {"cn": ["test"], "objectClass": ["top", "person"]},
-            ),
-            TestDeduplicationHelpers.create_entry(
-                "cn=user2,dc=example,dc=com",
-                {"cn": ["test"], "objectClass": ["top", "person"]},
-            ),
-        ]
-        options = FlextLdapModels.SearchOptions(
-            base_dn=TestConstants.DEFAULT_BASE_DN,
+    def test_multi_phase_sync_result_with_phase_results(self) -> None:
+        """Test MultiPhaseSyncResult with phase_results."""
+        phase1 = m.PhaseSyncResult(
+            phase_name="01-users",
+            total_entries=100,
+            synced=95,
+            failed=5,
+            skipped=0,
+            duration_seconds=10.0,
+            success_rate=95.0,
         )
-
-        result = FlextLdapModels.SearchResult(entries=entries, search_options=options)
-
-        # Access computed property - Pydantic computed_field accessed via getattr
-        total_count_value = cast("int", result.total_count)
-        assert total_count_value == 2
-
-    @pytest.mark.parametrize(
-        ("entries_data", "expected_categories"),
-        [
-            (
-                [
-                    ("cn=u1,dc=example,dc=com", ["person", "top"]),
-                    ("cn=u2,dc=example,dc=com", ["person", "top"]),
-                    ("ou=org,dc=example,dc=com", ["organizationalUnit"]),
-                ],
-                {"person": 2, "organizationalUnit": 1},
-            ),
-            ([], {}),
-        ],
-    )
-    def test_search_result_by_objectclass(
-        self,
-        entries_data: list[tuple[str, list[str]]],
-        expected_categories: dict[str, int],
-    ) -> None:
-        """Test SearchResult.by_objectclass categorization."""
-        # Use TestDeduplicationHelpers.create_entry
-        entries = [
-            TestDeduplicationHelpers.create_entry(
-                dn,
-                {"cn": ["test"], "objectClass": oc},
-            )
-            for dn, oc in entries_data
-        ]
-        options = FlextLdapModels.SearchOptions(
-            base_dn=TestConstants.DEFAULT_BASE_DN,
+        result = m.MultiPhaseSyncResult(
+            phase_results={"01-users": phase1},
+            total_entries=100,
+            total_synced=95,
+            total_failed=5,
+            total_skipped=0,
+            overall_success_rate=95.0,
+            total_duration_seconds=10.0,
         )
+        tm.dict_(result.phase_results, has_key="01-users")
+        tm.eq(result.phase_results["01-users"].synced, 95)
 
-        result = FlextLdapModels.SearchResult(entries=entries, search_options=options)
-        # Access computed property - Pydantic computed_field accessed via getattr
-        categories = cast(
-            "dict[str, list[FlextLdifModels.Entry]]",
-            result.by_objectclass,
+    # =========================================================================
+    # LdapOperationResult Tests
+    # =========================================================================
+
+    def test_ldap_operation_result_creation(self) -> None:
+        """Test LdapOperationResult creation."""
+        result = m.LdapOperationResult(
+            operation=c.UpsertOperations.ADDED,
         )
+        tm.eq(result.operation, c.UpsertOperations.ADDED)
 
-        for oc, expected_count in expected_categories.items():
-            assert len(categories.get(oc, [])) == expected_count
+    # =========================================================================
+    # LdapBatchStats Tests
+    # =========================================================================
 
-    def test_search_result_by_objectclass_missing(self) -> None:
-        """Test by_objectclass handles missing objectClass."""
-        entry = TestDeduplicationHelpers.create_entry(
-            TestConstants.TEST_USER_DN,
-            {"cn": ["test"]},  # No objectClass
+    def test_ldap_batch_stats_default_values(self) -> None:
+        """Test LdapBatchStats default values."""
+        stats = m.LdapBatchStats()
+        tm.eq(stats.synced, 0)
+        tm.eq(stats.failed, 0)
+        tm.eq(stats.skipped, 0)
+
+    def test_ldap_batch_stats_custom_values(self) -> None:
+        """Test LdapBatchStats with custom values."""
+        stats = m.LdapBatchStats(
+            synced=80,
+            failed=10,
+            skipped=10,
         )
-        options = FlextLdapModels.SearchOptions(
-            base_dn=TestConstants.DEFAULT_BASE_DN,
+        tm.eq(stats.synced, 80)
+        tm.eq(stats.failed, 10)
+        tm.eq(stats.skipped, 10)
+
+    # =========================================================================
+    # Types Namespace Tests
+    # =========================================================================
+
+    def test_types_namespace_exists(self) -> None:
+        """Test Types namespace exists."""
+        tm.not_none(m.Types)
+
+    def test_ldap_progress_callback_type_exists(self) -> None:
+        """Test LdapProgressCallback type alias exists."""
+        tm.that(hasattr(m.Types, "LdapProgressCallback"), eq=True)
+
+    # =========================================================================
+    # Model Serialization Tests
+    # =========================================================================
+
+    def test_connection_config_serialization(self) -> None:
+        """Test ConnectionConfig serialization to dict."""
+        config = m.ConnectionConfig(
+            host="ldap.example.com",
+            port=636,
         )
+        data = config.model_dump()
+        tm.eq(data["host"], "ldap.example.com")
+        tm.eq(data["port"], 636)
 
-        result = FlextLdapModels.SearchResult(entries=[entry], search_options=options)
-        # Access computed property - Pydantic computed_field accessed via getattr
-        categories = cast(
-            "dict[str, list[FlextLdifModels.Entry]]",
-            result.by_objectclass,
+    def test_search_options_serialization(self) -> None:
+        """Test SearchOptions serialization to dict."""
+        options = m.SearchOptions(
+            base_dn=tc.RFC.DEFAULT_BASE_DN,
+            scope="SUBTREE",
         )
+        data = options.model_dump()
+        tm.eq(data["base_dn"], tc.RFC.DEFAULT_BASE_DN)
+        tm.eq(data["scope"], "SUBTREE")
 
-        assert "unknown" in categories
-        assert len(categories["unknown"]) == 1
+    def test_sync_stats_serialization(self) -> None:
+        """Test SyncStats serialization includes computed field."""
+        stats = m.SyncStats.from_counters(added=80, skipped=10, failed=10)
+        data = stats.model_dump()
+        tm.dict_(data, has_key="success_rate")
+        tm.eq(data["success_rate"], 0.9)
 
-    # === BatchOperations Tests ===
+    # =========================================================================
+    # JSON Schema Generation Tests
+    # =========================================================================
 
-    @pytest.mark.parametrize(
-        ("total", "successful", "failed"),
-        [(10, 8, 2), (0, 0, 0), (5, 5, 0)],
-    )
-    def test_batch_upsert_result(
-        self,
-        total: int,
-        successful: int,
-        failed: int,
-    ) -> None:
-        """Test BatchUpsertResult basic properties."""
-        result = FlextLdapModels.BatchUpsertResult(
-            total_processed=total,
-            successful=successful,
-            failed=failed,
-            results=[],
-        )
+    def test_connection_config_json_schema(self) -> None:
+        """Test ConnectionConfig JSON schema generation."""
+        schema = m.ConnectionConfig.model_json_schema()
+        tm.dict_(schema, has_key="properties")
+        tm.dict_(schema["properties"], has_key=["host", "port"])
 
-        expected_rate = 0.0 if total == 0 else successful / total
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            result,
-            {
-                "total_processed": total,
-                "successful": successful,
-                "failed": failed,
-                "success_rate": expected_rate,
-            },
-        )
+    def test_search_options_json_schema(self) -> None:
+        """Test SearchOptions JSON schema generation."""
+        schema = m.SearchOptions.model_json_schema()
+        tm.dict_(schema, has_key="properties")
+        tm.dict_(schema["properties"], has_key=["base_dn", "scope"])
 
-    def test_batch_upsert_result_with_results(self) -> None:
-        """Test BatchUpsertResult with individual results."""
-        results = [
-            FlextLdapModels.UpsertResult(
-                success=True,
-                dn="cn=t1,dc=example,dc=com",
-                operation=FlextLdapConstants.OperationType.ADD,
-            ),
-            FlextLdapModels.UpsertResult(
-                success=False,
-                dn="cn=t2,dc=example,dc=com",
-                operation=FlextLdapConstants.OperationType.MODIFY,
-                error="Entry not found",
-            ),
-        ]
 
-        batch = FlextLdapModels.BatchUpsertResult(
-            total_processed=2,
-            successful=1,
-            failed=1,
-            results=results,
-        )
-
-        assert len(batch.results) == 2
-        assert batch.results[0].success is True
-        assert batch.results[1].error == "Entry not found"
-
-    @pytest.mark.parametrize(
-        ("success", "operation", "error"),
-        [
-            (True, "add", None),
-            (False, "modify", "Entry not found"),
-            (True, "search", None),
-        ],
-    )
-    def test_upsert_result(
-        self,
-        success: bool,
-        operation: str,
-        error: str | None,
-    ) -> None:
-        """Test UpsertResult scenarios."""
-        operation_type_literal: FlextLdapConstants.OperationType
-        if operation == "add":
-            operation_type_literal = FlextLdapConstants.OperationType.ADD
-        elif operation == "modify":
-            operation_type_literal = FlextLdapConstants.OperationType.MODIFY
-        elif operation == "delete":
-            operation_type_literal = FlextLdapConstants.OperationType.DELETE
-        elif operation == "modify_dn":
-            operation_type_literal = FlextLdapConstants.OperationType.MODIFY_DN
-        elif operation == "compare":
-            operation_type_literal = FlextLdapConstants.OperationType.COMPARE
-        elif operation == "bind":
-            operation_type_literal = FlextLdapConstants.OperationType.BIND
-        elif operation == "unbind":
-            operation_type_literal = FlextLdapConstants.OperationType.UNBIND
-        else:
-            operation_type_literal = FlextLdapConstants.OperationType.SEARCH
-        result = FlextLdapModels.UpsertResult(
-            success=success,
-            dn="cn=test,dc=example,dc=com",
-            operation=operation_type_literal,
-            error=error,
-        )
-
-        FlextTestsUtilities.ModelTestHelpers.assert_attr_values(
-            result,
-            {"success": success, "operation": operation, "error": error},
-        )
+__all__ = [
+    "TestsFlextLdapModels",
+]

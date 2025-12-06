@@ -9,22 +9,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+import logging
+from collections.abc import Callable, Mapping
+from typing import ParamSpec, Self, cast
 
-from flext_core import FlextUtilities
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core import FlextRuntime, t
+from flext_ldif import FlextLdifUtilities
+
+P = ParamSpec("P")
 
 # ═══════════════════════════════════════════════════════════════════
 # FLEXT_LDAP UTILITIES - Advanced Builder/DSL Patterns
 # ═══════════════════════════════════════════════════════════════════
-# Extends FlextUtilities with LDAP-specific builders and compositions.
+# Extends FlextLdifUtilities (which extends FlextUtilities) with LDAP-specific builders.
 # Uses mnemonic short names for well-parametrized functions.
 # Maximizes reuse of base utilities via composition.
 
 
-class FlextLdapUtilities(FlextUtilities):
-    """FlextLdap utilities - extends FlextUtilities with advanced builders.
+class FlextLdapUtilities(FlextLdifUtilities):
+    """FlextLdap utilities - extends FlextLdifUtilities with advanced builders.
 
     ARCHITECTURE:
     ────────────
@@ -36,7 +39,7 @@ class FlextLdapUtilities(FlextUtilities):
 
     USAGE:
     ──────
-        from flext_ldap.utilities import FlextLdapUtilities as u
+        from flext_ldap.utilities import u
 
         # Builder patterns
         values = u.to_str_list(attr_value)
@@ -44,17 +47,30 @@ class FlextLdapUtilities(FlextUtilities):
         filtered = u.filter_attrs(attrs, only_list_like=True)
     """
 
+    # Singleton instance for calling inherited instance methods from static methods
+    _instance: FlextLdapUtilities | None = None
+
+    @classmethod
+    def _get_instance(cls) -> Self:
+        """Get singleton instance for calling inherited instance methods."""
+        if cls._instance is None:
+            cls._instance = cls()
+        # Type narrowing: cls._instance is guaranteed to be
+        # FlextLdapUtilities after None check
+        # Cast to Self for proper type inference
+        instance: Self = cast("Self", cls._instance)
+        return instance
+
     # ═══════════════════════════════════════════════════════════════════
     # CONVERSION BUILDERS - Mnemonic: conv() → to_str(), to_str_list()
     # ═══════════════════════════════════════════════════════════════════
-    # Aliases for backward compatibility - delegate to parent conv_str/conv_str_list
 
     @staticmethod
     def to_str(value: object, *, default: str = "") -> str:
         """Convert to string (builder: conv().str()).
 
         Uses advanced DSL: conv() builder internally for fluent composition.
-        Alias for conv_str() from parent FlextUtilities for backward compatibility.
+        Delegates to parent FlextUtilities.conv_str() via inheritance.
 
         Args:
             value: Value to convert
@@ -64,14 +80,23 @@ class FlextLdapUtilities(FlextUtilities):
             str: Converted string
 
         """
-        return FlextLdapUtilities.ensure_str(cast("t.GeneralValueType", value), default=default)
+        # Convert to string directly
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return value
+        return str(value) if value else default
 
     @staticmethod
-    def to_str_list(value: t.GeneralValueType, *, default: list[str] | None = None) -> list[str]:
+    def to_str_list(
+        value: t.GeneralValueType,
+        *,
+        default: list[str] | None = None,
+    ) -> list[str]:
         """Convert to str_list (builder: conv().str_list()).
 
         Uses advanced DSL: conv() builder internally for fluent composition.
-        Alias for conv_str_list() from parent FlextUtilities for backward compatibility.
+        Delegates to parent FlextUtilities.conv_str_list() via inheritance.
 
         Args:
             value: Value to convert
@@ -81,11 +106,27 @@ class FlextLdapUtilities(FlextUtilities):
             list[str]: Converted list
 
         """
-        return FlextLdapUtilities.ensure_str_list(value, default=default or [])
+        # Convert to list[str] using type narrowing
+        if value is None:
+            return default or []
+        # Use FlextRuntime for type-safe list conversion
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+        # Check for tuple/set/frozenset first (is_list_like returns False for these)
+        if isinstance(value, (list, tuple, set, frozenset)):
+            return [str(item) for item in value if item is not None]
+        if FlextRuntime.is_list_like(value_typed):
+            return [str(value)]
+        return [str(value)] if value is not None else (default or [])
 
     @staticmethod
-    def to_str_list_truthy(value: object, *, default: list[str] | None = None) -> list[str]:
-        """Convert to str_list and filter truthy (generalized: chain(ensure_str_list, filter_truthy)).
+    def to_str_list_truthy(
+        value: object,
+        *,
+        default: list[str] | None = None,
+    ) -> list[str]:
+        """Convert to str_list and filter truthy.
+
+        Uses generalized pattern: chain(ensure, filter_truthy).
 
         Uses advanced DSL: chain() for fluent composition chain.
 
@@ -98,18 +139,33 @@ class FlextLdapUtilities(FlextUtilities):
 
         """
         # DSL pattern: chain() for fluent composition chain
-        result = FlextLdapUtilities.chain(
-            cast("t.GeneralValueType", value),
-            lambda v: FlextLdapUtilities.ensure_str_list(cast("t.GeneralValueType", v), default=default or []),
-            lambda lst: FlextLdapUtilities.filter_truthy(cast("list[object]", lst)),
-        )
-        return cast("list[str]", result) if isinstance(result, list) else (default or [])
+        # Use parent class methods directly
+        # Cast object to GeneralValueType for ensure
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+        # Convert to list[str] using type narrowing
+        if value_typed is None:
+            return default or []
+
+        # Check for tuple/set/frozenset first (is_list_like returns False for these)
+        if isinstance(value_typed, (list, tuple, set, frozenset)):
+            str_list = [str(item) for item in value_typed if item is not None]
+        elif FlextRuntime.is_list_like(value_typed):
+            # For other list-like types (not handled by isinstance above)
+            str_list = [str(value_typed)]
+        else:
+            str_list = (
+                [str(value_typed)] if value_typed is not None else (default or [])
+            )
+        # Filter truthy values - implement directly for type safety
+        # Type narrowing: str_list is list[str], filter truthy values
+        filtered_list: list[str] = [item for item in str_list if item]
+        return filtered_list
 
     @staticmethod
     def to_str_list_safe(value: object | None) -> list[str]:
-        """Safe str_list conversion (generalized: when() + ensure_str_list).
+        """Safe str_list conversion (generalized: when() + ensure).
 
-        Uses advanced DSL: when() → ensure_str_list() for safe composition.
+        Uses advanced DSL: when() → ensure() for safe composition.
 
         Args:
             value: Value to convert (can be None)
@@ -118,33 +174,194 @@ class FlextLdapUtilities(FlextUtilities):
             list[str]: Converted list or []
 
         """
-        # DSL pattern: when() for safe None check, then ensure_str_list()
-        return cast(
-            "list[str]",
-            FlextLdapUtilities.when(
-                condition=value is not None,
-                then_value=FlextLdapUtilities.ensure_str_list(cast("t.GeneralValueType", value), default=[]),
-                else_value=[],
-            ),
+        # DSL pattern: conditional check for safe None handling, then ensure()
+        if value is not None:
+            # Cast object to GeneralValueType for ensure
+            value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+            # Convert to list[str] using type narrowing
+            if value_typed is None:
+                return []
+            # Check for tuple/set/frozenset first (is_list_like returns False for these)
+            # then check is_list_like for standard list/Sequence types
+            if isinstance(value_typed, (list, tuple, set, frozenset)):
+                return [str(item) for item in value_typed if item is not None]
+            if FlextRuntime.is_list_like(value_typed):
+                return [str(item) for item in value_typed if item is not None]
+            return [str(value_typed)] if value_typed is not None else []
+        return []
+
+    # ═══════════════════════════════════════════════════════════════════
+    # NORMALIZATION BUILDERS - Expose via static methods
+    # ═══════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def norm_str(value: str, *, case: str | None = None) -> str:
+        """Normalize string (implements normalization directly).
+
+        Args:
+            value: String to normalize
+            case: Case normalization ("lower", "upper", None)
+
+        Returns:
+            Normalized string
+
+        """
+        if not value:
+            return ""
+        if case == "lower":
+            return value.lower()
+        if case == "upper":
+            return value.upper()
+        return value
+
+    @classmethod
+    def norm_join(
+        cls,
+        values: list[str] | tuple[str, ...],
+        *,
+        case: str | None = None,
+    ) -> str:
+        """Normalize and join strings (delegates to Parser.norm_join).
+
+        Args:
+            values: List or tuple of strings to normalize and join
+            case: Case normalization ("lower", "upper", None)
+
+        Returns:
+            Joined normalized string
+
+        """
+        # Convert tuple to list if needed
+        values_list = list(values) if isinstance(values, tuple) else values
+        # Normalize each value and join
+        normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
+        return " ".join(normalized)
+
+    @classmethod
+    def norm_in(
+        cls,
+        value: str,
+        collection: list[str] | tuple[str, ...],
+        *,
+        case: str | None = None,
+    ) -> bool:
+        """Check if normalized value is in collection (delegates to Parser.norm_in).
+
+        Args:
+            value: String to check
+            collection: List or tuple of strings to check against
+            case: Case normalization ("lower", "upper", None)
+
+        Returns:
+            True if normalized value is in collection
+
+        """
+        # Convert tuple to list if needed
+        collection_list = (
+            list(collection) if isinstance(collection, tuple) else collection
         )
+        # Normalize value and check membership
+        normalized_value = cls.norm_str(value, case=case or "lower")
+        normalized_collection = [
+            cls.norm_str(str(item), case=case or "lower") for item in collection_list
+        ]
+        return normalized_value in normalized_collection
 
     # ═══════════════════════════════════════════════════════════════════
-    # NORMALIZATION BUILDERS - Inherited from parent FlextUtilities
+    # FILTER BUILDERS - Expose via static methods
     # ═══════════════════════════════════════════════════════════════════
-    # Methods norm_str, norm_list, norm_join, norm_in are inherited from parent
-    # No need to override - parent implementations are generic and reusable
+
+    @staticmethod
+    def filter_truthy(
+        value: list[object] | dict[str, object],
+    ) -> list[object] | dict[str, object]:
+        """Filter truthy values from list or dict.
+
+        Args:
+            value: List or dict to filter
+
+        Returns:
+            Filtered list or dict with only truthy values
+
+        """
+        if isinstance(value, dict):
+            return {k: v for k, v in value.items() if v}
+        return [item for item in value if item]
 
     # ═══════════════════════════════════════════════════════════════════
-    # FILTER BUILDERS - Inherited from parent FlextUtilities
+    # MAP BUILDERS - Expose via static methods
     # ═══════════════════════════════════════════════════════════════════
-    # Methods filter_attrs, filter_not_none, filter_truthy are inherited from parent
-    # No need to override - parent implementations are generic and reusable
+
+    @staticmethod
+    def map_str(
+        values: list[str] | tuple[str, ...],
+        *,
+        case: str | None = None,
+        join: str | None = None,
+    ) -> str | list[str]:
+        """Map strings with normalization and optional join.
+
+        Args:
+            values: List of strings to map
+            case: Case normalization ("lower", "upper", None)
+            join: Join character (if provided, returns str; otherwise list[str])
+
+        Returns:
+            Joined string or list of normalized strings
+
+        """
+        # Normalize strings
+        normalized: list[str] = []
+        for val in values:
+            normalized_val = val
+            if case == "lower":
+                normalized_val = val.lower()
+            elif case == "upper":
+                normalized_val = val.upper()
+            normalized.append(normalized_val)
+
+        # Join if requested
+        if join is not None:
+            return join.join(normalized)
+        return normalized
 
     # ═══════════════════════════════════════════════════════════════════
-    # MAP BUILDERS - Mnemonic: map() → map_str(), attr_to_str_list()
+    # FIND BUILDERS - Expose via static methods
     # ═══════════════════════════════════════════════════════════════════
-    # map_str is inherited from parent FlextUtilities
-    # attr_to_str_list is LDAP-specific and kept here
+
+    @staticmethod
+    def find_callable(
+        callables_dict: Mapping[str, Callable[P, t.FlexibleValue]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> str | None:
+        """Find first callable that returns truthy value.
+
+        Args:
+            callables_dict: Dictionary of callables to test
+            *args: Positional arguments to pass to callables
+            **kwargs: Keyword arguments to pass to callables
+
+        Returns:
+            Key of first matching callable or None
+
+        """
+        for key, callable_func in callables_dict.items():
+            try:
+                result = callable_func(*args, **kwargs)
+                if result:
+                    return key
+            except Exception as e:
+                # Log exception for debugging but continue searching
+                # This is expected behavior when testing multiple callables
+                logger = logging.getLogger(__name__)
+                logger.debug(
+                    "Callable %s raised exception, continuing",
+                    key,
+                    exc_info=e,
+                )
+                continue
+        return None
 
     @staticmethod
     def attr_to_str_list(
@@ -152,9 +369,9 @@ class FlextLdapUtilities(FlextUtilities):
         *,
         filter_list_like: bool = False,
     ) -> dict[str, list[str]]:
-        """Convert attributes to str_list (generalized: map() + ensure_str_list).
+        """Convert attributes to str_list (generalized: map() + ensure).
 
-        Uses advanced DSL: map() → ensure_str_list() for fluent composition.
+        Uses advanced DSL: map() → ensure() for fluent composition.
 
         Args:
             attrs: Attributes to convert
@@ -164,23 +381,34 @@ class FlextLdapUtilities(FlextUtilities):
             dict[str, list[str]]: Converted attributes
 
         """
-        # DSL pattern: map() with when() + ensure_str_list() for fluent composition
-        def convert_value(_k: str, v: object) -> list[str]:
-            return cast(
-                "list[str]",
-                FlextLdapUtilities.when(
-                    condition=filter_list_like and not FlextRuntime.is_list_like(cast("t.GeneralValueType", v)),
-                    then_value=[str(v)],
-                    else_value=FlextLdapUtilities.ensure_str_list(cast("t.GeneralValueType", v), default=[]),
-                ),
-            )
 
-        attrs_dict = cast("dict[str, object]", attrs) if isinstance(attrs, dict) else {}
+        # DSL pattern: conditional conversion with ensure() for fluent composition
+        def convert_value(_k: str, v: object) -> list[str]:
+            if filter_list_like:
+                # Cast object to GeneralValueType for is_list_like
+                # FlextRuntime.is_list_like expects GeneralValueType
+                v_typed_check: t.GeneralValueType = cast("t.GeneralValueType", v)
+                if not FlextRuntime.is_list_like(v_typed_check):
+                    return [str(v)]
+            # Cast object to GeneralValueType for ensure
+            v_typed: t.GeneralValueType = cast("t.GeneralValueType", v)
+            # Convert to list[str] using type narrowing
+            if v_typed is None:
+                return []
+            if FlextRuntime.is_list_like(v_typed):
+                if isinstance(v_typed, (list, tuple, set, frozenset)):
+                    return [str(item) for item in v_typed if item is not None]
+                return [str(v_typed)]
+            return [str(v_typed)] if v_typed is not None else []
+
+        # attrs is dict[str, object] | dict[str, list[str]]
+        # Both are compatible with dict[str, object] for processing
+        attrs_dict: dict[str, object] = dict(attrs)
         if not attrs_dict:
             return {}
-        mapped_result = FlextLdapUtilities.map(attrs_dict, mapper=convert_value)
-        # map() returns dict[str, R] when input is dict, so type is already correct
-        return mapped_result if isinstance(mapped_result, dict) else {}
+        # Map attributes using dict comprehension (map functionality)
+        # mapped_result is always dict[str, list[str]] from comprehension
+        return {k: convert_value(k, v) for k, v in attrs_dict.items()}
 
     # ═══════════════════════════════════════════════════════════════════
     # FIND BUILDERS - Inherited from parent FlextUtilities
@@ -189,14 +417,26 @@ class FlextLdapUtilities(FlextUtilities):
     # No need to override - parent implementation is generic and reusable
 
     # ═══════════════════════════════════════════════════════════════════
+    # INHERITED METHODS - Available via inheritance from FlextUtilities
+    # ═══════════════════════════════════════════════════════════════════
+    # These methods are available via inheritance from FlextUtilities:
+    # - filter_truthy (via FlextUtilities)
+    # - extract_str_from_obj (via FlextUtilities)
+    # - normalize (via FlextUtilities) - prefer norm_str() for new code
+    # - map_str (via FlextUtilities)
+    # - find_callable (via FlextUtilities)
+    # - filter_attrs (via FlextUtilities)
+    # - all_ and any_ (via FlextUtilities.Validation.ResultHelpers)
+
+    # ═══════════════════════════════════════════════════════════════════
     # CONDITIONAL BUILDERS - Mnemonic: when() → when_safe(), dn_str()
     # ═══════════════════════════════════════════════════════════════════
 
     @staticmethod
     def when_safe(
-        condition: bool,  # noqa: FBT001
-        then_value: object | None,
         *,
+        condition: bool,
+        then_value: object | None,
         else_value: object | None = None,
         safe_then: bool = False,
     ) -> object | None:
@@ -214,16 +454,12 @@ class FlextLdapUtilities(FlextUtilities):
             then_value or else_value
 
         """
-        # DSL pattern: when() → or_() for safe composition with safe_then check
-        return FlextLdapUtilities.when(
-            condition=condition,
-            then_value=FlextLdapUtilities.or_(
-                then_value if not safe_then or then_value is not None else None,
-                else_value,
-                default=else_value,
-            ),
-            else_value=else_value,
-        )
+        # DSL pattern: conditional check for safe composition
+        if condition:
+            if safe_then and then_value is None:
+                return else_value
+            return then_value if then_value is not None else else_value
+        return else_value
 
     @staticmethod
     def dn_str(dn: object | None, *, default: str = "unknown") -> str:
@@ -239,8 +475,22 @@ class FlextLdapUtilities(FlextUtilities):
             str: DN string or default
 
         """
-        return FlextLdapUtilities.extract_str_from_obj(dn, attr="value", default=default)
+        # Extract string from object with attribute access
+        if dn is None:
+            return default
+        # Check if object has the specified attribute
+        if hasattr(dn, "value"):
+            value = getattr(dn, "value", None)
+            if isinstance(value, str):
+                return value
+            return str(value) if value is not None else default
+        # If no attribute, convert directly
+        if isinstance(dn, str):
+            return dn
+        return str(dn) if dn is not None else default
 
 
-# Convenience alias
+# Convenience alias - exported for domain usage
 u = FlextLdapUtilities
+
+__all__ = ["FlextLdapUtilities", "u"]

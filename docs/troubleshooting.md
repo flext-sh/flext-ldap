@@ -227,12 +227,12 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 **Validation:**
 
 ```python
-from flext_ldap import FlextLdapModels.ValueObjects
+from flext_ldap import m
 
 def validate_dn(dn_string: str) -> bool:
     """Validate DN format."""
     try:
-        dn = FlextLdapModels.ValueObjects.DistinguishedName.create(dn_string)
+        dn = m.DistinguishedName(value=dn_string)
         return True
     except ValueError as e:
         print(f"Invalid DN: {e}")
@@ -287,7 +287,7 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 **Filter Validation:**
 
 ```python
-from flext_ldap import FlextLdapModels.ValueObjects
+from flext_ldap import m, c
 
 def validate_filter(filter_string: str) -> bool:
     """Validate LDAP filter syntax."""

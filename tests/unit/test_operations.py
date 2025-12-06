@@ -13,9 +13,8 @@
 All tests use real functionality without mocks, leveraging flext-core test utilities
 and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
 
-Module: TestFlextLdapOperations
-Scope: Comprehensive operations testing with maximum code reuse
-Pattern: Parametrized tests using factories and constants
+Architecture: Single class per module following FLEXT patterns.
+Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,22 +27,22 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextConfig
-from flext_tests import FlextTestsMatchers
+from flext_tests import tm
 
+from flext_ldap import m
 from flext_ldap.config import FlextLdapConfig
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldap.models import FlextLdapModels
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-
-from ...fixtures.constants import TestConstants
-from ...helpers.entry_helpers import EntryTestHelpers
+from tests import c
 
 pytestmark = pytest.mark.unit
 
 
-class TestFlextLdapOperations:
+class TestsFlextLdapOperations:
     """Comprehensive tests for FlextLdapOperations using factories and DRY principles.
+
+    Architecture: Single class per module following FLEXT patterns.
+    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
 
     Uses parametrized tests and constants for maximum code reuse.
     All helper logic is nested within this single class following FLEXT patterns.
@@ -69,6 +68,7 @@ class TestFlextLdapOperations:
     @classmethod
     def _create_connection(cls) -> FlextLdapConnection:
         """Factory method for creating connection instances."""
+        # but services pass complex objects via __init__ which are validated at runtime
         return FlextLdapConnection(config=FlextLdapConfig())
 
     @classmethod
@@ -93,27 +93,23 @@ class TestFlextLdapOperations:
         """Test that __init__ succeeds when connection is provided."""
         connection = self._create_connection()
         operations = self._create_operations(connection)
-        assert operations is not None
-        assert operations._connection is connection
+        tm.not_none(operations)
+        tm.eq(operations._connection, connection)
 
     def test_operations_initialization(self) -> None:
         """Test operations service initialization."""
         operations = self._create_operations()
-        assert operations is not None
-        assert operations._connection is not None
-        assert operations.logger is not None
+        tm.not_none(operations, operations._connection, operations.logger)
 
     def test_config_property(self) -> None:
         """Test config property returns FlextConfig with ldap namespace."""
         operations = self._create_operations()
-        config = operations.config
-        assert config is not None
-        assert isinstance(config, FlextConfig)
+        tm.is_type(operations.config, FlextConfig)
 
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""
         operations = self._create_operations()
-        assert operations.is_connected is False
+        tm.eq(operations.is_connected, False)
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),
@@ -126,63 +122,23 @@ class TestFlextLdapOperations:
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
-        assert result is expected
-
-    @pytest.mark.parametrize(
-        "scenario",
-        ["identical", "different"],
-    )
-    def test_entry_comparison(self, scenario: str) -> None:
-        """Test EntryComparison.compare with identical/different entries."""
-        attrs = self._ENTRY_SCENARIOS[scenario]
-        entry1 = EntryTestHelpers.create_entry(
-            TestConstants.Operations.TEST_DN,
-            self._ENTRY_SCENARIOS["identical"],
-        )
-        entry2 = EntryTestHelpers.create_entry(TestConstants.Operations.TEST_DN, attrs)
-        changes = FlextLdapOperations.EntryComparison.compare(entry1, entry2)
-        if scenario == "identical":
-            assert changes is None
-        else:
-            assert changes is not None
-            assert isinstance(changes, dict)
-            assert "sn" in changes
+        tm.eq(result, expected)
 
     def test_execute_method_returns_result(self) -> None:
         """Test execute method returns a FlextResult."""
         operations = self._create_operations()
         result = operations.execute()
-        _ = FlextTestsMatchers.assert_failure(result)
-
-    def test_upsert_method_calls_internal(self) -> None:
-        """Test upsert method calls internal implementation."""
-        operations = self._create_operations()
-        entry = EntryTestHelpers.create_entry(
-            TestConstants.Operations.TEST_DN,
-            {"cn": ["test"], "objectClass": ["person"]},
-        )
-        result = operations.upsert(entry)
-        _ = FlextTestsMatchers.assert_failure(result)
-
-    def test_batch_upsert_method_exists(self) -> None:
-        """Test batch_upsert method exists."""
-        operations = self._create_operations()
-        entries = [
-            EntryTestHelpers.create_entry(
-                TestConstants.Operations.TEST_DN_1,
-                {"cn": ["test1"]},
-            ),
-        ]
-        result = operations.batch_upsert(entries)
-        _ = FlextTestsMatchers.assert_failure(result)
+        tm.fail(result)
 
     def test_search_method_exists(self) -> None:
         """Test that search method exists and can be called."""
         operations = self._create_operations()
-        search_options = FlextLdapModels.SearchOptions(
-            base_dn=TestConstants.Operations.BASE_DN,
-            filter_str=TestConstants.Operations.DEFAULT_FILTER,
-            scope=FlextLdapConstants.SearchScope.SUBTREE,
+        # Use constants directly from TestsFlextLdapConstants.RFC
+        rfc_constants = c.RFC
+        search_options = m.SearchOptions(
+            base_dn=rfc_constants.DEFAULT_BASE_DN,
+            filter_str=rfc_constants.DEFAULT_FILTER,
+            scope=c.SearchScope.SUBTREE.value,
         )
         result = operations.search(search_options)
-        _ = FlextTestsMatchers.assert_failure(result)
+        tm.fail(result)

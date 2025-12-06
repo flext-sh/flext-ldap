@@ -12,25 +12,26 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextResult, FlextRuntime
-from flext_core.typings import FlextTypes as t_core
-from flext_ldif.models import FlextLdifModels
 from flext_tests import FlextTestsUtilities
 
-from flext_ldap import FlextLdap, c, m, p, r, t, u
-from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap import (
+    FlextLdap,
+    FlextLdapOperations,
+    p,
+    r,
+)
 
-from ..fixtures.constants import RFC
-from ..fixtures.typing import GenericFieldsDict
-from .test_helpers import FlextLdapTestHelpers
+from ..constants import c
+from ..models import m
+from ..typings import GenericFieldsDict, t
+from ..utilities import u
+
+# Backward compatibility alias
+RFC = c.RFC
 
 # Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
 LdapClientType = FlextLdap | p.LdapService.LdapClientProtocol
-
-# Union type for LDAP operations only (no connect method) - for FlextLdapOperations and similar
-LdapOperationsType = (
-    FlextLdap | FlextLdapOperations | p.LdapService.LdapClientProtocol
-)
+LdapOperationsType = FlextLdap | FlextLdapOperations | p.LdapService.LdapClientProtocol
 
 # Valid search scopes for validation - reuse production StrEnum
 
@@ -39,7 +40,7 @@ _VALID_SCOPES: frozenset[str] = frozenset({
     c.SearchScope.ONELEVEL.value,
     c.SearchScope.SUBTREE.value,
 })
-# Reuse production Literal type
+# Reuse production Literal type via test constants
 SearchScopeType = c.LiteralTypes.SearchScopeLiteral
 
 
@@ -48,7 +49,7 @@ def _validate_scope(
 ) -> c.SearchScope:
     """Validate and return a SearchScope StrEnum.
 
-    Uses u.Enum.parse for unified enum parsing.
+    Uses u.Enum.parse for unified enum parsing via test utilities.
 
     Args:
         scope: Scope string or StrEnum to validate
@@ -64,7 +65,7 @@ def _validate_scope(
     if isinstance(scope, c.SearchScope):
         return scope
 
-    # Use u.Enum.parse for unified enum parsing
+    # Use u.Enum.parse for unified enum parsing via test utilities
     parse_result = u.Enum.parse(
         c.SearchScope,
         scope,
@@ -77,11 +78,52 @@ def _validate_scope(
     raise ValueError(msg)
 
 
-class TestOperationHelpers:
-    """Helper methods for LDAP operation testing to reduce duplication."""
+class TestsFlextLdapOperationHelpers:
+    """Helper methods for LDAP operation testing to reduce code duplication.
+
+    Architecture: Single class per module following FLEXT patterns.
+    Uses flext_tests utilities and protocols for maximum code reuse.
+    All methods are static for easy use in tests.
+    """
 
     @staticmethod
-    def _ensure_entry_has_dn(entry: FlextLdifModels.Entry) -> None:
+    def _ensure_flext_result[T](result: r[T] | object) -> r[T]:
+        """Ensure result is FlextResult, converting from protocol if needed.
+
+        Args:
+            result: Result that may be r or protocol result
+
+        Returns:
+            r[T] instance
+
+        """
+        if isinstance(result, r):
+            return result
+        return cast("r[T]", result)
+
+    @staticmethod
+    def _assert_result_success[T](
+        result: r[T],
+        error_msg: str = "Operation failed",
+    ) -> r[T]:
+        """Assert result is success and return it.
+
+        Args:
+            result: Result to check
+            error_msg: Error message if failure
+
+        Returns:
+            Result if success
+
+        Raises:
+            AssertionError: If result is failure
+
+        """
+        FlextTestsUtilities.Result.assert_success(result, error_msg=error_msg)
+        return result
+
+    @staticmethod
+    def _ensure_entry_has_dn(entry: m.Entry) -> None:
         """Ensure entry has DN for protocol compatibility.
 
         Args:
@@ -96,7 +138,7 @@ class TestOperationHelpers:
             raise ValueError(error_msg)
 
     @staticmethod
-    def _ensure_entry_has_attributes(entry: FlextLdifModels.Entry) -> None:
+    def _ensure_entry_has_attributes(entry: m.Entry) -> None:
         """Ensure entry has attributes for protocol compatibility.
 
         Args:
@@ -111,7 +153,7 @@ class TestOperationHelpers:
             raise ValueError(error_msg)
 
     @staticmethod
-    def _ensure_entry_protocol_compatible(entry: FlextLdifModels.Entry) -> None:
+    def _ensure_entry_protocol_compatible(entry: m.Entry) -> None:
         """Ensure entry is compatible with EntryProtocol.
 
         Args:
@@ -121,12 +163,33 @@ class TestOperationHelpers:
             ValueError: If entry.dn or entry.attributes is None
 
         """
-        TestOperationHelpers._ensure_entry_has_dn(entry)
-        TestOperationHelpers._ensure_entry_has_attributes(entry)
+        TestsFlextLdapOperationHelpers._ensure_entry_has_dn(entry)
+        TestsFlextLdapOperationHelpers._ensure_entry_has_attributes(entry)
+
+    @staticmethod
+    def _validate_search_options_type(
+        search_options_raw: object,
+    ) -> m.SearchOptions:
+        """Validate and return SearchOptions type.
+
+        Args:
+            search_options_raw: Raw search options to validate
+
+        Returns:
+            Validated SearchOptions instance
+
+        Raises:
+            TypeError: If search_options_raw is not SearchOptions
+
+        """
+        if not isinstance(search_options_raw, m.SearchOptions):
+            error_msg = "search_options must be m.SearchOptions"
+            raise TypeError(error_msg)
+        return search_options_raw
 
     @staticmethod
     def _get_entry_for_protocol(
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
     ) -> p.LdapEntry.EntryProtocol:
         """Get entry compatible with EntryProtocol after validation.
 
@@ -143,126 +206,6 @@ class TestOperationHelpers:
         return cast("p.LdapEntry.EntryProtocol", entry)
 
     @staticmethod
-    def assert_result_failure[T](
-        result: r[T],
-        *,
-        expected_error: str | None = None,
-    ) -> None:
-        """Assert result is failure, common pattern.
-
-        Uses centralized FlextTestsUtilities for consistency.
-
-        Args:
-            result: r to check
-            expected_error: Optional expected error substring
-
-        """
-        FlextTestsUtilities.TestUtilities.assert_result_failure(result)
-        if expected_error:
-            # r.error can be None, so we need to check
-            error_msg = result.error
-            assert error_msg is not None, "Expected error message but got None"
-            assert expected_error in error_msg, (
-                f"Expected error containing '{expected_error}', got: {error_msg}"
-            )
-
-    @staticmethod
-    def get_error_message[T](result: r[T]) -> str:
-        """Get error message from result, raising if None.
-
-        Args:
-            result: r to get error from
-
-        Returns:
-            str: Error message (guaranteed non-None)
-
-        Raises:
-            AssertionError: If result is success or error is None
-
-        """
-        assert result.is_failure, "Expected failure result"
-        error_msg = result.error
-        assert error_msg is not None, "Expected error message but got None"
-        return error_msg
-
-    @staticmethod
-    def assert_result_success[T](
-        result: r[T],
-        *,
-        error_message: str | None = None,
-    ) -> None:
-        """Assert result is success, common pattern.
-
-        Uses centralized FlextTestsUtilities for consistency.
-
-        Args:
-            result: r to check
-            error_message: Optional custom error message
-
-        """
-        FlextTestsUtilities.TestUtilities.assert_result_success(result)
-        # Custom error message handling if needed
-        if error_message and not result.is_success:
-            pytest.fail(f"{error_message}: {result.error}")
-
-    @staticmethod
-    def assert_result_success_and_unwrap[T](
-        result: r[T],
-        *,
-        error_message: str | None = None,
-    ) -> T:
-        """Assert result is success and unwrap it.
-
-        Args:
-            result: r to unwrap
-            error_message: Optional custom error message
-
-        Returns:
-            Unwrapped result value
-
-        """
-        TestOperationHelpers.assert_result_success(result, error_message=error_message)
-        return result.unwrap()
-
-    @staticmethod
-    def unwrap_and_assert_not_none[T](
-        result: r[T],
-        *,
-        error_message: str | None = None,
-    ) -> T:
-        """Unwrap result and assert it's not None.
-
-        Args:
-            result: r to unwrap
-            error_message: Optional custom error message
-
-        Returns:
-            Unwrapped result value (guaranteed not None)
-
-        """
-        value = TestOperationHelpers.assert_result_success_and_unwrap(
-            result,
-            error_message=error_message,
-        )
-        assert value is not None, "Unwrapped value is None"
-        return value
-
-    @staticmethod
-    def unwrap_sync_stats[T](
-        result: r[T],
-    ) -> T:
-        """Unwrap sync service stats result.
-
-        Args:
-            result: Sync service result (accepts any r type)
-
-        Returns:
-            Unwrapped stats of type T
-
-        """
-        return TestOperationHelpers.assert_result_success_and_unwrap(result)
-
-    @staticmethod
     def connect_with_skip_on_failure(
         client: LdapClientType,
         connection_config: m.ConnectionConfig,
@@ -276,7 +219,9 @@ class TestOperationHelpers:
         """
         connect_result = client.connect(connection_config)
         if connect_result.is_failure:
-            pytest.skip(f"Failed to connect: {connect_result.error}")
+            pytest.fail(
+                f"Failed to connect: {connect_result.error}. This test requires a running LDAP container.",
+            )
 
     @staticmethod
     def connect_and_assert_success(
@@ -291,23 +236,18 @@ class TestOperationHelpers:
 
         """
         connect_result = client.connect(connection_config)
-        # Type narrowing: ensure we have FlextResult, not just ResultProtocol
-        if isinstance(connect_result, FlextResult):
-            TestOperationHelpers.assert_result_success(
-                connect_result,
-                error_message="Connection failed",
-            )
+        # Type narrowing: ensure we have r, not just ResultProtocol
+        if isinstance(connect_result, r):
+            FlextTestsUtilities.TestUtilities.assert_result_success(connect_result)
         # Convert protocol result to r if needed
         elif connect_result.is_success:
-            TestOperationHelpers.assert_result_success(
+            FlextTestsUtilities.TestUtilities.assert_result_success(
                 r[bool].ok(connect_result.unwrap()),
-                error_message="Connection failed",
             )
         else:
-            TestOperationHelpers.assert_result_success(
-                r[bool].fail(str(connect_result.error)),
-                error_message="Connection failed",
-            )
+            # This should never happen if is_success is False, but handle gracefully
+            result_as_r = r[bool].fail(str(connect_result.error))
+            FlextTestsUtilities.TestUtilities.assert_result_success(result_as_r)
 
     @staticmethod
     def search_and_assert_success(
@@ -346,15 +286,27 @@ class TestOperationHelpers:
             size_limit=size_limit,
         )
 
-        # SearchOptions is structurally compatible with SearchOptionsProtocol
-        search_result_raw = client.search(search_options)
-        search_result: r[m.SearchResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(search_result_raw)
+        # SearchOptions works directly with FlextLdap/FlextLdapOperations
+        # For protocol clients, SearchOptions is structurally compatible with SearchOptionsProtocol
+        if isinstance(client, (FlextLdap, FlextLdapOperations)):
+            search_result_raw = client.search(search_options)
+        else:
+            # Protocol client - use cast to indicate structural compatibility
+            # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
+            search_result_protocol = client.search(
+                cast("p.Config.SearchOptionsProtocol", search_options),
+            )
+            search_result_raw = cast("r[m.SearchResult]", search_result_protocol)
+        # Ensure we have r[m.SearchResult]
+        if not isinstance(search_result_raw, r):
+            # Convert protocol result to r
+            search_result_raw = cast("r[m.SearchResult]", search_result_raw)
+        # Assert success and get value
+        FlextTestsUtilities.Result.assert_success(
+            search_result_raw,
+            error_msg="Search failed",
         )
-        TestOperationHelpers.assert_result_success(
-            search_result,
-            error_message="Search failed",
-        )
+        search_result = search_result_raw
         result = search_result.unwrap()
         # SearchResult.unwrap() always returns SearchResult model, no conversion needed
         assert len(result.entries) >= expected_min_count, (
@@ -381,12 +333,15 @@ class TestOperationHelpers:
 
         """
         execute_result_raw = client.execute()
-        execute_result: r[m.SearchResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(execute_result_raw)
+        # execute() returns r[m.SearchResult] - ensure type compatibility
+        # Protocol results are compatible with model results via structural typing
+        execute_result_typed: r[m.SearchResult] = (
+            TestsFlextLdapOperationHelpers._ensure_flext_result(
+                execute_result_raw,
+            )
         )
-        return TestOperationHelpers.assert_result_success_and_unwrap(
-            execute_result,
-            error_message="Execute failed",
+        return FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+            execute_result_typed,
         )
 
     @staticmethod
@@ -425,8 +380,8 @@ class TestOperationHelpers:
         mail: str | None = None,
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
-        **extra_attributes: t_core.GeneralValueType,
-    ) -> FlextLdifModels.Entry:
+        **extra_attributes: t.GeneralValueType,
+    ) -> m.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
         Replaces repetitive inetOrgPerson entry creation across tests.
@@ -443,19 +398,19 @@ class TestOperationHelpers:
             **extra_attributes: Additional attributes as individual kwargs
 
         Returns:
-            FlextLdifModels.Entry with inetOrgPerson objectClass
+            m.Entry with inetOrgPerson objectClass
 
         Example:
             # CN-based entry
-            entry = TestOperationHelpers.create_inetorgperson_entry(
+            entry = TestsFlextLdapOperationHelpers.create_inetorgperson_entry(
                 "testuser", "dc=example,dc=com", sn="User"
             )
             # UID-based entry
-            entry = TestOperationHelpers.create_inetorgperson_entry(
+            entry = TestsFlextLdapOperationHelpers.create_inetorgperson_entry(
                 "testuser", "dc=example,dc=com", sn="User", use_uid=True
             )
             # With additional attributes
-            entry = TestOperationHelpers.create_inetorgperson_entry(
+            entry = TestsFlextLdapOperationHelpers.create_inetorgperson_entry(
                 "testuser", "dc=example,dc=com",
                 additional_attrs={"mail": ["test@example.com"]}
             )
@@ -486,74 +441,40 @@ class TestOperationHelpers:
         if mail:
             entry_attributes["mail"] = [mail]
 
-        # Merge additional_attrs if provided
+        # Handle cn from extra_attributes if provided (overrides default)
+        # Must be done before processing other extra_attributes to avoid conflicts
+        if "cn" in extra_attributes:
+            cn_extra = extra_attributes.pop("cn")
+            # Normalize single value to list for LDAP attributes
+            if isinstance(cn_extra, list):
+                entry_attributes["cn"] = [str(v) for v in cn_extra]
+            else:
+                entry_attributes["cn"] = [str(cn_extra)]
+
+        # Merge additional_attrs if provided - normalize to dict[str, list[str]]
         if additional_attrs:
+            normalized_additional: dict[str, list[str]] = {}
+            for key, value in additional_attrs.items():
+                if isinstance(value, list):
+                    normalized_additional[key] = [str(v) for v in value]
+                else:
+                    normalized_additional[key] = [str(value)]
+            entry_attributes.update(normalized_additional)
 
-            def process_additional_attr(
-                key: str, value: object
-            ) -> list[str]:
-                """Process additional attribute value."""
-                value_typed: t_core.GeneralValueType = cast("t_core.GeneralValueType", value)
-                if FlextRuntime.is_list_like(value_typed):
-                    # If already a list, check if it's list[str] or needs conversion
-                    if isinstance(value_typed, list):
-                        # Check if all items are already strings
-                        if all(isinstance(v, str) for v in value_typed):
-                            return cast("list[str]", value_typed)
-                        # Convert non-string items to strings
-                        return [str(v) for v in value_typed]
-                    # For tuple/set/frozenset, convert to list[str]
-                    return [str(v) for v in value_typed]
-                return [str(value_typed)]
+        # Process individual extra attributes - normalize to dict[str, list[str]]
+        if extra_attributes:
+            normalized_extra: dict[str, list[str]] = {}
+            for key, value in extra_attributes.items():
+                if isinstance(value, list):
+                    normalized_extra[key] = [str(v) for v in value]
+                else:
+                    normalized_extra[key] = [str(value)]
+            entry_attributes.update(normalized_extra)
 
-            processed_attrs = u.process(
-                additional_attrs,
-                processor=process_additional_attr,
-                on_error="skip",
-            )
-            if processed_attrs.is_success:
-                # u.process returns dict[str, list[str]] when input is dict
-                processed_dict = cast("dict[str, list[str]]", processed_attrs.value)
-                entry_attributes.update(processed_dict)
-
-        # Process individual extra attributes - convert dict[str, object] to dict[str, list[str]]
-        def process_extra_attr(
-            key: str, extra_value: object
-        ) -> tuple[str, list[str]] | None:
-            """Process extra attribute value."""
-            if extra_value is None:
-                return None
-            # Type narrowing: cast object to GeneralValueType for FlextRuntime methods
-            extra_value_typed: t_core.GeneralValueType = cast(
-                "t_core.GeneralValueType", extra_value
-            )
-            if FlextRuntime.is_list_like(extra_value_typed):
-                # If already a list, check if it's list[str] or needs conversion
-                if isinstance(extra_value_typed, list):
-                    # Check if all items are already strings
-                    if all(isinstance(v, str) for v in extra_value_typed):
-                        return (key, cast("list[str]", extra_value_typed))
-                    # Convert non-string items to strings
-                    return (key, [str(v) for v in extra_value_typed])
-                # For tuple/set/frozenset, convert to list[str]
-                return (key, [str(v) for v in extra_value_typed])
-            return (key, [str(extra_value_typed)])
-
-        processed_extra = u.process(
-            extra_attributes,
-            processor=process_extra_attr,
-            on_error="skip",
-        )
-        extra_attrs_typed = dict(
-            cast(
-                "list[tuple[str, list[str]]]",
-                processed_extra.value if processed_extra.is_success else [],
-            )
-        )
-        entry_attributes.update(extra_attrs_typed)
-
-        # entry_attributes is dict[str, list[str]] which is compatible with create_entry's type
-        return FlextLdapTestHelpers.create_entry(dn, entry_attributes)
+        # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
+        # Pydantic will validate and convert types automatically
+        # Pyright strict: Entry.__init__ accepts **data: Any, so str/dict are valid
+        return m.Entry(dn=dn, attributes=entry_attributes)
 
     @staticmethod
     def create_group_entry(
@@ -561,8 +482,8 @@ class TestOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: t_core.GeneralValueType,
-    ) -> FlextLdifModels.Entry:
+        **kwargs: t.GeneralValueType,
+    ) -> m.Entry:
         """Create group entry.
 
         Args:
@@ -584,25 +505,19 @@ class TestOperationHelpers:
         if members:
             attributes["member"] = members
 
-        def process_kwarg(key: str, value: object) -> tuple[str, list[str]]:
-            """Process kwargs attribute value."""
-            value_typed: t_core.GeneralValueType = cast("t_core.GeneralValueType", value)
-            if FlextRuntime.is_list_like(value_typed):
-                return (key, [str(item) for item in value_typed])
-            return (key, [str(value_typed)])
+        # Normalize kwargs to dict[str, list[str]] for Entry attributes
+        normalized_kwargs: dict[str, list[str]] = {}
+        for key, value in kwargs.items():
+            if isinstance(value, list):
+                normalized_kwargs[key] = [str(v) for v in value]
+            else:
+                normalized_kwargs[key] = [str(value)]
+        attributes.update(normalized_kwargs)
 
-        processed_kwargs = u.process(
-            kwargs,
-            processor=process_kwarg,
-            on_error="skip",
-        )
-        if processed_kwargs.is_success:
-            attributes.update(
-                dict(cast("list[tuple[str, list[str]]]", processed_kwargs.value))
-            )
-
-        # attributes is dict[str, list[str]] which is compatible with create_entry's type
-        return FlextLdapTestHelpers.create_entry(dn, attributes)
+        # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
+        # Pydantic will validate and convert types automatically
+        # Pyright strict: Entry.__init__ accepts **data: Any, so str/dict are valid
+        return m.Entry(dn=dn, attributes=attributes)
 
     @staticmethod
     def create_entry_dict(
@@ -611,7 +526,7 @@ class TestOperationHelpers:
         *,
         sn: str | None = None,
         mail: str | None = None,
-        **extra_attributes: t_core.GeneralValueType,
+        **extra_attributes: t.GeneralValueType,
     ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
@@ -628,7 +543,7 @@ class TestOperationHelpers:
             Dictionary with 'dn' and 'attributes' keys
 
         Example:
-            entry_dict = TestOperationHelpers.create_entry_dict(
+            entry_dict = TestsFlextLdapOperationHelpers.create_entry_dict(
                 "testuser", "dc=example,dc=com", sn="User"
             )
 
@@ -642,22 +557,14 @@ class TestOperationHelpers:
         if mail:
             attributes["mail"] = [mail]
 
-        def process_extra_attr_value(key: str, value: object) -> tuple[str, list[str]]:
-            """Process extra attribute value."""
-            value_typed: t_core.GeneralValueType = cast("t_core.GeneralValueType", value)
-            if FlextRuntime.is_list_like(value_typed):
-                return (key, [str(v) for v in value_typed])
-            return (key, [str(value_typed)])
-
-        processed_extra_attrs = u.process(
-            extra_attributes,
-            processor=process_extra_attr_value,
-            on_error="skip",
-        )
-        if processed_extra_attrs.is_success:
-            attributes.update(
-                dict(cast("list[tuple[str, list[str]]]", processed_extra_attrs.value))
-            )
+        # Normalize extra_attributes to dict[str, list[str]]
+        normalized_extra_attrs: dict[str, list[str]] = {}
+        for key, value in extra_attributes.items():
+            if isinstance(value, list):
+                normalized_extra_attrs[key] = [str(v) for v in value]
+            else:
+                normalized_extra_attrs[key] = [str(value)]
+        attributes.update(normalized_extra_attrs)
         # TypedDict with total=False allows extra keys via __extra_items__
         # Return dict[str, object] for flexible test data
         return {
@@ -668,7 +575,7 @@ class TestOperationHelpers:
     @staticmethod
     def add_entry_and_assert_success(
         client: LdapOperationsType,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         *,
         verify_operation_result: bool = False,
         cleanup_after: bool = True,
@@ -685,17 +592,18 @@ class TestOperationHelpers:
             OperationResult
 
         """
-        # Cleanup before
-        if entry.dn:
-            FlextLdapTestHelpers.cleanup_entry(client, str(entry.dn))
+        # Cleanup before - try to delete if exists
+        if entry.dn and hasattr(client, "delete"):
+            client.delete(str(entry.dn))
 
         # Ensure entry.dn is not None for protocol compatibility
-        TestOperationHelpers._ensure_entry_has_dn(entry)
+        TestsFlextLdapOperationHelpers._ensure_entry_has_dn(entry)
         # Type narrowing: client is LdapOperationsType
         # FlextLdap and FlextLdapOperations accept Entry directly
         # Protocol clients accept EntryProtocol (Entry is structurally compatible)
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
-            add_result_raw = client.add(entry)
+            # Cast to protocol type (m.Entry satisfies EntryProtocol structurally)
+            add_result_raw = client.add(cast("p.LdapEntry.EntryProtocol", entry))
         else:
             # For protocol clients, Entry is structurally compatible with EntryProtocol
             # entry.dn is guaranteed to be not None by _ensure_entry_has_dn
@@ -705,13 +613,20 @@ class TestOperationHelpers:
                 "p.LdapEntry.EntryProtocol",
                 entry,
             )
-            add_result_raw = client.add(entry_for_protocol)  # type: ignore[assignment]  # Protocol result is compatible with r
-        result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(add_result_raw)
+            # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
+            add_result_raw_protocol = client.add(entry_for_protocol)
+            add_result_raw = cast("r[m.OperationResult]", add_result_raw_protocol)
+        # Ensure we have r and assert success
+        add_result_typed: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._ensure_flext_result(
+                add_result_raw,
+            )
         )
-        TestOperationHelpers.assert_result_success(
-            result,
-            error_message="Add operation failed",
+        result: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._assert_result_success(
+                add_result_typed,
+                error_msg="Add operation failed",
+            )
         )
 
         if verify_operation_result:
@@ -720,15 +635,15 @@ class TestOperationHelpers:
             assert operation_result.entries_affected == 1
 
         # Cleanup after if requested
-        if cleanup_after and entry.dn:
-            FlextLdapTestHelpers.cleanup_after_test(client, str(entry.dn))
+        if cleanup_after and entry.dn and hasattr(client, "delete"):
+            client.delete(str(entry.dn))
 
         return result
 
     @staticmethod
     def add_then_delete_and_assert(
         client: LdapClientType,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
     ) -> tuple[
         r[m.OperationResult],
         r[m.OperationResult],
@@ -743,7 +658,7 @@ class TestOperationHelpers:
             Tuple of (add_result, delete_result)
 
         """
-        add_result = TestOperationHelpers.add_entry_and_assert_success(
+        add_result = TestsFlextLdapOperationHelpers.add_entry_and_assert_success(
             client,
             entry,
             cleanup_after=False,
@@ -756,12 +671,9 @@ class TestOperationHelpers:
         dn_str = str(entry.dn) if entry.dn else ""
         delete_result_raw = client.delete(dn_str)
         delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+            TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        TestOperationHelpers.assert_result_success(
-            delete_result,
-            error_message="Delete operation failed",
-        )
+        FlextTestsUtilities.TestUtilities.assert_result_success(delete_result)
 
         return (add_result, delete_result)
 
@@ -783,9 +695,10 @@ class TestOperationHelpers:
             OperationResult
 
         """
-        operation_result = TestOperationHelpers.assert_result_success_and_unwrap(
-            result,
-            error_message="Operation failed",
+        operation_result = (
+            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+                result,
+            )
         )
 
         assert operation_result.success is True
@@ -799,7 +712,7 @@ class TestOperationHelpers:
     @staticmethod
     def execute_add_modify_delete_sequence(
         client: LdapClientType,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_delete: bool = True,
@@ -817,7 +730,7 @@ class TestOperationHelpers:
 
         """
         # Add (don't cleanup after since we'll modify and delete)
-        add_result = TestOperationHelpers.add_entry_and_assert_success(
+        add_result = TestsFlextLdapOperationHelpers.add_entry_and_assert_success(
             client,
             entry,
             cleanup_after=False,
@@ -830,12 +743,14 @@ class TestOperationHelpers:
 
         dn_str = str(entry.dn) if entry.dn else ""
         modify_result_raw = client.modify(dn_str, changes)
-        modify_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
+        modify_result_typed: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
         )
-        TestOperationHelpers.assert_result_success(
-            modify_result,
-            error_message="Modify operation failed",
+        modify_result: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._assert_result_success(
+                modify_result_typed,
+                error_msg="Modify operation failed",
+            )
         )
 
         # Delete
@@ -845,12 +760,12 @@ class TestOperationHelpers:
 
         delete_result_raw = client.delete(dn_str)
         delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+            TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
         if verify_delete:
-            TestOperationHelpers.assert_result_success(
+            TestsFlextLdapOperationHelpers._assert_result_success(
                 delete_result,
-                error_message="Delete operation failed",
+                error_msg="Delete operation failed",
             )
 
         return {
@@ -862,12 +777,11 @@ class TestOperationHelpers:
     @staticmethod
     def execute_crud_sequence(
         client: LdapClientType,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         changes: dict[str, list[tuple[str, list[str]]]],
     ) -> dict[
         str,
-        r[m.OperationResult]
-        | r[m.SearchResult],
+        r[m.OperationResult] | r[m.SearchResult],
     ]:
         """Execute complete CRUD sequence (add, search, modify, delete).
 
@@ -881,7 +795,7 @@ class TestOperationHelpers:
 
         """
         # Add (don't cleanup after since we'll modify and delete)
-        add_result = TestOperationHelpers.add_entry_and_assert_success(
+        add_result = TestsFlextLdapOperationHelpers.add_entry_and_assert_success(
             client,
             entry,
             cleanup_after=False,
@@ -892,17 +806,26 @@ class TestOperationHelpers:
         if hasattr(client, "search") and entry.dn:
             dn_str = str(entry.dn)
             # All clients now use SearchOptions - unified API
-            search_options = m.SearchOptions(
-                base_dn=dn_str,
-                filter_str="(objectClass=*)",
-                scope=c.SearchScope.BASE.value,  # Convert StrEnum to str
+            search_options = TestsFlextLdapOperationHelpers.create_search_options(
+                dn_str,
+                filter_str=RFC.DEFAULT_FILTER,
+                scope=c.SearchScope.BASE.value,
             )
-            # SearchOptions is structurally compatible with SearchOptionsProtocol
-            # Protocol expects settable attributes, but SearchOptions is frozen (read-only)
-            # Runtime compatibility is guaranteed via structural typing
-            search_result_raw = client.search(search_options)
-            search_result_optional = FlextLdapTestHelpers._ensure_flext_result(
-                search_result_raw,
+            # SearchOptions works directly with FlextLdap/FlextLdapOperations
+            # For protocol clients, SearchOptions is structurally compatible with SearchOptionsProtocol
+            if isinstance(client, (FlextLdap, FlextLdapOperations)):
+                search_result_raw = client.search(search_options)
+            else:
+                # Protocol client - use cast to indicate structural compatibility
+                # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
+                search_result_protocol = client.search(
+                    cast("p.Config.SearchOptionsProtocol", search_options),
+                )
+                search_result_raw = cast("r[m.SearchResult]", search_result_protocol)
+            search_result_optional = (
+                TestsFlextLdapOperationHelpers._ensure_flext_result(
+                    search_result_raw,
+                )
             )
 
         # Modify
@@ -912,12 +835,14 @@ class TestOperationHelpers:
 
         dn_str = str(entry.dn) if entry.dn else ""
         modify_result_raw = client.modify(dn_str, changes)
-        modify_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
+        modify_result_typed: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
         )
-        TestOperationHelpers.assert_result_success(
-            modify_result,
-            error_message="Modify operation failed",
+        modify_result: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._assert_result_success(
+                modify_result_typed,
+                error_msg="Modify operation failed",
+            )
         )
 
         # Delete
@@ -926,18 +851,19 @@ class TestOperationHelpers:
             raise AttributeError(error_msg)
 
         delete_result_raw = client.delete(dn_str)
-        delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+        delete_result_typed: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        TestOperationHelpers.assert_result_success(
-            delete_result,
-            error_message="Delete operation failed",
+        delete_result: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._assert_result_success(
+                delete_result_typed,
+                error_msg="Delete operation failed",
+            )
         )
 
         results: dict[
             str,
-            r[m.OperationResult]
-            | r[m.SearchResult],
+            r[m.OperationResult] | r[m.SearchResult],
         ] = {
             "add": add_result,
             "modify": modify_result,
@@ -956,12 +882,21 @@ class TestOperationHelpers:
         expected_error: str,
     ) -> None:
         """Execute search operation when not connected and assert failure."""
-        # SearchOptions is structurally compatible with SearchOptionsProtocol
-        search_result_raw = client.search(search_options)
+        # SearchOptions works directly with FlextLdap/FlextLdapOperations
+        # For protocol clients, SearchOptions is structurally compatible with SearchOptionsProtocol
+        if isinstance(client, (FlextLdap, FlextLdapOperations)):
+            search_result_raw = client.search(search_options)
+        else:
+            # Protocol client - use cast to indicate structural compatibility
+            # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
+            search_result_protocol = client.search(
+                cast("p.Config.SearchOptionsProtocol", search_options),
+            )
+            search_result_raw = cast("r[m.SearchResult]", search_result_protocol)
         search_result: r[m.SearchResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(search_result_raw)
+            TestsFlextLdapOperationHelpers._ensure_flext_result(search_result_raw)
         )
-        TestOperationHelpers.assert_result_failure(
+        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
             search_result,
             expected_error=expected_error,
         )
@@ -969,46 +904,47 @@ class TestOperationHelpers:
     @staticmethod
     def _execute_add_when_not_connected(
         client: LdapClientType,
-        entry: FlextLdifModels.Entry,
+        entry: m.Entry,
         expected_error: str,
     ) -> None:
         """Execute add operation when not connected and assert failure."""
-        TestOperationHelpers._ensure_entry_protocol_compatible(entry)
+        TestsFlextLdapOperationHelpers._ensure_entry_protocol_compatible(entry)
         # Use Entry directly for FlextLdap/FlextLdapOperations, EntryProtocol for protocol clients
         # Result may be r or ResultProtocol depending on client type
         # Use object type to accept both r and ResultProtocol variants
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
-            add_result_raw: object = client.add(entry)
+            # Cast to protocol type (m.Entry satisfies EntryProtocol structurally)
+            add_result_raw: object = client.add(
+                cast("p.LdapEntry.EntryProtocol", entry),
+            )
         else:
-            entry_protocol = TestOperationHelpers._get_entry_for_protocol(entry)
+            entry_protocol = TestsFlextLdapOperationHelpers._get_entry_for_protocol(
+                entry,
+            )
             add_result_raw = client.add(entry_protocol)
         # Convert protocol result to r if needed
-        add_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(
-                cast(
-                    "r[m.OperationResult] | p.ResultProtocol[m.OperationResult] | p.ResultProtocol[object]",
-                    add_result_raw,
-                ),
-            )
+        add_result_typed: r[m.OperationResult] = (
+            TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
-        TestOperationHelpers.assert_result_failure(
-            add_result,
+        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
+            add_result_typed,
             expected_error=expected_error,
         )
 
     @staticmethod
     def _convert_changes_to_modify_format(
-        changes: dict[str, t_core.GeneralValueType],
+        changes: dict[str, t.GeneralValueType],
     ) -> t.Ldap.ModifyChanges:
         """Convert dict changes to ModifyChanges format."""
 
         def process_change(
-            key: str, value_raw: object
+            key: str,
+            value_raw: object,
         ) -> tuple[str, list[tuple[str, list[str]]] | None] | None:
             """Process change value."""
             if value_raw is None:
                 return None
-            value: t_core.GeneralValueType = cast("t_core.GeneralValueType", value_raw)
+            value: t.GeneralValueType = cast("t.GeneralValueType", value_raw)
             if isinstance(value, list) and all(
                 isinstance(item, tuple)
                 and len(item) == 2
@@ -1035,7 +971,7 @@ class TestOperationHelpers:
 
         processed_changes = u.process(
             changes,
-            processor=process_change,
+            process_change,
             on_error="skip",
         )
         # Type narrowing: u.process() returns dict[str, list[tuple[str, list[str]]]] for dict input
@@ -1050,16 +986,18 @@ class TestOperationHelpers:
     def _execute_modify_when_not_connected(
         client: LdapClientType,
         dn: str,
-        changes: dict[str, t_core.GeneralValueType],
+        changes: dict[str, t.GeneralValueType],
         expected_error: str,
     ) -> None:
         """Execute modify operation when not connected and assert failure."""
-        modify_changes = TestOperationHelpers._convert_changes_to_modify_format(changes)
+        modify_changes = (
+            TestsFlextLdapOperationHelpers._convert_changes_to_modify_format(changes)
+        )
         modify_result_raw = client.modify(dn, modify_changes)
         modify_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(modify_result_raw)
+            TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
         )
-        TestOperationHelpers.assert_result_failure(
+        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
             modify_result,
             expected_error=expected_error,
         )
@@ -1073,9 +1011,9 @@ class TestOperationHelpers:
         """Execute delete operation when not connected and assert failure."""
         delete_result_raw = client.delete(dn)
         delete_result: r[m.OperationResult] = (
-            FlextLdapTestHelpers._ensure_flext_result(delete_result_raw)
+            TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        TestOperationHelpers.assert_result_failure(
+        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
             delete_result,
             expected_error=expected_error,
         )
@@ -1084,7 +1022,7 @@ class TestOperationHelpers:
     def execute_operation_when_not_connected(
         client: LdapClientType,
         operation: str,
-        **kwargs: t_core.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> None:
         """Execute operation when not connected and assert failure.
 
@@ -1101,13 +1039,15 @@ class TestOperationHelpers:
                 error_msg = "search_options required for search operation"
                 raise ValueError(error_msg)
             search_options_raw = kwargs["search_options"]
-            if not isinstance(search_options_raw, m.SearchOptions):
-                error_msg = "search_options must be m.SearchOptions"
-                raise TypeError(error_msg)
-            # Type narrowing: search_options_raw is SearchOptions after isinstance check
-            TestOperationHelpers._execute_search_when_not_connected(
+            # Validate type using helper function to avoid mypy unreachable code errors
+            search_options_validated = (
+                TestsFlextLdapOperationHelpers._validate_search_options_type(
+                    search_options_raw,
+                )
+            )
+            TestsFlextLdapOperationHelpers._execute_search_when_not_connected(
                 client,
-                search_options_raw,
+                search_options_validated,
                 expected_error,
             )
         elif operation == "add":
@@ -1115,13 +1055,17 @@ class TestOperationHelpers:
                 error_msg = "entry required for add operation"
                 raise ValueError(error_msg)
             entry_raw = kwargs["entry"]
-            if not isinstance(entry_raw, FlextLdifModels.Entry):
-                error_msg = "entry must be FlextLdifModels.Entry"
+            # Validate type
+            if not isinstance(entry_raw, m.Entry):
+                error_msg = "entry must be m.Entry"
                 raise TypeError(error_msg)
             # Type narrowing: entry_raw is Entry after isinstance check
-            TestOperationHelpers._execute_add_when_not_connected(
+            # After raise, execution continues only if isinstance check passed
+            # Mypy incorrectly flags as unreachable, but runtime is correct
+            entry_validated = entry_raw
+            TestsFlextLdapOperationHelpers._execute_add_when_not_connected(
                 client,
-                entry_raw,
+                entry_validated,
                 expected_error,
             )
         elif operation == "modify":
@@ -1139,7 +1083,7 @@ class TestOperationHelpers:
                 raise TypeError(error_msg)
             # Type narrowing: dn is str (DistinguishedName is a type alias for str)
             modify_dn_str: str = dn
-            TestOperationHelpers._execute_modify_when_not_connected(
+            TestsFlextLdapOperationHelpers._execute_modify_when_not_connected(
                 client,
                 modify_dn_str,
                 changes,
@@ -1156,7 +1100,7 @@ class TestOperationHelpers:
                 raise TypeError(error_msg)
             # Type narrowing: delete_dn is str
             delete_dn_str: str = delete_dn
-            TestOperationHelpers._execute_delete_when_not_connected(
+            TestsFlextLdapOperationHelpers._execute_delete_when_not_connected(
                 client,
                 delete_dn_str,
                 expected_error,
@@ -1188,7 +1132,7 @@ class TestOperationHelpers:
         if expected_entries_affected is None:
             expected_entries_affected = 1
 
-        return TestOperationHelpers.assert_operation_result_success(
+        return TestsFlextLdapOperationHelpers.assert_operation_result_success(
             result,
             expected_operation_type=expected_operation_type,
             expected_entries_affected=expected_entries_affected,

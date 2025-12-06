@@ -1,0 +1,202 @@
+"""Unit tests for flext_ldap.services.sync.FlextLdapSyncService.
+
+**Modules Tested:**
+- `flext_ldap.services.sync.FlextLdapSyncService` - LDIF to LDAP synchronization service
+
+**Test Scope:**
+- Service initialization and dependency injection
+- Execute method (health check)
+- SyncStats model creation
+- BaseDNTransformer functionality
+- BatchSync inner class
+- Method existence validation
+
+All tests use real functionality without mocks, leveraging flext-core test utilities
+and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+
+Architecture: Single class per module following FLEXT patterns.
+Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
+import pytest
+from flext_ldif import FlextLdif
+from flext_tests import tm
+
+from flext_ldap.config import FlextLdapConfig
+from flext_ldap.models import m
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.services.sync import FlextLdapSyncService
+
+pytestmark = pytest.mark.unit
+
+
+class TestsFlextLdapSync:
+    """Comprehensive tests for FlextLdapSyncService using factories and DRY principles.
+
+    Architecture: Single class per module following FLEXT patterns.
+    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+
+    Uses parametrized tests and constants for maximum code reuse.
+    All helper logic is nested within this single class following FLEXT patterns.
+    """
+
+    @classmethod
+    def _create_operations(cls) -> FlextLdapOperations:
+        """Factory method for creating operations instances."""
+        # but services pass complex objects via __init__ which are validated at runtime
+        connection = FlextLdapConnection(config=FlextLdapConfig())
+        return FlextLdapOperations(connection=connection)
+
+    def test_sync_service_initialization(self) -> None:
+        """Test sync service initialization with operations."""
+        operations = self._create_operations()
+        sync_service = FlextLdapSyncService(operations=operations)
+        tm.not_none(sync_service)
+        tm.is_type(sync_service, FlextLdapSyncService)
+
+    def test_sync_service_initialization_with_ldif(self) -> None:
+        """Test sync service initialization with custom ldif."""
+        operations = self._create_operations()
+        ldif = FlextLdif()
+        sync_service = FlextLdapSyncService(operations=operations, ldif=ldif)
+        tm.not_none(sync_service)
+        tm.is_type(sync_service, FlextLdapSyncService)
+
+    def test_sync_service_initialization_with_datetime_generator(self) -> None:
+        """Test sync service initialization with custom datetime generator."""
+        operations = self._create_operations()
+
+        def custom_datetime() -> datetime:
+            return datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+
+        sync_service = FlextLdapSyncService(
+            operations=operations,
+            generate_datetime_utc=custom_datetime,
+        )
+        tm.not_none(sync_service)
+        tm.is_type(sync_service, FlextLdapSyncService)
+
+    def test_execute_returns_empty_stats(self) -> None:
+        """Test execute() returns empty sync stats for health check."""
+        operations = self._create_operations()
+        sync_service = FlextLdapSyncService(operations=operations)
+        result = sync_service.execute()
+        stats = tm.ok(result, is_=m.SyncStats)
+        tm.eq(stats.added, 0)
+        tm.eq(stats.skipped, 0)
+        tm.eq(stats.failed, 0)
+        tm.eq(stats.total, 0)
+
+    def test_sync_stats_creation(self) -> None:
+        """Test SyncStats model creation."""
+        stats = m.SyncStats(
+            added=10,
+            skipped=2,
+            failed=1,
+            total=13,
+            duration_seconds=100.5,
+        )
+        tm.eq(stats.added, 10)
+        tm.eq(stats.skipped, 2)
+        tm.eq(stats.failed, 1)
+        tm.eq(stats.total, 13)
+        tm.eq(stats.duration_seconds, 100.5)
+
+    def test_sync_options_creation(self) -> None:
+        """Test SyncOptions model creation."""
+        options = m.SyncOptions(
+            source_basedn="dc=old,dc=com",
+            target_basedn="dc=new,dc=com",
+        )
+        tm.eq(options.source_basedn, "dc=old,dc=com")
+        tm.eq(options.target_basedn, "dc=new,dc=com")
+
+    def test_sync_options_without_transformation(self) -> None:
+        """Test SyncOptions without base DN transformation."""
+        options = m.SyncOptions()
+        tm.eq(options.source_basedn, "")
+        tm.eq(options.target_basedn, "")
+
+    def test_base_dn_transformer_no_transformation(self) -> None:
+        """Test BaseDNTransformer with no transformation needed."""
+        entries = [
+            m.Entry(
+                dn=m.DistinguishedName(value="cn=user,dc=example,dc=com"),
+                attributes=m.LdifAttributes({}),
+            ),
+        ]
+        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
+            entries,
+            source_basedn="",
+            target_basedn="",
+        )
+        tm.len(transformed, expected=1)
+        tm.not_none(transformed[0].dn)
+        tm.eq(transformed[0].dn.value, "cn=user,dc=example,dc=com")
+
+    def test_base_dn_transformer_with_transformation(self) -> None:
+        """Test BaseDNTransformer with base DN transformation."""
+        entries = [
+            m.Entry(
+                dn=m.DistinguishedName(value="cn=user,dc=old,dc=com"),
+                attributes=m.LdifAttributes({}),
+            ),
+        ]
+        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
+            entries,
+            source_basedn="dc=old,dc=com",
+            target_basedn="dc=new,dc=com",
+        )
+        assert len(transformed) == 1
+        assert transformed[0].dn is not None
+        assert transformed[0].dn.value == "cn=user,dc=new,dc=com"
+
+    def test_base_dn_transformer_case_insensitive(self) -> None:
+        """Test BaseDNTransformer with case-insensitive matching."""
+        entries = [
+            m.Entry(
+                dn=m.DistinguishedName(value="cn=user,dc=old,dc=com"),
+                attributes=m.LdifAttributes({}),
+            ),
+        ]
+        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
+            entries,
+            source_basedn="DC=OLD,DC=COM",
+            target_basedn="dc=new,dc=com",
+        )
+        tm.len(transformed, expected=1)
+        tm.not_none(transformed[0].dn)
+        tm.eq(transformed[0].dn.value, "cn=user,dc=new,dc=com")
+
+    def test_batch_sync_initialization(self) -> None:
+        """Test BatchSync inner class initialization."""
+        operations = self._create_operations()
+        batch_sync = FlextLdapSyncService.BatchSync(operations=operations)
+        tm.not_none(batch_sync)
+        tm.is_type(batch_sync, FlextLdapSyncService.BatchSync)
+
+    def test_sync_service_methods_exist(self) -> None:
+        """Test that all expected methods exist on sync service."""
+        operations = self._create_operations()
+        sync_service = FlextLdapSyncService(operations=operations)
+
+        # Check main methods
+        tm.that(sync_service, contains="execute")
+        tm.that(sync_service, contains="sync_ldif_file")
+        tm.that(callable(sync_service.execute), eq=True)
+        tm.that(callable(sync_service.sync_ldif_file), eq=True)
+
+    def test_sync_service_inner_classes_exist(self) -> None:
+        """Test that inner classes exist."""
+        tm.that(hasattr(FlextLdapSyncService, "BatchSync"), eq=True)
+        tm.that(hasattr(FlextLdapSyncService, "BaseDNTransformer"), eq=True)
+        tm.is_type(FlextLdapSyncService.BatchSync, type)
+        tm.is_type(FlextLdapSyncService.BaseDNTransformer, type)

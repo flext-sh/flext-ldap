@@ -9,7 +9,7 @@
 
 **Universal LDAP directory services library** for the FLEXT ecosystem, providing enterprise-grade LDAP operations with **server-specific implementations**, **Clean Architecture patterns**, and **zero code duplication**.
 
-> **✅ v0.10.0**: Major refactoring release with **simplified architecture** (12 modules), **zero code duplication** with flext-core, **consistent module patterns**, and **maintained public API stability**. See [Migration Guide](docs/refactoring/MIGRATION_GUIDE.md) for upgrade instructions.
+> **✅ v0.10.3**: Full compliance with FLEXT ecosystem standards. **Advanced type system patterns** (variance/covariance), **protocol override compatibility**, **complexity reduction techniques**, **zero linting violations** (ruff, mypy, pyrefly), and **maintained public API stability**. See [CLAUDE.md](CLAUDE.md) for development patterns.
 
 ## 🚀 What's New in v0.10.0
 
@@ -28,7 +28,7 @@ Import paths for internal modules have changed. **Public API is unchanged**. See
 
 ```python
 # ✅ PUBLIC API - UNCHANGED (no migration needed)
-from flext_ldap import FlextLdap, FlextLdapModels
+from flext_ldap import FlextLdap, m
 ldap = FlextLdap()
 
 # ⚠️ INTERNAL MODULES - Changed (migration required)
@@ -226,6 +226,54 @@ auth = FlextLdapClients.Authentication()
 search = FlextLdapClients.Search()
 ```
 
+### Key Development Patterns (v0.10.3)
+
+#### Type System - Variance and Covariance
+
+Use `Mapping` instead of `dict` when working with callables for better type compatibility:
+
+```python
+from collections.abc import Mapping
+from typing import Callable
+
+# ✅ CORRECT - Mapping is covariant, allows structural compatibility
+def find_handlers(
+    handlers: Mapping[str, Callable[..., FlexibleValue]],
+) -> str | None:
+    """Accepts dict[str, Callable[..., bool]] because Mapping is covariant."""
+    pass
+
+# ❌ INCORRECT - dict is invariant, won't accept subtype compatibility
+def find_handlers(
+    handlers: dict[str, Callable[..., FlexibleValue]],
+) -> str | None:
+    """This would NOT accept dict[str, Callable[..., bool]]."""
+    pass
+```
+
+#### Protocol Override Compatibility
+
+When overriding protocol namespace classes, maintain full backward compatibility using ignore comments:
+
+```python
+class Config:
+    """Configuration protocols - overrides parent while maintaining compatibility."""
+
+    @runtime_checkable
+    class ConnectionConfigProtocol(Protocol):
+        host: str
+        port: int
+```
+
+#### Code Complexity Reduction
+
+Refactor complex methods into focused helper methods to meet ruff limits:
+
+- **C901** (cyclomatic complexity): Must be < 10
+- **PLR1702** (nested blocks): Must be < 5
+
+**For more patterns, see [CLAUDE.md](CLAUDE.md)**
+
 ---
 
 ## 🚀 Quick Start
@@ -256,7 +304,7 @@ make validate  # Run quality checks
 **Simple LDAP Search:**
 
 ```python
-from flext_ldap import FlextLdap, FlextLdapModels
+from flext_ldap import FlextLdap, m
 
 def search_users():
     """Search for users in LDAP directory."""
@@ -498,19 +546,31 @@ make clean-all                # Deep clean including venvs
 
 **ZERO TOLERANCE** standards:
 
-- **Coverage**: 35% current, targeting 75%+ (proven achievable)
-- **Type Checking**: Pyrefly strict mode - ZERO errors
+- **Coverage**: 42% current (targeting 100%, focus on services/operations.py 15%, services/detection.py 19%, services/sync.py 29%, utilities.py 27%)
+- **Type Checking**: 
+  - Pyrefly strict mode - ZERO errors
+  - MyPy strict mode - ZERO errors
+  - Pyright - ZERO errors, ZERO warnings
 - **Linting**: Ruff - ZERO violations
 - **Security**: Bandit - ZERO critical issues
-- **Tests**: All tests passing
+- **Tests**: All tests passing (NO skipped tests)
+- **Test Infrastructure**: 
+  - NO Python modules in `tests/fixtures/*.py`
+  - Use `tests/helpers/` for all test code
+  - Use `conftest.py` and `flext_tests` patterns
 
 ### Development Standards
 
-- **Railway-Oriented Programming**: Use FlextResult[T] for all operations
-- **Type Safety**: Complete type annotations with Python 3.13+ syntax
+- **Railway-Oriented Programming**: Use `r[T]` alias for `FlextResult[T]` for all operations
+- **Type Safety**: Complete type annotations with Python 3.13+ syntax, avoid `object` and `dict[str, object]`
 - **Clean Architecture**: Respect layer boundaries (no infrastructure leakage)
 - **Pydantic v2**: Use native types (PositiveInt, EmailStr, etc.)
 - **No Duplication**: Never duplicate flext-core functionality
+- **Protocol Compatibility**: Protocols and concrete types work transparently without casts
+- **Override Compatibility**: All method overrides maintain backward compatibility (no bad-override)
+- **Short Names**: All short aliases (`r`, `t`, `c`, `m`, `p`, `u`, `e`, `d`, `x`, `h`, `s`) work without lint complaints
+- **Test Infrastructure**: Use `tests/helpers/` for test code, `tests/fixtures/` only for non-Python files
+- **No Skipped Tests**: Use `pytest.fail()` for infrastructure failures, create test data for missing data
 
 ---
 
@@ -520,17 +580,32 @@ make clean-all                # Deep clean including venvs
 
 ```
 tests/
-├── unit/              # Fast unit tests (~50 files)
-│   ├── test_api.py
-│   ├── test_clients.py
-│   ├── test_models.py
-│   ├── test_acl.py
-│   └── servers/       # Server-specific tests
-├── integration/       # Docker-based integration tests (~15 files)
-│   └── test_ldap_operations.py
-└── e2e/              # End-to-end workflow tests (~2 files)
-    └── test_complete_sync.py
+├── conftest.py              # All fixtures and pytest configuration (ONLY ONE)
+├── base.py                  # TestsFlextLdapServiceBase (extends FlextService, provides 's')
+├── constants.py             # TestsFlextLdapConstants (extends FlextTestsConstants + FlextLdapConstants, provides 'c')
+├── typings.py               # TestsFlextLdapTypes (extends FlextTestsTypes + FlextLdapTypes, provides 't')
+├── models.py                # TestsFlextLdapModels (extends FlextLdapModels, provides 'm')
+├── protocols.py             # TestsFlextLdapProtocols (extends FlextTestsProtocols + FlextLdapProtocols, provides 'p')
+├── utilities.py             # TestsFlextLdapUtilities (extends FlextTestsUtilities + FlextLdapUtilities, provides 'u')
+├── __init__.py              # Exports t, c, p, m, u, s, e, r, d, x
+├── helpers/                 # flext-ldap specific test helpers (NOT fixtures)
+│   └── operation_helpers.py # TestsFlextLdapOperationHelpers (uses conftest.py and flext_tests)
+├── fixtures/                # NON-PYTHON files only (JSON, LDIF, etc.)
+│   ├── test_users.json
+│   ├── test_groups.json
+│   └── test_base.ldif
+├── unit/                    # Unit tests (one class per module, prefix TestsFlextLdap)
+│   └── test_operations.py  # TestsFlextLdapOperations class
+└── integration/             # Integration tests (one class per module, prefix TestsFlextLdap)
+    └── test_api.py          # TestsFlextLdapApi class
 ```
+
+**Test Class Pattern (MANDATORY)**:
+- One class per test module, prefixed with `TestsFlextLdap`
+- Use `t, c, p, m, u, s` for test support (from `tests` module)
+- Use `e, r, d, x` from flext-core directly
+- NO skipped tests - Use `pytest.fail()` for infrastructure failures
+- NO Python modules in `tests/fixtures/*.py` - Use `tests/helpers/` instead
 
 ### Test Commands
 
@@ -595,8 +670,8 @@ Use pytest markers to control test execution:
 
 ### Quality Metrics (v0.10.0)
 
-- **Test Suite**: ~60 test files (consolidated from 87)
-- **Test Coverage**: 35% (targeting 75%+)
+- **Test Suite**: 7 unit test files (targeting 100% coverage)
+- **Test Coverage**: 42% (targeting 100%, focus on services/operations.py 15%, services/detection.py 19%, services/sync.py 29%, utilities.py 27%)
 - **Code Base**: ~2,800-3,150 LOC (reduced from ~4,000)
 - **Modules**: 12 root modules (down from 18)
 - **Lint Status**: Zero violations (Ruff)
@@ -628,7 +703,7 @@ Use pytest markers to control test execution:
 
 **In Progress**:
 
-- 🔄 Test coverage expansion (35% → 75%+)
+- 🔄 Test coverage expansion (42% → 100%)
 - 🔄 Active Directory enhancements
 - 🔄 Performance optimization
 
@@ -651,7 +726,7 @@ Use pytest markers to control test execution:
 
 🎯 **Planned**:
 
-- Expand test coverage (35% → 75%+)
+- Expand test coverage (42% → 100%)
 - Real LDAP functionality tests
 - Integration test expansion
 - Performance benchmarks
@@ -712,7 +787,7 @@ make validate    # Must pass: lint + type-check + security + test
 
 - Line length: 88 characters (Ruff default)
 - Type annotations: Complete, strict (Pyrefly)
-- Test coverage: 75%+ for new features
+- Test coverage: 100% for all features (pragmas only for untestable code)
 - Documentation: Google-style docstrings
 
 ### Contribution Workflow

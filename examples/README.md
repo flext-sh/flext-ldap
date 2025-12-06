@@ -164,7 +164,7 @@ python examples/03_authentication.py
 - Import entries from LDIF files (import_from_ldif)
 - Export entries to LDIF files (export_to_ldif)
 - FlextLdif integration and availability checking
-- Entry model usage (FlextLdapModels.Entry)
+- Entry model usage (m.Entry)
 - LDIF round-trip operations (import → modify → export)
 
 **Modules**: api.py, models.py, entry_adapter.py
