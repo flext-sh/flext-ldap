@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import FlextTestsUtilities
+from flext_tests import u
 
 from flext_ldap import (
     FlextLdap,
@@ -238,16 +238,16 @@ class TestsFlextLdapOperationHelpers:
         connect_result = client.connect(connection_config)
         # Type narrowing: ensure we have r, not just ResultProtocol
         if isinstance(connect_result, r):
-            FlextTestsUtilities.TestUtilities.assert_result_success(connect_result)
+            u.Tests.Result.assert_result_success(connect_result)
         # Convert protocol result to r if needed
         elif connect_result.is_success:
-            FlextTestsUtilities.TestUtilities.assert_result_success(
+            u.Tests.Result.assert_result_success(
                 r[bool].ok(connect_result.unwrap()),
             )
         else:
             # This should never happen if is_success is False, but handle gracefully
             result_as_r = r[bool].fail(str(connect_result.error))
-            FlextTestsUtilities.TestUtilities.assert_result_success(result_as_r)
+            u.Tests.Result.assert_result_success(result_as_r)
 
     @staticmethod
     def search_and_assert_success(
@@ -340,7 +340,7 @@ class TestsFlextLdapOperationHelpers:
                 execute_result_raw,
             )
         )
-        return FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+        return u.Tests.Result.assert_result_success_and_unwrap(
             execute_result_typed,
         )
 
@@ -673,7 +673,7 @@ class TestsFlextLdapOperationHelpers:
         delete_result: r[m.OperationResult] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        FlextTestsUtilities.TestUtilities.assert_result_success(delete_result)
+        u.Tests.Result.assert_result_success(delete_result)
 
         return (add_result, delete_result)
 
@@ -696,7 +696,7 @@ class TestsFlextLdapOperationHelpers:
 
         """
         operation_result = (
-            FlextTestsUtilities.ResultHelpers.assert_result_success_and_unwrap(
+            u.Tests.Result.assert_result_success_and_unwrap(
                 result,
             )
         )
@@ -896,7 +896,7 @@ class TestsFlextLdapOperationHelpers:
         search_result: r[m.SearchResult] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(search_result_raw)
         )
-        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             search_result,
             expected_error=expected_error,
         )
@@ -926,7 +926,7 @@ class TestsFlextLdapOperationHelpers:
         add_result_typed: r[m.OperationResult] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
-        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             add_result_typed,
             expected_error=expected_error,
         )
@@ -997,7 +997,7 @@ class TestsFlextLdapOperationHelpers:
         modify_result: r[m.OperationResult] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
         )
-        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             modify_result,
             expected_error=expected_error,
         )
@@ -1013,7 +1013,7 @@ class TestsFlextLdapOperationHelpers:
         delete_result: r[m.OperationResult] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        FlextTestsUtilities.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             delete_result,
             expected_error=expected_error,
         )
