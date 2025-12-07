@@ -23,6 +23,7 @@ from typing import override
 
 import pytest
 from flext_core import FlextConfig, FlextService, r
+from flext_tests import u
 
 from flext_ldap import base
 from flext_ldap.base import FlextLdapServiceBase, s
@@ -48,9 +49,10 @@ class TestsFlextLdapBase:
     def _get_model_config_attributes() -> list[tuple[str, object]]:
         """Factory: Return model config attribute tests (attr_name, expected_value)."""
         return [
-            ("frozen", True),
             ("arbitrary_types_allowed", True),
             ("extra", "forbid"),
+            ("use_enum_values", True),
+            ("validate_assignment", True),
         ]
 
     # =========================================================================
@@ -112,8 +114,9 @@ class TestsFlextLdapBase:
         service = ExecuteTestService()
         result = service.execute()
 
-        assert result.is_success
-        assert result.value == "success_value"
+        # Use flext_tests automation for result validation
+        value = u.Tests.Result.assert_success(result, "Execute should return success")
+        assert value == "success_value"
 
     def test_concrete_service_execute_can_fail(self) -> None:
         """Test concrete service execute method can return failure."""
@@ -129,8 +132,9 @@ class TestsFlextLdapBase:
         service = FailingTestService()
         result = service.execute()
 
-        assert result.is_failure
-        assert result.error == "operation_failed"
+        # Use flext_tests automation for failure validation
+        error = u.Tests.Result.assert_failure(result, "operation_failed")
+        assert error == "operation_failed"
 
     # =========================================================================
     # Config Access Tests
@@ -218,15 +222,25 @@ class TestsFlextLdapBase:
                 """Execute and return int."""
                 return r[int].ok(42)
 
-        # Test bool
+        # Test bool - validate real limits
         bool_result = BoolService().execute()
-        assert isinstance(bool_result.value, bool)
-        assert bool_result.value is True
+        bool_value = u.Tests.Result.assert_success(
+            bool_result, "Bool service should succeed"
+        )
+        assert isinstance(bool_value, bool)
+        assert bool_value is True
+        # Validate that bool service actually returns bool type
+        assert type(bool_value).__name__ == "bool"
 
-        # Test int
+        # Test int - validate real limits
         int_result = IntService().execute()
-        assert isinstance(int_result.value, int)
-        assert int_result.value == 42
+        int_value = u.Tests.Result.assert_success(
+            int_result, "Int service should succeed"
+        )
+        assert isinstance(int_value, int)
+        assert int_value == 42
+        # Validate that int service actually returns int type
+        assert type(int_value).__name__ == "int"
 
     def test_service_with_collection_type_parameters(self) -> None:
         """Test service with collection type parameters (list, dict)."""
@@ -247,15 +261,27 @@ class TestsFlextLdapBase:
                 """Execute and return dict."""
                 return r[dict[str, int]].ok({"count": 10})
 
-        # Test list
+        # Test list - validate real limits and structure
         list_result = ListService().execute()
-        assert isinstance(list_result.value, list)
-        assert list_result.value == ["a", "b", "c"]
+        list_value = u.Tests.Result.assert_success(
+            list_result, "List service should succeed"
+        )
+        assert isinstance(list_value, list)
+        assert len(list_value) == 3  # Validate actual length
+        assert list_value == ["a", "b", "c"]
+        # Validate all elements are strings
+        assert all(isinstance(item, str) for item in list_value)
 
-        # Test dict
+        # Test dict - validate real limits and structure
         dict_result = DictService().execute()
-        assert isinstance(dict_result.value, dict)
-        assert dict_result.value == {"count": 10}
+        dict_value = u.Tests.Result.assert_success(
+            dict_result, "Dict service should succeed"
+        )
+        assert isinstance(dict_value, dict)
+        assert len(dict_value) == 1  # Validate actual size
+        assert dict_value == {"count": 10}
+        # Validate dict values are correct types
+        assert isinstance(dict_value["count"], int)
 
     # =========================================================================
     # Model Config Tests
@@ -263,7 +289,7 @@ class TestsFlextLdapBase:
 
     @pytest.mark.parametrize(
         ("attr_name", "expected_value"),
-        _get_model_config_attributes.__func__(),
+        _get_model_config_attributes(),
     )
     def test_service_model_config_attributes(
         self,
@@ -323,8 +349,29 @@ class TestsFlextLdapBase:
         service_a = IndependentServiceA()
         service_b = IndependentServiceB()
 
-        assert service_a.execute().value == "A"
-        assert service_b.execute().value == "B"
+        # Validate services are truly independent - test multiple executions
+        result_a1 = service_a.execute()
+        result_b1 = service_b.execute()
+        result_a2 = service_a.execute()
+        result_b2 = service_b.execute()
+
+        # Use flext_tests automation
+        value_a1 = u.Tests.Result.assert_success(result_a1, "Service A should succeed")
+        value_b1 = u.Tests.Result.assert_success(result_b1, "Service B should succeed")
+        value_a2 = u.Tests.Result.assert_success(
+            result_a2, "Service A should succeed again"
+        )
+        value_b2 = u.Tests.Result.assert_success(
+            result_b2, "Service B should succeed again"
+        )
+
+        assert value_a1 == "A"
+        assert value_b1 == "B"
+        assert value_a2 == "A"  # Validate consistency
+        assert value_b2 == "B"  # Validate consistency
+        # Validate services don't interfere with each other
+        assert value_a1 == value_a2
+        assert value_b1 == value_b2
 
     # =========================================================================
     # Import Pattern Tests

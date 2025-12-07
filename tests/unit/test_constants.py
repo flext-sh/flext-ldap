@@ -54,11 +54,12 @@ class TestsFlextLdapConstants:
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
-        _get_ldap_cqrs_status_values.__func__(),
+        _get_ldap_cqrs_status_values(),
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values."""
-        tm.eq(getattr(c.LdapCqrs.Status, attr), expected)
+        actual = getattr(c.LdapCqrs.Status, attr)
+        tm.that(actual, eq=expected)
 
     @pytest.mark.parametrize(
         ("scope", "expected"),
@@ -70,7 +71,8 @@ class TestsFlextLdapConstants:
     )
     def test_search_scope_values(self, scope: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        tm.eq(getattr(c.SearchScope, scope).value, expected)
+        actual = getattr(c.SearchScope, scope).value
+        tm.that(actual, eq=expected)
 
     @pytest.mark.parametrize(
         ("op_type", "expected"),
@@ -83,7 +85,8 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_values(self, op_type: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        tm.eq(getattr(c.OperationType, op_type), expected)
+        actual = getattr(c.OperationType, op_type)
+        tm.that(actual, eq=expected)
 
     # =========================================================================
     # SCALAR CONSTANT TESTS
@@ -91,11 +94,11 @@ class TestsFlextLdapConstants:
 
     def test_core_name(self) -> None:
         """Test Core.NAME constant."""
-        tm.eq(c.Core.NAME, "FLEXT_LDAP")
+        tm.that(c.Core.NAME, eq="FLEXT_LDAP")
 
     def test_filters_all_entries(self) -> None:
         """Test Filters.ALL_ENTRIES_FILTER constant."""
-        tm.eq(c.Filters.ALL_ENTRIES_FILTER, "(objectClass=*)")
+        tm.that(c.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
 
     # =========================================================================
     # VALIDATION METHOD TESTS (Parametrized)
@@ -112,12 +115,12 @@ class TestsFlextLdapConstants:
     )
     def test_is_valid_status(
         self,
-        status: str | object,
+        status: str | c.LdapCqrs.Status,
         expected: bool,
     ) -> None:
         """Test is_valid_status with various input types."""
         result = c.LdapValidation.is_valid_status(status)
-        tm.eq(result, expected)
+        tm.that(result, eq=expected)
 
     # =========================================================================
     # CONNECTION DEFAULTS TESTS
@@ -125,5 +128,5 @@ class TestsFlextLdapConstants:
 
     def test_connection_defaults_port(self) -> None:
         """Test ConnectionDefaults.PORT is valid port number."""
-        tm.is_type(c.ConnectionDefaults.PORT, int)
+        tm.that(c.ConnectionDefaults.PORT, is_=int, none=False)
         tm.that(c.ConnectionDefaults.PORT, gte=1, lte=65535)

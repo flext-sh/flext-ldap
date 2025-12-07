@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ParamSpec
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextLogger, FlextRuntime, r
 from ldap3 import Connection
 
 from flext_ldap.base import s
@@ -329,6 +329,29 @@ class FlextLdapServerDetector(s[str]):
             str: Normalized server type (oid, oud, openldap, ad, ds389, rfc).
 
         """
+        # Try vendor-based detection first (most reliable)
+        cls = FlextLdapServerDetector
+        vendor_result = cls._detect_from_vendor(
+            vendor_name,
+            vendor_version,
+        )
+        if vendor_result:
+            return vendor_result
+
+        # Fallback to extension/context-based detection
+        extension_result = cls._detect_from_extensions(
+            supported_extensions,
+            naming_contexts,
+        )
+        # Ensure we always return a string (fallback to "rfc")
+        return extension_result if extension_result is not None else "rfc"
+
+    @staticmethod
+    def _detect_from_vendor(
+        vendor_name: str | None,
+        vendor_version: str | None,
+    ) -> str | None:
+        """Detect server type from vendor information."""
         # DSL pattern: builder for filtering vendor parts
         vendor_list = u.to_str_list([vendor_name, vendor_version])
         # filter_truthy accepts list[object] | dict[str, object]
@@ -345,95 +368,105 @@ class FlextLdapServerDetector(s[str]):
         # Normalize vendor info to lowercase for consistent matching
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
 
+        if not vendor_info:
+            return None
+
         # Vendor-based detection (priority order)
-        # Use u.find() for efficient vendor check detection
-        if vendor_info and isinstance(vendor_info, str):
-            vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
-                ("oud", lambda v: "oracle" in v and "unified directory" in v),
-                (
-                    "oid",
-                    lambda v: "oracle" in v
-                    and (
-                        "internet directory" in v
-                        or "oid" in v
-                        or "corporation" in v
-                        or (
-                            "unified directory" not in v
-                            and len(v.split()) <= c.VENDOR_STRING_MAX_TOKENS
-                        )
-                    ),
+        vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
+            ("oud", lambda v: "oracle" in v and "unified directory" in v),
+            (
+                "oid",
+                lambda v: "oracle" in v
+                and (
+                    "internet directory" in v
+                    or "oid" in v
+                    or "corporation" in v
+                    or (
+                        "unified directory" not in v
+                        and len(v.split()) <= c.VENDOR_STRING_MAX_TOKENS
+                    )
                 ),
-                ("openldap", lambda v: "openldap" in v),
-                ("ad", lambda v: "microsoft" in v or "active directory" in v),
-                ("ds389", lambda v: "389" in v or "dirsrv" in v),
-            ]
+            ),
+            ("openldap", lambda v: "openldap" in v),
+            ("ad", lambda v: "microsoft" in v or "active directory" in v),
+            ("ds389", lambda v: "389" in v or "dirsrv" in v),
+        ]
 
-            # Find matching vendor check
-            for detected_vendor_name, check_func in vendor_checks:
-                if check_func(vendor_info):
-                    return detected_vendor_name
+        # Find matching vendor check
+        for detected_vendor_name, check_func in vendor_checks:
+            if check_func(vendor_info):
+                return detected_vendor_name
 
+        return None
+
+    @staticmethod
+    def _detect_from_extensions(
+        supported_extensions: list[str],
+        naming_contexts: list[str],
+    ) -> str:
+        """Detect server type from extensions and naming contexts."""
         # DSL pattern: builder for string mapping with normalization and join
-        ext_str = u.map_str(supported_extensions, case="lower", join=" ")
+        # map_str returns str when join is provided
+        ext_str_raw = u.map_str(supported_extensions, case="lower", join=" ")
+        ext_str = ext_str_raw if isinstance(ext_str_raw, str) else " ".join(ext_str_raw)
         # DSL pattern: builder for normalization and join
         context_str = u.norm_join(naming_contexts, case="lower")
 
         # Extension/context-based detection (priority order)
-        # DSL pattern: server_type -> predicate function, find first match
-        # Extension checks as variadic callables for find_callable compatibility
-        def check_openldap(*args: object, **_kwargs: object) -> bool:
+        # Extension checks as typed variadic callables for find_callable ParamSpec[P] compatibility
+        def check_openldap(*args: str) -> bool:
             """Check for OpenLDAP."""
-            e = str(args[0]) if args else ""
+            e = args[0] if args else ""
             return "openldap" in e.lower()
 
-        def check_oid(*args: object, **_kwargs: object) -> bool:
+        def check_oid(*args: str) -> bool:
             """Check for Oracle Internet Directory."""
-            e = str(args[0]) if args else ""
-            c = str(args[1]) if len(args) > 1 else ""
+            e = args[0] if args else ""
+            c = args[1] if len(args) > 1 else ""
             return "oracle" in e or "oid" in e or "oracle" in c
 
-        def check_oud(*args: object, **_kwargs: object) -> bool:
+        def check_oud(*args: str) -> bool:
             """Check for Oracle Unified Directory."""
-            e = str(args[0]) if args else ""
+            e = args[0] if args else ""
             return "oud" in e
 
-        def check_ad(*args: object, **_kwargs: object) -> bool:
+        def check_ad(*args: str) -> bool:
             """Check for Active Directory."""
-            e = str(args[0]) if args else ""
-            c = str(args[1]) if len(args) > 1 else ""
+            e = args[0] if args else ""
+            c = args[1] if len(args) > 1 else ""
             return (
                 "microsoft" in e or "windows" in e or "microsoft" in c or "windows" in c
             )
 
-        def check_ds389(*args: object, **_kwargs: object) -> bool:
+        def check_ds389(*args: str) -> bool:
             """Check for 389 Directory Server."""
-            e = str(args[0]) if args else ""
+            e = args[0] if args else ""
             return "389" in e or "dirsrv" in e
 
-        # Extension checks as variadic callables for find_callable compatibility
-        # Variadic functions (*args, **kwargs) require Callable[..., ...] signature
-        # Using bool return type (compatible with t.FlexibleValue)
-        # Type ignore needed: Callable[..., bool] uses ... which mypy treats as Any
-        # This is required for variadic functions and is safe since we control the callables
-        extension_checks_dict: dict[str, Callable[..., bool]] = {
-            "openldap": check_openldap,
-            "oid": check_oid,
-            "oud": check_oud,
-            "ad": check_ad,
-            "ds389": check_ds389,
-        }
-
-        # Find matching extension check
-        # Pass dict directly - find_callable accepts dict[str, Callable[P, t.FlexibleValue]]
-        # Callable[..., bool] is compatible via structural subtyping (bool is FlexibleValue)
-        # Type ignore needed: dict is invariant, but Callable[..., bool] is compatible with Callable[P, FlexibleValue]
-        found = u.find_callable(
-            extension_checks_dict,
-            ext_str,
-            context_str,
-        )
+        # Extension checks - manually find matching server type
+        # Avoids ParamSpec[P] complexity of find_callable
+        extension_checks = [
+            ("openldap", check_openldap),
+            ("oid", check_oid),
+            ("oud", check_oud),
+            ("ad", check_ad),
+            ("ds389", check_ds389),
+        ]
+        found: str | None = None
+        logger = FlextLogger(__name__)
+        for server_name, check_func in extension_checks:
+            try:
+                if check_func(ext_str, context_str):
+                    found = server_name
+                    break
+            except Exception as e:
+                # Continue if check function raises exception
+                logger.debug(
+                    f"Server type check failed for {server_name}: {e}",
+                    server_name=server_name,
+                    error=str(e),
+                )
+                continue
 
         # Return found server type or default to RFC-compliant generic server
-        # DSL pattern: use when for conditional default
-        # DSL pattern: conditional default
         return found if found is not None else "rfc"

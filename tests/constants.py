@@ -74,8 +74,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     class RFC:
         """RFC server test constants - flat namespace for backward compatibility."""
 
-        # Server type - reuse production StrEnum from flext-ldif
-        SERVER_TYPE = FlextLdifConstants.ServerTypes.RFC.value
+        # Server type - use production StrEnum from flext-ldif directly
+        # Use TestsFlextLdapConstants.Ldif.ServerTypes.RFC.value - no aliases
 
         # LDAP connection defaults
         DEFAULT_HOST: Final[str] = "localhost"
@@ -84,9 +84,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
         DEFAULT_BIND_DN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         DEFAULT_BIND_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
 
-        # Search defaults - reuse production StrEnum
+        # Search defaults - use production StrEnum directly
         DEFAULT_FILTER: Final[str] = "(objectClass=*)"
-        DEFAULT_SCOPE = FlextLdapConstants.SearchScope.SUBTREE.value
+        # Use TestsFlextLdapConstants.Ldap.SearchScope.SUBTREE.value - no aliases
         DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
 
         # Test entry defaults
@@ -157,7 +157,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
         DEFAULT_BIND_DN: ClassVar[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         DEFAULT_BIND_PASSWORD: ClassVar[str] = "REDACTED_LDAP_BIND_PASSWORD123"
         DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
-        DEFAULT_SCOPE: ClassVar[str] = FlextLdapConstants.SearchScope.SUBTREE.value
+        # Use production StrEnum values directly - no aliases
+        # Access via TestsFlextLdapConstants.Ldap.SearchScope.SUBTREE.value
         DEFAULT_ATTRIBUTES: ClassVar[tuple[str, ...]] = ("objectClass", "cn")
         TEST_USER_CN: ClassVar[str] = "testuser"
         TEST_USER_DN: ClassVar[str] = "uid=testuser,ou=people,dc=flext,dc=local"
@@ -170,14 +171,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             Reuses production StrEnum values from FlextLdifConstants.ServerTypes.
             """
 
-            # Reuse production StrEnum values for consistency (from flext-ldif)
-            RFC = FlextLdifConstants.ServerTypes.RFC.value
-            OID = FlextLdifConstants.ServerTypes.OID.value
-            OUD = FlextLdifConstants.ServerTypes.OUD.value
-            OPENLDAP = FlextLdifConstants.ServerTypes.OPENLDAP.value
+            # Use production StrEnum values directly - no aliases
+            # Access via TestsFlextLdapConstants.Ldif.ServerTypes.RFC.value
 
             # Valid server types for testing (only those registered in quirks)
-            VALID = (RFC,)
+            # Use FlextLdifConstants.Ldif.ServerTypes.RFC.value directly - no aliases
+            VALID = (FlextLdifConstants.Ldif.ServerTypes.RFC.value,)
 
         class Connection:
             """LDAP connection-related constants."""
@@ -207,9 +206,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
             BASE_DN = "dc=flext,dc=local"
             FILTER_ALL = "(objectClass=*)"
-            SCOPE_SUBTREE = FlextLdapConstants.SearchScope.SUBTREE.value
-            SCOPE_ONELEVEL = FlextLdapConstants.SearchScope.ONELEVEL.value
-            SCOPE_BASE = FlextLdapConstants.SearchScope.BASE.value
+            # Use production StrEnum values directly - no aliases
+            # Access via TestsFlextLdapConstants.Ldap.SearchScope.SUBTREE.value
 
             class OrganizationalUnits:
                 """Organizational unit constants."""

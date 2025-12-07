@@ -56,13 +56,13 @@ class TestsFlextLdap3Adapter:
     def test_adapter_initialization(self) -> None:
         """Test adapter initialization."""
         adapter = Ldap3Adapter()
-        tm.is_type(adapter, Ldap3Adapter)
+        tm.that(adapter, is_=Ldap3Adapter, none=False)
 
     def test_execute_returns_success(self) -> None:
         """Test execute() returns failure when not connected."""
         adapter = Ldap3Adapter()
         result = adapter.execute()
-        tm.fail(result, "Not connected")
+        tm.fail(result, has="Not connected")
 
     def test_connection_manager_create_server_with_ssl(self) -> None:
         """Test ConnectionManager.create_server with SSL."""
@@ -74,17 +74,17 @@ class TestsFlextLdap3Adapter:
             timeout=5,
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.not_none(server)
-        tm.eq(server.host, "localhost")
-        tm.eq(server.port, 636)
+        tm.that(server, none=False)
+        tm.that(server.host, eq="localhost")
+        tm.that(server.port, eq=636)
 
     def test_connection_manager_create_server_without_ssl(self) -> None:
         """Test ConnectionManager.create_server without SSL."""
         config = self._create_connection_config()
         server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.not_none(server)
-        tm.eq(server.host, "localhost")
-        tm.eq(server.port, 389)
+        tm.that(server, none=False)
+        tm.that(server.host, eq="localhost")
+        tm.that(server.port, eq=389)
 
     def test_connection_manager_create_server_with_tls(self) -> None:
         """Test ConnectionManager.create_server with TLS."""
@@ -96,28 +96,30 @@ class TestsFlextLdap3Adapter:
             timeout=5,
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.not_none(server)
-        tm.eq(server.host, "localhost")
-        tm.eq(server.port, 389)
+        tm.that(server, none=False)
+        tm.that(server.host, eq="localhost")
+        tm.that(server.port, eq=389)
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
         # Single call validates both keys and types
-        tm.dict_(
+        tm.that(
             Ldap3Adapter.__dict__,
-            has_key=["ConnectionManager", "ResultConverter"],
+            keys=["ConnectionManager", "ResultConverter"],
         )
-        tm.is_type(Ldap3Adapter.ConnectionManager, type)
-        tm.is_type(Ldap3Adapter.ResultConverter, type)
+        tm.that(Ldap3Adapter.ConnectionManager, is_=type, none=False)
+        tm.that(Ldap3Adapter.ResultConverter, is_=type, none=False)
 
     def test_connection_manager_static_methods_exist(self) -> None:
         """Test that static methods exist on ConnectionManager."""
-        tm.dict_(dict(Ldap3Adapter.ConnectionManager.__dict__), has_key="create_server")
-        tm.eq(callable(Ldap3Adapter.ConnectionManager.create_server), True)
+        tm.that(dict(Ldap3Adapter.ConnectionManager.__dict__), keys=["create_server"])
+        tm.that(callable(Ldap3Adapter.ConnectionManager.create_server), eq=True)
 
     def test_adapter_methods_exist(self) -> None:
         """Test that all expected methods exist on adapter."""
         adapter = Ldap3Adapter()
-        # Single call validates key and callable
-        tm.dict_(dict(adapter.__dict__), has_key="execute")
-        tm.eq(callable(adapter.execute), True)
+        # Validate method exists and is callable
+        tm.has(adapter, "execute")
+        tm.that(hasattr(adapter, "execute"), eq=True) and tm.that(
+            callable(getattr(adapter, "execute", None)), eq=True
+        )

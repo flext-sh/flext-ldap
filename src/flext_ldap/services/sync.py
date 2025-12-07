@@ -28,6 +28,7 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
@@ -304,7 +305,13 @@ class FlextLdapSyncService(s[m.SyncStats]):
                 """Transform entry DN if source_basedn matches."""
                 dn_str = FlextLdifUtilities.DN.get_dn_value(entry.dn)
                 if source_basedn.lower() in dn_str.lower():
-                    new_dn_value = dn_str.replace(source_basedn, target_basedn)
+                    # Case-insensitive replacement using regex (RFC 4514 compliance)
+                    new_dn_value = re.sub(
+                        re.escape(source_basedn),
+                        target_basedn,
+                        dn_str,
+                        flags=re.IGNORECASE,
+                    )
                     # Create new Entry with new DN - Entry validates DN automatically
                     return m.Entry(
                         dn=m.DistinguishedName(value=new_dn_value),

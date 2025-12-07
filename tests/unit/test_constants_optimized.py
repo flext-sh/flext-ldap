@@ -57,22 +57,22 @@ class TestsFlextLdapConstants:
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values in single parametrized method."""
-        tm.eq(getattr(c.LdapCqrs.Status, attr), expected)
+        tm.that(getattr(c.LdapCqrs.Status, eq=attr), expected)
 
     def test_is_valid_status_with_enum(self) -> None:
         """Test is_valid_status with Status enum."""
         result = c.LdapValidation.is_valid_status(c.LdapCqrs.Status.PENDING)
-        tm.eq(result, True)
+        tm.that(result, eq=True)
 
     def test_is_valid_status_with_string(self) -> None:
         """Test is_valid_status with string literal."""
         result = c.LdapValidation.is_valid_status("pending")
-        tm.eq(result, True)
+        tm.that(result, eq=True)
 
     def test_is_valid_status_invalid(self) -> None:
         """Test is_valid_status with invalid value."""
         result = c.LdapValidation.is_valid_status("invalid")
-        tm.eq(result, False)
+        tm.that(result, eq=False)
 
     # =========================================================================
     # PARAMETRIZED ENUM TESTS - SearchScope
@@ -88,7 +88,7 @@ class TestsFlextLdapConstants:
     )
     def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        tm.eq(getattr(c.SearchScope, attr).value, expected)
+        tm.that(getattr(c.SearchScope, eq=attr).value, expected)
 
     # =========================================================================
     # PARAMETRIZED ENUM TESTS - OperationType
@@ -105,7 +105,7 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_enum_values(self, attr: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        tm.eq(getattr(c.OperationType, attr).value, expected)
+        tm.that(getattr(c.OperationType, eq=attr).value, expected)
 
     # =========================================================================
     # SCALAR CONSTANT TESTS
@@ -113,15 +113,15 @@ class TestsFlextLdapConstants:
 
     def test_core_name(self) -> None:
         """Test Core.NAME constant."""
-        tm.eq(c.Core.NAME, "FLEXT_LDAP")
+        tm.that(c.Core.NAME, eq="FLEXT_LDAP")
 
     def test_filters_all_entries(self) -> None:
         """Test Filters.ALL_ENTRIES_FILTER constant."""
-        tm.eq(c.Filters.ALL_ENTRIES_FILTER, "(objectClass=*)")
+        tm.that(c.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
 
     def test_connection_defaults_port_is_valid(self) -> None:
         """Test ConnectionDefaults.PORT is valid port number."""
-        tm.is_type(c.ConnectionDefaults.PORT, int)
+        tm.that(c.ConnectionDefaults.PORT, is_=int, none=False)
         tm.that(c.ConnectionDefaults.PORT, gte=1, lte=65535)
 
     # =========================================================================
@@ -130,8 +130,8 @@ class TestsFlextLdapConstants:
 
     def test_vendor_string_max_tokens(self) -> None:
         """Test newly added VENDOR_STRING_MAX_TOKENS constant."""
-        tm.is_type(c.VENDOR_STRING_MAX_TOKENS, int)
-        tm.eq(c.VENDOR_STRING_MAX_TOKENS, 2)
+        tm.that(c.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
+        tm.that(c.VENDOR_STRING_MAX_TOKENS, eq=2)
 
 
 # ============================================================================
@@ -146,9 +146,9 @@ class TestsFlextLdapConstants:
 #    - Makes data discoverable and reusable
 #
 # 3. TM METHODS: Leverage advanced matchers
-#    - tm.eq(a, b) - equality check
+#    - tm.that(a, eq=b) - equality check
 #    - tm.that(value, **comparisons) - multiple comparisons in one call
-#    - tm.is_type(value, type) - type assertion with not_none check
+#    - tm.that(value, is_=type, none=False) - type assertion with not_none check
 #
 # 4. SINGLE CLASS: All test logic in ONE class per module
 #    - No helpers outside the class

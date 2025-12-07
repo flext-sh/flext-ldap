@@ -30,7 +30,7 @@ from typing import cast
 
 from flext_core import FlextConfig, r
 from flext_ldif import FlextLdif, FlextLdifParser
-from pydantic import ConfigDict, PrivateAttr
+from pydantic import ConfigDict
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.base import s
@@ -94,9 +94,8 @@ class FlextLdapConnection(s[bool]):
     )
 
     _adapter: Ldap3Adapter
-    _config: FlextConfig | None = PrivateAttr(
-        default=None,
-    )  # Compatible with base class
+    # Use class attribute (not PrivateAttr) to match FlextService pattern
+    _config: FlextConfig | None = None
 
     def __init__(
         self,
@@ -135,7 +134,8 @@ class FlextLdapConnection(s[bool]):
         resolved_config: FlextLdapConfig = (
             config if config is not None else FlextLdapConfig()
         )
-        object.__setattr__(self, "_config", resolved_config)
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        self._config = resolved_config
         # Use default parser if not provided
         resolved_parser: FlextLdifParser = (
             parser if parser is not None else FlextLdif().parser

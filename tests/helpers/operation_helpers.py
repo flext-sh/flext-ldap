@@ -24,7 +24,6 @@ from flext_ldap import (
 from ..constants import c
 from ..models import m
 from ..typings import GenericFieldsDict, t
-from ..utilities import u
 
 # Backward compatibility alias
 RFC = c.RFC
@@ -119,7 +118,7 @@ class TestsFlextLdapOperationHelpers:
             AssertionError: If result is failure
 
         """
-        FlextTestsUtilities.Result.assert_success(result, error_msg=error_msg)
+        u.Tests.Result.assert_success(result, error_msg=error_msg)
         return result
 
     @staticmethod
@@ -302,7 +301,7 @@ class TestsFlextLdapOperationHelpers:
             # Convert protocol result to r
             search_result_raw = cast("r[m.SearchResult]", search_result_raw)
         # Assert success and get value
-        FlextTestsUtilities.Result.assert_success(
+        u.Tests.Result.assert_success(
             search_result_raw,
             error_msg="Search failed",
         )
@@ -340,9 +339,7 @@ class TestsFlextLdapOperationHelpers:
                 execute_result_raw,
             )
         )
-        return u.Tests.Result.assert_result_success_and_unwrap(
-            execute_result_typed,
-        )
+        return u.Tests.Result.assert_success(execute_result_typed)
 
     @staticmethod
     def create_search_options(
@@ -695,11 +692,7 @@ class TestsFlextLdapOperationHelpers:
             OperationResult
 
         """
-        operation_result = (
-            u.Tests.Result.assert_result_success_and_unwrap(
-                result,
-            )
-        )
+        operation_result = u.Tests.Result.assert_success(result)
 
         assert operation_result.success is True
         assert operation_result.entries_affected == expected_entries_affected

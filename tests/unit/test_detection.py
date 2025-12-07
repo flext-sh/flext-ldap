@@ -105,7 +105,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("kwargs", "expect_failure", "error_substring"),
-        _get_detector_execute_scenarios.__func__(),
+        _get_detector_execute_scenarios(),
     )
     def test_execute_error_handling(
         self,
@@ -121,7 +121,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("attrs", "key", "expected"),
-        _get_get_first_value_scenarios.__func__(),
+        _get_get_first_value_scenarios(),
     )
     def test_get_first_value(
         self,
@@ -135,7 +135,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
-        _get_detect_from_attributes_scenarios.__func__(),
+        _get_detect_from_attributes_scenarios(),
     )
     def test_detect_from_attributes(
         self,

@@ -93,23 +93,25 @@ class TestsFlextLdapOperations:
         """Test that __init__ succeeds when connection is provided."""
         connection = self._create_connection()
         operations = self._create_operations(connection)
-        tm.not_none(operations)
-        tm.eq(operations._connection, connection)
+        tm.that(operations, none=False)
+        tm.that(operations._connection, eq=connection)
 
     def test_operations_initialization(self) -> None:
         """Test operations service initialization."""
         operations = self._create_operations()
-        tm.not_none(operations, operations._connection, operations.logger)
+        tm.that(operations, none=False)
+        tm.that(operations._connection, none=False)
+        tm.that(operations.logger, none=False)
 
     def test_config_property(self) -> None:
         """Test config property returns FlextConfig with ldap namespace."""
         operations = self._create_operations()
-        tm.is_type(operations.config, FlextConfig)
+        tm.that(operations.config, is_=FlextConfig, none=False)
 
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""
         operations = self._create_operations()
-        tm.eq(operations.is_connected, False)
+        tm.that(operations.is_connected, eq=False)
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),
@@ -122,7 +124,7 @@ class TestsFlextLdapOperations:
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
-        tm.eq(result, expected)
+        tm.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
         """Test execute method returns a FlextResult."""

@@ -547,14 +547,14 @@ make clean-all                # Deep clean including venvs
 **ZERO TOLERANCE** standards:
 
 - **Coverage**: 42% current (targeting 100%, focus on services/operations.py 15%, services/detection.py 19%, services/sync.py 29%, utilities.py 27%)
-- **Type Checking**: 
+- **Type Checking**:
   - Pyrefly strict mode - ZERO errors
   - MyPy strict mode - ZERO errors
   - Pyright - ZERO errors, ZERO warnings
 - **Linting**: Ruff - ZERO violations
 - **Security**: Bandit - ZERO critical issues
 - **Tests**: All tests passing (NO skipped tests)
-- **Test Infrastructure**: 
+- **Test Infrastructure**:
   - NO Python modules in `tests/fixtures/*.py`
   - Use `tests/helpers/` for all test code
   - Use `conftest.py` and `flext_tests` patterns
@@ -601,6 +601,7 @@ tests/
 ```
 
 **Test Class Pattern (MANDATORY)**:
+
 - One class per test module, prefixed with `TestsFlextLdap`
 - Use `t, c, p, m, u, s` for test support (from `tests` module)
 - Use `e, r, d, x` from flext-core directly

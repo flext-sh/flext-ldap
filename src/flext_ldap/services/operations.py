@@ -43,7 +43,7 @@ from flext_ldap.base import s
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
+from flext_ldap.protocols import FlextLdapProtocols
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
@@ -96,7 +96,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
     @staticmethod
     def _extract_attributes_dict(
-        entry: p.LdapEntry.EntryProtocol | m.Entry,
+        entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
     ) -> dict[str, list[str]]:
         """Extract attributes dict from entry protocol.
 
@@ -143,7 +143,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         @staticmethod
         def extract_attributes(
-            entry: p.LdapEntry.EntryProtocol | m.Entry,
+            entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> Mapping[str, Sequence[str]]:
             """Return entry attributes as a normalized mapping of lists.
 
@@ -401,8 +401,8 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         @staticmethod
         def compare(
-            existing_entry: p.LdapEntry.EntryProtocol | m.Entry,
-            new_entry: p.LdapEntry.EntryProtocol | m.Entry,
+            existing_entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
+            new_entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> t.Ldap.ModifyChanges | None:
             """Compare two entries and return modify changes when needed.
 
@@ -518,7 +518,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         @staticmethod
         def _convert_to_model(
-            entry: p.LdapEntry.EntryProtocol | m.Entry,
+            entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> m.Entry:
             """Convert entry to model type.
 
@@ -620,7 +620,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         def execute(
             self,
-            entry: p.LdapEntry.EntryProtocol | m.Entry,
+            entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> r[m.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
@@ -658,7 +658,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         def handle_schema_modify(
             self,
-            entry: p.LdapEntry.EntryProtocol | m.Entry,
+            entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> r[m.LdapOperationResult]:
             """Apply a schema modification entry.
 
@@ -739,7 +739,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         def handle_regular_add(
             self,
-            entry: p.LdapEntry.EntryProtocol | m.Entry,
+            entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> r[m.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
@@ -777,7 +777,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
         def handle_existing_entry(
             self,
-            entry: p.LdapEntry.EntryProtocol | m.Entry,
+            entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         ) -> r[m.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
@@ -957,7 +957,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
     def add(
         self,
-        entry: p.LdapEntry.EntryProtocol | m.Entry,
+        entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         **_kwargs: str | float | bool | None,
     ) -> r[m.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
@@ -1017,7 +1017,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
     def modify(
         self,
-        dn: str | p.LdapEntry.DistinguishedNameProtocol,
+        dn: str | FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> r[m.OperationResult]:
@@ -1050,8 +1050,10 @@ class FlextLdapOperations(s[m.SearchResult]):
         """
         # Type narrowing: convert str to DistinguishedName model if needed
         if isinstance(dn, str):
-            dn_model: p.LdapEntry.DistinguishedNameProtocol = m.DistinguishedName(
-                value=FlextLdifUtilities.DN.get_dn_value(dn),
+            dn_model: FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol = (
+                m.DistinguishedName(
+                    value=FlextLdifUtilities.DN.get_dn_value(dn),
+                )
             )
         else:
             dn_model = dn
@@ -1070,7 +1072,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
     def delete(
         self,
-        dn: str | p.LdapEntry.DistinguishedNameProtocol,
+        dn: str | FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
     ) -> r[m.OperationResult]:
         """Delete an LDAP entry identified by DN.
@@ -1101,8 +1103,10 @@ class FlextLdapOperations(s[m.SearchResult]):
         """
         # Type narrowing: convert str to DistinguishedName model if needed
         if isinstance(dn, str):
-            dn_model: p.LdapEntry.DistinguishedNameProtocol = m.DistinguishedName(
-                value=FlextLdifUtilities.DN.get_dn_value(dn),
+            dn_model: FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol = (
+                m.DistinguishedName(
+                    value=FlextLdifUtilities.DN.get_dn_value(dn),
+                )
             )
         else:
             dn_model = dn
@@ -1139,7 +1143,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
     def upsert(
         self,
-        entry: p.LdapEntry.EntryProtocol | m.Entry,
+        entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol | m.Entry,
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
@@ -1263,7 +1267,7 @@ class FlextLdapOperations(s[m.SearchResult]):
 
     def batch_upsert(
         self,
-        entries: list[p.LdapEntry.EntryProtocol],
+        entries: list[FlextLdapProtocols.Ldap.Entry.EntryProtocol],
         *,
         progress_callback: Callable[
             [int, int, str, m.LdapBatchStats],

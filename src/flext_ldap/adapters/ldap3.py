@@ -38,10 +38,6 @@ from flext_core import FlextRuntime, r
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
-    FlextLdifUtilities,
-)
-from flext_ldif.models import (
-    FlextLdifModels,
 )
 from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
@@ -53,9 +49,7 @@ from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
-
-# ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"]
-# We use StrEnum internally and pass validated string values to ldap3
+from flext_ldap.utilities import u
 
 
 class Ldap3Adapter(s[bool]):
@@ -243,14 +237,14 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: p.LdapEntry.EntryProtocol | m.Entry,
-        ) -> FlextLdifModels.DistinguishedName:
+            parsed: p.Ldap.Entry.EntryProtocol | m.Entry,
+        ) -> m.DistinguishedName:
             """Extract Distinguished Name from LDAP entry.
 
             Business Rules:
                 - Extracts DN from m.Entry instances directly
                 - Handles protocol-based entries via hasattr() checks
-                - Uses FlextLdifUtilities.DN.get_dn_value() for normalization
+                - Uses u.DN.get_dn_value() for normalization
                 - Returns empty DistinguishedName("") when extraction fails (no exception)
                 - DN normalization ensures consistent format across server types
 
@@ -261,7 +255,7 @@ class Ldap3Adapter(s[bool]):
                 - Remote LDAP operations depend on correct DN for targeting entries
 
             Architecture:
-                - Delegates to FlextLdifUtilities.DN.get_dn_value() for normalization
+                - Delegates to u.DN.get_dn_value() for normalization
                 - Returns m.DistinguishedName (Pydantic model)
                 - No network calls - pure data extraction from local objects
 
@@ -275,13 +269,9 @@ class Ldap3Adapter(s[bool]):
             # Direct access for m.Entry
             if isinstance(parsed, m.Entry):
                 if parsed.dn is not None:
-                    # Use m.DistinguishedName (public API)
-                    if isinstance(parsed.dn, m.DistinguishedName):
-                        return parsed.dn
-                    # Convert to m.DistinguishedName (public API)
-                    return m.DistinguishedName.model_validate({
-                        "value": parsed.dn.value,
-                    })
+                    # parsed.dn is guaranteed to be m.DistinguishedName by type system
+                    # (type is DistinguishedName | None, and we checked not None)
+                    return parsed.dn
                 return m.DistinguishedName.model_validate({"value": ""})
 
             # Protocol-based entry - extract DN value using utilities
@@ -301,8 +291,8 @@ class Ldap3Adapter(s[bool]):
                 # Convert to m.DistinguishedName (public API)
                 return m.DistinguishedName.model_validate({"value": dn_raw.value})
 
-            # Use FlextLdifUtilities.DN for conversion
-            dn_value = FlextLdifUtilities.DN.get_dn_value(dn_raw)
+            # Use u.DN for conversion
+            dn_value = u.DN.get_dn_value(dn_raw)
             return m.DistinguishedName.model_validate({"value": dn_value})
 
         @staticmethod
@@ -383,8 +373,8 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: p.LdapEntry.EntryProtocol | m.Entry,
-        ) -> FlextLdifModels.LdifAttributes:
+            parsed: p.Ldap.Entry.EntryProtocol | m.Entry,
+        ) -> m.LdifAttributes:
             """Extract LDAP attributes as m.LdifAttributes.
 
             Business Rules:
@@ -425,8 +415,8 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: p.LdapEntry.EntryProtocol | m.Entry,
-        ) -> FlextLdifModels.QuirkMetadata | None:
+            parsed: p.Ldap.Entry.EntryProtocol | m.Entry,
+        ) -> m.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
             Business Rules:
@@ -531,7 +521,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def convert_parsed_entries(
-            parse_response: FlextLdifModels.ParseResponse | object,
+            parse_response: m.ParseResponse | object,
         ) -> r[list[m.Entry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
@@ -578,7 +568,7 @@ class Ldap3Adapter(s[bool]):
                 # Defensive conversion for invalid structures (e.g., from tests or manual construction)
                 # Extract DN, attributes, and metadata using helper methods
                 # Type narrowing: entry_raw is not Entry, so it might be EntryProtocol or invalid structure
-                entry_for_extraction: p.LdapEntry.EntryProtocol | m.Entry = entry_raw
+                entry_for_extraction: p.Ldap.Entry.EntryProtocol | m.Entry = entry_raw
                 dn_obj = Ldap3Adapter.ResultConverter.extract_dn(entry_for_extraction)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
                     entry_for_extraction,
@@ -659,13 +649,13 @@ class Ldap3Adapter(s[bool]):
         def execute_modify(
             self,
             connection: Connection,
-            dn: str | p.LdapEntry.DistinguishedNameProtocol,
+            dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
             changes: t.Ldap.ModifyChanges,
         ) -> r[m.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
 
             Business Rules:
-                - DN is normalized using FlextLdifUtilities.DN.get_dn_value()
+                - DN is normalized using u.DN.get_dn_value()
                 - Calls connection.modify() with DN and changes dict
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
@@ -690,7 +680,7 @@ class Ldap3Adapter(s[bool]):
 
             """
             try:
-                dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
+                dn_str = u.DN.get_dn_value(dn)
                 modify_func: t.Ldap.ModifyCallable = connection.modify
                 success = modify_func(dn_str, changes)
 
@@ -713,12 +703,12 @@ class Ldap3Adapter(s[bool]):
         def execute_delete(
             self,
             connection: Connection,
-            dn: str | p.LdapEntry.DistinguishedNameProtocol,
+            dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
         ) -> r[m.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
 
             Business Rules:
-                - DN is normalized using FlextLdifUtilities.DN.get_dn_value()
+                - DN is normalized using u.DN.get_dn_value()
                 - Calls connection.delete() with DN string
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
@@ -742,7 +732,7 @@ class Ldap3Adapter(s[bool]):
 
             """
             try:
-                dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
+                dn_str = u.DN.get_dn_value(dn)
                 delete_func: t.Ldap.DeleteCallable = connection.delete
                 success = delete_func(dn_str)
 
@@ -1201,7 +1191,7 @@ class Ldap3Adapter(s[bool]):
 
         Business Rules:
             - Entry attributes are converted from m.Entry to ldap3 format
-            - DN is extracted using FlextLdifUtilities.DN.get_dn_value()
+            - DN is extracted using u.DN.get_dn_value()
             - Entry must be unique (LDAP error 68 if entry already exists)
             - Entry must conform to LDAP schema constraints
             - Connection must be established and bound before add operation
@@ -1238,13 +1228,9 @@ class Ldap3Adapter(s[bool]):
                 f"Failed to convert entry attributes: {error_msg}",
             )
 
-        # Extract DN value using FlextLdifUtilities.DN.get_dn_value() - handles all DN types
+        # Extract DN value using u.DN.get_dn_value() - handles all DN types
         # DSL pattern: conditional default
-        dn_str = (
-            FlextLdifUtilities.DN.get_dn_value(entry.dn)
-            if entry.dn is not None
-            else "unknown"
-        )
+        dn_str = u.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
         return self.OperationExecutor(self).execute_add(
             connection_result.unwrap(),
             dn_str,
@@ -1253,7 +1239,7 @@ class Ldap3Adapter(s[bool]):
 
     def modify(
         self,
-        dn: str | p.LdapEntry.DistinguishedNameProtocol,
+        dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> r[m.OperationResult]:
@@ -1262,7 +1248,7 @@ class Ldap3Adapter(s[bool]):
         Business Rules:
             - Entry must exist before modification (LDAP error 32 if not found)
             - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
-            - DN normalization is applied using FlextLdifUtilities.DN.get_dn_value()
+            - DN normalization is applied using u.DN.get_dn_value()
             - String DNs are converted to DistinguishedName models for type safety
             - Connection must be established and bound before modify operation
 
@@ -1273,7 +1259,7 @@ class Ldap3Adapter(s[bool]):
 
         Architecture:
             - Uses OperationExecutor.execute_modify() for protocol-level operation
-            - DN conversion handled by FlextLdifUtilities.DN
+            - DN conversion handled by u.DN
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
@@ -1297,7 +1283,7 @@ class Ldap3Adapter(s[bool]):
 
     def delete(
         self,
-        dn: str | p.LdapEntry.DistinguishedNameProtocol,
+        dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
     ) -> r[m.OperationResult]:
         """Delete LDAP entry.
@@ -1305,7 +1291,7 @@ class Ldap3Adapter(s[bool]):
         Business Rules:
             - Entry must exist before deletion (LDAP error 32 if not found)
             - Entry must not have children (LDAP error 66 if has children)
-            - DN normalization is applied using FlextLdifUtilities.DN.get_dn_value()
+            - DN normalization is applied using u.DN.get_dn_value()
             - String DNs are converted to DistinguishedName models for type safety
             - Connection must be established and bound before delete operation
 
@@ -1316,7 +1302,7 @@ class Ldap3Adapter(s[bool]):
 
         Architecture:
             - Uses OperationExecutor.execute_delete() for protocol-level operation
-            - DN conversion handled by FlextLdifUtilities.DN
+            - DN conversion handled by u.DN
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
