@@ -39,7 +39,10 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     #     pass
 
 
-__all__ = ["TestsFlextLdapProtocols", "p"]
-
-# Alias for simplified usage
+# Runtime alias for simplified usage
 p = TestsFlextLdapProtocols
+
+__all__ = [
+    "TestsFlextLdapProtocols",
+    "p",
+]

@@ -54,33 +54,16 @@ and FlextLdif integration for enterprise directory services.
 ### 🏗️ Enterprise Architecture Documentation
 
 - **[Architecture Overview](architecture/README.md)** - Production-scale Clean Architecture + DDD implementation
-- **[Domain Model](architecture/domain-model.md)** - Rich entities, value objects, and domain services with business logic
-- **[FLEXT Integration](architecture/flext-integration.md)** - Deep flext-core integration with railway patterns (784 FlextResult usages)
-- **[Design Patterns](architecture/design-patterns.md)** - Enterprise patterns and -first architecture (120+ methods)
-- **[Quality Excellence](architecture/quality-metrics.md)** - Exceptional quality metrics and industry standards
 
 ### 🔌 Enterprise Integration Guides
 
-- **[FLEXT Ecosystem](integration/flext-ecosystem.md)** - 33+ project ecosystem integration patterns
-- **[Singer Pipeline](integration/singer-pipeline.md)** - Enterprise data pipeline patterns and LDAP integration
-- **[Authentication](integration/authentication.md)** - Enterprise authentication with flext-auth integration
-- **[Performance](integration/performance.md)** - Large-scale directory operations optimization (100k+ entries)
-- **[Security](integration/security.md)** - Enterprise security and compliance patterns
 
 ### 📖 Comprehensive API Reference
 
-- **[Core API](api/core/README.md)** - FlextLdapClients comprehensive interface with enterprise patterns
-- **[Domain Objects](api/domain/README.md)** - Rich entities and value objects with Pydantic v2 validation
-- **[Infrastructure](api/infrastructure/README.md)** - LDAP operations and protocol adapters (2,370+ lines)
-- **[Configuration](api/configuration.md)** - Enterprise configuration patterns with Pydantic v2
+- **[API Reference](api/README.md)** - Complete API documentation
 
 ### 🛠️ World-Class Development
 
-- **[Development Setup](development/setup.md)** - Complete development environment setup and best practices
-- **[Testing Guide](development/testing.md)** - Comprehensive testing strategies (135% test-to-code ratio)
-- **[Quality Gates](development/quality.md)** - Industry-leading quality standards and validation
-- **[Contributing](development/contributing.md)** - Professional contribution guidelines and patterns
-- **[Architecture Decisions](development/adr/README.md)** - Design decisions and architectural rationale
 
 ### 📊 Production Operations
 
@@ -190,7 +173,7 @@ This documentation follows **FLEXT Framework** enterprise standards and industry
 ### FLEXT Framework Integration
 
 - **[FLEXT Platform Documentation](../../docs/README.md)** - Complete platform documentation
-- **[FLEXT-Core Reference](../../flext-core/docs/README.md)** - Foundation library documentation (railway patterns, DI, domain modeling)
+- **[FLEXT-Core Reference](https://github.com/organization/flext/tree/main/flext-core/docs/README.md)** - Foundation library documentation (railway patterns, DI, domain modeling)
 - **[FLEXT Architecture Guide](../../docs/architecture/README.md)** - Platform-wide architecture patterns
 
 ### Enterprise LDAP Standards and Best Practices
@@ -209,7 +192,6 @@ This documentation follows **FLEXT Framework** enterprise standards and industry
 
 - **[GitHub Discussions](https://github.com/flext-sh/flext/discussions)** - Community discussions and Q&A
 - **[Issue Tracker](https://github.com/flext-sh/flext/issues)** - Bug reports and feature requests
-- **[Changelog](../CHANGELOG.md)** - Release history, changes, and migration guides
 
 ---
 

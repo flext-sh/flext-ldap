@@ -58,7 +58,7 @@ class TestsFlextLdapConstants:
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values."""
-        actual = getattr(c.LdapCqrs.Status, attr)
+        actual = getattr(c.Ldap.LdapCqrs.Status, attr)
         tm.that(actual, eq=expected)
 
     @pytest.mark.parametrize(
@@ -107,7 +107,7 @@ class TestsFlextLdapConstants:
     @pytest.mark.parametrize(
         ("status", "expected"),
         [
-            (c.LdapCqrs.Status.PENDING, True),
+            (c.Ldap.LdapCqrs.Status.PENDING, True),
             ("pending", True),
             ("running", True),
             ("invalid", False),
@@ -115,7 +115,7 @@ class TestsFlextLdapConstants:
     )
     def test_is_valid_status(
         self,
-        status: str | c.LdapCqrs.Status,
+        status: str | c.Ldap.LdapCqrs.Status,
         expected: bool,
     ) -> None:
         """Test is_valid_status with various input types."""

@@ -24,7 +24,7 @@
 
 ### Breaking Changes (Internal Only)
 
-Import paths for internal modules have changed. **Public API is unchanged**. See [Migration Guide](docs/refactoring/MIGRATION_GUIDE.md) for details.
+Import paths for internal modules have changed. **Public API is unchanged**. See [CLAUDE.md](CLAUDE.md) for development patterns and architecture details.
 
 ```python
 # ✅ PUBLIC API - UNCHANGED (no migration needed)
@@ -45,7 +45,6 @@ ldap = FlextLdap()
 
 - **[🚀 Getting Started](#quick-start)** - Installation and basic usage
 - **[🏗️ Architecture](#architecture-overview)** - System design and patterns
-- **[📖 Migration Guide](docs/refactoring/MIGRATION_GUIDE.md)** - Upgrading from v0.9.0
 - **[🔧 Development](#development)** - Contributing and development workflows
 - **[🧪 Testing](#testing)** - Test suite and quality gates
 
@@ -54,7 +53,6 @@ ldap = FlextLdap()
 - **[Architecture Documentation](docs/architecture/)** - Deep dive into system design
 - **[API Reference](docs/api/)** - Complete API documentation
 - **[Development Guides](docs/development/)** - Contributing guidelines
-- **[Refactoring Documentation](docs/refactoring/)** - v0.10.0 transformation details
 
 ---
 
@@ -748,18 +746,14 @@ Use pytest markers to control test execution:
 
 ### Core Documentation
 
-- **[Migration Guide](docs/refactoring/MIGRATION_GUIDE.md)** - Upgrading from v0.9.0 to v0.10.0
-- **[Refactoring Plan](docs/refactoring/REFACTORING_PLAN.md)** - v0.10.0 transformation details
-- **[Architecture Changes](docs/refactoring/ARCHITECTURE_CHANGES.md)** - Before/after comparison
-- **[Step-by-Step Guide](docs/refactoring/STEP_BY_STEP_GUIDE.md)** - Implementation execution
 
 ### Extended Documentation
 
 - **[Architecture Deep-Dive](docs/architecture/)** - Comprehensive architecture documentation
 - **[API Reference](docs/api/)** - Complete API documentation
 - **[Development Guides](docs/development/)** - Contributing and development workflows
-- **[Server Operations](docs/server-operations.md)** - Server-specific implementations
-- **[ACL Management](docs/ACL_MANAGEMENT.md)** - Server-specific ACL handling
+- **[Server Operations](docs/guides/server-operations.md)** - Server-specific implementations
+- **[ACL Management](docs/guides/ACL_MANAGEMENT.md)** - Server-specific ACL handling
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
 ---
@@ -813,7 +807,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 ### Resources
 
 - **Documentation**: [docs/](docs/)
-- **Migration Guide**: [docs/refactoring/MIGRATION_GUIDE.md](docs/refactoring/MIGRATION_GUIDE.md)
 - **Issues**: [GitHub Issues](https://github.com/flext/flext-ldap/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/flext/flext-ldap/discussions)
 

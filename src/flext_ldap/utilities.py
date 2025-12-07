@@ -16,7 +16,7 @@ from typing import cast
 from flext_core import FlextRuntime, P
 from flext_ldif import FlextLdifUtilities
 
-from flext_ldap import t
+from flext_ldap.typings import t
 
 # ═══════════════════════════════════════════════════════════════════
 # FLEXT_LDAP UTILITIES - Advanced Builder/DSL Patterns
@@ -72,10 +72,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str(value: object, *, default: str = "") -> str:
-            """Convert to string (builder: conv().str()).
+            """Convert to string using parent convenience shortcut.
 
-            Uses advanced DSL: conv() builder internally for fluent composition.
-            Delegates to parent FlextUtilities.conv_str() via inheritance.
+            Delegates to FlextLdifUtilities.to_str() for actual conversion.
 
             Args:
                 value: Value to convert
@@ -85,12 +84,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 str: Converted string
 
             """
-            # Convert to string directly
-            if value is None:
-                return default
-            if isinstance(value, str):
-                return value
-            return str(value) if value else default
+            return FlextLdifUtilities.to_str(value, default=default)
 
         @staticmethod
         def to_str_list(
@@ -98,10 +92,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
             *,
             default: list[str] | None = None,
         ) -> list[str]:
-            """Convert to str_list (builder: conv().str_list()).
+            """Convert to str_list using parent convenience shortcut.
 
-            Uses advanced DSL: conv() builder internally for fluent composition.
-            Delegates to parent FlextUtilities.conv_str_list() via inheritance.
+            Delegates to FlextLdifUtilities.to_str_list() for actual conversion.
 
             Args:
                 value: Value to convert (can be None)
@@ -111,17 +104,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 list[str]: Converted list
 
             """
-            # Convert to list[str] using type narrowing
-            if value is None:
-                return default or []
-            # Check for tuple/set/frozenset first (is_list_like returns False for these)
-            if isinstance(value, (list, tuple, set, frozenset)):
-                return [str(item) for item in value if item is not None]
-            # Use FlextRuntime for type-safe list conversion
-            value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
-            if FlextRuntime.is_list_like(value_typed):
-                return [str(value)]
-            return [str(value)]
+            return FlextLdifUtilities.to_str_list(value, default=default)
 
         @staticmethod
         def to_str_list_truthy(
@@ -129,49 +112,30 @@ class FlextLdapUtilities(FlextLdifUtilities):
             *,
             default: list[str] | None = None,
         ) -> list[str]:
-            """Convert to str_list and filter truthy.
+            """Convert to str_list and filter truthy values.
 
-            Uses generalized pattern: chain(ensure, filter_truthy).
-
-            Uses advanced DSL: chain() for fluent composition chain.
+            Uses parent Conversion utilities for conversion, then filters truthy values.
+            This is LDAP-specific functionality for attribute value processing.
 
             Args:
                 value: Value to convert
                 default: Default if None
 
             Returns:
-                list[str]: Converted and filtered list
+                list[str]: Converted and filtered list (truthy values only)
 
             """
-            # DSL pattern: chain() for fluent composition chain
-            # Use parent class methods directly
-            # Convert to list[str] using type narrowing
-            if value is None:
-                return default or []
-
-            # Check for tuple/set/frozenset first (is_list_like returns False for these)
-            if isinstance(value, (list, tuple, set, frozenset)):
-                str_list = [str(item) for item in value if item is not None]
-            else:
-                # Use FlextRuntime for type-safe list conversion
-                value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
-                if FlextRuntime.is_list_like(value_typed):
-                    # For other list-like types (not handled by isinstance above)
-                    str_list = [str(value_typed)]
-                else:
-                    str_list = (
-                        [str(value_typed)] if value is not None else (default or [])
-                    )
-            # Filter truthy values - implement directly for type safety
-            # Type narrowing: str_list is list[str], filter truthy values
-            filtered_list: list[str] = [item for item in str_list if item]
-            return filtered_list
+            # Use parent convenience shortcut for conversion
+            str_list = FlextLdifUtilities.to_str_list(value, default=default)
+            # Filter truthy values - LDAP-specific behavior
+            return [item for item in str_list if item]
 
         @staticmethod
         def to_str_list_safe(value: object | None) -> list[str]:
-            """Safe str_list conversion (generalized: when() + ensure).
+            """Safe str_list conversion using parent Conversion utilities.
 
-            Uses advanced DSL: when() → ensure() for safe composition.
+            Uses parent Conversion utilities for safe None handling and conversion.
+            This is LDAP-specific functionality for safe attribute value processing.
 
             Args:
                 value: Value to convert (can be None)
@@ -180,19 +144,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 list[str]: Converted list or []
 
             """
-            # DSL pattern: conditional check for safe None handling, then ensure()
-            if value is not None:
-                # Convert to list[str] using type narrowing
-                # Check for tuple/set/frozenset first (is_list_like returns False for these)
-                # then check is_list_like for standard list/Sequence types
-                if isinstance(value, (list, tuple, set, frozenset)):
-                    return [str(item) for item in value if item is not None]
-                # Use FlextRuntime for type-safe list conversion
-                value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
-                if FlextRuntime.is_list_like(value_typed):
-                    return [str(item) for item in value_typed if item is not None]
-                return [str(value_typed)] if value is not None else []
-            return []
+            return FlextLdifUtilities.to_str_list(value, default=[])
 
         # ═══════════════════════════════════════════════════════════════════
         # NORMALIZATION BUILDERS - Expose via static methods
@@ -495,11 +447,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return str(dn) if dn is not None else default
 
         # ═══════════════════════════════════════════════════════════════════
-        # LDIF NAMESPACE ACCESS - Access flext-ldif utilities via .Ldif
+        # LDIF NAMESPACE ACCESS - Explicit re-export for clear access
         # ═══════════════════════════════════════════════════════════════════
-        # Since FlextLdapUtilities extends FlextLdifUtilities, we can access
-        # LDIF utilities via the parent class's .Ldif namespace
-        # This is a class attribute that references the parent's Ldif namespace
+        # Explicit re-export of parent's Ldif namespace for namespace inheritance.
+        # This allows access to LDIF utilities via u.Ldap.Ldif.* pattern.
         Ldif: type[FlextLdifUtilities.Ldif] = FlextLdifUtilities.Ldif
 
 

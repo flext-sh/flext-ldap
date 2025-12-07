@@ -46,7 +46,8 @@ from dataclasses import dataclass
 from typing import Self
 
 from flext_core import FlextModels, FlextRuntime
-from flext_ldif import FlextLdifModels, FlextLdifUtilities
+from flext_core.utilities import u as flext_u
+from flext_ldif import FlextLdifModels
 from pydantic import (
     Field,
     computed_field,
@@ -55,12 +56,14 @@ from pydantic import (
 )
 
 from flext_ldap.constants import c
-from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
 
 class FlextLdapModels(FlextLdifModels):
     """LDAP domain models extending FlextLdifModels.
+
+    .. deprecated:: 1.0.0
+        Use ``FlextModels.Ldap.*`` or ``m.Ldap.*`` instead of ``FlextLdapModels.*``.
 
     Uses advanced Python 3.13 patterns with enums, mappings, and computed fields
     for type-safe, efficient model definitions. All models follow Pydantic v2 patterns
@@ -72,7 +75,20 @@ class FlextLdapModels(FlextLdifModels):
     - arbitrary_types_allowed=True: Allows custom types
     - str_strip_whitespace=True: Strips whitespace from strings
     - extra="forbid": Rejects extra fields
+
+    Migration Guide:
+        Old: ``from flext_ldap import FlextLdapModels; config = FlextLdapModels.Ldap.ConnectionConfig(...)``
+        New: ``from flext_core import FlextModels; config = FlextModels.Ldap.ConnectionConfig(...)``
+        Or: ``from flext_core import m; config = m.Ldap.ConnectionConfig(...)``
     """
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Warn when FlextLdapModels is subclassed directly."""
+        super().__init_subclass__(**kwargs)
+        flext_u.Deprecation.warn_once(
+            f"subclass:{cls.__name__}",
+            "Subclassing FlextLdapModels is deprecated. Use FlextModels.Ldap instead.",
+        )
 
     class Ldap:  # type: ignore[misc]
         """LDAP-specific protocol namespace.
@@ -205,7 +221,7 @@ class FlextLdapModels(FlextLdifModels):
             @classmethod
             def validate_base_dn_format(cls, v: str) -> str:
                 """Validate base_dn format."""
-                if not FlextLdifUtilities.Ldif.DN.validate(v):
+                if not u.Ldif.DN.validate(v):
                     error_msg = f"Invalid base_dn format: {v}"
                     raise ValueError(error_msg)
                 return v
@@ -238,7 +254,7 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if isinstance(v, c.Ldap.SearchScope):
                     return v.value
-                # Use FlextLdapUtilities.Enum.parse for unified enum parsing
+                # Use u.Enum.parse for unified enum parsing
                 parse_result = u.Enum.parse(
                     c.Ldap.SearchScope,
                     v,
@@ -296,7 +312,7 @@ class FlextLdapModels(FlextLdifModels):
                 if config is None:
                     config = cls.NormalizedConfig()
 
-                normalized_base = FlextLdifUtilities.Ldif.DN.norm_string(base_dn)
+                normalized_base = u.Ldif.DN.norm_string(base_dn)
                 return cls(
                     base_dn=normalized_base,
                     scope=config.scope or "SUBTREE",
@@ -669,7 +685,7 @@ class FlextLdapModels(FlextLdifModels):
                 default="rfc",
                 description="LDAP server type for LDIF parsing",
             )
-            progress_callback: t.Ldap.ProgressCallbackUnion = Field(
+            progress_callback: FlextLdapModels.Ldap.Types.ProgressCallbackUnion = Field(
                 default=None,
                 description="Optional callback for progress tracking (4 or 5 params)",
             )
@@ -768,53 +784,17 @@ class FlextLdapModels(FlextLdifModels):
             Defined in models.py to avoid circular import with typings.py.
             """
 
+            type ProgressCallbackUnion = (
+                LdapProgressCallback | MultiPhaseProgressCallback | None
+            )
+            """Union type for progress callbacks (accepts both single-phase and multi-phase).
 
-# Convenience alias for common usage pattern - exported for domain usage
+            Union of LdapProgressCallback (4 params) and MultiPhaseProgressCallback (5 params).
+            Defined in models.py to avoid circular import with typings.py.
+            Use this in model field annotations instead of t.Ldap.ProgressCallbackUnion.
+            """
+
+
 m = FlextLdapModels
-
-# =============================================================================
-# POPULATE FlextModels.Ldap NAMESPACE
-# =============================================================================
-# Copy all models from FlextLdapModels.Ldap to FlextModels.Ldap namespace
-# This allows access via both:
-# - FlextLdapModels.Ldap.* (project-specific namespace)
-# - FlextModels.Ldap.* (global namespace)
-# - m.Ldap.* (convenience alias)
-# =============================================================================
-# Note: FlextModels is imported at top of file
-
-# Get all attributes from FlextLdapModels.Ldap that are models, classes, or type aliases
-# Exclude private attributes and special methods
-_ldap_model_attrs = {
-    name: attr
-    for name, attr in vars(FlextLdapModels.Ldap).items()
-    if not name.startswith("_")
-    and (
-        isinstance(attr, type)
-        or hasattr(attr, "__origin__")  # TypeAlias
-        or (
-            callable(attr) and not isinstance(attr, type(FlextLdapModels.Ldap.__init__))
-        )
-    )
-}
-
-# Create FlextModels.Ldap namespace dynamically if it doesn't exist
-# Use direct class declaration, no aliases
-if not hasattr(FlextModels, "Ldap"):
-
-    class Ldap:
-        """LDAP project namespace - populated by flext-ldap.
-
-        This namespace contains all LDAP-specific models from flext-ldap.
-        Access via: FlextModels.Ldap.ConnectionConfig, FlextModels.Ldap.SearchOptions, etc.
-        """
-
-    # Type checker note: This is intentional namespace composition
-    # The Ldap class is dynamically added to FlextModels for runtime access
-    FlextModels.Ldap = Ldap  # type: ignore[assignment]
-
-# Populate FlextModels.Ldap namespace with direct declarations
-for name, attr in _ldap_model_attrs.items():
-    setattr(FlextModels.Ldap, name, attr)  # type: ignore[attr-defined]
 
 __all__ = ["FlextLdapModels", "m"]

@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from flext_core import FlextService
 
-from flext_ldap.typings import TDomainResult
+from flext_ldap.typings import FlextLdapDomainResultT as TDomainResult
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult]):

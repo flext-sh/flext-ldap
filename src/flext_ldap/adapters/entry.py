@@ -199,7 +199,7 @@ class FlextLdapEntryAdapter(s[bool]):
         }
         super().__init__(**kwargs_without_server_type)
         # Use provided server_type or default from constants
-        resolved_type: str = server_type or c.ServerTypes.RFC
+        resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
         # FlextLdif accepts config via kwargs, not as direct parameter
         # Use object.__setattr__ for frozen model compatibility
         object.__setattr__(self, "_ldif", FlextLdif())

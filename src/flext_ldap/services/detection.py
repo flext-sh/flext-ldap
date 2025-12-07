@@ -197,7 +197,7 @@ class FlextLdapServerDetector(s[str]):
 
         """
         # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
-        search_scope: c.LiteralTypes.Ldap3ScopeLiteral = "BASE"
+        search_scope: c.Ldap.LiteralTypes.Ldap3ScopeLiteral = "BASE"
         if not connection.search(
             search_base="",
             search_filter=str(c.Filters.ALL_ENTRIES_FILTER),

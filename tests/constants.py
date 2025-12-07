@@ -279,10 +279,10 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             }
             EMPTY_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {}
             SERVER_TYPE_OPENLDAP: ClassVar[str] = (
-                FlextLdifConstants.ServerTypes.OPENLDAP.value
+                FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value
             )
             SERVER_TYPE_OPENLDAP2: ClassVar[str] = (
-                FlextLdifConstants.ServerTypes.OPENLDAP.value
+                FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value
             )
             ERROR_NO_ATTRIBUTES: ClassVar[str] = "no attributes"
 

@@ -74,7 +74,7 @@ class FlextLdapConfig(FlextConfig):
     )
 
     port: int = Field(
-        default=c.ConnectionDefaults.PORT,
+        default=c.Ldap.ConnectionDefaults.PORT,
         ge=1,
         le=65535,
         description="LDAP server port",
@@ -101,29 +101,29 @@ class FlextLdapConfig(FlextConfig):
     )
 
     timeout: int = Field(
-        default=c.ConnectionDefaults.TIMEOUT,
+        default=c.Ldap.ConnectionDefaults.TIMEOUT,
         ge=1,
         description="Connection timeout in seconds",
     )
 
     auto_bind: bool = Field(
-        default=c.ConnectionDefaults.AUTO_BIND,
+        default=c.Ldap.ConnectionDefaults.AUTO_BIND,
         description="Automatically bind after connection",
     )
 
     auto_range: bool = Field(
-        default=c.ConnectionDefaults.AUTO_RANGE,
+        default=c.Ldap.ConnectionDefaults.AUTO_RANGE,
         description="Automatically handle range queries",
     )
 
     pool_size: int = Field(
-        default=c.ConnectionDefaults.POOL_SIZE,
+        default=c.Ldap.ConnectionDefaults.POOL_SIZE,
         ge=1,
         description="Connection pool size",
     )
 
     pool_lifetime: int = Field(
-        default=c.ConnectionDefaults.POOL_LIFETIME,
+        default=c.Ldap.ConnectionDefaults.POOL_LIFETIME,
         ge=1,
         description="Connection pool lifetime in seconds",
     )

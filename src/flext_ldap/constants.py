@@ -52,7 +52,12 @@ class FlextLdapConstants(FlextLdifConstants):
             """LDAP CQRS pattern constants."""
 
             class Status(StrEnum):
-                """LDAP CQRS status enumeration."""
+                """LDAP CQRS status enumeration.
+
+                DRY Pattern:
+                    StrEnum is the single source of truth. Use Status.PENDING.value
+                    or Status.PENDING directly - no base strings needed.
+                """
 
                 PENDING = "pending"
                 RUNNING = "running"
@@ -60,10 +65,10 @@ class FlextLdapConstants(FlextLdifConstants):
                 FAILED = "failed"
 
             type StatusLiteral = Literal[
-                "pending",
-                "running",
-                "completed",
-                "failed",
+                Status.PENDING,
+                Status.RUNNING,
+                Status.COMPLETED,
+                Status.FAILED,
             ]
 
         # ═══════════════════════════════════════════════════════════════════
@@ -124,6 +129,10 @@ class FlextLdapConstants(FlextLdifConstants):
 
             Extends parent with LDAP-specific attribute names.
             DN and CHANGETYPE are available via .Ldif namespace from FlextLdifConstants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LdapAttributeNames.OBJECT_CLASS.value
+                or LdapAttributeNames.OBJECT_CLASS directly - no base strings needed.
             """
 
             # Core attribute names (reused from flext-ldif via .Ldif namespace)
@@ -143,6 +152,11 @@ class FlextLdapConstants(FlextLdifConstants):
             """LDAP search scope types (RFC 4511).
 
             Python 3.13+ StrEnum provides string-like behavior with enum validation.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SearchScope.BASE.value
+                or SearchScope.BASE directly - no base strings needed.
+
             Can be used interchangeably with SearchScopeLiteral in type hints.
 
             **Pydantic 2 Usage:**
@@ -171,6 +185,11 @@ class FlextLdapConstants(FlextLdifConstants):
             """LDAP operation types.
 
             Extends base operation constants from flext-ldif with LDAP-specific operations.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use OperationType.SEARCH.value
+                or OperationType.SEARCH directly - no base strings needed.
+
             Uses .Ldif namespace to access parent constants.
             """
 
@@ -209,7 +228,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class ErrorStrings(StrEnum):
-            """Error/status string constants."""
+            """Error/status string constants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ErrorStrings.UNKNOWN_ERROR.value
+                or ErrorStrings.UNKNOWN_ERROR directly - no base strings needed.
+            """
 
             UNKNOWN_ERROR = "Unknown error"
             NOT_CONNECTED = "Not connected to LDAP server"
@@ -227,6 +251,10 @@ class FlextLdapConstants(FlextLdifConstants):
 
             Used for LDIF changetype attribute and modify operations.
             Extends base operation constants from flext-ldif with LDAP-specific operations.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ChangeTypeOperations.ADD.value
+                or ChangeTypeOperations.ADD directly - no base strings needed.
             """
 
             # Base operation constants (reused from flext-ldif via .Ldif namespace)
@@ -272,7 +300,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class UpsertOperations(StrEnum):
-            """Upsert operation result types."""
+            """Upsert operation result types.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use UpsertOperations.ADDED.value
+                or UpsertOperations.ADDED directly - no base strings needed.
+            """
 
             ADDED = "added"
             MODIFIED = "modified"
@@ -292,6 +325,10 @@ class FlextLdapConstants(FlextLdifConstants):
 
             DRY: Reuses OperationType values where applicable.
             Uses .Ldif namespace to access parent constants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LdapOperationNames.SYNC.value
+                or LdapOperationNames.SYNC directly - no base strings needed.
             """
 
             SYNC = "sync_ldif_file"
@@ -330,6 +367,10 @@ class FlextLdapConstants(FlextLdifConstants):
 
             LDAP-specific ACL attribute names used in LDAP operations.
             For RFC baseline ACL attributes, use FlextLdapConstants.Ldif.AclAttributes.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LdapAclAttributes.RAW.value
+                or LdapAclAttributes.RAW directly - no base strings needed.
             """
 
             RAW = "raw"
@@ -347,7 +388,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class AclFormat(StrEnum):
-            """Supported ACL format identifiers."""
+            """Supported ACL format identifiers.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use AclFormat.GENERIC.value
+                or AclFormat.GENERIC directly - no base strings needed.
+            """
 
             GENERIC = "generic"
             OPENLDAP2 = "openldap2"
@@ -359,7 +405,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class SyntheticDns(StrEnum):
-            """Synthetic DN constants for internal operations."""
+            """Synthetic DN constants for internal operations.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SyntheticDns.ACL_RULE.value
+                or SyntheticDns.ACL_RULE directly - no base strings needed.
+            """
 
             ACL_RULE = "cn=acl-rule"
             OBJECT_CLASS_DEFINITION = "cn=objectclass-definition"
@@ -370,7 +421,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class LdapDictKeys(StrEnum):
-            """LDAP dictionary key names."""
+            """LDAP dictionary key names.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LdapDictKeys.DESCRIPTION.value
+                or LdapDictKeys.DESCRIPTION directly - no base strings needed.
+            """
 
             DESCRIPTION = "description"
 
@@ -379,7 +435,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class SaslMechanisms(StrEnum):
-            """SASL authentication mechanism constants."""
+            """SASL authentication mechanism constants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SaslMechanisms.SIMPLE.value
+                or SaslMechanisms.SIMPLE directly - no base strings needed.
+            """
 
             SIMPLE = "SIMPLE"
             SASL_EXTERNAL = "SASL/EXTERNAL"
@@ -405,7 +466,12 @@ class FlextLdapConstants(FlextLdifConstants):
             SUBTREE_LDAP3: Final[int] = 2  # SUBTREE scope
 
         class Ldap3ScopeValues(StrEnum):
-            """LDAP3 scope string values matching Ldap3Scope Literal type."""
+            """LDAP3 scope string values matching Ldap3Scope Literal type.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Ldap3ScopeValues.BASE.value
+                or Ldap3ScopeValues.BASE directly - no base strings needed.
+            """
 
             BASE = "BASE"
             LEVEL = "LEVEL"
@@ -416,7 +482,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class RootDseAttributes(StrEnum):
-            """Root DSE attribute name constants."""
+            """Root DSE attribute name constants.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use RootDseAttributes.VENDOR_NAME.value
+                or RootDseAttributes.VENDOR_NAME directly - no base strings needed.
+            """
 
             VENDOR_NAME = "vendorName"
             VENDOR_VERSION = "vendorVersion"
@@ -429,7 +500,12 @@ class FlextLdapConstants(FlextLdifConstants):
         # ═══════════════════════════════════════════════════════════════════
 
         class VendorNames(StrEnum):
-            """Vendor name constants for server detection."""
+            """Vendor name constants for server detection.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use VendorNames.ORACLE.value
+                or VendorNames.ORACLE directly - no base strings needed.
+            """
 
             ORACLE = "oracle"
             OPENLDAP = "openldap"
@@ -514,156 +590,156 @@ class FlextLdapConstants(FlextLdifConstants):
             - Both provide type safety, but StrEnum offers better runtime validation
             """
 
-        # DRY Pattern: Literals manually defined but auto-validated against StrEnum
-        # StrEnum is single source of truth - validation ensures sync
-        # SearchScope StrEnum → Literal (values must match SearchScope enum)
+        # DRY Pattern: Literals reference StrEnum members - NO string duplication!
+        # StrEnum is single source of truth - Literal types reference enum members
+        # SearchScope StrEnum → Literal (references SearchScope enum members)
         type SearchScopeLiteral = Literal[
-            "BASE",
-            "ONELEVEL",
-            "SUBTREE",
+            SearchScope.BASE,
+            SearchScope.ONELEVEL,
+            SearchScope.SUBTREE,
         ]
 
-        # OperationType StrEnum → Literal (values must match OperationType enum)
+        # OperationType StrEnum → Literal (references OperationType enum members)
         # Reuses base operation constants from flext-ldif via OperationType enum
         type OperationTypeLiteral = Literal[
-            "search",
+            OperationType.SEARCH,
             # Reuses base operations from flext-ldif via OperationType enum
-            "add",
-            "modify",
-            "delete",
-            "modify_dn",
-            "compare",
-            "bind",
-            "unbind",
+            OperationType.ADD,
+            OperationType.MODIFY,
+            OperationType.DELETE,
+            OperationType.MODIFY_DN,
+            OperationType.COMPARE,
+            OperationType.BIND,
+            OperationType.UNBIND,
         ]
 
-        # ServerTypes StrEnum → Literal (values must match ServerTypes enum)
+        # ServerTypes StrEnum → Literal (references ServerTypes enum members)
         # NOTE: LdapServerTypeLiteral provides LDAP-specific server types
         # Parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral has
         # LDIF-specific types
         # Using separate type alias to avoid override conflict
         # For LDIF parsing, use parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        # DRY Pattern: References parent ServerTypes enum members - NO string duplication!
         type LdapServerTypeLiteral = Literal[
-            "rfc",
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "apache",
-            "ds389",
-            "novell",
-            "tivoli",
-            "ad",
-            "relaxed",
+            FlextLdifConstants.Ldif.ServerTypes.RFC,
+            FlextLdifConstants.Ldif.ServerTypes.OID,
+            FlextLdifConstants.Ldif.ServerTypes.OUD,
+            FlextLdifConstants.Ldif.ServerTypes.OPENLDAP,
+            FlextLdifConstants.Ldif.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.Ldif.ServerTypes.APACHE,
+            FlextLdifConstants.Ldif.ServerTypes.DS389,
+            FlextLdifConstants.Ldif.ServerTypes.NOVELL,
+            FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI,
+            FlextLdifConstants.Ldif.ServerTypes.AD,
+            FlextLdifConstants.Ldif.ServerTypes.RELAXED,
         ]
 
-        # UpsertOperations StrEnum → Literal (values must match UpsertOperations enum)
+        # UpsertOperations StrEnum → Literal (references UpsertOperations enum members)
         type UpsertOperationLiteral = Literal[
-            "added",
-            "modified",
-            "skipped",
+            UpsertOperations.ADDED,
+            UpsertOperations.MODIFIED,
+            UpsertOperations.SKIPPED,
         ]
 
-        # Ldap3ScopeValues StrEnum → Literal (for ldap3 library compatibility)
+        # Ldap3ScopeValues StrEnum → Literal (references Ldap3ScopeValues enum members)
         type Ldap3ScopeLiteral = Literal[
-            "BASE",
-            "LEVEL",
-            "SUBTREE",
+            Ldap3ScopeValues.BASE,
+            Ldap3ScopeValues.LEVEL,
+            Ldap3ScopeValues.SUBTREE,
         ]
 
-        # ErrorStrings StrEnum → Literal (values hardcoded to avoid forward references)
+        # ErrorStrings StrEnum → Literal (references ErrorStrings enum members)
         type ErrorStringLiteral = Literal[
-            "Unknown error",
-            "Not connected to LDAP server",
-            "already exists",
-            "entryalreadyexists",
-            "ldap_already_exists",
-            "session terminated",
-        ]  # Values match ErrorStrings enum - no duplication
+            ErrorStrings.UNKNOWN_ERROR,
+            ErrorStrings.NOT_CONNECTED,
+            ErrorStrings.ENTRY_ALREADY_EXISTS,
+            ErrorStrings.ENTRY_ALREADY_EXISTS_ALT,
+            ErrorStrings.ENTRY_ALREADY_EXISTS_LDAP,
+            ErrorStrings.SESSION_TERMINATED,
+        ]
 
-        # LdapOperationNames StrEnum → Literal (auto-generated from enum values)
+        # LdapOperationNames StrEnum → Literal (references LdapOperationNames enum members)
         # Reuses base operation constants from flext-ldif via LdapOperationNames enum
         type LdapOperationNameLiteral = Literal[
-            "sync_ldif_file",
-            "connect",
-            "disconnect",
-            "search",
+            LdapOperationNames.SYNC,
+            LdapOperationNames.CONNECT,
+            LdapOperationNames.DISCONNECT,
+            LdapOperationNames.SEARCH,
             # Reuses base operations from flext-ldif via LdapOperationNames enum
-            "add",
-            "modify",
-            "delete",
-            "batch_upsert",
-            "detect_from_connection",
-            "ldap3_to_ldif_entry",
-            "ldif_entry_to_ldap3_attributes",
-        ]  # Values match LdapOperationNames enum - no duplication
+            LdapOperationNames.ADD,
+            LdapOperationNames.MODIFY,
+            LdapOperationNames.DELETE,
+            LdapOperationNames.BATCH_UPSERT,
+            LdapOperationNames.DETECT_FROM_CONNECTION,
+            LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
+            LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
+        ]
 
-        # LdapAclAttributes StrEnum → Literal (auto-generated from enum values)
+        # LdapAclAttributes StrEnum → Literal (references LdapAclAttributes enum members)
         type AclAttributeLiteral = Literal[
-            "raw",
-            "target",
-            "targetAttributes",
-            "subject",
-            "permissions",
-        ]  # Values match LdapAclAttributes enum - no duplication
+            LdapAclAttributes.RAW,
+            LdapAclAttributes.TARGET,
+            LdapAclAttributes.TARGET_ATTRIBUTES,
+            LdapAclAttributes.SUBJECT,
+            LdapAclAttributes.PERMISSIONS,
+        ]
 
-        # AclFormat StrEnum → Literal (auto-generated from enum values)
+        # AclFormat StrEnum → Literal (references AclFormat enum members)
         type AclFormatLiteral = Literal[
-            "generic",
-            "openldap2",
-            "openldap1",
-            "oracle",
-        ]  # Values match AclFormat enum - no duplication
+            AclFormat.GENERIC,
+            AclFormat.OPENLDAP2,
+            AclFormat.OPENLDAP1,
+            AclFormat.ORACLE,
+        ]
 
-        # SyntheticDns StrEnum → Literal (auto-generated from enum values)
+        # SyntheticDns StrEnum → Literal (references SyntheticDns enum members)
         type SyntheticDnLiteral = Literal[
-            "cn=acl-rule",
-            "cn=objectclass-definition",
-            "cn=attributetype-definition",
-        ]  # Values match SyntheticDns enum - no duplication
+            SyntheticDns.ACL_RULE,
+            SyntheticDns.OBJECT_CLASS_DEFINITION,
+            SyntheticDns.ATTRIBUTE_TYPE_DEFINITION,
+        ]
 
-        # SaslMechanisms StrEnum → Literal (values hardcoded to avoid
-        # forward references)
+        # SaslMechanisms StrEnum → Literal (references SaslMechanisms enum members)
         type SaslMechanismLiteral = Literal[
-            "SIMPLE",
-            "SASL/EXTERNAL",
-            "SASL/DIGEST-MD5",
-            "SASL/GSSAPI",
-        ]  # Values match SaslMechanisms enum - no duplication
+            SaslMechanisms.SIMPLE,
+            SaslMechanisms.SASL_EXTERNAL,
+            SaslMechanisms.SASL_DIGEST_MD5,
+            SaslMechanisms.SASL_GSSAPI,
+        ]
 
-        # RootDseAttributes StrEnum → Literal (values from RootDseAttributes enum)
+        # RootDseAttributes StrEnum → Literal (references RootDseAttributes enum members)
         type RootDseAttributeLiteral = Literal[
-            "vendorName",
-            "vendorVersion",
-            "configContext",
-            "rootDomainNamingContext",
-            "defaultNamingContext",
-        ]  # Values match RootDseAttributes enum - no duplication
+            RootDseAttributes.VENDOR_NAME,
+            RootDseAttributes.VENDOR_VERSION,
+            RootDseAttributes.CONFIG_CONTEXT,
+            RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT,
+            RootDseAttributes.DEFAULT_NAMING_CONTEXT,
+        ]
 
-        # VendorNames StrEnum → Literal (values from VendorNames enum)
+        # VendorNames StrEnum → Literal (references VendorNames enum members)
         type VendorNameLiteral = Literal[
-            "oracle",
-            "openldap",
-            "microsoft",
-            "windows",
-            "novell",
-            "edir",
-            "ibm",
-            "unboundid",
-            "forgerock",
-        ]  # Values match VendorNames enum - no duplication
+            VendorNames.ORACLE,
+            VendorNames.OPENLDAP,
+            VendorNames.MICROSOFT,
+            VendorNames.WINDOWS,
+            VendorNames.NOVELL,
+            VendorNames.EDIR,
+            VendorNames.IBM,
+            VendorNames.UNBOUNDID,
+            VendorNames.FORGEROCK,
+        ]
 
-        # ChangeTypeOperations StrEnum → Literal (values from ChangeTypeOperations enum)
+        # ChangeTypeOperations StrEnum → Literal (references ChangeTypeOperations enum members)
         # Reuses base operation constants from flext-ldif via ChangeTypeOperations enum
         type ChangeTypeOperationLiteral = Literal[
             # Reuses base operations from flext-ldif via ChangeTypeOperations enum
-            "add",
-            "delete",
-            "modify",
-            "moddn",
-            "modrdn",
-            "replace",
-        ]  # Values match ChangeTypeOperations enum - no duplication
+            ChangeTypeOperations.ADD,
+            ChangeTypeOperations.DELETE,
+            ChangeTypeOperations.MODIFY,
+            ChangeTypeOperations.MODDN,
+            ChangeTypeOperations.MODRDN,
+            ChangeTypeOperations.REPLACE,
+        ]
 
         # ═══════════════════════════════════════════════════════════════════
         # SERVER TYPE MAPPINGS (flext-ldap ↔ flext-ldif compatibility)
@@ -711,7 +787,7 @@ class FlextLdapConstants(FlextLdifConstants):
             in this domain, without creating aliases.
             """
 
-            # Apenas referências, não aliases
+            # Only references, not aliases
             # Use FlextLdifConstants.Cqrs.Status directly in code
 
 

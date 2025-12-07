@@ -40,7 +40,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
         All LDAP domain-specific protocols are organized here to enable
         proper namespace separation. LDIF protocols from parent are accessed
-        via `.Ldif` namespace (e.g., `FlextLdapProtocols.Ldif.Models.EntryProtocol`).
+        via `.Ldif` namespace (e.g., `p.Ldif.Models.EntryProtocol`).
         """
 
         # =========================================================================
@@ -165,7 +165,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                     self,
                     config: FlextLdapProtocols.Ldap.Config.ConnectionConfigProtocol,
                     **kwargs: str | bool | float | None,
-                ) -> FlextLdifProtocols.Foundation.Result[bool]:
+                ) -> p.Result[bool]:
                     """Connect to LDAP server.
 
                     Args:
@@ -184,9 +184,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                     self,
                     search_options: FlextLdapProtocols.Ldap.Config.SearchOptionsProtocol,
                     server_type: str = "rfc",
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.SearchResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.SearchResultProtocol]:
                     """Perform LDAP search operation.
 
                     Args:
@@ -202,9 +200,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 def add(
                     self,
                     entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol,
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.OperationResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.OperationResultProtocol]:
                     """Add LDAP entry.
 
                     Args:
@@ -220,9 +216,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                     self,
                     dn: str | FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol,
                     changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.OperationResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.OperationResultProtocol]:
                     """Modify LDAP entry.
 
                     Args:
@@ -238,9 +232,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 def delete(
                     self,
                     dn: str | FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol,
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.OperationResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.OperationResultProtocol]:
                     """Delete LDAP entry.
 
                     Args:
@@ -255,9 +247,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 def execute(
                     self,
                     **_kwargs: str | bool | float | None,
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.SearchResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.SearchResultProtocol]:
                     """Execute health check or default operation.
 
                     Args:
@@ -300,9 +290,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                     self,
                     search_options: FlextLdapProtocols.Ldap.Config.SearchOptionsProtocol,
                     server_type: str = "rfc",
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.SearchResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.SearchResultProtocol]:
                     """Perform LDAP search operation.
 
                     Returns ResultProtocol containing SearchResult model.
@@ -313,9 +301,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 def add(
                     self,
                     entry: FlextLdapProtocols.Ldap.Entry.EntryProtocol,
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.OperationResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.OperationResultProtocol]:
                     """Add LDAP entry.
 
                     Returns ResultProtocol containing OperationResult model.
@@ -327,9 +313,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                     self,
                     dn: FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol | str,
                     changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.OperationResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.OperationResultProtocol]:
                     """Modify LDAP entry.
 
                     Returns ResultProtocol containing OperationResult model.
@@ -340,9 +324,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 def delete(
                     self,
                     dn: FlextLdapProtocols.Ldap.Entry.DistinguishedNameProtocol | str,
-                ) -> FlextLdifProtocols.Foundation.Result[
-                    FlextLdapProtocols.Ldap.Result.OperationResultProtocol
-                ]:
+                ) -> p.Result[FlextLdapProtocols.Ldap.Result.OperationResultProtocol]:
                     """Delete LDAP entry.
 
                     Returns ResultProtocol containing OperationResult model.
@@ -432,6 +414,10 @@ class FlextLdapProtocols(FlextLdifProtocols):
     # Use FlextLdapProtocols.Ldif or FlextLdifProtocols.Ldif directly
 
 
+# Direct access: use FlextLdapProtocols directly
+p = FlextLdapProtocols
+
 __all__ = [
     "FlextLdapProtocols",
+    "p",
 ]

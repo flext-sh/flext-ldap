@@ -52,7 +52,7 @@ class FlextLdapConnection(s[bool]):
 
     Business Rules:
         - Connection credentials (bind DN and password) are passed via
-          :class:`m.ConnectionConfig`, never stored in service state
+          :class:`m.Ldap.ConnectionConfig`, never stored in service state
         - Parser instance is resolved once at construction time and shared with
           the adapter for LDIF↔ldap3 conversions
         - Configuration defaults to ``FlextLdapConfig()`` when not provided,
@@ -74,7 +74,7 @@ class FlextLdapConnection(s[bool]):
 
     Example:
         >>> connection = FlextLdapConnection()
-        >>> config = m.ConnectionConfig(
+        >>> config = m.Ldap.ConnectionConfig(
         ...     host="ldap.example.com",
         ...     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         ...     bind_password="secret",
@@ -153,7 +153,7 @@ class FlextLdapConnection(s[bool]):
 
     def connect(
         self,
-        connection_config: m.ConnectionConfig,
+        connection_config: m.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
         max_retries: int = 3,
@@ -183,7 +183,7 @@ class FlextLdapConnection(s[bool]):
 
         Args:
             connection_config: Connection parameters including host, port, and
-                bind credentials. See :class:`m.ConnectionConfig`.
+                bind credentials. See :class:`m.Ldap.ConnectionConfig`.
             auto_retry: When ``True``, retry transient failures using
                 ``max_retries`` and ``retry_delay``. Defaults to ``False``.
             max_retries: Maximum retry attempts when ``auto_retry`` is enabled.

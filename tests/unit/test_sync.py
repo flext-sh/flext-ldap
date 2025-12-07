@@ -89,7 +89,7 @@ class TestsFlextLdapSync:
         operations = self._create_operations()
         sync_service = FlextLdapSyncService(operations=operations)
         result = sync_service.execute()
-        stats = tm.ok(result, is_=m.SyncStats)
+        stats = tm.ok(result, is_=m.Ldap.SyncStats)
         tm.that(stats.added, eq=0)
         tm.that(stats.skipped, eq=0)
         tm.that(stats.failed, eq=0)
@@ -97,7 +97,7 @@ class TestsFlextLdapSync:
 
     def test_sync_stats_creation(self) -> None:
         """Test SyncStats model creation."""
-        stats = m.SyncStats(
+        stats = m.Ldap.SyncStats(
             added=10,
             skipped=2,
             failed=1,
@@ -112,7 +112,7 @@ class TestsFlextLdapSync:
 
     def test_sync_options_creation(self) -> None:
         """Test SyncOptions model creation."""
-        options = m.SyncOptions(
+        options = m.Ldap.SyncOptions(
             source_basedn="dc=old,dc=com",
             target_basedn="dc=new,dc=com",
         )
@@ -121,15 +121,15 @@ class TestsFlextLdapSync:
 
     def test_sync_options_without_transformation(self) -> None:
         """Test SyncOptions without base DN transformation."""
-        options = m.SyncOptions()
+        options = m.Ldap.SyncOptions()
         tm.that(options.source_basedn, eq="")
         tm.that(options.target_basedn, eq="")
 
     def test_base_dn_transformer_no_transformation(self) -> None:
         """Test BaseDNTransformer with no transformation needed."""
         entries = [
-            m.Entry(
-                dn=m.DistinguishedName(value="cn=user,dc=example,dc=com"),
+            m.Ldap.Entry(
+                dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
                 attributes=m.LdifAttributes(attributes={}),
             ),
         ]
@@ -146,8 +146,8 @@ class TestsFlextLdapSync:
     def test_base_dn_transformer_with_transformation(self) -> None:
         """Test BaseDNTransformer with base DN transformation."""
         entries = [
-            m.Entry(
-                dn=m.DistinguishedName(value="cn=user,dc=old,dc=com"),
+            m.Ldap.Entry(
+                dn=m.Ldif.DistinguishedName(value="cn=user,dc=old,dc=com"),
                 attributes=m.LdifAttributes(attributes={}),
             ),
         ]
@@ -163,8 +163,8 @@ class TestsFlextLdapSync:
     def test_base_dn_transformer_case_insensitive(self) -> None:
         """Test BaseDNTransformer with case-insensitive matching."""
         entries = [
-            m.Entry(
-                dn=m.DistinguishedName(value="cn=user,dc=old,dc=com"),
+            m.Ldap.Entry(
+                dn=m.Ldif.DistinguishedName(value="cn=user,dc=old,dc=com"),
                 attributes=m.LdifAttributes(attributes={}),
             ),
         ]

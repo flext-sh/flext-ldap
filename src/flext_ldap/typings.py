@@ -11,29 +11,29 @@ from flext_ldif import FlextLdifTypes
 from flext_ldap.protocols import p
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TYPEVARS: Único objeto permitido fora da classe
+# TYPEVARS: Only object allowed outside the class
 # ═══════════════════════════════════════════════════════════════════════════
-# Reutilize de t quando existir
+# Reuse from t when available
 
-# Apenas TypeVars específicos do domínio
+# Only domain-specific TypeVars
 # Use string forward reference for Protocol type in TypeVar bound
-TLdapEntry = TypeVar("TLdapEntry", bound="p.Ldap.Entry.EntryProtocol")
-TLdapDomainResult = TypeVar("TLdapDomainResult")
+FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound="p.Ldap.Entry.EntryProtocol")
+FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CLASSE ÚNICA COM NESTED CLASSES
+# SINGLE CLASS WITH NESTED CLASSES
 # ═══════════════════════════════════════════════════════════════════════════
 class FlextLdapTypes(FlextLdifTypes):
     """[Package] type definitions extending FlextLdifTypes.
 
-    REGRAS:
+    RULES:
     ───────
-    1. TypeVars fora da classe (único caso permitido)
-    2. Type aliases PEP 695 dentro de nested classes
-    3. Tipos complexos compostos com Protocols
-    4. ZERO aliases simples - use tipos diretos
-    5. Composição com t, não duplicação
+    1. TypeVars outside the class (only case allowed)
+    2. PEP 695 type aliases inside nested classes
+    3. Complex types composed with Protocols
+    4. ZERO simple aliases - use direct types
+    5. Composition with t, no duplication
 
     NOTE: Progress callback types (MultiPhaseProgressCallback, ProgressCallbackUnion,
     LdapProgressCallback) are defined in FlextLdapModels.Types to avoid circular imports.
@@ -53,6 +53,41 @@ class FlextLdapTypes(FlextLdifTypes):
         Usage: Other projects can reference `t.Ldap.Entry.Instance`, `t.Ldap.Operation.Result`, etc.
         """
 
+        # Progress callback types (simplified to avoid circular imports)
+        # For strict typing use m.Types.* variants in models.py
+        # Use object for variadic callbacks - covers all parameter types
+        # Note: This is a union that accepts both single-phase (4 params) and multi-phase (5 params) callbacks
+        # The actual types are defined in models.py as m.Types.LdapProgressCallback and m.Types.MultiPhaseProgressCallback
+        type ProgressCallbackUnion = (
+            Callable[[object], None]
+            | Callable[[object, object], None]
+            | Callable[[object, object, object], None]
+            | Callable[[object, object, object, object], None]
+            | Callable[[object, object, object, object, object], None]
+            | None
+        )
+        """Union type for progress callbacks (simplified for config models).
+
+        Accepts callables with 1-5 parameters (all typed as object for flexibility).
+        Actual typed versions are in models.py: m.Types.LdapProgressCallback (4 params)
+        and m.Types.MultiPhaseProgressCallback (5 params).
+        """
+
+        # Operation data types (ldap3 compatibility) - defined here for direct access
+        # Also defined in Operation namespace for internal consistency
+        type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+        """Type alias for LDAP modify changes (ldap3 compatibility).
+
+        Format: {attribute_name: [(operation, [values])]}
+        Operations: 'MODIFY_ADD', 'MODIFY_DELETE', 'MODIFY_REPLACE'
+        """
+        type AttributeValues = dict[str, list[str]]
+        """Type alias for LDAP attribute values (multi-valued attributes)."""
+        type Attributes = dict[str, list[str]]
+        """Type alias for LDAP attributes (attribute name to value list mapping)."""
+        type AttributesReadOnly = Mapping[str, Sequence[str]]
+        """Type alias for read-only LDAP attributes mapping."""
+
         class Entry:
             """Entry-related type aliases.
 
@@ -64,12 +99,12 @@ class FlextLdapTypes(FlextLdifTypes):
             so there are no method overrides to be incompatible.
             """
 
-            # Tipos usando Protocols (evita import circular)
+            # Types using Protocols (avoids circular import)
             type Instance = p.Ldap.Entry.EntryProtocol
             type Collection = Sequence[p.Ldap.Entry.EntryProtocol]
             type EntryMapping = Mapping[str, p.Ldap.Entry.EntryProtocol]
 
-            # Tipos genéricos
+            # Generic types
             type Handler[T] = Callable[
                 [p.Ldap.Entry.EntryProtocol],
                 r[T],
@@ -87,11 +122,11 @@ class FlextLdapTypes(FlextLdifTypes):
         class Operation:
             """Operation-related type aliases."""
 
-            # Composição com t
+            # Composition with t
             type Result[T] = r[T]
             type Callback[T] = Callable[[], r[T]]
 
-            # Tipos específicos do domínio
+            # Domain-specific types
             type EntryProcessor = Callable[
                 [p.Ldap.Entry.EntryProtocol],
                 r[bool],
@@ -100,26 +135,6 @@ class FlextLdapTypes(FlextLdifTypes):
                 [Sequence[p.Ldap.Entry.EntryProtocol]],
                 r[int],
             ]
-
-            # Progress callback types (simplified to avoid circular imports)
-            # For strict typing use m.Types.* variants in models.py
-            # Use object for variadic callbacks - covers all parameter types
-            # Note: This is a union that accepts both single-phase (4 params) and multi-phase (5 params) callbacks
-            # The actual types are defined in models.py as m.Types.LdapProgressCallback and m.Types.MultiPhaseProgressCallback
-            type ProgressCallbackUnion = (
-                Callable[[object], None]
-                | Callable[[object, object], None]
-                | Callable[[object, object, object], None]
-                | Callable[[object, object, object, object], None]
-                | Callable[[object, object, object, object, object], None]
-                | None
-            )
-            """Union type for progress callbacks (simplified for config models).
-
-            Accepts callables with 1-5 parameters (all typed as object for flexibility).
-            Actual typed versions are in models.py: m.Types.LdapProgressCallback (4 params)
-            and m.Types.MultiPhaseProgressCallback (5 params).
-            """
 
             type MultiPhaseProgressCallback = Callable[[object], None]
             """Multi-phase progress callback (variadic, type-safe callback type).
@@ -130,9 +145,17 @@ class FlextLdapTypes(FlextLdifTypes):
 
             # Operation data types (ldap3 compatibility)
             type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+            """Type alias for LDAP modify changes (ldap3 compatibility).
+
+            Format: {attribute_name: [(operation, [values])]}
+            Operations: 'MODIFY_ADD', 'MODIFY_DELETE', 'MODIFY_REPLACE'
+            """
             type AttributeValues = dict[str, list[str]]
+            """Type alias for LDAP attribute values (multi-valued attributes)."""
             type Attributes = dict[str, list[str]]
+            """Type alias for LDAP attributes (attribute name to value list mapping)."""
             type AttributesReadOnly = Mapping[str, Sequence[str]]
+            """Type alias for read-only LDAP attributes mapping."""
 
             # ldap3 entry value types (for adapter conversion)
             type Ldap3EntryValue = (
@@ -212,8 +235,8 @@ t = FlextLdapTypes
 
 
 __all__ = [
+    "FlextLdapDomainResultT",
+    "FlextLdapEntryT",
     "FlextLdapTypes",
-    "TLdapDomainResult",
-    "TLdapEntry",
     "t",
 ]

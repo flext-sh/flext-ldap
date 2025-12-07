@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import r
-from flext_ldif import FlextLdif, FlextLdifUtilities
+from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import s
@@ -45,7 +45,7 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.utilities import u
 
 
-class FlextLdapSyncService(s[m.SyncStats]):
+class FlextLdapSyncService(s[m.Ldap.SyncStats]):
     """Stream LDIF entries into LDAP while tracking progress and totals.
 
     All LDAP mutations are delegated to :class:`FlextLdapOperations`, keeping
@@ -62,7 +62,7 @@ class FlextLdapSyncService(s[m.SyncStats]):
         - Duration is measured from start of parsing to end of batch processing
 
     Audit Implications:
-        - Returns ``m.SyncStats`` with complete sync metrics
+        - Returns ``m.Ldap.SyncStats`` with complete sync metrics
         - Progress callbacks enable real-time audit trail during large imports
         - Each entry's status (synced/skipped/failed) is tracked individually
         - Service readiness via ``execute()`` returns empty stats (zero counters)
@@ -79,7 +79,7 @@ class FlextLdapSyncService(s[m.SyncStats]):
         >>> sync_service = FlextLdapSyncService(operations=operations)
         >>> result = sync_service.sync_ldif_file(
         ...     ldif_file=Path("users.ldif"),
-        ...     options=m.SyncOptions(
+        ...     options=m.Ldap.SyncOptions(
         ...         source_basedn="dc=old,dc=com", target_basedn="dc=new,dc=com"
         ...     ),
         ... )
@@ -147,9 +147,9 @@ class FlextLdapSyncService(s[m.SyncStats]):
 
         def sync(
             self,
-            entries: list[m.Entry],
-            options: m.SyncOptions,
-        ) -> r[m.SyncStats]:
+            entries: list[m.Ldap.Entry],
+            options: m.Ldap.SyncOptions,
+        ) -> r[m.Ldap.SyncStats]:
             """Sync entries in batch mode with progress tracking.
 
             Business Rules:
@@ -162,7 +162,7 @@ class FlextLdapSyncService(s[m.SyncStats]):
             Audit Implications:
                 - Returns detailed counts: added, skipped (existing), failed
                 - Progress callback enables real-time audit logging
-                - Entry DN extraction uses FlextLdifUtilities.DN.get_dn_value()
+                - Entry DN extraction uses u.Ldif.DN.get_dn_value()
 
             Args:
                 entries: List of LDIF entries to add to the directory.
@@ -178,29 +178,33 @@ class FlextLdapSyncService(s[m.SyncStats]):
 
             # DSL pattern: process entries with accumulator builder
             def process_entry(
-                idx_entry: tuple[int, m.Entry],
-            ) -> m.LdapBatchStats:
+                idx_entry: tuple[int, m.Ldap.Entry],
+            ) -> m.Ldap.LdapBatchStats:
                 """Process single entry and update accumulator."""
                 idx, entry = idx_entry
-                # Use entry directly - m.Entry is the public API
+                # Use entry directly - m.Ldap.Entry is the public API
                 # Extract DN from entry
-                entry_dn = FlextLdifUtilities.DN.get_dn_value(entry.dn)
-                # m.Entry is structurally compatible with EntryProtocol (no cast needed)
+                entry_dn = u.Ldif.DN.get_dn_value(entry.dn)
+                # m.Ldap.Entry is structurally compatible with EntryProtocol (no cast needed)
                 add_result = self._ops.add(entry)
                 # DSL pattern: builder for stats based on result
                 if add_result.is_success:
                     stats_builder["added"] += 1
-                    entry_stats = m.LdapBatchStats(synced=1, skipped=0, failed=0)
+                    entry_stats = m.Ldap.LdapBatchStats(synced=1, skipped=0, failed=0)
                 else:
                     error_str = str(add_result.error) if add_result.error else ""
                     # DSL pattern: determine stats based on error type
                     is_skipped = FlextLdapOperations.is_already_exists_error(error_str)
                     if is_skipped:
                         stats_builder["skipped"] += 1
-                        entry_stats = m.LdapBatchStats(synced=0, skipped=1, failed=0)
+                        entry_stats = m.Ldap.LdapBatchStats(
+                            synced=0, skipped=1, failed=0
+                        )
                     else:
                         stats_builder["failed"] += 1
-                        entry_stats = m.LdapBatchStats(synced=0, skipped=0, failed=1)
+                        entry_stats = m.Ldap.LdapBatchStats(
+                            synced=0, skipped=0, failed=1
+                        )
 
                 if options.progress_callback:
                     options.progress_callback(idx, len(entries), entry_dn, entry_stats)
@@ -210,7 +214,7 @@ class FlextLdapSyncService(s[m.SyncStats]):
             logger = logging.getLogger(__name__)
             for idx_entry in enumerate(entries, 1):
                 try:
-                    # idx_entry is already tuple[int, m.Entry] from enumerate
+                    # idx_entry is already tuple[int, m.Ldap.Entry] from enumerate
                     process_entry(idx_entry)
                 except Exception:
                     entry_idx = idx_entry[0] if isinstance(idx_entry, tuple) else None
@@ -221,8 +225,8 @@ class FlextLdapSyncService(s[m.SyncStats]):
                     )
                     continue
 
-            return r[m.SyncStats].ok(
-                m.SyncStats.from_counters(
+            return r[m.Ldap.SyncStats].ok(
+                m.Ldap.SyncStats.from_counters(
                     added=stats_builder["added"],
                     skipped=stats_builder["skipped"],
                     failed=stats_builder["failed"],
@@ -252,16 +256,16 @@ class FlextLdapSyncService(s[m.SyncStats]):
         """
 
         @classmethod
-        def _convert_to_entry(cls, entry: m.Entry) -> m.Entry:
-            """Convert entry to m.Entry format.
+        def _convert_to_entry(cls, entry: m.Ldap.Entry) -> m.Ldap.Entry:
+            """Convert entry to m.Ldap.Entry format.
 
-            Entries are already m.Entry (public API).
+            Entries are already m.Ldap.Entry (public API).
 
             Args:
-                entry: Entry to convert (m.Entry).
+                entry: Entry to convert (m.Ldap.Entry).
 
             Returns:
-                m.Entry: Entry instance.
+                m.Ldap.Entry: Entry instance.
 
             """
             return entry
@@ -269,10 +273,10 @@ class FlextLdapSyncService(s[m.SyncStats]):
         @classmethod
         def transform(
             cls,
-            entries: list[m.Entry],
+            entries: list[m.Ldap.Entry],
             source_basedn: str,
             target_basedn: str,
-        ) -> list[m.Entry]:
+        ) -> list[m.Ldap.Entry]:
             """Rewrite entry DNs from ``source_basedn`` to ``target_basedn``.
 
             Business Rules:
@@ -297,13 +301,13 @@ class FlextLdapSyncService(s[m.SyncStats]):
 
             """
             if source_basedn == target_basedn:
-                # Return entries as-is (already m.Entry)
+                # Return entries as-is (already m.Ldap.Entry)
                 return entries
 
             # Transform entries - create new Entry with transformed DN
-            def transform_entry(entry: m.Entry) -> m.Entry:
+            def transform_entry(entry: m.Ldap.Entry) -> m.Ldap.Entry:
                 """Transform entry DN if source_basedn matches."""
-                dn_str = FlextLdifUtilities.DN.get_dn_value(entry.dn)
+                dn_str = u.Ldif.DN.get_dn_value(entry.dn)
                 if source_basedn.lower() in dn_str.lower():
                     # Case-insensitive replacement using regex (RFC 4514 compliance)
                     new_dn_value = re.sub(
@@ -313,7 +317,7 @@ class FlextLdapSyncService(s[m.SyncStats]):
                         flags=re.IGNORECASE,
                     )
                     # Create new Entry with new DN - Entry validates DN automatically
-                    return m.Entry(
+                    return m.Ldap.Entry(
                         dn=m.DistinguishedName(value=new_dn_value),
                         attributes=entry.attributes,
                     )
@@ -374,8 +378,8 @@ class FlextLdapSyncService(s[m.SyncStats]):
     def sync_ldif_file(
         self,
         ldif_file: Path,
-        options: m.SyncOptions,
-    ) -> r[m.SyncStats]:
+        options: m.Ldap.SyncOptions,
+    ) -> r[m.Ldap.SyncStats]:
         """Parse and sync an LDIF file into the directory.
 
         Main entry point for file-based LDIF synchronization. Validates file
@@ -406,20 +410,21 @@ class FlextLdapSyncService(s[m.SyncStats]):
 
         """
         if not ldif_file.exists():
-            return r[m.SyncStats].fail(f"LDIF file not found: {ldif_file}")
+            return r[m.Ldap.SyncStats].fail(f"LDIF file not found: {ldif_file}")
 
         start_time = self._generate_datetime_utc()
         # Use FlextLdif API parse method - read file content first
         # Use ServerTypes Literal type directly (FlextLdif.parse accepts Literal)
         # Use the literal value from the enum
-        server_type_literal: c.LiteralTypes.ServerTypeLiteral = (
-            "rfc"  # Literal matching c.ServerTypes.RFC.value
+        # For LDIF parsing, use parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral
+        server_type_literal: c.Ldif.LiteralTypes.ServerTypeLiteral = (
+            "rfc"  # Literal matching c.Ldif.ServerTypes.RFC.value
         )
         # Read file content and parse
         try:
             ldif_content = ldif_file.read_text(encoding="utf-8")
         except Exception as e:
-            return r[m.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
+            return r[m.Ldap.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
 
         parse_result = self._ldif.parse(
             ldif_content,
@@ -430,26 +435,28 @@ class FlextLdapSyncService(s[m.SyncStats]):
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
-            return r[m.SyncStats].fail(f"Failed to parse LDIF file: {error_msg}")
+            return r[m.Ldap.SyncStats].fail(f"Failed to parse LDIF file: {error_msg}")
 
         # API parse returns list[FlextLdifModels.Entry] (from flext-ldif)
-        # m.Entry extends FlextLdifModels.Entry, so entries are compatible
+        # m.Ldap.Entry extends FlextLdifModels.Entry, so entries are compatible
         # Type narrowing: parse_result.unwrap() returns list[FlextLdifModels.Entry]
-        # which is compatible with list[m.Entry] via inheritance
+        # which is compatible with list[m.Ldap.Entry] via inheritance
         entries_raw = parse_result.unwrap()
-        # m.Entry extends FlextLdifModels.Entry, so conversion is safe
+        # m.Ldap.Entry extends FlextLdifModels.Entry, so conversion is safe
 
-        # so list[FlextLdifModels.Entry] is compatible with list[m.Entry]
-        # Type narrowing: entries_raw is list[FlextLdifModels.Entry], m.Entry extends it
-        entries: list[m.Entry] = [cast("m.Entry", entry) for entry in entries_raw]
+        # so list[FlextLdifModels.Entry] is compatible with list[m.Ldap.Entry]
+        # Type narrowing: entries_raw is list[FlextLdifModels.Entry], m.Ldap.Entry extends it
+        entries: list[m.Ldap.Entry] = [
+            cast("m.Ldap.Entry", entry) for entry in entries_raw
+        ]
         return self._process_entries(entries, options, start_time)
 
     def _process_entries(
         self,
-        entries: list[m.Entry],
-        options: m.SyncOptions,
+        entries: list[m.Ldap.Entry],
+        options: m.Ldap.SyncOptions,
         start_time: datetime,
-    ) -> r[m.SyncStats]:
+    ) -> r[m.Ldap.SyncStats]:
         """Process parsed entries through the sync pipeline.
 
         Internal method that handles the post-parsing workflow: base DN
@@ -483,18 +490,18 @@ class FlextLdapSyncService(s[m.SyncStats]):
 
         """
         if not entries:
-            return r[m.SyncStats].ok(
-                m.SyncStats.from_counters(),
+            return r[m.Ldap.SyncStats].ok(
+                m.Ldap.SyncStats.from_counters(),
             )
 
         if options.source_basedn and options.target_basedn:
-            # Transform handles m.Entry via _convert_to_entry
+            # Transform handles m.Ldap.Entry via _convert_to_entry
             entries_transformed = self.BaseDNTransformer.transform(
                 entries,
                 options.source_basedn,
                 options.target_basedn,
             )
-            # Transform returns list[m.Entry], use directly
+            # Transform returns list[m.Ldap.Entry], use directly
             entries = entries_transformed
 
         batch_result = self.BatchSync(self._operations).sync(entries, options)
@@ -503,14 +510,14 @@ class FlextLdapSyncService(s[m.SyncStats]):
 
         stats = batch_result.unwrap()
         duration = (self._generate_datetime_utc() - start_time).total_seconds()
-        return r[m.SyncStats].ok(
+        return r[m.Ldap.SyncStats].ok(
             stats.model_copy(update={"duration_seconds": duration}),
         )
 
     def execute(
         self,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.SyncStats]:
+    ) -> r[m.Ldap.SyncStats]:
         """Return an empty stats payload to indicate service readiness.
 
         Implements the ``FlextService.execute()`` contract for service health
@@ -537,4 +544,4 @@ class FlextLdapSyncService(s[m.SyncStats]):
             (added=0, skipped=0, failed=0, duration_seconds=0.0).
 
         """
-        return r[m.SyncStats].ok(m.SyncStats.from_counters())
+        return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())

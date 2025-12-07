@@ -8,7 +8,7 @@ Business Rules:
     - ldap3 library is ONLY imported here (zero tolerance for direct imports elsewhere)
     - Connection binding uses ldap3.Connection with auto_bind and auto_range options
     - STARTTLS is handled separately from SSL (mutual exclusion enforced in config)
-    - Search results are converted to m.Entry via FlextLdifParser
+    - Search results are converted to m.Ldap.Entry via FlextLdifParser
     - CRUD operations (add, modify, delete) return FlextResult for consistency
     - LDAPException is caught and converted to r.fail() (no exceptions leak)
 
@@ -67,7 +67,7 @@ class Ldap3Adapter(s[bool]):
         """Connection management logic (SRP)."""
 
         @staticmethod
-        def create_server(config: m.ConnectionConfig) -> Server:
+        def create_server(config: m.Ldap.ConnectionConfig) -> Server:
             """Create ldap3 Server object.
 
             Business Rules:
@@ -104,7 +104,7 @@ class Ldap3Adapter(s[bool]):
         @staticmethod
         def create_connection(
             server: Server,
-            config: m.ConnectionConfig,
+            config: m.Ldap.ConnectionConfig,
         ) -> Connection:
             """Create ldap3 Connection object.
 
@@ -140,7 +140,7 @@ class Ldap3Adapter(s[bool]):
         @staticmethod
         def handle_tls(
             connection: Connection,
-            config: m.ConnectionConfig,
+            config: m.Ldap.ConnectionConfig,
         ) -> r[bool]:
             """Handle STARTTLS if requested.
 
@@ -237,12 +237,12 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: p.Ldap.Entry.EntryProtocol | m.Entry,
+            parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry,
         ) -> m.DistinguishedName:
             """Extract Distinguished Name from LDAP entry.
 
             Business Rules:
-                - Extracts DN from m.Entry instances directly
+                - Extracts DN from m.Ldap.Entry instances directly
                 - Handles protocol-based entries via hasattr() checks
                 - Uses u.DN.get_dn_value() for normalization
                 - Returns empty DistinguishedName("") when extraction fails (no exception)
@@ -266,8 +266,8 @@ class Ldap3Adapter(s[bool]):
                 DistinguishedName instance with extracted or empty value.
 
             """
-            # Direct access for m.Entry
-            if isinstance(parsed, m.Entry):
+            # Direct access for m.Ldap.Entry
+            if isinstance(parsed, m.Ldap.Entry):
                 if parsed.dn is not None:
                     # parsed.dn is guaranteed to be m.DistinguishedName by type system
                     # (type is DistinguishedName | None, and we checked not None)
@@ -373,12 +373,12 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: p.Ldap.Entry.EntryProtocol | m.Entry,
+            parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry,
         ) -> m.LdifAttributes:
             """Extract LDAP attributes as m.LdifAttributes.
 
             Business Rules:
-                - Extracts attributes from m.Entry or protocol entries
+                - Extracts attributes from m.Ldap.Entry or protocol entries
                 - Delegates to extract_attrs_dict() for raw dict extraction
                 - Wraps result in m.LdifAttributes Pydantic model
                 - Empty attributes {} returned when extraction fails (not an error)
@@ -398,7 +398,7 @@ class Ldap3Adapter(s[bool]):
             """
             # Get attributes from entry
             attrs_raw: object | None = None
-            if isinstance(parsed, m.Entry) or hasattr(parsed, "attributes"):
+            if isinstance(parsed, m.Ldap.Entry) or hasattr(parsed, "attributes"):
                 attrs_raw = parsed.attributes
 
             # Handle None case
@@ -415,7 +415,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: p.Ldap.Entry.EntryProtocol | m.Entry,
+            parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry,
         ) -> m.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -522,7 +522,7 @@ class Ldap3Adapter(s[bool]):
         @staticmethod
         def convert_parsed_entries(
             parse_response: m.ParseResponse | object,
-        ) -> r[list[m.Entry]]:
+        ) -> r[list[m.Ldap.Entry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
             Business Rules:
@@ -530,19 +530,19 @@ class Ldap3Adapter(s[bool]):
                 - Handles properly typed entries from parser (direct conversion)
                 - Defensively converts invalid structures for edge cases (tests, manual)
                 - Empty list returned when parse_response has no entries
-                - All entries validated as m.Entry instances
+                - All entries validated as m.Ldap.Entry instances
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
 
             Audit Implications:
                 - This is the main entry point for LDAP search result processing
-                - All entries returned are validated m.Entry instances
+                - All entries returned are validated m.Ldap.Entry instances
                 - Defensive conversion handles edge cases (tests, manual construction)
                 - Empty list returned when parse_response has no entries
                 - Uses FlextResult pattern for consistent error handling
 
             Architecture:
                 - Input: m.ParseResponse from FlextLdifParser
-                - Output: r[list[m.Entry]] (railway pattern)
+                - Output: r[list[m.Ldap.Entry]] (railway pattern)
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
                 - No network calls - processes pre-fetched LDAP results
 
@@ -555,20 +555,22 @@ class Ldap3Adapter(s[bool]):
             # Access entries attribute - ParseResponse has entries: list[Entry]
             entries_raw = getattr(parse_response, "entries", [])
             if not entries_raw:
-                return r[list[m.Entry]].ok([])
+                return r[list[m.Ldap.Entry]].ok([])
 
             # Convert entries efficiently
-            entries: list[m.Entry] = []
+            entries: list[m.Ldap.Entry] = []
             for entry_raw in entries_raw:
                 # Already valid Entry instance - use directly
-                if isinstance(entry_raw, m.Entry):
+                if isinstance(entry_raw, m.Ldap.Entry):
                     entries.append(entry_raw)
                     continue
 
                 # Defensive conversion for invalid structures (e.g., from tests or manual construction)
                 # Extract DN, attributes, and metadata using helper methods
                 # Type narrowing: entry_raw is not Entry, so it might be EntryProtocol or invalid structure
-                entry_for_extraction: p.Ldap.Entry.EntryProtocol | m.Entry = entry_raw
+                entry_for_extraction: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry = (
+                    entry_raw
+                )
                 dn_obj = Ldap3Adapter.ResultConverter.extract_dn(entry_for_extraction)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
                     entry_for_extraction,
@@ -578,14 +580,14 @@ class Ldap3Adapter(s[bool]):
                 )
 
                 # Create Entry with extracted objects
-                entry = m.Entry(
+                entry = m.Ldap.Entry(
                     dn=dn_obj,
                     attributes=attrs_obj,
                     metadata=metadata_obj,
                 )
                 entries.append(entry)
 
-            return r[list[m.Entry]].ok(entries)
+            return r[list[m.Ldap.Entry]].ok(entries)
 
     class OperationExecutor:
         """LDAP operation execution logic (SRP)."""
@@ -599,7 +601,7 @@ class Ldap3Adapter(s[bool]):
             connection: Connection,
             dn_str: str,
             ldap_attrs: t.Ldap.Attributes,
-        ) -> r[m.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP add operation via ldap3 Connection.
 
             Business Rules:
@@ -632,10 +634,10 @@ class Ldap3Adapter(s[bool]):
 
                 # Create results
                 if success:
-                    return r[m.OperationResult].ok(
-                        m.OperationResult(
+                    return r[m.Ldap.OperationResult].ok(
+                        m.Ldap.OperationResult(
                             success=True,
-                            operation_type=c.OperationType.ADD,
+                            operation_type=c.Ldap.OperationType.ADD,
                             message="Entry added successfully",
                             entries_affected=1,
                         ),
@@ -644,14 +646,14 @@ class Ldap3Adapter(s[bool]):
                 return self._extract_error_result(connection, "Add failed")
             except LDAPException as e:
                 error_msg = f"Add failed: {e!s}"
-                return r[m.OperationResult].fail(error_msg)
+                return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_modify(
             self,
             connection: Connection,
             dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
             changes: t.Ldap.ModifyChanges,
-        ) -> r[m.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
 
             Business Rules:
@@ -680,16 +682,16 @@ class Ldap3Adapter(s[bool]):
 
             """
             try:
-                dn_str = u.DN.get_dn_value(dn)
+                dn_str = u.Ldif.DN.get_dn_value(dn)
                 modify_func: t.Ldap.ModifyCallable = connection.modify
                 success = modify_func(dn_str, changes)
 
                 # Create results
                 if success:
-                    return r[m.OperationResult].ok(
-                        m.OperationResult(
+                    return r[m.Ldap.OperationResult].ok(
+                        m.Ldap.OperationResult(
                             success=True,
-                            operation_type=c.OperationType.MODIFY,
+                            operation_type=c.Ldap.OperationType.MODIFY,
                             message="Entry modified successfully",
                             entries_affected=1,
                         ),
@@ -698,13 +700,13 @@ class Ldap3Adapter(s[bool]):
                 return self._extract_error_result(connection, "Modify failed")
             except LDAPException as e:
                 error_msg = f"Modify failed: {e!s}"
-                return r[m.OperationResult].fail(error_msg)
+                return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_delete(
             self,
             connection: Connection,
             dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
-        ) -> r[m.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
 
             Business Rules:
@@ -732,16 +734,16 @@ class Ldap3Adapter(s[bool]):
 
             """
             try:
-                dn_str = u.DN.get_dn_value(dn)
+                dn_str = u.Ldif.DN.get_dn_value(dn)
                 delete_func: t.Ldap.DeleteCallable = connection.delete
                 success = delete_func(dn_str)
 
                 # Create results
                 if success:
-                    return r[m.OperationResult].ok(
-                        m.OperationResult(
+                    return r[m.Ldap.OperationResult].ok(
+                        m.Ldap.OperationResult(
                             success=True,
-                            operation_type=c.OperationType.DELETE,
+                            operation_type=c.Ldap.OperationType.DELETE,
                             message="Entry deleted successfully",
                             entries_affected=1,
                         ),
@@ -750,13 +752,13 @@ class Ldap3Adapter(s[bool]):
                 return self._extract_error_result(connection, "Delete failed")
             except LDAPException as e:
                 error_msg = f"Delete failed: {e!s}"
-                return r[m.OperationResult].fail(error_msg)
+                return r[m.Ldap.OperationResult].fail(error_msg)
 
         @staticmethod
         def _extract_error_result(
             connection: Connection,
             prefix: str,
-        ) -> r[m.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Extract error message from connection result.
 
             Business Rules:
@@ -790,7 +792,7 @@ class Ldap3Adapter(s[bool]):
                 description = result_dict.get("description")
                 if isinstance(description, str):
                     error_msg = f"{prefix}: {description}"
-            return r[m.OperationResult].fail(error_msg)
+            return r[m.Ldap.OperationResult].fail(error_msg)
 
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
@@ -801,7 +803,7 @@ class Ldap3Adapter(s[bool]):
 
             base_dn: str
             filter_str: str
-            ldap_scope: c.LiteralTypes.Ldap3ScopeLiteral
+            ldap_scope: c.Ldap.LiteralTypes.Ldap3ScopeLiteral
             search_attributes: list[str]
             size_limit: int
             time_limit: int
@@ -830,8 +832,8 @@ class Ldap3Adapter(s[bool]):
             self,
             connection: Connection,
             params: SearchParams,
-            server_type: c.ServerTypes | str,
-        ) -> r[list[m.Entry]]:
+            server_type: c.Ldif.ServerTypes | str,
+        ) -> r[list[m.Ldap.Entry]]:
             """Execute LDAP search and convert results.
 
             Business Rules:
@@ -875,10 +877,10 @@ class Ldap3Adapter(s[bool]):
 
                 # Extract result code from connection result
                 result_code = connection.result.get("result", -1)
-                if result_code not in c.LdapResultCodes.PARTIAL_SUCCESS_CODES:
+                if result_code not in c.Ldap.LdapResultCodes.PARTIAL_SUCCESS_CODES:
                     error_msg = connection.result.get("message", "LDAP search failed")
                     error_desc = connection.result.get("description", "unknown")
-                    return r[list[m.Entry]].fail(
+                    return r[list[m.Ldap.Entry]].fail(
                         f"LDAP search failed: {error_desc} - {error_msg}",
                     )
 
@@ -889,7 +891,7 @@ class Ldap3Adapter(s[bool]):
                 # Use c.normalize_server_type() directly - handles all mappings
                 server_type_str = (
                     server_type.value
-                    if isinstance(server_type, c.ServerTypes)
+                    if isinstance(server_type, c.Ldif.ServerTypes)
                     else str(server_type)
                 )
                 # Use c.normalize_server_type() directly - no duplication
@@ -899,7 +901,7 @@ class Ldap3Adapter(s[bool]):
                         server_type_str,
                     )
                 except ValueError:
-                    return r[list[m.Entry]].fail(
+                    return r[list[m.Ldap.Entry]].fail(
                         f"Unsupported server type: {server_type_str}",
                     )
                 parse_result = self._adapter.parser.parse_ldap3_results(
@@ -909,7 +911,7 @@ class Ldap3Adapter(s[bool]):
 
                 if parse_result.is_failure:
                     error_msg = str(parse_result.error) if parse_result.error else ""
-                    return r[list[m.Entry]].fail(error_msg)
+                    return r[list[m.Ldap.Entry]].fail(error_msg)
 
                 # Use parse_response directly - m.ParseResponse is the public API
                 parse_response = parse_result.unwrap()
@@ -917,7 +919,7 @@ class Ldap3Adapter(s[bool]):
                     parse_response,
                 )
             except LDAPException as e:
-                return r[list[m.Entry]].fail(f"Search failed: {e!s}")
+                return r[list[m.Ldap.Entry]].fail(f"Search failed: {e!s}")
 
     _connection: Connection | None
     _server: Server | None
@@ -960,7 +962,7 @@ class Ldap3Adapter(s[bool]):
 
     def connect(
         self,
-        config: m.ConnectionConfig,
+        config: m.Ldap.ConnectionConfig,
         **_kwargs: str | float | bool | None,
     ) -> r[bool]:
         """Establish LDAP connection using ldap3 library.
@@ -1054,13 +1056,13 @@ class Ldap3Adapter(s[bool]):
         """Get connection with fast fail if not available."""
         # Check connection state
         if not self.is_connected or self._connection is None:
-            return r[Connection].fail(c.ErrorStrings.NOT_CONNECTED)
+            return r[Connection].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
         return r[Connection].ok(self._connection)
 
     @staticmethod
     def _map_scope(
-        scope: c.SearchScope | str,
-    ) -> r[c.LiteralTypes.Ldap3ScopeLiteral]:
+        scope: c.Ldap.SearchScope | str,
+    ) -> r[c.Ldap.LiteralTypes.Ldap3ScopeLiteral]:
         """Map scope string to ldap3 scope constant.
 
         Uses direct StrEnum value mapping for type-safe conversion.
@@ -1068,7 +1070,7 @@ class Ldap3Adapter(s[bool]):
         # Normalize to StrEnum if string provided
         # Type narrowing: scope is str | SearchScope
         # SearchScope is a StrEnum (subclass of str), so check for SearchScope first
-        if isinstance(scope, c.SearchScope):
+        if isinstance(scope, c.Ldap.SearchScope):
             # Type narrowing: scope is SearchScope
             scope_enum = scope
         else:
@@ -1079,33 +1081,35 @@ class Ldap3Adapter(s[bool]):
                 scope_str = (
                     scope.upper() if isinstance(scope, str) else str(scope).upper()
                 )
-                scope_enum = c.SearchScope(scope_str)
+                scope_enum = c.Ldap.SearchScope(scope_str)
             except ValueError:
-                return r[c.LiteralTypes.Ldap3ScopeLiteral].fail(
+                return r[c.Ldap.LiteralTypes.Ldap3ScopeLiteral].fail(
                     f"Invalid LDAP scope: {scope}",
                 )
 
         # Direct mapping using StrEnum values with proper type narrowing
         ldap3_scope_mapping: Mapping[
-            c.SearchScope,
-            c.LiteralTypes.Ldap3ScopeLiteral,
+            c.Ldap.SearchScope,
+            c.Ldap.LiteralTypes.Ldap3ScopeLiteral,
         ] = {
-            c.SearchScope.BASE: "BASE",
-            c.SearchScope.ONELEVEL: "LEVEL",
-            c.SearchScope.SUBTREE: "SUBTREE",
+            c.Ldap.SearchScope.BASE: "BASE",
+            c.Ldap.SearchScope.ONELEVEL: "LEVEL",
+            c.Ldap.SearchScope.SUBTREE: "SUBTREE",
         }
 
         # Create results
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]
-            return r[c.LiteralTypes.Ldap3ScopeLiteral].ok(ldap3_value)
+            return r[c.Ldap.LiteralTypes.Ldap3ScopeLiteral].ok(ldap3_value)
 
-        return r[c.LiteralTypes.Ldap3ScopeLiteral].fail(f"Invalid LDAP scope: {scope}")
+        return r[c.Ldap.LiteralTypes.Ldap3ScopeLiteral].fail(
+            f"Invalid LDAP scope: {scope}"
+        )
 
     def search(
         self,
         search_options: m.SearchOptions,
-        server_type: c.ServerTypes | str = c.ServerTypes.RFC,
+        server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
     ) -> r[m.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
@@ -1145,7 +1149,7 @@ class Ldap3Adapter(s[bool]):
         # Convert scope to str or SearchScope for _map_scope
         # SearchOptions.scope is str, but may need conversion to SearchScope enum
         # Type narrowing: scope is str from SearchOptions model
-        scope_for_mapping: str | c.SearchScope = search_options.scope
+        scope_for_mapping: str | c.Ldap.SearchScope = search_options.scope
         scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
             return r[m.SearchResult].fail(
@@ -1171,7 +1175,7 @@ class Ldap3Adapter(s[bool]):
                 str(entries_result.error) if entries_result.error else "",
             )
 
-        # Use entries directly - m.Entry is the public API
+        # Use entries directly - m.Ldap.Entry is the public API
         # so all entries are compatible via duck-typing (same interface)
         entries_raw = entries_result.unwrap()
 
@@ -1184,13 +1188,13 @@ class Ldap3Adapter(s[bool]):
 
     def add(
         self,
-        entry: m.Entry,
+        entry: m.Ldap.Entry,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry using Entry model.
 
         Business Rules:
-            - Entry attributes are converted from m.Entry to ldap3 format
+            - Entry attributes are converted from m.Ldap.Entry to ldap3 format
             - DN is extracted using u.DN.get_dn_value()
             - Entry must be unique (LDAP error 68 if entry already exists)
             - Entry must conform to LDAP schema constraints
@@ -1216,21 +1220,21 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else "",
             )
 
-        # entry is already m.Entry from signature - use directly
+        # entry is already m.Ldap.Entry from signature - use directly
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""
-            return r[m.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 f"Failed to convert entry attributes: {error_msg}",
             )
 
-        # Extract DN value using u.DN.get_dn_value() - handles all DN types
+        # Extract DN value using u.Ldif.DN.get_dn_value() - handles all DN types
         # DSL pattern: conditional default
-        dn_str = u.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
+        dn_str = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
         return self.OperationExecutor(self).execute_add(
             connection_result.unwrap(),
             dn_str,
@@ -1242,7 +1246,7 @@ class Ldap3Adapter(s[bool]):
         dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
         Business Rules:
@@ -1272,7 +1276,7 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_modify(
@@ -1285,7 +1289,7 @@ class Ldap3Adapter(s[bool]):
         self,
         dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -1314,7 +1318,7 @@ class Ldap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return r[m.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_delete(
@@ -1350,5 +1354,5 @@ class Ldap3Adapter(s[bool]):
         """
         # Create results
         if not self.is_connected:
-            return r[bool].fail(c.ErrorStrings.NOT_CONNECTED)
+            return r[bool].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
         return r[bool].ok(True)
