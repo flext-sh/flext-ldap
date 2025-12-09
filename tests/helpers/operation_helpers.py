@@ -46,13 +46,11 @@ LdapOperationsType = FlextLdap | FlextLdapOperations | p.Ldap.LdapClientProtocol
 
 # Valid search scopes for validation - reuse production StrEnum
 
-_VALID_SCOPES: frozenset[str] = frozenset(
-    {
-        c.Ldap.SearchScope.BASE.value,
-        c.Ldap.SearchScope.ONELEVEL.value,
-        c.Ldap.SearchScope.SUBTREE.value,
-    }
-)
+_VALID_SCOPES: frozenset[str] = frozenset({
+    c.Ldap.SearchScope.BASE.value,
+    c.Ldap.SearchScope.ONELEVEL.value,
+    c.Ldap.SearchScope.SUBTREE.value,
+})
 # Reuse production Literal type via test constants
 # Note: PEP 695 type aliases are not accessible as class attributes at runtime
 # Use the StrEnum directly or import the type alias if needed for type hints

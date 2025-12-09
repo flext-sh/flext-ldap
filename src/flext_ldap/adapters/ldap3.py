@@ -807,7 +807,7 @@ class Ldap3Adapter(s[bool]):
             """
             try:
                 # Call connection.add directly - ldap3 returns bool for success
-                success = connection.add(dn_str, None, ldap_attrs)  # type: ignore[no-untyped-call]
+                success = connection.add(dn_str, None, ldap_attrs)
 
                 # Create results
                 if success:
@@ -861,7 +861,7 @@ class Ldap3Adapter(s[bool]):
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 # Call connection.modify directly - ldap3 returns bool for success
-                success = connection.modify(dn_str, changes)  # type: ignore[no-untyped-call]
+                success = connection.modify(dn_str, changes)
 
                 # Create results
                 if success:
@@ -913,7 +913,7 @@ class Ldap3Adapter(s[bool]):
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 # Call connection.delete directly - ldap3 returns bool for success
-                success = connection.delete(dn_str)  # type: ignore[no-untyped-call]
+                success = connection.delete(dn_str)
 
                 # Create results
                 if success:
@@ -1234,7 +1234,7 @@ class Ldap3Adapter(s[bool]):
         if self._connection is not None:
             try:
                 # Call connection.unbind directly
-                self._connection.unbind()  # type: ignore[no-untyped-call]
+                self._connection.unbind()
             except (LDAPException, OSError) as e:
                 self.logger.debug("Error during disconnect", error=str(e))
             finally:
@@ -1430,7 +1430,7 @@ class Ldap3Adapter(s[bool]):
 
         # entry is already m.Ldap.Entry from signature - use directly
         # Cast to protocol for type compatibility
-        attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)  # type: ignore[arg-type]
+        attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""
             return r[m.Ldap.OperationResult].fail(

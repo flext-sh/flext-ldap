@@ -291,7 +291,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         connection_config: FlextLdapConfig | None = None
         # Python 3.13: Use Protocol check for type narrowing
         if isinstance(connection, HasConfigAttribute):
-            config_raw = connection._config  # noqa: SLF001
+            config_raw = connection._config
             # Type narrowing: isinstance ensures config is FlextLdapConfig
             if isinstance(config_raw, FlextLdapConfig):
                 connection_config = config_raw

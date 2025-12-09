@@ -8,10 +8,6 @@ from typing import TypeVar
 from flext_core import r
 from flext_ldif import FlextLdifTypes
 
-from flext_ldap.constants import (
-    c,  # noqa: F401 - Required by architecture rule 2: typings must import constants
-)
-
 # ═══════════════════════════════════════════════════════════════════════════
 # TYPEVARS: Only object allowed outside the class
 # ═══════════════════════════════════════════════════════════════════════════

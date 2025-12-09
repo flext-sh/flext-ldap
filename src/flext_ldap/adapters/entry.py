@@ -516,19 +516,13 @@ class FlextLdapEntryAdapter(s[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            ldf_attrs_obj = m.Ldif.LdifAttributes.model_validate(
-                {
-                    "attributes": ldif_attrs,
-                }
-            )
-            metadata_obj = m.Ldif.QuirkMetadata.model_validate(
-                {
-                    "quirk_type": self._server_type,
-                    "extensions": conversion_metadata.model_dump(
-                        exclude_defaults=False
-                    ),
-                }
-            )
+            ldf_attrs_obj = m.Ldif.LdifAttributes.model_validate({
+                "attributes": ldif_attrs,
+            })
+            metadata_obj = m.Ldif.QuirkMetadata.model_validate({
+                "quirk_type": self._server_type,
+                "extensions": conversion_metadata.model_dump(exclude_defaults=False),
+            })
             return r[m.Ldif.Entry].ok(
                 m.Ldif.Entry(
                     dn=m.Ldif.DistinguishedName(value=dn_str),

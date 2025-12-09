@@ -246,23 +246,21 @@ class FlextLdapConstants(FlextLdifConstants):
             for entry comparison operations.
             """
 
-            IGNORE_SET: Final[frozenset[str]] = frozenset(
-                {
-                    # Base operation constants (reused from flext-ldif via .Ldif namespace)
-                    "add",
-                    "delete",
-                    "modify",
-                    "replace",
-                    "changetype",
-                    # LDAP-specific operational attributes
-                    "createTimestamp",
-                    "modifyTimestamp",
-                    "creatorsName",
-                    "modifiersName",
-                    "entryUUID",
-                    "entryCSN",
-                }
-            )
+            IGNORE_SET: Final[frozenset[str]] = frozenset({
+                # Base operation constants (reused from flext-ldif via .Ldif namespace)
+                "add",
+                "delete",
+                "modify",
+                "replace",
+                "changetype",
+                # LDAP-specific operational attributes
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryCSN",
+            })
 
         # ═══════════════════════════════════════════════════════════════════
         # UPSERT OPERATION RESULTS
