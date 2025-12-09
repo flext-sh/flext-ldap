@@ -61,7 +61,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         Example:
             from flext_ldap.utilities import u
             values = u.Ldap.to_str_list(attr_value)
-            result = u.Ldap.Ldif.DN.parse("cn=test,dc=example")  # Access LDIF utilities
+            result = u.Ldap.DN.parse("cn=test,dc=example")  # Access LDIF utilities
 
         """
 
@@ -475,7 +475,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 return default
             # Check if object has the specified attribute
             # Use Protocol for type-safe access
-            if isinstance(dn, p.Ldap.Entry.DistinguishedNameProtocol):
+            if isinstance(dn, p.Ldap.DistinguishedNameProtocol):
                 value = dn.value
                 # Protocol guarantees value is str, no need for isinstance check
                 return value or default
@@ -490,7 +490,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         # LDIF NAMESPACE ACCESS - Explicit re-export for clear access
         # ═══════════════════════════════════════════════════════════════════
         # Explicit re-export of parent's Ldif namespace for namespace inheritance.
-        # This allows access to LDIF utilities via u.Ldap.Ldif.* pattern.
+        # This allows access to LDIF utilities via u.Ldap.* pattern.
         Ldif: type[FlextLdifUtilities.Ldif] = FlextLdifUtilities.Ldif
 
 

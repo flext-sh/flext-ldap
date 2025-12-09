@@ -37,9 +37,9 @@ from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
+from flext_ldap import m, p
 from flext_ldap.base import s
 from flext_ldap.constants import c
-from flext_ldap.models import m
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.utilities import u
 
@@ -357,8 +357,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         service_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_auto_result"
-            and (v is None or isinstance(v, (str, float, bool)))
+            if k != "_auto_result" and (v is None or isinstance(v, (str, float, bool)))
         }
         # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
@@ -457,9 +456,9 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
         # so list[FlextLdifModels.Entry] is compatible with list[m.Ldap.Entry]
         # Type narrowing: entries_raw is list[FlextLdifModels.Entry], m.Ldap.Entry extends it
-        # m.Ldap.Entry extends m.Ldif.Entry, so entries are structurally compatible (no cast needed)
+        # m.Ldap.Entry extends p.Entry, so entries are structurally compatible (no cast needed)
         # Python 3.13: Use list comprehension with type narrowing for conversion
-        # m.Ldap.Entry extends m.Ldif.Entry, so conversion is safe
+        # m.Ldap.Entry extends p.Entry, so conversion is safe
         entries: list[m.Ldap.Entry] = [
             entry
             if isinstance(entry, m.Ldap.Entry)
@@ -469,7 +468,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                 metadata=entry.metadata,
             )
             for entry in entries_raw
-            if isinstance(entry, (m.Ldap.Entry, m.Ldif.Entry))
+            if isinstance(entry, (m.Ldap.Entry, p.Entry))
         ]
         return self._process_entries(entries, options, start_time)
 

@@ -39,6 +39,7 @@ from flext_ldap import (
     FlextLdapConfig,
     FlextLdapConnection,
     FlextLdapOperations,
+    p,
 )
 
 # Import unified test foundation modules
@@ -278,7 +279,7 @@ class TestFixtures:
         return ""
 
     @staticmethod
-    def load_base_ldif_entries() -> list[m.Ldif.Entry]:
+    def load_base_ldif_entries() -> list[p.Entry]:
         """Load and parse base LDIF structure to Entry models.
 
         Returns:
@@ -294,10 +295,10 @@ class TestFixtures:
         ldif = FlextLdif()
         result = ldif.parse(ldif_content, server_type="rfc")
         if result.is_success:
-            # Python 3.13: Type narrowing - unwrap() returns list[m.Ldif.Entry]
+            # Python 3.13: Type narrowing - unwrap() returns list[p.Entry]
             entries = result.unwrap()
-            # Type narrowing: entries is list[m.Ldif.Entry] from parse result
-            return [entry for entry in entries if isinstance(entry, m.Ldif.Entry)]
+            # Type narrowing: entries is list[p.Entry] from parse result
+            return [entry for entry in entries if isinstance(entry, p.Entry)]
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
         logger.warning(f"Failed to parse base LDIF: {result.error}")
@@ -1108,7 +1109,7 @@ def base_ldif_content() -> str:
 
 
 @pytest.fixture
-def base_ldif_entries() -> list[m.Ldif.Entry]:
+def base_ldif_entries() -> list[p.Entry]:
     """Load and parse base LDIF structure to Entry models."""
     return LdapTestFixtures.load_base_ldif_entries()
 

@@ -19,7 +19,7 @@ from flext_ldap.constants import (
 
 # Only domain-specific TypeVars
 # Bound to object to avoid circular import with protocols.py (Tier 0 rule)
-# Actual constraint: FlextLdapProtocols.Ldap.Entry.EntryProtocol (enforced at runtime by models/services)
+# Actual constraint: FlextLdapProtocols.Ldap.LdapEntryProtocol (enforced at runtime by models/services)
 FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=object)
 FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
 
@@ -103,7 +103,7 @@ class FlextLdapTypes(FlextLdifTypes):
             """
 
             # Types using object to avoid circular import with protocols.py (Tier 0 rule)
-            # Actual constraint: FlextLdapProtocols.Ldap.Entry.EntryProtocol (enforced at runtime by models/services)
+            # Actual constraint: FlextLdapProtocols.Ldap.LdapEntryProtocol (enforced at runtime by models/services)
             type Instance = object
             type Collection = Sequence[object]
             type EntryMapping = Mapping[str, object]
@@ -134,7 +134,7 @@ class FlextLdapTypes(FlextLdifTypes):
             type Callback[T] = Callable[[], r[T]]
 
             # Domain-specific types (using object to avoid circular import with protocols.py)
-            # Actual constraint: FlextLdapProtocols.Ldap.Entry.EntryProtocol (enforced at runtime)
+            # Actual constraint: FlextLdapProtocols.Ldap.LdapEntryProtocol (enforced at runtime)
             type EntryProcessor = Callable[
                 [object],
                 r[bool],

@@ -1162,17 +1162,20 @@ For more examples and advanced usage patterns, see:
 ## Related Documentation
 
 **Within Project**:
+
 - [Getting Started](getting-started.md) - Installation and basic usage
 - [Architecture](architecture.md) - Architecture and design patterns
 - [Configuration](configuration.md) - Configuration options
 - [Examples](examples/) - Working code examples
 
 **Across Projects**:
+
 - [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/api-reference/foundation.md) - Core APIs and patterns
 - [flext-ldif Processing](https://github.com/organization/flext/tree/main/flext-ldif/docs/api-reference.md) - LDIF processing API
 - [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/CLAUDE.md) - Data integration and ELT orchestration
 
 **External Resources**:
+
 - [RFC 4511 - LDAP: The Protocol](https://www.rfc-editor.org/rfc/rfc4511.html)
 - [RFC 4512 - LDAP: Technical Specification Road Map](https://www.rfc-editor.org/rfc/rfc4512.html)
 

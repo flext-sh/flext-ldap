@@ -28,8 +28,8 @@ Architecture Notes:
       (Config, Options, Results, Statistics)
     - Uses FlextModels.Entity for models requiring entity identity
       (SearchResult, BatchUpsertResult)
-    - Uses m.Ldif.Entry via inheritance and namespace composition (no duplication)
-      (no duplication, full hierarchy exposed)
+    - Extends FlextLdifModels via inheritance for m.Ldap.Entry (no duplication)
+      (full hierarchy exposed, implements p.Ldap.LdapEntryProtocol structurally)
     - Python 3.13+ PEP 695 type aliases in nested Types class
     - @computed_field for derived values (success_rate, total_count, by_objectclass)
     - Factory methods (normalized, from_counters) encapsulate common creation patterns
@@ -162,14 +162,14 @@ class FlextLdapModels(FlextLdifModels):
             """LDAP entry model extending public API Entry from flext-ldif.
 
             Exposes Entry model via inheritance to enable access via
-            m.Ldif.Entry namespace via inheritance. Access via m.Ldif.Entry.
+            m.Ldap.Entry. Implements p.Ldap.LdapEntryProtocol structurally.
             """
 
         # =========================================================================
         # LDIF MODELS ACCESS - Via inheritance and namespace composition
         # =========================================================================
         # FlextLdapModels extends FlextLdifModels, so LDIF models are accessible
-        # via inheritance. Access LDIF models through namespace: m.Ldif.*
+        # via inheritance. Access LDIF models through namespace: m.*
         # No aliases - use proper inheritance and namespace composition.
         # =========================================================================
 
@@ -234,7 +234,7 @@ class FlextLdapModels(FlextLdifModels):
             @classmethod
             def validate_base_dn_format(cls, v: str) -> str:
                 """Validate base_dn format using Pydantic v2 validation.
-                
+
                 Note: Models cannot import utilities, so basic validation is performed.
                 Full DN format validation is done at service/utility layer.
                 Pydantic Field(min_length=1) ensures non-empty, so this validator
@@ -270,17 +270,24 @@ class FlextLdapModels(FlextLdifModels):
                     Normalized string value.
 
                 """
-                if isinstance(v, c.Ldap.SearchScope):
-                    return v.value
-                # Models cannot import utilities, so use direct enum value lookup
-                # Try to match string value to enum members using __members__
-                v_str = str(v).upper()
-                # Iterate over enum members using __members__ dict
-                for scope_member in c.Ldap.SearchScope.__members__.values():
-                    if scope_member.value.upper() == v_str:
-                        return scope_member.value
-                # If no match found, return original string (validation will catch invalid values)
-                return str(v)
+                # Python 3.13: Match-case for enum/string normalization
+                match v:
+                    case c.Ldap.SearchScope() as enum_val:
+                        return enum_val.value
+                    case str() as str_val:
+                        # Models cannot import utilities, so use direct enum value lookup
+                        v_upper = str_val.upper()
+                        # Python 3.13: Generator expression for efficient lookup - direct return
+                        return next(
+                            (
+                                m.value
+                                for m in c.Ldap.SearchScope.__members__.values()
+                                if m.value.upper() == v_upper
+                            ),
+                            str_val,
+                        )
+                    case _:
+                        return str(v)
 
             @dataclass(frozen=True)
             class NormalizedConfig:
@@ -431,8 +438,8 @@ class FlextLdapModels(FlextLdifModels):
                     Categories instance with entries grouped by objectClass.
 
                 """
-                categories: m.Collections.Categories[m.Ldif.Entry] = (
-                    m.Collections.Categories[m.Ldif.Entry]()
+                categories: m.Collections.Categories[p.Ldap.LdapEntryProtocol] = (
+                    m.Collections.Categories[p.Ldap.LdapEntryProtocol]()
                 )
 
                 logger = logging.getLogger(__name__)
@@ -472,7 +479,7 @@ class FlextLdapModels(FlextLdifModels):
                 if isinstance(entry.attributes, Mapping):
                     return cls._convert_attrs_mapping(entry.attributes)
                 # Protocol case: access .attributes property
-                if isinstance(entry.attributes, p.Ldap.Entry.LdifAttributesProtocol):
+                if isinstance(entry.attributes, p.Ldap.LdifAttributesProtocol):
                     inner_attrs = entry.attributes.attributes
                     # Protocol guarantees attributes is Mapping[str, Sequence[str]]
                     # Type narrowing: inner_attrs is already Mapping[str, Sequence[str]]

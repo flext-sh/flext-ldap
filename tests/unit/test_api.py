@@ -338,9 +338,7 @@ class TestsFlextLdapApi:
         """Test add method exists."""
         api = self._create_api()
         # Python 3.13: Direct attribute access after hasattr check
-        tm.that(hasattr(api, "add"), eq=True) and tm.that(
-            callable(api.add), eq=True
-        )
+        tm.that(hasattr(api, "add"), eq=True) and tm.that(callable(api.add), eq=True)
 
     def test_modify_method_exists(self) -> None:
         """Test modify method exists."""

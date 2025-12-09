@@ -123,25 +123,25 @@ def _is_single_phase_callback(
 
 
 def _convert_entries_to_protocol(
-    entries: Sequence[m.Ldif.Entry | p.Ldap.Entry.EntryProtocol],
-) -> list[p.Ldap.Entry.EntryProtocol]:
+    entries: Sequence[p.Entry | p.Ldap.LdapEntryProtocol],
+) -> list[p.Ldap.LdapEntryProtocol]:
     """Convert entries to protocol list with type safety.
 
     Args:
-        entries: Sequence of entries (m.Ldif.Entry or EntryProtocol)
+        entries: Sequence of entries (p.Entry or p.Ldif.Entry.EntryProtocol)
 
     Returns:
-        List of EntryProtocol-compatible entries
+        List of p.Ldif.Entry.EntryProtocol-compatible entries
 
     """
     # Filter entries that are protocol-compatible
-    # m.Ldif.Entry is structurally compatible with EntryProtocol
+    # p.Entry is structurally compatible with p.Ldif.Entry.EntryProtocol
     # Use isinstance check for type narrowing
-    return [entry for entry in entries if isinstance(entry, p.Ldap.Entry.EntryProtocol)]
+    return [entry for entry in entries if isinstance(entry, p.Ldap.LdapEntryProtocol)]
 
 
 def _get_phase_result_value(
-    phase_result: m.Ldap.PhaseSyncResult | p.Ldap.Result.PhaseSyncResultProtocol,
+    phase_result: m.Ldap.PhaseSyncResult | p.Ldap.PhaseSyncResultProtocol,
     attr_name: str,
     default: int = 0,
 ) -> int:
@@ -159,7 +159,7 @@ def _get_phase_result_value(
     # Python 3.13: Both union types share same attributes - direct access
     # isinstance check ensures protocol compatibility
     if isinstance(
-        phase_result, (m.Ldap.PhaseSyncResult, p.Ldap.Result.PhaseSyncResultProtocol)
+        phase_result, (m.Ldap.PhaseSyncResult, p.Ldap.PhaseSyncResultProtocol)
     ):
         # Use match-case for modern Python 3.13 pattern matching
         match attr_name:
@@ -528,7 +528,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def add(
         self,
-        entry: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | m.Ldif.Entry,
+        entry: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | p.Entry,
     ) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry.
 
@@ -564,7 +564,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def modify(
         self,
-        dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
+        dn: str | p.Ldap.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
     ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
@@ -604,7 +604,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def delete(
         self,
-        dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
+        dn: str | p.Ldap.DistinguishedNameProtocol,
     ) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
@@ -640,7 +640,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def upsert(
         self,
-        entry: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | m.Ldif.Entry,
+        entry: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | p.Entry,
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
@@ -687,7 +687,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def batch_upsert(
         self,
-        entries: Sequence[p.Ldap.Entry.EntryProtocol],
+        entries: Sequence[p.Ldap.LdapEntryProtocol],
         *,
         progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
         retry_on_errors: list[str] | None = None,
@@ -791,13 +791,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}"
             )
 
-        # Type narrowing: parse_result.unwrap() returns list[m.Ldif.Entry]
+        # Type narrowing: parse_result.unwrap() returns list[p.Entry]
         # Runtime validation ensures correctness
         parse_value = parse_result.unwrap()
-        # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees m.Ldif.Entry
+        # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees p.Entry
         # Use list comprehension with isinstance for type narrowing
-        entries: list[m.Ldif.Entry] = [
-            entry for entry in parse_value if isinstance(entry, m.Ldif.Entry)
+        entries: list[p.Entry] = [
+            entry for entry in parse_value if isinstance(entry, p.Entry)
         ]
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
@@ -839,9 +839,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 # Type narrowing: callback is LdapProgressCallback (4 params)
                 single_phase_callback = callback_union
 
-        # m.Ldif.Entry implements EntryProtocol (structural compatibility)
-        # Type narrowing: entries is list[FlextLdifModels.Entry] which implements EntryProtocol
-        # Structural typing: m.Ldif.Entry implements p.Ldap.Entry.EntryProtocol
+        # p.Entry implements p.Ldif.Entry.EntryProtocol (structural compatibility)
+        # Type narrowing: entries is list[FlextLdifModels.Entry] which implements p.Ldif.Entry.EntryProtocol
+        # Structural typing: p.Entry implements p.Ldap.LdapEntryProtocol
         # Convert to list explicitly for type safety
         # Use helper function for type-safe conversion
         entries_protocol = _convert_entries_to_protocol(entries)

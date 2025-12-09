@@ -4,8 +4,8 @@ Provides seamless conversion between ldap3 Entry objects and FlextLdif Entry mod
 enabling integration between LDAP protocol operations and LDIF entry manipulation.
 
 Business Rules:
-    - ldap3.Entry → m.Ldif.Entry conversion preserves all attributes
-    - m.Ldif.Entry → ldap3 attributes uses dict[str, list[str]] format
+    - ldap3.Entry → p.Entry conversion preserves all attributes
+    - p.Entry → ldap3 attributes uses dict[str, list[str]] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
     - Server-specific normalization uses flext-ldif quirks system
     - DN normalization via FlextLdifUtilities.Ldif.DN.norm_string() for consistency
@@ -49,8 +49,8 @@ class FlextLdapEntryAdapter(s[bool]):
     """Adapter for converting between ldap3 and FlextLdif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:
-    - ldap3.Entry → m.Ldif.Entry (for result processing)
-    - m.Ldif.Entry → t.Ldap.Attributes (for ldap3 operations)
+    - ldap3.Entry → p.Entry (for result processing)
+    - p.Entry → t.Ldap.Attributes (for ldap3 operations)
     - Server-specific entry normalization using quirks
     - Entry validation for target server types
     - Entry format conversion between different servers
@@ -198,7 +198,7 @@ class FlextLdapEntryAdapter(s[bool]):
         # Exclude special parameters like _auto_result which are handled by FlextService
         # Python 3.13: Extract and validate _auto_result with modern pattern
         auto_result_raw: object = kwargs.pop("_auto_result", None)
-        auto_result: bool | None = (
+        _auto_result: bool | None = (
             auto_result_raw if isinstance(auto_result_raw, bool) else None
         )
         # Python 3.13: Filter kwargs with modern comprehension
@@ -210,14 +210,6 @@ class FlextLdapEntryAdapter(s[bool]):
         }
         # Type narrowing: kwargs_without_server_type is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
-        # Pass _auto_result explicitly if it was provided and is bool
-        # auto_result is already bool | None from isinstance check above
-        if auto_result is not None:
-            super().__init__(
-                _auto_result=auto_result, **kwargs_without_server_type
-            )
-            return
-        # _auto_result is None or invalid type - pass without it
         super().__init__(**kwargs_without_server_type)
         # Use provided server_type or default from constants
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
@@ -453,8 +445,8 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldap3_to_ldif_entry(
         self,
         ldap3_entry: Ldap3Entry,
-    ) -> r[m.Ldif.Entry]:
-        """Convert ldap3.Entry to m.Ldif.Entry.
+    ) -> r[p.Entry]:
+        """Convert ldap3.Entry to p.Entry.
 
         Business Rules:
             - DN is extracted from entry.entry_dn (string conversion)
@@ -482,7 +474,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:
-            r[m.Ldif.Entry]: Converted entry with metadata
+            r[p.Entry]: Converted entry with metadata
             or error if conversion fails (ValueError, TypeError, AttributeError).
 
         """
@@ -524,13 +516,19 @@ class FlextLdapEntryAdapter(s[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            ldf_attrs_obj = m.Ldif.LdifAttributes.model_validate({
-                "attributes": ldif_attrs,
-            })
-            metadata_obj = m.Ldif.QuirkMetadata.model_validate({
-                "quirk_type": self._server_type,
-                "extensions": conversion_metadata.model_dump(exclude_defaults=False),
-            })
+            ldf_attrs_obj = m.Ldif.LdifAttributes.model_validate(
+                {
+                    "attributes": ldif_attrs,
+                }
+            )
+            metadata_obj = m.Ldif.QuirkMetadata.model_validate(
+                {
+                    "quirk_type": self._server_type,
+                    "extensions": conversion_metadata.model_dump(
+                        exclude_defaults=False
+                    ),
+                }
+            )
             return r[m.Ldif.Entry].ok(
                 m.Ldif.Entry(
                     dn=m.Ldif.DistinguishedName(value=dn_str),
@@ -541,8 +539,10 @@ class FlextLdapEntryAdapter(s[bool]):
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
             entry_dn_for_log = "unknown"
-            if isinstance(ldap3_entry, p.Ldap.Infrastructure.Ldap3EntryProtocol):
-                entry_dn_for_log = str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
+            if isinstance(ldap3_entry, p.Ldap.Ldap3EntryProtocol):
+                entry_dn_for_log = (
+                    str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
+                )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY.value,
@@ -550,13 +550,13 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
+            return r[p.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldap.LdapEntryProtocol,
     ) -> r[t.Ldap.Attributes]:
-        """Convert m.Ldif.Entry to ldap3 attributes format.
+        """Convert p.Entry to ldap3 attributes format.
 
         Business Rules:
             - Entry must have attributes (LdifAttributes model)
@@ -578,7 +578,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns dict[str, list[str]] format expected by ldap3
 
         Args:
-            entry: m.Ldif.Entry with attributes to convert.
+            entry: p.Ldap.LdapEntryProtocol with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:
@@ -586,7 +586,7 @@ class FlextLdapEntryAdapter(s[bool]):
             or error if entry has no attributes or conversion fails.
 
         """
-        # Use entry directly - m.Ldif.Entry is the public API
+        # Use entry directly - p.Ldap.LdapEntryProtocol is the public API
         # Check if attributes are empty
         if entry.attributes is None:
             return r[t.Ldap.Attributes].fail("Entry has no attributes")

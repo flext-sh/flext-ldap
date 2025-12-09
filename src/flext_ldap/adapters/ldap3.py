@@ -238,7 +238,7 @@ class Ldap3Adapter(s[bool]):
             for entry in connection.entries:
                 # Type narrowing: entry is ldap3.Entry with dynamic attributes
                 # Use Protocol for type-safe attribute access
-                if not isinstance(entry, p.Ldap.Infrastructure.Ldap3EntryProtocol):
+                if not isinstance(entry, p.Ldap.Ldap3EntryProtocol):
                     # Fallback for non-protocol entries
                     dn = str(entry) if entry else ""
                     results.append((dn, {}))
@@ -298,7 +298,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def process_entry_attributes(
-            entry: p.Ldap.Infrastructure.Ldap3EntryProtocol,
+            entry: p.Ldap.Ldap3EntryProtocol,
             entry_attrs: Sequence[str],
         ) -> dict[str, list[str]]:
             """Process entry attributes into dict[str, list[str]].
@@ -321,7 +321,7 @@ class Ldap3Adapter(s[bool]):
                 if attr_obj is None:
                     continue
 
-                if isinstance(attr_obj, p.Ldap.Infrastructure.Ldap3AttributeProtocol):
+                if isinstance(attr_obj, p.Ldap.Ldap3AttributeProtocol):
                     attr_values = attr_obj.values
                     # Protocol guarantees values is Sequence[object], which is iterable
                     # No isinstance check needed - Sequence is directly iterable
@@ -333,7 +333,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | object,
+            parsed: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | object,
         ) -> m.Ldif.DistinguishedName:
             """Extract Distinguished Name from LDAP entry.
 
@@ -374,9 +374,9 @@ class Ldap3Adapter(s[bool]):
 
             # Protocol-based entry - extract DN value using utilities
             dn_raw: object | None = None
-            if isinstance(parsed, p.Ldap.Entry.EntryProtocol):
+            if isinstance(parsed, p.Ldap.LdapEntryProtocol):
                 dn_raw = parsed.dn
-            elif isinstance(parsed, p.Ldap.Infrastructure.Ldap3EntryProtocol):
+            elif isinstance(parsed, p.Ldap.Ldap3EntryProtocol):
                 # Use Protocol for type-safe access to entry_dn
                 dn_raw = parsed.entry_dn
             else:
@@ -394,7 +394,7 @@ class Ldap3Adapter(s[bool]):
             if isinstance(dn_raw, m.Ldif.DistinguishedName):
                 return dn_raw
             # Check if it has value attribute (duck typing for DistinguishedName-like objects)
-            if isinstance(dn_raw, p.Ldap.Entry.DistinguishedNameProtocol):
+            if isinstance(dn_raw, p.Ldap.DistinguishedNameProtocol):
                 # Convert to m.Ldif.DistinguishedName (public API)
                 return m.Ldif.DistinguishedName.model_validate({"value": dn_raw.value})
 
@@ -432,7 +432,7 @@ class Ldap3Adapter(s[bool]):
                 HasAttributesProperty
                 | Mapping[str, object | Sequence[str]]
                 | HasItemsMethod
-                | p.Ldap.Entry.LdifAttributesProtocol
+                | p.Ldap.LdifAttributesProtocol
                 | m.Ldif.LdifAttributes
                 | BaseModel
             ),
@@ -472,7 +472,9 @@ class Ldap3Adapter(s[bool]):
                 # Python 3.13: model_dump() always returns dict - direct access
                 dumped = attrs.model_dump()
                 # u.mapper().get() with default={} guarantees dict[str, object] | None
-                attrs_value = u.mapper().get(dumped, "attributes", default={})
+                attrs_value: dict[str, object] | None = u.mapper().get(
+                    dumped, "attributes", default={}
+                )
                 # Type narrowing: ensure dict before passing
                 if isinstance(attrs_value, dict):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
@@ -487,7 +489,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | object,
+            parsed: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | object,
         ) -> m.Ldif.LdifAttributes:
             """Extract LDAP attributes as m.Ldif.LdifAttributes.
 
@@ -512,7 +514,7 @@ class Ldap3Adapter(s[bool]):
             """
             # Get attributes from entry
             attrs_raw: object | None = None
-            if isinstance(parsed, (m.Ldap.Entry, p.Ldap.Entry.EntryProtocol)):
+            if isinstance(parsed, (m.Ldap.Entry, p.Ldap.LdapEntryProtocol)):
                 attrs_raw = parsed.attributes
             else:
                 # Fallback: try dynamic attribute access for unknown types
@@ -538,7 +540,7 @@ class Ldap3Adapter(s[bool]):
                     HasAttributesProperty,
                     Mapping,
                     HasItemsMethod,
-                    p.Ldap.Entry.LdifAttributesProtocol,
+                    p.Ldap.LdifAttributesProtocol,
                     m.Ldif.LdifAttributes,
                     BaseModel,
                 ),
@@ -550,7 +552,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | object,
+            parsed: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | object,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -578,7 +580,7 @@ class Ldap3Adapter(s[bool]):
             """
             # Extract metadata using protocol check
             metadata_raw: object | None = None
-            if isinstance(parsed, p.Ldap.Entry.EntryProtocol):
+            if isinstance(parsed, p.Ldap.LdapEntryProtocol):
                 metadata_raw = parsed.metadata
             else:
                 # Fallback: try dynamic attribute access for unknown types
@@ -656,7 +658,8 @@ class Ldap3Adapter(s[bool]):
             filtered: dict[str, str | int | float | bool | None] = {
                 k: v
                 for k, v in metadata_dict.items()
-                if isinstance(k, str) and isinstance(v, (str, int, float, bool) | type(None))
+                if isinstance(k, str)
+                and isinstance(v, (str, int, float, bool) | type(None))
             }
             return filtered or None
 
@@ -707,13 +710,13 @@ class Ldap3Adapter(s[bool]):
             entries: list[m.Ldap.Entry] = []
             for entry_raw in entries_raw:
                 # Already valid Entry instance - use directly
-                # Convert m.Ldif.Entry to m.Ldap.Entry if needed
+                # Convert p.Entry to m.Ldap.Entry if needed
                 if isinstance(entry_raw, m.Ldap.Entry):
                     entries.append(entry_raw)
                     continue
-                # If it's m.Ldif.Entry, convert to m.Ldap.Entry
-                if isinstance(entry_raw, m.Ldif.Entry):
-                    # m.Ldap.Entry extends m.Ldif.Entry, so we can create from existing
+                # If it's p.Entry, convert to m.Ldap.Entry
+                if isinstance(entry_raw, p.Entry):
+                    # m.Ldap.Entry extends p.Entry, so we can create from existing
                     entries.append(
                         m.Ldap.Entry(
                             dn=entry_raw.dn,
@@ -726,12 +729,12 @@ class Ldap3Adapter(s[bool]):
                 # Defensive conversion for invalid structures (e.g., from tests or manual construction)
                 # Extract DN, attributes, and metadata using helper methods
                 # Use Protocol checks for type-safe access
-                entry_for_extraction: (
-                    p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | None
-                ) = None
-                if isinstance(entry_raw, (m.Ldap.Entry, p.Ldap.Entry.EntryProtocol)):
+                entry_for_extraction: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | None = (
+                    None
+                )
+                if isinstance(entry_raw, (m.Ldap.Entry, p.Ldap.LdapEntryProtocol)):
                     entry_for_extraction = entry_raw
-                elif isinstance(entry_raw, p.Ldap.Infrastructure.Ldap3EntryProtocol):
+                elif isinstance(entry_raw, p.Ldap.Ldap3EntryProtocol):
                     # ldap3.Entry - convert to EntryProtocol-compatible structure
                     # This requires extracting entry_dn and building attributes dict
                     # For now, skip - ldap3 entries should be converted via ldap3_to_ldif_entry first
@@ -804,7 +807,7 @@ class Ldap3Adapter(s[bool]):
             """
             try:
                 # Call connection.add directly - ldap3 returns bool for success
-                success = connection.add(dn_str, None, ldap_attrs)
+                success = connection.add(dn_str, None, ldap_attrs)  # type: ignore[no-untyped-call]
 
                 # Create results
                 if success:
@@ -825,7 +828,7 @@ class Ldap3Adapter(s[bool]):
         def execute_modify(
             self,
             connection: Connection,
-            dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
+            dn: str | p.Ldap.DistinguishedNameProtocol,
             changes: t.Ldap.ModifyChanges,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
@@ -858,7 +861,7 @@ class Ldap3Adapter(s[bool]):
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 # Call connection.modify directly - ldap3 returns bool for success
-                success = connection.modify(dn_str, changes)
+                success = connection.modify(dn_str, changes)  # type: ignore[no-untyped-call]
 
                 # Create results
                 if success:
@@ -879,7 +882,7 @@ class Ldap3Adapter(s[bool]):
         def execute_delete(
             self,
             connection: Connection,
-            dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
+            dn: str | p.Ldap.DistinguishedNameProtocol,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
 
@@ -910,7 +913,7 @@ class Ldap3Adapter(s[bool]):
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 # Call connection.delete directly - ldap3 returns bool for success
-                success = connection.delete(dn_str)
+                success = connection.delete(dn_str)  # type: ignore[no-untyped-call]
 
                 # Create results
                 if success:
@@ -1140,7 +1143,7 @@ class Ldap3Adapter(s[bool]):
         service_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_auto_result" and isinstance(v, (str, float, bool) | type(None))
+            if isinstance(v, (str, float, bool) | type(None))
         }
         # Initialize parent with remaining kwargs
         # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
@@ -1231,7 +1234,7 @@ class Ldap3Adapter(s[bool]):
         if self._connection is not None:
             try:
                 # Call connection.unbind directly
-                self._connection.unbind()
+                self._connection.unbind()  # type: ignore[no-untyped-call]
             except (LDAPException, OSError) as e:
                 self.logger.debug("Error during disconnect", error=str(e))
             finally:
@@ -1426,7 +1429,8 @@ class Ldap3Adapter(s[bool]):
             )
 
         # entry is already m.Ldap.Entry from signature - use directly
-        attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
+        # Cast to protocol for type compatibility
+        attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)  # type: ignore[arg-type]
         if attrs_result.is_failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""
             return r[m.Ldap.OperationResult].fail(
@@ -1444,7 +1448,7 @@ class Ldap3Adapter(s[bool]):
 
     def modify(
         self,
-        dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
+        dn: str | p.Ldap.DistinguishedNameProtocol,
         changes: t.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
@@ -1488,7 +1492,7 @@ class Ldap3Adapter(s[bool]):
 
     def delete(
         self,
-        dn: str | p.Ldap.Entry.DistinguishedNameProtocol,
+        dn: str | p.Ldap.DistinguishedNameProtocol,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.

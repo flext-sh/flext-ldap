@@ -128,9 +128,7 @@ class TestsFlextLdapModels:
         # Verify the attribute exists via namespace inheritance
         actual = hasattr(m.Ldif, "LdifAttributes")
         tm.that(actual, eq=True)
-        tm.that(
-            m.Ldif.LdifAttributes is FlextLdifModels.Ldif.LdifAttributes, eq=True
-        )
+        tm.that(m.Ldif.LdifAttributes is FlextLdifModels.Ldif.LdifAttributes, eq=True)
 
     def test_quirk_metadata_via_ldif_namespace(self) -> None:
         """Test QuirkMetadata accessible via m.Ldif namespace (inherited)."""

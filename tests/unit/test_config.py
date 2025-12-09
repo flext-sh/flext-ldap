@@ -57,7 +57,7 @@ class TestsFlextLdapConfig:
 
     def test_config_initialization_defaults(self) -> None:
         """Test configuration initialization with default values and validate all fields.
-        
+
         Note: Config may load values from .env files if present, so we validate
         that port is in valid range rather than exact default value.
         """
@@ -79,7 +79,9 @@ class TestsFlextLdapConfig:
         if config.bind_dn is not None:
             assert isinstance(config.bind_dn, str), "bind_dn should be string or None"
         if config.bind_password is not None:
-            assert isinstance(config.bind_password, str), "bind_password should be string or None"
+            assert isinstance(config.bind_password, str), (
+                "bind_password should be string or None"
+            )
 
         # Validate types
         assert isinstance(config.host, str), "Host should be string"

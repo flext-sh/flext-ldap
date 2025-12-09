@@ -746,7 +746,6 @@ Use pytest markers to control test execution:
 
 ### Core Documentation
 
-
 ### Extended Documentation
 
 - **[Architecture Deep-Dive](docs/architecture/)** - Comprehensive architecture documentation

@@ -6,8 +6,8 @@
 **Test Scope:**
 - Adapter initialization
 - Execute method (health check)
-- ldap3.Entry → m.Ldif.Entry conversion
-- m.Ldif.Entry → ldap3 attributes conversion
+- ldap3.Entry → p.Entry conversion
+- p.Entry → ldap3 attributes conversion
 - Base64 encoding detection
 - Server-specific normalization
 - Method existence validation
@@ -27,8 +27,8 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
+from flext_ldap import m, p
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_ldap.models import m
 
 pytestmark = pytest.mark.unit
 
@@ -83,7 +83,7 @@ class TestsFlextLdapEntryAdapter:
         )
 
     def test_ldap3_to_ldif_entry(self) -> None:
-        """Test conversion from ldap3.Entry to m.Ldif.Entry."""
+        """Test conversion from ldap3.Entry to p.Entry."""
         adapter = FlextLdapEntryAdapter()
         # Create mock ldap3.Entry-like object
 
@@ -100,14 +100,14 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
-        tm.that(entry, is_=m.Ldif.Entry, none=False)
+        tm.that(entry, is_=p.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
         tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
         tm.that(entry.attributes, none=False)
 
     def test_ldap3_to_ldif_entry_with_empty_attributes(self) -> None:
-        """Test conversion from ldap3.Entry to m.Ldif.Entry with empty attributes."""
+        """Test conversion from ldap3.Entry to p.Entry with empty attributes."""
         adapter = FlextLdapEntryAdapter()
         # Create mock ldap3.Entry-like object
 
@@ -121,17 +121,19 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
-        tm.that(entry, is_=m.Ldif.Entry, none=False)
+        tm.that(entry, is_=p.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
         tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
 
     def test_ldif_entry_to_ldap3_attributes(self) -> None:
-        """Test conversion from m.Ldif.Entry to ldap3 attributes."""
+        """Test conversion from p.Entry to ldap3 attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = m.Ldif.Entry(
+        entry = p.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["user"], "sn": ["Doe"]}),
+            attributes=m.Ldif.LdifAttributes(
+                attributes={"cn": ["user"], "sn": ["Doe"]}
+            ),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attributes = tm.ok(result)
@@ -143,9 +145,9 @@ class TestsFlextLdapEntryAdapter:
         )
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
-        """Test conversion from m.Ldif.Entry to ldap3 attributes with empty attributes."""
+        """Test conversion from p.Entry to ldap3 attributes with empty attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = m.Ldif.Entry(
+        entry = p.Entry(
             dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
             attributes=m.Ldif.LdifAttributes(attributes={}),
         )
