@@ -38,7 +38,7 @@ import types
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self, TypeGuard, cast, override
+from typing import Protocol, Self, TypeGuard, override, runtime_checkable
 
 from flext_core import FlextConfig, r
 from flext_ldif import FlextLdif
@@ -57,6 +57,13 @@ from flext_ldap.utilities import u
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
 SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
+
+
+@runtime_checkable
+class HasConfigAttribute(Protocol):
+    """Protocol for objects with private _config attribute."""
+
+    _config: FlextLdapConfig
 
 
 def _is_multi_phase_callback(
@@ -134,14 +141,14 @@ def _convert_entries_to_protocol(
 
 
 def _get_phase_result_value(
-    phase_result: object,
+    phase_result: m.Ldap.PhaseSyncResult | p.Ldap.Result.PhaseSyncResultProtocol,
     attr_name: str,
     default: int = 0,
 ) -> int:
     """Get phase result attribute value with type safety.
 
     Args:
-        phase_result: Phase result object
+        phase_result: Phase result (model or protocol-compatible)
         attr_name: Attribute name to extract
         default: Default value if attribute not found
 
@@ -149,17 +156,23 @@ def _get_phase_result_value(
         Attribute value or default
 
     """
+    # Python 3.13: Both union types share same attributes - direct access
+    # isinstance check ensures protocol compatibility
     if isinstance(
         phase_result, (m.Ldap.PhaseSyncResult, p.Ldap.Result.PhaseSyncResultProtocol)
     ):
-        if attr_name == "total_entries":
-            return phase_result.total_entries
-        if attr_name == "synced":
-            return phase_result.synced
-        if attr_name == "failed":
-            return phase_result.failed
-        if attr_name == "skipped":
-            return phase_result.skipped
+        # Use match-case for modern Python 3.13 pattern matching
+        match attr_name:
+            case "total_entries":
+                return phase_result.total_entries
+            case "synced":
+                return phase_result.synced
+            case "failed":
+                return phase_result.failed
+            case "skipped":
+                return phase_result.skipped
+            case _:
+                return default
     return default
 
 
@@ -255,12 +268,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             **kwargs: Additional kwargs for FlextService base class.
 
         """
-        # Filter kwargs to only valid service kwargs, excluding _auto_result
-        # Type narrowing: filter to only compatible types for FlextService
+        # Python 3.13: Filter kwargs with modern comprehension
         service_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_auto_result" and isinstance(v, (str, float, bool, type(None)))
+            if k != "_auto_result" and (v is None or isinstance(v, (str, float, bool)))
         }
         # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
@@ -272,17 +284,20 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Use connection's config if available for consistency
         # Otherwise, super().__init__() already created proper
         # FlextLdapConfig via _get_service_config_type()
-        # Access private attribute via hasattr + getattr for type safety -
+        # Access private attribute via Protocol for type safety
         # PrivateAttr is accessible but not part of public API
         # PrivateAttr access is necessary for copying config from
         # connection to facade
         connection_config: FlextLdapConfig | None = None
-        if hasattr(connection, "_config"):
-            config_raw = getattr(connection, "_config", None)
-            # Type narrowing: check if config is FlextLdapConfig
+        # Python 3.13: Use Protocol check for type narrowing
+        if isinstance(connection, HasConfigAttribute):
+            config_raw = connection._config  # noqa: SLF001
+            # Type narrowing: isinstance ensures config is FlextLdapConfig
             if isinstance(config_raw, FlextLdapConfig):
                 connection_config = config_raw
-        if isinstance(connection_config, FlextLdapConfig):
+        # Type narrowing: connection_config is already FlextLdapConfig | None
+        # After isinstance check above, if it's not None, it's FlextLdapConfig
+        if connection_config is not None:
             # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
             self._config = connection_config
         self.logger.info(
@@ -513,7 +528,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def add(
         self,
-        entry: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry,
+        entry: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | m.Ldif.Entry,
     ) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry.
 
@@ -625,7 +640,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def upsert(
         self,
-        entry: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry,
+        entry: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | m.Ldif.Entry,
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
@@ -776,7 +791,14 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}"
             )
 
-        entries: list[m.Ldif.Entry] = cast("list[m.Ldif.Entry]", parse_result.unwrap())
+        # Type narrowing: parse_result.unwrap() returns list[m.Ldif.Entry]
+        # Runtime validation ensures correctness
+        parse_value = parse_result.unwrap()
+        # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees m.Ldif.Entry
+        # Use list comprehension with isinstance for type narrowing
+        entries: list[m.Ldif.Entry] = [
+            entry for entry in parse_value if isinstance(entry, m.Ldif.Entry)
+        ]
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
                 m.Ldap.PhaseSyncResult(

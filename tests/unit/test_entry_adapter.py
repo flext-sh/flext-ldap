@@ -6,8 +6,8 @@
 **Test Scope:**
 - Adapter initialization
 - Execute method (health check)
-- ldap3.Entry → m.Entry conversion
-- m.Entry → ldap3 attributes conversion
+- ldap3.Entry → m.Ldif.Entry conversion
+- m.Ldif.Entry → ldap3 attributes conversion
 - Base64 encoding detection
 - Server-specific normalization
 - Method existence validation
@@ -83,7 +83,7 @@ class TestsFlextLdapEntryAdapter:
         )
 
     def test_ldap3_to_ldif_entry(self) -> None:
-        """Test conversion from ldap3.Entry to m.Entry."""
+        """Test conversion from ldap3.Entry to m.Ldif.Entry."""
         adapter = FlextLdapEntryAdapter()
         # Create mock ldap3.Entry-like object
 
@@ -100,14 +100,14 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
-        tm.that(entry, is_=m.Entry, none=False)
+        tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
         tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
         tm.that(entry.attributes, none=False)
 
     def test_ldap3_to_ldif_entry_with_empty_attributes(self) -> None:
-        """Test conversion from ldap3.Entry to m.Entry with empty attributes."""
+        """Test conversion from ldap3.Entry to m.Ldif.Entry with empty attributes."""
         adapter = FlextLdapEntryAdapter()
         # Create mock ldap3.Entry-like object
 
@@ -121,17 +121,17 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
-        tm.that(entry, is_=m.Entry, none=False)
+        tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
         tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
 
     def test_ldif_entry_to_ldap3_attributes(self) -> None:
-        """Test conversion from m.Entry to ldap3 attributes."""
+        """Test conversion from m.Ldif.Entry to ldap3 attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = m.Entry(
-            dn=m.DistinguishedName(value="cn=user,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={"cn": ["user"], "sn": ["Doe"]}),
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes(attributes={"cn": ["user"], "sn": ["Doe"]}),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attributes = tm.ok(result)
@@ -143,11 +143,11 @@ class TestsFlextLdapEntryAdapter:
         )
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
-        """Test conversion from m.Entry to ldap3 attributes with empty attributes."""
+        """Test conversion from m.Ldif.Entry to ldap3 attributes with empty attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = m.Entry(
-            dn=m.DistinguishedName(value="cn=user,dc=example,dc=com"),
-            attributes=m.LdifAttributes(attributes={}),
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
+            attributes=m.Ldif.LdifAttributes(attributes={}),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         err = tm.fail(result, has="no attributes")
@@ -160,12 +160,13 @@ class TestsFlextLdapEntryAdapter:
         tm.has(adapter, "execute")
         tm.has(adapter, "ldap3_to_ldif_entry")
         tm.has(adapter, "ldif_entry_to_ldap3_attributes")
+        # Python 3.13: Direct attribute access after hasattr check
         assert hasattr(adapter, "execute")
-        assert callable(getattr(adapter, "execute", None))
+        assert callable(adapter.execute)
         assert hasattr(adapter, "ldap3_to_ldif_entry")
-        assert callable(getattr(adapter, "ldap3_to_ldif_entry", None))
+        assert callable(adapter.ldap3_to_ldif_entry)
         assert hasattr(adapter, "ldif_entry_to_ldap3_attributes")
-        assert callable(getattr(adapter, "ldif_entry_to_ldap3_attributes", None))
+        assert callable(adapter.ldif_entry_to_ldap3_attributes)
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
@@ -174,7 +175,6 @@ class TestsFlextLdapEntryAdapter:
 
     def test_conversion_helpers_static_methods_exist(self) -> None:
         """Test that static methods exist on _ConversionHelpers."""
+        # Python 3.13: Direct attribute access after hasattr check
         assert hasattr(FlextLdapEntryAdapter._ConversionHelpers, "is_base64_encoded")
-        assert callable(
-            getattr(FlextLdapEntryAdapter._ConversionHelpers, "is_base64_encoded", None)
-        )
+        assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)

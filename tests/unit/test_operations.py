@@ -137,10 +137,10 @@ class TestsFlextLdapOperations:
         operations = self._create_operations()
         # Use constants directly from TestsFlextLdapConstants.RFC
         rfc_constants = c.RFC
-        search_options = m.SearchOptions(
+        search_options = m.Ldap.SearchOptions(
             base_dn=rfc_constants.DEFAULT_BASE_DN,
             filter_str=rfc_constants.DEFAULT_FILTER,
-            scope=c.SearchScope.SUBTREE.value,
+            scope=c.Ldap.SearchScope.SUBTREE.value,
         )
         result = operations.search(search_options)
         tm.fail(result)

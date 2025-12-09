@@ -96,9 +96,9 @@ class TestsFlextLdapSmoke:
         @staticmethod
         def create_connection_config(
             ldap_container: LdapContainerDict,
-        ) -> m.ConnectionConfig:
+        ) -> m.Ldap.ConnectionConfig:
             """Factory for ConnectionConfig objects."""
-            return m.ConnectionConfig(
+            return m.Ldap.ConnectionConfig(
                 host=ldap_container["host"],
                 port=ldap_container["port"],
                 use_ssl=ldap_container["use_ssl"],

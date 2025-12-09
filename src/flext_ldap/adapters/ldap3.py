@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Literal, TypeGuard
+from typing import Literal, Protocol, TypeGuard, runtime_checkable
 
 from flext_core import FlextRuntime, r
 from flext_ldif import (
@@ -47,10 +47,29 @@ from pydantic import BaseModel, ConfigDict
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.base import s
 from flext_ldap.constants import c
-from flext_ldap.models import m
+from flext_ldap.models import HasItemsMethod, m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
+
+
+@runtime_checkable
+class HasDynamicAttribute(Protocol):
+    """Protocol for objects with dynamic attributes accessible via __getattr__."""
+
+    def __getattr__(self, name: str) -> object:
+        """Get dynamic attribute."""
+        ...
+
+
+@runtime_checkable
+class HasAttributesProperty(Protocol):
+    """Protocol for objects with 'attributes' property."""
+
+    @property
+    def attributes(self) -> dict[str, object] | Mapping[str, object]:
+        """Get attributes property."""
+        ...
 
 
 class Ldap3Adapter(s[bool]):
@@ -203,7 +222,7 @@ class Ldap3Adapter(s[bool]):
                 - Empty lists preserve attribute presence (important for schema)
 
             Architecture:
-                - Uses FlextRuntime.is_list_like() for type-safe value handling
+                - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
                 - Returns list[tuple[str, dict[str, list[str]]]] for parser compatibility
                 - No network calls - processes connection.entries
 
@@ -240,7 +259,7 @@ class Ldap3Adapter(s[bool]):
         def has_dynamic_attribute(
             obj: object,
             attr_name: str,
-        ) -> TypeGuard[object]:
+        ) -> TypeGuard[HasDynamicAttribute]:
             """Type guard for dynamic attribute access.
 
             Args:
@@ -268,10 +287,14 @@ class Ldap3Adapter(s[bool]):
                 Attribute value or None
 
             """
+            # Python 3.13: Use getattr() built-in for dynamic attributes after type narrowing
             if not Ldap3Adapter.ResultConverter.has_dynamic_attribute(obj, attr_name):
                 return None
-            # Use direct attribute access after type guard
-            return getattr(obj, attr_name, None)
+            # Type narrowing: TypeGuard ensures obj is HasDynamicAttribute
+            # Protocol guarantees dynamic attributes exist - use getattr() for dynamic access
+            # Note: getattr() is required here as attributes are dynamic (ldap3 library pattern)
+            dynamic_obj: HasDynamicAttribute = obj
+            return getattr(dynamic_obj, attr_name, None)
 
         @staticmethod
         def process_entry_attributes(
@@ -300,10 +323,9 @@ class Ldap3Adapter(s[bool]):
 
                 if isinstance(attr_obj, p.Ldap.Infrastructure.Ldap3AttributeProtocol):
                     attr_values = attr_obj.values
-                    if isinstance(attr_values, (list, tuple)):
-                        attrs_dict[attr] = [str(v) for v in attr_values]
-                    else:
-                        attrs_dict[attr] = [str(attr_values)]
+                    # Protocol guarantees values is Sequence[object], which is iterable
+                    # No isinstance check needed - Sequence is directly iterable
+                    attrs_dict[attr] = [str(v) for v in attr_values]
                 elif attr_obj is not None:
                     # Fallback for non-protocol attributes
                     attrs_dict[attr] = [str(attr_obj)]
@@ -354,24 +376,26 @@ class Ldap3Adapter(s[bool]):
             dn_raw: object | None = None
             if isinstance(parsed, p.Ldap.Entry.EntryProtocol):
                 dn_raw = parsed.dn
-            elif hasattr(parsed, "dn"):
-                # Fallback for non-protocol entries with dn attribute
-                # Use type guard for safe access
+            elif isinstance(parsed, p.Ldap.Infrastructure.Ldap3EntryProtocol):
+                # Use Protocol for type-safe access to entry_dn
+                dn_raw = parsed.entry_dn
+            else:
+                # Fallback: try dynamic attribute access for unknown types
                 dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed, "dn"
                 )
-            else:
-                return m.Ldif.DistinguishedName.model_validate({"value": ""})
+                if dn_raw is None:
+                    return m.Ldif.DistinguishedName.model_validate({"value": ""})
 
             if dn_raw is None:
                 return m.Ldif.DistinguishedName.model_validate({"value": ""})
 
-            # Check if already DistinguishedName instance - use m.DistinguishedName (public API)
+            # Check if already DistinguishedName instance - use m.Ldif.DistinguishedName (public API)
             if isinstance(dn_raw, m.Ldif.DistinguishedName):
                 return dn_raw
             # Check if it has value attribute (duck typing for DistinguishedName-like objects)
             if isinstance(dn_raw, p.Ldap.Entry.DistinguishedNameProtocol):
-                # Convert to m.DistinguishedName (public API)
+                # Convert to m.Ldif.DistinguishedName (public API)
                 return m.Ldif.DistinguishedName.model_validate({"value": dn_raw.value})
 
             # Use FlextLdifUtilities.Ldif.DN for conversion
@@ -392,23 +416,26 @@ class Ldap3Adapter(s[bool]):
 
             """
             result: dict[str, list[str]] = {}
+            # Python 3.13: Use modern comprehension with type narrowing
             for k, v in attrs_dict.items():
-                # Type narrowing: v is object, check if list-like before iterating
-                # FlextRuntime.is_list_like accepts object directly
-                if FlextRuntime.is_list_like(v):
-                    # Type narrowing: v is list-like, iterate safely
-                    if isinstance(v, (list, tuple, set, frozenset)):
-                        result[k] = [str(item) for item in v if item is not None]
-                    else:
-                        # Fallback: convert to list
-                        result[k] = [str(v)] if v is not None else []
-                else:
-                    result[k] = [str(v)] if v is not None else []
+                # isinstance needed for Sequence type narrowing (TypeGuard limitation)
+                result[k] = (
+                    [str(item) for item in v if item is not None]
+                    if isinstance(v, Sequence)
+                    else ([str(v)] if v is not None else [])
+                )
             return result
 
         @staticmethod
         def extract_attrs_dict(
-            attrs: object,
+            attrs: (
+                HasAttributesProperty
+                | Mapping[str, object | Sequence[str]]
+                | HasItemsMethod
+                | p.Ldap.Entry.LdifAttributesProtocol
+                | m.Ldif.LdifAttributes
+                | BaseModel
+            ),
         ) -> t.Ldap.Operation.AttributeDict:
             """Extract LDAP attributes as dictionary from various input formats.
 
@@ -418,7 +445,7 @@ class Ldap3Adapter(s[bool]):
                 - Handles Mapping types (dict, dict-like objects) directly
                 - All attribute values normalized to list[str] format
                 - Empty dict {} returned on extraction failure (no exception raised)
-                - Uses FlextRuntime.is_list_like() for type-safe value handling
+                - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
 
             Audit Implications:
                 - Attribute extraction affects data written to/read from LDAP directory
@@ -432,30 +459,28 @@ class Ldap3Adapter(s[bool]):
                 - No network calls - pure data transformation
 
             """
-            # Extract attributes property with default
-            # Use hasattr + getattr for dynamic access, then type check
-            if hasattr(attrs, "attributes"):
-                # Type narrowing: attrs has "attributes" attribute
-                # Use getattr for type safety (pyright doesn't narrow after hasattr)
-                attrs_attr = getattr(attrs, "attributes", None)
-                if attrs_attr is not None and isinstance(attrs_attr, (dict, Mapping)):
-                    return Ldap3Adapter.ResultConverter.normalize_attr_values(
-                        attrs_attr
-                    )
+            # Extract attributes property with Protocol check
+            # Use isinstance with Protocol for type narrowing
+            if isinstance(attrs, HasAttributesProperty):
+                # Type narrowing: isinstance ensures attrs has "attributes" property
+                attrs_attr = attrs.attributes
+                # Protocol guarantees attributes is Mapping[str, object] - no isinstance check needed
+                return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
 
             # Check for Pydantic model with model_dump method
             if isinstance(attrs, BaseModel):
-                attrs_model: BaseModel = attrs
-                dumped = attrs_model.model_dump()
-                if isinstance(dumped, dict):
-                    attrs_value = u.mapper().get(dumped, "attributes", default={})
-                    if isinstance(attrs_value, dict):
-                        return Ldap3Adapter.ResultConverter.normalize_attr_values(
-                            attrs_value,
-                        )
-                    return {}
+                # Python 3.13: model_dump() always returns dict - direct access
+                dumped = attrs.model_dump()
+                # u.mapper().get() with default={} guarantees dict[str, object] | None
+                attrs_value = u.mapper().get(dumped, "attributes", default={})
+                # Type narrowing: ensure dict before passing
+                if isinstance(attrs_value, dict):
+                    return Ldap3Adapter.ResultConverter.normalize_attr_values(
+                        attrs_value,
+                    )
+                return {}
 
-            # Check if attrs is Mapping directly
+            # Python 3.13: Use isinstance for Mapping type narrowing
             if isinstance(attrs, Mapping):
                 return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs)
             return {}
@@ -464,7 +489,7 @@ class Ldap3Adapter(s[bool]):
         def extract_attributes(
             parsed: p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | object,
         ) -> m.Ldif.LdifAttributes:
-            """Extract LDAP attributes as m.LdifAttributes.
+            """Extract LDAP attributes as m.Ldif.LdifAttributes.
 
             Business Rules:
                 - Extracts attributes from m.Ldap.Entry or protocol entries
@@ -489,8 +514,10 @@ class Ldap3Adapter(s[bool]):
             attrs_raw: object | None = None
             if isinstance(parsed, (m.Ldap.Entry, p.Ldap.Entry.EntryProtocol)):
                 attrs_raw = parsed.attributes
-            elif hasattr(parsed, "attributes"):
-                # Fallback for non-protocol entries with attributes
+            else:
+                # Fallback: try dynamic attribute access for unknown types
+                # Note: ldap3.Entry uses entry_attributes (Sequence[str]), not attributes
+                # So we need to use get_dynamic_attribute for compatibility
                 attrs_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed, "attributes"
                 )
@@ -504,7 +531,21 @@ class Ldap3Adapter(s[bool]):
                 return attrs_raw
 
             # Extract attributes dict and create new instance
-            attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
+            # Type narrowing: check if attrs_raw is compatible with extract_attrs_dict types
+            if isinstance(
+                attrs_raw,
+                (
+                    HasAttributesProperty,
+                    Mapping,
+                    HasItemsMethod,
+                    p.Ldap.Entry.LdifAttributesProtocol,
+                    m.Ldif.LdifAttributes,
+                    BaseModel,
+                ),
+            ):
+                attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
+            else:
+                attrs_dict = {}
             return m.Ldif.LdifAttributes.model_validate({"attributes": attrs_dict})
 
         @staticmethod
@@ -539,13 +580,13 @@ class Ldap3Adapter(s[bool]):
             metadata_raw: object | None = None
             if isinstance(parsed, p.Ldap.Entry.EntryProtocol):
                 metadata_raw = parsed.metadata
-            elif hasattr(parsed, "metadata"):
-                # Fallback for non-protocol entries with metadata
+            else:
+                # Fallback: try dynamic attribute access for unknown types
                 metadata_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed, "metadata"
                 )
-            else:
-                return None
+                if metadata_raw is None:
+                    return None
             if not metadata_raw:
                 return None
 
@@ -597,27 +638,25 @@ class Ldap3Adapter(s[bool]):
             if not metadata:
                 return None
 
-            # Convert to dict if needed
+            # Python 3.13: Use match-case for modern pattern matching
             metadata_dict: Mapping[str, object] | None = None
-            if isinstance(metadata, (dict, Mapping)):
-                metadata_dict = dict(metadata)
-            elif isinstance(metadata, BaseModel):
-                metadata_model: BaseModel = metadata
-                dumped = metadata_model.model_dump()
-                if isinstance(dumped, dict):
-                    metadata_dict = dumped
-            else:
-                return None
+            match metadata:
+                case dict() | Mapping():
+                    metadata_dict = dict(metadata)
+                case BaseModel():
+                    # model_dump() always returns dict - direct access
+                    metadata_dict = metadata.model_dump()
+                case _:
+                    return None
 
             if not metadata_dict:
                 return None
 
-            # Filter to ensure all values are valid types for QuirkMetadata
+            # Python 3.13: Filter with type narrowing - metadata_dict is Mapping[str, object]
             filtered: dict[str, str | int | float | bool | None] = {
                 k: v
                 for k, v in metadata_dict.items()
-                if isinstance(k, str)
-                and (isinstance(v, (str, int, float, bool)) or v is None)
+                if isinstance(k, str) and isinstance(v, (str, int, float, bool) | type(None))
             }
             return filtered or None
 
@@ -686,56 +725,33 @@ class Ldap3Adapter(s[bool]):
 
                 # Defensive conversion for invalid structures (e.g., from tests or manual construction)
                 # Extract DN, attributes, and metadata using helper methods
-                # Helper methods now accept object type for unknown entries
-                # Check EntryProtocol structurally to avoid overlap warning
-                if (
-                    hasattr(entry_raw, "dn")
-                    and hasattr(entry_raw, "attributes")
-                    and not isinstance(entry_raw, m.Ldap.Entry)
-                ):
-                    # EntryProtocol - extract and create Entry
-                    # Type narrowing: entry_raw has dn and attributes, so it's EntryProtocol-compatible
-                    # Use isinstance check for protocol compatibility
-                    # Protocols are structurally compatible - runtime check ensures compatibility
-                    if isinstance(entry_raw, p.Ldap.Entry.EntryProtocol):
-                        entry_for_extraction = entry_raw
-                    else:
-                        # Fallback: entry_raw is structurally compatible but not recognized as protocol
-                        # Use type assertion: entry_raw has dn and attributes, so it's EntryProtocol-compatible
-                        # Runtime check ensures structural compatibility
-                        has_dn = hasattr(entry_raw, "dn")
-                        has_attrs = hasattr(entry_raw, "attributes")
-                        if not (has_dn and has_attrs):
-                            entry_type = type(entry_raw)
-                            error_msg = (
-                                f"Entry must have dn and attributes, got {entry_type}"
-                            )
-                            raise ValueError(error_msg)
-                        entry_for_extraction = entry_raw
-                    dn_obj = Ldap3Adapter.ResultConverter.extract_dn(
-                        entry_for_extraction
+                # Use Protocol checks for type-safe access
+                entry_for_extraction: (
+                    p.Ldap.Entry.EntryProtocol | m.Ldap.Entry | None
+                ) = None
+                if isinstance(entry_raw, (m.Ldap.Entry, p.Ldap.Entry.EntryProtocol)):
+                    entry_for_extraction = entry_raw
+                elif isinstance(entry_raw, p.Ldap.Infrastructure.Ldap3EntryProtocol):
+                    # ldap3.Entry - convert to EntryProtocol-compatible structure
+                    # This requires extracting entry_dn and building attributes dict
+                    # For now, skip - ldap3 entries should be converted via ldap3_to_ldif_entry first
+                    entry_for_extraction = None
+                else:
+                    # Unknown type - cannot extract safely without Protocol
+                    entry_type = type(entry_raw)
+                    error_msg = (
+                        f"Entry must be EntryProtocol or m.Ldap.Entry, got {entry_type}"
                     )
-                    attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
-                        entry_for_extraction,
-                    )
-                    metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
-                        entry_for_extraction,
-                    )
-                    entry = m.Ldap.Entry(
-                        dn=dn_obj,
-                        attributes=attrs_obj,
-                        metadata=metadata_obj,
-                    )
-                    entries.append(entry)
+                    raise TypeError(error_msg)
+
+                if entry_for_extraction is None:
                     continue
-                # For unknown types, extract directly using helper methods
-                # Helper methods now accept object type for unknown entries
-                dn_obj = Ldap3Adapter.ResultConverter.extract_dn(entry_raw)
+                dn_obj = Ldap3Adapter.ResultConverter.extract_dn(entry_for_extraction)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
-                    entry_raw,
+                    entry_for_extraction,
                 )
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
-                    entry_raw,
+                    entry_for_extraction,
                 )
                 entry = m.Ldap.Entry(
                     dn=dn_obj,
@@ -1120,11 +1136,11 @@ class Ldap3Adapter(s[bool]):
             **kwargs: Additional service configuration parameters (delegated to FlextService).
 
         """
-        # Remove _auto_result from kwargs (handled by FlextService)
+        # Python 3.13: Modern comprehension with type narrowing
         service_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_auto_result" and isinstance(v, (str, float, bool, type(None)))
+            if k != "_auto_result" and isinstance(v, (str, float, bool) | type(None))
         }
         # Initialize parent with remaining kwargs
         # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
@@ -1251,27 +1267,26 @@ class Ldap3Adapter(s[bool]):
 
         Uses direct StrEnum value mapping for type-safe conversion.
         """
-        # Normalize to StrEnum if string provided
-        # Type narrowing: scope is str | SearchScope
-        # SearchScope is a StrEnum (subclass of str), so check for SearchScope first
-        if isinstance(scope, c.Ldap.SearchScope):
-            # Type narrowing: scope is SearchScope
-            scope_enum = scope
-        else:
-            # Type narrowing: scope is str (SearchScope is also str, but already handled above)
-            # Convert string to SearchScope enum
-            try:
-                # Normalize scope to uppercase for enum lookup
-                scope_str = (
-                    scope.upper() if isinstance(scope, str) else str(scope).upper()
-                )
-                scope_enum = c.Ldap.SearchScope(scope_str)
-            except ValueError:
-                return r[Literal["BASE", "LEVEL", "SUBTREE"]].fail(
-                    f"Invalid LDAP scope: {scope}",
-                )
+        # Python 3.13: Use match-case for modern pattern matching
+        match scope:
+            case c.Ldap.SearchScope():
+                scope_enum = scope
+            case str():
+                try:
+                    scope_enum = c.Ldap.SearchScope(scope.upper())
+                except ValueError:
+                    return r[Literal["BASE", "LEVEL", "SUBTREE"]].fail(
+                        f"Invalid LDAP scope: {scope}",
+                    )
+            case _:
+                try:
+                    scope_enum = c.Ldap.SearchScope(str(scope).upper())
+                except ValueError:
+                    return r[Literal["BASE", "LEVEL", "SUBTREE"]].fail(
+                        f"Invalid LDAP scope: {scope}",
+                    )
 
-        # Direct mapping using StrEnum values with proper type narrowing
+        # Python 3.13: Direct mapping using StrEnum values
         ldap3_scope_mapping: Mapping[
             c.Ldap.SearchScope,
             Literal[

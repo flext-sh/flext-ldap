@@ -69,7 +69,7 @@ class TestsFlextLdapConstants:
             "COMPLETED": c.Ldap.LdapCqrs.Status.COMPLETED,
             "FAILED": c.Ldap.LdapCqrs.Status.FAILED,
         }
-        tm.that(status_map[attr], expected)
+        tm.that(status_map[attr].value, eq=expected)
 
     def test_is_valid_status_with_enum(self) -> None:
         """Test is_valid_status with Status enum."""
@@ -101,12 +101,12 @@ class TestsFlextLdapConstants:
     def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
         # Map scope names to enum values
-        scope_map: dict[str, c.SearchScope] = {
-            "BASE": c.SearchScope.BASE,
-            "ONELEVEL": c.SearchScope.ONELEVEL,
-            "SUBTREE": c.SearchScope.SUBTREE,
+        scope_map: dict[str, c.Ldap.SearchScope] = {
+            "BASE": c.Ldap.SearchScope.BASE,
+            "ONELEVEL": c.Ldap.SearchScope.ONELEVEL,
+            "SUBTREE": c.Ldap.SearchScope.SUBTREE,
         }
-        tm.that(scope_map[attr].value, expected)
+        tm.that(scope_map[attr].value, eq=expected)
 
     # =========================================================================
     # PARAMETRIZED ENUM TESTS - OperationType
@@ -130,7 +130,7 @@ class TestsFlextLdapConstants:
             "DELETE": c.Ldap.OperationType.DELETE,
             "SEARCH": c.Ldap.OperationType.SEARCH,
         }
-        tm.that(op_type_map[attr].value, expected)
+        tm.that(op_type_map[attr].value, eq=expected)
 
     # =========================================================================
     # SCALAR CONSTANT TESTS
@@ -138,16 +138,16 @@ class TestsFlextLdapConstants:
 
     def test_core_name(self) -> None:
         """Test Core.NAME constant."""
-        tm.that(c.Core.NAME, eq="FLEXT_LDAP")
+        tm.that(c.Ldap.Core.NAME, eq="FLEXT_LDAP")
 
     def test_filters_all_entries(self) -> None:
         """Test Filters.ALL_ENTRIES_FILTER constant."""
-        tm.that(c.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
+        tm.that(c.Ldap.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
 
     def test_connection_defaults_port_is_valid(self) -> None:
         """Test ConnectionDefaults.PORT is valid port number."""
-        tm.that(c.ConnectionDefaults.PORT, is_=int, none=False)
-        tm.that(c.ConnectionDefaults.PORT, gte=1, lte=65535)
+        tm.that(c.Ldap.ConnectionDefaults.PORT, is_=int, none=False)
+        tm.that(c.Ldap.ConnectionDefaults.PORT, gte=1, lte=65535)
 
     # =========================================================================
     # VENDOR_STRING_MAX_TOKENS TEST

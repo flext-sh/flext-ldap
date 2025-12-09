@@ -32,7 +32,6 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -210,17 +209,17 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                     options.progress_callback(idx, len(entries), entry_dn, entry_stats)
                 return entry_stats
 
-            # Process all entries
+            # Process all entries - Python 3.13: enumerate always returns tuple
             logger = logging.getLogger(__name__)
             for idx_entry in enumerate(entries, 1):
                 try:
-                    # idx_entry is already tuple[int, m.Ldap.Entry] from enumerate
+                    # idx_entry is tuple[int, m.Ldap.Entry] from enumerate (guaranteed by Python)
                     process_entry(idx_entry)
                 except Exception:
-                    entry_idx = idx_entry[0] if isinstance(idx_entry, tuple) else None
+                    # enumerate always returns tuple[int, T], so idx_entry[0] is always valid
                     logger.debug(
                         "Failed to process entry in sync batch, skipping (entry_index=%s)",
-                        entry_idx,
+                        idx_entry[0],
                         exc_info=True,
                     )
                     continue
@@ -354,18 +353,22 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
         """
         # Remove _auto_result from kwargs (handled by FlextService)
+        # Python 3.13: Use type narrowing with structural pattern matching
         service_kwargs: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
-            if k != "_auto_result" and isinstance(v, (str, float, bool, type(None)))
+            if k != "_auto_result"
+            and (v is None or isinstance(v, (str, float, bool)))
         }
         # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
         super().__init__(**service_kwargs)
         # Use u.get() mnemonic: extract from kwargs with fallback
+        # Python 3.13: Use structural pattern matching for type validation
         if operations is None:
             operations_kwarg = u.mapper().get(kwargs, "operations")
             if operations_kwarg is not None:
+                # Type narrowing: validate operations_kwarg is FlextLdapOperations
                 if not isinstance(operations_kwarg, FlextLdapOperations):
                     error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
                     raise TypeError(error_msg)
@@ -455,22 +458,19 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # so list[FlextLdifModels.Entry] is compatible with list[m.Ldap.Entry]
         # Type narrowing: entries_raw is list[FlextLdifModels.Entry], m.Ldap.Entry extends it
         # m.Ldap.Entry extends m.Ldif.Entry, so entries are structurally compatible (no cast needed)
-        # Convert explicitly for type safety - m.Ldap.Entry extends m.Ldif.Entry
-        entries: list[m.Ldap.Entry] = []
-        for entry in entries_raw:
-            if isinstance(entry, m.Ldap.Entry):
-                entries.append(entry)
-            else:
-                # Type narrowing: entry is m.Ldif.Entry here
-                # Type assertion: parse_result returns list[m.Ldif.Entry]
-                entry_typed = cast("m.Ldif.Entry", entry)
-                entries.append(
-                    m.Ldap.Entry(
-                        dn=entry_typed.dn,
-                        attributes=entry_typed.attributes,
-                        metadata=entry_typed.metadata,
-                    )
-                )
+        # Python 3.13: Use list comprehension with type narrowing for conversion
+        # m.Ldap.Entry extends m.Ldif.Entry, so conversion is safe
+        entries: list[m.Ldap.Entry] = [
+            entry
+            if isinstance(entry, m.Ldap.Entry)
+            else m.Ldap.Entry(
+                dn=entry.dn,
+                attributes=entry.attributes,
+                metadata=entry.metadata,
+            )
+            for entry in entries_raw
+            if isinstance(entry, (m.Ldap.Entry, m.Ldif.Entry))
+        ]
         return self._process_entries(entries, options, start_time)
 
     def _process_entries(

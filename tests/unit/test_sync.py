@@ -127,7 +127,7 @@ class TestsFlextLdapSync:
         entries = [
             m.Ldap.Entry(
                 dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
-                attributes=m.LdifAttributes(attributes={}),
+                attributes=m.Ldif.LdifAttributes(attributes={}),
             ),
         ]
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(
@@ -145,7 +145,7 @@ class TestsFlextLdapSync:
         entries = [
             m.Ldap.Entry(
                 dn=m.Ldif.DistinguishedName(value="cn=user,dc=old,dc=com"),
-                attributes=m.LdifAttributes(attributes={}),
+                attributes=m.Ldif.LdifAttributes(attributes={}),
             ),
         ]
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(
@@ -162,7 +162,7 @@ class TestsFlextLdapSync:
         entries = [
             m.Ldap.Entry(
                 dn=m.Ldif.DistinguishedName(value="cn=user,dc=old,dc=com"),
-                attributes=m.LdifAttributes(attributes={}),
+                attributes=m.Ldif.LdifAttributes(attributes={}),
             ),
         ]
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(

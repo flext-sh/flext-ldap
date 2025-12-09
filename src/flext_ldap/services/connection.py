@@ -186,29 +186,19 @@ class FlextLdapConnection(s[bool]):
             message for troubleshooting.
 
         """
-
-        def attempt_connect() -> r[bool]:
-            return self._adapter.connect(connection_config)
-
-        # Type narrowing: retry accepts Callable[[], r[TResult] | TResult]
-        # attempt_connect returns r[bool] (FlextResult), retry expects r[TResult] | TResult
-        if auto_retry:
-            # Wrap attempt_connect - retry accepts r[TResult] | TResult directly
-            def wrapped_connect() -> r[bool]:
-                return attempt_connect()
-
-            retry_result = u.Reliability.retry[bool](
-                operation=wrapped_connect,
+        # Modern Python 3.13: Use ternary expression for concise retry logic
+        result: r[bool] = (
+            u.Reliability.retry[bool](
+                operation=lambda: self._adapter.connect(connection_config),
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,
             )
-            # retry returns r[TResult] | TResult, convert to r[bool]
-            if isinstance(retry_result, r):
-                result: r[bool] = retry_result
-            else:
-                result = r[bool].ok(retry_result)
-        else:
-            result = attempt_connect()
+            if auto_retry
+            else self._adapter.connect(connection_config)
+        )
+        # Type narrowing: retry returns r[TResult] | TResult, ensure r[bool]
+        if not isinstance(result, r):
+            result = r[bool].ok(result)
 
         if result.is_success:
             self._detect_server_type_optional()

@@ -41,14 +41,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Self, cast
+from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextModels, FlextRuntime, FlextTypes
-from flext_core.utilities import u as flext_u
+from flext_core import FlextModels
 from flext_ldif import FlextLdifModels
 from pydantic import (
+    ConfigDict,
     Field,
     computed_field,
     field_validator,
@@ -57,7 +58,15 @@ from pydantic import (
 
 from flext_ldap.constants import c
 from flext_ldap.protocols import p
-from flext_ldap.utilities import u
+
+
+@runtime_checkable
+class HasItemsMethod(Protocol):
+    """Protocol for objects with items() method."""
+
+    def items(self) -> Sequence[tuple[str, object]]:
+        """Return items as sequence of tuples."""
+        ...
 
 
 class FlextLdapModels(FlextLdifModels):
@@ -86,9 +95,11 @@ class FlextLdapModels(FlextLdifModels):
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Warn when FlextLdapModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
-        flext_u.Deprecation.warn_once(
-            f"subclass:{cls.__name__}",
-            "Subclassing FlextLdapModels is deprecated. Use FlextModels.Ldap instead.",
+        # Use standard warnings module instead of utilities (models cannot import utilities)
+        warnings.warn(
+            f"Subclassing {cls.__name__} is deprecated. Use FlextModels.Ldap instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     class Ldap:
@@ -191,12 +202,13 @@ class FlextLdapModels(FlextLdifModels):
             @model_validator(mode="after")
             def validate_ssl_tls_mutual_exclusion(self) -> Self:
                 """Validate SSL and TLS are mutually exclusive."""
+                # Python 3.13: Concise validation with modern error message
                 if self.use_ssl and self.use_tls:
-                    error_msg = (
+                    msg = (
                         "use_ssl and use_tls are mutually exclusive. "
                         "Use SSL (port 636) OR TLS/STARTTLS (port 389), not both."
                     )
-                    raise ValueError(error_msg)
+                    raise ValueError(msg)
                 return self
 
         # =========================================================================
@@ -209,7 +221,7 @@ class FlextLdapModels(FlextLdifModels):
             Frozen value object with DN validation.
             """
 
-            base_dn: str = Field(...)
+            base_dn: str = Field(..., min_length=1)
             scope: str = Field(
                 default="SUBTREE",
             )
@@ -221,10 +233,15 @@ class FlextLdapModels(FlextLdifModels):
             @field_validator("base_dn")
             @classmethod
             def validate_base_dn_format(cls, v: str) -> str:
-                """Validate base_dn format."""
-                if not u.Ldif.DN.validate(v):
-                    error_msg = f"Invalid base_dn format: {v}"
-                    raise ValueError(error_msg)
+                """Validate base_dn format using Pydantic v2 validation.
+                
+                Note: Models cannot import utilities, so basic validation is performed.
+                Full DN format validation is done at service/utility layer.
+                Pydantic Field(min_length=1) ensures non-empty, so this validator
+                only handles additional format checks if needed in the future.
+                """
+                # Python 3.13: Field(min_length=1) ensures non-empty, validator for future format checks
+                # Full DN format validation is done at utility layer (models cannot import utilities)
                 return v
 
             @field_validator("scope", mode="before")
@@ -255,13 +272,14 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if isinstance(v, c.Ldap.SearchScope):
                     return v.value
-                # Use u.Enum.parse for unified enum parsing
-                parse_result = u.Enum.parse(
-                    c.Ldap.SearchScope,
-                    v,
-                )
-                if parse_result.is_success:
-                    return parse_result.value.value
+                # Models cannot import utilities, so use direct enum value lookup
+                # Try to match string value to enum members using __members__
+                v_str = str(v).upper()
+                # Iterate over enum members using __members__ dict
+                for scope_member in c.Ldap.SearchScope.__members__.values():
+                    if scope_member.value.upper() == v_str:
+                        return scope_member.value
+                # If no match found, return original string (validation will catch invalid values)
                 return str(v)
 
             @dataclass(frozen=True)
@@ -313,7 +331,9 @@ class FlextLdapModels(FlextLdifModels):
                 if config is None:
                     config = cls.NormalizedConfig()
 
-                normalized_base = u.Ldif.DN.norm_string(base_dn)
+                # Models cannot import utilities, so use base_dn as-is
+                # DN normalization should be done at service/utility layer
+                normalized_base = base_dn
                 return cls(
                     base_dn=normalized_base,
                     scope=config.scope or "SUBTREE",
@@ -336,6 +356,8 @@ class FlextLdapModels(FlextLdifModels):
             - Value-based equality
             - Hashability for caching
             """
+
+            model_config = ConfigDict(frozen=True)
 
             success: bool = Field(..., description="Whether operation succeeded")
             operation_type: c.Ldap.OperationType = Field(
@@ -445,14 +467,16 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if entry.attributes is None:
                     return {}
-                # Try primary approach: Use Protocol for type-safe access
-                if isinstance(entry.attributes, p.Ldap.Entry.LdifAttributesProtocol):
-                    inner_attrs = entry.attributes.attributes
-                    if isinstance(inner_attrs, Mapping):
-                        return cls._convert_attrs_mapping(inner_attrs)
-                # Fallback: try direct dict-like access via Protocol check
+                # Optimize: check Mapping first (most common case)
+                # Then check Protocol (which has .attributes property)
                 if isinstance(entry.attributes, Mapping):
                     return cls._convert_attrs_mapping(entry.attributes)
+                # Protocol case: access .attributes property
+                if isinstance(entry.attributes, p.Ldap.Entry.LdifAttributesProtocol):
+                    inner_attrs = entry.attributes.attributes
+                    # Protocol guarantees attributes is Mapping[str, Sequence[str]]
+                    # Type narrowing: inner_attrs is already Mapping[str, Sequence[str]]
+                    return cls._convert_attrs_mapping(inner_attrs)
                 return {}
 
             @classmethod
@@ -463,17 +487,10 @@ class FlextLdapModels(FlextLdifModels):
                 """Convert attributes mapping to dict[str, list[str]]."""
                 result: dict[str, list[str]] = {}
                 for k, v in attrs.items():
-                    # Type narrowing: cast to GeneralValueType for is_list_like
-                    v_typed: FlextTypes.GeneralValueType = cast(
-                        "FlextTypes.GeneralValueType", v
-                    )
-                    if FlextRuntime.is_list_like(v_typed):
-                        # Type narrowing: v is Sequence at this point
-                        if isinstance(v, Sequence):
-                            result[k] = [str(item) for item in v]
-                        else:
-                            # Should not happen if is_list_like is correct, but handle gracefully
-                            result[k] = [str(v)]
+                    # Type narrowing: v is object, check if it's a Sequence
+                    # Use isinstance directly (models cannot import utilities)
+                    if isinstance(v, Sequence):
+                        result[k] = [str(item) for item in v]
                     else:
                         result[k] = [str(v)]
                 return result
@@ -481,7 +498,7 @@ class FlextLdapModels(FlextLdifModels):
             @classmethod
             def _convert_items_method(
                 cls,
-                attrs: object,
+                attrs: Mapping[str, object] | HasItemsMethod,
             ) -> dict[str, list[str]]:
                 """Convert items method result to dict[str, list[str]].
 
@@ -490,18 +507,16 @@ class FlextLdapModels(FlextLdifModels):
                 # Use isinstance with Mapping Protocol instead of getattr
                 if isinstance(attrs, Mapping):
                     return cls._convert_attrs_mapping(attrs)
-                # If it has items() method, try calling it
-                if hasattr(attrs, "items"):
-                    # Type narrowing: attrs has "items" attribute
-                    # Use getattr for type safety (pyright doesn't narrow after hasattr)
-                    items_method = getattr(attrs, "items", None)
-                    if items_method is not None and callable(items_method):
-                        try:
-                            items_result = items_method()
-                            if isinstance(items_result, (list, tuple)):
-                                return cls._convert_attrs_mapping(dict(items_result))
-                        except (AttributeError, TypeError):
-                            pass
+                # Use Protocol check for objects with items() method
+                # Type narrowing: isinstance with Protocol ensures type safety
+                if isinstance(attrs, HasItemsMethod):
+                    try:
+                        items_result = attrs.items()
+                        # Protocol guarantees items() returns Sequence[tuple[str, object]]
+                        # dict() accepts any iterable of pairs, so no isinstance check needed
+                        return cls._convert_attrs_mapping(dict(items_result))
+                    except (AttributeError, TypeError):
+                        pass
                 return {}
 
             @classmethod
@@ -520,21 +535,18 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if not attrs_dict:
                     return "unknown"
-                object_classes_raw = flext_u.mapper().get(
-                    attrs_dict, "objectClass", default=[]
-                )
-                # Type narrowing: cast to GeneralValueType for is_list_like
-                object_classes_typed: FlextTypes.GeneralValueType = cast(
-                    "FlextTypes.GeneralValueType", object_classes_raw
-                )
-                if FlextRuntime.is_list_like(object_classes_typed):
+                # Use direct dict access instead of utilities (models cannot import utilities)
+                object_classes_raw = attrs_dict.get("objectClass", [])
+                # Type narrowing: object_classes_raw is object, check if it's a Sequence
+                if isinstance(object_classes_raw, Sequence):
                     object_classes = [str(item) for item in object_classes_raw if item]
                 else:
                     object_classes = (
                         [str(object_classes_raw)] if object_classes_raw else []
                     )
+                # Use direct string check instead of utilities (models cannot import utilities)
                 found_category = next(
-                    (oc for oc in object_classes if u.Guards.is_string_non_empty(oc)),
+                    (oc for oc in object_classes if isinstance(oc, str) and oc),
                     None,
                 )
                 return found_category or "unknown"

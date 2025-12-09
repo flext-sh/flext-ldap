@@ -294,9 +294,12 @@ class TestFixtures:
         ldif = FlextLdif()
         result = ldif.parse(ldif_content, server_type="rfc")
         if result.is_success:
+            # Python 3.13: Type narrowing - unwrap() returns list[m.Ldif.Entry]
             entries = result.unwrap()
-            # Return list[m.Ldif.Entry] - entries are already m.Ldif.Entry
-            return list(entries)
+            # Type narrowing: entries is list[m.Ldif.Entry] from parse result
+            return [entry for entry in entries if isinstance(entry, m.Ldif.Entry)]
+        logger.warning(f"Failed to parse base LDIF: {result.error}")
+        return []
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
 
@@ -398,8 +401,11 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         logger.info("Test collection mode - skipping Docker initialization")
         return
 
-    # Get worker ID for isolation
-    worker_input = getattr(session.config, "workerinput", {})
+    # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
+    # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
+    worker_input: dict[str, object] = (
+        session.config.workerinput if hasattr(session.config, "workerinput") else {}
+    )
     worker_id = str(worker_input.get("workerid", "master"))
 
     # Use helper with correct workspace_root
@@ -510,8 +516,13 @@ def pytest_runtest_makereport(
     )
 
     if is_infrastructure_failure and not is_transient:
-        # Get worker ID for isolation
-        worker_input = getattr(item.session.config, "workerinput", {})
+        # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
+        # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
+        worker_input: dict[str, object] = (
+            item.session.config.workerinput
+            if hasattr(item.session.config, "workerinput")
+            else {}
+        )
         worker_id = str(worker_input.get("workerid", "master"))
 
         # Use helper with correct workspace_root
@@ -543,7 +554,10 @@ def worker_id(request: pytest.FixtureRequest) -> str:
             - "gw0", "gw1", ...: parallel workers from pytest-xdist
 
     """
-    worker_input = getattr(request.config, "workerinput", {})
+    # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
+    worker_input: dict[str, object] = (
+        request.config.workerinput if hasattr(request.config, "workerinput") else {}
+    )
     worker_id = worker_input.get("workerid", "master")
     # Type narrowing: worker_id is str from get() with default
     return str(worker_id)
@@ -1134,13 +1148,8 @@ def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFields
         }
         return default_group
 
-    # convert_group_json_to_entry returns dict[str, object]
-    entry_dict = LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0])
-    # Type narrowing: dict[str, object] is compatible with return type
-    if isinstance(entry_dict, dict):
-        return entry_dict
-    # Fallback: create empty dict if conversion failed
-    return {}
+    # convert_group_json_to_entry returns GenericFieldsDict
+    return LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0])
 
 
 # =============================================================================

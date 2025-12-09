@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, ParamSpec
 
-from flext_core import FlextLogger, FlextRuntime, r
+from flext_core import FlextLogger, r
 from ldap3 import Connection
 
 from flext_ldap.base import s
@@ -127,29 +127,20 @@ class FlextLdapServerDetector(s[str]):
             )
 
         root_dse_attrs = root_dse_result.unwrap()
-        # Extract values from rootDSE attributes
-        naming_contexts_raw = root_dse_attrs.get("namingContexts", [])
-        supported_controls_raw = root_dse_attrs.get("supportedControl", [])
-        supported_extensions_raw = root_dse_attrs.get("supportedExtension", [])
-        # Convert to list[str]
-        naming_contexts: list[str] = []
-        if naming_contexts_raw:
-            if FlextRuntime.is_list_like(naming_contexts_raw):
-                naming_contexts = [str(item) for item in naming_contexts_raw]
-            else:
-                naming_contexts = [str(naming_contexts_raw)]
-        supported_controls: list[str] = []
-        if supported_controls_raw:
-            if FlextRuntime.is_list_like(supported_controls_raw):
-                supported_controls = [str(item) for item in supported_controls_raw]
-            else:
-                supported_controls = [str(supported_controls_raw)]
-        supported_extensions: list[str] = []
-        if supported_extensions_raw:
-            if FlextRuntime.is_list_like(supported_extensions_raw):
-                supported_extensions = [str(item) for item in supported_extensions_raw]
-            else:
-                supported_extensions = [str(supported_extensions_raw)]
+        # Python 3.13: Use helper function for concise list conversion
+
+        def to_str_list(value: object) -> list[str]:
+            """Convert value to list[str] using modern Python 3.13 patterns."""
+            if not value:
+                return []
+            if isinstance(value, list):
+                return [str(item) for item in value]
+            return [str(value)]
+
+        # Extract and convert values from rootDSE attributes
+        naming_contexts = to_str_list(root_dse_attrs.get("namingContexts", []))
+        supported_controls = to_str_list(root_dse_attrs.get("supportedControl", []))
+        supported_extensions = to_str_list(root_dse_attrs.get("supportedExtension", []))
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
                 root_dse_attrs,
@@ -185,7 +176,7 @@ class FlextLdapServerDetector(s[str]):
 
         Architecture:
             - Uses ldap3 Connection.search() directly
-            - Uses FlextRuntime.is_list_like() for type-safe value handling
+            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
@@ -216,17 +207,12 @@ class FlextLdapServerDetector(s[str]):
         root_dse_entry = connection.entries[0]
         attrs_dict = root_dse_entry.entry_attributes_as_dict
 
-        # Filter None values and convert to list[str]
-        filtered_attrs = u.mapper().filter_dict(
-            attrs_dict,
-            lambda _k, v: v is not None,
-        )
-        attributes: dict[str, list[str]] = {}
-        for k, v in filtered_attrs.items():
-            if FlextRuntime.is_list_like(v):
-                attributes[k] = [str(item) for item in v]
-            else:
-                attributes[k] = [str(v)]
+        # Python 3.13: Filter None and convert to list[str] in one comprehension
+        attributes: dict[str, list[str]] = {
+            k: [str(item) for item in v] if isinstance(v, list) else [str(v)]
+            for k, v in attrs_dict.items()
+            if v is not None
+        }
 
         return r[dict[str, list[str]]].ok(attributes)
 
@@ -234,20 +220,18 @@ class FlextLdapServerDetector(s[str]):
     def _get_first_value(attrs: t.Ldap.Operation.AttributeDict, key: str) -> str | None:
         """Return the first attribute value for ``key`` when present.
 
-        Extract value from attributes dict.
+        Python 3.13: Use modern pattern matching for concise extraction.
         """
-        # Extract value from attributes dict
         values_raw = attrs.get(key)
-        values: list[str] | None = None
-        if values_raw is not None:
-            if FlextRuntime.is_list_like(values_raw):
-                values = [str(item) for item in values_raw]
-            else:
-                values = [str(values_raw)]
-        # Check if collection is empty
-        if values is None or not values:
+        if not values_raw:
             return None
-        return str(values[0])
+        # Python 3.13: Use isinstance for type narrowing (list vs scalar)
+        values = (
+            [str(item) for item in values_raw]
+            if isinstance(values_raw, list)
+            else [str(values_raw)]
+        )
+        return values[0] if values else None
 
     @staticmethod
     def _detect_from_attributes(
@@ -357,14 +341,11 @@ class FlextLdapServerDetector(s[str]):
         vendor_version: str | None,
     ) -> str | None:
         """Detect server type from vendor information."""
-        # DSL pattern: builder for filtering vendor parts
+        # Python 3.13: Use modern list comprehension with filter
         vendor_list = u.to_str_list([vendor_name, vendor_version])
-        # filter_truthy accepts list[object] | dict[str, object]
-        # Cast list[str] to list[object] for compatibility
-        vendor_list_object: list[object] = [str(item) for item in vendor_list]
-        vendor_parts_raw = u.Ldap.filter_truthy(vendor_list_object)
-        # filter_truthy returns list[object] | dict[str, object]
-        # Type narrowing: vendor_list_object is list[object], so result is list[object]
+        vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
+        # Type narrowing: filter_truthy returns list[object] | dict[str, object]
+        # isinstance needed to distinguish list from dict (union type)
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]
             if isinstance(vendor_parts_raw, list)
@@ -411,8 +392,7 @@ class FlextLdapServerDetector(s[str]):
         naming_contexts: list[str],
     ) -> str:
         """Detect server type from extensions and naming contexts."""
-        # DSL pattern: builder for string mapping with normalization and join
-        # map_str returns str when join is provided
+        # Python 3.13: map_str returns str | list[str] - use isinstance for type narrowing
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
         ext_str = ext_str_raw if isinstance(ext_str_raw, str) else " ".join(ext_str_raw)
         # DSL pattern: builder for normalization and join

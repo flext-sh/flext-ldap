@@ -92,27 +92,27 @@ class TestsFlextLdapUtilities:
 
     def test_norm_str_lowercase(self) -> None:
         """Test norm_str with lowercase."""
-        result = u.norm_str("TEST", case="lower")
+        result = u.Ldap.norm_str("TEST", case="lower")
         tm.that(result, eq="test")
 
     def test_norm_str_uppercase(self) -> None:
         """Test norm_str with uppercase."""
-        result = u.norm_str("test", case="upper")
+        result = u.Ldap.norm_str("test", case="upper")
         tm.that(result, eq="TEST")
 
     def test_norm_join(self) -> None:
         """Test norm_join with list."""
-        result = u.norm_join(["A", "B", "C"], case="lower")
+        result = u.Ldap.norm_join(["A", "B", "C"], case="lower")
         tm.that(result, eq="a b c")
 
     def test_filter_truthy(self) -> None:
         """Test filter_truthy removes falsy values."""
-        result = u.filter_truthy({"a": "value", "b": "", "c": None, "d": "value2"})
+        result = u.Ldap.filter_truthy({"a": "value", "b": "", "c": None, "d": "value2"})
         tm.that(result, keys=["a", "d"], lacks_keys=["b", "c"])
 
     def test_map_str(self) -> None:
         """Test map_str converts list values to strings."""
-        result = u.map_str(["a", "b", "c"], case="upper")
+        result = u.Ldap.map_str(["a", "b", "c"], case="upper")
         tm.that(result, eq=["A", "B", "C"])
 
     def test_find_callable_with_mapping(self) -> None:
@@ -122,7 +122,7 @@ class TestsFlextLdapUtilities:
             "handler2": lambda: False,
         }
         # find_callable returns key of first truthy callable result
-        result = u.find_callable(handlers)
+        result = u.Ldap.find_callable(handlers)
         tm.that(result, eq="handler1")
 
     def test_find_callable_not_found(self) -> None:
@@ -133,7 +133,7 @@ class TestsFlextLdapUtilities:
             "handler3": lambda: "",
         }
         # All handlers return falsy values
-        result = u.find_callable(handlers)
+        result = u.Ldap.find_callable(handlers)
         tm.that(result, none=True)
 
     def test_dn_str_with_string(self) -> None:

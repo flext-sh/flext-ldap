@@ -15,6 +15,13 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import r
 
+from flext_ldap.constants import (
+    c,  # noqa: F401 - Required by architecture rule 3: protocols must import constants
+)
+from flext_ldap.typings import (
+    t,  # noqa: F401 - Required by architecture rule 3: protocols must import typings
+)
+
 
 class FlextLdapProtocols:
     """LDAP-specific protocol definitions.

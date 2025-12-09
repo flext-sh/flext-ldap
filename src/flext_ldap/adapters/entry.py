@@ -19,7 +19,7 @@ Audit Implications:
 
 Architecture Notes:
     - Implements Adapter pattern between ldap3 and FlextLdif domains
-    - Uses FlextRuntime type guards for safe type narrowing (not isinstance)
+    - Python 3.13: Uses isinstance(..., Sequence) directly for type narrowing
     - Extends FlextService[bool] for health check capability
     - Inner class _ConversionHelpers follows SRP for value processing
 
@@ -32,7 +32,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 
-from flext_core import FlextRuntime, r
+from flext_core import r
 from flext_ldif import FlextLdif
 from ldap3 import Entry as Ldap3Entry
 from pydantic import PrivateAttr
@@ -40,6 +40,7 @@ from pydantic import PrivateAttr
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
@@ -113,7 +114,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 - List-like values are converted to list[str]
                 - Single values are wrapped in single-item list [str(value)]
                 - None values become empty list []
-                - Uses FlextRuntime.is_list_like() for type-safe handling
+                - Python 3.13: Uses isinstance(..., Sequence) for type-safe handling
 
             Audit Implications:
                 - All values normalized to string lists for consistency
@@ -121,7 +122,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 - Empty lists preserve attribute presence
 
             Architecture:
-                - Uses FlextRuntime.is_list_like() for type narrowing (not isinstance)
+                - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
                 - Returns Sequence[str] for flexible return type
                 - No network calls - pure data transformation
 
@@ -153,7 +154,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 - Used for conversion metadata generation
 
             Architecture:
-                - Uses FlextRuntime.is_list_like() and isinstance(tuple) checks
+                - Python 3.13: Uses isinstance(..., Sequence) and isinstance(tuple) checks
                 - Returns Sequence[str] for flexible return type
                 - No network calls - pure data transformation
 
@@ -195,29 +196,25 @@ class FlextLdapEntryAdapter(s[bool]):
         # Remove server_type and _auto_result from kwargs before passing to parent
         # Filter to only valid service kwargs (str | float | bool | None)
         # Exclude special parameters like _auto_result which are handled by FlextService
-        # Extract _auto_result separately if present and validate type
+        # Python 3.13: Extract and validate _auto_result with modern pattern
         auto_result_raw: object = kwargs.pop("_auto_result", None)
-        # Type narrowing: validate _auto_result is bool or None
         auto_result: bool | None = (
             auto_result_raw if isinstance(auto_result_raw, bool) else None
         )
+        # Python 3.13: Filter kwargs with modern comprehension
         kwargs_without_server_type: dict[str, str | float | bool | None] = {
             k: v
             for k, v in kwargs.items()
             if k not in ("server_type", "_auto_result")
-            and isinstance(v, (str, float, bool, type(None)))
+            and (v is None or isinstance(v, (str, float, bool)))
         }
         # Type narrowing: kwargs_without_server_type is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
         # Pass _auto_result explicitly if it was provided and is bool
-        # Use separate variable with explicit type narrowing for pyright
-        # Type narrowing: validate _auto_result is bool
-        auto_result_bool: bool | None = (
-            auto_result if isinstance(auto_result, bool) else None
-        )
-        if auto_result_bool is not None:
+        # auto_result is already bool | None from isinstance check above
+        if auto_result is not None:
             super().__init__(
-                _auto_result=auto_result_bool, **kwargs_without_server_type
+                _auto_result=auto_result, **kwargs_without_server_type
             )
             return
         # _auto_result is None or invalid type - pass without it
@@ -373,7 +370,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Business Rules:
             - DN changes are detected by comparing original_dn vs converted_dn
             - Attribute changes detected by comparing string representations
-            - Uses FlextRuntime.is_list_like() for type-safe value handling
+            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
             - Mutates conversion_metadata to record differences
             - Changes tracked for audit trail generation
 
@@ -385,7 +382,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Architecture:
             - Mutates conversion_metadata object (side effect)
-            - Uses FlextRuntime.is_list_like() for type narrowing
+            - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
             - Compares string representations for change detection
             - No network calls - pure metadata tracking
 
@@ -407,27 +404,21 @@ class FlextLdapEntryAdapter(s[bool]):
             original_values: t.Ldap.Operation.Ldap3EntryValue,
         ) -> str | None:
             """Check if attribute values changed during conversion."""
-            # Convert to list format for comparison
-            if FlextRuntime.is_list_like(original_values):
-                # Type narrowing: original_values is Sequence
-                # (is_list_like only returns True for Sequence)
-                # Type narrowing: is_list_like guarantees this is list-like (Sequence)
-                # Use isinstance check for type narrowing without assert
-                if isinstance(original_values, (list, tuple, set, frozenset, Sequence)):
-                    original_values_list = [str(v) for v in original_values]
-                else:
-                    # Should not happen if is_list_like is correct, but handle gracefully
-                    original_values_list = [str(original_values)]
-            else:
-                # Single value - wrap in list
-                original_values_list = u.Ldap.to_str_list_safe(original_values)
+            # Python 3.13: Use isinstance for type narrowing (TypeGuard limitation)
+            # is_list_like TypeGuard claims Sequence but only checks list
+            original_values_list = (
+                [str(v) for v in original_values]
+                if isinstance(original_values, Sequence)
+                else u.Ldap.to_str_list_safe(original_values)
+            )
             original_str = ", ".join(original_values_list)
-            # Extract from dict with default
+            # Python 3.13: Extract and convert with modern pattern
             attr_values_raw = converted_attrs_dict.get(attr_name, [])
-            if FlextRuntime.is_list_like(attr_values_raw):
-                attr_values_list = [str(v) for v in attr_values_raw]
-            else:
-                attr_values_list = [str(attr_values_raw)] if attr_values_raw else []
+            attr_values_list = (
+                [str(v) for v in attr_values_raw]
+                if isinstance(attr_values_raw, Sequence)
+                else ([str(attr_values_raw)] if attr_values_raw else [])
+            )
             # Filter truthy values
             filtered_str_values = [v for v in attr_values_list if v]
             converted_str = ", ".join(filtered_str_values) or ""
@@ -452,10 +443,9 @@ class FlextLdapEntryAdapter(s[bool]):
         filtered_dict: dict[str, str] = {
             k: v for k, v in result_dict.items() if v is not None
         }
-        # Use u.values() mnemonic: extract values from dict (if exists) or list()
-        changed_attrs = (
-            list(filtered_dict.values()) if isinstance(filtered_dict, dict) else []
-        )
+        # Use u.values() mnemonic: extract values from dict
+        # filtered_dict is already dict[str, str] - no isinstance check needed
+        changed_attrs = list(filtered_dict.values())
 
         if changed_attrs:
             conversion_metadata.attribute_changes = changed_attrs
@@ -549,12 +539,10 @@ class FlextLdapEntryAdapter(s[bool]):
                 ),
             )
         except (ValueError, TypeError, AttributeError) as e:
-            # Safe access for logging - use hasattr check before direct access
-            entry_dn_for_log = (
-                str(ldap3_entry.entry_dn)
-                if hasattr(ldap3_entry, "entry_dn")
-                else "unknown"
-            )
+            # Safe access for logging - use Protocol check for type-safe access
+            entry_dn_for_log = "unknown"
+            if isinstance(ldap3_entry, p.Ldap.Infrastructure.Ldap3EntryProtocol):
+                entry_dn_for_log = str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY.value,
@@ -576,7 +564,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Attribute values are already list[str] in LDIF format
             - Values are converted to strings (handles any value types)
             - Empty attributes dict returns failure (no attributes to convert)
-            - Uses FlextRuntime.is_list_like() for type-safe value handling
+            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
 
         Audit Implications:
             - Conversion failures are logged with entry DN and error details
@@ -585,7 +573,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Architecture:
             - Accesses entry.attributes.attributes dict directly
-            - Uses FlextRuntime.is_list_like() for type narrowing
+            - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
             - Returns FlextResult pattern - no exceptions raised
             - Returns dict[str, list[str]] format expected by ldap3
 
@@ -606,14 +594,12 @@ class FlextLdapEntryAdapter(s[bool]):
         if not attrs_dict:
             return r[t.Ldap.Attributes].fail("Entry has no attributes")
         try:
-            # Filter list-like attributes and convert to str_list
-            # Use FlextRuntime.is_list_like() for type-safe filtering
-            filtered_attrs: dict[str, list[str]] = {}
-            for k, v in attrs_dict.items():
-                if FlextRuntime.is_list_like(v):
-                    # Type narrowing: is_list_like() ensures v is Sequence-like
-                    # Iterate directly without cast
-                    filtered_attrs[k] = [str(item) for item in v]
+            # Python 3.13: Use isinstance directly for type-safe filtering
+            filtered_attrs: dict[str, list[str]] = {
+                k: [str(item) for item in v]
+                for k, v in attrs_dict.items()
+                if isinstance(v, Sequence)
+            }
             return r[t.Ldap.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above

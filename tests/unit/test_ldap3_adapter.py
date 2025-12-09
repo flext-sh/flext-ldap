@@ -43,9 +43,9 @@ class TestsFlextLdap3Adapter:
     """
 
     @classmethod
-    def _create_connection_config(cls) -> m.ConnectionConfig:
+    def _create_connection_config(cls) -> m.Ldap.ConnectionConfig:
         """Factory method for creating connection config instances."""
-        return m.ConnectionConfig(
+        return m.Ldap.ConnectionConfig(
             host="localhost",
             port=389,
             use_ssl=False,
@@ -66,7 +66,7 @@ class TestsFlextLdap3Adapter:
 
     def test_connection_manager_create_server_with_ssl(self) -> None:
         """Test ConnectionManager.create_server with SSL."""
-        config = m.ConnectionConfig(
+        config = m.Ldap.ConnectionConfig(
             host="localhost",
             port=636,
             use_ssl=True,
@@ -88,7 +88,7 @@ class TestsFlextLdap3Adapter:
 
     def test_connection_manager_create_server_with_tls(self) -> None:
         """Test ConnectionManager.create_server with TLS."""
-        config = m.ConnectionConfig(
+        config = m.Ldap.ConnectionConfig(
             host="localhost",
             port=389,
             use_ssl=False,
