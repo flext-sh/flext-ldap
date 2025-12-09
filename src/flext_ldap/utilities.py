@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from typing import cast
+from typing import TypeIs
 
-from flext_core import FlextRuntime, P
+from flext_core import FlextRuntime
 from flext_ldif import FlextLdifUtilities
 
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
 from flext_ldap.typings import t
 
 # ═══════════════════════════════════════════════════════════════════
@@ -145,6 +147,48 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             return FlextLdifUtilities.to_str_list(value, default=[])
+
+        # ═══════════════════════════════════════════════════════════════════
+        # VALIDATION HELPERS - Moved from constants.py (functions forbidden there)
+        # ═══════════════════════════════════════════════════════════════════
+
+        class Validation:
+            """LDAP validation utilities namespace.
+
+            This namespace contains validation helper methods. Functions are not allowed
+            in constants.py, so validation methods are placed here in utilities.py.
+            """
+
+            @staticmethod
+            def is_valid_status(
+                value: str | c.Ldap.LdapCqrs.Status | c.Ldap.LdapCqrs.StatusLiteral,
+            ) -> TypeIs[c.Ldap.LdapCqrs.StatusLiteral]:
+                """TypeIs narrowing - works in both if/else branches.
+
+                Since StatusLiteral is a subtype of str, after checking isinstance(
+                    value, Status
+                ),
+                the remaining type is str | StatusLiteral. We can check membership directly
+                without another isinstance check.
+
+                Args:
+                    value: Status value to validate (str, Status enum, or StatusLiteral)
+
+                Returns:
+                    TypeIs guard indicating if value is a valid StatusLiteral
+
+                """
+                valid_statuses = {
+                    c.Ldap.LdapCqrs.Status.PENDING,
+                    c.Ldap.LdapCqrs.Status.RUNNING,
+                    c.Ldap.LdapCqrs.Status.COMPLETED,
+                    c.Ldap.LdapCqrs.Status.FAILED,
+                }
+                if isinstance(value, c.Ldap.LdapCqrs.Status):
+                    return True
+                # Type narrowing: value is str | StatusLiteral after Status check
+                # Check membership directly - valid strings are StatusLiteral values
+                return value in valid_statuses
 
         # ═══════════════════════════════════════════════════════════════════
         # NORMALIZATION BUILDERS - Expose via static methods
@@ -288,9 +332,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[P, t.FlexibleValue]],
-            *args: P.args,
-            **kwargs: P.kwargs,
+            callables_dict: Mapping[str, Callable[..., t.FlexibleValue]],
+            *args: object,
+            **kwargs: object,
         ) -> str | None:
             """Find first callable that returns truthy value.
 
@@ -343,20 +387,17 @@ class FlextLdapUtilities(FlextLdifUtilities):
             def convert_value(_k: str, v: object) -> list[str]:
                 if v is None:
                     return []
-                if filter_list_like:
-                    # Cast object to GeneralValueType for is_list_like
-                    # FlextRuntime.is_list_like expects GeneralValueType
-                    v_typed_check: t.GeneralValueType = cast("t.GeneralValueType", v)
-                    if not FlextRuntime.is_list_like(v_typed_check):
-                        return [str(v)]
-                # Cast object to GeneralValueType for ensure
-                v_typed: t.GeneralValueType = cast("t.GeneralValueType", v)
-                # Convert to list[str] using type narrowing
-                if FlextRuntime.is_list_like(v_typed):
-                    if isinstance(v_typed, (list, tuple, set, frozenset)):
-                        return [str(item) for item in v_typed if item is not None]
-                    return [str(v_typed)]
-                return [str(v_typed)] if v_typed is not None else []
+                # Type narrowing: FlextRuntime.is_list_like accepts object
+                # Check if list-like for conversion (combine conditions to avoid nested if)
+                # v is object, is_list_like accepts object directly
+                is_list_like = FlextRuntime.is_list_like(v)
+                if filter_list_like and not is_list_like:
+                    return [str(v)]
+                # Type narrowing: check if list-like for conversion
+                if is_list_like and isinstance(v, (list, tuple, set, frozenset)):
+                    return [str(item) for item in v if item is not None]
+                # Not list-like or not a standard sequence - return as single string value
+                return [str(v)] if v is not None else []
 
             # attrs is dict[str, object] | dict[str, list[str]]
             # Both are compatible with dict[str, object] for processing
@@ -436,8 +477,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if dn is None:
                 return default
             # Check if object has the specified attribute
-            if hasattr(dn, "value"):
-                value = getattr(dn, "value", None)
+            # Use Protocol for type-safe access
+            if isinstance(dn, p.Ldap.Entry.DistinguishedNameProtocol):
+                value = dn.value
                 if isinstance(value, str):
                     return value
                 return str(value) if value is not None else default

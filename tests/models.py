@@ -33,8 +33,9 @@ class TestsFlextLdapModels(FlextLdapModels):
     - All production models come from FlextLdapModels (via inheritance)
     """
 
-    # Re-export FlextTestsDocker for Docker-specific utilities
-    Docker = FlextTestsDocker
+    # Docker namespace - real inheritance class
+    class Docker(FlextTestsDocker):
+        """Docker utilities - real inheritance from FlextTestsDocker."""
 
     # Test-specific models can be added here as nested classes
     # Example:
@@ -45,8 +46,4 @@ class TestsFlextLdapModels(FlextLdapModels):
 
 __all__ = [
     "TestsFlextLdapModels",
-    "m",
 ]
-
-# Alias for simplified usage
-m = TestsFlextLdapModels

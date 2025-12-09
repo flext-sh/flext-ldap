@@ -479,10 +479,10 @@ make validate   # Complete quality pipeline
 
 Once you have flext-ldap installed and working:
 
-1. **[Server Operations Guide](server-operations.md)** - Server-specific LDAP operations
+1. **[Server Operations Guide](guides/server-operations.md)** - Server-specific LDAP operations
 2. **[Architecture Guide](architecture.md)** - Universal LDAP interface architecture
 3. **[API Reference](api-reference.md)** - Complete API documentation
-4. **[Integration Guide](integration.md)** - FLEXT ecosystem and FlextLdif integration
+4. **[Integration Guide](guides/integration.md)** - FLEXT ecosystem and FlextLdif integration
 5. **[Examples](examples/)** - Working code examples
 6. **[Development Guide](development.md)** - Contributing to the project
 
@@ -511,6 +511,24 @@ Once you have flext-ldap installed and working:
 - Reinstall: `pip uninstall flext-ldap && pip install flext-ldap`
 
 For more troubleshooting help, see [Troubleshooting Guide](troubleshooting.md).
+
+## Related Documentation
+
+**Within Project**:
+- [Architecture Overview](architecture.md) - Clean Architecture and DDD implementation
+- [API Reference](api-reference.md) - Complete API documentation
+- [Configuration](configuration.md) - Settings and environment management
+- [Development](development.md) - Contributing and workflows
+- [Troubleshooting](troubleshooting.md) - Common issues and solutions
+- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+
+**Across Projects**:
+- [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/guides/railway-oriented-programming.md) - Railway-oriented programming patterns
+- [flext-ldif Integration](https://github.com/organization/flext/tree/main/flext-ldif/docs/guides/integration.md) - LDIF processing integration
+
+**External Resources**:
+- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
 ---
 

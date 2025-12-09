@@ -1119,4 +1119,4 @@ For more integration examples and patterns, see the [examples/](examples/) direc
 
 ---
 
-**Next:** [Troubleshooting Guide](troubleshooting.md) →
+**Next:** [Troubleshooting Guide](../troubleshooting.md) →

@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from flext_core import FlextConfig
@@ -218,8 +218,9 @@ class TestsFlextLdapApi:
         ) -> None:
             pass
 
-        # Cast to match expected type (ProgressCallbackUnion)
-        result = _is_multi_phase_callback(cast("Any", multi_phase_cb))
+        # Type narrowing: multi_phase_cb is callable with 5 parameters
+        # Use direct call - type guards handle type narrowing
+        result = _is_multi_phase_callback(multi_phase_cb)
         tm.that(result, eq=True)
 
     def test_is_single_phase_callback_with_4_params(self) -> None:
@@ -233,8 +234,9 @@ class TestsFlextLdapApi:
         ) -> None:
             pass
 
-        # Cast to match expected type (ProgressCallbackUnion)
-        result = _is_single_phase_callback(cast("Any", single_phase_cb))
+        # Type narrowing: single_phase_cb is callable with 4 parameters
+        # Use direct call - type guards handle type narrowing
+        result = _is_single_phase_callback(single_phase_cb)
         tm.that(result, eq=True)
 
     def test_is_multi_phase_callback_with_4_params_returns_false(self) -> None:
@@ -248,8 +250,9 @@ class TestsFlextLdapApi:
         ) -> None:
             pass
 
-        # Cast to match expected type (ProgressCallbackUnion)
-        result = _is_multi_phase_callback(cast("Any", single_phase_cb))
+        # Type narrowing: single_phase_cb is callable with 4 parameters (not 5)
+        # Use direct call - type guards handle type narrowing
+        result = _is_multi_phase_callback(single_phase_cb)
         tm.that(result, eq=False)
 
     def test_is_single_phase_callback_with_5_params_returns_false(self) -> None:
@@ -264,22 +267,29 @@ class TestsFlextLdapApi:
         ) -> None:
             pass
 
-        # Cast to match expected type (ProgressCallbackUnion)
-        result = _is_single_phase_callback(cast("Any", multi_phase_cb))
+        # Type narrowing: multi_phase_cb is callable with 5 parameters (not 4)
+        # Use direct call - type guards handle type narrowing
+        result = _is_single_phase_callback(multi_phase_cb)
         tm.that(result, eq=False)
 
     def test_is_multi_phase_callback_with_invalid_object(self) -> None:
         """Test _is_multi_phase_callback handles non-callable gracefully."""
         # Should not raise - returns False for non-callable
-        # Cast to match expected type (ProgressCallbackUnion)
-        result = _is_multi_phase_callback(cast("Any", "not a callable"))
+        # Type narrowing: string is not callable, so type guard returns False
+        # Use explicit type annotation to satisfy type checker
+        not_callable: object = "not a callable"
+        # Type guards accept object and return bool - pyright needs explicit ignore
+        result: bool = _is_multi_phase_callback(not_callable)
         tm.that(result, eq=False)
 
     def test_is_single_phase_callback_with_invalid_object(self) -> None:
         """Test _is_single_phase_callback handles non-callable gracefully."""
         # Should not raise - returns False for non-callable
-        # Cast to match expected type (ProgressCallbackUnion)
-        result = _is_single_phase_callback(cast("Any", 12345))
+        # Type narrowing: integer is not callable, so type guard returns False
+        # Use explicit type annotation to satisfy type checker
+        not_callable: object = 12345
+        # Type guards accept object and return bool - pyright needs explicit ignore
+        result: bool = _is_single_phase_callback(not_callable)
         tm.that(result, eq=False)
 
     # =========================================================================
@@ -290,7 +300,10 @@ class TestsFlextLdapApi:
         """Test connect method exists and accepts connection config."""
         api = self._create_api()
         assert hasattr(api, "connect")
-        assert callable(getattr(api, "connect", None))
+        # Use hasattr and direct attribute access instead of getattr
+        has_connect = hasattr(api, "connect")
+        connect_method = api.connect if has_connect else None
+        assert callable(connect_method)
 
     def test_disconnect_method_exists(self) -> None:
         """Test disconnect method exists."""

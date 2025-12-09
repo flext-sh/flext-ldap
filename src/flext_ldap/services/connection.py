@@ -26,8 +26,6 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextConfig, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
@@ -38,7 +36,6 @@ from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
 
@@ -140,16 +137,8 @@ class FlextLdapConnection(s[bool]):
         resolved_parser: FlextLdifParser = (
             parser if parser is not None else FlextLdif().parser
         )
-        # Create adapter directly
-        # Pass parser as part of kwargs (Ldap3Adapter.__init__ extracts it from kwargs)
-        # Use cast to satisfy type checker - parser is extracted and validated in Ldap3Adapter.__init__
-        _ = resolved_parser  # Used in adapter creation
-        # Cast parser to GeneralValueType for dict compatibility
-        parser_typed: t.GeneralValueType = cast("t.GeneralValueType", resolved_parser)
-        kwargs_with_parser: dict[str, t.GeneralValueType] = {
-            "parser": parser_typed,
-        }
-        self._adapter = Ldap3Adapter(**kwargs_with_parser)
+        # Create adapter directly with parser as explicit parameter
+        self._adapter = Ldap3Adapter(parser=resolved_parser)
 
     def connect(
         self,
@@ -202,21 +191,29 @@ class FlextLdapConnection(s[bool]):
             return self._adapter.connect(connection_config)
 
         # Type narrowing: retry accepts Callable[[], r[TResult] | TResult]
-        # attempt_connect returns r[bool], which matches r[TResult] when TResult=bool
-        # The type checker sees Callable[[], r[bool]] which is compatible with Callable[[], r[TResult]]
-        result: r[bool] = (
-            u.Reliability.retry(
-                operation=attempt_connect,
+        # attempt_connect returns r[bool] (FlextResult), retry expects r[TResult] | TResult
+        if auto_retry:
+            # Wrap attempt_connect - retry accepts r[TResult] | TResult directly
+            def wrapped_connect() -> r[bool]:
+                return attempt_connect()
+
+            retry_result = u.Reliability.retry[bool](
+                operation=wrapped_connect,
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,
             )
-            if auto_retry
-            else attempt_connect()
-        )
+            # retry returns r[TResult] | TResult, convert to r[bool]
+            if isinstance(retry_result, r):
+                result: r[bool] = retry_result
+            else:
+                result = r[bool].ok(retry_result)
+        else:
+            result = attempt_connect()
 
         if result.is_success:
             self._detect_server_type_optional()
             return r[bool].ok(True)
+        # Type narrowing: result is r[bool] at this point
         return result
 
     def disconnect(self) -> None:
@@ -323,13 +320,13 @@ class FlextLdapConnection(s[bool]):
         if detection_result.is_success:
             self.logger.info(
                 "Server type detected automatically",
-                operation=c.LdapOperationNames.CONNECT,
+                operation=c.Ldap.LdapOperationNames.CONNECT,
                 detected_server_type=detection_result.unwrap(),
             )
         else:
             self.logger.debug(
                 "Server type detection failed (non-critical)",
-                operation=c.LdapOperationNames.CONNECT,
+                operation=c.Ldap.LdapOperationNames.CONNECT,
                 error=str(detection_result.error) if detection_result.error else "",
             )
 
@@ -344,7 +341,7 @@ class FlextLdapConnection(s[bool]):
             - Implements FlextService abstract method for service orchestration
             - Health is determined solely by ``is_connected`` property
             - Does not attempt reconnection or network round-trip
-            - Error message uses ``c.ErrorStrings.NOT_CONNECTED``
+            - Error message uses ``c.Ldap.ErrorStrings.NOT_CONNECTED``
               for consistent error handling across the ecosystem
             - ``_kwargs`` absorbs extra arguments for interface compatibility
 
@@ -365,4 +362,4 @@ class FlextLdapConnection(s[bool]):
         # Create results
         if self.is_connected:
             return r[bool].ok(True)
-        return r[bool].fail(str(c.ErrorStrings.NOT_CONNECTED))
+        return r[bool].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))

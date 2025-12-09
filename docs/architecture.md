@@ -84,3 +84,21 @@ callers replace services or adapters for testing and alternative runtimes.
   exceptions in the main control flow.
 - **Adapter isolation** ensures protocol quirks and conversions stay localized to
   the adapter layer.
+
+## Related Documentation
+
+**Within Project**:
+- [Getting Started](getting-started.md) - Installation and basic usage
+- [API Reference](api-reference.md) - Complete API documentation
+- [Configuration](configuration.md) - Settings and environment management
+- [Development](development.md) - Contributing and workflows
+- [Troubleshooting](troubleshooting.md) - Common issues and solutions
+- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+
+**Across Projects**:
+- [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/architecture/overview.md) - Clean architecture and CQRS patterns
+- [flext-ldif Architecture](https://github.com/organization/flext/tree/main/flext-ldif/docs/architecture.md) - LDIF processing architecture
+
+**External Resources**:
+- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)

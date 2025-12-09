@@ -9,7 +9,7 @@ and maintain consistency.
 Business Rules:
     - ConnectionConfig enforces SSL/TLS mutual exclusion
       (cannot use both simultaneously)
-    - SearchOptions validates base_dn format via FlextLdifUtilities.DN.validate()
+    - SearchOptions validates base_dn format via u.Ldif.DN.validate()
     - SearchOptions.normalized() factory uses DN.norm_string() for consistency
     - SyncStats.success_rate computed as (added + skipped) / total
       (skipped = already exists)
@@ -41,11 +41,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, cast
 
-from flext_core import FlextModels, FlextRuntime
+from flext_core import FlextModels, FlextRuntime, FlextTypes
 from flext_core.utilities import u as flext_u
 from flext_ldif import FlextLdifModels
 from pydantic import (
@@ -56,6 +56,7 @@ from pydantic import (
 )
 
 from flext_ldap.constants import c
+from flext_ldap.protocols import p
 from flext_ldap.utilities import u
 
 
@@ -90,7 +91,7 @@ class FlextLdapModels(FlextLdifModels):
             "Subclassing FlextLdapModels is deprecated. Use FlextModels.Ldap instead.",
         )
 
-    class Ldap:  # type: ignore[misc]
+    class Ldap:
         """LDAP-specific protocol namespace.
 
         Type Checker Note: Basedpyright reports incompatible variable override
@@ -283,7 +284,7 @@ class FlextLdapModels(FlextLdifModels):
                 """Create SearchOptions with normalized base_dn using DN.norm_string().
 
                 Business Rules:
-                    - Base DN is normalized using FlextLdifUtilities.DN.norm_string()
+                    - Base DN is normalized using u.Ldif.DN.norm_string()
                     - Default scope is "SUBTREE" if not provided
                     - Default filter is ALL_ENTRIES_FILTER if not provided
                     - Default size_limit and time_limit are 0 (unlimited)
@@ -295,7 +296,7 @@ class FlextLdapModels(FlextLdifModels):
                     - Factory method provides type-safe SearchOptions creation
 
                 Architecture:
-                    - Uses FlextLdifUtilities.DN.norm_string() for DN normalization
+                    - Uses u.Ldif.DN.norm_string() for DN normalization
                     - Returns validated SearchOptions instance
                     - No network calls - pure factory method
 
@@ -444,14 +445,14 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if entry.attributes is None:
                     return {}
-                # Try primary approach: LdifAttributes-like object with .attributes dict
-                if hasattr(entry.attributes, "attributes"):
-                    inner_attrs = getattr(entry.attributes, "attributes", None)
+                # Try primary approach: Use Protocol for type-safe access
+                if isinstance(entry.attributes, p.Ldap.Entry.LdifAttributesProtocol):
+                    inner_attrs = entry.attributes.attributes
                     if isinstance(inner_attrs, Mapping):
                         return cls._convert_attrs_mapping(inner_attrs)
-                # Fallback: try direct dict-like access
-                if hasattr(entry.attributes, "items"):
-                    return cls._convert_items_method(entry.attributes)
+                # Fallback: try direct dict-like access via Protocol check
+                if isinstance(entry.attributes, Mapping):
+                    return cls._convert_attrs_mapping(entry.attributes)
                 return {}
 
             @classmethod
@@ -462,8 +463,17 @@ class FlextLdapModels(FlextLdifModels):
                 """Convert attributes mapping to dict[str, list[str]]."""
                 result: dict[str, list[str]] = {}
                 for k, v in attrs.items():
-                    if FlextRuntime.is_list_like(v):
-                        result[k] = [str(item) for item in v]
+                    # Type narrowing: cast to GeneralValueType for is_list_like
+                    v_typed: FlextTypes.GeneralValueType = cast(
+                        "FlextTypes.GeneralValueType", v
+                    )
+                    if FlextRuntime.is_list_like(v_typed):
+                        # Type narrowing: v is Sequence at this point
+                        if isinstance(v, Sequence):
+                            result[k] = [str(item) for item in v]
+                        else:
+                            # Should not happen if is_list_like is correct, but handle gracefully
+                            result[k] = [str(v)]
                     else:
                         result[k] = [str(v)]
                 return result
@@ -473,15 +483,25 @@ class FlextLdapModels(FlextLdifModels):
                 cls,
                 attrs: object,
             ) -> dict[str, list[str]]:
-                """Convert items method result to dict[str, list[str]]."""
-                try:
+                """Convert items method result to dict[str, list[str]].
+
+                Uses Protocol check to ensure type safety before accessing items.
+                """
+                # Use isinstance with Mapping Protocol instead of getattr
+                if isinstance(attrs, Mapping):
+                    return cls._convert_attrs_mapping(attrs)
+                # If it has items() method, try calling it
+                if hasattr(attrs, "items"):
+                    # Type narrowing: attrs has "items" attribute
+                    # Use getattr for type safety (pyright doesn't narrow after hasattr)
                     items_method = getattr(attrs, "items", None)
                     if items_method is not None and callable(items_method):
-                        items_result = items_method()
-                        if isinstance(items_result, (list, tuple)):
-                            return cls._convert_attrs_mapping(dict(items_result))
-                except (AttributeError, TypeError):
-                    pass
+                        try:
+                            items_result = items_method()
+                            if isinstance(items_result, (list, tuple)):
+                                return cls._convert_attrs_mapping(dict(items_result))
+                        except (AttributeError, TypeError):
+                            pass
                 return {}
 
             @classmethod
@@ -500,15 +520,21 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if not attrs_dict:
                     return "unknown"
-                object_classes_raw = attrs_dict.get("objectClass", [])
-                if FlextRuntime.is_list_like(object_classes_raw):
+                object_classes_raw = flext_u.mapper().get(
+                    attrs_dict, "objectClass", default=[]
+                )
+                # Type narrowing: cast to GeneralValueType for is_list_like
+                object_classes_typed: FlextTypes.GeneralValueType = cast(
+                    "FlextTypes.GeneralValueType", object_classes_raw
+                )
+                if FlextRuntime.is_list_like(object_classes_typed):
                     object_classes = [str(item) for item in object_classes_raw if item]
                 else:
                     object_classes = (
                         [str(object_classes_raw)] if object_classes_raw else []
                     )
                 found_category = next(
-                    (oc for oc in object_classes if oc and oc.strip()),
+                    (oc for oc in object_classes if u.Guards.is_string_non_empty(oc)),
                     None,
                 )
                 return found_category or "unknown"
@@ -795,6 +821,8 @@ class FlextLdapModels(FlextLdifModels):
             """
 
 
+# Runtime alias for basic class (objetos nested sem aliases redundantes)
+# Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
 m = FlextLdapModels
 
 __all__ = ["FlextLdapModels", "m"]

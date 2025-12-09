@@ -773,4 +773,4 @@ For more development resources:
 
 ---
 
-**Next:** [Integration Guide](integration.md) →
+**Next:** [Integration Guide](guides/integration.md) →

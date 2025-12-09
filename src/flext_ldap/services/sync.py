@@ -318,7 +318,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                     )
                     # Create new Entry with new DN - Entry validates DN automatically
                     return m.Ldap.Entry(
-                        dn=m.DistinguishedName(value=new_dn_value),
+                        dn=m.Ldif.DistinguishedName(value=new_dn_value),
                         attributes=entry.attributes,
                     )
                 return entry
@@ -328,7 +328,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
     def __init__(
         self,
         operations: FlextLdapOperations | None = None,
-        **kwargs: object,
+        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize the sync service with a required operations instance.
 
@@ -353,10 +353,18 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             TypeError: If operations is None or not FlextLdapOperations.
 
         """
-        super().__init__(**kwargs)
+        # Remove _auto_result from kwargs (handled by FlextService)
+        service_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if k != "_auto_result" and isinstance(v, (str, float, bool, type(None)))
+        }
+        # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
+        # which matches FlextService.__init__ signature
+        super().__init__(**service_kwargs)
         # Use u.get() mnemonic: extract from kwargs with fallback
         if operations is None:
-            operations_kwarg = kwargs.get("operations")
+            operations_kwarg = u.mapper().get(kwargs, "operations")
             if operations_kwarg is not None:
                 if not isinstance(operations_kwarg, FlextLdapOperations):
                     error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
@@ -446,9 +454,23 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
         # so list[FlextLdifModels.Entry] is compatible with list[m.Ldap.Entry]
         # Type narrowing: entries_raw is list[FlextLdifModels.Entry], m.Ldap.Entry extends it
-        entries: list[m.Ldap.Entry] = [
-            cast("m.Ldap.Entry", entry) for entry in entries_raw
-        ]
+        # m.Ldap.Entry extends m.Ldif.Entry, so entries are structurally compatible (no cast needed)
+        # Convert explicitly for type safety - m.Ldap.Entry extends m.Ldif.Entry
+        entries: list[m.Ldap.Entry] = []
+        for entry in entries_raw:
+            if isinstance(entry, m.Ldap.Entry):
+                entries.append(entry)
+            else:
+                # Type narrowing: entry is m.Ldif.Entry here
+                # Type assertion: parse_result returns list[m.Ldif.Entry]
+                entry_typed = cast("m.Ldif.Entry", entry)
+                entries.append(
+                    m.Ldap.Entry(
+                        dn=entry_typed.dn,
+                        attributes=entry_typed.attributes,
+                        metadata=entry_typed.metadata,
+                    )
+                )
         return self._process_entries(entries, options, start_time)
 
     def _process_entries(

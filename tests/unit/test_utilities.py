@@ -138,15 +138,15 @@ class TestsFlextLdapUtilities:
 
     def test_dn_str_with_string(self) -> None:
         """Test dn_str with string DN."""
-        result = u.dn_str("cn=test,dc=example,dc=com")
+        result = u.Ldap.dn_str("cn=test,dc=example,dc=com")
         tm.that(result, eq="cn=test,dc=example,dc=com")
 
     def test_dn_str_with_none(self) -> None:
         """Test dn_str with None."""
-        result = u.dn_str(None)
+        result = u.Ldap.dn_str(None)
         tm.that(result, eq="unknown")
 
     def test_dn_str_with_custom_default(self) -> None:
         """Test dn_str with custom default."""
-        result = u.dn_str(None, default="default")
+        result = u.Ldap.dn_str(None, default="default")
         tm.that(result, eq="default")

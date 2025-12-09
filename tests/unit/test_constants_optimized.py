@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests import c
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 
@@ -53,25 +53,37 @@ class TestsFlextLdapConstants:
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
-        _get_ldap_cqrs_status_values.__func__(),  # Call factory
+        [
+            ("PENDING", "pending"),
+            ("RUNNING", "running"),
+            ("COMPLETED", "completed"),
+            ("FAILED", "failed"),
+        ],
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values in single parametrized method."""
-        tm.that(getattr(c.LdapCqrs.Status, eq=attr), expected)
+        # Map attribute names to enum values
+        status_map: dict[str, c.Ldap.LdapCqrs.Status] = {
+            "PENDING": c.Ldap.LdapCqrs.Status.PENDING,
+            "RUNNING": c.Ldap.LdapCqrs.Status.RUNNING,
+            "COMPLETED": c.Ldap.LdapCqrs.Status.COMPLETED,
+            "FAILED": c.Ldap.LdapCqrs.Status.FAILED,
+        }
+        tm.that(status_map[attr], expected)
 
     def test_is_valid_status_with_enum(self) -> None:
         """Test is_valid_status with Status enum."""
-        result = c.LdapValidation.is_valid_status(c.LdapCqrs.Status.PENDING)
+        result = u.Ldap.Validation.is_valid_status(c.Ldap.LdapCqrs.Status.PENDING)
         tm.that(result, eq=True)
 
     def test_is_valid_status_with_string(self) -> None:
         """Test is_valid_status with string literal."""
-        result = c.LdapValidation.is_valid_status("pending")
+        result = u.Ldap.Validation.is_valid_status("pending")
         tm.that(result, eq=True)
 
     def test_is_valid_status_invalid(self) -> None:
         """Test is_valid_status with invalid value."""
-        result = c.LdapValidation.is_valid_status("invalid")
+        result = u.Ldap.Validation.is_valid_status("invalid")
         tm.that(result, eq=False)
 
     # =========================================================================
@@ -88,7 +100,13 @@ class TestsFlextLdapConstants:
     )
     def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        tm.that(getattr(c.SearchScope, eq=attr).value, expected)
+        # Map scope names to enum values
+        scope_map: dict[str, c.SearchScope] = {
+            "BASE": c.SearchScope.BASE,
+            "ONELEVEL": c.SearchScope.ONELEVEL,
+            "SUBTREE": c.SearchScope.SUBTREE,
+        }
+        tm.that(scope_map[attr].value, expected)
 
     # =========================================================================
     # PARAMETRIZED ENUM TESTS - OperationType
@@ -105,7 +123,14 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_enum_values(self, attr: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        tm.that(getattr(c.OperationType, eq=attr).value, expected)
+        # Map operation type names to enum values
+        op_type_map: dict[str, c.Ldap.OperationType] = {
+            "ADD": c.Ldap.OperationType.ADD,
+            "MODIFY": c.Ldap.OperationType.MODIFY,
+            "DELETE": c.Ldap.OperationType.DELETE,
+            "SEARCH": c.Ldap.OperationType.SEARCH,
+        }
+        tm.that(op_type_map[attr].value, expected)
 
     # =========================================================================
     # SCALAR CONSTANT TESTS
@@ -130,8 +155,8 @@ class TestsFlextLdapConstants:
 
     def test_vendor_string_max_tokens(self) -> None:
         """Test newly added VENDOR_STRING_MAX_TOKENS constant."""
-        tm.that(c.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
-        tm.that(c.VENDOR_STRING_MAX_TOKENS, eq=2)
+        tm.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
+        tm.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, eq=2)
 
 
 # ============================================================================

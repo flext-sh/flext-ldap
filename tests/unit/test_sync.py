@@ -23,8 +23,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 import pytest
 from flext_ldif import FlextLdif
 from flext_tests import tm
@@ -71,18 +69,17 @@ class TestsFlextLdapSync:
         tm.that(sync_service, is_=FlextLdapSyncService, none=False)
 
     def test_sync_service_initialization_with_datetime_generator(self) -> None:
-        """Test sync service initialization with custom datetime generator."""
+        """Test sync service initialization with datetime generator."""
         operations = self._create_operations()
 
-        def custom_datetime() -> datetime:
-            return datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-        sync_service = FlextLdapSyncService(
-            operations=operations,
-            generate_datetime_utc=custom_datetime,
-        )
+        # Note: generate_datetime_utc is not configurable via __init__
+        # It always uses u.Generators.generate_datetime_utc
+        # This test verifies the service initializes correctly
+        sync_service = FlextLdapSyncService(operations=operations)
         tm.that(sync_service, none=False)
         tm.that(sync_service, is_=FlextLdapSyncService, none=False)
+        # Verify datetime generator is set (uses default from u.Generators)
+        tm.that(hasattr(sync_service, "_generate_datetime_utc"), eq=True)
 
     def test_execute_returns_empty_stats(self) -> None:
         """Test execute() returns empty sync stats for health check."""

@@ -25,7 +25,7 @@ import types
 from collections.abc import Callable, Generator
 from pathlib import Path
 from threading import Lock
-from typing import TextIO, cast
+from typing import TextIO
 
 import pytest
 from flext_core import FlextLogger, r
@@ -221,7 +221,7 @@ class TestFixtures:
             return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> r[GenericFieldsDict]:
+    def load_docker_config() -> r[dict[str, object]]:
         """Load Docker configuration for test container.
 
         Returns:
@@ -231,7 +231,7 @@ class TestFixtures:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[GenericFieldsDict].fail(
+                return r[dict[str, object]].fail(
                     "Docker config file not found",
                 )
 
@@ -239,13 +239,14 @@ class TestFixtures:
                 config: object = json.load(f)
 
             if not isinstance(config, dict):
-                return r[GenericFieldsDict].fail(
+                return r[dict[str, object]].fail(
                     f"Expected dict in docker_config.json, got {type(config)}",
                 )
 
-            return r[GenericFieldsDict].ok(cast("GenericFieldsDict", config))
+            # Type narrowing: config is dict
+            return r[dict[str, object]].ok(config)
         except (OSError, json.JSONDecodeError) as e:
-            return r[GenericFieldsDict].fail(
+            return r[dict[str, object]].fail(
                 f"Failed to load docker config: {e}",
             )
 
@@ -277,7 +278,7 @@ class TestFixtures:
         return ""
 
     @staticmethod
-    def load_base_ldif_entries() -> list[m.Entry]:
+    def load_base_ldif_entries() -> list[m.Ldif.Entry]:
         """Load and parse base LDIF structure to Entry models.
 
         Returns:
@@ -294,14 +295,13 @@ class TestFixtures:
         result = ldif.parse(ldif_content, server_type="rfc")
         if result.is_success:
             entries = result.unwrap()
-            # Cast to list[m.Entry] - m.Entry is the public API
-            # Structurally compatible, but strict covariance/invariance requires cast
-            return cast("list[m.Entry]", list(entries))
+            # Return list[m.Ldif.Entry] - entries are already m.Ldif.Entry
+            return list(entries)
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
 
     @staticmethod
-    def convert_user_json_to_entry(user_data: GenericFieldsDict) -> dict[str, object]:
+    def convert_user_json_to_entry(user_data: GenericFieldsDict) -> GenericFieldsDict:
         """Convert user JSON data to Entry-compatible format."""
         # Map JSON fields to LDAP attributes
         object_classes = user_data.get("object_classes", [])
@@ -333,15 +333,15 @@ class TestFixtures:
         if "organizational_unit" in user_data:
             attributes["ou"] = [str(user_data.get("organizational_unit", ""))]
 
-        # Return dict - cast to GenericFieldsDict if needed by callers
-        result: dict[str, object] = {
+        # Return GenericFieldsDict-compatible dict
+        result: GenericFieldsDict = {
             "dn": str(user_data.get("dn", "")),
             "attributes": attributes,
         }
         return result
 
     @staticmethod
-    def convert_group_json_to_entry(group_data: GenericFieldsDict) -> dict[str, object]:
+    def convert_group_json_to_entry(group_data: GenericFieldsDict) -> GenericFieldsDict:
         """Convert group JSON data to Entry-compatible format."""
         object_classes = group_data.get("object_classes", [])
         if not isinstance(object_classes, list):
@@ -362,8 +362,8 @@ class TestFixtures:
             else:
                 attributes["member"] = [str(member_dns)]
 
-        # Return dict - cast to GenericFieldsDict if needed by callers
-        result: dict[str, object] = {
+        # Return GenericFieldsDict-compatible dict
+        result: GenericFieldsDict = {
             "dn": str(group_data.get("dn", "")),
             "attributes": attributes,
         }
@@ -544,7 +544,9 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
     """
     worker_input = getattr(request.config, "workerinput", {})
-    return cast("str", worker_input.get("workerid", "master"))
+    worker_id = worker_input.get("workerid", "master")
+    # Type narrowing: worker_id is str from get() with default
+    return str(worker_id)
 
 
 @pytest.fixture(scope="session")
@@ -858,13 +860,13 @@ def ldap_parser() -> FlextLdifParser:
 
 
 @pytest.fixture
-def sample_connection_config() -> m.ConnectionConfig:
+def sample_connection_config() -> m.Ldap.ConnectionConfig:
     """Create simple connection config for unit tests (no Docker dependency).
 
     This is a lightweight fixture for unit tests without live LDAP connection.
     For integration tests with real LDAP server, use the 'connection_config' fixture instead.
     """
-    return m.ConnectionConfig(
+    return m.Ldap.ConnectionConfig(
         host="localhost",
         port=3390,
         use_ssl=False,
@@ -894,7 +896,7 @@ def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapConfig:
 @pytest.fixture(scope="module")
 def connection_config(
     ldap_container: LdapContainerDict,
-) -> m.ConnectionConfig:
+) -> m.Ldap.ConnectionConfig:
     """Create connection configuration for testing.
 
     Module-scoped to match ldap_client fixture scope for performance.
@@ -902,7 +904,7 @@ def connection_config(
     port_value = ldap_container["port"]
     port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
 
-    return m.ConnectionConfig(
+    return m.Ldap.ConnectionConfig(
         host=str(ldap_container["host"]),
         port=port_int,
         use_ssl=False,
@@ -912,13 +914,13 @@ def connection_config(
 
 
 @pytest.fixture
-def search_options(ldap_container: LdapContainerDict) -> m.SearchOptions:
+def search_options(ldap_container: LdapContainerDict) -> m.Ldap.SearchOptions:
     """Create search options for testing."""
     base_dn = str(ldap_container.get("base_dn", "dc=example,dc=com"))
-    return m.SearchOptions(
+    return m.Ldap.SearchOptions(
         base_dn=base_dn,
         filter_str="(objectClass=*)",
-        scope=c.SearchScope.SUBTREE,
+        scope=c.Ldap.SearchScope.SUBTREE,
     )
 
 
@@ -954,7 +956,7 @@ def search_options(ldap_container: LdapContainerDict) -> m.SearchOptions:
 
 # @pytest.fixture(scope="module")
 # def ldap_client(
-#     connection_config: m.ConnectionConfig,
+#     connection_config: m.Ldap.ConnectionConfig,
 #     ldap_config: FlextLdapConfig,
 #     ldap_parser: FlextLdifParser | None,
 # ) -> FlextLdap:
@@ -1092,7 +1094,7 @@ def base_ldif_content() -> str:
 
 
 @pytest.fixture
-def base_ldif_entries() -> list[m.Entry]:
+def base_ldif_entries() -> list[m.Ldif.Entry]:
     """Load and parse base LDIF structure to Entry models."""
     return LdapTestFixtures.load_base_ldif_entries()
 
@@ -1113,10 +1115,8 @@ def test_user_entry(test_users_json: list[GenericFieldsDict]) -> GenericFieldsDi
         }
         return default_user
 
-    return cast(
-        "GenericFieldsDict",
-        LdapTestFixtures.convert_user_json_to_entry(test_users_json[0]),
-    )
+    # convert_user_json_to_entry returns GenericFieldsDict
+    return LdapTestFixtures.convert_user_json_to_entry(test_users_json[0])
 
 
 @pytest.fixture
@@ -1134,10 +1134,13 @@ def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFields
         }
         return default_group
 
-    return cast(
-        "GenericFieldsDict",
-        LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0]),
-    )
+    # convert_group_json_to_entry returns dict[str, object]
+    entry_dict = LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0])
+    # Type narrowing: dict[str, object] is compatible with return type
+    if isinstance(entry_dict, dict):
+        return entry_dict
+    # Fallback: create empty dict if conversion failed
+    return {}
 
 
 # =============================================================================
@@ -1199,7 +1202,7 @@ def ldap_connection(
 
     # Establish actual connection to LDAP server
     try:
-        connection_config = m.ConnectionConfig(
+        connection_config = m.Ldap.ConnectionConfig(
             host=ldap_config.host,
             port=ldap_config.port,
             use_ssl=ldap_config.use_ssl,

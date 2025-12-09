@@ -861,4 +861,4 @@ For additional support and community resources:
 
 ---
 
-**Previous:** [Integration Guide](integration.md) ←
+**Previous:** [Integration Guide](guides/integration.md) ←

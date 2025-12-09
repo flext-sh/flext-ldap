@@ -24,8 +24,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, cast
-
 import pytest
 from flext_tests import tm
 
@@ -98,8 +96,9 @@ class TestsFlextLdapEntryAdapter:
                 }
 
         ldap3_entry = MockLdap3Entry()
-        # Cast to Any to match expected type (ldap3.Entry is not available in tests)
-        result = adapter.ldap3_to_ldif_entry(cast("Any", ldap3_entry))
+        # Type narrowing: MockLdap3Entry is structurally compatible with ldap3.Entry
+        # Use direct call - adapter handles type compatibility
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         tm.that(entry, is_=m.Entry, none=False)
         tm.that(entry.dn, none=False)
@@ -118,8 +117,9 @@ class TestsFlextLdapEntryAdapter:
                 self.entry_attributes_as_dict: dict[str, list[str]] = {}
 
         ldap3_entry = MockLdap3Entry()
-        # Cast to Any to match expected type (ldap3.Entry is not available in tests)
-        result = adapter.ldap3_to_ldif_entry(cast("Any", ldap3_entry))
+        # Type narrowing: MockLdap3Entry is structurally compatible with ldap3.Entry
+        # Use direct call - adapter handles type compatibility
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         tm.that(entry, is_=m.Entry, none=False)
         tm.that(entry.dn, none=False)

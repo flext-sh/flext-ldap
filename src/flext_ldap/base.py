@@ -14,8 +14,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core import FlextService
+from flext_core import FlextService, t
 
+from flext_ldap.config import FlextLdapConfig
 from flext_ldap.typings import FlextLdapDomainResultT as TDomainResult
 
 
@@ -33,6 +34,24 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
                 host = self.config.ldap.host  # Typed access!
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """
+
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+        """Return runtime bootstrap options for LDAP services.
+
+        Business Rule: This method provides runtime bootstrap configuration for
+        all LDAP services, ensuring they use FlextLdapConfig as the configuration
+        type. This enables proper DI integration and namespace access.
+
+        Implication: All services extending FlextLdapServiceBase automatically
+        use FlextLdapConfig for their runtime configuration, ensuring consistent
+        configuration handling across all LDAP services.
+
+        Returns:
+            Runtime bootstrap options with config_type set to FlextLdapConfig
+
+        """
+        return {"config_type": FlextLdapConfig}
 
 
 # Convenience alias for common usage pattern - exported for domain usage

@@ -31,7 +31,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ParamSpec
+from typing import Literal, ParamSpec
 
 from flext_core import FlextLogger, FlextRuntime, r
 from ldap3 import Connection
@@ -116,7 +116,7 @@ class FlextLdapServerDetector(s[str]):
         """
         self.logger.debug(
             "Detecting server type from connection",
-            operation=c.LdapOperationNames.DETECT_FROM_CONNECTION.value,
+            operation=c.Ldap.LdapOperationNames.DETECT_FROM_CONNECTION.value,
             connection_bound=connection.bound,
         )
 
@@ -167,7 +167,7 @@ class FlextLdapServerDetector(s[str]):
     @staticmethod
     def _query_root_dse(
         connection: Connection,
-    ) -> r[t.Ldap.AttributeDict]:
+    ) -> r[t.Ldap.Operation.AttributeDict]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
         Business Rules:
@@ -197,14 +197,16 @@ class FlextLdapServerDetector(s[str]):
 
         """
         # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
-        search_scope: c.Ldap.LiteralTypes.Ldap3ScopeLiteral = "BASE"
+        search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = (
+            "BASE"  # c.Ldap.LiteralTypes.Ldap3ScopeLiteral
+        )
         if not connection.search(
             search_base="",
-            search_filter=str(c.Filters.ALL_ENTRIES_FILTER),
+            search_filter=str(c.Ldap.Filters.ALL_ENTRIES_FILTER),
             search_scope=search_scope,
-            attributes=str(c.LdapAttributeNames.ALL_ATTRIBUTES),
+            attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
-            return r[t.Ldap.AttributeDict].fail(
+            return r[t.Ldap.Operation.AttributeDict].fail(
                 f"rootDSE query failed: {connection.result}",
             )
 
@@ -215,7 +217,10 @@ class FlextLdapServerDetector(s[str]):
         attrs_dict = root_dse_entry.entry_attributes_as_dict
 
         # Filter None values and convert to list[str]
-        filtered_attrs = {k: v for k, v in attrs_dict.items() if v is not None}
+        filtered_attrs = u.mapper().filter_dict(
+            attrs_dict,
+            lambda _k, v: v is not None,
+        )
         attributes: dict[str, list[str]] = {}
         for k, v in filtered_attrs.items():
             if FlextRuntime.is_list_like(v):
@@ -226,7 +231,7 @@ class FlextLdapServerDetector(s[str]):
         return r[dict[str, list[str]]].ok(attributes)
 
     @staticmethod
-    def _get_first_value(attrs: t.Ldap.AttributeDict, key: str) -> str | None:
+    def _get_first_value(attrs: t.Ldap.Operation.AttributeDict, key: str) -> str | None:
         """Return the first attribute value for ``key`` when present.
 
         Extract value from attributes dict.
@@ -357,7 +362,7 @@ class FlextLdapServerDetector(s[str]):
         # filter_truthy accepts list[object] | dict[str, object]
         # Cast list[str] to list[object] for compatibility
         vendor_list_object: list[object] = [str(item) for item in vendor_list]
-        vendor_parts_raw = u.filter_truthy(vendor_list_object)
+        vendor_parts_raw = u.Ldap.filter_truthy(vendor_list_object)
         # filter_truthy returns list[object] | dict[str, object]
         # Type narrowing: vendor_list_object is list[object], so result is list[object]
         vendor_parts: list[str] = (
@@ -383,7 +388,8 @@ class FlextLdapServerDetector(s[str]):
                     or "corporation" in v
                     or (
                         "unified directory" not in v
-                        and len(v.split()) <= c.VENDOR_STRING_MAX_TOKENS
+                        and len(v.split())
+                        <= c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS
                     )
                 ),
             ),
@@ -407,10 +413,10 @@ class FlextLdapServerDetector(s[str]):
         """Detect server type from extensions and naming contexts."""
         # DSL pattern: builder for string mapping with normalization and join
         # map_str returns str when join is provided
-        ext_str_raw = u.map_str(supported_extensions, case="lower", join=" ")
+        ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
         ext_str = ext_str_raw if isinstance(ext_str_raw, str) else " ".join(ext_str_raw)
         # DSL pattern: builder for normalization and join
-        context_str = u.norm_join(naming_contexts, case="lower")
+        context_str = u.Ldap.norm_join(naming_contexts, case="lower")
 
         # Extension/context-based detection (priority order)
         # Extension checks as typed variadic callables for find_callable ParamSpec[P] compatibility

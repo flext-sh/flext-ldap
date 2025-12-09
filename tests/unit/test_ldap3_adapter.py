@@ -120,6 +120,7 @@ class TestsFlextLdap3Adapter:
         adapter = Ldap3Adapter()
         # Validate method exists and is callable
         tm.has(adapter, "execute")
-        tm.that(hasattr(adapter, "execute"), eq=True) and tm.that(
-            callable(getattr(adapter, "execute", None)), eq=True
-        )
+        # Use hasattr and direct attribute access instead of getattr
+        has_execute = hasattr(adapter, "execute")
+        execute_method = adapter.execute if has_execute else None
+        tm.that(has_execute, eq=True) and tm.that(callable(execute_method), eq=True)

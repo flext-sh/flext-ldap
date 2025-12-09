@@ -395,7 +395,7 @@ python examples/10_connection_management.py
 
 **Demonstrates:**
 
-- Domain.Repository protocol implementation
+- Repository protocol implementation
 - CRUD operations through repository pattern
 - Entity lifecycle management
 - Clean Architecture benefits
@@ -420,7 +420,7 @@ python examples/11_repository_patterns.py
 
 ---
 
-### 12. Domain Services (`12_domain_services.py`)
+### 12. Services (`12_domain_services.py`)
 
 **Purpose**: Domain-Driven Design with Specification Pattern
 

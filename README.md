@@ -753,7 +753,7 @@ Use pytest markers to control test execution:
 - **[API Reference](docs/api/)** - Complete API documentation
 - **[Development Guides](docs/development/)** - Contributing and development workflows
 - **[Server Operations](docs/guides/server-operations.md)** - Server-specific implementations
-- **[ACL Management](docs/guides/ACL_MANAGEMENT.md)** - Server-specific ACL handling
+- **[ACL Management](docs/guides/acl-management.md)** - Server-specific ACL handling
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
 ---

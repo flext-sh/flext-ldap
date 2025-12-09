@@ -791,7 +791,7 @@ if norm_result.is_failure:
 - **[Architecture Guide](architecture.md)** - Universal LDAP architecture
 - **[API Reference](api-reference.md)** - Complete API documentation
 - **[Integration Guide](integration.md)** - FlextLdif integration patterns
-- **[ACL Management](ACL_MANAGEMENT.md)** - Server-specific ACL handling
+- **[ACL Management](acl-management.md)** - Server-specific ACL handling
 - **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
 
 ---

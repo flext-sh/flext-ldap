@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Final, Literal, TypeIs
+from typing import Final, Literal
 
 from flext_ldif import FlextLdifConstants
 
@@ -70,39 +70,6 @@ class FlextLdapConstants(FlextLdifConstants):
                 Status.COMPLETED,
                 Status.FAILED,
             ]
-
-        # ═══════════════════════════════════════════════════════════════════
-        # VALIDATION HELPERS
-        # ═══════════════════════════════════════════════════════════════════
-
-        class LdapValidation:
-            """LDAP validation helpers for constants."""
-
-            @staticmethod
-            def is_valid_status(
-                value: str
-                | FlextLdapConstants.Ldap.LdapCqrs.Status
-                | FlextLdapConstants.Ldap.LdapCqrs.StatusLiteral,
-            ) -> TypeIs[FlextLdapConstants.Ldap.LdapCqrs.StatusLiteral]:
-                """TypeIs narrowing - works in both if/else branches.
-
-                Since StatusLiteral is a subtype of str, after checking isinstance(
-                    value, Status
-                ),
-                the remaining type is str | StatusLiteral. We can check membership directly
-                without another isinstance check.
-                """
-                valid_statuses = {
-                    FlextLdapConstants.Ldap.LdapCqrs.Status.PENDING,
-                    FlextLdapConstants.Ldap.LdapCqrs.Status.RUNNING,
-                    FlextLdapConstants.Ldap.LdapCqrs.Status.COMPLETED,
-                    FlextLdapConstants.Ldap.LdapCqrs.Status.FAILED,
-                }
-                if isinstance(value, FlextLdapConstants.Ldap.LdapCqrs.Status):
-                    return True
-                # Type narrowing: value is str | StatusLiteral after Status check
-                # Check membership directly - valid strings are StatusLiteral values
-                return value in valid_statuses
 
         # ═══════════════════════════════════════════════════════════════════
         # COMPOSITION: Use FlextLdifConstants via .Ldif namespace (no duplication)
@@ -620,18 +587,19 @@ class FlextLdapConstants(FlextLdifConstants):
         # Using separate type alias to avoid override conflict
         # For LDIF parsing, use parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral
         # DRY Pattern: References parent ServerTypes enum members - NO string duplication!
+        # Use string literals matching enum values for Literal type compatibility
         type LdapServerTypeLiteral = Literal[
-            FlextLdifConstants.Ldif.ServerTypes.RFC,
-            FlextLdifConstants.Ldif.ServerTypes.OID,
-            FlextLdifConstants.Ldif.ServerTypes.OUD,
-            FlextLdifConstants.Ldif.ServerTypes.OPENLDAP,
-            FlextLdifConstants.Ldif.ServerTypes.OPENLDAP1,
-            FlextLdifConstants.Ldif.ServerTypes.APACHE,
-            FlextLdifConstants.Ldif.ServerTypes.DS389,
-            FlextLdifConstants.Ldif.ServerTypes.NOVELL,
-            FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI,
-            FlextLdifConstants.Ldif.ServerTypes.AD,
-            FlextLdifConstants.Ldif.ServerTypes.RELAXED,
+            "rfc",  # FlextLdifConstants.Ldif.ServerTypes.RFC
+            "oid",  # FlextLdifConstants.Ldif.ServerTypes.OID
+            "oud",  # FlextLdifConstants.Ldif.ServerTypes.OUD
+            "openldap",  # FlextLdifConstants.Ldif.ServerTypes.OPENLDAP
+            "openldap1",  # FlextLdifConstants.Ldif.ServerTypes.OPENLDAP1
+            "apache",  # FlextLdifConstants.Ldif.ServerTypes.APACHE
+            "ds389",  # FlextLdifConstants.Ldif.ServerTypes.DS389
+            "novell",  # FlextLdifConstants.Ldif.ServerTypes.NOVELL
+            "ibm_tivoli",  # FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI
+            "ad",  # FlextLdifConstants.Ldif.ServerTypes.AD
+            "relaxed",  # FlextLdifConstants.Ldif.ServerTypes.RELAXED
         ]
 
         # UpsertOperations StrEnum → Literal (references UpsertOperations enum members)
@@ -772,9 +740,9 @@ class FlextLdapConstants(FlextLdifConstants):
                 "ibm_tivoli": "ibm_tivoli",
             }
 
-        # Server detection thresholds
-        VENDOR_STRING_MAX_TOKENS: Final[int] = 2
-        """Maximum number of tokens in a vendor string for Oracle server detection."""
+            # Server detection thresholds
+            VENDOR_STRING_MAX_TOKENS: Final[int] = 2
+            """Maximum number of tokens in a vendor string for Oracle server detection."""
 
         # ═══════════════════════════════════════════════════════════════════
         # REFERÊNCIAS A FLEXT-CORE (quando necessário reutilizar)

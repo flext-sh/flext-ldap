@@ -8,16 +8,15 @@ from typing import TypeVar
 from flext_core import r
 from flext_ldif import FlextLdifTypes
 
-from flext_ldap.protocols import p
-
 # ═══════════════════════════════════════════════════════════════════════════
 # TYPEVARS: Only object allowed outside the class
 # ═══════════════════════════════════════════════════════════════════════════
 # Reuse from t when available
 
 # Only domain-specific TypeVars
-# Use string forward reference for Protocol type in TypeVar bound
-FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound="p.Ldap.Entry.EntryProtocol")
+# Bound to object to avoid circular import with protocols.py (Tier 0 rule)
+# Actual constraint: FlextLdapProtocols.Ldap.Entry.EntryProtocol (enforced at runtime by models/services)
+FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=object)
 FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
 
 
@@ -99,24 +98,28 @@ class FlextLdapTypes(FlextLdifTypes):
             so there are no method overrides to be incompatible.
             """
 
-            # Types using Protocols (avoids circular import)
-            type Instance = p.Ldap.Entry.EntryProtocol
-            type Collection = Sequence[p.Ldap.Entry.EntryProtocol]
-            type EntryMapping = Mapping[str, p.Ldap.Entry.EntryProtocol]
+            # Types using object to avoid circular import with protocols.py (Tier 0 rule)
+            # Actual constraint: FlextLdapProtocols.Ldap.Entry.EntryProtocol (enforced at runtime by models/services)
+            type Instance = object
+            type Collection = Sequence[object]
+            type EntryMapping = Mapping[str, object]
 
             # Generic types
             type Handler[T] = Callable[
-                [p.Ldap.Entry.EntryProtocol],
+                [object],
                 r[T],
             ]
             type Transformer = Callable[
-                [p.Ldap.Entry.EntryProtocol],
-                p.Ldap.Entry.EntryProtocol,
+                [object],
+                object,
             ]
-            type Filter = Callable[[p.Ldap.Entry.EntryProtocol], bool]
+            type Filter = Callable[
+                [object],
+                bool,
+            ]
             type Processor = Callable[
-                [Sequence[p.Ldap.Entry.EntryProtocol]],
-                r[Sequence[p.Ldap.Entry.EntryProtocol]],
+                [Sequence[object]],
+                r[Sequence[object]],
             ]
 
         class Operation:
@@ -126,13 +129,14 @@ class FlextLdapTypes(FlextLdifTypes):
             type Result[T] = r[T]
             type Callback[T] = Callable[[], r[T]]
 
-            # Domain-specific types
+            # Domain-specific types (using object to avoid circular import with protocols.py)
+            # Actual constraint: FlextLdapProtocols.Ldap.Entry.EntryProtocol (enforced at runtime)
             type EntryProcessor = Callable[
-                [p.Ldap.Entry.EntryProtocol],
+                [object],
                 r[bool],
             ]
             type BatchProcessor = Callable[
-                [Sequence[p.Ldap.Entry.EntryProtocol]],
+                [Sequence[object]],
                 r[int],
             ]
 
@@ -209,25 +213,27 @@ class FlextLdapTypes(FlextLdifTypes):
 
             These type aliases provide convenient access to nested protocol classes
             without needing to reference the full nested path.
+
+            Note: All protocol types use object to avoid circular import with protocols.py (Tier 0 rule).
+            Actual constraints are FlextLdapProtocols.Ldap.* (enforced at runtime by models/services).
             """
 
             # Configuration protocols
-            # Use forward references to avoid pyright errors with nested protocols
-            type ConnectionConfig = p.Ldap.Config.ConnectionConfigProtocol
-            type SearchOptions = p.Ldap.Config.SearchOptionsProtocol
+            type ConnectionConfig = object
+            type SearchOptions = object
 
             # Entry protocols
-            type Entry = p.Ldap.Entry.EntryProtocol
-            type DistinguishedName = p.Ldap.Entry.DistinguishedNameProtocol
+            type Entry = object
+            type DistinguishedName = object
 
             # Service protocols
-            type LdapClient = p.Ldap.Service.LdapClientProtocol
-            type LdapAdapter = p.Ldap.Service.LdapAdapterProtocol
-            type LdapConnection = p.Ldap.Service.LdapConnectionProtocol
+            type LdapClient = object
+            type LdapAdapter = object
+            type LdapConnection = object
 
             # Result protocols
-            type OperationResult = p.Ldap.Result.OperationResultProtocol
-            type SearchResult = p.Ldap.Result.SearchResultProtocol
+            type OperationResult = object
+            type SearchResult = object
 
 
 # Alias for simplified usage

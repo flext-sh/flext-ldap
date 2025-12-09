@@ -25,7 +25,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests import c
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 
@@ -58,7 +58,14 @@ class TestsFlextLdapConstants:
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values."""
-        actual = getattr(c.Ldap.LdapCqrs.Status, attr)
+        # Map attribute names to enum values
+        status_map: dict[str, c.Ldap.LdapCqrs.Status] = {
+            "PENDING": c.Ldap.LdapCqrs.Status.PENDING,
+            "RUNNING": c.Ldap.LdapCqrs.Status.RUNNING,
+            "COMPLETED": c.Ldap.LdapCqrs.Status.COMPLETED,
+            "FAILED": c.Ldap.LdapCqrs.Status.FAILED,
+        }
+        actual = status_map[attr]
         tm.that(actual, eq=expected)
 
     @pytest.mark.parametrize(
@@ -71,7 +78,13 @@ class TestsFlextLdapConstants:
     )
     def test_search_scope_values(self, scope: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        actual = getattr(c.SearchScope, scope).value
+        # Map scope names to enum values
+        scope_map: dict[str, c.SearchScope] = {
+            "BASE": c.SearchScope.BASE,
+            "ONELEVEL": c.SearchScope.ONELEVEL,
+            "SUBTREE": c.SearchScope.SUBTREE,
+        }
+        actual = scope_map[scope].value
         tm.that(actual, eq=expected)
 
     @pytest.mark.parametrize(
@@ -85,7 +98,14 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_values(self, op_type: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        actual = getattr(c.OperationType, op_type)
+        # Map operation type names to enum values
+        op_type_map: dict[str, c.Ldap.OperationType] = {
+            "ADD": c.Ldap.OperationType.ADD,
+            "MODIFY": c.Ldap.OperationType.MODIFY,
+            "DELETE": c.Ldap.OperationType.DELETE,
+            "SEARCH": c.Ldap.OperationType.SEARCH,
+        }
+        actual = op_type_map[op_type]
         tm.that(actual, eq=expected)
 
     # =========================================================================
@@ -119,7 +139,7 @@ class TestsFlextLdapConstants:
         expected: bool,
     ) -> None:
         """Test is_valid_status with various input types."""
-        result = c.LdapValidation.is_valid_status(status)
+        result = u.Ldap.Validation.is_valid_status(status)
         tm.that(result, eq=expected)
 
     # =========================================================================

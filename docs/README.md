@@ -67,18 +67,18 @@ and FlextLdif integration for enterprise directory services.
 
 ### 📊 Production Operations
 
-- **[Deployment Guide](operations/deployment.md)** - Production deployment strategies and best practices
-- **[Monitoring](operations/monitoring.md)** - Observability, metrics collection, and performance monitoring
-- **[Performance](operations/performance.md)** - Large-scale directory optimization and benchmarking
-- **[Security](operations/security.md)** - Enterprise security and compliance implementation
+- **Deployment Guide** - Production deployment strategies and best practices (*Documentation coming soon*)
+- **Monitoring** - Observability, metrics collection, and performance monitoring (*Documentation coming soon*)
+- **Performance** - Large-scale directory optimization and benchmarking (*Documentation coming soon*)
+- **Security** - Enterprise security and compliance implementation (*Documentation coming soon*)
 
 ### 📋 Real-World Examples
 
-- **[Basic Usage](examples/basic-usage.md)** - Getting started with FLEXT-LDAP enterprise patterns
-- **[Advanced Patterns](examples/advanced-patterns.md)** - Sophisticated LDAP operations and patterns
-- **[Enterprise Scenarios](examples/enterprise.md)** - Real-world enterprise implementations and use cases
-- **[Performance Examples](examples/performance.md)** - Optimized directory operations for large-scale environments
-- **[Integration Examples](examples/integration.md)** - FLEXT ecosystem integration patterns and best practices
+- **Basic Usage** - Getting started with FLEXT-LDAP enterprise patterns (*Documentation coming soon*)
+- **Advanced Patterns** - Sophisticated LDAP operations and patterns (*Documentation coming soon*)
+- **Enterprise Scenarios** - Real-world enterprise implementations and use cases (*Documentation coming soon*)
+- **Performance Examples** - Optimized directory operations for large-scale environments (*Documentation coming soon*)
+- **Integration Examples** - FLEXT ecosystem integration patterns and best practices (*Documentation coming soon*)
 
 ---
 
@@ -87,20 +87,20 @@ and FlextLdif integration for enterprise directory services.
 ### For New Users
 
 1. Start with **[Architecture Overview](architecture/README.md)** to understand the enterprise system design
-2. Follow **[Development Setup](development/setup.md)** to configure your development environment
-3. Try **[Basic Usage Examples](examples/basic-usage.md)** to see FLEXT-LDAP enterprise patterns in action
+2. Follow **Development Setup** to configure your development environment (*Documentation coming soon*)
+3. Try **Basic Usage Examples** to see FLEXT-LDAP enterprise patterns in action (*Documentation coming soon*)
 
 ### For Enterprise Integrators
 
-1. Review **[FLEXT Ecosystem Integration](integration/flext-ecosystem.md)** for ecosystem-wide patterns
-2. Explore **[Singer Pipeline Integration](integration/singer-pipeline.md)** for data pipeline patterns
-3. Check **[API Reference](api/core/README.md)** for detailed interface documentation and usage
+1. Review **FLEXT Ecosystem Integration** for ecosystem-wide patterns (*Documentation coming soon*)
+2. Explore **Singer Pipeline Integration** for data pipeline patterns (*Documentation coming soon*)
+3. Check **[API Reference](api/README.md)** for detailed interface documentation and usage
 
 ### For Contributors and Developers
 
-1. Read **[Contributing Guidelines](development/contributing.md)** for development standards
-2. Understand **[Architecture Decisions](development/adr/README.md)** and design rationale
-3. Follow **[Testing Guide](development/testing.md)** for comprehensive quality standards
+1. Read **Contributing Guidelines** for development standards (*Documentation coming soon*)
+2. Understand **Architecture Decisions** and design rationale (*Documentation coming soon*)
+3. Follow **Testing Guide** for comprehensive quality standards (*Documentation coming soon*)
 
 ### For Operations and DevOps Teams
 
@@ -153,7 +153,7 @@ This documentation follows **FLEXT Framework** enterprise standards and industry
 
 - ✅ **Code Quality**: Zero lint violations (ruff)
 - ✅ **Type Safety**: MyPy strict mode compliance throughout
-- ✅ **Phase 2 Complete**: Ecosystem protocol adoption (Domain.Service, Infrastructure.Connection)
+- ✅ **Phase 2 Complete**: Ecosystem protocol adoption (Service, Connection)
 - ✅ **Server Implementations**: Universal LDAP interface with server-specific operations
 - ✅ **FlextLdif Integration**: Complete entry adapter and quirks detection system
 

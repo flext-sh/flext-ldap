@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import inspect
 import types
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeGuard, cast, override
@@ -59,7 +60,7 @@ SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 
 
 def _is_multi_phase_callback(
-    callback: t.Ldap.ProgressCallbackUnion,
+    callback: m.Ldap.Types.ProgressCallbackUnion,
 ) -> TypeGuard[m.Ldap.Types.MultiPhaseProgressCallback]:
     """Type guard to check if callback is multi-phase (5 parameters).
 
@@ -87,7 +88,7 @@ def _is_multi_phase_callback(
 
 
 def _is_single_phase_callback(
-    callback: t.Ldap.ProgressCallbackUnion,
+    callback: m.Ldap.Types.ProgressCallbackUnion,
 ) -> TypeGuard[m.Ldap.Types.LdapProgressCallback]:
     """Type guard to check if callback is single-phase (4 parameters).
 
@@ -112,6 +113,54 @@ def _is_single_phase_callback(
         return len(sig.parameters) == SINGLE_PHASE_CALLBACK_PARAM_COUNT
     except (TypeError, ValueError, AttributeError):
         return False
+
+
+def _convert_entries_to_protocol(
+    entries: Sequence[m.Ldif.Entry | p.Ldap.Entry.EntryProtocol],
+) -> list[p.Ldap.Entry.EntryProtocol]:
+    """Convert entries to protocol list with type safety.
+
+    Args:
+        entries: Sequence of entries (m.Ldif.Entry or EntryProtocol)
+
+    Returns:
+        List of EntryProtocol-compatible entries
+
+    """
+    # Filter entries that are protocol-compatible
+    # m.Ldif.Entry is structurally compatible with EntryProtocol
+    # Use isinstance check for type narrowing
+    return [entry for entry in entries if isinstance(entry, p.Ldap.Entry.EntryProtocol)]
+
+
+def _get_phase_result_value(
+    phase_result: object,
+    attr_name: str,
+    default: int = 0,
+) -> int:
+    """Get phase result attribute value with type safety.
+
+    Args:
+        phase_result: Phase result object
+        attr_name: Attribute name to extract
+        default: Default value if attribute not found
+
+    Returns:
+        Attribute value or default
+
+    """
+    if isinstance(
+        phase_result, (m.Ldap.PhaseSyncResult, p.Ldap.Result.PhaseSyncResultProtocol)
+    ):
+        if attr_name == "total_entries":
+            return phase_result.total_entries
+        if attr_name == "synced":
+            return phase_result.synced
+        if attr_name == "failed":
+            return phase_result.failed
+        if attr_name == "skipped":
+            return phase_result.skipped
+    return default
 
 
 class FlextLdap(s[m.Ldap.SearchResult]):
@@ -206,18 +255,33 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             **kwargs: Additional kwargs for FlextService base class.
 
         """
-        super().__init__(**kwargs)
+        # Filter kwargs to only valid service kwargs, excluding _auto_result
+        # Type narrowing: filter to only compatible types for FlextService
+        service_kwargs: dict[str, str | float | bool | None] = {
+            k: v
+            for k, v in kwargs.items()
+            if k != "_auto_result" and isinstance(v, (str, float, bool, type(None)))
+        }
+        # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
+        # which matches FlextService.__init__ signature
+        # Protocols are structurally compatible - no type ignore needed
+        super().__init__(**service_kwargs)
         self._connection = connection
         self._operations = operations
         self._ldif = ldif or FlextLdif()
         # Use connection's config if available for consistency
         # Otherwise, super().__init__() already created proper
         # FlextLdapConfig via _get_service_config_type()
-        # Access private attribute via getattr for type safety -
+        # Access private attribute via hasattr + getattr for type safety -
         # PrivateAttr is accessible but not part of public API
         # PrivateAttr access is necessary for copying config from
         # connection to facade
-        connection_config = getattr(connection, "_config", None)
+        connection_config: FlextLdapConfig | None = None
+        if hasattr(connection, "_config"):
+            config_raw = getattr(connection, "_config", None)
+            # Type narrowing: check if config is FlextLdapConfig
+            if isinstance(config_raw, FlextLdapConfig):
+                connection_config = config_raw
         if isinstance(connection_config, FlextLdapConfig):
             # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
             self._config = connection_config
@@ -417,7 +481,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """Perform LDAP search operation.
 
         Business Rules:
-            - Base DN is normalized using FlextLdifUtilities.DN.norm_string() before search
+            - Base DN is normalized using FlextLdifUtilities.Ldif.DN.norm_string() before search
             - Search filter is validated against LDAP filter syntax
             - Server type determines parsing quirks (OpenLDAP, OUD, OID, RFC)
             - Search scope (BASE, ONELEVEL, SUBTREE) controls depth of search
@@ -608,7 +672,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def batch_upsert(
         self,
-        entries: list[p.Ldap.Entry.EntryProtocol],
+        entries: Sequence[p.Ldap.Entry.EntryProtocol],
         *,
         progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
         retry_on_errors: list[str] | None = None,
@@ -712,7 +776,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}"
             )
 
-        entries = parse_result.unwrap()
+        entries: list[m.Ldif.Entry] = cast("list[m.Ldif.Entry]", parse_result.unwrap())
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
                 m.Ldap.PhaseSyncResult(
@@ -730,11 +794,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
         callback = config.progress_callback
         if callback is not None:
-            # Cast to ProgressCallbackUnion for type guard compatibility
-            callback_union: t.Ldap.ProgressCallbackUnion = cast(
-                "t.Ldap.ProgressCallbackUnion",
-                callback,
-            )
+            # Use models type for strict typing
+            callback_union: m.Ldap.Types.ProgressCallbackUnion = callback
             # Use type guard for type narrowing
             if _is_multi_phase_callback(callback_union):
                 # Multi-phase callback - wrap to single-phase
@@ -756,11 +817,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 # Type narrowing: callback is LdapProgressCallback (4 params)
                 single_phase_callback = callback_union
 
-        # m.Ldap.Entry is structurally compatible with EntryProtocol (no cast needed)
+        # m.Ldif.Entry implements EntryProtocol (structural compatibility)
         # Type narrowing: entries is list[FlextLdifModels.Entry] which implements EntryProtocol
-        entries_protocol: list[p.Ldap.Entry.EntryProtocol] = [
-            cast("p.Ldap.Entry.EntryProtocol", entry) for entry in entries
-        ]
+        # Structural typing: m.Ldif.Entry implements p.Ldap.Entry.EntryProtocol
+        # Convert to list explicitly for type safety
+        # Use helper function for type-safe conversion
+        entries_protocol = _convert_entries_to_protocol(entries)
         batch_result = self.batch_upsert(
             entries_protocol,
             progress_callback=single_phase_callback,
@@ -843,11 +905,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         if callback is None:
             return None
 
-        # Cast to ProgressCallbackUnion for type guard compatibility
-        callback_union: t.Ldap.ProgressCallbackUnion = cast(
-            "t.Ldap.ProgressCallbackUnion",
-            callback,
-        )
+        # Use models type for strict typing
+        callback_union: m.Ldap.Types.ProgressCallbackUnion = callback
 
         # Use type guard for type narrowing
         if _is_multi_phase_callback(callback_union):
@@ -897,11 +956,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             FlextLdap._make_phase_progress_callback(phase_name, config)
             or config.progress_callback
         )
-        # Cast to ProgressCallbackUnion for type guard compatibility
-        phase_callback_union: t.Ldap.ProgressCallbackUnion = cast(
-            "t.Ldap.ProgressCallbackUnion",
-            phase_callback_raw,
-        )
+        # Use models type for strict typing
+        phase_callback_union: m.Ldap.Types.ProgressCallbackUnion = phase_callback_raw
         # Ensure result is LdapProgressCallback | None (not MultiPhaseProgressCallback)
         if phase_callback_union is None:
             return None
@@ -953,12 +1009,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             phase_name,
             config=m.Ldap.SyncPhaseConfig(
                 server_type=config.server_type,
-                progress_callback=cast("t.Ldap.ProgressCallbackUnion", phase_callback),
+                progress_callback=phase_callback,  # Structurally compatible, no cast needed
                 retry_on_errors=config.retry_on_errors,
                 max_retries=config.max_retries,
                 stop_on_error=config.stop_on_error,
             ),
         )
+        # sync_phase_entries already returns r[m.Ldap.PhaseSyncResult]
 
     def sync_multiple_phases(
         self,
@@ -1038,10 +1095,22 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Aggregate totals from phase results
         phase_values = list(phase_results.values())
         totals = {
-            "entries": sum(getattr(p, "total_entries", 0) for p in phase_values),
-            "synced": sum(getattr(p, "synced", 0) for p in phase_values),
-            "failed": sum(getattr(p, "failed", 0) for p in phase_values),
-            "skipped": sum(getattr(p, "skipped", 0) for p in phase_values),
+            "entries": sum(
+                _get_phase_result_value(phase_result, "total_entries", 0)
+                for phase_result in phase_values
+            ),
+            "synced": sum(
+                _get_phase_result_value(phase_result, "synced", 0)
+                for phase_result in phase_values
+            ),
+            "failed": sum(
+                _get_phase_result_value(phase_result, "failed", 0)
+                for phase_result in phase_values
+            ),
+            "skipped": sum(
+                _get_phase_result_value(phase_result, "skipped", 0)
+                for phase_result in phase_values
+            ),
         }
         total_processed = totals["synced"] + totals["failed"] + totals["skipped"]
         overall_success_rate = (
