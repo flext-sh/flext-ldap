@@ -20,7 +20,7 @@ logic. flext-ldap ships two adapters that wrap `ldap3` and normalize entries to
 - **Role**: Converts between ldap3 entries and flext-ldif `Entry` models,
   handling DN normalization, attribute typing, and metadata preservation.
 - **Key features**:
-  - Map ldap3 attribute collections to `LdifAttributes` objects.
+  - Map ldap3 attribute collections to `Attributes` objects.
   - Build ldap3 attribute payloads from flext-ldif entries for write operations.
   - Centralizes conversion rules so service code stays free of protocol details.
 

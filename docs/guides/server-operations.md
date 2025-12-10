@@ -224,7 +224,7 @@ from flext_ldif import FlextLdifModels
 
 # Create entry
 entry = FlextLdifModels.Entry(
-    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+    dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
     attributes=FlextLdifModels.Attributes(attributes={
         "objectClass": ["person", "organizationalPerson"],
         "cn": ["test"],

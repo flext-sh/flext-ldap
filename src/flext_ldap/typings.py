@@ -49,7 +49,7 @@ class FlextLdapTypes(FlextLdifTypes):
         - m.Types.ProgressCallbackUnion
 
         This class also serves as the LDAP namespace for cross-project access.
-        Usage: Other projects can reference `t.Ldap.Entry.Instance`, `t.Ldap.Operation.Result`, etc.
+        Usage: Other projects can reference `t.Ldif.Entry.Instance`, `t.Ldap.Operation.Result`, etc.
         """
 
         # Progress callback types (simplified to avoid circular imports)
@@ -186,8 +186,8 @@ class FlextLdapTypes(FlextLdifTypes):
             """Type alias for conversion state: (removed_attrs, base64_attrs)."""
 
             # Callables
-            type AddCallable = Callable[[str, str | None, AttributeValues | None], bool]
-            type ModifyCallable = Callable[[str, ModifyChanges], bool]
+            type AddCallable = Callable[[str, str | None, FlextLdapTypes.Ldap.AttributeValues | None], bool]
+            type ModifyCallable = Callable[[str, FlextLdapTypes.Ldap.ModifyChanges], bool]
             type DeleteCallable = Callable[[str], bool]
             type SearchCallable = Callable[
                 [
@@ -224,7 +224,7 @@ class FlextLdapTypes(FlextLdifTypes):
 
             # Entry protocols
             type Entry = object
-            type DistinguishedName = object
+            type DN = object
 
             # Service protocols
             type LdapClient = object

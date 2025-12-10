@@ -58,7 +58,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)
         - Search operations normalize base_dn using FlextLdifUtilities.Ldif.DN.norm_string()
-        - Add/Modify/Delete operations convert string DNs to DistinguishedName models
+        - Add/Modify/Delete operations convert string DNs to DN models
         - Upsert implements LDAP idempotent write: add -> exists check -> modify
         - Batch operations track per-entry progress and support stop_on_error
 
@@ -95,12 +95,12 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     @staticmethod
     def _extract_attributes_dict(
-        entry: p.Ldap.LdapEntryProtocol | p.Entry,
+        entry: m.Ldif.Entry,
     ) -> dict[str, list[str]]:
-        """Extract attributes dict from entry protocol.
+        """Extract attributes dict from LDIF entry or entry protocol.
 
         Args:
-            entry: Entry protocol-compatible object.
+            entry: LDIF entry model (m.Ldif.Entry) or protocol-compatible object.
 
         Returns:
             Attributes dict with normalized values.
@@ -163,12 +163,12 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _extract_ldif_entry_attributes(
-            entry: p.Entry,
+            entry: m.Ldif.Entry,
         ) -> Mapping[str, Sequence[str]]:
-            """Extract attributes from p.Entry.
+            """Extract attributes from LDIF Entry.
 
             Args:
-                entry: LDIF entry model
+                entry: LDIF entry model (m.Ldif.Entry)
 
             Returns:
                 Mapping of attribute names to sequences
@@ -178,7 +178,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             if ldif_attrs is None:
                 return {}
             # Python 3.13: Protocol guarantees attributes is Mapping - direct access
-            if isinstance(ldif_attrs, p.Ldap.LdifAttributesProtocol):
+            if isinstance(ldif_attrs, p.Ldap.AttributesProtocol):
                 attrs_dict = ldif_attrs.attributes
                 # Protocol guarantees Mapping[str, Sequence[str]] - direct dict conversion
                 return dict(attrs_dict) if isinstance(attrs_dict, Mapping) else {}
@@ -186,7 +186,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _extract_protocol_entry_attributes(
-            entry: p.Ldap.LdapEntryProtocol,
+            entry: m.Ldif.Entry,
         ) -> Mapping[str, Sequence[str]]:
             """Extract attributes from EntryProtocol.
 
@@ -204,7 +204,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
                         attrs
                     )
-                case p.Ldap.LdifAttributesProtocol():
+                case p.Ldap.AttributesProtocol():
                     # Protocol guarantees Mapping[str, Sequence[str]]
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
                         attrs.attributes
@@ -214,14 +214,14 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def extract_attributes(
-            entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            entry: m.Ldif.Entry,
         ) -> Mapping[str, Sequence[str]]:
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
                 Normalizes p.Entry and EntryProtocol to a common
                 Mapping[str, Sequence[str]] format. p.Entry has
-                nested LdifAttributes.attributes, while EntryProtocol has direct
+                nested Attributes.attributes, while EntryProtocol has direct
                 attributes mapping.
 
             Audit Implication:
@@ -235,17 +235,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Python 3.13: Use match-case for modern pattern matching
             if entry.attributes is None:
                 return {}
-            match entry:
-                case p.Entry():
-                    return FlextLdapOperations.EntryComparison._extract_ldif_entry_attributes(
-                        entry
-                    )
-                case p.Ldap.LdapEntryProtocol():
-                    return FlextLdapOperations.EntryComparison._extract_protocol_entry_attributes(
-                        entry
-                    )
-                case _:
-                    return {}
+            # All entries conform to m.Ldif.Entry protocol - use protocol handler
+            return FlextLdapOperations.EntryComparison._extract_protocol_entry_attributes(
+                entry
+            )
 
         @staticmethod
         def normalize_value_set(values: list[str]) -> set[str]:
@@ -455,8 +448,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def compare(
-            existing_entry: p.Ldap.LdapEntryProtocol | p.Entry,
-            new_entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            existing_entry: m.Ldif.Entry,
+            new_entry: m.Ldif.Entry,
         ) -> t.Ldap.ModifyChanges | None:
             """Compare two entries and return modify changes when needed.
 
@@ -571,44 +564,36 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _convert_to_model(
-            entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            entry: m.Ldif.Entry,
         ) -> m.Ldif.Entry:
-            """Convert entry to model type.
+            """Convert protocol entry to model type.
 
             Args:
-                entry: Entry to convert.
+                entry: Entry protocol instance to convert.
 
             Returns:
-                p.Entry instance.
+                m.Ldif.Entry instance.
 
             """
-            # Python 3.13: Use match-case for modern pattern matching
-            match entry:
-                case p.Entry():
-                    return entry
-                case p.Ldap.LdapEntryProtocol():
-                    # EntryProtocol - convert to p.Entry
-                    dn_value = str(entry.dn)
-                    attrs_mapping = (
-                        FlextLdapOperations.EntryComparison.extract_attributes(
-                            entry,
-                        )
-                    )
-                    # Python 3.13: Modern dict comprehension with type narrowing
-                    attrs_dict: dict[str, list[str]] = {
-                        k: [str(item) for item in v]
-                        if isinstance(v, Sequence)
-                        else [str(v)]
-                        for k, v in u.mapper().to_dict(attrs_mapping).items()
-                    }
-                    return m.Ldif.Entry(
-                        dn=m.Ldif.DistinguishedName(value=dn_value),
-                        attributes=m.Ldif.LdifAttributes(attributes=attrs_dict),
-                    )
-                case _:
-                    # Fallback for unknown types - should never reach here due to union type
-                    msg = f"Unsupported entry type: {type(entry)}"
-                    raise TypeError(msg)
+            # Convert from protocol to model
+            dn_value = str(entry.dn)
+            attrs_mapping = (
+                FlextLdapOperations.EntryComparison.extract_attributes(
+                    entry,
+                )
+            )
+            # Python 3.13: Modern dict comprehension with type narrowing
+            # Type as flexible Mapping to accommodate LaxStr variant in Attributes
+            attrs_dict: dict[str | bytes | bytearray, list[str | bytes | bytearray]] = {
+                k: [str(item) for item in v]
+                if isinstance(v, Sequence)
+                else [str(v)]
+                for k, v in u.mapper().to_dict(attrs_mapping).items()
+            }
+            return m.Ldif.Entry(
+                dn=m.Ldif.DN(value=dn_value),
+                attributes=m.Ldif.Attributes(attributes=attrs_dict),
+            )
 
         def __init__(self, operations: FlextLdapOperations) -> None:
             """Initialize upsert handler with operations service.
@@ -688,7 +673,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def execute(
             self,
-            entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            entry: m.Ldif.Entry,
         ) -> r[m.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
@@ -732,7 +717,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def handle_schema_modify(
             self,
-            entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            entry: m.Ldif.Entry,
         ) -> r[m.Ldap.LdapOperationResult]:
             """Apply a schema modification entry.
 
@@ -792,7 +777,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Python 3.13: Use match-case for DN extraction
             dn_str = (
                 entry_model.dn.value or "unknown"
-                if isinstance(entry_model.dn, p.Ldap.DistinguishedNameProtocol)
+                if isinstance(entry_model.dn, m.Ldif.DN)
                 else str(entry_model.dn)
                 if entry_model.dn is not None
                 else "unknown"
@@ -823,7 +808,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def handle_regular_add(
             self,
-            entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            entry: m.Ldif.Entry,
         ) -> r[m.Ldap.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
@@ -861,7 +846,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def handle_existing_entry(
             self,
-            entry: p.Ldap.LdapEntryProtocol | p.Entry,
+            entry: m.Ldif.Entry,
         ) -> r[m.Ldap.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
@@ -885,7 +870,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             entry_dn: str = "unknown"
             if isinstance(entry.dn, str):
                 entry_dn = entry.dn
-            elif isinstance(entry.dn, p.Ldap.DistinguishedNameProtocol):
+            elif isinstance(entry.dn, m.Ldif.DN):
                 entry_dn = str(entry.dn.value)
             else:
                 entry_dn = str(entry.dn) if entry.dn else "unknown"
@@ -906,13 +891,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             # Extract search data
             search_data = search_result.value if search_result.is_success else None
-            # Get entries safely - SearchResult.entries is list[p.Entry]
-            existing_entries: list[p.Entry] = []
+            # Get entries safely - SearchResult.entries is list[m.Ldif.Entry]
+            existing_entries: list[m.Ldif.Entry] = []
             if search_data is not None:
                 # search_data is m.Ldap.SearchResult from model definition
                 # No hasattr check needed - SearchResult always has entries attribute
                 entries_raw = search_data.entries
-                # SearchResult.entries is list[p.Entry] from model definition
+                # SearchResult.entries is list[m.Ldif.Entry] from model definition
                 # No isinstance check needed - type is already guaranteed
                 existing_entries = list(entries_raw) if entries_raw else []
             if not existing_entries:
@@ -930,7 +915,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
 
             # Use entry directly - already cast to p.Entry above
-            existing_entry: p.Entry = existing_entries[0]
+            existing_entry: m.Ldif.Entry = existing_entries[0]
             changes = FlextLdapOperations.EntryComparison.compare(
                 existing_entry,
                 entry,
@@ -1058,7 +1043,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     def add(
         self,
-        entry: p.Ldap.LdapEntryProtocol | p.Entry,
+        entry: m.Ldif.Entry,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
@@ -1086,32 +1071,26 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             FlextResult containing OperationResult with success status and entries_affected=1
 
         """
-        # Convert entry to m.Ldap.Entry (adapter requires m.Ldap.Entry)
-        entry_for_adapter: m.Ldap.Entry
-        if isinstance(entry, m.Ldap.Entry):
+        # Convert entry to m.Ldif.Entry (adapter requires m.Ldif.Entry)
+        entry_for_adapter: m.Ldif.Entry
+        if isinstance(entry, m.Ldif.Entry):
             entry_for_adapter = entry
-        elif isinstance(entry, p.Entry):
-            # Convert p.Entry to m.Ldap.Entry
-            entry_for_adapter = m.Ldap.Entry(
-                dn=entry.dn,
-                attributes=entry.attributes,
-                metadata=entry.metadata,
-            )
         else:
-            # EntryProtocol - convert to m.Ldap.Entry
+            # EntryProtocol - convert to m.Ldif.Entry
             dn_value = str(entry.dn)
             attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
                 entry,
             )
             # Python 3.13: Use isinstance directly for type narrowing
-            attrs_dict: dict[str, list[str]] = {
+            # Type as flexible mapping to accommodate LaxStr variant in Attributes
+            attrs_dict: dict[str | bytes | bytearray, list[str | bytes | bytearray]] = {
                 k: [str(item) for item in v] if isinstance(v, Sequence) else [str(v)]
                 for k, v in u.mapper().to_dict(attrs_mapping).items()
             }
-            # Create entry as m.Ldap.Entry
-            entry_for_adapter = m.Ldap.Entry(
-                dn=m.Ldif.DistinguishedName(value=dn_value),
-                attributes=m.Ldif.LdifAttributes(attributes=attrs_dict),
+            # Create entry as m.Ldif.Entry
+            entry_for_adapter = m.Ldif.Entry(
+                dn=m.Ldif.DN(value=dn_value),
+                attributes=m.Ldif.Attributes(attributes=attrs_dict),
             )
         result = self._connection.adapter.add(entry_for_adapter)
         # Adapter returns r[OperationResultProtocol] - unwrap directly
@@ -1125,7 +1104,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     def modify(
         self,
-        dn: str | p.Ldap.DistinguishedNameProtocol,
+        dn: str | m.Ldif.DN,
         changes: t.Ldap.ModifyChanges,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
@@ -1135,7 +1114,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             - Entry must exist before modification (LDAP error 32 if not found)
             - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
             - DN normalization is applied using FlextLdifUtilities.Ldif.DN.get_dn_value()
-            - String DNs are converted to DistinguishedName models for type safety
+            - String DNs are converted to DN models for type safety
             - Schema constraints are validated by LDAP server
 
         Audit Implications:
@@ -1149,16 +1128,16 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
-            dn: Distinguished name of entry to modify (string or DistinguishedName model)
+            dn: Distinguished name of entry to modify (string or DN model)
             changes: Modification changes dict in ldap3 format
 
         Returns:
             FlextResult containing OperationResult with success status and entries_affected=1
 
         """
-        # Type narrowing: convert str to DistinguishedName model if needed
+        # Type narrowing: convert str to DN model if needed
         if isinstance(dn, str):
-            dn_model: p.Ldap.DistinguishedNameProtocol = m.Ldif.DistinguishedName(
+            dn_model: m.Ldif.DN = m.Ldif.DN(
                 value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
             )
         else:
@@ -1178,7 +1157,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     def delete(
         self,
-        dn: str | p.Ldap.DistinguishedNameProtocol,
+        dn: str | m.Ldif.DN,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Delete an LDAP entry identified by DN.
@@ -1187,7 +1166,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             - Entry must exist before deletion (LDAP error 32 if not found)
             - Entry must not have children (LDAP error 66 if has children)
             - DN normalization is applied using FlextLdifUtilities.Ldif.DN.get_dn_value()
-            - String DNs are converted to DistinguishedName models for type safety
+            - String DNs are converted to DN models for type safety
             - Deletion is permanent - no undo capability
 
         Audit Implications:
@@ -1201,15 +1180,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
-            dn: Distinguished name of entry to delete (string or DistinguishedName model)
+            dn: Distinguished name of entry to delete (string or DN model)
 
         Returns:
             FlextResult containing OperationResult with success status and entries_affected=1
 
         """
-        # Type narrowing: convert str to DistinguishedName model if needed
+        # Type narrowing: convert str to DN model if needed
         if isinstance(dn, str):
-            dn_model: p.Ldap.DistinguishedNameProtocol = m.Ldif.DistinguishedName(
+            dn_model: m.Ldif.DN = m.Ldif.DN(
                 value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
             )
         else:
@@ -1247,7 +1226,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     def upsert(
         self,
-        entry: p.Ldap.LdapEntryProtocol | p.Entry,
+        entry: m.Ldif.Entry,
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
@@ -1382,7 +1361,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     def batch_upsert(
         self,
-        entries: Sequence[p.Ldap.LdapEntryProtocol],
+        entries: Sequence[m.Ldif.Entry],
         *,
         progress_callback: Callable[
             [int, int, str, m.Ldap.LdapBatchStats],

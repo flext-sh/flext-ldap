@@ -1123,14 +1123,14 @@ class TestsFlextLdapOperationHelpers:
                 raise ValueError(error_msg)
             dn = kwargs["dn"]
             changes = kwargs["changes"]
-            # DistinguishedName is a type alias for str, so we only need to check for str
+            # DN is a type alias for str, so we only need to check for str
             if not isinstance(dn, str):
                 error_msg = "dn must be str"
                 raise TypeError(error_msg)
             if not isinstance(changes, dict):
                 error_msg = "changes must be dict"
                 raise TypeError(error_msg)
-            # Type narrowing: dn is str (DistinguishedName is a type alias for str)
+            # Type narrowing: dn is str (DN is a type alias for str)
             modify_dn_str: str = dn
             TestsFlextLdapOperationHelpers._execute_modify_when_not_connected(
                 client,
@@ -1143,7 +1143,7 @@ class TestsFlextLdapOperationHelpers:
                 error_msg = "dn required for delete operation"
                 raise ValueError(error_msg)
             delete_dn = kwargs["dn"]
-            # DistinguishedName is a type alias for str, so we only need to check for str
+            # DN is a type alias for str, so we only need to check for str
             if not isinstance(delete_dn, str):
                 error_msg = "dn must be str"
                 raise TypeError(error_msg)

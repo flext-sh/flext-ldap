@@ -15,7 +15,7 @@ password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-pa
       - [FlextLdapGroup](#flextldapgroup)
   - [🎯 Value Objects](#-value-objects)
     - [FlextLdapModels.ValueObjects](#flextldapmodelsvalueobjects)
-      - [DistinguishedName](#distinguishedname)
+      - [DN](#distinguishedname)
       - [LdapFilter](#ldapfilter)
 - [Create filters](#create-filters)
 - [Combine filters](#combine-filters) - [LdapScope](#ldapscope)
@@ -269,7 +269,7 @@ LDAP group entity.
 
 Container for value objects.
 
-#### DistinguishedName
+#### DN
 
 RFC 4514 compliant distinguished name.
 
@@ -285,7 +285,7 @@ RFC 4514 compliant distinguished name.
 **Example:**
 
 ```python
-dn = FlextLdapModels.ValueObjects.DistinguishedName("cn=user,ou=people,dc=example,dc=com")
+dn = FlextLdapModels.ValueObjects.DN("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)       # "cn=user"
 print(dn.parent_dn) # "ou=people,dc=example,dc=com"
 ```
@@ -566,7 +566,7 @@ adapter = FlextLdapEntryAdapter()
 
 # Create FlextLdif entry
 ldif_entry = FlextLdifModels.Entry(
-    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+    dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
     attributes=FlextLdifModels.Attributes(attributes={
         "objectClass": ["person", "organizationalPerson"],
         "cn": ["test"],
@@ -861,7 +861,7 @@ from flext_ldap.servers import OpenLDAP2Operations
 ops = OpenLDAP2Operations()
 
 entry = FlextLdifModels.Entry(
-    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+    dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
     attributes=FlextLdifModels.Attributes(attributes={
         "objectClass": ["person", "organizationalPerson"],
         "cn": ["test"],

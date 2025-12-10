@@ -194,7 +194,7 @@ from flext_ldap import m
 def validate_dn(dn_string: str) -> bool:
     """Validate DN format."""
     try:
-        dn = m.Ldif.DistinguishedName(value=dn_string)
+        dn = m.Ldif.DN(value=dn_string)
         return True
     except ValueError as e:
         print(f"Invalid DN: {e}")

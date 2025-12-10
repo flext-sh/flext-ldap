@@ -41,7 +41,7 @@ class FlextLdapProtocols(ldif_p):
 
         All LDAP domain-specific protocols are organized here at ROOT level
         to enable proper namespace separation. LDIF protocols from parent
-        are accessed via `.Ldif` namespace (e.g., `p.Ldif.EntryProtocol`).
+        are accessed via `.Ldif` namespace (e.g., `m.Ldif.EntryProtocol`).
 
         Pattern: `p.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
         """
@@ -51,7 +51,7 @@ class FlextLdapProtocols(ldif_p):
         # =====================================================================
 
         @runtime_checkable
-        class DistinguishedNameProtocol(Protocol):
+        class DNProtocol(Protocol):
             """Protocol for Distinguished Name (structural type)."""
 
             def __str__(self) -> str:
@@ -64,7 +64,7 @@ class FlextLdapProtocols(ldif_p):
                 ...
 
         @runtime_checkable
-        class LdifAttributesProtocol(Protocol):
+        class AttributesProtocol(Protocol):
             """Protocol for LDIF attributes (structural type)."""
 
             @property
@@ -77,15 +77,24 @@ class FlextLdapProtocols(ldif_p):
             """Protocol for LDAP entry (structural type).
 
             Accepts both simple types and complex types (models).
-            DistinguishedName has __str__ method, LdifAttributes has
+            DN has __str__ method, Attributes has
             .attributes property.
             Models are structurally compatible through attribute access.
+
+            IMPORTANT: Allows None for dn and attributes to be compatible with
+            FlextLdifModels.Ldif.Entry which allows None for RFC violation capture
+            during LDIF processing. Application layer validates non-None requirement.
+
+            Type Strategy: Accept both concrete Attributes class (from flext-ldif)
+            and dict types for flexibility with structural typing.
             """
 
-            dn: str | FlextLdapProtocols.Ldap.DistinguishedNameProtocol
+            dn: str | FlextLdapProtocols.Ldap.DNProtocol | None
             attributes: (
                 Mapping[str, Sequence[str]]
-                | FlextLdapProtocols.Ldap.LdifAttributesProtocol
+                | dict[str, list[str]]
+                | FlextLdapProtocols.Ldap.AttributesProtocol
+                | None
             )
             metadata: (
                 Mapping[
@@ -243,7 +252,7 @@ class FlextLdapProtocols(ldif_p):
 
             def modify(
                 self,
-                dn: str | FlextLdapProtocols.Ldap.DistinguishedNameProtocol,
+                dn: str | FlextLdapProtocols.Ldap.DNProtocol,
                 changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
             ) -> r[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Modify LDAP entry.
@@ -260,7 +269,7 @@ class FlextLdapProtocols(ldif_p):
 
             def delete(
                 self,
-                dn: str | FlextLdapProtocols.Ldap.DistinguishedNameProtocol,
+                dn: str | FlextLdapProtocols.Ldap.DNProtocol,
             ) -> r[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Delete LDAP entry.
 
@@ -338,7 +347,7 @@ class FlextLdapProtocols(ldif_p):
 
             def modify(
                 self,
-                dn: FlextLdapProtocols.Ldap.DistinguishedNameProtocol | str,
+                dn: FlextLdapProtocols.Ldap.DNProtocol | str,
                 changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
             ) -> r[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Modify LDAP entry.
@@ -350,7 +359,7 @@ class FlextLdapProtocols(ldif_p):
 
             def delete(
                 self,
-                dn: FlextLdapProtocols.Ldap.DistinguishedNameProtocol | str,
+                dn: FlextLdapProtocols.Ldap.DNProtocol | str,
             ) -> r[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Delete LDAP entry.
 
@@ -460,3 +469,6 @@ __all__ = [
     "FlextLdapProtocols",
     "p",
 ]
+
+# Short alias for namespace access
+fldap = FlextLdapProtocols

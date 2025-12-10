@@ -37,9 +37,10 @@ from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import m, p
 from flext_ldap.base import s
 from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.utilities import u
 
@@ -146,7 +147,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
         def sync(
             self,
-            entries: list[m.Ldap.Entry],
+            entries: list[m.Ldif.Entry],
             options: m.Ldap.SyncOptions,
         ) -> r[m.Ldap.SyncStats]:
             """Sync entries in batch mode with progress tracking.
@@ -177,14 +178,14 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
             # DSL pattern: process entries with accumulator builder
             def process_entry(
-                idx_entry: tuple[int, m.Ldap.Entry],
+                idx_entry: tuple[int, m.Ldif.Entry],
             ) -> m.Ldap.LdapBatchStats:
                 """Process single entry and update accumulator."""
                 idx, entry = idx_entry
-                # Use entry directly - m.Ldap.Entry is the public API
+                # Use entry directly - m.Ldif.Entry protocol is the interface
                 # Extract DN from entry
                 entry_dn = u.Ldif.DN.get_dn_value(entry.dn)
-                # m.Ldap.Entry is structurally compatible with EntryProtocol (no cast needed)
+                # m.Ldif.Entry protocol implements all required interface methods
                 add_result = self._ops.add(entry)
                 # DSL pattern: builder for stats based on result
                 if add_result.is_success:
@@ -213,7 +214,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             logger = logging.getLogger(__name__)
             for idx_entry in enumerate(entries, 1):
                 try:
-                    # idx_entry is tuple[int, m.Ldap.Entry] from enumerate (guaranteed by Python)
+                    # idx_entry is tuple[int, m.Ldif.Entry] from enumerate (guaranteed by Python)
                     process_entry(idx_entry)
                 except Exception:
                     # enumerate always returns tuple[int, T], so idx_entry[0] is always valid
@@ -255,16 +256,16 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         """
 
         @classmethod
-        def _convert_to_entry(cls, entry: m.Ldap.Entry) -> m.Ldap.Entry:
-            """Convert entry to m.Ldap.Entry format.
+        def _convert_to_entry(cls, entry: m.Ldif.Entry) -> m.Ldif.Entry:
+            """Return entry using m.Ldif.Entry protocol.
 
-            Entries are already m.Ldap.Entry (public API).
+            Entries implement m.Ldif.Entry protocol (service layer interface).
 
             Args:
-                entry: Entry to convert (m.Ldap.Entry).
+                entry: Entry conforming to m.Ldif.Entry protocol.
 
             Returns:
-                m.Ldap.Entry: Entry instance.
+                m.Ldif.Entry: Entry instance.
 
             """
             return entry
@@ -272,10 +273,10 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         @classmethod
         def transform(
             cls,
-            entries: list[m.Ldap.Entry],
+            entries: list[m.Ldif.Entry],
             source_basedn: str,
             target_basedn: str,
-        ) -> list[m.Ldap.Entry]:
+        ) -> list[m.Ldif.Entry]:
             """Rewrite entry DNs from ``source_basedn`` to ``target_basedn``.
 
             Business Rules:
@@ -300,12 +301,16 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
             """
             if source_basedn == target_basedn:
-                # Return entries as-is (already m.Ldap.Entry)
+                # Return entries as-is (already m.Ldif.Entry protocol compliant)
                 return entries
 
             # Transform entries - create new Entry with transformed DN
-            def transform_entry(entry: m.Ldap.Entry) -> m.Ldap.Entry:
+            def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
                 """Transform entry DN if source_basedn matches."""
+                # Type guard: only transform m.Ldif.Entry instances
+                if not isinstance(entry, m.Ldif.Entry):
+                    return entry
+
                 dn_str = u.Ldif.DN.get_dn_value(entry.dn)
                 if source_basedn.lower() in dn_str.lower():
                     # Case-insensitive replacement using regex (RFC 4514 compliance)
@@ -316,12 +321,13 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                         flags=re.IGNORECASE,
                     )
                     # Create new Entry with new DN - Entry validates DN automatically
-                    return m.Ldap.Entry(
-                        dn=m.Ldif.DistinguishedName(value=new_dn_value),
+                    return m.Ldif.Entry(
+                        dn=m.Ldif.DN(value=new_dn_value),
                         attributes=entry.attributes,
                     )
                 return entry
 
+            # Result contains m.Ldif.Entry instances which implement m.Ldif.Entry
             return [transform_entry(entry) for entry in entries]
 
     def __init__(
@@ -448,33 +454,26 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             return r[m.Ldap.SyncStats].fail(f"Failed to parse LDIF file: {error_msg}")
 
         # API parse returns list[FlextLdifModels.Entry] (from flext-ldif)
-        # m.Ldap.Entry extends FlextLdifModels.Entry, so entries are compatible
+        # m.Ldif.Entry implements m.Ldif.Entry protocol, so entries are compatible
         # Type narrowing: parse_result.unwrap() returns list[FlextLdifModels.Entry]
-        # which is compatible with list[m.Ldap.Entry] via inheritance
+        # which implements m.Ldif.Entry protocol via structural typing
         entries_raw = parse_result.unwrap()
-        # m.Ldap.Entry extends FlextLdifModels.Entry, so conversion is safe
+        # m.Ldif.Entry implements m.Ldif.Entry, so conversion is safe
 
-        # so list[FlextLdifModels.Entry] is compatible with list[m.Ldap.Entry]
-        # Type narrowing: entries_raw is list[FlextLdifModels.Entry], m.Ldap.Entry extends it
-        # m.Ldap.Entry extends p.Entry, so entries are structurally compatible (no cast needed)
-        # Python 3.13: Use list comprehension with type narrowing for conversion
-        # m.Ldap.Entry extends p.Entry, so conversion is safe
-        entries: list[m.Ldap.Entry] = [
+        # List of m.Ldif.Entry instances all implement m.Ldif.Entry protocol
+        # Type narrowing: entries_raw is list[FlextLdifModels.Entry], filter for m.Ldif.Entry
+        # Only accept m.Ldif.Entry instances (which properly implement protocol)
+        # Other types must be validated and converted in service layer
+        entries: list[m.Ldif.Entry] = [
             entry
-            if isinstance(entry, m.Ldap.Entry)
-            else m.Ldap.Entry(
-                dn=entry.dn,
-                attributes=entry.attributes,
-                metadata=entry.metadata,
-            )
             for entry in entries_raw
-            if isinstance(entry, (m.Ldap.Entry, p.Entry))
+            if isinstance(entry, m.Ldif.Entry)
         ]
         return self._process_entries(entries, options, start_time)
 
     def _process_entries(
         self,
-        entries: list[m.Ldap.Entry],
+        entries: list[m.Ldif.Entry],
         options: m.Ldap.SyncOptions,
         start_time: datetime,
     ) -> r[m.Ldap.SyncStats]:
@@ -516,13 +515,13 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             )
 
         if options.source_basedn and options.target_basedn:
-            # Transform handles m.Ldap.Entry via _convert_to_entry
+            # Transform handles m.Ldif.Entry protocol and returns transformed entries
             entries_transformed = self.BaseDNTransformer.transform(
                 entries,
                 options.source_basedn,
                 options.target_basedn,
             )
-            # Transform returns list[m.Ldap.Entry], use directly
+            # Transform returns list[m.Ldif.Entry], use directly
             entries = entries_transformed
 
         batch_result = self.BatchSync(self._operations).sync(entries, options)

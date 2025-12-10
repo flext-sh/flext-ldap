@@ -16,6 +16,7 @@ from typing import TypeIs
 from flext_ldif import FlextLdifUtilities
 
 from flext_ldap.constants import c
+from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 
@@ -475,7 +476,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 return default
             # Check if object has the specified attribute
             # Use Protocol for type-safe access
-            if isinstance(dn, p.Ldap.DistinguishedNameProtocol):
+            if isinstance(dn, m.Ldif.DN):
                 value = dn.value
                 # Protocol guarantees value is str, no need for isinstance check
                 return value or default

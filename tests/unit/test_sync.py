@@ -125,9 +125,9 @@ class TestsFlextLdapSync:
     def test_base_dn_transformer_no_transformation(self) -> None:
         """Test BaseDNTransformer with no transformation needed."""
         entries = [
-            m.Ldap.Entry(
-                dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
-                attributes=m.Ldif.LdifAttributes(attributes={}),
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(attributes={}),
             ),
         ]
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(
@@ -143,9 +143,9 @@ class TestsFlextLdapSync:
     def test_base_dn_transformer_with_transformation(self) -> None:
         """Test BaseDNTransformer with base DN transformation."""
         entries = [
-            m.Ldap.Entry(
-                dn=m.Ldif.DistinguishedName(value="cn=user,dc=old,dc=com"),
-                attributes=m.Ldif.LdifAttributes(attributes={}),
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=user,dc=old,dc=com"),
+                attributes=m.Ldif.Attributes(attributes={}),
             ),
         ]
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(
@@ -160,9 +160,9 @@ class TestsFlextLdapSync:
     def test_base_dn_transformer_case_insensitive(self) -> None:
         """Test BaseDNTransformer with case-insensitive matching."""
         entries = [
-            m.Ldap.Entry(
-                dn=m.Ldif.DistinguishedName(value="cn=user,dc=old,dc=com"),
-                attributes=m.Ldif.LdifAttributes(attributes={}),
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=user,dc=old,dc=com"),
+                attributes=m.Ldif.Attributes(attributes={}),
             ),
         ]
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(

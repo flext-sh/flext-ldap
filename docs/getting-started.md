@@ -307,7 +307,7 @@ for ldap3_entry in connection.entries:
 
 # FlextLdif → ldap3
 ldif_entry = FlextLdifModels.Entry(
-    dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+    dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
     attributes=FlextLdifModels.Attributes(attributes={
         "objectClass": ["person"],
         "cn": ["test"],

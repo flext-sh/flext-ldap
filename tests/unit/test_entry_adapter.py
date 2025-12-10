@@ -27,7 +27,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldap import m, p
+from flext_ldap import m
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 pytestmark = pytest.mark.unit
@@ -100,7 +100,7 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
-        tm.that(entry, is_=p.Entry, none=False)
+        tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
         tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
@@ -121,7 +121,7 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
-        tm.that(entry, is_=p.Entry, none=False)
+        tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
         tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
@@ -129,11 +129,9 @@ class TestsFlextLdapEntryAdapter:
     def test_ldif_entry_to_ldap3_attributes(self) -> None:
         """Test conversion from p.Entry to ldap3 attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = p.Entry(
-            dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes(
-                attributes={"cn": ["user"], "sn": ["Doe"]}
-            ),
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(attributes={"cn": ["user"], "sn": ["Doe"]}),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attributes = tm.ok(result)
@@ -147,9 +145,9 @@ class TestsFlextLdapEntryAdapter:
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
         """Test conversion from p.Entry to ldap3 attributes with empty attributes."""
         adapter = FlextLdapEntryAdapter()
-        entry = p.Entry(
-            dn=m.Ldif.DistinguishedName(value="cn=user,dc=example,dc=com"),
-            attributes=m.Ldif.LdifAttributes(attributes={}),
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(attributes={}),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         err = tm.fail(result, has="no attributes")

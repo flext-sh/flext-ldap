@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
+from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -198,7 +199,7 @@ class FlextLdapEntryAdapter(s[bool]):
         # Exclude special parameters like _auto_result which are handled by FlextService
         # Python 3.13: Extract and validate _auto_result with modern pattern
         auto_result_raw: object = kwargs.pop("_auto_result", None)
-        _auto_result: bool | None = (
+        auto_result: bool | None = (
             auto_result_raw if isinstance(auto_result_raw, bool) else None
         )
         # Python 3.13: Filter kwargs with modern comprehension
@@ -210,13 +211,16 @@ class FlextLdapEntryAdapter(s[bool]):
         }
         # Type narrowing: kwargs_without_server_type is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
+        # Do NOT pass _auto_result to super().__init__() - it's a PrivateAttr
+        # that must be set directly via object.__setattr__() to bypass Pydantic validation
         super().__init__(**kwargs_without_server_type)
         # Use provided server_type or default from constants
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
         # FlextLdif accepts config via kwargs, not as direct parameter
-        # Use object.__setattr__ for frozen model compatibility
+        # Use object.__setattr__ for PrivateAttr fields (frozen model compatibility)
         object.__setattr__(self, "_ldif", FlextLdif())
         object.__setattr__(self, "_server_type", resolved_type)
+        object.__setattr__(self, "_auto_result", auto_result)
 
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
         """Execute method required by FlextService.
@@ -445,7 +449,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldap3_to_ldif_entry(
         self,
         ldap3_entry: Ldap3Entry,
-    ) -> r[p.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
         Business Rules:
@@ -516,7 +520,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            ldf_attrs_obj = m.Ldif.LdifAttributes.model_validate({
+            ldf_attrs_obj = m.Ldif.Attributes.model_validate({
                 "attributes": ldif_attrs,
             })
             metadata_obj = m.Ldif.QuirkMetadata.model_validate({
@@ -525,7 +529,7 @@ class FlextLdapEntryAdapter(s[bool]):
             })
             return r[m.Ldif.Entry].ok(
                 m.Ldif.Entry(
-                    dn=m.Ldif.DistinguishedName(value=dn_str),
+                    dn=m.Ldif.DN(value=dn_str),
                     attributes=ldf_attrs_obj,
                     metadata=metadata_obj,
                 ),
@@ -544,16 +548,16 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[p.Entry].fail(f"Failed to create Entry: {e!s}")
+            return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        entry: p.Ldap.LdapEntryProtocol,
+        entry: m.Ldif.Entry,
     ) -> r[t.Ldap.Attributes]:
         """Convert p.Entry to ldap3 attributes format.
 
         Business Rules:
-            - Entry must have attributes (LdifAttributes model)
+            - Entry must have attributes (Attributes model)
             - Attributes must have non-empty attributes dict
             - Attribute values are already list[str] in LDIF format
             - Values are converted to strings (handles any value types)
@@ -584,7 +588,9 @@ class FlextLdapEntryAdapter(s[bool]):
         # Check if attributes are empty
         if entry.attributes is None:
             return r[t.Ldap.Attributes].fail("Entry has no attributes")
-        attrs_dict = entry.attributes.attributes
+        # Cast to AttributesProtocol - we expect LDIF entries with attributes property
+        ldif_attrs = cast("p.Ldap.AttributesProtocol", entry.attributes)
+        attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
             return r[t.Ldap.Attributes].fail("Entry has no attributes")
         try:
@@ -597,7 +603,8 @@ class FlextLdapEntryAdapter(s[bool]):
             return r[t.Ldap.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above
-            dn_value = entry.dn.value if entry.dn else "unknown"
+            # entry.dn can be str or DNProtocol (which has .value)
+            dn_value = getattr(entry.dn, "value", entry.dn) if entry.dn else "unknown"
             # DSL pattern: builder for str conversion
             entry_dn_str = u.to_str(dn_value, default="unknown")
             self.logger.exception(

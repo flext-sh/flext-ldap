@@ -28,7 +28,7 @@ Architecture Notes:
       (Config, Options, Results, Statistics)
     - Uses FlextModels.Entity for models requiring entity identity
       (SearchResult, BatchUpsertResult)
-    - Extends FlextLdifModels via inheritance for m.Ldap.Entry (no duplication)
+    - Extends FlextLdifModels via inheritance for m.Ldif.Entry (no duplication)
       (full hierarchy exposed, implements p.Ldap.LdapEntryProtocol structurally)
     - Python 3.13+ PEP 695 type aliases in nested Types class
     - @computed_field for derived values (success_rate, total_count, by_objectclass)
@@ -44,7 +44,7 @@ import logging
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, Self, Union, runtime_checkable
 
 from flext_core import FlextModels
 from flext_ldif import FlextLdifModels
@@ -57,7 +57,6 @@ from pydantic import (
 )
 
 from flext_ldap.constants import c
-from flext_ldap.protocols import p
 
 
 @runtime_checkable
@@ -75,9 +74,14 @@ class FlextLdapModels(FlextLdifModels):
     .. deprecated:: 1.0.0
         Use ``FlextModels.Ldap.*`` or ``m.Ldap.*`` instead of ``FlextLdapModels.*``.
 
-    Uses advanced Python 3.13 patterns with enums, mappings, and computed fields
-    for type-safe, efficient model definitions. All models follow Pydantic v2 patterns
-    with proper validation and immutability.
+    NAMESPACE HIERARCHY PADRAO:
+    ───────────────────────────
+    Usa padroes avancados Python 3.13 com enums, mappings e computed fields
+    para definicoes type-safe e eficientes. Todos os modelos seguem padroes Pydantic v2
+    com validacao e imutabilidade adequadas.
+
+    PADRAO: Namespace hierarquico completo m.Ldap.ConnectionConfig, m.Ldap.SearchOptions
+    SEM duplicacao - heranca real de FlextLdifModels (que herda de FlextModels)
 
     **Pydantic 2 Integration:**
     - use_enum_values=True: StrEnum fields serialize as strings
@@ -162,7 +166,7 @@ class FlextLdapModels(FlextLdifModels):
             """LDAP entry model extending public API Entry from flext-ldif.
 
             Exposes Entry model via inheritance to enable access via
-            m.Ldap.Entry. Implements p.Ldap.LdapEntryProtocol structurally.
+            m.Ldif.Entry. Implements p.Ldap.LdapEntryProtocol structurally.
             """
 
         # =========================================================================
@@ -421,7 +425,7 @@ class FlextLdapModels(FlextLdifModels):
                     - Entries are grouped by first objectClass value
                     - Entries without objectClass are categorized as "unknown"
                     - Uses m.Collections.Categories for grouping
-                    - Handles both LdifAttributes and Mapping types
+                    - Handles both Attributes and Mapping types
 
                 Audit Implications:
                     - Categorization enables entry analysis by object type
@@ -430,7 +434,7 @@ class FlextLdapModels(FlextLdifModels):
 
                 Architecture:
                     - Uses m.Collections.Categories for grouping
-                    - Handles LdifAttributes and Mapping types safely
+                    - Handles Attributes and Mapping types safely
                     - Returns Categories[Entry] for type-safe access
                     - No network calls - pure data categorization
 
@@ -438,8 +442,8 @@ class FlextLdapModels(FlextLdifModels):
                     Categories instance with entries grouped by objectClass.
 
                 """
-                categories: m.Collections.Categories[p.Ldap.LdapEntryProtocol] = (
-                    m.Collections.Categories[p.Ldap.LdapEntryProtocol]()
+                categories: m.Collections.Categories[m.Ldif.Entry] = (
+                    m.Collections.Categories[m.Ldif.Entry]()
                 )
 
                 logger = logging.getLogger(__name__)
@@ -462,7 +466,7 @@ class FlextLdapModels(FlextLdifModels):
             ) -> dict[str, list[str]]:
                 """Extract attributes dict from entry.
 
-                Uses duck-typing to handle m.Ldif.LdifAttributes (public API via namespace)
+                Uses duck-typing to handle m.Ldif.Attributes (public API via namespace)
                 which has the same structure with .attributes property.
 
                 Args:
@@ -474,17 +478,17 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if entry.attributes is None:
                     return {}
-                # Optimize: check Mapping first (most common case)
-                # Then check Protocol (which has .attributes property)
-                if isinstance(entry.attributes, Mapping):
-                    return cls._convert_attrs_mapping(entry.attributes)
-                # Protocol case: access .attributes property
-                if isinstance(entry.attributes, p.Ldap.LdifAttributesProtocol):
-                    inner_attrs = entry.attributes.attributes
-                    # Protocol guarantees attributes is Mapping[str, Sequence[str]]
-                    # Type narrowing: inner_attrs is already Mapping[str, Sequence[str]]
-                    return cls._convert_attrs_mapping(inner_attrs)
-                return {}
+                # entry.attributes is FlextLdifModelsDomains.Attributes
+                # which is dict[LaxStr, list[LaxStr]] - convert keys to str
+                result: dict[str, list[str]] = {}
+                for k, v in entry.attributes.items():
+                    # k is LaxStr (str-like), v is list[LaxStr]
+                    key_str = str(k)
+                    if isinstance(v, Sequence):
+                        result[key_str] = [str(item) for item in v]
+                    else:
+                        result[key_str] = [str(v)]
+                return result
 
             @classmethod
             def _convert_attrs_mapping(
@@ -829,9 +833,11 @@ class FlextLdapModels(FlextLdifModels):
             Defined in models.py to avoid circular import with typings.py.
             """
 
-            type ProgressCallbackUnion = (
-                LdapProgressCallback | MultiPhaseProgressCallback | None
-            )
+            type ProgressCallbackUnion = Union[
+                FlextLdapModels.Ldap.Types.LdapProgressCallback,
+                FlextLdapModels.Ldap.Types.MultiPhaseProgressCallback,
+                None
+            ]
             """Union type for progress callbacks (accepts both single-phase and multi-phase).
 
             Union of LdapProgressCallback (4 params) and MultiPhaseProgressCallback (5 params).
@@ -842,6 +848,14 @@ class FlextLdapModels(FlextLdifModels):
 
 # Runtime alias for basic class (objetos nested sem aliases redundantes)
 # Pattern: Classes básicas sempre com runtime alias, objetos nested sem aliases redundantes
+# =========================================================================
+# NAMESPACE HIERARCHY - PADRAO CORRETO PARA FLEXT-LDAP
+# =========================================================================
+# Use namespace hierarquico completo: m.Ldap.ConnectionConfig, m.Ldap.SearchOptions
+# SEM duplicacao de declaracoes - heranca real de FlextLdifModels
+# SEM quebra de codigo - mantem compatibilidade backward
+# =========================================================================
+
 m = FlextLdapModels
 
 __all__ = ["FlextLdapModels", "m"]

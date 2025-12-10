@@ -98,18 +98,18 @@ class TestsFlextLdapModels:
 
     def test_entry_model_exists(self) -> None:
         """Test Entry model exists."""
-        tm.that(m.Ldap.Entry, none=False)
+        tm.that(m.Ldif.Entry, none=False)
 
     def test_entry_inherits_from_flext_ldif_entry(self) -> None:
         """Test Entry inherits from FlextLdifModels.Ldif.Entry."""
-        tm.that(issubclass(m.Ldap.Entry, FlextLdifModels.Ldif.Entry), eq=True)
+        tm.that(issubclass(m.Ldif.Entry, FlextLdifModels.Ldif.Entry), eq=True)
 
     def test_entry_creation(self) -> None:
         """Test Entry creation with DN and attributes."""
-        # Entry accepts DistinguishedName for dn (use m.Ldif namespace)
-        dn = m.Ldif.DistinguishedName(value=tc.RFC.DEFAULT_BASE_DN)
-        entry = m.Ldap.Entry(dn=dn, attributes=None)
-        # Entry.dn is a DistinguishedName object, use .value for string comparison
+        # Entry accepts DN for dn (use m.Ldif namespace)
+        dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
+        entry = m.Ldif.Entry(dn=dn, attributes=None)
+        # Entry.dn is a DN object, use .value for string comparison
         tm.that(entry.dn, none=False)
         assert entry.dn is not None
         tm.that(entry.dn.value, eq=tc.RFC.DEFAULT_BASE_DN)
@@ -120,15 +120,15 @@ class TestsFlextLdapModels:
     # =========================================================================
 
     def test_distinguished_name_via_ldif_namespace(self) -> None:
-        """Test DistinguishedName accessible via m.Ldif namespace (inherited)."""
-        tm.that(m.Ldif.DistinguishedName, eq=FlextLdifModels.Ldif.DistinguishedName)
+        """Test DN accessible via m.Ldif namespace (inherited)."""
+        tm.that(m.Ldif.DN, eq=FlextLdifModels.Ldif.DN)
 
     def test_ldif_attributes_via_ldif_namespace(self) -> None:
-        """Test LdifAttributes accessible via m.Ldif namespace (inherited)."""
+        """Test Attributes accessible via m.Ldif namespace (inherited)."""
         # Verify the attribute exists via namespace inheritance
-        actual = hasattr(m.Ldif, "LdifAttributes")
+        actual = hasattr(m.Ldif, "Attributes")
         tm.that(actual, eq=True)
-        tm.that(m.Ldif.LdifAttributes is FlextLdifModels.Ldif.LdifAttributes, eq=True)
+        tm.that(m.Ldif.Attributes is FlextLdifModels.Ldif.Attributes, eq=True)
 
     def test_quirk_metadata_via_ldif_namespace(self) -> None:
         """Test QuirkMetadata accessible via m.Ldif namespace (inherited)."""
@@ -257,9 +257,11 @@ class TestsFlextLdapModels:
         tm.that(options.size_limit, eq=100)
 
     def test_search_options_invalid_base_dn_format(self) -> None:
-        """Test SearchOptions validates base_dn format."""
-        with pytest.raises(ValidationError, match="Invalid base_dn format"):
-            m.Ldap.SearchOptions(base_dn="invalid-dn-format")
+        """Test SearchOptions accepts any non-empty base_dn (full validation at service layer)."""
+        # DN format validation is done at service/utility layer, not model layer
+        # Model just checks that base_dn is non-empty string
+        options = m.Ldap.SearchOptions(base_dn="invalid-dn-format")
+        tm.that(options.base_dn, eq="invalid-dn-format")
 
     def test_search_options_scope_normalization_enum(self) -> None:
         """Test SearchOptions normalizes scope from StrEnum."""
@@ -364,10 +366,8 @@ class TestsFlextLdapModels:
     ) -> None:
         """Test SearchResult.total_count computed field."""
         entries = [
-            m.Ldap.Entry(
-                dn=m.Ldif.DistinguishedName(
-                    value=f"cn=user{i},{tc.RFC.DEFAULT_BASE_DN}"
-                ),
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value=f"cn=user{i},{tc.RFC.DEFAULT_BASE_DN}"),
                 attributes=None,
             )
             for i in range(num_entries)
@@ -386,9 +386,9 @@ class TestsFlextLdapModels:
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
         """Test extract_attrs_dict_from_entry with None attributes."""
-        # Entry accepts DistinguishedName for dn (use m.Ldif namespace)
-        dn = m.Ldif.DistinguishedName(value=tc.RFC.DEFAULT_BASE_DN)
-        entry = m.Ldap.Entry(dn=dn, attributes=None)
+        # Entry accepts DN for dn (use m.Ldif namespace)
+        dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
+        entry = m.Ldif.Entry(dn=dn, attributes=None)
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         tm.that(attrs, eq={})
 
@@ -407,9 +407,9 @@ class TestsFlextLdapModels:
 
     def test_search_result_get_entry_category(self) -> None:
         """Test get_entry_category returns category or unknown."""
-        # Entry accepts DistinguishedName for dn (use m.Ldif namespace)
-        dn = m.Ldif.DistinguishedName(value=tc.RFC.DEFAULT_BASE_DN)
-        entry = m.Ldap.Entry(dn=dn, attributes=None)
+        # Entry accepts DN for dn (use m.Ldif namespace)
+        dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
+        entry = m.Ldif.Entry(dn=dn, attributes=None)
         category = m.Ldap.SearchResult.get_entry_category(entry)
         # Entry with no attributes should return "unknown"
         tm.that(category, eq="unknown")

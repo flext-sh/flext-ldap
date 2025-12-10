@@ -386,7 +386,7 @@ def convert_ldap_entries():
 
     # FlextLdif → ldap3
     new_entry = FlextLdifModels.Entry(
-        dn=FlextLdifModels.DistinguishedName(value="cn=newuser,dc=example,dc=com"),
+        dn=FlextLdifModels.DN(value="cn=newuser,dc=example,dc=com"),
         attributes=FlextLdifModels.Attributes(attributes={
             "cn": ["newuser"],
             "objectClass": ["person"]

@@ -326,7 +326,7 @@ def search_entries(self, base_dn: str, filter_str: str, scope: str,
 
 ```python
 @dataclass(frozen=True)
-class DistinguishedName:
+class DN:
     """RFC 4514 compliant Distinguished Name."""
     value: str
 
@@ -396,7 +396,7 @@ from flext_core import u
 
 # Local imports
 from flext_ldap.entities import FlextLdapUser
-from flext_ldap.value_objects import DistinguishedName
+from flext_ldap.value_objects import DN
 ```
 
 ---

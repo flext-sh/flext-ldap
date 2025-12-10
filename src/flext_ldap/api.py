@@ -9,7 +9,7 @@ Business Rules:
     - Connection and operations services are injected (no internal instantiation)
     - FlextLdif singleton is used for LDIF parsing (consistent ecosystem behavior)
     - FlextResult pattern is used for all operations (no exceptions raised)
-    - Search results use m.Ldap.Entry for cross-ecosystem compatibility
+    - Search results use m.Ldif.Entry for cross-ecosystem compatibility
     - Upsert operations implement add-or-modify pattern with idempotent handling
 
 Audit Implications:
@@ -61,9 +61,12 @@ SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 
 @runtime_checkable
 class HasConfigAttribute(Protocol):
-    """Protocol for objects with private _config attribute."""
+    """Protocol for objects exposing FlextLdapConfig configuration."""
 
-    _config: FlextLdapConfig
+    @property
+    def config(self) -> FlextLdapConfig:
+        """Return resolved LDAP configuration."""
+        ...
 
 
 def _is_multi_phase_callback(
@@ -123,21 +126,20 @@ def _is_single_phase_callback(
 
 
 def _convert_entries_to_protocol(
-    entries: Sequence[p.Entry | p.Ldap.LdapEntryProtocol],
-) -> list[p.Ldap.LdapEntryProtocol]:
+    entries: Sequence[m.Ldif.Entry],
+) -> list[m.Ldif.Entry]:
     """Convert entries to protocol list with type safety.
 
     Args:
-        entries: Sequence of entries (p.Entry or p.Ldif.Entry.EntryProtocol)
+        entries: Sequence of entries conforming to m.Ldif.Entry protocol
 
     Returns:
-        List of p.Ldif.Entry.EntryProtocol-compatible entries
+        List of m.Ldif.Entry-compatible entries
 
     """
-    # Filter entries that are protocol-compatible
-    # p.Entry is structurally compatible with p.Ldif.Entry.EntryProtocol
-    # Use isinstance check for type narrowing
-    return [entry for entry in entries if isinstance(entry, p.Ldap.LdapEntryProtocol)]
+    # All entries already implement m.Ldif.Entry protocol
+    # Return as list for batch operations
+    return list(entries)
 
 
 def _get_phase_result_value(
@@ -289,12 +291,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # PrivateAttr access is necessary for copying config from
         # connection to facade
         connection_config: FlextLdapConfig | None = None
-        # Python 3.13: Use Protocol check for type narrowing
-        if isinstance(connection, HasConfigAttribute):
-            config_raw = connection._config
-            # Type narrowing: isinstance ensures config is FlextLdapConfig
-            if isinstance(config_raw, FlextLdapConfig):
-                connection_config = config_raw
+        # Check for actual connection type that has compatible config
+        if (
+            isinstance(connection, FlextLdapConnection)
+            and isinstance(connection.config, FlextLdapConfig)
+        ):
+            # FlextLdapConnection.config is FlextLdapConfig (via super)
+            connection_config = connection.config
         # Type narrowing: connection_config is already FlextLdapConfig | None
         # After isinstance check above, if it's not None, it's FlextLdapConfig
         if connection_config is not None:
@@ -514,7 +517,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             - Delegates to FlextLdapOperations.search() for execution
             - Uses FlextLdifParser for server-specific entry parsing
             - Returns FlextResult pattern - no exceptions raised
-            - Entry models use m.Ldap.Entry for consistency
+            - Entry models use m.Ldif.Entry for consistency
 
         Args:
             search_options: Search configuration (base_dn, filter_str, scope, attributes)
@@ -528,7 +531,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def add(
         self,
-        entry: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | p.Entry,
+        entry: m.Ldif.Entry,
     ) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry.
 
@@ -564,7 +567,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def modify(
         self,
-        dn: str | p.Ldap.DistinguishedNameProtocol,
+        dn: str | m.Ldif.DN,
         changes: t.Ldap.ModifyChanges,
     ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
@@ -592,7 +595,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
-            dn: Distinguished name of entry to modify (string or DistinguishedName model)
+            dn: Distinguished name of entry to modify (string or DN model)
             changes: Modification changes dict in ldap3 format
 
         Returns:
@@ -604,7 +607,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def delete(
         self,
-        dn: str | p.Ldap.DistinguishedNameProtocol,
+        dn: str | m.Ldif.DN,
     ) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
@@ -629,7 +632,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
-            dn: Distinguished name of entry to delete (string or DistinguishedName model)
+            dn: Distinguished name of entry to delete (string or DN model)
 
         Returns:
             FlextResult containing OperationResult with success status and entries_affected=1
@@ -640,7 +643,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def upsert(
         self,
-        entry: p.Ldap.LdapEntryProtocol | m.Ldap.Entry | p.Entry,
+        entry: m.Ldif.Entry,
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
@@ -687,7 +690,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     @u.Args.validated_with_result
     def batch_upsert(
         self,
-        entries: Sequence[p.Ldap.LdapEntryProtocol],
+        entries: Sequence[m.Ldif.Entry],
         *,
         progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
         retry_on_errors: list[str] | None = None,
@@ -791,13 +794,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}"
             )
 
-        # Type narrowing: parse_result.unwrap() returns list[p.Entry]
+        # Type narrowing: parse_result.unwrap() returns list[m.Ldif.Entry]
         # Runtime validation ensures correctness
         parse_value = parse_result.unwrap()
-        # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees p.Entry
+        # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees m.Ldif.Entry
         # Use list comprehension with isinstance for type narrowing
-        entries: list[p.Entry] = [
-            entry for entry in parse_value if isinstance(entry, p.Entry)
+        entries: list[m.Ldif.Entry] = [
+            entry for entry in parse_value if isinstance(entry, m.Ldif.Entry)
         ]
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
@@ -839,8 +842,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 # Type narrowing: callback is LdapProgressCallback (4 params)
                 single_phase_callback = callback_union
 
-        # p.Entry implements p.Ldif.Entry.EntryProtocol (structural compatibility)
-        # Type narrowing: entries is list[FlextLdifModels.Entry] which implements p.Ldif.Entry.EntryProtocol
+        # p.Entry implements m.Ldif.Entry.EntryProtocol (structural compatibility)
+        # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
         # Structural typing: p.Entry implements p.Ldap.LdapEntryProtocol
         # Convert to list explicitly for type safety
         # Use helper function for type-safe conversion
@@ -1143,7 +1146,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         return r[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
-                phase_results=phase_results,
+                phase_results=phase_results,  # pyrefly: ignore[bad-argument-type]
                 total_entries=totals["entries"],
                 total_synced=totals["synced"],
                 total_failed=totals["failed"],
