@@ -35,6 +35,7 @@ from collections.abc import Callable, Mapping, Sequence
 
 from flext_core import r
 from flext_ldif import FlextLdifUtilities
+from flext_ldif.typings import LaxStr
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
 
@@ -42,7 +43,6 @@ from flext_ldap.base import s
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
@@ -81,7 +81,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         >>> ops = FlextLdapOperations(connection=conn)
         >>> result = ops.search(m.Ldap.SearchOptions(base_dn="dc=example,dc=com"))
         >>> if result.is_success:
-        ...     entries = result.unwrap().entries
+        ...     entries = result.value.entries
 
     """
 
@@ -142,23 +142,34 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _convert_mapping_to_dict(
-            attrs: Mapping[str, Sequence[str]],
+            attrs: Mapping[LaxStr, list[LaxStr]],
         ) -> dict[str, list[str]]:
             """Convert Mapping to dict[str, list[str]].
 
             Args:
-                attrs: Mapping of attribute names to sequences
+                attrs: Mapping of attribute names to sequences (handles LaxStr keys/values)
 
             Returns:
                 Dictionary of attribute names to list of strings
 
             """
             # Python 3.13: Use isinstance directly for type narrowing
+            # Handle LaxStr keys (str | bytes | bytearray) and values
             attrs_result: dict[str, list[str]] = {}
-            for k, v in u.mapper().to_dict(attrs).items():
-                attrs_result[k] = (
-                    [str(item) for item in v] if isinstance(v, Sequence) else [str(v)]
-                )
+            for k, v in attrs.items():
+                # Ensure key is str (handle LaxStr from LDIF: str | bytes | bytearray)
+                if isinstance(k, bytes):
+                    key_str = k.decode('utf-8', errors='replace')
+                elif isinstance(k, bytearray):
+                    key_str = bytes(k).decode('utf-8', errors='replace')
+                else:
+                    key_str = str(k)
+
+                # Convert value to list of strings
+                if isinstance(v, Sequence):
+                    attrs_result[key_str] = [str(item) for item in v]
+                else:
+                    attrs_result[key_str] = [str(v)]
             return attrs_result
 
         @staticmethod
@@ -178,10 +189,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             if ldif_attrs is None:
                 return {}
             # Python 3.13: Protocol guarantees attributes is Mapping - direct access
-            if isinstance(ldif_attrs, p.Ldap.AttributesProtocol):
+            if isinstance(ldif_attrs, m.Ldif.Attributes):
                 attrs_dict = ldif_attrs.attributes
-                # Protocol guarantees Mapping[str, Sequence[str]] - direct dict conversion
-                return dict(attrs_dict) if isinstance(attrs_dict, Mapping) else {}
+                # Convert using helper to handle LaxStr keys properly
+                if isinstance(attrs_dict, Mapping):
+                    return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
+                        attrs_dict
+                    )
             return {}
 
         @staticmethod
@@ -201,14 +215,18 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs = entry.attributes
             match attrs:
                 case Mapping():
+                    # Convert Mapping with potentially LaxStr keys/values
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
                         attrs
                     )
-                case p.Ldap.AttributesProtocol():
-                    # Protocol guarantees Mapping[str, Sequence[str]]
-                    return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                        attrs.attributes
-                    )
+                case m.Ldif.Attributes():
+                    # Convert m.Ldif.Attributes which has dict[LaxStr, list[LaxStr]]
+                    attrs_dict = attrs.attributes
+                    if isinstance(attrs_dict, Mapping):
+                        return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
+                            attrs_dict
+                        )
+                    return {}
                 case _:
                     return {}
 
@@ -236,8 +254,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             if entry.attributes is None:
                 return {}
             # All entries conform to m.Ldif.Entry protocol - use protocol handler
-            return FlextLdapOperations.EntryComparison._extract_protocol_entry_attributes(
-                entry
+            return (
+                FlextLdapOperations.EntryComparison._extract_protocol_entry_attributes(
+                    entry
+                )
             )
 
         @staticmethod
@@ -577,17 +597,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             """
             # Convert from protocol to model
             dn_value = str(entry.dn)
-            attrs_mapping = (
-                FlextLdapOperations.EntryComparison.extract_attributes(
-                    entry,
-                )
+            attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
+                entry,
             )
             # Python 3.13: Modern dict comprehension with type narrowing
             # Type as flexible Mapping to accommodate LaxStr variant in Attributes
             attrs_dict: dict[str | bytes | bytearray, list[str | bytes | bytearray]] = {
-                k: [str(item) for item in v]
-                if isinstance(v, Sequence)
-                else [str(v)]
+                k: [str(item) for item in v] if isinstance(v, Sequence) else [str(v)]
                 for k, v in u.mapper().to_dict(attrs_mapping).items()
             }
             return m.Ldif.Entry(
@@ -1033,7 +1049,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         )
         # Adapter returns r[SearchResultProtocol] - unwrap directly
         if result.is_success:
-            search_result = result.unwrap()
+            search_result = result.value
             # Type narrowing: SearchResultProtocol is compatible with SearchResult model
             return r[m.Ldap.SearchResult].ok(search_result)
         # DSL pattern: ensure error message with default
@@ -1095,7 +1111,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         result = self._connection.adapter.add(entry_for_adapter)
         # Adapter returns r[OperationResultProtocol] - unwrap directly
         if result.is_success:
-            operation_result = result.unwrap()
+            operation_result = result.value
             return r[m.Ldap.OperationResult].ok(operation_result)
         # DSL pattern: ensure error message with default
         # DSL pattern: builder for str conversion
@@ -1148,7 +1164,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         )
         # Adapter returns r[OperationResultProtocol] - unwrap directly
         if result.is_success:
-            operation_result = result.unwrap()
+            operation_result = result.value
             return r[m.Ldap.OperationResult].ok(operation_result)
         # DSL pattern: ensure error message with default
         # DSL pattern: builder for str conversion
@@ -1196,7 +1212,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         result = self._connection.adapter.delete(dn_model)
         # Adapter returns r[OperationResultProtocol] - unwrap directly
         if result.is_success:
-            operation_result = result.unwrap()
+            operation_result = result.value
             return r[m.Ldap.OperationResult].ok(operation_result)
         # DSL pattern: ensure error message with default
         # DSL pattern: builder for str conversion
@@ -1315,7 +1331,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     ) -> None:
         """Update batch stats from upsert result."""
         if upsert_result.is_success:
-            operation = upsert_result.unwrap().operation
+            operation = upsert_result.value.operation
             if operation == c.Ldap.UpsertOperations.SKIPPED:
                 stats["skipped"] += 1
             elif operation in {

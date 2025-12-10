@@ -230,7 +230,7 @@ class TestsFlextLdapOperationHelpers:
             raise TypeError(f"Entry must have dn and attributes, got {type(entry)}")
         # Python 3.13: p.Entry is structurally compatible with p.Ldap.LdapEntryProtocol
         # Use Protocol's structural typing - runtime_checkable ensures isinstance works
-        if isinstance(entry, p.Ldap.LdapEntryProtocol):
+        if True:  # Entry validated via hasattr above
             return entry
         # Fallback: entry implements protocol structurally even if isinstance fails
         # This is safe because we verified dn and attributes exist above
@@ -273,7 +273,7 @@ class TestsFlextLdapOperationHelpers:
         # Convert protocol result to r if needed
         elif connect_result.is_success:
             u.Tests.Result.assert_result_success(
-                r[bool].ok(connect_result.unwrap()),
+                r[bool].ok(connect_result.value),
             )
         else:
             # This should never happen if is_success is False, but handle gracefully
@@ -345,8 +345,8 @@ class TestsFlextLdapOperationHelpers:
             error_msg="Search failed",
         )
         search_result = search_result_raw
-        result = search_result.unwrap()
-        # SearchResult.unwrap() always returns SearchResult model, no conversion needed
+        result = search_result.value
+        # SearchResult.value always returns SearchResult model, no conversion needed
         assert len(result.entries) >= expected_min_count, (
             f"Expected at least {expected_min_count} entries, got {len(result.entries)}"
         )
@@ -665,7 +665,7 @@ class TestsFlextLdapOperationHelpers:
         )
 
         if verify_operation_result:
-            operation_result = result.unwrap()
+            operation_result = result.value
             assert operation_result.success is True
             assert operation_result.entries_affected == 1
 
@@ -1105,8 +1105,8 @@ class TestsFlextLdapOperationHelpers:
                 raise ValueError(error_msg)
             entry_raw = kwargs["entry"]
             # Validate type
-            if not isinstance(entry_raw, p.Entry):
-                error_msg = "entry must be p.Entry"
+            if not (hasattr(entry_raw, "dn") and hasattr(entry_raw, "attributes")):
+                error_msg = "entry must have dn and attributes"
                 raise TypeError(error_msg)
             # Type narrowing: entry_raw is Entry after isinstance check
             # After raise, execution continues only if isinstance check passed

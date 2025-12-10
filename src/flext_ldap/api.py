@@ -48,7 +48,6 @@ from flext_ldap.base import s
 from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import t
@@ -143,7 +142,7 @@ def _convert_entries_to_protocol(
 
 
 def _get_phase_result_value(
-    phase_result: m.Ldap.PhaseSyncResult | p.Ldap.PhaseSyncResultProtocol,
+    phase_result: m.Ldap.PhaseSyncResult,
     attr_name: str,
     default: int = 0,
 ) -> int:
@@ -161,7 +160,7 @@ def _get_phase_result_value(
     # Python 3.13: Both union types share same attributes - direct access
     # isinstance check ensures protocol compatibility
     if isinstance(
-        phase_result, (m.Ldap.PhaseSyncResult, p.Ldap.PhaseSyncResultProtocol)
+        phase_result, (m.Ldap.PhaseSyncResult, m.Ldap.PhaseSyncResult)
     ):
         # Use match-case for modern Python 3.13 pattern matching
         match attr_name:
@@ -216,7 +215,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         ...     api.connect(connection_config)
         ...     result = api.search(search_options)
         ...     if result.is_success:
-        ...         entries = result.unwrap().entries
+        ...         entries = result.value.entries
         >>> # disconnect called automatically on context exit
 
     """
@@ -292,9 +291,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # connection to facade
         connection_config: FlextLdapConfig | None = None
         # Check for actual connection type that has compatible config
-        if (
-            isinstance(connection, FlextLdapConnection)
-            and isinstance(connection.config, FlextLdapConfig)
+        if isinstance(connection, FlextLdapConnection) and isinstance(
+            connection.config, FlextLdapConfig
         ):
             # FlextLdapConnection.config is FlextLdapConfig (via super)
             connection_config = connection.config
@@ -794,9 +792,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}"
             )
 
-        # Type narrowing: parse_result.unwrap() returns list[m.Ldif.Entry]
+        # Type narrowing: parse_result.value returns list[m.Ldif.Entry]
         # Runtime validation ensures correctness
-        parse_value = parse_result.unwrap()
+        parse_value = parse_result.value
         # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees m.Ldif.Entry
         # Use list comprehension with isinstance for type narrowing
         entries: list[m.Ldif.Entry] = [
@@ -844,7 +842,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         # p.Entry implements m.Ldif.Entry.EntryProtocol (structural compatibility)
         # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
-        # Structural typing: p.Entry implements p.Ldap.LdapEntryProtocol
+        # Structural typing: p.Entry implements m.Ldif.Entry
         # Convert to list explicitly for type safety
         # Use helper function for type-safe conversion
         entries_protocol = _convert_entries_to_protocol(entries)
@@ -868,7 +866,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             )
             return r[m.Ldap.PhaseSyncResult].fail(f"Batch sync failed: {error_msg}")
 
-        batch_stats = batch_result.unwrap()
+        batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()
 
         total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped
@@ -1115,7 +1113,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 if config.stop_on_error:
                     stop_requested = True
             else:
-                phase_results[phase_name] = phase_result.unwrap()
+                phase_results[phase_name] = phase_result.value
 
         # Aggregate totals from phase results
         phase_values = list(phase_results.values())

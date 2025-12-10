@@ -147,20 +147,6 @@ class FlextLdapTypes(FlextLdifTypes):
             This alias is kept for backward compatibility but should not be used in new code.
             """
 
-            # Operation data types (ldap3 compatibility)
-            type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
-            """Type alias for LDAP modify changes (ldap3 compatibility).
-
-            Format: {attribute_name: [(operation, [values])]}
-            Operations: 'MODIFY_ADD', 'MODIFY_DELETE', 'MODIFY_REPLACE'
-            """
-            type AttributeValues = dict[str, list[str]]
-            """Type alias for LDAP attribute values (multi-valued attributes)."""
-            type Attributes = dict[str, list[str]]
-            """Type alias for LDAP attributes (attribute name to value list mapping)."""
-            type AttributesReadOnly = Mapping[str, Sequence[str]]
-            """Type alias for read-only LDAP attributes mapping."""
-
             # ldap3 entry value types (for adapter conversion)
             type Ldap3EntryValue = (
                 str
@@ -186,8 +172,12 @@ class FlextLdapTypes(FlextLdifTypes):
             """Type alias for conversion state: (removed_attrs, base64_attrs)."""
 
             # Callables
-            type AddCallable = Callable[[str, str | None, FlextLdapTypes.Ldap.AttributeValues | None], bool]
-            type ModifyCallable = Callable[[str, FlextLdapTypes.Ldap.ModifyChanges], bool]
+            type AddCallable = Callable[
+                [str, str | None, FlextLdapTypes.Ldap.AttributeValues | None], bool
+            ]
+            type ModifyCallable = Callable[
+                [str, FlextLdapTypes.Ldap.ModifyChanges], bool
+            ]
             type DeleteCallable = Callable[[str], bool]
             type SearchCallable = Callable[
                 [

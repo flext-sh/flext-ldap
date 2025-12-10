@@ -311,7 +311,7 @@ class FlextLdapConnection(s[bool]):
             self.logger.info(
                 "Server type detected automatically",
                 operation=c.Ldap.LdapOperationNames.CONNECT,
-                detected_server_type=detection_result.unwrap(),
+                detected_server_type=detection_result.value,
             )
         else:
             self.logger.debug(

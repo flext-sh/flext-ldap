@@ -64,11 +64,15 @@ class HasDynamicAttribute(Protocol):
 
 @runtime_checkable
 class HasAttributesProperty(Protocol):
-    """Protocol for objects with 'attributes' property."""
+    """Protocol for objects with 'attributes' property.
+
+    Uses Mapping (covariant) instead of dict (invariant) to allow structural
+    compatibility with dict subtypes and Sequence subtypes in values.
+    """
 
     @property
-    def attributes(self) -> dict[str, object] | Mapping[str, object]:
-        """Get attributes property."""
+    def attributes(self) -> Mapping[str, object]:
+        """Get attributes property - covariant Mapping for structural compatibility."""
         ...
 
 
@@ -238,7 +242,7 @@ class Ldap3Adapter(s[bool]):
             for entry in connection.entries:
                 # Type narrowing: entry is ldap3.Entry with dynamic attributes
                 # Use Protocol for type-safe attribute access
-                if not isinstance(entry, p.Ldap.Ldap3EntryProtocol):
+                if not hasattr(entry, 'entry_dn'):
                     # Fallback for non-protocol entries
                     dn = str(entry) if entry else ""
                     results.append((dn, {}))
@@ -321,7 +325,7 @@ class Ldap3Adapter(s[bool]):
                 if attr_obj is None:
                     continue
 
-                if isinstance(attr_obj, p.Ldap.Ldap3AttributeProtocol):
+                if hasattr(attr_obj, 'values'):
                     attr_values = attr_obj.values
                     # Protocol guarantees values is Sequence[object], which is iterable
                     # No isinstance check needed - Sequence is directly iterable
@@ -333,7 +337,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: p.Ldap.LdapEntryProtocol | m.Ldif.Entry | object,
+            parsed: m.Ldif.Entry | object,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -372,9 +376,9 @@ class Ldap3Adapter(s[bool]):
 
             # Protocol-based entry - extract DN value using utilities
             dn_raw: object | None = None
-            if isinstance(parsed, p.Ldap.LdapEntryProtocol):
+            if isinstance(parsed, m.Ldif.Entry):
                 dn_raw = parsed.dn
-            elif isinstance(parsed, p.Ldap.Ldap3EntryProtocol):
+            elif hasattr(parsed, 'entry_dn'):
                 # Use Protocol for type-safe access to entry_dn
                 dn_raw = parsed.entry_dn
             else:
@@ -430,7 +434,6 @@ class Ldap3Adapter(s[bool]):
                 HasAttributesProperty
                 | Mapping[str, object | Sequence[str]]
                 | HasItemsMethod
-                | p.Ldap.AttributesProtocol
                 | m.Ldif.Attributes
                 | BaseModel
             ),
@@ -487,7 +490,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: p.Ldap.LdapEntryProtocol | m.Ldif.Entry | object,
+            parsed: m.Ldif.Entry | object,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -512,7 +515,7 @@ class Ldap3Adapter(s[bool]):
             """
             # Get attributes from entry
             attrs_raw: object | None = None
-            if isinstance(parsed, (m.Ldif.Entry, p.Ldap.LdapEntryProtocol)):
+            if isinstance(parsed, (m.Ldif.Entry, m.Ldif.Entry)):
                 attrs_raw = parsed.attributes
             else:
                 # Fallback: try dynamic attribute access for unknown types
@@ -538,7 +541,7 @@ class Ldap3Adapter(s[bool]):
                     HasAttributesProperty,
                     Mapping,
                     HasItemsMethod,
-                    p.Ldap.AttributesProtocol,
+                    m.Ldif.Attributes,
                     m.Ldif.Attributes,
                     BaseModel,
                 ),
@@ -550,7 +553,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: p.Ldap.LdapEntryProtocol | m.Ldif.Entry | object,
+            parsed: m.Ldif.Entry | object,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -578,7 +581,7 @@ class Ldap3Adapter(s[bool]):
             """
             # Extract metadata using protocol check
             metadata_raw: object | None = None
-            if isinstance(parsed, p.Ldap.LdapEntryProtocol):
+            if isinstance(parsed, m.Ldif.Entry):
                 metadata_raw = parsed.metadata
             else:
                 # Fallback: try dynamic attribute access for unknown types
@@ -717,7 +720,7 @@ class Ldap3Adapter(s[bool]):
                 entry_for_extraction: m.Ldif.Entry | None = None
                 # Only accept m.Ldif.Entry instances for direct processing
                 # Other types must be validated and converted in service layer
-                if isinstance(entry_raw, p.Ldap.Ldap3EntryProtocol):
+                if hasattr(entry_raw, 'entry_dn'):
                     # ldap3.Entry - convert to EntryProtocol-compatible structure
                     # This requires extracting entry_dn and building attributes dict
                     # For now, skip - ldap3 entries should be converted via ldap3_to_ldif_entry first
@@ -1093,7 +1096,7 @@ class Ldap3Adapter(s[bool]):
                     return r[list[m.Ldif.Entry]].fail(error_msg)
 
                 # Use parse_response directly - m.Ldif.ParseResponse is the public API
-                parse_response = parse_result.unwrap()
+                parse_response = parse_result.value
                 return self._adapter.ResultConverter.convert_parsed_entries(
                     parse_response,
                 )
@@ -1346,13 +1349,13 @@ class Ldap3Adapter(s[bool]):
         search_params = self.SearchExecutor.SearchParams(
             base_dn=search_options.base_dn,
             filter_str=search_options.filter_str,
-            ldap_scope=scope_result.unwrap(),
+            ldap_scope=scope_result.value,
             search_attributes=search_options.attributes or [],
             size_limit=search_options.size_limit,
             time_limit=search_options.time_limit,
         )
         entries_result = self.SearchExecutor(self).execute(
-            connection_result.unwrap(),
+            connection_result.value,
             search_params,
             server_type,
         )
@@ -1364,7 +1367,7 @@ class Ldap3Adapter(s[bool]):
 
         # Use entries directly - m.Ldif.Entry is the public API
         # so all entries are compatible via duck-typing (same interface)
-        entries_raw = entries_result.unwrap()
+        entries_raw = entries_result.value
 
         return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(
@@ -1424,9 +1427,9 @@ class Ldap3Adapter(s[bool]):
         # DSL pattern: conditional default
         dn_str = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
         return self.OperationExecutor(self).execute_add(
-            connection_result.unwrap(),
+            connection_result.value,
             dn_str,
-            attrs_result.unwrap(),
+            attrs_result.value,
         )
 
     def modify(
@@ -1468,7 +1471,7 @@ class Ldap3Adapter(s[bool]):
                 str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_modify(
-            connection_result.unwrap(),
+            connection_result.value,
             dn,
             changes,
         )
@@ -1510,7 +1513,7 @@ class Ldap3Adapter(s[bool]):
                 str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_delete(
-            connection_result.unwrap(),
+            connection_result.value,
             dn,
         )
 

@@ -64,12 +64,8 @@ class FlextLdapConstants(FlextLdifConstants):
                 COMPLETED = "completed"
                 FAILED = "failed"
 
-            type StatusLiteral = Literal[
-                "pending",
-                "running",
-                "completed",
-                "failed",
-            ]
+            # Status StrEnum → Literal type alias (Python 3.13+ PEP 695)
+            type StatusLiteral = Literal["pending", "running", "completed", "failed"]
 
         # ═══════════════════════════════════════════════════════════════════
         # COMPOSITION: Use FlextLdifConstants via .Ldif namespace (no duplication)
@@ -560,25 +556,9 @@ class FlextLdapConstants(FlextLdifConstants):
         # DRY Pattern: Literals reference StrEnum members - NO string duplication!
         # StrEnum is single source of truth - Literal types reference enum members
         # SearchScope StrEnum → Literal (references SearchScope enum members)
-        type SearchScopeLiteral = Literal[
-            FlextLdapConstants.Ldap.SearchScope.BASE,
-            FlextLdapConstants.Ldap.SearchScope.ONELEVEL,
-            FlextLdapConstants.Ldap.SearchScope.SUBTREE,
-        ]
 
         # OperationType StrEnum → Literal (references OperationType enum members)
         # Reuses base operation constants from flext-ldif via OperationType enum
-        type OperationTypeLiteral = Literal[
-            FlextLdapConstants.Ldap.OperationType.SEARCH,
-            # Reuses base operations from flext-ldif via OperationType enum
-            FlextLdapConstants.Ldap.OperationType.ADD,
-            FlextLdapConstants.Ldap.OperationType.MODIFY,
-            FlextLdapConstants.Ldap.OperationType.DELETE,
-            FlextLdapConstants.Ldap.OperationType.MODIFY_DN,
-            FlextLdapConstants.Ldap.OperationType.COMPARE,
-            FlextLdapConstants.Ldap.OperationType.BIND,
-            FlextLdapConstants.Ldap.OperationType.UNBIND,
-        ]
 
         # ServerTypes StrEnum → Literal (references ServerTypes enum members)
         # NOTE: LdapServerTypeLiteral provides LDAP-specific server types
@@ -603,111 +583,28 @@ class FlextLdapConstants(FlextLdifConstants):
         ]
 
         # UpsertOperations StrEnum → Literal (references UpsertOperations enum members)
-        type UpsertOperationLiteral = Literal[
-            FlextLdapConstants.Ldap.UpsertOperations.ADDED,
-            FlextLdapConstants.Ldap.UpsertOperations.MODIFIED,
-            FlextLdapConstants.Ldap.UpsertOperations.SKIPPED,
-        ]
 
         # Ldap3ScopeValues StrEnum → Literal (references Ldap3ScopeValues enum members)
-        type Ldap3ScopeLiteral = Literal[
-            FlextLdapConstants.Ldap.Ldap3ScopeValues.BASE,
-            FlextLdapConstants.Ldap.Ldap3ScopeValues.LEVEL,
-            FlextLdapConstants.Ldap.Ldap3ScopeValues.SUBTREE,
-        ]
 
         # ErrorStrings StrEnum → Literal (references ErrorStrings enum members)
-        type ErrorStringLiteral = Literal[
-            FlextLdapConstants.Ldap.ErrorStrings.UNKNOWN_ERROR,
-            FlextLdapConstants.Ldap.ErrorStrings.NOT_CONNECTED,
-            FlextLdapConstants.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS,
-            FlextLdapConstants.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_ALT,
-            FlextLdapConstants.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_LDAP,
-            FlextLdapConstants.Ldap.ErrorStrings.SESSION_TERMINATED,
-        ]
 
         # LdapOperationNames StrEnum → Literal (references LdapOperationNames enum members)
         # Reuses base operation constants from flext-ldif via LdapOperationNames enum
-        type LdapOperationNameLiteral = Literal[
-            FlextLdapConstants.Ldap.LdapOperationNames.SYNC,
-            FlextLdapConstants.Ldap.LdapOperationNames.CONNECT,
-            FlextLdapConstants.Ldap.LdapOperationNames.DISCONNECT,
-            FlextLdapConstants.Ldap.LdapOperationNames.SEARCH,
-            # Reuses base operations from flext-ldif via LdapOperationNames enum
-            FlextLdapConstants.Ldap.LdapOperationNames.ADD,
-            FlextLdapConstants.Ldap.LdapOperationNames.MODIFY,
-            FlextLdapConstants.Ldap.LdapOperationNames.DELETE,
-            FlextLdapConstants.Ldap.LdapOperationNames.BATCH_UPSERT,
-            FlextLdapConstants.Ldap.LdapOperationNames.DETECT_FROM_CONNECTION,
-            FlextLdapConstants.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
-            FlextLdapConstants.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
-        ]
 
         # LdapAclAttributes StrEnum → Literal (references LdapAclAttributes enum members)
-        type AclAttributeLiteral = Literal[
-            FlextLdapConstants.Ldap.LdapAclAttributes.RAW,
-            FlextLdapConstants.Ldap.LdapAclAttributes.TARGET,
-            FlextLdapConstants.Ldap.LdapAclAttributes.TARGET_ATTRIBUTES,
-            FlextLdapConstants.Ldap.LdapAclAttributes.SUBJECT,
-            FlextLdapConstants.Ldap.LdapAclAttributes.PERMISSIONS,
-        ]
 
         # AclFormat StrEnum → Literal (references AclFormat enum members)
-        type AclFormatLiteral = Literal[
-            FlextLdapConstants.Ldap.AclFormat.GENERIC,
-            FlextLdapConstants.Ldap.AclFormat.OPENLDAP2,
-            FlextLdapConstants.Ldap.AclFormat.OPENLDAP1,
-            FlextLdapConstants.Ldap.AclFormat.ORACLE,
-        ]
 
         # SyntheticDns StrEnum → Literal (references SyntheticDns enum members)
-        type SyntheticDnLiteral = Literal[
-            FlextLdapConstants.Ldap.SyntheticDns.ACL_RULE,
-            FlextLdapConstants.Ldap.SyntheticDns.OBJECT_CLASS_DEFINITION,
-            FlextLdapConstants.Ldap.SyntheticDns.ATTRIBUTE_TYPE_DEFINITION,
-        ]
 
         # SaslMechanisms StrEnum → Literal (references SaslMechanisms enum members)
-        type SaslMechanismLiteral = Literal[
-            FlextLdapConstants.Ldap.SaslMechanisms.SIMPLE,
-            FlextLdapConstants.Ldap.SaslMechanisms.SASL_EXTERNAL,
-            FlextLdapConstants.Ldap.SaslMechanisms.SASL_DIGEST_MD5,
-            FlextLdapConstants.Ldap.SaslMechanisms.SASL_GSSAPI,
-        ]
 
         # RootDseAttributes StrEnum → Literal (references RootDseAttributes enum members)
-        type RootDseAttributeLiteral = Literal[
-            FlextLdapConstants.Ldap.RootDseAttributes.VENDOR_NAME,
-            FlextLdapConstants.Ldap.RootDseAttributes.VENDOR_VERSION,
-            FlextLdapConstants.Ldap.RootDseAttributes.CONFIG_CONTEXT,
-            FlextLdapConstants.Ldap.RootDseAttributes.ROOT_DOMAIN_NAMING_CONTEXT,
-            FlextLdapConstants.Ldap.RootDseAttributes.DEFAULT_NAMING_CONTEXT,
-        ]
 
         # VendorNames StrEnum → Literal (references VendorNames enum members)
-        type VendorNameLiteral = Literal[
-            FlextLdapConstants.Ldap.VendorNames.ORACLE,
-            FlextLdapConstants.Ldap.VendorNames.OPENLDAP,
-            FlextLdapConstants.Ldap.VendorNames.MICROSOFT,
-            FlextLdapConstants.Ldap.VendorNames.WINDOWS,
-            FlextLdapConstants.Ldap.VendorNames.NOVELL,
-            FlextLdapConstants.Ldap.VendorNames.EDIR,
-            FlextLdapConstants.Ldap.VendorNames.IBM,
-            FlextLdapConstants.Ldap.VendorNames.UNBOUNDID,
-            FlextLdapConstants.Ldap.VendorNames.FORGEROCK,
-        ]
 
         # ChangeTypeOperations StrEnum → Literal (references ChangeTypeOperations enum members)
         # Reuses base operation constants from flext-ldif via ChangeTypeOperations enum
-        type ChangeTypeOperationLiteral = Literal[
-            # Reuses base operations from flext-ldif via ChangeTypeOperations enum
-            FlextLdapConstants.Ldap.ChangeTypeOperations.ADD,
-            FlextLdapConstants.Ldap.ChangeTypeOperations.DELETE,
-            FlextLdapConstants.Ldap.ChangeTypeOperations.MODIFY,
-            FlextLdapConstants.Ldap.ChangeTypeOperations.MODDN,
-            FlextLdapConstants.Ldap.ChangeTypeOperations.MODRDN,
-            FlextLdapConstants.Ldap.ChangeTypeOperations.REPLACE,
-        ]
 
         # ═══════════════════════════════════════════════════════════════════
         # SERVER TYPE MAPPINGS (flext-ldap ↔ flext-ldif compatibility)

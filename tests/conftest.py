@@ -256,7 +256,7 @@ class TestFixtures:
         """Load test users from JSON file with default fallback."""
         result = TestFixtures.load_json("test_users.json")
         if result.is_success:
-            return result.unwrap()
+            return result.value
         logger.warning(f"Failed to load users: {result.error}")
         return []
 
@@ -265,7 +265,7 @@ class TestFixtures:
         """Load test groups from JSON file with default fallback."""
         result = TestFixtures.load_json("test_groups.json")
         if result.is_success:
-            return result.unwrap()
+            return result.value
         logger.warning(f"Failed to load groups: {result.error}")
         return []
 
@@ -274,7 +274,7 @@ class TestFixtures:
         """Load base LDIF structure from file with default fallback."""
         result = TestFixtures.load_ldif("test_base.ldif")
         if result.is_success:
-            return result.unwrap()
+            return result.value
         logger.warning(f"Failed to load base LDIF: {result.error}")
         return ""
 
@@ -296,9 +296,9 @@ class TestFixtures:
         result = ldif.parse(ldif_content, server_type="rfc")
         if result.is_success:
             # Python 3.13: Type narrowing - unwrap() returns list[p.Entry]
-            entries = result.unwrap()
+            entries = result.value
             # Type narrowing: entries is list[p.Entry] from parse result
-            return [entry for entry in entries if isinstance(entry, p.Entry)]
+            return [entry for entry in entries if hasattr(entry, "dn") and hasattr(entry, "attributes")]
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
         logger.warning(f"Failed to parse base LDIF: {result.error}")

@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -41,7 +40,6 @@ from pydantic import PrivateAttr
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
@@ -537,7 +535,7 @@ class FlextLdapEntryAdapter(s[bool]):
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
             entry_dn_for_log = "unknown"
-            if isinstance(ldap3_entry, p.Ldap.Ldap3EntryProtocol):
+            if hasattr(ldap3_entry, 'entry_dn'):
                 entry_dn_for_log = (
                     str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
                 )
@@ -576,7 +574,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns dict[str, list[str]] format expected by ldap3
 
         Args:
-            entry: p.Ldap.LdapEntryProtocol with attributes to convert.
+            entry: m.Ldif.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:
@@ -584,22 +582,29 @@ class FlextLdapEntryAdapter(s[bool]):
             or error if entry has no attributes or conversion fails.
 
         """
-        # Use entry directly - p.Ldap.LdapEntryProtocol is the public API
+        # Use entry directly - m.Ldif.Entry is the public API
         # Check if attributes are empty
         if entry.attributes is None:
             return r[t.Ldap.Attributes].fail("Entry has no attributes")
-        # Cast to AttributesProtocol - we expect LDIF entries with attributes property
-        ldif_attrs = cast("p.Ldap.AttributesProtocol", entry.attributes)
+        # entry.attributes is already m.Ldif.Attributes type (after None check above)
+        ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
             return r[t.Ldap.Attributes].fail("Entry has no attributes")
         try:
             # Python 3.13: Use isinstance directly for type-safe filtering
-            filtered_attrs: dict[str, list[str]] = {
-                k: [str(item) for item in v]
-                for k, v in attrs_dict.items()
-                if isinstance(v, Sequence)
-            }
+            # Convert to str keys and list values to ensure type compatibility
+            filtered_attrs: dict[str, list[str]] = {}
+            for k, v in attrs_dict.items():
+                if isinstance(v, Sequence):
+                    # Ensure key is str (handle LaxStr: str | bytes | bytearray)
+                    if isinstance(k, bytes):
+                        key_str = k.decode('utf-8', errors='replace')
+                    elif isinstance(k, bytearray):
+                        key_str = bytes(k).decode('utf-8', errors='replace')
+                    else:
+                        key_str = str(k)
+                    filtered_attrs[key_str] = [str(item) for item in v]
             return r[t.Ldap.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above

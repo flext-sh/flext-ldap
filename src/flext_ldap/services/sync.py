@@ -40,7 +40,6 @@ from pydantic import ConfigDict, PrivateAttr
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.utilities import u
 
@@ -84,7 +83,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         ...     ),
         ... )
         >>> if result.is_success:
-        ...     stats = result.unwrap()
+        ...     stats = result.value
         ...     print(f"Added: {stats.added}, Skipped: {stats.skipped}")
 
     """
@@ -455,9 +454,9 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
         # API parse returns list[FlextLdifModels.Entry] (from flext-ldif)
         # m.Ldif.Entry implements m.Ldif.Entry protocol, so entries are compatible
-        # Type narrowing: parse_result.unwrap() returns list[FlextLdifModels.Entry]
+        # Type narrowing: parse_result.value returns list[FlextLdifModels.Entry]
         # which implements m.Ldif.Entry protocol via structural typing
-        entries_raw = parse_result.unwrap()
+        entries_raw = parse_result.value
         # m.Ldif.Entry implements m.Ldif.Entry, so conversion is safe
 
         # List of m.Ldif.Entry instances all implement m.Ldif.Entry protocol
@@ -465,9 +464,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Only accept m.Ldif.Entry instances (which properly implement protocol)
         # Other types must be validated and converted in service layer
         entries: list[m.Ldif.Entry] = [
-            entry
-            for entry in entries_raw
-            if isinstance(entry, m.Ldif.Entry)
+            entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)
         ]
         return self._process_entries(entries, options, start_time)
 
@@ -528,7 +525,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         if batch_result.is_failure:
             return batch_result
 
-        stats = batch_result.unwrap()
+        stats = batch_result.value
         duration = (self._generate_datetime_utc() - start_time).total_seconds()
         return r[m.Ldap.SyncStats].ok(
             stats.model_copy(update={"duration_seconds": duration}),

@@ -29,7 +29,7 @@ Architecture Notes:
     - Uses FlextModels.Entity for models requiring entity identity
       (SearchResult, BatchUpsertResult)
     - Extends FlextLdifModels via inheritance for m.Ldif.Entry (no duplication)
-      (full hierarchy exposed, implements p.Ldap.LdapEntryProtocol structurally)
+      (full hierarchy exposed, implements m.Ldif.Entry structurally)
     - Python 3.13+ PEP 695 type aliases in nested Types class
     - @computed_field for derived values (success_rate, total_count, by_objectclass)
     - Factory methods (normalized, from_counters) encapsulate common creation patterns
@@ -166,7 +166,7 @@ class FlextLdapModels(FlextLdifModels):
             """LDAP entry model extending public API Entry from flext-ldif.
 
             Exposes Entry model via inheritance to enable access via
-            m.Ldif.Entry. Implements p.Ldap.LdapEntryProtocol structurally.
+            m.Ldif.Entry. Implements m.Ldif.Entry structurally.
             """
 
         # =========================================================================
@@ -836,7 +836,7 @@ class FlextLdapModels(FlextLdifModels):
             type ProgressCallbackUnion = Union[
                 FlextLdapModels.Ldap.Types.LdapProgressCallback,
                 FlextLdapModels.Ldap.Types.MultiPhaseProgressCallback,
-                None
+                None,
             ]
             """Union type for progress callbacks (accepts both single-phase and multi-phase).
 

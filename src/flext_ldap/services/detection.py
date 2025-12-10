@@ -126,7 +126,7 @@ class FlextLdapServerDetector(s[str]):
                 f"Failed to query rootDSE: {root_dse_result.error}",
             )
 
-        root_dse_attrs = root_dse_result.unwrap()
+        root_dse_attrs = root_dse_result.value
         # Python 3.13: Use helper function for concise list conversion
 
         def to_str_list(value: object) -> list[str]:

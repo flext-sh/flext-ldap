@@ -17,7 +17,6 @@ from flext_ldif import FlextLdifUtilities
 
 from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.typings import t
 
 # ═══════════════════════════════════════════════════════════════════
