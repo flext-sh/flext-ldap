@@ -68,7 +68,7 @@ python examples/02_search_operations.py
 - Read entries (search, search_one)
 - Update entries (modify_entry)
 - Delete entries (delete_entry)
-- Configuration setup (FlextLdapConfig)
+- Configuration setup (FlextLdapSettings)
 - Constants usage (FlextLdapConstants)
 
 **Modules**: api.py, models.py, config.py, constants.py
@@ -669,7 +669,7 @@ python examples/99_comprehensive_oud_validation.py
 | **api.py (FlextLdap)**    | ALL                    | Primary facade - all operations                      |
 | **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities   |
 | **clients.py**            | 07, 11                 | Advanced direct client usage, repositories           |
-| **config.py**             | 01, 10                 | FlextLdapConfig configuration, connection management |
+| **config.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
 | **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                           |
 | **validations.py**        | 02, 06                 | DN, filter validation                                |
 | **authentication.py**     | 03                     | User authentication flows                            |
@@ -698,10 +698,10 @@ python examples/99_comprehensive_oud_validation.py
 
 ```python
 from flext_ldap.api import FlextLdap
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.settings import FlextLdapSettings
 
 # Create and configure
-config = FlextLdapConfig(
+config = FlextLdapSettings(
     ldap_server_uri="ldap://localhost:389",
     ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",

@@ -224,6 +224,13 @@
         warn_unused_configs = true
         warn_unused_ignores = true
 
+        [[tool.mypy.overrides]]
+            module = [
+                "ldap3",
+                "ldap3.*",
+            ]
+            ignore_missing_imports = true
+
     [tool.ruff]
         extend = "../ruff-shared.toml"
 

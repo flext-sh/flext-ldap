@@ -102,10 +102,10 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 4. **Configure certificate verification settings**
 
 ```python
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
-config = FlextLdapConfig(
+config = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -113,7 +113,7 @@ config = FlextLdapConfig(
 )
 
 # Proper certificate configuration
-config = FlextLdapConfig(
+config = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -432,9 +432,9 @@ ConnectionError: Connection pool exhausted
 
 ```python
 # Check connection pool configuration
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLdapSettings
 
-config = FlextLdapConfig.from_env()
+config = FlextLdapSettings.from_env()
 print(f"Pool size: {config.pool_size}")
 print(f"Connection timeout: {config.connection_timeout}")
 ```
@@ -444,7 +444,7 @@ print(f"Connection timeout: {config.connection_timeout}")
 1. **Increase pool size:**
 
 ```python
-config = FlextLdapConfig(
+config = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
     connection_timeout=10,
@@ -478,11 +478,11 @@ class LDAPService:
 
 ```python
 import os
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLdapSettings
 
 def diagnose_config():
     """Check configuration values."""
-    config = FlextLdapConfig.from_env()
+    config = FlextLdapSettings.from_env()
 
     print("LDAP Configuration:")
     print(f"  Host: {config.host}")
@@ -663,7 +663,7 @@ run(handle_errors_properly())
 
 ```python
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -780,7 +780,7 @@ When reporting issues, include:
 ```python
 import sys
 import pkg_resources
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLdapSettings
 
 def collect_diagnostic_info():
     """Collect diagnostic information for bug reports."""
@@ -801,7 +801,7 @@ def collect_diagnostic_info():
 
     # Configuration (sanitized)
     try:
-        config = FlextLdapConfig.from_env()
+        config = FlextLdapSettings.from_env()
         print(f"LDAP Host: {config.host}")
         print(f"LDAP Port: {config.port}")
         print(f"Use SSL: {config.use_ssl}")

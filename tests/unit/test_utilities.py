@@ -26,7 +26,7 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar
 
 import pytest
-from flext_core import t as core_t_flex
+from flext_core import FlexibleValue  # type: ignore[attr-defined]
 from flext_tests import tm
 
 from tests import u
@@ -117,7 +117,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_with_mapping(self) -> None:
         """Test find_callable with Mapping (covariant pattern)."""
-        handlers: Mapping[str, Callable[[], core_t_flex.FlexibleValue]] = {
+        handlers: Mapping[str, Callable[[], FlexibleValue]] = {
             "handler1": lambda: "value1",
             "handler2": lambda: False,
         }
@@ -127,7 +127,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_not_found(self) -> None:
         """Test find_callable when no handler returns truthy."""
-        handlers: Mapping[str, Callable[[], core_t_flex.FlexibleValue]] = {
+        handlers: Mapping[str, Callable[[], FlexibleValue]] = {
             "handler1": lambda: False,
             "handler2": lambda: None,
             "handler3": lambda: "",

@@ -61,7 +61,7 @@ FLEXT-LDAP builds on established FLEXT foundation patterns:
 ```python
 # FLEXT-Core integration
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -114,7 +114,7 @@ class UserService:
 
 ```python
 # Environment-based configuration following FLEXT patterns
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLdapSettings
 from pydantic import BaseSettings
 
 class AppSettings(BaseSettings):
@@ -132,9 +132,9 @@ class AppSettings(BaseSettings):
     app_name: str = "flext-app"
     debug: bool = False
 
-    def get_ldap_config(self) -> FlextLdapConfig:
+    def get_ldap_config(self) -> FlextLdapSettings:
         """Create LDAP configuration from app settings."""
-        return FlextLdapConfig(
+        return FlextLdapSettings(
             host=self.ldap_host,
             port=self.ldap_port,
             use_ssl=self.ldap_use_ssl,
@@ -159,7 +159,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext

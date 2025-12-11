@@ -40,18 +40,17 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol, Self, TypeGuard, override, runtime_checkable
 
-from flext_core import FlextConfig, r
+from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import s
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import t
-from flext_ldap.utilities import u
 
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
@@ -60,10 +59,10 @@ SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 
 @runtime_checkable
 class HasConfigAttribute(Protocol):
-    """Protocol for objects exposing FlextLdapConfig configuration."""
+    """Protocol for objects exposing FlextLdapSettings configuration."""
 
     @property
-    def config(self) -> FlextLdapConfig:
+    def config(self) -> FlextLdapSettings:
         """Return resolved LDAP configuration."""
         ...
 
@@ -159,9 +158,7 @@ def _get_phase_result_value(
     """
     # Python 3.13: Both union types share same attributes - direct access
     # isinstance check ensures protocol compatibility
-    if isinstance(
-        phase_result, (m.Ldap.PhaseSyncResult, m.Ldap.PhaseSyncResult)
-    ):
+    if isinstance(phase_result, (m.Ldap.PhaseSyncResult, m.Ldap.PhaseSyncResult)):
         # Use match-case for modern Python 3.13 pattern matching
         match attr_name:
             case "total_entries":
@@ -221,9 +218,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     """
 
     @classmethod
-    def _get_service_config_type(cls) -> type[FlextLdapConfig]:
-        """Get FlextLdapConfig as the service-specific config type."""
-        return FlextLdapConfig
+    def _get_service_config_type(cls) -> type[FlextLdapSettings]:
+        """Get FlextLdapSettings as the service-specific config type."""
+        return FlextLdapSettings
 
     model_config = ConfigDict(
         frozen=False,  # Facade needs mutable state for logging
@@ -234,7 +231,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
-    _config: FlextConfig | None = PrivateAttr(
+    _config: FlextSettings | None = PrivateAttr(
         default=None,
     )  # Compatible with base class
 
@@ -244,7 +241,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         connection: FlextLdapConnection,
         operations: FlextLdapOperations,
         ldif: FlextLdif | None = None,
-        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize LDAP facade with injected dependencies.
 
@@ -266,38 +262,32 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             operations: Initialized FlextLdapOperations instance. Must reference
                 the same connection for consistent state.
             ldif: FlextLdif instance (defaults to get_instance() singleton).
-            **kwargs: Additional kwargs for FlextService base class.
 
         """
-        # Python 3.13: Filter kwargs with modern comprehension
-        service_kwargs: dict[str, str | float | bool | None] = {
-            k: v
-            for k, v in kwargs.items()
-            if k != "_auto_result" and (v is None or isinstance(v, (str, float, bool)))
-        }
-        # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
+        # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
+        # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
         # Protocols are structurally compatible - no type ignore needed
-        super().__init__(**service_kwargs)
+        super().__init__()
         self._connection = connection
         self._operations = operations
         self._ldif = ldif or FlextLdif()
         # Use connection's config if available for consistency
         # Otherwise, super().__init__() already created proper
-        # FlextLdapConfig via _get_service_config_type()
+        # FlextLdapSettings via _get_service_config_type()
         # Access private attribute via Protocol for type safety
         # PrivateAttr is accessible but not part of public API
         # PrivateAttr access is necessary for copying config from
         # connection to facade
-        connection_config: FlextLdapConfig | None = None
+        connection_config: FlextLdapSettings | None = None
         # Check for actual connection type that has compatible config
         if isinstance(connection, FlextLdapConnection) and isinstance(
-            connection.config, FlextLdapConfig
+            connection.config, FlextLdapSettings
         ):
-            # FlextLdapConnection.config is FlextLdapConfig (via super)
+            # FlextLdapConnection.config is FlextLdapSettings (via super)
             connection_config = connection.config
-        # Type narrowing: connection_config is already FlextLdapConfig | None
-        # After isinstance check above, if it's not None, it's FlextLdapConfig
+        # Type narrowing: connection_config is already FlextLdapSettings | None
+        # After isinstance check above, if it's not None, it's FlextLdapSettings
         if connection_config is not None:
             # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
             self._config = connection_config
@@ -358,7 +348,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def connect(
         self,
-        connection_config: m.Ldap.ConnectionConfig | FlextLdapConfig,
+        connection_config: m.Ldap.ConnectionConfig | FlextLdapSettings,
         *,
         auto_retry: bool = False,
         max_retries: int = 3,
@@ -384,12 +374,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         Architecture:
             - Delegates to FlextLdapConnection.connect() for actual connection logic
             - Uses FlextResult pattern - no exceptions raised
-            - Supports both ConnectionConfig and FlextLdapConfig for flexibility
+            - Supports both ConnectionConfig and FlextLdapSettings for flexibility
             - Connection must be established before any LDAP operations
 
         Args:
             connection_config: Connection configuration
-              (ConnectionConfig or FlextLdapConfig)
+              (ConnectionConfig or FlextLdapSettings)
             auto_retry: Enable automatic retry on connection failure (default: False)
             max_retries: Maximum number of retry attempts (default: 3)
             retry_delay: Delay between retries in seconds (default: 1.0)
@@ -398,8 +388,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             r[bool] indicating connection success
 
         """
-        # Convert FlextLdapConfig to ConnectionConfig if needed
-        if isinstance(connection_config, FlextLdapConfig):
+        # Convert FlextLdapSettings to ConnectionConfig if needed
+        if isinstance(connection_config, FlextLdapSettings):
             connection_config = m.Ldap.ConnectionConfig(
                 host=connection_config.host,
                 port=connection_config.port,
@@ -488,7 +478,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """
         return self._connection.is_connected
 
-    @u.Args.validated_with_result
     def search(
         self,
         search_options: m.Ldap.SearchOptions,
@@ -602,7 +591,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """
         return self._operations.modify(dn, changes)
 
-    @u.Args.validated_with_result
     def delete(
         self,
         dn: str | m.Ldif.DN,
@@ -638,7 +626,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """
         return self._operations.delete(dn)
 
-    @u.Args.validated_with_result
     def upsert(
         self,
         entry: m.Ldif.Entry,
@@ -685,7 +672,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             max_retries=max_retries,
         )
 
-    @u.Args.validated_with_result
     def batch_upsert(
         self,
         entries: Sequence[m.Ldif.Entry],
@@ -738,7 +724,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             stop_on_error=stop_on_error,
         )
 
-    @u.Args.validated_with_result
     def sync_phase_entries(
         self,
         ldif_file_path: Path,
@@ -788,9 +773,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
-            return r[m.Ldap.PhaseSyncResult].fail(
-                f"Failed to parse LDIF file: {error_msg}"
-            )
+            return r.fail(f"Failed to parse LDIF file: {error_msg}")
 
         # Type narrowing: parse_result.value returns list[m.Ldif.Entry]
         # Runtime validation ensures correctness
@@ -801,7 +784,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             entry for entry in parse_value if isinstance(entry, m.Ldif.Entry)
         ]
         if not entries:
-            return r[m.Ldap.PhaseSyncResult].ok(
+            return r.ok(
                 m.Ldap.PhaseSyncResult(
                     phase_name=phase_name,
                     total_entries=0,
@@ -864,7 +847,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             error_msg = (
                 str(batch_result.error) if batch_result.error else "Unknown error"
             )
-            return r[m.Ldap.PhaseSyncResult].fail(f"Batch sync failed: {error_msg}")
+            return r.fail(f"Batch sync failed: {error_msg}")
 
         batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()
@@ -876,7 +859,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             else 0.0
         )
 
-        return r[m.Ldap.PhaseSyncResult].ok(
+        return r.ok(
             m.Ldap.PhaseSyncResult(
                 phase_name=phase_name,
                 total_entries=len(entries),

@@ -5,9 +5,9 @@ Defines common patterns for config namespace access:
 - All services MUST inherit from this base
 - All config access MUST use self.config.ldap / self.config.ldif
 
-The config namespace access uses FlextConfig.auto_register pattern:
-- FlextLdapConfig is registered via @FlextConfig.auto_register("ldap")
-- FlextLdifConfig is registered via @FlextConfig.auto_register("ldif")
+The config namespace access uses FlextSettings.auto_register pattern:
+- FlextLdapSettings is registered via @FlextSettings.auto_register("ldap")
+- FlextLdifSettings is registered via @FlextSettings.auto_register("ldif")
 - Access via self.config.ldap / self.config.ldif from x.config
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from flext_core import FlextService, t
 
-from flext_ldap.config import FlextLdapConfig
+from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import FlextLdapDomainResultT as TDomainResult
 
 
@@ -24,9 +24,9 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
     """Base class for all flext-ldap services with typed config access.
 
     Inherits config property from x which provides:
-    - self.config → FlextConfig.get_global_instance()
-    - self.config.ldap → FlextLdapConfig (via @FlextConfig.auto_register)
-    - self.config.ldif → FlextLdifConfig (via @FlextConfig.auto_register)
+    - self.config → FlextSettings.get_global_instance()
+    - self.config.ldap → FlextLdapSettings (via @FlextSettings.auto_register)
+    - self.config.ldif → FlextLdifSettings (via @FlextSettings.auto_register)
 
     Usage in services:
         class MyService(FlextLdapServiceBase[MyResult]):
@@ -36,22 +36,22 @@ class FlextLdapServiceBase(FlextService[TDomainResult]):
     """
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services.
 
         Business Rule: This method provides runtime bootstrap configuration for
-        all LDAP services, ensuring they use FlextLdapConfig as the configuration
+        all LDAP services, ensuring they use FlextLdapSettings as the configuration
         type. This enables proper DI integration and namespace access.
 
         Implication: All services extending FlextLdapServiceBase automatically
-        use FlextLdapConfig for their runtime configuration, ensuring consistent
+        use FlextLdapSettings for their runtime configuration, ensuring consistent
         configuration handling across all LDAP services.
 
         Returns:
-            Runtime bootstrap options with config_type set to FlextLdapConfig
+            Runtime bootstrap options with config_type set to FlextLdapSettings
 
         """
-        return {"config_type": FlextLdapConfig}
+        return {"config_type": FlextLdapSettings}
 
 
 # Convenience alias for common usage pattern - exported for domain usage

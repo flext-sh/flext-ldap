@@ -26,13 +26,13 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_tests import tm
 
 from flext_ldap import m
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.settings import FlextLdapSettings
 from tests import c
 
 pytestmark = pytest.mark.unit
@@ -69,7 +69,7 @@ class TestsFlextLdapOperations:
     def _create_connection(cls) -> FlextLdapConnection:
         """Factory method for creating connection instances."""
         # but services pass complex objects via __init__ which are validated at runtime
-        return FlextLdapConnection(config=FlextLdapConfig())
+        return FlextLdapConnection(config=FlextLdapSettings())
 
     @classmethod
     def _create_operations(
@@ -104,9 +104,9 @@ class TestsFlextLdapOperations:
         tm.that(operations.logger, none=False)
 
     def test_config_property(self) -> None:
-        """Test config property returns FlextConfig with ldap namespace."""
+        """Test config property returns FlextSettings with ldap namespace."""
         operations = self._create_operations()
-        tm.that(operations.config, is_=FlextConfig, none=False)
+        tm.that(operations.config, is_=FlextSettings, none=False)
 
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""

@@ -34,13 +34,13 @@ from flext_core import (
 
 from flext_ldap.api import FlextLdap
 from flext_ldap.base import FlextLdapServiceBase, s
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import FlextLdapConstants, c
 from flext_ldap.models import FlextLdapModels, m
 from flext_ldap.protocols import FlextLdapProtocols, p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import FlextLdapTypes, t
 from flext_ldap.utilities import FlextLdapUtilities, u
 
@@ -90,7 +90,6 @@ h = FlextHandlers
 
 __all__ = [
     "FlextLdap",  # ✅ Facade (single entry point)
-    "FlextLdapConfig",  # ✅ Configuration
     "FlextLdapConnection",  # ✅ Connection service
     "FlextLdapConstants",  # ✅ Constants
     "FlextLdapModels",  # ✅ Domain models
@@ -98,6 +97,7 @@ __all__ = [
     "FlextLdapProtocols",  # ✅ Protocol definitions
     "FlextLdapServerDetector",  # ✅ Server detection service
     "FlextLdapServiceBase",  # ✅ Base class for services with typed config
+    "FlextLdapSettings",  # ✅ Configuration
     "FlextLdapTypes",  # ✅ Type definitions
     "FlextLdapUtilities",  # ✅ Advanced utilities
     "c",  # ✅ Constants alias

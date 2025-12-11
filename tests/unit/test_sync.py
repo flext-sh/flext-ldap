@@ -24,14 +24,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdif
 from flext_tests import tm
 
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.models import m
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSyncService
+from flext_ldap.settings import FlextLdapSettings
 
 pytestmark = pytest.mark.unit
 
@@ -50,7 +49,7 @@ class TestsFlextLdapSync:
     def _create_operations(cls) -> FlextLdapOperations:
         """Factory method for creating operations instances."""
         # but services pass complex objects via __init__ which are validated at runtime
-        connection = FlextLdapConnection(config=FlextLdapConfig())
+        connection = FlextLdapConnection(config=FlextLdapSettings())
         return FlextLdapOperations(connection=connection)
 
     def test_sync_service_initialization(self) -> None:
@@ -63,8 +62,8 @@ class TestsFlextLdapSync:
     def test_sync_service_initialization_with_ldif(self) -> None:
         """Test sync service initialization with custom ldif."""
         operations = self._create_operations()
-        ldif = FlextLdif()
-        sync_service = FlextLdapSyncService(operations=operations, ldif=ldif)
+        # Note: ldif parameter is not used in __init__, service always creates FlextLdif()
+        sync_service = FlextLdapSyncService(operations=operations)
         tm.that(sync_service, none=False)
         tm.that(sync_service, is_=FlextLdapSyncService, none=False)
 

@@ -23,11 +23,11 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_ldif import FlextLdif
 from flext_tests import tm
 
-from flext_ldap import FlextLdap, FlextLdapConfig, m
+from flext_ldap import FlextLdap, FlextLdapSettings, m
 from flext_ldap.api import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
     SINGLE_PHASE_CALLBACK_PARAM_COUNT,
@@ -60,14 +60,14 @@ class TestsFlextLdapApi:
     }
 
     @classmethod
-    def _create_config(cls) -> FlextLdapConfig:
-        """Factory method for creating FlextLdapConfig."""
-        return FlextLdapConfig()
+    def _create_config(cls) -> FlextLdapSettings:
+        """Factory method for creating FlextLdapSettings."""
+        return FlextLdapSettings()
 
     @classmethod
     def _create_connection(
         cls,
-        config: FlextLdapConfig | None = None,
+        config: FlextLdapSettings | None = None,
     ) -> FlextLdapConnection:
         """Factory method for creating FlextLdapConnection."""
         cfg = config or cls._create_config()
@@ -148,9 +148,9 @@ class TestsFlextLdapApi:
         tm.that(api.logger, none=False)
 
     def test_api_config_property(self) -> None:
-        """Test config property returns valid FlextConfig."""
+        """Test config property returns valid FlextSettings."""
         api = self._create_api()
-        tm.that(api.config, is_=FlextConfig, none=False)
+        tm.that(api.config, is_=FlextSettings, none=False)
 
     # =========================================================================
     # Context Manager Tests
@@ -180,9 +180,9 @@ class TestsFlextLdapApi:
     # =========================================================================
 
     def test_get_service_config_type_returns_flext_ldap_config(self) -> None:
-        """Test _get_service_config_type returns FlextLdapConfig."""
+        """Test _get_service_config_type returns FlextLdapSettings."""
         config_type = FlextLdap._get_service_config_type()
-        tm.that(config_type, eq=FlextLdapConfig)
+        tm.that(config_type, eq=FlextLdapSettings)
 
     # =========================================================================
     # Type Guard Tests

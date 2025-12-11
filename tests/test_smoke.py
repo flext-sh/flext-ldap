@@ -29,9 +29,9 @@ from ldap3 import Connection, Server
 
 from flext_ldap import (
     FlextLdap,
-    FlextLdapConfig,
     FlextLdapConnection,
     FlextLdapOperations,
+    FlextLdapSettings,
     m,
 )
 
@@ -83,9 +83,9 @@ class TestsFlextLdapSmoke:
             )
 
         @staticmethod
-        def create_flext_config(ldap_container: LdapContainerDict) -> FlextLdapConfig:
-            """Factory for FlextLdapConfig objects."""
-            return FlextLdapConfig(
+        def create_flext_config(ldap_container: LdapContainerDict) -> FlextLdapSettings:
+            """Factory for FlextLdapSettings objects."""
+            return FlextLdapSettings(
                 host=ldap_container["host"],
                 port=ldap_container["port"],
                 use_ssl=ldap_container["use_ssl"],
@@ -177,7 +177,7 @@ class TestsFlextLdapSmoke:
         # Instantiate REAL FlextLdap object (requires connection and operations)
 
         # but services pass complex objects via __init__ which are validated at runtime
-        config = FlextLdapConfig()
+        config = FlextLdapSettings()
         connection = FlextLdapConnection(config=config)
         operations = FlextLdapOperations(connection=connection)
         api = FlextLdap(

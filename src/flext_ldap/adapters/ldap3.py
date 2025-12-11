@@ -242,7 +242,7 @@ class Ldap3Adapter(s[bool]):
             for entry in connection.entries:
                 # Type narrowing: entry is ldap3.Entry with dynamic attributes
                 # Use Protocol for type-safe attribute access
-                if not hasattr(entry, 'entry_dn'):
+                if not hasattr(entry, "entry_dn"):
                     # Fallback for non-protocol entries
                     dn = str(entry) if entry else ""
                     results.append((dn, {}))
@@ -325,12 +325,13 @@ class Ldap3Adapter(s[bool]):
                 if attr_obj is None:
                     continue
 
-                if hasattr(attr_obj, 'values'):
-                    attr_values = attr_obj.values
+                # Use getattr() to safely access attributes on object type
+                attr_values = getattr(attr_obj, "values", None)
+                if attr_values is not None:
                     # Protocol guarantees values is Sequence[object], which is iterable
                     # No isinstance check needed - Sequence is directly iterable
                     attrs_dict[attr] = [str(v) for v in attr_values]
-                elif attr_obj is not None:
+                else:
                     # Fallback for non-protocol attributes
                     attrs_dict[attr] = [str(attr_obj)]
             return attrs_dict
@@ -378,16 +379,16 @@ class Ldap3Adapter(s[bool]):
             dn_raw: object | None = None
             if isinstance(parsed, m.Ldif.Entry):
                 dn_raw = parsed.dn
-            elif hasattr(parsed, 'entry_dn'):
-                # Use Protocol for type-safe access to entry_dn
-                dn_raw = parsed.entry_dn
             else:
-                # Fallback: try dynamic attribute access for unknown types
-                dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed, "dn"
-                )
+                # Use getattr() for safe access to attributes on object type
+                dn_raw = getattr(parsed, "entry_dn", None)
                 if dn_raw is None:
-                    return m.Ldif.DN.model_validate({"value": ""})
+                    # Fallback: try dynamic attribute access for unknown types
+                    dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
+                        parsed, "dn"
+                    )
+                    if dn_raw is None:
+                        return m.Ldif.DN.model_validate({"value": ""})
 
             if dn_raw is None:
                 return m.Ldif.DN.model_validate({"value": ""})
@@ -660,7 +661,7 @@ class Ldap3Adapter(s[bool]):
                 k: v
                 for k, v in metadata_dict.items()
                 if isinstance(k, str)
-                and isinstance(v, (str, int, float, bool) | type(None))
+                and isinstance(v, (str, int, float, bool, type(None)))
             }
             return filtered or None
 
@@ -720,7 +721,7 @@ class Ldap3Adapter(s[bool]):
                 entry_for_extraction: m.Ldif.Entry | None = None
                 # Only accept m.Ldif.Entry instances for direct processing
                 # Other types must be validated and converted in service layer
-                if hasattr(entry_raw, 'entry_dn'):
+                if hasattr(entry_raw, "entry_dn"):
                     # ldap3.Entry - convert to EntryProtocol-compatible structure
                     # This requires extracting entry_dn and building attributes dict
                     # For now, skip - ldap3 entries should be converted via ldap3_to_ldif_entry first
@@ -1116,26 +1117,19 @@ class Ldap3Adapter(s[bool]):
     def __init__(
         self,
         parser: FlextLdifParser | None = None,
-        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize adapter service with parser.
 
         Args:
             parser: Optional FlextLdifParser instance. If None, uses default from FlextLdif.
-            **kwargs: Additional service configuration parameters (delegated to FlextService).
 
         """
         # Python 3.13: Modern comprehension with type narrowing
-        service_kwargs: dict[str, str | float | bool | None] = {
-            k: v
-            for k, v in kwargs.items()
-            if isinstance(v, (str, float, bool) | type(None))
-        }
-        # Initialize parent with remaining kwargs
-        # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
+        # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
+        # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
         # Protocols are structurally compatible - no type ignore needed
-        super().__init__(**service_kwargs)
+        super().__init__()
         # Use default parser if not provided
         if parser is None:
             parser = FlextLdif().parser
@@ -1237,7 +1231,7 @@ class Ldap3Adapter(s[bool]):
         """Check if adapter has an active connection."""
         if self._connection is None:
             return False
-        return self._connection.bound
+        return bool(self._connection.bound)
 
     def _get_connection(self) -> r[Connection]:
         """Get connection with fast fail if not available."""

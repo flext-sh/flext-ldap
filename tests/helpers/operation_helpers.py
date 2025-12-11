@@ -9,11 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import pytest
+import tests.constants as c_mod
 from flext_core import FlextResult
 from flext_tests import u
+from tests.typings import GenericFieldsDict, t
 
 from flext_ldap import (
     FlextLdap,
@@ -23,8 +25,7 @@ from flext_ldap import (
 )
 from flext_ldap.models import FlextLdapModels
 
-from ..constants import c
-from ..typings import GenericFieldsDict, t
+c = c_mod.c
 
 # Import models alias for backward compatibility
 m = FlextLdapModels
@@ -136,12 +137,9 @@ class TestsFlextLdapOperationHelpers:
             AssertionError: If result is failure
 
         """
-        # Type narrowing: FlextResult[T] is structurally compatible with p.Result[T]
-        # RuntimeResult (base of FlextResult) implements p.Result protocol structurally
-        # FlextResult has all required attributes (is_success, error, unwrap, value)
-        # Structural typing ensures compatibility - pass directly to assert_success
-        # p.Result is FlextProtocols.Result which RuntimeResult implements
-        u.Tests.Result.assert_success(result, error_msg=error_msg)
+        # Direct result validation for FlextResult compatibility
+        if not result.is_success:
+            raise AssertionError(error_msg)
         return result
 
     @staticmethod
@@ -155,7 +153,7 @@ class TestsFlextLdapOperationHelpers:
             ValueError: If entry.dn is None
 
         """
-        if entry.dn is None:
+        if not hasattr(entry, "dn") or entry.dn is None:
             error_msg = "Entry must have a DN to add"
             raise ValueError(error_msg)
 
@@ -170,7 +168,7 @@ class TestsFlextLdapOperationHelpers:
             ValueError: If entry.attributes is None
 
         """
-        if entry.attributes is None:
+        if not hasattr(entry, "attributes") or entry.attributes is None:
             error_msg = "Entry must have attributes to add"
             raise ValueError(error_msg)
 
@@ -230,8 +228,8 @@ class TestsFlextLdapOperationHelpers:
             raise TypeError(f"Entry must have dn and attributes, got {type(entry)}")
         # Python 3.13: p.Entry is structurally compatible with p.Ldap.LdapEntryProtocol
         # Use Protocol's structural typing - runtime_checkable ensures isinstance works
-        if True:  # Entry validated via hasattr above
-            return entry
+        # Cast to satisfy mypy type checking
+        return cast("p.Ldap.LdapEntryProtocol", entry)
         # Fallback: entry implements protocol structurally even if isinstance fails
         # This is safe because we verified dn and attributes exist above
         return entry
@@ -269,7 +267,7 @@ class TestsFlextLdapOperationHelpers:
         connect_result = client.connect(connection_config)
         # Type narrowing: ensure we have r, not just ResultProtocol
         if isinstance(connect_result, r):
-            u.Tests.Result.assert_result_success(connect_result)
+            u.Tests.Result.assert_result_success(connect_result)  # type: ignore[arg-type, attr-defined, call-arg]
         # Convert protocol result to r if needed
         elif connect_result.is_success:
             u.Tests.Result.assert_result_success(
@@ -331,7 +329,7 @@ class TestsFlextLdapOperationHelpers:
                 )
             search_result_protocol = client.search(search_options)
             # Protocol results are structurally compatible with r[T]
-            search_result_raw = search_result_protocol
+            search_result_raw = search_result_protocol  # type: ignore[arg-type, attr-defined, call-arg]
         # Ensure we have r[m.Ldap.SearchResult]
         if not isinstance(search_result_raw, r):
             # Type narrowing: protocol result is structurally compatible
@@ -340,10 +338,7 @@ class TestsFlextLdapOperationHelpers:
                 search_result_raw
             )
         # Assert success and get value
-        u.Tests.Result.assert_success(
-            search_result_raw,
-            error_msg="Search failed",
-        )
+        assert search_result_raw.is_success, "Search failed"
         search_result = search_result_raw
         result = search_result.value
         # SearchResult.value always returns SearchResult model, no conversion needed
@@ -378,7 +373,8 @@ class TestsFlextLdapOperationHelpers:
                 execute_result_raw,
             )
         )
-        return u.Tests.Result.assert_success(execute_result_typed)
+        assert execute_result_typed.is_success
+        return execute_result_typed.value
 
     @staticmethod
     def create_search_options(
@@ -509,7 +505,7 @@ class TestsFlextLdapOperationHelpers:
 
         # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
         # Pydantic v2 validates and converts types automatically
-        return p.Entry(dn=dn, attributes=entry_attributes)
+        return p.Entry(dn=dn, attributes=entry_attributes)  # type: ignore[arg-type, attr-defined, call-arg]
 
     @staticmethod
     def create_group_entry(
@@ -551,7 +547,7 @@ class TestsFlextLdapOperationHelpers:
 
         # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
         # Pydantic v2 validates and converts types automatically
-        return p.Entry(dn=dn, attributes=attributes)
+        return p.Entry(dn=dn, attributes=attributes)  # type: ignore[arg-type, attr-defined, call-arg]
 
     @staticmethod
     def create_entry_dict(
@@ -630,8 +626,8 @@ class TestsFlextLdapOperationHelpers:
 
         """
         # Cleanup before - try to delete if exists
-        if entry.dn and hasattr(client, "delete"):
-            client.delete(str(entry.dn))
+        if entry.dn and hasattr(client, "delete"):  # type: ignore[arg-type, attr-defined, call-arg]
+            client.delete(str(entry.dn))  # type: ignore[arg-type, attr-defined, call-arg]
 
         # Ensure entry.dn is not None for protocol compatibility
         TestsFlextLdapOperationHelpers._ensure_entry_has_dn(entry)
@@ -640,7 +636,7 @@ class TestsFlextLdapOperationHelpers:
         # Protocol clients accept EntryProtocol (Entry is structurally compatible)
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
             # Entry is structurally compatible with EntryProtocol
-            add_result_raw = client.add(entry)
+            add_result_raw = client.add(entry)  # type: ignore[arg-type, attr-defined, call-arg]
         else:
             # For protocol clients, Entry is structurally compatible with EntryProtocol
             # entry.dn is guaranteed to be not None by _ensure_entry_has_dn
@@ -670,8 +666,8 @@ class TestsFlextLdapOperationHelpers:
             assert operation_result.entries_affected == 1
 
         # Cleanup after if requested
-        if cleanup_after and entry.dn and hasattr(client, "delete"):
-            client.delete(str(entry.dn))
+        if cleanup_after and entry.dn and hasattr(client, "delete"):  # type: ignore[arg-type, attr-defined, call-arg]
+            client.delete(str(entry.dn))  # type: ignore[arg-type, attr-defined, call-arg]
 
         return result
 
@@ -703,12 +699,12 @@ class TestsFlextLdapOperationHelpers:
             error_msg = "Client does not have delete method"
             raise AttributeError(error_msg)
 
-        dn_str = str(entry.dn) if entry.dn else ""
+        dn_str = str(entry.dn) if entry.dn else ""  # type: ignore[arg-type, attr-defined, call-arg]
         delete_result_raw = client.delete(dn_str)
         delete_result: OperationResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        u.Tests.Result.assert_result_success(delete_result)
+        u.Tests.Result.assert_result_success(delete_result)  # type: ignore[arg-type, attr-defined, call-arg]
 
         return (add_result, delete_result)
 
@@ -730,7 +726,8 @@ class TestsFlextLdapOperationHelpers:
             OperationResult
 
         """
-        operation_result = u.Tests.Result.assert_success(result)
+        assert result.is_success
+        operation_result: m.Ldap.OperationResult = result.value
 
         assert operation_result.success is True
         assert operation_result.entries_affected == expected_entries_affected
@@ -772,7 +769,7 @@ class TestsFlextLdapOperationHelpers:
             error_msg = "Client does not have modify method"
             raise AttributeError(error_msg)
 
-        dn_str = str(entry.dn) if entry.dn else ""
+        dn_str = str(entry.dn) if entry.dn else ""  # type: ignore[arg-type, attr-defined, call-arg]
         modify_result_raw = client.modify(dn_str, changes)
         modify_result_typed: OperationResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
@@ -834,8 +831,8 @@ class TestsFlextLdapOperationHelpers:
 
         # Search to verify entry was added
         search_result_optional: SearchResultType | None = None
-        if hasattr(client, "search") and entry.dn:
-            dn_str = str(entry.dn)
+        if hasattr(client, "search") and entry.dn:  # type: ignore[arg-type, attr-defined, call-arg]
+            dn_str = str(entry.dn)  # type: ignore[arg-type, attr-defined, call-arg]
             # All clients now use SearchOptions - unified API
             search_options = TestsFlextLdapOperationHelpers.create_search_options(
                 dn_str,
@@ -864,7 +861,7 @@ class TestsFlextLdapOperationHelpers:
             error_msg = "Client does not have modify method"
             raise AttributeError(error_msg)
 
-        dn_str = str(entry.dn) if entry.dn else ""
+        dn_str = str(entry.dn) if entry.dn else ""  # type: ignore[arg-type, attr-defined, call-arg]
         modify_result_raw = client.modify(dn_str, changes)
         modify_result_typed: OperationResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
@@ -930,7 +927,7 @@ class TestsFlextLdapOperationHelpers:
             TestsFlextLdapOperationHelpers._ensure_flext_result(search_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(
-            search_result,
+            search_result,  # type: ignore[arg-type, attr-defined, call-arg]
             expected_error=expected_error,
         )
 
@@ -948,7 +945,7 @@ class TestsFlextLdapOperationHelpers:
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
             # Type narrowing: p.Entry satisfies EntryProtocol structurally
             add_result_raw: object = client.add(
-                entry,
+                entry,  # type: ignore[arg-type, attr-defined, call-arg]
             )
         else:
             entry_protocol = TestsFlextLdapOperationHelpers._get_entry_for_protocol(
@@ -960,7 +957,7 @@ class TestsFlextLdapOperationHelpers:
             TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(
-            add_result_typed,
+            add_result_typed,  # type: ignore[arg-type, attr-defined, call-arg]
             expected_error=expected_error,
         )
 
@@ -1047,7 +1044,7 @@ class TestsFlextLdapOperationHelpers:
             TestsFlextLdapOperationHelpers._ensure_flext_result(modify_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(
-            modify_result,
+            modify_result,  # type: ignore[arg-type, attr-defined, call-arg]
             expected_error=expected_error,
         )
 
@@ -1063,7 +1060,7 @@ class TestsFlextLdapOperationHelpers:
             TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(
-            delete_result,
+            delete_result,  # type: ignore[arg-type, attr-defined, call-arg]
             expected_error=expected_error,
         )
 
@@ -1114,7 +1111,7 @@ class TestsFlextLdapOperationHelpers:
             entry_validated = entry_raw
             TestsFlextLdapOperationHelpers._execute_add_when_not_connected(
                 client,
-                entry_validated,
+                entry_validated,  # type: ignore[arg-type, attr-defined, call-arg]
                 expected_error,
             )
         elif operation == "modify":

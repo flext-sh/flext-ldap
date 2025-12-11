@@ -98,7 +98,7 @@ class TestsFlextLdapEntryAdapter:
         ldap3_entry = MockLdap3Entry()
         # Type narrowing: MockLdap3Entry is structurally compatible with ldap3.Entry
         # Use direct call - adapter handles type compatibility
-        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)  # type: ignore[arg-type]
         entry = tm.ok(result)
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
@@ -119,7 +119,7 @@ class TestsFlextLdapEntryAdapter:
         ldap3_entry = MockLdap3Entry()
         # Type narrowing: MockLdap3Entry is structurally compatible with ldap3.Entry
         # Use direct call - adapter handles type compatibility
-        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)  # type: ignore[arg-type]
         entry = tm.ok(result)
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)

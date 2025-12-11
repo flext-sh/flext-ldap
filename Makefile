@@ -165,7 +165,7 @@ ldap-test: ## Test LDAP connection
 
 .PHONY: ldap-validate
 ldap-validate: ## Validate LDAP configuration
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldap.config import FlextLdapConfig; print('LDAP config valid')"
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -c "from flext_ldap.settings import FlextLdapSettings; print('LDAP config valid')"
 
 .PHONY: ldap-connect
 ldap-connect: ## Test LDAP server connection
@@ -331,6 +331,12 @@ clean-all: clean ## Deep clean including venv
 
 .PHONY: reset
 reset: clean-all setup ## Reset project
+
+# =============================================================================
+# LINT REPORTS (Multi-Agent Coordination)
+# =============================================================================
+# Include centralized lint-reports.mk from workspace root
+include ../lint-reports.mk
 
 # =============================================================================
 # FLEXT-QUALITY INTEGRATION

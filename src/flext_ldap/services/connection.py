@@ -26,16 +26,16 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, r
+from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.base import s
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.services.detection import FlextLdapServerDetector
+from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.utilities import u
 
 
@@ -52,7 +52,7 @@ class FlextLdapConnection(s[bool]):
           :class:`m.Ldap.ConnectionConfig`, never stored in service state
         - Parser instance is resolved once at construction time and shared with
           the adapter for LDIF↔ldap3 conversions
-        - Configuration defaults to ``FlextLdapConfig()`` when not provided,
+        - Configuration defaults to ``FlextLdapSettings()`` when not provided,
           ensuring sensible LDAP defaults (port 389/636, timeout 30s)
         - ``frozen=False`` allows mutable ``_adapter`` state for connect/disconnect
           lifecycle while maintaining Pydantic model validation
@@ -92,11 +92,11 @@ class FlextLdapConnection(s[bool]):
 
     _adapter: Ldap3Adapter
     # Use class attribute (not PrivateAttr) to match FlextService pattern
-    _config: FlextConfig | None = None
+    _config: FlextSettings | None = None
 
     def __init__(
         self,
-        config: FlextLdapConfig | None = None,
+        config: FlextLdapSettings | None = None,
         parser: FlextLdifParser | None = None,
     ) -> None:
         """Create a connection service with optional configuration and parser.
@@ -119,7 +119,7 @@ class FlextLdapConnection(s[bool]):
 
         Args:
             config: Optional LDAP configuration; defaults to a new
-                :class:`FlextLdapConfig` instance when omitted. Controls connection
+                :class:`FlextLdapSettings` instance when omitted. Controls connection
                 timeouts, TLS settings, and protocol options.
             parser: Optional LDIF parser to reuse for adapter conversions. When
                 ``None``, the shared :class:`FlextLdif` singleton parser is used,
@@ -128,8 +128,8 @@ class FlextLdapConnection(s[bool]):
         """
         super().__init__()
         # Create config instance if not provided
-        resolved_config: FlextLdapConfig = (
-            config if config is not None else FlextLdapConfig()
+        resolved_config: FlextLdapSettings = (
+            config if config is not None else FlextLdapSettings()
         )
         # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
         self._config = resolved_config
@@ -188,7 +188,7 @@ class FlextLdapConnection(s[bool]):
         """
         # Modern Python 3.13: Use ternary expression for concise retry logic
         result: r[bool] = (
-            u.Reliability.retry[bool](
+            u.Reliability.retry(
                 operation=lambda: self._adapter.connect(connection_config),
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,

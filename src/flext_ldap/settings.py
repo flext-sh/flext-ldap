@@ -4,7 +4,7 @@ This module defines configuration settings using Pydantic v2 models with validat
 Provides singleton pattern configuration classes for LDAP operations with environment
 variable support and thread-safe instance management.
 
-Modules: FlextLdapConfig
+Modules: FlextLdapSettings
 Scope: LDAP connection configuration, environment variable loading
 Pattern: Singleton with dependency injection support, Pydantic v2 BaseSettings
 
@@ -14,15 +14,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.constants import c
 
 
-@FlextConfig.auto_register("ldap")
-class FlextLdapConfig(FlextConfig):
+@FlextSettings.auto_register("ldap")
+class FlextLdapSettings(FlextSettings):
     """Pydantic v2 configuration for LDAP operations.
 
     **ARCHITECTURAL PATTERN**: Zero-Boilerplate Configuration
@@ -50,16 +50,16 @@ class FlextLdapConfig(FlextConfig):
         FLEXT_LDAP_CHUNK_SIZE=100
 
     **Usage**:
-        config = FlextLdapConfig.get_instance()
+        config = FlextLdapSettings.get_instance()
         print(config.host, config.port, config.bind_dn)
     """
 
-    # Use FlextConfig.resolve_env_file() to ensure all FLEXT configs use same .env
+    # Use FlextSettings.resolve_env_file() to ensure all FLEXT configs use same .env
     # extra="ignore" allows other FLEXT_* env vars to be present without causing errors
     # Only FLEXT_LDAP_* vars are loaded as fields due to env_prefix
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
-        env_file=FlextConfig.resolve_env_file(),
+        env_file=FlextSettings.resolve_env_file(),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         extra="ignore",  # Ignore extra fields from .env that don't match env_prefix
@@ -147,4 +147,4 @@ class FlextLdapConfig(FlextConfig):
     )
 
 
-__all__ = ["FlextLdapConfig"]
+__all__ = ["FlextLdapSettings"]

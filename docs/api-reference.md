@@ -20,7 +20,7 @@ password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-pa
 - [Create filters](#create-filters)
 - [Combine filters](#combine-filters) - [LdapScope](#ldapscope)
   - [⚙️ Configuration](#-configuration)
-    - [FlextLdapConfig](#flextldapconfig)
+    - [FlextLdapSettings](#flextldapconfig)
   - [🔧 Utilities](#-utilities)
     - [FlextLdapTypeGuards](#flextldaptypeguards)
       - [`is_valid_dn(value: str) -> bool`](#is_valid_dnvalue-str---bool)
@@ -91,7 +91,7 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `config` (FlextLdapConfig, optional): Configuration object. If None, uses default config.
+- `config` (FlextLdapSettings, optional): Configuration object. If None, uses default config.
 
 **Returns:** FlextLdapClients instance
 
@@ -330,7 +330,7 @@ Search scope enumeration.
 
 ## ⚙️ Configuration
 
-### FlextLdapConfig
+### FlextLdapSettings
 
 LDAP connection configuration.
 
@@ -348,9 +348,9 @@ LDAP connection configuration.
 **Example:**
 
 ```python
-from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
+from Flext_ldap import FlextLdapSettings, set_flext_ldap_config
 
-config = FlextLdapConfig(
+config = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,

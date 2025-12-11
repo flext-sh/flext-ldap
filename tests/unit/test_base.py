@@ -22,8 +22,7 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_core import FlextConfig, FlextService, r
-from flext_tests import u
+from flext_core import FlextService, FlextSettings, r
 
 from flext_ldap import base
 from flext_ldap.base import FlextLdapServiceBase, s
@@ -114,9 +113,9 @@ class TestsFlextLdapBase:
         service = ExecuteTestService()
         result = service.execute()
 
-        # Use flext_tests automation for result validation
-        value = u.Tests.Result.assert_success(result, "Execute should return success")
-        assert value == "success_value"
+        # Direct result validation for FlextResult compatibility
+        assert result.is_success
+        assert result.value == "success_value"
 
     def test_concrete_service_execute_can_fail(self) -> None:
         """Test concrete service execute method can return failure."""
@@ -132,9 +131,9 @@ class TestsFlextLdapBase:
         service = FailingTestService()
         result = service.execute()
 
-        # Use flext_tests automation for failure validation
-        error = u.Tests.Result.assert_failure(result, "operation_failed")
-        assert error == "operation_failed"
+        # Direct result validation for FlextResult compatibility
+        assert result.is_failure
+        assert result.error == "operation_failed"
 
     # =========================================================================
     # Config Access Tests
@@ -156,7 +155,7 @@ class TestsFlextLdapBase:
         assert hasattr(service, "config")
         config = service.config
         assert config is not None
-        assert isinstance(config, FlextConfig)
+        assert isinstance(config, FlextSettings)
 
     def test_service_config_provides_equivalent_values(self) -> None:
         """Test service config provides equivalent values to global instance."""
@@ -171,7 +170,7 @@ class TestsFlextLdapBase:
 
         service = GlobalConfigService()
         config = service.config
-        global_config = FlextConfig.get_global_instance()
+        global_config = FlextSettings.get_global_instance()
 
         # Config provides equivalent values (may be cloned instance)
         assert config.app_name == global_config.app_name
@@ -224,9 +223,8 @@ class TestsFlextLdapBase:
 
         # Test bool - validate real limits
         bool_result = BoolService().execute()
-        bool_value = u.Tests.Result.assert_success(
-            bool_result, "Bool service should succeed"
-        )
+        assert bool_result.is_success
+        bool_value: bool = bool_result.value
         assert isinstance(bool_value, bool)
         assert bool_value is True
         # Validate that bool service actually returns bool type
@@ -234,9 +232,8 @@ class TestsFlextLdapBase:
 
         # Test int - validate real limits
         int_result = IntService().execute()
-        int_value = u.Tests.Result.assert_success(
-            int_result, "Int service should succeed"
-        )
+        assert int_result.is_success
+        int_value: int = int_result.value
         assert isinstance(int_value, int)
         assert int_value == 42
         # Validate that int service actually returns int type
@@ -263,9 +260,8 @@ class TestsFlextLdapBase:
 
         # Test list - validate real limits and structure
         list_result = ListService().execute()
-        list_value = u.Tests.Result.assert_success(
-            list_result, "List service should succeed"
-        )
+        assert list_result.is_success
+        list_value: list[str] = list_result.value
         assert isinstance(list_value, list)
         assert len(list_value) == 3  # Validate actual length
         assert list_value == ["a", "b", "c"]
@@ -274,9 +270,8 @@ class TestsFlextLdapBase:
 
         # Test dict - validate real limits and structure
         dict_result = DictService().execute()
-        dict_value = u.Tests.Result.assert_success(
-            dict_result, "Dict service should succeed"
-        )
+        assert dict_result.is_success
+        dict_value: dict[str, int] = dict_result.value
         assert isinstance(dict_value, dict)
         assert len(dict_value) == 1  # Validate actual size
         assert dict_value == {"count": 10}
@@ -356,14 +351,14 @@ class TestsFlextLdapBase:
         result_b2 = service_b.execute()
 
         # Use flext_tests automation
-        value_a1 = u.Tests.Result.assert_success(result_a1, "Service A should succeed")
-        value_b1 = u.Tests.Result.assert_success(result_b1, "Service B should succeed")
-        value_a2 = u.Tests.Result.assert_success(
-            result_a2, "Service A should succeed again"
-        )
-        value_b2 = u.Tests.Result.assert_success(
-            result_b2, "Service B should succeed again"
-        )
+        assert result_a1.is_success
+        value_a1: str = result_a1.value
+        assert result_b1.is_success
+        value_b1: str = result_b1.value
+        assert result_a2.is_success
+        value_a2: str = result_a2.value
+        assert result_b2.is_success
+        value_b2: str = result_b2.value
 
         assert value_a1 == "A"
         assert value_b1 == "B"

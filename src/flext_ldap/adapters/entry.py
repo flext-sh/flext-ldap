@@ -201,17 +201,12 @@ class FlextLdapEntryAdapter(s[bool]):
             auto_result_raw if isinstance(auto_result_raw, bool) else None
         )
         # Python 3.13: Filter kwargs with modern comprehension
-        kwargs_without_server_type: dict[str, str | float | bool | None] = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in ("server_type", "_auto_result")
-            and (v is None or isinstance(v, (str, float, bool)))
-        }
-        # Type narrowing: kwargs_without_server_type is dict[str, str | float | bool | None]
+        # Removed unused kwargs filtering - super().__init__() doesn't need config kwargs
+        # Type narrowing was: kwargs_without_server_type is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
         # Do NOT pass _auto_result to super().__init__() - it's a PrivateAttr
         # that must be set directly via object.__setattr__() to bypass Pydantic validation
-        super().__init__(**kwargs_without_server_type)
+        super().__init__()
         # Use provided server_type or default from constants
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
         # FlextLdif accepts config via kwargs, not as direct parameter
@@ -535,7 +530,7 @@ class FlextLdapEntryAdapter(s[bool]):
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
             entry_dn_for_log = "unknown"
-            if hasattr(ldap3_entry, 'entry_dn'):
+            if hasattr(ldap3_entry, "entry_dn"):
                 entry_dn_for_log = (
                     str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
                 )
@@ -599,9 +594,9 @@ class FlextLdapEntryAdapter(s[bool]):
                 if isinstance(v, Sequence):
                     # Ensure key is str (handle LaxStr: str | bytes | bytearray)
                     if isinstance(k, bytes):
-                        key_str = k.decode('utf-8', errors='replace')
+                        key_str = k.decode("utf-8", errors="replace")
                     elif isinstance(k, bytearray):
-                        key_str = bytes(k).decode('utf-8', errors='replace')
+                        key_str = bytes(k).decode("utf-8", errors="replace")
                     else:
                         key_str = str(k)
                     filtered_attrs[key_str] = [str(item) for item in v]

@@ -25,7 +25,7 @@ import types
 from collections.abc import Callable, Generator
 from pathlib import Path
 from threading import Lock
-from typing import TextIO
+from typing import TextIO, cast
 
 import pytest
 from flext_core import FlextLogger, r
@@ -36,9 +36,9 @@ from ldap3 import Connection, Server
 
 from flext_ldap import (
     FlextLdap,
-    FlextLdapConfig,
     FlextLdapConnection,
     FlextLdapOperations,
+    FlextLdapSettings,
     p,
 )
 
@@ -298,7 +298,12 @@ class TestFixtures:
             # Python 3.13: Type narrowing - unwrap() returns list[p.Entry]
             entries = result.value
             # Type narrowing: entries is list[p.Entry] from parse result
-            return [entry for entry in entries if hasattr(entry, "dn") and hasattr(entry, "attributes")]
+            filtered_entries = [
+                entry
+                for entry in entries
+                if hasattr(entry, "dn") and hasattr(entry, "attributes")
+            ]
+            return cast("list[p.Entry]", filtered_entries)
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
         logger.warning(f"Failed to parse base LDIF: {result.error}")
@@ -891,7 +896,7 @@ def sample_connection_config() -> m.Ldap.ConnectionConfig:
 
 
 @pytest.fixture(scope="module")
-def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapConfig:
+def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapSettings:
     """Get standard LDAP connection configuration.
 
     Module-scoped to match ldap_client fixture scope for performance.
@@ -899,7 +904,7 @@ def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapConfig:
     port_value = ldap_container["port"]
     port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
 
-    return FlextLdapConfig(
+    return FlextLdapSettings(
         host=str(ldap_container["host"]),
         port=port_int,
         use_ssl=False,
@@ -972,7 +977,7 @@ def search_options(ldap_container: LdapContainerDict) -> m.Ldap.SearchOptions:
 # @pytest.fixture(scope="module")
 # def ldap_client(
 #     connection_config: m.Ldap.ConnectionConfig,
-#     ldap_config: FlextLdapConfig,
+#     ldap_config: FlextLdapSettings,
 #     ldap_parser: FlextLdifParser | None,
 # ) -> FlextLdap:
 #     """Get configured LDAP client instance for testing with established connection.
@@ -1066,7 +1071,7 @@ def ldap_test_data_loader(
                     logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
                     # Entry might be already deleted by test or not exist
-                    # Convert Exception to GeneralValueType for logger.debug
+                    # Convert Exception to t.GeneralValueType for logger.debug
                     error_repr: t.GeneralValueType = str(e)
                     logger.debug("Cleanup skip for %s: %s", dn, error_repr)
 
@@ -1183,7 +1188,7 @@ SAMPLE_GROUP_ENTRY = {
 
 @pytest.fixture
 def ldap_connection(
-    ldap_config: FlextLdapConfig,
+    ldap_config: FlextLdapSettings,
     ldap_parser: FlextLdifParser | None,
     ldap_container: LdapContainerDict,
 ) -> Generator[FlextLdapConnection]:
@@ -1326,7 +1331,7 @@ def ldap_client(
 
 
 def create_flext_ldap_instance(
-    config: FlextLdapConfig | None = None,
+    config: FlextLdapSettings | None = None,
     parser: FlextLdifParser | None = None,
 ) -> FlextLdap:
     """Create a FlextLdap instance for testing without connection.
@@ -1335,7 +1340,7 @@ def create_flext_ldap_instance(
     The instance will not be connected - call connect() separately if needed.
 
     Args:
-        config: Optional LDAP configuration (defaults to FlextLdapConfig())
+        config: Optional LDAP configuration (defaults to FlextLdapSettings())
         parser: Optional LDIF parser
 
     Returns:
@@ -1343,7 +1348,7 @@ def create_flext_ldap_instance(
 
     """
     if config is None:
-        config = FlextLdapConfig()
+        config = FlextLdapSettings()
 
     # but services pass complex objects via __init__ which are validated at runtime
     connection = FlextLdapConnection(
@@ -1372,7 +1377,7 @@ def create_flext_ldap_instance(
 
 # @pytest.fixture
 # def flext_ldap_instance(
-#     ldap_config: FlextLdapConfig,
+#     ldap_config: FlextLdapSettings,
 #     ldap_parser: FlextLdifParser,
 # ) -> FlextLdap:
 #     """Get FlextLdap instance without connection."""

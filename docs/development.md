@@ -374,7 +374,7 @@ from ldap3 import Connection, Server
 
 # FLEXT imports
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -512,7 +512,7 @@ class TestLdapOperations:
 import pytest
 from flext_tests import FlextTestsDocker
 from flext_core import FlextBus
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
@@ -531,7 +531,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from Flext_ldap import FlextLdapConfig, set_flext_ldap_config
+from Flext_ldap import FlextLdapSettings, set_flext_ldap_config
 
 @pytest.fixture(scope="session")
 def ldap_server():
@@ -568,7 +568,7 @@ def ldap_server():
         pytest.skip(f"LDAP server not ready: {health_result.error}")
 
     # Configure flext-ldap for testing
-    test_config = FlextLdapConfig(
+    test_config = FlextLdapSettings(
         host="localhost",
         port=3390,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
@@ -679,9 +679,9 @@ All public APIs require comprehensive documentation including:
 
 ```python
 # Use connection pooling for high-traffic scenarios
-from Flext_ldap import FlextLdapConfig
+from Flext_ldap import FlextLdapSettings
 
-config = FlextLdapConfig(
+config = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=10,  # Adjust based on load
     connection_timeout=5,

@@ -32,20 +32,22 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
+from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdifUtilities
-from flext_ldif.typings import LaxStr
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
 
 from flext_ldap.base import s
-from flext_ldap.config import FlextLdapConfig
 from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
+
+LaxStr = str | bytes | bytearray  # Type alias for lenient string handling
 
 
 class FlextLdapOperations(s[m.Ldap.SearchResult]):
@@ -159,9 +161,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             for k, v in attrs.items():
                 # Ensure key is str (handle LaxStr from LDIF: str | bytes | bytearray)
                 if isinstance(k, bytes):
-                    key_str = k.decode('utf-8', errors='replace')
+                    key_str = k.decode("utf-8", errors="replace")
                 elif isinstance(k, bytearray):
-                    key_str = bytes(k).decode('utf-8', errors='replace')
+                    key_str = bytes(k).decode("utf-8", errors="replace")
                 else:
                     key_str = str(k)
 
@@ -194,7 +196,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 # Convert using helper to handle LaxStr keys properly
                 if isinstance(attrs_dict, Mapping):
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                        attrs_dict
+                        attrs_dict  # type: ignore[arg-type]
                     )
             return {}
 
@@ -224,7 +226,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     attrs_dict = attrs.attributes
                     if isinstance(attrs_dict, Mapping):
                         return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                            attrs_dict
+                            attrs_dict  # type: ignore[arg-type]
                         )
                     return {}
                 case _:
@@ -601,14 +603,14 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 entry,
             )
             # Python 3.13: Modern dict comprehension with type narrowing
-            # Type as flexible Mapping to accommodate LaxStr variant in Attributes
+            # Type as flexible Mapping to accommodate LaxStr variant in
             attrs_dict: dict[str | bytes | bytearray, list[str | bytes | bytearray]] = {
                 k: [str(item) for item in v] if isinstance(v, Sequence) else [str(v)]
                 for k, v in u.mapper().to_dict(attrs_mapping).items()
             }
             return m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn_value),
-                attributes=m.Ldif.Attributes(attributes=attrs_dict),
+                attributes=m.Ldif.Attributes(attributes=attrs_dict),  # type: ignore[arg-type]
             )
 
         def __init__(self, operations: FlextLdapOperations) -> None:
@@ -988,18 +990,12 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     def __init__(
         self,
         connection: FlextLdapConnection,
-        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize the operations service with a live connection."""
-        # Remove _auto_result from kwargs (handled by FlextService)
-        service_kwargs: dict[str, str | float | bool | None] = {
-            k: v
-            for k, v in kwargs.items()
-            if k != "_auto_result" and isinstance(v, (str, float, bool, type(None)))
-        }
-        # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
+        # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
+        # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
-        super().__init__(**service_kwargs)
+        super().__init__()
         self._connection = connection
         self._upsert_handler = self._UpsertHandler(self)
 
@@ -1098,7 +1094,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 entry,
             )
             # Python 3.13: Use isinstance directly for type narrowing
-            # Type as flexible mapping to accommodate LaxStr variant in Attributes
+            # Type as flexible mapping to accommodate LaxStr variant in
             attrs_dict: dict[str | bytes | bytearray, list[str | bytes | bytearray]] = {
                 k: [str(item) for item in v] if isinstance(v, Sequence) else [str(v)]
                 for k, v in u.mapper().to_dict(attrs_mapping).items()
@@ -1311,10 +1307,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         def wrapped_execute() -> r[m.Ldap.LdapOperationResult]:
             return self._upsert_handler.execute(entry)
 
-        retry_result = u.Reliability.retry[m.Ldap.LdapOperationResult](
-            operation=wrapped_execute,
-            max_attempts=max_retries,
-            delay_seconds=1.0,
+        retry_result: r[m.Ldap.LdapOperationResult] | m.Ldap.LdapOperationResult = (
+            u.Reliability.retry(
+                operation=cast(
+                    "Callable[[], r[m.Ldap.LdapOperationResult] | m.Ldap.LdapOperationResult]",
+                    wrapped_execute,
+                ),
+                max_attempts=max_retries,
+                delay_seconds=1.0,
+            )
         )
         # retry returns r[TResult] | TResult, convert to r[TResult]
         if isinstance(retry_result, r):
@@ -1501,7 +1502,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         Business Rules:
             - Returns failure if connection is not bound (NOT_CONNECTED error)
             - Returns empty SearchResult with configured base_dn on success
-            - Uses default base_dn from FlextLdapConfig if not specified
+            - Uses default base_dn from FlextLdapSettings if not specified
             - Serves as health check for FlextService.execute() pattern
 
         Audit Implication:
@@ -1515,7 +1516,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         if not self._connection.is_connected:
             return r[m.Ldap.SearchResult].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
 
-        ldap_config = self.config.get_namespace("ldap", FlextLdapConfig)
+        ldap_config = self.config.get_namespace("ldap", FlextLdapSettings)
         base_dn = ldap_config.base_dn or "dc=example,dc=com"
         return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(

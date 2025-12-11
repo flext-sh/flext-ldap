@@ -122,7 +122,7 @@ class FlextLdapModels(FlextLdifModels):
             """Collections base classes extending FlextModels.Collections.
 
             Exposes Config, Options, Results, Statistics, Categories via inheritance
-            to enable access via m.Collections.* namespace.
+            to enable access via m.Categories namespace.
             """
 
             class Config(FlextModels.Collections.Config):
@@ -418,13 +418,13 @@ class FlextLdapModels(FlextLdifModels):
             @computed_field
             def by_objectclass(
                 self,
-            ) -> m.Collections.Categories[FlextLdifModels.Ldif.Entry]:
+            ) -> m.Categories[FlextLdifModels.Ldif.Entry]:
                 """Categorize entries by objectClass attribute.
 
                 Business Rules:
                     - Entries are grouped by first objectClass value
                     - Entries without objectClass are categorized as "unknown"
-                    - Uses m.Collections.Categories for grouping
+                    - Uses m.Categories for grouping
                     - Handles both Attributes and Mapping types
 
                 Audit Implications:
@@ -433,7 +433,7 @@ class FlextLdapModels(FlextLdifModels):
                     - Categories can be used for compliance reporting
 
                 Architecture:
-                    - Uses m.Collections.Categories for grouping
+                    - Uses m.Categories for grouping
                     - Handles Attributes and Mapping types safely
                     - Returns Categories[Entry] for type-safe access
                     - No network calls - pure data categorization
@@ -442,9 +442,7 @@ class FlextLdapModels(FlextLdifModels):
                     Categories instance with entries grouped by objectClass.
 
                 """
-                categories: m.Collections.Categories[m.Ldif.Entry] = (
-                    m.Collections.Categories[m.Ldif.Entry]()
-                )
+                categories: m.Categories[m.Ldif.Entry] = m.Categories()
 
                 logger = logging.getLogger(__name__)
                 for entry in self.entries:
@@ -478,7 +476,7 @@ class FlextLdapModels(FlextLdifModels):
                 """
                 if entry.attributes is None:
                     return {}
-                # entry.attributes is FlextLdifModelsDomains.Attributes
+                # entry.attributes is FlextLdifModelsDomains.
                 # which is dict[LaxStr, list[LaxStr]] - convert keys to str
                 result: dict[str, list[str]] = {}
                 for k, v in entry.attributes.items():

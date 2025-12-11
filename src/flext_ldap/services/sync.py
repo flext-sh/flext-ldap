@@ -359,14 +359,10 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         """
         # Remove _auto_result from kwargs (handled by FlextService)
         # Python 3.13: Use type narrowing with structural pattern matching
-        service_kwargs: dict[str, str | float | bool | None] = {
-            k: v
-            for k, v in kwargs.items()
-            if k != "_auto_result" and (v is None or isinstance(v, (str, float, bool)))
-        }
-        # Type narrowing: service_kwargs is dict[str, str | float | bool | None]
+        # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
+        # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
-        super().__init__(**service_kwargs)
+        super().__init__()
         # Use u.get() mnemonic: extract from kwargs with fallback
         # Python 3.13: Use structural pattern matching for type validation
         if operations is None:
