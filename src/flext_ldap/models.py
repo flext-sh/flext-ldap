@@ -81,7 +81,8 @@ class FlextLdapModels(FlextLdifModels):
             def validate_ssl_tls_exclusion(self) -> Self:
                 """Validate that SSL and TLS are mutually exclusive."""
                 if self.use_ssl and self.use_tls:
-                    raise ValueError("use_ssl and use_tls are mutually exclusive")
+                    msg = "use_ssl and use_tls are mutually exclusive"
+                    raise ValueError(msg)
                 return self
 
         class SearchOptions(BaseModel):
@@ -96,6 +97,7 @@ class FlextLdapModels(FlextLdifModels):
 
             class NormalizedConfig(BaseModel):
                 """Configuration for normalized SearchOptions factory."""
+
                 scope: str = "SUBTREE"
                 filter_str: str = "(objectClass=*)"
                 size_limit: int = 0
@@ -106,8 +108,8 @@ class FlextLdapModels(FlextLdifModels):
             def normalized(
                 cls,
                 base_dn: str,
-                config: "SearchOptions.NormalizedConfig | None" = None,
-            ) -> "SearchOptions":
+                config: SearchOptions.NormalizedConfig | None = None,
+            ) -> SearchOptions:
                 """Create SearchOptions with normalized configuration.
 
                 Args:
@@ -116,6 +118,7 @@ class FlextLdapModels(FlextLdifModels):
 
                 Returns:
                     SearchOptions with specified or default values
+
                 """
                 if config is None:
                     config = cls.NormalizedConfig()
