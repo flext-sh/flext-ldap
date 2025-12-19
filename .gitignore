@@ -377,4 +377,42 @@ docker/ldap-config/**
 # ============================================================================
 # SAFETY: Keep .gitkeep files
 # ============================================================================
-!**/.gitkeep
+!**/.gitkeep# ============================================================================
+# BACKUP AND TEMPORARY FILES - NEVER commit
+# ============================================================================
+# Backup files with various extensions
+*.bak
+*.backup
+*.orig
+*.old
+*_backup*
+*_old*
+*_temp*
+*backup*
+
+# Validation and test scripts outside proper directories
+**/validate*.sh
+**/validate*.py
+**/validate*.yml
+**/validate*.yaml
+**/test*.sh
+**/test*.py
+**/test*.yml
+**/test*.yaml
+
+# Temporary and working files
+*.tmp
+*.temp
+temp/
+staging/
+.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude AI files
+.claude/
