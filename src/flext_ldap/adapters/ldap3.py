@@ -743,11 +743,11 @@ class Ldap3Adapter(s[bool]):
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
                     entry_for_extraction,
                 )
-                entry = m.Ldif.Entry(
-                    dn=dn_obj,
-                    attributes=attrs_obj,
-                    metadata=metadata_obj,
-                )
+                entry = m.Ldif.Entry.model_validate({
+                    "dn": dn_obj,
+                    "attributes": attrs_obj,
+                    "metadata": metadata_obj,
+                })
                 entries.append(entry)
                 continue
 
@@ -764,7 +764,7 @@ class Ldap3Adapter(s[bool]):
             self,
             connection: Connection,
             dn_str: str,
-            ldap_attrs: t.Ldap.Attributes,
+            ldap_attrs: t.Ldap.Operation.Attributes,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP add operation via ldap3 Connection.
 
@@ -816,7 +816,7 @@ class Ldap3Adapter(s[bool]):
             self,
             connection: Connection,
             dn: str | m.Ldif.DN,
-            changes: t.Ldap.ModifyChanges,
+            changes: t.Ldap.Operation.Changes,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
 
@@ -1429,7 +1429,7 @@ class Ldap3Adapter(s[bool]):
     def modify(
         self,
         dn: str | m.Ldif.DN,
-        changes: t.Ldap.ModifyChanges,
+        changes: t.Ldap.Operation.Changes,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.

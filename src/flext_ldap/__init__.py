@@ -32,6 +32,7 @@ from flext_core import (
     FlextResult,
 )
 
+# Temporarily disabled some imports due to flext-ldif import issues
 from flext_ldap.api import FlextLdap
 from flext_ldap.base import FlextLdapServiceBase, s
 from flext_ldap.constants import FlextLdapConstants, c
@@ -67,7 +68,7 @@ __email__ = "dev@flext.com"
 # Usage:
 #   from flext_ldap import u, t, c, m, p, r, e, d, s, x, h
 #   result = {k: v for k, v in data.items() if predicate(k, v)}
-#   typed_value: t.Ldap.Attributes = {...}
+#   typed_value: t.Ldap.Operation.Attributes = {...}
 #   status = c.OperationType.ADD
 #   model = m.SearchOptions(...)
 #   protocol: p.LdapEntry.EntryProtocol = entry

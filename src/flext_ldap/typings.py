@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TypeVar
 
 from flext_core import r
@@ -40,114 +40,31 @@ class FlextLdapTypes(FlextLdifTypes):
     """
 
     class Ldap:
-        """LDAP-specific type aliases.
+        """LDAP-specific type aliases with 2-level maximum nesting.
 
-        NOTE: For strict type checking, use FlextLdapModels.Types which has
-        typed versions:
-        - m.Types.LdapProgressCallback
-        - m.Types.MultiPhaseProgressCallback
-        - m.Types.ProgressCallbackUnion
+        Architecture: 2-level maximum namespace (t.Ldap.SubDomain.Type)
+        Never: t.Ldap.SubDomain.SubSub.Type (3+ levels forbidden)
 
-        This class also serves as the LDAP namespace for cross-project access.
-        Usage: Other projects can reference `t.Ldif.Entry.Instance`, `t.Ldap.Operation.Result`, etc.
+        This class serves as the LDAP namespace for cross-project access.
+        Usage: t.Ldap.Connection.Config, t.Ldap.Operation.Result, etc.
         """
 
-        # Progress callback types (simplified to avoid circular imports)
-        # For strict typing use m.Types.* variants in models.py
-        # Use object for variadic callbacks - covers all parameter types
-        # Note: This is a union that accepts both single-phase (4 params) and multi-phase (5 params) callbacks
-        # The actual types are defined in models.py as m.Types.LdapProgressCallback and m.Types.MultiPhaseProgressCallback
-        type ProgressCallbackUnion = (
-            Callable[[object], None]
-            | Callable[[object, object], None]
-            | Callable[[object, object, object], None]
-            | Callable[[object, object, object, object], None]
-            | Callable[[object, object, object, object, object], None]
-            | None
-        )
-        """Union type for progress callbacks (simplified for config models).
+        # Connection types
+        class Connection:
+            """Connection-related type aliases."""
 
-        Accepts callables with 1-5 parameters (all typed as object for flexibility).
-        Actual typed versions are in models.py: m.Types.LdapProgressCallback (4 params)
-        and m.Types.MultiPhaseProgressCallback (5 params).
-        """
+            type Config = object  # Bounded to ConnectionConfig at runtime
+            type Options = Mapping[str, object]  # Connection options
 
-        # Operation data types (ldap3 compatibility) - defined here for direct access
-        # Also defined in Operation namespace for internal consistency
-        type ModifyChanges = dict[str, list[tuple[str, list[str]]]]
-        """Type alias for LDAP modify changes (ldap3 compatibility).
-
-        Format: {attribute_name: [(operation, [values])]}
-        Operations: 'MODIFY_ADD', 'MODIFY_DELETE', 'MODIFY_REPLACE'
-        """
-        type AttributeValues = dict[str, list[str]]
-        """Type alias for LDAP attribute values (multi-valued attributes)."""
-        type Attributes = dict[str, list[str]]
-        """Type alias for LDAP attributes (attribute name to value list mapping)."""
-        type AttributesReadOnly = Mapping[str, Sequence[str]]
-        """Type alias for read-only LDAP attributes mapping."""
-
-        class Entry:
-            """Entry-related type aliases.
-
-            Extends parent Entry with LDAP-specific entry type aliases.
-            Parent class provides LDIF-specific entry type aliases.
-
-            Note: This nested class extends FlextLdifTypes.Entry to add LDAP-specific
-            type aliases. Both classes contain only type aliases (PEP 695), not methods,
-            so there are no method overrides to be incompatible.
-            """
-
-            # Types using object to avoid circular import with protocols.py (Tier 0 rule)
-            # Actual constraint: FlextLdapProtocols.Ldap.LdapEntryProtocol (enforced at runtime by models/services)
-            type Instance = object
-            type Collection = Sequence[object]
-            type EntryMapping = Mapping[str, object]
-
-            # Generic types
-            type Handler[T] = Callable[
-                [object],
-                r[T],
-            ]
-            type Transformer = Callable[
-                [object],
-                object,
-            ]
-            type Filter = Callable[
-                [object],
-                bool,
-            ]
-            type Processor = Callable[
-                [Sequence[object]],
-                r[Sequence[object]],
-            ]
-
+        # Operation types
         class Operation:
             """Operation-related type aliases."""
 
-            # Composition with t
             type Result[T] = r[T]
-            type Callback[T] = Callable[[], r[T]]
-
-            # Domain-specific types (using object to avoid circular import with protocols.py)
-            # Actual constraint: FlextLdapProtocols.Ldap.LdapEntryProtocol (enforced at runtime)
-            type EntryProcessor = Callable[
-                [object],
-                r[bool],
-            ]
-            type BatchProcessor = Callable[
-                [Sequence[object]],
-                r[int],
-            ]
-
-            type MultiPhaseProgressCallback = Callable[[object], None]
-            """Multi-phase progress callback (variadic, type-safe callback type).
-
-            Note: For strict typing, use m.Types.MultiPhaseProgressCallback from models.py.
-            This alias is kept for backward compatibility but should not be used in new code.
-            """
-
-            # ldap3 entry value types (for adapter conversion)
+            type Changes = dict[str, list[tuple[str, list[str]]]]
+            type Attributes = Mapping[str, Sequence[str]]
+            type AttributeDict = dict[str, list[str]]
+            """Type alias for LDAP attribute mappings (attribute name to value list)."""
             type Ldap3EntryValue = (
                 str
                 | bytes
@@ -157,73 +74,22 @@ class FlextLdapTypes(FlextLdifTypes):
                 | Sequence[str | bytes | int | float | bool]
                 | None
             )
-            """Type alias for ldap3 entry attribute values.
+            """Type alias for ldap3 entry attribute values."""
 
-            Supports all common LDAP attribute value types:
-            - Scalar: str, bytes, int, float, bool, None
-            - Multi-valued: Sequence of scalar types
-            """
+        # Entry types
+        class Entry:
+            """Entry-related type aliases."""
 
-            type AttributeDict = dict[str, list[str]]
-            """Type alias for LDIF/LDAP attribute mappings
-            (attribute names to string lists)."""
+            type Instance = object  # Bounded to Entry at runtime
+            type Collection = Sequence[object]
 
-            type ConversionState = tuple[list[str], list[str]]
-            """Type alias for conversion state: (removed_attrs, base64_attrs)."""
+        # Search types
+        class Search:
+            """Search-related type aliases."""
 
-            # Callables
-            type AddCallable = Callable[
-                [str, str | None, FlextLdapTypes.Ldap.AttributeValues | None], bool
-            ]
-            type ModifyCallable = Callable[
-                [str, FlextLdapTypes.Ldap.ModifyChanges], bool
-            ]
-            type DeleteCallable = Callable[[str], bool]
-            type SearchCallable = Callable[
-                [
-                    str,
-                    str,
-                    int,
-                    Sequence[str] | None,
-                    bool,
-                    Mapping[str, str] | None,
-                    int | None,
-                    int | None,
-                    bool,
-                    Mapping[str, str] | None,
-                ],
-                tuple[bool, Mapping[str, Sequence[Mapping[str, Sequence[str]]]]],
-            ]
-
-            # Namespace composition via inheritance - no aliases needed
-            # Access parent namespaces directly through inheritance
-
-        class Protocol:
-            """Protocol type aliases for easier access (PEP 695).
-
-            These type aliases provide convenient access to nested protocol classes
-            without needing to reference the full nested path.
-
-            Note: All protocol types use object to avoid circular import with protocols.py (Tier 0 rule).
-            Actual constraints are FlextLdapProtocols.Ldap.* (enforced at runtime by models/services).
-            """
-
-            # Configuration protocols
-            type ConnectionConfig = object
-            type SearchOptions = object
-
-            # Entry protocols
-            type Entry = object
-            type DN = object
-
-            # Service protocols
-            type LdapClient = object
-            type LdapAdapter = object
-            type LdapConnection = object
-
-            # Result protocols
-            type OperationResult = object
-            type SearchResult = object
+            type Options = object  # Bounded to SearchOptions at runtime
+            type Filter = str
+            type Scope = str
 
 
 # Alias for simplified usage

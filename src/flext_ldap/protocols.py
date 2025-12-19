@@ -135,6 +135,25 @@ class FlextLdapProtocols(ldif_p):
                 """Return string representation of scope."""
                 ...
 
+        class Parse:
+            """Parse-related protocols."""
+
+            @runtime_checkable
+            class ParseResultProtocol(Protocol):
+                """Protocol for parse results (structural type)."""
+
+                is_failure: bool
+                """Indicates if parsing failed."""
+
+                is_success: bool
+                """Indicates if parsing succeeded."""
+
+                error: str | None
+                """Error message if parsing failed."""
+
+                value: object
+                """Parsed value or result object."""
+
         @runtime_checkable
         class SearchOptionsProtocol(Protocol):
             """Protocol for LDAP search options (structural type).
@@ -422,7 +441,7 @@ class FlextLdapProtocols(ldif_p):
             """Protocol for ldap3.Entry objects (structural type).
 
             ldap3.Entry has dynamic attributes accessed via entry_dn and
-            entry_attributes properties, plus attribute-specific objects.
+            entry_attributes_as_dict properties, plus attribute-specific objects.
             """
 
             @property
@@ -431,8 +450,8 @@ class FlextLdapProtocols(ldif_p):
                 ...
 
             @property
-            def entry_attributes(self) -> Sequence[str]:
-                """Get list of attribute names."""
+            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[object]]:
+                """Get attributes as dict mapping attribute names to value lists."""
                 ...
 
         @runtime_checkable

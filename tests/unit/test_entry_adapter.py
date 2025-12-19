@@ -90,15 +90,19 @@ class TestsFlextLdapEntryAdapter:
         class MockLdap3Entry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=user,dc=example,dc=com"
-                self.entry_attributes_as_dict: dict[str, list[str]] = {
+                self._entry_attributes_as_dict: dict[str, list[str]] = {
                     "cn": ["user"],
                     "sn": ["Doe"],
                 }
 
+            @property
+            def entry_attributes_as_dict(self) -> dict[str, list[str]]:
+                return self._entry_attributes_as_dict
+
         ldap3_entry = MockLdap3Entry()
         # Type narrowing: MockLdap3Entry is structurally compatible with ldap3.Entry
         # Use direct call - adapter handles type compatibility
-        result = adapter.ldap3_to_ldif_entry(ldap3_entry)  # type: ignore[arg-type]
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
@@ -114,12 +118,16 @@ class TestsFlextLdapEntryAdapter:
         class MockLdap3Entry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=user,dc=example,dc=com"
-                self.entry_attributes_as_dict: dict[str, list[str]] = {}
+                self._entry_attributes_as_dict: dict[str, list[str]] = {}
+
+            @property
+            def entry_attributes_as_dict(self) -> dict[str, list[str]]:
+                return self._entry_attributes_as_dict
 
         ldap3_entry = MockLdap3Entry()
         # Type narrowing: MockLdap3Entry is structurally compatible with ldap3.Entry
         # Use direct call - adapter handles type compatibility
-        result = adapter.ldap3_to_ldif_entry(ldap3_entry)  # type: ignore[arg-type]
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)

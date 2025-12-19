@@ -134,7 +134,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 
 ### **Configuration File**
 
-Create `flext_ldap_config.py`:
+Create `flext_ldap.settings.py`:
 
 ```python
 from Flext_ldap import FlextLdapSettings

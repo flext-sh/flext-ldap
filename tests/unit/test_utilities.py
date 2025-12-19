@@ -26,10 +26,13 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar
 
 import pytest
-from flext_core import FlexibleValue  # type: ignore[attr-defined]
+from flext_core import t as t_core
 from flext_tests import tm
 
 from tests import u
+
+# FlexibleValue is a type alias in FlextTypes
+FlexibleValue = t_core.FlexibleValue
 
 pytestmark = pytest.mark.unit
 

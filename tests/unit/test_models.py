@@ -74,23 +74,23 @@ class TestsFlextLdapModels:
 
     def test_collections_exists(self) -> None:
         """Test Collections class exists."""
-        tm.that(m.Ldap.Collections, none=False)
+        tm.that(m.Collections, none=False)
 
     def test_collections_config_exists(self) -> None:
         """Test Collections.Config exists."""
-        tm.that(m.Ldap.Collections.Config, none=False)
+        tm.that(m.Collections.Config, none=False)
 
     def test_collections_options_exists(self) -> None:
         """Test Collections.Options exists."""
-        tm.that(m.Ldap.Collections.Options, none=False)
+        tm.that(m.Collections.Options, none=False)
 
     def test_collections_results_exists(self) -> None:
         """Test Collections.Results exists."""
-        tm.that(m.Ldap.Collections.Results, none=False)
+        tm.that(m.Collections.Results, none=False)
 
     def test_collections_statistics_exists(self) -> None:
         """Test Collections.Statistics exists."""
-        tm.that(m.Ldap.Collections.Statistics, none=False)
+        tm.that(m.Collections.Statistics, none=False)
 
     # =========================================================================
     # Entry Model Tests
@@ -217,7 +217,7 @@ class TestsFlextLdapModels:
         """
         config = m.Ldap.ConnectionConfig()
         # Verify it's a valid config instance
-        tm.that(config, is_=m.Ldap.Collections.Config, none=False)
+        tm.that(config, is_=m.FlextLdapModels.Collections.Config, none=False)
         # Verify model_dump works (serialization)
         dump = config.model_dump()
         tm.that(dump, keys=["host", "port"])

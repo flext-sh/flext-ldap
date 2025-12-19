@@ -196,9 +196,7 @@ class FlextLdapConnection(s[bool]):
             if auto_retry
             else self._adapter.connect(connection_config)
         )
-        # Type narrowing: retry returns r[TResult] | TResult, ensure r[bool]
-        if not isinstance(result, r):
-            result = r[bool].ok(result)
+        # Both retry and connect return r[bool], no type narrowing needed
 
         if result.is_success:
             self._detect_server_type_optional()

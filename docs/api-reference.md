@@ -348,7 +348,7 @@ LDAP connection configuration.
 **Example:**
 
 ```python
-from Flext_ldap import FlextLdapSettings, set_flext_ldap_config
+from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
 
 config = FlextLdapSettings(
     host="ldap.example.com",
@@ -359,7 +359,7 @@ config = FlextLdapSettings(
     base_dn="dc=example,dc=com"
 )
 
-set_flext_ldap_config(config)
+set_flext_ldap.settings(config)
 ```
 
 ---

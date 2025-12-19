@@ -531,7 +531,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from Flext_ldap import FlextLdapSettings, set_flext_ldap_config
+from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
 
 @pytest.fixture(scope="session")
 def ldap_server():
@@ -575,7 +575,7 @@ def ldap_server():
         bind_password="REDACTED_LDAP_BIND_PASSWORD123",
         base_dn="dc=flext,dc=local"
     )
-    set_flext_ldap_config(test_config)
+    set_flext_ldap.settings(test_config)
 
     yield container_id
 

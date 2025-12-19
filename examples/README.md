@@ -664,27 +664,27 @@ python examples/99_comprehensive_oud_validation.py
 
 ## 🎯 Module Coverage Matrix
 
-| Module                    | Examples               | Functionality Demonstrated                           |
-| ------------------------- | ---------------------- | ---------------------------------------------------- |
-| **api.py (FlextLdap)**    | ALL                    | Primary facade - all operations                      |
-| **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities   |
-| **clients.py**            | 07, 11                 | Advanced direct client usage, repositories           |
+| Module                    | Examples               | Functionality Demonstrated                             |
+| ------------------------- | ---------------------- | ------------------------------------------------------ |
+| **api.py (FlextLdap)**    | ALL                    | Primary facade - all operations                        |
+| **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
+| **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
 | **config.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
-| **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                           |
-| **validations.py**        | 02, 06                 | DN, filter validation                                |
-| **authentication.py**     | 03                     | User authentication flows                            |
-| **search.py**             | 02                     | Search operations                                    |
-| **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization   |
-| **servers/**              | 05                     | Server-specific operations                           |
-| **quirks_integration.py** | 05, 09                 | Server quirks handling, ACL/paging/timeout quirks    |
-| **exceptions.py**         | 07                     | Error handling                                       |
-| **schema.py**             | 09                     | Schema discovery, server detection                   |
-| **acl/manager.py**        | 08                     | ACL management                                       |
-| **acl/converters.py**     | 08                     | ACL format conversion                                |
-| **acl/parsers.py**        | 08                     | Multi-format ACL parsing                             |
-| **repositories.py**       | 11                     | Repository pattern, DDD                              |
-| **domain.py**             | 12                     | Domain services, Specification Pattern               |
-| **connection_manager.py** | 10                     | Connection lifecycle (conceptual)                    |
+| **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                             |
+| **validations.py**        | 02, 06                 | DN, filter validation                                  |
+| **authentication.py**     | 03                     | User authentication flows                              |
+| **search.py**             | 02                     | Search operations                                      |
+| **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization     |
+| **servers/**              | 05                     | Server-specific operations                             |
+| **quirks_integration.py** | 05, 09                 | Server quirks handling, ACL/paging/timeout quirks      |
+| **exceptions.py**         | 07                     | Error handling                                         |
+| **schema.py**             | 09                     | Schema discovery, server detection                     |
+| **acl/manager.py**        | 08                     | ACL management                                         |
+| **acl/converters.py**     | 08                     | ACL format conversion                                  |
+| **acl/parsers.py**        | 08                     | Multi-format ACL parsing                               |
+| **repositories.py**       | 11                     | Repository pattern, DDD                                |
+| **domain.py**             | 12                     | Domain services, Specification Pattern                 |
+| **connection_manager.py** | 10                     | Connection lifecycle (conceptual)                      |
 
 **Coverage Summary:**
 

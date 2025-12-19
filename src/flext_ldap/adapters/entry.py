@@ -34,12 +34,12 @@ from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_core import r
 from flext_ldif import FlextLdif
-from ldap3 import Entry as Ldap3Entry
 from pydantic import PrivateAttr
 
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
@@ -49,7 +49,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     This adapter provides bidirectional conversion with universal server support:
     - ldap3.Entry → p.Entry (for result processing)
-    - p.Entry → t.Ldap.Attributes (for ldap3 operations)
+    - p.Entry → t.Ldap.Operation.Attributes (for ldap3 operations)
     - Server-specific entry normalization using quirks
     - Entry validation for target server types
     - Entry format conversion between different servers
@@ -246,7 +246,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     def _convert_ldap3_value_to_list(
         self,
-        value: t.Ldap.Operation.Ldap3EntryValue,
+        value: object,
         key: str,
         base64_attrs: MutableSequence[str],
         removed_attrs: MutableSequence[str],
@@ -306,7 +306,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_conversion_metadata(
         removed_attrs: Sequence[str],
         base64_attrs: Sequence[str],
-        original_attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue],
+        original_attrs_dict: Mapping[str, object],
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation.
@@ -351,7 +351,7 @@ class FlextLdapEntryAdapter(s[bool]):
         conversion_metadata: m.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
-        original_attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue],
+        original_attrs_dict: Mapping[str, object],
         converted_attrs_dict: Mapping[str, list[str]],
     ) -> None:
         """Track DN and attribute differences in conversion metadata.
@@ -441,7 +441,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     def ldap3_to_ldif_entry(
         self,
-        ldap3_entry: Ldap3Entry,
+        ldap3_entry: p.Ldap.Ldap3EntryProtocol,
     ) -> r[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
@@ -521,11 +521,11 @@ class FlextLdapEntryAdapter(s[bool]):
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
             return r[m.Ldif.Entry].ok(
-                m.Ldif.Entry(
-                    dn=m.Ldif.DN(value=dn_str),
-                    attributes=ldf_attrs_obj,
-                    metadata=metadata_obj,
-                ),
+                m.Ldif.Entry.model_validate({
+                    "dn": m.Ldif.DN(value=dn_str),
+                    "attributes": ldf_attrs_obj,
+                    "metadata": metadata_obj,
+                }),
             )
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
@@ -536,7 +536,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
-                operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY.value,
+                operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
                 entry_dn=entry_dn_for_log,
                 error=str(e),
                 error_type=type(e).__name__,
@@ -546,7 +546,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldif_entry_to_ldap3_attributes(
         self,
         entry: m.Ldif.Entry,
-    ) -> r[t.Ldap.Attributes]:
+    ) -> r[t.Ldap.Operation.Attributes]:
         """Convert p.Entry to ldap3 attributes format.
 
         Business Rules:
@@ -580,12 +580,12 @@ class FlextLdapEntryAdapter(s[bool]):
         # Use entry directly - m.Ldif.Entry is the public API
         # Check if attributes are empty
         if entry.attributes is None:
-            return r[t.Ldap.Attributes].fail("Entry has no attributes")
+            return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         # entry.attributes is already m.Ldif.Attributes type (after None check above)
         ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
-            return r[t.Ldap.Attributes].fail("Entry has no attributes")
+            return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         try:
             # Python 3.13: Use isinstance directly for type-safe filtering
             # Convert to str keys and list values to ensure type compatibility
@@ -594,13 +594,13 @@ class FlextLdapEntryAdapter(s[bool]):
                 if isinstance(v, Sequence):
                     # Ensure key is str (handle LaxStr: str | bytes | bytearray)
                     if isinstance(k, bytes):
-                        key_str = k.decode("utf-8", errors="replace")
+                        key_str: str = k.decode("utf-8", errors="replace")
                     elif isinstance(k, bytearray):
                         key_str = bytes(k).decode("utf-8", errors="replace")
                     else:
                         key_str = str(k)
                     filtered_attrs[key_str] = [str(item) for item in v]
-            return r[t.Ldap.Attributes].ok(filtered_attrs)
+            return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above
             # entry.dn can be str or DNProtocol (which has .value)
@@ -609,11 +609,11 @@ class FlextLdapEntryAdapter(s[bool]):
             entry_dn_str = u.to_str(dn_value, default="unknown")
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
-                operation=c.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES.value,
+                operation=c.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
                 entry_dn=entry_dn_str,
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[t.Ldap.Attributes].fail(
+            return r[t.Ldap.Operation.Attributes].fail(
                 f"Failed to convert attributes to ldap3 format: {e!s}",
             )

@@ -179,7 +179,7 @@ class TestsFlextLdapApi:
     # Service Config Type Tests
     # =========================================================================
 
-    def test_get_service_config_type_returns_flext_ldap_config(self) -> None:
+    def test_get_service_config_type_returns_flext_ldap_settings(self) -> None:
         """Test _get_service_config_type returns FlextLdapSettings."""
         config_type = FlextLdap._get_service_config_type()
         tm.that(config_type, eq=FlextLdapSettings)
