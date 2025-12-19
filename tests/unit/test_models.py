@@ -217,7 +217,7 @@ class TestsFlextLdapModels:
         """
         config = m.Ldap.ConnectionConfig()
         # Verify it's a valid config instance
-        tm.that(config, is_=m.FlextLdapModels.Collections.Config, none=False)
+        tm.that(config, is_=m.Collections.Config, none=False)
         # Verify model_dump works (serialization)
         dump = config.model_dump()
         tm.that(dump, keys=["host", "port"])
