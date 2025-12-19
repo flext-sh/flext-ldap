@@ -9,7 +9,7 @@ from collections.abc import Callable, Sequence
 from typing import Protocol, Self, runtime_checkable
 
 from flext_ldif.models import FlextLdifModels
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 
 @runtime_checkable
@@ -87,12 +87,47 @@ class FlextLdapModels(FlextLdifModels):
         class SearchOptions(BaseModel):
             """Search options."""
 
-            base_dn: str = ""
+            base_dn: str = Field(..., min_length=1, description="Base DN for search (required, non-empty)")
             scope: str = "SUBTREE"
             filter_str: str = "(objectClass=*)"
             attributes: list[str] | None = None
             size_limit: int = 0
             time_limit: int = 0
+
+            class NormalizedConfig(BaseModel):
+                """Configuration for normalized SearchOptions factory."""
+                scope: str = "SUBTREE"
+                filter_str: str = "(objectClass=*)"
+                size_limit: int = 0
+                time_limit: int = 0
+                attributes: list[str] | None = None
+
+            @classmethod
+            def normalized(
+                cls,
+                base_dn: str,
+                config: "SearchOptions.NormalizedConfig | None" = None,
+            ) -> "SearchOptions":
+                """Create SearchOptions with normalized configuration.
+
+                Args:
+                    base_dn: Base DN for search
+                    config: Optional NormalizedConfig with custom values
+
+                Returns:
+                    SearchOptions with specified or default values
+                """
+                if config is None:
+                    config = cls.NormalizedConfig()
+
+                return cls(
+                    base_dn=base_dn,
+                    scope=config.scope,
+                    filter_str=config.filter_str,
+                    size_limit=config.size_limit,
+                    time_limit=config.time_limit,
+                    attributes=config.attributes,
+                )
 
         class LdapBatchStats(BaseModel):
             """Batch stats."""
@@ -104,7 +139,7 @@ class FlextLdapModels(FlextLdifModels):
         class SyncOptions(BaseModel):
             """Sync options."""
 
-            batch_size: int = 100
+            batch_size: int = Field(default=100, ge=1, description="Batch size for sync operations (must be >= 1)")
             auto_create_parents: bool = True
             allow_deletes: bool = False
             source_basedn: str = ""
@@ -119,6 +154,14 @@ class FlextLdapModels(FlextLdifModels):
             failed: int = 0
             total: int = 0
             duration_seconds: float = 0.0
+
+            @computed_field  # type: ignore[misc]
+            @property
+            def success_rate(self) -> float:
+                """Calculate success rate (added + skipped) / total."""
+                if self.total == 0:
+                    return 0.0
+                return (self.added + self.skipped) / self.total
 
             @classmethod
             def from_counters(
@@ -155,6 +198,13 @@ class FlextLdapModels(FlextLdifModels):
             failed: int = 0
             results: list[object] = Field(default_factory=list)
 
+            @property
+            def success_rate(self) -> float:
+                """Calculate success rate (successful / total_processed)."""
+                if self.total_processed == 0:
+                    return 0.0
+                return self.successful / self.total_processed
+
         class SyncPhaseConfig(BaseModel):
             """Sync phase config."""
 
@@ -178,6 +228,8 @@ class FlextLdapModels(FlextLdifModels):
         class OperationResult(BaseModel):
             """LDAP operation result."""
 
+            model_config = {"frozen": True}
+
             success: bool
             operation_type: str
             message: str = ""
@@ -188,6 +240,74 @@ class FlextLdapModels(FlextLdifModels):
 
             entries: list[object] = Field(default_factory=list)
             search_options: object = None
+
+            @property
+            def total_count(self) -> int:
+                """Total count of entries in result."""
+                return len(self.entries)
+
+            @property
+            def by_objectclass(self) -> dict[str, list[object]]:
+                """Group entries by objectclass."""
+                result: dict[str, list[object]] = {}
+                for entry in self.entries:
+                    category = self.get_entry_category(entry)
+                    if category not in result:
+                        result[category] = []
+                    result[category].append(entry)
+                return result
+
+            @staticmethod
+            def extract_attrs_dict_from_entry(entry: object) -> dict[str, list[str]]:
+                """Extract attributes dict from entry."""
+                if entry is None:
+                    return {}
+                # Try to get attributes from entry
+                if hasattr(entry, 'attributes'):
+                    attrs = getattr(entry, 'attributes', None)
+                    if attrs is None:
+                        return {}
+                    # Handle different attribute formats
+                    if isinstance(attrs, dict):
+                        return attrs
+                    if hasattr(attrs, 'attributes'):
+                        attrs_inner = getattr(attrs, 'attributes', None)
+                        if isinstance(attrs_inner, dict):
+                            return attrs_inner
+                return {}
+
+            @staticmethod
+            def extract_objectclass_category(attrs: dict[str, object]) -> str:
+                """Extract objectclass category from attributes."""
+                if not attrs or not isinstance(attrs, dict):
+                    return "unknown"
+                oc_list = attrs.get('objectClass', attrs.get('objectclass', []))
+                if isinstance(oc_list, (list, tuple)) and oc_list:
+                    return str(oc_list[0]).lower()
+                return "unknown"
+
+            @staticmethod
+            def get_entry_category(entry: object) -> str:
+                """Get category (objectclass) of an entry."""
+                # Extract attributes from entry
+                attrs: dict[str, list[str]] = {}
+                if entry is not None and hasattr(entry, 'attributes'):
+                    attrs_obj = getattr(entry, 'attributes', None)
+                    if attrs_obj is None:
+                        attrs = {}
+                    elif isinstance(attrs_obj, dict):
+                        attrs = attrs_obj  # type: ignore[assignment]
+                    elif hasattr(attrs_obj, 'attributes'):
+                        attrs_inner = getattr(attrs_obj, 'attributes', None)
+                        if isinstance(attrs_inner, dict):
+                            attrs = attrs_inner  # type: ignore[assignment]
+                # Extract objectclass category from attributes
+                if not attrs or not isinstance(attrs, dict):
+                    return "unknown"
+                oc_list = attrs.get('objectClass', attrs.get('objectclass', []))
+                if isinstance(oc_list, (list, tuple)) and oc_list:
+                    return str(oc_list[0]).lower()
+                return "unknown"
 
         class Types:
             """Type definitions for LDAP models."""

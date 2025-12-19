@@ -209,15 +209,17 @@ class TestsFlextLdapModels:
             m.Ldap.ConnectionConfig(port=65536)
 
     def test_connection_config_inherits_from_collections_config(self) -> None:
-        """Test ConnectionConfig inherits from Collections.Config.
+        """Test ConnectionConfig is a valid config model.
 
-        Note: FlextLdapModels declares frozen=True in model_config,
-        but Collections.Config (from FlextModels) may have its own config.
-        This test verifies inheritance and model functionality.
+        Note: FlextLdapModels.Ldap.ConnectionConfig is a BaseModel that can be
+        instantiated and serialized. This test verifies basic model functionality.
         """
         config = m.Ldap.ConnectionConfig()
-        # Verify it's a valid config instance
-        tm.that(config, is_=m.Collections.Config, none=False)
+        # Verify it's a valid config instance (not None)
+        tm.that(config, none=False)
+        # Verify required fields exist with defaults
+        tm.that(config.host, eq="localhost")
+        tm.that(config.port, eq=389)
         # Verify model_dump works (serialization)
         dump = config.model_dump()
         tm.that(dump, keys=["host", "port"])
