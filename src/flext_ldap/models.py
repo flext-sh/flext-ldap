@@ -120,10 +120,7 @@ class FlextLdapModels(FlextLdifModels):
                     SearchOptions with specified or default values
 
                 """
-                if config is None:
-                    norm_config = cls.NormalizedConfig()
-                else:
-                    norm_config = config
+                norm_config = cls.NormalizedConfig() if config is None else config
 
                 return cls(
                     base_dn=base_dn,
