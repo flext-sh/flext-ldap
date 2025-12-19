@@ -96,7 +96,7 @@ class FlextLdapConstants(FlextLdifConstants):
         class ServerTypeMappings:
             """Server type mappings and limits."""
 
-            VENDOR_STRING_MAX_TOKENS = 100
+            VENDOR_STRING_MAX_TOKENS = 2
 
         class ConnectionDefaults:
             """Connection default values."""
