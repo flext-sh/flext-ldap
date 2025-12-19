@@ -41,6 +41,7 @@ from pathlib import Path
 from typing import Protocol, Self, TypeGuard, override, runtime_checkable
 
 from flext_core import FlextSettings, r
+from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import s
@@ -53,29 +54,6 @@ from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import t
 
 
-# Stub class to avoid import issues - TODO: Re-enable when flext-ldif is fixed
-class FlextLdif:
-    """Stub class for FlextLdif until import issues are resolved."""
-
-    def parse(
-        self, _file_path: str, _server_type: str = "rfc"
-    ) -> p.Ldap.Parse.ParseResultProtocol:
-        """Stub parse method."""
-
-        # Return a dummy object that has the expected attributes
-        class DummyParseResult:
-            def __init__(self) -> None:
-                self.entries: list[object] = []
-                self.success: bool = True
-                self.errors: list[str] = []
-                self.is_failure: bool = False
-                self.error: str | None = None
-                self.value: object = self
-
-        return DummyParseResult()
-
-
-# from flext_ldif import FlextLdif  # Temporarily disabled due to flext-ldif import issues
 
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5

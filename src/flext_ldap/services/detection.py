@@ -116,7 +116,7 @@ class FlextLdapServerDetector(s[str]):
         """
         self.logger.debug(
             "Detecting server type from connection",
-            operation=c.Ldap.LdapOperationNames.DETECT_FROM_CONNECTION.value,
+            operation=c.Ldap.LdapOperationNames.DETECT_FROM_CONNECTION,
             connection_bound=connection.bound,
         )
 

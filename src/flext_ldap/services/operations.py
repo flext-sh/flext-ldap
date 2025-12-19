@@ -932,6 +932,7 @@ class FlextLdapOperations(s):
               - "entry already exists" (standard)
               - "already exists" (abbreviated)
               - "entryalreadyexists" (LDAP error constant)
+              - "ldap_already_exists" (snake_case variant)
 
         Audit Implication:
             Used by upsert logic to distinguish "add failed because exists"
@@ -948,6 +949,7 @@ class FlextLdapOperations(s):
             str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS) in error_lower
             or str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_ALT) in error_lower
             or str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_LDAP) in error_lower
+            or str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_SNAKE) in error_lower
         )
 
     def __init__(

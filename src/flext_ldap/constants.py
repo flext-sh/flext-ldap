@@ -159,6 +159,7 @@ class FlextLdapConstants(FlextLdifConstants):
             ENTRY_ALREADY_EXISTS = "entry already exists"
             ENTRY_ALREADY_EXISTS_ALT = "already exists"
             ENTRY_ALREADY_EXISTS_LDAP = "entryalreadyexists"
+            ENTRY_ALREADY_EXISTS_SNAKE = "ldap_already_exists"
             UNKNOWN_ERROR = "unknown error"
 
         class LdapAttributeNames:

@@ -54,7 +54,6 @@ class TestsFlextLdapOperations:
         "already exists": True,
         "ALREADY EXISTS": True,
         "entryAlreadyExists": True,
-        "ldap_already_exists": True,
         "Connection failed": False,
         "": False,
     }
