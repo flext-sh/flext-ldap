@@ -108,8 +108,8 @@ class FlextLdapModels(FlextLdifModels):
             def normalized(
                 cls,
                 base_dn: str,
-                config: SearchOptions.NormalizedConfig | None = None,
-            ) -> SearchOptions:
+                config: Self.NormalizedConfig | None = None,
+            ) -> Self:
                 """Create SearchOptions with normalized configuration.
 
                 Args:
@@ -121,15 +121,17 @@ class FlextLdapModels(FlextLdifModels):
 
                 """
                 if config is None:
-                    config = cls.NormalizedConfig()
+                    norm_config = cls.NormalizedConfig()
+                else:
+                    norm_config = config
 
                 return cls(
                     base_dn=base_dn,
-                    scope=config.scope,
-                    filter_str=config.filter_str,
-                    size_limit=config.size_limit,
-                    time_limit=config.time_limit,
-                    attributes=config.attributes,
+                    scope=norm_config.scope,
+                    filter_str=norm_config.filter_str,
+                    size_limit=norm_config.size_limit,
+                    time_limit=norm_config.time_limit,
+                    attributes=norm_config.attributes,
                 )
 
         class LdapBatchStats(BaseModel):

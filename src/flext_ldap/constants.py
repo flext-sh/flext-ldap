@@ -6,7 +6,7 @@ This module provides constants for LDAP operations, extending FlextLdifConstants
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Literal
+from typing import ClassVar, Literal
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -124,6 +124,8 @@ class FlextLdapConstants(FlextLdifConstants):
         class LdapOperationNames:
             """LDAP operation name constants."""
 
+            CONNECT = "connect"
+            DETECT_FROM_CONNECTION = "detect_from_connection"
             LDAP3_TO_LDIF_ENTRY = "ldap3_to_ldif_entry"
             LDIF_ENTRY_TO_LDAP3 = "ldif_entry_to_ldap3"
             LDIF_ENTRY_TO_LDAP3_ATTRIBUTES = "ldif_entry_to_ldap3_attributes"
@@ -144,7 +146,7 @@ class FlextLdapConstants(FlextLdifConstants):
             PROTOCOL_ERROR = 2
             NO_SUCH_OBJECT = 32
             REFERRAL = 10
-            PARTIAL_SUCCESS_CODES = [0, 10]
+            PARTIAL_SUCCESS_CODES: ClassVar[list[int]] = [0, 10]
 
         class ErrorStrings:
             """Error message string constants."""
@@ -167,6 +169,23 @@ class FlextLdapConstants(FlextLdifConstants):
             SURNAME = "sn"
             MAIL = "mail"
             OBJECT_CLASS = "objectClass"
+            CHANGETYPE = "changetype"
+
+        class OperationalAttributes:
+            """Operational attributes to ignore in LDAP entries."""
+
+            IGNORE_SET: ClassVar[set[str]] = {
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryCSN",
+                "hasSubordinates",
+                "numSubordinates",
+                "subschemaSubentry",
+                "dseType",
+            }
 
         class Filters:
             """LDAP filter constants."""

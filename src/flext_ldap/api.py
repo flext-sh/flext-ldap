@@ -46,6 +46,7 @@ from pydantic import ConfigDict, PrivateAttr
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.settings import FlextLdapSettings
@@ -57,7 +58,7 @@ class FlextLdif:
     """Stub class for FlextLdif until import issues are resolved."""
 
     def parse(
-        self, file_path: str, server_type: str = "rfc"
+        self, _file_path: str, _server_type: str = "rfc"
     ) -> p.Ldap.Parse.ParseResultProtocol:
         """Stub parse method."""
 
