@@ -49,7 +49,7 @@ from flext_ldap.utilities import u
 LaxStr = str | bytes | bytearray  # Type alias for lenient string handling
 
 
-class FlextLdapOperations(s):
+class FlextLdapOperations(s[m.Ldap.SearchResult]):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
@@ -190,7 +190,7 @@ class FlextLdapOperations(s):
                 attrs_dict = ldif_attrs.attributes
                 # Convert using helper to handle LaxStr keys properly
                 return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                    attrs_dict
+                    attrs_dict,
                 )
             return {}
 
@@ -214,12 +214,12 @@ class FlextLdapOperations(s):
                     # Convert m.Ldif.Attributes which has dict[LaxStr, list[LaxStr]]
                     attrs_dict = attrs.attributes
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                        attrs_dict
+                        attrs_dict,
                     )
                 case Mapping():
                     # Convert Mapping with potentially LaxStr keys/values
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                        attrs
+                        attrs,
                     )
                 case _:
                     return {}
@@ -250,7 +250,7 @@ class FlextLdapOperations(s):
             # All entries conform to m.Ldif.Entry protocol - use protocol handler
             return (
                 FlextLdapOperations.EntryComparison._extract_protocol_entry_attributes(
-                    entry
+                    entry,
                 )
             )
 
@@ -532,13 +532,13 @@ class FlextLdapOperations(s):
                 FlextLdapOperations.EntryComparison.process_new_attributes(
                     new_attrs,
                     existing_attrs,
-                    ignore,
+                    frozenset(ignore),
                 )
             )
             delete_changes = (
                 FlextLdapOperations.EntryComparison.process_deleted_attributes(
                     existing_attrs,
-                    ignore,
+                    frozenset(ignore),
                     processed,
                 )
             )
@@ -630,7 +630,9 @@ class FlextLdapOperations(s):
 
             """
             add_op_raw: list[object] = u.mapper().get(
-                attrs, c.Ldap.ChangeTypeOperations.ADD, default=[]
+                attrs,
+                c.Ldap.ChangeTypeOperations.ADD,
+                default=[],
             )
             # add_op_raw is list[object] from dict[str, list[str]]
             add_op: list[str] = [str(item) for item in add_op_raw]
@@ -687,7 +689,9 @@ class FlextLdapOperations(s):
             # Extract changetype (available via c.LdapAttributeNames inheritance)
             # u.mapper().get() returns the value directly, not RuntimeResult
             changetype_raw: list[object] = u.mapper().get(
-                attrs, c.Ldap.LdapAttributeNames.CHANGETYPE, default=[]
+                attrs,
+                c.Ldap.LdapAttributeNames.CHANGETYPE,
+                default=[],
             )
             # changetype_raw is list[object] from dict[str, list[str]]
             changetype_val: list[str] = [str(item) for item in changetype_raw]
@@ -728,7 +732,9 @@ class FlextLdapOperations(s):
             attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
             # Extract add operation - add_op_raw is list[object] from dict[str, list[str]]
             add_op_raw: list[object] = u.mapper().get(
-                attrs, c.Ldap.ChangeTypeOperations.ADD, default=[]
+                attrs,
+                c.Ldap.ChangeTypeOperations.ADD,
+                default=[],
             )
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
@@ -767,7 +773,7 @@ class FlextLdapOperations(s):
             if modify_result.is_success:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.MODIFIED
+                        operation=c.Ldap.UpsertOperations.MODIFIED,
                     ),
                 )
 
@@ -776,7 +782,7 @@ class FlextLdapOperations(s):
             return (
                 r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.SKIPPED
+                        operation=c.Ldap.UpsertOperations.SKIPPED,
                     ),
                 )
                 if self._ops.is_already_exists_error(error_str)
@@ -864,7 +870,7 @@ class FlextLdapOperations(s):
             if search_result.is_failure:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.SKIPPED
+                        operation=c.Ldap.UpsertOperations.SKIPPED,
                     ),
                 )
 
@@ -878,21 +884,19 @@ class FlextLdapOperations(s):
                 entries_raw = search_data.entries
                 # SearchResult.entries is list[m.Ldif.Entry] from model definition
                 # No isinstance check needed - type is already guaranteed
-                existing_entries = (
-                    list(entries_raw) if entries_raw else []
-                )
+                existing_entries = list(entries_raw) if entries_raw else []  # type: ignore[arg-type]
             if not existing_entries:
                 retry_result = self._ops.add(entry)
                 # Create results
                 if retry_result.is_success:
                     return r[m.Ldap.LdapOperationResult].ok(
                         m.Ldap.LdapOperationResult(
-                            operation=c.Ldap.UpsertOperations.ADDED
+                            operation=c.Ldap.UpsertOperations.ADDED,
                         ),
                     )
                 # Get error string
                 return r[m.Ldap.LdapOperationResult].fail(
-                    u.Ldap.to_str(retry_result.error)
+                    u.Ldap.to_str(retry_result.error),
                 )
 
             # Use entry directly - already cast to p.Entry above
@@ -967,7 +971,7 @@ class FlextLdapOperations(s):
     def search(
         self,
         search_options: m.Ldap.SearchOptions,
-        server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
+        server_type: str | None = None,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
@@ -1000,13 +1004,15 @@ class FlextLdapOperations(s):
         normalized_options = search_options.model_copy(
             update={
                 "base_dn": FlextLdifUtilities.Ldif.DN.norm_string(
-                    search_options.base_dn
+                    search_options.base_dn,
                 ),
             },
         )
+        # Default server_type to RFC if not provided
+        effective_server_type = server_type or c.Ldif.ServerTypes.RFC
         result = self._connection.adapter.search(
             normalized_options,
-            server_type=server_type,
+            server_type=effective_server_type,
         )
         # Adapter returns r[SearchResultProtocol] - unwrap directly
         if result.is_success:
@@ -1261,7 +1267,9 @@ class FlextLdapOperations(s):
             u.Ldif.find(
                 retry_patterns,
                 predicate=lambda pattern: u.Ldap.norm_in(
-                    error_str, [pattern], case="lower"
+                    error_str,
+                    [pattern],
+                    case="lower",
                 ),
             )
             is None
@@ -1455,10 +1463,7 @@ class FlextLdapOperations(s):
 
         return r[m.Ldap.LdapBatchStats].ok(stats)
 
-    def execute(
-        self,
-        **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.SearchResult]:
+    def execute(self) -> r[m.Ldap.SearchResult]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:

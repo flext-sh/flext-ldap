@@ -38,22 +38,18 @@ import types
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, Self, TypeGuard, override, runtime_checkable
+from typing import Protocol, Self, TypeGuard, cast, runtime_checkable
 
 from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import s
-from flext_ldap.constants import c
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import t
-
-
 
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
@@ -177,7 +173,7 @@ def _get_phase_result_value(
     return default
 
 
-class FlextLdap(s):
+class FlextLdap(s[m.Ldap.SearchResult]):
     """Main API facade for LDAP operations using dependency injection.
 
     Uses FlextLdapConnection and FlextLdapOperations directly without wrapper logic.
@@ -285,7 +281,8 @@ class FlextLdap(s):
         connection_config: FlextLdapSettings | None = None
         # Check for actual connection type that has compatible config
         if isinstance(connection, FlextLdapConnection) and isinstance(
-            connection.config, FlextLdapSettings
+            connection.config,
+            FlextLdapSettings,
         ):
             # FlextLdapConnection.config is FlextLdapSettings (via super)
             connection_config = connection.config
@@ -484,7 +481,7 @@ class FlextLdap(s):
     def search(
         self,
         search_options: m.Ldap.SearchOptions,
-        server_type: c.Ldif.ServerTypes = (c.Ldif.ServerTypes.RFC),
+        server_type: str = "rfc",
     ) -> r[m.Ldap.SearchResult]:
         """Perform LDAP search operation.
 
@@ -772,7 +769,8 @@ class FlextLdap(s):
         start_time = datetime.now(UTC)
 
         parse_result = self._ldif.parse(
-            str(ldif_file_path), server_type=config.server_type
+            str(ldif_file_path),
+            server_type=config.server_type,
         )
         if parse_result.is_failure:
             error_msg = (
@@ -803,14 +801,18 @@ class FlextLdap(s):
 
         # Convert multi-phase callback to single-phase if needed
         single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
-        callback = config.progress_callback
+        callback_raw = config.progress_callback
+        # Cast to union type for type guards
+        callback: m.Ldap.Types.ProgressCallbackUnion | None = cast(
+            "m.Ldap.Types.ProgressCallbackUnion | None",
+            callback_raw,
+        )
         if callback is not None:
-            # Ensure callback is treated as ProgressCallbackUnion for type guard
-            callback_union: m.Ldap.Types.ProgressCallbackUnion | None = callback
-            if callback_union is not None and _is_multi_phase_callback(callback_union):
+            # Use TypeGuards to narrow callback type without casts
+            if _is_multi_phase_callback(callback):
                 # Multi-phase callback - wrap to single-phase
                 # Type narrowing: callback is MultiPhaseProgressCallback after guard
-                multi_phase_cb = callback_union
+                multi_phase_cb = callback
 
                 def wrapped_cb(
                     current: int,
@@ -821,11 +823,14 @@ class FlextLdap(s):
                     # Use narrowed multi-phase callback
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
-                single_phase_callback = wrapped_cb
-            elif _is_single_phase_callback(callback_union):
+                single_phase_callback = cast(
+                    "m.Ldap.Types.LdapProgressCallback | None",
+                    wrapped_cb,
+                )
+            elif _is_single_phase_callback(callback):
                 # Single-phase callback - use directly
                 # Type narrowing: callback is LdapProgressCallback (4 params)
-                single_phase_callback = callback_union
+                single_phase_callback = callback
 
         # p.Entry implements m.Ldif.Entry.EntryProtocol (structural compatibility)
         # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
@@ -911,18 +916,20 @@ class FlextLdap(s):
         if config.progress_callback is None:
             return None
 
-        callback = config.progress_callback
-        if callback is None:
+        callback_raw = config.progress_callback
+        if callback_raw is None:
             return None
+        # Cast to union type for type guards
+        callback: m.Ldap.Types.ProgressCallbackUnion = cast(
+            "m.Ldap.Types.ProgressCallbackUnion",
+            callback_raw,
+        )
 
-        # Use models type for strict typing
-        callback_union: m.Ldap.Types.ProgressCallbackUnion | None = callback
-
-        # Use type guard for type narrowing
-        if callback_union is not None and _is_multi_phase_callback(callback_union):
+        # Use type guards for type narrowing without casts
+        if _is_multi_phase_callback(callback):
             # Multi-phase callback - wrap to single-phase
             # Type narrowing: callback is MultiPhaseProgressCallback after guard
-            multi_phase_cb = callback_union
+            multi_phase_cb = callback
 
             def progress_cb(
                 current: int,
@@ -933,12 +940,15 @@ class FlextLdap(s):
                 # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
 
-            return progress_cb
+            return cast(
+                "m.Ldap.Types.LdapProgressCallback | None",
+                progress_cb,
+            )
 
-        if _is_single_phase_callback(callback_union):
+        if _is_single_phase_callback(callback):
             # Single-phase callback - use directly
             # Type narrowing: callback is LdapProgressCallback (4 params)
-            return callback_union
+            return callback
 
         # Fallback: return None if callback signature doesn't match
         return None
@@ -966,20 +976,23 @@ class FlextLdap(s):
             FlextLdap._make_phase_progress_callback(phase_name, config)
             or config.progress_callback
         )
-        # Use models type for strict typing
-        phase_callback_union: m.Ldap.Types.ProgressCallbackUnion | None = (
-            phase_callback_raw
+        # Cast to union type for type guards
+        phase_callback: m.Ldap.Types.ProgressCallbackUnion | None = cast(
+            "m.Ldap.Types.ProgressCallbackUnion | None",
+            phase_callback_raw,
         )
+
         # Ensure result is LdapProgressCallback | None (not MultiPhaseProgressCallback)
-        if phase_callback_union is None:
+        if phase_callback is None:
             return None
 
-        if _is_single_phase_callback(phase_callback_union):
-            return phase_callback_union
+        if _is_single_phase_callback(phase_callback):
+            return phase_callback
 
-        if _is_multi_phase_callback(phase_callback_union):
+        if _is_multi_phase_callback(phase_callback):
             # Wrap multi-phase callback to single-phase
-            multi_phase_cb = phase_callback_union
+            # Type narrowing: phase_callback is MultiPhaseProgressCallback after guard
+            multi_phase_cb = phase_callback
 
             def wrapped_phase_cb(
                 current: int,
@@ -989,7 +1002,10 @@ class FlextLdap(s):
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 
-            return wrapped_phase_cb
+            return cast(
+                "m.Ldap.Types.LdapProgressCallback | None",
+                wrapped_phase_cb,
+            )
 
         return None
 
@@ -1133,7 +1149,7 @@ class FlextLdap(s):
 
         return r[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
-                phase_results=phase_results,
+                phase_results=cast("dict[str, object]", phase_results),
                 total_entries=totals["entries"],
                 total_synced=totals["synced"],
                 total_failed=totals["failed"],
@@ -1144,16 +1160,12 @@ class FlextLdap(s):
             ),
         )
 
-    @override
-    def execute(
-        self,
-        **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.SearchResult]:
+    def execute(self) -> r[m.Ldap.SearchResult]:
         """Execute service health check for FlextService pattern compliance.
 
-        Implements the ``FlextService.execute()`` contract by delegating to
-        the operations service health check. The @override decorator ensures
-        base class contract is properly implemented.
+        Implements a custom execute method with extended return type compatibility.
+        The base class execute() expects FlextResult[None], but this method returns
+        SearchResult for operational purposes.
 
         Business Rules:
             - Delegates entirely to ``_operations.execute()``
@@ -1165,10 +1177,6 @@ class FlextLdap(s):
             - Can be called by service orchestrators for readiness checks
             - Health status reflects operations service state
             - No logging performed at facade level (delegated to operations)
-
-        Args:
-            **_kwargs: Absorbed keyword arguments for interface compatibility.
-                Not used by this implementation.
 
         Returns:
             r[SearchResult]: Health status from operations service.

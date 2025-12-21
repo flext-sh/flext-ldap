@@ -160,8 +160,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             @staticmethod
             def is_valid_status(
-                value: str | c.Ldap.LdapCqrs.Status | c.Ldap.LdapCqrs.StatusLiteral,
-            ) -> TypeIs[c.Ldap.LdapCqrs.StatusLiteral]:
+                value: str | object,
+            ) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking isinstance(
@@ -331,7 +331,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.FlexibleValue]],
+            callables_dict: Mapping[str, Callable[..., object]],
             *args: object,
             **kwargs: object,
         ) -> str | None:

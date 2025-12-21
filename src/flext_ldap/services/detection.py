@@ -448,7 +448,7 @@ class FlextLdapServerDetector(s[str]):
             except Exception as e:
                 # Continue if check function raises exception
                 logger.debug(
-                    f"Server type check failed for {server_name}: {e}",
+                    "Server type check failed",
                     server_name=server_name,
                     error=str(e),
                 )

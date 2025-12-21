@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
 
 import pytest
 import tests.constants as c_mod
@@ -319,10 +319,10 @@ class TestsFlextLdapOperationHelpers:
         # SearchOptions works directly with FlextLdap/FlextLdapOperations
         # For protocol clients, SearchOptions is structurally compatible with SearchOptionsProtocol
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
-            search_result_raw: Union[
-                FlextResult[m.Ldap.SearchResult],
-                FlextResult[p.Ldap.SearchResultProtocol],
-            ] = client.search(search_options)
+            search_result_raw: (
+                FlextResult[m.Ldap.SearchResult]
+                | FlextResult[p.Ldap.SearchResultProtocol]
+            ) = client.search(search_options)
         else:
             # Protocol client - structural compatibility
             # Protocol returns ResultProtocol, _ensure_flext_result handles conversion

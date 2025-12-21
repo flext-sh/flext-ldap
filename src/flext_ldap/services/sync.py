@@ -38,13 +38,12 @@ from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap.base import s
-from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.utilities import u
 
 
-class FlextLdapSyncService(s):
+class FlextLdapSyncService(s[m.Ldap.SyncStats]):
     """Stream LDIF entries into LDAP while tracking progress and totals.
 
     All LDAP mutations are delegated to :class:`FlextLdapOperations`, keeping
@@ -147,7 +146,7 @@ class FlextLdapSyncService(s):
         def sync(
             self,
             entries: list[m.Ldif.Entry],
-            options: m.Ldap.SyncOptions,  # noqa: ARG002 - Options used for future extensibility
+            _options: m.Ldap.SyncOptions,
         ) -> r[m.Ldap.SyncStats]:
             """Sync entries in batch mode with progress tracking.
 
@@ -165,7 +164,7 @@ class FlextLdapSyncService(s):
 
             Args:
                 entries: List of LDIF entries to add to the directory.
-                options: Sync options including progress_callback for monitoring.
+                _options: Sync options including progress_callback for monitoring.
 
             Returns:
                 r[SyncStats]: Statistics with added/skipped/failed
@@ -198,12 +197,16 @@ class FlextLdapSyncService(s):
                     if is_skipped:
                         stats_builder["skipped"] += 1
                         entry_stats = m.Ldap.LdapBatchStats(
-                            synced=0, skipped=1, failed=0
+                            synced=0,
+                            skipped=1,
+                            failed=0,
                         )
                     else:
                         stats_builder["failed"] += 1
                         entry_stats = m.Ldap.LdapBatchStats(
-                            synced=0, skipped=0, failed=1
+                            synced=0,
+                            skipped=0,
+                            failed=1,
                         )
 
                 # Progress callback temporarily disabled due to type signature mismatch
@@ -430,7 +433,7 @@ class FlextLdapSyncService(s):
         # Use ServerTypes Literal type directly (FlextLdif.parse accepts Literal)
         # Use the literal value from the enum
         # For LDIF parsing, use parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-        server_type_literal: c.Ldif.LiteralTypes.ServerTypeLiteral = (
+        server_type_literal: str = (
             "rfc"  # Literal matching c.Ldif.ServerTypes.RFC.value
         )
         # Read file content and parse
@@ -529,10 +532,7 @@ class FlextLdapSyncService(s):
             stats.model_copy(update={"duration_seconds": duration}),
         )
 
-    def execute(
-        self,
-        **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.SyncStats]:
+    def execute(self) -> r[m.Ldap.SyncStats]:
         """Return an empty stats payload to indicate service readiness.
 
         Implements the ``FlextService.execute()`` contract for service health
@@ -549,10 +549,6 @@ class FlextLdapSyncService(s):
             - Can be called by service orchestrators for readiness checks
             - Does not perform actual sync operations (lightweight)
             - Zero counters indicate no sync work performed
-
-        Args:
-            **_kwargs: Absorbed keyword arguments for interface compatibility.
-                Not used by this implementation.
 
         Returns:
             r[SyncStats]: Always ok with ``from_counters()`` defaults

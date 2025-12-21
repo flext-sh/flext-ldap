@@ -88,7 +88,11 @@ class FlextLdapModels(FlextLdifModels):
         class SearchOptions(BaseModel):
             """Search options."""
 
-            base_dn: str = Field(..., min_length=1, description="Base DN for search (required, non-empty)")
+            base_dn: str = Field(
+                ...,
+                min_length=1,
+                description="Base DN for search (required, non-empty)",
+            )
             scope: str = "SUBTREE"
             filter_str: str = "(objectClass=*)"
             attributes: list[str] | None = None
@@ -108,8 +112,9 @@ class FlextLdapModels(FlextLdifModels):
             def normalized(
                 cls,
                 base_dn: str,
-                config: Self.NormalizedConfig | None = None,
-            ) -> Self:
+                config: FlextLdapModels.Ldap.SearchOptions.NormalizedConfig
+                | None = None,
+            ) -> FlextLdapModels.Ldap.SearchOptions:
                 """Create SearchOptions with normalized configuration.
 
                 Args:
@@ -141,7 +146,11 @@ class FlextLdapModels(FlextLdifModels):
         class SyncOptions(BaseModel):
             """Sync options."""
 
-            batch_size: int = Field(default=100, ge=1, description="Batch size for sync operations (must be >= 1)")
+            batch_size: int = Field(
+                default=100,
+                ge=1,
+                description="Batch size for sync operations (must be >= 1)",
+            )
             auto_create_parents: bool = True
             allow_deletes: bool = False
             source_basedn: str = ""
@@ -157,8 +166,8 @@ class FlextLdapModels(FlextLdifModels):
             total: int = 0
             duration_seconds: float = 0.0
 
-            @computed_field  # type: ignore[misc]
             @property
+            @computed_field
             def success_rate(self) -> float:
                 """Calculate success rate (added + skipped) / total."""
                 if self.total == 0:
@@ -265,15 +274,15 @@ class FlextLdapModels(FlextLdifModels):
                 if entry is None:
                     return {}
                 # Try to get attributes from entry
-                if hasattr(entry, 'attributes'):
-                    attrs = getattr(entry, 'attributes', None)
+                if hasattr(entry, "attributes"):
+                    attrs = getattr(entry, "attributes", None)
                     if attrs is None:
                         return {}
                     # Handle different attribute formats
                     if isinstance(attrs, dict):
                         return attrs
-                    if hasattr(attrs, 'attributes'):
-                        attrs_inner = getattr(attrs, 'attributes', None)
+                    if hasattr(attrs, "attributes"):
+                        attrs_inner = getattr(attrs, "attributes", None)
                         if isinstance(attrs_inner, dict):
                             return attrs_inner
                 return {}
@@ -283,7 +292,7 @@ class FlextLdapModels(FlextLdifModels):
                 """Extract objectclass category from attributes."""
                 if not attrs or not isinstance(attrs, dict):
                     return "unknown"
-                oc_list = attrs.get('objectClass', attrs.get('objectclass', []))
+                oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
                 if isinstance(oc_list, (list, tuple)) and oc_list:
                     return str(oc_list[0]).lower()
                 return "unknown"
@@ -293,20 +302,20 @@ class FlextLdapModels(FlextLdifModels):
                 """Get category (objectclass) of an entry."""
                 # Extract attributes from entry
                 attrs: dict[str, list[str]] = {}
-                if entry is not None and hasattr(entry, 'attributes'):
-                    attrs_obj = getattr(entry, 'attributes', None)
+                if entry is not None and hasattr(entry, "attributes"):
+                    attrs_obj = getattr(entry, "attributes", None)
                     if attrs_obj is None:
                         attrs = {}
                     elif isinstance(attrs_obj, dict):
-                        attrs = attrs_obj  # type: ignore[assignment]
-                    elif hasattr(attrs_obj, 'attributes'):
-                        attrs_inner = getattr(attrs_obj, 'attributes', None)
+                        attrs = attrs_obj
+                    elif hasattr(attrs_obj, "attributes"):
+                        attrs_inner = getattr(attrs_obj, "attributes", None)
                         if isinstance(attrs_inner, dict):
-                            attrs = attrs_inner  # type: ignore[assignment]
+                            attrs = attrs_inner
                 # Extract objectclass category from attributes
                 if not attrs or not isinstance(attrs, dict):
                     return "unknown"
-                oc_list = attrs.get('objectClass', attrs.get('objectclass', []))
+                oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
                 if isinstance(oc_list, (list, tuple)) and oc_list:
                     return str(oc_list[0]).lower()
                 return "unknown"

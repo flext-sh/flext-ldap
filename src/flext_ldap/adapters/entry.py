@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
+from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -153,7 +154,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 - Used for conversion metadata generation
 
             Architecture:
-                - Python 3.13: Uses isinstance(..., Sequence) and isinstance(tuple) checks
+                - Python 3.13: Uses isinstance and tuple checks
                 - Returns Sequence[str] for flexible return type
                 - No network calls - pure data transformation
 
@@ -201,9 +202,9 @@ class FlextLdapEntryAdapter(s[bool]):
             auto_result_raw if isinstance(auto_result_raw, bool) else None
         )
         # Python 3.13: Filter kwargs with modern comprehension
-        # Removed unused kwargs filtering - super().__init__() doesn't need config kwargs
-        # Type narrowing was: kwargs_without_server_type is dict[str, str | float | bool | None]
-        # which matches FlextService.__init__ signature
+        # Removed unused kwargs filtering - super().__init__() doesn't need config
+        # Type narrowing: dict[str, str | float | bool | None]
+        # matches FlextService.__init__ signature
         # Do NOT pass _auto_result to super().__init__() - it's a PrivateAttr
         # that must be set directly via object.__setattr__() to bypass Pydantic validation
         super().__init__()
@@ -246,7 +247,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     def _convert_ldap3_value_to_list(
         self,
-        value: object,
+        value: t.Ldap.Operation.Ldap3EntryValue | None,
         key: str,
         base64_attrs: MutableSequence[str],
         removed_attrs: MutableSequence[str],
@@ -351,7 +352,7 @@ class FlextLdapEntryAdapter(s[bool]):
         conversion_metadata: m.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
-        original_attrs_dict: Mapping[str, object],
+        original_attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue],
         converted_attrs_dict: Mapping[str, list[str]],
     ) -> None:
         """Track DN and attribute differences in conversion metadata.
@@ -477,8 +478,13 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         try:
             dn_str = str(ldap3_entry.entry_dn)
+            # ldap3 is untyped - access attribute directly without cast
             attrs_dict = ldap3_entry.entry_attributes_as_dict
-            original_attrs_dict = dict(attrs_dict)
+            # Cast ldap3 untyped dict to expected type
+            original_attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue] = cast(
+                "Mapping[str, t.Ldap.Operation.Ldap3EntryValue]",
+                dict(attrs_dict),
+            )
             removed_attrs: list[str] = []
             base64_attrs: list[str] = []
             # Convert attributes efficiently
@@ -486,8 +492,13 @@ class FlextLdapEntryAdapter(s[bool]):
             logger = logging.getLogger(__name__)
             for key, value in attrs_dict.items():
                 try:
-                    converted = self._convert_ldap3_value_to_list(
+                    # Cast ldap3 untyped value to expected type
+                    value_typed: t.Ldap.Operation.Ldap3EntryValue | None = cast(
+                        "t.Ldap.Operation.Ldap3EntryValue | None",
                         value,
+                    )
+                    converted = self._convert_ldap3_value_to_list(
+                        value_typed,
                         key,
                         base64_attrs,
                         removed_attrs,
@@ -522,7 +533,7 @@ class FlextLdapEntryAdapter(s[bool]):
             })
             return r[m.Ldif.Entry].ok(
                 m.Ldif.Entry.model_validate({
-                    "dn": m.Ldif.DN(value=dn_str),
+                    "dn": m.Ldif.DN.model_validate({"value": dn_str}),
                     "attributes": ldf_attrs_obj,
                     "metadata": metadata_obj,
                 }),
@@ -592,13 +603,8 @@ class FlextLdapEntryAdapter(s[bool]):
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
                 if isinstance(v, Sequence):
-                    # Ensure key is str (handle LaxStr: str | bytes | bytearray)
-                    if isinstance(k, bytes):
-                        key_str: str = k.decode("utf-8", errors="replace")
-                    elif isinstance(k, bytearray):
-                        key_str = bytes(k).decode("utf-8", errors="replace")
-                    else:
-                        key_str = str(k)
+                    # Key is str according to type annotation
+                    key_str = str(k)
                     filtered_attrs[key_str] = [str(item) for item in v]
             return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
