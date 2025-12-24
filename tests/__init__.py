@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Core test modules extending src modules (using standardized short names)
-# These use the SAME short names as production (m, t, u, c, p, s) for consistency
-from flext import FlextDecorators as d,
+from flext_core import (
+    FlextDecorators as d,
     FlextExceptions as e,
     FlextMixins as x,
-    FlextResult as r
+    FlextResult as r,
+)
 
 from tests.base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
 from tests.constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c

@@ -34,6 +34,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, TypeGuard
 
+from flext_core import FlextRuntime, r
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
@@ -44,7 +45,6 @@ from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict
 
-from flext import FlextRuntime, r
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.base import s
 from flext_ldap.constants import FlextLdapConstants, c

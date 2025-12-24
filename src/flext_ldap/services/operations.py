@@ -884,7 +884,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 entries_raw = search_data.entries
                 # SearchResult.entries is list[m.Ldif.Entry] from model definition
                 # No isinstance check needed - type is already guaranteed
-                existing_entries = list(entries_raw) if entries_raw else []
+                existing_entries = entries_raw if entries_raw is not None else []
             if not existing_entries:
                 retry_result = self._ops.add(entry)
                 # Create results

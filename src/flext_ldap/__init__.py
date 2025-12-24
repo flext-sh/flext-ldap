@@ -24,11 +24,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext import FlextDecorators,
+from flext_core import (
+    FlextDecorators,
     FlextExceptions,
     FlextHandlers,
     FlextMixins,
-    FlextResult
+    FlextResult,
+)
 
 # Temporarily disabled some imports due to flext-ldif import issues
 from flext_ldap.api import FlextLdap

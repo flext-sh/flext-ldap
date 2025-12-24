@@ -40,10 +40,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeGuard, cast
 
+from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext import FlextSettings, r
 from flext_ldap.base import s
 from flext_ldap.models import m
 from flext_ldap.protocols import p

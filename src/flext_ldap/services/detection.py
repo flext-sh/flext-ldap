@@ -33,9 +33,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, ParamSpec
 
+from flext_core import FlextLogger, r
 from ldap3 import Connection
 
-from flext import FlextLogger, r
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.typings import t
@@ -362,15 +362,17 @@ class FlextLdapServerDetector(s[str]):
             ("oud", lambda v: "oracle" in v and "unified directory" in v),
             (
                 "oid",
-                lambda v: "oracle" in v
-                and (
-                    "internet directory" in v
-                    or "oid" in v
-                    or "corporation" in v
-                    or (
-                        "unified directory" not in v
-                        and len(v.split())
-                        <= c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS
+                lambda v: (
+                    "oracle" in v
+                    and (
+                        "internet directory" in v
+                        or "oid" in v
+                        or "corporation" in v
+                        or (
+                            "unified directory" not in v
+                            and len(v.split())
+                            <= c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS
+                        )
                     )
                 ),
             ),

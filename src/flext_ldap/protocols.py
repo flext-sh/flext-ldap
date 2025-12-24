@@ -13,9 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
+from flext_core import r
 from flext_ldif import p as ldif_p
-
-from flext import r
 
 
 class FlextLdapProtocols(ldif_p):

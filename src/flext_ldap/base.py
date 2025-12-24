@@ -14,7 +14,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext import FlextService, t
+from flext_core import FlextService, t
+
 from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import FlextLdapDomainResultT as TDomainResult
 

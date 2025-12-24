@@ -13,10 +13,10 @@ from typing import Any, TypeVar, cast
 
 import pytest
 import tests.constants as c_mod
+from flext_core import FlextResult
 from flext_tests import u
 from tests.typings import GenericFieldsDict, t
 
-from flext import FlextResult
 from flext_ldap import (
     FlextLdap,
     FlextLdapOperations,
@@ -1016,7 +1016,8 @@ class TestsFlextLdapOperationHelpers:
         # Type narrowing: u.Collection.process() returns dict[str, R] for dict input
         # where R is the return type of process_change: tuple[str, list[tuple[str, list[str]]] | None] | None
         processed_dict_raw: dict[
-            str, tuple[str, list[tuple[str, list[str]]] | None] | None,
+            str,
+            tuple[str, list[tuple[str, list[str]]] | None] | None,
         ] = {}
         if processed_changes.is_success and isinstance(processed_changes.value, dict):
             processed_dict_raw = processed_changes.value

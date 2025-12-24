@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TypeVar
 
+from flext_core import r
 from flext_ldif import FlextLdifTypes
-
-from flext import r
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TYPEVARS: Only object allowed outside the class

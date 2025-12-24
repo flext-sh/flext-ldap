@@ -26,10 +26,10 @@ Architecture Notes:
 
 from __future__ import annotations
 
+from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
-from flext import FlextSettings, r
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 from flext_ldap.base import s
 from flext_ldap.constants import c
