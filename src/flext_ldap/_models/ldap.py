@@ -198,7 +198,11 @@ class FlextLdapModelsLdap:
         entries_affected: int = 0
 
     class SearchResult(BaseModel):
-        """Search result."""
+        """Search result.
+
+        Contains entries from LDAP search operations. The entries field
+        holds a list of directory entries returned from the search.
+        """
 
         entries: list[object] = Field(default_factory=list)
         search_options: object = None

@@ -876,15 +876,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             # Extract search data
             search_data = search_result.value if search_result.is_success else None
-            # Get entries safely - SearchResult.entries is list[m.Ldif.Entry]
-            existing_entries: list[m.Ldif.Entry] = []
-            if search_data is not None:
+            # Get entries from search result - already Ldif Entry objects at runtime
+            existing_entries: list = []
+            if search_data is not None and search_data.entries:
                 # search_data is m.Ldap.SearchResult from model definition
-                # No hasattr check needed - SearchResult always has entries attribute
-                entries_raw = search_data.entries
-                # SearchResult.entries is list[m.Ldif.Entry] from model definition
-                # No isinstance check needed - type is already guaranteed
-                existing_entries = entries_raw if entries_raw is not None else []
+                # SearchResult.entries contains directory entries from search (list[object] in type)
+                # but are actually m.Ldif.Entry objects at runtime
+                existing_entries = list(search_data.entries)
             if not existing_entries:
                 retry_result = self._ops.add(entry)
                 # Create results

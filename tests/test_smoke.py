@@ -27,7 +27,8 @@ import pytest
 from flext import r
 from ldap3 import Connection, Server
 
-from flext_ldap import (
+
+
     FlextLdap,
     FlextLdapConnection,
     FlextLdapOperations,
