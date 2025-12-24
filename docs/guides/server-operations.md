@@ -1,108 +1,108 @@
 # Server-Specific Operations Guide
 
+
 ## Table of Contents
 
-- [Server-Specific Operations Guide](#server-specific-operations-guide)
-  - [🎯 Overview](#-overview)
-    - [**Available Implementations**](#available-implementations)
-  - [📦 Importing Server Operations](#-importing-server-operations)
-- [Import specific server operations](#import-specific-server-operations)
-- [Import supporting components](#import-supporting-components)
-  - [🔧 OpenLDAP 2.x Operations](#-openldap-2x-operations)
-    - [**Features**](#features)
-    - [**Basic Usage**](#basic-usage)
-- [Initialize operations](#initialize-operations)
-- [Connection](#connection)
-- [Schema discovery](#schema-discovery)
-  - [**ACL Operations**](#acl-operations)
-- [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry)
-- [Set ACLs](#set-acls)
-  - [**Entry Operations**](#entry-operations)
-- [Create entry](#create-entry)
-- [Add entry](#add-entry)
-- [Modify entry](#modify-entry)
-- [Delete entry](#delete-entry)
-  - [**Paged Search**](#paged-search)
-- [Large result set with paging](#large-result-set-with-paging)
-  - [🔧 OpenLDAP 1.x Operations](#-openldap-1x-operations)
-    - [**Features**](#features)
-    - [**Key Differences**](#key-differences)
-- [ACL attribute is different](#acl-attribute-is-different)
-- [ACL format is legacy syntax](#acl-format-is-legacy-syntax)
-- [access to <what> by <who> <access>](#access-to-what-by-who-access)
-  - [🔧 Oracle OID Operations](#-oracle-oid-operations)
-    - [**Features**](#features)
-    - [**Basic Usage**](#basic-usage)
-- [Connection to Oracle OID](#connection-to-oracle-oid)
-- [Schema discovery (Oracle-specific)](#schema-discovery-oracle-specific)
-  - [**Oracle OID ACLs**](#oracle-oid-acls)
-- [Get orclaci ACLs](#get-orclaci-acls)
-- [Set orclaci ACLs](#set-orclaci-acls)
-  - [**Oracle-Specific Features**](#oracle-specific-features)
-- [Get OID defaults](#get-oid-defaults)
-- [Bind mechanisms](#bind-mechanisms)
-- [Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5"]](#returns-simple-saslexternal-sasldigest-md5)
-  - [🔧 Oracle OUD Operations](#-oracle-oud-operations)
-    - [**Features**](#features)
-    - [**Basic Usage**](#basic-usage)
-- [Connection to Oracle OUD](#connection-to-oracle-oud)
-- [Schema discovery](#schema-discovery)
-  - [**ds-privilege-name ACLs**](#ds-privilege-name-acls)
-- [Get ds-privilege-name ACLs](#get-ds-privilege-name-acls)
-- [Set ds-privilege-name ACLs](#set-ds-privilege-name-acls)
-  - [**OUD-Specific Features**](#oud-specific-features)
-- [Extended SASL mechanisms](#extended-sasl-mechanisms)
-- [Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5", "SASL/GSSAPI",
-  "SASL/PLAIN"]](#returns-simple-saslexternal-sasldigest-md5-saslgssapi-saslplain)
-- [Schema location](#schema-location)
-- [VLV and paged results](#vlv-and-paged-results)
-  - [🔧 Active Directory Operations (Stub)](#-active-directory-operations-stub)
-    - [**Status**](#status)
-    - [**Planned Features**](#planned-features)
-    - [**Current Usage**](#current-usage)
-- [Available methods (return NotImplementedError)](#available-methods-return-notimplementederror)
-- [Basic info available](#basic-info-available)
-  - [**Contributing AD Implementation**](#contributing-ad-implementation)
-  - [🔧 Generic Server Operations](#-generic-server-operations)
-    - [**Purpose**](#purpose)
-    - [**Features**](#features)
-    - [**Usage**](#usage)
-- [Works with any RFC-compliant LDAP server](#works-with-any-rfc-compliant-ldap-server)
-- [Basic schema discovery](#basic-schema-discovery)
-- [Basic entry operations (should work on any server)](#basic-entry-operations-should-work-on-any-server)
-- [Paged search (if supported by server)](#paged-search-if-supported-by-server)
-  - [**Limitations**](#limitations)
-  - [🔄 Entry Adapter Integration](#-entry-adapter-integration)
-- [Search and convert to FlextLdif](#search-and-convert-to-flextldif)
-- [Create FlextLdif entry and convert to ldap3](#create-flextldif-entry-and-convert-to-ldap3)
-  - [🔍 Quirks Detection](#-quirks-detection)
-- [Detect server type from entries](#detect-server-type-from-entries)
-- [Automatic server operations selection](#automatic-server-operations-selection)
-  - [📊 Server Comparison](#-server-comparison)
-    - [**Connection Features**](#connection-features)
-    - [**Schema Operations**](#schema-operations)
-    - [**ACL Features**](#acl-features)
-    - [**Search Features**](#search-features)
-  - [🎯 Best Practices](#-best-practices)
-    - [**1. Use Server Detection**](#1-use-server-detection)
-    - [**2. Handle Errors Explicitly**](#2-handle-errors-explicitly)
-    - [**3. Use Entry Adapter**](#3-use-entry-adapter)
-- [ldap3 → FlextLdif](#ldap3--flextldif)
-- [FlextLdif → ldap3](#flextldif--ldap3)
-  - [**4. Server-Specific Normalization**](#4-server-specific-normalization)
-  - [**5. Connection Management**](#5-connection-management)
-- [Create connection](#create-connection)
-  - [🔧 Troubleshooting](#-troubleshooting)
-    - [**Common Issues**](#common-issues)
-- [Check if server is properly connected](#check-if-server-is-properly-connected)
-- [Check schema DN](#check-schema-dn)
-- [Verify ACL attribute for server](#verify-acl-attribute-for-server)
-- [Check permissions](#check-permissions)
-- [ACL operations typically require REDACTED_LDAP_BIND_PASSWORD privileges](#acl-operations-typically-require-REDACTED_LDAP_BIND_PASSWORD-privileges)
-- [Reduce page size](#reduce-page-size)
-- [Check entry normalization](#check-entry-normalization)
-- [Verify required object classes and attributes](#verify-required-object-classes-and-attributes)
-  - [📚 Additional Resources](#-additional-resources)
+- Server-Specific Operations Guide
+  - 🎯 Overview
+    - **Available Implementations**
+  - 📦 Importing Server Operations
+- Import specific server operations
+- Import supporting components
+  - 🔧 OpenLDAP 2.x Operations
+    - **Features**
+    - **Basic Usage**
+- Initialize operations
+- Connection
+- Schema discovery
+  - **ACL Operations**
+- Get ACLs from cn=config entry
+- Set ACLs
+  - **Entry Operations**
+- Create entry
+- Add entry
+- Modify entry
+- Delete entry
+  - **Paged Search**
+- Large result set with paging
+  - 🔧 OpenLDAP 1.x Operations
+    - **Features**
+    - **Key Differences**
+- ACL attribute is different
+- ACL format is legacy syntax
+- access to `what` by `who` `access`
+  - 🔧 Oracle OID Operations
+    - **Features**
+    - **Basic Usage**
+- Connection to Oracle OID
+- Schema discovery (Oracle-specific)
+  - **Oracle OID ACLs**
+- Get orclaci ACLs
+- Set orclaci ACLs
+  - **Oracle-Specific Features**
+- Get OID defaults
+- Bind mechanisms
+- Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5"]
+  - 🔧 Oracle OUD Operations
+    - **Features**
+    - **Basic Usage**
+- Connection to Oracle OUD
+- Schema discovery
+  - **ds-privilege-name ACLs**
+- Get ds-privilege-name ACLs
+- Set ds-privilege-name ACLs
+  - **OUD-Specific Features**
+- Extended SASL mechanisms
+- Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5", "SASL/GSSAPI", "SASL/PLAIN"]
+- Schema location
+- VLV and paged results
+  - 🔧 Active Directory Operations (Stub)
+    - **Status**
+    - **Planned Features**
+    - **Current Usage**
+- Available methods (return NotImplementedError)
+- Basic info available
+  - **Contributing AD Implementation**
+  - 🔧 Generic Server Operations
+    - **Purpose**
+    - **Features**
+    - **Usage**
+- Works with any RFC-compliant LDAP server
+- Basic schema discovery
+- Basic entry operations (should work on any server)
+- Paged search (if supported by server)
+  - **Limitations**
+  - 🔄 Entry Adapter Integration
+- Search and convert to FlextLdif
+- Create FlextLdif entry and convert to ldap3
+  - 🔍 Quirks Detection
+- Detect server type from entries
+- Automatic server operations selection
+  - 📊 Server Comparison
+    - **Connection Features**
+    - **Schema Operations**
+    - **ACL Features**
+    - **Search Features**
+  - 🎯 Best Practices
+    - **1. Use Server Detection**
+    - **2. Handle Errors Explicitly**
+    - **3. Use Entry Adapter**
+- ldap3 → FlextLdif
+- FlextLdif → ldap3
+  - **4. Server-Specific Normalization**
+  - **5. Connection Management**
+- Create connection
+  - 🔧 Troubleshooting
+    - **Common Issues**
+- Check if server is properly connected
+- Check schema DN
+- Verify ACL attribute for server
+- Check permissions
+- ACL operations typically require REDACTED_LDAP_BIND_PASSWORD privileges
+- Reduce page size
+- Check entry normalization
+- Verify required object classes and attributes
+  - 📚 Additional Resources
 
 **Complete guide to using server-specific LDAP operations in flext-ldap**
 
@@ -111,25 +111,28 @@ This document provides detailed information about server-specific implementation
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+
+##
+
 
 ## 🎯 Overview
 
 FLEXT-LDAP provides complete,
 server-specific implementations for major LDAP servers with automatic quirks handling and FlextLdif integration.
 
+
+
 ### **Available Implementations**
 
-| Server               | Status      | ACL Attribute        | Schema DN                  | Lines | Version Support |
-| -------------------- | ----------- | -------------------- | -------------------------- | ----- | --------------- |
-| **OpenLDAP 2.x**     | 🟢 Complete | olcAccess            | cn=subschema               | 525   | 2.4+            |
-| **OpenLDAP 1.x**     | 🟢 Complete | access               | cn=subschema               | 102   | 1.x (legacy)    |
-| **Oracle OID**       | 🟢 Complete | orclaci              | cn=subschemasubentry       | 361   | 11g+            |
-| **Oracle OUD**       | 🟢 Complete | ds-privilege-name    | cn=schema                  | 373   | 11g+            |
-| **Active Directory** | 🟡 Stub     | nTSecurityDescriptor | cn=schema,cn=configuration | 250   | Future          |
-| **Generic**          | 🟢 Complete | aci                  | cn=subschema               | 310   | RFC 4510        |
+Server: **OpenLDAP 2.x** - Status: 🟢 Complete - ACL Attribute: olcAccess - Schema DN: cn=subschema - Lines: 525 - Version Support: 2.4+
+Server: **OpenLDAP 1.x** - Status: 🟢 Complete - ACL Attribute: access - Schema DN: cn=subschema - Lines: 102 - Version Support: 1.x (legacy)
+Server: **Oracle OID** - Status: 🟢 Complete - ACL Attribute: orclaci - Schema DN: cn=subschemasubentry - Lines: 361 - Version Support: 11g+
+Server: **Oracle OUD** - Status: 🟢 Complete - ACL Attribute: ds-privilege-name - Schema DN: cn=schema - Lines: 373 - Version Support: 11g+
+Server: **Active Directory** - Status: 🟡 Stub - ACL Attribute: nTSecurityDescriptor - Schema DN: cn=schema,cn=configuration - Lines: 250 - Version Support: Future
+Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 4510
 
----
+##
+
 
 ## 📦 Importing Server Operations
 
@@ -151,9 +154,13 @@ from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 from flext_ldif import FlextLdifModels
 ```
 
----
+
+##
+
 
 ## 🔧 OpenLDAP 2.x Operations
+
+
 
 ### **Features**
 
@@ -162,6 +169,8 @@ from flext_ldif import FlextLdifModels
 - Paged results and VLV support
 - Full schema discovery
 - START_TLS support
+
+
 
 ### **Basic Usage**
 
@@ -190,6 +199,8 @@ if schema_result.is_success:
     print(f"Matching rules: {len(schema['matching_rules'])}")
 ```
 
+
+
 ### **ACL Operations**
 
 ```python
@@ -216,6 +227,8 @@ set_result = ops.set_acls(
     acls=new_acls
 )
 ```
+
+
 
 ### **Entry Operations**
 
@@ -252,6 +265,8 @@ delete_result = ops.delete_entry(
 )
 ```
 
+
+
 ### **Paged Search**
 
 ```python
@@ -273,9 +288,13 @@ if search_result.is_success:
         print(f"Attributes: {entry.attributes}")
 ```
 
----
+
+##
+
 
 ## 🔧 OpenLDAP 1.x Operations
+
+
 
 ### **Features**
 
@@ -283,6 +302,8 @@ if search_result.is_success:
 - **access** ACL syntax (legacy)
 - Inherits most functionality from OpenLDAP 2.x
 - Limited VLV support
+
+
 
 ### **Key Differences**
 
@@ -303,9 +324,13 @@ legacy_acl = {
 
 **Note**: OpenLDAP 1.x extends OpenLDAP 2.x operations, only overriding ACL-related methods for the legacy syntax.
 
----
+
+##
+
 
 ## 🔧 Oracle OID Operations
+
+
 
 ### **Features**
 
@@ -314,6 +339,8 @@ legacy_acl = {
 - Oracle-specific object classes (orclUserV2, orclContainer)
 - VLV support
 - Full replication support
+
+
 
 ### **Basic Usage**
 
@@ -337,6 +364,8 @@ if schema_result.is_success:
     print(f"Server type: {schema['server_type']}")  # "oid"
 ```
 
+
+
 ### **Oracle OID ACLs**
 
 ```python
@@ -359,6 +388,8 @@ oid_acls = [
 set_result = ops.set_acls(connection, "dc=example,dc=com", oid_acls)
 ```
 
+
+
 ### **Oracle-Specific Features**
 
 ```python
@@ -372,9 +403,13 @@ mechanisms = ops.get_bind_mechanisms()
 # Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5"]
 ```
 
----
+
+##
+
 
 ## 🔧 Oracle OUD Operations
+
+
 
 ### **Features**
 
@@ -383,6 +418,8 @@ mechanisms = ops.get_bind_mechanisms()
 - Based on 389 Directory Server
 - Extended SASL support (GSSAPI, PLAIN)
 - Full enterprise features
+
+
 
 ### **Basic Usage**
 
@@ -406,6 +443,8 @@ if schema_result.is_success:
     print(f"Server type: {schema['server_type']}")  # "oud"
 ```
 
+
+
 ### **ds-privilege-name ACLs**
 
 ```python
@@ -425,6 +464,8 @@ oud_acls = [
 set_result = ops.set_acls(connection, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", oud_acls)
 ```
 
+
+
 ### **OUD-Specific Features**
 
 ```python
@@ -440,13 +481,19 @@ supports_vlv = ops.supports_vlv()  # True
 supports_paging = ops.supports_paged_results()  # True
 ```
 
----
+
+##
+
 
 ## 🔧 Active Directory Operations (Stub)
+
+
 
 ### **Status**
 
 Currently implemented as a stub with `NotImplementedError` for most operations. Provides the interface for future implementation.
+
+
 
 ### **Planned Features**
 
@@ -455,6 +502,8 @@ Currently implemented as a stub with `NotImplementedError` for most operations. 
 - GUID-based DNs
 - Global Catalog support
 - SASL/GSSAPI authentication
+
+
 
 ### **Current Usage**
 
@@ -476,6 +525,8 @@ acl_attr = ops.get_acl_attribute_name()  # "nTSecurityDescriptor"
 schema_dn = ops.get_schema_dn()  # "cn=schema,cn=configuration"
 ```
 
+
+
 ### **Contributing AD Implementation**
 
 If you want to contribute Active Directory support:
@@ -488,13 +539,19 @@ If you want to contribute Active Directory support:
 
 See `src/flext_ldap/servers/ad_operations.py` for stub methods.
 
----
+
+##
+
 
 ## 🔧 Generic Server Operations
+
+
 
 ### **Purpose**
 
 RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic operations that should work with any RFC 4510-compliant server.
+
+
 
 ### **Features**
 
@@ -503,6 +560,8 @@ RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic
 - Basic LDAP operations
 - Conservative defaults
 - Paged search support
+
+
 
 ### **Usage**
 
@@ -538,6 +597,8 @@ search_result = ops.search_with_paging(
 )
 ```
 
+
+
 ### **Limitations**
 
 - ACL operations return minimal support
@@ -545,7 +606,9 @@ search_result = ops.search_with_paging(
 - No server-specific optimizations
 - Conservative capability detection
 
----
+
+##
+
 
 ## 🔄 Entry Adapter Integration
 
@@ -579,7 +642,9 @@ if attrs_result.is_success:
     ops.add_entry(connection, ldif_entry)
 ```
 
----
+
+##
+
 
 ## 🔍 Quirks Detection
 
@@ -618,51 +683,53 @@ else:
     ops = GenericServerOperations()
 ```
 
----
+
+##
+
 
 ## 📊 Server Comparison
 
+
+
 ### **Connection Features**
 
-| Feature       | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD      | Generic |
-| ------------- | ------------ | ------------ | ---------- | ---------- | ------- | ------- |
-| Default Port  | 389/636      | 389/636      | 389/636    | 389/636    | 389/636 | 389/636 |
-| START_TLS     | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes     | ❌ No   | ✅ Yes  |
-| SIMPLE Auth   | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes     | ✅ Yes  | ✅ Yes  |
-| SASL/EXTERNAL | ✅ Yes       | ❌ No        | ✅ Yes     | ✅ Yes     | ❌ No   | ❌ No   |
-| SASL/GSSAPI   | ❌ No        | ❌ No        | ❌ No      | ✅ Yes     | ✅ Yes  | ❌ No   |
+Feature: Default Port - OpenLDAP 2.x: 389/636 - OpenLDAP 1.x: 389/636 - Oracle OID: 389/636 - Oracle OUD: 389/636 - AD: 389/636 - Generic: 389/636
+Feature: START_TLS - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ❌ No - Generic: ✅ Yes
+Feature: SIMPLE Auth - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ✅ Yes - Generic: ✅ Yes
+Feature: SASL/EXTERNAL - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ❌ No - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ❌ No - Generic: ❌ No
+Feature: SASL/GSSAPI - OpenLDAP 2.x: ❌ No - OpenLDAP 1.x: ❌ No - Oracle OID: ❌ No - Oracle OUD: ✅ Yes - AD: ✅ Yes - Generic: ❌ No
+
 
 ### **Schema Operations**
 
-| Feature         | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID           | Oracle OUD | AD                  | Generic      |
-| --------------- | ------------ | ------------ | -------------------- | ---------- | ------------------- | ------------ |
-| Schema DN       | cn=subschema | cn=subschema | cn=subschemasubentry | cn=schema  | cn=schema,cn=config | cn=subschema |
-| Object Classes  | ✅ Full      | ✅ Full      | ✅ Full              | ✅ Full    | 🟡 Stub             | ⚠️ Basic     |
-| Attribute Types | ✅ Full      | ✅ Full      | ✅ Full              | ✅ Full    | 🟡 Stub             | ⚠️ Basic     |
-| Syntaxes        | ✅ Yes       | ✅ Yes       | ❌ No                | ✅ Yes     | 🟡 Stub             | ❌ No        |
-| Matching Rules  | ✅ Yes       | ❌ No        | ❌ No                | ❌ No      | 🟡 Stub             | ❌ No        |
+Feature: Schema DN - OpenLDAP 2.x: cn=subschema - OpenLDAP 1.x: cn=subschema - Oracle OID: cn=subschemasubentry - Oracle OUD: cn=schema - AD: cn=schema,cn=config - Generic: cn=subschema
+Feature: Object Classes - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ⚠️ Basic
+Feature: Attribute Types - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ⚠️ Basic
+Feature: Syntaxes - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ❌ No - Oracle OUD: ✅ Yes - AD: 🟡 Stub - Generic: ❌ No
+Feature: Matching Rules - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ❌ No - Oracle OID: ❌ No - Oracle OUD: ❌ No - AD: 🟡 Stub - Generic: ❌ No
+
 
 ### **ACL Features**
 
-| Feature       | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD        | AD                   | Generic    |
-| ------------- | ------------ | ------------ | ---------- | ----------------- | -------------------- | ---------- |
-| ACL Attribute | olcAccess    | access       | orclaci    | ds-privilege-name | nTSecurityDescriptor | aci        |
-| Get ACLs      | ✅ Full      | ✅ Full      | ✅ Full    | ✅ Full           | 🟡 Stub              | ⚠️ Limited |
-| Set ACLs      | ✅ Full      | ✅ Full      | ✅ Full    | ✅ Full           | 🟡 Stub              | ❌ No      |
-| Parse ACL     | ✅ Full      | ✅ Full      | ⚠️ Basic   | ⚠️ Basic          | 🟡 Stub              | ⚠️ Basic   |
-| Format ACL    | ✅ Full      | ✅ Full      | ⚠️ Basic   | ⚠️ Basic          | 🟡 Stub              | ⚠️ Basic   |
+Feature: ACL Attribute - OpenLDAP 2.x: olcAccess - OpenLDAP 1.x: access - Oracle OID: orclaci - Oracle OUD: ds-privilege-name - AD: nTSecurityDescriptor - Generic: aci
+Feature: Get ACLs - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ⚠️ Limited
+Feature: Set ACLs - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ❌ No
+Feature: Parse ACL - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ⚠️ Basic - Oracle OUD: ⚠️ Basic - AD: 🟡 Stub - Generic: ⚠️ Basic
+Feature: Format ACL - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ⚠️ Basic - Oracle OUD: ⚠️ Basic - AD: 🟡 Stub - Generic: ⚠️ Basic
+
 
 ### **Search Features**
 
-| Feature       | OpenLDAP 2.x | OpenLDAP 1.x | Oracle OID | Oracle OUD | AD     | Generic |
-| ------------- | ------------ | ------------ | ---------- | ---------- | ------ | ------- |
-| Paged Results | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes     | ✅ Yes | ✅ Yes  |
-| VLV           | ✅ Yes       | ⚠️ Limited   | ✅ Yes     | ✅ Yes     | ❌ No  | ❌ No   |
-| Max Page Size | 1000         | 1000         | 5000       | 1000       | 1000   | 1000    |
+Feature: Paged Results - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ✅ Yes - Generic: ✅ Yes
+Feature: VLV - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ⚠️ Limited - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ❌ No - Generic: ❌ No
+Feature: Max Page Size - OpenLDAP 2.x: 1000 - OpenLDAP 1.x: 1000 - Oracle OID: 5000 - Oracle OUD: 1000 - AD: 1000 - Generic: 1000
 
----
+##
+
 
 ## 🎯 Best Practices
+
+
 
 ### **1. Use Server Detection**
 
@@ -677,6 +744,8 @@ if server_type_result.is_success:
     # Select appropriate operations class
 ```
 
+
+
 ### **2. Handle Errors Explicitly**
 
 All operations return `FlextResult` - always check for failures:
@@ -689,6 +758,8 @@ if result.is_failure:
 else:
     print("Operation succeeded")
 ```
+
+
 
 ### **3. Use Entry Adapter**
 
@@ -704,6 +775,8 @@ ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 ```
 
+
+
 ### **4. Server-Specific Normalization**
 
 Each server may require specific entry normalization:
@@ -714,6 +787,8 @@ if norm_result.is_success:
     normalized_entry = norm_result.unwrap()
     # Use normalized entry
 ```
+
+
 
 ### **5. Connection Management**
 
@@ -732,9 +807,13 @@ finally:
     connection.unbind()
 ```
 
----
+
+##
+
 
 ## 🔧 Troubleshooting
+
+
 
 ### **Common Issues**
 
@@ -784,7 +863,9 @@ if norm_result.is_failure:
 # Verify required object classes and attributes
 ```
 
----
+
+##
+
 
 ## 📚 Additional Resources
 
@@ -794,7 +875,8 @@ if norm_result.is_failure:
 - **[ACL Management](acl-management.md)** - Server-specific ACL handling
 - **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
 
----
+
+##
 
 **Last Updated**: 2025-01-08
 **Version**: 0.9.9
