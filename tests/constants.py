@@ -309,10 +309,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             FAST_TIMEOUT: ClassVar[int] = 1
 
 
-# Short alias per FLEXT convention
-c = TestsFlextLdapConstants
+# Short aliases per FLEXT convention
+tc = TestsFlextLdapConstants  # Primary test constants alias
+c = TestsFlextLdapConstants   # Alternative alias for compatibility
 
 __all__ = [
     "TestsFlextLdapConstants",
     "c",
+    "tc",
 ]

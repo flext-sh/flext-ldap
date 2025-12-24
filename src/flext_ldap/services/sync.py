@@ -33,10 +33,10 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
+from flext import r
 from flext_ldap.base import s
 from flext_ldap.models import m
 from flext_ldap.services.operations import FlextLdapOperations

@@ -13,8 +13,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
-from flext_core import r
 from flext_ldif import p as ldif_p
+
+from flext import r
 
 
 class FlextLdapProtocols(ldif_p):
@@ -478,6 +479,49 @@ class FlextLdapProtocols(ldif_p):
                 self,
             ) -> Sequence[FlextLdapProtocols.Ldap.Ldap3EntryProtocol]:
                 """Get list of entries."""
+                ...
+
+        # =====================================================================
+        # DUCK TYPING PROTOCOLS
+        # =====================================================================
+        # Protocols for duck typing common patterns.
+
+        @runtime_checkable
+        class HasItemsMethod(Protocol):
+            """Protocol for objects with items() method."""
+
+            def items(self) -> Sequence[tuple[str, object]]:
+                """Return items as sequence of tuples."""
+                ...
+
+        @runtime_checkable
+        class HasConfigAttribute(Protocol):
+            """Protocol for objects exposing configuration (duck typing for settings)."""
+
+            @property
+            def config(self) -> object:
+                """Return resolved configuration object."""
+                ...
+
+        @runtime_checkable
+        class HasDynamicAttribute(Protocol):
+            """Protocol for objects with dynamic attributes accessible via __getattr__."""
+
+            def __getattr__(self, name: str) -> object:
+                """Get dynamic attribute."""
+                ...
+
+        @runtime_checkable
+        class HasAttributesProperty(Protocol):
+            """Protocol for objects with 'attributes' property.
+
+            Uses Mapping (covariant) instead of dict (invariant) to allow structural
+            compatibility with dict subtypes and Sequence subtypes in values.
+            """
+
+            @property
+            def attributes(self) -> Mapping[str, object]:
+                """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 
 

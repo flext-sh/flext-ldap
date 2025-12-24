@@ -1,11 +1,7 @@
 """Protocol definitions for flext-ldap tests.
 
-Provides TestsLdapProtocols, extending FlextTestsProtocols with flext-ldap-specific
+Provides TestsFlextLdapProtocols, extending FlextTestsProtocols with flext-ldap-specific
 protocols. All generic test protocols come from flext_tests.
-
-Architecture:
-- FlextTestsProtocols (flext_tests) = Generic protocols for all FLEXT projects
-- TestsLdapProtocols (tests/) = flext-ldap-specific protocols extending FlextTestsProtocols
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,30 +15,37 @@ from flext_ldap.protocols import FlextLdapProtocols
 
 
 class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
-    """Protocol definitions for flext-ldap tests - extends FlextTestsProtocols and FlextLdapProtocols.
+    """Protocol definitions for flext-ldap tests.
 
-    Architecture: Extends both FlextTestsProtocols and FlextLdapProtocols with flext-ldap-specific protocol definitions.
-    All generic protocols from FlextTestsProtocols and production protocols from FlextLdapProtocols are available through inheritance.
+    Extends both FlextTestsProtocols and FlextLdapProtocols with flext-ldap-specific
+    protocol definitions.
+
+    Provides access to:
+    - tp.Tests.Docker.* (from FlextTestsProtocols)
+    - tp.Tests.Factory.* (from FlextTestsProtocols)
+    - tp.Ldap.* (from FlextLdapProtocols)
 
     Rules:
-    - NEVER redeclare protocols from FlextTestsProtocols or FlextLdapProtocols
-    - Only flext-ldap-specific protocols allowed (not generic for other projects)
-    - All generic protocols come from FlextTestsProtocols
-    - All production protocols come from FlextLdapProtocols
+    - NEVER redeclare protocols from parent classes
+    - Only flext-ldap-specific test protocols allowed
     """
 
-    # Test-specific protocols can be added here as nested classes
-    # Example:
-    # @runtime_checkable
-    # class TestClientProtocol(Protocol):
-    #     """Test-specific client protocol."""
-    #     pass
+    class Tests:
+        """Project-specific test protocols.
+
+        Extends FlextTestsProtocols.Tests with flext-ldap-specific protocols.
+        """
+
+        class Ldap:
+            """Flext-ldap-specific test protocols."""
 
 
-# Runtime alias for simplified usage
+# Runtime aliases
 p = TestsFlextLdapProtocols
+tp = TestsFlextLdapProtocols
 
 __all__ = [
     "TestsFlextLdapProtocols",
     "p",
+    "tp",
 ]

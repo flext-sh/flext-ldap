@@ -33,10 +33,10 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import cast
 
-from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
+from flext import r
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m

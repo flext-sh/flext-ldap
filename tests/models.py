@@ -1,11 +1,8 @@
-"""Models for flext-ldap tests.
+"""Test model definitions extending src models for centralized test objects.
 
-Provides TestsLdapModels, extending FlextTestsModels with flext-ldap-specific models.
-All generic test models come from flext_tests.
-
-Architecture:
-- FlextTestsModels (flext_tests) = Generic models for all FLEXT projects
-- TestsLdapModels (tests/) = flext-ldap-specific models extending FlextTestsModels
+This module provides test-specific model extensions that inherit from
+src/flext_ldap/models.py classes. This centralizes test objects without
+duplicating parent class functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,37 +10,67 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsDocker
+from flext_tests.models import FlextTestsModels
 
 from flext_ldap.models import FlextLdapModels
 
 
-class TestsFlextLdapModels(FlextLdapModels):
-    """Models for flext-ldap tests - extends FlextLdapModels.
+class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
+    """Test models - composição de FlextTestsModels + FlextLdapModels.
 
-    Architecture: Extends FlextLdapModels (which already extends FlextModels).
-    FlextTestsDocker provides Docker-specific models and utilities.
-    All generic models from FlextTestsModels are available via composition.
-    All production models from FlextLdapModels are available through inheritance.
+    Hierarquia:
+    - FlextTestsModels: Utilitários de teste genéricos
+    - FlextLdapModels: Models de domínio do projeto
+    - TestsFlextLdapModels: Composição + namespace .Tests
 
-    Rules:
-    - NEVER redeclare models from FlextLdapModels
-    - Only flext-ldap-specific models allowed
-    - All generic test models come from FlextTestsModels (via composition)
-    - All production models come from FlextLdapModels (via inheritance)
+    Access patterns:
+    - tm.Tests.* - Test fixtures (ConnectionConfig, SearchOptions, etc.)
+    - m.Ldap.* - Production domain models
     """
 
-    # Docker namespace - real inheritance class
-    class Docker(FlextTestsDocker):
-        """Docker utilities - real inheritance from FlextTestsDocker."""
+    class Tests:
+        """Test fixture models namespace.
 
-    # Test-specific models can be added here as nested classes
-    # Example:
-    # class TestSearchOptions(SearchOptions):
-    #     """Test-specific search options."""
-    #     pass
+        Convenience aliases for test-only shortcuts.
+        Production code should use m.Ldap.* pattern.
+        """
 
+        # Connection models for testing
+        ConnectionConfig = FlextLdapModels.Ldap.ConnectionConfig
+        NormalizedConfig = FlextLdapModels.Ldap.NormalizedConfig
+        SearchOptions = FlextLdapModels.Ldap.SearchOptions
+
+        # Sync models for testing
+        SyncOptions = FlextLdapModels.Ldap.SyncOptions
+        SyncStats = FlextLdapModels.Ldap.SyncStats
+        SyncPhaseConfig = FlextLdapModels.Ldap.SyncPhaseConfig
+        LdapBatchStats = FlextLdapModels.Ldap.LdapBatchStats
+
+        # Result models for testing
+        UpsertResult = FlextLdapModels.Ldap.UpsertResult
+        BatchUpsertResult = FlextLdapModels.Ldap.BatchUpsertResult
+        OperationResult = FlextLdapModels.Ldap.OperationResult
+        SearchResult = FlextLdapModels.Ldap.SearchResult
+        LdapOperationResult = FlextLdapModels.Ldap.LdapOperationResult
+        PhaseSyncResult = FlextLdapModels.Ldap.PhaseSyncResult
+        MultiPhaseSyncResult = FlextLdapModels.Ldap.MultiPhaseSyncResult
+
+        # Metadata models for testing
+        ConversionMetadata = FlextLdapModels.Ldap.ConversionMetadata
+
+        # Collection models for testing
+        CollectionsConfig = FlextLdapModels.Collections.Config
+        CollectionsOptions = FlextLdapModels.Collections.Options
+        CollectionsResults = FlextLdapModels.Collections.Results
+        CollectionsStatistics = FlextLdapModels.Collections.Statistics
+
+
+# Short aliases for tests
+tm = TestsFlextLdapModels
+m = TestsFlextLdapModels
 
 __all__ = [
     "TestsFlextLdapModels",
+    "m",
+    "tm",
 ]

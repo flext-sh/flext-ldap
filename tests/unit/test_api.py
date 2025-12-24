@@ -23,7 +23,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextSettings
+from flext import FlextSettings
 from flext_ldif import FlextLdif
 from flext_tests import tm
 

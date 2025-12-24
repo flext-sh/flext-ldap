@@ -24,7 +24,7 @@ from collections.abc import Callable
 from enum import StrEnum
 
 import pytest
-from flext_core import r
+from flext import r
 from ldap3 import Connection, Server
 
 from flext_ldap import (

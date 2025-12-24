@@ -38,14 +38,15 @@ import types
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, Self, TypeGuard, cast, runtime_checkable
+from typing import Self, TypeGuard, cast
 
-from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
+from flext import FlextSettings, r
 from flext_ldap.base import s
 from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.settings import FlextLdapSettings
@@ -55,15 +56,8 @@ from flext_ldap.typings import t
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
 SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 
-
-@runtime_checkable
-class HasConfigAttribute(Protocol):
-    """Protocol for objects exposing FlextLdapSettings configuration."""
-
-    @property
-    def config(self) -> FlextLdapSettings:
-        """Return resolved LDAP configuration."""
-        ...
+# Protocol reference from centralized protocols.py for backward compatibility
+HasConfigAttribute = p.Ldap.HasConfigAttribute
 
 
 def _is_multi_phase_callback(

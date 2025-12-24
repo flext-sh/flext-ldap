@@ -32,9 +32,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol, TypeGuard, runtime_checkable
+from typing import Literal, TypeGuard
 
-from flext_core import FlextRuntime, r
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
@@ -45,6 +44,7 @@ from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict
 
+from flext import FlextRuntime, r
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.base import s
 from flext_ldap.constants import FlextLdapConstants, c
@@ -56,28 +56,9 @@ from flext_ldap.utilities import u
 # Local alias for cleaner code
 LdifEntry = FlextLdifModels.Ldif.Entry
 
-
-@runtime_checkable
-class HasDynamicAttribute(Protocol):
-    """Protocol for objects with dynamic attributes accessible via __getattr__."""
-
-    def __getattr__(self, name: str) -> object:
-        """Get dynamic attribute."""
-        ...
-
-
-@runtime_checkable
-class HasAttributesProperty(Protocol):
-    """Protocol for objects with 'attributes' property.
-
-    Uses Mapping (covariant) instead of dict (invariant) to allow structural
-    compatibility with dict subtypes and Sequence subtypes in values.
-    """
-
-    @property
-    def attributes(self) -> Mapping[str, object]:
-        """Get attributes property - covariant Mapping for structural compatibility."""
-        ...
+# Protocol references from centralized protocols.py for backward compatibility
+HasDynamicAttribute = p.Ldap.HasDynamicAttribute
+HasAttributesProperty = p.Ldap.HasAttributesProperty
 
 
 class Ldap3Adapter(s[bool]):

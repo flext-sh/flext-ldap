@@ -3,11 +3,12 @@
 ## Table of Contents
 
 - [FLEXT-LDAP Documentation](#flext-ldap-documentation)
+  - [Table of Contents](#table-of-contents)
   - [📚 Documentation Structure](#-documentation-structure)
-    - [🏗️ Enterprise Architecture Documentation](#-enterprise-architecture-documentation)
+    - [🏗️ Enterprise Architecture Documentation](#️-enterprise-architecture-documentation)
     - [🔌 Enterprise Integration Guides](#-enterprise-integration-guides)
     - [📖 Comprehensive API Reference](#-comprehensive-api-reference)
-    - [🛠️ World-Class Development](#-world-class-development)
+    - [🛠️ World-Class Development](#️-world-class-development)
     - [📊 Production Operations](#-production-operations)
     - [📋 Real-World Examples](#-real-world-examples)
   - [🚀 Quick Navigation](#-quick-navigation)

@@ -3,10 +3,11 @@
 ## Table of Contents
 
 - [C4 Model: Container Architecture](#c4-model-container-architecture)
-  - [🏗️ Container Architecture Overview](#-container-architecture-overview)
+  - [Table of Contents](#table-of-contents)
+  - [🏗️ Container Architecture Overview](#️-container-architecture-overview)
   - [📦 Container Descriptions](#-container-descriptions)
   - [🔄 Container Communication Patterns](#-container-communication-patterns)
-  - [🏗️ Technology Choices](#-technology-choices)
+  - [🏗️ Technology Choices](#️-technology-choices)
   - [🚀 Deployment Considerations](#-deployment-considerations)
   - [📊 Performance Characteristics](#-performance-characteristics)
   - [🔒 Security Considerations](#-security-considerations)

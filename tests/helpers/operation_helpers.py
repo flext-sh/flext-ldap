@@ -13,10 +13,10 @@ from typing import Any, TypeVar, cast
 
 import pytest
 import tests.constants as c_mod
-from flext_core import FlextResult
 from flext_tests import u
 from tests.typings import GenericFieldsDict, t
 
+from flext import FlextResult
 from flext_ldap import (
     FlextLdap,
     FlextLdapOperations,
@@ -329,7 +329,7 @@ class TestsFlextLdapOperationHelpers:
             # Type narrowing: search_options is protocol-compatible (has base_dn)
             if not hasattr(search_options, "base_dn"):
                 raise TypeError(
-                    f"SearchOptions must have base_dn, got {type(search_options)}"
+                    f"SearchOptions must have base_dn, got {type(search_options)}",
                 )
             search_result_protocol = client.search(search_options)
             # Protocol results are structurally compatible with r[T]
@@ -339,7 +339,7 @@ class TestsFlextLdapOperationHelpers:
             # Type narrowing: protocol result is structurally compatible
             # Use _ensure_flext_result for conversion
             search_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
-                search_result_raw
+                search_result_raw,
             )
         # Assert success and get value
         assert search_result_raw.is_success, "Search failed"
@@ -648,10 +648,10 @@ class TestsFlextLdapOperationHelpers:
             # Protocols are structurally compatible - no cast needed
             # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
             add_result_raw_protocol = client.add(
-                cast("p.Ldap.LdapEntryProtocol", entry)
+                cast("p.Ldap.LdapEntryProtocol", entry),
             )
             add_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
-                add_result_raw_protocol
+                add_result_raw_protocol,
             )
         # Ensure we have r and assert success
         add_result_typed: OperationResultType = (
@@ -854,7 +854,7 @@ class TestsFlextLdapOperationHelpers:
                 # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
                 search_result_protocol = client.search(search_options)
                 search_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
-                    search_result_protocol
+                    search_result_protocol,
                 )
             search_result_optional = (
                 TestsFlextLdapOperationHelpers._ensure_flext_result(
@@ -927,7 +927,7 @@ class TestsFlextLdapOperationHelpers:
                 search_options,
             )
             search_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
-                search_result_protocol
+                search_result_protocol,
             )
         search_result: SearchResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(search_result_raw)
@@ -1016,7 +1016,7 @@ class TestsFlextLdapOperationHelpers:
         # Type narrowing: u.Collection.process() returns dict[str, R] for dict input
         # where R is the return type of process_change: tuple[str, list[tuple[str, list[str]]] | None] | None
         processed_dict_raw: dict[
-            str, tuple[str, list[tuple[str, list[str]]] | None] | None
+            str, tuple[str, list[tuple[str, list[str]]] | None] | None,
         ] = {}
         if processed_changes.is_success and isinstance(processed_changes.value, dict):
             processed_dict_raw = processed_changes.value

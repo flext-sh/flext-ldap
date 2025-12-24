@@ -33,11 +33,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping, Sequence
 
-from flext_core import r
 from flext_ldif import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
 
+from flext import r
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m

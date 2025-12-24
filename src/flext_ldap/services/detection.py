@@ -33,9 +33,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, ParamSpec
 
-from flext_core import FlextLogger, r
 from ldap3 import Connection
 
+from flext import FlextLogger, r
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.typings import t

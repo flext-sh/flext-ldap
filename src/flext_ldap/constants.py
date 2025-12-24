@@ -21,68 +21,11 @@ class FlextLdapConstants(FlextLdifConstants):
 
     Access patterns:
     - c.Ldap.* (LDAP-specific constants)
-    - c.Ldif.* (inherited from FlextLdifConstants)
+    - c.Ldif.* (inherited from FlextLdifConstants - do NOT override)
     - c.Platform.* (inherited from FlextConstants via FlextLdifConstants)
+
+    NOTE: Ldif namespace is inherited from parent - do NOT override.
     """
-
-    class Ldif:
-        """LDIF-related constants."""
-
-        # Expose Categories from parent FlextLdifConstants.Ldif
-        Categories = FlextLdifConstants.Ldif.Categories
-
-        class ServerTypes(StrEnum):
-            """Server type constants."""
-
-            RFC = "rfc"
-            OUD = "oud"
-            OID = "oid"
-            OPENLDAP = "openldap"
-            OPENLDAP1 = "openldap1"
-            APACHE = "apache"
-            DS389 = "ds389"
-            NOVELL = "novell"
-            IBM_TIVOLI = "ibm_tivoli"
-            AD = "ad"
-            RELAXED = "relaxed"
-
-        class SpaceHandlingOption:
-            """Space handling options."""
-
-            PRESERVE = "preserve"
-            NORMALIZE = "normalize"
-            STRIP = "strip"
-
-        class EscapeHandlingOption:
-            """Escape handling options."""
-
-            PRESERVE = "preserve"
-            ESCAPE = "escape"
-            UNESCAPE = "unescape"
-
-        class SortOption:
-            """Sort options."""
-
-            DN = "dn"
-            ATTR = "attr"
-            NONE = "none"
-
-        class LiteralTypes:
-            """Literal type definitions for LDIF."""
-
-            ServerTypeLiteral = Literal[
-                "rfc",
-                "oud",
-                "oid",
-                "openldap",
-                "openldap1",
-                "apache",
-                "ds389",
-                "novell",
-                "ibm_tivoli",
-                "ad",
-                "relaxed",
-            ]
 
     class Ldap:
         """LDAP-related constants."""
