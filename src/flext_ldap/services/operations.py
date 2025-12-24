@@ -33,11 +33,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping, Sequence
 
+from flext_core import r
 from flext_ldif import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
 
-from flext import r
 from flext_ldap.base import s
 from flext_ldap.constants import c
 from flext_ldap.models import m
@@ -884,7 +884,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 entries_raw = search_data.entries
                 # SearchResult.entries is list[m.Ldif.Entry] from model definition
                 # No isinstance check needed - type is already guaranteed
-                existing_entries = list(entries_raw) if entries_raw else []  # type: ignore[arg-type]
+                existing_entries = list(entries_raw) if entries_raw else []
             if not existing_entries:
                 retry_result = self._ops.add(entry)
                 # Create results
