@@ -769,8 +769,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             # Railway pattern: map success to MODIFIED, lash for conditional SKIPPED/fail
             return (
-                self._ops
-                .modify(dn_str, changes)
+                self._ops.modify(dn_str, changes)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.MODIFIED
@@ -814,8 +813,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Railway pattern: map success to ADDED, lash for conditional delegation
             entry_for_add = self._convert_to_model(entry)
             return (
-                self._ops
-                .add(entry_for_add)
+                self._ops.add(entry_for_add)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.ADDED
@@ -1011,8 +1009,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         effective_server_type = server_type or c.Ldif.ServerTypes.RFC
         # Railway pattern: flat_map for type narrowing, map_error for error formatting
         return (
-            self._connection.adapter
-            .search(
+            self._connection.adapter.search(
                 normalized_options,
                 server_type=effective_server_type,
             )
@@ -1073,8 +1070,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             })
         # Railway pattern: flat_map for type narrowing, map_error for error formatting
         return (
-            self._connection.adapter
-            .add(entry_for_adapter)
+            self._connection.adapter.add(entry_for_adapter)
             .flat_map(r[m.Ldap.OperationResult].ok)
             .map_error(lambda e: u.to_str(e, default="Unknown error"))
         )
@@ -1121,8 +1117,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             dn_model = dn
         # Railway pattern: flat_map for type narrowing, map_error for error formatting
         return (
-            self._connection.adapter
-            .modify(dn_model, changes)
+            self._connection.adapter.modify(dn_model, changes)
             .flat_map(r[m.Ldap.OperationResult].ok)
             .map_error(lambda e: u.to_str(e, default="Unknown error"))
         )
@@ -1167,8 +1162,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             dn_model = dn
         # Railway pattern: flat_map for type narrowing, map_error for error formatting
         return (
-            self._connection.adapter
-            .delete(dn_model)
+            self._connection.adapter.delete(dn_model)
             .flat_map(r[m.Ldap.OperationResult].ok)
             .map_error(lambda e: u.to_str(e, default="Unknown error"))
         )

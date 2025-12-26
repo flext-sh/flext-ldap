@@ -46,7 +46,7 @@ from flext_ldap.utilities import u
 
 
 def _is_ldap3_attrs_dict(
-    value: object,
+    value: t.GeneralValueType,
 ) -> TypeGuard[Mapping[str, t.Ldap.Operation.Ldap3EntryValue]]:
     """TypeGuard for ldap3 untyped entry_attributes_as_dict.
 
@@ -58,7 +58,7 @@ def _is_ldap3_attrs_dict(
 
 
 def _is_ldap3_entry_value(
-    value: object,
+    value: t.GeneralValueType,
 ) -> TypeGuard[t.Ldap.Operation.Ldap3EntryValue]:
     """TypeGuard for ldap3 untyped attribute values.
 

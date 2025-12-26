@@ -44,6 +44,7 @@ from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
+from flext_ldap._models.ldap import FlextLdapModelsLdap
 from flext_ldap.base import s
 from flext_ldap.models import m
 from flext_ldap.protocols import p
@@ -134,7 +135,7 @@ def _convert_entries_to_protocol(
 
 
 def _get_phase_result_value(
-    phase_result: m.Ldap.PhaseSyncResult,
+    phase_result: FlextLdapModelsLdap.PhaseSyncResult,
     attr_name: str,
     default: int = 0,
 ) -> int:
@@ -1054,7 +1055,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """
         config = config or m.Ldap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
-        phase_results: dict[str, m.Ldap.PhaseSyncResult] = {}
+        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
         overall_success = True
         stop_requested = False
 

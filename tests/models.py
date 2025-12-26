@@ -37,7 +37,6 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
 
         # Connection models for testing
         ConnectionConfig = FlextLdapModels.Ldap.ConnectionConfig
-        NormalizedConfig = FlextLdapModels.Ldap.NormalizedConfig
         SearchOptions = FlextLdapModels.Ldap.SearchOptions
 
         # Sync models for testing

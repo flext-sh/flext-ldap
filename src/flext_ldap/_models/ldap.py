@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = [
     "FlextLdapModelsLdap",
@@ -121,7 +121,6 @@ class FlextLdapModelsLdap:
         total: int = 0
         duration_seconds: float = 0.0
 
-        @computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (added + skipped) / total."""
@@ -164,7 +163,6 @@ class FlextLdapModelsLdap:
         failed: int = 0
         results: list[object] = Field(default_factory=list)
 
-        @computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (successful / total_processed)."""

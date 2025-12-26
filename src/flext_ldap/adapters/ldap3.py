@@ -247,7 +247,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def has_dynamic_attribute(
-            obj: object,
+            obj: t.GeneralValueType,
             attr_name: str,
         ) -> TypeGuard[HasDynamicAttribute]:
             """Type guard for dynamic attribute access.
@@ -264,9 +264,9 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: object,
+            obj: t.GeneralValueType,
             attr_name: str,
-        ) -> object | None:
+        ) -> t.GeneralValueType | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -325,7 +325,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: LdifEntry | object,
+            parsed: LdifEntry | t.GeneralValueType,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -363,7 +363,7 @@ class Ldap3Adapter(s[bool]):
                 return m.Ldif.DN.model_validate({"value": ""})
 
             # Protocol-based entry - extract DN value using utilities
-            dn_raw: object | None = None
+            dn_raw: t.GeneralValueType | None = None
             if isinstance(parsed, LdifEntry):
                 dn_raw = parsed.dn
             else:
@@ -395,7 +395,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: dict[str, object] | Mapping[str, object],
+            attrs_dict: t.Types.StringDict | Mapping[str, t.GeneralValueType],
         ) -> t.Ldap.Operation.AttributeDict:
             """Normalize attribute values to list[str] format.
 
@@ -421,7 +421,7 @@ class Ldap3Adapter(s[bool]):
         def extract_attrs_dict(
             attrs: (
                 HasAttributesProperty
-                | Mapping[str, object | Sequence[str]]
+                | Mapping[str, t.GeneralValueType | Sequence[str]]
                 | HasItemsMethod
                 | m.Ldif.Attributes
                 | BaseModel
@@ -461,8 +461,8 @@ class Ldap3Adapter(s[bool]):
             if isinstance(attrs, BaseModel):
                 # Python 3.13: model_dump() always returns dict - direct access
                 dumped = attrs.model_dump()
-                # u.mapper().get() with default={} guarantees dict[str, object] | None
-                attrs_value: dict[str, object] | None = u.mapper().get(
+                # u.mapper().get() with default={} guarantees t.Types.StringDict | None
+                attrs_value: t.Types.StringDict | None = u.mapper().get(
                     dumped,
                     "attributes",
                     default={},
@@ -481,7 +481,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: LdifEntry | object,
+            parsed: LdifEntry | t.GeneralValueType,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -505,7 +505,7 @@ class Ldap3Adapter(s[bool]):
 
             """
             # Get attributes from entry
-            attrs_raw: object | None = None
+            attrs_raw: t.GeneralValueType | None = None
             if isinstance(parsed, (LdifEntry, LdifEntry)):
                 attrs_raw = parsed.attributes
             else:
@@ -572,7 +572,7 @@ class Ldap3Adapter(s[bool]):
 
             """
             # Extract metadata using protocol check
-            metadata_raw: object | None = None
+            metadata_raw: t.GeneralValueType | None = None
             if isinstance(parsed, LdifEntry):
                 metadata_raw = parsed.metadata
             else:
@@ -601,7 +601,7 @@ class Ldap3Adapter(s[bool]):
             metadata: (
                 t.MetadataAttributeValue
                 | Mapping[str, str | int | float | bool | None]
-                | object
+                | t.GeneralValueType
                 | None
             ),
         ) -> t.MetadataAttributeValue | None:
@@ -635,7 +635,7 @@ class Ldap3Adapter(s[bool]):
                 return None
 
             # Python 3.13: Use match-case for modern pattern matching
-            metadata_dict: Mapping[str, object] | None = None
+            metadata_dict: Mapping[str, t.GeneralValueType] | None = None
             match metadata:
                 case dict() | Mapping():
                     metadata_dict = dict(metadata)
@@ -659,7 +659,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def convert_parsed_entries(
-            parse_response: object,
+            parse_response: t.GeneralValueType,
         ) -> r[list[LdifEntry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
@@ -786,8 +786,8 @@ class Ldap3Adapter(s[bool]):
             """
             try:
                 # Call connection.add directly - ldap3 is untyped
-                # Convert Attributes (Mapping[str, Sequence[str]]) to dict[str, object]
-                attrs_dict: dict[str, object] = dict(ldap_attrs)
+                # Convert Attributes (Mapping[str, Sequence[str]]) to dict for ldap3
+                attrs_dict: t.Types.StringDict = dict(ldap_attrs)
 
                 # Use if/else instead of cast for type narrowing
                 if connection.add(dn_str, None, attrs_dict):
