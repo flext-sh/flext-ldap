@@ -26,7 +26,7 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar
 
 import pytest
-from flext import t as t_core
+from flext_core import t as t_core
 from flext_tests import tm
 
 from tests import u

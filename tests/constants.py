@@ -311,7 +311,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
 # Short aliases per FLEXT convention
 tc = TestsFlextLdapConstants  # Primary test constants alias
-c = TestsFlextLdapConstants   # Alternative alias for compatibility
+c = TestsFlextLdapConstants  # Alternative alias for compatibility
 
 __all__ = [
     "TestsFlextLdapConstants",

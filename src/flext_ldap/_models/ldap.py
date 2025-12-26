@@ -8,7 +8,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+
+__all__ = [
+    "FlextLdapModelsLdap",
+]
 
 
 class FlextLdapModelsLdap:
@@ -117,8 +121,8 @@ class FlextLdapModelsLdap:
         total: int = 0
         duration_seconds: float = 0.0
 
-        @property
         @computed_field
+        @property
         def success_rate(self) -> float:
             """Calculate success rate (added + skipped) / total."""
             if self.total == 0:
@@ -133,7 +137,7 @@ class FlextLdapModelsLdap:
             failed: int = 0,
             duration_seconds: float = 0.0,
             **kwargs: object,
-        ) -> FlextLdapModelsLdap.SyncStats:
+        ) -> Self:
             """Factory method with auto-calculated total from counters."""
             return cls(
                 added=added,
@@ -160,6 +164,7 @@ class FlextLdapModelsLdap:
         failed: int = 0
         results: list[object] = Field(default_factory=list)
 
+        @computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (successful / total_processed)."""
@@ -170,8 +175,10 @@ class FlextLdapModelsLdap:
     class SyncPhaseConfig(BaseModel):
         """Sync phase config."""
 
+        model_config = ConfigDict(arbitrary_types_allowed=True)
+
         server_type: str = "rfc"
-        progress_callback: object = None
+        progress_callback: FlextLdapModelsLdap.Types.ProgressCallbackUnion = None
         retry_on_errors: list[str] | None = None
         max_retries: int = 5
         stop_on_error: bool = False
@@ -301,7 +308,11 @@ class FlextLdapModelsLdap:
     class MultiPhaseSyncResult(BaseModel):
         """Multi-phase sync result."""
 
-        phase_results: dict[str, object] = Field(default_factory=dict)
+        model_config = ConfigDict(arbitrary_types_allowed=True)
+
+        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
+            default_factory=dict,
+        )
         total_entries: int = 0
         total_synced: int = 0
         total_failed: int = 0

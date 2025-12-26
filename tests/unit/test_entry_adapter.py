@@ -164,17 +164,13 @@ class TestsFlextLdapEntryAdapter:
     def test_adapter_methods_exist(self) -> None:
         """Test that all expected methods exist on adapter."""
         adapter = FlextLdapEntryAdapter()
-        # Check main methods - single call validates all
-        tm.has(adapter, "execute")
-        tm.has(adapter, "ldap3_to_ldif_entry")
-        tm.has(adapter, "ldif_entry_to_ldap3_attributes")
         # Python 3.13: Direct attribute access after hasattr check
-        assert hasattr(adapter, "execute")
-        assert callable(adapter.execute)
-        assert hasattr(adapter, "ldap3_to_ldif_entry")
-        assert callable(adapter.ldap3_to_ldif_entry)
-        assert hasattr(adapter, "ldif_entry_to_ldap3_attributes")
-        assert callable(adapter.ldif_entry_to_ldap3_attributes)
+        tm.that(hasattr(adapter, "execute"), eq=True)
+        tm.that(callable(adapter.execute), eq=True)
+        tm.that(hasattr(adapter, "ldap3_to_ldif_entry"), eq=True)
+        tm.that(callable(adapter.ldap3_to_ldif_entry), eq=True)
+        tm.that(hasattr(adapter, "ldif_entry_to_ldap3_attributes"), eq=True)
+        tm.that(callable(adapter.ldif_entry_to_ldap3_attributes), eq=True)
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""

@@ -24,11 +24,10 @@ from collections.abc import Callable
 from enum import StrEnum
 
 import pytest
-from flext import r
+from flext_core import r
 from ldap3 import Connection, Server
 
-
-
+from flext_ldap import (
     FlextLdap,
     FlextLdapConnection,
     FlextLdapOperations,

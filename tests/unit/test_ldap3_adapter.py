@@ -119,8 +119,5 @@ class TestsFlextLdap3Adapter:
         """Test that all expected methods exist on adapter."""
         adapter = Ldap3Adapter()
         # Validate method exists and is callable
-        tm.has(adapter, "execute")
-        # Use hasattr and direct attribute access instead of getattr
-        has_execute = hasattr(adapter, "execute")
-        execute_method = adapter.execute if has_execute else None
-        tm.that(has_execute, eq=True) and tm.that(callable(execute_method), eq=True)
+        tm.that(hasattr(adapter, "execute"), eq=True)
+        tm.that(callable(adapter.execute), eq=True)

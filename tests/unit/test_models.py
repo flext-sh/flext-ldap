@@ -291,7 +291,7 @@ class TestsFlextLdapModels:
 
     def test_search_options_normalized_with_config(self) -> None:
         """Test SearchOptions.normalized with NormalizedConfig."""
-        config = m.Ldap.SearchOptions.NormalizedConfig(
+        config = m.Ldap.NormalizedConfig(
             scope="BASE",
             filter_str="(uid=*)",
             size_limit=50,

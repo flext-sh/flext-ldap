@@ -767,27 +767,27 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 if entry_model.dn is not None
                 else "unknown"
             )
-            modify_result = self._ops.modify(dn_str, changes)
-
-            # Python 3.13: Use match-case for result handling
-            if modify_result.is_success:
-                return r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.MODIFIED,
-                    ),
-                )
-
-            # Get error string and check if it's "already exists"
-            error_str = u.to_str(modify_result.error)
+            # Railway pattern: map success to MODIFIED, lash for conditional SKIPPED/fail
             return (
-                r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.SKIPPED,
-                    ),
+                self._ops
+                .modify(dn_str, changes)
+                .map(
+                    lambda _: m.Ldap.LdapOperationResult(
+                        operation=c.Ldap.UpsertOperations.MODIFIED
+                    )
                 )
-                if self._ops.is_already_exists_error(error_str)
-                else r[m.Ldap.LdapOperationResult].fail(
-                    error_str or c.Ldap.ErrorStrings.UNKNOWN_ERROR,
+                .lash(
+                    lambda e: (
+                        r[m.Ldap.LdapOperationResult].ok(
+                            m.Ldap.LdapOperationResult(
+                                operation=c.Ldap.UpsertOperations.SKIPPED
+                            )
+                        )
+                        if self._ops.is_already_exists_error(u.to_str(e))
+                        else r[m.Ldap.LdapOperationResult].fail(
+                            u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR
+                        )
+                    )
                 )
             )
 
@@ -811,23 +811,24 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 FlextResult with ADDED or delegates to existing entry handler.
 
             """
-            # Convert to model for add operation
+            # Railway pattern: map success to ADDED, lash for conditional delegation
             entry_for_add = self._convert_to_model(entry)
-            add_result = self._ops.add(entry_for_add)
-
-            # Create result based on operation outcome
-            if add_result.is_success:
-                return r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperations.ADDED),
+            return (
+                self._ops
+                .add(entry_for_add)
+                .map(
+                    lambda _: m.Ldap.LdapOperationResult(
+                        operation=c.Ldap.UpsertOperations.ADDED
+                    )
                 )
-
-            # DSL pattern: builder for str conversion
-            error_str = u.to_str(add_result.error)
-            # DSL pattern: early return for non-existing-entry errors
-            if not self._ops.is_already_exists_error(error_str):
-                return r[m.Ldap.LdapOperationResult].fail(error_str)
-
-            return self.handle_existing_entry(entry)
+                .lash(
+                    lambda e: (
+                        self.handle_existing_entry(entry)
+                        if self._ops.is_already_exists_error(u.to_str(e))
+                        else r[m.Ldap.LdapOperationResult].fail(u.to_str(e))
+                    )
+                )
+            )
 
         def handle_existing_entry(
             self,
@@ -875,7 +876,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
 
             # Extract search data
-            search_data = search_result.value if search_result.is_success else None
+            search_data = search_result.map_or(None)
             # Get entries from search result - already Ldif Entry objects at runtime
             existing_entries: list = []
             if search_data is not None and search_data.entries:
@@ -1008,19 +1009,16 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         )
         # Default server_type to RFC if not provided
         effective_server_type = server_type or c.Ldif.ServerTypes.RFC
-        result = self._connection.adapter.search(
-            normalized_options,
-            server_type=effective_server_type,
+        # Railway pattern: flat_map for type narrowing, map_error for error formatting
+        return (
+            self._connection.adapter
+            .search(
+                normalized_options,
+                server_type=effective_server_type,
+            )
+            .flat_map(r[m.Ldap.SearchResult].ok)
+            .map_error(lambda e: u.to_str(e, default="Unknown error"))
         )
-        # Adapter returns r[SearchResultProtocol] - unwrap directly
-        if result.is_success:
-            search_result = result.value
-            # Type narrowing: SearchResultProtocol is compatible with SearchResult model
-            return r[m.Ldap.SearchResult].ok(search_result)
-        # DSL pattern: ensure error message with default
-        # DSL pattern: builder for str conversion
-        error_msg = u.to_str(result.error, default="Unknown error")
-        return r[m.Ldap.SearchResult].fail(error_msg)
 
     def add(
         self,
@@ -1073,15 +1071,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 "dn": m.Ldif.DN(value=dn_value),
                 "attributes": m.Ldif.Attributes(attributes=attrs_dict),
             })
-        result = self._connection.adapter.add(entry_for_adapter)
-        # Adapter returns r[OperationResultProtocol] - unwrap directly
-        if result.is_success:
-            operation_result = result.value
-            return r[m.Ldap.OperationResult].ok(operation_result)
-        # DSL pattern: ensure error message with default
-        # DSL pattern: builder for str conversion
-        error_msg = u.to_str(result.error, default="Unknown error")
-        return r[m.Ldap.OperationResult].fail(error_msg)
+        # Railway pattern: flat_map for type narrowing, map_error for error formatting
+        return (
+            self._connection.adapter
+            .add(entry_for_adapter)
+            .flat_map(r[m.Ldap.OperationResult].ok)
+            .map_error(lambda e: u.to_str(e, default="Unknown error"))
+        )
 
     def modify(
         self,
@@ -1123,18 +1119,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
         else:
             dn_model = dn
-        result = self._connection.adapter.modify(
-            dn_model,
-            changes,
+        # Railway pattern: flat_map for type narrowing, map_error for error formatting
+        return (
+            self._connection.adapter
+            .modify(dn_model, changes)
+            .flat_map(r[m.Ldap.OperationResult].ok)
+            .map_error(lambda e: u.to_str(e, default="Unknown error"))
         )
-        # Adapter returns r[OperationResultProtocol] - unwrap directly
-        if result.is_success:
-            operation_result = result.value
-            return r[m.Ldap.OperationResult].ok(operation_result)
-        # DSL pattern: ensure error message with default
-        # DSL pattern: builder for str conversion
-        error_msg = u.to_str(result.error, default="Unknown error")
-        return r[m.Ldap.OperationResult].fail(error_msg)
 
     def delete(
         self,
@@ -1174,15 +1165,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
         else:
             dn_model = dn
-        result = self._connection.adapter.delete(dn_model)
-        # Adapter returns r[OperationResultProtocol] - unwrap directly
-        if result.is_success:
-            operation_result = result.value
-            return r[m.Ldap.OperationResult].ok(operation_result)
-        # DSL pattern: ensure error message with default
-        # DSL pattern: builder for str conversion
-        error_msg = u.to_str(result.error, default="Unknown error")
-        return r[m.Ldap.OperationResult].fail(error_msg)
+        # Railway pattern: flat_map for type narrowing, map_error for error formatting
+        return (
+            self._connection.adapter
+            .delete(dn_model)
+            .flat_map(r[m.Ldap.OperationResult].ok)
+            .map_error(lambda e: u.to_str(e, default="Unknown error"))
+        )
 
     @property
     def is_connected(self) -> bool:

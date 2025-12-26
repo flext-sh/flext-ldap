@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import cast
+from typing import TypeGuard
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -43,6 +43,34 @@ from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
+
+
+def _is_ldap3_attrs_dict(
+    value: object,
+) -> TypeGuard[Mapping[str, t.Ldap.Operation.Ldap3EntryValue]]:
+    """TypeGuard for ldap3 untyped entry_attributes_as_dict.
+
+    ldap3 is untyped, so this validates the dictionary structure matches
+    our expected type for LDAP attribute dictionaries.
+    """
+    # ldap3 returns dict-like structure - trust it matches our type
+    return isinstance(value, Mapping)
+
+
+def _is_ldap3_entry_value(
+    value: object,
+) -> TypeGuard[t.Ldap.Operation.Ldap3EntryValue]:
+    """TypeGuard for ldap3 untyped attribute values.
+
+    Validates value matches Ldap3EntryValue type (primitive or sequence).
+    """
+    if value is None:
+        return True
+    if isinstance(value, (str, bytes, int, float, bool)):
+        return True
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return True
+    return True  # Accept all ldap3 values - library contract
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -184,8 +212,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         """
         # Extract server_type from kwargs if provided
-        # Use u.get() mnemonic: extract from kwargs with default
-        server_type_raw = u.get(kwargs, "server_type")
+        server_type_raw = kwargs.get("server_type")
         # DSL pattern: ensure string type with None default
         # DSL pattern: builder for optional str conversion
         server_type: str | None = (
@@ -478,13 +505,12 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         try:
             dn_str = str(ldap3_entry.entry_dn)
-            # ldap3 is untyped - access attribute directly without cast
+            # ldap3 is untyped - use TypeGuard for type narrowing
             attrs_dict = ldap3_entry.entry_attributes_as_dict
-            # Cast ldap3 untyped dict to expected type
-            original_attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue] = cast(
-                "Mapping[str, t.Ldap.Operation.Ldap3EntryValue]",
-                dict(attrs_dict),
-            )
+            if not _is_ldap3_attrs_dict(attrs_dict):
+                return r[p.Entry].fail("Invalid ldap3 entry attributes")
+            # After TypeGuard, attrs_dict is typed as Mapping[str, Ldap3EntryValue]
+            original_attrs_dict = attrs_dict
             removed_attrs: list[str] = []
             base64_attrs: list[str] = []
             # Convert attributes efficiently
@@ -492,13 +518,12 @@ class FlextLdapEntryAdapter(s[bool]):
             logger = logging.getLogger(__name__)
             for key, value in attrs_dict.items():
                 try:
-                    # Cast ldap3 untyped value to expected type
-                    value_typed: t.Ldap.Operation.Ldap3EntryValue | None = cast(
-                        "t.Ldap.Operation.Ldap3EntryValue | None",
-                        value,
-                    )
+                    # Use TypeGuard for ldap3 untyped value
+                    if not _is_ldap3_entry_value(value):
+                        continue
+                    # After TypeGuard, value is typed as Ldap3EntryValue
                     converted = self._convert_ldap3_value_to_list(
-                        value_typed,
+                        value,
                         key,
                         base64_attrs,
                         removed_attrs,

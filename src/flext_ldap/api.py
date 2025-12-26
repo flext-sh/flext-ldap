@@ -38,7 +38,7 @@ import types
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self, TypeGuard, cast
+from typing import Self, TypeGuard
 
 from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
@@ -795,14 +795,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         # Convert multi-phase callback to single-phase if needed
         single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
-        callback_raw = config.progress_callback
-        # Cast to union type for type guards
-        callback: m.Ldap.Types.ProgressCallbackUnion | None = cast(
-            "m.Ldap.Types.ProgressCallbackUnion | None",
-            callback_raw,
-        )
+        callback = config.progress_callback
         if callback is not None:
-            # Use TypeGuards to narrow callback type without casts
+            # Use TypeGuards to narrow callback type
             if _is_multi_phase_callback(callback):
                 # Multi-phase callback - wrap to single-phase
                 # Type narrowing: callback is MultiPhaseProgressCallback after guard
@@ -812,15 +807,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                     current: int,
                     total: int,
                     dn: str,
-                    stats: m.Ldap.LdapBatchStats,
+                    stats: object,
                 ) -> None:
                     # Use narrowed multi-phase callback
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
-                single_phase_callback = cast(
-                    "m.Ldap.Types.LdapProgressCallback | None",
-                    wrapped_cb,
-                )
+                # wrapped_cb matches LdapProgressCallback signature (4 params)
+                single_phase_callback = wrapped_cb
             elif _is_single_phase_callback(callback):
                 # Single-phase callback - use directly
                 # Type narrowing: callback is LdapProgressCallback (4 params)
@@ -907,19 +900,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             sync_phase_entries() or sync_multiple_phases() directly.
 
         """
-        if config.progress_callback is None:
+        callback = config.progress_callback
+        if callback is None:
             return None
 
-        callback_raw = config.progress_callback
-        if callback_raw is None:
-            return None
-        # Cast to union type for type guards
-        callback: m.Ldap.Types.ProgressCallbackUnion = cast(
-            "m.Ldap.Types.ProgressCallbackUnion",
-            callback_raw,
-        )
-
-        # Use type guards for type narrowing without casts
+        # Use type guards for type narrowing
         if _is_multi_phase_callback(callback):
             # Multi-phase callback - wrap to single-phase
             # Type narrowing: callback is MultiPhaseProgressCallback after guard
@@ -929,15 +914,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 current: int,
                 total: int,
                 dn: str,
-                stats: m.Ldap.LdapBatchStats,
+                stats: object,
             ) -> None:
                 # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
 
-            return cast(
-                "m.Ldap.Types.LdapProgressCallback | None",
-                progress_cb,
-            )
+            # progress_cb matches LdapProgressCallback signature (4 params)
+            return progress_cb
 
         if _is_single_phase_callback(callback):
             # Single-phase callback - use directly
@@ -966,14 +949,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         """
         # Convert callback to single-phase if needed
-        phase_callback_raw = (
+        phase_callback = (
             FlextLdap._make_phase_progress_callback(phase_name, config)
             or config.progress_callback
-        )
-        # Cast to union type for type guards
-        phase_callback: m.Ldap.Types.ProgressCallbackUnion | None = cast(
-            "m.Ldap.Types.ProgressCallbackUnion | None",
-            phase_callback_raw,
         )
 
         # Ensure result is LdapProgressCallback | None (not MultiPhaseProgressCallback)
@@ -992,14 +970,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 current: int,
                 total: int,
                 dn: str,
-                stats: m.Ldap.LdapBatchStats,
+                stats: object,
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 
-            return cast(
-                "m.Ldap.Types.LdapProgressCallback | None",
-                wrapped_phase_cb,
-            )
+            # wrapped_phase_cb matches LdapProgressCallback signature (4 params)
+            return wrapped_phase_cb
 
         return None
 
@@ -1143,7 +1119,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         return r[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
-                phase_results=cast("dict[str, object]", phase_results),
+                # PhaseSyncResult is object-compatible, no cast needed
+                phase_results=phase_results,
                 total_entries=totals["entries"],
                 total_synced=totals["synced"],
                 total_failed=totals["failed"],

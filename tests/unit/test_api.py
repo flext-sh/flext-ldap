@@ -23,13 +23,12 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext import FlextSettings
+from flext_core import FlextSettings
 from flext_ldif import FlextLdif
 from flext_tests import tm
 
 from flext_ldap import FlextLdap, FlextLdapSettings, m
-
-
+from flext_ldap.api import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
     SINGLE_PHASE_CALLBACK_PARAM_COUNT,
     _is_multi_phase_callback,

@@ -26,7 +26,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
-from flext import FlextSettings
+from flext_core import FlextSettings
 from flext_tests import tm
 
 from flext_ldap import m

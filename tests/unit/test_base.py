@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext import FlextService, FlextSettings, r
+from flext_core import FlextService, FlextSettings, r
 
 from flext_ldap import base
 from flext_ldap.base import FlextLdapServiceBase, s

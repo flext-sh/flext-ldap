@@ -197,7 +197,9 @@ LdapModifyOperationDict = TestsFlextLdapTypes.Tests.Fixtures.LdapModifyOperation
 LdapSearchResultDict = TestsFlextLdapTypes.Tests.Fixtures.LdapSearchResultDict
 LdapTestScenarioDict = TestsFlextLdapTypes.Tests.Fixtures.LdapTestScenarioDict
 GenericTestCaseDict = TestsFlextLdapTypes.Tests.Fixtures.GenericTestCaseDict
-GenericCallableParameterDict = TestsFlextLdapTypes.Tests.Fixtures.GenericCallableParameterDict
+GenericCallableParameterDict = (
+    TestsFlextLdapTypes.Tests.Fixtures.GenericCallableParameterDict
+)
 LdapConnectionResultDict = TestsFlextLdapTypes.Tests.Fixtures.LdapConnectionResultDict
 
 # Short aliases
