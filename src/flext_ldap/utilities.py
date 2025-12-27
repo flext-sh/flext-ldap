@@ -13,6 +13,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeIs
 
+from flext_core import FlextTypes as t
 from flext_ldif import FlextLdifUtilities
 
 from flext_ldap.constants import c
@@ -273,8 +274,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list[object] | dict[str, object],
-        ) -> list[object] | dict[str, object]:
+            value: list[t.GeneralValueType] | dict[str, t.GeneralValueType],
+        ) -> list[t.GeneralValueType] | dict[str, t.GeneralValueType]:
             """Filter truthy values from list or dict.
 
             Args:
@@ -365,7 +366,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: dict[str, object] | dict[str, list[str]],
+            attrs: dict[str, t.GeneralValueType] | dict[str, list[str]],
             *,
             filter_list_like: bool = False,
         ) -> dict[str, list[str]]:
@@ -396,9 +397,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 # Not a sequence - return as single string value
                 return [str(v)] if v is not None else []
 
-            # attrs is dict[str, object] | dict[str, list[str]]
-            # Both are compatible with dict[str, object] for processing
-            attrs_dict: dict[str, object] = dict(attrs)
+            # attrs is dict[str, t.GeneralValueType] | dict[str, list[str]]
+            # Both are compatible with dict[str, t.GeneralValueType] for processing
+            attrs_dict: dict[str, t.GeneralValueType] = dict(attrs)
             if not attrs_dict:
                 return {}
             # Map attributes using dict comprehension (map functionality)

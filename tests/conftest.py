@@ -25,10 +25,10 @@ import types
 from collections.abc import Callable, Generator
 from pathlib import Path
 from threading import Lock
-from typing import TextIO, cast
+from typing import TextIO
 
 import pytest
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, FlextTypes as t, r
 from flext_ldif import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestsDocker
@@ -222,7 +222,7 @@ class TestFixtures:
             return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> r[dict[str, object]]:
+    def load_docker_config() -> r[dict[str, t.GeneralValueType]]:
         """Load Docker configuration for test container.
 
         Returns:
@@ -232,7 +232,7 @@ class TestFixtures:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[dict[str, object]].fail(
+                return r[dict[str, t.GeneralValueType]].fail(
                     "Docker config file not found",
                 )
 
@@ -240,14 +240,14 @@ class TestFixtures:
                 config: object = json.load(f)
 
             if not isinstance(config, dict):
-                return r[dict[str, object]].fail(
+                return r[dict[str, t.GeneralValueType]].fail(
                     f"Expected dict in docker_config.json, got {type(config)}",
                 )
 
             # Type narrowing: config is dict
-            return r[dict[str, object]].ok(config)
+            return r[dict[str, t.GeneralValueType]].ok(config)
         except (OSError, json.JSONDecodeError) as e:
-            return r[dict[str, object]].fail(
+            return r[dict[str, t.GeneralValueType]].fail(
                 f"Failed to load docker config: {e}",
             )
 
@@ -298,14 +298,13 @@ class TestFixtures:
             # Python 3.13: Type narrowing - unwrap() returns list[p.Entry]
             entries = result.value
             # Type narrowing: entries is list[p.Entry] from parse result
-            filtered_entries = [
+            # Filter entries with required attributes, preserving type
+            return [
                 entry
                 for entry in entries
                 if hasattr(entry, "dn") and hasattr(entry, "attributes")
             ]
-            return cast("list[p.Entry]", filtered_entries)
-        logger.warning(f"Failed to parse base LDIF: {result.error}")
-        return []
+            # Type narrowing: filtered_entries is list[p.Entry] (same type as entries)
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
 
@@ -409,7 +408,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
     # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
     # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
-    worker_input: dict[str, object] = (
+    worker_input: dict[str, t.GeneralValueType] = (
         session.config.workerinput if hasattr(session.config, "workerinput") else {}
     )
     worker_id = str(worker_input.get("workerid", "master"))
@@ -524,7 +523,7 @@ def pytest_runtest_makereport(
     if is_infrastructure_failure and not is_transient:
         # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
         # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
-        worker_input: dict[str, object] = (
+        worker_input: dict[str, t.GeneralValueType] = (
             item.session.config.workerinput
             if hasattr(item.session.config, "workerinput")
             else {}
@@ -561,7 +560,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
     """
     # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
-    worker_input: dict[str, object] = (
+    worker_input: dict[str, t.GeneralValueType] = (
         request.config.workerinput if hasattr(request.config, "workerinput") else {}
     )
     worker_id = worker_input.get("workerid", "master")

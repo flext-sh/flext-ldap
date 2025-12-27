@@ -32,9 +32,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Literal, TypeGuard
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextRuntime, FlextTypes as t, r
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
@@ -395,7 +396,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: t.Types.StringDict | Mapping[str, t.GeneralValueType],
+            attrs_dict: dict[str, str] | Mapping[str, t.GeneralValueType],
         ) -> t.Ldap.Operation.AttributeDict:
             """Normalize attribute values to list[str] format.
 
@@ -461,11 +462,14 @@ class Ldap3Adapter(s[bool]):
             if isinstance(attrs, BaseModel):
                 # Python 3.13: model_dump() always returns dict - direct access
                 dumped = attrs.model_dump()
-                # u.mapper().get() with default={} guarantees t.Types.StringDict | None
-                attrs_value: t.Types.StringDict | None = u.mapper().get(
+                # u.mapper().get() with default={} - extract and narrow type
+                attrs_value_raw = u.mapper().get(
                     dumped,
                     "attributes",
                     default={},
+                )
+                attrs_value: dict[str, str] | None = (
+                    attrs_value_raw if isinstance(attrs_value_raw, dict) else None
                 )
                 # Type narrowing: ensure dict before passing
                 if isinstance(attrs_value, dict):
@@ -649,7 +653,18 @@ class Ldap3Adapter(s[bool]):
                 return None
 
             # Python 3.13: Filter with type narrowing - metadata_dict is Mapping[str, object]
-            filtered: dict[str, str | int | float | bool | None] = {
+            # Note: MetadataAttributeValue dict variant includes datetime and list types
+            # but we filter to basic scalar types for QuirkMetadata compatibility
+            filtered: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | datetime
+                | list[str | int | float | bool | datetime | None]
+                | None,
+            ] = {
                 k: v
                 for k, v in metadata_dict.items()
                 if isinstance(k, str)
@@ -787,7 +802,10 @@ class Ldap3Adapter(s[bool]):
             try:
                 # Call connection.add directly - ldap3 is untyped
                 # Convert Attributes (Mapping[str, Sequence[str]]) to dict for ldap3
-                attrs_dict: t.Types.StringDict = dict(ldap_attrs)
+                # LDAP attributes are multi-valued, so values are lists
+                attrs_dict: dict[str, list[str]] = {
+                    k: list(v) for k, v in ldap_attrs.items()
+                }
 
                 # Use if/else instead of cast for type narrowing
                 if connection.add(dn_str, None, attrs_dict):

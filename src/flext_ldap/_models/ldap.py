@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
+from flext_core import FlextTypes as t
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = [
@@ -161,7 +162,7 @@ class FlextLdapModelsLdap:
         total_processed: int = 0
         successful: int = 0
         failed: int = 0
-        results: list[object] = Field(default_factory=list)
+        results: list[t.GeneralValueType] = Field(default_factory=list)
 
         @property
         def success_rate(self) -> float:
@@ -209,7 +210,7 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: list[object] = Field(default_factory=list)
+        entries: list[t.GeneralValueType] = Field(default_factory=list)
         search_options: object = None
 
         @property
@@ -218,9 +219,9 @@ class FlextLdapModelsLdap:
             return len(self.entries)
 
         @property
-        def by_objectclass(self) -> dict[str, list[object]]:
+        def by_objectclass(self) -> dict[str, list[t.GeneralValueType]]:
             """Group entries by objectclass."""
-            result: dict[str, list[object]] = {}
+            result: dict[str, list[t.GeneralValueType]] = {}
             for entry in self.entries:
                 category = self.get_entry_category(entry)
                 if category not in result:
@@ -229,7 +230,9 @@ class FlextLdapModelsLdap:
             return result
 
         @staticmethod
-        def extract_attrs_dict_from_entry(entry: object) -> dict[str, list[str]]:
+        def extract_attrs_dict_from_entry(
+            entry: object,
+        ) -> dict[str, list[str]]:
             """Extract attributes dict from entry."""
             if entry is None:
                 return {}
@@ -248,7 +251,9 @@ class FlextLdapModelsLdap:
             return {}
 
         @staticmethod
-        def extract_objectclass_category(attrs: dict[str, object]) -> str:
+        def extract_objectclass_category(
+            attrs: dict[str, t.GeneralValueType],
+        ) -> str:
             """Extract objectclass category from attributes."""
             if not attrs or not isinstance(attrs, dict):
                 return "unknown"

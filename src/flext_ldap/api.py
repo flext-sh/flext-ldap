@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeGuard
 
-from flext_core import FlextSettings, r
+from flext_core import FlextSettings, FlextTypes as t, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -197,7 +197,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         - @override decorator for execute() ensures base class contract
 
     Example:
-        >>> from flext_ldap import FlextLdap, FlextLdapConnection, FlextLdapOperations
+        >>> from flext_ldap import (
+        ...     FlextLdap,
+        ...     FlextLdapConnection,
+        ...     FlextLdapOperations,
+        ... )
         >>> connection = FlextLdapConnection(config=config, parser=ldif.parser)
         >>> operations = FlextLdapOperations(connection=connection)
         >>> api = FlextLdap(connection=connection, operations=operations, ldif=ldif)
@@ -776,7 +780,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Type narrowing: parse_result.value returns list[m.Ldif.Entry]
         # Runtime validation ensures correctness
         parse_value = parse_result.value
-        # Type narrowing: parse_value is list[object] from unwrap(), but runtime guarantees m.Ldif.Entry
+        # Type narrowing: parse_value is list[t.GeneralValueType] from unwrap(), but runtime guarantees m.Ldif.Entry
         # Use list comprehension with isinstance for type narrowing
         entries: list[m.Ldif.Entry] = [
             entry for entry in parse_value if isinstance(entry, m.Ldif.Entry)

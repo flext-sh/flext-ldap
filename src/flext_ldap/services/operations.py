@@ -33,7 +33,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping, Sequence
 
-from flext_core import r
+from flext_core import FlextTypes as t, r
 from flext_ldif import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
@@ -629,12 +629,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 FlextResult with attribute type or error.
 
             """
-            add_op_raw: list[object] = u.mapper().get(
+            add_op_result = u.mapper().get(
                 attrs,
                 c.Ldap.ChangeTypeOperations.ADD,
                 default=[],
             )
-            # add_op_raw is list[object] from dict[str, list[str]]
+            # Type narrow: ensure list before iterating
+            add_op_raw = add_op_result if isinstance(add_op_result, list) else []
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[str].fail("Schema modify entry missing 'add' attribute")
@@ -656,8 +657,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             # mapper().get() returns T | None directly, not FlextResult
-            # attr_values_raw is list[object] from dict[str, list[str]]
-            attr_values_raw: list[object] = u.mapper().get(attrs, attr_type, default=[])
+            # Type narrow: ensure list before iterating
+            attr_values_result = u.mapper().get(attrs, attr_type, default=[])
+            attr_values_raw = (
+                attr_values_result if isinstance(attr_values_result, list) else []
+            )
             attr_values: list[str] = [str(item) for item in attr_values_raw]
             filtered: list[str] = u.Ldap.to_str_list_truthy(attr_values)
             if not filtered:
@@ -688,12 +692,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs = FlextLdapOperations._extract_attributes_dict(entry)
             # Extract changetype (available via c.LdapAttributeNames inheritance)
             # u.mapper().get() returns the value directly, not RuntimeResult
-            changetype_raw: list[object] = u.mapper().get(
+            changetype_result = u.mapper().get(
                 attrs,
                 c.Ldap.LdapAttributeNames.CHANGETYPE,
                 default=[],
             )
-            # changetype_raw is list[object] from dict[str, list[str]]
+            # Type narrow: ensure list before iterating
+            changetype_raw = (
+                changetype_result if isinstance(changetype_result, list) else []
+            )
             changetype_val: list[str] = [str(item) for item in changetype_raw]
             # Use u.normalize for consistent case handling
             changetype = (
@@ -730,12 +737,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             """
             entry_model = self._convert_to_model(entry)
             attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
-            # Extract add operation - add_op_raw is list[object] from dict[str, list[str]]
-            add_op_raw: list[object] = u.mapper().get(
+            # Extract add operation - type narrow after mapper().get()
+            add_op_result = u.mapper().get(
                 attrs,
                 c.Ldap.ChangeTypeOperations.ADD,
                 default=[],
             )
+            add_op_raw = add_op_result if isinstance(add_op_result, list) else []
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -743,8 +751,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
 
             attr_type = add_op[0]
-            # Extract attribute values - attr_values_raw is list[object] from dict[str, list[str]]
-            attr_values_raw: list[object] = u.mapper().get(attrs, attr_type, default=[])
+            # Extract attribute values - type narrow after mapper().get()
+            attr_values_result = u.mapper().get(attrs, attr_type, default=[])
+            attr_values_raw = (
+                attr_values_result if isinstance(attr_values_result, list) else []
+            )
             attr_values: list[str] = [str(item) for item in attr_values_raw]
             # Filter truthy values
             filtered: list[str] = u.Ldap.to_str_list_truthy(attr_values)
@@ -769,7 +780,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             # Railway pattern: map success to MODIFIED, lash for conditional SKIPPED/fail
             return (
-                self._ops.modify(dn_str, changes)
+                self._ops
+                .modify(dn_str, changes)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.MODIFIED
@@ -813,7 +825,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Railway pattern: map success to ADDED, lash for conditional delegation
             entry_for_add = self._convert_to_model(entry)
             return (
-                self._ops.add(entry_for_add)
+                self._ops
+                .add(entry_for_add)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.ADDED
@@ -879,7 +892,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             existing_entries: list = []
             if search_data is not None and search_data.entries:
                 # search_data is m.Ldap.SearchResult from model definition
-                # SearchResult.entries contains directory entries from search (list[object] in type)
+                # SearchResult.entries contains directory entries from search (list[t.GeneralValueType] in type)
                 # but are actually m.Ldif.Entry objects at runtime
                 existing_entries = list(search_data.entries)
             if not existing_entries:
@@ -1007,15 +1020,19 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         )
         # Default server_type to RFC if not provided
         effective_server_type = server_type or c.Ldif.ServerTypes.RFC
-        # Railway pattern: flat_map for type narrowing, map_error for error formatting
-        return (
-            self._connection.adapter.search(
-                normalized_options,
-                server_type=effective_server_type,
-            )
-            .flat_map(r[m.Ldap.SearchResult].ok)
-            .map_error(lambda e: u.to_str(e, default="Unknown error"))
+        # Execute search and handle result with proper typing
+        result = self._connection.adapter.search(
+            normalized_options,
+            server_type=effective_server_type,
         )
+        if result.is_failure:
+            return r[m.Ldap.SearchResult].fail(
+                u.to_str(result.error, default="Unknown error"),
+            )
+        # Type narrowing: value is guaranteed after is_failure check
+        if result.value is None:
+            return r[m.Ldap.SearchResult].fail("Search result is None")
+        return r[m.Ldap.SearchResult].ok(result.value)
 
     def add(
         self,
@@ -1068,12 +1085,16 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 "dn": m.Ldif.DN(value=dn_value),
                 "attributes": m.Ldif.Attributes(attributes=attrs_dict),
             })
-        # Railway pattern: flat_map for type narrowing, map_error for error formatting
-        return (
-            self._connection.adapter.add(entry_for_adapter)
-            .flat_map(r[m.Ldap.OperationResult].ok)
-            .map_error(lambda e: u.to_str(e, default="Unknown error"))
-        )
+        # Execute add and handle result with proper typing
+        result = self._connection.adapter.add(entry_for_adapter)
+        if result.is_failure:
+            return r[m.Ldap.OperationResult].fail(
+                u.to_str(result.error, default="Unknown error"),
+            )
+        # Type narrowing: value is guaranteed after is_failure check
+        if result.value is None:
+            return r[m.Ldap.OperationResult].fail("Add result is None")
+        return r[m.Ldap.OperationResult].ok(result.value)
 
     def modify(
         self,
@@ -1115,12 +1136,16 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
         else:
             dn_model = dn
-        # Railway pattern: flat_map for type narrowing, map_error for error formatting
-        return (
-            self._connection.adapter.modify(dn_model, changes)
-            .flat_map(r[m.Ldap.OperationResult].ok)
-            .map_error(lambda e: u.to_str(e, default="Unknown error"))
-        )
+        # Execute modify and handle result with proper typing
+        result = self._connection.adapter.modify(dn_model, changes)
+        if result.is_failure:
+            return r[m.Ldap.OperationResult].fail(
+                u.to_str(result.error, default="Unknown error"),
+            )
+        # Type narrowing: value is guaranteed after is_failure check
+        if result.value is None:
+            return r[m.Ldap.OperationResult].fail("Modify result is None")
+        return r[m.Ldap.OperationResult].ok(result.value)
 
     def delete(
         self,
@@ -1160,12 +1185,16 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
         else:
             dn_model = dn
-        # Railway pattern: flat_map for type narrowing, map_error for error formatting
-        return (
-            self._connection.adapter.delete(dn_model)
-            .flat_map(r[m.Ldap.OperationResult].ok)
-            .map_error(lambda e: u.to_str(e, default="Unknown error"))
-        )
+        # Execute delete and handle result with proper typing
+        result = self._connection.adapter.delete(dn_model)
+        if result.is_failure:
+            return r[m.Ldap.OperationResult].fail(
+                u.to_str(result.error, default="Unknown error"),
+            )
+        # Type narrowing: value is guaranteed after is_failure check
+        if result.value is None:
+            return r[m.Ldap.OperationResult].fail("Delete result is None")
+        return r[m.Ldap.OperationResult].ok(result.value)
 
     @property
     def is_connected(self) -> bool:
@@ -1374,7 +1403,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         """
         # Builder pattern: accumulate stats using DSL
-        stats_builder: dict[str, int] = {"synced": 0, "failed": 0, "skipped": 0}
+        stats_builder: dict[str, int] = {
+            "synced": 0,
+            "failed": 0,
+            "skipped": 0,
+        }
         total_entries = len(entries)
 
         # Process all entries

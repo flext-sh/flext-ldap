@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, TypeVar, cast
+from typing import TypeVar
 
 import pytest
 import tests.constants as c_mod
@@ -228,11 +228,7 @@ class TestsFlextLdapOperationHelpers:
         if not (hasattr(entry, "dn") and hasattr(entry, "attributes")):
             raise TypeError(f"Entry must have dn and attributes, got {type(entry)}")
         # Python 3.13: p.Entry is structurally compatible with p.Ldap.LdapEntryProtocol
-        # Use Protocol's structural typing - runtime_checkable ensures isinstance works
-        # Cast to satisfy mypy type checking
-        return cast("p.Ldap.LdapEntryProtocol", entry)
-        # Fallback: entry implements protocol structurally even if isinstance fails
-        # This is safe because we verified dn and attributes exist above
+        # Protocols work via structural typing - return entry directly
         return entry
 
     @staticmethod
@@ -268,7 +264,8 @@ class TestsFlextLdapOperationHelpers:
         connect_result = client.connect(connection_config)
         # Type narrowing: ensure we have r, not just ResultProtocol
         if isinstance(connect_result, r):
-            u.Tests.Result.assert_result_success(cast("Any", connect_result))
+            # FlextResult is compatible with test utilities
+            u.Tests.Result.assert_result_success(connect_result)
         # Convert protocol result to r if needed
         elif connect_result.is_success:
             u.Tests.Result.assert_result_success(
@@ -354,7 +351,8 @@ class TestsFlextLdapOperationHelpers:
                 f"Expected at most {expected_max_count} entries, "
                 f"got {len(result.entries)}"
             )
-        return cast("m.Ldap.SearchResult", result)
+        # Type narrowing: result is already m.Ldap.SearchResult from FlextResult[m.Ldap.SearchResult].value
+        return result
 
     @staticmethod
     def execute_and_assert_success(
@@ -509,7 +507,8 @@ class TestsFlextLdapOperationHelpers:
 
         # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
         # Pydantic v2 validates and converts types automatically
-        return cast("p.Entry", m.Ldap.Entry(dn=dn, attributes=entry_attributes))
+        # m.Ldap.Entry is structurally compatible with p.Entry protocol
+        return m.Ldap.Entry(dn=dn, attributes=entry_attributes)
 
     @staticmethod
     def create_group_entry(
@@ -645,11 +644,9 @@ class TestsFlextLdapOperationHelpers:
             # For protocol clients, Entry is structurally compatible with EntryProtocol
             # entry.dn is guaranteed to be not None by _ensure_entry_has_dn
             # Type narrowing: LdapEntry with non-None dn satisfies EntryProtocol
-            # Protocols are structurally compatible - no cast needed
+            # Protocols are structurally compatible via structural typing
             # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
-            add_result_raw_protocol = client.add(
-                cast("p.Ldap.LdapEntryProtocol", entry),
-            )
+            add_result_raw_protocol = client.add(entry)
             add_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
                 add_result_raw_protocol,
             )

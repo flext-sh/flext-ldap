@@ -450,7 +450,9 @@ class FlextLdapProtocols(ldif_p):
                 ...
 
             @property
-            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[object]]:
+            def entry_attributes_as_dict(
+                self,
+            ) -> Mapping[str, Sequence[object]]:
                 """Get attributes as dict mapping attribute names to value lists."""
                 ...
 

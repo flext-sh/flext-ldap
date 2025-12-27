@@ -33,7 +33,7 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import TypeGuard
 
-from flext_core import r
+from flext_core import FlextTypes as t, r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
@@ -508,7 +508,7 @@ class FlextLdapEntryAdapter(s[bool]):
             # ldap3 is untyped - use TypeGuard for type narrowing
             attrs_dict = ldap3_entry.entry_attributes_as_dict
             if not _is_ldap3_attrs_dict(attrs_dict):
-                return r[p.Entry].fail("Invalid ldap3 entry attributes")
+                return r[m.Ldif.Entry].fail("Invalid ldap3 entry attributes")
             # After TypeGuard, attrs_dict is typed as Mapping[str, Ldap3EntryValue]
             original_attrs_dict = attrs_dict
             removed_attrs: list[str] = []

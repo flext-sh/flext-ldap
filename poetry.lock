@@ -1037,24 +1037,24 @@ url = "../flext-ldif"
 
 [[package]]
 name = "hypothesis"
-version = "6.148.7"
+version = "6.148.8"
 description = "The property-based testing library for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "hypothesis-6.148.7-py3-none-any.whl", hash = "sha256:94dbd58ebf259afa3bafb1d3bf5761ac1bde6f1477de494798cbf7960aabbdee"},
-    {file = "hypothesis-6.148.7.tar.gz", hash = "sha256:b96e817e715c5b1a278411e3b9baf6d599d5b12207ba25e41a8f066929f6c2a6"},
+    {file = "hypothesis-6.148.8-py3-none-any.whl", hash = "sha256:c1842f47f974d74661b3779a26032f8b91bc1eb30d84741714d3712d7f43e85e"},
+    {file = "hypothesis-6.148.8.tar.gz", hash = "sha256:fa6b2ae029bc02f9d2d6c2257b0cbf2dc3782362457d2027a038ad7f4209c385"},
 ]
 
 [package.dependencies]
 sortedcontainers = ">=2.1.0,<3.0.0"
 
 [package.extras]
-all = ["black (>=20.8b0)", "click (>=7.0)", "crosshair-tool (>=0.0.99)", "django (>=4.2)", "dpcontracts (>=0.4)", "hypothesis-crosshair (>=0.0.26)", "lark (>=0.10.1)", "libcst (>=0.3.16)", "numpy (>=1.21.6)", "pandas (>=1.1)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "tzdata (>=2025.2) ; sys_platform == \"win32\" or sys_platform == \"emscripten\"", "watchdog (>=4.0.0)"]
+all = ["black (>=20.8b0)", "click (>=7.0)", "crosshair-tool (>=0.0.101)", "django (>=4.2)", "dpcontracts (>=0.4)", "hypothesis-crosshair (>=0.0.27)", "lark (>=0.10.1)", "libcst (>=0.3.16)", "numpy (>=1.21.6)", "pandas (>=1.1)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "tzdata (>=2025.3) ; sys_platform == \"win32\" or sys_platform == \"emscripten\"", "watchdog (>=4.0.0)"]
 cli = ["black (>=20.8b0)", "click (>=7.0)", "rich (>=9.0.0)"]
 codemods = ["libcst (>=0.3.16)"]
-crosshair = ["crosshair-tool (>=0.0.99)", "hypothesis-crosshair (>=0.0.26)"]
+crosshair = ["crosshair-tool (>=0.0.101)", "hypothesis-crosshair (>=0.0.27)"]
 dateutil = ["python-dateutil (>=1.4)"]
 django = ["django (>=4.2)"]
 dpcontracts = ["dpcontracts (>=0.4)"]
@@ -1066,7 +1066,7 @@ pytest = ["pytest (>=4.6)"]
 pytz = ["pytz (>=2014.1)"]
 redis = ["redis (>=3.0.0)"]
 watchdog = ["watchdog (>=4.0.0)"]
-zoneinfo = ["tzdata (>=2025.2) ; sys_platform == \"win32\" or sys_platform == \"emscripten\""]
+zoneinfo = ["tzdata (>=2025.3) ; sys_platform == \"win32\" or sys_platform == \"emscripten\""]
 
 [[package]]
 name = "identify"
@@ -2078,14 +2078,14 @@ testutils = ["gitpython (>3)"]
 
 [[package]]
 name = "pyparsing"
-version = "3.3.0"
+version = "3.3.1"
 description = "pyparsing - Classes and methods to define and execute parsing grammars"
 optional = false
 python-versions = ">=3.9"
 groups = ["security"]
 files = [
-    {file = "pyparsing-3.3.0-py3-none-any.whl", hash = "sha256:d15038408e0097d3a01e7e0846731f7f2450c5b6e4a75a52baabd6bbf24585be"},
-    {file = "pyparsing-3.3.0.tar.gz", hash = "sha256:0de16f2661afbab11fe6645d9472c3b96968d2fffea5b0cc9da88f5be286f039"},
+    {file = "pyparsing-3.3.1-py3-none-any.whl", hash = "sha256:023b5e7e5520ad96642e2c6db4cb683d3970bd640cdf7115049a6e9c3682df82"},
+    {file = "pyparsing-3.3.1.tar.gz", hash = "sha256:47fad0f17ac1e2cad3de3b458570fbc9b03560aa029ed5e16ee5554da9a2251c"},
 ]
 
 [package.extras]
@@ -2902,14 +2902,14 @@ urllib3 = ">=2"
 
 [[package]]
 name = "types-setuptools"
-version = "80.9.0.20251221"
+version = "80.9.0.20251223"
 description = "Typing stubs for setuptools"
 optional = false
 python-versions = ">=3.9"
 groups = ["typings"]
 files = [
-    {file = "types_setuptools-80.9.0.20251221-py3-none-any.whl", hash = "sha256:fecf4b9ebfc4cdd9cd38b898b653ad197507d7a62d465a168b709c56e94b02c4"},
-    {file = "types_setuptools-80.9.0.20251221.tar.gz", hash = "sha256:05da599f5a062bbee3e83d60318576ba23111a768b7a2e46aa11644109c5d17f"},
+    {file = "types_setuptools-80.9.0.20251223-py3-none-any.whl", hash = "sha256:1b36db79d724c2287d83dc052cf887b47c0da6a2fff044378be0b019545f56e6"},
+    {file = "types_setuptools-80.9.0.20251223.tar.gz", hash = "sha256:d3411059ae2f5f03985217d86ac6084efea2c9e9cacd5f0869ef950f308169b2"},
 ]
 
 [[package]]

@@ -78,7 +78,8 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         >>> result = sync_service.sync_ldif_file(
         ...     ldif_file=Path("users.ldif"),
         ...     options=m.Ldap.SyncOptions(
-        ...         source_basedn="dc=old,dc=com", target_basedn="dc=new,dc=com"
+        ...         source_basedn="dc=old,dc=com",
+        ...         target_basedn="dc=new,dc=com",
         ...     ),
         ... )
         >>> if result.is_success:
@@ -172,7 +173,11 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
 
             """
             # Builder pattern: accumulate stats using DSL
-            stats_builder: dict[str, int] = {"added": 0, "skipped": 0, "failed": 0}
+            stats_builder: dict[str, int] = {
+                "added": 0,
+                "skipped": 0,
+                "failed": 0,
+            }
 
             # DSL pattern: process entries with accumulator builder
             def process_entry(

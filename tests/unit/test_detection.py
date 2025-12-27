@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes as t
 
 import pytest
 from flext_tests import tm
@@ -47,7 +48,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _get_detector_execute_scenarios() -> list[
-        tuple[dict[str, object] | None, bool, str]
+        tuple[dict[str, t.GeneralValueType] | None, bool, str]
     ]:
         """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
         return [
@@ -109,7 +110,7 @@ class TestsFlextLdapDetection:
     )
     def test_execute_error_handling(
         self,
-        kwargs: dict[str, object] | None,
+        kwargs: dict[str, t.GeneralValueType] | None,
         expect_failure: bool,
         error_substring: str,
     ) -> None:

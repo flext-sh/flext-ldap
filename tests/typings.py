@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from flext_core import FlextTypes as t
 from flext_core.typings import T, T_co, T_contra
 from flext_tests.typings import FlextTestsTypes
 
@@ -136,7 +137,7 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
                 """LDAP search result data."""
 
                 dn: str
-                attributes: dict[str, object]
+                attributes: dict[str, t.GeneralValueType]
                 entry_uuid: str
                 modifyTimestamp: str
                 createTimestamp: str
@@ -145,8 +146,8 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
                 """Generic test scenario for LDAP testing."""
 
                 scenario_name: str
-                input_data: dict[str, object]
-                expected_output: dict[str, object]
+                input_data: dict[str, t.GeneralValueType]
+                expected_output: dict[str, t.GeneralValueType]
                 error_expected: bool
                 error_message: str
 

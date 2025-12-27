@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, ParamSpec
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, FlextTypes as t, r
 from ldap3 import Connection
 
 from flext_ldap.base import s
@@ -344,7 +344,7 @@ class FlextLdapServerDetector(s[str]):
         # Python 3.13: Use modern list comprehension with filter
         vendor_list = u.to_str_list([vendor_name, vendor_version])
         vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
-        # Type narrowing: filter_truthy returns list[object] | dict[str, object]
+        # Type narrowing: filter_truthy returns list[t.GeneralValueType] | dict[str, t.GeneralValueType]
         # isinstance needed to distinguish list from dict (union type)
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]
