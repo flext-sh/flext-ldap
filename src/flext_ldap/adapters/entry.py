@@ -31,9 +31,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import TypeGuard
+from typing import TypeGuard, cast
 
-from flext_core import FlextTypes as t, r
+from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
@@ -507,7 +507,7 @@ class FlextLdapEntryAdapter(s[bool]):
             dn_str = str(ldap3_entry.entry_dn)
             # ldap3 is untyped - use TypeGuard for type narrowing
             attrs_dict = ldap3_entry.entry_attributes_as_dict
-            if not _is_ldap3_attrs_dict(attrs_dict):
+            if not _is_ldap3_attrs_dict(cast("t.GeneralValueType", attrs_dict)):
                 return r[m.Ldif.Entry].fail("Invalid ldap3 entry attributes")
             # After TypeGuard, attrs_dict is typed as Mapping[str, Ldap3EntryValue]
             original_attrs_dict = attrs_dict
@@ -519,11 +519,11 @@ class FlextLdapEntryAdapter(s[bool]):
             for key, value in attrs_dict.items():
                 try:
                     # Use TypeGuard for ldap3 untyped value
-                    if not _is_ldap3_entry_value(value):
+                    if not _is_ldap3_entry_value(cast("t.GeneralValueType", value)):
                         continue
                     # After TypeGuard, value is typed as Ldap3EntryValue
                     converted = self._convert_ldap3_value_to_list(
-                        value,
+                        cast("t.Ldap.Operation.Ldap3EntryValue", value),
                         key,
                         base64_attrs,
                         removed_attrs,
@@ -546,7 +546,9 @@ class FlextLdapEntryAdapter(s[bool]):
                 conversion_metadata,
                 dn_str,
                 dn_str,
-                original_attrs_dict,
+                cast(
+                    "dict[str, t.Ldap.Operation.Ldap3EntryValue]", original_attrs_dict
+                ),
                 ldif_attrs,
             )
             ldf_attrs_obj = m.Ldif.Attributes.model_validate({

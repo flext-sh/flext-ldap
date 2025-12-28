@@ -33,7 +33,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping, Sequence
 
-from flext_core import FlextTypes as t, r
+from flext_core import FlextLogger, r
 from flext_ldif import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
@@ -889,7 +889,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Extract search data
             search_data = search_result.map_or(None)
             # Get entries from search result - already Ldif Entry objects at runtime
-            existing_entries: list = []
+            existing_entries: list[object] = []
             if search_data is not None and search_data.entries:
                 # search_data is m.Ldap.SearchResult from model definition
                 # SearchResult.entries contains directory entries from search (list[t.GeneralValueType] in type)
@@ -909,8 +909,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     u.Ldap.to_str(retry_result.error),
                 )
 
-            # Use entry directly - already cast to p.Entry above
-            existing_entry: m.Ldif.Entry = existing_entries[0]
+            # Use entry directly - already from search result at runtime
+            existing_entry_obj = existing_entries[0]
+            if not isinstance(existing_entry_obj, m.Ldif.Entry):
+                return r[m.Ldap.LdapOperationResult].fail(
+                    f"Expected Entry type, got {type(existing_entry_obj).__name__}",
+                )
+            existing_entry: m.Ldif.Entry = existing_entry_obj
             changes = FlextLdapOperations.EntryComparison.compare(
                 existing_entry,
                 entry,
@@ -1324,7 +1329,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             stats["failed"] += 1
             entry_dn_sliced = entry_dn[:100] if entry_dn else None
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
-            self.logger.error(
+            FlextLogger(__name__).error(
                 "Batch upsert entry failed",
                 entry_index=entry_index,
                 total_entries=total_entries,
@@ -1349,7 +1354,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             callback(entry_index, total, entry_dn or "", callback_stats)
         except (RuntimeError, TypeError, ValueError) as e:
-            self.logger.warning(
+            FlextLogger(__name__).warning(
                 "Progress callback failed",
                 operation=c.Ldap.LdapOperationNames.SYNC,
                 entry_index=entry_index,
@@ -1440,7 +1445,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     )
             except Exception:
                 entry_idx = idx_entry[0] if isinstance(idx_entry, tuple) else None
-                self.logger.debug(
+                FlextLogger(__name__).debug(
                     "Failed to process entry in batch, skipping (entry_index=%s)",
                     entry_idx,
                     exc_info=True,
@@ -1461,7 +1466,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             skipped=stats_builder["skipped"],
         )
 
-        self.logger.info(
+        FlextLogger(__name__).info(
             "Batch upsert completed",
             operation=c.Ldap.LdapOperationNames.BATCH_UPSERT,
             total_entries=total_entries,

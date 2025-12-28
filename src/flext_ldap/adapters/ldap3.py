@@ -33,9 +33,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, TypeGuard
+from typing import Literal, TypeGuard, cast
 
-from flext_core import FlextRuntime, FlextTypes as t, r
+from flext_core import FlextRuntime, r
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,
@@ -305,9 +305,9 @@ class Ldap3Adapter(s[bool]):
             attrs_dict: dict[str, list[str]] = {}
             for attr in entry_attrs:
                 # Access dynamic attribute - ldap3.Entry has dynamic attributes
-                # Use type guard for safe access
+                # entry is runtime-validated as Ldap3EntryProtocol - cast for type safety
                 attr_obj = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    entry,
+                    cast("t.GeneralValueType", entry),
                     attr,
                 )
                 if attr_obj is None:
@@ -455,8 +455,10 @@ class Ldap3Adapter(s[bool]):
             if isinstance(attrs, HasAttributesProperty):
                 # Type narrowing: isinstance ensures attrs has "attributes" property
                 attrs_attr = attrs.attributes
-                # Protocol guarantees attributes is Mapping[str, object] - no isinstance check needed
-                return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
+                # Cast Mapping[str, object] to expected type for normalize_attr_values
+                return Ldap3Adapter.ResultConverter.normalize_attr_values(
+                    cast("Mapping[str, t.GeneralValueType]", attrs_attr)
+                )
 
             # Check for Pydantic model with model_dump method
             if isinstance(attrs, BaseModel):
@@ -468,7 +470,7 @@ class Ldap3Adapter(s[bool]):
                     "attributes",
                     default={},
                 )
-                attrs_value: dict[str, str] | None = (
+                attrs_value: dict[str, t.GeneralValueType] | None = (
                     attrs_value_raw if isinstance(attrs_value_raw, dict) else None
                 )
                 # Type narrowing: ensure dict before passing
@@ -535,11 +537,9 @@ class Ldap3Adapter(s[bool]):
                 attrs_raw,
                 (
                     HasAttributesProperty,
-                    Mapping,
-                    HasItemsMethod,
-                    m.Ldif.Attributes,
                     m.Ldif.Attributes,
                     BaseModel,
+                    Mapping,
                 ),
             ):
                 attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
@@ -581,8 +581,9 @@ class Ldap3Adapter(s[bool]):
                 metadata_raw = parsed.metadata
             else:
                 # Fallback: try dynamic attribute access for unknown types
+                # Cast object to GeneralValueType for get_dynamic_attribute
                 metadata_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed,
+                    cast("t.GeneralValueType", parsed),
                     "metadata",
                 )
                 if metadata_raw is None:
@@ -808,7 +809,7 @@ class Ldap3Adapter(s[bool]):
                 }
 
                 # Use if/else instead of cast for type narrowing
-                if connection.add(dn_str, None, attrs_dict):
+                if connection.add(dn_str, None, attrs_dict):  # type: ignore[no-untyped-call]
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
@@ -859,7 +860,7 @@ class Ldap3Adapter(s[bool]):
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 # Call connection.modify directly - ldap3 is untyped
-                if connection.modify(dn_str, changes):
+                if connection.modify(dn_str, changes):  # type: ignore[no-untyped-call]
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
@@ -908,7 +909,7 @@ class Ldap3Adapter(s[bool]):
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 # Call connection.delete directly - ldap3 is untyped
-                if connection.delete(dn_str):
+                if connection.delete(dn_str):  # type: ignore[no-untyped-call]
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
@@ -1225,7 +1226,7 @@ class Ldap3Adapter(s[bool]):
         if self._connection is not None:
             try:
                 # Call connection.unbind directly - ldap3 is untyped
-                self._connection.unbind()
+                self._connection.unbind()  # type: ignore[no-untyped-call]
             except (LDAPException, OSError) as e:
                 self.logger.debug("Error during disconnect", error=str(e))
             finally:

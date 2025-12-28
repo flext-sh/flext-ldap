@@ -174,4 +174,4 @@ class FlextLdapConstants(FlextLdifConstants):
                 """Server type literals."""
 
 
-c = FlextLdapConstants()
+c = FlextLdapConstants

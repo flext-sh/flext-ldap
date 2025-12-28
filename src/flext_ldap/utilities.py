@@ -13,7 +13,6 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeIs
 
-from flext_core import FlextTypes as t
 from flext_ldif import FlextLdifUtilities
 
 from flext_ldap.constants import c
