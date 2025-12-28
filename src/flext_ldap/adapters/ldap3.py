@@ -68,6 +68,7 @@ HasAttributesProperty = p.Ldap.HasAttributesProperty
 # These wrappers provide type safety for untyped ldap3 library methods.
 # Each wrapper ensures the untyped ldap3 call returns the expected type.
 
+
 def _ldap3_add(
     connection: Connection,
     dn: str,

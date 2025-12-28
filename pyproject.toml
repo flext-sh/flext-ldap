@@ -246,3 +246,12 @@
             "tests",
         ]
 
+
+
+[[tool.mypy.overrides]]
+module = "flext_ldap.adapters.ldap3"
+disable_error_code = ["no-untyped-call", "no-any-return"]
+
+[[tool.mypy.overrides]]
+module = "ldap3.*"
+ignore_missing_imports = true

@@ -797,8 +797,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             # Railway pattern: map success to MODIFIED, lash for conditional SKIPPED/fail
             return (
-                self._ops
-                .modify(dn_str, changes)
+                self._ops.modify(dn_str, changes)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.MODIFIED
@@ -842,8 +841,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Railway pattern: map success to ADDED, lash for conditional delegation
             entry_for_add = self._convert_to_model(entry)
             return (
-                self._ops
-                .add(entry_for_add)
+                self._ops.add(entry_for_add)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.ADDED
