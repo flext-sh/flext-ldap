@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, TypeGuard, cast
+from typing import Literal, TypeGuard
 
 from flext_core import FlextRuntime, r
 from flext_ldif import (
@@ -248,7 +248,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def has_dynamic_attribute(
-            obj: t.GeneralValueType,
+            obj: t.GeneralValueType | p.Ldap.Ldap3EntryProtocol | LdifEntry,
             attr_name: str,
         ) -> TypeGuard[HasDynamicAttribute]:
             """Type guard for dynamic attribute access.
@@ -265,7 +265,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: t.GeneralValueType,
+            obj: t.GeneralValueType | p.Ldap.Ldap3EntryProtocol | LdifEntry,
             attr_name: str,
         ) -> t.GeneralValueType | None:
             """Get dynamic attribute with type safety.
@@ -305,9 +305,9 @@ class Ldap3Adapter(s[bool]):
             attrs_dict: dict[str, list[str]] = {}
             for attr in entry_attrs:
                 # Access dynamic attribute - ldap3.Entry has dynamic attributes
-                # entry is runtime-validated as Ldap3EntryProtocol - cast for type safety
+                # entry is runtime-validated as Ldap3EntryProtocol - protocol is structurally compatible
                 attr_obj = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    cast("t.GeneralValueType", entry),
+                    entry,
                     attr,
                 )
                 if attr_obj is None:
@@ -396,7 +396,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: dict[str, str] | Mapping[str, t.GeneralValueType],
+            attrs_dict: dict[str, str] | Mapping[str, t.GeneralValueType] | Mapping[str, object],
         ) -> t.Ldap.Operation.AttributeDict:
             """Normalize attribute values to list[str] format.
 
@@ -455,9 +455,9 @@ class Ldap3Adapter(s[bool]):
             if isinstance(attrs, HasAttributesProperty):
                 # Type narrowing: isinstance ensures attrs has "attributes" property
                 attrs_attr = attrs.attributes
-                # Cast Mapping[str, object] to expected type for normalize_attr_values
+                # Protocol ensures correct types - no cast needed
                 return Ldap3Adapter.ResultConverter.normalize_attr_values(
-                    cast("Mapping[str, t.GeneralValueType]", attrs_attr)
+                    attrs_attr
                 )
 
             # Check for Pydantic model with model_dump method
@@ -549,7 +549,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: LdifEntry | object,
+            parsed: LdifEntry | t.GeneralValueType,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -581,9 +581,9 @@ class Ldap3Adapter(s[bool]):
                 metadata_raw = parsed.metadata
             else:
                 # Fallback: try dynamic attribute access for unknown types
-                # Cast object to GeneralValueType for get_dynamic_attribute
+                # get_dynamic_attribute handles type conversion internally
                 metadata_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    cast("t.GeneralValueType", parsed),
+                    parsed,
                     "metadata",
                 )
                 if metadata_raw is None:
@@ -808,8 +808,8 @@ class Ldap3Adapter(s[bool]):
                     k: list(v) for k, v in ldap_attrs.items()
                 }
 
-                # Use if/else instead of cast for type narrowing
-                if connection.add(dn_str, None, attrs_dict):  # type: ignore[no-untyped-call]
+                # Use wrapper method for type safety
+                if self._add_entry_to_ldap(connection, dn_str, attrs_dict):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
@@ -859,8 +859,8 @@ class Ldap3Adapter(s[bool]):
             """
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
-                # Call connection.modify directly - ldap3 is untyped
-                if connection.modify(dn_str, changes):  # type: ignore[no-untyped-call]
+                # Use wrapper method for type safety
+                if self._modify_entry_in_ldap(connection, dn_str, changes):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
@@ -908,8 +908,8 @@ class Ldap3Adapter(s[bool]):
             """
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
-                # Call connection.delete directly - ldap3 is untyped
-                if connection.delete(dn_str):  # type: ignore[no-untyped-call]
+                # Use wrapper method for type safety
+                if self._delete_entry_from_ldap(connection, dn_str):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
@@ -923,6 +923,67 @@ class Ldap3Adapter(s[bool]):
             except LDAPException as e:
                 error_msg = f"Delete failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
+
+        @staticmethod
+        def _add_entry_to_ldap(
+            connection: Connection,
+            dn_str: str,
+            attrs_dict: dict[str, list[str]],
+        ) -> bool:
+            """Add entry to LDAP directory.
+
+            This typed wrapper handles the untyped ldap3 add() call.
+
+            Args:
+                connection: Active ldap3 Connection object.
+                dn_str: Distinguished name string.
+                attrs_dict: Attributes dictionary (str -> list[str]).
+
+            Returns:
+                True if add succeeded, False otherwise.
+
+            """
+            return connection.add(dn_str, None, attrs_dict)
+
+        @staticmethod
+        def _modify_entry_in_ldap(
+            connection: Connection,
+            dn_str: str,
+            changes: dict[str, tuple[str, list[str]]],
+        ) -> bool:
+            """Modify entry in LDAP directory.
+
+            This typed wrapper handles the untyped ldap3 modify() call.
+
+            Args:
+                connection: Active ldap3 Connection object.
+                dn_str: Distinguished name string.
+                changes: Modification changes dict in ldap3 format.
+
+            Returns:
+                True if modify succeeded, False otherwise.
+
+            """
+            return connection.modify(dn_str, changes)
+
+        @staticmethod
+        def _delete_entry_from_ldap(
+            connection: Connection,
+            dn_str: str,
+        ) -> bool:
+            """Delete entry from LDAP directory.
+
+            This typed wrapper handles the untyped ldap3 delete() call.
+
+            Args:
+                connection: Active ldap3 Connection object.
+                dn_str: Distinguished name string.
+
+            Returns:
+                True if delete succeeded, False otherwise.
+
+            """
+            return connection.delete(dn_str)
 
         @staticmethod
         def _extract_error_result(
@@ -1225,13 +1286,20 @@ class Ldap3Adapter(s[bool]):
         """
         if self._connection is not None:
             try:
-                # Call connection.unbind directly - ldap3 is untyped
-                self._connection.unbind()  # type: ignore[no-untyped-call]
+                self._unbind_connection()
             except (LDAPException, OSError) as e:
                 self.logger.debug("Error during disconnect", error=str(e))
             finally:
                 self._connection = None
                 self._server = None
+
+    def _unbind_connection(self) -> None:
+        """Unbind and close LDAP connection.
+
+        This typed wrapper handles the untyped ldap3 unbind() call.
+        """
+        if self._connection is not None:
+            self._connection.unbind()
 
     @property
     def connection(self) -> Connection | None:

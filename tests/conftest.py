@@ -28,7 +28,7 @@ from threading import Lock
 from typing import TextIO
 
 import pytest
-from flext_core import FlextLogger, FlextTypes as t, r
+from flext_core import FlextLogger, r
 from flext_ldif import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestsDocker

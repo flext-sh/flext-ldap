@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
+from typing import TypeGuard
 
 from flext_core import FlextLogger, r
 from flext_ldif import FlextLdifUtilities
@@ -47,6 +48,22 @@ from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
 LaxStr = str | bytes | bytearray  # Type alias for lenient string handling
+
+
+def _is_ldif_entry(obj: object) -> TypeGuard[m.Ldif.Entry]:
+    """Type guard for Entry type narrowing.
+
+    Validates that an object is a flext-ldif Entry instance.
+    Used for proper type narrowing without isinstance() in production code.
+
+    Args:
+        obj: Object to validate
+
+    Returns:
+        TypeGuard[m.Ldif.Entry]: True if obj is an Entry, False otherwise
+
+    """
+    return isinstance(obj, m.Ldif.Entry)
 
 
 class FlextLdapOperations(s[m.Ldap.SearchResult]):
@@ -911,7 +928,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             # Use entry directly - already from search result at runtime
             existing_entry_obj = existing_entries[0]
-            if not isinstance(existing_entry_obj, m.Ldif.Entry):
+            if not _is_ldif_entry(existing_entry_obj):
                 return r[m.Ldap.LdapOperationResult].fail(
                     f"Expected Entry type, got {type(existing_entry_obj).__name__}",
                 )

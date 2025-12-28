@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from flext_core import FlextTypes as t
 from flext_core.typings import T, T_co, T_contra
 from flext_tests.typings import FlextTestsTypes
 
