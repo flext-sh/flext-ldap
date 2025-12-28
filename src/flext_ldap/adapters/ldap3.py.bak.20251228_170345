@@ -62,100 +62,6 @@ HasDynamicAttribute = p.Ldap.HasDynamicAttribute
 HasAttributesProperty = p.Ldap.HasAttributesProperty
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Type-Safe Wrappers for Untyped ldap3 Methods
-# ═══════════════════════════════════════════════════════════════════
-# These wrappers provide type safety for untyped ldap3 library methods.
-# Each wrapper ensures the untyped ldap3 call returns the expected type.
-
-def _ldap3_add(
-    connection: Connection,
-    dn: str,
-    object_class: t.GeneralValueType,
-    attributes: dict[str, list[str]],
-) -> bool:
-    """Type-safe wrapper for untyped ldap3 Connection.add().
-
-    Args:
-        connection: Active ldap3 Connection object.
-        dn: Distinguished name string.
-        object_class: Object class specification (None for generic).
-        attributes: Attributes dictionary.
-
-    Returns:
-        True if add succeeded, False otherwise.
-
-    """
-    # ldap3.add() is untyped, returns Any
-    # We know it returns bool - wrap to satisfy mypy strict
-    result = connection.add(dn, object_class, attributes)
-    if isinstance(result, bool):
-        return result
-    return bool(result)
-
-
-def _ldap3_modify(
-    connection: Connection,
-    dn: str,
-    changes: t.Ldap.Operation.Changes,
-) -> bool:
-    """Type-safe wrapper for untyped ldap3 Connection.modify().
-
-    Args:
-        connection: Active ldap3 Connection object.
-        dn: Distinguished name string.
-        changes: Modification changes dict in ldap3 format.
-
-    Returns:
-        True if modify succeeded, False otherwise.
-
-    """
-    # ldap3.modify() is untyped, returns Any
-    # We know it returns bool - wrap to satisfy mypy strict
-    result = connection.modify(dn, changes)
-    if isinstance(result, bool):
-        return result
-    return bool(result)
-
-
-def _ldap3_delete(
-    connection: Connection,
-    dn: str,
-) -> bool:
-    """Type-safe wrapper for untyped ldap3 Connection.delete().
-
-    Args:
-        connection: Active ldap3 Connection object.
-        dn: Distinguished name string.
-
-    Returns:
-        True if delete succeeded, False otherwise.
-
-    """
-    # ldap3.delete() is untyped, returns Any
-    # We know it returns bool - wrap to satisfy mypy strict
-    result = connection.delete(dn)
-    if isinstance(result, bool):
-        return result
-    return bool(result)
-
-
-def _ldap3_unbind(connection: Connection) -> bool:
-    """Type-safe wrapper for untyped ldap3 Connection.unbind().
-
-    Args:
-        connection: Active ldap3 Connection object.
-
-    Returns:
-        True if unbind succeeded, False otherwise.
-
-    """
-    # ldap3.unbind() is untyped, returns Any
-    # We know it returns bool - wrap to satisfy mypy strict
-    result = connection.unbind()
-    if isinstance(result, bool):
-        return result
-    return bool(result)
 
 
 class Ldap3Adapter(s[bool]):
@@ -1039,8 +945,9 @@ class Ldap3Adapter(s[bool]):
                 True if add succeeded, False otherwise.
 
             """
-            # Use type-safe wrapper for untyped ldap3 call
-            return _ldap3_add(connection, dn_str, None, attrs_dict)
+            # Call untyped ldap3 method and convert result to bool
+            result = connection.add(dn_str, None, attrs_dict)
+            return bool(result) if result is not None else False
 
         @staticmethod
         def _modify_entry_in_ldap(
@@ -1401,9 +1308,13 @@ class Ldap3Adapter(s[bool]):
         Errors are suppressed to ensure cleanup always completes.
         """
         if self._connection is not None:
-            # Use type-safe wrapper for untyped ldap3 call
+            # ldap3.unbind() is untyped but we know it returns bool
+            # Wrap call to ensure type safety despite ldap3 not having type stubs
             try:
-                _ = _ldap3_unbind(self._connection)
+                unbind_result = self._connection.unbind()
+                # Verify unbind result is a boolean (ldap3 returns True/False)
+                # Unknown types from ldap3 are ignored - cleanup continues
+                _ = unbind_result if isinstance(unbind_result, bool) else None
             except (AttributeError, RuntimeError):
                 # Connection already closed or unavailable - continue cleanup
                 _ = None

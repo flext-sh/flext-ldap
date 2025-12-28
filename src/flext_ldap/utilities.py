@@ -72,7 +72,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
-        def to_str(value: object, *, default: str = "") -> str:
+        def to_str(value: t.GeneralValueType | None, *, default: str = "") -> str:
             """Convert to string using parent convenience shortcut.
 
             Delegates to FlextLdifUtilities.to_str() for actual conversion.
@@ -85,6 +85,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 str: Converted string
 
             """
+            if value is None:
+                return default
             return FlextLdifUtilities.to_str(value, default=default)
 
         @staticmethod
@@ -109,7 +111,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list_truthy(
-            value: object,
+            value: t.GeneralValueType | None,
             *,
             default: list[str] | None = None,
         ) -> list[str]:
@@ -127,12 +129,14 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             # Use parent convenience shortcut for conversion
+            if value is None:
+                return default or []
             str_list = FlextLdifUtilities.to_str_list(value, default=default)
             # Filter truthy values - LDAP-specific behavior
             return [item for item in str_list if item]
 
         @staticmethod
-        def to_str_list_safe(value: object | None) -> list[str]:
+        def to_str_list_safe(value: t.GeneralValueType | None) -> list[str]:
             """Safe str_list conversion using parent Conversion utilities.
 
             Uses parent Conversion utilities for safe None handling and conversion.
@@ -145,6 +149,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 list[str]: Converted list or []
 
             """
+            if value is None:
+                return []
             return FlextLdifUtilities.to_str_list(value, default=[])
 
         # ═══════════════════════════════════════════════════════════════════
