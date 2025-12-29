@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -379,7 +379,7 @@ class FlextLdapEntryAdapter(s[bool]):
         conversion_metadata: m.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
-        original_attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue],
+        original_attrs_dict: Mapping[str, Sequence[object]],
         converted_attrs_dict: Mapping[str, list[str]],
     ) -> None:
         """Track DN and attribute differences in conversion metadata.
@@ -418,7 +418,7 @@ class FlextLdapEntryAdapter(s[bool]):
         # Track attribute differences (changes in values during conversion)
         def check_attr_changed(
             attr_name: str,
-            original_values: t.Ldap.Operation.Ldap3EntryValue,
+            original_values: Sequence[object],
         ) -> str | None:
             """Check if attribute values changed during conversion."""
             # Python 3.13: Use isinstance for type narrowing (TypeGuard limitation)
@@ -505,30 +505,36 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         try:
             dn_str = str(ldap3_entry.entry_dn)
-            # ldap3 is untyped - use TypeGuard for type narrowing
+            # ldap3 is untyped - entry_attributes_as_dict returns dict-like structure
+            # Type from ldap3: Mapping[str, Sequence[object]], compatible with our usage
             attrs_dict = ldap3_entry.entry_attributes_as_dict
-            if not _is_ldap3_attrs_dict(cast("t.GeneralValueType", attrs_dict)):
-                return r[m.Ldif.Entry].fail("Invalid ldap3 entry attributes")
-            # After TypeGuard, attrs_dict is typed as Mapping[str, Ldap3EntryValue]
             original_attrs_dict = attrs_dict
             removed_attrs: list[str] = []
             base64_attrs: list[str] = []
             # Convert attributes efficiently
             ldif_attrs: dict[str, list[str]] = {}
             logger = logging.getLogger(__name__)
-            for key, value in attrs_dict.items():
+            for key, raw_value in attrs_dict.items():
                 try:
-                    # Use TypeGuard for ldap3 untyped value
-                    if not _is_ldap3_entry_value(cast("t.GeneralValueType", value)):
-                        continue
-                    # After TypeGuard, value is typed as Ldap3EntryValue
-                    converted = self._convert_ldap3_value_to_list(
-                        cast("t.Ldap.Operation.Ldap3EntryValue", value),
-                        key,
-                        base64_attrs,
-                        removed_attrs,
+                    # ldap3 returns Sequence[object] - convert each item to str
+                    str_values: list[str] = []
+                    if isinstance(raw_value, Sequence):
+                        for item in raw_value:
+                            if isinstance(item, bytes):
+                                str_values.append(
+                                    item.decode("utf-8", errors="replace"),
+                                )
+                            else:
+                                str_values.append(str(item))
+                    # Check for base64 encoding requirement
+                    threshold = self._ConversionHelpers.ASCII_THRESHOLD
+                    has_base64 = any(
+                        self._ConversionHelpers.is_base64_encoded(v, threshold)
+                        for v in str_values
                     )
-                    ldif_attrs[key] = converted
+                    if has_base64:
+                        base64_attrs.append(key)
+                    ldif_attrs[key] = str_values
                 except Exception as e:
                     logger.debug(
                         "Failed to convert attribute %s, skipping",
@@ -546,9 +552,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 conversion_metadata,
                 dn_str,
                 dn_str,
-                cast(
-                    "dict[str, t.Ldap.Operation.Ldap3EntryValue]", original_attrs_dict
-                ),
+                original_attrs_dict,
                 ldif_attrs,
             )
             ldf_attrs_obj = m.Ldif.Attributes.model_validate({

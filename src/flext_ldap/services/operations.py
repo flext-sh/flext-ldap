@@ -319,10 +319,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             # If key found, return its values from existing_attrs
             if found_key is not None:
-                # u.mapper().get() returns the value directly, not RuntimeResult
-                values = u.mapper().get(existing_attrs, found_key)
+                # found_key comes from attr_keys (list[str]), convert to str for type safety
+                key: str = str(found_key)
+                values = existing_attrs.get(key)
                 # existing_attrs is Mapping[str, Sequence[str]], so values is Sequence[str] | None
-                if values is not None and isinstance(values, Sequence):
+                if values is not None:
                     return [str(item) for item in values if item is not None]
             return None
 
