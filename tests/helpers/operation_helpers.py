@@ -665,7 +665,7 @@ class TestsFlextLdapOperationHelpers:
 
         if verify_operation_result:
             operation_result = result.value
-            assert operation_result.success is True
+            assert operation_result.is_success is True
             assert operation_result.entries_affected == 1
 
         # Cleanup after if requested
@@ -732,7 +732,7 @@ class TestsFlextLdapOperationHelpers:
         assert result.is_success
         operation_result: m.Ldap.OperationResult = result.value
 
-        assert operation_result.success is True
+        assert operation_result.is_success is True
         assert operation_result.entries_affected == expected_entries_affected
 
         if expected_operation_type:

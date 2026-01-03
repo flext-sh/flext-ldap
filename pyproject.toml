@@ -19,8 +19,6 @@
     dependencies = [
         "beartype (>=0.19.0)",
         "cryptography (>=45.0.5)",
-        "flext-core @ file:../flext-core",
-        "flext-ldif @ file:../flext-ldif",
         "ldap3 (>=2.9.0)",
         "pydantic (>=2.12.3)",
         "pydantic-core (>=2.41.4)",
@@ -95,12 +93,17 @@
             isort = ">=6.0.1"
             pre-commit = ">=4.0.1"
             pylint = ">=3.3.0"
-            pyrefly = "^0.34.0"
+            pyrefly = "^0.46.3"
             pyupgrade = ">=3.19.0"
             radon = ">=6.0.1"
             ruff = ">=0.12.3"
             types-ldap3 = ">=2.9.13.20250622"
             vulture = ">=2.13"
+        pytest = "^9.0.2"
+        opentelemetry-api = ">=1.39.1"
+        opentelemetry-sdk = ">=1.39.1"
+        prompt-toolkit = ">=3.0.52"
+        sqlparse = ">=0.5.5"
 
         [tool.poetry.group.test.dependencies]
 
@@ -111,7 +114,7 @@
             pytest = ">=8.4.0"
             pytest-benchmark = ">=5.1.0"
             pytest-clarity = ">=1.0.1"
-            pytest-cov = "=7.0.0"
+            pytest-cov = ">=7.0.0"
             pytest-deadfixtures = ">=2.2.1"
             pytest-env = ">=1.1.5"
             pytest-mock = ">=3.14.0"
@@ -246,12 +249,3 @@
             "tests",
         ]
 
-
-
-[[tool.mypy.overrides]]
-module = "flext_ldap.adapters.ldap3"
-disable_error_code = ["no-untyped-call", "no-any-return"]
-
-[[tool.mypy.overrides]]
-module = "ldap3.*"
-ignore_missing_imports = true

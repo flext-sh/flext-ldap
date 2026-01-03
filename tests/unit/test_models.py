@@ -316,7 +316,7 @@ class TestsFlextLdapModels:
             message="Entry added successfully",
             entries_affected=1,
         )
-        tm.that(result.success, eq=True)
+        tm.that(result.is_success, eq=True)
         tm.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
         tm.that(result.message, eq="Entry added successfully")
         tm.that(result.entries_affected, eq=1)
@@ -339,7 +339,7 @@ class TestsFlextLdapModels:
         # Pydantic v2 frozen models raise TypeError on assignment
 
         with pytest.raises((TypeError, ValidationError)):
-            result.success = False
+            result.is_success = False
 
     # =========================================================================
     # SearchResult Tests
@@ -502,7 +502,7 @@ class TestsFlextLdapModels:
             dn=tc.RFC.DEFAULT_BASE_DN,
             operation=c.Ldap.OperationType.ADD,
         )
-        tm.that(result.success, eq=True)
+        tm.that(result.is_success, eq=True)
         tm.that(result.dn, eq=tc.RFC.DEFAULT_BASE_DN)
         tm.that(result.operation, eq=c.Ldap.OperationType.ADD)
         tm.that(result.error, none=True)
@@ -515,7 +515,7 @@ class TestsFlextLdapModels:
             operation=c.Ldap.OperationType.ADD,
             error="Entry already exists",
         )
-        tm.that(result.success, eq=False)
+        tm.that(result.is_success, eq=False)
         tm.that(result.error, eq="Entry already exists")
 
     # =========================================================================
