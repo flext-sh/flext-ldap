@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal, ParamSpec
 
-from flext_core import FlextLogger, r
+from flext_core import FlextRuntime, r
 from ldap3 import Connection
 
 from flext_ldap.base import s
@@ -441,7 +441,7 @@ class FlextLdapServerDetector(s[str]):
             ("ds389", check_ds389),
         ]
         found: str | None = None
-        logger = FlextLogger(__name__)
+        logger = FlextRuntime.get_logger(__name__)
         for server_name, check_func in extension_checks:
             try:
                 if check_func(ext_str, context_str):

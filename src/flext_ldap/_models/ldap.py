@@ -9,7 +9,7 @@ from collections.abc import Callable
 from typing import Self
 
 from flext_core import FlextTypes as t
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 __all__ = [
     "FlextLdapModelsLdap",
@@ -122,6 +122,7 @@ class FlextLdapModelsLdap:
         total: int = 0
         duration_seconds: float = 0.0
 
+        @computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (added + skipped) / total."""
@@ -155,6 +156,11 @@ class FlextLdapModelsLdap:
         dn: str
         operation: str
         error: str | None = None
+
+        @property
+        def is_success(self) -> bool:
+            """Alias for success field for FlextResult compatibility."""
+            return self.success
 
     class BatchUpsertResult(BaseModel):
         """Batch upsert result."""
@@ -202,6 +208,11 @@ class FlextLdapModelsLdap:
         operation_type: str
         message: str = ""
         entries_affected: int = 0
+
+        @property
+        def is_success(self) -> bool:
+            """Alias for success field for FlextResult compatibility."""
+            return self.success
 
     class SearchResult(BaseModel):
         """Search result.

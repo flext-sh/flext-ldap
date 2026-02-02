@@ -34,7 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeGuard
 
-from flext_core import FlextLogger, r
+from flext_core import FlextRuntime, FlextSettings, r
 from flext_ldif import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
@@ -1291,21 +1291,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         # Use u.normalize for consistent case handling
         # DSL pattern: builder for string normalization
         error_str = u.Ldap.norm_str(str(result.error), case="lower")
-        # Use u.Ldif.find() to check if error matches any retry pattern
-        if retry_on_errors is None:
-            return result
-        # Convert retry_on_errors to tuple for u.Ldif.find compatibility
-        retry_patterns = tuple(retry_on_errors)
-        if (
-            u.Ldif.find(
-                retry_patterns,
-                predicate=lambda pattern: u.Ldap.norm_in(
-                    error_str,
-                    [pattern],
-                    case="lower",
-                ),
-            )
-            is None
+        # Python 3.13: Use any() for type-safe pattern matching over list[str]
+        if not any(
+            u.Ldap.norm_in(error_str, [pattern], case="lower")
+            for pattern in retry_on_errors
         ):
             return result
 
@@ -1347,7 +1336,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             stats["failed"] += 1
             entry_dn_sliced = entry_dn[:100] if entry_dn else None
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
-            FlextLogger(__name__).error(
+            FlextRuntime.get_logger(__name__).error(
                 "Batch upsert entry failed",
                 entry_index=entry_index,
                 total_entries=total_entries,
@@ -1372,7 +1361,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             callback(entry_index, total, entry_dn or "", callback_stats)
         except (RuntimeError, TypeError, ValueError) as e:
-            FlextLogger(__name__).warning(
+            FlextRuntime.get_logger(__name__).warning(
                 "Progress callback failed",
                 operation=c.Ldap.LdapOperationNames.SYNC,
                 entry_index=entry_index,
@@ -1463,7 +1452,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     )
             except Exception:
                 entry_idx = idx_entry[0] if isinstance(idx_entry, tuple) else None
-                FlextLogger(__name__).debug(
+                FlextRuntime.get_logger(__name__).debug(
                     "Failed to process entry in batch, skipping (entry_index=%s)",
                     entry_idx,
                     exc_info=True,
@@ -1484,7 +1473,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             skipped=stats_builder["skipped"],
         )
 
-        FlextLogger(__name__).info(
+        FlextRuntime.get_logger(__name__).info(
             "Batch upsert completed",
             operation=c.Ldap.LdapOperationNames.BATCH_UPSERT,
             total_entries=total_entries,
@@ -1520,7 +1509,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         if not self._connection.is_connected:
             return r[m.Ldap.SearchResult].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
 
-        ldap_config = self.config.get_namespace("ldap", FlextLdapSettings)
+        ldap_config = FlextSettings.get_global_instance().get_namespace(
+            "ldap", FlextLdapSettings
+        )
         base_dn = ldap_config.base_dn or "dc=example,dc=com"
         return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(

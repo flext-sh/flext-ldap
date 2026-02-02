@@ -125,12 +125,8 @@ class FlextLdapEntryAdapter(s[bool]):
                 True if value requires base64 encoding, False otherwise.
 
             """
-            # Use u.Ldif.find() for efficient character checking
-            return (
-                value.startswith("::")
-                or u.Ldif.find(list(value), predicate=lambda c: ord(c) > threshold)
-                is not None
-            )
+            # Python 3.13: Use any() for type-safe character iteration over string
+            return value.startswith("::") or any(ord(c) > threshold for c in value)
 
         @staticmethod
         def convert_value_to_strings(
@@ -316,16 +312,10 @@ class FlextLdapEntryAdapter(s[bool]):
             removed_attrs.append(key)
             return []
         converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
-        # Use u.Ldif.find() to check if any value requires base64 encoding
-        if (
-            u.Ldif.find(
-                converted_values,
-                predicate=lambda v: self._ConversionHelpers.is_base64_encoded(
-                    v,
-                    ascii_threshold,
-                ),
-            )
-            is not None
+        # Python 3.13: Use any() for type-safe iteration over converted strings
+        if any(
+            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
+            for v in converted_values
         ):
             base64_attrs.append(key)
         return converted_values
