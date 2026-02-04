@@ -447,10 +447,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         except Exception as e:
             return r[m.Ldap.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
 
-        parse_result = self._ldif.parse(
-            ldif_content,
-            server_type=server_type_literal,
-        )
+        parse_result = self._ldif.parse(ldif_content, server_type_literal)
 
         if parse_result.is_failure:
             error_msg = (

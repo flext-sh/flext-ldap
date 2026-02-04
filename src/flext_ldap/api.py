@@ -767,10 +767,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         start_time = datetime.now(UTC)
 
-        parse_result = self._ldif.parse(
-            str(ldif_file_path),
-            server_type=config.server_type,
-        )
+        try:
+            ldif_content = ldif_file_path.read_text(encoding="utf-8")
+        except Exception as e:
+            return r.fail(f"Failed to read LDIF file: {e!s}")
+
+        parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"

@@ -25,14 +25,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextDecorators,
-    FlextExceptions,
-    FlextHandlers,
-    FlextMixins,
-    FlextResult,
+    FlextDecorators as d,
+    FlextExceptions as e,
+    FlextHandlers as h,
+    FlextMixins as x,
+    FlextResult as r,
 )
 
-# Temporarily disabled some imports due to flext-ldif import issues
 from flext_ldap.api import FlextLdap
 from flext_ldap.base import FlextLdapServiceBase, s
 from flext_ldap.constants import FlextLdapConstants, c
@@ -44,8 +43,6 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import FlextLdapTypes, t
 from flext_ldap.utilities import FlextLdapUtilities, u
-
-__email__ = "dev@flext.com"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CONVENIENCE ALIASES - Short names for common usage
@@ -81,13 +78,7 @@ __email__ = "dev@flext.com"
 
 # Domain aliases imported from modules (already imported above)
 # u, t, c, m, p, s are imported from their respective modules
-
-# Global aliases from flext-core
-r = FlextResult
-e = FlextExceptions
-d = FlextDecorators
-x = FlextMixins
-h = FlextHandlers
+# Global aliases r, e, d, x, h imported from flext_core via import-as above
 
 __all__ = [
     "FlextLdap",  # ✅ Facade (single entry point)
