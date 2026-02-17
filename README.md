@@ -6,7 +6,9 @@
 
 **FLEXT-LDAP** is a universal, type-safe LDAP directory services library for the FLEXT ecosystem. It abstracts the complexities of different LDAP server implementations (OpenLDAP, Oracle OID/OUD, Active Directory) into a unified, railway-oriented API, enabling consistent directory operations across the enterprise.
 
-Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
+**Reviewed**: 2026-02-17 | **Version**: 0.10.0-dev
+
+Part of the [FLEXT](https://github.com/flext/flext) ecosystem.
 
 ## 🚀 Key Features
 
