@@ -276,12 +276,12 @@ class Ldap3Adapter(s[bool]):
 
             """
             if not config.use_tls or config.use_ssl:
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             try:
                 if not connection.start_tls():
                     return r[bool].fail("Failed to start TLS")
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             except LDAPException as tls_error:
                 error_msg = f"Failed to start TLS: {tls_error}"
                 return r[bool].fail(error_msg)
@@ -1362,7 +1362,7 @@ class Ldap3Adapter(s[bool]):
             if self._connection is None or not self._connection.bound:
                 return r[bool].fail("Failed to bind to LDAP server")
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except LDAPException as e:
             return r[bool].fail(f"Connection failed: {e!s}")
 
@@ -1733,4 +1733,4 @@ class Ldap3Adapter(s[bool]):
         # Create results
         if not self.is_connected:
             return r[bool].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)

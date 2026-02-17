@@ -200,7 +200,7 @@ class FlextLdapConnection(s[bool]):
 
         if result.is_success:
             self._detect_server_type_optional()
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         # Type narrowing: result is r[bool] at this point
         return result
 
@@ -349,5 +349,5 @@ class FlextLdapConnection(s[bool]):
         """
         # Create results
         if self.is_connected:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         return r[bool].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))

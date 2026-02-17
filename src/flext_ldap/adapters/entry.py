@@ -266,7 +266,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 and always ready
 
         """
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _convert_ldap3_value_to_list(
         self,

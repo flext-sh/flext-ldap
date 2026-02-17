@@ -1142,7 +1142,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """Execute service health check for FlextService pattern compliance.
 
         Implements a custom execute method with extended return type compatibility.
-        The base class execute() expects FlextResult[None], but this method returns
+        The base class execute() expects FlextResult[bool], but this method returns
         SearchResult for operational purposes.
 
         Business Rules:
