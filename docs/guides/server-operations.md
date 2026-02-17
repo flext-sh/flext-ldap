@@ -1,6 +1,5 @@
 # Server-Specific Operations Guide
 
-
 ## Table of Contents
 
 - Server-Specific Operations Guide
@@ -111,16 +110,12 @@ This document provides detailed information about server-specific implementation
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-
 ##
-
 
 ## 🎯 Overview
 
 FLEXT-LDAP provides complete,
 server-specific implementations for major LDAP servers with automatic quirks handling and FlextLdif integration.
-
-
 
 ### **Available Implementations**
 
@@ -132,7 +127,6 @@ Server: **Active Directory** - Status: 🟡 Stub - ACL Attribute: nTSecurityDesc
 Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 4510
 
 ##
-
 
 ## 📦 Importing Server Operations
 
@@ -154,13 +148,9 @@ from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
 from flext_ldif import FlextLdifModels
 ```
 
-
 ##
 
-
 ## 🔧 OpenLDAP 2.x Operations
-
-
 
 ### **Features**
 
@@ -169,8 +159,6 @@ from flext_ldif import FlextLdifModels
 - Paged results and VLV support
 - Full schema discovery
 - START_TLS support
-
-
 
 ### **Basic Usage**
 
@@ -199,8 +187,6 @@ if schema_result.is_success:
     print(f"Matching rules: {len(schema['matching_rules'])}")
 ```
 
-
-
 ### **ACL Operations**
 
 ```python
@@ -227,8 +213,6 @@ set_result = ops.set_acls(
     acls=new_acls
 )
 ```
-
-
 
 ### **Entry Operations**
 
@@ -265,8 +249,6 @@ delete_result = ops.delete_entry(
 )
 ```
 
-
-
 ### **Paged Search**
 
 ```python
@@ -288,13 +270,9 @@ if search_result.is_success:
         print(f"Attributes: {entry.attributes}")
 ```
 
-
 ##
 
-
 ## 🔧 OpenLDAP 1.x Operations
-
-
 
 ### **Features**
 
@@ -302,8 +280,6 @@ if search_result.is_success:
 - **access** ACL syntax (legacy)
 - Inherits most functionality from OpenLDAP 2.x
 - Limited VLV support
-
-
 
 ### **Key Differences**
 
@@ -324,13 +300,9 @@ legacy_acl = {
 
 **Note**: OpenLDAP 1.x extends OpenLDAP 2.x operations, only overriding ACL-related methods for the legacy syntax.
 
-
 ##
 
-
 ## 🔧 Oracle OID Operations
-
-
 
 ### **Features**
 
@@ -339,8 +311,6 @@ legacy_acl = {
 - Oracle-specific object classes (orclUserV2, orclContainer)
 - VLV support
 - Full replication support
-
-
 
 ### **Basic Usage**
 
@@ -364,8 +334,6 @@ if schema_result.is_success:
     print(f"Server type: {schema['server_type']}")  # "oid"
 ```
 
-
-
 ### **Oracle OID ACLs**
 
 ```python
@@ -388,8 +356,6 @@ oid_acls = [
 set_result = ops.set_acls(connection, "dc=example,dc=com", oid_acls)
 ```
 
-
-
 ### **Oracle-Specific Features**
 
 ```python
@@ -403,13 +369,9 @@ mechanisms = ops.get_bind_mechanisms()
 # Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5"]
 ```
 
-
 ##
 
-
 ## 🔧 Oracle OUD Operations
-
-
 
 ### **Features**
 
@@ -418,8 +380,6 @@ mechanisms = ops.get_bind_mechanisms()
 - Based on 389 Directory Server
 - Extended SASL support (GSSAPI, PLAIN)
 - Full enterprise features
-
-
 
 ### **Basic Usage**
 
@@ -443,8 +403,6 @@ if schema_result.is_success:
     print(f"Server type: {schema['server_type']}")  # "oud"
 ```
 
-
-
 ### **ds-privilege-name ACLs**
 
 ```python
@@ -464,8 +422,6 @@ oud_acls = [
 set_result = ops.set_acls(connection, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", oud_acls)
 ```
 
-
-
 ### **OUD-Specific Features**
 
 ```python
@@ -481,19 +437,13 @@ supports_vlv = ops.supports_vlv()  # True
 supports_paging = ops.supports_paged_results()  # True
 ```
 
-
 ##
 
-
 ## 🔧 Active Directory Operations (Stub)
-
-
 
 ### **Status**
 
 Currently implemented as a stub with `NotImplementedError` for most operations. Provides the interface for future implementation.
-
-
 
 ### **Planned Features**
 
@@ -502,8 +452,6 @@ Currently implemented as a stub with `NotImplementedError` for most operations. 
 - GUID-based DNs
 - Global Catalog support
 - SASL/GSSAPI authentication
-
-
 
 ### **Current Usage**
 
@@ -525,8 +473,6 @@ acl_attr = ops.get_acl_attribute_name()  # "nTSecurityDescriptor"
 schema_dn = ops.get_schema_dn()  # "cn=schema,cn=configuration"
 ```
 
-
-
 ### **Contributing AD Implementation**
 
 If you want to contribute Active Directory support:
@@ -539,19 +485,13 @@ If you want to contribute Active Directory support:
 
 See `src/flext_ldap/servers/ad_operations.py` for stub methods.
 
-
 ##
 
-
 ## 🔧 Generic Server Operations
-
-
 
 ### **Purpose**
 
 RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic operations that should work with any RFC 4510-compliant server.
-
-
 
 ### **Features**
 
@@ -560,8 +500,6 @@ RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic
 - Basic LDAP operations
 - Conservative defaults
 - Paged search support
-
-
 
 ### **Usage**
 
@@ -597,8 +535,6 @@ search_result = ops.search_with_paging(
 )
 ```
 
-
-
 ### **Limitations**
 
 - ACL operations return minimal support
@@ -606,9 +542,7 @@ search_result = ops.search_with_paging(
 - No server-specific optimizations
 - Conservative capability detection
 
-
 ##
-
 
 ## 🔄 Entry Adapter Integration
 
@@ -642,9 +576,7 @@ if attrs_result.is_success:
     ops.add_entry(connection, ldif_entry)
 ```
 
-
 ##
-
 
 ## 🔍 Quirks Detection
 
@@ -683,13 +615,9 @@ else:
     ops = GenericServerOperations()
 ```
 
-
 ##
 
-
 ## 📊 Server Comparison
-
-
 
 ### **Connection Features**
 
@@ -699,7 +627,6 @@ Feature: SIMPLE Auth - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OI
 Feature: SASL/EXTERNAL - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ❌ No - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ❌ No - Generic: ❌ No
 Feature: SASL/GSSAPI - OpenLDAP 2.x: ❌ No - OpenLDAP 1.x: ❌ No - Oracle OID: ❌ No - Oracle OUD: ✅ Yes - AD: ✅ Yes - Generic: ❌ No
 
-
 ### **Schema Operations**
 
 Feature: Schema DN - OpenLDAP 2.x: cn=subschema - OpenLDAP 1.x: cn=subschema - Oracle OID: cn=subschemasubentry - Oracle OUD: cn=schema - AD: cn=schema,cn=config - Generic: cn=subschema
@@ -707,7 +634,6 @@ Feature: Object Classes - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Orac
 Feature: Attribute Types - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ⚠️ Basic
 Feature: Syntaxes - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ❌ No - Oracle OUD: ✅ Yes - AD: 🟡 Stub - Generic: ❌ No
 Feature: Matching Rules - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ❌ No - Oracle OID: ❌ No - Oracle OUD: ❌ No - AD: 🟡 Stub - Generic: ❌ No
-
 
 ### **ACL Features**
 
@@ -717,7 +643,6 @@ Feature: Set ACLs - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID
 Feature: Parse ACL - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ⚠️ Basic - Oracle OUD: ⚠️ Basic - AD: 🟡 Stub - Generic: ⚠️ Basic
 Feature: Format ACL - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ⚠️ Basic - Oracle OUD: ⚠️ Basic - AD: 🟡 Stub - Generic: ⚠️ Basic
 
-
 ### **Search Features**
 
 Feature: Paged Results - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ✅ Yes - Oracle OUD: ✅ Yes - AD: ✅ Yes - Generic: ✅ Yes
@@ -726,10 +651,7 @@ Feature: Max Page Size - OpenLDAP 2.x: 1000 - OpenLDAP 1.x: 1000 - Oracle OID: 5
 
 ##
 
-
 ## 🎯 Best Practices
-
-
 
 ### **1. Use Server Detection**
 
@@ -744,8 +666,6 @@ if server_type_result.is_success:
     # Select appropriate operations class
 ```
 
-
-
 ### **2. Handle Errors Explicitly**
 
 All operations return `FlextResult` - always check for failures:
@@ -758,8 +678,6 @@ if result.is_failure:
 else:
     print("Operation succeeded")
 ```
-
-
 
 ### **3. Use Entry Adapter**
 
@@ -775,8 +693,6 @@ ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 ```
 
-
-
 ### **4. Server-Specific Normalization**
 
 Each server may require specific entry normalization:
@@ -787,8 +703,6 @@ if norm_result.is_success:
     normalized_entry = norm_result.unwrap()
     # Use normalized entry
 ```
-
-
 
 ### **5. Connection Management**
 
@@ -807,13 +721,9 @@ finally:
     connection.unbind()
 ```
 
-
 ##
 
-
 ## 🔧 Troubleshooting
-
-
 
 ### **Common Issues**
 
@@ -863,9 +773,7 @@ if norm_result.is_failure:
 # Verify required object classes and attributes
 ```
 
-
 ##
-
 
 ## 📚 Additional Resources
 
@@ -874,7 +782,6 @@ if norm_result.is_failure:
 - **[Integration Guide](integration.md)** - FlextLdif integration patterns
 - **[ACL Management](acl-management.md)** - Server-specific ACL handling
 - **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
-
 
 ##
 

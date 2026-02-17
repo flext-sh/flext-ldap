@@ -438,16 +438,13 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Use ServerTypes Literal type directly (FlextLdif.parse accepts Literal)
         # Use the literal value from the enum
         # For LDIF parsing, use parent FlextLdifConstants.LiteralTypes.ServerTypeLiteral
-        server_type_literal: str = (
-            "rfc"  # Literal matching c.Ldif.ServerTypes.RFC.value
-        )
         # Read file content and parse
         try:
             ldif_content = ldif_file.read_text(encoding="utf-8")
         except Exception as e:
             return r[m.Ldap.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
 
-        parse_result = self._ldif.parse(ldif_content, server_type_literal)
+        parse_result = self._ldif.parse(ldif_content)
 
         if parse_result.is_failure:
             error_msg = (
