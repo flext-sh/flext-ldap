@@ -1,6 +1,6 @@
 {
-  "https://github.com/flext/flext-ldap/issues": {
-    "url": "https://github.com/flext/flext-ldap/issues",
+  "https://github.com/flext-sh/flext-ldap/issues": {
+    "url": "https://github.com/flext-sh/flext-ldap/issues",
     "status": "broken",
     "status_code": 404,
     "error_message": "HTTP Error 404: Not Found",

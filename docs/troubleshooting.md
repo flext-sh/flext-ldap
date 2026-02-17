@@ -817,7 +817,7 @@ collect_diagnostic_info()
 
 For additional support and community resources:
 
-- [GitHub Issues](https://github.com/flext/flext-ldap/issues) - Bug reports and feature requests
+- [GitHub Issues](https://github.com/flext-sh/flext-ldap/issues) - Bug reports and feature requests
 - [FLEXT Documentation](https://docs.flext.dev) - Framework documentation
 - [Examples](examples/) - Working code examples
 
