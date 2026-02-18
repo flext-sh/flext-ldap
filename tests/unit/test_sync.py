@@ -134,7 +134,7 @@ class TestsFlextLdapSync:
             source_basedn="",
             target_basedn="",
         )
-        tm.that(transformed, length=1)
+        tm.that(transformed, len=1)
         tm.that(transformed[0].dn, none=False)
         assert transformed[0].dn is not None  # Type guard
         tm.that(transformed[0].dn.value, eq="cn=user,dc=example,dc=com")
@@ -169,7 +169,7 @@ class TestsFlextLdapSync:
             source_basedn="DC=OLD,DC=COM",
             target_basedn="dc=new,dc=com",
         )
-        tm.that(transformed, length=1)
+        tm.that(transformed, len=1)
         tm.that(transformed[0].dn, none=False)
         assert transformed[0].dn is not None  # Type guard
         tm.that(transformed[0].dn.value, eq="cn=user,dc=new,dc=com")

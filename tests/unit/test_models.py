@@ -600,7 +600,7 @@ class TestsFlextLdapModels:
             dn_changed=True,
             converted_dn="cn=user,dc=new,dc=com",
         )
-        tm.that(metadata.source_attributes, length=3)
+        tm.that(metadata.source_attributes, len=3)
         tm.that(metadata.source_attributes, contains="telephoneNumber")
         tm.that(metadata.dn_changed, eq=True)
 
