@@ -48,14 +48,14 @@ class TestsFlextLdapUtilities:
     """
 
     # Test data scenarios
-    _STRING_VALUES: ClassVar[Mapping[str, str]] = {
+    _STRING_VALUES: ClassVar[dict[str, str]] = {
         "simple": "test",
         "empty": "",
         "whitespace": "  test  ",
         "unicode": "café",
     }
 
-    _LIST_VALUES: ClassVar[Mapping[str, object]] = {
+    _LIST_VALUES: ClassVar[dict[str, object]] = {
         "list_str": ["a", "b", "c"],
         "list_mixed": ["a", 1, True],
         "tuple": ("a", "b"),
@@ -120,7 +120,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_with_mapping(self) -> None:
         """Test find_callable with Mapping (covariant pattern)."""
-        handlers: Mapping[str, Callable[[], FlexibleValue]] = {
+        handlers: dict[str, Callable[[], FlexibleValue]] = {
             "handler1": lambda: "value1",
             "handler2": lambda: False,
         }
@@ -130,7 +130,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_not_found(self) -> None:
         """Test find_callable when no handler returns truthy."""
-        handlers: Mapping[str, Callable[[], FlexibleValue]] = {
+        handlers: dict[str, Callable[[], FlexibleValue]] = {
             "handler1": lambda: False,
             "handler2": lambda: None,
             "handler3": lambda: "",

@@ -345,7 +345,7 @@ class TestsFlextLdapModels:
     # SearchResult Tests
     # =========================================================================
 
-    _SEARCH_RESULT_SCENARIOS: ClassVar[Mapping[str, tuple[int, int]]] = {
+    _SEARCH_RESULT_SCENARIOS: ClassVar[dict[str, tuple[int, int]]] = {
         # name: (num_entries, expected_total_count)
         "empty": (0, 0),
         "single": (1, 1),

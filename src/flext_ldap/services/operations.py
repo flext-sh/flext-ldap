@@ -31,7 +31,7 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import TypeGuard
 
 from flext_core import FlextRuntime, FlextSettings, r
@@ -158,7 +158,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _convert_mapping_to_dict(
-            attrs: Mapping[LaxStr, Sequence[LaxStr]] | dict[str, list[str]],
+            attrs: dict[LaxStr, Sequence[LaxStr]] | dict[str, list[str]],
         ) -> dict[str, list[str]]:
             """Convert Mapping to dict[str, list[str]].
 
@@ -189,7 +189,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_ldif_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> Mapping[str, Sequence[str]]:
+        ) -> dict[str, Sequence[str]]:
             """Extract attributes from LDIF Entry.
 
             Args:
@@ -214,7 +214,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_protocol_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> Mapping[str, Sequence[str]]:
+        ) -> dict[str, Sequence[str]]:
             """Extract attributes from EntryProtocol.
 
             Args:
@@ -233,7 +233,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
                         attrs_dict,
                     )
-                case Mapping():
+                case dict():
                     # Convert Mapping with potentially LaxStr keys/values
                     return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
                         attrs,
@@ -244,7 +244,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def extract_attributes(
             entry: m.Ldif.Entry,
-        ) -> Mapping[str, Sequence[str]]:
+        ) -> dict[str, Sequence[str]]:
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
@@ -289,7 +289,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def find_existing_values(
             attr_name: str,
-            existing_attrs: Mapping[str, Sequence[str]],
+            existing_attrs: dict[str, Sequence[str]],
         ) -> list[str] | None:
             """Find existing attribute values by case-insensitive name.
 
@@ -329,8 +329,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_new_attributes(
-            new_attrs: Mapping[str, Sequence[str]],
-            existing_attrs: Mapping[str, Sequence[str]],
+            new_attrs: dict[str, Sequence[str]],
+            existing_attrs: dict[str, Sequence[str]],
             ignore: frozenset[str],
         ) -> tuple[t.Ldap.Operation.Changes, set[str]]:
             """Process new attributes and detect replacement changes.
@@ -434,7 +434,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_deleted_attributes(
-            existing_attrs: Mapping[str, Sequence[str]],
+            existing_attrs: dict[str, Sequence[str]],
             ignore: frozenset[str],
             processed: set[str],
         ) -> t.Ldap.Operation.Changes:

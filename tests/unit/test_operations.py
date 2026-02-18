@@ -49,7 +49,7 @@ class TestsFlextLdapOperations:
     """
 
     # Error detection scenarios using mapping for DRY
-    _ERROR_DETECTION_SCENARIOS: ClassVar[Mapping[str, bool]] = {
+    _ERROR_DETECTION_SCENARIOS: ClassVar[dict[str, bool]] = {
         "Entry already exists": True,
         "already exists": True,
         "ALREADY EXISTS": True,
@@ -59,7 +59,7 @@ class TestsFlextLdapOperations:
     }
 
     # Entry comparison scenarios
-    _ENTRY_SCENARIOS: ClassVar[Mapping[str, dict[str, list[str]]]] = {
+    _ENTRY_SCENARIOS: ClassVar[dict[str, dict[str, list[str]]]] = {
         "identical": {"cn": ["test"], "sn": ["User"]},
         "different": {"cn": ["test"], "sn": ["Different"]},
     }

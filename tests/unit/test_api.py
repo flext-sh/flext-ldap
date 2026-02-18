@@ -50,7 +50,7 @@ class TestsFlextLdapApi:
     """
 
     # Callback scenarios for parametrized tests
-    _CALLBACK_SCENARIOS: ClassVar[Mapping[str, tuple[int, bool, bool]]] = {
+    _CALLBACK_SCENARIOS: ClassVar[dict[str, tuple[int, bool, bool]]] = {
         # name: (param_count, is_multi, is_single)
         "none": (0, False, False),
         "single_phase": (4, False, True),
