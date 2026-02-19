@@ -2,15 +2,15 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- Status
-- Context
-- Decision
-- Alternatives Considered
-- Implementation Plan
-- Validation
-- Consequences
-- References
+- [Table of Contents](#table-of-contents)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Alternatives Considered](#alternatives-considered)
+- [Implementation Plan](#implementation-plan)
+- [Validation](#validation)
+- [Consequences](#consequences)
+- [References](#references)
 <!-- TOC END -->
 
 ## Table of Contents

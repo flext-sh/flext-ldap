@@ -2,15 +2,15 @@
 
 
 <!-- TOC START -->
-- Layered View
-- Module Map
-- Runtime Flows
-  - Connecting
-  - Search and CRUD
-  - Synchronization
-  - Server Detection
-- Design Notes
-- Related Documentation
+- [Layered View](#layered-view)
+- [Module Map](#module-map)
+- [Runtime Flows](#runtime-flows)
+  - [Connecting](#connecting)
+  - [Search and CRUD](#search-and-crud)
+  - [Synchronization](#synchronization)
+  - [Server Detection](#server-detection)
+- [Design Notes](#design-notes)
+- [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
 FLEXT-LDAP wraps `ldap3` and `flext-ldif` behind a small service layer and a

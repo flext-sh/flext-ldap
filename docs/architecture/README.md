@@ -2,15 +2,15 @@
 
 
 <!-- TOC START -->
-- Overview
-- Table of Contents
-  - Core Architecture
-  - Implementation Details
-  - Design Principles
-- Quick Reference
-  - Architecture Layers
-  - Module Structure (v0.11.0)
-- Related Documentation
+- [Overview](#overview)
+- [Table of Contents](#table-of-contents)
+  - [Core Architecture](#core-architecture)
+  - [Implementation Details](#implementation-details)
+  - [Design Principles](#design-principles)
+- [Quick Reference](#quick-reference)
+  - [Architecture Layers](#architecture-layers)
+  - [Module Structure (v0.11.0)](#module-structure-v0110)
+- [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
 **Version**: 1.1  

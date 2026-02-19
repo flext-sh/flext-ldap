@@ -2,31 +2,31 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- Configuration Overview
-  - Configuration Hierarchy
-- Environment Variables
-  - LDAP Server Configuration
-  - Security Configuration
-  - Connection Pool Settings
-- Configuration File
-  - Python Configuration
-  - Environment-Specific Configuration
-- Docker Configuration
-  - Environment File
-  - Docker Compose
-- Testing Configuration
-  - Test LDAP Server
-  - Test Configuration
-- Configuration Validation
-  - Validating Configuration
-  - Common Configuration Issues
-- Security Best Practices
-  - Credential Management
-  - SSL/TLS Configuration
-- Performance Tuning
-  - Connection Pool Optimization
-  - Search Optimization
+- [Table of Contents](#table-of-contents)
+- [Configuration Overview](#configuration-overview)
+  - [Configuration Hierarchy](#configuration-hierarchy)
+- [Environment Variables](#environment-variables)
+  - [LDAP Server Configuration](#ldap-server-configuration)
+  - [Security Configuration](#security-configuration)
+  - [Connection Pool Settings](#connection-pool-settings)
+- [Configuration File](#configuration-file)
+  - [Python Configuration](#python-configuration)
+  - [Environment-Specific Configuration](#environment-specific-configuration)
+- [Docker Configuration](#docker-configuration)
+  - [Environment File](#environment-file)
+  - [Docker Compose](#docker-compose)
+- [Testing Configuration](#testing-configuration)
+  - [Test LDAP Server](#test-ldap-server)
+  - [Test Configuration](#test-configuration)
+- [Configuration Validation](#configuration-validation)
+  - [Validating Configuration](#validating-configuration)
+  - [Common Configuration Issues](#common-configuration-issues)
+- [Security Best Practices](#security-best-practices)
+  - [Credential Management](#credential-management)
+  - [SSL/TLS Configuration](#ssltls-configuration)
+- [Performance Tuning](#performance-tuning)
+  - [Connection Pool Optimization](#connection-pool-optimization)
+  - [Search Optimization](#search-optimization)
 <!-- TOC END -->
 
 ## Table of Contents

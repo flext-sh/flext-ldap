@@ -2,37 +2,37 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- Overview
-  - Key Features
-  - Architecture
-- Quick Start
-  - Prerequisites
-  - Basic Usage
-  - Common Workflows
-- Core Components
-  - 1. Content Audit System (`audit.py`)
-  - 2. Link Validation (`validate_links.py`)
-  - 3. Style Validation (`validate_style.py`)
-  - 4. Content Optimization (`optimize.py`)
-  - 5. Quality Reporting (`report.py`)
-  - 6. Synchronization Manager (`sync.py`)
-- Maintenance Workflows
-  - Automated Maintenance
-  - CI/CD Integration
-  - Manual Maintenance
-- Configuration
-  - Main Configuration File
-  - Custom Rules
-- Troubleshooting
-  - Common Issues
-  - Performance Optimization
-  - Debug Mode
-- Best Practices
-  - Quality Assurance
-  - Content Standards
-  - Team Collaboration
-  - Performance Considerations
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+  - [Key Features](#key-features)
+  - [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Basic Usage](#basic-usage)
+  - [Common Workflows](#common-workflows)
+- [Core Components](#core-components)
+  - [1. Content Audit System (`audit.py`)](#1-content-audit-system-auditpy)
+  - [2. Link Validation (`validate_links.py`)](#2-link-validation-validatelinkspy)
+  - [3. Style Validation (`validate_style.py`)](#3-style-validation-validatestylepy)
+  - [4. Content Optimization (`optimize.py`)](#4-content-optimization-optimizepy)
+  - [5. Quality Reporting (`report.py`)](#5-quality-reporting-reportpy)
+  - [6. Synchronization Manager (`sync.py`)](#6-synchronization-manager-syncpy)
+- [Maintenance Workflows](#maintenance-workflows)
+  - [Automated Maintenance](#automated-maintenance)
+  - [CI/CD Integration](#cicd-integration)
+  - [Manual Maintenance](#manual-maintenance)
+- [Configuration](#configuration)
+  - [Main Configuration File](#main-configuration-file)
+  - [Custom Rules](#custom-rules)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [Performance Optimization](#performance-optimization)
+  - [Debug Mode](#debug-mode)
+- [Best Practices](#best-practices)
+  - [Quality Assurance](#quality-assurance)
+  - [Content Standards](#content-standards)
+  - [Team Collaboration](#team-collaboration)
+  - [Performance Considerations](#performance-considerations)
 <!-- TOC END -->
 
 **Complete guide for using the Documentation Maintenance System**

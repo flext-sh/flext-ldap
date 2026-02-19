@@ -2,39 +2,39 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- Overview
-- Key Features
-  - Supported LDAP Servers
-  - Universal Capabilities
-- Server Operations
-  - Creating Server Operations
-  - Server-Specific Operations
-- Universal API Methods
-  - 1. Get Detected Server Type
-  - 2. Get Server Capabilities
-  - 3. Universal Search with Optimization
-  - 4. Entry Normalization
-  - 5. Entry Conversion Between Servers
-  - 6. Server Type Detection
-  - 7. Entry Validation
-  - 8. Server-Specific Attributes
-- Entry Conversion Examples
-  - OpenLDAP 1.x → OpenLDAP 2.x Migration
-  - Oracle OID → Oracle OUD Migration
-- Migration Scenarios
-  - Scenario 1: Multi-Server Environment
-  - Scenario 2: Progressive Migration
-- Best Practices
-  - 1. Always Detect Server Type
-  - 2. Validate After Conversion
-  - 3. Use Server Capabilities
-  - 4. Handle Quirks Gracefully
-- Troubleshooting
-  - Server Detection Issues
-  - Conversion Failures
-  - ACL Translation Issues
-- Contributing
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Key Features](#key-features)
+  - [Supported LDAP Servers](#supported-ldap-servers)
+  - [Universal Capabilities](#universal-capabilities)
+- [Server Operations](#server-operations)
+  - [Creating Server Operations](#creating-server-operations)
+  - [Server-Specific Operations](#server-specific-operations)
+- [Universal API Methods](#universal-api-methods)
+  - [1. Get Detected Server Type](#1-get-detected-server-type)
+  - [2. Get Server Capabilities](#2-get-server-capabilities)
+  - [3. Universal Search with Optimization](#3-universal-search-with-optimization)
+  - [4. Entry Normalization](#4-entry-normalization)
+  - [5. Entry Conversion Between Servers](#5-entry-conversion-between-servers)
+  - [6. Server Type Detection](#6-server-type-detection)
+  - [7. Entry Validation](#7-entry-validation)
+  - [8. Server-Specific Attributes](#8-server-specific-attributes)
+- [Entry Conversion Examples](#entry-conversion-examples)
+  - [OpenLDAP 1.x → OpenLDAP 2.x Migration](#openldap-1x-openldap-2x-migration)
+  - [Oracle OID → Oracle OUD Migration](#oracle-oid-oracle-oud-migration)
+- [Migration Scenarios](#migration-scenarios)
+  - [Scenario 1: Multi-Server Environment](#scenario-1-multi-server-environment)
+  - [Scenario 2: Progressive Migration](#scenario-2-progressive-migration)
+- [Best Practices](#best-practices)
+  - [1. Always Detect Server Type](#1-always-detect-server-type)
+  - [2. Validate After Conversion](#2-validate-after-conversion)
+  - [3. Use Server Capabilities](#3-use-server-capabilities)
+  - [4. Handle Quirks Gracefully](#4-handle-quirks-gracefully)
+- [Troubleshooting](#troubleshooting)
+  - [Server Detection Issues](#server-detection-issues)
+  - [Conversion Failures](#conversion-failures)
+  - [ACL Translation Issues](#acl-translation-issues)
+- [Contributing](#contributing)
 <!-- TOC END -->
 
 **flext-ldap** now provides complete universal LDAP support,

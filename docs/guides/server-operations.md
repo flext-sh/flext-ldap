@@ -2,56 +2,56 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- ## 🎯 Overview
-  - **Available Implementations**
-- ## 📦 Importing Server Operations
-- ## 🔧 OpenLDAP 2.x Operations
-  - **Features**
-  - **Basic Usage**
-  - **ACL Operations**
-  - **Entry Operations**
-  - **Paged Search**
-- ## 🔧 OpenLDAP 1.x Operations
-  - **Features**
-  - **Key Differences**
-- ## 🔧 Oracle OID Operations
-  - **Features**
-  - **Basic Usage**
-  - **Oracle OID ACLs**
-  - **Oracle-Specific Features**
-- ## 🔧 Oracle OUD Operations
-  - **Features**
-  - **Basic Usage**
-  - **ds-privilege-name ACLs**
-  - **OUD-Specific Features**
-- ## 🔧 Active Directory Operations (Stub)
-  - **Status**
-  - **Planned Features**
-  - **Current Usage**
-  - **Contributing AD Implementation**
-- ## 🔧 Generic Server Operations
-  - **Purpose**
-  - **Features**
-  - **Usage**
-  - **Limitations**
-- ## 🔄 Entry Adapter Integration
-- ## 🔍 Quirks Detection
-- ## 📊 Server Comparison
-  - **Connection Features**
-  - **Schema Operations**
-  - **ACL Features**
-  - **Search Features**
-- ## 🎯 Best Practices
-  - **1. Use Server Detection**
-  - **2. Handle Errors Explicitly**
-  - **3. Use Entry Adapter**
-  - **4. Server-Specific Normalization**
-  - **5. Connection Management**
-- ## 🔧 Troubleshooting
-  - **Common Issues**
-- ## 📚 Additional Resources
-- **Last Updated**: 2025-01-08
+- [Table of Contents](#table-of-contents)
+- [## 🎯 Overview](#-overview)
+  - [**Available Implementations**](#available-implementations)
+- [## 📦 Importing Server Operations](#-importing-server-operations)
+- [## 🔧 OpenLDAP 2.x Operations](#-openldap-2x-operations)
+  - [**Features**](#features)
+  - [**Basic Usage**](#basic-usage)
+  - [**ACL Operations**](#acl-operations)
+  - [**Entry Operations**](#entry-operations)
+  - [**Paged Search**](#paged-search)
+- [## 🔧 OpenLDAP 1.x Operations](#-openldap-1x-operations)
+  - [**Features**](#features)
+  - [**Key Differences**](#key-differences)
+- [## 🔧 Oracle OID Operations](#-oracle-oid-operations)
+  - [**Features**](#features)
+  - [**Basic Usage**](#basic-usage)
+  - [**Oracle OID ACLs**](#oracle-oid-acls)
+  - [**Oracle-Specific Features**](#oracle-specific-features)
+- [## 🔧 Oracle OUD Operations](#-oracle-oud-operations)
+  - [**Features**](#features)
+  - [**Basic Usage**](#basic-usage)
+  - [**ds-privilege-name ACLs**](#ds-privilege-name-acls)
+  - [**OUD-Specific Features**](#oud-specific-features)
+- [## 🔧 Active Directory Operations (Stub)](#-active-directory-operations-stub)
+  - [**Status**](#status)
+  - [**Planned Features**](#planned-features)
+  - [**Current Usage**](#current-usage)
+  - [**Contributing AD Implementation**](#contributing-ad-implementation)
+- [## 🔧 Generic Server Operations](#-generic-server-operations)
+  - [**Purpose**](#purpose)
+  - [**Features**](#features)
+  - [**Usage**](#usage)
+  - [**Limitations**](#limitations)
+- [## 🔄 Entry Adapter Integration](#-entry-adapter-integration)
+- [## 🔍 Quirks Detection](#-quirks-detection)
+- [## 📊 Server Comparison](#-server-comparison)
+  - [**Connection Features**](#connection-features)
+  - [**Schema Operations**](#schema-operations)
+  - [**ACL Features**](#acl-features)
+  - [**Search Features**](#search-features)
+- [## 🎯 Best Practices](#-best-practices)
+  - [**1. Use Server Detection**](#1-use-server-detection)
+  - [**2. Handle Errors Explicitly**](#2-handle-errors-explicitly)
+  - [**3. Use Entry Adapter**](#3-use-entry-adapter)
+  - [**4. Server-Specific Normalization**](#4-server-specific-normalization)
+  - [**5. Connection Management**](#5-connection-management)
+- [## 🔧 Troubleshooting](#-troubleshooting)
+  - [**Common Issues**](#common-issues)
+- [## 📚 Additional Resources](#-additional-resources)
+- [**Last Updated**: 2025-01-08](#last-updated-2025-01-08)
 <!-- TOC END -->
 
 ## Table of Contents

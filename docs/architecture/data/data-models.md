@@ -2,7 +2,7 @@
 
 
 <!-- TOC START -->
-- 🏗️ Domain Model Overview
+- [🏗️ Domain Model Overview](#-domain-model-overview)
 <!-- TOC END -->
 
 **Domain Data Structures and Relationships**

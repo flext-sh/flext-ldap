@@ -2,26 +2,26 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- 🎯 System Context Overview
-- 📋 Context Description
-  - **Primary Users**
-  - **External Systems**
-  - **System Responsibilities**
-- 🔄 System Interactions
-  - **Primary Interaction Patterns**
-- 🎯 System Qualities
-  - **Functional Requirements**
-  - **Quality Requirements**
-- 🚨 System Constraints
-  - **Technical Constraints**
-  - **Business Constraints**
-  - **Operational Constraints**
-- 📊 System Metrics
-  - **Current Status (Version 0.9.9)**
-  - **Performance Benchmarks**
-  - **Quality Metrics**
-- 🔗 Related Documentation
+- [Table of Contents](#table-of-contents)
+- [🎯 System Context Overview](#-system-context-overview)
+- [📋 Context Description](#-context-description)
+  - [**Primary Users**](#primary-users)
+  - [**External Systems**](#external-systems)
+  - [**System Responsibilities**](#system-responsibilities)
+- [🔄 System Interactions](#-system-interactions)
+  - [**Primary Interaction Patterns**](#primary-interaction-patterns)
+- [🎯 System Qualities](#-system-qualities)
+  - [**Functional Requirements**](#functional-requirements)
+  - [**Quality Requirements**](#quality-requirements)
+- [🚨 System Constraints](#-system-constraints)
+  - [**Technical Constraints**](#technical-constraints)
+  - [**Business Constraints**](#business-constraints)
+  - [**Operational Constraints**](#operational-constraints)
+- [📊 System Metrics](#-system-metrics)
+  - [**Current Status (Version 0.9.9)**](#current-status-version-099)
+  - [**Performance Benchmarks**](#performance-benchmarks)
+  - [**Quality Metrics**](#quality-metrics)
+- [🔗 Related Documentation](#-related-documentation)
 <!-- TOC END -->
 
 ## Table of Contents

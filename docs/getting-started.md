@@ -2,35 +2,35 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- Prerequisites
-  - **System Requirements**
-  - **LDAP Server Requirements**
-- Installation
-  - **Production Installation**
-  - **Development Installation**
-  - **Verify Installation**
-- Configuration
-  - **Environment Variables**
-  - **Configuration File**
-- First Steps
-  - **Basic Connection Test**
-  - **Simple Directory Search**
-  - **User Authentication**
-- Universal LDAP Interface
-  - **Server-Specific Operations**
-  - **Entry Conversion (ldap3 ↔ FlextLdif)**
-  - **Schema Discovery**
-  - **ACL Management**
-  - **Paged Search**
-- Development Environment
-  - **Test LDAP Server Setup**
-  - **Run Tests**
-  - **Development Workflow**
-- Next Steps
-- Troubleshooting
-  - **Common Issues**
-- Related Documentation
+- [Table of Contents](#table-of-contents)
+- [Prerequisites](#prerequisites)
+  - [**System Requirements**](#system-requirements)
+  - [**LDAP Server Requirements**](#ldap-server-requirements)
+- [Installation](#installation)
+  - [**Production Installation**](#production-installation)
+  - [**Development Installation**](#development-installation)
+  - [**Verify Installation**](#verify-installation)
+- [Configuration](#configuration)
+  - [**Environment Variables**](#environment-variables)
+  - [**Configuration File**](#configuration-file)
+- [First Steps](#first-steps)
+  - [**Basic Connection Test**](#basic-connection-test)
+  - [**Simple Directory Search**](#simple-directory-search)
+  - [**User Authentication**](#user-authentication)
+- [Universal LDAP Interface](#universal-ldap-interface)
+  - [**Server-Specific Operations**](#server-specific-operations)
+  - [**Entry Conversion (ldap3 ↔ FlextLdif)**](#entry-conversion-ldap3-flextldif)
+  - [**Schema Discovery**](#schema-discovery)
+  - [**ACL Management**](#acl-management)
+  - [**Paged Search**](#paged-search)
+- [Development Environment](#development-environment)
+  - [**Test LDAP Server Setup**](#test-ldap-server-setup)
+  - [**Run Tests**](#run-tests)
+  - [**Development Workflow**](#development-workflow)
+- [Next Steps](#next-steps)
+- [Troubleshooting](#troubleshooting)
+  - [**Common Issues**](#common-issues)
+- [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
 ## Table of Contents

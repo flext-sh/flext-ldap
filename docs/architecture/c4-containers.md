@@ -2,15 +2,15 @@
 
 
 <!-- TOC START -->
-- Table of Contents
-- 🏗️ Container Architecture Overview
-- 📦 Container Descriptions
-- 🔄 Container Communication Patterns
-- 🏗️ Technology Choices
-- 🚀 Deployment Considerations
-- 📊 Performance Characteristics
-- 🔒 Security Considerations
-- 🔗 Related Documentation
+- [Table of Contents](#table-of-contents)
+- [🏗️ Container Architecture Overview](#-container-architecture-overview)
+- [📦 Container Descriptions](#-container-descriptions)
+- [🔄 Container Communication Patterns](#-container-communication-patterns)
+- [🏗️ Technology Choices](#-technology-choices)
+- [🚀 Deployment Considerations](#-deployment-considerations)
+- [📊 Performance Characteristics](#-performance-characteristics)
+- [🔒 Security Considerations](#-security-considerations)
+- [🔗 Related Documentation](#-related-documentation)
 <!-- TOC END -->
 
 ## Table of Contents

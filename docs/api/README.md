@@ -2,19 +2,19 @@
 
 
 <!-- TOC START -->
-- Overview
-- Public API
-  - Primary Entry Point
-  - Core Modules
-  - Server Operations
-- Quick Reference
-  - Import Patterns
-  - Common Operations
-- API Stability
-  - Stable (Public API)
-  - Internal (Subject to Change)
-- Return Types
-- Related Documentation
+- [Overview](#overview)
+- [Public API](#public-api)
+  - [Primary Entry Point](#primary-entry-point)
+  - [Core Modules](#core-modules)
+  - [Server Operations](#server-operations)
+- [Quick Reference](#quick-reference)
+  - [Import Patterns](#import-patterns)
+  - [Common Operations](#common-operations)
+- [API Stability](#api-stability)
+  - [Stable (Public API)](#stable-public-api)
+  - [Internal (Subject to Change)](#internal-subject-to-change)
+- [Return Types](#return-types)
+- [Related Documentation](#related-documentation)
 <!-- TOC END -->
 
 **Version**: 1.0 (v0.10.0)
