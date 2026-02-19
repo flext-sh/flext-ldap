@@ -1,5 +1,10 @@
 # 11-risks: Risks and Technical Debt
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Arc42 Section 11-risks**
 
 [Content for Risks and Technical Debt would go here]

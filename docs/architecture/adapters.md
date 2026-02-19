@@ -1,5 +1,12 @@
 # Adapter Layer
 
+
+<!-- TOC START -->
+- [Ldap3Adapter](#ldap3adapter)
+- [FlextLdapEntryAdapter](#flextldapentryadapter)
+- [Why Adapters Matter](#why-adapters-matter)
+<!-- TOC END -->
+
 Adapters isolate external libraries so that services remain focused on domain
 logic. flext-ldap ships two adapters that wrap `ldap3` and normalize entries to
 `flext-ldif` models.

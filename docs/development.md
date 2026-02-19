@@ -1,5 +1,42 @@
 # Development Guide
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Development Environment Setup](#development-environment-setup)
+  - [Prerequisites](#prerequisites)
+  - [Initial Setup](#initial-setup)
+  - [Development Tools Installation](#development-tools-installation)
+- [Development Workflow](#development-workflow)
+  - [Daily Development Commands](#daily-development-commands)
+  - [Code Formatting](#code-formatting)
+  - [Type Checking](#type-checking)
+- [Testing Strategy](#testing-strategy)
+  - [Test Categories](#test-categories)
+  - [Docker LDAP Test Server](#docker-ldap-test-server)
+  - [Coverage Analysis](#coverage-analysis)
+- [Architecture Guidelines](#architecture-guidelines)
+  - [Clean Architecture Layers](#clean-architecture-layers)
+  - [Coding Standards](#coding-standards)
+- [Code Quality Standards](#code-quality-standards)
+  - [Type Safety Requirements](#type-safety-requirements)
+  - [Import Organization](#import-organization)
+- [Testing Guidelines](#testing-guidelines)
+  - [Unit Test Structure](#unit-test-structure)
+  - [Integration Test Structure](#integration-test-structure)
+  - [Test Fixtures](#test-fixtures)
+- [Documentation Standards](#documentation-standards)
+  - [Code Documentation](#code-documentation)
+  - [API Documentation](#api-documentation)
+- [Performance Guidelines](#performance-guidelines)
+  - [Connection Management](#connection-management)
+  - [Search Optimization](#search-optimization)
+  - [Best Practices](#best-practices)
+- [Contribution Guidelines](#contribution-guidelines)
+  - [Pull Request Process](#pull-request-process)
+  - [Code Review Checklist](#code-review-checklist)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - Development Guide

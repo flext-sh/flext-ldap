@@ -1,5 +1,10 @@
 # 02-constraints: Architecture Constraints
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Arc42 Section 02-constraints**
 
 [Content for Architecture Constraints would go here]

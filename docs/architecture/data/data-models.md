@@ -1,5 +1,10 @@
 # Data Architecture: Domain Models
 
+
+<!-- TOC START -->
+- [🏗️ Domain Model Overview](#-domain-model-overview)
+<!-- TOC END -->
+
 **Domain Data Structures and Relationships**
 
 This document describes the core data models, entities, and relationships within the flext-ldap domain.

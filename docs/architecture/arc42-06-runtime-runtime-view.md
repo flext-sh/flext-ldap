@@ -1,5 +1,10 @@
 # 06-runtime: Runtime View
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Arc42 Section 06-runtime**
 
 [Content for Runtime View would go here]

@@ -1,5 +1,41 @@
 # API Reference
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [🚀 Main API](#-main-api)
+  - [`get_flext_ldap_api(config=None)`](#getflextldapapiconfignone)
+- [🏗️ FlextLdapClients](#-flextldapclients)
+  - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#searchentriesrequest-searchrequest-flextresultlistldapentry)
+  - [`authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`](#authenticateuserusername-str-password-str-flextresultflextldapuser)
+  - [`create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`](#createuserrequest-createuserrequest-flextresultflextldapuser)
+  - [`test_connection() -> FlextResult[str]`](#testconnection-flextresultstr)
+- [📊 Domain Entities](#-domain-entities)
+  - [FlextLdapEntities](#flextldapentities)
+- [🎯 Value Objects](#-value-objects)
+  - [FlextLdapModels.ValueObjects](#flextldapmodelsvalueobjects)
+- [⚙️ Configuration](#-configuration)
+  - [FlextLdapSettings](#flextldapsettings)
+- [🔧 Utilities](#-utilities)
+  - [FlextLdapTypeGuards](#flextldaptypeguards)
+  - [FlextLdapConstants](#flextldapconstants)
+- [🚨 Exceptions](#-exceptions)
+  - [FlextExceptions](#flextexceptions)
+- [🔄 FlextResult Usage](#-flextresult-usage)
+  - [Success Handling](#success-handling)
+  - [Error Handling](#error-handling)
+  - [Chaining Operations](#chaining-operations)
+- [🔄 Universal LDAP Interface](#-universal-ldap-interface)
+  - [FlextLdapEntryAdapter](#flextldapentryadapter)
+  - [FlextLdapQuirksAdapter](#flextldapquirksadapter)
+- [🏗️ Server Operations](#-server-operations)
+  - [BaseServerOperations](#baseserveroperations)
+  - [Server-Specific Implementations](#server-specific-implementations)
+- [📝 Type Annotations](#-type-annotations)
+- [🔗 Complete Usage Example](#-complete-usage-example)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [API Reference](#api-reference)

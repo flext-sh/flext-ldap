@@ -1,5 +1,10 @@
 # 09-decisions: Architecture Decisions
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Arc42 Section 09-decisions**
 
 [Content for Architecture Decisions would go here]

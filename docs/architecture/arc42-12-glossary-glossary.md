@@ -1,5 +1,10 @@
 # 12-glossary: Glossary
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Arc42 Section 12-glossary**
 
 [Content for Glossary would go here]

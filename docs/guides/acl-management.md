@@ -1,5 +1,37 @@
 # ACL Management System
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Basic Usage](#basic-usage)
+  - [Converting ACL Formats](#converting-acl-formats)
+  - [Batch Conversion](#batch-conversion)
+- [ACL Format Examples](#acl-format-examples)
+  - [OpenLDAP Format](#openldap-format)
+  - [Oracle Directory Format](#oracle-directory-format)
+  - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds-apache-ds)
+- [Creating Custom ACLs](#creating-custom-acls)
+  - [Using the Unified Model](#using-the-unified-model)
+- [ACL Validation](#acl-validation)
+- [Migration Scenarios](#migration-scenarios)
+  - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
+  - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
+- [Advanced Features](#advanced-features)
+  - [ACL with Conditions](#acl-with-conditions)
+  - [Permission Mapping](#permission-mapping)
+  - [Subject Types](#subject-types)
+- [Error Handling](#error-handling)
+- [Integration with client-a OUD Migration](#integration-with-client-a-oud-migration)
+- [Best Practices](#best-practices)
+- [API Reference](#api-reference)
+  - [FlextLdap ACL Methods](#flextldap-acl-methods)
+  - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [ACL Management System](#acl-management-system)

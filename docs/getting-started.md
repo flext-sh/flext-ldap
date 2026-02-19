@@ -1,5 +1,38 @@
 # Getting Started with FLEXT-LDAP
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Prerequisites](#prerequisites)
+  - [**System Requirements**](#system-requirements)
+  - [**LDAP Server Requirements**](#ldap-server-requirements)
+- [Installation](#installation)
+  - [**Production Installation**](#production-installation)
+  - [**Development Installation**](#development-installation)
+  - [**Verify Installation**](#verify-installation)
+- [Configuration](#configuration)
+  - [**Environment Variables**](#environment-variables)
+  - [**Configuration File**](#configuration-file)
+- [First Steps](#first-steps)
+  - [**Basic Connection Test**](#basic-connection-test)
+  - [**Simple Directory Search**](#simple-directory-search)
+  - [**User Authentication**](#user-authentication)
+- [Universal LDAP Interface](#universal-ldap-interface)
+  - [**Server-Specific Operations**](#server-specific-operations)
+  - [**Entry Conversion (ldap3 ↔ FlextLdif)**](#entry-conversion-ldap3-flextldif)
+  - [**Schema Discovery**](#schema-discovery)
+  - [**ACL Management**](#acl-management)
+  - [**Paged Search**](#paged-search)
+- [Development Environment](#development-environment)
+  - [**Test LDAP Server Setup**](#test-ldap-server-setup)
+  - [**Run Tests**](#run-tests)
+  - [**Development Workflow**](#development-workflow)
+- [Next Steps](#next-steps)
+- [Troubleshooting](#troubleshooting)
+  - [**Common Issues**](#common-issues)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [Getting Started with FLEXT-LDAP](#getting-started-with-flext-ldap)

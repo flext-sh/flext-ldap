@@ -1,5 +1,15 @@
 # Service Layer
 
+
+<!-- TOC START -->
+- [Services](#services)
+  - [Connection](#connection)
+  - [Operations](#operations)
+  - [Synchronization](#synchronization)
+  - [Server Detection](#server-detection)
+- [Collaboration Pattern](#collaboration-pattern)
+<!-- TOC END -->
+
 The service layer contains the composable building blocks that power the
 `FlextLdap` facade. Each service is focused on a single responsibility and uses
 `FlextResult` to make success and failure explicit.

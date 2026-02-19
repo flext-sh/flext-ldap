@@ -1,5 +1,38 @@
 # Troubleshooting Guide
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Connection Issues](#connection-issues)
+  - [Connection Refused Errors](#connection-refused-errors)
+  - [SSL/TLS Connection Errors](#ssltls-connection-errors)
+- [Authentication Issues](#authentication-issues)
+  - [Invalid Credentials](#invalid-credentials)
+  - [DN Format Issues](#dn-format-issues)
+- [Search and Query Issues](#search-and-query-issues)
+  - [Search Filter Syntax Errors](#search-filter-syntax-errors)
+  - [Search Base DN Not Found](#search-base-dn-not-found)
+- [Performance Issues](#performance-issues)
+  - [Slow Search Operations](#slow-search-operations)
+  - [Connection Pool Exhaustion](#connection-pool-exhaustion)
+- [Configuration Issues](#configuration-issues)
+  - [Environment Variable Problems](#environment-variable-problems)
+  - [Docker Environment Issues](#docker-environment-issues)
+- [Development and Testing Issues](#development-and-testing-issues)
+  - [Import Errors](#import-errors)
+  - [Test Environment Setup](#test-environment-setup)
+- [Error Message Reference](#error-message-reference)
+  - [Common Error Patterns](#common-error-patterns)
+  - [FlextResult Error Handling](#flextresult-error-handling)
+- [Debugging Tools and Techniques](#debugging-tools-and-techniques)
+  - [Enable Debug Logging](#enable-debug-logging)
+  - [Network Debugging](#network-debugging)
+  - [Performance Profiling](#performance-profiling)
+- [Getting Help](#getting-help)
+  - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
+  - [Diagnostic Information Collection](#diagnostic-information-collection)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [Troubleshooting Guide](#troubleshooting-guide)

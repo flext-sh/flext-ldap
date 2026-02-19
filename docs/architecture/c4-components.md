@@ -1,5 +1,10 @@
 # C4 Model: Component Architecture
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Level 3: Component Diagram**
 
 This diagram shows the detailed component structure and interfaces.

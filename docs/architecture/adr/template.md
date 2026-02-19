@@ -1,5 +1,18 @@
 # Architecture Decision Record (ADR) Template
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Alternatives Considered](#alternatives-considered)
+- [Implementation Plan](#implementation-plan)
+- [Validation](#validation)
+- [References](#references)
+- [ADR Maintenance](#adr-maintenance)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)

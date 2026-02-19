@@ -1,5 +1,18 @@
 # Architecture Decision Record (ADR) 002-universal-ldap: Universal LDAP Interface
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Alternatives Considered](#alternatives-considered)
+- [Implementation Plan](#implementation-plan)
+- [Validation](#validation)
+- [Consequences](#consequences)
+- [References](#references)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [Architecture Decision Record (ADR) 002-universal-ldap: Universal LDAP Interface](#architecture-decision-record-adr-002-universal-ldap-universal-ldap-interface)

@@ -1,5 +1,34 @@
 # Integration Guide
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
+  - [Core FLEXT Dependencies](#core-flext-dependencies)
+  - [Configuration Management](#configuration-management)
+- [FastAPI Integration](#fastapi-integration)
+  - [API Endpoints with LDAP Authentication](#api-endpoints-with-ldap-authentication)
+- [Django Integration](#django-integration)
+  - [Django Authentication Backend](#django-authentication-backend)
+  - [Django User Sync Management Command](#django-user-sync-management-command)
+- [Flask Integration](#flask-integration)
+  - [Flask Application with LDAP Authentication](#flask-application-with-ldap-authentication)
+- [Docker Integration](#docker-integration)
+  - [Docker Compose Setup](#docker-compose-setup)
+  - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
+- [Kubernetes Integration](#kubernetes-integration)
+  - [Kubernetes Deployment](#kubernetes-deployment)
+- [FlextLdif Integration](#flextldif-integration)
+  - [Entry Format Conversion](#entry-format-conversion)
+  - [LDIF File Processing](#ldif-file-processing)
+  - [Export to LDIF](#export-to-ldif)
+  - [Server Quirks Detection](#server-quirks-detection)
+  - [Universal LDAP Processor](#universal-ldap-processor)
+- [Monitoring and Observability](#monitoring-and-observability)
+  - [Prometheus Metrics](#prometheus-metrics)
+  - [Health Check Endpoints](#health-check-endpoints)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [Integration Guide](#integration-guide)

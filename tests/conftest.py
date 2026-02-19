@@ -29,11 +29,6 @@ from typing import TextIO
 
 import pytest
 from flext_core import FlextLogger, r
-from flext_ldif import FlextLdif
-from flext_ldif.services.parser import FlextLdifParser
-from flext_tests import FlextTestsDocker
-from ldap3 import Connection, Server
-
 from flext_ldap import (
     FlextLdap,
     FlextLdapConnection,
@@ -41,6 +36,10 @@ from flext_ldap import (
     FlextLdapSettings,
     p,
 )
+from flext_ldif import FlextLdif
+from flext_ldif.services.parser import FlextLdifParser
+from flext_tests import FlextTestsDocker
+from ldap3 import Connection, Server
 
 # Import unified test foundation modules
 from . import c, m, t  # Test foundation short aliases (TestsFlextLdap*)
@@ -54,7 +53,7 @@ logger = FlextLogger(__name__)
 
 # FLEXT-LDAP project root (absolute path for consistent workspace_root)
 FLEXT_LDAP_ROOT = Path(__file__).parent.parent.resolve()
-FLEXT_WORKSPACE_ROOT = FLEXT_LDAP_ROOT.parent  # /home/marlonsc/flext
+FLEXT_WORKSPACE_ROOT = FLEXT_LDAP_ROOT.parent
 
 # Container configuration (matches SHARED_CONTAINERS in FlextTestsDocker)
 LDAP_CONTAINER_NAME = "flext-openldap-test"

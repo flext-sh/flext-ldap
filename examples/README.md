@@ -1,5 +1,47 @@
 # FLEXT-LDAP Examples
 
+
+<!-- TOC START -->
+- [📚 Overview](#-overview)
+- [🚀 Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Environment Variables](#environment-variables)
+  - [Running Examples](#running-examples)
+- [📖 Example Catalog](#-example-catalog)
+  - [01. Basic Operations (`01_basic_operations.py`)](#01-basic-operations-01basicoperationspy)
+  - [02. Search Operations (`02_search_operations.py`)](#02-search-operations-02searchoperationspy)
+  - [03. Authentication Operations (`03_authentication.py`)](#03-authentication-operations-03authenticationpy)
+  - [04. LDIF Operations (`04_ldif_operations.py`)](#04-ldif-operations-04ldifoperationspy)
+  - [05. Universal Operations (`05_universal_operations.py`)](#05-universal-operations-05universaloperationspy)
+  - [06. Validation Patterns (`06_validation_patterns.py`)](#06-validation-patterns-06validationpatternspy)
+  - [07. Advanced Patterns (`07_advanced_patterns.py`)](#07-advanced-patterns-07advancedpatternspy)
+  - [08. ACL Operations (`08_acl_operations.py`)](#08-acl-operations-08acloperationspy)
+  - [09. Schema Operations (`09_schema_operations.py`)](#09-schema-operations-09schemaoperationspy)
+  - [10. Connection Management (`10_connection_management.py`)](#10-connection-management-10connectionmanagementpy)
+  - [11. Repository Patterns (`11_repository_patterns.py`)](#11-repository-patterns-11repositorypatternspy)
+  - [12. Services (`12_domain_services.py`)](#12-services-12domainservicespy)
+- [🧪 Comprehensive Validation Examples](#-comprehensive-validation-examples)
+  - [Test Data Generator (`test_data_generator.py`)](#test-data-generator-testdatageneratorpy)
+  - [Validation Helpers (`validation_helpers.py`)](#validation-helpers-validationhelperspy)
+  - [99. Comprehensive OpenLDAP Validation (`99_comprehensive_openldap_validation.py`)](#99-comprehensive-openldap-validation-99comprehensiveopenldapvalidationpy)
+  - [99. Comprehensive OUD Validation (`99_comprehensive_oud_validation.py`)](#99-comprehensive-oud-validation-99comprehensiveoudvalidationpy)
+  - [Validation Best Practices](#validation-best-practices)
+- [🎯 Module Coverage Matrix](#-module-coverage-matrix)
+- [🔧 Common Patterns](#-common-patterns)
+  - [Pattern 1: Basic FlextLdap Usage](#pattern-1-basic-flextldap-usage)
+  - [Pattern 2: Context Manager](#pattern-2-context-manager)
+  - [Pattern 3: FlextResult Error Handling](#pattern-3-flextresult-error-handling)
+  - [Pattern 4: Validation Before Operations](#pattern-4-validation-before-operations)
+- [🐛 Troubleshooting](#-troubleshooting)
+  - [Connection Issues](#connection-issues)
+  - [Import Errors](#import-errors)
+  - [Permission Errors](#permission-errors)
+- [📚 Additional Resources](#-additional-resources)
+- [✅ Best Practices](#-best-practices)
+- [🚀 Next Steps](#-next-steps)
+- [📝 License](#-license)
+<!-- TOC END -->
+
 **12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **FlextLdap API** (api.py) as the primary interface.
 
 ## 📚 Overview

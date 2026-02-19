@@ -1,9 +1,10 @@
 # flext-ldap - LDAP Operations Library
 PROJECT_NAME := flext-ldap
-COV_DIR := flext_ldap
-MIN_COVERAGE := 70
-
+ifneq ("$(wildcard ../base.mk)", "")
 include ../base.mk
+else
+include base.mk
+endif
 
 # === PROJECT-SPECIFIC TARGETS ===
 .PHONY: ldap-start ldap-stop ldap-restart ldap-health ldap-reset
