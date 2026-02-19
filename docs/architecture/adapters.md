@@ -2,9 +2,9 @@
 
 
 <!-- TOC START -->
-- [Ldap3Adapter](#ldap3adapter)
-- [FlextLdapEntryAdapter](#flextldapentryadapter)
-- [Why Adapters Matter](#why-adapters-matter)
+- Ldap3Adapter
+- FlextLdapEntryAdapter
+- Why Adapters Matter
 <!-- TOC END -->
 
 Adapters isolate external libraries so that services remain focused on domain

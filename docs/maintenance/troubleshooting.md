@@ -2,61 +2,61 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Quick Diagnosis](#quick-diagnosis)
-  - [System Health Check](#system-health-check)
-  - [Configuration Validation](#configuration-validation)
-  - [Dependency Check](#dependency-check)
-- [Common Issues](#common-issues)
-  - [Import Errors](#import-errors)
-  - [Permission Errors](#permission-errors)
-  - [Configuration File Errors](#configuration-file-errors)
-  - [Path Resolution Issues](#path-resolution-issues)
-- [Component-Specific Problems](#component-specific-problems)
-  - [Content Audit Issues](#content-audit-issues)
-  - [Link Validation Problems](#link-validation-problems)
-  - [Style Validation Errors](#style-validation-errors)
-  - [Content Optimization Issues](#content-optimization-issues)
-  - [Reporting System Problems](#reporting-system-problems)
-  - [Synchronization Issues](#synchronization-issues)
-- [Performance Issues](#performance-issues)
-  - [Memory Usage](#memory-usage)
-  - [Slow Execution](#slow-execution)
-  - [Disk Space Issues](#disk-space-issues)
-- [Configuration Problems](#configuration-problems)
-  - [Invalid Configuration Values](#invalid-configuration-values)
-  - [Environment-Specific Settings](#environment-specific-settings)
-- [Integration Issues](#integration-issues)
-  - [CI/CD Pipeline Failures](#cicd-pipeline-failures)
-  - [IDE Integration Problems](#ide-integration-problems)
-  - [Version Control Conflicts](#version-control-conflicts)
-- [Recovery Procedures](#recovery-procedures)
-  - [Complete System Reset](#complete-system-reset)
-  - [Component-Specific Recovery](#component-specific-recovery)
-  - [Data Recovery](#data-recovery)
-- [Debug Tools](#debug-tools)
-  - [Enable Debug Logging](#enable-debug-logging)
-  - [Performance Profiling](#performance-profiling)
-  - [Memory Monitoring](#memory-monitoring)
-  - [Network Debugging](#network-debugging)
-  - [File System Debugging](#file-system-debugging)
-- [Advanced Troubleshooting](#advanced-troubleshooting)
-  - [Custom Diagnostic Scripts](#custom-diagnostic-scripts)
-  - [Automated Health Checks](#automated-health-checks)
+- Table of Contents
+- Quick Diagnosis
+  - System Health Check
+  - Configuration Validation
+  - Dependency Check
+- Common Issues
+  - Import Errors
+  - Permission Errors
+  - Configuration File Errors
+  - Path Resolution Issues
+- Component-Specific Problems
+  - Content Audit Issues
+  - Link Validation Problems
+  - Style Validation Errors
+  - Content Optimization Issues
+  - Reporting System Problems
+  - Synchronization Issues
+- Performance Issues
+  - Memory Usage
+  - Slow Execution
+  - Disk Space Issues
+- Configuration Problems
+  - Invalid Configuration Values
+  - Environment-Specific Settings
+- Integration Issues
+  - CI/CD Pipeline Failures
+  - IDE Integration Problems
+  - Version Control Conflicts
+- Recovery Procedures
+  - Complete System Reset
+  - Component-Specific Recovery
+  - Data Recovery
+- Debug Tools
+  - Enable Debug Logging
+  - Performance Profiling
+  - Memory Monitoring
+  - Network Debugging
+  - File System Debugging
+- Advanced Troubleshooting
+  - Custom Diagnostic Scripts
+  - Automated Health Checks
 <!-- TOC END -->
 
 **Common issues, diagnostics, and solutions for the Documentation Maintenance System**
 
 ## Table of Contents
 
-- [Quick Diagnosis](#quick-diagnosis)
-- [Common Issues](#common-issues)
-- [Component-Specific Problems](#component-specific-problems)
-- [Performance Issues](#performance-issues)
-- [Configuration Problems](#configuration-problems)
-- [Integration Issues](#integration-issues)
-- [Recovery Procedures](#recovery-procedures)
-- [Debug Tools](#debug-tools)
+- Quick Diagnosis
+- Common Issues
+- Component-Specific Problems
+- Performance Issues
+- Configuration Problems
+- Integration Issues
+- Recovery Procedures
+- Debug Tools
 
 ## Quick Diagnosis
 

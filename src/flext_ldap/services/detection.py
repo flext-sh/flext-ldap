@@ -30,11 +30,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
-from typing import Literal, ParamSpec
+from typing import ParamSpec
 
-from flext_core import FlextRuntime, r
-from ldap3 import Connection
+from flext_core import r
+from ldap3 import BASE, Connection
 
 from flext_ldap.base import s
 from flext_ldap.constants import c
@@ -114,12 +115,6 @@ class FlextLdapServerDetector(s[str]):
             or error if rootDSE query fails.
 
         """
-        self.logger.debug(
-            "Detecting server type from connection",
-            operation=c.Ldap.LdapOperationNames.DETECT_FROM_CONNECTION,
-            connection_bound=connection.bound,
-        )
-
         root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
         if root_dse_result.is_failure:
             return r[str].fail(
@@ -187,14 +182,16 @@ class FlextLdapServerDetector(s[str]):
             or error if rootDSE query fails.
 
         """
-        # ldap3 expects Literal["BASE", "LEVEL", "SUBTREE"] - use StrEnum value directly
-        search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = (
-            "BASE"  # c.Ldap.LiteralTypes.Ldap3ScopeLiteral
-        )
-        if not connection.search(
+        search_method = getattr(connection, "search", None)
+        if not callable(search_method):
+            return r[t.Ldap.Operation.AttributeDict].fail(
+                "rootDSE query failed: search unavailable"
+            )
+
+        if not search_method(
             search_base="",
             search_filter=str(c.Ldap.Filters.ALL_ENTRIES_FILTER),
-            search_scope=search_scope,
+            search_scope=BASE,
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
             return r[t.Ldap.Operation.AttributeDict].fail(
@@ -441,18 +438,16 @@ class FlextLdapServerDetector(s[str]):
             ("ds389", check_ds389),
         ]
         found: str | None = None
-        logger = FlextRuntime.get_logger(__name__)
         for server_name, check_func in extension_checks:
             try:
                 if check_func(ext_str, context_str):
                     found = server_name
                     break
-            except Exception as e:
-                # Continue if check function raises exception
-                logger.debug(
-                    "Server type check failed",
-                    server_name=server_name,
-                    error=str(e),
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "Server type check failed: %s",
+                    server_name,
+                    exc_info=True,
                 )
                 continue
 

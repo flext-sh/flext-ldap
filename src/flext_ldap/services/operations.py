@@ -35,6 +35,7 @@ from collections.abc import Callable, Sequence
 from typing import TypeGuard
 
 from flext_core import FlextRuntime, FlextSettings, r
+from flext_core.protocols import p as core_p
 from flext_ldif import FlextLdifUtilities
 from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
@@ -48,6 +49,14 @@ from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
 LaxStr = str | bytes | bytearray  # Type alias for lenient string handling
+
+
+def _get_structlog_logger() -> core_p.Log.StructlogLogger | None:
+    """Return structlog logger when runtime logger satisfies the protocol."""
+    logger = FlextRuntime.get_logger(__name__)
+    if isinstance(logger, core_p.Log.StructlogLogger):
+        return logger
+    return None
 
 
 def _is_ldif_entry(obj: object) -> TypeGuard[m.Ldif.Entry]:
@@ -189,7 +198,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_ldif_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> dict[str, Sequence[str]]:
+        ) -> dict[str, list[str]]:
             """Extract attributes from LDIF Entry.
 
             Args:
@@ -214,7 +223,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_protocol_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> dict[str, Sequence[str]]:
+        ) -> dict[str, list[str]]:
             """Extract attributes from EntryProtocol.
 
             Args:
@@ -244,7 +253,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def extract_attributes(
             entry: m.Ldif.Entry,
-        ) -> dict[str, Sequence[str]]:
+        ) -> dict[str, list[str]]:
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
@@ -289,7 +298,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def find_existing_values(
             attr_name: str,
-            existing_attrs: dict[str, Sequence[str]],
+            existing_attrs: dict[str, list[str]],
         ) -> list[str] | None:
             """Find existing attribute values by case-insensitive name.
 
@@ -329,8 +338,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_new_attributes(
-            new_attrs: dict[str, Sequence[str]],
-            existing_attrs: dict[str, Sequence[str]],
+            new_attrs: dict[str, list[str]],
+            existing_attrs: dict[str, list[str]],
             ignore: frozenset[str],
         ) -> tuple[t.Ldap.Operation.Changes, set[str]]:
             """Process new attributes and detect replacement changes.
@@ -364,8 +373,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Process attributes efficiently
             def process_attr(
                 attr_name: str,
-                new_vals: Sequence[str],
-            ) -> tuple[str, list[tuple[str, list[str]]] | None]:
+                new_vals: list[str],
+            ) -> tuple[str, list[tuple[int, list[str]]] | None]:
                 """Process single attribute and return change if needed."""
                 # Use u.normalize for consistent case handling
                 # DSL pattern: builder for string normalization
@@ -408,7 +417,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 return (attr_name, None)
 
             # Process all attributes
-            processed_dict: dict[str, list[tuple[str, list[str]]] | None] = {}
+            processed_dict: dict[str, list[tuple[int, list[str]]] | None] = {}
             logger = logging.getLogger(__name__)
             for attr_name, new_vals in u.mapper().to_dict(filtered_attrs).items():
                 try:
@@ -423,7 +432,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     )
                     continue
             # Filter None values and update changes dict
-            processed_changes: dict[str, list[tuple[str, list[str]]]] = {
+            processed_changes: dict[str, list[tuple[int, list[str]]]] = {
                 k: v
                 for k, v in u.mapper().to_dict(processed_dict).items()
                 if v is not None
@@ -434,7 +443,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_deleted_attributes(
-            existing_attrs: dict[str, Sequence[str]],
+            existing_attrs: dict[str, list[str]],
             ignore: frozenset[str],
             processed: set[str],
         ) -> t.Ldap.Operation.Changes:
@@ -463,7 +472,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 if k.lower() not in ignore_lower and k.lower() not in processed_lower:
                     filtered_attrs[k] = [str(item) for item in v]
             # Transform to MODIFY_DELETE operations
-            changes_dict: dict[str, list[tuple[str, list[str]]]] = {
+            changes_dict: dict[str, list[tuple[int, list[str]]]] = {
                 k: [(MODIFY_DELETE, [])] for k in filtered_attrs
             }
 
@@ -561,7 +570,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
             )
             # Merge dictionaries (override strategy)
-            merged: dict[str, list[tuple[str, list[str]]]] = {}
+            merged: dict[str, list[tuple[int, list[str]]]] = {}
             merged.update(changes)
             merged.update(delete_changes)
             return merged or None
@@ -1336,13 +1345,23 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             stats["failed"] += 1
             entry_dn_sliced = entry_dn[:100] if entry_dn else None
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
-            FlextRuntime.get_logger(__name__).error(
-                "Batch upsert entry failed",
-                entry_index=entry_index,
-                total_entries=total_entries,
-                entry_dn=entry_dn_sliced,
-                error=error_msg,
-            )
+            logger = _get_structlog_logger()
+            if logger is not None:
+                logger.error(
+                    "Batch upsert entry failed",
+                    entry_index=entry_index,
+                    total_entries=total_entries,
+                    entry_dn=entry_dn_sliced,
+                    error=error_msg,
+                )
+            else:
+                logging.getLogger(__name__).error(
+                    "Batch upsert entry failed: entry=%s total=%s dn=%s error=%s",
+                    entry_index,
+                    total_entries,
+                    entry_dn_sliced,
+                    error_msg,
+                )
 
     def _invoke_batch_progress_callback(
         self,
@@ -1361,12 +1380,21 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             callback(entry_index, total, entry_dn or "", callback_stats)
         except (RuntimeError, TypeError, ValueError) as e:
-            FlextRuntime.get_logger(__name__).warning(
-                "Progress callback failed",
-                operation=c.Ldap.LdapOperationNames.SYNC,
-                entry_index=entry_index,
-                error=str(e),
-            )
+            logger = _get_structlog_logger()
+            if logger is not None:
+                logger.warning(
+                    "Progress callback failed",
+                    operation=c.Ldap.LdapOperationNames.SYNC,
+                    entry_index=entry_index,
+                    error=str(e),
+                )
+            else:
+                logging.getLogger(__name__).warning(
+                    "Progress callback failed: operation=%s entry=%s error=%s",
+                    c.Ldap.LdapOperationNames.SYNC,
+                    entry_index,
+                    e,
+                )
 
     def batch_upsert(
         self,
@@ -1452,11 +1480,19 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     )
             except Exception:
                 entry_idx = idx_entry[0] if isinstance(idx_entry, tuple) else None
-                FlextRuntime.get_logger(__name__).debug(
-                    "Failed to process entry in batch, skipping (entry_index=%s)",
-                    entry_idx,
-                    exc_info=True,
-                )
+                logger = _get_structlog_logger()
+                if logger is not None:
+                    logger.debug(
+                        "Failed to process entry in batch, skipping",
+                        entry_index=entry_idx,
+                        exc_info=True,
+                    )
+                else:
+                    logging.getLogger(__name__).debug(
+                        "Failed to process entry in batch, skipping (entry_index=%s)",
+                        entry_idx,
+                        exc_info=True,
+                    )
                 continue
 
         # Check for stop_on_error condition (early exit detected)
@@ -1473,14 +1509,24 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             skipped=stats_builder["skipped"],
         )
 
-        FlextRuntime.get_logger(__name__).info(
-            "Batch upsert completed",
-            operation=c.Ldap.LdapOperationNames.BATCH_UPSERT,
-            total_entries=total_entries,
-            synced=stats_builder["synced"],
-            failed=stats_builder["failed"],
-            skipped=stats_builder["skipped"],
-        )
+        logger = _get_structlog_logger()
+        if logger is not None:
+            logger.info(
+                "Batch upsert completed",
+                operation=c.Ldap.LdapOperationNames.BATCH_UPSERT,
+                total_entries=total_entries,
+                synced=stats_builder["synced"],
+                failed=stats_builder["failed"],
+                skipped=stats_builder["skipped"],
+            )
+        else:
+            logging.getLogger(__name__).info(
+                "Batch upsert completed: total=%s synced=%s failed=%s skipped=%s",
+                total_entries,
+                stats_builder["synced"],
+                stats_builder["failed"],
+                stats_builder["skipped"],
+            )
 
         if stats_builder["synced"] == 0 and stats_builder["failed"] > 0:
             return r[m.Ldap.LdapBatchStats].fail(

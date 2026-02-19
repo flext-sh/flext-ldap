@@ -2,36 +2,36 @@
 
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [Table of Contents](#table-of-contents)
-  - [Getting Started](#getting-started)
-  - [Development Practices](#development-practices)
-  - [Contributing](#contributing)
-- [Quick Start](#quick-start)
-  - [Initial Setup](#initial-setup)
-  - [Development Cycle](#development-cycle)
-- [Quality Standards](#quality-standards)
-  - [ZERO TOLERANCE](#zero-tolerance)
-  - [Code Quality Rules](#code-quality-rules)
-- [Testing](#testing)
-  - [Test Categories](#test-categories)
-  - [Docker Test Server](#docker-test-server)
-- [Essential Commands](#essential-commands)
-- [FLEXT Patterns](#flext-patterns)
-  - [Railway-Oriented Programming](#railway-oriented-programming)
-  - [Use x](#use-x)
-  - [Pydantic v2 Models](#pydantic-v2-models)
-- [Git Workflow](#git-workflow)
-  - [Branch Naming](#branch-naming)
-  - [Commit Messages](#commit-messages)
-- [Pull Request Checklist](#pull-request-checklist)
-- [Getting Help](#getting-help)
-  - [Resources](#resources)
-  - [Communication](#communication)
-- [Best Practices](#best-practices)
-  - [DO ✅](#do-)
-  - [DON'T ❌](#dont-)
-- [Related Documentation](#related-documentation)
+- Overview
+- Table of Contents
+  - Getting Started
+  - Development Practices
+  - Contributing
+- Quick Start
+  - Initial Setup
+  - Development Cycle
+- Quality Standards
+  - ZERO TOLERANCE
+  - Code Quality Rules
+- Testing
+  - Test Categories
+  - Docker Test Server
+- Essential Commands
+- FLEXT Patterns
+  - Railway-Oriented Programming
+  - Use x
+  - Pydantic v2 Models
+- Git Workflow
+  - Branch Naming
+  - Commit Messages
+- Pull Request Checklist
+- Getting Help
+  - Resources
+  - Communication
+- Best Practices
+  - DO ✅
+  - DON'T ❌
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 1.0
@@ -46,21 +46,21 @@ Comprehensive development guides for contributing to flext-ldap, including setup
 
 ### Getting Started
 
-1. **[Setup](setup.md)** - Development environment setup
-2. **[Workflow](workflow.md)** - Development workflow and git process
-3. **[Quality Gates](quality-gates.md)** - ZERO TOLERANCE standards
+1. **Setup** - Development environment setup
+2. **Workflow** - Development workflow and git process
+3. **Quality Gates** - ZERO TOLERANCE standards
 
 ### Development Practices
 
-4. **[Testing Guide](testing.md)** - Unit, integration, E2E testing
-5. **[Code Standards](code-standards.md)** - Style, types, documentation
-6. **[Architecture Guide](architecture-guide.md)** - Clean Architecture patterns
+4. **Testing Guide** - Unit, integration, E2E testing
+5. **Code Standards** - Style, types, documentation
+6. **Architecture Guide** - Clean Architecture patterns
 
 ### Contributing
 
-7. **[Contributing](contributing.md)** - How to contribute
-8. **[Pull Request Guide](pull-requests.md)** - PR process and checklist
-9. **[Release Process](release-process.md)** - Versioning and releases
+7. **Contributing** - How to contribute
+8. **Pull Request Guide** - PR process and checklist
+9. **Release Process** - Versioning and releases
 
 ## Quick Start
 
@@ -251,9 +251,9 @@ test: add integration tests for OID
 
 ### Resources
 
-- **Architecture**: [docs/architecture/](../architecture/)
-- **API Reference**: [docs/api/](../api/)
-- **Refactoring Docs**: [docs/refactoring/](../refactoring/)
+- **Architecture**: docs/architecture/
+- **API Reference**: docs/api/
+- **Refactoring Docs**: docs/refactoring/
 
 ### Communication
 
@@ -283,9 +283,9 @@ test: add integration tests for OID
 
 ## Related Documentation
 
-- [Architecture](../architecture/) - System architecture
-- [API Reference](../api/) - Complete API docs
-- [Migration Guide](../refactoring/MIGRATION_GUIDE.md) - v0.9.0 → v0.10.0
+- Architecture - System architecture
+- API Reference - Complete API docs
+- Migration Guide - v0.9.0 → v0.10.0
 
 ---
 

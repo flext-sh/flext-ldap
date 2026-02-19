@@ -2,29 +2,29 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [🏗️ Container Architecture Overview](#-container-architecture-overview)
-- [📦 Container Descriptions](#-container-descriptions)
-- [🔄 Container Communication Patterns](#-container-communication-patterns)
-- [🏗️ Technology Choices](#-technology-choices)
-- [🚀 Deployment Considerations](#-deployment-considerations)
-- [📊 Performance Characteristics](#-performance-characteristics)
-- [🔒 Security Considerations](#-security-considerations)
-- [🔗 Related Documentation](#-related-documentation)
+- Table of Contents
+- 🏗️ Container Architecture Overview
+- 📦 Container Descriptions
+- 🔄 Container Communication Patterns
+- 🏗️ Technology Choices
+- 🚀 Deployment Considerations
+- 📊 Performance Characteristics
+- 🔒 Security Considerations
+- 🔗 Related Documentation
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [C4 Model: Container Architecture](#c4-model-container-architecture)
-  - [Table of Contents](#table-of-contents)
-  - [🏗️ Container Architecture Overview](#️-container-architecture-overview)
-  - [📦 Container Descriptions](#-container-descriptions)
-  - [🔄 Container Communication Patterns](#-container-communication-patterns)
-  - [🏗️ Technology Choices](#️-technology-choices)
-  - [🚀 Deployment Considerations](#-deployment-considerations)
-  - [📊 Performance Characteristics](#-performance-characteristics)
-  - [🔒 Security Considerations](#-security-considerations)
-  - [🔗 Related Documentation](#-related-documentation)
+- C4 Model: Container Architecture
+  - Table of Contents
+  - 🏗️ Container Architecture Overview
+  - 📦 Container Descriptions
+  - 🔄 Container Communication Patterns
+  - 🏗️ Technology Choices
+  - 🚀 Deployment Considerations
+  - 📊 Performance Characteristics
+  - 🔒 Security Considerations
+  - 🔗 Related Documentation
 
 **Level 2: Container Diagram**
 

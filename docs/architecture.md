@@ -2,15 +2,15 @@
 
 
 <!-- TOC START -->
-- [Layered View](#layered-view)
-- [Module Map](#module-map)
-- [Runtime Flows](#runtime-flows)
-  - [Connecting](#connecting)
-  - [Search and CRUD](#search-and-crud)
-  - [Synchronization](#synchronization)
-  - [Server Detection](#server-detection)
-- [Design Notes](#design-notes)
-- [Related Documentation](#related-documentation)
+- Layered View
+- Module Map
+- Runtime Flows
+  - Connecting
+  - Search and CRUD
+  - Synchronization
+  - Server Detection
+- Design Notes
+- Related Documentation
 <!-- TOC END -->
 
 FLEXT-LDAP wraps `ldap3` and `flext-ldif` behind a small service layer and a
@@ -102,12 +102,12 @@ callers replace services or adapters for testing and alternative runtimes.
 
 **Within Project**:
 
-- [Getting Started](getting-started.md) - Installation and basic usage
-- [API Reference](api-reference.md) - Complete API documentation
-- [Configuration](configuration.md) - Settings and environment management
-- [Development](development.md) - Contributing and workflows
-- [Troubleshooting](troubleshooting.md) - Common issues and solutions
-- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+- Getting Started - Installation and basic usage
+- API Reference - Complete API documentation
+- Configuration - Settings and environment management
+- Development - Contributing and workflows
+- Troubleshooting - Common issues and solutions
+- Integration Guide - FLEXT ecosystem integration
 
 **Across Projects**:
 

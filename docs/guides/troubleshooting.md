@@ -8,7 +8,8 @@
 
 
 
-## Table of Contents
+
+
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
 
@@ -631,9 +632,9 @@ monitor_cpu()
 ### Self-Service Resources
 
 1. **Check Documentation**
-   - [API Reference](../api-reference/README.md)
-   - [Configuration Guide](./configuration.md)
-   - [Development Guide](./development.md)
+   - API Reference
+   - Configuration Guide
+   - Development Guide
 
 2. **Run Diagnostics**
 
@@ -780,9 +781,9 @@ def process(data: dict) -> ProcessedData:
 
 ## Resources
 
-- [FLEXT Core Documentation](../api-reference/foundation.md)
-- [Configuration Guide](./configuration.md)
-- [Development Guide](./development.md)
-- [Testing Guide](./testing.md)
+- FLEXT Core Documentation
+- Configuration Guide
+- Development Guide
+- Testing Guide
 - [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - [GitHub Discussions](https://github.com/flext-sh/flext/discussions)

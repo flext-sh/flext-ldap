@@ -61,7 +61,7 @@ class FlextLdapTypes(FlextLdifTypes):
             """Operation-related type aliases."""
 
             type Result[T] = r[T]
-            type Changes = dict[str, list[tuple[str, list[str]]]]
+            type Changes = dict[str, list[tuple[int, list[str]]]]
             type Attributes = Mapping[str, Sequence[str]]
             type AttributeDict = dict[str, list[str]]
             """Type alias for LDAP attribute mappings (attribute name to value list)."""

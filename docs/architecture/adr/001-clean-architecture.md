@@ -2,32 +2,32 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Status](#status)
-- [Context](#context)
-- [Decision](#decision)
-- [Alternatives Considered](#alternatives-considered)
-- [Implementation Plan](#implementation-plan)
-- [Validation](#validation)
-- [Consequences](#consequences)
-- [Implementation Status](#implementation-status)
-- [References](#references)
-- [ADR Maintenance](#adr-maintenance)
+- Table of Contents
+- Status
+- Context
+- Decision
+- Alternatives Considered
+- Implementation Plan
+- Validation
+- Consequences
+- Implementation Status
+- References
+- ADR Maintenance
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [Architecture Decision Record (ADR) 001: Clean Architecture Adoption](#architecture-decision-record-adr-001-clean-architecture-adoption)
-  - [Status](#status)
-  - [Context](#context)
-  - [Decision](#decision)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Implementation Plan](#implementation-plan)
-  - [Validation](#validation)
-  - [Consequences](#consequences)
-  - [Implementation Status](#implementation-status)
-  - [References](#references)
-  - [ADR Maintenance](#adr-maintenance)
+- Architecture Decision Record (ADR) 001: Clean Architecture Adoption
+  - Status
+  - Context
+  - Decision
+  - Alternatives Considered
+  - Implementation Plan
+  - Validation
+  - Consequences
+  - Implementation Status
+  - References
+  - ADR Maintenance
 
 ## Status
 
@@ -258,7 +258,7 @@ Plugin-based architecture with core and extensions.
 
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) - Robert C. Martin
 - [Domain-Driven Design](https://domainlanguage.com/ddd/) - Eric Evans
-- [FLEXT Architecture Guidelines](../../README.md) - FLEXT ecosystem patterns
+- FLEXT Architecture Guidelines - FLEXT ecosystem patterns
 
 **Research**
 
@@ -267,8 +267,8 @@ Plugin-based architecture with core and extensions.
 
 **Discussions**
 
-- [ADR 002: Railway Pattern Implementation](002-railway-pattern.md) - Error handling strategy
-- [ADR 003: Universal LDAP Interface](003-universal-ldap.md) - Server abstraction design
+- ADR 002: Railway Pattern Implementation - Error handling strategy
+- ADR 003: Universal LDAP Interface - Server abstraction design
 
 ---
 

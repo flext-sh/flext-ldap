@@ -2,39 +2,39 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Development Environment Setup](#development-environment-setup)
-  - [Prerequisites](#prerequisites)
-  - [Initial Setup](#initial-setup)
-  - [Development Tools Installation](#development-tools-installation)
-- [Development Workflow](#development-workflow)
-  - [Daily Development Commands](#daily-development-commands)
-  - [Code Formatting](#code-formatting)
-  - [Type Checking](#type-checking)
-- [Testing Strategy](#testing-strategy)
-  - [Test Categories](#test-categories)
-  - [Docker LDAP Test Server](#docker-ldap-test-server)
-  - [Coverage Analysis](#coverage-analysis)
-- [Architecture Guidelines](#architecture-guidelines)
-  - [Clean Architecture Layers](#clean-architecture-layers)
-  - [Coding Standards](#coding-standards)
-- [Code Quality Standards](#code-quality-standards)
-  - [Type Safety Requirements](#type-safety-requirements)
-  - [Import Organization](#import-organization)
-- [Testing Guidelines](#testing-guidelines)
-  - [Unit Test Structure](#unit-test-structure)
-  - [Integration Test Structure](#integration-test-structure)
-  - [Test Fixtures](#test-fixtures)
-- [Documentation Standards](#documentation-standards)
-  - [Code Documentation](#code-documentation)
-  - [API Documentation](#api-documentation)
-- [Performance Guidelines](#performance-guidelines)
-  - [Connection Management](#connection-management)
-  - [Search Optimization](#search-optimization)
-  - [Best Practices](#best-practices)
-- [Contribution Guidelines](#contribution-guidelines)
-  - [Pull Request Process](#pull-request-process)
-  - [Code Review Checklist](#code-review-checklist)
+- Table of Contents
+- Development Environment Setup
+  - Prerequisites
+  - Initial Setup
+  - Development Tools Installation
+- Development Workflow
+  - Daily Development Commands
+  - Code Formatting
+  - Type Checking
+- Testing Strategy
+  - Test Categories
+  - Docker LDAP Test Server
+  - Coverage Analysis
+- Architecture Guidelines
+  - Clean Architecture Layers
+  - Coding Standards
+- Code Quality Standards
+  - Type Safety Requirements
+  - Import Organization
+- Testing Guidelines
+  - Unit Test Structure
+  - Integration Test Structure
+  - Test Fixtures
+- Documentation Standards
+  - Code Documentation
+  - API Documentation
+- Performance Guidelines
+  - Connection Management
+  - Search Optimization
+  - Best Practices
+- Contribution Guidelines
+  - Pull Request Process
+  - Code Review Checklist
 <!-- TOC END -->
 
 ## Table of Contents
@@ -804,10 +804,10 @@ results = gather(*[
 
 For more development resources:
 
-- [Architecture Guide](architecture.md) - Understanding Clean Architecture
-- [API Reference](api-reference.md) - Complete API documentation
-- [Examples](examples/) - Working code examples
+- Architecture Guide - Understanding Clean Architecture
+- API Reference - Complete API documentation
+- Examples - Working code examples
 
 ---
 
-**Next:** [Integration Guide](guides/integration.md) →
+**Next:** Integration Guide →

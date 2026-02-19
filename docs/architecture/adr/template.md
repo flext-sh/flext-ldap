@@ -2,28 +2,28 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Status](#status)
-- [Context](#context)
-- [Decision](#decision)
-- [Alternatives Considered](#alternatives-considered)
-- [Implementation Plan](#implementation-plan)
-- [Validation](#validation)
-- [References](#references)
-- [ADR Maintenance](#adr-maintenance)
+- Table of Contents
+- Status
+- Context
+- Decision
+- Alternatives Considered
+- Implementation Plan
+- Validation
+- References
+- ADR Maintenance
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
-  - [Status](#status)
-  - [Context](#context)
-  - [Decision](#decision)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Implementation Plan](#implementation-plan)
-  - [Validation](#validation)
-  - [References](#references)
-  - [ADR Maintenance](#adr-maintenance)
+- Architecture Decision Record (ADR) Template
+  - Status
+  - Context
+  - Decision
+  - Alternatives Considered
+  - Implementation Plan
+  - Validation
+  - References
+  - ADR Maintenance
 
 **ADR {number}: {title}**
 

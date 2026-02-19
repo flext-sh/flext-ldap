@@ -2,77 +2,77 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [📚 Documentation Structure](#-documentation-structure)
-  - [🏗️ Enterprise Architecture Documentation](#-enterprise-architecture-documentation)
-  - [🔌 Enterprise Integration Guides](#-enterprise-integration-guides)
-  - [📖 Comprehensive API Reference](#-comprehensive-api-reference)
-  - [🛠️ World-Class Development](#-world-class-development)
-  - [📊 Production Operations](#-production-operations)
-  - [📋 Real-World Examples](#-real-world-examples)
-- [🚀 Quick Navigation](#-quick-navigation)
-  - [For New Users](#for-new-users)
-  - [For Enterprise Integrators](#for-enterprise-integrators)
-  - [For Contributors and Developers](#for-contributors-and-developers)
-  - [For Operations and DevOps Teams](#for-operations-and-devops-teams)
-- [🎯 Documentation Standards](#-documentation-standards)
-  - [Structure and Organization](#structure-and-organization)
-  - [Content Quality and Accuracy](#content-quality-and-accuracy)
-  - [Maintenance and Evolution](#maintenance-and-evolution)
-- [📊 Enterprise Foundation Metrics](#-enterprise-foundation-metrics)
-  - [Current Implementation Status (Evidence-Based)](#current-implementation-status-evidence-based)
-  - [2025 Enhancement Vision](#2025-enhancement-vision)
-- [🔗 External Resources](#-external-resources)
-  - [FLEXT Framework Integration](#flext-framework-integration)
-  - [Enterprise LDAP Standards and Best Practices](#enterprise-ldap-standards-and-best-practices)
-  - [Research and Industry Standards (2025)](#research-and-industry-standards-2025)
-  - [Community and Support](#community-and-support)
-- [📞 Getting Help and Support](#-getting-help-and-support)
-  - [Documentation Issues and Improvements](#documentation-issues-and-improvements)
-  - [Technical Support and Community](#technical-support-and-community)
-  - [Contributing to Documentation](#contributing-to-documentation)
-- [🏆 Excellence in Documentation](#-excellence-in-documentation)
-  - [Comprehensive Coverage](#comprehensive-coverage)
-  - [Quality Assurance](#quality-assurance)
-  - [Innovation and Leadership](#innovation-and-leadership)
+- Table of Contents
+- 📚 Documentation Structure
+  - 🏗️ Enterprise Architecture Documentation
+  - 🔌 Enterprise Integration Guides
+  - 📖 Comprehensive API Reference
+  - 🛠️ World-Class Development
+  - 📊 Production Operations
+  - 📋 Real-World Examples
+- 🚀 Quick Navigation
+  - For New Users
+  - For Enterprise Integrators
+  - For Contributors and Developers
+  - For Operations and DevOps Teams
+- 🎯 Documentation Standards
+  - Structure and Organization
+  - Content Quality and Accuracy
+  - Maintenance and Evolution
+- 📊 Enterprise Foundation Metrics
+  - Current Implementation Status (Evidence-Based)
+  - 2025 Enhancement Vision
+- 🔗 External Resources
+  - FLEXT Framework Integration
+  - Enterprise LDAP Standards and Best Practices
+  - Research and Industry Standards (2025)
+  - Community and Support
+- 📞 Getting Help and Support
+  - Documentation Issues and Improvements
+  - Technical Support and Community
+  - Contributing to Documentation
+- 🏆 Excellence in Documentation
+  - Comprehensive Coverage
+  - Quality Assurance
+  - Innovation and Leadership
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [FLEXT-LDAP Documentation](#flext-ldap-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [📚 Documentation Structure](#-documentation-structure)
-    - [🏗️ Enterprise Architecture Documentation](#️-enterprise-architecture-documentation)
-    - [🔌 Enterprise Integration Guides](#-enterprise-integration-guides)
-    - [📖 Comprehensive API Reference](#-comprehensive-api-reference)
-    - [🛠️ World-Class Development](#️-world-class-development)
-    - [📊 Production Operations](#-production-operations)
-    - [📋 Real-World Examples](#-real-world-examples)
-  - [🚀 Quick Navigation](#-quick-navigation)
-    - [For New Users](#for-new-users)
-    - [For Enterprise Integrators](#for-enterprise-integrators)
-    - [For Contributors and Developers](#for-contributors-and-developers)
-    - [For Operations and DevOps Teams](#for-operations-and-devops-teams)
-  - [🎯 Documentation Standards](#-documentation-standards)
-    - [Structure and Organization](#structure-and-organization)
-    - [Content Quality and Accuracy](#content-quality-and-accuracy)
-    - [Maintenance and Evolution](#maintenance-and-evolution)
-  - [📊 Enterprise Foundation Metrics](#-enterprise-foundation-metrics)
-    - [Current Implementation Status (Evidence-Based)](#current-implementation-status-evidence-based)
-    - [2025 Enhancement Vision](#2025-enhancement-vision)
-  - [🔗 External Resources](#-external-resources)
-    - [FLEXT Framework Integration](#flext-framework-integration)
-    - [Enterprise LDAP Standards and Best Practices](#enterprise-ldap-standards-and-best-practices)
-    - [Research and Industry Standards (2025)](#research-and-industry-standards-2025)
-    - [Community and Support](#community-and-support)
-  - [📞 Getting Help and Support](#-getting-help-and-support)
-    - [Documentation Issues and Improvements](#documentation-issues-and-improvements)
-    - [Technical Support and Community](#technical-support-and-community)
-    - [Contributing to Documentation](#contributing-to-documentation)
-  - [🏆 Excellence in Documentation](#-excellence-in-documentation)
-    - [Comprehensive Coverage](#comprehensive-coverage)
-    - [Quality Assurance](#quality-assurance)
-    - [Innovation and Leadership](#innovation-and-leadership)
+- FLEXT-LDAP Documentation
+  - Table of Contents
+  - 📚 Documentation Structure
+    - 🏗️ Enterprise Architecture Documentation
+    - 🔌 Enterprise Integration Guides
+    - 📖 Comprehensive API Reference
+    - 🛠️ World-Class Development
+    - 📊 Production Operations
+    - 📋 Real-World Examples
+  - 🚀 Quick Navigation
+    - For New Users
+    - For Enterprise Integrators
+    - For Contributors and Developers
+    - For Operations and DevOps Teams
+  - 🎯 Documentation Standards
+    - Structure and Organization
+    - Content Quality and Accuracy
+    - Maintenance and Evolution
+  - 📊 Enterprise Foundation Metrics
+    - Current Implementation Status (Evidence-Based)
+    - 2025 Enhancement Vision
+  - 🔗 External Resources
+    - FLEXT Framework Integration
+    - Enterprise LDAP Standards and Best Practices
+    - Research and Industry Standards (2025)
+    - Community and Support
+  - 📞 Getting Help and Support
+    - Documentation Issues and Improvements
+    - Technical Support and Community
+    - Contributing to Documentation
+  - 🏆 Excellence in Documentation
+    - Comprehensive Coverage
+    - Quality Assurance
+    - Innovation and Leadership
 
 **FLEXT LDAP Foundation Documentation**
 
@@ -91,13 +91,13 @@ and FlextLdif integration for enterprise directory services.
 
 ### 🏗️ Enterprise Architecture Documentation
 
-- **[Architecture Overview](architecture/README.md)** - Production-scale Clean Architecture + DDD implementation
+- **Architecture Overview** - Production-scale Clean Architecture + DDD implementation
 
 ### 🔌 Enterprise Integration Guides
 
 ### 📖 Comprehensive API Reference
 
-- **[API Reference](api/README.md)** - Complete API documentation
+- **API Reference** - Complete API documentation
 
 ### 🛠️ World-Class Development
 
@@ -122,7 +122,7 @@ and FlextLdif integration for enterprise directory services.
 
 ### For New Users
 
-1. Start with **[Architecture Overview](architecture/README.md)** to understand the enterprise system design
+1. Start with **Architecture Overview** to understand the enterprise system design
 2. Follow **Development Setup** to configure your development environment (_Documentation coming soon_)
 3. Try **Basic Usage Examples** to see FLEXT-LDAP enterprise patterns in action (_Documentation coming soon_)
 
@@ -130,7 +130,7 @@ and FlextLdif integration for enterprise directory services.
 
 1. Review **FLEXT Ecosystem Integration** for ecosystem-wide patterns (_Documentation coming soon_)
 2. Explore **Singer Pipeline Integration** for data pipeline patterns (_Documentation coming soon_)
-3. Check **[API Reference](api/README.md)** for detailed interface documentation and usage
+3. Check **API Reference** for detailed interface documentation and usage
 
 ### For Contributors and Developers
 
@@ -140,9 +140,9 @@ and FlextLdif integration for enterprise directory services.
 
 ### For Operations and DevOps Teams
 
-1. Review **[Deployment Guide](operations/deployment.md)** for production deployment strategies
-2. Setup **[Monitoring](operations/monitoring.md)** for observability and performance tracking
-3. Implement **[Security Best Practices](operations/security.md)** for enterprise compliance
+1. Review **Deployment Guide** for production deployment strategies
+2. Setup **Monitoring** for observability and performance tracking
+3. Implement **Security Best Practices** for enterprise compliance
 
 ---
 
@@ -208,21 +208,21 @@ This documentation follows **FLEXT Framework** enterprise standards and industry
 
 ### FLEXT Framework Integration
 
-- **[FLEXT Platform Documentation](../../docs/README.md)** - Complete platform documentation
+- **FLEXT Platform Documentation** - Complete platform documentation
 - **[FLEXT-Core Reference](https://github.com/organization/flext/tree/main/flext-core/docs/README.md)** - Foundation library documentation (railway patterns, DI, domain modeling)
-- **[FLEXT Architecture Guide](../../docs/architecture/README.md)** - Platform-wide architecture patterns
+- **FLEXT Architecture Guide** - Platform-wide architecture patterns
 
 ### Enterprise LDAP Standards and Best Practices
 
-- **[LDAP RFC Standards](standards/ldap-rfc.md)** - RFC 4510-4519 technical specifications
-- **[LDAP Schema Reference](standards/schema.md)** - Standard LDAP schemas and extensions
-- **[Security Guidelines](standards/security.md)** - LDAP security best practices and compliance
+- **LDAP RFC Standards** - RFC 4510-4519 technical specifications
+- **LDAP Schema Reference** - Standard LDAP schemas and extensions
+- **Security Guidelines** - LDAP security best practices and compliance
 
 ### Research and Industry Standards (2025)
 
-- **[Enterprise LDAP Best Practices](research/enterprise-ldap-2025.md)** - Industry research and benchmarks
-- **[Clean Architecture Patterns](research/clean-architecture-python.md)** - Python enterprise architecture patterns
-- **[Programming Patterns](research/-patterns-2025.md)** - Modern Python patterns and performance
+- **Enterprise LDAP Best Practices** - Industry research and benchmarks
+- **Clean Architecture Patterns** - Python enterprise architecture patterns
+- **Programming Patterns** - Modern Python patterns and performance
 
 ### Community and Support
 
@@ -249,7 +249,7 @@ If you find issues with this documentation or have suggestions for improvements:
 
 ### Contributing to Documentation
 
-See [Contributing Guidelines](development/contributing.md) for detailed information on:
+See Contributing Guidelines for detailed information on:
 
 - Documentation style guide and writing standards
 - Code example requirements and testing procedures

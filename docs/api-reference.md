@@ -2,113 +2,113 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [🚀 Main API](#-main-api)
-  - [`get_flext_ldap_api(config=None)`](#getflextldapapiconfignone)
-- [🏗️ FlextLdapClients](#-flextldapclients)
+- Table of Contents
+- 🚀 Main API
+  - `get_flext_ldap_api(config=None)`
+- 🏗️ FlextLdapClients
   - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#searchentriesrequest-searchrequest-flextresultlistldapentry)
   - [`authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`](#authenticateuserusername-str-password-str-flextresultflextldapuser)
   - [`create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`](#createuserrequest-createuserrequest-flextresultflextldapuser)
   - [`test_connection() -> FlextResult[str]`](#testconnection-flextresultstr)
-- [📊 Domain Entities](#-domain-entities)
-  - [FlextLdapEntities](#flextldapentities)
-- [🎯 Value Objects](#-value-objects)
-  - [FlextLdapModels.ValueObjects](#flextldapmodelsvalueobjects)
-- [⚙️ Configuration](#-configuration)
-  - [FlextLdapSettings](#flextldapsettings)
-- [🔧 Utilities](#-utilities)
-  - [FlextLdapTypeGuards](#flextldaptypeguards)
-  - [FlextLdapConstants](#flextldapconstants)
-- [🚨 Exceptions](#-exceptions)
-  - [FlextExceptions](#flextexceptions)
-- [🔄 FlextResult Usage](#-flextresult-usage)
-  - [Success Handling](#success-handling)
-  - [Error Handling](#error-handling)
-  - [Chaining Operations](#chaining-operations)
-- [🔄 Universal LDAP Interface](#-universal-ldap-interface)
-  - [FlextLdapEntryAdapter](#flextldapentryadapter)
-  - [FlextLdapQuirksAdapter](#flextldapquirksadapter)
-- [🏗️ Server Operations](#-server-operations)
-  - [BaseServerOperations](#baseserveroperations)
-  - [Server-Specific Implementations](#server-specific-implementations)
-- [📝 Type Annotations](#-type-annotations)
-- [🔗 Complete Usage Example](#-complete-usage-example)
-- [Related Documentation](#related-documentation)
+- 📊 Domain Entities
+  - FlextLdapEntities
+- 🎯 Value Objects
+  - FlextLdapModels.ValueObjects
+- ⚙️ Configuration
+  - FlextLdapSettings
+- 🔧 Utilities
+  - FlextLdapTypeGuards
+  - FlextLdapConstants
+- 🚨 Exceptions
+  - FlextExceptions
+- 🔄 FlextResult Usage
+  - Success Handling
+  - Error Handling
+  - Chaining Operations
+- 🔄 Universal LDAP Interface
+  - FlextLdapEntryAdapter
+  - FlextLdapQuirksAdapter
+- 🏗️ Server Operations
+  - BaseServerOperations
+  - Server-Specific Implementations
+- 📝 Type Annotations
+- 🔗 Complete Usage Example
+- Related Documentation
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [API Reference](#api-reference)
-  - [🚀 Main API](#-main-api)
-    - [`get_flext_ldap_api(config=None)`](#get_flext_ldap_apiconfignone)
-  - [🏗️ FlextLdapClients](#-flextldapclients) - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#search_entriesrequest-searchrequest---flextresultlistldapentry) - [`authenticate_user(username: str,
+- API Reference
+  - 🚀 Main API
+    - `get_flext_ldap_api(config=None)`
+  - 🏗️ FlextLdapClients - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#search_entriesrequest-searchrequest---flextresultlistldapentry) - [`authenticate_user(username: str,
 password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-password-str---flextresultflextldapuser) - [`create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`](#create_userrequest-createuserrequest---flextresultflextldapuser) - [`test_connection() -> FlextResult[str]`](#test_connection---flextresultstr)
-  - [📊 Domain Entities](#-domain-entities)
-    - [FlextLdapEntities](#flextldapentities)
-      - [SearchRequest](#searchrequest)
-      - [CreateUserRequest](#createuserrequest)
-      - [FlextLdapUser](#flextldapuser)
-      - [FlextLdapGroup](#flextldapgroup)
-  - [🎯 Value Objects](#-value-objects)
-    - [FlextLdapModels.ValueObjects](#flextldapmodelsvalueobjects)
-      - [DN](#distinguishedname)
-      - [LdapFilter](#ldapfilter)
-- [Create filters](#create-filters)
-- [Combine filters](#combine-filters) - [LdapScope](#ldapscope)
-  - [⚙️ Configuration](#-configuration)
-    - [FlextLdapSettings](#flextldapconfig)
-  - [🔧 Utilities](#-utilities)
-    - [FlextLdapTypeGuards](#flextldaptypeguards)
-      - [`is_valid_dn(value: str) -> bool`](#is_valid_dnvalue-str---bool)
-      - [`is_ldap_entry(obj: object) -> bool`](#is_ldap_entryobj-object---bool)
-    - [FlextLdapConstants](#flextldapconstants)
-  - [🚨 Exceptions](#-exceptions)
-    - [FlextExceptions](#flextexceptions)
-      - [ConnectionError](#connectionerror)
-      - [AuthenticationError](#authenticationerror)
-      - [SearchError](#searcherror)
-  - [🔄 FlextResult Usage](#-flextresult-usage)
-    - [Success Handling](#success-handling)
-- [Check success](#check-success)
-- [Alternative: direct access (raises if failure)](#alternative-direct-access-raises-if-failure)
-  - [Error Handling](#error-handling)
-  - [Chaining Operations](#chaining-operations)
-  - [🔄 Universal LDAP Interface](#-universal-ldap-interface)
-    - [FlextLdapEntryAdapter](#flextldapentryadapter)
+  - 📊 Domain Entities
+    - FlextLdapEntities
+      - SearchRequest
+      - CreateUserRequest
+      - FlextLdapUser
+      - FlextLdapGroup
+  - 🎯 Value Objects
+    - FlextLdapModels.ValueObjects
+      - DN
+      - LdapFilter
+- Create filters
+- Combine filters - LdapScope
+  - ⚙️ Configuration
+    - FlextLdapSettings
+  - 🔧 Utilities
+    - FlextLdapTypeGuards
+      - `is_valid_dn(value: str) -> bool`
+      - `is_ldap_entry(obj: object) -> bool`
+    - FlextLdapConstants
+  - 🚨 Exceptions
+    - FlextExceptions
+      - ConnectionError
+      - AuthenticationError
+      - SearchError
+  - 🔄 FlextResult Usage
+    - Success Handling
+- Check success
+- Alternative: direct access (raises if failure)
+  - Error Handling
+  - Chaining Operations
+  - 🔄 Universal LDAP Interface
+    - FlextLdapEntryAdapter
       - [`ldap3_to_ldif_entry(ldap3_entry) -> FlextResult[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
-- [Search with ldap3](#search-with-ldap3) - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextResult[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str,
+- Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextResult[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str,
 t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
-- [Create FlextLdif entry](#create-flextldif-entry)
-- [Convert to ldap3 attributes](#convert-to-ldap3-attributes) - [`convert_ldif_file_to_entries(ldif_file_path) -> FlextResult[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries,
+- Create FlextLdif entry
+- Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> FlextResult[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries,
 output_path) -> FlextResult[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
-  - [FlextLdapQuirksAdapter](#flextldapquirksadapter)
+  - FlextLdapQuirksAdapter
     - [`detect_server_type_from_entries(entries) -> FlextResult[str]`](#detect_server_type_from_entriesentries---flextresultstr)
-- [Detect from entries](#detect-from-entries) - [`get_acl_attribute_name(server_type=None) -> FlextResult[str]`](#get_acl_attribute_nameserver_typenone---flextresultstr) - [`get_acl_format(server_type=None) -> FlextResult[str]`](#get_acl_formatserver_typenone---flextresultstr) - [`get_schema_subentry(server_type=None) -> FlextResult[str]`](#get_schema_subentryserver_typenone---flextresultstr) - [`get_max_page_size(server_type=None) -> FlextResult[int]`](#get_max_page_sizeserver_typenone---flextresultint) - [`normalize_entry_for_server(entry,
+- Detect from entries - [`get_acl_attribute_name(server_type=None) -> FlextResult[str]`](#get_acl_attribute_nameserver_typenone---flextresultstr) - [`get_acl_format(server_type=None) -> FlextResult[str]`](#get_acl_formatserver_typenone---flextresultstr) - [`get_schema_subentry(server_type=None) -> FlextResult[str]`](#get_schema_subentryserver_typenone---flextresultstr) - [`get_max_page_size(server_type=None) -> FlextResult[int]`](#get_max_page_sizeserver_typenone---flextresultint) - [`normalize_entry_for_server(entry,
 server_type=None) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entry_for_serverentry-server_typenone---flextresultflextldifmodelsentry)
-  - [🏗️ Server Operations](#-server-operations)
-    - [BaseServerOperations](#baseserveroperations)
-      - [Connection Operations](#connection-operations)
-        - [`get_default_port(use_ssl=False) -> int`](#get_default_portuse_sslfalse---int)
-        - [`supports_start_tls() -> bool`](#supports_start_tls---bool)
-        - [`get_bind_mechanisms() -> t.StringList`](#get_bind_mechanisms---flexttypesstringlist)
-      - [Schema Operations](#schema-operations)
-        - [`get_schema_dn() -> str`](#get_schema_dn---str)
+  - 🏗️ Server Operations
+    - BaseServerOperations
+      - Connection Operations
+        - `get_default_port(use_ssl=False) -> int`
+        - `supports_start_tls() -> bool`
+        - `get_bind_mechanisms() -> t.StringList`
+      - Schema Operations
+        - `get_schema_dn() -> str`
         - [`discover_schema(connection) -> FlextResult[t.Dict]`](#discover_schemaconnection---flextresultflexttypesdict)
         - [`parse_object_class(object_class_def) -> FlextResult[t.Dict]`](#parse_object_classobject_class_def---flextresultflexttypesdict)
         - [`parse_attribute_type(attribute_def) -> FlextResult[t.Dict]`](#parse_attribute_typeattribute_def---flextresultflexttypesdict)
-      - [ACL Operations](#acl-operations)
-        - [`get_acl_attribute_name() -> str`](#get_acl_attribute_name---str)
-        - [`get_acl_format() -> str`](#get_acl_format---str)
+      - ACL Operations
+        - `get_acl_attribute_name() -> str`
+        - `get_acl_format() -> str`
         - [`get_acls(connection, dn) -> FlextResult[list[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- [Get ACLs from cn=config entry](#get-acls-from-cnconfig-entry) - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - [Entry Operations](#entry-operations) - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - [Search Operations](#search-operations) - [`get_max_page_size() -> int`](#get_max_page_size---int) - [`supports_paged_results() -> bool`](#supports_paged_results---bool) - [`supports_vlv() -> bool`](#supports_vlv---bool) - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
+- Get ACLs from cn=config entry - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
 page_size=100) -> FlextResult[list[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
-  - [Server-Specific Implementations](#server-specific-implementations)
-    - [OpenLDAP2Operations](#openldap2operations)
-- [Schema discovery](#schema-discovery)
-- [ACL management](#acl-management) - [OracleOIDOperations](#oracleoidoperations) - [OracleOUDOperations](#oracleoudoperations) - [GenericServerOperations](#genericserveroperations)
-  - [📝 Type Annotations](#-type-annotations)
-- [Server operations with FlextLdif integration](#server-operations-with-flextldif-integration)
-  - [🔗 Complete Usage Example](#-complete-usage-example)
+  - Server-Specific Implementations
+    - OpenLDAP2Operations
+- Schema discovery
+- ACL management - OracleOIDOperations - OracleOUDOperations - GenericServerOperations
+  - 📝 Type Annotations
+- Server operations with FlextLdif integration
+  - 🔗 Complete Usage Example
 
 **Complete API documentation for flext-ldap**
 
@@ -1190,19 +1190,19 @@ run(universal_ldap_example())
 
 For more examples and advanced usage patterns, see:
 
-- **[Examples](examples/)** - Working code examples
-- **[Server Operations Guide](server-operations.md)** - Server-specific usage
-- **[Integration Guide](integration.md)** - FLEXT ecosystem integration
-- **[Architecture Guide](architecture.md)** - Understanding the design
+- **Examples** - Working code examples
+- **Server Operations Guide** - Server-specific usage
+- **Integration Guide** - FLEXT ecosystem integration
+- **Architecture Guide** - Understanding the design
 
 ## Related Documentation
 
 **Within Project**:
 
-- [Getting Started](getting-started.md) - Installation and basic usage
-- [Architecture](architecture.md) - Architecture and design patterns
-- [Configuration](configuration.md) - Configuration options
-- [Examples](examples/) - Working code examples
+- Getting Started - Installation and basic usage
+- Architecture - Architecture and design patterns
+- Configuration - Configuration options
+- Examples - Working code examples
 
 **Across Projects**:
 
@@ -1217,4 +1217,4 @@ For more examples and advanced usage patterns, see:
 
 ---
 
-**Next:** [Configuration Guide](configuration.md) →
+**Next:** Configuration Guide →

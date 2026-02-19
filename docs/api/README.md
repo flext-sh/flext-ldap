@@ -2,19 +2,19 @@
 
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [Public API](#public-api)
-  - [Primary Entry Point](#primary-entry-point)
-  - [Core Modules](#core-modules)
-  - [Server Operations](#server-operations)
-- [Quick Reference](#quick-reference)
-  - [Import Patterns](#import-patterns)
-  - [Common Operations](#common-operations)
-- [API Stability](#api-stability)
-  - [Stable (Public API)](#stable-public-api)
-  - [Internal (Subject to Change)](#internal-subject-to-change)
-- [Return Types](#return-types)
-- [Related Documentation](#related-documentation)
+- Overview
+- Public API
+  - Primary Entry Point
+  - Core Modules
+  - Server Operations
+- Quick Reference
+  - Import Patterns
+  - Common Operations
+- API Stability
+  - Stable (Public API)
+  - Internal (Subject to Change)
+- Return Types
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 1.0 (v0.10.0)
@@ -29,7 +29,7 @@ Complete API reference for flext-ldap v0.10.0, covering all public interfaces, c
 
 ### Primary Entry Point
 
-**[FlextLdap](flextldap-api.md)** - Main API facade
+**FlextLdap** - Main API facade
 
 ```python
 from flext_ldap import FlextLdap
@@ -40,30 +40,30 @@ result = api.search_entries(search_request)
 
 ### Core Modules
 
-1. **[FlextLdapModels](models-api.md)** - Domain models and entities
+1. **FlextLdapModels** - Domain models and entities
    - SearchRequest, Connection, Entry models
    - Domain logic and validations
 
-2. **[FlextLdapClients](clients-api.md)** - LDAP client operations
+2. **FlextLdapClients** - LDAP client operations
    - Authentication - Bind operations
    - Search - Search operations
 
-3. **[FlextLdapAcl](acl-api.md)** - ACL management
+3. **FlextLdapAcl** - ACL management
    - Manager - ACL operations
    - Parsers - ACL parsing
    - Converters - Format conversion
 
-4. **[FlextLdapSchema](schema-api.md)** - Schema operations
+4. **FlextLdapSchema** - Schema operations
    - Discover - Schema discovery
    - Sync - Schema synchronization
 
-5. **[FlextLdapEntryAdapter](adapter-api.md)** - Entry conversion
+5. **FlextLdapEntryAdapter** - Entry conversion
    - ldap3 → flext-ldif
    - flext-ldif → ldap3
 
 ### Server Operations
 
-6. **[Server Operations](servers-api.md)** - Server-specific implementations
+6. **Server Operations** - Server-specific implementations
    - OpenLDAP2Operations
    - OpenLDAP1Operations
    - OracleOIDOperations
@@ -154,9 +154,9 @@ if result.is_failure:
 
 ## Related Documentation
 
-- [Architecture](../architecture/) - Architecture patterns
-- [Development](../development/) - Contributing guidelines
-- [Migration Guide](../refactoring/MIGRATION_GUIDE.md) - v0.9.0 → v0.10.0
+- Architecture - Architecture patterns
+- Development - Contributing guidelines
+- Migration Guide - v0.9.0 → v0.10.0
 
 ---
 

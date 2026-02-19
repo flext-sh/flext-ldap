@@ -42,7 +42,7 @@ from flext_ldif import (
     FlextLdifUtilities,
 )
 from flext_ldif.models import FlextLdifModels
-from ldap3 import Connection, Server
+from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict
 
@@ -72,7 +72,7 @@ HasAttributesProperty = p.Ldap.HasAttributesProperty
 def _ldap3_add(
     connection: Connection,
     dn: str,
-    object_class: t.GeneralValueType,
+    object_class: list[str] | str | None,
     attributes: dict[str, list[str]],
 ) -> bool:
     """Type-safe wrapper for untyped ldap3 Connection.add().
@@ -113,7 +113,53 @@ def _ldap3_modify(
     """
     # ldap3.modify() is untyped, returns Any
     # We know it returns bool - wrap to satisfy mypy strict
-    result = connection.modify(dn, changes)
+    modify_method = getattr(connection, "modify", None)
+    if not callable(modify_method):
+        return False
+    result = modify_method(dn, changes)
+    if isinstance(result, bool):
+        return result
+    return bool(result)
+
+
+def _ldap3_is_bound(connection: Connection) -> bool:
+    """Safely read ldap3 bound state from dynamic connection objects."""
+    return bool(getattr(connection, "bound", False))
+
+
+def _ldap3_start_tls(connection: Connection) -> bool:
+    """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
+    start_tls_method = getattr(connection, "start_tls", None)
+    if not callable(start_tls_method):
+        return False
+    result = start_tls_method()
+    if isinstance(result, bool):
+        return result
+    return bool(result)
+
+
+def _ldap3_search(
+    connection: Connection,
+    *,
+    search_base: str,
+    search_filter: str,
+    search_scope: int | str,
+    attributes: Sequence[str] | str,
+    size_limit: int,
+    time_limit: int,
+) -> bool:
+    """Safely invoke ldap3 search on dynamic connection objects."""
+    search_method = getattr(connection, "search", None)
+    if not callable(search_method):
+        return False
+    result = search_method(
+        search_base=search_base,
+        search_filter=search_filter,
+        search_scope=search_scope,
+        attributes=attributes,
+        size_limit=size_limit,
+        time_limit=time_limit,
+    )
     if isinstance(result, bool):
         return result
     return bool(result)
@@ -279,7 +325,7 @@ class Ldap3Adapter(s[bool]):
                 return r[bool].ok(value=True)
 
             try:
-                if not connection.start_tls():
+                if not _ldap3_start_tls(connection):
                     return r[bool].fail("Failed to start TLS")
                 return r[bool].ok(value=True)
             except LDAPException as tls_error:
@@ -1062,9 +1108,7 @@ class Ldap3Adapter(s[bool]):
                 True if modify succeeded, False otherwise.
 
             """
-            # Call untyped ldap3 method and convert result to bool
-            result = connection.modify(dn_str, changes)
-            return bool(result) if result is not None else False
+            return _ldap3_modify(connection, dn_str, changes)
 
         @staticmethod
         def _delete_entry_from_ldap(
@@ -1083,9 +1127,7 @@ class Ldap3Adapter(s[bool]):
                 True if delete succeeded, False otherwise.
 
             """
-            # Call untyped ldap3 method and convert result to bool
-            result = connection.delete(dn_str)
-            return bool(result) if result is not None else False
+            return _ldap3_delete(connection, dn_str)
 
         @staticmethod
         def _extract_error_result(
@@ -1136,11 +1178,7 @@ class Ldap3Adapter(s[bool]):
 
             base_dn: str
             filter_str: str
-            ldap_scope: Literal[
-                "BASE",
-                "LEVEL",
-                "SUBTREE",
-            ]  # c.Ldap.LiteralTypes.Ldap3ScopeLiteral
+            ldap_scope: int
             search_attributes: list[str]
             size_limit: int
             time_limit: int
@@ -1203,7 +1241,8 @@ class Ldap3Adapter(s[bool]):
 
             """
             try:
-                connection.search(
+                _ = _ldap3_search(
+                    connection,
                     search_base=params.base_dn,
                     search_filter=params.filter_str,
                     search_scope=params.ldap_scope,
@@ -1359,7 +1398,7 @@ class Ldap3Adapter(s[bool]):
                 return tls_result
 
             # Check bound state - connection is guaranteed to be non-None after create_connection
-            if self._connection is None or not self._connection.bound:
+            if self._connection is None or not _ldap3_is_bound(self._connection):
                 return r[bool].fail("Failed to bind to LDAP server")
 
             return r[bool].ok(value=True)
@@ -1419,7 +1458,7 @@ class Ldap3Adapter(s[bool]):
         """Check if adapter has an active connection."""
         if self._connection is None:
             return False
-        return bool(self._connection.bound)
+        return _ldap3_is_bound(self._connection)
 
     def _get_connection(self) -> r[Connection]:
         """Get connection with fast fail if not available."""
@@ -1431,9 +1470,7 @@ class Ldap3Adapter(s[bool]):
     @staticmethod
     def _map_scope(
         scope: FlextLdapConstants.Ldap.SearchScope | str,
-    ) -> r[
-        Literal["BASE", "LEVEL", "SUBTREE"]
-    ]:  # c.Ldap.LiteralTypes.Ldap3ScopeLiteral
+    ) -> r[int]:
         """Map scope string to ldap3 scope constant.
 
         Uses direct StrEnum value mapping for type-safe conversion.
@@ -1460,23 +1497,19 @@ class Ldap3Adapter(s[bool]):
         # Python 3.13: Direct mapping using StrEnum values
         ldap3_scope_mapping: Mapping[
             FlextLdapConstants.Ldap.SearchScope,
-            Literal[
-                "BASE",
-                "LEVEL",
-                "SUBTREE",
-            ],  # c.Ldap.LiteralTypes.Ldap3ScopeLiteral
+            int,
         ] = {
-            FlextLdapConstants.Ldap.SearchScope.BASE: "BASE",
-            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: "LEVEL",
-            FlextLdapConstants.Ldap.SearchScope.SUBTREE: "SUBTREE",
+            FlextLdapConstants.Ldap.SearchScope.BASE: BASE,
+            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: LEVEL,
+            FlextLdapConstants.Ldap.SearchScope.SUBTREE: SUBTREE,
         }
 
         # Create results
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]
-            return r[Literal["BASE", "LEVEL", "SUBTREE"]].ok(ldap3_value)
+            return r[int].ok(ldap3_value)
 
-        return r[Literal["BASE", "LEVEL", "SUBTREE"]].fail(
+        return r[int].fail(
             f"Invalid LDAP scope: {scope}",
         )
 

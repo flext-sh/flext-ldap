@@ -2,77 +2,77 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Configuration Overview](#configuration-overview)
-  - [Configuration Hierarchy](#configuration-hierarchy)
-- [Environment Variables](#environment-variables)
-  - [LDAP Server Configuration](#ldap-server-configuration)
-  - [Security Configuration](#security-configuration)
-  - [Connection Pool Settings](#connection-pool-settings)
-- [Configuration File](#configuration-file)
-  - [Python Configuration](#python-configuration)
-  - [Environment-Specific Configuration](#environment-specific-configuration)
-- [Docker Configuration](#docker-configuration)
-  - [Environment File](#environment-file)
-  - [Docker Compose](#docker-compose)
-- [Testing Configuration](#testing-configuration)
-  - [Test LDAP Server](#test-ldap-server)
-  - [Test Configuration](#test-configuration)
-- [Configuration Validation](#configuration-validation)
-  - [Validating Configuration](#validating-configuration)
-  - [Common Configuration Issues](#common-configuration-issues)
-- [Security Best Practices](#security-best-practices)
-  - [Credential Management](#credential-management)
-  - [SSL/TLS Configuration](#ssltls-configuration)
-- [Performance Tuning](#performance-tuning)
-  - [Connection Pool Optimization](#connection-pool-optimization)
-  - [Search Optimization](#search-optimization)
+- Table of Contents
+- Configuration Overview
+  - Configuration Hierarchy
+- Environment Variables
+  - LDAP Server Configuration
+  - Security Configuration
+  - Connection Pool Settings
+- Configuration File
+  - Python Configuration
+  - Environment-Specific Configuration
+- Docker Configuration
+  - Environment File
+  - Docker Compose
+- Testing Configuration
+  - Test LDAP Server
+  - Test Configuration
+- Configuration Validation
+  - Validating Configuration
+  - Common Configuration Issues
+- Security Best Practices
+  - Credential Management
+  - SSL/TLS Configuration
+- Performance Tuning
+  - Connection Pool Optimization
+  - Search Optimization
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [Configuration Guide](#configuration-guide)
-  - [Configuration Overview](#configuration-overview)
-    - [Configuration Hierarchy](#configuration-hierarchy)
-- [1. Default configuration](#1-default-configuration)
-- [2. Environment variables (preferred)](#2-environment-variables-preferred)
-- [3. Explicit configuration](#3-explicit-configuration)
-  - [Environment Variables](#environment-variables)
-    - [LDAP Server Configuration](#ldap-server-configuration)
-- [Required settings](#required-settings)
-- [Optional settings](#optional-settings)
-  - [Security Configuration](#security-configuration)
-- [SSL/TLS settings](#ssltls-settings)
-- [Authentication](#authentication)
-  - [Connection Pool Settings](#connection-pool-settings)
-- [Connection management](#connection-management)
-  - [Configuration File](#configuration-file)
-    - [Python Configuration](#python-configuration)
-- [Production configuration](#production-configuration)
-- [Development configuration](#development-configuration)
-  - [Environment-Specific Configuration](#environment-specific-configuration)
-- [Usage](#usage)
-  - [Docker Configuration](#docker-configuration)
-    - [Environment File](#environment-file)
-- [LDAP Configuration](#ldap-configuration)
-- [Connection settings](#connection-settings)
-  - [Docker Compose](#docker-compose)
-  - [Testing Configuration](#testing-configuration)
-    - [Test LDAP Server](#test-ldap-server)
-- [Start test LDAP server (if available)](#start-test-ldap-server-if-available)
-  - [Test Configuration](#test-configuration)
-  - [Configuration Validation](#configuration-validation)
-    - [Validating Configuration](#validating-configuration)
-    - [Common Configuration Issues](#common-configuration-issues)
-  - [Security Best Practices](#security-best-practices)
-    - [Credential Management](#credential-management)
-- [Use environment variables for secrets](#use-environment-variables-for-secrets)
-  - [SSL/TLS Configuration](#ssltls-configuration)
-  - [Performance Tuning](#performance-tuning)
-    - [Connection Pool Optimization](#connection-pool-optimization)
-- [High-traffic configuration](#high-traffic-configuration)
-  - [Search Optimization](#search-optimization)
-- [Optimized search request](#optimized-search-request)
+- Configuration Guide
+  - Configuration Overview
+    - Configuration Hierarchy
+- 1. Default configuration
+- 2. Environment variables (preferred)
+- 3. Explicit configuration
+  - Environment Variables
+    - LDAP Server Configuration
+- Required settings
+- Optional settings
+  - Security Configuration
+- SSL/TLS settings
+- Authentication
+  - Connection Pool Settings
+- Connection management
+  - Configuration File
+    - Python Configuration
+- Production configuration
+- Development configuration
+  - Environment-Specific Configuration
+- Usage
+  - Docker Configuration
+    - Environment File
+- LDAP Configuration
+- Connection settings
+  - Docker Compose
+  - Testing Configuration
+    - Test LDAP Server
+- Start test LDAP server (if available)
+  - Test Configuration
+  - Configuration Validation
+    - Validating Configuration
+    - Common Configuration Issues
+  - Security Best Practices
+    - Credential Management
+- Use environment variables for secrets
+  - SSL/TLS Configuration
+  - Performance Tuning
+    - Connection Pool Optimization
+- High-traffic configuration
+  - Search Optimization
+- Optimized search request
 
 **Environment setup and configuration options for flext-ldap**
 
@@ -411,8 +411,8 @@ search_request = FlextLdapEntities.SearchRequest(
 
 ---
 
-For more configuration examples, see the [examples/](examples/) directory.
+For more configuration examples, see the examples/ directory.
 
 ---
 
-**Next:** [Development Guide](development.md) →
+**Next:** Development Guide →

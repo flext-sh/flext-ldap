@@ -2,80 +2,80 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Prerequisites](#prerequisites)
-  - [**System Requirements**](#system-requirements)
-  - [**LDAP Server Requirements**](#ldap-server-requirements)
-- [Installation](#installation)
-  - [**Production Installation**](#production-installation)
-  - [**Development Installation**](#development-installation)
-  - [**Verify Installation**](#verify-installation)
-- [Configuration](#configuration)
-  - [**Environment Variables**](#environment-variables)
-  - [**Configuration File**](#configuration-file)
-- [First Steps](#first-steps)
-  - [**Basic Connection Test**](#basic-connection-test)
-  - [**Simple Directory Search**](#simple-directory-search)
-  - [**User Authentication**](#user-authentication)
-- [Universal LDAP Interface](#universal-ldap-interface)
-  - [**Server-Specific Operations**](#server-specific-operations)
-  - [**Entry Conversion (ldap3 ↔ FlextLdif)**](#entry-conversion-ldap3-flextldif)
-  - [**Schema Discovery**](#schema-discovery)
-  - [**ACL Management**](#acl-management)
-  - [**Paged Search**](#paged-search)
-- [Development Environment](#development-environment)
-  - [**Test LDAP Server Setup**](#test-ldap-server-setup)
-  - [**Run Tests**](#run-tests)
-  - [**Development Workflow**](#development-workflow)
-- [Next Steps](#next-steps)
-- [Troubleshooting](#troubleshooting)
-  - [**Common Issues**](#common-issues)
-- [Related Documentation](#related-documentation)
+- Table of Contents
+- Prerequisites
+  - **System Requirements**
+  - **LDAP Server Requirements**
+- Installation
+  - **Production Installation**
+  - **Development Installation**
+  - **Verify Installation**
+- Configuration
+  - **Environment Variables**
+  - **Configuration File**
+- First Steps
+  - **Basic Connection Test**
+  - **Simple Directory Search**
+  - **User Authentication**
+- Universal LDAP Interface
+  - **Server-Specific Operations**
+  - **Entry Conversion (ldap3 ↔ FlextLdif)**
+  - **Schema Discovery**
+  - **ACL Management**
+  - **Paged Search**
+- Development Environment
+  - **Test LDAP Server Setup**
+  - **Run Tests**
+  - **Development Workflow**
+- Next Steps
+- Troubleshooting
+  - **Common Issues**
+- Related Documentation
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [Getting Started with FLEXT-LDAP](#getting-started-with-flext-ldap)
-  - [Prerequisites](#prerequisites)
-    - [**System Requirements**](#system-requirements)
-    - [**LDAP Server Requirements**](#ldap-server-requirements)
-  - [Installation](#installation)
-    - [**Production Installation**](#production-installation)
-- [or with poetry](#or-with-poetry)
-  - [**Development Installation**](#development-installation)
-  - [**Verify Installation**](#verify-installation)
-  - [Configuration](#configuration)
-    - [**Environment Variables**](#environment-variables)
-- [Basic LDAP server configuration](#basic-ldap-server-configuration)
-- [Authentication](#authentication)
-- [Connection settings](#connection-settings)
-  - [**Configuration File**](#configuration-file)
-  - [First Steps](#first-steps)
-    - [**Basic Connection Test**](#basic-connection-test)
-    - [**Simple Directory Search**](#simple-directory-search)
-    - [**User Authentication**](#user-authentication)
-  - [Universal LDAP Interface](#universal-ldap-interface)
-    - [**Server-Specific Operations**](#server-specific-operations)
-    - [**Entry Conversion (ldap3 ↔ FlextLdif)**](#entry-conversion-ldap3--flextldif)
-- [ldap3 → FlextLdif](#ldap3--flextldif)
-- [FlextLdif → ldap3](#flextldif--ldap3)
-  - [**Schema Discovery**](#schema-discovery)
-  - [**ACL Management**](#acl-management)
-  - [**Paged Search**](#paged-search)
-  - [Development Environment](#development-environment)
-    - [**Test LDAP Server Setup**](#test-ldap-server-setup)
-- [Start OpenLDAP test server](#start-openldap-test-server)
-- [Verify server is running](#verify-server-is-running)
-- [Stop test server](#stop-test-server)
-  - [**Run Tests**](#run-tests)
-- [Run all tests](#run-all-tests)
-- [Run specific test categories](#run-specific-test-categories)
-- [Run with coverage](#run-with-coverage)
-  - [**Development Workflow**](#development-workflow)
-- [Daily development cycle](#daily-development-cycle)
-  - [Next Steps](#next-steps)
-  - [Troubleshooting](#troubleshooting)
-    - [**Common Issues**](#common-issues)
+- Getting Started with FLEXT-LDAP
+  - Prerequisites
+    - **System Requirements**
+    - **LDAP Server Requirements**
+  - Installation
+    - **Production Installation**
+- or with poetry
+  - **Development Installation**
+  - **Verify Installation**
+  - Configuration
+    - **Environment Variables**
+- Basic LDAP server configuration
+- Authentication
+- Connection settings
+  - **Configuration File**
+  - First Steps
+    - **Basic Connection Test**
+    - **Simple Directory Search**
+    - **User Authentication**
+  - Universal LDAP Interface
+    - **Server-Specific Operations**
+    - **Entry Conversion (ldap3 ↔ FlextLdif)**
+- ldap3 → FlextLdif
+- FlextLdif → ldap3
+  - **Schema Discovery**
+  - **ACL Management**
+  - **Paged Search**
+  - Development Environment
+    - **Test LDAP Server Setup**
+- Start OpenLDAP test server
+- Verify server is running
+- Stop test server
+  - **Run Tests**
+- Run all tests
+- Run specific test categories
+- Run with coverage
+  - **Development Workflow**
+- Daily development cycle
+  - Next Steps
+  - Troubleshooting
+    - **Common Issues**
 
 **LDAP directory services integration for the FLEXT ecosystem**
 
@@ -512,12 +512,12 @@ make validate   # Complete quality pipeline
 
 Once you have flext-ldap installed and working:
 
-1. **[Server Operations Guide](guides/server-operations.md)** - Server-specific LDAP operations
-2. **[Architecture Guide](architecture.md)** - Universal LDAP interface architecture
-3. **[API Reference](api-reference.md)** - Complete API documentation
-4. **[Integration Guide](guides/integration.md)** - FLEXT ecosystem and FlextLdif integration
-5. **[Examples](examples/)** - Working code examples
-6. **[Development Guide](development.md)** - Contributing to the project
+1. **Server Operations Guide** - Server-specific LDAP operations
+2. **Architecture Guide** - Universal LDAP interface architecture
+3. **API Reference** - Complete API documentation
+4. **Integration Guide** - FLEXT ecosystem and FlextLdif integration
+5. **Examples** - Working code examples
+6. **Development Guide** - Contributing to the project
 
 ---
 
@@ -543,18 +543,18 @@ Once you have flext-ldap installed and working:
 - Check Python version: `python --version` (requires 3.13+)
 - Reinstall: `pip uninstall flext-ldap && pip install flext-ldap`
 
-For more troubleshooting help, see [Troubleshooting Guide](troubleshooting.md).
+For more troubleshooting help, see Troubleshooting Guide.
 
 ## Related Documentation
 
 **Within Project**:
 
-- [Architecture Overview](architecture.md) - Clean Architecture and DDD implementation
-- [API Reference](api-reference.md) - Complete API documentation
-- [Configuration](configuration.md) - Settings and environment management
-- [Development](development.md) - Contributing and workflows
-- [Troubleshooting](troubleshooting.md) - Common issues and solutions
-- [Integration Guide](guides/integration.md) - FLEXT ecosystem integration
+- Architecture Overview - Clean Architecture and DDD implementation
+- API Reference - Complete API documentation
+- Configuration - Settings and environment management
+- Development - Contributing and workflows
+- Troubleshooting - Common issues and solutions
+- Integration Guide - FLEXT ecosystem integration
 
 **Across Projects**:
 
@@ -568,4 +568,4 @@ For more troubleshooting help, see [Troubleshooting Guide](troubleshooting.md).
 
 ---
 
-**Next:** [Architecture Overview](architecture.md) →
+**Next:** Architecture Overview →

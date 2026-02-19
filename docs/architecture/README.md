@@ -2,15 +2,15 @@
 
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [Table of Contents](#table-of-contents)
-  - [Core Architecture](#core-architecture)
-  - [Implementation Details](#implementation-details)
-  - [Design Principles](#design-principles)
-- [Quick Reference](#quick-reference)
-  - [Architecture Layers](#architecture-layers)
-  - [Module Structure (v0.11.0)](#module-structure-v0110)
-- [Related Documentation](#related-documentation)
+- Overview
+- Table of Contents
+  - Core Architecture
+  - Implementation Details
+  - Design Principles
+- Quick Reference
+  - Architecture Layers
+  - Module Structure (v0.11.0)
+- Related Documentation
 <!-- TOC END -->
 
 **Version**: 1.1  
@@ -29,21 +29,21 @@ shipped in the source tree rather than legacy server-specific stacks.
 
 ### Core Architecture
 
-1. **[C4: System Context](c4-system-context.md)** - External dependencies and boundaries
-2. **[C4: Containers](c4-containers.md)** - Major runtime blocks and their contracts
-3. **[C4: Components](c4-components.md)** - Service and adapter composition
-4. **[C4: Code](c4-code.md)** - Pointers to source files and entry points
+1. **C4: System Context** - External dependencies and boundaries
+2. **C4: Containers** - Major runtime blocks and their contracts
+3. **C4: Components** - Service and adapter composition
+4. **C4: Code** - Pointers to source files and entry points
 
 ### Implementation Details
 
-5. **[Service Layer](service-layer.md)** - Connection, operations, detection, and sync services
-6. **[Adapters](adapters.md)** - How ldap3 integration is wrapped in flext services
+5. **Service Layer** - Connection, operations, detection, and sync services
+6. **Adapters** - How ldap3 integration is wrapped in flext services
 
 ### Design Principles
 
-7. **[arc42 Views](arc42-03-system-scope-system-scope-and-context.md)** - System scope and context
-8. **[Quality Requirements](arc42-10-quality-quality-requirements.md)** - Cross-cutting quality criteria
-9. **[Risks and Decisions](arc42-09-decisions-architecture-decisions.md)** - Notable ADRs and open risks
+7. **arc42 Views** - System scope and context
+8. **Quality Requirements** - Cross-cutting quality criteria
+9. **Risks and Decisions** - Notable ADRs and open risks
 
 ## Quick Reference
 
@@ -76,9 +76,9 @@ API Facade → Service Layer → Adapter Layer → Protocol + Models
 
 ## Related Documentation
 
-- [API Reference](../api/)
-- [Development Guides](../development/)
-- [Maintenance](../maintenance/)
+- API Reference
+- Development Guides
+- Maintenance
 
 ---
 

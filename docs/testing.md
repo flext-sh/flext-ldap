@@ -2,101 +2,101 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Testing Overview](#testing-overview)
-- [Test Environment](#test-environment)
-  - [Docker LDAP Test Server](#docker-ldap-test-server)
-  - [Test Categories](#test-categories)
-- [Current Test Coverage Analysis](#current-test-coverage-analysis)
-  - [Coverage by Module (Priority Order)](#coverage-by-module-priority-order)
-  - [Coverage Trend Analysis](#coverage-trend-analysis)
-- [Test Failure Analysis](#test-failure-analysis)
-  - [Current Failures](#current-failures)
-  - [Skipped Tests (7 total)](#skipped-tests-7-total)
-- [Testing Strategy & Roadmap](#testing-strategy-roadmap)
-  - [Phase 1: Critical Gap Coverage (Priority 1 Modules)](#phase-1-critical-gap-coverage-priority-1-modules)
-  - [Phase 2: Supporting Module Coverage (Priority 2)](#phase-2-supporting-module-coverage-priority-2)
-  - [Phase 3: Advanced Feature Testing (Priority 3)](#phase-3-advanced-feature-testing-priority-3)
-- [Quality Assurance Strategy](#quality-assurance-strategy)
-  - [Test Quality Standards](#test-quality-standards)
-  - [CI/CD Integration](#cicd-integration)
-- [Test Development Guidelines](#test-development-guidelines)
-  - [Writing Effective Tests](#writing-effective-tests)
-  - [Test Data Management](#test-data-management)
-- [Risk Assessment](#risk-assessment)
-  - [High Risk](#high-risk)
-  - [Medium Risk](#medium-risk)
-  - [Mitigation Strategies](#mitigation-strategies)
-- [Success Metrics](#success-metrics)
-  - [Coverage Targets](#coverage-targets)
-  - [Quality Metrics](#quality-metrics)
-  - [Business Impact](#business-impact)
-- [Implementation Timeline](#implementation-timeline)
-  - [Month 1: Critical Gap Coverage](#month-1-critical-gap-coverage)
-  - [Month 2: Integration & E2E](#month-2-integration-e2e)
-  - [Month 3: Advanced Scenarios](#month-3-advanced-scenarios)
-- [Current Status Summary](#current-status-summary)
+- Table of Contents
+- Testing Overview
+- Test Environment
+  - Docker LDAP Test Server
+  - Test Categories
+- Current Test Coverage Analysis
+  - Coverage by Module (Priority Order)
+  - Coverage Trend Analysis
+- Test Failure Analysis
+  - Current Failures
+  - Skipped Tests (7 total)
+- Testing Strategy & Roadmap
+  - Phase 1: Critical Gap Coverage (Priority 1 Modules)
+  - Phase 2: Supporting Module Coverage (Priority 2)
+  - Phase 3: Advanced Feature Testing (Priority 3)
+- Quality Assurance Strategy
+  - Test Quality Standards
+  - CI/CD Integration
+- Test Development Guidelines
+  - Writing Effective Tests
+  - Test Data Management
+- Risk Assessment
+  - High Risk
+  - Medium Risk
+  - Mitigation Strategies
+- Success Metrics
+  - Coverage Targets
+  - Quality Metrics
+  - Business Impact
+- Implementation Timeline
+  - Month 1: Critical Gap Coverage
+  - Month 2: Integration & E2E
+  - Month 3: Advanced Scenarios
+- Current Status Summary
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [FLEXT-LDAP Testing Plan & Status](#flext-ldap-testing-plan--status)
-  - [Testing Overview](#testing-overview)
-  - [Test Environment](#test-environment)
-    - [Docker LDAP Test Server](#docker-ldap-test-server)
-- [Start test server](#start-test-server)
-- [Stop test server](#stop-test-server)
-- [Manual LDAP operations](#manual-ldap-operations)
-  - [Test Categories](#test-categories)
-    - [1. Unit Tests (`tests/unit/`)](#1-unit-tests-testsunit)
-    - [2. Integration Tests (`tests/integration/`)](#2-integration-tests-testsintegration)
-    - [3. E2E Tests (`tests/e2e/`)](#3-e2e-tests-testse2e)
-    - [4. Infrastructure Tests (`tests/infrastructure/`)](#4-infrastructure-tests-testsinfrastructure)
-  - [Current Test Coverage Analysis](#current-test-coverage-analysis)
-    - [Coverage by Module (Priority Order)](#coverage-by-module-priority-order)
-    - [Coverage Trend Analysis](#coverage-trend-analysis)
-  - [Test Failure Analysis](#test-failure-analysis)
-    - [Current Failures](#current-failures)
-    - [Skipped Tests (7 total)](#skipped-tests-7-total)
-  - [Testing Strategy & Roadmap](#testing-strategy--roadmap)
-    - [Phase 1: Critical Gap Coverage (Priority 1 Modules)](#phase-1-critical-gap-coverage-priority-1-modules)
-      - [Implementation Approach](#implementation-approach)
-    - [Phase 2: Supporting Module Coverage (Priority 2)](#phase-2-supporting-module-coverage-priority-2)
-    - [Phase 3: Advanced Feature Testing (Priority 3)](#phase-3-advanced-feature-testing-priority-3)
-  - [Quality Assurance Strategy](#quality-assurance-strategy)
-    - [Test Quality Standards](#test-quality-standards)
-      - [1. Real LDAP Functionality (MANDATORY)](#1-real-ldap-functionality-mandatory)
-      - [2. Coverage Quality Over Quantity](#2-coverage-quality-over-quantity)
-      - [3. Test Organization](#3-test-organization)
-    - [CI/CD Integration](#cicd-integration)
-      - [Quality Gates](#quality-gates)
-- [Coverage requirements](#coverage-requirements)
-- [Docker availability check](#docker-availability-check)
-- [Test stability](#test-stability) - [Automated Testing Pipeline](#automated-testing-pipeline)
-- [.github/workflows/test.yml](#githubworkflowstestyml)
-  - [Test Development Guidelines](#test-development-guidelines)
-    - [Writing Effective Tests](#writing-effective-tests)
-      - [1. Test Structure Pattern](#1-test-structure-pattern)
-      - [2. LDAP Integration Test Pattern](#2-ldap-integration-test-pattern)
-      - [3. Mock Testing Pattern](#3-mock-testing-pattern)
-    - [Test Data Management](#test-data-management)
-      - [LDAP Test Data](#ldap-test-data)
-      - [Test Fixtures](#test-fixtures)
-  - [Risk Assessment](#risk-assessment)
-    - [High Risk](#high-risk)
-    - [Medium Risk](#medium-risk)
-    - [Mitigation Strategies](#mitigation-strategies)
-      - [Docker Reliability](#docker-reliability)
-      - [Test Stability](#test-stability)
-  - [Success Metrics](#success-metrics)
-    - [Coverage Targets](#coverage-targets)
-    - [Quality Metrics](#quality-metrics)
-    - [Business Impact](#business-impact)
-  - [Implementation Timeline](#implementation-timeline)
-    - [Month 1: Critical Gap Coverage](#month-1-critical-gap-coverage)
-    - [Month 2: Integration & E2E](#month-2-integration--e2e)
-    - [Month 3: Advanced Scenarios](#month-3-advanced-scenarios)
-  - [Current Status Summary](#current-status-summary)
+- FLEXT-LDAP Testing Plan & Status
+  - Testing Overview
+  - Test Environment
+    - Docker LDAP Test Server
+- Start test server
+- Stop test server
+- Manual LDAP operations
+  - Test Categories
+    - 1. Unit Tests (`tests/unit/`)
+    - 2. Integration Tests (`tests/integration/`)
+    - 3. E2E Tests (`tests/e2e/`)
+    - 4. Infrastructure Tests (`tests/infrastructure/`)
+  - Current Test Coverage Analysis
+    - Coverage by Module (Priority Order)
+    - Coverage Trend Analysis
+  - Test Failure Analysis
+    - Current Failures
+    - Skipped Tests (7 total)
+  - Testing Strategy & Roadmap
+    - Phase 1: Critical Gap Coverage (Priority 1 Modules)
+      - Implementation Approach
+    - Phase 2: Supporting Module Coverage (Priority 2)
+    - Phase 3: Advanced Feature Testing (Priority 3)
+  - Quality Assurance Strategy
+    - Test Quality Standards
+      - 1. Real LDAP Functionality (MANDATORY)
+      - 2. Coverage Quality Over Quantity
+      - 3. Test Organization
+    - CI/CD Integration
+      - Quality Gates
+- Coverage requirements
+- Docker availability check
+- Test stability - Automated Testing Pipeline
+- .github/workflows/test.yml
+  - Test Development Guidelines
+    - Writing Effective Tests
+      - 1. Test Structure Pattern
+      - 2. LDAP Integration Test Pattern
+      - 3. Mock Testing Pattern
+    - Test Data Management
+      - LDAP Test Data
+      - Test Fixtures
+  - Risk Assessment
+    - High Risk
+    - Medium Risk
+    - Mitigation Strategies
+      - Docker Reliability
+      - Test Stability
+  - Success Metrics
+    - Coverage Targets
+    - Quality Metrics
+    - Business Impact
+  - Implementation Timeline
+    - Month 1: Critical Gap Coverage
+    - Month 2: Integration & E2E
+    - Month 3: Advanced Scenarios
+  - Current Status Summary
 
 ## Testing Overview
 

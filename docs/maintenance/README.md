@@ -2,138 +2,138 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [📋 System Overview](#-system-overview)
-- [🏗️ Architecture](#-architecture)
-- [🚀 Quick Start](#-quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Basic Usage](#basic-usage)
-- [📊 Maintenance Categories](#-maintenance-categories)
-  - [1. Content Quality Audit (`audit.py`)](#1-content-quality-audit-auditpy)
-  - [2. Link & Reference Validation (`validate_links.py`)](#2-link-reference-validation-validatelinkspy)
-  - [3. Style & Consistency (`validate_style.py`)](#3-style-consistency-validatestylepy)
-  - [4. Content Optimization (`optimize.py`)](#4-content-optimization-optimizepy)
-  - [5. Synchronization (`sync.py`)](#5-synchronization-syncpy)
-  - [6. Quality Reporting (`report.py`)](#6-quality-reporting-reportpy)
-- [🔧 Configuration](#-configuration)
-  - [Main Configuration File](#main-configuration-file)
-  - [Custom Style Rules](#custom-style-rules)
-- [📈 Quality Metrics](#-quality-metrics)
-  - [Content Quality Metrics](#content-quality-metrics)
-  - [Maintenance Performance](#maintenance-performance)
-- [🔄 Automated Workflows](#-automated-workflows)
-  - [CI/CD Integration](#cicd-integration)
-  - [Git Hooks Integration](#git-hooks-integration)
-- [📊 Reporting & Analytics](#-reporting-analytics)
-  - [Quality Dashboard](#quality-dashboard)
-  - [Automated Notifications](#automated-notifications)
-- [🛠️ Maintenance Procedures](#-maintenance-procedures)
-  - [Daily Maintenance](#daily-maintenance)
-  - [Weekly Maintenance](#weekly-maintenance)
-  - [Monthly Maintenance](#monthly-maintenance)
-- [🔍 Troubleshooting](#-troubleshooting)
-  - [Common Issues](#common-issues)
-  - [Recovery Procedures](#recovery-procedures)
-- [📚 Advanced Usage](#-advanced-usage)
-  - [Custom Validation Rules](#custom-validation-rules)
-  - [Integration with External Tools](#integration-with-external-tools)
-- [🤝 Contributing](#-contributing)
-  - [Adding New Validators](#adding-new-validators)
-  - [Improving Performance](#improving-performance)
-  - [Extending Reporting](#extending-reporting)
-- [📋 Maintenance Checklist](#-maintenance-checklist)
-  - [Pre-Maintenance](#pre-maintenance)
-  - [During Maintenance](#during-maintenance)
-  - [Post-Maintenance](#post-maintenance)
-- [📞 Support & Resources](#-support-resources)
-  - [Documentation](#documentation)
-  - [Community](#community)
-  - [Professional Services](#professional-services)
+- Table of Contents
+- 📋 System Overview
+- 🏗️ Architecture
+- 🚀 Quick Start
+  - Prerequisites
+  - Basic Usage
+- 📊 Maintenance Categories
+  - 1. Content Quality Audit (`audit.py`)
+  - 2. Link & Reference Validation (`validate_links.py`)
+  - 3. Style & Consistency (`validate_style.py`)
+  - 4. Content Optimization (`optimize.py`)
+  - 5. Synchronization (`sync.py`)
+  - 6. Quality Reporting (`report.py`)
+- 🔧 Configuration
+  - Main Configuration File
+  - Custom Style Rules
+- 📈 Quality Metrics
+  - Content Quality Metrics
+  - Maintenance Performance
+- 🔄 Automated Workflows
+  - CI/CD Integration
+  - Git Hooks Integration
+- 📊 Reporting & Analytics
+  - Quality Dashboard
+  - Automated Notifications
+- 🛠️ Maintenance Procedures
+  - Daily Maintenance
+  - Weekly Maintenance
+  - Monthly Maintenance
+- 🔍 Troubleshooting
+  - Common Issues
+  - Recovery Procedures
+- 📚 Advanced Usage
+  - Custom Validation Rules
+  - Integration with External Tools
+- 🤝 Contributing
+  - Adding New Validators
+  - Improving Performance
+  - Extending Reporting
+- 📋 Maintenance Checklist
+  - Pre-Maintenance
+  - During Maintenance
+  - Post-Maintenance
+- 📞 Support & Resources
+  - Documentation
+  - Community
+  - Professional Services
 <!-- TOC END -->
 
 ## Table of Contents
 
-- [Documentation Maintenance System](#documentation-maintenance-system)
-  - [📋 System Overview](#-system-overview)
-  - [🏗️ Architecture](#-architecture)
-  - [🚀 Quick Start](#-quick-start)
-    - [Prerequisites](#prerequisites)
-- [Required system dependencies](#required-system-dependencies)
-- [Optional: For advanced features](#optional-for-advanced-features)
-  - [Basic Usage](#basic-usage)
-- [Run comprehensive audit](#run-comprehensive-audit)
-- [Validate all links](#validate-all-links)
-- [Generate quality report](#generate-quality-report)
-- [Automated maintenance](#automated-maintenance)
-  - [📊 Maintenance Categories](#-maintenance-categories)
-    - [1. Content Quality Audit (`audit.py`)](#1-content-quality-audit-auditpy)
-    - [2. Link & Reference Validation (`validate_links.py`)](#2-link--reference-validation-validate_linkspy)
-    - [3. Style & Consistency (`validate_style.py`)](#3-style--consistency-validate_stylepy)
-    - [4. Content Optimization (`optimize.py`)](#4-content-optimization-optimizepy)
-    - [5. Synchronization (`sync.py`)](#5-synchronization-syncpy)
-    - [6. Quality Reporting (`report.py`)](#6-quality-reporting-reportpy)
-  - [🔧 Configuration](#-configuration)
-    - [Main Configuration File](#main-configuration-file)
-- [Documentation Maintenance Configuration](#documentation-maintenance-configuration)
-  - [Custom Style Rules](#custom-style-rules)
-- [Custom style rules for documentation](#custom-style-rules-for-documentation)
-  - [📈 Quality Metrics](#-quality-metrics)
-    - [Content Quality Metrics](#content-quality-metrics)
-    - [Maintenance Performance](#maintenance-performance)
-  - [🔄 Automated Workflows](#-automated-workflows)
-    - [CI/CD Integration](#cicd-integration)
-    - [Git Hooks Integration](#git-hooks-integration)
-  - [📊 Reporting & Analytics](#-reporting--analytics)
-    - [Quality Dashboard](#quality-dashboard)
-    - [Automated Notifications](#automated-notifications)
-- [Critical issues requiring immediate attention](#critical-issues-requiring-immediate-attention)
-- [Weekly summary reports](#weekly-summary-reports)
-  - [🛠️ Maintenance Procedures](#-maintenance-procedures)
-    - [Daily Maintenance](#daily-maintenance)
-- [Quick audit (2-5 minutes)](#quick-audit-2-5-minutes)
-- [Style validation](#style-validation)
-  - [Weekly Maintenance](#weekly-maintenance)
-- [Comprehensive audit (10-15 minutes)](#comprehensive-audit-10-15-minutes)
-- [Link validation](#link-validation)
-- [Generate weekly report](#generate-weekly-report)
-  - [Monthly Maintenance](#monthly-maintenance)
-- [Content optimization](#content-optimization)
-- [Synchronization check](#synchronization-check)
-- [Comprehensive reporting](#comprehensive-reporting)
-  - [🔍 Troubleshooting](#-troubleshooting)
-    - [Common Issues](#common-issues)
-      - [Link Validation Failures](#link-validation-failures)
-- [Debug specific link](#debug-specific-link)
-- [Skip problematic domains](#skip-problematic-domains) - [Style Validation Errors](#style-validation-errors)
-- [Show detailed style violations](#show-detailed-style-violations)
-- [Auto-fix common issues](#auto-fix-common-issues) - [Performance Issues](#performance-issues)
-- [Run with profiling](#run-with-profiling)
-- [Optimize configuration](#optimize-configuration)
-- [Reduce check intervals, increase timeouts](#reduce-check-intervals-increase-timeouts)
-  - [Recovery Procedures](#recovery-procedures)
-    - [Rollback Failed Changes](#rollback-failed-changes)
-- [Check what changed](#check-what-changed)
-- [Rollback specific files](#rollback-specific-files)
-- [Complete rollback](#complete-rollback) - [Rebuild Maintenance Database](#rebuild-maintenance-database)
-- [Clear maintenance cache](#clear-maintenance-cache)
-- [Rebuild from scratch](#rebuild-from-scratch)
-  - [📚 Advanced Usage](#-advanced-usage)
-    - [Custom Validation Rules](#custom-validation-rules)
-- [docs/maintenance/custom_validators.py](#docsmaintenancecustom_validatorspy)
-  - [Integration with External Tools](#integration-with-external-tools)
-- [docs/maintenance/integrations.py](#docsmaintenanceintegrationspy)
-  - [🤝 Contributing](#-contributing)
-    - [Adding New Validators](#adding-new-validators)
-    - [Improving Performance](#improving-performance)
-    - [Extending Reporting](#extending-reporting)
-  - [📋 Maintenance Checklist](#-maintenance-checklist)
-    - [Pre-Maintenance](#pre-maintenance)
-    - [During Maintenance](#during-maintenance)
-    - [Post-Maintenance](#post-maintenance)
-  - [📞 Support & Resources](#-support--resources)
-    - [Documentation](#documentation)
-    - [Community](#community)
-    - [Professional Services](#professional-services)
+- Documentation Maintenance System
+  - 📋 System Overview
+  - 🏗️ Architecture
+  - 🚀 Quick Start
+    - Prerequisites
+- Required system dependencies
+- Optional: For advanced features
+  - Basic Usage
+- Run comprehensive audit
+- Validate all links
+- Generate quality report
+- Automated maintenance
+  - 📊 Maintenance Categories
+    - 1. Content Quality Audit (`audit.py`)
+    - 2. Link & Reference Validation (`validate_links.py`)
+    - 3. Style & Consistency (`validate_style.py`)
+    - 4. Content Optimization (`optimize.py`)
+    - 5. Synchronization (`sync.py`)
+    - 6. Quality Reporting (`report.py`)
+  - 🔧 Configuration
+    - Main Configuration File
+- Documentation Maintenance Configuration
+  - Custom Style Rules
+- Custom style rules for documentation
+  - 📈 Quality Metrics
+    - Content Quality Metrics
+    - Maintenance Performance
+  - 🔄 Automated Workflows
+    - CI/CD Integration
+    - Git Hooks Integration
+  - 📊 Reporting & Analytics
+    - Quality Dashboard
+    - Automated Notifications
+- Critical issues requiring immediate attention
+- Weekly summary reports
+  - 🛠️ Maintenance Procedures
+    - Daily Maintenance
+- Quick audit (2-5 minutes)
+- Style validation
+  - Weekly Maintenance
+- Comprehensive audit (10-15 minutes)
+- Link validation
+- Generate weekly report
+  - Monthly Maintenance
+- Content optimization
+- Synchronization check
+- Comprehensive reporting
+  - 🔍 Troubleshooting
+    - Common Issues
+      - Link Validation Failures
+- Debug specific link
+- Skip problematic domains - Style Validation Errors
+- Show detailed style violations
+- Auto-fix common issues - Performance Issues
+- Run with profiling
+- Optimize configuration
+- Reduce check intervals, increase timeouts
+  - Recovery Procedures
+    - Rollback Failed Changes
+- Check what changed
+- Rollback specific files
+- Complete rollback - Rebuild Maintenance Database
+- Clear maintenance cache
+- Rebuild from scratch
+  - 📚 Advanced Usage
+    - Custom Validation Rules
+- docs/maintenance/custom_validators.py
+  - Integration with External Tools
+- docs/maintenance/integrations.py
+  - 🤝 Contributing
+    - Adding New Validators
+    - Improving Performance
+    - Extending Reporting
+  - 📋 Maintenance Checklist
+    - Pre-Maintenance
+    - During Maintenance
+    - Post-Maintenance
+  - 📞 Support & Resources
+    - Documentation
+    - Community
+    - Professional Services
 
 **Comprehensive Documentation Quality Assurance and Maintenance Framework**
 
