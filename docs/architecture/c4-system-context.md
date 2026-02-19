@@ -64,7 +64,7 @@ System_Ext(generic_ldap, "Generic LDAP Server", "RFC-compliant LDAP implementati
 
 System_Ext(flext_api, "FLEXT-API", "REST API framework using flext-ldap")
 System_Ext(flext_auth, "FLEXT-Auth", "Authentication service using flext-ldap")
-System_Ext(client-a_migration, "client-a OUD Migration", "Oracle directory migration tool")
+System_Ext(flext_migration, "FLEXT OUD Migration", "Oracle directory migration tool")
 System_Ext(flext_meltano, "FLEXT-Meltano", "Data integration platform with LDAP taps/targets")
 
 Rel(REDACTED_LDAP_BIND_PASSWORD, flext_ldap, "Manages LDAP operations", "LDAP REDACTED_LDAP_BIND_PASSWORD tools")
@@ -82,7 +82,7 @@ Rel(flext_ldap, generic_ldap, "Connects to", "ldap3 protocol")
 
 Rel(flext_api, flext_ldap, "Uses for user management", "LDAP operations")
 Rel(flext_auth, flext_ldap, "Uses for authentication", "User validation")
-Rel(client-a_migration, flext_ldap, "Uses for directory migration", "Bulk operations")
+Rel(flext_migration, flext_ldap, "Uses for directory migration", "Bulk operations")
 Rel(flext_meltano, flext_ldap, "Uses for data integration", "Directory sync")
 
 @enduml
@@ -134,7 +134,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 - **FLEXT-LDIF**: Handles LDIF file processing and LDAP entry models
 - **FLEXT-API**: REST API framework using flext-ldap for user management
 - **FLEXT-Auth**: Authentication service leveraging flext-ldap
-- **client-a OUD Migration**: Enterprise directory migration tooling
+- **FLEXT OUD Migration**: Enterprise directory migration tooling
 - **FLEXT-Meltano**: Data integration platform with LDAP connectors
 
 ### **System Responsibilities**
@@ -184,7 +184,7 @@ Scaling         Error Handling   Connection Mgmt  Data Export
 #### **Migration Flow**
 
 ```
-System Admin → client-a Migration → FLEXT-LDAP → Source LDAP → Target LDAP
+System Admin → FLEXT Migration → FLEXT-LDAP → Source LDAP → Target LDAP
      ↓              ↓              ↓              ↓              ↓
 Migration Planning Bulk Operations Entry Conversion Schema Mapping Data Transfer
 Progress Tracking Error Handling  Validation      ACL Migration User Provisioning

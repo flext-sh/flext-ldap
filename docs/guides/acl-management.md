@@ -49,7 +49,7 @@
 - [Different subject types](#different-subject-types)
   - [Error Handling](#error-handling)
 - [All operations return FlextResult for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
-  - [Integration with client-a OUD Migration](#integration-with-client-a-oud-migration)
+  - [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
 - [Example: Convert Oracle OUD ACLs to OpenLDAP format](#example-convert-oracle-oud-acls-to-openldap-format)
 - [Read Oracle ACLs from OUD](#read-oracle-acls-from-oud)
 - [Convert each ACL](#convert-each-acl)
@@ -343,7 +343,7 @@ else:
     # Process successful result
 ```
 
-## Integration with client-a OUD Migration
+## Integration with FLEXT OUD Migration
 
 ```python
 # Example: Convert Oracle OUD ACLs to OpenLDAP format
@@ -401,5 +401,5 @@ write_openldap_acls(converted_acls)
 ## See Also
 
 - [FLEXT LDAP API Documentation](README.md)
-- [client-a OUD Migration Guide](../client-a-oud-mig/README.md)
+- [FLEXT OUD Migration Guide](../flext-oud-mig/README.md)
 - [Clean Architecture Patterns](ARCHITECTURE.md)

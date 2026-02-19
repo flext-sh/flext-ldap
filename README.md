@@ -108,7 +108,7 @@ FLEXT-LDAP serves as the **universal LDAP operations foundation** for all enterp
 - **ldap3** → Low-level LDAP protocol (wrapped, not exposed to ecosystem)
 - **flext-auth** → LDAP authentication provider for SSO systems
 - **flext-meltano** → Singer taps/targets for LDAP data integration
-- **client-a-oud-mig** → Oracle Unified Directory migration (enterprise tool)
+- **flext-oud-mig** → Oracle Unified Directory migration (enterprise tool)
 
 ---
 

@@ -1,20 +1,19 @@
 [build-system]
     build-backend = "poetry.core.masonry.api"
     requires = [
-        "poetry-core>=1.9.0",
+        "poetry-core>=2",
     ]
 
 [project]
     classifiers = [
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.13",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
-        "Typing :: Typed",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
+    "Typing :: Typed"
     ]
     dependencies = [
         "beartype (>=0.19.0)",
@@ -40,6 +39,7 @@
     readme = "README.md"
     requires-python = ">=3.13,<3.14"
     version = "0.9.0"
+    license = "MIT"
     [[project.authors]]
         email = "team@flext.sh"
         name = "FLEXT Team"
@@ -47,9 +47,6 @@
     [[project.maintainers]]
         email = "team@flext.sh"
         name = "FLEXT Team"
-
-    [project.license]
-        text = "MIT"
 
     [project.urls]
         Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
@@ -188,21 +185,19 @@
 
     [tool.pytest.ini_options]
         addopts = [
-            "--cov-report=term-missing",
-            "--cov=src/",
-            "--strict-config",
-            "--strict-markers",
-            "--tb=short",
-            "-p no:sugar",
-            "-p no:randomly",
-            "-q",
-            "-ra",
             # PARALELIZAÇÃO (pytest-xdist) - REGRA 3: Idempotência & Paralelização
             # Uncomment to enable parallel testing (requires pytest-xdist installed)
             # "-n", "auto",              # Use all CPU cores (or set number like "4")
             # "--dist", "loadgroup",     # Distribute by test file (keeps module tests together)
             # NOTE: Tests MUST be idempotent with unique DNs (make_user_dn/make_group_dn fixtures)
             # Integration tests share single LDAP container but use DN namespacing for isolation
+            "--strict-config",
+            "--strict-markers",
+            "--tb=short",
+            "-p no:sugar",
+            "-p no:randomly",
+            "-q",
+            "-ra"
         ]
         filterwarnings = [
             "ignore::DeprecationWarning",
@@ -292,8 +287,19 @@
 
     [tool.pyrefly]
         search-path = [
+            "../typings",
+            "../typings/generated",
             ".",
             "src",
             "tests",
         ]
 
+[tool.coverage.run]
+source = ["src/flext_ldap"]
+
+[tool.coverage.report]
+fail_under = 70
+precision = 2
+
+[tool.bandit]
+skips = ["B404", "B603", "B607", "B105", "B608"]

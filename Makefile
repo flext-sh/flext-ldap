@@ -1,8 +1,5 @@
 # flext-ldap - LDAP Operations Library
 PROJECT_NAME := flext-ldap
-COV_DIR := flext_ldap
-MIN_COVERAGE := 70
-
 include ../base.mk
 
 # === PROJECT-SPECIFIC TARGETS ===
