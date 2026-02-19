@@ -1,97 +1,64 @@
 # ACL Management System
 
-<!-- TOC START -->
-
-- [Table of Contents](#table-of-contents)
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-  - [Basic Usage](#basic-usage)
-  - [Converting ACL Formats](#converting-acl-formats)
-  - [Batch Conversion](#batch-conversion)
-- [ACL Format Examples](#acl-format-examples)
-  - [OpenLDAP Format](#openldap-format)
-  - [Oracle Directory Format](#oracle-directory-format)
-  - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds-apache-ds)
-- [Creating Custom ACLs](#creating-custom-acls)
-  - [Using the Unified Model](#using-the-unified-model)
-- [ACL Validation](#acl-validation)
-- [Migration Scenarios](#migration-scenarios)
-  - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
-  - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
-- [Advanced Features](#advanced-features)
-  - [ACL with Conditions](#acl-with-conditions)
-  - [Permission Mapping](#permission-mapping)
-  - [Subject Types](#subject-types)
-- [Error Handling](#error-handling)
-- [Integration with client-a OUD Migration](#integration-with-client-a-oud-migration)
-- [Best Practices](#best-practices)
-- [API Reference](#api-reference)
-  - [FlextLdap ACL Methods](#flextldap-acl-methods)
-  - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
-- [See Also](#see-also)
-
-<!-- TOC END -->
-
 ## Table of Contents
 
-- ACL Management System
-  - Overview
-  - Architecture
-  - Quick Start
-    - Basic Usage
-- Initialize API
-- Parse an OpenLDAP ACL
-  - Converting ACL Formats
-- Convert OpenLDAP to Oracle format
-  - Batch Conversion
-- Convert multiple ACLs at once
-  - ACL Format Examples
-    - OpenLDAP Format
-- Simple attribute ACL
-- DN-based ACL
-- Multiple attributes
-  - Oracle Directory Format
-- Attribute ACL
-- Entry-level ACL
-- Multiple attributes
-  - ACI Format (389 DS / Apache DS)
-- Simple ACI
-- Deny ACL
-- Group-based ACI
-  - Creating Custom ACLs
-    - Using the Unified Model
-- Create ACL components
-- Create unified ACL
-- Convert to any format
-  - ACL Validation
-- Validate ACL syntax
-  - Migration Scenarios
-    - Oracle to OpenLDAP Migration
-- Parse Oracle ACLs from existing directory
-- Convert to OpenLDAP format
-  - OpenLDAP to 389 DS Migration
-- Parse OpenLDAP slapd.conf ACLs
-- Convert to ACI format for 389 DS
-  - Advanced Features
-    - ACL with Conditions
-- Create ACL with time and IP restrictions
-  - Permission Mapping
-- Standard permissions across formats
-  - Subject Types
-- Different subject types
-  - Error Handling
-- All operations return FlextResult for safe error handling
-  - Integration with client-a OUD Migration
-- Example: Convert Oracle OUD ACLs to OpenLDAP format
-- Read Oracle ACLs from OUD
-- Convert each ACL
-- Write to OpenLDAP configuration
-  - Best Practices
-  - API Reference
-    - FlextLdap ACL Methods
-    - FlextLdapAclManager Methods
-  - See Also
+- [ACL Management System](#acl-management-system)
+  - [Overview](#overview)
+  - [Architecture](#architecture)
+  - [Quick Start](#quick-start)
+    - [Basic Usage](#basic-usage)
+- [Initialize API](#initialize-api)
+- [Parse an OpenLDAP ACL](#parse-an-openldap-acl)
+  - [Converting ACL Formats](#converting-acl-formats)
+- [Convert OpenLDAP to Oracle format](#convert-openldap-to-oracle-format)
+  - [Batch Conversion](#batch-conversion)
+- [Convert multiple ACLs at once](#convert-multiple-acls-at-once)
+  - [ACL Format Examples](#acl-format-examples)
+    - [OpenLDAP Format](#openldap-format)
+- [Simple attribute ACL](#simple-attribute-acl)
+- [DN-based ACL](#dn-based-acl)
+- [Multiple attributes](#multiple-attributes)
+  - [Oracle Directory Format](#oracle-directory-format)
+- [Attribute ACL](#attribute-acl)
+- [Entry-level ACL](#entry-level-acl)
+- [Multiple attributes](#multiple-attributes)
+  - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds--apache-ds)
+- [Simple ACI](#simple-aci)
+- [Deny ACL](#deny-acl)
+- [Group-based ACI](#group-based-aci)
+  - [Creating Custom ACLs](#creating-custom-acls)
+    - [Using the Unified Model](#using-the-unified-model)
+- [Create ACL components](#create-acl-components)
+- [Create unified ACL](#create-unified-acl)
+- [Convert to any format](#convert-to-any-format)
+  - [ACL Validation](#acl-validation)
+- [Validate ACL syntax](#validate-acl-syntax)
+  - [Migration Scenarios](#migration-scenarios)
+    - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
+- [Parse Oracle ACLs from existing directory](#parse-oracle-acls-from-existing-directory)
+- [Convert to OpenLDAP format](#convert-to-openldap-format)
+  - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
+- [Parse OpenLDAP slapd.conf ACLs](#parse-openldap-slapdconf-acls)
+- [Convert to ACI format for 389 DS](#convert-to-aci-format-for-389-ds)
+  - [Advanced Features](#advanced-features)
+    - [ACL with Conditions](#acl-with-conditions)
+- [Create ACL with time and IP restrictions](#create-acl-with-time-and-ip-restrictions)
+  - [Permission Mapping](#permission-mapping)
+- [Standard permissions across formats](#standard-permissions-across-formats)
+  - [Subject Types](#subject-types)
+- [Different subject types](#different-subject-types)
+  - [Error Handling](#error-handling)
+- [All operations return FlextResult for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
+  - [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
+- [Example: Convert Oracle OUD ACLs to OpenLDAP format](#example-convert-oracle-oud-acls-to-openldap-format)
+- [Read Oracle ACLs from OUD](#read-oracle-acls-from-oud)
+- [Convert each ACL](#convert-each-acl)
+- [Write to OpenLDAP configuration](#write-to-openldap-configuration)
+  - [Best Practices](#best-practices)
+  - [API Reference](#api-reference)
+    - [FlextLdap ACL Methods](#flextldap-acl-methods)
+    - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
+  - [See Also](#see-also)
 
 ## Overview
 
@@ -107,9 +74,9 @@ The FLEXT LDAP ACL Management system provides comprehensive ACL (Access Control 
 The ACL system follows Clean Architecture principles with:
 
 1. **Unified ACL Model** - Intermediate representation for all ACL formats
-1. **Format-specific Parsers** - Parse ACLs from different LDAP servers
-1. **Bidirectional Converters** - Convert between any supported formats
-1. **AclManager** - Orchestration layer for ACL operations
+2. **Format-specific Parsers** - Parse ACLs from different LDAP servers
+3. **Bidirectional Converters** - Convert between any supported formats
+4. **AclManager** - Orchestration layer for ACL operations
 
 ## Quick Start
 
@@ -376,7 +343,7 @@ else:
     # Process successful result
 ```
 
-## Integration with client-a OUD Migration
+## Integration with FLEXT OUD Migration
 
 ```python
 # Example: Convert Oracle OUD ACLs to OpenLDAP format
@@ -409,10 +376,10 @@ write_openldap_acls(converted_acls)
 ## Best Practices
 
 1. **Always validate ACL syntax** before applying to production directory
-1. **Test conversions** with sample ACLs before bulk migration
-1. **Review conversion warnings** to understand potential feature loss
-1. **Use unified model** for complex ACL manipulation
-1. **Batch operations** for better performance with multiple ACLs
+2. **Test conversions** with sample ACLs before bulk migration
+3. **Review conversion warnings** to understand potential feature loss
+4. **Use unified model** for complex ACL manipulation
+5. **Batch operations** for better performance with multiple ACLs
 
 ## API Reference
 
@@ -433,6 +400,6 @@ write_openldap_acls(converted_acls)
 
 ## See Also
 
-- FLEXT LDAP API Documentation
-- client-a OUD Migration Guide
-- Clean Architecture Patterns
+- [FLEXT LDAP API Documentation](README.md)
+- [FLEXT OUD Migration Guide](../flext-oud-mig/README.md)
+- [Clean Architecture Patterns](ARCHITECTURE.md)
