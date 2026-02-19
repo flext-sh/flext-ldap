@@ -37,7 +37,7 @@ ldap = FlextLdap()
 #      auth = FlextLdapClients.Authentication()
 ```
 
----
+______________________________________________________________________
 
 ## 📚 Documentation
 
@@ -54,7 +54,7 @@ ldap = FlextLdap()
 - **[API Reference](docs/api/)** - Complete API documentation
 - **[Development Guides](docs/development/)** - Contributing guidelines
 
----
+______________________________________________________________________
 
 ## 🎯 Purpose and Role in FLEXT Ecosystem
 
@@ -94,12 +94,12 @@ FLEXT-LDAP serves as the **universal LDAP operations foundation** for all enterp
 ### Key Responsibilities
 
 1. **Universal LDAP Interface** - Single API for all LDAP server types
-2. **Server-Specific Operations** - Complete implementations with quirks handling
-3. **FlextLdif Integration** - Universal entry/LDIF handling with server detection
-4. **Entry Adapter Pattern** - Bidirectional ldap3 ↔ FlextLdif conversion
-5. **Schema Discovery** - Server-specific schema endpoints and parsing
-6. **ACL Management** - Server-specific ACL formats and operations
-7. **Clean Architecture** - Domain-driven design with infrastructure abstraction
+1. **Server-Specific Operations** - Complete implementations with quirks handling
+1. **FlextLdif Integration** - Universal entry/LDIF handling with server detection
+1. **Entry Adapter Pattern** - Bidirectional ldap3 ↔ FlextLdif conversion
+1. **Schema Discovery** - Server-specific schema endpoints and parsing
+1. **ACL Management** - Server-specific ACL formats and operations
+1. **Clean Architecture** - Domain-driven design with infrastructure abstraction
 
 ### Integration Points
 
@@ -110,7 +110,7 @@ FLEXT-LDAP serves as the **universal LDAP operations foundation** for all enterp
 - **flext-meltano** → Singer taps/targets for LDAP data integration
 - **flext-oud-mig** → Oracle Unified Directory migration (enterprise tool)
 
----
+______________________________________________________________________
 
 ## 🏗️ Architecture Overview
 
@@ -272,7 +272,7 @@ Refactor complex methods into focused helper methods to meet ruff limits:
 
 **For more patterns, see [CLAUDE.md](CLAUDE.md)**
 
----
+______________________________________________________________________
 
 ## 🚀 Quick Start
 
@@ -429,7 +429,7 @@ def manage_acls(connection, server_type):
 manage_acls(connection, "openldap2")
 ```
 
----
+______________________________________________________________________
 
 ## 🌐 Server-Specific Features
 
@@ -504,7 +504,7 @@ ops = ActiveDirectoryOperations()
 | **START_TLS**        | ✅           | ✅           | ✅         | ✅              | ✅                      |
 | **Replication**      | ✅           | ✅           | ✅         | ✅ Advanced     | ✅                      |
 
----
+______________________________________________________________________
 
 ## 🔧 Quality Assurance
 
@@ -521,7 +521,6 @@ The FLEXT ecosystem provides comprehensive automated quality assurance:
 - **Type Safety**: Complete type coverage maintained
 - **Test Coverage**: All changes include comprehensive tests
 - **Quality Validation**: Automated checks ensure standards are met
-
 
 ## 🔧 Development
 
@@ -587,7 +586,7 @@ make clean-all                # Deep clean including venvs
 - **Test Infrastructure**: Use `tests/helpers/` for test code, `tests/fixtures/` only for non-Python files
 - **No Skipped Tests**: Use `pytest.fail()` for infrastructure failures, create test data for missing data
 
----
+______________________________________________________________________
 
 ## 🧪 Testing
 
@@ -680,7 +679,7 @@ Use pytest markers to control test execution:
 @pytest.mark.e2e               # End-to-end workflows
 ```
 
----
+______________________________________________________________________
 
 ## 📊 Project Statistics
 
@@ -723,7 +722,7 @@ Use pytest markers to control test execution:
 - 🔄 Active Directory enhancements
 - 🔄 Performance optimization
 
----
+______________________________________________________________________
 
 ## 🗺️ Roadmap
 
@@ -757,7 +756,7 @@ Use pytest markers to control test execution:
 - Comprehensive monitoring and observability
 - Production deployment guides
 
----
+______________________________________________________________________
 
 ## 📚 Additional Documentation
 
@@ -772,17 +771,18 @@ Use pytest markers to control test execution:
 - **[ACL Management](docs/guides/acl-management.md)** - Server-specific ACL handling
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
----
+______________________________________________________________________
 
 ## 🤝 Contributing
+
 ### Quality Standards
 
 All contributions must:
+
 - Maintain architectural layering and dependency rules
 - Preserve complete type safety
 - Follow established testing patterns
 - Pass automated quality validation
-
 
 ### FLEXT Compliance Checklist
 
@@ -812,19 +812,19 @@ make validate    # Must pass: lint + type-check + security + test
 ### Contribution Workflow
 
 1. **Fork and clone** the repository
-2. **Create feature branch** from `main`
-3. **Make changes** following standards
-4. **Run quality gates**: `make validate`
-5. **Run tests**: `make test`
-6. **Create pull request** with clear description
+1. **Create feature branch** from `main`
+1. **Make changes** following standards
+1. **Run quality gates**: `make validate`
+1. **Run tests**: `make test`
+1. **Create pull request** with clear description
 
----
+______________________________________________________________________
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
----
+______________________________________________________________________
 
 ## 🆘 Support
 
@@ -848,7 +848,7 @@ When reporting issues, please include:
 
 Report security issues privately to maintainers. Do not open public issues for security vulnerabilities.
 
----
+______________________________________________________________________
 
 **flext-ldap v0.10.0** - Universal LDAP directory services with Clean Architecture, server-specific implementations, and zero code duplication.
 
