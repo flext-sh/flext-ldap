@@ -1,7 +1,7 @@
 # Architecture Decision Record (ADR) 001: Clean Architecture Adoption
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Status](#status)
 - [Context](#context)
@@ -13,6 +13,7 @@
 - [Implementation Status](#implementation-status)
 - [References](#references)
 - [ADR Maintenance](#adr-maintenance)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -102,10 +103,10 @@ src/flext_ldap/
 **Key Architectural Principles:**
 
 1. **Dependency Rule**: Inner layers don't depend on outer layers
-2. **Abstraction Principle**: Abstract interfaces in inner layers
-3. **Dependency Inversion**: High-level modules don't depend on low-level modules
-4. **Railway Pattern**: Explicit error handling throughout
-5. **Protocol-Based Design**: Type-safe interfaces with runtime checking
+1. **Abstraction Principle**: Abstract interfaces in inner layers
+1. **Dependency Inversion**: High-level modules don't depend on low-level modules
+1. **Railway Pattern**: Explicit error handling throughout
+1. **Protocol-Based Design**: Type-safe interfaces with runtime checking
 
 **Rationale**
 Clean Architecture provides the best foundation for:
@@ -202,7 +203,7 @@ Plugin-based architecture with core and extensions.
 - **Performance**: No degradation from previous implementation
 - **API Compatibility**: 100% backward compatibility
 - **Code Quality**: Zero lint violations, MyPy strict compliance
-- **Extensibility**: New server support in <2 weeks
+- **Extensibility**: New server support in \<2 weeks
 
 **Testing Strategy**
 
@@ -270,7 +271,7 @@ Plugin-based architecture with core and extensions.
 - ADR 002: Railway Pattern Implementation - Error handling strategy
 - ADR 003: Universal LDAP Interface - Server abstraction design
 
----
+______________________________________________________________________
 
 ## ADR Maintenance
 

@@ -1,10 +1,11 @@
 # Adapter Layer
 
-
 <!-- TOC START -->
+
 - [Ldap3Adapter](#ldap3adapter)
 - [FlextLdapEntryAdapter](#flextldapentryadapter)
 - [Why Adapters Matter](#why-adapters-matter)
+
 <!-- TOC END -->
 
 Adapters isolate external libraries so that services remain focused on domain

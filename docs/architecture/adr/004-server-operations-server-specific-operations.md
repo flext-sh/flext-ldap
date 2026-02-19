@@ -1,7 +1,7 @@
 # Architecture Decision Record (ADR) 004-server-operations: Server-Specific Operations
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Status](#status)
 - [Context](#context)
@@ -11,6 +11,7 @@
 - [Validation](#validation)
 - [Consequences](#consequences)
 - [References](#references)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -82,7 +83,7 @@
 
 - [Links to related ADRs and documentation]
 
----
+______________________________________________________________________
 
 **ADR 004-server-operations: Server-Specific Operations**
 _Accepted on 2025-10-10_

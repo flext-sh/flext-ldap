@@ -1,7 +1,7 @@
 # Documentation Maintenance System - Troubleshooting Guide
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Quick Diagnosis](#quick-diagnosis)
   - [System Health Check](#system-health-check)
@@ -43,6 +43,7 @@
 - [Advanced Troubleshooting](#advanced-troubleshooting)
   - [Custom Diagnostic Scripts](#custom-diagnostic-scripts)
   - [Automated Health Checks](#automated-health-checks)
+
 <!-- TOC END -->
 
 **Common issues, diagnostics, and solutions for the Documentation Maintenance System**
@@ -743,17 +744,17 @@ EOF
 chmod +x docs/maintenance/health_check.sh
 ```
 
----
+______________________________________________________________________
 
 **Documentation Maintenance System Troubleshooting Guide**
 
 **Key Recovery Steps:**
 
 1. **Diagnose**: Run health checks and gather diagnostic information
-2. **Isolate**: Identify which component is failing
-3. **Fix**: Apply appropriate solution from this guide
-4. **Verify**: Test the fix and ensure no regressions
-5. **Prevent**: Update configurations or procedures to prevent recurrence
+1. **Isolate**: Identify which component is failing
+1. **Fix**: Apply appropriate solution from this guide
+1. **Verify**: Test the fix and ensure no regressions
+1. **Prevent**: Update configurations or procedures to prevent recurrence
 
 **Support Resources:**
 

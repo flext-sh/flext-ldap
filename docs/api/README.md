@@ -1,7 +1,7 @@
 # API Reference Documentation
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Public API](#public-api)
   - [Primary Entry Point](#primary-entry-point)
@@ -15,6 +15,7 @@
   - [Internal (Subject to Change)](#internal-subject-to-change)
 - [Return Types](#return-types)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 1.0 (v0.10.0)
@@ -41,23 +42,28 @@ result = api.search_entries(search_request)
 ### Core Modules
 
 1. **FlextLdapModels** - Domain models and entities
+
    - SearchRequest, Connection, Entry models
    - Domain logic and validations
 
-2. **FlextLdapClients** - LDAP client operations
+1. **FlextLdapClients** - LDAP client operations
+
    - Authentication - Bind operations
    - Search - Search operations
 
-3. **FlextLdapAcl** - ACL management
+1. **FlextLdapAcl** - ACL management
+
    - Manager - ACL operations
    - Parsers - ACL parsing
    - Converters - Format conversion
 
-4. **FlextLdapSchema** - Schema operations
+1. **FlextLdapSchema** - Schema operations
+
    - Discover - Schema discovery
    - Sync - Schema synchronization
 
-5. **FlextLdapEntryAdapter** - Entry conversion
+1. **FlextLdapEntryAdapter** - Entry conversion
+
    - ldap3 → flext-ldif
    - flext-ldif → ldap3
 
@@ -158,7 +164,7 @@ if result.is_failure:
 - Development - Contributing guidelines
 - Migration Guide - v0.9.0 → v0.10.0
 
----
+______________________________________________________________________
 
 **Last Updated**: 2025-01-24
 **API Version**: v0.10.0

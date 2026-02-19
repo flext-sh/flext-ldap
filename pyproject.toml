@@ -172,9 +172,11 @@ ini_options.addopts = [
   "--strict-markers",
   "--tb=short",
   "-p no:sugar",
-  "-p no:randomly",
   "-q",
-  "-ra"
+  "-ra",
+  "--timeout=30",
+  "--timeout-method=signal",
+  "--durations=0"
 ]
 ini_options.filterwarnings = [
   "ignore::DeprecationWarning",

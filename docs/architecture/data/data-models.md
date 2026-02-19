@@ -1,8 +1,9 @@
 # Data Architecture: Domain Models
 
-
 <!-- TOC START -->
-- [🏗️ Domain Model Overview](#-domain-model-overview)
+
+- [🏗️ Domain Model Overview](#domain-model-overview)
+
 <!-- TOC END -->
 
 **Domain Data Structures and Relationships**
@@ -15,7 +16,7 @@ FLEXT-LDAP implements a rich domain model based on LDAP standards while providin
 
 [Domain model content would go here]
 
----
+______________________________________________________________________
 
 **Domain Data Models**
 _Enterprise-grade LDAP entities with business logic and validation_

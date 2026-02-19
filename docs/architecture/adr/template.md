@@ -1,7 +1,7 @@
 # Architecture Decision Record (ADR) Template
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Status](#status)
 - [Context](#context)
@@ -11,6 +11,7 @@
 - [Validation](#validation)
 - [References](#references)
 - [ADR Maintenance](#adr-maintenance)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -144,7 +145,7 @@
 
 - {Links to design discussions, GitHub issues, or meeting notes}
 
----
+______________________________________________________________________
 
 ## ADR Maintenance
 
@@ -158,7 +159,7 @@
 
 **Superseded by**: {ADR number, if applicable}
 
----
+______________________________________________________________________
 
 **Template Version**: 1.0
 **Based on**: Michael Nygard's ADR format with FLEXT enhancements

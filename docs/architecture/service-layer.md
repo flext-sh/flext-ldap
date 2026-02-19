@@ -1,13 +1,14 @@
 # Service Layer
 
-
 <!-- TOC START -->
+
 - [Services](#services)
   - [Connection](#connection)
   - [Operations](#operations)
   - [Synchronization](#synchronization)
   - [Server Detection](#server-detection)
 - [Collaboration Pattern](#collaboration-pattern)
+
 <!-- TOC END -->
 
 The service layer contains the composable building blocks that power the

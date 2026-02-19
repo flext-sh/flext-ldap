@@ -1,7 +1,7 @@
 # Universal LDAP Operations Guide
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Key Features](#key-features)
@@ -35,6 +35,7 @@
   - [Conversion Failures](#conversion-failures)
   - [ACL Translation Issues](#acl-translation-issues)
 - [Contributing](#contributing)
+
 <!-- TOC END -->
 
 **flext-ldap** now provides complete universal LDAP support,
@@ -58,9 +59,9 @@ Active Directory) through a unified interface.
 The universal LDAP system consists of:
 
 1. **Server Operations**: Server-specific implementations (OpenLDAP, Oracle, AD)
-2. **Entry Adapter**: Universal entry conversion with quirks integration
-3. **Factory Pattern**: Dynamic server operations instantiation
-4. **Universal API**: High-level methods exposing universal capabilities
+1. **Entry Adapter**: Universal entry conversion with quirks integration
+1. **Factory Pattern**: Dynamic server operations instantiation
+1. **Universal API**: High-level methods exposing universal capabilities
 
 ## Key Features
 
@@ -556,14 +557,14 @@ if caps_result.is_success:
 To add support for additional LDAP servers:
 
 1. Create new server operations class inheriting from `BaseServerOperations`
-2. Implement all required methods (connection, schema, ACL, entry, search)
-3. Add server-specific quirks to FlextLdif quirks system
-4. Register in `ServerOperationsFactory`
-5. Add tests and documentation
+1. Implement all required methods (connection, schema, ACL, entry, search)
+1. Add server-specific quirks to FlextLdif quirks system
+1. Register in `ServerOperationsFactory`
+1. Add tests and documentation
 
 See `src/flext_ldap/servers/ad_operations.py` for stub template.
 
----
+______________________________________________________________________
 
 **Copyright (c) 2025 FLEXT Team. All rights reserved.**
 **SPDX-License-Identifier: MIT**

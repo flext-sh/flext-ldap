@@ -1,7 +1,7 @@
 # Integration Guide
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
@@ -27,6 +27,7 @@
 - [Monitoring and Observability](#monitoring-and-observability)
   - [Prometheus Metrics](#prometheus-metrics)
   - [Health Check Endpoints](#health-check-endpoints)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -79,7 +80,7 @@ This guide covers integration patterns, FLEXT ecosystem usage, and third-party s
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+______________________________________________________________________
 
 ## FLEXT Ecosystem Integration
 
@@ -177,7 +178,7 @@ settings = AppSettings()
 ldap_config = settings.get_ldap_config()
 ```
 
----
+______________________________________________________________________
 
 ## FastAPI Integration
 
@@ -300,7 +301,7 @@ def create_user(
     }
 ```
 
----
+______________________________________________________________________
 
 ## Django Integration
 
@@ -472,7 +473,7 @@ class Command(BaseCommand):
             )
 ```
 
----
+______________________________________________________________________
 
 ## Flask Integration
 
@@ -559,7 +560,7 @@ if __name__ == '__main__':
     app.run(debug=True)
 ```
 
----
+______________________________________________________________________
 
 ## Docker Integration
 
@@ -643,7 +644,7 @@ EXPOSE 8000
 CMD ["python", "-m", "myapp"]
 ```
 
----
+______________________________________________________________________
 
 ## Kubernetes Integration
 
@@ -733,7 +734,7 @@ data:
   use_ssl: "true"
 ```
 
----
+______________________________________________________________________
 
 ## FlextLdif Integration
 
@@ -1063,7 +1064,7 @@ def main():
 run(main())
 ```
 
----
+______________________________________________________________________
 
 ## Monitoring and Observability
 
@@ -1142,10 +1143,10 @@ def readiness_check():
         }, 503
 ```
 
----
+______________________________________________________________________
 
 For more integration examples and patterns, see the examples/ directory.
 
----
+______________________________________________________________________
 
 **Next:** Troubleshooting Guide →

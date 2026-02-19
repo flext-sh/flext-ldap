@@ -1,7 +1,7 @@
 # FLEXT-LDAP Architecture
 
-
 <!-- TOC START -->
+
 - [Layered View](#layered-view)
 - [Module Map](#module-map)
 - [Runtime Flows](#runtime-flows)
@@ -11,6 +11,7 @@
   - [Server Detection](#server-detection)
 - [Design Notes](#design-notes)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 FLEXT-LDAP wraps `ldap3` and `flext-ldif` behind a small service layer and a
@@ -53,10 +54,10 @@ callers replace services or adapters for testing and alternative runtimes.
 
 1. `FlextLdap.connect` converts incoming dictionaries to
    :class:`~flext_ldap.models.FlextLdapModels.ConnectionConfig` when needed.
-2. :class:`~flext_ldap.services.connection.FlextLdapConnection` delegates
+1. :class:`~flext_ldap.services.connection.FlextLdapConnection` delegates
    binding to :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`, with optional
    retry handling.
-3. After a successful bind, the connection service can trigger
+1. After a successful bind, the connection service can trigger
    :class:`~flext_ldap.services.detection.FlextLdapServerDetector` to infer the
    server type from `rootDSE` attributes.
 
@@ -64,9 +65,9 @@ callers replace services or adapters for testing and alternative runtimes.
 
 1. The facade forwards search/add/modify/delete calls to
    :class:`~flext_ldap.services.operations.FlextLdapOperations`.
-2. The operations service normalizes DNs and delegates protocol calls to the
+1. The operations service normalizes DNs and delegates protocol calls to the
    LDAP adapter, which returns typed results already parsed by `flext-ldif`.
-3. Results are wrapped in `FlextResult` instances for explicit
+1. Results are wrapped in `FlextResult` instances for explicit
    success/failure handling.
 
 ### Synchronization
@@ -74,16 +75,16 @@ callers replace services or adapters for testing and alternative runtimes.
 1. :class:`~flext_ldap.services.sync.FlextLdapSyncService` reads LDIF content
    (from files or pre-parsed entries) and streams it through the operations
    service.
-2. Batch mode collects per-entry stats and supports progress callbacks;
+1. Batch mode collects per-entry stats and supports progress callbacks;
    multi-phase syncs reuse the same pipeline while attaching phase metadata.
-3. Final statistics are returned via
+1. Final statistics are returned via
    :class:`flext_ldap.models.FlextLdapModels.SyncStats`.
 
 ### Server Detection
 
 1. :class:`~flext_ldap.services.detection.FlextLdapServerDetector` queries
    `rootDSE` using the active ldap3 connection.
-2. Vendor attributes are matched against lightweight in-project heuristics to
+1. Vendor attributes are matched against lightweight in-project heuristics to
    return a server label (for example, `rfc`, `openldap`, `ad`) without
    relying on external detection helpers.
 

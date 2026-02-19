@@ -1,16 +1,17 @@
 # C4 Model: Container Architecture
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
-- [🏗️ Container Architecture Overview](#-container-architecture-overview)
-- [📦 Container Descriptions](#-container-descriptions)
-- [🔄 Container Communication Patterns](#-container-communication-patterns)
-- [🏗️ Technology Choices](#-technology-choices)
-- [🚀 Deployment Considerations](#-deployment-considerations)
-- [📊 Performance Characteristics](#-performance-characteristics)
-- [🔒 Security Considerations](#-security-considerations)
-- [🔗 Related Documentation](#-related-documentation)
+- [🏗️ Container Architecture Overview](#container-architecture-overview)
+- [📦 Container Descriptions](#container-descriptions)
+- [🔄 Container Communication Patterns](#container-communication-patterns)
+- [🏗️ Technology Choices](#technology-choices)
+- [🚀 Deployment Considerations](#deployment-considerations)
+- [📊 Performance Characteristics](#performance-characteristics)
+- [🔒 Security Considerations](#security-considerations)
+- [🔗 Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -65,7 +66,7 @@ providing LDAP operations through a unified interface while supporting multiple 
 
 [Related documentation links would go here]
 
----
+______________________________________________________________________
 
 **C4 Model - Level 2: Container Architecture**
 _Technology choices and high-level system structure_

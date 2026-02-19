@@ -9,7 +9,7 @@ endif
 # === PROJECT-SPECIFIC TARGETS ===
 .PHONY: ldap-start ldap-stop ldap-restart ldap-health ldap-reset
 .PHONY: ldap-search ldap-search-users ldap-search-groups ldap-shell ldap-logs
-.PHONY: test-unit test-integration build docs docs-serve shell
+.PHONY: test-unit test-integration build docs-serve shell
 
 # Docker LDAP server management
 ldap-start: ## Start Docker LDAP server
@@ -41,9 +41,6 @@ ldap-shell: ## Open LDAP container shell
 
 ldap-logs: ## View LDAP server logs
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml logs -f
-
-docs: ## Build documentation
-	$(Q)$(POETRY) run mkdocs build
 
 docs-serve: ## Serve documentation
 	$(Q)$(POETRY) run mkdocs serve

@@ -1,7 +1,7 @@
 # Architecture Documentation
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Table of Contents](#table-of-contents)
   - [Core Architecture](#core-architecture)
@@ -11,10 +11,11 @@
   - [Architecture Layers](#architecture-layers)
   - [Module Structure (v0.11.0)](#module-structure-v0110)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
-**Version**: 1.1  
-**Date**: 2025-03-15  
+**Version**: 1.1\
+**Date**: 2025-03-15\
 **Target Release**: v0.11.0
 
 ## Overview
@@ -30,20 +31,20 @@ shipped in the source tree rather than legacy server-specific stacks.
 ### Core Architecture
 
 1. **C4: System Context** - External dependencies and boundaries
-2. **C4: Containers** - Major runtime blocks and their contracts
-3. **C4: Components** - Service and adapter composition
-4. **C4: Code** - Pointers to source files and entry points
+1. **C4: Containers** - Major runtime blocks and their contracts
+1. **C4: Components** - Service and adapter composition
+1. **C4: Code** - Pointers to source files and entry points
 
 ### Implementation Details
 
 5. **Service Layer** - Connection, operations, detection, and sync services
-6. **Adapters** - How ldap3 integration is wrapped in flext services
+1. **Adapters** - How ldap3 integration is wrapped in flext services
 
 ### Design Principles
 
 7. **arc42 Views** - System scope and context
-8. **Quality Requirements** - Cross-cutting quality criteria
-9. **Risks and Decisions** - Notable ADRs and open risks
+1. **Quality Requirements** - Cross-cutting quality criteria
+1. **Risks and Decisions** - Notable ADRs and open risks
 
 ## Quick Reference
 
@@ -80,6 +81,6 @@ API Facade → Service Layer → Adapter Layer → Protocol + Models
 - Development Guides
 - Maintenance
 
----
+______________________________________________________________________
 
 **Last Updated**: 2025-03-15

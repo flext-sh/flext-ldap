@@ -1,7 +1,7 @@
 # Development Guide
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Table of Contents](#table-of-contents)
   - [Getting Started](#getting-started)
@@ -29,9 +29,10 @@
   - [Resources](#resources)
   - [Communication](#communication)
 - [Best Practices](#best-practices)
-  - [DO ✅](#do-)
-  - [DON'T ❌](#dont-)
+  - [DO ✅](#do)
+  - [DON'T ❌](#dont)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 1.0
@@ -47,20 +48,20 @@ Comprehensive development guides for contributing to flext-ldap, including setup
 ### Getting Started
 
 1. **Setup** - Development environment setup
-2. **Workflow** - Development workflow and git process
-3. **Quality Gates** - ZERO TOLERANCE standards
+1. **Workflow** - Development workflow and git process
+1. **Quality Gates** - ZERO TOLERANCE standards
 
 ### Development Practices
 
 4. **Testing Guide** - Unit, integration, E2E testing
-5. **Code Standards** - Style, types, documentation
-6. **Architecture Guide** - Clean Architecture patterns
+1. **Code Standards** - Style, types, documentation
+1. **Architecture Guide** - Clean Architecture patterns
 
 ### Contributing
 
 7. **Contributing** - How to contribute
-8. **Pull Request Guide** - PR process and checklist
-9. **Release Process** - Versioning and releases
+1. **Pull Request Guide** - PR process and checklist
+1. **Release Process** - Versioning and releases
 
 ## Quick Start
 
@@ -122,10 +123,10 @@ make validate  # Must pass: lint + type + security + test
 ### Code Quality Rules
 
 1. **Use FlextResult[T]** for all operations
-2. **Complete type annotations** (Python 3.13+ syntax)
-3. **Pydantic v2** for models
-4. **Clean Architecture** - respect layer boundaries
-5. **Zero duplication** - use flext-core patterns
+1. **Complete type annotations** (Python 3.13+ syntax)
+1. **Pydantic v2** for models
+1. **Clean Architecture** - respect layer boundaries
+1. **Zero duplication** - use flext-core patterns
 
 ## Testing
 
@@ -287,7 +288,7 @@ test: add integration tests for OID
 - API Reference - Complete API docs
 - Migration Guide - v0.9.0 → v0.10.0
 
----
+______________________________________________________________________
 
 **Last Updated**: 2025-01-24
 **Maintainer**: FLEXT Team

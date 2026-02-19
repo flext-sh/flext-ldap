@@ -1,7 +1,7 @@
 # Getting Started with FLEXT-LDAP
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Prerequisites](#prerequisites)
   - [**System Requirements**](#system-requirements)
@@ -31,6 +31,7 @@
 - [Troubleshooting](#troubleshooting)
   - [**Common Issues**](#common-issues)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -84,7 +85,7 @@ This guide covers installation, basic configuration, and first steps with flext-
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+______________________________________________________________________
 
 ## Prerequisites
 
@@ -108,7 +109,7 @@ This guide covers installation, basic configuration, and first steps with flext-
 - Docker for running test LDAP server
 - osixia/openldap:1.5.0 container (automatic setup available)
 
----
+______________________________________________________________________
 
 ## Installation
 
@@ -141,7 +142,7 @@ Test your installation:
 python -c "from flext_ldap import get_flext_ldap_api; print('Installation successful')"
 ```
 
----
+______________________________________________________________________
 
 ## Configuration
 
@@ -184,7 +185,7 @@ config = FlextLdapSettings(
 )
 ```
 
----
+______________________________________________________________________
 
 ## First Steps
 
@@ -256,7 +257,7 @@ def authenticate_user():
 run(authenticate_user())
 ```
 
----
+______________________________________________________________________
 
 ## Universal LDAP Interface
 
@@ -461,7 +462,7 @@ def paged_search():
 run(paged_search())
 ```
 
----
+______________________________________________________________________
 
 ## Development Environment
 
@@ -506,20 +507,20 @@ make test       # Run tests
 make validate   # Complete quality pipeline
 ```
 
----
+______________________________________________________________________
 
 ## Next Steps
 
 Once you have flext-ldap installed and working:
 
 1. **Server Operations Guide** - Server-specific LDAP operations
-2. **Architecture Guide** - Universal LDAP interface architecture
-3. **API Reference** - Complete API documentation
-4. **Integration Guide** - FLEXT ecosystem and FlextLdif integration
-5. **Examples** - Working code examples
-6. **Development Guide** - Contributing to the project
+1. **Architecture Guide** - Universal LDAP interface architecture
+1. **API Reference** - Complete API documentation
+1. **Integration Guide** - FLEXT ecosystem and FlextLdif integration
+1. **Examples** - Working code examples
+1. **Development Guide** - Contributing to the project
 
----
+______________________________________________________________________
 
 ## Troubleshooting
 
@@ -566,6 +567,6 @@ For more troubleshooting help, see Troubleshooting Guide.
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
----
+______________________________________________________________________
 
 **Next:** Architecture Overview →

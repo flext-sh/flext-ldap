@@ -1,7 +1,7 @@
 # FLEXT-LDAP Testing Plan & Status
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Testing Overview](#testing-overview)
 - [Test Environment](#test-environment)
@@ -36,6 +36,7 @@
   - [Month 2: Integration & E2E](#month-2-integration-e2e)
   - [Month 3: Advanced Scenarios](#month-3-advanced-scenarios)
 - [Current Status Summary](#current-status-summary)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -191,9 +192,9 @@ docker exec -it flext-ldap-test-server ldapsearch \
 **Largest Coverage Gaps**:
 
 1. **operations.py** (1,396 lines): 0% coverage - highest impact
-2. **api.py** (739 lines): 9% coverage - application layer
-3. **services.py** (692 lines): Low coverage - business logic
-4. **adapters.py** (801 lines): Low coverage - infrastructure
+1. **api.py** (739 lines): 9% coverage - application layer
+1. **services.py** (692 lines): Low coverage - business logic
+1. **adapters.py** (801 lines): Low coverage - infrastructure
 
 ## Test Failure Analysis
 
@@ -224,24 +225,28 @@ docker exec -it flext-ldap-test-server ldapsearch \
 #### Implementation Approach
 
 1. **operations.py** (1,396 lines, 0% coverage)
+
    - **Challenge**: Complex server-specific operations
    - **Strategy**: Unit tests for each server operation class
    - **Docker Integration**: Real server testing for validation
    - **Estimated Tests**: 50+ test methods
 
-2. **api.py** (739 lines, 9% coverage)
+1. **api.py** (739 lines, 9% coverage)
+
    - **Challenge**: Application layer orchestration
    - **Strategy**: Mock infrastructure, test business logic
    - **Integration Tests**: End-to-end API workflows
    - **Estimated Tests**: 30+ test methods
 
-3. **services.py** (692 lines, low coverage)
+1. **services.py** (692 lines, low coverage)
+
    - **Challenge**: Business logic coordination
    - **Strategy**: Service layer unit tests
    - **Mock Dependencies**: Isolate service logic
    - **Estimated Tests**: 25+ test methods
 
-4. **adapters.py** (801 lines, low coverage)
+1. **adapters.py** (801 lines, low coverage)
+
    - **Challenge**: ldap3 ↔ FlextLdif conversion
    - **Strategy**: Adapter pattern testing
    - **Data-Driven Tests**: Multiple conversion scenarios
@@ -482,7 +487,7 @@ def test_user():
 **Blocking Issues**: 1 failing integration test, 7 skipped Docker-dependent tests
 **Next Steps**: Begin coverage improvement with critical modules
 
----
+______________________________________________________________________
 
 **Testing Status**: 35% coverage achieved, comprehensive plan for 90% target
 **Critical Gaps**: Priority 1 modules need immediate attention

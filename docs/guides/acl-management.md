@@ -1,7 +1,7 @@
 # ACL Management System
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -30,6 +30,7 @@
   - [FlextLdap ACL Methods](#flextldap-acl-methods)
   - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -106,9 +107,9 @@ The FLEXT LDAP ACL Management system provides comprehensive ACL (Access Control 
 The ACL system follows Clean Architecture principles with:
 
 1. **Unified ACL Model** - Intermediate representation for all ACL formats
-2. **Format-specific Parsers** - Parse ACLs from different LDAP servers
-3. **Bidirectional Converters** - Convert between any supported formats
-4. **AclManager** - Orchestration layer for ACL operations
+1. **Format-specific Parsers** - Parse ACLs from different LDAP servers
+1. **Bidirectional Converters** - Convert between any supported formats
+1. **AclManager** - Orchestration layer for ACL operations
 
 ## Quick Start
 
@@ -408,10 +409,10 @@ write_openldap_acls(converted_acls)
 ## Best Practices
 
 1. **Always validate ACL syntax** before applying to production directory
-2. **Test conversions** with sample ACLs before bulk migration
-3. **Review conversion warnings** to understand potential feature loss
-4. **Use unified model** for complex ACL manipulation
-5. **Batch operations** for better performance with multiple ACLs
+1. **Test conversions** with sample ACLs before bulk migration
+1. **Review conversion warnings** to understand potential feature loss
+1. **Use unified model** for complex ACL manipulation
+1. **Batch operations** for better performance with multiple ACLs
 
 ## API Reference
 

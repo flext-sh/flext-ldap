@@ -1,7 +1,7 @@
 # Troubleshooting Guide
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Connection Issues](#connection-issues)
   - [Connection Refused Errors](#connection-refused-errors)
@@ -31,6 +31,7 @@
 - [Getting Help](#getting-help)
   - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
   - [Diagnostic Information Collection](#diagnostic-information-collection)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -73,7 +74,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+______________________________________________________________________
 
 ## Connection Issues
 
@@ -102,9 +103,9 @@ ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,
 **Solutions:**
 
 1. **Verify server is running and accessible**
-2. **Check firewall settings** - ensure ports 389/636 are open
-3. **Confirm network connectivity** between client and server
-4. **Validate DNS resolution** of LDAP server hostname
+1. **Check firewall settings** - ensure ports 389/636 are open
+1. **Confirm network connectivity** between client and server
+1. **Validate DNS resolution** of LDAP server hostname
 
 ### SSL/TLS Connection Errors
 
@@ -130,9 +131,9 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 **Solutions:**
 
 1. **Verify SSL certificate is valid and not expired**
-2. **Check certificate chain completeness**
-3. **Ensure CA certificate is installed**
-4. **Configure certificate verification settings**
+1. **Check certificate chain completeness**
+1. **Ensure CA certificate is installed**
+1. **Configure certificate verification settings**
 
 ```python
 from Flext_ldap import FlextLdapSettings
@@ -155,7 +156,7 @@ config = FlextLdapSettings(
 )
 ```
 
----
+______________________________________________________________________
 
 ## Authentication Issues
 
@@ -191,9 +192,9 @@ run(diagnose_auth())
 **Solutions:**
 
 1. **Verify bind DN format** - must be RFC 4514 compliant
-2. **Check bind password** - ensure no special characters are escaped incorrectly
-3. **Confirm user exists** in the directory
-4. **Test with LDAP REDACTED_LDAP_BIND_PASSWORD tools** first
+1. **Check bind password** - ensure no special characters are escaped incorrectly
+1. **Confirm user exists** in the directory
+1. **Test with LDAP REDACTED_LDAP_BIND_PASSWORD tools** first
 
 ### DN Format Issues
 
@@ -245,7 +246,7 @@ for test_dn in test_dns:
     print(f"{test_dn}: {'✅' if result else '❌'}")
 ```
 
----
+______________________________________________________________________
 
 ## Search and Query Issues
 
@@ -342,7 +343,7 @@ def diagnose_base_dn():
 run(diagnose_base_dn())
 ```
 
----
+______________________________________________________________________
 
 ## Performance Issues
 
@@ -501,7 +502,7 @@ class LDAPService:
         return results
 ```
 
----
+______________________________________________________________________
 
 ## Configuration Issues
 
@@ -579,7 +580,7 @@ services:
     # Ensure data persists between restarts
 ```
 
----
+______________________________________________________________________
 
 ## Development and Testing Issues
 
@@ -640,7 +641,7 @@ docker rm flext-ldap-test-server
 make ldap-test-server
 ```
 
----
+______________________________________________________________________
 
 ## Error Message Reference
 
@@ -688,7 +689,7 @@ def handle_errors_properly():
 run(handle_errors_properly())
 ```
 
----
+______________________________________________________________________
 
 ## Debugging Tools and Techniques
 
@@ -779,7 +780,7 @@ def run_profiling():
 run_profiling()
 ```
 
----
+______________________________________________________________________
 
 ## Getting Help
 
@@ -788,22 +789,26 @@ run_profiling()
 When reporting issues, include:
 
 1. **Environment details:**
+
    - Python version
    - flext-ldap version
    - Operating system
    - LDAP server type and version
 
-2. **Configuration:**
+1. **Configuration:**
+
    - Sanitized configuration (no passwords)
    - Environment variables
    - Network setup (Docker, Kubernetes, etc.)
 
-3. **Error details:**
+1. **Error details:**
+
    - Complete error messages
    - Stack traces
    - Relevant log output
 
-4. **Reproduction steps:**
+1. **Reproduction steps:**
+
    - Minimal code example
    - Steps to reproduce
    - Expected vs actual behavior
@@ -846,7 +851,7 @@ def collect_diagnostic_info():
 collect_diagnostic_info()
 ```
 
----
+______________________________________________________________________
 
 For additional support and community resources:
 
@@ -854,6 +859,6 @@ For additional support and community resources:
 - [FLEXT Documentation](https://docs.flext.dev) - Framework documentation
 - Examples - Working code examples
 
----
+______________________________________________________________________
 
 **Previous:** Integration Guide ←

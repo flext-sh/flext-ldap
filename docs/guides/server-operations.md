@@ -1,57 +1,58 @@
 # Server-Specific Operations Guide
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
-- [## 🎯 Overview](#-overview)
+- [## 🎯 Overview](#overview)
   - [**Available Implementations**](#available-implementations)
-- [## 📦 Importing Server Operations](#-importing-server-operations)
-- [## 🔧 OpenLDAP 2.x Operations](#-openldap-2x-operations)
+- [## 📦 Importing Server Operations](#importing-server-operations)
+- [## 🔧 OpenLDAP 2.x Operations](#openldap-2x-operations)
   - [**Features**](#features)
   - [**Basic Usage**](#basic-usage)
   - [**ACL Operations**](#acl-operations)
   - [**Entry Operations**](#entry-operations)
   - [**Paged Search**](#paged-search)
-- [## 🔧 OpenLDAP 1.x Operations](#-openldap-1x-operations)
+- [## 🔧 OpenLDAP 1.x Operations](#openldap-1x-operations)
   - [**Features**](#features)
   - [**Key Differences**](#key-differences)
-- [## 🔧 Oracle OID Operations](#-oracle-oid-operations)
+- [## 🔧 Oracle OID Operations](#oracle-oid-operations)
   - [**Features**](#features)
   - [**Basic Usage**](#basic-usage)
   - [**Oracle OID ACLs**](#oracle-oid-acls)
   - [**Oracle-Specific Features**](#oracle-specific-features)
-- [## 🔧 Oracle OUD Operations](#-oracle-oud-operations)
+- [## 🔧 Oracle OUD Operations](#oracle-oud-operations)
   - [**Features**](#features)
   - [**Basic Usage**](#basic-usage)
   - [**ds-privilege-name ACLs**](#ds-privilege-name-acls)
   - [**OUD-Specific Features**](#oud-specific-features)
-- [## 🔧 Active Directory Operations (Stub)](#-active-directory-operations-stub)
+- [## 🔧 Active Directory Operations (Stub)](#active-directory-operations-stub)
   - [**Status**](#status)
   - [**Planned Features**](#planned-features)
   - [**Current Usage**](#current-usage)
   - [**Contributing AD Implementation**](#contributing-ad-implementation)
-- [## 🔧 Generic Server Operations](#-generic-server-operations)
+- [## 🔧 Generic Server Operations](#generic-server-operations)
   - [**Purpose**](#purpose)
   - [**Features**](#features)
   - [**Usage**](#usage)
   - [**Limitations**](#limitations)
-- [## 🔄 Entry Adapter Integration](#-entry-adapter-integration)
-- [## 🔍 Quirks Detection](#-quirks-detection)
-- [## 📊 Server Comparison](#-server-comparison)
+- [## 🔄 Entry Adapter Integration](#entry-adapter-integration)
+- [## 🔍 Quirks Detection](#quirks-detection)
+- [## 📊 Server Comparison](#server-comparison)
   - [**Connection Features**](#connection-features)
   - [**Schema Operations**](#schema-operations)
   - [**ACL Features**](#acl-features)
   - [**Search Features**](#search-features)
-- [## 🎯 Best Practices](#-best-practices)
+- [## 🎯 Best Practices](#best-practices)
   - [**1. Use Server Detection**](#1-use-server-detection)
   - [**2. Handle Errors Explicitly**](#2-handle-errors-explicitly)
   - [**3. Use Entry Adapter**](#3-use-entry-adapter)
   - [**4. Server-Specific Normalization**](#4-server-specific-normalization)
   - [**5. Connection Management**](#5-connection-management)
-- [## 🔧 Troubleshooting](#-troubleshooting)
+- [## 🔧 Troubleshooting](#troubleshooting)
   - [**Common Issues**](#common-issues)
-- [## 📚 Additional Resources](#-additional-resources)
+- [## 📚 Additional Resources](#additional-resources)
 - [**Last Updated**: 2025-01-08](#last-updated-2025-01-08)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -532,10 +533,10 @@ schema_dn = ops.get_schema_dn()  # "cn=schema,cn=configuration"
 If you want to contribute Active Directory support:
 
 1. Implement schema discovery with AD schema format
-2. Implement nTSecurityDescriptor parsing and formatting
-3. Handle GUID-based DNs
-4. Implement AD-specific entry normalization
-5. Add Global Catalog support
+1. Implement nTSecurityDescriptor parsing and formatting
+1. Handle GUID-based DNs
+1. Implement AD-specific entry normalization
+1. Add Global Catalog support
 
 See `src/flext_ldap/servers/ad_operations.py` for stub methods.
 

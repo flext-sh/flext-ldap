@@ -1,39 +1,40 @@
 # API Reference
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
-- [🚀 Main API](#-main-api)
+- [🚀 Main API](#main-api)
   - [`get_flext_ldap_api(config=None)`](#getflextldapapiconfignone)
-- [🏗️ FlextLdapClients](#-flextldapclients)
+- [🏗️ FlextLdapClients](#flextldapclients)
   - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#searchentriesrequest-searchrequest-flextresultlistldapentry)
   - [`authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`](#authenticateuserusername-str-password-str-flextresultflextldapuser)
   - [`create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`](#createuserrequest-createuserrequest-flextresultflextldapuser)
   - [`test_connection() -> FlextResult[str]`](#testconnection-flextresultstr)
-- [📊 Domain Entities](#-domain-entities)
+- [📊 Domain Entities](#domain-entities)
   - [FlextLdapEntities](#flextldapentities)
-- [🎯 Value Objects](#-value-objects)
+- [🎯 Value Objects](#value-objects)
   - [FlextLdapModels.ValueObjects](#flextldapmodelsvalueobjects)
-- [⚙️ Configuration](#-configuration)
+- [⚙️ Configuration](#configuration)
   - [FlextLdapSettings](#flextldapsettings)
-- [🔧 Utilities](#-utilities)
+- [🔧 Utilities](#utilities)
   - [FlextLdapTypeGuards](#flextldaptypeguards)
   - [FlextLdapConstants](#flextldapconstants)
-- [🚨 Exceptions](#-exceptions)
+- [🚨 Exceptions](#exceptions)
   - [FlextExceptions](#flextexceptions)
-- [🔄 FlextResult Usage](#-flextresult-usage)
+- [🔄 FlextResult Usage](#flextresult-usage)
   - [Success Handling](#success-handling)
   - [Error Handling](#error-handling)
   - [Chaining Operations](#chaining-operations)
-- [🔄 Universal LDAP Interface](#-universal-ldap-interface)
+- [🔄 Universal LDAP Interface](#universal-ldap-interface)
   - [FlextLdapEntryAdapter](#flextldapentryadapter)
   - [FlextLdapQuirksAdapter](#flextldapquirksadapter)
-- [🏗️ Server Operations](#-server-operations)
+- [🏗️ Server Operations](#server-operations)
   - [BaseServerOperations](#baseserveroperations)
   - [Server-Specific Implementations](#server-specific-implementations)
-- [📝 Type Annotations](#-type-annotations)
-- [🔗 Complete Usage Example](#-complete-usage-example)
+- [📝 Type Annotations](#type-annotations)
+- [🔗 Complete Usage Example](#complete-usage-example)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Table of Contents
@@ -41,8 +42,7 @@
 - API Reference
   - 🚀 Main API
     - `get_flext_ldap_api(config=None)`
-  - 🏗️ FlextLdapClients - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#search_entriesrequest-searchrequest---flextresultlistldapentry) - [`authenticate_user(username: str,
-password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-password-str---flextresultflextldapuser) - [`create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`](#create_userrequest-createuserrequest---flextresultflextldapuser) - [`test_connection() -> FlextResult[str]`](#test_connection---flextresultstr)
+  - 🏗️ FlextLdapClients - [`search_entries(request: SearchRequest) -> FlextResult[List[LdapEntry]]`](#search_entriesrequest-searchrequest---flextresultlistldapentry) - [`authenticate_user(username: str, password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-password-str---flextresultflextldapuser) - [`create_user(request: CreateUserRequest) -> FlextResult[FlextLdapUser]`](#create_userrequest-createuserrequest---flextresultflextldapuser) - [`test_connection() -> FlextResult[str]`](#test_connection---flextresultstr)
   - 📊 Domain Entities
     - FlextLdapEntities
       - SearchRequest
@@ -76,15 +76,12 @@ password: str) -> FlextResult[FlextLdapUser]`](#authenticate_userusername-str-pa
   - 🔄 Universal LDAP Interface
     - FlextLdapEntryAdapter
       - [`ldap3_to_ldif_entry(ldap3_entry) -> FlextResult[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
-- Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextResult[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str,
-t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
+- Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> FlextResult[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> FlextResult[dict[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
 - Create FlextLdif entry
-- Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> FlextResult[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries,
-output_path) -> FlextResult[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
+- Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> FlextResult[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries, output_path) -> FlextResult[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
   - FlextLdapQuirksAdapter
     - [`detect_server_type_from_entries(entries) -> FlextResult[str]`](#detect_server_type_from_entriesentries---flextresultstr)
-- Detect from entries - [`get_acl_attribute_name(server_type=None) -> FlextResult[str]`](#get_acl_attribute_nameserver_typenone---flextresultstr) - [`get_acl_format(server_type=None) -> FlextResult[str]`](#get_acl_formatserver_typenone---flextresultstr) - [`get_schema_subentry(server_type=None) -> FlextResult[str]`](#get_schema_subentryserver_typenone---flextresultstr) - [`get_max_page_size(server_type=None) -> FlextResult[int]`](#get_max_page_sizeserver_typenone---flextresultint) - [`normalize_entry_for_server(entry,
-server_type=None) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entry_for_serverentry-server_typenone---flextresultflextldifmodelsentry)
+- Detect from entries - [`get_acl_attribute_name(server_type=None) -> FlextResult[str]`](#get_acl_attribute_nameserver_typenone---flextresultstr) - [`get_acl_format(server_type=None) -> FlextResult[str]`](#get_acl_formatserver_typenone---flextresultstr) - [`get_schema_subentry(server_type=None) -> FlextResult[str]`](#get_schema_subentryserver_typenone---flextresultstr) - [`get_max_page_size(server_type=None) -> FlextResult[int]`](#get_max_page_sizeserver_typenone---flextresultint) - [`normalize_entry_for_server(entry, server_type=None) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entry_for_serverentry-server_typenone---flextresultflextldifmodelsentry)
   - 🏗️ Server Operations
     - BaseServerOperations
       - Connection Operations
@@ -100,8 +97,7 @@ server_type=None) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entry_for_s
         - `get_acl_attribute_name() -> str`
         - `get_acl_format() -> str`
         - [`get_acls(connection, dn) -> FlextResult[list[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- Get ACLs from cn=config entry - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None,
-page_size=100) -> FlextResult[list[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
+- Get ACLs from cn=config entry - [`set_acls(connection, dn, acls) -> FlextResult[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> FlextResult[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> FlextResult[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> FlextResult[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> FlextResult[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> FlextResult[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> FlextResult[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> FlextResult[list[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - Server-Specific Implementations
     - OpenLDAP2Operations
 - Schema discovery
@@ -117,7 +113,7 @@ This document provides comprehensive API reference for all public interfaces in 
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+______________________________________________________________________
 
 ## 🚀 Main API
 
@@ -139,7 +135,7 @@ from flext_ldap import get_flext_ldap_api
 api = get_flext_ldap_api()
 ```
 
----
+______________________________________________________________________
 
 ## 🏗️ FlextLdapClients
 
@@ -228,7 +224,7 @@ if result.is_success:
     print("Connection successful")
 ```
 
----
+______________________________________________________________________
 
 ## 📊 Domain Entities
 
@@ -297,7 +293,7 @@ LDAP group entity.
 - `add_member(member_dn: str) -> None`: Add group member
 - `remove_member(member_dn: str) -> None`: Remove group member
 
----
+______________________________________________________________________
 
 ## 🎯 Value Objects
 
@@ -362,7 +358,7 @@ Search scope enumeration.
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
----
+______________________________________________________________________
 
 ## ⚙️ Configuration
 
@@ -398,7 +394,7 @@ config = FlextLdapSettings(
 set_flext_ldap.settings(config)
 ```
 
----
+______________________________________________________________________
 
 ## 🔧 Utilities
 
@@ -435,7 +431,7 @@ LDAP protocol constants.
 - `SCOPE_ONELEVEL`: One-level search scope
 - `SCOPE_SUBTREE`: Subtree search scope
 
----
+______________________________________________________________________
 
 ## 🚨 Exceptions
 
@@ -485,7 +481,7 @@ except FlextExceptions.ConnectionError as e:
     print(f"Connection error: {e.message}")
 ```
 
----
+______________________________________________________________________
 
 ## 🔄 FlextResult Usage
 
@@ -529,7 +525,7 @@ else:
     return FlextResult.fail(f"Search failed: {search_result.error}")
 ```
 
----
+______________________________________________________________________
 
 ## 🔄 Universal LDAP Interface
 
@@ -638,7 +634,7 @@ Write FlextLdif entries to LDIF file.
 
 **Returns:** FlextResult indicating success
 
----
+______________________________________________________________________
 
 ### FlextLdapQuirksAdapter
 
@@ -737,7 +733,7 @@ Get server-specific maximum page size for paged searches.
 
 Normalize entry for server-specific requirements.
 
----
+______________________________________________________________________
 
 ## 🏗️ Server Operations
 
@@ -978,7 +974,7 @@ if result.is_success:
         print(f"DN: {entry.dn}")
 ```
 
----
+______________________________________________________________________
 
 ### Server-Specific Implementations
 
@@ -1075,7 +1071,7 @@ from flext_ldap.servers import GenericServerOperations
 - Basic paged results
 - Standard LDAP operations
 
----
+______________________________________________________________________
 
 ## 📝 Type Annotations
 
@@ -1103,7 +1099,7 @@ Use mypy or similar tools for static type checking:
 mypy --strict your_code.py
 ```
 
----
+______________________________________________________________________
 
 ## 🔗 Complete Usage Example
 
@@ -1186,7 +1182,7 @@ def universal_ldap_example():
 run(universal_ldap_example())
 ```
 
----
+______________________________________________________________________
 
 For more examples and advanced usage patterns, see:
 
@@ -1215,6 +1211,6 @@ For more examples and advanced usage patterns, see:
 - [RFC 4511 - LDAP: The Protocol](https://www.rfc-editor.org/rfc/rfc4511.html)
 - [RFC 4512 - LDAP: Technical Specification Road Map](https://www.rfc-editor.org/rfc/rfc4512.html)
 
----
+______________________________________________________________________
 
 **Next:** Configuration Guide →
