@@ -4,8 +4,8 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-from pathlib import Path
 import sys
+from pathlib import Path
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
@@ -16,7 +16,7 @@ from release.shared import resolve_projects, workspace_root
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--version", required=True)
     _ = parser.add_argument("--output-dir", type=Path, required=True)
     _ = parser.add_argument("--projects", nargs="*", default=[])

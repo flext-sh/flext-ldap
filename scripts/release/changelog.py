@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
-import sys
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
@@ -15,7 +15,7 @@ from release.shared import workspace_root
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--version", required=True)
     _ = parser.add_argument("--tag", required=True)
     _ = parser.add_argument("--notes", type=Path, required=True)

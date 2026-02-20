@@ -2,15 +2,15 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
-from release.shared import parse_semver, resolve_projects, workspace_root
 from libs.versioning import replace_project_version
+from release.shared import parse_semver, resolve_projects, workspace_root
 
 
 def _replace_version(content: str, version: str) -> tuple[str, bool]:
@@ -23,13 +23,12 @@ def _version_files(root: Path, project_names: list[str]) -> list[Path]:
         pyproject = project.path / "pyproject.toml"
         if pyproject.exists():
             files.append(pyproject)
-    dedup = sorted({path.resolve() for path in files})
-    return dedup
+    return sorted({path.resolve() for path in files})
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--version", required=True)
     _ = parser.add_argument("--dev-suffix", type=int, default=0)
     _ = parser.add_argument("--projects", nargs="*", default=[])

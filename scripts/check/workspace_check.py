@@ -20,7 +20,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -149,17 +149,17 @@ def _run_pyrefly(project_dir: Path, src_dir: str, reports_dir: Path) -> GateResu
         try:
             data = json.loads(json_file.read_text())
             raw_errors = data.get("errors", []) if isinstance(data, dict) else data
-            for e in raw_errors:
-                errors.append(
-                    CheckError(
-                        file=e.get("path", "?"),
-                        line=e.get("line", 0),
-                        column=e.get("column", 0),
-                        code=e.get("name", ""),
-                        message=e.get("description", ""),
-                        severity=e.get("severity", "error"),
-                    )
+            errors.extend(
+                CheckError(
+                    file=e.get("path", "?"),
+                    line=e.get("line", 0),
+                    column=e.get("column", 0),
+                    code=e.get("name", ""),
+                    message=e.get("description", ""),
+                    severity=e.get("severity", "error"),
                 )
+                for e in raw_errors
+            )
         except (json.JSONDecodeError, KeyError):
             pass
 
@@ -193,17 +193,17 @@ def _run_bandit(project_dir: Path, src_dir: str) -> GateResult:
     errors: list[CheckError] = []
     try:
         data = json.loads(result.stdout or "{}")
-        for e in data.get("results", []):
-            errors.append(
-                CheckError(
-                    file=e.get("filename", "?"),
-                    line=e.get("line_number", 0),
-                    column=0,
-                    code=e.get("test_id", ""),
-                    message=e.get("issue_text", ""),
-                    severity=e.get("issue_severity", "MEDIUM").lower(),
-                )
+        errors.extend(
+            CheckError(
+                file=e.get("filename", "?"),
+                line=e.get("line_number", 0),
+                column=0,
+                code=e.get("test_id", ""),
+                message=e.get("issue_text", ""),
+                severity=e.get("issue_severity", "MEDIUM").lower(),
             )
+            for e in data.get("results", [])
+        )
     except (json.JSONDecodeError, KeyError):
         pass
     return GateResult(
@@ -227,7 +227,7 @@ def _run_mypy(project_dir: Path, src_dir: str) -> GateResult:
             continue
         try:
             e = json.loads(raw_line)
-            if e.get("severity") in ("error", "warning", "note"):
+            if e.get("severity") in {"error", "warning", "note"}:
                 errors.append(
                     CheckError(
                         file=e.get("file", "?"),
@@ -599,7 +599,7 @@ def main() -> int:
     gates: list[str] = []
     for gate in requested_gates:
         resolved_gate = "pyrefly" if gate == "type" else gate
-        if resolved_gate not in (
+        if resolved_gate not in {
             "lint",
             "format",
             "pyrefly",
@@ -608,7 +608,7 @@ def main() -> int:
             "security",
             "markdown",
             "go",
-        ):
+        }:
             print(f"ERROR: unknown gate '{gate}'", file=sys.stderr)
             return 2
         if resolved_gate not in gates:
@@ -648,7 +648,7 @@ def main() -> int:
             if args.fail_fast:
                 break
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     md_path = reports_dir / "check-report.md"
     md_path.write_text(_generate_md(all_results, gates, timestamp))

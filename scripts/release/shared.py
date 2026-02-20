@@ -12,11 +12,8 @@ if str(REPO_ROOT) not in sys.path:
 from libs.discovery import ProjectInfo
 from libs.paths import workspace_root as _workspace_root
 from libs.selection import resolve_projects as _resolve_projects
-from libs.subprocess import run_capture as _run_capture
-from libs.subprocess import run_checked as _run_checked
-from libs.versioning import bump_version as _bump_version
-from libs.versioning import parse_semver as _parse_semver
-
+from libs.subprocess import run_capture as _run_capture, run_checked as _run_checked
+from libs.versioning import bump_version as _bump_version, parse_semver as _parse_semver
 
 Project = ProjectInfo
 

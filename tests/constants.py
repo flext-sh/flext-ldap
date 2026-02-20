@@ -153,7 +153,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
         DEFAULT_BASE_DN: ClassVar[str] = "dc=flext,dc=local"
         DEFAULT_HOST: ClassVar[str] = "localhost"
         DEFAULT_PORT: ClassVar[int] = 3390
-        DEFAULT_BIND_DN: ClassVar[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+        DEFAULT_BIND_DN: ClassVar[str] = (
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+        )
         DEFAULT_BIND_PASSWORD: ClassVar[str] = "REDACTED_LDAP_BIND_PASSWORD123"
         DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
         # Use production StrEnum values directly - no aliases
