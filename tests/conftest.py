@@ -17,11 +17,14 @@ Container Lifecycle Rules:
 """
 
 from __future__ import annotations
+
 # PYTHON_VERSION_GUARD — Do not remove. Managed by scripts/maintenance/enforce_python_version.py
 import sys as _sys
 
 if _sys.version_info[:2] != (3, 13):
-    _v = f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}"
+    _v = (
+        f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}"
+    )
     raise RuntimeError(
         f"\n{'=' * 72}\n"
         f"FATAL: Python {_v} detected — this project requires Python 3.13.\n"
@@ -42,6 +45,7 @@ del _sys
 
 import fcntl
 import json
+import os
 import time
 import types
 from collections.abc import Callable, Generator
@@ -83,8 +87,54 @@ LDAP_COMPOSE_FILE = FLEXT_WORKSPACE_ROOT / "docker" / "docker-compose.openldap.y
 LDAP_SERVICE_NAME = "openldap"
 LDAP_PORT = 3390
 LDAP_BASE_DN = "dc=flext,dc=local"
-LDAP_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"  # Matches docker-compose.openldap.yml
+LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
+LDAP_ADMIN_PASSWORD = "admin123"
+LDAP_LEGACY_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+LDAP_LEGACY_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
+
+_resolved_admin_credentials: tuple[str, str] | None = None
+
+
+def _get_admin_credentials() -> tuple[str, str]:
+    """Resolve working LDAP admin credentials for current environment."""
+    global _resolved_admin_credentials
+
+    if _resolved_admin_credentials is not None:
+        return _resolved_admin_credentials
+
+    env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
+    env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
+
+    candidates: list[tuple[str, str]] = []
+    if env_dn and env_password:
+        candidates.append((env_dn, env_password))
+
+    candidates.extend(
+        [
+            (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD),
+            (LDAP_LEGACY_ADMIN_DN, LDAP_LEGACY_ADMIN_PASSWORD),
+        ],
+    )
+
+    for candidate_dn, candidate_password in candidates:
+        try:
+            server = Server("localhost", port=LDAP_PORT, get_info="NO_INFO")
+            test_conn = Connection(
+                server,
+                user=candidate_dn,
+                password=candidate_password,
+                auto_bind=True,
+                receive_timeout=1,
+            )
+            if test_conn.bound:
+                _ldap3_unbind(test_conn)
+                _resolved_admin_credentials = (candidate_dn, candidate_password)
+                return _resolved_admin_credentials
+        except Exception:
+            continue
+
+    _resolved_admin_credentials = (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
+    return _resolved_admin_credentials
 
 
 # =============================================================================
@@ -482,6 +532,52 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             else:
                 logger.info("Container %s created", LDAP_CONTAINER_NAME)
 
+    # Warm up LDAP bind before test timeouts are active.
+    port_ready_result = docker_control.wait_for_port_ready(
+        "localhost",
+        LDAP_PORT,
+        90,
+    )
+    if port_ready_result.is_success and port_ready_result.value:
+        admin_dn, admin_password = _get_admin_credentials()
+        ldap_ready = False
+        waited = 0.0
+        wait_interval = 1.0
+        while waited < 90:
+            try:
+                server = Server(
+                    f"ldap://localhost:{LDAP_PORT}",
+                    get_info="NO_INFO",
+                )
+                test_conn = Connection(
+                    server,
+                    user=admin_dn,
+                    password=admin_password,
+                    auto_bind=True,
+                    receive_timeout=1,
+                )
+                if test_conn.bound:
+                    _ldap3_unbind(test_conn)
+                    ldap_ready = True
+                    break
+            except Exception:
+                pass
+
+            time.sleep(wait_interval)
+            waited += wait_interval
+
+        if ldap_ready:
+            logger.info(
+                "Container %s bind-ready after %.1fs in session start",
+                LDAP_CONTAINER_NAME,
+                waited,
+            )
+        else:
+            logger.warning(
+                "Container %s port is open but LDAP bind is not ready yet",
+                LDAP_CONTAINER_NAME,
+            )
+
 
 def pytest_runtest_makereport(
     item: pytest.Item,
@@ -793,8 +889,9 @@ def ldap_container(
     docker_control = _get_docker_control(worker_id)
 
     with lock:
-        max_wait: int = 90  # seconds - increased for LDAP initialization
-        wait_interval: float = 2.0  # seconds
+        max_wait: int = 20  # Keep below pytest-timeout budget
+        wait_interval: float = 1.0  # faster readiness polling
+        admin_dn, admin_password = _get_admin_credentials()
 
         logger.info("Waiting for container %s to be ready...", LDAP_CONTAINER_NAME)
 
@@ -823,10 +920,10 @@ def ldap_container(
                 )
                 test_conn = Connection(
                     server,
-                    user=LDAP_ADMIN_DN,
-                    password=LDAP_ADMIN_PASSWORD,
+                    user=admin_dn,
+                    password=admin_password,
                     auto_bind=True,
-                    receive_timeout=5,  # Increased timeout for bind
+                    receive_timeout=1,
                 )
                 # Verify connection is actually bound
                 if test_conn.bound:
@@ -863,8 +960,8 @@ def ldap_container(
     container_info: LdapContainerDict = {
         "server_url": f"ldap://localhost:{LDAP_PORT}",
         "host": "localhost",
-        "bind_dn": LDAP_ADMIN_DN,
-        "password": LDAP_ADMIN_PASSWORD,
+        "bind_dn": admin_dn,
+        "password": admin_password,
         "base_dn": LDAP_BASE_DN,
         "port": LDAP_PORT,
         "use_ssl": False,
@@ -1416,11 +1513,12 @@ def _ensure_basic_ldap_structure() -> None:
     This is called after container is ready to guarantee test environment.
     """
     try:
+        admin_dn, admin_password = _get_admin_credentials()
         server = Server(f"ldap://localhost:{LDAP_PORT}", get_info="NO_INFO")
         conn = Connection(
             server,
-            user=LDAP_ADMIN_DN,
-            password=LDAP_ADMIN_PASSWORD,
+            user=admin_dn,
+            password=admin_password,
             auto_bind=True,
         )
 

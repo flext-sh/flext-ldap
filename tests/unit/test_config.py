@@ -51,6 +51,11 @@ class TestsFlextLdapSettings:
             (65535, 65535),  # Maximum valid port
         ]
 
+    @pytest.fixture(autouse=True)
+    def reset_settings_singleton(self) -> None:
+        """Reset singleton state for deterministic test behavior."""
+        FlextLdapSettings.reset_global_instance()
+
     # =========================================================================
     # INITIALIZATION TESTS
     # =========================================================================
