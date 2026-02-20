@@ -219,7 +219,20 @@ def _run_mypy(project_dir: Path, src_dir: str) -> GateResult:
     src_path = project_dir / src_dir
     if not src_path.exists():
         return GateResult(gate="mypy", project=project_dir.name, passed=True)
-    result = _run(["mypy", src_dir, "--output", "json"], project_dir)
+
+    package_candidates = [
+        child.name
+        for child in src_path.iterdir()
+        if child.is_dir() and (child / "__init__.py").exists()
+    ]
+    if len(package_candidates) == 1:
+        result = _run(
+            ["mypy", "-p", package_candidates[0], "--output", "json"],
+            project_dir,
+        )
+    else:
+        result = _run(["mypy", src_dir, "--output", "json"], project_dir)
+
     errors: list[CheckError] = []
     for raw_line in (result.stdout or "").splitlines():
         raw_line = raw_line.strip()
