@@ -32,12 +32,11 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import TypeGuard
+from typing import Final, TypeGuard
 
 from flext_core import FlextRuntime, FlextSettings, r
 from flext_core.protocols import p as core_p
 from flext_ldif import FlextLdifUtilities
-from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from pydantic import ConfigDict
 
 from flext_ldap.base import s
@@ -49,6 +48,10 @@ from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
 LaxStr = str | bytes | bytearray  # Type alias for lenient string handling
+
+LDAP3_MODIFY_ADD: Final[int] = 0
+LDAP3_MODIFY_DELETE: Final[int] = 1
+LDAP3_MODIFY_REPLACE: Final[int] = 2
 
 
 def _get_structlog_logger() -> core_p.Log.StructlogLogger | None:
@@ -409,7 +412,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         attr_name,
                         [
                             (
-                                MODIFY_REPLACE,
+                                LDAP3_MODIFY_REPLACE,
                                 new_list,
                             ),
                         ],
@@ -473,7 +476,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     filtered_attrs[k] = [str(item) for item in v]
             # Transform to MODIFY_DELETE operations
             changes_dict: dict[str, list[tuple[int, list[str]]]] = {
-                k: [(MODIFY_DELETE, [])] for k in filtered_attrs
+                k: [(LDAP3_MODIFY_DELETE, [])] for k in filtered_attrs
             }
 
             return changes_dict
@@ -794,7 +797,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
 
             changes: t.Ldap.Operation.Changes = {
-                attr_type: [(MODIFY_ADD, filtered)],
+                attr_type: [(LDAP3_MODIFY_ADD, filtered)],
             }
             entry_model = self._convert_to_model(entry)
             # Python 3.13: Use match-case for DN extraction

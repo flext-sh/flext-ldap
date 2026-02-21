@@ -260,11 +260,12 @@ overrides = [ { module = [
 
 [tool.pyrefly]
 search-path = [
-  "../typings",
-  "../typings/generated",
-  ".",
-  "src",
-  "tests",
+    "../typings",
+    "../typings/generated",
+    "src",
+    "tests",
+    "examples",
+    "scripts"
 ]
 
 [tool.bandit]

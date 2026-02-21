@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, TypeGuard
+from typing import Final, TypeGuard
 
 from flext_core import FlextRuntime, r
 from flext_ldif import (
@@ -42,7 +42,7 @@ from flext_ldif import (
     FlextLdifUtilities,
 )
 from flext_ldif.models import FlextLdifModels
-from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
+from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict
 
@@ -56,6 +56,10 @@ from flext_ldap.utilities import u
 
 # Local alias for cleaner code
 LdifEntry = FlextLdifModels.Ldif.Entry
+
+LDAP3_SCOPE_BASE: Final[int] = 0
+LDAP3_SCOPE_LEVEL: Final[int] = 1
+LDAP3_SCOPE_SUBTREE: Final[int] = 2
 
 # Protocol references from centralized protocols.py for backward compatibility
 HasDynamicAttribute = p.Ldap.HasDynamicAttribute
@@ -1483,14 +1487,14 @@ class Ldap3Adapter(s[bool]):
                 try:
                     scope_enum = FlextLdapConstants.Ldap.SearchScope(scope.upper())
                 except ValueError:
-                    return r[Literal["BASE", "LEVEL", "SUBTREE"]].fail(
+                    return r[int].fail(
                         f"Invalid LDAP scope: {scope}",
                     )
             case _:
                 try:
                     scope_enum = FlextLdapConstants.Ldap.SearchScope(str(scope).upper())
                 except ValueError:
-                    return r[Literal["BASE", "LEVEL", "SUBTREE"]].fail(
+                    return r[int].fail(
                         f"Invalid LDAP scope: {scope}",
                     )
 
@@ -1499,9 +1503,9 @@ class Ldap3Adapter(s[bool]):
             FlextLdapConstants.Ldap.SearchScope,
             int,
         ] = {
-            FlextLdapConstants.Ldap.SearchScope.BASE: BASE,
-            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: LEVEL,
-            FlextLdapConstants.Ldap.SearchScope.SUBTREE: SUBTREE,
+            FlextLdapConstants.Ldap.SearchScope.BASE: LDAP3_SCOPE_BASE,
+            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: LDAP3_SCOPE_LEVEL,
+            FlextLdapConstants.Ldap.SearchScope.SUBTREE: LDAP3_SCOPE_SUBTREE,
         }
 
         # Create results

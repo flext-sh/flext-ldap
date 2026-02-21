@@ -167,6 +167,20 @@ class FlextLdapConstants(FlextLdifConstants):
             ONELEVEL = "ONELEVEL"
             SUBTREE = "SUBTREE"
 
+        class SearchScopeValue:
+            """ldap3-compatible search scope integer values."""
+
+            BASE = 0
+            LEVEL = 1
+            SUBTREE = 2
+
+        class ModifyOperation:
+            """ldap3-compatible modify operation integer values."""
+
+            ADD = 0
+            DELETE = 1
+            REPLACE = 2
+
         class LiteralTypes:
             """Literal type definitions."""
 
