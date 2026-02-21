@@ -417,3 +417,8 @@ staging/
 # Claude AI files
 .claude/
 .github/*.rej
+
+# --- workspace-sync: required ignores (auto-managed) ---
+.reports/
+.venv/
+__pycache__/
