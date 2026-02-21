@@ -13,7 +13,7 @@ from flext_core import (
     FlextDecorators as d,
     FlextExceptions as e,
     FlextMixins as x,
-    FlextResult as r,
+    r,
 )
 
 from tests.base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s

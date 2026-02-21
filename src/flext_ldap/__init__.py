@@ -29,7 +29,7 @@ from flext_core import (
     FlextExceptions as e,
     FlextHandlers as h,
     FlextMixins as x,
-    FlextResult as r,
+    r,
 )
 
 from flext_ldap.api import FlextLdap

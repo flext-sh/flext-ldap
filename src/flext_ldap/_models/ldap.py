@@ -8,8 +8,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Self
 
-from flext_core import FlextTypes as t
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+
+from flext_ldap.typings import t
 
 __all__ = [
     "FlextLdapModelsLdap",

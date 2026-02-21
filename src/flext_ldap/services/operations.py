@@ -35,7 +35,7 @@ from collections.abc import Callable, Sequence
 from typing import Final, TypeGuard
 
 from flext_core import FlextRuntime, FlextSettings, r
-from flext_core.protocols import p as core_p
+from flext_core.protocols import p
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
@@ -54,10 +54,10 @@ LDAP3_MODIFY_DELETE: Final[int] = 1
 LDAP3_MODIFY_REPLACE: Final[int] = 2
 
 
-def _get_structlog_logger() -> core_p.Log.StructlogLogger | None:
+def _get_structlog_logger() -> p.Log.StructlogLogger | None:
     """Return structlog logger when runtime logger satisfies the protocol."""
     logger = FlextRuntime.get_logger(__name__)
-    if isinstance(logger, core_p.Log.StructlogLogger):
+    if isinstance(logger, p.Log.StructlogLogger):
         return logger
     return None
 
