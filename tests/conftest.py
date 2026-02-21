@@ -67,15 +67,14 @@ LDAP_ADMIN_PASSWORD = "admin123"
 LDAP_LEGACY_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
 LDAP_LEGACY_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
 
-_resolved_admin_credentials: tuple[str, str] | None = None
+# Mutable container to cache credentials without global statement (avoids PLW0603).
+_resolved_admin_credentials: list[tuple[str, str] | None] = [None]
 
 
 def _get_admin_credentials() -> tuple[str, str]:
     """Resolve working LDAP admin credentials for current environment."""
-    global _resolved_admin_credentials
-
-    if _resolved_admin_credentials is not None:
-        return _resolved_admin_credentials
+    if _resolved_admin_credentials[0] is not None:
+        return _resolved_admin_credentials[0]
 
     env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
     env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
@@ -103,13 +102,13 @@ def _get_admin_credentials() -> tuple[str, str]:
             )
             if test_conn.bound:
                 _ldap3_unbind(test_conn)
-                _resolved_admin_credentials = (candidate_dn, candidate_password)
-                return _resolved_admin_credentials
+                _resolved_admin_credentials[0] = (candidate_dn, candidate_password)
+                return _resolved_admin_credentials[0]
         except Exception:
             continue
 
-    _resolved_admin_credentials = (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
-    return _resolved_admin_credentials
+    _resolved_admin_credentials[0] = (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
+    return _resolved_admin_credentials[0]
 
 
 # =============================================================================
