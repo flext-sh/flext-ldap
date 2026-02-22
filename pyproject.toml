@@ -55,10 +55,10 @@ dependencies.pydantic-settings = ">=2.11.0"
 dependencies.python = ">=3.13,<3.14"
 dependencies.structlog = ">=25.4.0"
 dependencies.flext-ldif.develop = true
-dependencies.flext-ldif.path = ".flext-deps/flext-ldif"
+dependencies.flext-ldif.path = "../flext-ldif"
 dependencies.flext-quality.develop = true
 dependencies.flext-quality.optional = true
-dependencies.flext-quality.path = ".flext-deps/flext-quality"
+dependencies.flext-quality.path = "../flext-quality"
 group.dev.dependencies.autoflake = ">=2.3.1"
 group.dev.dependencies.black = ">=25.1.0"
 group.dev.dependencies.codespell = ">=2.3.0"
@@ -277,31 +277,89 @@ xml.output = "coverage.xml"
 [tool.mypy]
 check_untyped_defs = true
 disallow_incomplete_defs = true
-disallow_untyped_calls = false
-disallow_untyped_defs = false
-follow_imports = "normal"
-ignore_missing_imports = false
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+follow_imports = "silent"
 incremental = true
-mypy_path = ["..", "../typings", "../typings/generated", "src", ".flext-deps/flext-ldif/src", ".flext-deps/flext-quality/src"]
-namespace_packages = false
+mypy_path = [ "..", "../typings", "../typings/generated", "src", "../flext-ldif/src", "../flext-quality/src" ]
+namespace_packages = true
 no_implicit_optional = true
 python_version = "3.13"
 warn_redundant_casts = true
 warn_return_any = true
 warn_unused_configs = true
-warn_unused_ignores = true
-overrides = [ { module = [
-  "ldap3",
-  "ldap3.*",
-], ignore_missing_imports = true } ]
+warn_unused_ignores = false
+cache_dir = ".mypy_cache"
+color_output = true
+disallow_any_decorated = false
+disallow_any_explicit = true
+disallow_any_expr = false
+disallow_any_generics = true
+disallow_any_unimported = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = false
+error_summary = true
+exclude = [
+  ".*/generate_config.py",
+  ".*/manage.py",
+  ".*_pb2\\.py$",
+  ".*_pb2_grpc\\.py$",
+  ".coverage.*",
+  ".git/",
+  ".mypy_cache/",
+  ".pytest_cache/",
+  ".ruff_cache/",
+  ".venv/",
+  "__pycache__/",
+  "build/",
+  "dist/",
+  "node_modules/",
+  "vendor/",
+]
+extra_checks = true
+follow_imports_for_stubs = true
+local_partial_types = true
+no_implicit_reexport = true
+platform = "linux"
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+show_traceback = true
+strict = true
+strict_equality = true
+strict_optional = true
+warn_incomplete_stub = true
+warn_no_return = true
+warn_unreachable = true
 
 [tool.pyrefly]
-search-path = ["..", "../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
+search-path = [
+  "..",
+  "../flext-ldif/src",
+  "../flext-quality/src",
+  "../typings",
+  "../typings/generated",
+  "src",
+  "tests",
+  "examples",
+  "scripts",
+]
 project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
 
 [tool.pyright]
 enableTypeIgnoreComments = false
-extraPaths = ["..", "src", "tests", "examples", "scripts", "../typings", "../typings/generated", ".flext-deps/flext-ldif/src", ".flext-deps/flext-quality/src"]
+extraPaths = [
+  "..",
+  "src",
+  "tests",
+  "examples",
+  "scripts",
+  "../typings",
+  "../typings/generated",
+  "../flext-ldif/src",
+  "../flext-quality/src",
+]
 include = [ "src", "scripts", "tests", "examples" ]
 exclude = [
   "**/*.pb2.py",
