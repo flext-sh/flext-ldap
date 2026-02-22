@@ -30,6 +30,11 @@ from typing import TextIO
 
 import pytest
 from flext_core import FlextLogger, r
+from flext_ldif import FlextLdif
+from flext_ldif.services.parser import FlextLdifParser
+from flext_tests import FlextTestsDocker
+from ldap3 import Connection, Server
+
 from flext_ldap import (
     FlextLdap,
     FlextLdapConnection,
@@ -37,10 +42,6 @@ from flext_ldap import (
     FlextLdapSettings,
     p,
 )
-from flext_ldif import FlextLdif
-from flext_ldif.services.parser import FlextLdifParser
-from flext_tests import FlextTestsDocker
-from ldap3 import Connection, Server
 
 # Import unified test foundation modules
 from . import c, m, t  # Test foundation short aliases (TestsFlextLdap*)
