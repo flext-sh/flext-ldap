@@ -25,14 +25,14 @@ Architecture Notes:
     - Uses Railway-Oriented Programming pattern (FlextResult) for error handling
     - No exceptions are raised; all failures return r.fail()
     - All methods are type-safe with strict Pydantic v2 validation
-    - Python 3.13: isinstance(..., Sequence) used directly for type narrowing
+    - Python 3.13: uses guard-based sequence handling
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Sequence
-from typing import Final, TypeGuard
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from typing import Final
 
 from flext_core import FlextRuntime, FlextSettings, r
 from flext_core.protocols import p
@@ -57,25 +57,9 @@ LDAP3_MODIFY_REPLACE: Final[int] = 2
 def _get_structlog_logger() -> p.Log.StructlogLogger | None:
     """Return structlog logger when runtime logger satisfies the protocol."""
     logger = FlextRuntime.get_logger(__name__)
-    if isinstance(logger, p.Log.StructlogLogger):
+    if u.Guards._is_logger(logger):
         return logger
     return None
-
-
-def _is_ldif_entry(obj: object) -> TypeGuard[m.Ldif.Entry]:
-    """Type guard for Entry type narrowing.
-
-    Validates that an object is a flext-ldif Entry instance.
-    Used for proper type narrowing without isinstance() in production code.
-
-    Args:
-        obj: Object to validate
-
-    Returns:
-        TypeGuard[m.Ldif.Entry]: True if obj is an Entry, False otherwise
-
-    """
-    return isinstance(obj, m.Ldif.Entry)
 
 
 class FlextLdapOperations(s[m.Ldap.SearchResult]):
@@ -126,7 +110,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     @staticmethod
     def _extract_attributes_dict(
         entry: m.Ldif.Entry,
-    ) -> dict[str, list[str]]:
+    ) -> Mapping[str, list[str]]:
         """Extract attributes dict from LDIF entry or entry protocol.
 
         Args:
@@ -170,8 +154,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _convert_mapping_to_dict(
-            attrs: dict[LaxStr, Sequence[LaxStr]] | dict[str, list[str]],
-        ) -> dict[str, list[str]]:
+            attrs: Mapping[LaxStr, Sequence[LaxStr]] | Mapping[str, list[str]],
+        ) -> Mapping[str, list[str]]:
             """Convert Mapping to dict[str, list[str]].
 
             Args:
@@ -186,9 +170,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs_result: dict[str, list[str]] = {}
             for k, v in attrs.items():
                 # Ensure key is str (handle LaxStr from LDIF: str | bytes | bytearray)
-                if isinstance(k, bytes):
+                if u.Guards._is_bytes(k):
                     key_str = k.decode("utf-8", errors="replace")
-                elif isinstance(k, bytearray):
+                elif u.Guards.is_type(k, bytearray):
                     key_str = bytes(k).decode("utf-8", errors="replace")
                 else:
                     key_str = str(k)
@@ -201,7 +185,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_ldif_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, list[str]]:
             """Extract attributes from LDIF Entry.
 
             Args:
@@ -214,19 +198,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             ldif_attrs = entry.attributes
             if ldif_attrs is None:
                 return {}
-            # Python 3.13: Protocol guarantees attributes is Mapping - direct access
-            if isinstance(ldif_attrs, m.Ldif.Attributes):
-                attrs_dict = ldif_attrs.attributes
-                # Convert using helper to handle LaxStr keys properly
-                return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                    attrs_dict,
-                )
-            return {}
+            attrs_dict = ldif_attrs.attributes
+            return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
+                attrs_dict,
+            )
 
         @staticmethod
         def _extract_protocol_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, list[str]]:
             """Extract attributes from EntryProtocol.
 
             Args:
@@ -236,27 +216,24 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 Mapping of attribute names to sequences
 
             """
-            # Python 3.13: Use match-case for modern pattern matching
             attrs = entry.attributes
-            match attrs:
-                case m.Ldif.Attributes():
-                    # Convert m.Ldif.Attributes which has dict[LaxStr, list[LaxStr]]
-                    attrs_dict = attrs.attributes
-                    return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                        attrs_dict,
-                    )
-                case dict():
-                    # Convert Mapping with potentially LaxStr keys/values
-                    return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                        attrs,
-                    )
-                case _:
-                    return {}
+            if attrs is None:
+                return {}
+            if u.Guards.is_type(attrs, m.Ldif.Attributes):
+                attrs_dict = attrs.attributes
+                return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
+                    attrs_dict,
+                )
+            if u.is_dict_like(attrs):
+                return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
+                    dict(attrs),
+                )
+            return {}
 
         @staticmethod
         def extract_attributes(
             entry: m.Ldif.Entry,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, list[str]]:
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
@@ -301,7 +278,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def find_existing_values(
             attr_name: str,
-            existing_attrs: dict[str, list[str]],
+            existing_attrs: Mapping[str, list[str]],
         ) -> list[str] | None:
             """Find existing attribute values by case-insensitive name.
 
@@ -341,8 +318,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_new_attributes(
-            new_attrs: dict[str, list[str]],
-            existing_attrs: dict[str, list[str]],
+            new_attrs: Mapping[str, list[str]],
+            existing_attrs: Mapping[str, list[str]],
             ignore: frozenset[str],
         ) -> tuple[t.Ldap.Operation.Changes, set[str]]:
             """Process new attributes and detect replacement changes.
@@ -351,7 +328,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 - Skips operational attributes in ignore set (objectClass, etc.)
                 - Uses MODIFY_REPLACE for changed values (not ADD/DELETE pair)
                 - Tracks processed attributes to detect deletions later
-                - Python 3.13: isinstance(..., Sequence) validates sequences directly
+                - Python 3.13: guard-based sequence validation
 
             Audit Implication:
                 Returns tuple of (changes, processed_attrs) for audit trail.
@@ -446,7 +423,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_deleted_attributes(
-            existing_attrs: dict[str, list[str]],
+            existing_attrs: Mapping[str, list[str]],
             ignore: frozenset[str],
             processed: set[str],
         ) -> t.Ldap.Operation.Changes:
@@ -456,7 +433,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 - Only deletes attributes NOT in processed set (already handled)
                 - Skips operational attributes in ignore set
                 - Uses MODIFY_DELETE with empty list to remove attribute entirely
-                - Python 3.13: isinstance(..., Sequence) validates sequences directly
+                - Python 3.13: guard-based sequence validation
 
             Audit Implication:
                 Returns deletions needed to sync existing entry with new state.
@@ -515,12 +492,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
 
             # Normalize attributes efficiently
-            # Python 3.13: Use isinstance for type narrowing (TypeGuard limitation)
             def normalize_attr(_k: str, v: object) -> list[str]:
                 """Normalize attribute value to list[str]."""
                 return (
                     [str(item) for item in v if item is not None]
-                    if isinstance(v, Sequence)
+                    if u.is_list_like(v) or u.Guards._is_tuple(v)
                     else [str(v)]
                 )
 
@@ -648,7 +624,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def _extract_schema_add_operation(
             self,
-            attrs: dict[str, list[str]],
+            attrs: Mapping[str, list[str]],
         ) -> r[str]:
             """Extract schema add operation attribute type.
 
@@ -665,7 +641,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 default=[],
             )
             # Type narrow: ensure list before iterating
-            add_op_raw = add_op_result if isinstance(add_op_result, list) else []
+            add_op_raw = add_op_result if u.Guards.is_list(add_op_result) else []
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[str].fail("Schema modify entry missing 'add' attribute")
@@ -673,7 +649,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def _extract_schema_attribute_values(
             self,
-            attrs: dict[str, list[str]],
+            attrs: Mapping[str, list[str]],
             attr_type: str,
         ) -> r[list[str]]:
             """Extract and filter schema attribute values.
@@ -690,7 +666,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Type narrow: ensure list before iterating
             attr_values_result = u.mapper().get(attrs, attr_type, default=[])
             attr_values_raw = (
-                attr_values_result if isinstance(attr_values_result, list) else []
+                attr_values_result if u.Guards.is_list(attr_values_result) else []
             )
             attr_values: list[str] = [str(item) for item in attr_values_raw]
             filtered: list[str] = u.Ldap.to_str_list_truthy(attr_values)
@@ -729,7 +705,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             # Type narrow: ensure list before iterating
             changetype_raw = (
-                changetype_result if isinstance(changetype_result, list) else []
+                changetype_result if u.Guards.is_list(changetype_result) else []
             )
             changetype_val: list[str] = [str(item) for item in changetype_raw]
             # Use u.normalize for consistent case handling
@@ -773,7 +749,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 c.Ldap.ChangeTypeOperations.ADD,
                 default=[],
             )
-            add_op_raw = add_op_result if isinstance(add_op_result, list) else []
+            add_op_raw = add_op_result if u.Guards.is_list(add_op_result) else []
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -784,7 +760,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Extract attribute values - type narrow after mapper().get()
             attr_values_result = u.mapper().get(attrs, attr_type, default=[])
             attr_values_raw = (
-                attr_values_result if isinstance(attr_values_result, list) else []
+                attr_values_result if u.Guards.is_list(attr_values_result) else []
             )
             attr_values: list[str] = [str(item) for item in attr_values_raw]
             # Filter truthy values
@@ -803,7 +779,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             # Python 3.13: Use match-case for DN extraction
             dn_str = (
                 entry_model.dn.value or "unknown"
-                if isinstance(entry_model.dn, m.Ldif.DN)
+                if u.Guards.is_type(entry_model.dn, m.Ldif.DN)
                 else str(entry_model.dn)
                 if entry_model.dn is not None
                 else "unknown"
@@ -895,9 +871,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             """
             # Extract DN from EntryProtocol
             entry_dn: str = "unknown"
-            if isinstance(entry.dn, str):
+            if u.Guards._is_str(entry.dn):
                 entry_dn = entry.dn
-            elif isinstance(entry.dn, m.Ldif.DN):
+            elif u.Guards.is_type(entry.dn, m.Ldif.DN):
                 entry_dn = str(entry.dn.value)
             else:
                 entry_dn = str(entry.dn) if entry.dn else "unknown"
@@ -941,11 +917,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             # Use entry directly - already from search result at runtime
             existing_entry_obj = existing_entries[0]
-            if not _is_ldif_entry(existing_entry_obj):
-                return r[m.Ldap.LdapOperationResult].fail(
-                    f"Expected Entry type, got {type(existing_entry_obj).__name__}",
-                )
-            existing_entry: m.Ldif.Entry = existing_entry_obj
+            existing_entry = m.Ldif.Entry.model_validate(existing_entry_obj)
             changes = FlextLdapOperations.EntryComparison.compare(
                 existing_entry,
                 entry,
@@ -1101,25 +1073,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """
         # Convert entry to m.Ldif.Entry (adapter requires m.Ldif.Entry)
         entry_for_adapter: m.Ldif.Entry
-        if isinstance(entry, m.Ldif.Entry):
-            entry_for_adapter = entry
-        else:
-            # EntryProtocol - convert to m.Ldif.Entry
-            dn_value = str(entry.dn)
-            attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
-                entry,
-            )
-            # attrs_mapping is Mapping[str, Sequence[str]], so v is always Sequence[str]
-            # Convert to proper types for m.Ldif.Attributes constructor
-            attrs_dict: dict[str, list[str]] = {
-                str(k): [str(item) for item in v]
-                for k, v in u.mapper().to_dict(attrs_mapping).items()
-            }
-            # Create entry as m.Ldif.Entry
-            entry_for_adapter = m.Ldif.Entry.model_validate({
-                "dn": m.Ldif.DN(value=dn_value),
-                "attributes": m.Ldif.Attributes(attributes=attrs_dict),
-            })
+        entry_for_adapter = m.Ldif.Entry.model_validate(entry)
         # Execute add and handle result with proper typing
         result = self._connection.adapter.add(entry_for_adapter)
         if result.is_failure:
@@ -1165,7 +1119,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         """
         # Type narrowing: convert str to DN model if needed
-        if isinstance(dn, str):
+        if u.Guards._is_str(dn):
             dn_model: m.Ldif.DN = m.Ldif.DN(
                 value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
             )
@@ -1214,7 +1168,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         """
         # Type narrowing: convert str to DN model if needed
-        if isinstance(dn, str):
+        if u.Guards._is_str(dn):
             dn_model: m.Ldif.DN = m.Ldif.DN(
                 value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
             )
@@ -1322,14 +1276,14 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
         )
         # retry returns r[TResult] | TResult, convert to r[TResult]
-        if isinstance(retry_result, r):
+        if u.Guards._is_result(retry_result):
             return retry_result
         return r[m.Ldap.LdapOperationResult].ok(retry_result)
 
     def _update_batch_stats(
         self,
         upsert_result: r[m.Ldap.LdapOperationResult],
-        stats: dict[str, int],
+        stats: MutableMapping[str, int],
         entry_index: int,
         entry_dn: str | None,
         total_entries: int,
@@ -1372,7 +1326,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         entry_index: int,
         total: int,
         entry_dn: str | None,
-        stats: dict[str, int],
+        stats: Mapping[str, int],
     ) -> None:
         """Invoke progress callback with error handling."""
         try:
@@ -1482,7 +1436,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         stats_builder,
                     )
             except Exception:
-                entry_idx = idx_entry[0] if isinstance(idx_entry, tuple) else None
+                entry_idx = idx_entry[0] if u.Guards._is_tuple(idx_entry) else None
                 logger = _get_structlog_logger()
                 if logger is not None:
                     logger.debug(
@@ -1501,7 +1455,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         # Check for stop_on_error condition (early exit detected)
         if stop_on_error and "_stop_error" in stats_builder:
             error_idx = stats_builder["_stop_error"]
-            if isinstance(error_idx, int):
+            if u.Guards._is_int(error_idx):
                 return r[m.Ldap.LdapBatchStats].fail(
                     f"Batch upsert stopped on error at entry {error_idx}/{total_entries}",
                 )

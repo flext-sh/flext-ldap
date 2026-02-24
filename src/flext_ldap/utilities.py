@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities
@@ -170,7 +170,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             ) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
-                Since StatusLiteral is a subtype of str, after checking isinstance(
+                Since StatusLiteral is a subtype of str, after checking enum type,
                     value, Status
                 ),
                 the remaining type is str | StatusLiteral. We can check membership directly
@@ -189,7 +189,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     c.Ldap.LdapCqrs.Status.COMPLETED,
                     c.Ldap.LdapCqrs.Status.FAILED,
                 }
-                if isinstance(value, c.Ldap.LdapCqrs.Status):
+                if u.Guards.is_type(value, c.Ldap.LdapCqrs.Status):
                     return True
                 # Type narrowing: value is str | StatusLiteral after Status check
                 # Check membership directly - valid strings are StatusLiteral values
@@ -237,7 +237,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             # Convert tuple to list if needed
-            values_list = list(values) if isinstance(values, tuple) else values
+            values_list = list(values) if u.Guards._is_tuple(values) else values
             # Normalize each value and join
             normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
             return " ".join(normalized)
@@ -263,7 +263,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
             # Convert tuple to list if needed
             collection_list = (
-                list(collection) if isinstance(collection, tuple) else collection
+                list(collection) if u.Guards._is_tuple(collection) else collection
             )
             # Normalize value and check membership
             normalized_value = cls.norm_str(value, case=case or "lower")
@@ -279,8 +279,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list[t.GeneralValueType] | dict[str, t.GeneralValueType],
-        ) -> list[t.GeneralValueType] | dict[str, t.GeneralValueType]:
+            value: list[t.GeneralValueType] | Mapping[str, t.GeneralValueType],
+        ) -> list[t.GeneralValueType] | Mapping[str, t.GeneralValueType]:
             """Filter truthy values from list or dict.
 
             Args:
@@ -290,7 +290,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Filtered list or dict with only truthy values
 
             """
-            if isinstance(value, dict):
+            if u.Guards._is_dict(value):
                 return {k: v for k, v in value.items() if v}
             return [item for item in value if item]
 
@@ -371,10 +371,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: dict[str, t.GeneralValueType] | dict[str, list[str]],
+            attrs: Mapping[str, t.GeneralValueType] | Mapping[str, list[str]],
             *,
             filter_list_like: bool = False,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, list[str]]:
             """Convert attributes to str_list (generalized: map() + ensure).
 
             Uses advanced DSL: map() → ensure() for fluent composition.
@@ -393,7 +393,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 if v is None:
                     return []
                 # Python 3.13: Use isinstance directly for type narrowing
-                if isinstance(v, Sequence):
+                if u.Guards._is_sequence(v):
                     # Type narrowing: isinstance ensures v is Sequence
                     return [str(item) for item in v if item is not None]
                 # Not a sequence - return as single string value
@@ -481,13 +481,13 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 return default
             # Check if object has the specified attribute
             # Use Protocol for type-safe access
-            if isinstance(dn, m.Ldif.DN):
+            if u.Guards.is_type(dn, m.Ldif.DN):
                 value = dn.value
                 # Protocol guarantees value is str, no need for isinstance check
                 return value or default
             # If no attribute, convert directly
             # Type narrowing: after Protocol check, dn is str | object
-            if isinstance(dn, str):
+            if u.Guards._is_str(dn):
                 return dn
             # Fallback: convert to string
             return str(dn) if dn is not None else default

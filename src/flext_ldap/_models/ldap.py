@@ -5,7 +5,7 @@ LDAP operation models with validation logic.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
@@ -230,7 +230,7 @@ class FlextLdapModelsLdap:
             return len(self.entries)
 
         @property
-        def by_objectclass(self) -> dict[str, list[t.GeneralValueType]]:
+        def by_objectclass(self) -> Mapping[str, list[t.GeneralValueType]]:
             """Group entries by objectclass."""
             result: dict[str, list[t.GeneralValueType]] = {}
             for entry in self.entries:
@@ -243,33 +243,35 @@ class FlextLdapModelsLdap:
         @staticmethod
         def extract_attrs_dict_from_entry(
             entry: object,
-        ) -> dict[str, list[str]]:
+        ) -> Mapping[str, list[str]]:
             """Extract attributes dict from entry."""
             if entry is None:
                 return {}
-            # Try to get attributes from entry
-            if hasattr(entry, "attributes"):
-                attrs = getattr(entry, "attributes", None)
-                if attrs is None:
-                    return {}
-                # Handle different attribute formats
-                if isinstance(attrs, dict):
-                    return attrs
-                if hasattr(attrs, "attributes"):
-                    attrs_inner = getattr(attrs, "attributes", None)
-                    if isinstance(attrs_inner, dict):
-                        return attrs_inner
+            try:
+                attrs = entry.attributes
+            except AttributeError:
+                return {}
+            if attrs is None:
+                return {}
+            if u.is_dict_like(attrs):
+                return dict(attrs)
+            try:
+                attrs_inner = attrs.attributes
+            except AttributeError:
+                return {}
+            if u.is_dict_like(attrs_inner):
+                return dict(attrs_inner)
             return {}
 
         @staticmethod
         def extract_objectclass_category(
-            attrs: dict[str, t.GeneralValueType],
+            attrs: Mapping[str, t.GeneralValueType],
         ) -> str:
             """Extract objectclass category from attributes."""
-            if not attrs or not isinstance(attrs, dict):
+            if not attrs or not u.is_dict_like(attrs):
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            if isinstance(oc_list, (list, tuple)) and oc_list:
+            if (u.is_list_like(oc_list) or u.Guards._is_tuple(oc_list)) and oc_list:
                 return str(oc_list[0]).lower()
             return "unknown"
 
@@ -278,21 +280,27 @@ class FlextLdapModelsLdap:
             """Get category (objectclass) of an entry."""
             # Extract attributes from entry
             attrs: dict[str, list[str]] = {}
-            if entry is not None and hasattr(entry, "attributes"):
-                attrs_obj = getattr(entry, "attributes", None)
+            if entry is not None:
+                try:
+                    attrs_obj = entry.attributes
+                except AttributeError:
+                    attrs_obj = None
                 if attrs_obj is None:
                     attrs = {}
-                elif isinstance(attrs_obj, dict):
-                    attrs = attrs_obj
-                elif hasattr(attrs_obj, "attributes"):
-                    attrs_inner = getattr(attrs_obj, "attributes", None)
-                    if isinstance(attrs_inner, dict):
-                        attrs = attrs_inner
+                elif u.is_dict_like(attrs_obj):
+                    attrs = dict(attrs_obj)
+                else:
+                    try:
+                        attrs_inner = attrs_obj.attributes
+                    except AttributeError:
+                        attrs_inner = None
+                    if u.is_dict_like(attrs_inner):
+                        attrs = dict(attrs_inner)
             # Extract objectclass category from attributes
-            if not attrs or not isinstance(attrs, dict):
+            if not attrs or not u.is_dict_like(attrs):
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            if isinstance(oc_list, (list, tuple)) and oc_list:
+            if (u.is_list_like(oc_list) or u.Guards._is_tuple(oc_list)) and oc_list:
                 return str(oc_list[0]).lower()
             return "unknown"
 

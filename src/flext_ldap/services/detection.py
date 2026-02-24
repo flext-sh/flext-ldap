@@ -31,10 +31,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import ParamSpec
 
-from flext_core import r
+from flext_core import r, u
 from ldap3 import BASE, Connection
 
 from flext_ldap.base import s
@@ -76,8 +76,7 @@ class FlextLdapServerDetector(s[str]):
         connection_raw = _kwargs.get("connection")
         if connection_raw is None:
             return r[str].fail("connection parameter required")
-        # Use isinstance for type validation (u.guard doesn't support external types)
-        if not isinstance(connection_raw, Connection):
+        if not u.Guards.is_type(connection_raw, Connection):
             return r[str].fail(
                 f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
             )
@@ -128,7 +127,7 @@ class FlextLdapServerDetector(s[str]):
             """Convert value to list[str] using modern Python 3.13 patterns."""
             if not value:
                 return []
-            if isinstance(value, list):
+            if u.Guards.is_list(value):
                 return [str(item) for item in value]
             return [str(value)]
 
@@ -171,7 +170,7 @@ class FlextLdapServerDetector(s[str]):
 
         Architecture:
             - Uses ldap3 Connection.search() directly
-            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
+            - Python 3.13: Uses guard-based sequence handling
             - Returns FlextResult pattern - no exceptions raised
 
         Args:
@@ -199,19 +198,19 @@ class FlextLdapServerDetector(s[str]):
             )
 
         if not connection.entries:
-            return r[dict[str, list[str]]].fail("rootDSE query returned no entries")
+            return r[Mapping[str, list[str]]].fail("rootDSE query returned no entries")
 
         root_dse_entry = connection.entries[0]
         attrs_dict = root_dse_entry.entry_attributes_as_dict
 
         # Python 3.13: Filter None and convert to list[str] in one comprehension
         attributes: dict[str, list[str]] = {
-            k: [str(item) for item in v] if isinstance(v, list) else [str(v)]
+            k: [str(item) for item in v] if u.Guards.is_list(v) else [str(v)]
             for k, v in attrs_dict.items()
             if v is not None
         }
 
-        return r[dict[str, list[str]]].ok(attributes)
+        return r[Mapping[str, list[str]]].ok(attributes)
 
     @staticmethod
     def _get_first_value(attrs: t.Ldap.Operation.AttributeDict, key: str) -> str | None:
@@ -225,7 +224,7 @@ class FlextLdapServerDetector(s[str]):
         # Python 3.13: Use isinstance for type narrowing (list vs scalar)
         values = (
             [str(item) for item in values_raw]
-            if isinstance(values_raw, list)
+            if u.Guards.is_list(values_raw)
             else [str(values_raw)]
         )
         return values[0] if values else None
@@ -345,7 +344,7 @@ class FlextLdapServerDetector(s[str]):
         # isinstance needed to distinguish list from dict (union type)
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]
-            if isinstance(vendor_parts_raw, list)
+            if u.Guards.is_list(vendor_parts_raw)
             else []
         )
         # Normalize vendor info to lowercase for consistent matching
@@ -391,9 +390,11 @@ class FlextLdapServerDetector(s[str]):
         naming_contexts: list[str],
     ) -> str:
         """Detect server type from extensions and naming contexts."""
-        # Python 3.13: map_str returns str | list[str] - use isinstance for type narrowing
+        # Python 3.13: map_str returns str | list[str]
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
-        ext_str = ext_str_raw if isinstance(ext_str_raw, str) else " ".join(ext_str_raw)
+        ext_str = (
+            ext_str_raw if u.Guards._is_str(ext_str_raw) else " ".join(ext_str_raw)
+        )
         # DSL pattern: builder for normalization and join
         context_str = u.Ldap.norm_join(naming_contexts, case="lower")
 

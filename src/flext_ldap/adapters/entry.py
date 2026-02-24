@@ -19,7 +19,7 @@ Audit Implications:
 
 Architecture Notes:
     - Implements Adapter pattern between ldap3 and FlextLdif domains
-    - Python 3.13: Uses isinstance(..., Sequence) directly for type narrowing
+    - Python 3.13: Uses guard-based sequence handling
     - Extends FlextService[bool] for health check capability
     - Inner class _ConversionHelpers follows SRP for value processing
 
@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import TypeGuard
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -43,34 +42,6 @@ from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
-
-
-def _is_ldap3_attrs_dict(
-    value: t.GeneralValueType,
-) -> TypeGuard[Mapping[str, t.Ldap.Operation.Ldap3EntryValue]]:
-    """TypeGuard for ldap3 untyped entry_attributes_as_dict.
-
-    ldap3 is untyped, so this validates the dictionary structure matches
-    our expected type for LDAP attribute dictionaries.
-    """
-    # ldap3 returns dict-like structure - trust it matches our type
-    return isinstance(value, Mapping)
-
-
-def _is_ldap3_entry_value(
-    value: t.GeneralValueType,
-) -> TypeGuard[t.Ldap.Operation.Ldap3EntryValue]:
-    """TypeGuard for ldap3 untyped attribute values.
-
-    Validates value matches Ldap3EntryValue type (primitive or sequence).
-    """
-    if value is None:
-        return True
-    if isinstance(value, (str, bytes, int, float, bool)):
-        return True
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-        return True
-    return True  # Accept all ldap3 values - library contract
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -138,7 +109,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 - List-like values are converted to list[str]
                 - Single values are wrapped in single-item list [str(value)]
                 - None values become empty list []
-                - Python 3.13: Uses isinstance(..., Sequence) for type-safe handling
+                - Python 3.13: Uses guard-based sequence handling
 
             Audit Implications:
                 - All values normalized to string lists for consistency
@@ -146,7 +117,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 - Empty lists preserve attribute presence
 
             Architecture:
-                - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
+                - Python 3.13: Uses guard-based sequence handling
                 - Returns Sequence[str] for flexible return type
                 - No network calls - pure data transformation
 
@@ -222,7 +193,7 @@ class FlextLdapEntryAdapter(s[bool]):
         # Python 3.13: Extract and validate _auto_result with modern pattern
         auto_result_raw: object = kwargs.pop("_auto_result", None)
         auto_result: bool | None = (
-            auto_result_raw if isinstance(auto_result_raw, bool) else None
+            auto_result_raw if u.Guards._is_bool(auto_result_raw) else None
         )
         # Python 3.13: Filter kwargs with modern comprehension
         # Removed unused kwargs filtering - super().__init__() doesn't need config
@@ -377,7 +348,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Business Rules:
             - DN changes are detected by comparing original_dn vs converted_dn
             - Attribute changes detected by comparing string representations
-            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
+                - Python 3.13: Uses guard-based sequence handling
             - Mutates conversion_metadata to record differences
             - Changes tracked for audit trail generation
 
@@ -389,7 +360,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Architecture:
             - Mutates conversion_metadata object (side effect)
-            - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
+                - Python 3.13: Uses guard-based sequence handling
             - Compares string representations for change detection
             - No network calls - pure metadata tracking
 
@@ -411,11 +382,11 @@ class FlextLdapEntryAdapter(s[bool]):
             original_values: Sequence[object],
         ) -> str | None:
             """Check if attribute values changed during conversion."""
-            # Python 3.13: Use isinstance for type narrowing (TypeGuard limitation)
-            # is_list_like TypeGuard claims Sequence but only checks list
+            # Python 3.13: use runtime guards for sequence handling
             original_values_list = (
                 [str(v) for v in original_values]
-                if isinstance(original_values, Sequence)
+                if u.is_list_like(original_values)
+                or u.Guards._is_tuple(original_values)
                 else u.Ldap.to_str_list_safe(original_values)
             )
             original_str = ", ".join(original_values_list)
@@ -423,7 +394,8 @@ class FlextLdapEntryAdapter(s[bool]):
             attr_values_raw = converted_attrs_dict.get(attr_name, [])
             attr_values_list = (
                 [str(v) for v in attr_values_raw]
-                if isinstance(attr_values_raw, Sequence)
+                if u.is_list_like(attr_values_raw)
+                or u.Guards._is_tuple(attr_values_raw)
                 else ([str(attr_values_raw)] if attr_values_raw else [])
             )
             # Filter truthy values
@@ -508,9 +480,11 @@ class FlextLdapEntryAdapter(s[bool]):
                 try:
                     # ldap3 returns Sequence[object] - convert each item to str
                     str_values: list[str] = []
-                    if isinstance(raw_value, Sequence):
+                    if u.is_list_like(
+                        raw_value
+                    ) or u.Guards._is_tuple(raw_value):
                         for item in raw_value:
-                            if isinstance(item, bytes):
+                            if u.Guards._is_bytes(item):
                                 str_values.append(
                                     item.decode("utf-8", errors="replace"),
                                 )
@@ -562,7 +536,7 @@ class FlextLdapEntryAdapter(s[bool]):
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
             entry_dn_for_log = "unknown"
-            if hasattr(ldap3_entry, "entry_dn"):
+            if u.Guards.is_type(ldap3_entry, p.Ldap.Ldap3EntryProtocol):
                 entry_dn_for_log = (
                     str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
                 )
@@ -587,7 +561,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Attribute values are already list[str] in LDIF format
             - Values are converted to strings (handles any value types)
             - Empty attributes dict returns failure (no attributes to convert)
-            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
+            - Python 3.13: Uses guard-based sequence handling
 
         Audit Implications:
             - Conversion failures are logged with entry DN and error details
@@ -596,7 +570,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Architecture:
             - Accesses entry.attributes.attributes dict directly
-            - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
+            - Python 3.13: Uses guard-based sequence handling
             - Returns FlextResult pattern - no exceptions raised
             - Returns dict[str, list[str]] format expected by ldap3
 
@@ -623,7 +597,7 @@ class FlextLdapEntryAdapter(s[bool]):
             # Convert to str keys and list values to ensure type compatibility
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
-                if isinstance(v, Sequence):
+                if u.is_list_like(v) or u.Guards._is_tuple(v):
                     # Key is str according to type annotation
                     key_str = str(k)
                     filtered_attrs[key_str] = [str(item) for item in v]

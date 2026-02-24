@@ -33,7 +33,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import r
+from flext_core import r, u
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -317,7 +317,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
                 """Transform entry DN if source_basedn matches."""
                 # Type guard: only transform m.Ldif.Entry instances
-                if not isinstance(entry, m.Ldif.Entry):
+                if not u.Guards.is_type(entry, m.Ldif.Entry):
                     return entry
 
                 dn_str = u.Ldif.DN.get_dn_value(entry.dn)
@@ -379,7 +379,10 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             operations_kwarg = u.mapper().get(kwargs, "operations")
             if operations_kwarg is not None:
                 # Type narrowing: validate operations_kwarg is FlextLdapOperations
-                if not isinstance(operations_kwarg, FlextLdapOperations):
+                if not u.Guards.is_type(
+                    operations_kwarg,
+                    FlextLdapOperations,
+                ):
                     error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
                     raise TypeError(error_msg)
                 operations = operations_kwarg
@@ -464,7 +467,9 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Only accept m.Ldif.Entry instances (which properly implement protocol)
         # Other types must be validated and converted in service layer
         entries: list[m.Ldif.Entry] = [
-            entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)
+            entry
+            for entry in entries_raw
+            if u.Guards.is_type(entry, m.Ldif.Entry)
         ]
         return self._process_entries(entries, options, start_time)
 

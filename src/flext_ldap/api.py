@@ -35,12 +35,12 @@ from __future__ import annotations
 
 import inspect
 import types
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self, TypeGuard
+from typing import Self
 
-from flext_core import FlextSettings, r
+from flext_core import FlextSettings, r, u
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -63,7 +63,7 @@ HasConfigAttribute = p.Ldap.HasConfigAttribute
 
 def _is_multi_phase_callback(
     callback: m.Ldap.Types.ProgressCallbackUnion,
-) -> TypeGuard[m.Ldap.Types.MultiPhaseProgressCallback]:
+) -> bool:
     """Type guard to check if callback is multi-phase (5 parameters).
 
     Business Rules:
@@ -76,7 +76,7 @@ def _is_multi_phase_callback(
         callback: Progress callback union type to check.
 
     Returns:
-        TypeGuard narrowing to MultiPhaseProgressCallback if 5 parameters.
+        True when callback has multi-phase signature.
 
     """
     if callback is None:
@@ -91,7 +91,7 @@ def _is_multi_phase_callback(
 
 def _is_single_phase_callback(
     callback: m.Ldap.Types.ProgressCallbackUnion,
-) -> TypeGuard[m.Ldap.Types.LdapProgressCallback]:
+) -> bool:
     """Type guard to check if callback is single-phase (4 parameters).
 
     Business Rules:
@@ -104,7 +104,7 @@ def _is_single_phase_callback(
         callback: Progress callback union type to check.
 
     Returns:
-        TypeGuard narrowing to LdapProgressCallback if 4 parameters.
+        True when callback has single-phase signature.
 
     """
     if callback is None:
@@ -150,22 +150,17 @@ def _get_phase_result_value(
         Attribute value or default
 
     """
-    # Python 3.13: Both union types share same attributes - direct access
-    # isinstance check ensures protocol compatibility
-    if isinstance(phase_result, (m.Ldap.PhaseSyncResult, m.Ldap.PhaseSyncResult)):
-        # Use match-case for modern Python 3.13 pattern matching
-        match attr_name:
-            case "total_entries":
-                return phase_result.total_entries
-            case "synced":
-                return phase_result.synced
-            case "failed":
-                return phase_result.failed
-            case "skipped":
-                return phase_result.skipped
-            case _:
-                return default
-    return default
+    match attr_name:
+        case "total_entries":
+            return phase_result.total_entries
+        case "synced":
+            return phase_result.synced
+        case "failed":
+            return phase_result.failed
+        case "skipped":
+            return phase_result.skipped
+        case _:
+            return default
 
 
 class FlextLdap(s[m.Ldap.SearchResult]):
@@ -278,11 +273,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # PrivateAttr access is necessary for copying config from
         # connection to facade
         connection_config: FlextLdapSettings | None = None
-        # Check for actual connection type that has compatible config
-        if isinstance(connection, FlextLdapConnection) and isinstance(
-            connection.config,
-            FlextLdapSettings,
-        ):
+        if u.Guards.is_type(connection.config, FlextLdapSettings):
             # FlextLdapConnection.config is FlextLdapSettings (via super)
             connection_config = connection.config
         # Type narrowing: connection_config is already FlextLdapSettings | None
@@ -388,7 +379,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         """
         # Convert FlextLdapSettings to ConnectionConfig if needed
-        if isinstance(connection_config, FlextLdapSettings):
+        if u.Guards.is_type(connection_config, FlextLdapSettings):
             connection_config = m.Ldap.ConnectionConfig(
                 host=connection_config.host,
                 port=connection_config.port,
@@ -782,10 +773,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Type narrowing: parse_result.value returns list[m.Ldif.Entry]
         # Runtime validation ensures correctness
         parse_value = parse_result.value
-        # Type narrowing: parse_value is list[t.GeneralValueType] from unwrap(), but runtime guarantees m.Ldif.Entry
-        # Use list comprehension with isinstance for type narrowing
         entries: list[m.Ldif.Entry] = [
-            entry for entry in parse_value if isinstance(entry, m.Ldif.Entry)
+            m.Ldif.Entry.model_validate(entry) for entry in parse_value
         ]
         if not entries:
             return r.ok(
@@ -804,7 +793,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
         callback = config.progress_callback
         if callback is not None:
-            # Use TypeGuards to narrow callback type
+            # Use callback signature detection
             if _is_multi_phase_callback(callback):
                 # Multi-phase callback - wrap to single-phase
                 # Type narrowing: callback is MultiPhaseProgressCallback after guard
@@ -1024,7 +1013,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def sync_multiple_phases(
         self,
-        phase_files: dict[str, Path],
+        phase_files: Mapping[str, Path],
         *,
         config: m.Ldap.SyncPhaseConfig | None = None,
     ) -> r[m.Ldap.MultiPhaseSyncResult]:
