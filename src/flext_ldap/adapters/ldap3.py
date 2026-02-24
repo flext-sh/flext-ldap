@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Final, cast
+from typing import Final
 
 from flext_core import r
 from flext_ldif import (
@@ -476,8 +476,9 @@ class Ldap3Adapter(s[bool]):
                     {"value": getattr(dn_raw, "value") or ""},
                 )
 
-            # Use FlextLdifUtilities.Ldif.DN for conversion
-            dn_value: str = FlextLdifUtilities.Ldif.DN.get_dn_value(dn_raw)
+            # Convert to string first, then use DN utility
+            dn_str_val = str(dn_raw)
+            dn_value: str = FlextLdifUtilities.Ldif.DN.get_dn_value(dn_str_val)
             return m.Ldif.DN.model_validate({"value": dn_value})
 
         @staticmethod
@@ -1515,7 +1516,7 @@ class Ldap3Adapter(s[bool]):
 
         return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(
-                entries=cast("list[t.GeneralValueType]", list(entries_raw)),
+                entries=list(entries_raw),
                 search_options=search_options,
             ),
         )

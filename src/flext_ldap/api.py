@@ -116,9 +116,11 @@ class FlextLdapSyncCallbacks:
             case _:
                 return default
 
+
 # Module-level aliases for backward compatibility (used by tests)
 _is_multi_phase_callback = FlextLdapSyncCallbacks.is_multi_phase_callback
 _is_single_phase_callback = FlextLdapSyncCallbacks.is_single_phase_callback
+
 
 class FlextLdap(s[m.Ldap.SearchResult]):
     """Main API facade for LDAP operations using dependency injection.

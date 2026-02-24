@@ -8,8 +8,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from flext_ldif.models import FlextLdifModels
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from flext_ldap.typings import t
 

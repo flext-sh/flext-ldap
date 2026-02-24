@@ -320,6 +320,8 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                 if not u.Guards.is_type(entry, m.Ldif.Entry):
                     return entry
 
+                if entry.dn is None:
+                    return entry
                 dn_str = u.Ldif.DN.get_dn_value(entry.dn)
                 if source_basedn.lower() in dn_str.lower():
                     # Case-insensitive replacement using regex (RFC 4514 compliance)
