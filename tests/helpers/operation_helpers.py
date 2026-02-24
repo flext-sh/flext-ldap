@@ -14,9 +14,6 @@ from typing import TypeVar
 import pytest
 import tests.constants as c_mod
 from flext_core import FlextResult
-from flext_tests import u
-from tests.typings import GenericFieldsDict, t
-
 from flext_ldap import (
     FlextLdap,
     FlextLdapOperations,
@@ -24,6 +21,8 @@ from flext_ldap import (
     r,
 )
 from flext_ldap.models import FlextLdapModels
+from flext_tests import u
+from tests.typings import GenericFieldsDict, t
 
 c = c_mod.c
 

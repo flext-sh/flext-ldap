@@ -111,12 +111,7 @@ optional-dependencies.dev = [
   "types-toml>=0.10.8.20240310",
   "vulture>=2.13",
 ]
-urls.Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
-urls.Homepage = "https://github.com/flext-sh/flext"
-urls.Repository = "https://github.com/flext-sh/flext"
-
-# [CUSTOM] poetry dev extensions
-[tool.poetry.group.dev.dependencies]
+urls = { Documentation = "https://github.com/flext-sh/flext/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext", Repository = "https://github.com/flext-sh/flext" }
 
 # [MANAGED] deptry
 [tool.deptry]
@@ -124,7 +119,29 @@ pep621_dev_dependency_groups = [
   "dev",
 ]
 
-[group.dev.dependencies]
-packages = [ { from = "src", include = "flext_ldap" } ]
+[tool.pytest.ini_options]
+minversion = "8.0"
+python_classes = [
+    "Test*",
+]
+python_files = [
+    "*_test.py",
+    "*_tests.py",
+    "test_*.py",
+]
+addopts = [
+    "--strict-markers",
+]
+markers = [
+    "unit: unit tests",
+    "integration: integration tests",
+    "performance: performance and benchmark tests",
+    "slow: slow-running tests",
+    "docker: tests requiring Docker",
+    "e2e: end-to-end integration tests",
+    "edge_cases: edge case tests",
+    "stress: stress tests",
+    "resilience: resilience tests",
+]
 
 # [MANAGED] ruff
