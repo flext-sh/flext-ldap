@@ -1326,7 +1326,9 @@ class Ldap3Adapter(s[bool]):
                 return tls_result
 
             # Check bound state - connection is guaranteed to be non-None after create_connection
-            if self._connection is None or not FlextLdapLdap3Wrappers.is_bound(self._connection):
+            if self._connection is None or not FlextLdapLdap3Wrappers.is_bound(
+                self._connection
+            ):
                 return r[bool].fail("Failed to bind to LDAP server")
 
             return r[bool].ok(value=True)

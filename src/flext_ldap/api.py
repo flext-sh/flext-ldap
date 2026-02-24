@@ -751,7 +751,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             # Use callback signature detection
             if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
                 multi_phase_cb = cast(
-                    m.Ldap.Types.MultiPhaseProgressCallback,
+                    "m.Ldap.Types.MultiPhaseProgressCallback",
                     callback,
                 )
 
@@ -764,12 +764,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
                 single_phase_callback = cast(
-                    m.Ldap.Types.LdapProgressCallback,
+                    "m.Ldap.Types.LdapProgressCallback",
                     wrapped_cb,
                 )
             elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
                 single_phase_callback = cast(
-                    m.Ldap.Types.LdapProgressCallback,
+                    "m.Ldap.Types.LdapProgressCallback",
                     callback,
                 )
 
@@ -861,7 +861,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Use type guards for type narrowing
         if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
             multi_phase_cb = cast(
-                m.Ldap.Types.MultiPhaseProgressCallback,
+                "m.Ldap.Types.MultiPhaseProgressCallback",
                 callback,
             )
 
@@ -874,10 +874,10 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
 
-            return cast(m.Ldap.Types.LdapProgressCallback, progress_cb)
+            return cast("m.Ldap.Types.LdapProgressCallback", progress_cb)
 
         if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
-            return cast(m.Ldap.Types.LdapProgressCallback, callback)
+            return cast("m.Ldap.Types.LdapProgressCallback", callback)
 
         return None
 
@@ -910,11 +910,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             return None
 
         if FlextLdapSyncCallbacks.is_single_phase_callback(phase_callback):
-            return cast(m.Ldap.Types.LdapProgressCallback, phase_callback)
+            return cast("m.Ldap.Types.LdapProgressCallback", phase_callback)
 
         if FlextLdapSyncCallbacks.is_multi_phase_callback(phase_callback):
             multi_phase_cb = cast(
-                m.Ldap.Types.MultiPhaseProgressCallback,
+                "m.Ldap.Types.MultiPhaseProgressCallback",
                 phase_callback,
             )
 
@@ -926,7 +926,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 
-            return cast(m.Ldap.Types.LdapProgressCallback, wrapped_phase_cb)
+            return cast("m.Ldap.Types.LdapProgressCallback", wrapped_phase_cb)
 
         return None
 
@@ -1045,7 +1045,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         phase_values = list(phase_results.values())
         totals = {
             "entries": sum(
-                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "total_entries", 0)
+                FlextLdapSyncCallbacks.get_phase_result_value(
+                    phase_result, "total_entries", 0
+                )
                 for phase_result in phase_values
             ),
             "synced": sum(
@@ -1057,7 +1059,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 for phase_result in phase_values
             ),
             "skipped": sum(
-                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "skipped", 0)
+                FlextLdapSyncCallbacks.get_phase_result_value(
+                    phase_result, "skipped", 0
+                )
                 for phase_result in phase_values
             ),
         }
