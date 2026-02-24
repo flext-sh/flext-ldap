@@ -204,7 +204,7 @@ class FlextLdapServerDetector(s[str]):
 
         # Python 3.13: Filter None and convert to list[str] in one comprehension
         attributes: dict[str, list[str]] = {
-            k: [str(item) for item in v] if u.Guards.is_list(v) else [str(v)]
+            k: [str(item) for item in v] if isinstance(v, list) else [str(v)]
             for k, v in attrs_dict.items()
             if v is not None
         }
@@ -223,7 +223,7 @@ class FlextLdapServerDetector(s[str]):
         # Python 3.13: Use isinstance for type narrowing (list vs scalar)
         values = (
             [str(item) for item in values_raw]
-            if u.Guards.is_list(values_raw)
+            if isinstance(values_raw, list)
             else [str(values_raw)]
         )
         return values[0] if values else None
@@ -327,8 +327,7 @@ class FlextLdapServerDetector(s[str]):
             supported_extensions,
             naming_contexts,
         )
-        # Ensure we always return a string (fallback to "rfc")
-        return extension_result if extension_result is not None else "rfc"
+        return extension_result
 
     @staticmethod
     def _detect_from_vendor(

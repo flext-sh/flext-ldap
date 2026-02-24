@@ -38,7 +38,7 @@ import types
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self, cast
+from typing import Self, TypeIs
 
 from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
@@ -67,7 +67,7 @@ class FlextLdapSyncCallbacks:
     @staticmethod
     def is_multi_phase_callback(
         callback: m.Ldap.Types.ProgressCallbackUnion,
-    ) -> bool:
+    ) -> TypeIs[m.Ldap.Types.MultiPhaseProgressCallback]:
         """Type guard to check if callback is multi-phase (5 parameters)."""
         if callback is None:
             return False
@@ -80,7 +80,7 @@ class FlextLdapSyncCallbacks:
     @staticmethod
     def is_single_phase_callback(
         callback: m.Ldap.Types.ProgressCallbackUnion,
-    ) -> bool:
+    ) -> TypeIs[m.Ldap.Types.LdapProgressCallback]:
         """Type guard to check if callback is single-phase (4 parameters)."""
         if callback is None:
             return False
@@ -755,10 +755,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         if callback is not None:
             # Use callback signature detection
             if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
-                multi_phase_cb = cast(
-                    "m.Ldap.Types.MultiPhaseProgressCallback",
-                    callback,
-                )
+                multi_phase_cb = callback
 
                 def wrapped_cb(
                     current: int,
@@ -768,15 +765,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 ) -> None:
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
-                single_phase_callback = cast(
-                    "m.Ldap.Types.LdapProgressCallback",
-                    wrapped_cb,
-                )
+                single_phase_callback = wrapped_cb
             elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
-                single_phase_callback = cast(
-                    "m.Ldap.Types.LdapProgressCallback",
-                    callback,
-                )
+                single_phase_callback = callback
 
         # p.Entry implements m.Ldif.Entry.EntryProtocol (structural compatibility)
         # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
@@ -865,10 +856,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         # Use type guards for type narrowing
         if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
-            multi_phase_cb = cast(
-                "m.Ldap.Types.MultiPhaseProgressCallback",
-                callback,
-            )
+            multi_phase_cb = callback
 
             def progress_cb(
                 current: int,
@@ -879,10 +867,10 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
 
-            return cast("m.Ldap.Types.LdapProgressCallback", progress_cb)
+            return progress_cb
 
         if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
-            return cast("m.Ldap.Types.LdapProgressCallback", callback)
+            return callback
 
         return None
 
@@ -915,13 +903,10 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             return None
 
         if FlextLdapSyncCallbacks.is_single_phase_callback(phase_callback):
-            return cast("m.Ldap.Types.LdapProgressCallback", phase_callback)
+            return phase_callback
 
         if FlextLdapSyncCallbacks.is_multi_phase_callback(phase_callback):
-            multi_phase_cb = cast(
-                "m.Ldap.Types.MultiPhaseProgressCallback",
-                phase_callback,
-            )
+            multi_phase_cb = phase_callback
 
             def wrapped_phase_cb(
                 current: int,
@@ -931,7 +916,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 
-            return cast("m.Ldap.Types.LdapProgressCallback", wrapped_phase_cb)
+            return wrapped_phase_cb
 
         return None
 

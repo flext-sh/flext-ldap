@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -129,7 +128,20 @@ class FlextLdapEntryAdapter(s[bool]):
                 Sequence of string values (empty if value is None/empty).
 
             """
-            return u.Ldap.to_str_list_safe(cast("t.GeneralValueType", value))
+            match value:
+                case None:
+                    return []
+                case bytes() as value_bytes:
+                    return [value_bytes.decode("utf-8", errors="replace")]
+                case list() | tuple() as sequence_values:
+                    return [
+                        item.decode("utf-8", errors="replace")
+                        if isinstance(item, bytes)
+                        else str(item)
+                        for item in sequence_values
+                    ]
+                case _:
+                    return [str(value)]
 
         @staticmethod
         def normalize_original_attr_value(
@@ -160,7 +172,9 @@ class FlextLdapEntryAdapter(s[bool]):
                 Sequence of string values from original attribute.
 
             """
-            return u.Ldap.to_str_list_safe(cast("t.GeneralValueType", value))
+            return FlextLdapEntryAdapter._ConversionHelpers.convert_value_to_strings(
+                value
+            )
 
     _ldif: FlextLdif = PrivateAttr()
     _server_type: str = PrivateAttr()
@@ -385,10 +399,14 @@ class FlextLdapEntryAdapter(s[bool]):
             match original_values:
                 case list() | tuple():
                     original_values_list = [str(v) for v in original_values]
+                case str() as original_str:
+                    original_values_list = [original_str]
+                case bytes() as original_bytes:
+                    original_values_list = [
+                        original_bytes.decode("utf-8", errors="replace")
+                    ]
                 case _:
-                    original_values_list = u.Ldap.to_str_list_safe(
-                        cast("t.GeneralValueType", original_values),
-                    )
+                    original_values_list = [str(v) for v in original_values]
             original_str = ", ".join(original_values_list)
             # Python 3.13: Extract and convert with modern pattern
             attr_values_raw = converted_attrs_dict.get(attr_name, [])

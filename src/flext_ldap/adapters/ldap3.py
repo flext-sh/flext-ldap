@@ -451,7 +451,12 @@ class Ldap3Adapter(s[bool]):
             # Direct access for LdifEntry (isinstance for type narrowing)
             if isinstance(parsed, LdifEntry):
                 if parsed.dn is not None:
-                    return m.Ldif.DN.model_validate(parsed.dn.model_dump())
+                    return m.Ldif.DN.model_validate(
+                        {
+                            "value": parsed.dn.value,
+                            "metadata": parsed.dn.metadata,
+                        },
+                    )
                 return m.Ldif.DN.model_validate({"value": ""})
 
             # Protocol-based entry - extract DN using getattr

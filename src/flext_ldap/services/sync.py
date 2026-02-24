@@ -317,7 +317,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
                 """Transform entry DN if source_basedn matches."""
                 # Type guard: only transform m.Ldif.Entry instances
-                if not u.Guards.is_type(entry, m.Ldif.Entry):
+                if not isinstance(entry, m.Ldif.Entry):
                     return entry
 
                 if entry.dn is None:
@@ -465,7 +465,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Only accept m.Ldif.Entry instances (which properly implement protocol)
         # Other types must be validated and converted in service layer
         entries: list[m.Ldif.Entry] = [
-            entry for entry in entries_raw if u.Guards.is_type(entry, m.Ldif.Entry)
+            entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)
         ]
         return self._process_entries(entries, options, start_time)
 

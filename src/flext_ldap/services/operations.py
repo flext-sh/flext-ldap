@@ -220,7 +220,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs = entry.attributes
             if attrs is None:
                 return {}
-            if u.Guards.is_type(attrs, m.Ldif.Attributes):
+            if isinstance(attrs, m.Ldif.Attributes):
                 attrs_dict = attrs.attributes
                 return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
                     attrs_dict,
