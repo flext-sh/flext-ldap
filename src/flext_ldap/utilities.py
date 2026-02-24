@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from typing import TypeIs
+from typing import Any, TypeIs, cast
 
 from flext_ldif import FlextLdifUtilities
 
@@ -87,7 +87,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
             if value is None:
                 return default
-            return FlextLdifUtilities.to_str(value, default=default)
+            return FlextLdifUtilities.to_str(
+                cast("Any", value),
+                default=default,
+            )
 
         @staticmethod
         def to_str_list(
@@ -107,7 +110,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 list[str]: Converted list
 
             """
-            return FlextLdifUtilities.to_str_list(value, default=default)
+            return FlextLdifUtilities.to_str_list(
+                cast("Any", value),
+                default=default,
+            )
 
         @staticmethod
         def to_str_list_truthy(
@@ -131,7 +137,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
             # Use parent convenience shortcut for conversion
             if value is None:
                 return default or []
-            str_list = FlextLdifUtilities.to_str_list(value, default=default)
+            str_list = FlextLdifUtilities.to_str_list(
+                cast("Any", value),
+                default=default,
+            )
             # Filter truthy values - LDAP-specific behavior
             return [item for item in str_list if item]
 
@@ -151,7 +160,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
             if value is None:
                 return []
-            return FlextLdifUtilities.to_str_list(value, default=[])
+            return FlextLdifUtilities.to_str_list(
+                cast("Any", value),
+                default=[],
+            )
 
         # ═══════════════════════════════════════════════════════════════════
         # VALIDATION HELPERS - Moved from constants.py (functions forbidden there)
@@ -189,7 +201,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     c.Ldap.LdapCqrs.Status.COMPLETED,
                     c.Ldap.LdapCqrs.Status.FAILED,
                 }
-                if u.Guards.is_type(value, c.Ldap.LdapCqrs.Status):
+                if isinstance(value, c.Ldap.LdapCqrs.Status):
                     return True
                 # Type narrowing: value is str | StatusLiteral after Status check
                 # Check membership directly - valid strings are StatusLiteral values
@@ -237,7 +249,11 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             # Convert tuple to list if needed
-            values_list = list(values) if u.Guards._is_tuple(values) else values
+            match values:
+                case tuple():
+                    values_list = list(values)
+                case _:
+                    values_list = values
             # Normalize each value and join
             normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
             return " ".join(normalized)
@@ -262,9 +278,11 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             # Convert tuple to list if needed
-            collection_list = (
-                list(collection) if u.Guards._is_tuple(collection) else collection
-            )
+            match collection:
+                case tuple():
+                    collection_list = list(collection)
+                case _:
+                    collection_list = collection
             # Normalize value and check membership
             normalized_value = cls.norm_str(value, case=case or "lower")
             normalized_collection = [
@@ -290,7 +308,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Filtered list or dict with only truthy values
 
             """
-            if u.Guards._is_dict(value):
+            if isinstance(value, Mapping):
                 return {k: v for k, v in value.items() if v}
             return [item for item in value if item]
 
@@ -393,18 +411,19 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 if v is None:
                     return []
                 # Python 3.13: Use isinstance directly for type narrowing
-                if u.Guards._is_sequence(v):
-                    # Type narrowing: isinstance ensures v is Sequence
-                    return [str(item) for item in v if item is not None]
+                match v:
+                    case list() | tuple() | range():
+                        # Type narrowing: pattern ensures sequence-like input
+                        return [str(item) for item in v if item is not None]
+                    case _:
+                        pass
                 # Not a sequence - return as single string value
                 if filter_list_like:
                     return [str(v)]
                 # Not a sequence - return as single string value
                 return [str(v)] if v is not None else []
 
-            # attrs is dict[str, t.GeneralValueType] | dict[str, list[str]]
-            # Both are compatible with dict[str, t.GeneralValueType] for processing
-            attrs_dict: dict[str, t.GeneralValueType] = dict(attrs)
+            attrs_dict: dict[str, t.GeneralValueType | list[str]] = dict(attrs)
             if not attrs_dict:
                 return {}
             # Map attributes using dict comprehension (map functionality)
@@ -479,16 +498,16 @@ class FlextLdapUtilities(FlextLdifUtilities):
             # Extract string from object with attribute access
             if dn is None:
                 return default
-            # Check if object has the specified attribute
-            # Use Protocol for type-safe access
-            if u.Guards.is_type(dn, m.Ldif.DN):
+            if isinstance(dn, m.Ldif.DN):
                 value = dn.value
-                # Protocol guarantees value is str, no need for isinstance check
                 return value or default
             # If no attribute, convert directly
             # Type narrowing: after Protocol check, dn is str | object
-            if u.Guards._is_str(dn):
-                return dn
+            match dn:
+                case str() as dn_str:
+                    return dn_str
+                case _:
+                    pass
             # Fallback: convert to string
             return str(dn) if dn is not None else default
 

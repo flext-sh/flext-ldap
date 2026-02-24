@@ -12,14 +12,14 @@ from __future__ import annotations
 from flext_core import (
     FlextDecorators as d,
     FlextExceptions as e,
-    FlextMixins as x,
     r,
+    x,
 )
 
 from tests.base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
 from tests.constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
 from tests.models import TestsFlextLdapModels, TestsFlextLdapModels as m
-from tests.protocols import TestsFlextLdapProtocols, p, tp
+from tests.protocols import TestsFlextLdapProtocols, p
 from tests.typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t, tt
 from tests.utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
@@ -38,7 +38,6 @@ __all__ = [
     "r",
     "s",
     "t",
-    "tp",
     "tt",
     "u",
     "x",

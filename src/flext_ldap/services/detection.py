@@ -31,10 +31,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import ParamSpec
 
-from flext_core import r, u
+from flext_core import r
 from ldap3 import BASE, Connection
 
 from flext_ldap.base import s
@@ -76,11 +76,10 @@ class FlextLdapServerDetector(s[str]):
         connection_raw = _kwargs.get("connection")
         if connection_raw is None:
             return r[str].fail("connection parameter required")
-        if not u.Guards.is_type(connection_raw, Connection):
+        if not isinstance(connection_raw, Connection):
             return r[str].fail(
                 f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
             )
-        # Type narrowing: connection_raw is Connection after isinstance check
         connection: Connection = connection_raw
         return self.detect_from_connection(connection)
 
@@ -127,7 +126,7 @@ class FlextLdapServerDetector(s[str]):
             """Convert value to list[str] using modern Python 3.13 patterns."""
             if not value:
                 return []
-            if u.Guards.is_list(value):
+            if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
                 return [str(item) for item in value]
             return [str(value)]
 
@@ -344,7 +343,7 @@ class FlextLdapServerDetector(s[str]):
         # isinstance needed to distinguish list from dict (union type)
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]
-            if u.Guards.is_list(vendor_parts_raw)
+            if isinstance(vendor_parts_raw, list)
             else []
         )
         # Normalize vendor info to lowercase for consistent matching
@@ -392,9 +391,11 @@ class FlextLdapServerDetector(s[str]):
         """Detect server type from extensions and naming contexts."""
         # Python 3.13: map_str returns str | list[str]
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
-        ext_str = (
-            ext_str_raw if u.Guards._is_str(ext_str_raw) else " ".join(ext_str_raw)
-        )
+        match ext_str_raw:
+            case str():
+                ext_str = ext_str_raw
+            case _:
+                ext_str = " ".join(ext_str_raw)
         # DSL pattern: builder for normalization and join
         context_str = u.Ldap.norm_join(naming_contexts, case="lower")
 

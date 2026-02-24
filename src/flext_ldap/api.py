@@ -38,9 +38,9 @@ import types
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self
+from typing import Self, cast
 
-from flext_core import FlextSettings, r, u
+from flext_core import FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -61,106 +61,60 @@ SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 HasConfigAttribute = p.Ldap.HasConfigAttribute
 
 
-def _is_multi_phase_callback(
-    callback: m.Ldap.Types.ProgressCallbackUnion,
-) -> bool:
-    """Type guard to check if callback is multi-phase (5 parameters).
+class FlextLdapSyncCallbacks:
+    """Sync callback type guards and helpers for phase/single-phase progress callbacks."""
 
-    Business Rules:
-        - Multi-phase callbacks have 5 parameters: (phase, current, total, dn, stats)
-        - Used for sync_multiple_phases() where phase name is needed
-        - Returns False for None callbacks (safe no-op pattern)
-        - Uses inspect.signature() for parameter counting
+    @staticmethod
+    def is_multi_phase_callback(
+        callback: m.Ldap.Types.ProgressCallbackUnion,
+    ) -> bool:
+        """Type guard to check if callback is multi-phase (5 parameters)."""
+        if callback is None:
+            return False
+        try:
+            sig = inspect.signature(callback)
+            return len(sig.parameters) == MULTI_PHASE_CALLBACK_PARAM_COUNT
+        except (TypeError, ValueError, AttributeError):
+            return False
 
-    Args:
-        callback: Progress callback union type to check.
+    @staticmethod
+    def is_single_phase_callback(
+        callback: m.Ldap.Types.ProgressCallbackUnion,
+    ) -> bool:
+        """Type guard to check if callback is single-phase (4 parameters)."""
+        if callback is None:
+            return False
+        try:
+            sig = inspect.signature(callback)
+            return len(sig.parameters) == SINGLE_PHASE_CALLBACK_PARAM_COUNT
+        except (TypeError, ValueError, AttributeError):
+            return False
 
-    Returns:
-        True when callback has multi-phase signature.
+    @staticmethod
+    def convert_entries_to_protocol(
+        entries: Sequence[m.Ldif.Entry],
+    ) -> list[m.Ldif.Entry]:
+        """Convert entries to protocol list with type safety."""
+        return list(entries)
 
-    """
-    if callback is None:
-        return False
-    try:
-        sig = inspect.signature(callback)
-        # Check parameter count matches multi-phase callback signature
-        return len(sig.parameters) == MULTI_PHASE_CALLBACK_PARAM_COUNT
-    except (TypeError, ValueError, AttributeError):
-        return False
-
-
-def _is_single_phase_callback(
-    callback: m.Ldap.Types.ProgressCallbackUnion,
-) -> bool:
-    """Type guard to check if callback is single-phase (4 parameters).
-
-    Business Rules:
-        - Single-phase callbacks have 4 parameters: (current, total, dn, stats)
-        - Used for batch_upsert() where phase name is implicit
-        - Returns False for None callbacks (safe no-op pattern)
-        - Uses inspect.signature() for parameter counting
-
-    Args:
-        callback: Progress callback union type to check.
-
-    Returns:
-        True when callback has single-phase signature.
-
-    """
-    if callback is None:
-        return False
-    try:
-        sig = inspect.signature(callback)
-        # Check parameter count matches single-phase callback signature
-        return len(sig.parameters) == SINGLE_PHASE_CALLBACK_PARAM_COUNT
-    except (TypeError, ValueError, AttributeError):
-        return False
-
-
-def _convert_entries_to_protocol(
-    entries: Sequence[m.Ldif.Entry],
-) -> list[m.Ldif.Entry]:
-    """Convert entries to protocol list with type safety.
-
-    Args:
-        entries: Sequence of entries conforming to m.Ldif.Entry protocol
-
-    Returns:
-        List of m.Ldif.Entry-compatible entries
-
-    """
-    # All entries already implement m.Ldif.Entry protocol
-    # Return as list for batch operations
-    return list(entries)
-
-
-def _get_phase_result_value(
-    phase_result: FlextLdapModelsLdap.PhaseSyncResult,
-    attr_name: str,
-    default: int = 0,
-) -> int:
-    """Get phase result attribute value with type safety.
-
-    Args:
-        phase_result: Phase result (model or protocol-compatible)
-        attr_name: Attribute name to extract
-        default: Default value if attribute not found
-
-    Returns:
-        Attribute value or default
-
-    """
-    match attr_name:
-        case "total_entries":
-            return phase_result.total_entries
-        case "synced":
-            return phase_result.synced
-        case "failed":
-            return phase_result.failed
-        case "skipped":
-            return phase_result.skipped
-        case _:
-            return default
+    @staticmethod
+    def get_phase_result_value(
+        phase_result: FlextLdapModelsLdap.PhaseSyncResult,
+        attr_name: str,
+        default: int = 0,
+    ) -> int:
+        """Get phase result attribute value with type safety."""
+        match attr_name:
+            case "total_entries":
+                return phase_result.total_entries
+            case "synced":
+                return phase_result.synced
+            case "failed":
+                return phase_result.failed
+            case "skipped":
+                return phase_result.skipped
+            case _:
+                return default
 
 
 class FlextLdap(s[m.Ldap.SearchResult]):
@@ -273,8 +227,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # PrivateAttr access is necessary for copying config from
         # connection to facade
         connection_config: FlextLdapSettings | None = None
-        if u.Guards.is_type(connection.config, FlextLdapSettings):
-            # FlextLdapConnection.config is FlextLdapSettings (via super)
+        if isinstance(connection.config, FlextLdapSettings):
             connection_config = connection.config
         # Type narrowing: connection_config is already FlextLdapSettings | None
         # After isinstance check above, if it's not None, it's FlextLdapSettings
@@ -378,9 +331,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             r[bool] indicating connection success
 
         """
-        # Convert FlextLdapSettings to ConnectionConfig if needed
-        if u.Guards.is_type(connection_config, FlextLdapSettings):
-            connection_config = m.Ldap.ConnectionConfig(
+        config_for_connect: m.Ldap.ConnectionConfig
+        if isinstance(connection_config, FlextLdapSettings):
+            config_for_connect = m.Ldap.ConnectionConfig(
                 host=connection_config.host,
                 port=connection_config.port,
                 use_ssl=connection_config.use_ssl,
@@ -391,17 +344,19 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 auto_bind=connection_config.auto_bind,
                 auto_range=connection_config.auto_range,
             )
+        else:
+            config_for_connect = connection_config
 
         self.logger.debug(
             "Connecting to LDAP server",
-            host=connection_config.host,
-            port=connection_config.port,
-            use_ssl=connection_config.use_ssl,
-            use_tls=connection_config.use_tls,
+            host=config_for_connect.host,
+            port=config_for_connect.port,
+            use_ssl=config_for_connect.use_ssl,
+            use_tls=config_for_connect.use_tls,
         )
 
         result = self._connection.connect(
-            connection_config,
+            config_for_connect,
             auto_retry=auto_retry,
             max_retries=max_retries,
             retry_delay=retry_delay,
@@ -410,14 +365,14 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         if result.is_success:
             self.logger.info(
                 "LDAP connection established",
-                host=connection_config.host,
-                port=connection_config.port,
+                host=config_for_connect.host,
+                port=config_for_connect.port,
             )
         else:
             self.logger.error(
                 "LDAP connection failed",
-                host=connection_config.host,
-                port=connection_config.port,
+                host=config_for_connect.host,
+                port=config_for_connect.port,
                 error=str(result.error),
             )
 
@@ -794,10 +749,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         callback = config.progress_callback
         if callback is not None:
             # Use callback signature detection
-            if _is_multi_phase_callback(callback):
-                # Multi-phase callback - wrap to single-phase
-                # Type narrowing: callback is MultiPhaseProgressCallback after guard
-                multi_phase_cb = callback
+            if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
+                multi_phase_cb = cast(
+                    m.Ldap.Types.MultiPhaseProgressCallback,
+                    callback,
+                )
 
                 def wrapped_cb(
                     current: int,
@@ -805,22 +761,24 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                     dn: str,
                     stats: object,
                 ) -> None:
-                    # Use narrowed multi-phase callback
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
-                # wrapped_cb matches LdapProgressCallback signature (4 params)
-                single_phase_callback = wrapped_cb
-            elif _is_single_phase_callback(callback):
-                # Single-phase callback - use directly
-                # Type narrowing: callback is LdapProgressCallback (4 params)
-                single_phase_callback = callback
+                single_phase_callback = cast(
+                    m.Ldap.Types.LdapProgressCallback,
+                    wrapped_cb,
+                )
+            elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
+                single_phase_callback = cast(
+                    m.Ldap.Types.LdapProgressCallback,
+                    callback,
+                )
 
         # p.Entry implements m.Ldif.Entry.EntryProtocol (structural compatibility)
         # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
         # Structural typing: p.Entry implements m.Ldif.Entry
         # Convert to list explicitly for type safety
         # Use helper function for type-safe conversion
-        entries_protocol = _convert_entries_to_protocol(entries)
+        entries_protocol = FlextLdapSyncCallbacks.convert_entries_to_protocol(entries)
         batch_result = self.batch_upsert(
             entries_protocol,
             progress_callback=single_phase_callback,
@@ -901,10 +859,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             return None
 
         # Use type guards for type narrowing
-        if _is_multi_phase_callback(callback):
-            # Multi-phase callback - wrap to single-phase
-            # Type narrowing: callback is MultiPhaseProgressCallback after guard
-            multi_phase_cb = callback
+        if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
+            multi_phase_cb = cast(
+                m.Ldap.Types.MultiPhaseProgressCallback,
+                callback,
+            )
 
             def progress_cb(
                 current: int,
@@ -915,15 +874,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
 
-            # progress_cb matches LdapProgressCallback signature (4 params)
-            return progress_cb
+            return cast(m.Ldap.Types.LdapProgressCallback, progress_cb)
 
-        if _is_single_phase_callback(callback):
-            # Single-phase callback - use directly
-            # Type narrowing: callback is LdapProgressCallback (4 params)
-            return callback
+        if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
+            return cast(m.Ldap.Types.LdapProgressCallback, callback)
 
-        # Fallback: return None if callback signature doesn't match
         return None
 
     def _prepare_phase_callback(
@@ -954,13 +909,14 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         if phase_callback is None:
             return None
 
-        if _is_single_phase_callback(phase_callback):
-            return phase_callback
+        if FlextLdapSyncCallbacks.is_single_phase_callback(phase_callback):
+            return cast(m.Ldap.Types.LdapProgressCallback, phase_callback)
 
-        if _is_multi_phase_callback(phase_callback):
-            # Wrap multi-phase callback to single-phase
-            # Type narrowing: phase_callback is MultiPhaseProgressCallback after guard
-            multi_phase_cb = phase_callback
+        if FlextLdapSyncCallbacks.is_multi_phase_callback(phase_callback):
+            multi_phase_cb = cast(
+                m.Ldap.Types.MultiPhaseProgressCallback,
+                phase_callback,
+            )
 
             def wrapped_phase_cb(
                 current: int,
@@ -970,8 +926,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 
-            # wrapped_phase_cb matches LdapProgressCallback signature (4 params)
-            return wrapped_phase_cb
+            return cast(m.Ldap.Types.LdapProgressCallback, wrapped_phase_cb)
 
         return None
 
@@ -1090,19 +1045,19 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         phase_values = list(phase_results.values())
         totals = {
             "entries": sum(
-                _get_phase_result_value(phase_result, "total_entries", 0)
+                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "total_entries", 0)
                 for phase_result in phase_values
             ),
             "synced": sum(
-                _get_phase_result_value(phase_result, "synced", 0)
+                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "synced", 0)
                 for phase_result in phase_values
             ),
             "failed": sum(
-                _get_phase_result_value(phase_result, "failed", 0)
+                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "failed", 0)
                 for phase_result in phase_values
             ),
             "skipped": sum(
-                _get_phase_result_value(phase_result, "skipped", 0)
+                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "skipped", 0)
                 for phase_result in phase_values
             ),
         }

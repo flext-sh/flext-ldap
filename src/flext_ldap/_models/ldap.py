@@ -247,20 +247,21 @@ class FlextLdapModelsLdap:
             """Extract attributes dict from entry."""
             if entry is None:
                 return {}
+            attrs: object
             try:
-                attrs = entry.attributes
+                attrs = getattr(entry, "attributes", None)
             except AttributeError:
                 return {}
             if attrs is None:
                 return {}
-            if u.is_dict_like(attrs):
-                return dict(attrs)
+            if isinstance(attrs, Mapping):
+                return {k: list(v) for k, v in attrs.items()}
             try:
-                attrs_inner = attrs.attributes
+                attrs_inner = getattr(attrs, "attributes", None)
             except AttributeError:
                 return {}
-            if u.is_dict_like(attrs_inner):
-                return dict(attrs_inner)
+            if isinstance(attrs_inner, Mapping):
+                return {k: list(v) for k, v in attrs_inner.items()}
             return {}
 
         @staticmethod
@@ -268,41 +269,37 @@ class FlextLdapModelsLdap:
             attrs: Mapping[str, t.GeneralValueType],
         ) -> str:
             """Extract objectclass category from attributes."""
-            if not attrs or not u.is_dict_like(attrs):
+            if not attrs:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            if (u.is_list_like(oc_list) or u.Guards._is_tuple(oc_list)) and oc_list:
-                return str(oc_list[0]).lower()
-            return "unknown"
+            match oc_list:
+                case list() | tuple() if oc_list:
+                    return str(oc_list[0]).lower()
+                case _:
+                    return "unknown"
 
         @staticmethod
         def get_entry_category(entry: object) -> str:
             """Get category (objectclass) of an entry."""
-            # Extract attributes from entry
             attrs: dict[str, list[str]] = {}
             if entry is not None:
-                try:
-                    attrs_obj = entry.attributes
-                except AttributeError:
-                    attrs_obj = None
+                attrs_obj: object = getattr(entry, "attributes", None)
                 if attrs_obj is None:
                     attrs = {}
-                elif u.is_dict_like(attrs_obj):
-                    attrs = dict(attrs_obj)
+                elif isinstance(attrs_obj, Mapping):
+                    attrs = {k: list(v) for k, v in attrs_obj.items()}
                 else:
-                    try:
-                        attrs_inner = attrs_obj.attributes
-                    except AttributeError:
-                        attrs_inner = None
-                    if u.is_dict_like(attrs_inner):
-                        attrs = dict(attrs_inner)
-            # Extract objectclass category from attributes
-            if not attrs or not u.is_dict_like(attrs):
+                    attrs_inner: object = getattr(attrs_obj, "attributes", None)
+                    if isinstance(attrs_inner, Mapping):
+                        attrs = {k: list(v) for k, v in attrs_inner.items()}
+            if not attrs:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            if (u.is_list_like(oc_list) or u.Guards._is_tuple(oc_list)) and oc_list:
-                return str(oc_list[0]).lower()
-            return "unknown"
+            match oc_list:
+                case list() | tuple() if oc_list:
+                    return str(oc_list[0]).lower()
+                case _:
+                    return "unknown"
 
     class Types:
         """Type definitions for LDAP models."""

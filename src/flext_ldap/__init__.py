@@ -28,8 +28,8 @@ from flext_core import (
     FlextDecorators as d,
     FlextExceptions as e,
     FlextHandlers as h,
-    FlextMixins as x,
     r,
+    x,
 )
 
 from flext_ldap.api import FlextLdap

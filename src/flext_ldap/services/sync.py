@@ -33,7 +33,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import r, u
+from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -376,13 +376,9 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Use u.get() mnemonic: extract from kwargs with fallback
         # Python 3.13: Use structural pattern matching for type validation
         if operations is None:
-            operations_kwarg = u.mapper().get(kwargs, "operations")
+            operations_kwarg = kwargs.get("operations")
             if operations_kwarg is not None:
-                # Type narrowing: validate operations_kwarg is FlextLdapOperations
-                if not u.Guards.is_type(
-                    operations_kwarg,
-                    FlextLdapOperations,
-                ):
+                if not isinstance(operations_kwarg, FlextLdapOperations):
                     error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
                     raise TypeError(error_msg)
                 operations = operations_kwarg
@@ -467,9 +463,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Only accept m.Ldif.Entry instances (which properly implement protocol)
         # Other types must be validated and converted in service layer
         entries: list[m.Ldif.Entry] = [
-            entry
-            for entry in entries_raw
-            if u.Guards.is_type(entry, m.Ldif.Entry)
+            entry for entry in entries_raw if u.Guards.is_type(entry, m.Ldif.Entry)
         ]
         return self._process_entries(entries, options, start_time)
 

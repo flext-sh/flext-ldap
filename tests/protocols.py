@@ -20,9 +20,9 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     protocol definitions.
 
     Provides access to:
-    - tp.Tests.Docker.* (from FlextTestsProtocols)
-    - tp.Tests.Factory.* (from FlextTestsProtocols)
-    - tp.Ldap.* (from FlextLdapProtocols)
+    - p.Tests.Docker.* (from FlextTestsProtocols)
+    - p.Tests.Factory.* (from FlextTestsProtocols)
+    - p.Ldap.* (from FlextLdapProtocols)
 
     Rules:
     - NEVER redeclare protocols from parent classes
@@ -41,10 +41,9 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
 
 # Runtime aliases
 p = TestsFlextLdapProtocols
-tp = TestsFlextLdapProtocols
+p = TestsFlextLdapProtocols
 
 __all__ = [
     "TestsFlextLdapProtocols",
     "p",
-    "tp",
 ]

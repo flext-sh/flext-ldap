@@ -526,13 +526,9 @@ class FlextLdapProtocols(ldif_p):
                 ...
 
 
-# Direct access: use FlextLdapProtocols directly
 p = FlextLdapProtocols
 
 __all__ = [
     "FlextLdapProtocols",
     "p",
 ]
-
-# Short alias for namespace access
-fldap = FlextLdapProtocols

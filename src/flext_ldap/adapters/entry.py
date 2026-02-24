@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
+from typing import cast
 
 from flext_core import r
 from flext_ldif import FlextLdif
@@ -128,8 +129,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 Sequence of string values (empty if value is None/empty).
 
             """
-            # DSL pattern: builder for safe str_list conversion
-            return u.Ldap.to_str_list_safe(value)
+            return u.Ldap.to_str_list_safe(cast("t.GeneralValueType", value))
 
         @staticmethod
         def normalize_original_attr_value(
@@ -160,8 +160,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 Sequence of string values from original attribute.
 
             """
-            # DSL pattern: builder for safe str_list conversion
-            return u.Ldap.to_str_list_safe(value)
+            return u.Ldap.to_str_list_safe(cast("t.GeneralValueType", value))
 
     _ldif: FlextLdif = PrivateAttr()
     _server_type: str = PrivateAttr()
@@ -183,18 +182,18 @@ class FlextLdapEntryAdapter(s[bool]):
         # DSL pattern: ensure string type with None default
         # DSL pattern: builder for optional str conversion
         server_type: str | None = (
-            u.to_str(server_type_raw, default="")
-            if server_type_raw is not None
-            else None
+            str(server_type_raw) if server_type_raw is not None else None
         )
         # Remove server_type and _auto_result from kwargs before passing to parent
         # Filter to only valid service kwargs (str | float | bool | None)
         # Exclude special parameters like _auto_result which are handled by FlextService
         # Python 3.13: Extract and validate _auto_result with modern pattern
         auto_result_raw: object = kwargs.pop("_auto_result", None)
-        auto_result: bool | None = (
-            auto_result_raw if u.Guards._is_bool(auto_result_raw) else None
-        )
+        match auto_result_raw:
+            case bool() as auto_result_value:
+                auto_result: bool | None = auto_result_value
+            case _:
+                auto_result = None
         # Python 3.13: Filter kwargs with modern comprehension
         # Removed unused kwargs filtering - super().__init__() doesn't need config
         # Type narrowing: dict[str, str | float | bool | None]
@@ -383,21 +382,21 @@ class FlextLdapEntryAdapter(s[bool]):
         ) -> str | None:
             """Check if attribute values changed during conversion."""
             # Python 3.13: use runtime guards for sequence handling
-            original_values_list = (
-                [str(v) for v in original_values]
-                if u.is_list_like(original_values)
-                or u.Guards._is_tuple(original_values)
-                else u.Ldap.to_str_list_safe(original_values)
-            )
+            match original_values:
+                case list() | tuple():
+                    original_values_list = [str(v) for v in original_values]
+                case _:
+                    original_values_list = u.Ldap.to_str_list_safe(
+                        cast("t.GeneralValueType", original_values),
+                    )
             original_str = ", ".join(original_values_list)
             # Python 3.13: Extract and convert with modern pattern
             attr_values_raw = converted_attrs_dict.get(attr_name, [])
-            attr_values_list = (
-                [str(v) for v in attr_values_raw]
-                if u.is_list_like(attr_values_raw)
-                or u.Guards._is_tuple(attr_values_raw)
-                else ([str(attr_values_raw)] if attr_values_raw else [])
-            )
+            match attr_values_raw:
+                case list() | tuple():
+                    attr_values_list = [str(v) for v in attr_values_raw]
+                case _:
+                    attr_values_list = [str(attr_values_raw)] if attr_values_raw else []
             # Filter truthy values
             filtered_str_values = [v for v in attr_values_list if v]
             converted_str = ", ".join(filtered_str_values) or ""
@@ -480,16 +479,20 @@ class FlextLdapEntryAdapter(s[bool]):
                 try:
                     # ldap3 returns Sequence[object] - convert each item to str
                     str_values: list[str] = []
-                    if u.is_list_like(
-                        raw_value
-                    ) or u.Guards._is_tuple(raw_value):
-                        for item in raw_value:
-                            if u.Guards._is_bytes(item):
-                                str_values.append(
-                                    item.decode("utf-8", errors="replace"),
-                                )
-                            else:
-                                str_values.append(str(item))
+                    match raw_value:
+                        case list() | tuple():
+                            for item in raw_value:
+                                match item:
+                                    case bytes() as item_bytes:
+                                        str_values.append(
+                                            item_bytes.decode(
+                                                "utf-8", errors="replace"
+                                            ),
+                                        )
+                                    case _:
+                                        str_values.append(str(item))
+                        case _:
+                            pass
                     # Check for base64 encoding requirement
                     threshold = self._ConversionHelpers.ASCII_THRESHOLD
                     has_base64 = any(
@@ -536,7 +539,7 @@ class FlextLdapEntryAdapter(s[bool]):
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
             entry_dn_for_log = "unknown"
-            if u.Guards.is_type(ldap3_entry, p.Ldap.Ldap3EntryProtocol):
+            if isinstance(ldap3_entry, p.Ldap.Ldap3EntryProtocol):
                 entry_dn_for_log = (
                     str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
                 )
@@ -597,17 +600,22 @@ class FlextLdapEntryAdapter(s[bool]):
             # Convert to str keys and list values to ensure type compatibility
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
-                if u.is_list_like(v) or u.Guards._is_tuple(v):
-                    # Key is str according to type annotation
-                    key_str = str(k)
-                    filtered_attrs[key_str] = [str(item) for item in v]
+                match v:
+                    case list() | tuple():
+                        # Key is str according to type annotation
+                        key_str = str(k)
+                        filtered_attrs[key_str] = [str(item) for item in v]
+                    case _:
+                        pass
             return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above
-            # entry.dn can be str or DNProtocol (which has .value)
             dn_value = getattr(entry.dn, "value", entry.dn) if entry.dn else "unknown"
-            # DSL pattern: builder for str conversion
-            entry_dn_str = u.to_str(dn_value, default="unknown")
+            entry_dn_str = (
+                str(dn_value)
+                if dn_value is not None and dn_value != "unknown"
+                else "unknown"
+            )
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
                 operation=c.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
