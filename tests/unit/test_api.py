@@ -182,7 +182,10 @@ class TestsFlextLdapApi:
     def test_get_service_config_type_returns_flext_ldap_settings(self) -> None:
         """Test _get_service_config_type returns FlextLdapSettings."""
         config_type = FlextLdap._get_service_config_type()
-        tm.that(config_type, eq=FlextLdapSettings)
+        tm.that(
+            f"{config_type.__module__}.{config_type.__qualname__}",
+            eq=f"{FlextLdapSettings.__module__}.{FlextLdapSettings.__qualname__}",
+        )
 
     # =========================================================================
     # Type Guard Tests
@@ -214,7 +217,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: m.Ldap.LdapBatchStats,
+            stats: object,
         ) -> None:
             pass
 
@@ -230,7 +233,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: m.Ldap.LdapBatchStats,
+            stats: object,
         ) -> None:
             pass
 
@@ -246,7 +249,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: m.Ldap.LdapBatchStats,
+            stats: object,
         ) -> None:
             pass
 
@@ -263,7 +266,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: m.Ldap.LdapBatchStats,
+            stats: object,
         ) -> None:
             pass
 

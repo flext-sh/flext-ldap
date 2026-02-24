@@ -9,6 +9,7 @@ from collections.abc import Callable, Mapping
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from flext_ldif.models import FlextLdifModels
 
 from flext_ldap.typings import t
 
@@ -221,8 +222,8 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: list[t.GeneralValueType] = Field(default_factory=list)
-        search_options: object = None
+        entries: list[FlextLdifModels.Ldif.Entry] = Field(default_factory=list)
+        search_options: FlextLdapModelsLdap.SearchOptions | None = None
 
         @property
         def total_count(self) -> int:
@@ -230,9 +231,9 @@ class FlextLdapModelsLdap:
             return len(self.entries)
 
         @property
-        def by_objectclass(self) -> Mapping[str, list[t.GeneralValueType]]:
+        def by_objectclass(self) -> Mapping[str, list[FlextLdifModels.Ldif.Entry]]:
             """Group entries by objectclass."""
-            result: dict[str, list[t.GeneralValueType]] = {}
+            result: dict[str, list[FlextLdifModels.Ldif.Entry]] = {}
             for entry in self.entries:
                 category = self.get_entry_category(entry)
                 if category not in result:
@@ -242,27 +243,13 @@ class FlextLdapModelsLdap:
 
         @staticmethod
         def extract_attrs_dict_from_entry(
-            entry: object,
+            entry: FlextLdifModels.Ldif.Entry,
         ) -> Mapping[str, list[str]]:
             """Extract attributes dict from entry."""
-            if entry is None:
-                return {}
-            attrs: object
-            try:
-                attrs = getattr(entry, "attributes", None)
-            except AttributeError:
-                return {}
+            attrs = entry.attributes
             if attrs is None:
                 return {}
-            if isinstance(attrs, Mapping):
-                return {k: list(v) for k, v in attrs.items()}
-            try:
-                attrs_inner = getattr(attrs, "attributes", None)
-            except AttributeError:
-                return {}
-            if isinstance(attrs_inner, Mapping):
-                return {k: list(v) for k, v in attrs_inner.items()}
-            return {}
+            return {key: list(values) for key, values in attrs.attributes.items()}
 
         @staticmethod
         def extract_objectclass_category(
@@ -279,19 +266,11 @@ class FlextLdapModelsLdap:
                     return "unknown"
 
         @staticmethod
-        def get_entry_category(entry: object) -> str:
+        def get_entry_category(entry: FlextLdifModels.Ldif.Entry) -> str:
             """Get category (objectclass) of an entry."""
-            attrs: dict[str, list[str]] = {}
-            if entry is not None:
-                attrs_obj: object = getattr(entry, "attributes", None)
-                if attrs_obj is None:
-                    attrs = {}
-                elif isinstance(attrs_obj, Mapping):
-                    attrs = {k: list(v) for k, v in attrs_obj.items()}
-                else:
-                    attrs_inner: object = getattr(attrs_obj, "attributes", None)
-                    if isinstance(attrs_inner, Mapping):
-                        attrs = {k: list(v) for k, v in attrs_inner.items()}
+            attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
+                entry
+            )
             if not attrs:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))

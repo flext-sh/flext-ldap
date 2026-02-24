@@ -31,8 +31,8 @@ from flext_tests import tm
 
 from tests import u
 
-# FlexibleValue is a type alias in FlextTypes
-FlexibleValue = t.FlexibleValue
+# FlexibleValue is a type alias - use GeneralScalarValue from core
+FlexibleValue = t.GeneralScalarValue
 
 pytestmark = pytest.mark.unit
 

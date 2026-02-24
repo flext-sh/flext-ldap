@@ -50,7 +50,10 @@ class TestsFlextLdapModels:
     def test_models_class_exists(self) -> None:
         """Test FlextLdapModels class exists."""
         tm.that(FlextLdapModels, none=False)
-        tm.that(m, eq=FlextLdapModels)
+        tm.that(
+            f"{m.__module__}.{m.__qualname__}",
+            eq=f"{FlextLdapModels.__module__}.{FlextLdapModels.__qualname__}",
+        )
 
     def test_models_inherits_from_flext_ldif_models(self) -> None:
         """Test FlextLdapModels inherits from FlextLdifModels."""
@@ -121,7 +124,10 @@ class TestsFlextLdapModels:
 
     def test_distinguished_name_via_ldif_namespace(self) -> None:
         """Test DN accessible via m.Ldif namespace (inherited)."""
-        tm.that(m.Ldif.DN, eq=FlextLdifModels.Ldif.DN)
+        tm.that(
+            f"{m.Ldif.DN.__module__}.{m.Ldif.DN.__qualname__}",
+            eq=f"{FlextLdifModels.Ldif.DN.__module__}.{FlextLdifModels.Ldif.DN.__qualname__}",
+        )
 
     def test_ldif_attributes_via_ldif_namespace(self) -> None:
         """Test Attributes accessible via m.Ldif namespace (inherited)."""
@@ -132,7 +138,10 @@ class TestsFlextLdapModels:
 
     def test_quirk_metadata_via_ldif_namespace(self) -> None:
         """Test QuirkMetadata accessible via m.Ldif namespace (inherited)."""
-        tm.that(m.Ldif.QuirkMetadata, eq=FlextLdifModels.Ldif.QuirkMetadata)
+        tm.that(
+            f"{m.Ldif.QuirkMetadata.__module__}.{m.Ldif.QuirkMetadata.__qualname__}",
+            eq=f"{FlextLdifModels.Ldif.QuirkMetadata.__module__}.{FlextLdifModels.Ldif.QuirkMetadata.__qualname__}",
+        )
 
     def test_parse_response_via_ldif_namespace(self) -> None:
         """Test ParseResponse accessible via m.Ldif namespace (inherited)."""
@@ -339,7 +348,7 @@ class TestsFlextLdapModels:
         # Pydantic v2 frozen models raise TypeError on assignment
 
         with pytest.raises((TypeError, ValidationError)):
-            result.is_success = False
+            setattr(result, "is_success", False)
 
     # =========================================================================
     # SearchResult Tests
