@@ -69,8 +69,6 @@ HasAttributesProperty = p.Ldap.HasAttributesProperty
 # ═══════════════════════════════════════════════════════════════════
 # Type-Safe Wrappers for Untyped ldap3 Methods
 # ═══════════════════════════════════════════════════════════════════
-# These wrappers provide type safety for untyped ldap3 library methods.
-# Each wrapper ensures the untyped ldap3 call returns the expected type.
 
 
 class FlextLdapLdap3Wrappers:
@@ -186,6 +184,11 @@ class Ldap3Adapter(s[bool]):
 
     # Service requires mutable state for connection management
     model_config = ConfigDict(frozen=False)
+
+    @staticmethod
+    def _is_bound(connection: Connection) -> bool:
+        """Check if ldap3 connection is bound."""
+        return bool(getattr(connection, "bound", False))
 
     class ConnectionManager:
         """Connection management logic (SRP)."""
@@ -1388,7 +1391,7 @@ class Ldap3Adapter(s[bool]):
         """Check if adapter has an active connection."""
         if self._connection is None:
             return False
-        return _ldap3_is_bound(self._connection)
+        return Ldap3Adapter._is_bound(self._connection)
 
     def _get_connection(self) -> r[Connection]:
         """Get connection with fast fail if not available."""

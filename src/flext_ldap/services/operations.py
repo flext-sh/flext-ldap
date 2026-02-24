@@ -54,14 +54,6 @@ LDAP3_MODIFY_DELETE: Final[int] = 1
 LDAP3_MODIFY_REPLACE: Final[int] = 2
 
 
-def _get_structlog_logger() -> p.Log.StructlogLogger | None:
-    """Return structlog logger when runtime logger satisfies the protocol."""
-    logger = FlextRuntime.get_logger(__name__)
-    if isinstance(logger, p.Log.StructlogLogger):
-        return cast("p.Log.StructlogLogger", logger)
-    return None
-
-
 class FlextLdapOperations(s[m.Ldap.SearchResult]):
     """Coordinate LDAP operations on an active connection.
 
@@ -104,6 +96,14 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         extra="allow",
         arbitrary_types_allowed=True,
     )
+
+    @staticmethod
+    def _get_structlog_logger() -> p.Log.StructlogLogger | None:
+        """Return structlog logger when runtime logger satisfies the protocol."""
+        logger = FlextRuntime.get_logger(__name__)
+        if isinstance(logger, p.Log.StructlogLogger):
+            return cast("p.Log.StructlogLogger", logger)
+        return None
 
     _connection: FlextLdapConnection
 
@@ -1290,7 +1290,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             stats["failed"] += 1
             entry_dn_sliced = entry_dn[:100] if entry_dn else None
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
-            logger = _get_structlog_logger()
+            logger = FlextLdapOperations._get_structlog_logger()
             if logger is not None:
                 logger.error(
                     "Batch upsert entry failed",
@@ -1325,7 +1325,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
             callback(entry_index, total, entry_dn or "", callback_stats)
         except (RuntimeError, TypeError, ValueError) as e:
-            logger = _get_structlog_logger()
+            logger = FlextLdapOperations._get_structlog_logger()
             if logger is not None:
                 logger.warning(
                     "Progress callback failed",
@@ -1429,7 +1429,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         entry_idx = idx_entry[0]
                     case _:
                         entry_idx = None
-                logger = _get_structlog_logger()
+                logger = FlextLdapOperations._get_structlog_logger()
                 if logger is not None:
                     logger.debug(
                         "Failed to process entry in batch, skipping",
@@ -1459,7 +1459,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             skipped=stats_builder["skipped"],
         )
 
-        logger = _get_structlog_logger()
+        logger = FlextLdapOperations._get_structlog_logger()
         if logger is not None:
             logger.info(
                 "Batch upsert completed",
