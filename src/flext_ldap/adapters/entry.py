@@ -423,7 +423,15 @@ class FlextLdapEntryAdapter(s[bool]):
                 changed = check_attr_changed(attr_name, original_values)
                 if changed is not None:
                     result_dict[attr_name] = changed
-            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+                OSError,
+                RuntimeError,
+                ImportError,
+            ) as e:
                 logger.debug(
                     "Failed to check attribute change for %s, skipping",
                     attr_name,
@@ -515,7 +523,15 @@ class FlextLdapEntryAdapter(s[bool]):
                     if has_base64:
                         base64_attrs.append(key)
                     ldif_attrs[key] = str_values
-                except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    OSError,
+                    RuntimeError,
+                    ImportError,
+                ) as e:
                     logger.debug(
                         "Failed to convert attribute %s, skipping",
                         key,

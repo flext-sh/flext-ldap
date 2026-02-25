@@ -225,7 +225,15 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                 try:
                     # idx_entry is tuple[int, m.Ldif.Entry] from enumerate (guaranteed by Python)
                     _ = process_entry(idx_entry)
-                except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError):
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    OSError,
+                    RuntimeError,
+                    ImportError,
+                ):
                     # enumerate always returns tuple[int, T], so idx_entry[0] is always valid
                     logger.debug(
                         "Failed to process entry in sync batch, skipping (entry_index=%s)",
@@ -438,7 +446,15 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Read file content and parse
         try:
             ldif_content = ldif_file.read_text(encoding="utf-8")
-        except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
+        except (
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+            OSError,
+            RuntimeError,
+            ImportError,
+        ) as e:
             return r[m.Ldap.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
 
         parse_result = self._ldif.parse(ldif_content)
