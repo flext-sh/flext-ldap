@@ -16,12 +16,12 @@ from flext_core import (
     x,
 )
 
-from tests.base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
-from tests.constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
-from tests.models import TestsFlextLdapModels, TestsFlextLdapModels as m
-from tests.protocols import TestsFlextLdapProtocols, p
-from tests.typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t, tt
-from tests.utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
+from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
+from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
+from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
+from .protocols import TestsFlextLdapProtocols, p
+from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t, tt
+from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
 __all__ = [
     "TestsFlextLdapConstants",

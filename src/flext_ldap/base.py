@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from typing import override
 
 from flext_core import FlextService
 from flext_core.protocols import p
@@ -42,7 +41,6 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
     """
 
     @classmethod
-    @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services.
 

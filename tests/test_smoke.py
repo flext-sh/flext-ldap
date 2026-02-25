@@ -20,7 +20,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from enum import StrEnum
 
 import pytest
@@ -112,13 +111,18 @@ class TestsFlextLdapSmoke:
         @staticmethod
         def assert_connection_bound(connection: Connection) -> None:
             """Assert that LDAP connection is bound."""
-            assert connection.bound, "LDAP server not responding to bind"
+            bound = getattr(connection, "bound", False)
+            assert bound, "LDAP server not responding to bind"
 
         @staticmethod
         def assert_server_info_available(connection: Connection) -> None:
             """Assert that LDAP server info is available."""
-            assert connection.server.info is not None, "LDAP server info not available"
-            assert connection.server.info.naming_contexts is not None, (
+            server = getattr(connection, "server", None)
+            assert server is not None, "LDAP connection has no server"
+            info = getattr(server, "info", None)
+            assert info is not None, "LDAP server info not available"
+            naming_contexts = getattr(info, "naming_contexts", None)
+            assert naming_contexts is not None, (
                 "LDAP naming contexts not available"
             )
 
@@ -164,9 +168,8 @@ class TestsFlextLdapSmoke:
         # Verify REAL server info is available (schema loaded)
         TestsFlextLdapSmoke.Assertions.assert_server_info_available(connection)
 
-        # REAL unbind (typed wrapper for mypy strict)
-        unbind_func: Callable[[], None] = connection.unbind
-        unbind_func()
+        # REAL unbind (ldap3 Connection.unbind returns bool)
+        connection.unbind()
 
     def test_flext_ldap_api_imports(self) -> None:
         """SMOKE TEST: FlextLdap API imports without errors (REGRA 5: REAL code).

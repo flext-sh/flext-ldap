@@ -564,13 +564,9 @@ class Ldap3Adapter(s[bool]):
             if isinstance(attrs, BaseModel):
                 dumped = attrs.model_dump()
                 attrs_value_raw = dumped.get("attributes", {})
-                attrs_value: dict[str, t.GeneralValueType] | None = (
-                    attrs_value_raw if u.is_dict_like(attrs_value_raw) else None
-                )
-                # Type narrowing: ensure dict before passing
-                if u.is_dict_like(attrs_value):
+                if isinstance(attrs_value_raw, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
-                        attrs_value,
+                        attrs_value_raw,
                     )
                 return {}
 

@@ -127,7 +127,7 @@ def _ldap3_add(
     # Runtime behavior is correct, Callable provides type information for mypy
     # Similar pattern to delete_func and unbind_func in this file
     add_method: Callable[
-        [str, str | list[str] | None, dict[str, list[str]] | None],
+        [str, str | list[str] | None, dict[str, object] | None],
         bool,
     ] = conn.add
     # Call method with proper typing - Callable ensures type safety
@@ -141,9 +141,8 @@ def _ldap3_delete(conn: Connection, dn: str) -> bool:
 
 
 def _ldap3_unbind(conn: Connection) -> None:
-    """Typed wrapper for Connection.unbind."""
-    unbind_func: Callable[[], None] = conn.unbind
-    unbind_func()
+    """Typed wrapper for Connection.unbind (ldap3 returns bool; we ignore return)."""
+    conn.unbind()
 
 
 def _get_docker_control(worker_id: str = "master") -> FlextTestsDocker:
@@ -452,9 +451,9 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         return
 
     # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
-    # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
+    worker_input_val = getattr(session.config, "workerinput", None)
     worker_input: dict[str, t.GeneralValueType] = (
-        session.config.workerinput if hasattr(session.config, "workerinput") else {}
+        worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = str(worker_input.get("workerid", "master"))
 
@@ -613,11 +612,9 @@ def pytest_runtest_makereport(
 
     if is_infrastructure_failure and not is_transient:
         # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
-        # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
+        worker_input_val = getattr(item.session.config, "workerinput", None)
         worker_input: dict[str, t.GeneralValueType] = (
-            item.session.config.workerinput
-            if hasattr(item.session.config, "workerinput")
-            else {}
+            worker_input_val if isinstance(worker_input_val, dict) else {}
         )
         worker_id = str(worker_input.get("workerid", "master"))
 
@@ -650,9 +647,10 @@ def worker_id(request: pytest.FixtureRequest) -> str:
             - "gw0", "gw1", ...: parallel workers from pytest-xdist
 
     """
-    # Python 3.13: Use hasattr + direct access for dynamic pytest attributes
+    # pytest-xdist adds workerinput dynamically to config
+    worker_input_val = getattr(request.config, "workerinput", None)
     worker_input: dict[str, t.GeneralValueType] = (
-        request.config.workerinput if hasattr(request.config, "workerinput") else {}
+        worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = worker_input.get("workerid", "master")
     # Type narrowing: worker_id is str from get() with default
@@ -1369,9 +1367,8 @@ def ldap3_connection(
         auto_bind=True,
     )
     yield connection
-    if connection.bound:
-        unbind_func: Callable[[], None] = connection.unbind
-        unbind_func()
+    if getattr(connection, "bound", False):
+        connection.unbind()
 
 
 @pytest.fixture
