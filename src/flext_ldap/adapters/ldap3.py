@@ -301,7 +301,7 @@ class Ldap3Adapter(s[bool]):
                 if not FlextLdapLdap3Wrappers.start_tls(connection):
                     return r[bool].fail("Failed to start TLS")
                 return r[bool].ok(value=True)
-            except Exception as tls_error:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as tls_error:
                 error_msg = f"Failed to start TLS: {tls_error}"
                 return r[bool].fail(error_msg)
 
@@ -888,7 +888,7 @@ class Ldap3Adapter(s[bool]):
                     )
 
                 return self._extract_error_result(connection, "Add failed")
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                 error_msg = f"Add failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
@@ -939,7 +939,7 @@ class Ldap3Adapter(s[bool]):
                     )
 
                 return self._extract_error_result(connection, "Modify failed")
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                 error_msg = f"Modify failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
@@ -988,7 +988,7 @@ class Ldap3Adapter(s[bool]):
                     )
 
                 return self._extract_error_result(connection, "Delete failed")
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                 error_msg = f"Delete failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
@@ -1236,7 +1236,7 @@ class Ldap3Adapter(s[bool]):
                 return self._adapter.ResultConverter.convert_parsed_entries(
                     parse_response,
                 )
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                 return r[list[LdifEntry]].fail(f"Search failed: {e!s}")
 
     _connection: Connection | None
@@ -1323,7 +1323,7 @@ class Ldap3Adapter(s[bool]):
                 return r[bool].fail("Failed to bind to LDAP server")
 
             return r[bool].ok(value=True)
-        except Exception as e:
+        except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
             return r[bool].fail(f"Connection failed: {e!s}")
 
     def disconnect(self) -> None:
@@ -1349,7 +1349,7 @@ class Ldap3Adapter(s[bool]):
         if self._connection is not None:
             try:
                 self._unbind_connection()
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                 self.logger.debug("Error during disconnect", error=str(e))
             finally:
                 self._connection = None

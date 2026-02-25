@@ -720,7 +720,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         try:
             ldif_content = ldif_file_path.read_text(encoding="utf-8")
-        except Exception as e:
+        except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
             return r.fail(f"Failed to read LDIF file: {e!s}")
 
         parse_result = self._ldif.parse(ldif_content)

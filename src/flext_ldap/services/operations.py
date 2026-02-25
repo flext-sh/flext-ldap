@@ -399,7 +399,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     result = process_attr(attr_name, new_vals)
                     if result[1] is not None:
                         processed_dict[result[0]] = result[1]
-                except Exception as e:
+                except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                     logger.debug(
                         "Failed to process attribute %s, skipping",
                         attr_name,
@@ -500,7 +500,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 try:
                     normalized = normalize_attr(k, v)
                     existing_attrs_transformed[k] = normalized
-                except Exception as e:
+                except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                     logger.debug(
                         "Failed to normalize existing attribute %s, skipping",
                         k,
@@ -514,7 +514,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 try:
                     normalized = normalize_attr(k, v)
                     new_attrs[k] = normalized
-                except Exception as e:
+                except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                     logger.debug(
                         "Failed to normalize new attribute %s, skipping",
                         k,
@@ -1387,7 +1387,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         entry_dn,
                         stats_builder,
                     )
-            except Exception:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError):
                 match idx_entry:
                     case tuple():
                         entry_idx = idx_entry[0]

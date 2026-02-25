@@ -442,7 +442,7 @@ class FlextLdapServerDetector(s[str]):
                 if check_func(ext_str, context_str):
                     found = server_name
                     break
-            except Exception:
+            except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError):
                 logging.getLogger(__name__).debug(
                     "Server type check failed: %s",
                     server_name,

@@ -406,7 +406,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     result = callable_func(*args, **kwargs)
                     if result:
                         return key
-                except Exception as e:
+                except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError, ImportError) as e:
                     # Log exception for debugging but continue searching
                     # This is expected behavior when testing multiple callables
                     logger = logging.getLogger(__name__)
