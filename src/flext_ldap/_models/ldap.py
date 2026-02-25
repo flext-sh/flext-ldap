@@ -260,8 +260,8 @@ class FlextLdapModelsLdap:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             match oc_list:
-                case list() | tuple() if oc_list:
-                    return str(oc_list[0]).lower()
+                case list() as oc_values if oc_values:
+                    return str(oc_values[0]).lower()
                 case _:
                     return "unknown"
 
@@ -275,8 +275,8 @@ class FlextLdapModelsLdap:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             match oc_list:
-                case list() | tuple() if oc_list:
-                    return str(oc_list[0]).lower()
+                case list() as oc_values if oc_values:
+                    return str(oc_values[0]).lower()
                 case _:
                     return "unknown"
 

@@ -43,7 +43,6 @@ from flext_ldif import (
 )
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Server
-from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -82,7 +81,7 @@ class FlextLdapLdap3Wrappers:
         attributes: Mapping[str, list[str]],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add()."""
-        result = connection.add(dn, object_class, attributes)
+        result = connection.add(dn, object_class, dict(attributes))
         match result:
             case bool() as bool_result:
                 return bool_result
@@ -302,7 +301,7 @@ class Ldap3Adapter(s[bool]):
                 if not FlextLdapLdap3Wrappers.start_tls(connection):
                     return r[bool].fail("Failed to start TLS")
                 return r[bool].ok(value=True)
-            except LDAPException as tls_error:
+            except Exception as tls_error:
                 error_msg = f"Failed to start TLS: {tls_error}"
                 return r[bool].fail(error_msg)
 
@@ -343,19 +342,22 @@ class Ldap3Adapter(s[bool]):
             # Process entries efficiently
             results: list[tuple[str, Mapping[str, list[str]]]] = []
             for entry in connection.entries:
+                if not isinstance(entry, p.Ldap.Ldap3EntryProtocol):
+                    dn = str(entry) if entry else ""
+                    results.append((dn, {}))
+                    continue
                 # Type narrowing: entry is ldap3.Entry with dynamic attributes
                 # Use Protocol for type-safe attribute access
                 try:
                     dn_raw = entry.entry_dn
                 except AttributeError:
                     dn = str(entry) if entry else ""
-                    empty_attrs: Mapping[str, list[str]] = {}
-                    results.append((dn, empty_attrs))
+                    results.append((dn, {}))
                     continue
                 dn = str(dn_raw) if dn_raw is not None else ""
 
                 # Process attributes
-                entry_attrs = entry.entry_attributes
+                entry_attrs = list(entry.entry_attributes_as_dict.keys())
                 attrs_dict = Ldap3Adapter.ResultConverter.process_entry_attributes(
                     entry,
                     entry_attrs,
@@ -553,14 +555,7 @@ class Ldap3Adapter(s[bool]):
 
             if isinstance(attrs, BaseModel):
                 dumped = attrs.model_dump()
-                attrs_value_raw = (
-                    dumped.get("attributes", {})
-                    if isinstance(
-                        dumped,
-                        Mapping,
-                    )
-                    else {}
-                )
+                attrs_value_raw = dumped.get("attributes", {})
                 attrs_value: dict[str, t.GeneralValueType] | None = (
                     attrs_value_raw if u.is_dict_like(attrs_value_raw) else None
                 )
@@ -838,6 +833,7 @@ class Ldap3Adapter(s[bool]):
 
         def __init__(self, adapter: Ldap3Adapter) -> None:
             """Initialize with adapter instance."""
+            super().__init__()
             self._adapter = adapter
 
         def execute_add(
@@ -892,7 +888,7 @@ class Ldap3Adapter(s[bool]):
                     )
 
                 return self._extract_error_result(connection, "Add failed")
-            except LDAPException as e:
+            except Exception as e:
                 error_msg = f"Add failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
@@ -943,7 +939,7 @@ class Ldap3Adapter(s[bool]):
                     )
 
                 return self._extract_error_result(connection, "Modify failed")
-            except LDAPException as e:
+            except Exception as e:
                 error_msg = f"Modify failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
@@ -992,7 +988,7 @@ class Ldap3Adapter(s[bool]):
                     )
 
                 return self._extract_error_result(connection, "Delete failed")
-            except LDAPException as e:
+            except Exception as e:
                 error_msg = f"Delete failed: {e!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
@@ -1091,13 +1087,12 @@ class Ldap3Adapter(s[bool]):
             """
             error_msg = f"{prefix}: LDAP operation returned failure status"
             result_dict = connection.result
-            if isinstance(result_dict, Mapping):
-                description = result_dict.get("description")
-                match description:
-                    case str() as description_str:
-                        error_msg = f"{prefix}: {description_str}"
-                    case _:
-                        pass
+            description = result_dict.get("description")
+            match description:
+                case str() as description_str:
+                    error_msg = f"{prefix}: {description_str}"
+                case _:
+                    pass
             return r[m.Ldap.OperationResult].fail(error_msg)
 
     class SearchExecutor:
@@ -1132,6 +1127,7 @@ class Ldap3Adapter(s[bool]):
                     Must have active connection for execute() to succeed.
 
             """
+            super().__init__()
             self._adapter = adapter
 
         def execute(
@@ -1183,22 +1179,10 @@ class Ldap3Adapter(s[bool]):
                 )
 
                 conn_result = connection.result
-                result_code = (
-                    conn_result.get("result", -1)
-                    if isinstance(conn_result, Mapping)
-                    else getattr(conn_result, "result", -1)
-                )
+                result_code = conn_result.get("result", -1)
                 if result_code not in c.Ldap.LdapResultCodes.PARTIAL_SUCCESS_CODES:
-                    error_msg = (
-                        conn_result.get("message", "LDAP search failed")
-                        if isinstance(conn_result, Mapping)
-                        else getattr(conn_result, "message", "LDAP search failed")
-                    )
-                    error_desc = (
-                        conn_result.get("description", "unknown")
-                        if isinstance(conn_result, Mapping)
-                        else getattr(conn_result, "description", "unknown")
-                    )
+                    error_msg = conn_result.get("message", "LDAP search failed")
+                    error_desc = conn_result.get("description", "unknown")
                     return r[list[LdifEntry]].fail(
                         f"LDAP search failed: {error_desc} - {error_msg}",
                     )
@@ -1252,7 +1236,7 @@ class Ldap3Adapter(s[bool]):
                 return self._adapter.ResultConverter.convert_parsed_entries(
                     parse_response,
                 )
-            except LDAPException as e:
+            except Exception as e:
                 return r[list[LdifEntry]].fail(f"Search failed: {e!s}")
 
     _connection: Connection | None
@@ -1335,13 +1319,11 @@ class Ldap3Adapter(s[bool]):
                 return tls_result
 
             # Check bound state - connection is guaranteed to be non-None after create_connection
-            if self._connection is None or not FlextLdapLdap3Wrappers.is_bound(
-                self._connection
-            ):
+            if not FlextLdapLdap3Wrappers.is_bound(self._connection):
                 return r[bool].fail("Failed to bind to LDAP server")
 
             return r[bool].ok(value=True)
-        except LDAPException as e:
+        except Exception as e:
             return r[bool].fail(f"Connection failed: {e!s}")
 
     def disconnect(self) -> None:
@@ -1367,7 +1349,7 @@ class Ldap3Adapter(s[bool]):
         if self._connection is not None:
             try:
                 self._unbind_connection()
-            except (LDAPException, OSError) as e:
+            except Exception as e:
                 self.logger.debug("Error during disconnect", error=str(e))
             finally:
                 self._connection = None

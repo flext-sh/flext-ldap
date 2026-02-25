@@ -41,7 +41,6 @@ from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
-from flext_ldap.utilities import u
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -410,11 +409,7 @@ class FlextLdapEntryAdapter(s[bool]):
             original_str = ", ".join(original_values_list)
             # Python 3.13: Extract and convert with modern pattern
             attr_values_raw = converted_attrs_dict.get(attr_name, [])
-            match attr_values_raw:
-                case list() | tuple():
-                    attr_values_list = [str(v) for v in attr_values_raw]
-                case _:
-                    attr_values_list = [str(attr_values_raw)] if attr_values_raw else []
+            attr_values_list = [str(v) for v in attr_values_raw]
             # Filter truthy values
             filtered_str_values = [v for v in attr_values_list if v]
             converted_str = ", ".join(filtered_str_values) or ""
@@ -556,11 +551,9 @@ class FlextLdapEntryAdapter(s[bool]):
             )
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
-            entry_dn_for_log = "unknown"
-            if isinstance(ldap3_entry, p.Ldap.Ldap3EntryProtocol):
-                entry_dn_for_log = (
-                    str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
-                )
+            entry_dn_for_log = (
+                str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
+            )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
@@ -618,13 +611,8 @@ class FlextLdapEntryAdapter(s[bool]):
             # Convert to str keys and list values to ensure type compatibility
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
-                match v:
-                    case list() | tuple():
-                        # Key is str according to type annotation
-                        key_str = str(k)
-                        filtered_attrs[key_str] = [str(item) for item in v]
-                    case _:
-                        pass
+                key_str = str(k)
+                filtered_attrs[key_str] = [str(item) for item in v]
             return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above

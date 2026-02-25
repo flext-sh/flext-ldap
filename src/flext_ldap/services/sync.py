@@ -224,7 +224,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             for idx_entry in enumerate(entries, 1):
                 try:
                     # idx_entry is tuple[int, m.Ldif.Entry] from enumerate (guaranteed by Python)
-                    process_entry(idx_entry)
+                    _ = process_entry(idx_entry)
                 except Exception:
                     # enumerate always returns tuple[int, T], so idx_entry[0] is always valid
                     logger.debug(
@@ -316,10 +316,6 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             # Transform entries - create new Entry with transformed DN
             def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
                 """Transform entry DN if source_basedn matches."""
-                # Type guard: only transform m.Ldif.Entry instances
-                if not isinstance(entry, m.Ldif.Entry):
-                    return entry
-
                 if entry.dn is None:
                     return entry
                 dn_str = u.Ldif.DN.get_dn_value(entry.dn)
@@ -464,9 +460,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         # Type narrowing: entries_raw is list[FlextLdifModels.Entry], filter for m.Ldif.Entry
         # Only accept m.Ldif.Entry instances (which properly implement protocol)
         # Other types must be validated and converted in service layer
-        entries: list[m.Ldif.Entry] = [
-            entry for entry in entries_raw if isinstance(entry, m.Ldif.Entry)
-        ]
+        entries: list[m.Ldif.Entry] = list(entries_raw)
         return self._process_entries(entries, options, start_time)
 
     def _process_entries(

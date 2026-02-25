@@ -19,15 +19,14 @@ from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.typings import t
 
-
 type _StrictJsonValue = (
     str
     | int
     | float
     | bool
-    | None
     | list[_StrictJsonValue]
     | Mapping[str, _StrictJsonValue]
+    | None
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -83,20 +82,21 @@ class FlextLdapUtilities(FlextLdifUtilities):
         # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
-        def _to_json_value(
+        def to_json_value(
             value: object | None,
         ) -> _StrictJsonValue:
+            """Normalize values into strict JSON-safe primitives/collections."""
             match value:
                 case None | str() | int() | float() | bool():
                     return value
                 case Mapping() as mapping_value:
                     return {
-                        str(key): FlextLdapUtilities.Ldap._to_json_value(item)
+                        str(key): FlextLdapUtilities.Ldap.to_json_value(item)
                         for key, item in mapping_value.items()
                     }
                 case list() | tuple() as sequence_value:
                     return [
-                        FlextLdapUtilities.Ldap._to_json_value(item)
+                        FlextLdapUtilities.Ldap.to_json_value(item)
                         for item in sequence_value
                     ]
                 case _:
@@ -119,7 +119,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if value is None:
                 return default
             return FlextLdifUtilities.to_str(
-                FlextLdapUtilities.Ldap._to_json_value(value),
+                FlextLdapUtilities.Ldap.to_json_value(value),
                 default=default,
             )
 
@@ -142,7 +142,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap._to_json_value(value),
+                FlextLdapUtilities.Ldap.to_json_value(value),
                 default=default,
             )
 
@@ -169,7 +169,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if value is None:
                 return default or []
             str_list = FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap._to_json_value(value),
+                FlextLdapUtilities.Ldap.to_json_value(value),
                 default=default,
             )
             # Filter truthy values - LDAP-specific behavior
@@ -192,7 +192,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if value is None:
                 return []
             return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap._to_json_value(value),
+                FlextLdapUtilities.Ldap.to_json_value(value),
                 default=[],
             )
 

@@ -39,6 +39,7 @@ from ldap3 import BASE, Connection
 
 from flext_ldap.base import s
 from flext_ldap.constants import c
+from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
@@ -200,13 +201,15 @@ class FlextLdapServerDetector(s[str]):
             return r[Mapping[str, list[str]]].fail("rootDSE query returned no entries")
 
         root_dse_entry = connection.entries[0]
+        if not isinstance(root_dse_entry, p.Ldap.Ldap3EntryProtocol):
+            return r[t.Ldap.Operation.AttributeDict].fail(
+                "rootDSE query returned invalid entry payload"
+            )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
 
         # Python 3.13: Filter None and convert to list[str] in one comprehension
         attributes: dict[str, list[str]] = {
-            k: [str(item) for item in v] if isinstance(v, list) else [str(v)]
-            for k, v in attrs_dict.items()
-            if v is not None
+            k: [str(item) for item in v] for k, v in attrs_dict.items()
         }
 
         return r[Mapping[str, list[str]]].ok(attributes)
@@ -218,14 +221,10 @@ class FlextLdapServerDetector(s[str]):
         Python 3.13: Use modern pattern matching for concise extraction.
         """
         values_raw = attrs.get(key)
-        if not values_raw:
+        if values_raw is None:
             return None
         # Python 3.13: Use isinstance for type narrowing (list vs scalar)
-        values = (
-            [str(item) for item in values_raw]
-            if isinstance(values_raw, list)
-            else [str(values_raw)]
-        )
+        values = [str(item) for item in values_raw]
         return values[0] if values else None
 
     @staticmethod
@@ -323,11 +322,10 @@ class FlextLdapServerDetector(s[str]):
             return vendor_result
 
         # Fallback to extension/context-based detection
-        extension_result = cls._detect_from_extensions(
+        return cls._detect_from_extensions(
             supported_extensions,
             naming_contexts,
         )
-        return extension_result
 
     @staticmethod
     def _detect_from_vendor(

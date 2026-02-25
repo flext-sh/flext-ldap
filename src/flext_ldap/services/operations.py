@@ -32,9 +32,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Final, cast
+from typing import Final
 
-from flext_core import FlextResult, FlextRuntime, FlextSettings, r
+from flext_core import FlextRuntime, FlextSettings, r
 from flext_core.protocols import p
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
@@ -102,7 +102,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """Return structlog logger when runtime logger satisfies the protocol."""
         logger = FlextRuntime.get_logger(__name__)
         if isinstance(logger, p.Log.StructlogLogger):
-            return cast("p.Log.StructlogLogger", logger)
+            return logger
         return None
 
     _connection: FlextLdapConnection
@@ -220,16 +220,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs = entry.attributes
             if attrs is None:
                 return {}
-            if isinstance(attrs, m.Ldif.Attributes):
-                attrs_dict = attrs.attributes
-                return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                    attrs_dict,
-                )
-            if u.is_dict_like(attrs):
-                return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                    dict(attrs),
-                )
-            return {}
+            attrs_dict = attrs.attributes
+            return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
+                attrs_dict,
+            )
 
         @staticmethod
         def extract_attributes(
@@ -314,7 +308,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 values = existing_attrs.get(key)
                 # existing_attrs is Mapping[str, Sequence[str]], so values is Sequence[str] | None
                 if values is not None:
-                    return [str(item) for item in values if item is not None]
+                    return [str(item) for item in values]
             return None
 
         @staticmethod
@@ -381,7 +375,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     existing_set = set()
                 # Convert new_vals to truthy list[str]
                 new_set = FlextLdapOperations.EntryComparison.normalize_value_set(
-                    [x for x in new_vals if x] if isinstance(new_vals, list) else [],
+                    [x for x in new_vals if x],
                 )
                 if existing_set != new_set:
                     # Convert new_vals to truthy list[str]
@@ -619,6 +613,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     Must have active connection for execute() to succeed.
 
             """
+            super().__init__()
             self._ops = operations
 
         def _extract_schema_add_operation(
@@ -635,7 +630,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             add_op_result = attrs.get(c.Ldap.ChangeTypeOperations.ADD, [])
-            add_op_raw = add_op_result if isinstance(add_op_result, list) else []
+            add_op_raw = add_op_result
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[str].fail("Schema modify entry missing 'add' attribute")
@@ -657,9 +652,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             attr_values_result = attrs.get(attr_type, [])
-            attr_values_raw = (
-                attr_values_result if isinstance(attr_values_result, list) else []
-            )
+            attr_values_raw = attr_values_result
             attr_values = [str(item) for item in attr_values_raw]
             filtered = [x for x in attr_values if x]
             if not filtered:
@@ -693,9 +686,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 c.Ldap.LdapAttributeNames.CHANGETYPE,
                 [],
             )
-            changetype_raw = (
-                changetype_result if isinstance(changetype_result, list) else []
-            )
+            changetype_raw = changetype_result
             changetype_val: list[str] = [str(item) for item in changetype_raw]
             # Use u.normalize for consistent case handling
             changetype = (
@@ -733,7 +724,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             entry_model = self._convert_to_model(entry)
             attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
             add_op_result = attrs.get(c.Ldap.ChangeTypeOperations.ADD, [])
-            add_op_raw = add_op_result if isinstance(add_op_result, list) else []
+            add_op_raw = add_op_result
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -742,9 +733,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             attr_type = add_op[0]
             attr_values_result = attrs.get(attr_type, [])
-            attr_values_raw = (
-                attr_values_result if isinstance(attr_values_result, list) else []
-            )
+            attr_values_raw = attr_values_result
             attr_values = [str(item) for item in attr_values_raw]
             filtered = [x for x in attr_values if x]
 
@@ -855,15 +844,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             # Extract DN from EntryProtocol
-            match entry.dn:
-                case str() as dn_str:
-                    entry_dn = dn_str
-                case m.Ldif.DN() as dn_model:
-                    entry_dn = str(dn_model.value)
-                case None:
-                    entry_dn = "unknown"
-                case _:
-                    entry_dn = str(entry.dn)
+            entry_dn = str(entry.dn.value) if entry.dn is not None else "unknown"
             search_options = m.Ldap.SearchOptions(
                 base_dn=entry_dn,
                 filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,
@@ -1023,9 +1004,6 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return r[m.Ldap.SearchResult].fail(
                 u.to_str(result.error, default="Unknown error"),
             )
-        # Type narrowing: value is guaranteed after is_failure check
-        if result.value is None:
-            return r[m.Ldap.SearchResult].fail("Search result is None")
         return r[m.Ldap.SearchResult].ok(result.value)
 
     def add(
@@ -1067,9 +1045,6 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return r[m.Ldap.OperationResult].fail(
                 u.to_str(result.error, default="Unknown error"),
             )
-        # Type narrowing: value is guaranteed after is_failure check
-        if result.value is None:
-            return r[m.Ldap.OperationResult].fail("Add result is None")
         return r[m.Ldap.OperationResult].ok(result.value)
 
     def modify(
@@ -1119,9 +1094,6 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return r[m.Ldap.OperationResult].fail(
                 u.to_str(result.error, default="Unknown error"),
             )
-        # Type narrowing: value is guaranteed after is_failure check
-        if result.value is None:
-            return r[m.Ldap.OperationResult].fail("Modify result is None")
         return r[m.Ldap.OperationResult].ok(result.value)
 
     def delete(
@@ -1169,9 +1141,6 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return r[m.Ldap.OperationResult].fail(
                 u.to_str(result.error, default="Unknown error"),
             )
-        # Type narrowing: value is guaranteed after is_failure check
-        if result.value is None:
-            return r[m.Ldap.OperationResult].fail("Delete result is None")
         return r[m.Ldap.OperationResult].ok(result.value)
 
     @property
@@ -1257,16 +1226,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         def wrapped_execute() -> r[m.Ldap.LdapOperationResult]:
             return self._upsert_handler.execute(entry)
 
-        retry_result: r[m.Ldap.LdapOperationResult] | m.Ldap.LdapOperationResult = (
-            u.Reliability.retry(
-                operation=wrapped_execute,
-                max_attempts=max_retries,
-                delay_seconds=1.0,
-            )
+        return u.Reliability.retry(
+            operation=wrapped_execute,
+            max_attempts=max_retries,
+            delay_seconds=1.0,
         )
-        if isinstance(retry_result, FlextResult):
-            return retry_result
-        return r[m.Ldap.LdapOperationResult].ok(retry_result)
 
     def _update_batch_stats(
         self,
