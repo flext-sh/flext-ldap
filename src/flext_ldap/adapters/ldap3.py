@@ -31,7 +31,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Final, Literal, TypeAlias
 
@@ -43,7 +42,7 @@ from flext_ldif import (
 )
 from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Server
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.base import s
@@ -447,13 +446,11 @@ class Ldap3Adapter(s[bool]):
             # Direct access for LdifEntry (isinstance for type narrowing)
             if isinstance(parsed, LdifEntry):
                 if parsed.dn is not None:
-                    return m.Ldif.DN.model_validate(
-                        {
-                            "value": parsed.dn.value,
-                            "metadata": parsed.dn.metadata,
-                        },
+                    return m.Ldif.DN(
+                        value=parsed.dn.value,
+                        metadata=parsed.dn.metadata,
                     )
-                return m.Ldif.DN.model_validate({"value": ""})
+                return m.Ldif.DN(value="")
 
             # Protocol-based entry - extract DN through structural typing.
             dn_raw: t.GeneralValueType | None = None
@@ -464,18 +461,18 @@ class Ldap3Adapter(s[bool]):
                     parsed, "dn"
                 )
             if dn_raw is None:
-                return m.Ldif.DN.model_validate({"value": ""})
+                return m.Ldif.DN(value="")
 
             # Already DN instance (isinstance for type narrowing)
             if isinstance(dn_raw, m.Ldif.DN):
                 return dn_raw
             if isinstance(dn_raw, p.Ldap.DNProtocol):
-                return m.Ldif.DN.model_validate({"value": dn_raw.value or ""})
+                return m.Ldif.DN(value=dn_raw.value or "")
 
             # Convert to string first, then use DN utility
             dn_str_val = str(dn_raw)
             dn_value: str = FlextLdifUtilities.Ldif.DN.get_dn_value(dn_str_val)
-            return m.Ldif.DN.model_validate({"value": dn_value})
+            return m.Ldif.DN(value=dn_value)
 
         @staticmethod
         def normalize_attr_values(
@@ -594,14 +591,14 @@ class Ldap3Adapter(s[bool]):
 
             # Handle None case
             if attrs_raw is None:
-                return m.Ldif.Attributes.model_validate({"attributes": {}})
+                return m.Ldif.Attributes(attributes={})
 
             if isinstance(attrs_raw, m.Ldif.Attributes):
                 return attrs_raw
 
             # Extract attributes dict (extract_attrs_dict accepts GeneralValueType)
             attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
-            return m.Ldif.Attributes.model_validate({"attributes": attrs_dict})
+            return m.Ldif.Attributes(attributes=attrs_dict)
 
         @staticmethod
         def extract_metadata(
@@ -802,11 +799,11 @@ class Ldap3Adapter(s[bool]):
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
                     entry_for_extraction,
                 )
-                entry = LdifEntry.model_validate({
-                    "dn": dn_obj,
-                    "attributes": attrs_obj,
-                    "metadata": metadata_obj,
-                })
+                entry = LdifEntry(
+                    dn=dn_obj,
+                    attributes=attrs_obj,
+                    metadata=metadata_obj,
+                )
                 entries.append(entry)
                 continue
 
@@ -1106,16 +1103,23 @@ class Ldap3Adapter(s[bool]):
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
 
-        @dataclass(frozen=True)
-        class SearchParams:
+        class SearchParams(BaseModel):
             """Search parameters grouped together to reduce method arguments."""
 
-            base_dn: str
-            filter_str: str
-            ldap_scope: int
-            search_attributes: list[str]
-            size_limit: int
-            time_limit: int
+            model_config = ConfigDict(frozen=True, extra="forbid")
+
+            base_dn: str = Field(..., description="Base DN for search")
+            filter_str: str = Field(..., description="LDAP filter string")
+            ldap_scope: int = Field(..., description="LDAP search scope")
+            search_attributes: list[str] = Field(
+                default_factory=list, description="Attributes to retrieve"
+            )
+            size_limit: int = Field(
+                default=0, ge=0, description="Maximum number of results"
+            )
+            time_limit: int = Field(
+                default=0, ge=0, description="Search timeout in seconds"
+            )
 
         def __init__(self, adapter: Ldap3Adapter) -> None:
             """Initialize search executor with adapter instance.

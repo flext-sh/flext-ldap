@@ -551,19 +551,19 @@ class FlextLdapEntryAdapter(s[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            ldf_attrs_obj = m.Ldif.Attributes.model_validate({
-                "attributes": ldif_attrs,
-            })
+            ldf_attrs_obj = m.Ldif.Attributes(
+                attributes=ldif_attrs,
+            )
             metadata_obj = m.Ldif.QuirkMetadata.model_validate({
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
             return r[m.Ldif.Entry].ok(
-                m.Ldif.Entry.model_validate({
-                    "dn": m.Ldif.DN.model_validate({"value": dn_str}),
-                    "attributes": ldf_attrs_obj,
-                    "metadata": metadata_obj,
-                }),
+                m.Ldif.Entry(
+                    dn=m.Ldif.DN(value=dn_str),
+                    attributes=ldf_attrs_obj,
+                    metadata=metadata_obj,
+                ),
             )
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access

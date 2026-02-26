@@ -335,11 +335,11 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                         dn_str,
                         flags=re.IGNORECASE,
                     )
-                    # Create new Entry with new DN - Entry validates DN automatically
-                    return m.Ldif.Entry.model_validate({
-                        "dn": m.Ldif.DN(value=new_dn_value),
-                        "attributes": entry.attributes,
-                    })
+                     # Create new Entry with new DN - Entry validates DN automatically
+                     return m.Ldif.Entry(
+                         dn=m.Ldif.DN(value=new_dn_value),
+                         attributes=entry.attributes,
+                     )
                 return entry
 
             # Result contains m.Ldif.Entry instances which implement m.Ldif.Entry

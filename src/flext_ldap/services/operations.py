@@ -614,10 +614,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 str(k): [str(item) for item in v]
                 for k, v in dict(attrs_mapping).items()
             }
-            return m.Ldif.Entry.model_validate({
-                "dn": m.Ldif.DN(value=dn_value),
-                "attributes": m.Ldif.Attributes(attributes=attrs_dict),
-            })
+             return m.Ldif.Entry(
+                 dn=m.Ldif.DN(value=dn_value),
+                 attributes=m.Ldif.Attributes(attributes=attrs_dict),
+             )
 
         def __init__(self, operations: FlextLdapOperations) -> None:
             """Initialize upsert handler with operations service.
