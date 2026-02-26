@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Final
+from typing import Final, override
 
 from flext_core import FlextRuntime, FlextSettings, r
 from flext_core.protocols import p
@@ -614,10 +614,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 str(k): [str(item) for item in v]
                 for k, v in dict(attrs_mapping).items()
             }
-             return m.Ldif.Entry(
-                 dn=m.Ldif.DN(value=dn_value),
-                 attributes=m.Ldif.Attributes(attributes=attrs_dict),
-             )
+            return m.Ldif.Entry(
+                dn=m.Ldif.DN(value=dn_value),
+                attributes=m.Ldif.Attributes(attributes=attrs_dict),
+            )
 
         def __init__(self, operations: FlextLdapOperations) -> None:
             """Initialize upsert handler with operations service.
@@ -1069,7 +1069,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return r[m.Ldap.OperationResult].fail(
                 u.to_str(result.error, default="Unknown error"),
             )
-        return r[m.Ldap.OperationResult].ok(result.value)
+        return r[m.Ldap.OperationResult].ok(result)
 
     def modify(
         self,
@@ -1481,6 +1481,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         return r[m.Ldap.LdapBatchStats].ok(stats)
 
+    @override
     def execute(self) -> r[m.Ldap.SearchResult]:
         """Report readiness; fails when the connection is not bound.
 

@@ -24,8 +24,6 @@ from enum import StrEnum
 
 import pytest
 from flext_core import r
-from ldap3 import Connection, Server
-
 from flext_ldap import (
     FlextLdap,
     FlextLdapConnection,
@@ -33,6 +31,7 @@ from flext_ldap import (
     FlextLdapSettings,
     m,
 )
+from ldap3 import Connection, Server
 
 from .typings import LdapContainerDict
 
@@ -122,9 +121,7 @@ class TestsFlextLdapSmoke:
             info = getattr(server, "info", None)
             assert info is not None, "LDAP server info not available"
             naming_contexts = getattr(info, "naming_contexts", None)
-            assert naming_contexts is not None, (
-                "LDAP naming contexts not available"
-            )
+            assert naming_contexts is not None, "LDAP naming contexts not available"
 
         @staticmethod
         def assert_api_instantiated(api: FlextLdap | None) -> None:

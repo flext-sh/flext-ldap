@@ -40,8 +40,8 @@ classifiers = [
 dependencies = [
   "beartype>=0.19",
   "cryptography>=45.0.5",
-  "flext-core @ ../flext-core",
-  "flext-ldif @ ../flext-ldif",
+  "flext-core  @ file:../flext-core",
+  "flext-ldif  @ file:../flext-ldif",
   "ldap3>=2.9",
   "pydantic>=2.12.3",
   "pydantic-core>=2.41.4",
@@ -133,15 +133,44 @@ markers = [
   "resilience: resilience tests",
 ]
 
+# [MANAGED] pyright
 [tool.pyright]
 extraPaths = ["../flext-core/src", "../flext-ldif/src"]
 reportMissingModuleSource = false
 reportMissingImports = true
 pythonVersion = "3.13"
 
+# [MANAGED] mypy
 [tool.mypy]
 python_version = "3.13"
 mypy_path = "../flext-core/src:../flext-ldif/src"
 follow_imports = "normal"
 ignore_missing_imports = false
 
+# [CUSTOM] poetry dev extensions
+# [MANAGED] pyrefly
+[tool.pyrefly]
+python-version = "3.13"
+ignore-errors-in-generated-code = true
+search-path = [
+    ".",
+]
+project-excludes = [
+    "**/_pb2.py",
+    "**/_pb2_grpc.py",
+]
+
+[tool.pyrefly.errors]
+deprecated = true
+redundant-cast = true
+implicit-abstract-class = true
+implicit-any = true
+implicitly-defined-attribute = true
+missing-override-decorator = true
+missing-source = true
+not-required-key-access = true
+open-unpacking = true
+protocol-implicitly-defined-attribute = true
+unannotated-attribute = true
+unannotated-parameter = true
+unannotated-return = true

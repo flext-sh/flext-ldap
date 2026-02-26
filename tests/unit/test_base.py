@@ -23,7 +23,6 @@ from typing import override
 
 import pytest
 from flext_core import FlextService, FlextSettings, r
-
 from flext_ldap import base
 from flext_ldap.base import FlextLdapServiceBase, s
 
@@ -175,9 +174,7 @@ class TestsFlextLdapBase:
         # Config provides equivalent values (may be cloned instance)
         assert config.app_name == global_config.app_name
         assert config.version == global_config.version
-        assert getattr(config, "debug", False) == getattr(
-            global_config, "debug", False
-        )
+        assert getattr(config, "debug", False) == getattr(global_config, "debug", False)
 
     # =========================================================================
     # Logger Access Tests

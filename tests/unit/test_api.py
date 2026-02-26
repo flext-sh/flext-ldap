@@ -19,14 +19,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
-from flext_ldif import FlextLdif
-from flext_tests import tm
-
 from flext_ldap import FlextLdap, FlextLdapSettings, m
 from flext_ldap.api import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
@@ -36,6 +32,8 @@ from flext_ldap.api import (
 )
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldif import FlextLdif
+from flext_tests import tm
 
 from .. import c
 
