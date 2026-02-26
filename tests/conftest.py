@@ -501,6 +501,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             else:
                 logger.info("Container %s created", LDAP_CONTAINER_NAME)
 
+    container_name = LDAP_CONTAINER_NAME
     # Warm up LDAP bind before test timeouts are active.
     port_ready_result = docker_control.wait_for_port_ready(
         "localhost",
@@ -538,13 +539,13 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         if ldap_ready:
             logger.info(
                 "Container %s bind-ready after %.1fs in session start",
-                LDAP_CONTAINER_NAME,
+                container_name,
                 waited,
             )
         else:
             logger.warning(
                 "Container %s port is open but LDAP bind is not ready yet",
-                LDAP_CONTAINER_NAME,
+                container_name,
             )
 
 

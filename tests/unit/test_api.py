@@ -183,10 +183,7 @@ class TestsFlextLdapApi:
     def test_get_service_config_type_returns_flext_ldap_settings(self) -> None:
         """Test _get_service_config_type returns FlextLdapSettings."""
         config_type = FlextLdap._get_service_config_type()
-        tm.that(
-            f"{config_type.__module__}.{config_type.__qualname__}",
-            eq=f"{FlextLdapSettings.__module__}.{FlextLdapSettings.__qualname__}",
-        )
+        assert config_type is FlextLdapSettings
 
     # =========================================================================
     # Type Guard Tests

@@ -157,3 +157,5 @@ mypy_path = "../flext-core/src:../flext-ldif/src"
 follow_imports = "normal"
 ignore_missing_imports = false
 
+[tool.pyrefly]
+search_path = ["."]

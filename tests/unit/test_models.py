@@ -210,13 +210,15 @@ class TestsFlextLdapModels:
 
     def test_connection_config_port_constraint_violation_min(self) -> None:
         """Test port constraint violation (below minimum)."""
+        invalid_port: int = 0
         with pytest.raises(ValidationError):
-            m.Ldap.ConnectionConfig(port=0)
+            m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_port_constraint_violation_max(self) -> None:
         """Test port constraint violation (above maximum)."""
+        invalid_port: int = 65536
         with pytest.raises(ValidationError):
-            m.Ldap.ConnectionConfig(port=65536)
+            m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_inherits_from_collections_config(self) -> None:
         """Test ConnectionConfig is a valid config model.
@@ -456,8 +458,9 @@ class TestsFlextLdapModels:
 
     def test_sync_options_batch_size_constraint(self) -> None:
         """Test SyncOptions batch_size must be >= 1."""
+        invalid_batch: int = 0
         with pytest.raises(ValidationError):
-            m.Ldap.SyncOptions(batch_size=0)
+            m.Ldap.SyncOptions(batch_size=invalid_batch)
 
     # =========================================================================
     # SyncStats Tests
