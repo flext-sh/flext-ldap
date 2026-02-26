@@ -148,7 +148,9 @@ class FlextLdapLdap3Wrappers:
             search_base=search_base,
             search_filter=search_filter,
             search_scope=normalized_scope,
-            attributes=list(attributes) if not isinstance(attributes, str) else attributes,
+            attributes=list(attributes)
+            if not isinstance(attributes, str)
+            else attributes,
             size_limit=size_limit,
             time_limit=time_limit,
         )
