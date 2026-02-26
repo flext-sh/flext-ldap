@@ -523,7 +523,7 @@ python maintenance/maintain.py --comprehensive
 1. **Monitor resources**: Track memory and CPU usage
 1. **Scale appropriately**: Adjust worker counts for your environment
 
----
+______________________________________________________________________
 
 **Documentation Maintenance System User Guide**
 _Automated Quality Assurance for Technical Documentation_

@@ -126,7 +126,7 @@ This guide covers development setup, coding standards, and contribution guidelin
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+______________________________________________________________________
 
 ## Development Environment Setup
 
@@ -168,7 +168,7 @@ poetry install --with dev,test,docs
 python -c "from flext_ldap import get_flext_ldap_api; print('✅ Development setup complete')"
 ```
 
----
+______________________________________________________________________
 
 ## Development Workflow
 
@@ -211,7 +211,7 @@ PYTHONPATH=src mypy src/flext_ldap --strict
 PYTHONPATH=src pyright src/flext_ldap --level error
 ```
 
----
+______________________________________________________________________
 
 ## Testing Strategy
 
@@ -267,7 +267,7 @@ open htmlcov/index.html
 pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|services\.py|adapters\.py"
 ```
 
----
+______________________________________________________________________
 
 ## Architecture Guidelines
 
@@ -377,7 +377,7 @@ class DN:
         return bool(self.value and "=" in self.value and "," in self.value)
 ```
 
----
+______________________________________________________________________
 
 ## Code Quality Standards
 
@@ -437,7 +437,7 @@ from flext_ldap.entities import FlextLdapUser
 from flext_ldap.value_objects import DN
 ```
 
----
+______________________________________________________________________
 
 ## Testing Guidelines
 
@@ -643,7 +643,7 @@ def authenticated_user():
     api.delete_user("cn=auth.test,ou=users,dc=flext,dc=local")
 ```
 
----
+______________________________________________________________________
 
 ## Documentation Standards
 
@@ -709,7 +709,7 @@ All public APIs require comprehensive documentation including:
 - Complete working examples
 - Integration with Clean Architecture layers
 
----
+______________________________________________________________________
 
 ## Performance Guidelines
 
@@ -756,7 +756,7 @@ results = gather(*[
 ])
 ```
 
----
+______________________________________________________________________
 
 ## Contribution Guidelines
 
@@ -785,6 +785,7 @@ results = gather(*[
    ```
 
 1. **Submit Pull Request**
+
    - Clear description of changes
    - Reference related issues
    - Include test coverage
@@ -801,7 +802,7 @@ results = gather(*[
 - [ ] Parameter objects used for complex operations
 - [ ] Integration tests pass with Docker LDAP server
 
----
+______________________________________________________________________
 
 For more development resources:
 
@@ -809,6 +810,6 @@ For more development resources:
 - API Reference - Complete API documentation
 - Examples - Working code examples
 
----
+______________________________________________________________________
 
 **Next:** Integration Guide →

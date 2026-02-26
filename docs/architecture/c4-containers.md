@@ -66,7 +66,7 @@ providing LDAP operations through a unified interface while supporting multiple 
 
 [Related documentation links would go here]
 
----
+______________________________________________________________________
 
 **C4 Model - Level 2: Container Architecture**
 _Technology choices and high-level system structure_

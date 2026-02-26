@@ -664,6 +664,7 @@ monitor_cpu()
 ### Self-Service Resources
 
 1. **Check Documentation**
+
    - API Reference
    - Configuration Guide
    - Development Guide
@@ -689,16 +690,19 @@ monitor_cpu()
 ### Community Support
 
 1. **GitHub Issues**
+
    - [Create Issue](https://github.com/flext-sh/flext/issues)
    - Search existing issues
    - Check closed issues for solutions
 
 1. **GitHub Discussions**
+
    - [Ask Question](https://github.com/flext-sh/flext/discussions)
    - Share solutions
    - Discuss best practices
 
 1. **Email Support**
+
    - <dev@flext.com> for technical issues
    - <support@flext.com> for general questions
 

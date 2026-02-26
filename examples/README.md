@@ -129,7 +129,7 @@ python examples/01_basic_operations.py
 - User entry created, read, updated, and deleted
 - Connection closed gracefully
 
----
+______________________________________________________________________
 
 ### 02. Search Operations (`02_search_operations.py`)
 
@@ -165,7 +165,7 @@ python examples/02_search_operations.py
 - Different scope demonstrations
 - Attribute filtering examples
 
----
+______________________________________________________________________
 
 ### 03. Authentication Operations (`03_authentication.py`)
 
@@ -196,7 +196,7 @@ python examples/03_authentication.py
 - Complete authentication workflow (authenticate → search → validate)
 - Security testing (injection attempts handled)
 
----
+______________________________________________________________________
 
 ### 04. LDIF Operations (`04_ldif_operations.py`)
 
@@ -228,7 +228,7 @@ python examples/04_ldif_operations.py
 - LDIF export with file creation
 - Round-trip demonstration
 
----
+______________________________________________________________________
 
 ### 05. Universal Operations (`05_universal_operations.py`)
 
@@ -263,7 +263,7 @@ python examples/05_universal_operations.py
 - Entry format conversion between server types
 - Server detection from entry attributes
 
----
+______________________________________________________________________
 
 ### 06. Validation Patterns (`06_validation_patterns.py`)
 
@@ -297,7 +297,7 @@ python examples/06_validation_patterns.py
 
 **Note**: No LDAP connection required for most validations
 
----
+______________________________________________________________________
 
 ### 07. Advanced Patterns (`07_advanced_patterns.py`)
 
@@ -332,7 +332,7 @@ python examples/07_advanced_patterns.py
 - Exception handling demonstrations
 - Performance optimization results
 
----
+______________________________________________________________________
 
 ### 08. ACL Operations (`08_acl_operations.py`)
 
@@ -364,7 +364,7 @@ python examples/08_acl_operations.py
 - Server detection for ACL format selection
 - Complete migration workflow example
 
----
+______________________________________________________________________
 
 ### 09. Schema Operations (`09_schema_operations.py`)
 
@@ -396,7 +396,7 @@ python examples/09_schema_operations.py
 - Schema search operations
 - Server capabilities comprehensive report
 
----
+______________________________________________________________________
 
 ### 10. Connection Management (`10_connection_management.py`)
 
@@ -430,7 +430,7 @@ python examples/10_connection_management.py
 - Retry pattern with backoff
 - Multiple connection management
 
----
+______________________________________________________________________
 
 ### 11. Repository Patterns (`11_repository_patterns.py`)
 
@@ -461,7 +461,7 @@ python examples/11_repository_patterns.py
 - Clean Architecture layer separation
 - Testing benefits explanation
 
----
+______________________________________________________________________
 
 ### 12. Services (`12_domain_services.py`)
 
@@ -494,7 +494,7 @@ python examples/12_domain_services.py
 - Domain service operations
 - Specification Pattern benefits
 
----
+______________________________________________________________________
 
 ## 🧪 Comprehensive Validation Examples
 
@@ -528,7 +528,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 - 200 computer accounts
 - 150 additional containers
 
----
+______________________________________________________________________
 
 ### Validation Helpers (`validation_helpers.py`)
 
@@ -546,7 +546,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 
 **Usage:** Imported by comprehensive validation examples
 
----
+______________________________________________________________________
 
 ### 99. Comprehensive OpenLDAP Validation (`99_comprehensive_openldap_validation.py`)
 
@@ -555,6 +555,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 **Validates 4 Critical Requirements:**
 
 1. **API Usability** - All connection and operation modes work
+
    - Direct method calls
    - Context manager pattern
    - Parameter object pattern
@@ -562,12 +563,14 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
    - Batch operations
 
 1. **Complete Parameterization** - All parameter variations supported
+
    - SearchRequest with all fields
    - Config-based parameters
    - Method parameter overrides
    - Default values from constants
 
 1. **Universal Schema Support** - Works with multiple schemas
+
    - Standard LDAP schemas (person, group, ou)
    - Extended schemas (inetOrgPerson, groupOfNames)
    - Service and computer schemas
@@ -575,6 +578,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
    - Multi-valued attributes
 
 1. **Server Information Accuracy** - Correct server detection
+
    - Server type detection
    - Server capabilities
    - Supported operations
@@ -620,7 +624,7 @@ python examples/99_comprehensive_openldap_validation.py
 - All 4 requirements pass
 - > 90% overall success rate
 
----
+______________________________________________________________________
 
 ### 99. Comprehensive OUD Validation (`99_comprehensive_oud_validation.py`)
 
@@ -677,7 +681,7 @@ python examples/99_comprehensive_oud_validation.py
 - > 90% overall success rate
 - OUD-specific features validated
 
----
+______________________________________________________________________
 
 ### Validation Best Practices
 
@@ -703,7 +707,7 @@ python examples/99_comprehensive_oud_validation.py
 1. **Low Success Rate**: May indicate breaking changes or server issues
 1. **Timeout Errors**: Increase time limits for large datasets
 
----
+______________________________________________________________________
 
 ## 🎯 Module Coverage Matrix
 

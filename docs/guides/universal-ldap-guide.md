@@ -564,7 +564,7 @@ To add support for additional LDAP servers:
 
 See `src/flext_ldap/servers/ad_operations.py` for stub template.
 
----
+______________________________________________________________________
 
 **Copyright (c) 2025 FLEXT Team. All rights reserved.**
 **SPDX-License-Identifier: MIT**

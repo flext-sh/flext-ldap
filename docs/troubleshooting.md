@@ -74,7 +74,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
----
+______________________________________________________________________
 
 ## Connection Issues
 
@@ -156,7 +156,7 @@ config = FlextLdapSettings(
 )
 ```
 
----
+______________________________________________________________________
 
 ## Authentication Issues
 
@@ -246,7 +246,7 @@ for test_dn in test_dns:
     print(f"{test_dn}: {'✅' if result else '❌'}")
 ```
 
----
+______________________________________________________________________
 
 ## Search and Query Issues
 
@@ -343,7 +343,7 @@ def diagnose_base_dn():
 run(diagnose_base_dn())
 ```
 
----
+______________________________________________________________________
 
 ## Performance Issues
 
@@ -502,7 +502,7 @@ class LDAPService:
         return results
 ```
 
----
+______________________________________________________________________
 
 ## Configuration Issues
 
@@ -580,7 +580,7 @@ services:
     # Ensure data persists between restarts
 ```
 
----
+______________________________________________________________________
 
 ## Development and Testing Issues
 
@@ -641,7 +641,7 @@ docker rm flext-ldap-test-server
 make ldap-test-server
 ```
 
----
+______________________________________________________________________
 
 ## Error Message Reference
 
@@ -689,7 +689,7 @@ def handle_errors_properly():
 run(handle_errors_properly())
 ```
 
----
+______________________________________________________________________
 
 ## Debugging Tools and Techniques
 
@@ -780,7 +780,7 @@ def run_profiling():
 run_profiling()
 ```
 
----
+______________________________________________________________________
 
 ## Getting Help
 
@@ -789,22 +789,26 @@ run_profiling()
 When reporting issues, include:
 
 1. **Environment details:**
+
    - Python version
    - flext-ldap version
    - Operating system
    - LDAP server type and version
 
 1. **Configuration:**
+
    - Sanitized configuration (no passwords)
    - Environment variables
    - Network setup (Docker, Kubernetes, etc.)
 
 1. **Error details:**
+
    - Complete error messages
    - Stack traces
    - Relevant log output
 
 1. **Reproduction steps:**
+
    - Minimal code example
    - Steps to reproduce
    - Expected vs actual behavior
@@ -847,7 +851,7 @@ def collect_diagnostic_info():
 collect_diagnostic_info()
 ```
 
----
+______________________________________________________________________
 
 For additional support and community resources:
 
@@ -855,6 +859,6 @@ For additional support and community resources:
 - [FLEXT Documentation](https://docs.flext.dev) - Framework documentation
 - Examples - Working code examples
 
----
+______________________________________________________________________
 
 **Previous:** Integration Guide ←

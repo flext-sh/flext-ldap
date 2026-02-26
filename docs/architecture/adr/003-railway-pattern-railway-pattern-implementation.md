@@ -83,7 +83,7 @@
 
 - [Links to related ADRs and documentation]
 
----
+______________________________________________________________________
 
 **ADR 003-railway-pattern: Railway Pattern Implementation**
 _Accepted on 2025-10-10_

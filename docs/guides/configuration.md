@@ -413,16 +413,19 @@ class FlextLdifSettings(BaseModel):
 ### Common Configuration Issues
 
 1. **Environment Variables Not Loading**
+
    - Ensure variables are prefixed with `FLEXT_`
    - Check for typos in variable names
    - Verify environment is set before running application
 
 1. **Configuration File Not Found**
+
    - Check file path is correct
    - Ensure file has proper permissions
    - Verify file format (YAML, JSON, or TOML)
 
 1. **Validation Errors**
+
    - Check Pydantic model field types
    - Verify required fields are provided
    - Review field validators for constraints

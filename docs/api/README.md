@@ -42,23 +42,28 @@ result = api.search_entries(search_request)
 ### Core Modules
 
 1. **FlextLdapModels** - Domain models and entities
+
    - SearchRequest, Connection, Entry models
    - Domain logic and validations
 
 1. **FlextLdapClients** - LDAP client operations
+
    - Authentication - Bind operations
    - Search - Search operations
 
 1. **FlextLdapAcl** - ACL management
+
    - Manager - ACL operations
    - Parsers - ACL parsing
    - Converters - Format conversion
 
 1. **FlextLdapSchema** - Schema operations
+
    - Discover - Schema discovery
    - Sync - Schema synchronization
 
 1. **FlextLdapEntryAdapter** - Entry conversion
+
    - ldap3 → flext-ldif
    - flext-ldif → ldap3
 
@@ -159,7 +164,7 @@ if result.is_failure:
 - Development - Contributing guidelines
 - Migration Guide - v0.9.0 → v0.10.0
 
----
+______________________________________________________________________
 
 **Last Updated**: 2025-01-24
 **API Version**: v0.10.0
