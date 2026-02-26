@@ -75,16 +75,16 @@ class TestsFlextLdap3Adapter:
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         tm.that(server, none=False)
-        tm.that(server.host, eq="localhost")
-        tm.that(server.port, eq=636)
+        tm.that(getattr(server, "host", ""), eq="localhost")
+        tm.that(getattr(server, "port", 0), eq=636)
 
     def test_connection_manager_create_server_without_ssl(self) -> None:
         """Test ConnectionManager.create_server without SSL."""
         config = self._create_connection_config()
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         tm.that(server, none=False)
-        tm.that(server.host, eq="localhost")
-        tm.that(server.port, eq=389)
+        tm.that(getattr(server, "host", ""), eq="localhost")
+        tm.that(getattr(server, "port", 0), eq=389)
 
     def test_connection_manager_create_server_with_tls(self) -> None:
         """Test ConnectionManager.create_server with TLS."""
@@ -97,8 +97,8 @@ class TestsFlextLdap3Adapter:
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         tm.that(server, none=False)
-        tm.that(server.host, eq="localhost")
-        tm.that(server.port, eq=389)
+        tm.that(getattr(server, "host", ""), eq="localhost")
+        tm.that(getattr(server, "port", 0), eq=389)
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""

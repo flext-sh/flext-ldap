@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
-from flext_core import r
+from flext_core import r, t
 from flext_ldif import p as ldif_p
 
 
@@ -92,7 +92,6 @@ class FlextLdapProtocols(ldif_p):
             dn: str | FlextLdapProtocols.Ldap.DNProtocol | None
             attributes: (
                 Mapping[str, Sequence[str]]
-                | dict[str, list[str]]
                 | FlextLdapProtocols.Ldap.AttributesProtocol
                 | None
             )
@@ -151,7 +150,7 @@ class FlextLdapProtocols(ldif_p):
                 error: str | None
                 """Error message if parsing failed."""
 
-                value: object
+                value: t.GeneralValueType
                 """Parsed value or result object."""
 
         @runtime_checkable
@@ -272,7 +271,7 @@ class FlextLdapProtocols(ldif_p):
             def modify(
                 self,
                 dn: str | FlextLdapProtocols.Ldap.DNProtocol,
-                changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
+                changes: Mapping[str, Sequence[tuple[str | int, Sequence[str]]]],
             ) -> r[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Modify LDAP entry.
 
@@ -339,7 +338,9 @@ class FlextLdapProtocols(ldif_p):
             """
 
             # Type aliases for adapter operations
-            type LdapModifyChanges = Mapping[str, Sequence[tuple[str, Sequence[str]]]]
+            type LdapModifyChanges = Mapping[
+                str, Sequence[tuple[str | int, Sequence[str]]]
+            ]
 
             def search(
                 self,
@@ -367,7 +368,7 @@ class FlextLdapProtocols(ldif_p):
             def modify(
                 self,
                 dn: FlextLdapProtocols.Ldap.DNProtocol | str,
-                changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
+                changes: Mapping[str, Sequence[tuple[str | int, Sequence[str]]]],
             ) -> r[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Modify LDAP entry.
 
@@ -452,7 +453,7 @@ class FlextLdapProtocols(ldif_p):
             @property
             def entry_attributes_as_dict(
                 self,
-            ) -> Mapping[str, Sequence[object]]:
+            ) -> Mapping[str, Sequence[t.GeneralValueType]]:
                 """Get attributes as dict mapping attribute names to value lists."""
                 ...
 
@@ -464,7 +465,7 @@ class FlextLdapProtocols(ldif_p):
             """
 
             @property
-            def values(self) -> Sequence[object]:
+            def values(self) -> Sequence[t.GeneralValueType]:
                 """Get attribute values."""
                 ...
 
@@ -491,7 +492,7 @@ class FlextLdapProtocols(ldif_p):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[tuple[str, object]]:
+            def items(self) -> Sequence[tuple[str, t.GeneralValueType]]:
                 """Return items as sequence of tuples."""
                 ...
 
@@ -500,7 +501,7 @@ class FlextLdapProtocols(ldif_p):
             """Protocol for objects exposing configuration (duck typing for settings)."""
 
             @property
-            def config(self) -> object:
+            def config(self) -> t.GeneralValueType:
                 """Return resolved configuration object."""
                 ...
 
@@ -508,7 +509,7 @@ class FlextLdapProtocols(ldif_p):
         class HasDynamicAttribute(Protocol):
             """Protocol for objects with dynamic attributes accessible via __getattr__."""
 
-            def __getattr__(self, name: str) -> object:
+            def __getattr__(self, name: str) -> t.GeneralValueType:
                 """Get dynamic attribute."""
                 ...
 
@@ -521,7 +522,7 @@ class FlextLdapProtocols(ldif_p):
             """
 
             @property
-            def attributes(self) -> Mapping[str, object]:
+            def attributes(self) -> Mapping[str, t.GeneralValueType]:
                 """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 

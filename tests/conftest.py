@@ -23,7 +23,7 @@ import json
 import os
 import time
 import types
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 from threading import Lock
 from typing import TextIO
@@ -35,7 +35,6 @@ from flext_ldap import (
     FlextLdapConnection,
     FlextLdapOperations,
     FlextLdapSettings,
-    p,
 )
 from flext_ldif import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
@@ -103,12 +102,12 @@ def _get_admin_credentials() -> tuple[str, str]:
             if test_conn.bound:
                 _ldap3_unbind(test_conn)
                 _resolved_admin_credentials[0] = (candidate_dn, candidate_password)
-                return _resolved_admin_credentials[0]
+                return candidate_dn, candidate_password
         except Exception:
             continue
 
     _resolved_admin_credentials[0] = (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
-    return _resolved_admin_credentials[0]
+    return LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD
 
 
 # =============================================================================
@@ -120,18 +119,17 @@ def _ldap3_add(
     conn: Connection,
     dn: str,
     object_class: str | list[str] | None = None,
-    attributes: dict[str, list[str]] | None = None,
+    attributes: Mapping[str, Sequence[str]] | None = None,
 ) -> bool:
-    """Typed wrapper for Connection.add."""
-    # ldap3 Connection.add is untyped, use Callable with explicit types
-    # Runtime behavior is correct, Callable provides type information for mypy
-    # Similar pattern to delete_func and unbind_func in this file
-    add_method: Callable[
-        [str, str | list[str] | None, dict[str, object] | None],
-        bool,
-    ] = conn.add
-    # Call method with proper typing - Callable ensures type safety
-    return bool(add_method(dn, object_class, attributes))
+    """Typed wrapper for Connection.add.
+
+    ldap3 Connection.add accepts dict[str, object] | None for attributes;
+    we accept Mapping[str, Sequence[str]] | None and convert at call site.
+    """
+    attrs_arg: dict[str, object] | None = (
+        {k: list(v) for k, v in attributes.items()} if attributes is not None else None
+    )
+    return bool(conn.add(dn, object_class, attrs_arg))
 
 
 def _ldap3_delete(conn: Connection, dn: str) -> bool:
@@ -323,7 +321,7 @@ class TestFixtures:
         return ""
 
     @staticmethod
-    def load_base_ldif_entries() -> list[p.Entry]:
+    def load_base_ldif_entries() -> list[m.Ldif.Entry]:
         """Load and parse base LDIF structure to Entry models.
 
         Returns:
@@ -339,16 +337,14 @@ class TestFixtures:
         ldif = FlextLdif()
         result = ldif.parse(ldif_content, server_type="rfc")
         if result.is_success:
-            # Python 3.13: Type narrowing - unwrap() returns list[p.Entry]
+            # Python 3.13: Type narrowing - value is list[m.Ldif.Entry]
             entries = result.value
-            # Type narrowing: entries is list[p.Entry] from parse result
             # Filter entries with required attributes, preserving type
             return [
                 entry
                 for entry in entries
                 if hasattr(entry, "dn") and hasattr(entry, "attributes")
             ]
-            # Type narrowing: filtered_entries is list[p.Entry] (same type as entries)
         logger.warning(f"Failed to parse base LDIF: {result.error}")
         return []
 
@@ -1203,7 +1199,7 @@ def base_ldif_content() -> str:
 
 
 @pytest.fixture
-def base_ldif_entries() -> list[p.Entry]:
+def base_ldif_entries() -> list[m.Ldif.Entry]:
     """Load and parse base LDIF structure to Entry models."""
     return LdapTestFixtures.load_base_ldif_entries()
 

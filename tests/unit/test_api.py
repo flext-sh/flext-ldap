@@ -36,7 +36,8 @@ from flext_ldap.api import (
 )
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
-from tests import c
+
+from .. import c
 
 pytestmark = [pytest.mark.unit]
 
@@ -322,10 +323,8 @@ class TestsFlextLdapApi:
     def test_search_method_exists(self) -> None:
         """Test search method exists."""
         api = self._create_api()
-        # Python 3.13: Direct attribute access after hasattr check
-        tm.that(hasattr(api, "search"), eq=True) and tm.that(
-            callable(api.search), eq=True
-        )
+        tm.that(hasattr(api, "search"), eq=True)
+        tm.that(callable(api.search), eq=True)
 
     def test_search_without_connection_returns_failure(self) -> None:
         """Test search returns failure when not connected."""
@@ -340,24 +339,20 @@ class TestsFlextLdapApi:
     def test_add_method_exists(self) -> None:
         """Test add method exists."""
         api = self._create_api()
-        # Python 3.13: Direct attribute access after hasattr check
-        tm.that(hasattr(api, "add"), eq=True) and tm.that(callable(api.add), eq=True)
+        tm.that(hasattr(api, "add"), eq=True)
+        tm.that(callable(api.add), eq=True)
 
     def test_modify_method_exists(self) -> None:
         """Test modify method exists."""
         api = self._create_api()
-        # Python 3.13: Direct attribute access after hasattr check
-        tm.that(hasattr(api, "modify"), eq=True) and tm.that(
-            callable(api.modify), eq=True
-        )
+        tm.that(hasattr(api, "modify"), eq=True)
+        tm.that(callable(api.modify), eq=True)
 
     def test_delete_method_exists(self) -> None:
         """Test delete method exists."""
         api = self._create_api()
-        # Python 3.13: Direct attribute access after hasattr check
-        tm.that(hasattr(api, "delete"), eq=True) and tm.that(
-            callable(api.delete), eq=True
-        )
+        tm.that(hasattr(api, "delete"), eq=True)
+        tm.that(callable(api.delete), eq=True)
 
     def test_execute_method_returns_result(self) -> None:
         """Test execute method returns FlextResult."""

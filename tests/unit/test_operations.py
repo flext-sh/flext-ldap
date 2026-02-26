@@ -33,7 +33,8 @@ from flext_ldap import m
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.settings import FlextLdapSettings
-from tests import c
+
+from .. import c
 
 pytestmark = pytest.mark.unit
 

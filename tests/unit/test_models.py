@@ -31,7 +31,8 @@ from flext_tests import tm
 from pydantic import ValidationError
 
 from flext_ldap import FlextLdapModels, c, m
-from tests import c as tc
+
+from .. import c as tc
 
 pytestmark = [pytest.mark.unit]
 
@@ -347,7 +348,8 @@ class TestsFlextLdapModels:
         )
         # Pydantic v2 frozen models raise TypeError on assignment
 
-        with pytest.raises((TypeError, ValidationError)):
+        exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
+        with pytest.raises(exc_types):
             setattr(result, "is_success", False)
 
     # =========================================================================

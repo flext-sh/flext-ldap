@@ -9,7 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeVar
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from typing import TypeAlias, TypeVar
 
 import pytest
 from flext_core import FlextResult
@@ -20,11 +22,15 @@ from flext_ldap import (
     r,
 )
 from flext_ldap.models import FlextLdapModels
-from ldap3 import MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 from flext_tests import u
 
-from . import constants as c_mod
-from .typings import GenericFieldsDict, t
+from .. import constants as c_mod
+from ..typings import GenericFieldsDict, t
+
+# RFC 4511 modify operation values (avoid dependency on ldap3 stubs for typecheck)
+LDAP_MODIFY_ADD: int = 0
+LDAP_MODIFY_DELETE: int = 1
+LDAP_MODIFY_REPLACE: int = 2
 
 c = c_mod.c
 
@@ -35,14 +41,9 @@ m = FlextLdapModels
 T = TypeVar("T")
 
 # Type aliases for pyright compatibility (avoid variable in type expression)
-# Use PEP 695 type keyword for type aliases
-type OperationResultType = FlextResult[FlextLdapModels.Ldap.OperationResult]
-type SearchResultType = FlextResult[FlextLdapModels.Ldap.SearchResult]
-# Entry is Ldif.Entry (FlextLdifModels.Ldif.Entry); FlextLdapModels extends FlextLdifModels
-type LdapEntry = FlextLdapModels.Ldif.Entry
-
-# Backward compatibility alias
-RFC = c.RFC
+OperationResultType: TypeAlias = FlextResult[FlextLdapModels.Ldap.OperationResult]
+SearchResultType: TypeAlias = FlextResult[FlextLdapModels.Ldap.SearchResult]
+LdapEntry: TypeAlias = FlextLdapModels.Ldif.Entry
 
 # Union type for LDAP clients - accepts FlextLdap and protocol-compliant clients
 LdapClientType = FlextLdap | p.Ldap.LdapClientProtocol
@@ -60,6 +61,39 @@ _VALID_SCOPES: frozenset[str] = frozenset({
 # Use the StrEnum directly or import the type alias if needed for type hints
 # For runtime use, use c.Ldap.SearchScope enum values
 SearchScopeType = c.Ldap.SearchScope
+
+
+@dataclass
+class _LdapEntryProtocolAdapter:
+    dn: str | p.Ldap.DNProtocol | None
+    attributes: (
+        Mapping[str, Sequence[str]]
+        | dict[str, list[str]]
+        | p.Ldap.AttributesProtocol
+        | None
+    )
+    metadata: (
+        Mapping[
+            str,
+            str
+            | int
+            | float
+            | bool
+            | Sequence[str]
+            | Mapping[str, str | Sequence[str]],
+        ]
+        | None
+    ) = None
+
+
+def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntryProtocol:
+    dn_str = str(entry.dn) if entry.dn is not None else ""
+    attrs: dict[str, list[str]] = (
+        entry.attributes.attributes
+        if entry.attributes is not None and hasattr(entry.attributes, "attributes")
+        else {}
+    )
+    return _LdapEntryProtocolAdapter(dn=dn_str, attributes=attrs)
 
 
 def _validate_scope(
@@ -146,7 +180,7 @@ class TestsFlextLdapOperationHelpers:
         return result
 
     @staticmethod
-    def _ensure_entry_has_dn(entry: p.Entry) -> None:
+    def _ensure_entry_has_dn(entry: LdapEntry) -> None:
         """Ensure entry has DN for protocol compatibility.
 
         Args:
@@ -161,7 +195,7 @@ class TestsFlextLdapOperationHelpers:
             raise ValueError(error_msg)
 
     @staticmethod
-    def _ensure_entry_has_attributes(entry: p.Entry) -> None:
+    def _ensure_entry_has_attributes(entry: LdapEntry) -> None:
         """Ensure entry has attributes for protocol compatibility.
 
         Args:
@@ -176,7 +210,7 @@ class TestsFlextLdapOperationHelpers:
             raise ValueError(error_msg)
 
     @staticmethod
-    def _ensure_entry_protocol_compatible(entry: p.Entry) -> None:
+    def _ensure_entry_protocol_compatible(entry: LdapEntry) -> None:
         """Ensure entry is compatible with EntryProtocol.
 
         Args:
@@ -212,25 +246,19 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _get_entry_for_protocol(
-        entry: p.Entry,
-    ) -> p.Ldap.LdapEntryProtocol:
+        entry: LdapEntry,
+    ) -> LdapEntry:
         """Get entry compatible with LdapEntryProtocol after validation.
 
         Args:
             entry: LdapEntry that has been validated via _ensure_entry_protocol_compatible
 
         Returns:
-            Entry compatible with LdapEntryProtocol
+            Entry (m.Ldif.Entry) compatible with LdapEntryProtocol
 
         """
-        # After _ensure_entry_protocol_compatible, entry.dn and entry.attributes are guaranteed non-None
-        # Entry is structurally compatible with LdapEntryProtocol
-        # Protocols are structurally compatible - no cast needed
-        # Type narrowing: entry has dn and attributes, so it's LdapEntryProtocol-compatible
         if not (hasattr(entry, "dn") and hasattr(entry, "attributes")):
             raise TypeError(f"Entry must have dn and attributes, got {type(entry)}")
-        # Python 3.13: p.Entry is structurally compatible with p.Ldap.LdapEntryProtocol
-        # Protocols work via structural typing - return entry directly
         return entry
 
     @staticmethod
@@ -336,15 +364,14 @@ class TestsFlextLdapOperationHelpers:
         # Ensure we have r[m.Ldap.SearchResult]
         if not isinstance(search_result_raw, r):
             # Type narrowing: protocol result is structurally compatible
-            # Use _ensure_flext_result for conversion
             search_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
                 search_result_raw,
             )
-        # Assert success and get value
         assert search_result_raw.is_success, "Search failed"
-        search_result = search_result_raw
-        result = search_result.value
-        # SearchResult.value always returns SearchResult model, no conversion needed
+        result_untyped = search_result_raw.value
+        if not isinstance(result_untyped, m.Ldap.SearchResult):
+            raise TypeError(f"Expected m.Ldap.SearchResult, got {type(result_untyped)}")
+        result: m.Ldap.SearchResult = result_untyped
         assert len(result.entries) >= expected_min_count, (
             f"Expected at least {expected_min_count} entries, got {len(result.entries)}"
         )
@@ -417,7 +444,7 @@ class TestsFlextLdapOperationHelpers:
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
         **extra_attributes: t.GeneralValueType,
-    ) -> p.Entry:
+    ) -> FlextLdapModels.Ldif.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
         Replaces repetitive inetOrgPerson entry creation across tests.
@@ -434,7 +461,7 @@ class TestsFlextLdapOperationHelpers:
             **extra_attributes: Additional attributes as individual kwargs
 
         Returns:
-            p.Entry with inetOrgPerson objectClass
+            m.Ldif.Entry with inetOrgPerson objectClass
 
         Example:
             # CN-based entry
@@ -507,10 +534,11 @@ class TestsFlextLdapOperationHelpers:
                     normalized_extra[key] = [str(value)]
             entry_attributes.update(normalized_extra)
 
-        # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
-        # Pydantic v2 validates and converts types automatically
-        # m.Ldif.Entry is the production model for add(); structurally compatible with p.Entry
-        return m.Ldif.Entry(dn=dn, attributes=entry_attributes)
+        # Use production model with explicit DN and Attributes for type checker
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes(attributes=entry_attributes),
+        )
 
     @staticmethod
     def create_group_entry(
@@ -519,7 +547,7 @@ class TestsFlextLdapOperationHelpers:
         *,
         members: list[str] | None = None,
         **kwargs: t.GeneralValueType,
-    ) -> p.Entry:
+    ) -> FlextLdapModels.Ldif.Entry:
         """Create group entry.
 
         Args:
@@ -550,9 +578,11 @@ class TestsFlextLdapOperationHelpers:
                 normalized_kwargs[key] = [str(value)]
         attributes.update(normalized_kwargs)
 
-        # Entry accepts str for dn and dict[str, list[str]] for attributes via Pydantic
-        # Pydantic v2 validates and converts types automatically
-        return p.Entry(dn=dn, attributes=attributes)
+        # Use production model with explicit DN and Attributes for type checker
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes(attributes=attributes),
+        )
 
     @staticmethod
     def create_entry_dict(
@@ -613,7 +643,7 @@ class TestsFlextLdapOperationHelpers:
     @staticmethod
     def add_entry_and_assert_success(
         client: LdapOperationsType,
-        entry: p.Entry,
+        entry: LdapEntry,
         *,
         verify_operation_result: bool = False,
         cleanup_after: bool = True,
@@ -640,15 +670,10 @@ class TestsFlextLdapOperationHelpers:
         # FlextLdap and FlextLdapOperations accept Entry directly
         # Protocol clients accept EntryProtocol (Entry is structurally compatible)
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
-            # Entry is structurally compatible with EntryProtocol
             add_result_raw = client.add(entry)
         else:
-            # For protocol clients, Entry is structurally compatible with EntryProtocol
-            # entry.dn is guaranteed to be not None by _ensure_entry_has_dn
-            # Type narrowing: LdapEntry with non-None dn satisfies EntryProtocol
-            # Protocols are structurally compatible via structural typing
-            # Protocol returns ResultProtocol, _ensure_flext_result handles conversion
-            add_result_raw_protocol = client.add(entry)
+            entry_for_protocol = _ldap_entry_to_protocol_adapter(entry)
+            add_result_raw_protocol = client.add(entry_for_protocol)
             add_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
                 add_result_raw_protocol,
             )
@@ -679,7 +704,7 @@ class TestsFlextLdapOperationHelpers:
     @staticmethod
     def add_then_delete_and_assert(
         client: LdapClientType,
-        entry: p.Entry,
+        entry: LdapEntry,
     ) -> tuple[
         OperationResultType,
         OperationResultType,
@@ -745,7 +770,7 @@ class TestsFlextLdapOperationHelpers:
     @staticmethod
     def execute_add_modify_delete_sequence(
         client: LdapClientType,
-        entry: p.Entry,
+        entry: LdapEntry,
         changes: dict[str, list[tuple[str, list[str]]]],
         *,
         verify_delete: bool = True,
@@ -815,7 +840,7 @@ class TestsFlextLdapOperationHelpers:
     @staticmethod
     def execute_crud_sequence(
         client: LdapClientType,
-        entry: p.Entry,
+        entry: LdapEntry,
         changes: dict[str, list[tuple[str, list[str]]]],
     ) -> dict[
         str,
@@ -846,7 +871,7 @@ class TestsFlextLdapOperationHelpers:
             # All clients now use SearchOptions - unified API
             search_options = TestsFlextLdapOperationHelpers.create_search_options(
                 dn_str,
-                filter_str=RFC.DEFAULT_FILTER,
+                filter_str=c.RFC.DEFAULT_FILTER,
                 scope=c.Ldap.SearchScope.BASE.value,
             )
             # SearchOptions works directly with FlextLdap/FlextLdapOperations
@@ -949,7 +974,7 @@ class TestsFlextLdapOperationHelpers:
     @staticmethod
     def _execute_add_when_not_connected(
         client: LdapClientType,
-        entry: p.Entry,
+        entry: LdapEntry,
         expected_error: str,
     ) -> None:
         """Execute add operation when not connected and assert failure."""
@@ -957,16 +982,14 @@ class TestsFlextLdapOperationHelpers:
         # Use Entry directly for FlextLdap/FlextLdapOperations, EntryProtocol for protocol clients
         # Result may be r or ResultProtocol depending on client type
         # Use object type to accept both r and ResultProtocol variants
+        add_result_raw: object
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
-            # Type narrowing: p.Entry satisfies EntryProtocol structurally
-            add_result_raw: object = client.add(entry)
+            add_result_raw = client.add(entry)
         else:
-            entry_protocol = TestsFlextLdapOperationHelpers._get_entry_for_protocol(
-                entry,
-            )
-            add_result_raw = client.add(entry_protocol)
+            entry_for_protocol = _ldap_entry_to_protocol_adapter(entry)
+            add_result_raw = client.add(entry_for_protocol)
         # Convert protocol result to r if needed
-        add_result_typed: OperationResultType = (
+        add_result_typed: FlextResult[p.Ldap.OperationResultProtocol] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(
@@ -976,14 +999,16 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _convert_changes_to_modify_format(
-        changes: dict[str, t.GeneralValueType],
+        changes: Mapping[
+            str,
+            t.GeneralValueType | list[tuple[str | int, list[str]]],
+        ],
     ) -> t.Ldap.Operation.Changes:
         """Convert dict changes to ldap3 format (int operation codes)."""
-
-        _OP_STR_TO_INT: dict[str, int] = {
-            "MODIFY_ADD": MODIFY_ADD,
-            "MODIFY_DELETE": MODIFY_DELETE,
-            "MODIFY_REPLACE": MODIFY_REPLACE,
+        op_str_to_int: dict[str, int] = {
+            "MODIFY_ADD": LDAP_MODIFY_ADD,
+            "MODIFY_DELETE": LDAP_MODIFY_DELETE,
+            "MODIFY_REPLACE": LDAP_MODIFY_REPLACE,
         }
 
         result: dict[str, list[tuple[int, list[str]]]] = {}
@@ -991,9 +1016,7 @@ class TestsFlextLdapOperationHelpers:
             if value_raw is None:
                 continue
             value: t.GeneralValueType
-            if isinstance(
-                value_raw, (str, int, float, bool, list, dict, type(None))
-            ):
+            if isinstance(value_raw, (str, int, float, bool, list, dict, type(None))):
                 value = value_raw
             else:
                 value = str(value_raw)
@@ -1011,21 +1034,28 @@ class TestsFlextLdapOperationHelpers:
                     if isinstance(tup_item, tuple) and len(tup_item) == 2:
                         op_raw, vals = tup_item[0], tup_item[1]
                         op_int = (
-                            _OP_STR_TO_INT.get(str(op_raw).upper(), MODIFY_REPLACE)
+                            op_str_to_int.get(str(op_raw).upper(), LDAP_MODIFY_REPLACE)
                             if isinstance(op_raw, str)
-                            else int(op_raw)
+                            else (
+                                int(op_raw)
+                                if isinstance(op_raw, int)
+                                else LDAP_MODIFY_REPLACE
+                            )
+                        )
+                        op_val: int = (
+                            op_int if op_int is not None else LDAP_MODIFY_REPLACE
                         )
                         vals_list: list[str] = (
                             [str(v) for v in vals]
                             if isinstance(vals, (list, tuple))
                             else [str(vals)]
                         )
-                        ops_list.append((op_int, vals_list))
+                        ops_list.append((op_val, vals_list))
             elif isinstance(value, (list, tuple)):
                 value_list = [str(v) for v in value]
-                ops_list.append((MODIFY_REPLACE, value_list))
+                ops_list.append((LDAP_MODIFY_REPLACE, value_list))
             else:
-                ops_list.append((MODIFY_REPLACE, [str(value)]))
+                ops_list.append((LDAP_MODIFY_REPLACE, [str(value)]))
 
             if ops_list:
                 result[key] = ops_list
@@ -1104,14 +1134,11 @@ class TestsFlextLdapOperationHelpers:
                 error_msg = "entry required for add operation"
                 raise ValueError(error_msg)
             entry_raw = kwargs["entry"]
-            # Validate type
-            if not (hasattr(entry_raw, "dn") and hasattr(entry_raw, "attributes")):
-                error_msg = "entry must have dn and attributes"
+            # Validate type: must be m.Ldif.Entry (LdapEntry)
+            if not isinstance(entry_raw, m.Ldif.Entry):
+                error_msg = "entry must be m.Ldif.Entry (LdapEntry)"
                 raise TypeError(error_msg)
-            # Type narrowing: entry_raw is Entry after isinstance check
-            # After raise, execution continues only if isinstance check passed
-            # Mypy incorrectly flags as unreachable, but runtime is correct
-            entry_validated = entry_raw
+            entry_validated: LdapEntry = entry_raw
             TestsFlextLdapOperationHelpers._execute_add_when_not_connected(
                 client,
                 entry_validated,
@@ -1210,18 +1237,20 @@ class TestsFlextLdapOperationHelpers:
 
         """
         if base_dn is None:
-            base_dn = RFC.DEFAULT_BASE_DN
+            base_dn = str(c.RFC.DEFAULT_BASE_DN) if c.RFC.DEFAULT_BASE_DN else ""
         if filter_str is None:
-            filter_str = RFC.DEFAULT_FILTER
+            filter_str = (
+                str(c.RFC.DEFAULT_FILTER) if c.RFC.DEFAULT_FILTER else "(objectClass=*)"
+            )
         if scope is None:
             # Use production StrEnum value directly
             scope = c.Ldap.SearchScope.SUBTREE.value
         if attributes is None:
-            attributes = list(RFC.DEFAULT_ATTRIBUTES)
+            attributes = list(c.RFC.DEFAULT_ATTRIBUTES)
 
         return m.Ldap.SearchOptions(
-            base_dn=base_dn,
-            filter_str=filter_str,
+            base_dn=str(base_dn),
+            filter_str=str(filter_str),
             scope=_validate_scope(scope).value,  # Convert StrEnum to str
             attributes=attributes,
         )

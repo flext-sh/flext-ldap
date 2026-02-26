@@ -104,6 +104,7 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
+        assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard
@@ -129,6 +130,7 @@ class TestsFlextLdapEntryAdapter:
         # Use direct call - adapter handles type compatibility
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
+        assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None  # Type guard

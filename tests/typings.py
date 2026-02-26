@@ -38,7 +38,7 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
     - All production types come from FlextLdapTypes
     """
 
-    class Tests:
+    class Tests(FlextTestsTypes.Tests):
         """flext-ldap-specific test type definitions namespace.
 
         Use tt.Tests.* for flext-ldap-specific test types.

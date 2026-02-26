@@ -85,7 +85,8 @@ class TestsFlextLdapSync:
         operations = self._create_operations()
         sync_service = FlextLdapSyncService(operations=operations)
         result = sync_service.execute()
-        stats = tm.ok(result, is_=m.Ldap.SyncStats)
+        stats = tm.ok(result)
+        assert isinstance(stats, m.Ldap.SyncStats), "expected SyncStats"
         tm.that(stats.added, eq=0)
         tm.that(stats.skipped, eq=0)
         tm.that(stats.failed, eq=0)

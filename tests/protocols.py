@@ -29,7 +29,7 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     - Only flext-ldap-specific test protocols allowed
     """
 
-    class Tests:
+    class Tests(FlextTestsProtocols.Tests):
         """Project-specific test protocols.
 
         Extends FlextTestsProtocols.Tests with flext-ldap-specific protocols.

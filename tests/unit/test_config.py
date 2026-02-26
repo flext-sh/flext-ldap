@@ -21,7 +21,8 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap import FlextLdapSettings
-from tests import c
+
+from .. import c
 
 pytestmark = [pytest.mark.unit]
 

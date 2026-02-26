@@ -145,4 +145,15 @@ markers = [
     "resilience: resilience tests",
 ]
 
-# [MANAGED] ruff
+[tool.pyright]
+extraPaths = ["../flext-core/src", "../flext-ldif/src"]
+reportMissingModuleSource = false
+reportMissingImports = true
+pythonVersion = "3.13"
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "../flext-core/src:../flext-ldif/src"
+follow_imports = "normal"
+ignore_missing_imports = false
+

@@ -29,11 +29,9 @@ import pytest
 from flext_ldap import t
 from flext_tests import tm
 
-from tests import u
+from .. import u
 
-# FlexibleValue is a type alias - use GeneralScalarValue from core
-FlexibleValue = t.GeneralScalarValue
-
+# Use type from flext_ldap typings for callable return (no variable in type expr)
 pytestmark = pytest.mark.unit
 
 
@@ -120,7 +118,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_with_mapping(self) -> None:
         """Test find_callable with Mapping (covariant pattern)."""
-        handlers: dict[str, Callable[[], FlexibleValue]] = {
+        handlers: dict[str, Callable[[], t.GeneralScalarValue]] = {
             "handler1": lambda: "value1",
             "handler2": lambda: False,
         }
@@ -130,7 +128,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_not_found(self) -> None:
         """Test find_callable when no handler returns truthy."""
-        handlers: dict[str, Callable[[], FlexibleValue]] = {
+        handlers: dict[str, Callable[[], t.GeneralScalarValue]] = {
             "handler1": lambda: False,
             "handler2": lambda: None,
             "handler3": lambda: "",
