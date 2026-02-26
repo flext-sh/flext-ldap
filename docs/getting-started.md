@@ -85,7 +85,7 @@ This guide covers installation, basic configuration, and first steps with flext-
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## Prerequisites
 
@@ -109,7 +109,7 @@ ______________________________________________________________________
 - Docker for running test LDAP server
 - osixia/openldap:1.5.0 container (automatic setup available)
 
-______________________________________________________________________
+---
 
 ## Installation
 
@@ -142,7 +142,7 @@ Test your installation:
 python -c "from flext_ldap import get_flext_ldap_api; print('Installation successful')"
 ```
 
-______________________________________________________________________
+---
 
 ## Configuration
 
@@ -185,7 +185,7 @@ config = FlextLdapSettings(
 )
 ```
 
-______________________________________________________________________
+---
 
 ## First Steps
 
@@ -257,7 +257,7 @@ def authenticate_user():
 run(authenticate_user())
 ```
 
-______________________________________________________________________
+---
 
 ## Universal LDAP Interface
 
@@ -462,7 +462,7 @@ def paged_search():
 run(paged_search())
 ```
 
-______________________________________________________________________
+---
 
 ## Development Environment
 
@@ -507,7 +507,7 @@ make test       # Run tests
 make validate   # Complete quality pipeline
 ```
 
-______________________________________________________________________
+---
 
 ## Next Steps
 
@@ -520,7 +520,7 @@ Once you have flext-ldap installed and working:
 1. **Examples** - Working code examples
 1. **Development Guide** - Contributing to the project
 
-______________________________________________________________________
+---
 
 ## Troubleshooting
 
@@ -567,6 +567,6 @@ For more troubleshooting help, see Troubleshooting Guide.
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
-______________________________________________________________________
+---
 
 **Next:** Architecture Overview →

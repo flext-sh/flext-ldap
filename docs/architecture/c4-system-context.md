@@ -292,7 +292,7 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 - **Security Architecture** - Authentication and authorization
 - **Integration Guide** - Ecosystem integration patterns
 
-______________________________________________________________________
+---
 
 **C4 Model - Level 1: System Context**
 _Understanding FLEXT-LDAP's role in the enterprise ecosystem_

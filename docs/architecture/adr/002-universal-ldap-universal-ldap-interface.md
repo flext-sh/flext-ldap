@@ -83,7 +83,7 @@
 
 - [Links to related ADRs and documentation]
 
-______________________________________________________________________
+---
 
 **ADR 002-universal-ldap: Universal LDAP Interface**
 _Accepted on 2025-10-10_

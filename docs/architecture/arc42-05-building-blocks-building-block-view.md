@@ -10,7 +10,7 @@
 
 [Content for Building Block View would go here]
 
-______________________________________________________________________
+---
 
 **Arc42 Section 05-building-blocks: Building Block View**
 _Part of the comprehensive Arc42 architecture documentation_

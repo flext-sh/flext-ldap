@@ -271,7 +271,7 @@ Plugin-based architecture with core and extensions.
 - ADR 002: Railway Pattern Implementation - Error handling strategy
 - ADR 003: Universal LDAP Interface - Server abstraction design
 
-______________________________________________________________________
+---
 
 ## ADR Maintenance
 

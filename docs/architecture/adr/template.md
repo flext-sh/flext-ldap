@@ -145,7 +145,7 @@
 
 - {Links to design discussions, GitHub issues, or meeting notes}
 
-______________________________________________________________________
+---
 
 ## ADR Maintenance
 
@@ -159,7 +159,7 @@ ______________________________________________________________________
 
 **Superseded by**: {ADR number, if applicable}
 
-______________________________________________________________________
+---
 
 **Template Version**: 1.0
 **Based on**: Michael Nygard's ADR format with FLEXT enhancements

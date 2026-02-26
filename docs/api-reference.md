@@ -113,7 +113,7 @@ This document provides comprehensive API reference for all public interfaces in 
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## 🚀 Main API
 
@@ -135,7 +135,7 @@ from flext_ldap import get_flext_ldap_api
 api = get_flext_ldap_api()
 ```
 
-______________________________________________________________________
+---
 
 ## 🏗️ FlextLdapClients
 
@@ -224,7 +224,7 @@ if result.is_success:
     print("Connection successful")
 ```
 
-______________________________________________________________________
+---
 
 ## 📊 Domain Entities
 
@@ -293,7 +293,7 @@ LDAP group entity.
 - `add_member(member_dn: str) -> None`: Add group member
 - `remove_member(member_dn: str) -> None`: Remove group member
 
-______________________________________________________________________
+---
 
 ## 🎯 Value Objects
 
@@ -358,7 +358,7 @@ Search scope enumeration.
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
-______________________________________________________________________
+---
 
 ## ⚙️ Configuration
 
@@ -394,7 +394,7 @@ config = FlextLdapSettings(
 set_flext_ldap.settings(config)
 ```
 
-______________________________________________________________________
+---
 
 ## 🔧 Utilities
 
@@ -431,7 +431,7 @@ LDAP protocol constants.
 - `SCOPE_ONELEVEL`: One-level search scope
 - `SCOPE_SUBTREE`: Subtree search scope
 
-______________________________________________________________________
+---
 
 ## 🚨 Exceptions
 
@@ -481,7 +481,7 @@ except FlextExceptions.ConnectionError as e:
     print(f"Connection error: {e.message}")
 ```
 
-______________________________________________________________________
+---
 
 ## 🔄 FlextResult Usage
 
@@ -525,7 +525,7 @@ else:
     return FlextResult.fail(f"Search failed: {search_result.error}")
 ```
 
-______________________________________________________________________
+---
 
 ## 🔄 Universal LDAP Interface
 
@@ -634,7 +634,7 @@ Write FlextLdif entries to LDIF file.
 
 **Returns:** FlextResult indicating success
 
-______________________________________________________________________
+---
 
 ### FlextLdapQuirksAdapter
 
@@ -733,7 +733,7 @@ Get server-specific maximum page size for paged searches.
 
 Normalize entry for server-specific requirements.
 
-______________________________________________________________________
+---
 
 ## 🏗️ Server Operations
 
@@ -974,7 +974,7 @@ if result.is_success:
         print(f"DN: {entry.dn}")
 ```
 
-______________________________________________________________________
+---
 
 ### Server-Specific Implementations
 
@@ -1071,7 +1071,7 @@ from flext_ldap.servers import GenericServerOperations
 - Basic paged results
 - Standard LDAP operations
 
-______________________________________________________________________
+---
 
 ## 📝 Type Annotations
 
@@ -1099,7 +1099,7 @@ Use mypy or similar tools for static type checking:
 mypy --strict your_code.py
 ```
 
-______________________________________________________________________
+---
 
 ## 🔗 Complete Usage Example
 
@@ -1182,7 +1182,7 @@ def universal_ldap_example():
 run(universal_ldap_example())
 ```
 
-______________________________________________________________________
+---
 
 For more examples and advanced usage patterns, see:
 
@@ -1211,6 +1211,6 @@ For more examples and advanced usage patterns, see:
 - [RFC 4511 - LDAP: The Protocol](https://www.rfc-editor.org/rfc/rfc4511.html)
 - [RFC 4512 - LDAP: Technical Specification Road Map](https://www.rfc-editor.org/rfc/rfc4512.html)
 
-______________________________________________________________________
+---
 
 **Next:** Configuration Guide →

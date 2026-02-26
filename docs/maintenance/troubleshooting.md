@@ -744,7 +744,7 @@ EOF
 chmod +x docs/maintenance/health_check.sh
 ```
 
-______________________________________________________________________
+---
 
 **Documentation Maintenance System Troubleshooting Guide**
 

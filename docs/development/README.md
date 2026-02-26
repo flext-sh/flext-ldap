@@ -288,7 +288,7 @@ test: add integration tests for OID
 - API Reference - Complete API docs
 - Migration Guide - v0.9.0 → v0.10.0
 
-______________________________________________________________________
+---
 
 **Last Updated**: 2025-01-24
 **Maintainer**: FLEXT Team

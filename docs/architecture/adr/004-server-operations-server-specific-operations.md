@@ -83,7 +83,7 @@
 
 - [Links to related ADRs and documentation]
 
-______________________________________________________________________
+---
 
 **ADR 004-server-operations: Server-Specific Operations**
 _Accepted on 2025-10-10_

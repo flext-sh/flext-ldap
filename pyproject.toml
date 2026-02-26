@@ -5,9 +5,7 @@
 # [MANAGED] build system
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = [
-  "poetry-core>=2",
-]
+requires = ["poetry-core>=2"]
 
 # [CUSTOM] project metadata
 [project]
@@ -26,8 +24,8 @@ keywords = [
   "typed",
 ]
 license = "MIT"
-maintainers = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
-authors = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
+maintainers = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+authors = [{ email = "team@flext.sh", name = "FLEXT Team" }]
 requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -116,33 +114,23 @@ urls = { Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 
 # [MANAGED] deptry
 [tool.deptry]
-pep621_dev_dependency_groups = [
-  "dev",
-]
+pep621_dev_dependency_groups = ["dev"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-python_classes = [
-    "Test*",
-]
-python_files = [
-    "*_test.py",
-    "*_tests.py",
-    "test_*.py",
-]
-addopts = [
-    "--strict-markers",
-]
+python_classes = ["Test*"]
+python_files = ["*_test.py", "*_tests.py", "test_*.py"]
+addopts = ["--strict-markers"]
 markers = [
-    "unit: unit tests",
-    "integration: integration tests",
-    "performance: performance and benchmark tests",
-    "slow: slow-running tests",
-    "docker: tests requiring Docker",
-    "e2e: end-to-end integration tests",
-    "edge_cases: edge case tests",
-    "stress: stress tests",
-    "resilience: resilience tests",
+  "unit: unit tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "slow: slow-running tests",
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "stress: stress tests",
+  "resilience: resilience tests",
 ]
 
 [tool.pyright]

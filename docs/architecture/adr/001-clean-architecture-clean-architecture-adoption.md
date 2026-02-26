@@ -83,7 +83,7 @@
 
 - [Links to related ADRs and documentation]
 
-______________________________________________________________________
+---
 
 **ADR 001-clean-architecture: Clean Architecture Adoption**
 _Accepted on 2025-10-10_

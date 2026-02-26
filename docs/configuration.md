@@ -82,7 +82,7 @@ This guide covers all configuration aspects for integrating flext-ldap in your F
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## Configuration Overview
 
@@ -130,7 +130,7 @@ config = FlextLdapSettings(
 )
 ```
 
-______________________________________________________________________
+---
 
 ## Environment Variables
 
@@ -175,7 +175,7 @@ export FLEXT_LDAP_CONNECTION_TIMEOUT=10
 export FLEXT_LDAP_RECEIVE_TIMEOUT=30
 ```
 
-______________________________________________________________________
+---
 
 ## Configuration File
 
@@ -232,7 +232,7 @@ def get_config() -> FlextLdapSettings:
 config = get_config()
 ```
 
-______________________________________________________________________
+---
 
 ## Docker Configuration
 
@@ -269,7 +269,7 @@ services:
       - ldap-server
 ```
 
-______________________________________________________________________
+---
 
 ## Testing Configuration
 
@@ -305,7 +305,7 @@ TEST_CONFIG = FlextLdapSettings(
 )
 ```
 
-______________________________________________________________________
+---
 
 ## Configuration Validation
 
@@ -347,7 +347,7 @@ run(validate_config())
 - Check CA certificate file path
 - Confirm SSL port (usually 636)
 
-______________________________________________________________________
+---
 
 ## Security Best Practices
 
@@ -378,7 +378,7 @@ config = FlextLdapSettings(
 )
 ```
 
-______________________________________________________________________
+---
 
 ## Performance Tuning
 
@@ -410,10 +410,10 @@ search_request = FlextLdapEntities.SearchRequest(
 )
 ```
 
-______________________________________________________________________
+---
 
 For more configuration examples, see the examples/ directory.
 
-______________________________________________________________________
+---
 
 **Next:** Development Guide →

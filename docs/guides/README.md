@@ -119,7 +119,7 @@ Security considerations when using FLEXT.
 
 Effective error handling strategies in FLEXT applications.
 
-______________________________________________________________________
+---
 
 **Note**: This guide structure is being updated. Currently,
 only the Getting Started guide is available. Additional guides are being created as part of the documentation maintenance process.

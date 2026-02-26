@@ -81,6 +81,6 @@ API Facade → Service Layer → Adapter Layer → Protocol + Models
 - Development Guides
 - Maintenance
 
-______________________________________________________________________
+---
 
 **Last Updated**: 2025-03-15
