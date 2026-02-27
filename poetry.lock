@@ -1211,7 +1211,7 @@ name = "flext-core"
 version = "0.12.0.dev0"
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 optional = false
-python-versions = ">=3.13,<3.14"
+python-versions = ">=3.13"
 groups = ["main"]
 files = []
 develop = false

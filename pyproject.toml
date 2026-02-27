@@ -5,7 +5,7 @@
 # [MANAGED] build system
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=2"]
+requires = [ "poetry-core>=2" ]
 
 # [CUSTOM] project metadata
 [project]
@@ -24,8 +24,8 @@ keywords = [
   "typed",
 ]
 license = "MIT"
-maintainers = [{ email = "team@flext.sh", name = "FLEXT Team" }]
-authors = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -110,17 +110,17 @@ optional-dependencies.dev = [
   "types-toml>=0.10.8.20240310",
   "vulture>=2.13",
 ]
-urls = { Documentation = "https://github.com/flext-sh/flext/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext", Repository = "https://github.com/flext-sh/flext" }
+urls = {Documentation = "https://github.com/flext-sh/flext/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext", Repository = "https://github.com/flext-sh/flext"}
 
 # [MANAGED] deptry
 [tool.deptry]
-pep621_dev_dependency_groups = ["dev"]
+pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-python_classes = ["Test*"]
-python_files = ["*_test.py", "*_tests.py", "test_*.py"]
-addopts = ["--strict-markers"]
+python_classes = [ "Test*" ]
+python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+addopts = [ "--strict-markers" ]
 markers = [
   "unit: unit tests",
   "integration: integration tests",
@@ -135,34 +135,36 @@ markers = [
 
 # [MANAGED] pyright
 [tool.pyright]
-extraPaths = ["../flext-core/src", "../flext-ldif/src"]
-reportMissingModuleSource = false
-reportMissingImports = true
+extraPaths = [ "../flext-core/src", "../flext-ldif/src" ]
 pythonVersion = "3.13"
+reportMissingImports = true
+reportMissingModuleSource = false
 
 # [MANAGED] mypy
 [tool.mypy]
-python_version = "3.13"
-mypy_path = "../flext-core/src:../flext-ldif/src"
 follow_imports = "normal"
 ignore_missing_imports = false
+mypy_path = "../flext-core/src:../flext-ldif/src"
+python_version = "3.13"
 
 # [CUSTOM] poetry dev extensions
 # [MANAGED] pyrefly
 [tool.pyrefly]
 python-version = "3.13"
+
 ignore-errors-in-generated-code = true
-search-path = [
-    ".",
-]
 project-excludes = [
-    "**/_pb2.py",
-    "**/_pb2_grpc.py",
+  "**/_pb2.py",
+  "**/_pb2_grpc.py",
+  "**/*_pb2*.py",
+  "**/*_pb2_grpc*.py",
+]
+search-path = [
+  ".",
 ]
 
 [tool.pyrefly.errors]
 deprecated = true
-redundant-cast = true
 implicit-abstract-class = true
 implicit-any = true
 implicitly-defined-attribute = true
@@ -171,6 +173,7 @@ missing-source = true
 not-required-key-access = true
 open-unpacking = true
 protocol-implicitly-defined-attribute = true
+redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
