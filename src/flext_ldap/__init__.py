@@ -14,8 +14,8 @@ Single Entry Point Architecture:
         result = ldap.search(options)
 
     Incorrect usage (bypasses single entry point):
-        from flext_ldap.services.connection import FlextLdapConnection
-        from flext_ldap.adapters import Ldap3Adapter
+        from flext_ldap.services.connection import FlextLdapConnection  # ❌ WRONG
+        from flext_ldap.adapters import Ldap3Adapter  # ❌ WRONG
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -69,7 +69,7 @@ from flext_ldap.utilities import FlextLdapUtilities, u
 #   status = c.OperationType.ADD
 #   model = m.SearchOptions(...)
 #   protocol: p.LdapEntry.EntryProtocol = entry
-#   success = FlextResult.ok("value")
+#   success = r.ok("value")
 #   error = e.ValidationError("message")
 #   decorator = d.validate()
 #   class MyService(s): ...  # s = FlextLdapServiceBase

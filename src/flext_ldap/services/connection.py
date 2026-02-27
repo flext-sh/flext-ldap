@@ -26,8 +26,6 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_core import FlextSettings
 from flext_core.result import FlextResult
 from flext_ldif import FlextLdif, FlextLdifParser

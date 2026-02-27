@@ -43,7 +43,6 @@ class FlextLdapServiceBase(FlextService, ABC):
     @classmethod
     @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services.
 
         Business Rule: This method provides runtime bootstrap configuration for
