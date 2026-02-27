@@ -628,7 +628,7 @@ class Ldap3Adapter(s[bool]):
                 QuirkMetadata instance or None if no metadata available.
 
             """
-            metadata_raw: object | None = None
+            metadata_raw: Mapping[str, Sequence[str | bytes]] | None = None
             if isinstance(parsed, LdifEntry):
                 metadata_raw = parsed.metadata
             else:

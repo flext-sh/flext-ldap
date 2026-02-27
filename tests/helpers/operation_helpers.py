@@ -225,7 +225,7 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _validate_search_options_type(
-        search_options_raw: object,
+        search_options_raw: Mapping[str, str | int | bool] | None,
     ) -> m.Ldap.SearchOptions:
         """Validate and return SearchOptions type.
 
@@ -982,7 +982,7 @@ class TestsFlextLdapOperationHelpers:
         # Use Entry directly for FlextLdap/FlextLdapOperations, EntryProtocol for protocol clients
         # Result may be r or ResultProtocol depending on client type
         # Use object type to accept both r and ResultProtocol variants
-        add_result_raw: object
+        add_result_raw: r[m.Ldap.Entry] | None
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
             add_result_raw = client.add(entry)
         else:

@@ -230,7 +230,7 @@ class TestFixtures:
                 )
 
             with filepath.open(encoding="utf-8") as f:
-                data: object = json.load(f)
+                data: dict[str, t.ConfigMapValue] | list[t.ConfigMapValue] = json.load(f)
 
             if not isinstance(data, list):
                 return r[list[GenericFieldsDict]].fail(
@@ -279,7 +279,7 @@ class TestFixtures:
                 )
 
             with filepath.open(encoding="utf-8") as f:
-                config: object = json.load(f)
+                config: dict[str, t.ConfigMapValue] = json.load(f)
 
             if not isinstance(config, dict):
                 return r[dict[str, t.GeneralValueType]].fail(

@@ -113,7 +113,7 @@ class FlextLdapModelsLdap:
         allow_deletes: bool = False
         source_basedn: str = ""
         target_basedn: str = ""
-        progress_callback: object = None  # Simplified callback type
+        progress_callback: Callable[[SyncStats], None] | None = None
 
     class SyncStats(BaseModel):
         """Sync stats."""
@@ -138,7 +138,7 @@ class FlextLdapModelsLdap:
             skipped: int = 0,
             failed: int = 0,
             duration_seconds: float = 0.0,
-            **kwargs: object,
+            **kwargs: str | int | float | bool | None,
         ) -> Self:
             """Factory method with auto-calculated total from counters."""
             return cls(

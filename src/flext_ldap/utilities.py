@@ -83,7 +83,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_json_value(
-            value: object | None,
+            value: t.ConfigMapValue | None,
         ) -> _StrictJsonValue:
             """Normalize values into strict JSON-safe primitives/collections."""
             match value:
@@ -209,7 +209,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             @staticmethod
             def is_valid_status(
-                value: str | object,
+                value: str | t.ConfigMapValue,
             ) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
@@ -386,9 +386,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., object]],
-            *args: object,
-            **kwargs: object,
+            callables_dict: Mapping[str, Callable[..., t.ConfigMapValue]],
+            *args: str | int | float | bool | None,
+            **kwargs: str | int | float | bool | None,
         ) -> str | None:
             """Find first callable that returns truthy value.
 
@@ -446,7 +446,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
 
             # Python 3.13: DSL pattern with isinstance for type narrowing
-            def convert_value(_k: str, v: object) -> list[str]:
+            def convert_value(_k: str, v: str | list[str] | t.ConfigMapValue) -> list[str]:
                 if v is None:
                     return []
                 # Python 3.13: Use isinstance directly for type narrowing
@@ -495,10 +495,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def when_safe(
             *,
             condition: bool,
-            then_value: object | None,
-            else_value: object | None = None,
+            then_value: t.ConfigMapValue | None,
+            else_value: t.ConfigMapValue | None = None,
             safe_then: bool = False,
-        ) -> object | None:
+        ) -> t.ConfigMapValue | None:
             """Safe conditional (builder: whn().safe().or_().build()).
 
             Uses advanced DSL: whn() → safe() → or_() for safe composition.
@@ -521,7 +521,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return else_value
 
         @staticmethod
-        def dn_str(dn: object | None, *, default: str = "unknown") -> str:
+        def dn_str(dn: str | m.Ldif.DN | None, *, default: str = "unknown") -> str:
             """Extract DN string (builder: whn().safe().conv().str()).
 
             Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.

@@ -769,7 +769,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                     current: int,
                     total: int,
                     dn: str,
-                    stats: object,
+                    stats: m.Ldap.SyncStats,
                 ) -> None:
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
@@ -870,7 +870,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 current: int,
                 total: int,
                 dn: str,
-                stats: object,
+                stats: m.Ldap.SyncStats,
             ) -> None:
                 # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
@@ -920,7 +920,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 current: int,
                 total: int,
                 dn: str,
-                stats: object,
+                stats: m.Ldap.SyncStats,
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 

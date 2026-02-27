@@ -54,7 +54,7 @@ class FlextLdapServerDetector(s[str]):
     normalized server label (for example, ``openldap`` or ``ad``).
     """
 
-    def execute(self, **_kwargs: object) -> r[str]:
+    def execute(self, **_kwargs: str | int | float | bool | None) -> r[str]:
         """Detect server type using a provided ``ldap3.Connection`` instance.
 
         Business Rules:
@@ -123,7 +123,7 @@ class FlextLdapServerDetector(s[str]):
         root_dse_attrs = root_dse_result.value
         # Python 3.13: Use helper function for concise list conversion
 
-        def to_str_list(value: object) -> list[str]:
+        def to_str_list(value: str | Sequence[str] | t.ConfigMapValue) -> list[str]:
             """Convert value to list[str] using modern Python 3.13 patterns."""
             if not value:
                 return []

@@ -201,12 +201,7 @@ class FlextLdapEntryAdapter(s[bool]):
         # Filter to only valid service kwargs (str | float | bool | None)
         # Exclude special parameters like _auto_result which are handled by FlextService
         # Python 3.13: Extract and validate _auto_result with modern pattern
-        auto_result_raw: object = kwargs.pop("_auto_result", None)
-        match auto_result_raw:
-            case bool() as auto_result_value:
-                auto_result: bool | None = auto_result_value
-            case _:
-                auto_result = None
+        auto_result: bool | None = kwargs.pop("_auto_result", None)  # type: ignore[assignment]
         # Python 3.13: Filter kwargs with modern comprehension
         # Removed unused kwargs filtering - super().__init__() doesn't need config
         # Type narrowing: dict[str, str | float | bool | None]

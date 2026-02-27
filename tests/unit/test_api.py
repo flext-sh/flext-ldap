@@ -213,7 +213,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: object,
+            stats: m.Ldap.SyncStats,
         ) -> None:
             pass
 
@@ -229,7 +229,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: object,
+            stats: m.Ldap.SyncStats,
         ) -> None:
             pass
 
@@ -245,7 +245,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: object,
+            stats: m.Ldap.SyncStats,
         ) -> None:
             pass
 
@@ -262,7 +262,7 @@ class TestsFlextLdapApi:
             current: int,
             total: int,
             dn: str,
-            stats: object,
+            stats: m.Ldap.SyncStats,
         ) -> None:
             pass
 
