@@ -11,11 +11,8 @@ from typing import Self
 from flext_ldif.models import FlextLdifModels
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
+from flext_ldap.protocols import p
 from flext_ldap.typings import t
-
-__all__ = [
-    "FlextLdapModelsLdap",
-]
 
 
 class FlextLdapModelsLdap:
@@ -283,8 +280,12 @@ class FlextLdapModelsLdap:
     class Types:
         """Type definitions for LDAP models."""
 
-        LdapProgressCallback = Callable[[int, int, str, object], None]
-        MultiPhaseProgressCallback = Callable[[str, int, int, str, object], None]
+        LdapProgressCallback = Callable[
+            [int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
+        ]
+        MultiPhaseProgressCallback = Callable[
+            [str, int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
+        ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 
     class LdapOperationResult(BaseModel):
@@ -318,3 +319,8 @@ class FlextLdapModelsLdap:
         overall_success_rate: float = 0.0
         total_duration_seconds: float = 0.0
         overall_success: bool = True
+
+
+__all__ = [
+    "FlextLdapModelsLdap",
+]

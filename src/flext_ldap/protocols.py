@@ -11,7 +11,7 @@ This allows protocols to remain independent of model implementations.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Protocol, runtime_checkable
+from typing import Protocol, override, runtime_checkable
 
 from flext_core import r, t
 from flext_ldif import p as ldif_p
@@ -54,6 +54,7 @@ class FlextLdapProtocols(ldif_p):
         class DNProtocol(Protocol):
             """Protocol for Distinguished Name (structural type)."""
 
+            @override
             def __str__(self) -> str:
                 """Return string representation of DN."""
                 ...
@@ -108,6 +109,14 @@ class FlextLdapProtocols(ldif_p):
                 | None
             )
 
+        @runtime_checkable
+        class LdapBatchStatsProtocol(Protocol):
+            """Protocol for LDAP batch statistics (structural type)."""
+
+            synced: int
+            failed: int
+            skipped: int
+
         # =====================================================================
         # LAYER 0: DOMAIN PROTOCOLS - Config (no internal dependencies)
         # =====================================================================
@@ -130,6 +139,7 @@ class FlextLdapProtocols(ldif_p):
         class SearchScopeProtocol(Protocol):
             """Protocol for search scope (structural type - accepts StrEnum or str)."""
 
+            @override
             def __str__(self) -> str:
                 """Return string representation of scope."""
                 ...

@@ -41,8 +41,7 @@ from flext_ldif.services.parser import FlextLdifParser
 from flext_tests import FlextTestsDocker
 from ldap3 import Connection, Server
 
-# Import unified test foundation modules
-from . import c, m, t  # Test foundation short aliases (TestsFlextLdap*)
+from . import c, m, t
 from .typings import GenericFieldsDict, LdapContainerDict
 
 logger = FlextLogger(__name__)
