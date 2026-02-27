@@ -288,7 +288,7 @@ from flext_ldap import m, c
 def validate_filter(filter_string: str) -> bool:
     """Validate LDAP filter syntax."""
     try:
-        ldap_filter = FlextLdapModels.ValueObjects.Filter(expression=filter_string)
+        ldap_filter = FlextLdapModels.Values.Filter(expression=filter_string)
         return True
     except ValueError as e:
         print(f"Invalid filter: {e}")

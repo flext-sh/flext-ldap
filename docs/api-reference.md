@@ -13,7 +13,7 @@
 - [📊 Domain Entities](#domain-entities)
   - [FlextLdapEntities](#flextldapentities)
 - [🎯 Value Objects](#value-objects)
-  - [FlextLdapModels.ValueObjects](#flextldapmodelsvalueobjects)
+  - [FlextLdapModels.Values](#flextldapmodelsvalueobjects)
 - [⚙️ Configuration](#configuration)
   - [FlextLdapSettings](#flextldapsettings)
 - [🔧 Utilities](#utilities)
@@ -50,7 +50,7 @@
       - FlextLdapUser
       - FlextLdapGroup
   - 🎯 Value Objects
-    - FlextLdapModels.ValueObjects
+    - FlextLdapModels.Values
       - DN
       - LdapFilter
 - Create filters
@@ -297,7 +297,7 @@ ______________________________________________________________________
 
 ## 🎯 Value Objects
 
-### FlextLdapModels.ValueObjects
+### FlextLdapModels.Values
 
 Container for value objects.
 
@@ -317,7 +317,7 @@ RFC 4514 compliant distinguished name.
 **Example:**
 
 ```python
-dn = FlextLdapModels.ValueObjects.DN("cn=user,ou=people,dc=example,dc=com")
+dn = FlextLdapModels.Values.DN("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)       # "cn=user"
 print(dn.parent_dn) # "ou=people,dc=example,dc=com"
 ```
@@ -341,11 +341,11 @@ LDAP search filter with validation.
 
 ```python
 # Create filters
-user_filter = FlextLdapModels.ValueObjects.LdapFilter.equals("uid", "john.doe")
-person_filter = FlextLdapModels.ValueObjects.LdapFilter.object_class("person")
+user_filter = FlextLdapModels.Values.LdapFilter.equals("uid", "john.doe")
+person_filter = FlextLdapModels.Values.LdapFilter.object_class("person")
 
 # Combine filters
-combined = FlextLdapModels.ValueObjects.LdapFilter.and_filters(user_filter, person_filter)
+combined = FlextLdapModels.Values.LdapFilter.and_filters(user_filter, person_filter)
 ```
 
 #### LdapScope
