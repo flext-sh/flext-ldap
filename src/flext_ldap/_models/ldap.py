@@ -110,12 +110,12 @@ class FlextLdapModelsLdap:
         allow_deletes: bool = False
         source_basedn: str = ""
         target_basedn: str = ""
-        progress_callback: Callable[[SyncStats], None] | None = None
+        progress_callback: Callable[[FlextLdapModelsLdap.SyncStats], None] | None = None
 
     class SyncStats(BaseModel):
         """Sync stats."""
 
-        added: int = 0
+        synced: int = 0
         skipped: int = 0
         failed: int = 0
         total: int = 0
@@ -123,15 +123,15 @@ class FlextLdapModelsLdap:
 
         @computed_field
         def success_rate(self) -> float:
-            """Calculate success rate (added + skipped) / total."""
+            """Calculate success rate (synced + skipped) / total."""
             if self.total == 0:
                 return 0.0
-            return (self.added + self.skipped) / self.total
+            return (self.synced + self.skipped) / self.total
 
         @classmethod
         def from_counters(
             cls,
-            added: int = 0,
+            synced: int = 0,
             skipped: int = 0,
             failed: int = 0,
             duration_seconds: float = 0.0,
@@ -139,10 +139,10 @@ class FlextLdapModelsLdap:
         ) -> Self:
             """Factory method with auto-calculated total from counters."""
             return cls(
-                added=added,
+                synced=synced,
                 skipped=skipped,
                 failed=failed,
-                total=added + skipped + failed,
+                total=synced + skipped + failed,
                 duration_seconds=duration_seconds,
                 **kwargs,
             )

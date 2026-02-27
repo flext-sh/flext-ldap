@@ -38,9 +38,10 @@ import types
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self, TypeIs
+from typing import Self, TypeIs, override
 
-from flext_core import FlextSettings, r
+from flext_core import FlextSettings
+from flext_core.result import FlextResult
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -122,7 +123,7 @@ _is_multi_phase_callback = FlextLdapSyncCallbacks.is_multi_phase_callback
 _is_single_phase_callback = FlextLdapSyncCallbacks.is_single_phase_callback
 
 
-class FlextLdap(s[m.Ldap.SearchResult]):
+class FlextLdap(s):
     """Main API facade for LDAP operations using dependency injection.
 
     Uses FlextLdapConnection and FlextLdapOperations directly without wrapper logic.
@@ -170,6 +171,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     """
 
     @classmethod
+    @override
+    def _get_service_config_type(cls) -> type[FlextLdapSettings]:
     def _get_service_config_type(cls) -> type[FlextLdapSettings]:
         """Get FlextLdapSettings as the service-specific config type."""
         return FlextLdapSettings
@@ -302,7 +305,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         max_retries: int = 3,
         retry_delay: float = 1.0,
         **_kwargs: str | float | bool | None,
-    ) -> r[bool]:
+    ) -> FlextResult[bool]:
         """Establish LDAP connection with optional auto-retry.
 
         Business Rules:
@@ -333,7 +336,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             retry_delay: Delay between retries in seconds (default: 1.0)
 
         Returns:
-            r[bool] indicating connection success
+            FlextResult[bool] indicating connection success
 
         """
         config_for_connect: m.Ldap.ConnectionConfig
@@ -432,7 +435,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         self,
         search_options: m.Ldap.SearchOptions,
         server_type: str = "rfc",
-    ) -> r[m.Ldap.SearchResult]:
+    ) -> FlextResult[m.Ldap.SearchResult]:
         """Perform LDAP search operation.
 
         Business Rules:
@@ -469,7 +472,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     def add(
         self,
         entry: m.Ldif.Entry,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> FlextResult[m.Ldap.OperationResult]:
         """Add LDAP entry.
 
         Business Rules:
@@ -506,7 +509,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         self,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.Operation.Changes,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> FlextResult[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
         Business Rules:
@@ -544,7 +547,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     def delete(
         self,
         dn: str | m.Ldif.DN,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> FlextResult[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -582,7 +585,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
-    ) -> r[m.Ldap.LdapOperationResult]:
+    ) -> FlextResult[m.Ldap.LdapOperationResult]:
         """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).
 
         Business Rules:
@@ -630,7 +633,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
-    ) -> r[m.Ldap.LdapBatchStats]:
+    ) -> FlextResult[m.Ldap.LdapBatchStats]:
         """Batch upsert multiple LDAP entries with progress tracking.
 
         Business Rules:
@@ -680,7 +683,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         phase_name: str,
         *,
         config: m.Ldap.SyncPhaseConfig | None = None,
-    ) -> r[m.Ldap.PhaseSyncResult]:
+    ) -> FlextResult[m.Ldap.PhaseSyncResult]:
         """Synchronize entries from LDIF file to LDAP server.
 
         Business Rules:
@@ -729,14 +732,14 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             RuntimeError,
             ImportError,
         ) as e:
-            return r.fail(f"Failed to read LDIF file: {e!s}")
+            return FlextResult.fail(f"Failed to read LDIF file: {e!s}")
 
         parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
-            return r.fail(f"Failed to parse LDIF file: {error_msg}")
+            return FlextResult.fail(f"Failed to parse LDIF file: {error_msg}")
 
         # Type narrowing: parse_result.value returns list[m.Ldif.Entry]
         # Runtime validation ensures correctness
@@ -745,7 +748,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             m.Ldif.Entry.model_validate(entry) for entry in parse_value
         ]
         if not entries:
-            return r.ok(
+            return FlextResult.ok(
                 m.Ldap.PhaseSyncResult(
                     phase_name=phase_name,
                     total_entries=0,
@@ -801,7 +804,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             error_msg = (
                 str(batch_result.error) if batch_result.error else "Unknown error"
             )
-            return r.fail(f"Batch sync failed: {error_msg}")
+            return FlextResult.fail(f"Batch sync failed: {error_msg}")
 
         batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()
@@ -813,7 +816,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             else 0.0
         )
 
-        return r.ok(
+        return FlextResult.ok(
             m.Ldap.PhaseSyncResult(
                 phase_name=phase_name,
                 total_entries=len(entries),
@@ -933,7 +936,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         phase_name: str,
         ldif_path: Path,
         config: m.Ldap.SyncPhaseConfig,
-    ) -> r[m.Ldap.PhaseSyncResult]:
+    ) -> FlextResult[m.Ldap.PhaseSyncResult]:
         """Process single phase file and return result.
 
         Handles phase-specific callback preparation and execution.
@@ -962,14 +965,14 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 stop_on_error=config.stop_on_error,
             ),
         )
-        # sync_phase_entries already returns r[m.Ldap.PhaseSyncResult]
+        # sync_phase_entries already returns FlextResult[m.Ldap.PhaseSyncResult]
 
     def sync_multiple_phases(
         self,
         phase_files: Mapping[str, Path],
         *,
         config: m.Ldap.SyncPhaseConfig | None = None,
-    ) -> r[m.Ldap.MultiPhaseSyncResult]:
+    ) -> FlextResult[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially.
 
         Processes multiple LDIF files (phases) in the order provided by the
@@ -997,7 +1000,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 Applied to all phases uniformly.
 
         Returns:
-            r[MultiPhaseSyncResult]: Aggregated results including
+            FlextResult[MultiPhaseSyncResult]: Aggregated results including
             per-phase statistics, totals, and overall success rate.
 
         """
@@ -1070,7 +1073,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             else 0.0
         )
 
-        return r[m.Ldap.MultiPhaseSyncResult].ok(
+        return FlextResult[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
                 # PhaseSyncResult is object-compatible, no cast needed
                 phase_results=phase_results,
@@ -1084,7 +1087,8 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ),
         )
 
-    def execute(self) -> r[m.Ldap.SearchResult]:
+    @override
+    def execute(self) -> FlextResult[m.Ldap.SearchResult]:
         """Execute service health check for FlextService pattern compliance.
 
         Implements a custom execute method with extended return type compatibility.
@@ -1103,7 +1107,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             - No logging performed at facade level (delegated to operations)
 
         Returns:
-            r[SearchResult]: Health status from operations service.
+            FlextResult[SearchResult]: Health status from operations service.
 
         """
         return self._operations.execute()

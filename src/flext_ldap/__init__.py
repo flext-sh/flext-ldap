@@ -69,7 +69,7 @@ from flext_ldap.utilities import FlextLdapUtilities, u
 #   status = c.OperationType.ADD
 #   model = m.SearchOptions(...)
 #   protocol: p.LdapEntry.EntryProtocol = entry
-#   success = r.ok("value")
+#   success = FlextResult.ok("value")
 #   error = e.ValidationError("message")
 #   decorator = d.validate()
 #   class MyService(s): ...  # s = FlextLdapServiceBase

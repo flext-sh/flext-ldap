@@ -17,15 +17,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from typing import override
 
 from flext_core import FlextService
 from flext_core.protocols import p
 
 from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.typings import FlextLdapDomainResultT as TDomainResult
 
 
-class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
+class FlextLdapServiceBase(FlextService, ABC):
     """Base class for all flext-ldap services with typed config access.
 
     Inherits config property from x which provides:
@@ -35,12 +35,14 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
 
     Usage in services:
         class MyService(FlextLdapServiceBase[MyResult]):
-            def execute(self) -> r[MyResult]:
+            def execute(self) -> FlextResult[MyResult]:
                 host = self.config.ldap.host  # Typed access!
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """
 
     @classmethod
+    @override
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services.
 

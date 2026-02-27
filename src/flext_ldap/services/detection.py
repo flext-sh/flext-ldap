@@ -34,7 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import ParamSpec
 
-from flext_core import r
+from flext_core.result import FlextResult
 from ldap3 import BASE, Connection
 
 from flext_ldap.base import s
@@ -46,7 +46,7 @@ from flext_ldap.utilities import u
 P = ParamSpec("P")
 
 
-class FlextLdapServerDetector(s[str]):
+class FlextLdapServerDetector(s):
     """Identify a directory server by querying ``rootDSE`` attributes.
 
     The detector queries the base DN on a bound :class:`ldap3.Connection`,
@@ -54,13 +54,13 @@ class FlextLdapServerDetector(s[str]):
     normalized server label (for example, ``openldap`` or ``ad``).
     """
 
-    def execute(self, **_kwargs: str | float | bool | None) -> r[str]:
+    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[str]:
         """Detect server type using a provided ``ldap3.Connection`` instance.
 
         Business Rules:
             - Requires 'connection' parameter in kwargs (ldap3.Connection instance)
             - Delegates to detect_from_connection() for actual detection logic
-            - Returns r.fail() if connection parameter missing or invalid type
+            - Returns FlextResult.fail() if connection parameter missing or invalid type
             - Connection must be bound before detection (validated by detect_from_connection)
 
         Audit Implications:
@@ -76,15 +76,15 @@ class FlextLdapServerDetector(s[str]):
         # Extract connection from kwargs
         connection_raw = _kwargs.get("connection")
         if connection_raw is None:
-            return r[str].fail("connection parameter required")
+            return FlextResult[str].fail("connection parameter required")
         if not isinstance(connection_raw, Connection):
-            return r[str].fail(
+            return FlextResult[str].fail(
                 f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
             )
         connection: Connection = connection_raw
         return self.detect_from_connection(connection)
 
-    def detect_from_connection(self, connection: Connection) -> r[str]:
+    def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
         """Query ``rootDSE`` and return a detected server label.
 
         Business Rules:
@@ -110,13 +110,13 @@ class FlextLdapServerDetector(s[str]):
             connection: Active ldap3.Connection instance (must be bound).
 
         Returns:
-            r[str]: Normalized server type string (oid, oud, openldap, ad, ds389, rfc)
+            FlextResult[str]: Normalized server type string (oid, oud, openldap, ad, ds389, rfc)
             or error if rootDSE query fails.
 
         """
         root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
         if root_dse_result.is_failure:
-            return r[str].fail(
+            return FlextResult[str].fail(
                 f"Failed to query rootDSE: {root_dse_result.error}",
             )
 
@@ -152,7 +152,7 @@ class FlextLdapServerDetector(s[str]):
     @staticmethod
     def _query_root_dse(
         connection: Connection,
-    ) -> r[t.Ldap.Operation.AttributeDict]:
+    ) -> FlextResult[t.Ldap.Operation.AttributeDict]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
         Business Rules:
@@ -177,13 +177,13 @@ class FlextLdapServerDetector(s[str]):
             connection: Active ldap3.Connection instance (must be bound).
 
         Returns:
-            r[Attributes]: Dict mapping attribute names to list[str] values
+            FlextResult[Attributes]: Dict mapping attribute names to list[str] values
             or error if rootDSE query fails.
 
         """
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return FlextResult[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query failed: search unavailable"
             )
 
@@ -193,16 +193,18 @@ class FlextLdapServerDetector(s[str]):
             search_scope=BASE,
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return FlextResult[t.Ldap.Operation.AttributeDict].fail(
                 f"rootDSE query failed: {connection.result}",
             )
 
         if not connection.entries:
-            return r[Mapping[str, list[str]]].fail("rootDSE query returned no entries")
+            return FlextResult[Mapping[str, list[str]]].fail(
+                "rootDSE query returned no entries"
+            )
 
         root_dse_entry = connection.entries[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3EntryProtocol):
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return FlextResult[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query returned invalid entry payload"
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
@@ -212,7 +214,7 @@ class FlextLdapServerDetector(s[str]):
             k: [str(item) for item in v] for k, v in attrs_dict.items()
         }
 
-        return r[Mapping[str, list[str]]].ok(attributes)
+        return FlextResult[Mapping[str, list[str]]].ok(attributes)
 
     @staticmethod
     def _get_first_value(attrs: t.Ldap.Operation.AttributeDict, key: str) -> str | None:
@@ -234,7 +236,7 @@ class FlextLdapServerDetector(s[str]):
         naming_contexts: list[str],
         _supported_controls: list[str],
         supported_extensions: list[str],
-    ) -> r[str]:
+    ) -> FlextResult[str]:
         """Classify the server using collected ``rootDSE`` attributes.
 
         Business Rules:
@@ -261,7 +263,7 @@ class FlextLdapServerDetector(s[str]):
             supported_extensions: List of supported LDAP extensions.
 
         Returns:
-            r[str]: Always success with normalized server type string.
+            FlextResult[str]: Always success with normalized server type string.
 
         """
         # Simple server type detection based on common attributes
@@ -274,7 +276,7 @@ class FlextLdapServerDetector(s[str]):
                 vendor_version,
             )
         )
-        return r[str].ok(detected_type)
+        return FlextResult[str].ok(detected_type)
 
     @staticmethod
     def _detect_server_type_from_attributes_simple(

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, TypeVar
 
-from flext_core import r
+from flext_core.result import FlextResult
 from flext_ldif import FlextLdifTypes
 
 
@@ -46,7 +46,7 @@ class FlextLdapTypes(FlextLdifTypes):
         class Operation:
             """Operation type aliases."""
 
-            type Result[T] = r[T]
+            type Result[T] = FlextResult[T]
             type Changes = dict[str, list[tuple[int, list[str]]]]
             type Attributes = Mapping[str, Sequence[str]]
             type AttributeDict = dict[str, list[str]]
