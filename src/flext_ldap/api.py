@@ -173,7 +173,6 @@ class FlextLdap(s):
     @classmethod
     @override
     def _get_service_config_type(cls) -> type[FlextLdapSettings]:
-    def _get_service_config_type(cls) -> type[FlextLdapSettings]:
         """Get FlextLdapSettings as the service-specific config type."""
         return FlextLdapSettings
 
