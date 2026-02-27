@@ -180,35 +180,15 @@ class FlextLdapEntryAdapter(s[bool]):
 
     def __init__(
         self,
-        **kwargs: t.GeneralValueType,
+        *,
+        server_type: str | None = None,
     ) -> None:
         """Initialize entry adapter with FlextLdif integration and quirks.
 
         Args:
-            **kwargs: Keyword arguments including:
-                - server_type: Server type for normalization (defaults to Constants)
-                - Additional keyword arguments passed to parent class
+            server_type: Server type for normalization (defaults to RFC).
 
         """
-        # Extract server_type from kwargs if provided
-        server_type_raw = kwargs.get("server_type")
-        # DSL pattern: ensure string type with None default
-        # DSL pattern: builder for optional str conversion
-        server_type: str | None = (
-            str(server_type_raw) if server_type_raw is not None else None
-        )
-        # Remove server_type and _auto_result from kwargs before passing to parent
-        # Filter to only valid service kwargs (str | float | bool | None)
-        # Exclude special parameters like _auto_result which are handled by FlextService
-        # Python 3.13: Extract and validate _auto_result with modern pattern
-        auto_result: bool | None = kwargs.pop(
-            "_auto_result", None
-        )  # Python 3.13: Filter kwargs with modern comprehension
-        # Removed unused kwargs filtering - super().__init__() doesn't need config
-        # Type narrowing: dict[str, str | float | bool | None]
-        # matches FlextService.__init__ signature
-        # Do NOT pass _auto_result to super().__init__() - it's a PrivateAttr
-        # that must be set directly via object.__setattr__() to bypass Pydantic validation
         super().__init__()
         # Use provided server_type or default from constants
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
@@ -216,7 +196,6 @@ class FlextLdapEntryAdapter(s[bool]):
         # Use object.__setattr__ for PrivateAttr fields (frozen model compatibility)
         object.__setattr__(self, "_ldif", FlextLdif())
         object.__setattr__(self, "_server_type", resolved_type)
-        object.__setattr__(self, "_auto_result", auto_result)
 
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
         """Execute method required by FlextService.

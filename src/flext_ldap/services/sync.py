@@ -348,13 +348,11 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
     def __init__(
         self,
         operations: FlextLdapOperations | None = None,
-        **kwargs: str | float | bool | None,
     ) -> None:
         """Initialize the sync service with a required operations instance.
 
         Business Rules:
             - Operations parameter is REQUIRED (raises TypeError if None)
-            - Supports operations via positional arg OR kwargs["operations"]
             - FlextLdif singleton is resolved at construction for LDIF parsing
             - Datetime generator uses u.Generators for test injection
             - Type validation ensures operations is FlextLdapOperations instance
@@ -366,36 +364,18 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         Args:
             operations: Required FlextLdapOperations instance with active
                 connection. Raises TypeError if None or wrong type.
-            **kwargs: Additional arguments passed to base class. May contain
-                "operations" key as alternative to positional argument.
 
         Raises:
             TypeError: If operations is None or not FlextLdapOperations.
 
         """
-        # Remove _auto_result from kwargs (handled by FlextService)
-        # Python 3.13: Use type narrowing with structural pattern matching
-        # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
-        # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
-        # which matches FlextService.__init__ signature
         super().__init__()
-        # Use u.get() mnemonic: extract from kwargs with fallback
-        # Python 3.13: Use structural pattern matching for type validation
-        if operations is None:
-            operations_kwarg = kwargs.get("operations")
-            if operations_kwarg is not None:
-                if not isinstance(operations_kwarg, FlextLdapOperations):
-                    error_msg = f"operations must be FlextLdapOperations, got {type(operations_kwarg).__name__}"
-                    raise TypeError(error_msg)
-                operations = operations_kwarg
 
         if operations is None:
             error_msg = "operations parameter is required"
             raise TypeError(error_msg)
 
         # operations is not None at this point (mypy type narrowing after raise)
-        # Type validation already done above if from kwargs
-        # At this point operations is guaranteed to be FlextLdapOperations
         self._operations = operations
         # FlextLdif accepts config via kwargs, not as direct parameter
         self._ldif = FlextLdif()
