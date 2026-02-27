@@ -288,7 +288,7 @@ class TestsFlextLdapBase:
     def test_service_model_config_attributes(
         self,
         attr_name: str,
-        expected_value: str | int | float | bool | None,
+        expected_value: str | float | bool | None,
     ) -> None:
         """Test service inherits correct model config attributes from FlextService."""
 

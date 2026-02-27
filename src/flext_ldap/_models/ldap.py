@@ -138,7 +138,7 @@ class FlextLdapModelsLdap:
             skipped: int = 0,
             failed: int = 0,
             duration_seconds: float = 0.0,
-            **kwargs: str | int | float | bool | None,
+            **kwargs: str | float | bool | None,
         ) -> Self:
             """Factory method with auto-calculated total from counters."""
             return cls(

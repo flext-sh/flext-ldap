@@ -493,7 +493,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
 
             # Normalize attributes efficiently
-            def normalize_attr(_k: str, v: str | bytes | Sequence[str | bytes]) -> list[str]:
+            def normalize_attr(
+                _k: str, v: str | bytes | Sequence[str | bytes]
+            ) -> list[str]:
                 """Normalize attribute value to list[str]."""
                 match v:
                     case list() | tuple():

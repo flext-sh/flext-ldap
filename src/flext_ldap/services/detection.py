@@ -54,7 +54,7 @@ class FlextLdapServerDetector(s[str]):
     normalized server label (for example, ``openldap`` or ``ad``).
     """
 
-    def execute(self, **_kwargs: str | int | float | bool | None) -> r[str]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[str]:
         """Detect server type using a provided ``ldap3.Connection`` instance.
 
         Business Rules:

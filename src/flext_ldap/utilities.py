@@ -387,8 +387,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @staticmethod
         def find_callable(
             callables_dict: Mapping[str, Callable[..., t.ConfigMapValue]],
-            *args: str | int | float | bool | None,
-            **kwargs: str | int | float | bool | None,
+            *args: str | float | bool | None,
+            **kwargs: str | float | bool | None,
         ) -> str | None:
             """Find first callable that returns truthy value.
 
@@ -446,7 +446,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
 
             # Python 3.13: DSL pattern with isinstance for type narrowing
-            def convert_value(_k: str, v: str | list[str] | t.ConfigMapValue) -> list[str]:
+            def convert_value(
+                _k: str, v: str | list[str] | t.ConfigMapValue
+            ) -> list[str]:
                 if v is None:
                     return []
                 # Python 3.13: Use isinstance directly for type narrowing
