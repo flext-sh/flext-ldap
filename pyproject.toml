@@ -134,6 +134,7 @@ markers = [
 ]
 
 # [MANAGED] pyright
+enable_assertion_pass_hook = true
 [tool.pyright]
 extraPaths = [ "../flext-core/src", "../flext-ldif/src" ]
 pythonVersion = "3.13"
