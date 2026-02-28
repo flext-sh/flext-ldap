@@ -145,8 +145,8 @@ class FlextLdapConnection(s):
         connection_config: m.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
+        max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
+        retry_delay: float = c.Ldap.ConnectionDefaults.DEFAULT_RETRY_DELAY,
         **_kwargs: str | float | bool | None,
     ) -> FlextResult[bool]:
         """Establish an LDAP connection with optional automatic retry.

@@ -44,12 +44,31 @@ class FlextLdapConstants(FlextLdifConstants):
         class ConnectionDefaults:
             """Connection default values."""
 
+            DEFAULT_HOST = "localhost"
+            DEFAULT_MAX_RETRIES = 5
+            DEFAULT_RETRY_DELAY = 1.0
             PORT = 389
             TIMEOUT = 30
             AUTO_BIND = True
             AUTO_RANGE = True
             POOL_SIZE = 10
             POOL_LIFETIME = 3600
+
+        class SearchDefaults:
+            """Search operation default values."""
+
+            DEFAULT_SCOPE = "SUBTREE"
+
+        class ServerDefaults:
+            """Server configuration default values."""
+
+            DEFAULT_TYPE = "rfc"
+
+        class EntryDefaults:
+            """Entry processing default values."""
+
+            UNKNOWN_VALUE = "unknown"
+            ASCII_THRESHOLD = 127
 
         class LdapCqrs:
             """LDAP CQRS constants."""

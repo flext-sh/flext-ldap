@@ -780,11 +780,11 @@ class FlextLdapOperations(s):
                 entry_model.dn,
                 m.Ldif.DN,
             ):
-                dn_str = entry_model.dn.value or "unknown"
+                dn_str = entry_model.dn.value or c.Ldap.EntryDefaults.UNKNOWN_VALUE
             elif entry_model.dn is not None:
                 dn_str = str(entry_model.dn)
             else:
-                dn_str = "unknown"
+                dn_str = c.Ldap.EntryDefaults.UNKNOWN_VALUE
             # Railway pattern: map success to MODIFIED, lash for conditional SKIPPED/fail
             return (
                 self._ops
@@ -871,7 +871,7 @@ class FlextLdapOperations(s):
 
             """
             # Extract DN from EntryProtocol
-            entry_dn = str(entry.dn.value) if entry.dn is not None else "unknown"
+            entry_dn = str(entry.dn.value) if entry.dn is not None else c.Ldap.EntryDefaults.UNKNOWN_VALUE
             search_options = m.Ldap.SearchOptions(
                 base_dn=entry_dn,
                 filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,

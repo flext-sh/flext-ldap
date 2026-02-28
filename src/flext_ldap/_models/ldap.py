@@ -11,6 +11,7 @@ from typing import Self
 from flext_ldif.models import FlextLdifModels
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
+from flext_ldap.constants import c
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 
@@ -21,13 +22,13 @@ class FlextLdapModelsLdap:
     class ConnectionConfig(BaseModel):
         """Connection config."""
 
-        host: str = "localhost"
-        port: int = Field(default=389, ge=1, le=65535)
+        host: str = c.Ldap.ConnectionDefaults.DEFAULT_HOST
+        port: int = Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535)
         use_ssl: bool = False
         use_tls: bool = False
         bind_dn: str | None = None
         bind_password: str | None = None
-        timeout: int = 30
+        timeout: int = c.Ldap.ConnectionDefaults.TIMEOUT
         auto_bind: bool = True
         auto_range: bool = True
 
@@ -42,8 +43,8 @@ class FlextLdapModelsLdap:
     class NormalizedConfig(BaseModel):
         """Configuration for normalized SearchOptions factory."""
 
-        scope: str = "SUBTREE"
-        filter_str: str = "(objectClass=*)"
+        scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
+        filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
         size_limit: int = 0
         time_limit: int = 0
         attributes: list[str] | None = None
@@ -56,8 +57,8 @@ class FlextLdapModelsLdap:
             min_length=1,
             description="Base DN for search (required, non-empty)",
         )
-        scope: str = "SUBTREE"
-        filter_str: str = "(objectClass=*)"
+        scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
+        filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
         attributes: list[str] | None = None
         size_limit: int = 0
         time_limit: int = 0
@@ -180,10 +181,10 @@ class FlextLdapModelsLdap:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        server_type: str = "rfc"
+        server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
         progress_callback: FlextLdapModelsLdap.Types.ProgressCallbackUnion = None
         retry_on_errors: list[str] | None = None
-        max_retries: int = 5
+        max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
 
     class ConversionMetadata(BaseModel):

@@ -66,10 +66,10 @@ class FlextLdapEntryAdapter(s):
         """
 
         # ASCII threshold for base64 encoding detection (chars > 127 require encoding)
-        ASCII_THRESHOLD: int = 127
+        ASCII_THRESHOLD: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
 
         @staticmethod
-        def is_base64_encoded(value: str, threshold: int = ASCII_THRESHOLD) -> bool:
+        def is_base64_encoded(value: str, threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD) -> bool:
             """Check if value requires base64 encoding.
 
             Business Rules:
@@ -545,7 +545,7 @@ class FlextLdapEntryAdapter(s):
         except (ValueError, TypeError, AttributeError) as e:
             # Safe access for logging - use Protocol check for type-safe access
             entry_dn_for_log = (
-                str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
+                str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else c.Ldap.EntryDefaults.UNKNOWN_VALUE
             )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
@@ -613,11 +613,11 @@ class FlextLdapEntryAdapter(s):
             return FlextResult[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             # Get DN value from entry - duck-typing works since entry is validated above
-            dn_value = getattr(entry.dn, "value", entry.dn) if entry.dn else "unknown"
+            dn_value = getattr(entry.dn, "value", entry.dn) if entry.dn else c.Ldap.EntryDefaults.UNKNOWN_VALUE
             entry_dn_str = (
                 str(dn_value)
-                if dn_value is not None and dn_value != "unknown"
-                else "unknown"
+                if dn_value is not None and dn_value != c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
             )
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
