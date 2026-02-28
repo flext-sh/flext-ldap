@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
@@ -37,25 +37,17 @@ if TYPE_CHECKING:
         x,
     )
 
-    from flext_ldap import (
-        FlextLdap,
-        FlextLdapConnection,
-        FlextLdapConstants,
-        FlextLdapConstants as c,
-        FlextLdapModels,
-        FlextLdapModels as m,
-        FlextLdapOperations,
-        FlextLdapProtocols,
-        FlextLdapProtocols as p,
-        FlextLdapServerDetector,
-        FlextLdapServiceBase,
-        FlextLdapSettings,
-        FlextLdapTypes,
-        FlextLdapTypes as t,
-        FlextLdapUtilities,
-        FlextLdapUtilities as u,
-        s,
-    )
+    from flext_ldap.api import FlextLdap
+    from flext_ldap.base import FlextLdapServiceBase, s
+    from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
+    from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
+    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
+    from flext_ldap.services.connection import FlextLdapConnection
+    from flext_ldap.services.detection import FlextLdapServerDetector
+    from flext_ldap.services.operations import FlextLdapOperations
+    from flext_ldap.settings import FlextLdapSettings
+    from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
+    from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -65,10 +57,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapModels": ("flext_ldap.models", "FlextLdapModels"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
     "FlextLdapProtocols": ("flext_ldap.protocols", "FlextLdapProtocols"),
-    "FlextLdapServerDetector": (
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ),
+    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
     "FlextLdapServiceBase": ("flext_ldap.base", "FlextLdapServiceBase"),
     "FlextLdapSettings": ("flext_ldap.settings", "FlextLdapSettings"),
     "FlextLdapTypes": ("flext_ldap.typings", "FlextLdapTypes"),
@@ -112,7 +101,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.GeneralValueType:
+def __getattr__(name: str) -> Any:  # noqa: ANN401
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
