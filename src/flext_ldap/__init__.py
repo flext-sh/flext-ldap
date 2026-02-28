@@ -57,7 +57,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapModels": ("flext_ldap.models", "FlextLdapModels"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
     "FlextLdapProtocols": ("flext_ldap.protocols", "FlextLdapProtocols"),
-    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
+    "FlextLdapServerDetector": (
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ),
     "FlextLdapServiceBase": ("flext_ldap.base", "FlextLdapServiceBase"),
     "FlextLdapSettings": ("flext_ldap.settings", "FlextLdapSettings"),
     "FlextLdapTypes": ("flext_ldap.typings", "FlextLdapTypes"),

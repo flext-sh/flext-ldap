@@ -16,6 +16,8 @@ from typing import Protocol, override, runtime_checkable
 from flext_core import FlextResult
 from flext_core.protocols import FlextProtocols
 
+from flext_ldap.typings import t
+
 
 class FlextLdapProtocols(FlextProtocols):
     """LDAP-specific protocol definitions.
