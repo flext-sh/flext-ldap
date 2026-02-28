@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
-from typing import ParamSpec
+from typing import ParamSpec, override
 
 from flext_core import FlextResult
 from ldap3 import BASE, Connection
@@ -46,7 +46,7 @@ from flext_ldap.utilities import u
 P = ParamSpec("P")
 
 
-class FlextLdapServerDetector(s):
+class FlextLdapServerDetector(s[str]):
     """Identify a directory server by querying ``rootDSE`` attributes.
 
     The detector queries the base DN on a bound :class:`ldap3.Connection`,
@@ -54,6 +54,7 @@ class FlextLdapServerDetector(s):
     normalized server label (for example, ``openldap`` or ``ad``).
     """
 
+    @override
     def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[str]:
         """Detect server type using a provided ``ldap3.Connection`` instance.
 

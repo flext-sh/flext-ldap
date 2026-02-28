@@ -26,6 +26,8 @@ Architecture Notes:
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextResult, FlextSettings
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
@@ -39,7 +41,7 @@ from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.utilities import u
 
 
-class FlextLdapConnection(s):
+class FlextLdapConnection(s[bool]):
     """Manage the LDAP connection lifecycle with typed ergonomics.
 
     The service wraps ``Ldap3Adapter`` to create/bind connections, optionally
@@ -318,6 +320,7 @@ class FlextLdapConnection(s):
                 error=str(detection_result.error) if detection_result.error else "",
             )
 
+    @override
     def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
         """Execute service health check for FlextService pattern compliance.
 

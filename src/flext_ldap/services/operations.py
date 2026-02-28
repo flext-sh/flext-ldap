@@ -53,7 +53,7 @@ LDAP3_MODIFY_DELETE: Final[int] = 1
 LDAP3_MODIFY_REPLACE: Final[int] = 2
 
 
-class FlextLdapOperations(s):
+class FlextLdapOperations(s[m.Ldap.SearchResult]):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`

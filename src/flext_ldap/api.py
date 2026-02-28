@@ -122,7 +122,7 @@ _is_multi_phase_callback = FlextLdapSyncCallbacks.is_multi_phase_callback
 _is_single_phase_callback = FlextLdapSyncCallbacks.is_single_phase_callback
 
 
-class FlextLdap(s):
+class FlextLdap(s[m.Ldap.SearchResult]):
     """Main API facade for LDAP operations using dependency injection.
 
     Uses FlextLdapConnection and FlextLdapOperations directly without wrapper logic.

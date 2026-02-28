@@ -98,18 +98,7 @@ class FlextLdapProtocols(FlextProtocols):
                 | FlextLdapProtocols.Ldap.AttributesProtocol
                 | None
             )
-            metadata: (
-                Mapping[
-                    str,
-                    str
-                    | int
-                    | float
-                    | bool
-                    | Sequence[str]
-                    | Mapping[str, str | Sequence[str]],
-                ]
-                | None
-            )
+            metadata: t.ConfigMap | None
 
         @runtime_checkable
         class LdapBatchStatsProtocol(Protocol):
@@ -232,7 +221,7 @@ class FlextLdapProtocols(FlextProtocols):
             def connect(
                 self,
                 config: FlextLdapProtocols.Ldap.ConnectionConfigProtocol,
-                **kwargs: str | bool | float | None,
+                **kwargs: t.ScalarValue,
             ) -> FlextResult[bool]:
                 """Connect to LDAP server.
 
@@ -314,7 +303,7 @@ class FlextLdapProtocols(FlextProtocols):
 
             def execute(
                 self,
-                **_kwargs: str | bool | float | None,
+                **_kwargs: t.ScalarValue,
             ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
                 """Execute health check or default operation.
 

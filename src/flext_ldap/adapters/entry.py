@@ -44,7 +44,7 @@ from flext_ldap.protocols import p
 from flext_ldap.typings import t
 
 
-class FlextLdapEntryAdapter(s):
+class FlextLdapEntryAdapter(s[bool]):
     """Adapter for converting between ldap3 and FlextLdif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:

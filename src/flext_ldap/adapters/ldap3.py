@@ -180,7 +180,7 @@ class FlextLdapLdap3Wrappers:
                 return bool(result)
 
 
-class Ldap3Adapter(s):
+class Ldap3Adapter(s[bool]):
     """Service adapter for ldap3 library following flext-ldif patterns.
 
     Wraps ldap3 Connection and Server objects to provide a simplified

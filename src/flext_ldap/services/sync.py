@@ -32,6 +32,7 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdif
@@ -43,7 +44,7 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.utilities import u
 
 
-class FlextLdapSyncService(s):
+class FlextLdapSyncService(s[m.Ldap.SyncStats]):
     """Stream LDIF entries into LDAP while tracking progress and totals.
 
     All LDAP mutations are delegated to :class:`FlextLdapOperations`, keeping
@@ -528,6 +529,7 @@ class FlextLdapSyncService(s):
             stats.model_copy(update={"duration_seconds": duration}),
         )
 
+    @override
     def execute(self) -> FlextResult[m.Ldap.SyncStats]:
         """Return an empty stats payload to indicate service readiness.
 
