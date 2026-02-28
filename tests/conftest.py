@@ -420,7 +420,6 @@ class TestFixtures:
 
 
 # Create alias for backward compatibility with fixtures
-LdapTestFixtures = TestFixtures
 
 
 # =============================================================================
@@ -1185,25 +1184,25 @@ def ldap_test_data_loader(
 @pytest.fixture
 def test_users_json() -> list[GenericFieldsDict]:
     """Load test users from JSON fixture file."""
-    return LdapTestFixtures.load_users_json()
+    return TestFixtures.load_users_json()
 
 
 @pytest.fixture
 def test_groups_json() -> list[GenericFieldsDict]:
     """Load test groups from JSON fixture file."""
-    return LdapTestFixtures.load_groups_json()
+    return TestFixtures.load_groups_json()
 
 
 @pytest.fixture
 def base_ldif_content() -> str:
     """Load base LDIF structure from fixture file."""
-    return LdapTestFixtures.load_base_ldif()
+    return TestFixtures.load_base_ldif()
 
 
 @pytest.fixture
 def base_ldif_entries() -> list[m.Ldif.Entry]:
     """Load and parse base LDIF structure to Entry models."""
-    return LdapTestFixtures.load_base_ldif_entries()
+    return TestFixtures.load_base_ldif_entries()
 
 
 @pytest.fixture
@@ -1223,7 +1222,7 @@ def test_user_entry(test_users_json: list[GenericFieldsDict]) -> GenericFieldsDi
         return default_user
 
     # convert_user_json_to_entry returns GenericFieldsDict
-    return LdapTestFixtures.convert_user_json_to_entry(test_users_json[0])
+    return TestFixtures.convert_user_json_to_entry(test_users_json[0])
 
 
 @pytest.fixture
@@ -1242,7 +1241,7 @@ def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFields
         return default_group
 
     # convert_group_json_to_entry returns GenericFieldsDict
-    return LdapTestFixtures.convert_group_json_to_entry(test_groups_json[0])
+    return TestFixtures.convert_group_json_to_entry(test_groups_json[0])
 
 
 # =============================================================================
