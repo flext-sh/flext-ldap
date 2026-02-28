@@ -11,10 +11,6 @@ from typing import TypeAlias
 from flext_ldif.models import FlextLdifModels
 
 from flext_ldap._models.ldap import FlextLdapModelsLdap
-from flext_ldap.protocols import p
-
-# Protocol reference from centralized protocols.py for backward compatibility
-HasItemsMethod = p.Ldap.HasItemsMethod
 
 
 class FlextLdapModels(FlextLdifModels):
@@ -106,4 +102,4 @@ class FlextLdapModels(FlextLdifModels):
 # Global instance
 m = FlextLdapModels
 
-__all__ = ["FlextLdapModels", "HasItemsMethod", "m"]
+__all__ = ["FlextLdapModels", "m"]

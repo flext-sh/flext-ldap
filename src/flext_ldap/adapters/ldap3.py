@@ -47,7 +47,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.base import s
 from flext_ldap.constants import FlextLdapConstants, c
-from flext_ldap.models import HasItemsMethod, m
+from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
@@ -507,7 +507,7 @@ class Ldap3Adapter(s):
             attrs: (
                 p.Ldap.HasAttributesProperty
                 | Mapping[str, t.GeneralValueType | Sequence[str]]
-                | HasItemsMethod
+                | p.Ldap.HasItemsMethod
                 | m.Ldif.Attributes
                 | BaseModel
                 | t.GeneralValueType
