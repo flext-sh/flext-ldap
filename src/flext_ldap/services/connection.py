@@ -133,7 +133,6 @@ class FlextLdapConnection(s[bool]):
         resolved_config: FlextLdapSettings = (
             config if config is not None else FlextLdapSettings()
         )
-        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
         self._config = resolved_config
         # Use default parser if not provided
         resolved_parser: FlextLdifParser = (

@@ -723,9 +723,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             )
 
             if changetype == c.Ldap.ChangeTypeOperations.MODIFY:
-                # p.Entry is structurally compatible with EntryProtocol (no cast needed)
                 return self.handle_schema_modify(entry)
-                # p.Entry is structurally compatible with EntryProtocol (no cast needed)
             return self.handle_regular_add(entry)
 
         def handle_schema_modify(

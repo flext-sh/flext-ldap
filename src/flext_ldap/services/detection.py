@@ -400,7 +400,6 @@ class FlextLdapServerDetector(s[str]):
         context_str = u.Ldap.norm_join(naming_contexts, case="lower")
 
         # Extension/context-based detection (priority order)
-        # Extension checks as typed variadic callables for find_callable ParamSpec[P] compatibility
         def check_openldap(*args: str) -> bool:
             """Check for OpenLDAP."""
             e = args[0] if args else ""

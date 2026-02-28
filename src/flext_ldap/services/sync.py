@@ -453,7 +453,6 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             )
 
         # API parse returns list[FlextLdifModels.Entry] (from flext-ldif)
-        # m.Ldif.Entry implements m.Ldif.Entry protocol, so entries are compatible
         # Type narrowing: parse_result.value returns list[FlextLdifModels.Entry]
         # which implements m.Ldif.Entry protocol via structural typing
         entries_raw = parse_result.value

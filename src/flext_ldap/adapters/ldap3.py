@@ -583,7 +583,6 @@ class Ldap3Adapter(s[bool]):
             else:
                 # Fallback: try dynamic attribute access for unknown types
                 # Note: ldap3.Entry uses entry_attributes (Sequence[str]), not attributes
-                # So we need to use get_dynamic_attribute for compatibility
                 attrs_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed,
                     "attributes",
@@ -709,7 +708,6 @@ class Ldap3Adapter(s[bool]):
 
             # Python 3.13: Filter with type narrowing - metadata_dict is Mapping[str, object]
             # Note: MetadataAttributeValue dict variant includes datetime and list types
-            # but we filter to basic scalar types for QuirkMetadata compatibility
             filtered: dict[
                 str,
                 str
@@ -783,7 +781,6 @@ class Ldap3Adapter(s[bool]):
                 # Only accept LdifEntry instances for direct processing
                 # Other types must be validated and converted in service layer
                 if isinstance(entry_raw, p.Ldap.Ldap3EntryProtocol):
-                    # ldap3.Entry - convert to EntryProtocol-compatible structure
                     # This requires extracting entry_dn and building attributes dict
                     # For now, skip - ldap3 entries should be converted via ldap3_to_ldif_entry first
                     entry_for_extraction = None
@@ -1288,7 +1285,6 @@ class Ldap3Adapter(s[bool]):
         # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
         # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
-        # Protocols are structurally compatible - no type ignore needed
         super().__init__()
         # Use default parser if not provided
         if parser is None:
@@ -1539,7 +1535,6 @@ class Ldap3Adapter(s[bool]):
             )
 
         # Use entries directly - LdifEntry is the public API
-        # so all entries are compatible via duck-typing (same interface)
         entries_raw = entries_result.value
 
         return FlextResult[m.Ldap.SearchResult].ok(
@@ -1588,7 +1583,6 @@ class Ldap3Adapter(s[bool]):
             )
 
         # entry is already LdifEntry from signature - use directly
-        # Cast to protocol for type compatibility
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""

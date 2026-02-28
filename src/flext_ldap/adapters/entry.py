@@ -194,7 +194,6 @@ class FlextLdapEntryAdapter(s[bool]):
         # Use provided server_type or default from constants
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
         # FlextLdif accepts config via kwargs, not as direct parameter
-        # Use object.__setattr__ for PrivateAttr fields (frozen model compatibility)
         object.__setattr__(self, "_ldif", FlextLdif())
         object.__setattr__(self, "_server_type", resolved_type)
 
@@ -465,7 +464,6 @@ class FlextLdapEntryAdapter(s[bool]):
         try:
             dn_str = str(ldap3_entry.entry_dn)
             # ldap3 is untyped - entry_attributes_as_dict returns dict-like structure
-            # Type from ldap3: Mapping[str, Sequence[object]], compatible with our usage
             attrs_dict = ldap3_entry.entry_attributes_as_dict
             original_attrs_dict = attrs_dict
             removed_attrs: list[str] = []
@@ -605,7 +603,6 @@ class FlextLdapEntryAdapter(s[bool]):
             )
         try:
             # Python 3.13: Use isinstance directly for type-safe filtering
-            # Convert to str keys and list values to ensure type compatibility
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
                 key_str = str(k)

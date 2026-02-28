@@ -177,7 +177,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
     _ldif: FlextLdif = PrivateAttr()
     _config: FlextSettings | None = PrivateAttr(
         default=None,
-    )  # Compatible with base class
+    )
 
     def __init__(
         self,
@@ -211,7 +211,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
         # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
         # which matches FlextService.__init__ signature
-        # Protocols are structurally compatible - no type ignore needed
         super().__init__()
         self._connection = connection
         self._operations = operations
@@ -229,7 +228,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         # Type narrowing: connection_config is already FlextLdapSettings | None
         # After isinstance check above, if it's not None, it's FlextLdapSettings
         if connection_config is not None:
-            # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
             self._config = connection_config
         self.logger.info(
             "FlextLdap facade initialized",
@@ -769,7 +767,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
                 single_phase_callback = callback
 
-        # p.Entry implements m.Ldif.Entry.EntryProtocol (structural compatibility)
         # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
         # Structural typing: p.Entry implements m.Ldif.Entry
         # Convert to list explicitly for type safety
@@ -948,7 +945,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             phase_name,
             config=m.Ldap.SyncPhaseConfig(
                 server_type=config.server_type,
-                progress_callback=phase_callback,  # Structurally compatible, no cast needed
+                progress_callback=phase_callback,
                 retry_on_errors=config.retry_on_errors,
                 max_retries=config.max_retries,
                 stop_on_error=config.stop_on_error,
@@ -1064,7 +1061,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         return FlextResult[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
-                # PhaseSyncResult is object-compatible, no cast needed
                 phase_results=phase_results,
                 total_entries=totals["entries"],
                 total_synced=totals["synced"],

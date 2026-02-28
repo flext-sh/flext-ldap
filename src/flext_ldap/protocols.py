@@ -183,7 +183,7 @@ class FlextLdapProtocols(FlextProtocols):
             """
 
             success: bool
-            operation_type: str  # Accepts StrEnum (compatible with str)
+            operation_type: str
             message: str
             entries_affected: int
 
