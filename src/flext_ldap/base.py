@@ -21,7 +21,7 @@ from typing import TypeVar, override
 
 from flext_core import FlextService, p
 
-from flext_ldap.settings import FlextLdapSettings
+from flext_ldap import FlextLdapSettings
 
 TDomainResult = TypeVar("TDomainResult")
 

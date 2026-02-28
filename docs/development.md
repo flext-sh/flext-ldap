@@ -429,8 +429,8 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldap.entities import FlextLdapUser
-from flext_ldap.value_objects import DN
+from flext_ldap import FlextLdapUser
+from flext_ldap import DN
 ```
 
 ______________________________________________________________________
@@ -441,7 +441,7 @@ ______________________________________________________________________
 
 ```python
 import pytest
-from flext_ldap.entities import FlextLdapUser, CreateUserRequest
+from flext_ldap import FlextLdapUser, CreateUserRequest
 
 class TestFlextLdapUser:
     """Test domain entity behavior."""

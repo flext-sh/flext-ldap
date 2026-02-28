@@ -267,9 +267,9 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 
 ```python
 import ldap3
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import OpenLDAP2Operations, OracleOIDOperations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
 
 def server_specific_operations():
     """Use server-specific operations with automatic detection."""
@@ -308,7 +308,7 @@ def server_specific_operations():
         elif server_type == "oid":
             ops = OracleOIDOperations()
         else:
-            from flext_ldap.servers import GenericServerOperations
+            from flext_ldap import GenericServerOperations
             ops = GenericServerOperations()
 
         # Discover schema
@@ -325,7 +325,7 @@ run(server_specific_operations())
 Convert between ldap3 and FlextLdif entry formats:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
 
@@ -360,7 +360,7 @@ if attrs_result.is_success:
 Discover schema from different LDAP server types:
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 def discover_schema():
@@ -391,7 +391,7 @@ run(discover_schema())
 Manage server-specific ACLs:
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 def manage_acls():
@@ -431,7 +431,7 @@ run(manage_acls())
 Execute paged searches with automatic pagination:
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 def paged_search():

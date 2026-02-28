@@ -91,7 +91,7 @@ from flext_ldap import (
 )
 
 # Server operations
-from flext_ldap.servers import (
+from flext_ldap import (
     OpenLDAP2Operations,
     OracleOIDOperations,
 )

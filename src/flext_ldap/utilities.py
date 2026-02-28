@@ -15,9 +15,7 @@ from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities
 
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.typings import t
+from flext_ldap import c, m, t
 
 type _StrictJsonValue = (
     str
@@ -50,7 +48,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
     USAGE:
     ──────
-        from flext_ldap.utilities import u
+        from flext_ldap import u
 
         # Builder patterns
         values = u.to_str_list(attr_value)
@@ -69,7 +67,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         and cross-project access. Also provides access to LDIF utilities via .Ldif.
 
         Example:
-            from flext_ldap.utilities import u
+            from flext_ldap import u
             values = u.Ldap.to_str_list(attr_value)
             result = u.Ldap.DN.parse("cn=test,dc=example")  # Access LDIF utilities
 

@@ -743,7 +743,7 @@ ______________________________________________________________________
 FLEXT-LDAP uses FlextLdif for universal LDIF entry handling with automatic server quirks detection:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
 
@@ -775,8 +775,8 @@ for ldap3_entry in connection.entries:
 Process LDIF files with FlextLdif integration:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import OpenLDAP2Operations
 
 def process_ldif_file():
     """Process LDIF file and import to LDAP server."""
@@ -816,8 +816,8 @@ run(process_ldif_file())
 Export LDAP entries to LDIF format:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 def export_to_ldif():
@@ -864,9 +864,9 @@ run(export_to_ldif())
 Use FlextLdif quirks system for automatic server detection:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 )
 import ldap3
@@ -918,7 +918,7 @@ def detect_and_configure():
         elif server_type == "oud":
             ops = OracleOUDOperations()
         else:
-            from flext_ldap.servers import GenericServerOperations
+            from flext_ldap import GenericServerOperations
             ops = GenericServerOperations()
 
         return ops
@@ -931,9 +931,9 @@ run(detect_and_configure())
 Complete example combining FlextLdif with server operations:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations, GenericServerOperations
 )
 from flext_ldif import FlextLdifModels

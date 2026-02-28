@@ -9,13 +9,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr, t
 
 if TYPE_CHECKING:
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.services.sync import FlextLdapSyncService
+    from flext_ldap import (
+        FlextLdapConnection,
+        FlextLdapOperations,
+        FlextLdapServerDetector,
+        FlextLdapSyncService,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

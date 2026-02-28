@@ -23,14 +23,16 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
-from flext_ldap import FlextLdap, FlextLdapSettings, m
-from flext_ldap.api import (
+from flext_ldap import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
     SINGLE_PHASE_CALLBACK_PARAM_COUNT,
+    FlextLdap,
+    FlextLdapConnection,
+    FlextLdapOperations,
+    FlextLdapSettings,
     FlextLdapSyncCallbacks,
+    m,
 )
-from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import FlextLdif
 from flext_tests import tm
 

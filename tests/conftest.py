@@ -36,8 +36,7 @@ from flext_ldap import (
     FlextLdapOperations,
     FlextLdapSettings,
 )
-from flext_ldif import FlextLdif
-from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif import FlextLdif, FlextLdifParser
 from flext_tests import FlextTestsDocker
 from ldap3 import Connection, Server
 

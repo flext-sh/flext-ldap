@@ -44,13 +44,15 @@ from flext_core import FlextResult, FlextSettings
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
+from flext_ldap import (
+    FlextLdapConnection,
+    FlextLdapOperations,
+    FlextLdapSettings,
+    m,
+    s,
+    t,
+)
 from flext_ldap._models.ldap import FlextLdapModelsLdap
-from flext_ldap.base import s
-from flext_ldap.models import m
-from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.typings import t
 
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5

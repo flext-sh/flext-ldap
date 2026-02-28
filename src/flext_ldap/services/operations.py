@@ -38,13 +38,7 @@ from flext_core import FlextResult, FlextRuntime, FlextSettings, p
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import FlextLdapConnection, FlextLdapSettings, c, m, s, t, u
 
 LaxStr = str | bytes | bytearray  # Type alias for lenient string handling
 
@@ -869,7 +863,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             # Extract DN from EntryProtocol
-            entry_dn = str(entry.dn.value) if entry.dn is not None else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+            entry_dn = (
+                str(entry.dn.value)
+                if entry.dn is not None
+                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+            )
             search_options = m.Ldap.SearchOptions(
                 base_dn=entry_dn,
                 filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,

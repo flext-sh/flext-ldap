@@ -8,7 +8,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, Literal
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConstants
 
 
 class FlextLdapConstants(FlextLdifConstants):

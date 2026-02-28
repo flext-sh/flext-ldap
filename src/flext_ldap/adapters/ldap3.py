@@ -37,20 +37,15 @@ from typing import Final, Literal, TypeAlias, override
 from flext_core import FlextResult
 from flext_ldif import (
     FlextLdif,
+    FlextLdifModels,
     FlextLdifParser,
     FlextLdifUtilities,
 )
-from flext_ldif.models import FlextLdifModels
 from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap import FlextLdapConstants, c, m, p, s, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_ldap.base import s
-from flext_ldap.constants import FlextLdapConstants, c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
 
 # Type alias for ldap3→LDIF entry (mypy/pyright valid-type)
 LdifEntry: TypeAlias = FlextLdifModels.Ldif.Entry

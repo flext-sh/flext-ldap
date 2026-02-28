@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 from flext_ldap._models.ldap import FlextLdapModelsLdap
 

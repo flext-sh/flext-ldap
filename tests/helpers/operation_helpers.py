@@ -17,11 +17,11 @@ import pytest
 from flext_core import FlextResult
 from flext_ldap import (
     FlextLdap,
+    FlextLdapModels,
     FlextLdapOperations,
     p,
     r,
 )
-from flext_ldap.models import FlextLdapModels
 from flext_tests import u
 
 from .. import constants as c_mod

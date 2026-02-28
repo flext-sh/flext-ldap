@@ -13,10 +13,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
-from flext_core import FlextResult
-from flext_core.protocols import FlextProtocols
+from flext_core import FlextProtocols, FlextResult
 
-from flext_ldap.typings import t
+from flext_ldap import t
 
 
 class FlextLdapProtocols(FlextProtocols):

@@ -536,7 +536,7 @@ Bidirectional converter between ldap3 entries and FlextLdif entries.
 **Import:**
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapEntryAdapter
 ```
 
 #### `ldap3_to_ldif_entry(ldap3_entry) -> FlextResult[FlextLdifModels.Entry]`
@@ -552,7 +552,7 @@ Convert ldap3.Entry to FlextLdif entry.
 **Example:**
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapEntryAdapter
 import ldap3
 
 adapter = FlextLdapEntryAdapter()
@@ -592,7 +592,7 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 ```python
 from flext_ldif import FlextLdifModels
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter()
 
@@ -643,7 +643,7 @@ Server detection and quirks system integration using FlextLdif.
 **Import:**
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapQuirksAdapter
 ```
 
 #### `detect_server_type_from_entries(entries) -> FlextResult[str]`
@@ -668,8 +668,8 @@ Detect LDAP server type from entry analysis.
 **Example:**
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 )
 
@@ -744,7 +744,7 @@ Abstract base class defining complete server operations interface.
 **Import:**
 
 ```python
-from flext_ldap.servers import BaseServerOperations
+from flext_ldap import BaseServerOperations
 ```
 
 **Server Implementations:**
@@ -795,7 +795,7 @@ Discover schema from server.
 **Example:**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 ops = OpenLDAP2Operations()
@@ -839,7 +839,7 @@ Retrieve ACLs from entry.
 **Example:**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
 
@@ -888,7 +888,7 @@ Add FlextLdif entry to directory.
 
 ```python
 from flext_ldif import FlextLdifModels
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
 
@@ -955,7 +955,7 @@ Execute paged search with automatic pagination.
 **Example:**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
 
@@ -985,7 +985,7 @@ Complete implementation for OpenLDAP 2.x (cn=config style).
 **Import:**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 ```
 
 **Features:**
@@ -999,7 +999,7 @@ from flext_ldap.servers import OpenLDAP2Operations
 **Example:**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 ops = OpenLDAP2Operations()
@@ -1025,7 +1025,7 @@ Complete implementation for Oracle Internet Directory.
 **Import:**
 
 ```python
-from flext_ldap.servers import OracleOIDOperations
+from flext_ldap import OracleOIDOperations
 ```
 
 **Features:**
@@ -1043,7 +1043,7 @@ Complete implementation for Oracle Unified Directory.
 **Import:**
 
 ```python
-from flext_ldap.servers import OracleOUDOperations
+from flext_ldap import OracleOUDOperations
 ```
 
 **Features:**
@@ -1061,7 +1061,7 @@ RFC-compliant fallback for unknown servers.
 **Import:**
 
 ```python
-from flext_ldap.servers import GenericServerOperations
+from flext_ldap import GenericServerOperations
 ```
 
 **Features:**
@@ -1105,9 +1105,9 @@ ______________________________________________________________________
 
 ```python
 import ldap3
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import (
     OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 )
 from flext_ldif import FlextLdifModels
@@ -1155,7 +1155,7 @@ def universal_ldap_example():
         elif server_type == "oud":
             ops = OracleOUDOperations()
         else:
-            from flext_ldap.servers import GenericServerOperations
+            from flext_ldap import GenericServerOperations
             ops = GenericServerOperations()
 
         # Discover schema

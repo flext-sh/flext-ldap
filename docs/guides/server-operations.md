@@ -187,7 +187,7 @@ Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn
 
 ```python
 # Import specific server operations
-from flext_ldap.servers import (
+from flext_ldap import (
     BaseServerOperations,          # Abstract base
     OpenLDAP2Operations,            # OpenLDAP 2.x
     OpenLDAP1Operations,            # OpenLDAP 1.x (legacy)
@@ -198,8 +198,8 @@ from flext_ldap.servers import (
 )
 
 # Import supporting components
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldif import FlextLdifModels
 ```
 
@@ -218,7 +218,7 @@ from flext_ldif import FlextLdifModels
 ### **Basic Usage**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 # Initialize operations
@@ -339,7 +339,7 @@ if search_result.is_success:
 ### **Key Differences**
 
 ```python
-from flext_ldap.servers import OpenLDAP1Operations
+from flext_ldap import OpenLDAP1Operations
 
 ops = OpenLDAP1Operations()
 
@@ -370,7 +370,7 @@ legacy_acl = {
 ### **Basic Usage**
 
 ```python
-from flext_ldap.servers import OracleOIDOperations
+from flext_ldap import OracleOIDOperations
 
 ops = OracleOIDOperations()
 
@@ -439,7 +439,7 @@ mechanisms = ops.get_bind_mechanisms()
 ### **Basic Usage**
 
 ```python
-from flext_ldap.servers import OracleOUDOperations
+from flext_ldap import OracleOUDOperations
 
 ops = OracleOUDOperations()
 
@@ -511,7 +511,7 @@ Currently implemented as a stub with `NotImplementedError` for most operations. 
 ### **Current Usage**
 
 ```python
-from flext_ldap.servers import ActiveDirectoryOperations
+from flext_ldap import ActiveDirectoryOperations
 
 ops = ActiveDirectoryOperations()
 
@@ -559,7 +559,7 @@ RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic
 ### **Usage**
 
 ```python
-from flext_ldap.servers import GenericServerOperations
+from flext_ldap import GenericServerOperations
 
 ops = GenericServerOperations()
 
@@ -604,8 +604,8 @@ search_result = ops.search_with_paging(
 All server operations integrate with the Entry Adapter for ldap3 ↔ FlextLdif conversion:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import OpenLDAP2Operations
 
 adapter = FlextLdapEntryAdapter()
 ops = OpenLDAP2Operations()
@@ -638,7 +638,7 @@ if attrs_result.is_success:
 Server type detection using FlextLdif quirks:
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapQuirksAdapter
 
 quirks = FlextLdapQuirksAdapter()
 

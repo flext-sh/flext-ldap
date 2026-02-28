@@ -38,10 +38,7 @@ from flext_core import FlextResult
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap.base import s
-from flext_ldap.models import m
-from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.utilities import u
+from flext_ldap import FlextLdapOperations, m, s, u
 
 
 class FlextLdapSyncService(s[m.Ldap.SyncStats]):
@@ -73,7 +70,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         - Callable injection for datetime generation enables test determinism
 
     Example:
-        >>> from flext_ldap.services.operations import FlextLdapOperations
+        >>> from flext_ldap import FlextLdapOperations
         >>> operations = FlextLdapOperations(connection=connected_connection)
         >>> sync_service = FlextLdapSyncService(operations=operations)
         >>> result = sync_service.sync_ldif_file(

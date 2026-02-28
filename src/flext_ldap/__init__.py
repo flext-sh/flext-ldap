@@ -14,8 +14,8 @@ Single Entry Point Architecture:
         result = ldap.search(options)
 
     Incorrect usage (bypasses single entry point):
-        from flext_ldap.services.connection import FlextLdapConnection  # ❌ WRONG
-        from flext_ldap.adapters import Ldap3Adapter  # ❌ WRONG
+        from flext_ldap import FlextLdapConnection  # ❌ WRONG
+        from flext_ldap import Ldap3Adapter  # ❌ WRONG
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import (
@@ -37,17 +37,25 @@ if TYPE_CHECKING:
         x,
     )
 
-    from flext_ldap.api import FlextLdap
-    from flext_ldap.base import FlextLdapServiceBase, s
-    from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
-    from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
-    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
-    from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
+    from flext_ldap import (
+        FlextLdap,
+        FlextLdapConnection,
+        FlextLdapConstants,
+        FlextLdapConstants as c,
+        FlextLdapModels,
+        FlextLdapModels as m,
+        FlextLdapOperations,
+        FlextLdapProtocols,
+        FlextLdapProtocols as p,
+        FlextLdapServerDetector,
+        FlextLdapServiceBase,
+        FlextLdapSettings,
+        FlextLdapTypes,
+        FlextLdapTypes as t,
+        FlextLdapUtilities,
+        FlextLdapUtilities as u,
+        s,
+    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

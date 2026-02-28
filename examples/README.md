@@ -744,8 +744,8 @@ ______________________________________________________________________
 ### Pattern 1: Basic FlextLdap Usage
 
 ```python
-from flext_ldap.api import FlextLdap
-from flext_ldap.settings import FlextLdapSettings
+from flext_ldap import FlextLdap
+from flext_ldap import FlextLdapSettings
 
 # Create and configure
 config = FlextLdapSettings(
@@ -772,7 +772,7 @@ api.unbind()
 
 ```python
 from contextlib import contextmanager
-from flext_ldap.api import FlextLdap
+from flext_ldap import FlextLdap
 
 @contextmanager
 def ldap_connection():
@@ -814,7 +814,7 @@ def process():
 ### Pattern 4: Validation Before Operations
 
 ```python
-from flext_ldap.validations import FlextLdapValidations
+from flext_ldap import FlextLdapValidations
 
 # Validate DN
 dn_result = FlextLdapValidations.validate_dn(user_dn)

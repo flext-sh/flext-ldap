@@ -32,13 +32,8 @@ from flext_core import FlextResult, FlextSettings
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
+from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, s, u
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.utilities import u
 
 
 class FlextLdapConnection(s[bool]):

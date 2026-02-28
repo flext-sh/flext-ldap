@@ -117,7 +117,7 @@ The ACL system follows Clean Architecture principles with:
 
 ```python
 from flext_ldap import FlextLdap
-from flext_ldap.acl import FlextLdapConstants
+from flext_ldap import FlextLdapConstants
 
 # Initialize API
 api = FlextLdap()
@@ -217,7 +217,7 @@ if batch_result.is_success:
 ### Using the Unified Model
 
 ```python
-from flext_ldap.acl import FlextLdapModels, FlextLdapConstants
+from flext_ldap import FlextLdapModels, FlextLdapConstants
 
 # Create ACL components
 target_result = FlextLdapModels.AclTarget.create(
@@ -381,7 +381,7 @@ else:
 ```python
 # Example: Convert Oracle OUD ACLs to OpenLDAP format
 from flext_ldap import FlextLdap
-from flext_ldap.acl import FlextLdapConstants
+from flext_ldap import FlextLdapConstants
 
 api = FlextLdap()
 
