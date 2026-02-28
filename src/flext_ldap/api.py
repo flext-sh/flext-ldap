@@ -47,7 +47,6 @@ from pydantic import ConfigDict, PrivateAttr
 from flext_ldap._models.ldap import FlextLdapModelsLdap
 from flext_ldap.base import s
 from flext_ldap.models import m
-from flext_ldap.protocols import p
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.settings import FlextLdapSettings
@@ -56,9 +55,6 @@ from flext_ldap.typings import t
 # Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
 SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
-
-# Protocol reference from centralized protocols.py for backward compatibility
-HasConfigAttribute = p.Ldap.HasConfigAttribute
 
 
 class FlextLdapSyncCallbacks:
@@ -115,11 +111,6 @@ class FlextLdapSyncCallbacks:
                 return phase_result.skipped
             case _:
                 return default
-
-
-# Module-level aliases for backward compatibility (used by tests)
-_is_multi_phase_callback = FlextLdapSyncCallbacks.is_multi_phase_callback
-_is_single_phase_callback = FlextLdapSyncCallbacks.is_single_phase_callback
 
 
 class FlextLdap(s[m.Ldap.SearchResult]):

@@ -27,8 +27,7 @@ from flext_ldap import FlextLdap, FlextLdapSettings, m
 from flext_ldap.api import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
     SINGLE_PHASE_CALLBACK_PARAM_COUNT,
-    _is_multi_phase_callback,
-    _is_single_phase_callback,
+    FlextLdapSyncCallbacks,
 )
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
@@ -197,12 +196,12 @@ class TestsFlextLdapApi:
 
     def test_is_multi_phase_callback_with_none(self) -> None:
         """Test _is_multi_phase_callback returns False for None."""
-        result = _is_multi_phase_callback(None)
+        result = FlextLdapSyncCallbacks.is_multi_phase_callback(None)
         tm.that(result, eq=False)
 
     def test_is_single_phase_callback_with_none(self) -> None:
         """Test _is_single_phase_callback returns False for None."""
-        result = _is_single_phase_callback(None)
+        result = FlextLdapSyncCallbacks.is_single_phase_callback(None)
         tm.that(result, eq=False)
 
     def test_is_multi_phase_callback_with_5_params(self) -> None:
@@ -219,7 +218,7 @@ class TestsFlextLdapApi:
 
         # Type narrowing: multi_phase_cb is callable with 5 parameters
         # Use direct call - type guards handle type narrowing
-        result = _is_multi_phase_callback(multi_phase_cb)
+        result = FlextLdapSyncCallbacks.is_multi_phase_callback(multi_phase_cb)
         tm.that(result, eq=True)
 
     def test_is_single_phase_callback_with_4_params(self) -> None:
@@ -235,7 +234,7 @@ class TestsFlextLdapApi:
 
         # Type narrowing: single_phase_cb is callable with 4 parameters
         # Use direct call - type guards handle type narrowing
-        result = _is_single_phase_callback(single_phase_cb)
+        result = FlextLdapSyncCallbacks.is_single_phase_callback(single_phase_cb)
         tm.that(result, eq=True)
 
     def test_is_multi_phase_callback_with_4_params_returns_false(self) -> None:
@@ -251,7 +250,7 @@ class TestsFlextLdapApi:
 
         # Type narrowing: single_phase_cb is callable with 4 parameters (not 5)
         # Use direct call - type guards handle type narrowing
-        result = _is_multi_phase_callback(single_phase_cb)
+        result = FlextLdapSyncCallbacks.is_multi_phase_callback(single_phase_cb)
         tm.that(result, eq=False)
 
     def test_is_single_phase_callback_with_5_params_returns_false(self) -> None:
@@ -268,7 +267,7 @@ class TestsFlextLdapApi:
 
         # Type narrowing: multi_phase_cb is callable with 5 parameters (not 4)
         # Use direct call - type guards handle type narrowing
-        result = _is_single_phase_callback(multi_phase_cb)
+        result = FlextLdapSyncCallbacks.is_single_phase_callback(multi_phase_cb)
         tm.that(result, eq=False)
 
     def test_is_multi_phase_callback_with_invalid_object(self) -> None:
@@ -277,7 +276,7 @@ class TestsFlextLdapApi:
         # Type narrowing: string is not callable, so type guard returns False
         # Use None instead of invalid object - type guards handle None gracefully
         # This tests the None handling path without violating type safety
-        result: bool = _is_multi_phase_callback(None)
+        result: bool = FlextLdapSyncCallbacks.is_multi_phase_callback(None)
         tm.that(result, eq=False)
 
     def test_is_single_phase_callback_with_invalid_object(self) -> None:
@@ -286,7 +285,7 @@ class TestsFlextLdapApi:
         # Type narrowing: integer is not callable, so type guard returns False
         # Use None instead of invalid object - type guards handle None gracefully
         # This tests the None handling path without violating type safety
-        result: bool = _is_single_phase_callback(None)
+        result: bool = FlextLdapSyncCallbacks.is_single_phase_callback(None)
         tm.that(result, eq=False)
 
     # =========================================================================
