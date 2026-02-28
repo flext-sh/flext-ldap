@@ -628,23 +628,28 @@ class Ldap3Adapter(s):
                 QuirkMetadata instance or None if no metadata available.
 
             """
-            metadata_raw: Mapping[str, Sequence[str | bytes]] | None = None
             if isinstance(parsed, LdifEntry):
+                # Entry.metadata is QuirkMetadata | None — return directly if present
+                if parsed.metadata is None:
+                    return None
+                if isinstance(parsed.metadata, m.Ldif.QuirkMetadata):
+                    return parsed.metadata
+                # Unexpected type — attempt normalization
                 metadata_raw = parsed.metadata
             else:
                 # Fallback: try dynamic attribute access for unknown types
                 # get_dynamic_attribute handles type conversion internally
-                metadata_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
+                dynamic_attr = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed,
                     "metadata",
                 )
-                if metadata_raw is None:
+                if dynamic_attr is None:
                     return None
+                if isinstance(dynamic_attr, m.Ldif.QuirkMetadata):
+                    return dynamic_attr
+                metadata_raw = dynamic_attr
             if not metadata_raw:
                 return None
-
-            if isinstance(metadata_raw, m.Ldif.QuirkMetadata):
-                return metadata_raw
 
             # Normalize metadata using normalize_metadata() - handles all filtering and conversion
             normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
