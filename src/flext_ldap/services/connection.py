@@ -26,8 +26,7 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from flext_core import FlextSettings
-from flext_core.result import FlextResult
+from flext_core import FlextResult, FlextSettings
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 

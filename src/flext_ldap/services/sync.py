@@ -33,7 +33,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 

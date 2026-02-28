@@ -13,8 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
-from flext_core import t
-from flext_core.result import FlextResult
+from flext_core import FlextResult, t
 from flext_ldif import p as ldif_p
 
 

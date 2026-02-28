@@ -33,7 +33,7 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 

@@ -40,8 +40,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeIs, override
 
-from flext_core import FlextSettings
-from flext_core.result import FlextResult
+from flext_core import FlextResult, FlextSettings
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 

@@ -78,7 +78,7 @@ from flext_ldap.utilities import FlextLdapUtilities, u
 
 # Domain aliases imported from modules (already imported above)
 # u, t, c, m, p, s are imported from their respective modules
-# Global aliases r, e, d, x, h imported from flext_core via import-as above
+# Global aliases r, e, d, x, h imported from flext_core import-as above
 
 __all__ = [
     "FlextLdap",  # ✅ Facade (single entry point)

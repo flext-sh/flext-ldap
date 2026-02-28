@@ -34,9 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Final, override
 
-from flext_core import FlextRuntime, FlextSettings
-from flext_core.protocols import p
-from flext_core.result import FlextResult
+from flext_core import FlextResult, FlextRuntime, FlextSettings, p
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 

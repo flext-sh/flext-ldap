@@ -34,7 +34,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Final, Literal, TypeAlias, override
 
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 from flext_ldif import (
     FlextLdif,
     FlextLdifParser,

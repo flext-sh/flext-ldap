@@ -19,8 +19,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import override
 
-from flext_core import FlextService
-from flext_core.protocols import p
+from flext_core import FlextService, p
 
 from flext_ldap.settings import FlextLdapSettings
 

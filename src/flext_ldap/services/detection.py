@@ -34,7 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import ParamSpec
 
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 from ldap3 import BASE, Connection
 
 from flext_ldap.base import s
