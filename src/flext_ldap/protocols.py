@@ -339,7 +339,8 @@ class FlextLdapProtocols(FlextProtocols):
 
             # Type aliases for adapter operations
             type LdapModifyChanges = Mapping[
-                str, Sequence[tuple[str | int, Sequence[str]]]
+                str,
+                Sequence[tuple[str | int, Sequence[str]]],
             ]
 
             def search(

@@ -229,7 +229,7 @@ class TestFixtures:
 
             with filepath.open(encoding="utf-8") as f:
                 data: dict[str, t.ConfigMapValue] | list[t.ConfigMapValue] = json.load(
-                    f
+                    f,
                 )
 
             if not isinstance(data, list):

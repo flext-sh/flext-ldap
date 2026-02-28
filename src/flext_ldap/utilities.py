@@ -445,7 +445,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             # Python 3.13: DSL pattern with isinstance for type narrowing
             def convert_value(
-                _k: str, v: str | list[str] | t.ConfigMapValue
+                _k: str,
+                v: str | list[str] | t.ConfigMapValue,
             ) -> list[str]:
                 if v is None:
                     return []

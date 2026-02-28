@@ -255,7 +255,7 @@ class FlextLdapModelsLdap:
         def get_entry_category(entry: FlextLdifModels.Ldif.Entry) -> str:
             """Get category (objectclass) of an entry."""
             attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
-                entry
+                entry,
             )
             if not attrs:
                 return "unknown"
@@ -270,10 +270,12 @@ class FlextLdapModelsLdap:
         """Type definitions for LDAP models."""
 
         LdapProgressCallback = Callable[
-            [int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
+            [int, int, str, "p.Ldap.LdapBatchStatsProtocol"],
+            None,
         ]
         MultiPhaseProgressCallback = Callable[
-            [str, int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
+            [str, int, int, str, "p.Ldap.LdapBatchStatsProtocol"],
+            None,
         ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 

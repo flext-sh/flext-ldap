@@ -66,7 +66,8 @@ class FlextLdapEntryAdapter(s[bool]):
 
         @staticmethod
         def is_base64_encoded(
-            value: str, threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
+            value: str,
+            threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD,
         ) -> bool:
             """Check if value requires base64 encoding.
 
@@ -171,7 +172,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
             """
             return FlextLdapEntryAdapter._ConversionHelpers.convert_value_to_strings(
-                value
+                value,
             )
 
     _ldif: FlextLdif = PrivateAttr()
@@ -376,7 +377,7 @@ class FlextLdapEntryAdapter(s[bool]):
                     original_values_list = [original_str]
                 case bytes() as original_bytes:
                     original_values_list = [
-                        original_bytes.decode("utf-8", errors="replace")
+                        original_bytes.decode("utf-8", errors="replace"),
                     ]
                 case _:
                     original_values_list = [str(v) for v in original_values]
@@ -480,7 +481,8 @@ class FlextLdapEntryAdapter(s[bool]):
                                     case bytes() as item_bytes:
                                         str_values.append(
                                             item_bytes.decode(
-                                                "utf-8", errors="replace"
+                                                "utf-8",
+                                                errors="replace",
                                             ),
                                         )
                                     case _:
@@ -592,14 +594,14 @@ class FlextLdapEntryAdapter(s[bool]):
         # Check if attributes are empty
         if entry.attributes is None:
             return FlextResult[t.Ldap.Operation.Attributes].fail(
-                "Entry has no attributes"
+                "Entry has no attributes",
             )
         # entry.attributes is already m.Ldif.Attributes type (after None check above)
         ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
             return FlextResult[t.Ldap.Operation.Attributes].fail(
-                "Entry has no attributes"
+                "Entry has no attributes",
             )
         try:
             # Python 3.13: Use isinstance directly for type-safe filtering

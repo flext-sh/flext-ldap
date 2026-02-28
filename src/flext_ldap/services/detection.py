@@ -181,7 +181,7 @@ class FlextLdapServerDetector(s[str]):
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
             return FlextResult[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query failed: search unavailable"
+                "rootDSE query failed: search unavailable",
             )
 
         if not search_method(
@@ -196,13 +196,13 @@ class FlextLdapServerDetector(s[str]):
 
         if not connection.entries:
             return FlextResult[Mapping[str, list[str]]].fail(
-                "rootDSE query returned no entries"
+                "rootDSE query returned no entries",
             )
 
         root_dse_entry = connection.entries[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3EntryProtocol):
             return FlextResult[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query returned invalid entry payload"
+                "rootDSE query returned invalid entry payload",
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
 

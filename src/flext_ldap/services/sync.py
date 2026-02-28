@@ -415,7 +415,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         """
         if not ldif_file.exists():
             return FlextResult[m.Ldap.SyncStats].fail(
-                f"LDIF file not found: {ldif_file}"
+                f"LDIF file not found: {ldif_file}",
             )
 
         start_time = self._generate_datetime_utc()
@@ -436,7 +436,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             ImportError,
         ) as e:
             return FlextResult[m.Ldap.SyncStats].fail(
-                f"Failed to read LDIF file: {e!s}"
+                f"Failed to read LDIF file: {e!s}",
             )
 
         parse_result = self._ldif.parse(ldif_content)
@@ -446,7 +446,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
             return FlextResult[m.Ldap.SyncStats].fail(
-                f"Failed to parse LDIF file: {error_msg}"
+                f"Failed to parse LDIF file: {error_msg}",
             )
 
         # API parse returns list[FlextLdifModels.Entry] (from flext-ldif)

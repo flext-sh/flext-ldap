@@ -487,7 +487,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             # Normalize attributes efficiently
             def normalize_attr(
-                _k: str, v: str | bytes | Sequence[str | bytes]
+                _k: str,
+                v: str | bytes | Sequence[str | bytes],
             ) -> list[str]:
                 """Normalize attribute value to list[str]."""
                 match v:
@@ -653,7 +654,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             add_op: list[str] = [str(item) for item in add_op_raw]
             if not add_op:
                 return FlextResult[str].fail(
-                    "Schema modify entry missing 'add' attribute"
+                    "Schema modify entry missing 'add' attribute",
                 )
             return FlextResult[str].ok(add_op[0])
 
@@ -783,21 +784,21 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 .modify(dn_str, changes)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.MODIFIED
-                    )
+                        operation=c.Ldap.UpsertOperations.MODIFIED,
+                    ),
                 )
                 .lash(
                     lambda e: (
                         FlextResult[m.Ldap.LdapOperationResult].ok(
                             m.Ldap.LdapOperationResult(
-                                operation=c.Ldap.UpsertOperations.SKIPPED
-                            )
+                                operation=c.Ldap.UpsertOperations.SKIPPED,
+                            ),
                         )
                         if self._ops.is_already_exists_error(u.to_str(e))
                         else FlextResult[m.Ldap.LdapOperationResult].fail(
-                            u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR
+                            u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR,
                         )
-                    )
+                    ),
                 )
             )
 
@@ -828,15 +829,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 .add(entry_for_add)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.ADDED
-                    )
+                        operation=c.Ldap.UpsertOperations.ADDED,
+                    ),
                 )
                 .lash(
                     lambda e: (
                         self.handle_existing_entry(entry)
                         if self._ops.is_already_exists_error(u.to_str(e))
                         else FlextResult[m.Ldap.LdapOperationResult].fail(u.to_str(e))
-                    )
+                    ),
                 )
             )
 
@@ -1500,11 +1501,12 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """
         if not self._connection.is_connected:
             return FlextResult[m.Ldap.SearchResult].fail(
-                c.Ldap.ErrorStrings.NOT_CONNECTED
+                c.Ldap.ErrorStrings.NOT_CONNECTED,
             )
 
         ldap_config = FlextSettings.get_global_instance().get_namespace(
-            "ldap", FlextLdapSettings
+            "ldap",
+            FlextLdapSettings,
         )
         base_dn = ldap_config.base_dn or "dc=example,dc=com"
         return FlextResult[m.Ldap.SearchResult].ok(

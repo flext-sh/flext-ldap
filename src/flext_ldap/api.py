@@ -1035,7 +1035,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         totals = {
             "entries": sum(
                 FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result, "total_entries", 0
+                    phase_result,
+                    "total_entries",
+                    0,
                 )
                 for phase_result in phase_values
             ),
@@ -1049,7 +1051,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ),
             "skipped": sum(
                 FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result, "skipped", 0
+                    phase_result,
+                    "skipped",
+                    0,
                 )
                 for phase_result in phase_values
             ),

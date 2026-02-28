@@ -367,7 +367,7 @@ class Ldap3Adapter(s[bool]):
                 dn = str(dn_raw) if dn_raw is not None else ""
 
                 attrs_dict = Ldap3Adapter.ResultConverter.process_entry_attributes(
-                    entry
+                    entry,
                 )
                 results.append((dn, attrs_dict))
             return results
@@ -453,7 +453,8 @@ class Ldap3Adapter(s[bool]):
                 dn_raw = parsed.entry_dn
             else:
                 dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed, "dn"
+                    parsed,
+                    "dn",
                 )
             if dn_raw is None:
                 return m.Ldif.DN(value="")
@@ -1109,13 +1110,18 @@ class Ldap3Adapter(s[bool]):
             filter_str: str = Field(..., description="LDAP filter string")
             ldap_scope: int = Field(..., description="LDAP search scope")
             search_attributes: list[str] = Field(
-                default_factory=list, description="Attributes to retrieve"
+                default_factory=list,
+                description="Attributes to retrieve",
             )
             size_limit: int = Field(
-                default=0, ge=0, description="Maximum number of results"
+                default=0,
+                ge=0,
+                description="Maximum number of results",
             )
             time_limit: int = Field(
-                default=0, ge=0, description="Search timeout in seconds"
+                default=0,
+                ge=0,
+                description="Search timeout in seconds",
             )
 
         def __init__(self, adapter: Ldap3Adapter) -> None:
