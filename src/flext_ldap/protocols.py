@@ -13,11 +13,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
-from flext_core import FlextResult, t
-from flext_ldif import p as ldif_p
+from flext_core import FlextResult
+from flext_core.protocols import FlextProtocols
 
 
-class FlextLdapProtocols(ldif_p):
+class FlextLdapProtocols(FlextProtocols):
     """LDAP-specific protocol definitions.
 
     Domain-specific protocol interfaces for LDAP operations.
