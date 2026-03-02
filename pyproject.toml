@@ -172,3 +172,6 @@ redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
+bad-override = false
+
+[tool.poetry]
