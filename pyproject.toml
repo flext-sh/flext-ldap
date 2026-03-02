@@ -142,12 +142,6 @@ reportMissingImports = true
 reportMissingModuleSource = false
 
 # [MANAGED] mypy
-[tool.mypy]
-follow_imports = "normal"
-ignore_missing_imports = false
-mypy_path = "../flext-core/src:../flext-ldif/src"
-python_version = "3.13"
-
 # [CUSTOM] poetry dev extensions
 # [MANAGED] pyrefly
 [tool.pyrefly]
