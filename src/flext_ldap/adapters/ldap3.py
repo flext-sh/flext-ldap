@@ -705,7 +705,7 @@ class Ldap3Adapter(s[bool]):
             # Note: MetadataAttributeValue dict variant includes datetime and list types
             filtered: dict[
                 str,
-                t.ScalarValue | list[t.ScalarValue] | None,
+                t.Scalar | list[t.Scalar] | None,
             ] = {}
             for k, v in metadata_dict.items():
                 match k:

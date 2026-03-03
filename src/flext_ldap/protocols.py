@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
-from flext_core import FlextResult
+from flext_core import FlextResult, m
 from flext_ldif import FlextLdifProtocols
 
 from flext_ldap import t
@@ -221,7 +221,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def connect(
                 self,
                 config: FlextLdapProtocols.Ldap.ConnectionConfigProtocol,
-                **kwargs: t.ScalarValue,
+                **kwargs: t.Scalar,
             ) -> FlextResult[bool]:
                 """Connect to LDAP server.
 
@@ -303,7 +303,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def execute(
                 self,
-                **_kwargs: t.ScalarValue,
+                **_kwargs: t.Scalar,
             ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
                 """Execute health check or default operation.
 

@@ -119,7 +119,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_with_mapping(self) -> None:
         """Test find_callable with Mapping (covariant pattern)."""
-        handlers: dict[str, Callable[[], t.ScalarValue]] = {
+        handlers: dict[str, Callable[[], t.Scalar]] = {
             "handler1": lambda: "value1",
             "handler2": lambda: False,
         }
@@ -129,7 +129,7 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_not_found(self) -> None:
         """Test find_callable when no handler returns truthy."""
-        handlers: dict[str, Callable[[], t.ScalarValue]] = {
+        handlers: dict[str, Callable[[], t.Scalar]] = {
             "handler1": lambda: False,
             "handler2": lambda: None,
             "handler3": lambda: "",
