@@ -655,7 +655,7 @@ class Ldap3Adapter(s[bool]):
         def normalize_metadata(
             metadata: (
                 t.MetadataValue
-                | Mapping[str, t.JsonPrimitive | None]
+                | Mapping[str, t.Scalar | None]
                 | t.ContainerValue
                 | object
                 | None

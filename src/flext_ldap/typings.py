@@ -27,7 +27,7 @@ class SearchOptionsContract(Protocol):
 FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
 FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
 
-type LdapScalar = t.JsonPrimitive | None
+type LdapScalar = t.Scalar | None
 type LdapCollection = Sequence[str | bytes | int | float | bool]
 
 

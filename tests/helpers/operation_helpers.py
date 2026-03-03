@@ -76,7 +76,7 @@ class _LdapEntryProtocolAdapter:
     metadata: (
         Mapping[
             str,
-            t.JsonPrimitive | Sequence[str] | Mapping[str, str | Sequence[str]],
+            t.Scalar | Sequence[str] | Mapping[str, str | Sequence[str]],
         ]
         | None
     ) = None
