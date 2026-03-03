@@ -17,12 +17,7 @@ from flext_ldif import FlextLdifUtilities
 
 from flext_ldap import c, m, t
 
-type _StrictJsonValue = (
-    t.JsonPrimitive
-    | list[_StrictJsonValue]
-    | Mapping[str, _StrictJsonValue]
-    | None
-)
+
 
 # ═══════════════════════════════════════════════════════════════════
 # FLEXT_LDAP UTILITIES - Advanced Builder/DSL Patterns
@@ -79,7 +74,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @staticmethod
         def to_json_value(
             value: t.ContainerValue | None,
-        ) -> _StrictJsonValue:
+        ) -> t.StrictJsonValue:
             """Normalize values into strict JSON-safe primitives/collections."""
             match value:
                 case None | str() | int() | float() | bool():
