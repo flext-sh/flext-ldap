@@ -31,7 +31,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import Final, Literal, TypeAlias, override
 
 from flext_core import FlextResult
@@ -706,9 +705,7 @@ class Ldap3Adapter(s[bool]):
             # Note: MetadataAttributeValue dict variant includes datetime and list types
             filtered: dict[
                 str,
-                t.ScalarValue
-                | list[t.ScalarValue]
-                | None,
+                t.ScalarValue | list[t.ScalarValue] | None,
             ] = {}
             for k, v in metadata_dict.items():
                 match k:
