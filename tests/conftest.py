@@ -275,7 +275,7 @@ class TestFixtures:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[dict[str, t.ContainerValue]].fail(
+                return r[t.ConfigurationMapping].fail(
                     "Docker config file not found",
                 )
 
@@ -283,14 +283,14 @@ class TestFixtures:
                 config: dict[str, t.ContainerValue] = json.load(f)
 
             if not isinstance(config, dict):
-                return r[dict[str, t.ContainerValue]].fail(
+                return r[t.ConfigurationMapping].fail(
                     f"Expected dict in docker_config.json, got {type(config)}",
                 )
 
             # Type narrowing: config is dict
-            return r[dict[str, t.ContainerValue]].ok(config)
+            return r[t.ConfigurationMapping].ok(config)
         except (OSError, json.JSONDecodeError) as e:
-            return r[dict[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"Failed to load docker config: {e}",
             )
 
