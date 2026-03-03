@@ -15,9 +15,10 @@ from __future__ import annotations
 
 from typing import ClassVar, Final
 
-from flext_ldap import FlextLdapConstants
 from flext_ldif import FlextLdifConstants
 from flext_tests import FlextTestsConstants
+
+from flext_ldap import FlextLdapConstants
 
 
 class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):

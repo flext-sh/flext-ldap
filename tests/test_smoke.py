@@ -24,6 +24,8 @@ from enum import StrEnum
 
 import pytest
 from flext_core import r
+from ldap3 import Connection, Server
+
 from flext_ldap import (
     FlextLdap,
     FlextLdapConnection,
@@ -31,7 +33,6 @@ from flext_ldap import (
     FlextLdapSettings,
     m,
 )
-from ldap3 import Connection, Server
 
 from .typings import LdapContainerDict
 

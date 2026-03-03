@@ -15,6 +15,8 @@ from typing import TypeAlias, TypeVar
 
 import pytest
 from flext_core import FlextResult
+from flext_tests import u
+
 from flext_ldap import (
     FlextLdap,
     FlextLdapModels,
@@ -22,7 +24,6 @@ from flext_ldap import (
     p,
     r,
 )
-from flext_tests import u
 
 from .. import constants as c_mod
 from ..typings import GenericFieldsDict, t

@@ -26,8 +26,9 @@ from collections.abc import Callable
 from typing import ClassVar
 
 import pytest
-from flext_ldap import t
 from flext_tests import tm
+
+from flext_ldap import t
 
 from .. import u
 

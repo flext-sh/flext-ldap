@@ -26,8 +26,9 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
-from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings, m
 from flext_tests import tm
+
+from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings, m
 
 from .. import c
 

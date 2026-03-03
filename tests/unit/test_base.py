@@ -23,6 +23,7 @@ from typing import override
 
 import pytest
 from flext_core import FlextService, FlextSettings, r
+
 from flext_ldap import FlextLdapServiceBase, base, s
 
 pytestmark = [pytest.mark.unit]

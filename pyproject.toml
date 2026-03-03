@@ -144,6 +144,8 @@ reportMissingModuleSource = false
 # [MANAGED] mypy
 # [CUSTOM] poetry dev extensions
 # [MANAGED] pyrefly
+pythonPlatform = "Linux"
+typeCheckingMode = "strict"
 [tool.pyrefly]
 python-version = "3.13"
 
@@ -175,3 +177,27 @@ unannotated-return = true
 bad-override = false
 
 [tool.poetry]
+
+[tool.mypy]
+plugins = [
+    "pydantic.mypy",
+]
+disable_error_code = [
+    "prop-decorator",
+]
+python_version = "3.13"
+
+# [MANAGED] pydantic-mypy
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# [MANAGED] ruff
+[tool.ruff]
+extend = "../ruff-shared.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "flext_ldap",
+]

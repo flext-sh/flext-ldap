@@ -23,6 +23,9 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
+from flext_ldif import FlextLdif
+from flext_tests import tm
+
 from flext_ldap import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
     SINGLE_PHASE_CALLBACK_PARAM_COUNT,
@@ -33,8 +36,6 @@ from flext_ldap import (
     FlextLdapSyncCallbacks,
     m,
 )
-from flext_ldif import FlextLdif
-from flext_tests import tm
 
 from .. import c
 
