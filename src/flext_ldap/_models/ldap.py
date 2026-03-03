@@ -160,7 +160,7 @@ class FlextLdapModelsLdap:
         total_processed: int = 0
         successful: int = 0
         failed: int = 0
-        results: list[t.GeneralValueType] = Field(default_factory=list)
+        results: list[t.ContainerValue] = Field(default_factory=list)
 
         @property
         def success_rate(self) -> float:
@@ -239,7 +239,7 @@ class FlextLdapModelsLdap:
 
         @staticmethod
         def extract_objectclass_category(
-            attrs: Mapping[str, t.GeneralValueType],
+            attrs: Mapping[str, t.ContainerValue],
         ) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:

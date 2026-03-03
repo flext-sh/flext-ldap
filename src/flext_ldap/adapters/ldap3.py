@@ -374,9 +374,9 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: t.GeneralValueType | p.Ldap.Ldap3EntryProtocol | LdifEntry,
+            obj: t.ContainerValue | p.Ldap.Ldap3EntryProtocol | LdifEntry,
             attr_name: str,
-        ) -> t.GeneralValueType | t.MetadataAttributeValue | None:
+        ) -> t.ContainerValue | t.MetadataValue | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -409,7 +409,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: LdifEntry | t.GeneralValueType,
+            parsed: LdifEntry | t.ContainerValue,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -448,7 +448,7 @@ class Ldap3Adapter(s[bool]):
                 return m.Ldif.DN(value="")
 
             # Protocol-based entry - extract DN through structural typing.
-            dn_raw: t.GeneralValueType | None = None
+            dn_raw: t.ContainerValue | None = None
             if isinstance(parsed, p.Ldap.Ldap3EntryProtocol):
                 dn_raw = parsed.entry_dn
             else:
@@ -473,7 +473,7 @@ class Ldap3Adapter(s[bool]):
         @staticmethod
         def normalize_attr_values(
             attrs_dict: Mapping[str, str]
-            | Mapping[str, t.GeneralValueType]
+            | Mapping[str, t.ContainerValue]
             | Mapping[str, object]
             | None,
         ) -> t.Ldap.Operation.AttributeDict:
@@ -502,11 +502,11 @@ class Ldap3Adapter(s[bool]):
         def extract_attrs_dict(
             attrs: (
                 p.Ldap.HasAttributesProperty
-                | Mapping[str, t.GeneralValueType | Sequence[str]]
+                | Mapping[str, t.ContainerValue | Sequence[str]]
                 | p.Ldap.HasItemsMethod
                 | m.Ldif.Attributes
                 | BaseModel
-                | t.GeneralValueType
+                | t.ContainerValue
             ),
         ) -> t.Ldap.Operation.AttributeDict:
             """Extract LDAP attributes as dictionary from various input formats.
@@ -550,7 +550,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: LdifEntry | t.GeneralValueType,
+            parsed: LdifEntry | t.ContainerValue,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -573,7 +573,7 @@ class Ldap3Adapter(s[bool]):
                 - No network calls - pure data transformation
 
             """
-            attrs_raw: m.Ldif.Attributes | t.GeneralValueType | None = None
+            attrs_raw: m.Ldif.Attributes | t.ContainerValue | None = None
             if isinstance(parsed, LdifEntry):
                 attrs_raw = parsed.attributes
             else:
@@ -591,13 +591,13 @@ class Ldap3Adapter(s[bool]):
             if isinstance(attrs_raw, m.Ldif.Attributes):
                 return attrs_raw
 
-            # Extract attributes dict (extract_attrs_dict accepts GeneralValueType)
+            # Extract attributes dict (extract_attrs_dict accepts ContainerValue)
             attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
             return m.Ldif.Attributes(attributes=attrs_dict)
 
         @staticmethod
         def extract_metadata(
-            parsed: LdifEntry | t.GeneralValueType,
+            parsed: LdifEntry | t.ContainerValue,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -655,13 +655,13 @@ class Ldap3Adapter(s[bool]):
         @staticmethod
         def normalize_metadata(
             metadata: (
-                t.MetadataAttributeValue
-                | Mapping[str, str | int | float | bool | None]
-                | t.GeneralValueType
+                t.MetadataValue
+                | Mapping[str, t.JsonPrimitive | None]
+                | t.ContainerValue
                 | object
                 | None
             ),
-        ) -> t.MetadataAttributeValue | None:
+        ) -> t.MetadataValue | None:
             """Normalize metadata for Entry model validation.
 
             Business Rules:
@@ -706,12 +706,8 @@ class Ldap3Adapter(s[bool]):
             # Note: MetadataAttributeValue dict variant includes datetime and list types
             filtered: dict[
                 str,
-                str
-                | int
-                | float
-                | bool
-                | datetime
-                | list[str | int | float | bool | datetime | None]
+                t.ScalarValue
+                | list[t.ScalarValue]
                 | None,
             ] = {}
             for k, v in metadata_dict.items():

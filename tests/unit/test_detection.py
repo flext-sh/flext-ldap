@@ -47,7 +47,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _get_detector_execute_scenarios() -> list[
-        tuple[dict[str, t.GeneralValueType] | None, bool, str]
+        tuple[dict[str, t.ContainerValue] | None, bool, str]
     ]:
         """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
         return [
@@ -109,7 +109,7 @@ class TestsFlextLdapDetection:
     )
     def test_execute_error_handling(
         self,
-        kwargs: dict[str, t.GeneralValueType] | None,
+        kwargs: dict[str, t.ContainerValue] | None,
         expect_failure: bool,
         error_substring: str,
     ) -> None:

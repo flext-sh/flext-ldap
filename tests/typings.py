@@ -136,7 +136,7 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
                 """LDAP search result data."""
 
                 dn: str
-                attributes: dict[str, t.GeneralValueType]
+                attributes: dict[str, t.ContainerValue]
                 entry_uuid: str
                 modifyTimestamp: str
                 createTimestamp: str
@@ -145,8 +145,8 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
                 """Generic test scenario for LDAP testing."""
 
                 scenario_name: str
-                input_data: dict[str, t.GeneralValueType]
-                expected_output: dict[str, t.GeneralValueType]
+                input_data: dict[str, t.ContainerValue]
+                expected_output: dict[str, t.ContainerValue]
                 error_expected: bool
                 error_message: str
 

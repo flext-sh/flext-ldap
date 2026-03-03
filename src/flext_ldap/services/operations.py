@@ -890,7 +890,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             existing_entries: list[object] = []
             if search_data is not None and search_data.entries:
                 # search_data is m.Ldap.SearchResult from model definition
-                # SearchResult.entries contains directory entries from search (list[t.GeneralValueType] in type)
+                # SearchResult.entries contains directory entries from search (list[t.ContainerValue] in type)
                 # but are actually m.Ldif.Entry objects at runtime
                 existing_entries = list(search_data.entries)
             if not existing_entries:

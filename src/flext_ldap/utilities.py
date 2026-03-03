@@ -18,10 +18,7 @@ from flext_ldif import FlextLdifUtilities
 from flext_ldap import c, m, t
 
 type _StrictJsonValue = (
-    str
-    | int
-    | float
-    | bool
+    t.JsonPrimitive
     | list[_StrictJsonValue]
     | Mapping[str, _StrictJsonValue]
     | None
@@ -81,7 +78,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_json_value(
-            value: t.ConfigMapValue | None,
+            value: t.ContainerValue | None,
         ) -> _StrictJsonValue:
             """Normalize values into strict JSON-safe primitives/collections."""
             match value:
@@ -101,7 +98,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     return str(value)
 
         @staticmethod
-        def to_str(value: t.GeneralValueType | None, *, default: str = "") -> str:
+        def to_str(value: t.ContainerValue | None, *, default: str = "") -> str:
             """Convert to string using parent convenience shortcut.
 
             Delegates to FlextLdifUtilities.to_str() for actual conversion.
@@ -123,7 +120,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list(
-            value: t.GeneralValueType | None,
+            value: t.ContainerValue | None,
             *,
             default: list[str] | None = None,
         ) -> list[str]:
@@ -146,7 +143,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list_truthy(
-            value: t.GeneralValueType | None,
+            value: t.ContainerValue | None,
             *,
             default: list[str] | None = None,
         ) -> list[str]:
@@ -174,7 +171,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return [item for item in str_list if item]
 
         @staticmethod
-        def to_str_list_safe(value: t.GeneralValueType | None) -> list[str]:
+        def to_str_list_safe(value: t.ContainerValue | None) -> list[str]:
             """Safe str_list conversion using parent Conversion utilities.
 
             Uses parent Conversion utilities for safe None handling and conversion.
@@ -207,7 +204,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             @staticmethod
             def is_valid_status(
-                value: str | t.ConfigMapValue,
+                value: str | t.ContainerValue,
             ) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
@@ -326,8 +323,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list[t.GeneralValueType] | Mapping[str, t.GeneralValueType],
-        ) -> list[t.GeneralValueType] | Mapping[str, t.GeneralValueType]:
+            value: list[t.ContainerValue] | Mapping[str, t.ContainerValue],
+        ) -> list[t.ContainerValue] | Mapping[str, t.ContainerValue]:
             """Filter truthy values from list or dict.
 
             Args:
@@ -384,7 +381,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.ConfigMapValue]],
+            callables_dict: Mapping[str, Callable[..., t.ContainerValue]],
             *args: str | float | bool | None,
             **kwargs: str | float | bool | None,
         ) -> str | None:
@@ -426,7 +423,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: Mapping[str, t.GeneralValueType] | Mapping[str, list[str]],
+            attrs: Mapping[str, t.ContainerValue] | Mapping[str, list[str]],
             *,
             filter_list_like: bool = False,
         ) -> Mapping[str, list[str]]:
@@ -446,7 +443,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             # Python 3.13: DSL pattern with isinstance for type narrowing
             def convert_value(
                 _k: str,
-                v: str | list[str] | t.ConfigMapValue,
+                v: str | list[str] | t.ContainerValue,
             ) -> list[str]:
                 if v is None:
                     return []
@@ -463,7 +460,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 # Not a sequence - return as single string value
                 return [str(v)] if v is not None else []
 
-            attrs_dict: dict[str, t.GeneralValueType | list[str]] = dict(attrs)
+            attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
             if not attrs_dict:
                 return {}
             # Map attributes using dict comprehension (map functionality)
@@ -496,10 +493,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def when_safe(
             *,
             condition: bool,
-            then_value: t.ConfigMapValue | None,
-            else_value: t.ConfigMapValue | None = None,
+            then_value: t.ContainerValue | None,
+            else_value: t.ContainerValue | None = None,
             safe_then: bool = False,
-        ) -> t.ConfigMapValue | None:
+        ) -> t.ContainerValue | None:
             """Safe conditional (builder: whn().safe().or_().build()).
 
             Uses advanced DSL: whn() → safe() → or_() for safe composition.

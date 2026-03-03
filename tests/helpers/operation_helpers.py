@@ -76,10 +76,7 @@ class _LdapEntryProtocolAdapter:
     metadata: (
         Mapping[
             str,
-            str
-            | int
-            | float
-            | bool
+            t.JsonPrimitive
             | Sequence[str]
             | Mapping[str, str | Sequence[str]],
         ]
@@ -444,7 +441,7 @@ class TestsFlextLdapOperationHelpers:
         mail: str | None = None,
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
-        **extra_attributes: t.GeneralValueType,
+        **extra_attributes: t.ContainerValue,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
@@ -547,7 +544,7 @@ class TestsFlextLdapOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ContainerValue,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create group entry.
 
@@ -592,7 +589,7 @@ class TestsFlextLdapOperationHelpers:
         *,
         sn: str | None = None,
         mail: str | None = None,
-        **extra_attributes: t.GeneralValueType,
+        **extra_attributes: t.ContainerValue,
     ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
@@ -1002,7 +999,7 @@ class TestsFlextLdapOperationHelpers:
     def _convert_changes_to_modify_format(
         changes: Mapping[
             str,
-            t.GeneralValueType | list[tuple[str | int, list[str]]],
+            t.ContainerValue | list[tuple[str | int, list[str]]],
         ],
     ) -> t.Ldap.Operation.Changes:
         """Convert dict changes to ldap3 format (int operation codes)."""
@@ -1016,7 +1013,7 @@ class TestsFlextLdapOperationHelpers:
         for key, value_raw in changes.items():
             if value_raw is None:
                 continue
-            value: t.GeneralValueType
+            value: t.ContainerValue
             if isinstance(value_raw, (str, int, float, bool, list, dict, type(None))):
                 value = value_raw
             else:
@@ -1066,7 +1063,7 @@ class TestsFlextLdapOperationHelpers:
     def _execute_modify_when_not_connected(
         client: LdapClientType,
         dn: str,
-        changes: dict[str, t.GeneralValueType],
+        changes: dict[str, t.ContainerValue],
         expected_error: str,
     ) -> None:
         """Execute modify operation when not connected and assert failure."""
@@ -1102,7 +1099,7 @@ class TestsFlextLdapOperationHelpers:
     def execute_operation_when_not_connected(
         client: LdapClientType,
         operation: str,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ContainerValue,
     ) -> None:
         """Execute operation when not connected and assert failure.
 

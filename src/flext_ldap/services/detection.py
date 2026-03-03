@@ -120,7 +120,7 @@ class FlextLdapServerDetector(s[str]):
         root_dse_attrs = root_dse_result.value
         # Python 3.13: Use helper function for concise list conversion
 
-        def to_str_list(value: str | Sequence[str] | t.ConfigMapValue) -> list[str]:
+        def to_str_list(value: str | Sequence[str] | t.ContainerValue) -> list[str]:
             """Convert value to list[str] using modern Python 3.13 patterns."""
             if not value:
                 return []
@@ -335,7 +335,7 @@ class FlextLdapServerDetector(s[str]):
         # Python 3.13: Use modern list comprehension with filter
         vendor_list = u.to_str_list([vendor_name, vendor_version])
         vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
-        # Type narrowing: filter_truthy returns list[t.GeneralValueType] | dict[str, t.GeneralValueType]
+        # Type narrowing: filter_truthy returns list[t.ContainerValue] | dict[str, t.ContainerValue]
         # isinstance needed to distinguish list from dict (union type)
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]

@@ -229,7 +229,7 @@ class TestFixtures:
                 )
 
             with filepath.open(encoding="utf-8") as f:
-                data: dict[str, t.ConfigMapValue] | list[t.ConfigMapValue] = json.load(
+                data: dict[str, t.ContainerValue] | list[t.ContainerValue] = json.load(
                     f,
                 )
 
@@ -265,7 +265,7 @@ class TestFixtures:
             return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> r[dict[str, t.GeneralValueType]]:
+    def load_docker_config() -> r[dict[str, t.ContainerValue]]:
         """Load Docker configuration for test container.
 
         Returns:
@@ -275,22 +275,22 @@ class TestFixtures:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[dict[str, t.GeneralValueType]].fail(
+                return r[dict[str, t.ContainerValue]].fail(
                     "Docker config file not found",
                 )
 
             with filepath.open(encoding="utf-8") as f:
-                config: dict[str, t.ConfigMapValue] = json.load(f)
+                config: dict[str, t.ContainerValue] = json.load(f)
 
             if not isinstance(config, dict):
-                return r[dict[str, t.GeneralValueType]].fail(
+                return r[dict[str, t.ContainerValue]].fail(
                     f"Expected dict in docker_config.json, got {type(config)}",
                 )
 
             # Type narrowing: config is dict
-            return r[dict[str, t.GeneralValueType]].ok(config)
+            return r[dict[str, t.ContainerValue]].ok(config)
         except (OSError, json.JSONDecodeError) as e:
-            return r[dict[str, t.GeneralValueType]].fail(
+            return r[dict[str, t.ContainerValue]].fail(
                 f"Failed to load docker config: {e}",
             )
 
@@ -448,7 +448,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
     # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
     worker_input_val = getattr(session.config, "workerinput", None)
-    worker_input: dict[str, t.GeneralValueType] = (
+    worker_input: dict[str, t.ContainerValue] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = str(worker_input.get("workerid", "master"))
@@ -610,7 +610,7 @@ def pytest_runtest_makereport(
     if is_infrastructure_failure and not is_transient:
         # Get worker ID for isolation - pytest-xdist adds workerinput dynamically
         worker_input_val = getattr(item.session.config, "workerinput", None)
-        worker_input: dict[str, t.GeneralValueType] = (
+        worker_input: dict[str, t.ContainerValue] = (
             worker_input_val if isinstance(worker_input_val, dict) else {}
         )
         worker_id = str(worker_input.get("workerid", "master"))
@@ -646,7 +646,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
     """
     # pytest-xdist adds workerinput dynamically to config
     worker_input_val = getattr(request.config, "workerinput", None)
-    worker_input: dict[str, t.GeneralValueType] = (
+    worker_input: dict[str, t.ContainerValue] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = worker_input.get("workerid", "master")
@@ -1157,8 +1157,8 @@ def ldap_test_data_loader(
                     logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
                     # Entry might be already deleted by test or not exist
-                    # Convert Exception to t.GeneralValueType for logger.debug
-                    error_repr: t.GeneralValueType = str(e)
+                    # Convert Exception to t.ContainerValue for logger.debug
+                    error_repr: t.ContainerValue = str(e)
                     logger.debug("Cleanup skip for %s: %s", dn, error_repr)
 
         except Exception as e:
