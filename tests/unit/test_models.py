@@ -77,23 +77,23 @@ class TestsFlextLdapModels:
 
     def test_collections_exists(self) -> None:
         """Test Collections class exists."""
-        tm.that(m.Collections, none=False)
+        tm.that(m.Categories, none=False)
 
     def test_collections_config_exists(self) -> None:
         """Test Collections.Config exists."""
-        tm.that(m.Collections.Config, none=False)
+        tm.that(m.CollectionsConfig, none=False)
 
     def test_collections_options_exists(self) -> None:
         """Test Collections.Options exists."""
-        tm.that(m.Collections.Options, none=False)
+        tm.that(m.CollectionsOptions, none=False)
 
     def test_collections_results_exists(self) -> None:
         """Test Collections.Results exists."""
-        tm.that(m.Collections.Results, none=False)
+        tm.that(m.CollectionsResults, none=False)
 
     def test_collections_statistics_exists(self) -> None:
         """Test Collections.Statistics exists."""
-        tm.that(m.Collections.Statistics, none=False)
+        tm.that(m.CollectionsStatistics, none=False)
 
     # =========================================================================
     # Entry Model Tests
@@ -327,7 +327,7 @@ class TestsFlextLdapModels:
             message="Entry added successfully",
             entries_affected=1,
         )
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
         tm.that(result.message, eq="Entry added successfully")
         tm.that(result.entries_affected, eq=1)
@@ -468,7 +468,7 @@ class TestsFlextLdapModels:
     def test_sync_stats_default_values(self) -> None:
         """Test SyncStats default values."""
         stats = m.Ldap.SyncStats()
-        tm.that(stats.added, eq=0)
+        tm.that(stats.synced, eq=0)
         tm.that(stats.skipped, eq=0)
         tm.that(stats.failed, eq=0)
         tm.that(stats.total, eq=0)
@@ -482,23 +482,23 @@ class TestsFlextLdapModels:
     def test_sync_stats_success_rate_calculation(self) -> None:
         """Test SyncStats.success_rate computed field."""
         stats = m.Ldap.SyncStats(
-            added=70,
+            synced=70,
             skipped=20,
             failed=10,
             total=100,
         )
-        # success_rate = (added + skipped) / total = (70 + 20) / 100 = 0.9
+        # success_rate = (synced + skipped) / total = (70 + 20) / 100 = 0.9
         tm.that(stats.success_rate, eq=0.9)
 
     def test_sync_stats_from_counters_factory(self) -> None:
         """Test SyncStats.from_counters factory method."""
         stats = m.Ldap.SyncStats.from_counters(
-            added=50,
+            synced=50,
             skipped=30,
             failed=20,
             duration_seconds=10.5,
         )
-        tm.that(stats.added, eq=50)
+        tm.that(stats.synced, eq=50)
         tm.that(stats.skipped, eq=30)
         tm.that(stats.failed, eq=20)
         tm.that(stats.total, eq=100)  # auto-calculated
@@ -515,7 +515,7 @@ class TestsFlextLdapModels:
             dn=tc.RFC.DEFAULT_BASE_DN,
             operation=c.Ldap.OperationType.ADD,
         )
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.dn, eq=tc.RFC.DEFAULT_BASE_DN)
         tm.that(result.operation, eq=c.Ldap.OperationType.ADD)
         tm.that(result.error, none=True)
@@ -528,7 +528,7 @@ class TestsFlextLdapModels:
             operation=c.Ldap.OperationType.ADD,
             error="Entry already exists",
         )
-        tm.that(result.is_success, eq=False)
+        tm.that(result.success, eq=False)
         tm.that(result.error, eq="Entry already exists")
 
     # =========================================================================
