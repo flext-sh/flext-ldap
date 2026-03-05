@@ -46,11 +46,8 @@ class FlextLdapModels(FlextLdifModels):
         class SearchOptions(FlextLdapModelsLdap.SearchOptions):
             """Options for LDAP search operations."""
 
-        class SyncOptions(FlextLdapModelsLdap.SyncOptions):
-            """Options for LDAP sync operations."""
-
-        class SyncPhaseConfig(FlextLdapModelsLdap.SyncPhaseConfig):
-            """Configuration for sync phase operations."""
+        SyncOptions = FlextLdapModelsLdap.SyncOptions
+        SyncPhaseConfig = FlextLdapModelsLdap.SyncPhaseConfig
 
         # Result models
         class SearchResult(FlextLdapModelsLdap.SearchResult):

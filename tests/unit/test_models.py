@@ -752,7 +752,7 @@ class TestsFlextLdapModels:
 
     def test_sync_stats_serialization(self) -> None:
         """Test SyncStats serialization includes computed field."""
-        stats = m.Ldap.SyncStats.from_counters(added=80, skipped=10, failed=10)
+        stats = m.Ldap.SyncStats.from_counters(synced=80, skipped=10, failed=10)
         data = stats.model_dump()
         tm.that(data, keys=["success_rate"])
         tm.that(data["success_rate"], eq=0.9)

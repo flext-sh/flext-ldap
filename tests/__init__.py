@@ -14,32 +14,33 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
-    from constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from flext_core import FlextDecorators as d, FlextExceptions as e, r, x
-    from models import TestsFlextLdapModels, TestsFlextLdapModels as m
-    from protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
-    from typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t, tt
-    from utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
+
+    from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
+    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
+    from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
+    from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t, tt
+    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestsFlextLdapConstants": ("constants", "TestsFlextLdapConstants"),
-    "TestsFlextLdapModels": ("models", "TestsFlextLdapModels"),
-    "TestsFlextLdapProtocols": ("protocols", "TestsFlextLdapProtocols"),
-    "TestsFlextLdapServiceBase": ("base", "TestsFlextLdapServiceBase"),
-    "TestsFlextLdapTypes": ("typings", "TestsFlextLdapTypes"),
-    "TestsFlextLdapUtilities": ("utilities", "TestsFlextLdapUtilities"),
-    "c": ("constants", "TestsFlextLdapConstants"),
+    "TestsFlextLdapConstants": ("tests.constants", "TestsFlextLdapConstants"),
+    "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
+    "TestsFlextLdapProtocols": ("tests.protocols", "TestsFlextLdapProtocols"),
+    "TestsFlextLdapServiceBase": ("tests.base", "TestsFlextLdapServiceBase"),
+    "TestsFlextLdapTypes": ("tests.typings", "TestsFlextLdapTypes"),
+    "TestsFlextLdapUtilities": ("tests.utilities", "TestsFlextLdapUtilities"),
+    "c": ("tests.constants", "TestsFlextLdapConstants"),
     "d": ("flext_core", "FlextDecorators"),
     "e": ("flext_core", "FlextExceptions"),
-    "m": ("models", "TestsFlextLdapModels"),
-    "p": ("protocols", "TestsFlextLdapProtocols"),
+    "m": ("tests.models", "TestsFlextLdapModels"),
+    "p": ("tests.protocols", "TestsFlextLdapProtocols"),
     "r": ("flext_core", "r"),
-    "s": ("base", "TestsFlextLdapServiceBase"),
-    "t": ("typings", "TestsFlextLdapTypes"),
-    "tt": ("typings", "tt"),
-    "u": ("utilities", "TestsFlextLdapUtilities"),
+    "s": ("tests.base", "TestsFlextLdapServiceBase"),
+    "t": ("tests.typings", "TestsFlextLdapTypes"),
+    "tt": ("tests.typings", "tt"),
+    "u": ("tests.utilities", "TestsFlextLdapUtilities"),
     "x": ("flext_core", "x"),
 }
 

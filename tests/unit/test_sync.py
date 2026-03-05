@@ -89,7 +89,7 @@ class TestsFlextLdapSync:
         result = sync_service.execute()
         stats = tm.ok(result)
         assert isinstance(stats, m.Ldap.SyncStats), "expected SyncStats"
-        tm.that(stats.added, eq=0)
+        tm.that(stats.synced, eq=0)
         tm.that(stats.skipped, eq=0)
         tm.that(stats.failed, eq=0)
         tm.that(stats.total, eq=0)
@@ -97,13 +97,13 @@ class TestsFlextLdapSync:
     def test_sync_stats_creation(self) -> None:
         """Test SyncStats model creation."""
         stats = m.Ldap.SyncStats(
-            added=10,
+            synced=10,
             skipped=2,
             failed=1,
             total=13,
             duration_seconds=100.5,
         )
-        tm.that(stats.added, eq=10)
+        tm.that(stats.synced, eq=10)
         tm.that(stats.skipped, eq=2)
         tm.that(stats.failed, eq=1)
         tm.that(stats.total, eq=13)
@@ -190,8 +190,7 @@ class TestsFlextLdapSync:
         sync_service = FlextLdapSyncService(operations=operations)
 
         # Check main methods
-        tm.that(sync_service, contains="execute")
-        tm.that(sync_service, contains="sync_ldif_file")
+        tm.that(sync_service, attrs=["execute", "sync_ldif_file"])
         tm.that(callable(sync_service.execute), eq=True)
         tm.that(callable(sync_service.sync_ldif_file), eq=True)
 

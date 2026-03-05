@@ -858,7 +858,7 @@ def ldap_container(
     docker_control = _get_docker_control(worker_id)
 
     with lock:
-        max_wait: int = 20  # Keep below pytest-timeout budget
+        max_wait: int = 60
         wait_interval: float = 1.0  # faster readiness polling
         admin_dn, admin_password = _get_admin_credentials()
 

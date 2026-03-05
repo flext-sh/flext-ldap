@@ -131,6 +131,7 @@ markers = [
   "edge_cases: edge case tests",
   "stress: stress tests",
   "resilience: resilience tests",
+  "smoke: smoke connectivity tests",
 ]
 
 # [MANAGED] pyright
