@@ -65,40 +65,6 @@ class FlextLdapEntryAdapter(s[bool]):
         ASCII_THRESHOLD: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
 
         @staticmethod
-        def is_base64_encoded(
-            value: str,
-            threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD,
-        ) -> bool:
-            """Check if value requires base64 encoding.
-
-            Business Rules:
-                - Values starting with "::" are base64 encoded (LDIF marker)
-                - Values with characters > threshold (127) require encoding
-                - ASCII threshold detects non-printable characters
-                - Binary values (non-ASCII) must be base64 encoded per RFC 2849
-
-            Audit Implications:
-                - Base64 encoding detection affects LDIF output format
-                - Binary values are properly encoded for transport safety
-                - Encoding detection enables proper LDIF serialization
-
-            Architecture:
-                - Uses ord() for character code checking
-                - Threshold of 127 detects non-ASCII characters
-                - Returns bool for simple predicate usage
-
-            Args:
-                value: String value to check for base64 encoding requirement.
-                threshold: ASCII threshold for non-printable detection (default: 127).
-
-            Returns:
-                True if value requires base64 encoding, False otherwise.
-
-            """
-            # Python 3.13: Use any() for type-safe character iteration over string
-            return value.startswith("::") or any(ord(c) > threshold for c in value)
-
-        @staticmethod
         def convert_value_to_strings(
             value: t.Ldap.Operation.Ldap3EntryValue,
         ) -> Sequence[str]:
@@ -141,6 +107,40 @@ class FlextLdapEntryAdapter(s[bool]):
                     ]
                 case _:
                     return [str(value)]
+
+        @staticmethod
+        def is_base64_encoded(
+            value: str,
+            threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD,
+        ) -> bool:
+            """Check if value requires base64 encoding.
+
+            Business Rules:
+                - Values starting with "::" are base64 encoded (LDIF marker)
+                - Values with characters > threshold (127) require encoding
+                - ASCII threshold detects non-printable characters
+                - Binary values (non-ASCII) must be base64 encoded per RFC 2849
+
+            Audit Implications:
+                - Base64 encoding detection affects LDIF output format
+                - Binary values are properly encoded for transport safety
+                - Encoding detection enables proper LDIF serialization
+
+            Architecture:
+                - Uses ord() for character code checking
+                - Threshold of 127 detects non-ASCII characters
+                - Returns bool for simple predicate usage
+
+            Args:
+                value: String value to check for base64 encoding requirement.
+                threshold: ASCII threshold for non-printable detection (default: 127).
+
+            Returns:
+                True if value requires base64 encoding, False otherwise.
+
+            """
+            # Python 3.13: Use any() for type-safe character iteration over string
+            return value.startswith("::") or any(ord(c) > threshold for c in value)
 
         @staticmethod
         def normalize_original_attr_value(
@@ -195,88 +195,6 @@ class FlextLdapEntryAdapter(s[bool]):
         # FlextLdif accepts config via kwargs, not as direct parameter
         object.__setattr__(self, "_ldif", FlextLdif())
         object.__setattr__(self, "_server_type", resolved_type)
-
-    @override
-    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
-        """Execute method required by FlextService.
-
-        Business Rules:
-            - Entry adapter is stateless and performs no operations
-            - Conversion methods (ldap3_to_ldif_entry, etc.) should be called directly
-            - Always returns success (True) as adapter is always ready
-            - No remote operations performed - pure data transformation adapter
-
-        Audit Implications:
-            - This method exists for FlextService protocol compliance only
-            - No LDAP operations are performed - no audit trail needed
-            - Conversion methods are called directly by service layer
-
-        Architecture:
-            - Stateless adapter pattern - no internal state to manage
-            - Conversion methods handle bidirectional entry transformation
-            - No network calls - pure data transformation
-
-        Args:
-            **_kwargs: Unused - adapter is stateless and requires no configuration
-
-        Returns:
-            FlextResult[bool] - success with True as this adapter is stateless
-                and always ready
-
-        """
-        return FlextResult[bool].ok(value=True)
-
-    def _convert_ldap3_value_to_list(
-        self,
-        value: t.Ldap.Operation.Ldap3EntryValue | None,
-        key: str,
-        base64_attrs: MutableSequence[str],
-        removed_attrs: MutableSequence[str],
-        ascii_threshold: int = _ConversionHelpers.ASCII_THRESHOLD,
-    ) -> list[str]:
-        """Convert ldap3 attribute value to list format, tracking metadata.
-
-        Business Rules:
-            - None values are tracked in removed_attrs and return []
-            - Values are converted using _ConversionHelpers.convert_value_to_strings()
-            - Base64 encoding detection uses ASCII threshold (127)
-            - Attributes requiring base64 are tracked in base64_attrs
-            - Mutates tracking lists for conversion metadata generation
-
-        Audit Implications:
-            - Base64 attributes tracked for proper LDIF encoding
-            - Removed attributes tracked for conversion metadata
-            - Tracking enables audit trail of value transformations
-
-        Architecture:
-            - Uses _ConversionHelpers for value conversion
-            - Mutates base64_attrs and removed_attrs lists (side effect)
-            - Uses type guards for safe value type narrowing
-            - Returns list[str] for consistent format
-
-        Args:
-            value: ldap3 attribute value to convert.
-            key: Attribute name for tracking in metadata lists.
-            base64_attrs: Mutable list to track attributes needing base64 encoding.
-            removed_attrs: Mutable list to track empty/None attributes.
-            ascii_threshold: ASCII threshold for base64 detection (default: 127).
-
-        Returns:
-            List of string values (empty if None).
-
-        """
-        # Conditional handling for None values
-        if value is None:
-            removed_attrs.append(key)
-            return []
-        converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
-        # Python 3.13: Use any() for type-safe iteration over converted strings
-        if any(
-            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
-            for v in converted_values
-        ):
-            base64_attrs.append(key)
-        return converted_values
 
     @staticmethod
     def _build_conversion_metadata(
@@ -423,6 +341,36 @@ class FlextLdapEntryAdapter(s[bool]):
 
         if changed_attrs:
             conversion_metadata.attribute_changes = changed_attrs
+
+    @override
+    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
+        """Execute method required by FlextService.
+
+        Business Rules:
+            - Entry adapter is stateless and performs no operations
+            - Conversion methods (ldap3_to_ldif_entry, etc.) should be called directly
+            - Always returns success (True) as adapter is always ready
+            - No remote operations performed - pure data transformation adapter
+
+        Audit Implications:
+            - This method exists for FlextService protocol compliance only
+            - No LDAP operations are performed - no audit trail needed
+            - Conversion methods are called directly by service layer
+
+        Architecture:
+            - Stateless adapter pattern - no internal state to manage
+            - Conversion methods handle bidirectional entry transformation
+            - No network calls - pure data transformation
+
+        Args:
+            **_kwargs: Unused - adapter is stateless and requires no configuration
+
+        Returns:
+            FlextResult[bool] - success with True as this adapter is stateless
+                and always ready
+
+        """
+        return FlextResult[bool].ok(value=True)
 
     def ldap3_to_ldif_entry(
         self,
@@ -633,3 +581,55 @@ class FlextLdapEntryAdapter(s[bool]):
             return FlextResult[t.Ldap.Operation.Attributes].fail(
                 f"Failed to convert attributes to ldap3 format: {e!s}",
             )
+
+    def _convert_ldap3_value_to_list(
+        self,
+        value: t.Ldap.Operation.Ldap3EntryValue | None,
+        key: str,
+        base64_attrs: MutableSequence[str],
+        removed_attrs: MutableSequence[str],
+        ascii_threshold: int = _ConversionHelpers.ASCII_THRESHOLD,
+    ) -> list[str]:
+        """Convert ldap3 attribute value to list format, tracking metadata.
+
+        Business Rules:
+            - None values are tracked in removed_attrs and return []
+            - Values are converted using _ConversionHelpers.convert_value_to_strings()
+            - Base64 encoding detection uses ASCII threshold (127)
+            - Attributes requiring base64 are tracked in base64_attrs
+            - Mutates tracking lists for conversion metadata generation
+
+        Audit Implications:
+            - Base64 attributes tracked for proper LDIF encoding
+            - Removed attributes tracked for conversion metadata
+            - Tracking enables audit trail of value transformations
+
+        Architecture:
+            - Uses _ConversionHelpers for value conversion
+            - Mutates base64_attrs and removed_attrs lists (side effect)
+            - Uses type guards for safe value type narrowing
+            - Returns list[str] for consistent format
+
+        Args:
+            value: ldap3 attribute value to convert.
+            key: Attribute name for tracking in metadata lists.
+            base64_attrs: Mutable list to track attributes needing base64 encoding.
+            removed_attrs: Mutable list to track empty/None attributes.
+            ascii_threshold: ASCII threshold for base64 detection (default: 127).
+
+        Returns:
+            List of string values (empty if None).
+
+        """
+        # Conditional handling for None values
+        if value is None:
+            removed_attrs.append(key)
+            return []
+        converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
+        # Python 3.13: Use any() for type-safe iteration over converted strings
+        if any(
+            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
+            for v in converted_values
+        ):
+            base64_attrs.append(key)
+        return converted_values

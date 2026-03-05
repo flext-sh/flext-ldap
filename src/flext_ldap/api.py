@@ -63,32 +63,6 @@ class FlextLdapSyncCallbacks:
     """Sync callback type guards and helpers for phase/single-phase progress callbacks."""
 
     @staticmethod
-    def is_multi_phase_callback(
-        callback: m.Ldap.Types.ProgressCallbackUnion,
-    ) -> TypeIs[m.Ldap.Types.MultiPhaseProgressCallback]:
-        """Type guard to check if callback is multi-phase (5 parameters)."""
-        if callback is None:
-            return False
-        try:
-            sig = inspect.signature(callback)
-            return len(sig.parameters) == MULTI_PHASE_CALLBACK_PARAM_COUNT
-        except (TypeError, ValueError, AttributeError):
-            return False
-
-    @staticmethod
-    def is_single_phase_callback(
-        callback: m.Ldap.Types.ProgressCallbackUnion,
-    ) -> TypeIs[m.Ldap.Types.LdapProgressCallback]:
-        """Type guard to check if callback is single-phase (4 parameters)."""
-        if callback is None:
-            return False
-        try:
-            sig = inspect.signature(callback)
-            return len(sig.parameters) == SINGLE_PHASE_CALLBACK_PARAM_COUNT
-        except (TypeError, ValueError, AttributeError):
-            return False
-
-    @staticmethod
     def convert_entries_to_protocol(
         entries: Sequence[m.Ldif.Entry],
     ) -> list[m.Ldif.Entry]:
@@ -113,6 +87,32 @@ class FlextLdapSyncCallbacks:
                 return phase_result.skipped
             case _:
                 return default
+
+    @staticmethod
+    def is_multi_phase_callback(
+        callback: m.Ldap.Types.ProgressCallbackUnion,
+    ) -> TypeIs[m.Ldap.Types.MultiPhaseProgressCallback]:
+        """Type guard to check if callback is multi-phase (5 parameters)."""
+        if callback is None:
+            return False
+        try:
+            sig = inspect.signature(callback)
+            return len(sig.parameters) == MULTI_PHASE_CALLBACK_PARAM_COUNT
+        except (TypeError, ValueError, AttributeError):
+            return False
+
+    @staticmethod
+    def is_single_phase_callback(
+        callback: m.Ldap.Types.ProgressCallbackUnion,
+    ) -> TypeIs[m.Ldap.Types.LdapProgressCallback]:
+        """Type guard to check if callback is single-phase (4 parameters)."""
+        if callback is None:
+            return False
+        try:
+            sig = inspect.signature(callback)
+            return len(sig.parameters) == SINGLE_PHASE_CALLBACK_PARAM_COUNT
+        except (TypeError, ValueError, AttributeError):
+            return False
 
 
 class FlextLdap(s[m.Ldap.SearchResult]):
@@ -286,6 +286,172 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """
         self.disconnect()
 
+    @property
+    def is_connected(self) -> bool:
+        """Check if LDAP connection is active.
+
+        Business Rules:
+            - Delegates to FlextLdapConnection.is_connected property
+            - Returns True if connection is bound and ready for operations
+            - Returns False if connection is closed or not established
+            - State is checked synchronously (no network calls)
+
+        Audit Implications:
+            - Connection state checks are not logged (frequent operation)
+            - State changes are logged via connect/disconnect methods
+            - State can be queried before operations for validation
+
+        Returns:
+            True if connected and bound, False otherwise.
+
+        """
+        return self._connection.is_connected
+
+    @staticmethod
+    def _make_phase_progress_callback(
+        phase: str,
+        config: m.Ldap.SyncPhaseConfig,
+    ) -> m.Ldap.Types.LdapProgressCallback | None:
+        """Create progress callback for a phase, handling both single and multi-phase signatures.
+
+        Internal factory method that converts multi-phase callbacks (5 params) to
+        single-phase callbacks (4 params) by binding the phase name.
+
+        Business Rules:
+            - Returns None if config.progress_callback is None (no-op)
+            - Multi-phase callbacks (5 params) are wrapped with phase name binding
+            - Single-phase callbacks (4 params) are returned unchanged
+            - Unknown callback signatures return None (fallback safety)
+            - Uses type guards for proper type narrowing
+
+        Audit Implications:
+            - Callback conversion is transparent to callers
+            - Phase name is injected for multi-phase audit correlation
+
+        Args:
+            phase: Phase name to bind for multi-phase callbacks.
+            config: m.Ldap.SyncPhaseConfig containing the callback to convert.
+
+        Returns:
+            LdapProgressCallback or None if no valid callback.
+
+        Note:
+            This is a static internal method. External callers should use
+            sync_phase_entries() or sync_multiple_phases() directly.
+
+        """
+        callback = config.progress_callback
+        if callback is None:
+            return None
+
+        # Use type guards for type narrowing
+        if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
+            multi_phase_cb = callback
+
+            def progress_cb(
+                current: int,
+                total: int,
+                dn: str,
+                stats: m.Ldap.SyncStats,
+            ) -> None:
+                # Use narrowed multi-phase callback
+                multi_phase_cb(phase, current, total, dn, stats)
+
+            return progress_cb
+
+        if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
+            return callback
+
+        return None
+
+    def add(
+        self,
+        entry: m.Ldif.Entry,
+    ) -> FlextResult[m.Ldap.OperationResult]:
+        """Add LDAP entry.
+
+        Business Rules:
+            - Entry DN must be unique (LDAP error 68 if entry already exists)
+            - Entry attributes are validated against LDAP schema
+            - Required objectClass attributes must be present
+            - DN normalization is applied before add operation
+            - Operational attributes (modifyTimestamp, etc.) are auto-generated by server
+            - Entry must conform to LDAP schema constraints
+
+        Audit Implications:
+            - Add operations are logged with entry DN for traceability
+            - Successful adds log entry DN and affected count (always 1)
+            - Failed adds log error message and DN for forensic analysis
+            - Add operations are auditable via LDAP server access logs
+            - Entry creation timestamps are tracked by LDAP server
+
+        Architecture:
+            - Delegates to FlextLdapOperations.add() for execution
+            - Uses Ldap3Adapter for protocol-level operations
+            - Entry conversion handled by FlextLdapEntryAdapter
+            - Returns FlextResult pattern - no exceptions raised
+
+        Args:
+            entry: Entry model to add (must include DN and required attributes)
+
+        Returns:
+            FlextResult containing OperationResult with success status and entries_affected=1
+
+        """
+        return self._operations.add(entry)
+
+    def batch_upsert(
+        self,
+        entries: Sequence[m.Ldif.Entry],
+        *,
+        progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
+        retry_on_errors: list[str] | None = None,
+        max_retries: int = 1,
+        stop_on_error: bool = False,
+    ) -> FlextResult[m.Ldap.LdapBatchStats]:
+        """Batch upsert multiple LDAP entries with progress tracking.
+
+        Business Rules:
+            - Processes entries sequentially (not parallel) for consistency
+            - Each entry uses upsert logic (add/modify/skip based on comparison)
+            - Progress callback is invoked after each entry (current, total, dn, stats)
+            - stop_on_error=True aborts batch on first failure
+            - stop_on_error=False continues processing remaining entries
+            - Batch fails only if ALL entries fail (synced=0 and failed>0)
+            - Statistics track synced (added+modified), failed, and skipped counts
+
+        Audit Implications:
+            - Batch operations log start/end with total entry count
+            - Progress callbacks enable real-time audit trail during processing
+            - Individual entry failures are logged with index and DN
+            - Final statistics (synced/failed/skipped) logged for compliance reporting
+            - Large batches (>1000 entries) trigger performance monitoring
+
+        Architecture:
+            - Delegates to FlextLdapOperations.batch_upsert() for execution
+            - Uses FlextLdapOperations.upsert() for each entry
+            - Progress callback signature: (current: int, total: int, dn: str, stats: LdapBatchStats)
+            - Returns FlextResult pattern - no exceptions raised
+
+        Args:
+            entries: List of entries to upsert (must include DN and attributes)
+            progress_callback: Optional callback for progress tracking (4 parameters)
+            retry_on_errors: Error patterns to retry on (e.g., ["session terminated"])
+            max_retries: Maximum retries per entry (default: 1, no retry)
+            stop_on_error: Stop processing on first error (default: False, continue)
+
+        Returns:
+            FlextResult containing LdapBatchStats with synced/failed/skipped counts
+
+        """
+        return self._operations.batch_upsert(
+            entries,
+            progress_callback=progress_callback,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
+            stop_on_error=stop_on_error,
+        )
+
     def connect(
         self,
         connection_config: m.Ldap.ConnectionConfig | FlextLdapSettings,
@@ -375,6 +541,41 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         return result
 
+    def delete(
+        self,
+        dn: str | m.Ldif.DN,
+    ) -> FlextResult[m.Ldap.OperationResult]:
+        """Delete LDAP entry.
+
+        Business Rules:
+            - Entry must exist before deletion (LDAP error 32 if not found)
+            - Entry must not have children (LDAP error 66 if has children)
+            - DN normalization is applied before delete operation
+            - Deletion is permanent - no undo capability
+            - Cascade deletion is not supported (delete children first)
+
+        Audit Implications:
+            - Delete operations are logged with DN for critical audit trail
+            - Successful deletes log entry DN and affected count (always 1)
+            - Failed deletes log error message and DN for forensic analysis
+            - Delete operations are auditable via LDAP server access logs
+            - Entry deletion events are critical for compliance reporting
+
+        Architecture:
+            - Delegates to FlextLdapOperations.delete() for execution
+            - Uses Ldap3Adapter for protocol-level operations
+            - DN conversion handled by FlextLdifUtilities.DN
+            - Returns FlextResult pattern - no exceptions raised
+
+        Args:
+            dn: Distinguished name of entry to delete (string or DN model)
+
+        Returns:
+            FlextResult containing OperationResult with success status and entries_affected=1
+
+        """
+        return self._operations.delete(dn)
+
     def disconnect(self) -> None:
         """Close LDAP connection.
 
@@ -399,100 +600,30 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         self._connection.disconnect()
         self.logger.info("LDAP connection closed")
 
-    @property
-    def is_connected(self) -> bool:
-        """Check if LDAP connection is active.
+    @override
+    def execute(self) -> FlextResult[m.Ldap.SearchResult]:
+        """Execute service health check for FlextService pattern compliance.
+
+        Implements a custom execute method with extended return type compatibility.
+        The base class execute() expects FlextResult[bool], but this method returns
+        SearchResult for operational purposes.
 
         Business Rules:
-            - Delegates to FlextLdapConnection.is_connected property
-            - Returns True if connection is bound and ready for operations
-            - Returns False if connection is closed or not established
-            - State is checked synchronously (no network calls)
+            - Delegates entirely to ``_operations.execute()``
+            - Returns SearchResult type per FlextLdapServiceBase[SearchResult]
+            - ``_kwargs`` absorbs extra arguments for interface compatibility
+            - Does not perform actual search (lightweight health check)
 
         Audit Implications:
-            - Connection state checks are not logged (frequent operation)
-            - State changes are logged via connect/disconnect methods
-            - State can be queried before operations for validation
+            - Can be called by service orchestrators for readiness checks
+            - Health status reflects operations service state
+            - No logging performed at facade level (delegated to operations)
 
         Returns:
-            True if connected and bound, False otherwise.
+            FlextResult[SearchResult]: Health status from operations service.
 
         """
-        return self._connection.is_connected
-
-    def search(
-        self,
-        search_options: m.Ldap.SearchOptions,
-        server_type: str = "rfc",
-    ) -> FlextResult[m.Ldap.SearchResult]:
-        """Perform LDAP search operation.
-
-        Business Rules:
-            - Base DN is normalized using FlextLdifUtilities.Ldif.DN.norm_string() before search
-            - Search filter is validated against LDAP filter syntax
-            - Server type determines parsing quirks (OpenLDAP, OUD, OID, RFC)
-            - Search scope (BASE, ONELEVEL, SUBTREE) controls depth of search
-            - Empty result sets return successful SearchResult with empty entries list
-            - Operational attributes are filtered according to server type quirks
-
-        Audit Implications:
-            - All search operations are logged with base_dn, filter, and scope
-            - Search result counts are logged for compliance reporting
-            - Failed searches log error messages with search parameters
-            - Large result sets (>1000 entries) trigger performance warnings
-            - Search operations are auditable via LDAP server access logs
-
-        Architecture:
-            - Delegates to FlextLdapOperations.search() for execution
-            - Uses FlextLdifParser for server-specific entry parsing
-            - Returns FlextResult pattern - no exceptions raised
-            - Entry models use m.Ldif.Entry for consistency
-
-        Args:
-            search_options: Search configuration (base_dn, filter_str, scope, attributes)
-            server_type: LDAP server type for parsing quirks (default: RFC)
-
-        Returns:
-            FlextResult containing SearchResult with Entry models
-
-        """
-        return self._operations.search(search_options, server_type)
-
-    def add(
-        self,
-        entry: m.Ldif.Entry,
-    ) -> FlextResult[m.Ldap.OperationResult]:
-        """Add LDAP entry.
-
-        Business Rules:
-            - Entry DN must be unique (LDAP error 68 if entry already exists)
-            - Entry attributes are validated against LDAP schema
-            - Required objectClass attributes must be present
-            - DN normalization is applied before add operation
-            - Operational attributes (modifyTimestamp, etc.) are auto-generated by server
-            - Entry must conform to LDAP schema constraints
-
-        Audit Implications:
-            - Add operations are logged with entry DN for traceability
-            - Successful adds log entry DN and affected count (always 1)
-            - Failed adds log error message and DN for forensic analysis
-            - Add operations are auditable via LDAP server access logs
-            - Entry creation timestamps are tracked by LDAP server
-
-        Architecture:
-            - Delegates to FlextLdapOperations.add() for execution
-            - Uses Ldap3Adapter for protocol-level operations
-            - Entry conversion handled by FlextLdapEntryAdapter
-            - Returns FlextResult pattern - no exceptions raised
-
-        Args:
-            entry: Entry model to add (must include DN and required attributes)
-
-        Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
-
-        """
-        return self._operations.add(entry)
+        return self._operations.execute()
 
     def modify(
         self,
@@ -533,137 +664,165 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         """
         return self._operations.modify(dn, changes)
 
-    def delete(
+    def search(
         self,
-        dn: str | m.Ldif.DN,
-    ) -> FlextResult[m.Ldap.OperationResult]:
-        """Delete LDAP entry.
+        search_options: m.Ldap.SearchOptions,
+        server_type: str = "rfc",
+    ) -> FlextResult[m.Ldap.SearchResult]:
+        """Perform LDAP search operation.
 
         Business Rules:
-            - Entry must exist before deletion (LDAP error 32 if not found)
-            - Entry must not have children (LDAP error 66 if has children)
-            - DN normalization is applied before delete operation
-            - Deletion is permanent - no undo capability
-            - Cascade deletion is not supported (delete children first)
+            - Base DN is normalized using FlextLdifUtilities.Ldif.DN.norm_string() before search
+            - Search filter is validated against LDAP filter syntax
+            - Server type determines parsing quirks (OpenLDAP, OUD, OID, RFC)
+            - Search scope (BASE, ONELEVEL, SUBTREE) controls depth of search
+            - Empty result sets return successful SearchResult with empty entries list
+            - Operational attributes are filtered according to server type quirks
 
         Audit Implications:
-            - Delete operations are logged with DN for critical audit trail
-            - Successful deletes log entry DN and affected count (always 1)
-            - Failed deletes log error message and DN for forensic analysis
-            - Delete operations are auditable via LDAP server access logs
-            - Entry deletion events are critical for compliance reporting
+            - All search operations are logged with base_dn, filter, and scope
+            - Search result counts are logged for compliance reporting
+            - Failed searches log error messages with search parameters
+            - Large result sets (>1000 entries) trigger performance warnings
+            - Search operations are auditable via LDAP server access logs
 
         Architecture:
-            - Delegates to FlextLdapOperations.delete() for execution
-            - Uses Ldap3Adapter for protocol-level operations
-            - DN conversion handled by FlextLdifUtilities.DN
+            - Delegates to FlextLdapOperations.search() for execution
+            - Uses FlextLdifParser for server-specific entry parsing
             - Returns FlextResult pattern - no exceptions raised
+            - Entry models use m.Ldif.Entry for consistency
 
         Args:
-            dn: Distinguished name of entry to delete (string or DN model)
+            search_options: Search configuration (base_dn, filter_str, scope, attributes)
+            server_type: LDAP server type for parsing quirks (default: RFC)
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            FlextResult containing SearchResult with Entry models
 
         """
-        return self._operations.delete(dn)
+        return self._operations.search(search_options, server_type)
 
-    def upsert(
+    def sync_multiple_phases(
         self,
-        entry: m.Ldif.Entry,
+        phase_files: Mapping[str, Path],
         *,
-        retry_on_errors: list[str] | None = None,
-        max_retries: int = 1,
-    ) -> FlextResult[m.Ldap.LdapOperationResult]:
-        """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).
+        config: m.Ldap.SyncPhaseConfig | None = None,
+    ) -> FlextResult[m.Ldap.MultiPhaseSyncResult]:
+        """Synchronize multiple LDIF phase files sequentially.
+
+        Processes multiple LDIF files (phases) in the order provided by the
+        dict keys, aggregating statistics across all phases.
 
         Business Rules:
-            - First attempts ADD operation
-            - If entry exists (LDAP error 68), performs search and comparison
-            - Entry comparison ignores operational attributes (modifyTimestamp, etc.)
-            - If entries are identical, operation is SKIPPED (no changes needed)
-            - If entries differ, MODIFY operation is applied with computed changes
-            - Schema modification entries (changetype=modify) are handled specially
-            - Retry mechanism uses u.Reliability for transient errors
+            - Phases are processed in dict iteration order (Python 3.7+ preserves order)
+            - Missing phase files are logged as warnings but skipped (not errors)
+            - stop_on_error=True stops processing on first phase failure
+            - stop_on_error=False continues with remaining phases
+            - Progress callback is converted per-phase for proper phase identification
+            - Success rate is calculated across ALL processed phases
 
         Audit Implications:
-            - Upsert operations log operation type (ADDED, MODIFIED, SKIPPED)
-            - Comparison results are logged for audit trail
-            - Retry attempts are logged individually for compliance
-            - Skipped operations indicate no changes needed (audit efficiency)
-            - All upsert outcomes are auditable via LDAP server access logs
-
-        Architecture:
-            - Delegates to FlextLdapOperations.upsert() for execution
-            - Uses EntryComparison.compare() for attribute-level diff
-            - Retry logic uses u.Reliability.retry()
-            - Returns FlextResult pattern - no exceptions raised
+            - Each phase sync is logged individually via sync_phase_entries()
+            - Missing files logged at WARNING level
+            - Phase failures logged at ERROR level with phase name
+            - Overall statistics available for compliance reporting
+            - Duration includes all phases (start to finish)
 
         Args:
-            entry: Entry model to upsert (must include DN and attributes)
-            retry_on_errors: List of error patterns to retry on (e.g., ["session terminated"])
-            max_retries: Maximum number of retry attempts (default: 1, no retry)
+            phase_files: Dict mapping phase names to LDIF file paths.
+                Keys are phase identifiers, values are Path objects.
+            config: Sync configuration (defaults to m.Ldap.SyncPhaseConfig()).
+                Applied to all phases uniformly.
 
         Returns:
-            FlextResult containing LdapOperationResult with operation type (ADDED|MODIFIED|SKIPPED)
+            FlextResult[MultiPhaseSyncResult]: Aggregated results including
+            per-phase statistics, totals, and overall success rate.
 
         """
-        return self._operations.upsert(
-            entry,
-            retry_on_errors=retry_on_errors,
-            max_retries=max_retries,
+        config = config or m.Ldap.SyncPhaseConfig()
+        start_time = datetime.now(UTC)
+        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
+        overall_success = True
+        stop_requested = False
+
+        # Process all phases in order
+        for phase_name, phase_file in phase_files.items():
+            if stop_requested:
+                break
+
+            if not phase_file.exists():
+                self.logger.warning(
+                    "Phase file not found",
+                    phase=phase_name,
+                    file=str(phase_file),
+                )
+                continue
+
+            # Process single phase and update accumulator state
+            phase_result = self._process_single_phase(
+                phase_name,
+                phase_file,
+                config,
+            )
+
+            if phase_result.is_failure:
+                self.logger.error(
+                    "Phase sync failed",
+                    phase=phase_name,
+                    error=str(phase_result.error),
+                )
+                overall_success = False
+                if config.stop_on_error:
+                    stop_requested = True
+            else:
+                phase_results[phase_name] = phase_result.value
+
+        # Aggregate totals from phase results
+        phase_values = list(phase_results.values())
+        totals = {
+            "entries": sum(
+                FlextLdapSyncCallbacks.get_phase_result_value(
+                    phase_result,
+                    "total_entries",
+                    0,
+                )
+                for phase_result in phase_values
+            ),
+            "synced": sum(
+                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "synced", 0)
+                for phase_result in phase_values
+            ),
+            "failed": sum(
+                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "failed", 0)
+                for phase_result in phase_values
+            ),
+            "skipped": sum(
+                FlextLdapSyncCallbacks.get_phase_result_value(
+                    phase_result,
+                    "skipped",
+                    0,
+                )
+                for phase_result in phase_values
+            ),
+        }
+        total_processed = totals["synced"] + totals["failed"] + totals["skipped"]
+        overall_success_rate = (
+            (totals["synced"] + totals["skipped"]) / total_processed * 100
+            if total_processed > 0
+            else 0.0
         )
 
-    def batch_upsert(
-        self,
-        entries: Sequence[m.Ldif.Entry],
-        *,
-        progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
-        retry_on_errors: list[str] | None = None,
-        max_retries: int = 1,
-        stop_on_error: bool = False,
-    ) -> FlextResult[m.Ldap.LdapBatchStats]:
-        """Batch upsert multiple LDAP entries with progress tracking.
-
-        Business Rules:
-            - Processes entries sequentially (not parallel) for consistency
-            - Each entry uses upsert logic (add/modify/skip based on comparison)
-            - Progress callback is invoked after each entry (current, total, dn, stats)
-            - stop_on_error=True aborts batch on first failure
-            - stop_on_error=False continues processing remaining entries
-            - Batch fails only if ALL entries fail (synced=0 and failed>0)
-            - Statistics track synced (added+modified), failed, and skipped counts
-
-        Audit Implications:
-            - Batch operations log start/end with total entry count
-            - Progress callbacks enable real-time audit trail during processing
-            - Individual entry failures are logged with index and DN
-            - Final statistics (synced/failed/skipped) logged for compliance reporting
-            - Large batches (>1000 entries) trigger performance monitoring
-
-        Architecture:
-            - Delegates to FlextLdapOperations.batch_upsert() for execution
-            - Uses FlextLdapOperations.upsert() for each entry
-            - Progress callback signature: (current: int, total: int, dn: str, stats: LdapBatchStats)
-            - Returns FlextResult pattern - no exceptions raised
-
-        Args:
-            entries: List of entries to upsert (must include DN and attributes)
-            progress_callback: Optional callback for progress tracking (4 parameters)
-            retry_on_errors: Error patterns to retry on (e.g., ["session terminated"])
-            max_retries: Maximum retries per entry (default: 1, no retry)
-            stop_on_error: Stop processing on first error (default: False, continue)
-
-        Returns:
-            FlextResult containing LdapBatchStats with synced/failed/skipped counts
-
-        """
-        return self._operations.batch_upsert(
-            entries,
-            progress_callback=progress_callback,
-            retry_on_errors=retry_on_errors,
-            max_retries=max_retries,
-            stop_on_error=stop_on_error,
+        return FlextResult[m.Ldap.MultiPhaseSyncResult].ok(
+            m.Ldap.MultiPhaseSyncResult(
+                phase_results=phase_results,
+                total_entries=totals["entries"],
+                total_synced=totals["synced"],
+                total_failed=totals["failed"],
+                total_skipped=totals["skipped"],
+                overall_success_rate=overall_success_rate,
+                total_duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
+                overall_success=overall_success,
+            ),
         )
 
     def sync_phase_entries(
@@ -816,62 +975,51 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ),
         )
 
-    @staticmethod
-    def _make_phase_progress_callback(
-        phase: str,
-        config: m.Ldap.SyncPhaseConfig,
-    ) -> m.Ldap.Types.LdapProgressCallback | None:
-        """Create progress callback for a phase, handling both single and multi-phase signatures.
-
-        Internal factory method that converts multi-phase callbacks (5 params) to
-        single-phase callbacks (4 params) by binding the phase name.
+    def upsert(
+        self,
+        entry: m.Ldif.Entry,
+        *,
+        retry_on_errors: list[str] | None = None,
+        max_retries: int = 1,
+    ) -> FlextResult[m.Ldap.LdapOperationResult]:
+        """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).
 
         Business Rules:
-            - Returns None if config.progress_callback is None (no-op)
-            - Multi-phase callbacks (5 params) are wrapped with phase name binding
-            - Single-phase callbacks (4 params) are returned unchanged
-            - Unknown callback signatures return None (fallback safety)
-            - Uses type guards for proper type narrowing
+            - First attempts ADD operation
+            - If entry exists (LDAP error 68), performs search and comparison
+            - Entry comparison ignores operational attributes (modifyTimestamp, etc.)
+            - If entries are identical, operation is SKIPPED (no changes needed)
+            - If entries differ, MODIFY operation is applied with computed changes
+            - Schema modification entries (changetype=modify) are handled specially
+            - Retry mechanism uses u.Reliability for transient errors
 
         Audit Implications:
-            - Callback conversion is transparent to callers
-            - Phase name is injected for multi-phase audit correlation
+            - Upsert operations log operation type (ADDED, MODIFIED, SKIPPED)
+            - Comparison results are logged for audit trail
+            - Retry attempts are logged individually for compliance
+            - Skipped operations indicate no changes needed (audit efficiency)
+            - All upsert outcomes are auditable via LDAP server access logs
+
+        Architecture:
+            - Delegates to FlextLdapOperations.upsert() for execution
+            - Uses EntryComparison.compare() for attribute-level diff
+            - Retry logic uses u.Reliability.retry()
+            - Returns FlextResult pattern - no exceptions raised
 
         Args:
-            phase: Phase name to bind for multi-phase callbacks.
-            config: m.Ldap.SyncPhaseConfig containing the callback to convert.
+            entry: Entry model to upsert (must include DN and attributes)
+            retry_on_errors: List of error patterns to retry on (e.g., ["session terminated"])
+            max_retries: Maximum number of retry attempts (default: 1, no retry)
 
         Returns:
-            LdapProgressCallback or None if no valid callback.
-
-        Note:
-            This is a static internal method. External callers should use
-            sync_phase_entries() or sync_multiple_phases() directly.
+            FlextResult containing LdapOperationResult with operation type (ADDED|MODIFIED|SKIPPED)
 
         """
-        callback = config.progress_callback
-        if callback is None:
-            return None
-
-        # Use type guards for type narrowing
-        if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
-            multi_phase_cb = callback
-
-            def progress_cb(
-                current: int,
-                total: int,
-                dn: str,
-                stats: m.Ldap.SyncStats,
-            ) -> None:
-                # Use narrowed multi-phase callback
-                multi_phase_cb(phase, current, total, dn, stats)
-
-            return progress_cb
-
-        if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
-            return callback
-
-        return None
+        return self._operations.upsert(
+            entry,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
+        )
 
     def _prepare_phase_callback(
         self,
@@ -954,151 +1102,3 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ),
         )
         # sync_phase_entries already returns FlextResult[m.Ldap.PhaseSyncResult]
-
-    def sync_multiple_phases(
-        self,
-        phase_files: Mapping[str, Path],
-        *,
-        config: m.Ldap.SyncPhaseConfig | None = None,
-    ) -> FlextResult[m.Ldap.MultiPhaseSyncResult]:
-        """Synchronize multiple LDIF phase files sequentially.
-
-        Processes multiple LDIF files (phases) in the order provided by the
-        dict keys, aggregating statistics across all phases.
-
-        Business Rules:
-            - Phases are processed in dict iteration order (Python 3.7+ preserves order)
-            - Missing phase files are logged as warnings but skipped (not errors)
-            - stop_on_error=True stops processing on first phase failure
-            - stop_on_error=False continues with remaining phases
-            - Progress callback is converted per-phase for proper phase identification
-            - Success rate is calculated across ALL processed phases
-
-        Audit Implications:
-            - Each phase sync is logged individually via sync_phase_entries()
-            - Missing files logged at WARNING level
-            - Phase failures logged at ERROR level with phase name
-            - Overall statistics available for compliance reporting
-            - Duration includes all phases (start to finish)
-
-        Args:
-            phase_files: Dict mapping phase names to LDIF file paths.
-                Keys are phase identifiers, values are Path objects.
-            config: Sync configuration (defaults to m.Ldap.SyncPhaseConfig()).
-                Applied to all phases uniformly.
-
-        Returns:
-            FlextResult[MultiPhaseSyncResult]: Aggregated results including
-            per-phase statistics, totals, and overall success rate.
-
-        """
-        config = config or m.Ldap.SyncPhaseConfig()
-        start_time = datetime.now(UTC)
-        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
-        overall_success = True
-        stop_requested = False
-
-        # Process all phases in order
-        for phase_name, phase_file in phase_files.items():
-            if stop_requested:
-                break
-
-            if not phase_file.exists():
-                self.logger.warning(
-                    "Phase file not found",
-                    phase=phase_name,
-                    file=str(phase_file),
-                )
-                continue
-
-            # Process single phase and update accumulator state
-            phase_result = self._process_single_phase(
-                phase_name,
-                phase_file,
-                config,
-            )
-
-            if phase_result.is_failure:
-                self.logger.error(
-                    "Phase sync failed",
-                    phase=phase_name,
-                    error=str(phase_result.error),
-                )
-                overall_success = False
-                if config.stop_on_error:
-                    stop_requested = True
-            else:
-                phase_results[phase_name] = phase_result.value
-
-        # Aggregate totals from phase results
-        phase_values = list(phase_results.values())
-        totals = {
-            "entries": sum(
-                FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result,
-                    "total_entries",
-                    0,
-                )
-                for phase_result in phase_values
-            ),
-            "synced": sum(
-                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "synced", 0)
-                for phase_result in phase_values
-            ),
-            "failed": sum(
-                FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "failed", 0)
-                for phase_result in phase_values
-            ),
-            "skipped": sum(
-                FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result,
-                    "skipped",
-                    0,
-                )
-                for phase_result in phase_values
-            ),
-        }
-        total_processed = totals["synced"] + totals["failed"] + totals["skipped"]
-        overall_success_rate = (
-            (totals["synced"] + totals["skipped"]) / total_processed * 100
-            if total_processed > 0
-            else 0.0
-        )
-
-        return FlextResult[m.Ldap.MultiPhaseSyncResult].ok(
-            m.Ldap.MultiPhaseSyncResult(
-                phase_results=phase_results,
-                total_entries=totals["entries"],
-                total_synced=totals["synced"],
-                total_failed=totals["failed"],
-                total_skipped=totals["skipped"],
-                overall_success_rate=overall_success_rate,
-                total_duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
-                overall_success=overall_success,
-            ),
-        )
-
-    @override
-    def execute(self) -> FlextResult[m.Ldap.SearchResult]:
-        """Execute service health check for FlextService pattern compliance.
-
-        Implements a custom execute method with extended return type compatibility.
-        The base class execute() expects FlextResult[bool], but this method returns
-        SearchResult for operational purposes.
-
-        Business Rules:
-            - Delegates entirely to ``_operations.execute()``
-            - Returns SearchResult type per FlextLdapServiceBase[SearchResult]
-            - ``_kwargs`` absorbs extra arguments for interface compatibility
-            - Does not perform actual search (lightweight health check)
-
-        Audit Implications:
-            - Can be called by service orchestrators for readiness checks
-            - Health status reflects operations service state
-            - No logging performed at facade level (delegated to operations)
-
-        Returns:
-            FlextResult[SearchResult]: Health status from operations service.
-
-        """
-        return self._operations.execute()

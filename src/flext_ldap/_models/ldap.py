@@ -212,11 +212,6 @@ class FlextLdapModelsLdap:
         search_options: FlextLdapModelsLdap.SearchOptions | None = None
 
         @property
-        def total_count(self) -> int:
-            """Total count of entries in result."""
-            return len(self.entries)
-
-        @property
         def by_objectclass(self) -> Mapping[str, list[FlextLdifModels.Ldif.Entry]]:
             """Group entries by objectclass."""
             result: dict[str, list[FlextLdifModels.Ldif.Entry]] = {}
@@ -226,6 +221,11 @@ class FlextLdapModelsLdap:
                     result[category] = []
                 result[category].append(entry)
             return result
+
+        @property
+        def total_count(self) -> int:
+            """Total count of entries in result."""
+            return len(self.entries)
 
         @staticmethod
         def extract_attrs_dict_from_entry(

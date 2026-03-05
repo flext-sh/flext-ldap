@@ -379,6 +379,32 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         self._ldif = FlextLdif()
         self._generate_datetime_utc = u.Generators.generate_datetime_utc
 
+    @override
+    def execute(self) -> FlextResult[m.Ldap.SyncStats]:
+        """Return an empty stats payload to indicate service readiness.
+
+        Implements the ``FlextService.execute()`` contract for service health
+        checks. Returns zero-counter stats to indicate the sync service is
+        ready to accept sync requests.
+
+        Business Rules:
+            - Always returns success with empty/zero SyncStats
+            - Does NOT check operations service connectivity
+            - ``noqa: PLR6301`` allows self-reference for potential future use
+            - ``_kwargs`` absorbs extra arguments for interface compatibility
+
+        Audit Implications:
+            - Can be called by service orchestrators for readiness checks
+            - Does not perform actual sync operations (lightweight)
+            - Zero counters indicate no sync work performed
+
+        Returns:
+            FlextResult[SyncStats]: Always ok with ``from_counters()`` defaults
+            (synced=0, skipped=0, failed=0, duration_seconds=0.0).
+
+        """
+        return FlextResult[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
+
     def sync_ldif_file(
         self,
         ldif_file: Path,
@@ -524,29 +550,3 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         return FlextResult[m.Ldap.SyncStats].ok(
             stats.model_copy(update={"duration_seconds": duration}),
         )
-
-    @override
-    def execute(self) -> FlextResult[m.Ldap.SyncStats]:
-        """Return an empty stats payload to indicate service readiness.
-
-        Implements the ``FlextService.execute()`` contract for service health
-        checks. Returns zero-counter stats to indicate the sync service is
-        ready to accept sync requests.
-
-        Business Rules:
-            - Always returns success with empty/zero SyncStats
-            - Does NOT check operations service connectivity
-            - ``noqa: PLR6301`` allows self-reference for potential future use
-            - ``_kwargs`` absorbs extra arguments for interface compatibility
-
-        Audit Implications:
-            - Can be called by service orchestrators for readiness checks
-            - Does not perform actual sync operations (lightweight)
-            - Zero counters indicate no sync work performed
-
-        Returns:
-            FlextResult[SyncStats]: Always ok with ``from_counters()`` defaults
-            (synced=0, skipped=0, failed=0, duration_seconds=0.0).
-
-        """
-        return FlextResult[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())

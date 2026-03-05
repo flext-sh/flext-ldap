@@ -218,38 +218,12 @@ class FlextLdapProtocols(FlextLdifProtocols):
             Uses structural types for type safety without importing models.
             """
 
-            def connect(
-                self,
-                config: FlextLdapProtocols.Ldap.ConnectionConfigProtocol,
-                **kwargs: t.Scalar,
-            ) -> FlextResult[bool]:
-                """Connect to LDAP server.
-
-                Args:
-                    config: Connection configuration (may be named 'config' or
-                        'connection_config' in implementations)
-                    **kwargs: Additional keyword arguments (e.g., auto_retry: bool,
-                        max_retries: int, retry_delay: float)
+            @property
+            def is_connected(self) -> bool:
+                """Check if client is connected.
 
                 Returns:
-                    ResultProtocol[bool] indicating connection success or failure
-
-                """
-                ...
-
-            def search(
-                self,
-                search_options: FlextLdapProtocols.Ldap.SearchOptionsProtocol,
-                server_type: str = "rfc",
-            ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
-                """Perform LDAP search operation.
-
-                Args:
-                    search_options: Search configuration (required)
-                    server_type: LDAP server type for parsing (default: RFC)
-
-                Returns:
-                    ResultProtocol containing SearchResult with Entry models
+                    True if connected, False otherwise
 
                 """
                 ...
@@ -269,19 +243,21 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def modify(
+            def connect(
                 self,
-                dn: str | FlextLdapProtocols.Ldap.DNProtocol,
-                changes: Mapping[str, Sequence[tuple[str | int, Sequence[str]]]],
-            ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
-                """Modify LDAP entry.
+                config: FlextLdapProtocols.Ldap.ConnectionConfigProtocol,
+                **kwargs: t.Scalar,
+            ) -> FlextResult[bool]:
+                """Connect to LDAP server.
 
                 Args:
-                    dn: Distinguished name of entry to modify
-                    changes: Modification changes in ldap3 format
+                    config: Connection configuration (may be named 'config' or
+                        'connection_config' in implementations)
+                    **kwargs: Additional keyword arguments (e.g., auto_retry: bool,
+                        max_retries: int, retry_delay: float)
 
                 Returns:
-                    ResultProtocol containing OperationResult
+                    ResultProtocol[bool] indicating connection success or failure
 
                 """
                 ...
@@ -317,12 +293,36 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            @property
-            def is_connected(self) -> bool:
-                """Check if client is connected.
+            def modify(
+                self,
+                dn: str | FlextLdapProtocols.Ldap.DNProtocol,
+                changes: Mapping[str, Sequence[tuple[str | int, Sequence[str]]]],
+            ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
+                """Modify LDAP entry.
+
+                Args:
+                    dn: Distinguished name of entry to modify
+                    changes: Modification changes in ldap3 format
 
                 Returns:
-                    True if connected, False otherwise
+                    ResultProtocol containing OperationResult
+
+                """
+                ...
+
+            def search(
+                self,
+                search_options: FlextLdapProtocols.Ldap.SearchOptionsProtocol,
+                server_type: str = "rfc",
+            ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
+                """Perform LDAP search operation.
+
+                Args:
+                    search_options: Search configuration (required)
+                    server_type: LDAP server type for parsing (default: RFC)
+
+                Returns:
+                    ResultProtocol containing SearchResult with Entry models
 
                 """
                 ...
@@ -344,16 +344,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 Sequence[tuple[str | int, Sequence[str]]],
             ]
 
-            def search(
-                self,
-                search_options: FlextLdapProtocols.Ldap.SearchOptionsProtocol,
-                server_type: str = "rfc",
-            ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
-                """Perform LDAP search operation.
-
-                Returns ResultProtocol containing SearchResult model.
-                Models are structurally compatible with SearchResultProtocol.
-                """
+            @property
+            def is_connected(self) -> bool:
+                """Check if adapter is connected."""
                 ...
 
             def add(
@@ -361,6 +354,17 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 entry: FlextLdapProtocols.Ldap.LdapEntryProtocol,
             ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Add LDAP entry.
+
+                Returns ResultProtocol containing OperationResult model.
+                Models are structurally compatible with OperationResultProtocol.
+                """
+                ...
+
+            def delete(
+                self,
+                dn: FlextLdapProtocols.Ldap.DNProtocol | str,
+            ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
+                """Delete LDAP entry.
 
                 Returns ResultProtocol containing OperationResult model.
                 Models are structurally compatible with OperationResultProtocol.
@@ -379,20 +383,16 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def delete(
+            def search(
                 self,
-                dn: FlextLdapProtocols.Ldap.DNProtocol | str,
-            ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
-                """Delete LDAP entry.
+                search_options: FlextLdapProtocols.Ldap.SearchOptionsProtocol,
+                server_type: str = "rfc",
+            ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
+                """Perform LDAP search operation.
 
-                Returns ResultProtocol containing OperationResult model.
-                Models are structurally compatible with OperationResultProtocol.
+                Returns ResultProtocol containing SearchResult model.
+                Models are structurally compatible with SearchResultProtocol.
                 """
-                ...
-
-            @property
-            def is_connected(self) -> bool:
-                """Check if adapter is connected."""
                 ...
 
         @runtime_checkable
@@ -448,15 +448,15 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def entry_dn(self) -> str | None:
-                """Get entry distinguished name."""
-                ...
-
-            @property
             def entry_attributes_as_dict(
                 self,
             ) -> Mapping[str, Sequence[t.ContainerValue]]:
                 """Get attributes as dict mapping attribute names to value lists."""
+                ...
+
+            @property
+            def entry_dn(self) -> str | None:
+                """Get entry distinguished name."""
                 ...
 
         @runtime_checkable

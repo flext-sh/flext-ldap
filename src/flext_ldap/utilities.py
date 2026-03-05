@@ -135,6 +135,27 @@ class FlextLdapUtilities(FlextLdifUtilities):
             )
 
         @staticmethod
+        def to_str_list_safe(value: t.ContainerValue | None) -> list[str]:
+            """Safe str_list conversion using parent Conversion utilities.
+
+            Uses parent Conversion utilities for safe None handling and conversion.
+            This is LDAP-specific functionality for safe attribute value processing.
+
+            Args:
+                value: Value to convert (can be None)
+
+            Returns:
+                list[str]: Converted list or []
+
+            """
+            if value is None:
+                return []
+            return FlextLdifUtilities.to_str_list(
+                FlextLdapUtilities.Ldap.to_json_value(value),
+                default=[],
+            )
+
+        @staticmethod
         def to_str_list_truthy(
             value: t.ContainerValue | None,
             *,
@@ -162,27 +183,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
             )
             # Filter truthy values - LDAP-specific behavior
             return [item for item in str_list if item]
-
-        @staticmethod
-        def to_str_list_safe(value: t.ContainerValue | None) -> list[str]:
-            """Safe str_list conversion using parent Conversion utilities.
-
-            Uses parent Conversion utilities for safe None handling and conversion.
-            This is LDAP-specific functionality for safe attribute value processing.
-
-            Args:
-                value: Value to convert (can be None)
-
-            Returns:
-                list[str]: Converted list or []
-
-            """
-            if value is None:
-                return []
-            return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value),
-                default=[],
-            )
 
         # ═══════════════════════════════════════════════════════════════════
         # VALIDATION HELPERS - Moved from constants.py (functions forbidden there)
@@ -226,57 +226,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 # Check membership directly - valid strings are StatusLiteral values
                 return value in valid_statuses
 
-        # ═══════════════════════════════════════════════════════════════════
-        # NORMALIZATION BUILDERS - Expose via static methods
-        # ═══════════════════════════════════════════════════════════════════
-
-        @staticmethod
-        def norm_str(value: str, *, case: str | None = None) -> str:
-            """Normalize string (implements normalization directly).
-
-            Args:
-                value: String to normalize
-                case: Case normalization ("lower", "upper", None)
-
-            Returns:
-                Normalized string
-
-            """
-            if not value:
-                return ""
-            if case == "lower":
-                return value.lower()
-            if case == "upper":
-                return value.upper()
-            return value
-
-        @classmethod
-        def norm_join(
-            cls,
-            values: list[str] | tuple[str, ...],
-            *,
-            case: str | None = None,
-        ) -> str:
-            """Normalize and join strings (delegates to Parser.norm_join).
-
-            Args:
-                values: List or tuple of strings to normalize and join
-                case: Case normalization ("lower", "upper", None)
-
-            Returns:
-                Joined normalized string
-
-            """
-            # Convert tuple to list if needed
-            match values:
-                case tuple():
-                    values_list = list(values)
-                case _:
-                    values_list = values
-            # Normalize each value and join
-            normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
-            return " ".join(normalized)
-
         @classmethod
         def norm_in(
             cls,
@@ -310,6 +259,109 @@ class FlextLdapUtilities(FlextLdifUtilities):
             ]
             return normalized_value in normalized_collection
 
+        @classmethod
+        def norm_join(
+            cls,
+            values: list[str] | tuple[str, ...],
+            *,
+            case: str | None = None,
+        ) -> str:
+            """Normalize and join strings (delegates to Parser.norm_join).
+
+            Args:
+                values: List or tuple of strings to normalize and join
+                case: Case normalization ("lower", "upper", None)
+
+            Returns:
+                Joined normalized string
+
+            """
+            # Convert tuple to list if needed
+            match values:
+                case tuple():
+                    values_list = list(values)
+                case _:
+                    values_list = values
+            # Normalize each value and join
+            normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
+            return " ".join(normalized)
+
+        @staticmethod
+        def attr_to_str_list(
+            attrs: Mapping[str, t.ContainerValue] | Mapping[str, list[str]],
+            *,
+            filter_list_like: bool = False,
+        ) -> Mapping[str, list[str]]:
+            """Convert attributes to str_list (generalized: map() + ensure).
+
+            Uses advanced DSL: map() → ensure() for fluent composition.
+
+            Args:
+                attrs: Attributes to convert
+                filter_list_like: Only convert list-like values
+
+            Returns:
+                dict[str, list[str]]: Converted attributes
+
+            """
+
+            # Python 3.13: DSL pattern with isinstance for type narrowing
+            def convert_value(
+                _k: str,
+                v: str | list[str] | t.ContainerValue,
+            ) -> list[str]:
+                if v is None:
+                    return []
+                # Python 3.13: Use isinstance directly for type narrowing
+                match v:
+                    case list() | tuple() | range():
+                        # Type narrowing: pattern ensures sequence-like input
+                        return [str(item) for item in v if item is not None]
+                    case _:
+                        pass
+                # Not a sequence - return as single string value
+                if filter_list_like:
+                    return [str(v)]
+                # Not a sequence - return as single string value
+                return [str(v)] if v is not None else []
+
+            attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
+            if not attrs_dict:
+                return {}
+            # Map attributes using dict comprehension (map functionality)
+            # mapped_result is always dict[str, list[str]] from comprehension
+            return {k: convert_value(k, v) for k, v in attrs_dict.items()}
+
+        @staticmethod
+        def dn_str(dn: str | m.Ldif.DN | None, *, default: str = "unknown") -> str:
+            """Extract DN string (builder: whn().safe().conv().str()).
+
+            Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
+
+            Args:
+                dn: DN object (can be None or have .value)
+                default: Default if None
+
+            Returns:
+                str: DN string or default
+
+            """
+            # Extract string from object with attribute access
+            if dn is None:
+                return default
+            if isinstance(dn, m.Ldif.DN):
+                value = dn.value
+                return value or default
+            # If no attribute, convert directly
+            # Type narrowing: after Protocol check, dn is str | object
+            match dn:
+                case str() as dn_str:
+                    return dn_str
+                case _:
+                    pass
+            # Fallback: convert to string
+            return str(dn) if dn is not None else default
+
         # ═══════════════════════════════════════════════════════════════════
         # FILTER BUILDERS - Expose via static methods
         # ═══════════════════════════════════════════════════════════════════
@@ -330,43 +382,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if isinstance(value, Mapping):
                 return {k: v for k, v in value.items() if v}
             return [item for item in value if item]
-
-        # ═══════════════════════════════════════════════════════════════════
-        # MAP BUILDERS - Expose via static methods
-        # ═══════════════════════════════════════════════════════════════════
-
-        @staticmethod
-        def map_str(
-            values: list[str] | tuple[str, ...],
-            *,
-            case: str | None = None,
-            join: str | None = None,
-        ) -> str | list[str]:
-            """Map strings with normalization and optional join.
-
-            Args:
-                values: List of strings to map
-                case: Case normalization ("lower", "upper", None)
-                join: Join character (if provided, returns str; otherwise list[str])
-
-            Returns:
-                Joined string or list of normalized strings
-
-            """
-            # Normalize strings
-            normalized: list[str] = []
-            for val in values:
-                normalized_val = val
-                if case == "lower":
-                    normalized_val = val.lower()
-                elif case == "upper":
-                    normalized_val = val.upper()
-                normalized.append(normalized_val)
-
-            # Join if requested
-            if join is not None:
-                return join.join(normalized)
-            return normalized
 
         # ═══════════════════════════════════════════════════════════════════
         # FIND BUILDERS - Expose via static methods
@@ -414,51 +429,66 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     continue
             return None
 
-        @staticmethod
-        def attr_to_str_list(
-            attrs: Mapping[str, t.ContainerValue] | Mapping[str, list[str]],
-            *,
-            filter_list_like: bool = False,
-        ) -> Mapping[str, list[str]]:
-            """Convert attributes to str_list (generalized: map() + ensure).
+        # ═══════════════════════════════════════════════════════════════════
+        # MAP BUILDERS - Expose via static methods
+        # ═══════════════════════════════════════════════════════════════════
 
-            Uses advanced DSL: map() → ensure() for fluent composition.
+        @staticmethod
+        def map_str(
+            values: list[str] | tuple[str, ...],
+            *,
+            case: str | None = None,
+            join: str | None = None,
+        ) -> str | list[str]:
+            """Map strings with normalization and optional join.
 
             Args:
-                attrs: Attributes to convert
-                filter_list_like: Only convert list-like values
+                values: List of strings to map
+                case: Case normalization ("lower", "upper", None)
+                join: Join character (if provided, returns str; otherwise list[str])
 
             Returns:
-                dict[str, list[str]]: Converted attributes
+                Joined string or list of normalized strings
 
             """
+            # Normalize strings
+            normalized: list[str] = []
+            for val in values:
+                normalized_val = val
+                if case == "lower":
+                    normalized_val = val.lower()
+                elif case == "upper":
+                    normalized_val = val.upper()
+                normalized.append(normalized_val)
 
-            # Python 3.13: DSL pattern with isinstance for type narrowing
-            def convert_value(
-                _k: str,
-                v: str | list[str] | t.ContainerValue,
-            ) -> list[str]:
-                if v is None:
-                    return []
-                # Python 3.13: Use isinstance directly for type narrowing
-                match v:
-                    case list() | tuple() | range():
-                        # Type narrowing: pattern ensures sequence-like input
-                        return [str(item) for item in v if item is not None]
-                    case _:
-                        pass
-                # Not a sequence - return as single string value
-                if filter_list_like:
-                    return [str(v)]
-                # Not a sequence - return as single string value
-                return [str(v)] if v is not None else []
+            # Join if requested
+            if join is not None:
+                return join.join(normalized)
+            return normalized
 
-            attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
-            if not attrs_dict:
-                return {}
-            # Map attributes using dict comprehension (map functionality)
-            # mapped_result is always dict[str, list[str]] from comprehension
-            return {k: convert_value(k, v) for k, v in attrs_dict.items()}
+        # ═══════════════════════════════════════════════════════════════════
+        # NORMALIZATION BUILDERS - Expose via static methods
+        # ═══════════════════════════════════════════════════════════════════
+
+        @staticmethod
+        def norm_str(value: str, *, case: str | None = None) -> str:
+            """Normalize string (implements normalization directly).
+
+            Args:
+                value: String to normalize
+                case: Case normalization ("lower", "upper", None)
+
+            Returns:
+                Normalized string
+
+            """
+            if not value:
+                return ""
+            if case == "lower":
+                return value.lower()
+            if case == "upper":
+                return value.upper()
+            return value
 
         # ═══════════════════════════════════════════════════════════════════
         # FIND BUILDERS - Inherited from parent FlextUtilities
@@ -510,36 +540,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     return else_value
                 return then_value if then_value is not None else else_value
             return else_value
-
-        @staticmethod
-        def dn_str(dn: str | m.Ldif.DN | None, *, default: str = "unknown") -> str:
-            """Extract DN string (builder: whn().safe().conv().str()).
-
-            Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
-
-            Args:
-                dn: DN object (can be None or have .value)
-                default: Default if None
-
-            Returns:
-                str: DN string or default
-
-            """
-            # Extract string from object with attribute access
-            if dn is None:
-                return default
-            if isinstance(dn, m.Ldif.DN):
-                value = dn.value
-                return value or default
-            # If no attribute, convert directly
-            # Type narrowing: after Protocol check, dn is str | object
-            match dn:
-                case str() as dn_str:
-                    return dn_str
-                case _:
-                    pass
-            # Fallback: convert to string
-            return str(dn) if dn is not None else default
 
         # ═══════════════════════════════════════════════════════════════════
         # LDIF NAMESPACE ACCESS - Explicit re-export for clear access
