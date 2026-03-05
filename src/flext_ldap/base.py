@@ -17,9 +17,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Mapping, Sequence
+from types import ModuleType
 from typing import TypeVar, override
 
-from flext_core import FlextService, p
+from pydantic_settings import BaseSettings
+
+from flext_core import FlextService, p, t
 
 from flext_ldap import FlextLdapSettings
 
@@ -58,8 +62,8 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
             Runtime bootstrap options with config_type set to FlextLdapSettings
 
         """
-        options = FlextService._runtime_bootstrap_options()
-        options.config_type = FlextLdapSettings
+        del cls
+        options = _RuntimeBootstrapOptions(config_type=FlextLdapSettings)
         return options
 
 
@@ -67,3 +71,24 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
 s = FlextLdapServiceBase
 
 __all__ = ["FlextLdapServiceBase", "s"]
+
+
+class _RuntimeBootstrapOptions:
+    """Concrete runtime bootstrap options compatible with core protocol."""
+
+    def __init__(
+        self,
+        *,
+        config_type: type[BaseSettings] | None = None,
+    ) -> None:
+        self.config_type: type[BaseSettings] | None = config_type
+        self.config_overrides: Mapping[str, t.Scalar] | None = None
+        self.context: p.Context | None = None
+        self.subproject: str | None = None
+        self.services: Mapping[str, t.RegisterableService] | None = None
+        self.factories: Mapping[str, t.FactoryCallable] | None = None
+        self.resources: Mapping[str, t.ResourceCallable] | None = None
+        self.container_overrides: Mapping[str, t.Scalar] | None = None
+        self.wire_modules: Sequence[ModuleType] | None = None
+        self.wire_packages: Sequence[str] | None = None
+        self.wire_classes: Sequence[type] | None = None
