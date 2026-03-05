@@ -58,7 +58,9 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
             Runtime bootstrap options with config_type set to FlextLdapSettings
 
         """
-        return p.RuntimeBootstrapOptions(config_type=FlextLdapSettings)
+        options = FlextService._runtime_bootstrap_options()
+        options.config_type = FlextLdapSettings
+        return options
 
 
 # Convenience alias for common usage pattern - exported for domain usage
