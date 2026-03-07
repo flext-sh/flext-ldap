@@ -13,7 +13,7 @@
 - [📊 Domain Entities](#domain-entities)
   - [FlextLdapEntities](#flextldapentities)
 - [🎯 Value Objects](#value-objects)
-  - [FlextLdapModels.Values](#flextldapmodelsvalueobjects)
+  - [FlextLdapModels.Values](#flextldapmodelsvalues)
 - [⚙️ Configuration](#configuration)
   - [FlextLdapSettings](#flextldapsettings)
 - [🔧 Utilities](#utilities)
