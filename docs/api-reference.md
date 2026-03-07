@@ -1204,7 +1204,7 @@ For more examples and advanced usage patterns, see:
 
 - [flext-core Foundation](https://github.com/organization/flext/tree/main/flext-core/docs/api-reference/foundation.md) - Core APIs and patterns
 - [flext-ldif Processing](https://github.com/organization/flext/tree/main/flext-ldif/docs/api-reference.md) - LDIF processing API
-- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/CLAUDE.md) - Data integration and ELT orchestration
+- [flext-meltano Pipelines](https://github.com/organization/flext/tree/main/flext-meltano/AGENTS.md) - Data integration and ELT orchestration
 
 **External Resources**:
 

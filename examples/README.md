@@ -873,7 +873,7 @@ pip install flext-ldif
 - **[FLEXT-LDAP Documentation](../README.md)** - Main project documentation
 - **[API Reference](../docs/api-reference.md)** - Complete API documentation
 - **[Architecture Guide](../docs/architecture.md)** - System design and patterns
-- **[FLEXT Standards](../../CLAUDE.md)** - Ecosystem-wide standards
+- **[FLEXT Standards](../../AGENTS.md)** - Ecosystem-wide standards
 
 ## ✅ Best Practices
 
