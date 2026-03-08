@@ -388,7 +388,7 @@ class Command(BaseCommand):
     help = 'Synchronize users from LDAP directory'
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        _ = parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Show what would be synced without making changes'
