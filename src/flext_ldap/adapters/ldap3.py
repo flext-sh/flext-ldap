@@ -41,7 +41,7 @@ from flext_ldif import (
     FlextLdifUtilities,
 )
 from ldap3 import Connection, Server
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from flext_ldap import FlextLdapConstants, c, m, p, s, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -1093,29 +1093,6 @@ class Ldap3Adapter(s[bool]):
 
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
-
-        class SearchParams(BaseModel):
-            """Search parameters grouped together to reduce method arguments."""
-
-            model_config = ConfigDict(frozen=True, extra="forbid")
-
-            base_dn: str = Field(..., description="Base DN for search")
-            filter_str: str = Field(..., description="LDAP filter string")
-            ldap_scope: int = Field(..., description="LDAP search scope")
-            search_attributes: list[str] = Field(
-                default_factory=list,
-                description="Attributes to retrieve",
-            )
-            size_limit: int = Field(
-                default=0,
-                ge=0,
-                description="Maximum number of results",
-            )
-            time_limit: int = Field(
-                default=0,
-                ge=0,
-                description="Search timeout in seconds",
-            )
 
         def __init__(self, adapter: Ldap3Adapter) -> None:
             """Initialize search executor with adapter instance.

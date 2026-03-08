@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping
 from typing import TypeAlias, TypeVar
 
 import pytest
@@ -62,24 +61,6 @@ _VALID_SCOPES: frozenset[str] = frozenset({
 # Use the StrEnum directly or import the type alias if needed for type hints
 # For runtime use, use c.Ldap.SearchScope enum values
 SearchScopeType = c.Ldap.SearchScope
-
-
-@dataclass
-class _LdapEntryProtocolAdapter:
-    dn: str | p.Ldap.DNProtocol | None
-    attributes: (
-        Mapping[str, Sequence[str]]
-        | dict[str, list[str]]
-        | p.Ldap.AttributesProtocol
-        | None
-    )
-    metadata: (
-        Mapping[
-            str,
-            t.Scalar | Sequence[str] | Mapping[str, str | Sequence[str]],
-        ]
-        | None
-    ) = None
 
 
 def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntryProtocol:
