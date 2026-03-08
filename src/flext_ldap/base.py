@@ -66,7 +66,5 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
         return options
 
 
-# Convenience alias for common usage pattern - exported for domain usage
 s = FlextLdapServiceBase
-
 __all__ = ["FlextLdapServiceBase", "s"]

@@ -17,13 +17,6 @@ from flext_ldif import FlextLdifUtilities
 
 from flext_ldap import c, m, t
 
-# ═══════════════════════════════════════════════════════════════════
-# FLEXT_LDAP UTILITIES - Advanced Builder/DSL Patterns
-# ═══════════════════════════════════════════════════════════════════
-# Extends FlextLdifUtilities (which extends FlextUtilities) with LDAP-specific builders.
-# Uses mnemonic short names for well-parametrized functions.
-# Maximizes reuse of base utilities via composition.
-
 
 class FlextLdapUtilities(FlextLdifUtilities):
     """FlextLdap utilities - extends FlextLdifUtilities with advanced builders.
@@ -46,10 +39,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
         filtered = u.filter_attrs(attrs, only_list_like=True)
     """
 
-    # === LDAP NAMESPACE ===
-    # Project-specific namespace for LDAP utilities
-    # Access via u.Ldap.* pattern for better organization
-    # Also provides access to .Ldif namespace from flext-ldif
     class Ldap:
         """LDAP-specific utility namespace.
 
@@ -63,16 +52,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         """
 
-        # Note: No singleton instance needed - all methods are static
-
-        # ═══════════════════════════════════════════════════════════════════
-        # CONVERSION BUILDERS - Mnemonic: conv() → to_str(), to_str_list()
-        # ═══════════════════════════════════════════════════════════════════
-
         @staticmethod
-        def to_json_value(
-            value: t.ContainerValue | None,
-        ) -> t.StrictJsonValue:
+        def to_json_value(value: t.ContainerValue | None) -> t.StrictJsonValue:
             """Normalize values into strict JSON-safe primitives/collections."""
             match value:
                 case None | str() | int() | float() | bool():
@@ -107,15 +88,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if value is None:
                 return default
             return FlextLdifUtilities.to_str(
-                FlextLdapUtilities.Ldap.to_json_value(value),
-                default=default,
+                FlextLdapUtilities.Ldap.to_json_value(value), default=default
             )
 
         @staticmethod
         def to_str_list(
-            value: t.ContainerValue | None,
-            *,
-            default: list[str] | None = None,
+            value: t.ContainerValue | None, *, default: list[str] | None = None
         ) -> list[str]:
             """Convert to str_list using parent convenience shortcut.
 
@@ -130,8 +108,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
             return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value),
-                default=default,
+                FlextLdapUtilities.Ldap.to_json_value(value), default=default
             )
 
         @staticmethod
@@ -151,15 +128,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if value is None:
                 return []
             return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value),
-                default=[],
+                FlextLdapUtilities.Ldap.to_json_value(value), default=[]
             )
 
         @staticmethod
         def to_str_list_truthy(
-            value: t.ContainerValue | None,
-            *,
-            default: list[str] | None = None,
+            value: t.ContainerValue | None, *, default: list[str] | None = None
         ) -> list[str]:
             """Convert to str_list and filter truthy values.
 
@@ -174,19 +148,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 list[str]: Converted and filtered list (truthy values only)
 
             """
-            # Use parent convenience shortcut for conversion
             if value is None:
                 return default or []
             str_list = FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value),
-                default=default,
+                FlextLdapUtilities.Ldap.to_json_value(value), default=default
             )
-            # Filter truthy values - LDAP-specific behavior
             return [item for item in str_list if item]
-
-        # ═══════════════════════════════════════════════════════════════════
-        # VALIDATION HELPERS - Moved from constants.py (functions forbidden there)
-        # ═══════════════════════════════════════════════════════════════════
 
         class Validation:
             """LDAP validation utilities namespace.
@@ -196,9 +163,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
 
             @staticmethod
-            def is_valid_status(
-                value: str | t.ContainerValue,
-            ) -> TypeIs[str]:
+            def is_valid_status(value: str | t.ContainerValue) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -222,8 +187,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 }
                 if isinstance(value, c.Ldap.LdapCqrs.Status):
                     return True
-                # Type narrowing: value is str | StatusLiteral after Status check
-                # Check membership directly - valid strings are StatusLiteral values
                 return value in valid_statuses
 
         @classmethod
@@ -245,13 +208,11 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 True if normalized value is in collection
 
             """
-            # Convert tuple to list if needed
             match collection:
                 case tuple():
                     collection_list = list(collection)
                 case _:
                     collection_list = collection
-            # Normalize value and check membership
             normalized_value = cls.norm_str(value, case=case or "lower")
             normalized_collection = [
                 cls.norm_str(str(item), case=case or "lower")
@@ -261,10 +222,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @classmethod
         def norm_join(
-            cls,
-            values: list[str] | tuple[str, ...],
-            *,
-            case: str | None = None,
+            cls, values: list[str] | tuple[str, ...], *, case: str | None = None
         ) -> str:
             """Normalize and join strings (delegates to Parser.norm_join).
 
@@ -276,13 +234,11 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Joined normalized string
 
             """
-            # Convert tuple to list if needed
             match values:
                 case tuple():
                     values_list = list(values)
                 case _:
                     values_list = values
-            # Normalize each value and join
             normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
             return " ".join(normalized)
 
@@ -305,31 +261,23 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
 
-            # Python 3.13: DSL pattern with isinstance for type narrowing
             def convert_value(
-                _k: str,
-                v: str | list[str] | t.ContainerValue,
+                _k: str, v: str | list[str] | t.ContainerValue
             ) -> list[str]:
                 if v is None:
                     return []
-                # Python 3.13: Use isinstance directly for type narrowing
                 match v:
                     case list() | tuple() | range():
-                        # Type narrowing: pattern ensures sequence-like input
                         return [str(item) for item in v if item is not None]
                     case _:
                         pass
-                # Not a sequence - return as single string value
                 if filter_list_like:
                     return [str(v)]
-                # Not a sequence - return as single string value
                 return [str(v)] if v is not None else []
 
             attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
             if not attrs_dict:
                 return {}
-            # Map attributes using dict comprehension (map functionality)
-            # mapped_result is always dict[str, list[str]] from comprehension
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
 
         @staticmethod
@@ -346,25 +294,17 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 str: DN string or default
 
             """
-            # Extract string from object with attribute access
             if dn is None:
                 return default
             if isinstance(dn, m.Ldif.DN):
                 value = dn.value
                 return value or default
-            # If no attribute, convert directly
-            # Type narrowing: after Protocol check, dn is str | object
             match dn:
                 case str() as dn_str:
                     return dn_str
                 case _:
                     pass
-            # Fallback: convert to string
             return str(dn) if dn is not None else default
-
-        # ═══════════════════════════════════════════════════════════════════
-        # FILTER BUILDERS - Expose via static methods
-        # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
         def filter_truthy(
@@ -382,10 +322,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if isinstance(value, Mapping):
                 return {k: v for k, v in value.items() if v}
             return [item for item in value if item]
-
-        # ═══════════════════════════════════════════════════════════════════
-        # FIND BUILDERS - Expose via static methods
-        # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
         def find_callable(
@@ -418,20 +354,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     RuntimeError,
                     ImportError,
                 ) as e:
-                    # Log exception for debugging but continue searching
-                    # This is expected behavior when testing multiple callables
                     logger = logging.getLogger(__name__)
                     logger.debug(
-                        "Callable %s raised exception, continuing",
-                        key,
-                        exc_info=e,
+                        "Callable %s raised exception, continuing", key, exc_info=e
                     )
                     continue
             return None
-
-        # ═══════════════════════════════════════════════════════════════════
-        # MAP BUILDERS - Expose via static methods
-        # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
         def map_str(
@@ -451,7 +379,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Joined string or list of normalized strings
 
             """
-            # Normalize strings
             normalized: list[str] = []
             for val in values:
                 normalized_val = val
@@ -460,15 +387,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 elif case == "upper":
                     normalized_val = val.upper()
                 normalized.append(normalized_val)
-
-            # Join if requested
             if join is not None:
                 return join.join(normalized)
             return normalized
-
-        # ═══════════════════════════════════════════════════════════════════
-        # NORMALIZATION BUILDERS - Expose via static methods
-        # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
         def norm_str(value: str, *, case: str | None = None) -> str:
@@ -489,28 +410,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if case == "upper":
                 return value.upper()
             return value
-
-        # ═══════════════════════════════════════════════════════════════════
-        # FIND BUILDERS - Inherited from parent FlextUtilities
-        # ═══════════════════════════════════════════════════════════════════
-        # Method find_callable is inherited from parent
-        # No need to override - parent implementation is generic and reusable
-
-        # ═══════════════════════════════════════════════════════════════════
-        # INHERITED METHODS - Available via inheritance from FlextUtilities
-        # ═══════════════════════════════════════════════════════════════════
-        # These methods are available via inheritance from FlextUtilities:
-        # - filter_truthy (via FlextUtilities)
-        # - extract_str_from_obj (via FlextUtilities)
-        # - normalize (via FlextUtilities) - prefer norm_str() for new code
-        # - map_str (via FlextUtilities)
-        # - find_callable (via FlextUtilities)
-        # - filter_attrs (via FlextUtilities)
-        # - all_ and any_ (via FlextUtilities.Validation.ResultHelpers)
-
-        # ═══════════════════════════════════════════════════════════════════
-        # CONDITIONAL BUILDERS - Mnemonic: when() → when_safe(), dn_str()
-        # ═══════════════════════════════════════════════════════════════════
 
         @staticmethod
         def when_safe(
@@ -534,22 +433,14 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 then_value or else_value
 
             """
-            # DSL pattern: conditional check for safe composition
             if condition:
                 if safe_then and then_value is None:
                     return else_value
                 return then_value if then_value is not None else else_value
             return else_value
 
-        # ═══════════════════════════════════════════════════════════════════
-        # LDIF NAMESPACE ACCESS - Explicit re-export for clear access
-        # ═══════════════════════════════════════════════════════════════════
-        # Explicit re-export of parent's Ldif namespace for namespace inheritance.
-        # This allows access to LDIF utilities via u.Ldap.* pattern.
         Ldif: type[FlextLdifUtilities.Ldif] = FlextLdifUtilities.Ldif
 
 
-# Convenience alias - exported for domain usage
 u = FlextLdapUtilities
-
 __all__ = ["FlextLdapUtilities", "u"]

@@ -22,8 +22,6 @@ if TYPE_CHECKING:
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
     from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t, tt
     from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapConstants": ("tests.constants", "TestsFlextLdapConstants"),
     "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
@@ -43,7 +41,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "u": ("tests.utilities", "TestsFlextLdapUtilities"),
     "x": ("flext_core", "x"),
 }
-
 __all__ = [
     "TestsFlextLdapConstants",
     "TestsFlextLdapModels",
@@ -65,7 +62,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

@@ -32,7 +32,6 @@ from flext_ldap import t
 
 from .. import u
 
-# Use type from flext_ldap typings for callable return (no variable in type expr)
 pytestmark = pytest.mark.unit
 
 
@@ -46,14 +45,12 @@ class TestsFlextLdapUtilities:
     All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    # Test data scenarios
     _STRING_VALUES: ClassVar[dict[str, str]] = {
         "simple": "test",
         "empty": "",
         "whitespace": "  test  ",
         "unicode": "café",
     }
-
     _LIST_VALUES: ClassVar[dict[str, object]] = {
         "list_str": ["a", "b", "c"],
         "list_mixed": ["a", 1, True],
@@ -123,7 +120,6 @@ class TestsFlextLdapUtilities:
             "handler1": lambda: "value1",
             "handler2": lambda: False,
         }
-        # find_callable returns key of first truthy callable result
         result = u.Ldap.find_callable(handlers)
         tm.that(result, eq="handler1")
 
@@ -134,7 +130,6 @@ class TestsFlextLdapUtilities:
             "handler2": lambda: None,
             "handler3": lambda: "",
         }
-        # All handlers return falsy values
         result = u.Ldap.find_callable(handlers)
         tm.that(result, none=True)
 

@@ -33,6 +33,4 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
 
 __all__ = ["TestsFlextLdapUtilities", "u"]
-
-# Alias for simplified usage
 u = TestsFlextLdapUtilities

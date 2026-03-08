@@ -48,10 +48,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
         Pattern: `p.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
         """
 
-        # =====================================================================
-        # LAYER 0: DOMAIN PROTOCOLS - Entry (no internal dependencies)
-        # =====================================================================
-
         @runtime_checkable
         class DNProtocol(Protocol):
             """Protocol for Distinguished Name (structural type)."""
@@ -108,10 +104,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
             failed: int
             skipped: int
 
-        # =====================================================================
-        # LAYER 0: DOMAIN PROTOCOLS - Config (no internal dependencies)
-        # =====================================================================
-
         @runtime_checkable
         class ConnectionConfigProtocol(Protocol):
             """Protocol for LDAP connection configuration (structural type)."""
@@ -143,16 +135,13 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Protocol for parse results (structural type)."""
 
                 is_failure: bool
-                """Indicates if parsing failed."""
-
+                "Indicates if parsing failed."
                 is_success: bool
-                """Indicates if parsing succeeded."""
-
+                "Indicates if parsing succeeded."
                 error: str | None
-                """Error message if parsing failed."""
-
+                "Error message if parsing failed."
                 value: t.ContainerValue
-                """Parsed value or result object."""
+                "Parsed value or result object."
 
         @runtime_checkable
         class SearchOptionsProtocol(Protocol):
@@ -164,15 +153,11 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             base_dn: str
-            scope: str  # Normalized to str after validation
+            scope: str
             filter_str: str
             attributes: list[str] | None
             size_limit: int
             time_limit: int
-
-        # =====================================================================
-        # LAYER 2: RESULT PROTOCOLS (can use Layer 0)
-        # =====================================================================
 
         @runtime_checkable
         class OperationResultProtocol(Protocol):
@@ -206,10 +191,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
             failed: int
             skipped: int
 
-        # =====================================================================
-        # LAYER 1: SERVICE PROTOCOLS (can use Layer 0)
-        # =====================================================================
-
         @runtime_checkable
         class LdapClientProtocol(Protocol):
             """Protocol for LDAP clients that support CRUD operations.
@@ -229,8 +210,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def add(
-                self,
-                entry: FlextLdapProtocols.Ldap.LdapEntryProtocol,
+                self, entry: FlextLdapProtocols.Ldap.LdapEntryProtocol
             ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Add LDAP entry.
 
@@ -263,8 +243,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def delete(
-                self,
-                dn: str | FlextLdapProtocols.Ldap.DNProtocol,
+                self, dn: str | FlextLdapProtocols.Ldap.DNProtocol
             ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Delete LDAP entry.
 
@@ -278,8 +257,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def execute(
-                self,
-                **_kwargs: t.Scalar,
+                self, **_kwargs: t.Scalar
             ) -> FlextResult[FlextLdapProtocols.Ldap.SearchResultProtocol]:
                 """Execute health check or default operation.
 
@@ -338,10 +316,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
             Protocols independent of Models.
             """
 
-            # Type aliases for adapter operations
             type LdapModifyChanges = Mapping[
-                str,
-                Sequence[tuple[str | int, Sequence[str]]],
+                str, Sequence[tuple[str | int, Sequence[str]]]
             ]
 
             @property
@@ -350,8 +326,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def add(
-                self,
-                entry: FlextLdapProtocols.Ldap.LdapEntryProtocol,
+                self, entry: FlextLdapProtocols.Ldap.LdapEntryProtocol
             ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Add LDAP entry.
 
@@ -361,8 +336,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def delete(
-                self,
-                dn: FlextLdapProtocols.Ldap.DNProtocol | str,
+                self, dn: FlextLdapProtocols.Ldap.DNProtocol | str
             ) -> FlextResult[FlextLdapProtocols.Ldap.OperationResultProtocol]:
                 """Delete LDAP entry.
 
@@ -405,9 +379,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def adapter(
-                self,
-            ) -> FlextLdapProtocols.Ldap.LdapAdapterProtocol:
+            def adapter(self) -> FlextLdapProtocols.Ldap.LdapAdapterProtocol:
                 """Get LDAP adapter instance.
 
                 Returns:
@@ -434,10 +406,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
                 """
                 ...
-
-        # =====================================================================
-        # INFRASTRUCTURE PROTOCOLS (ldap3 library objects)
-        # =====================================================================
 
         @runtime_checkable
         class Ldap3EntryProtocol(Protocol):
@@ -479,16 +447,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def entries(
-                self,
-            ) -> Sequence[FlextLdapProtocols.Ldap.Ldap3EntryProtocol]:
+            def entries(self) -> Sequence[FlextLdapProtocols.Ldap.Ldap3EntryProtocol]:
                 """Get list of entries."""
                 ...
-
-        # =====================================================================
-        # DUCK TYPING PROTOCOLS
-        # =====================================================================
-        # Protocols for duck typing common patterns.
 
         @runtime_checkable
         class HasItemsMethod(Protocol):
@@ -530,8 +491,4 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
 
 p = FlextLdapProtocols
-
-__all__ = [
-    "FlextLdapProtocols",
-    "p",
-]
+__all__ = ["FlextLdapProtocols", "p"]

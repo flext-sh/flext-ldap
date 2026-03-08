@@ -41,22 +41,14 @@ class TestsFlextLdapDetection:
     Expected reduction: 217 lines → 95 lines (56% reduction).
     """
 
-    # =========================================================================
-    # FACTORY METHODS FOR PARAMETRIZATION
-    # =========================================================================
-
     @staticmethod
     def _get_detector_execute_scenarios() -> list[
         tuple[dict[str, t.ContainerValue] | None, bool, str]
     ]:
         """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
         return [
-            ({}, True, "connection parameter required"),  # Missing connection
-            (
-                {"connection": "invalid"},
-                True,
-                "connection must be ldap3.Connection",
-            ),  # Invalid type
+            ({}, True, "connection parameter required"),
+            ({"connection": "invalid"}, True, "connection must be ldap3.Connection"),
         ]
 
     @staticmethod
@@ -81,21 +73,15 @@ class TestsFlextLdapDetection:
     ]:
         """Factory: Return _detect_from_attributes() test scenarios (vendor_name, version, controls, expected)."""
         return [
-            # Standard server detection
             ("Oracle Corporation", "12.2.1.4.0", [], "oid"),
             ("Oracle Unified Directory", "12.2.1.4.0", [], "oud"),
             ("OpenLDAP", "2.4.57", [], "openldap"),
             ("Microsoft Corporation", None, ["1.2.840.113556.1.4.319"], "ad"),
             ("389 Project", "2.0.0", [], "ds389"),
             (None, None, [], "rfc"),
-            # Variant detection (case-insensitive and partial matches)
-            ("oracle corporation", "12.2.1.4.0", [], "oid"),  # Case-insensitive
-            ("Oracle", None, [], "oid"),  # Partial match
+            ("oracle corporation", "12.2.1.4.0", [], "oid"),
+            ("Oracle", None, [], "oid"),
         ]
-
-    # =========================================================================
-    # PARAMETRIZED TESTS
-    # =========================================================================
 
     def test_detector_initialization(self) -> None:
         """Test detector initialization."""
@@ -120,14 +106,10 @@ class TestsFlextLdapDetection:
         assert error_substring in str(result.error)
 
     @pytest.mark.parametrize(
-        ("attrs", "key", "expected"),
-        _get_get_first_value_scenarios(),
+        ("attrs", "key", "expected"), _get_get_first_value_scenarios()
     )
     def test_get_first_value(
-        self,
-        attrs: dict[str, list[str]],
-        key: str,
-        expected: str | None,
+        self, attrs: dict[str, list[str]], key: str, expected: str | None
     ) -> None:
         """Test _get_first_value with various attribute scenarios."""
         value = FlextLdapServerDetector._get_first_value(attrs, key)

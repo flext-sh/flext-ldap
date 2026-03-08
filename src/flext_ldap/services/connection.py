@@ -81,14 +81,8 @@ class FlextLdapConnection(s[bool]):
 
     """
 
-    model_config = ConfigDict(
-        frozen=False,  # Service needs mutable state for connection lifecycle
-        extra="allow",
-        arbitrary_types_allowed=True,
-    )
-
+    model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
     _adapter: Ldap3Adapter
-    # Use class attribute (not PrivateAttr) to match FlextService pattern
     _config: FlextSettings | None = None
 
     def __init__(
@@ -124,16 +118,13 @@ class FlextLdapConnection(s[bool]):
 
         """
         super().__init__()
-        # Create config instance if not provided
         resolved_config: FlextLdapSettings = (
             config if config is not None else FlextLdapSettings()
         )
         self._config = resolved_config
-        # Use default parser if not provided
         resolved_parser: FlextLdifParser = (
             parser if parser is not None else FlextLdif().parser
         )
-        # Create adapter directly with parser as explicit parameter
         self._adapter = Ldap3Adapter(parser=resolved_parser)
 
     @property
@@ -230,7 +221,6 @@ class FlextLdapConnection(s[bool]):
             message for troubleshooting.
 
         """
-        # Modern Python 3.13: Use ternary expression for concise retry logic
         result: FlextResult[bool] = (
             u.Reliability.retry(
                 operation=lambda: self._adapter.connect(connection_config),
@@ -240,12 +230,9 @@ class FlextLdapConnection(s[bool]):
             if auto_retry
             else self._adapter.connect(connection_config)
         )
-        # Both retry and connect return FlextResult[bool], no type narrowing needed
-
         if result.is_success:
             self._detect_server_type_optional()
             return FlextResult[bool].ok(value=True)
-        # Type narrowing: result is FlextResult[bool] at this point
         return result
 
     def disconnect(self) -> None:
@@ -298,7 +285,6 @@ class FlextLdapConnection(s[bool]):
             ``fail(NOT_CONNECTED)`` if disconnected or never connected.
 
         """
-        # Create results
         if self.is_connected:
             return FlextResult[bool].ok(value=True)
         return FlextResult[bool].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))
@@ -332,10 +318,8 @@ class FlextLdapConnection(s[bool]):
         connection = self._adapter.connection
         if not connection:
             return
-
         detector = FlextLdapServerDetector()
         detection_result: FlextResult[str] = detector.detect_from_connection(connection)
-
         if detection_result.is_success:
             self.logger.info(
                 "Server type detected automatically",

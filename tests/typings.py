@@ -48,7 +48,6 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             """TypedDict definitions for LDAP test fixtures."""
 
 
-# Export TypedDict classes for direct import (backward compatibility)
 GenericFieldsDict = TestsFlextLdapTypes.Tests.Fixtures.GenericFieldsDict
 LdapContainerDict = TestsFlextLdapTypes.Tests.Fixtures.LdapContainerDict
 LdapConnectionConfigDict = TestsFlextLdapTypes.Tests.Fixtures.LdapConnectionConfigDict
@@ -64,11 +63,8 @@ GenericCallableParameterDict = (
     TestsFlextLdapTypes.Tests.Fixtures.GenericCallableParameterDict
 )
 LdapConnectionResultDict = TestsFlextLdapTypes.Tests.Fixtures.LdapConnectionResultDict
-
-# Short aliases
 t = TestsFlextLdapTypes
 tt = TestsFlextLdapTypes
-
 __all__ = [
     "GenericCallableParameterDict",
     "GenericFieldsDict",

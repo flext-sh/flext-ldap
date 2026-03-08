@@ -43,10 +43,6 @@ class TestsFlextLdapModels:
     Tests all domain models, validation, computed fields, and inheritance.
     """
 
-    # =========================================================================
-    # Model Class Existence Tests
-    # =========================================================================
-
     def test_models_class_exists(self) -> None:
         """Test FlextLdapModels class exists."""
         tm.that(FlextLdapModels, none=False)
@@ -65,15 +61,9 @@ class TestsFlextLdapModels:
         FlextLdapModels is a namespace class, not a Pydantic model.
         The model_config exists on nested Pydantic models like ConnectionConfig.
         """
-        # ConnectionConfig (nested Pydantic model) has model_config
         tm.that(m.Ldap.ConnectionConfig.model_config, none=False)
-        # Check frozen status on config models (they inherit from Collections.Config)
         config_frozen = m.Ldap.ConnectionConfig.model_config.get("frozen", False)
         tm.that(isinstance(config_frozen, bool), eq=True)
-
-    # =========================================================================
-    # Collections Inheritance Tests
-    # =========================================================================
 
     def test_collections_exists(self) -> None:
         """Test Collections class exists."""
@@ -95,10 +85,6 @@ class TestsFlextLdapModels:
         """Test Collections.Statistics exists."""
         tm.that(m.CollectionsStatistics, none=False)
 
-    # =========================================================================
-    # Entry Model Tests
-    # =========================================================================
-
     def test_entry_model_exists(self) -> None:
         """Test Entry model exists."""
         tm.that(m.Ldif.Entry, none=False)
@@ -109,18 +95,12 @@ class TestsFlextLdapModels:
 
     def test_entry_creation(self) -> None:
         """Test Entry creation with DN and attributes."""
-        # Entry accepts DN for dn (use m.Ldif namespace)
         dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(dn=dn, attributes=None)
-        # Entry.dn is a DN object, use .value for string comparison
         tm.that(entry.dn, none=False)
         assert entry.dn is not None
         tm.that(entry.dn.value, eq=tc.RFC.DEFAULT_BASE_DN)
         tm.that(entry.attributes, none=True)
-
-    # =========================================================================
-    # Namespace Inheritance Tests (via FlextLdifModels inheritance)
-    # =========================================================================
 
     def test_distinguished_name_via_ldif_namespace(self) -> None:
         """Test DN accessible via m.Ldif namespace (inherited)."""
@@ -131,7 +111,6 @@ class TestsFlextLdapModels:
 
     def test_ldif_attributes_via_ldif_namespace(self) -> None:
         """Test Attributes accessible via m.Ldif namespace (inherited)."""
-        # Verify the attribute exists via namespace inheritance
         actual = hasattr(m.Ldif, "Attributes")
         tm.that(actual, eq=True)
         tm.that(m.Ldif.Attributes is FlextLdifModels.Ldif.Attributes, eq=True)
@@ -145,14 +124,9 @@ class TestsFlextLdapModels:
 
     def test_parse_response_via_ldif_namespace(self) -> None:
         """Test ParseResponse accessible via m.Ldif namespace (inherited)."""
-        # ParseResponse is accessible via m.Ldif namespace
         tm.that(m.Ldif.ParseResponse, none=False)
         actual = hasattr(m.Ldif, "ParseResponse")
         tm.that(actual, eq=True)
-
-    # =========================================================================
-    # ConnectionConfig Tests
-    # =========================================================================
 
     def test_connection_config_default_values(self) -> None:
         """Test ConnectionConfig default values."""
@@ -200,10 +174,8 @@ class TestsFlextLdapModels:
 
     def test_connection_config_port_constraints(self) -> None:
         """Test port field constraints."""
-        # Valid ports
         config_min = m.Ldap.ConnectionConfig(port=1)
         tm.that(config_min.port, eq=1)
-
         config_max = m.Ldap.ConnectionConfig(port=65535)
         tm.that(config_max.port, eq=65535)
 
@@ -226,23 +198,16 @@ class TestsFlextLdapModels:
         instantiated and serialized. This test verifies basic model functionality.
         """
         config = m.Ldap.ConnectionConfig()
-        # Verify it's a valid config instance (not None)
         tm.that(config, none=False)
-        # Verify required fields exist with defaults
         tm.that(config.host, eq="localhost")
         tm.that(config.port, eq=389)
-        # Verify model_dump works (serialization)
         dump = config.model_dump()
         tm.that(dump, keys=["host", "port"])
-
-    # =========================================================================
-    # SearchOptions Tests
-    # =========================================================================
 
     def test_search_options_required_base_dn(self) -> None:
         """Test SearchOptions requires base_dn."""
         with pytest.raises(ValidationError, match="base_dn"):
-            m.Ldap.SearchOptions(base_dn="")  # Empty string should fail validation
+            m.Ldap.SearchOptions(base_dn="")
 
     def test_search_options_default_values(self) -> None:
         """Test SearchOptions default values."""
@@ -271,26 +236,19 @@ class TestsFlextLdapModels:
 
     def test_search_options_invalid_base_dn_format(self) -> None:
         """Test SearchOptions accepts any non-empty base_dn (full validation at service layer)."""
-        # DN format validation is done at service/utility layer, not model layer
-        # Model just checks that base_dn is non-empty string
         options = m.Ldap.SearchOptions(base_dn="invalid-dn-format")
         tm.that(options.base_dn, eq="invalid-dn-format")
 
     def test_search_options_scope_normalization_enum(self) -> None:
         """Test SearchOptions normalizes scope from StrEnum."""
         options = m.Ldap.SearchOptions(
-            base_dn=tc.RFC.DEFAULT_BASE_DN,
-            scope=c.Ldap.SearchScope.BASE,
+            base_dn=tc.RFC.DEFAULT_BASE_DN, scope=c.Ldap.SearchScope.BASE
         )
         tm.that(options.scope, eq="BASE")
 
     def test_search_options_scope_normalization_string(self) -> None:
         """Test SearchOptions normalizes scope from string."""
-        options = m.Ldap.SearchOptions(
-            base_dn=tc.RFC.DEFAULT_BASE_DN,
-            scope="subtree",
-        )
-        # Should parse and normalize to uppercase
+        options = m.Ldap.SearchOptions(base_dn=tc.RFC.DEFAULT_BASE_DN, scope="subtree")
         tm.that(options.scope in {"SUBTREE", "subtree"}, eq=True)
 
     def test_search_options_normalized_factory(self) -> None:
@@ -303,21 +261,12 @@ class TestsFlextLdapModels:
     def test_search_options_normalized_with_config(self) -> None:
         """Test SearchOptions.normalized with NormalizedConfig."""
         config = m.Ldap.NormalizedConfig(
-            scope="BASE",
-            filter_str="(uid=*)",
-            size_limit=50,
+            scope="BASE", filter_str="(uid=*)", size_limit=50
         )
-        options = m.Ldap.SearchOptions.normalized(
-            tc.RFC.DEFAULT_BASE_DN,
-            config=config,
-        )
+        options = m.Ldap.SearchOptions.normalized(tc.RFC.DEFAULT_BASE_DN, config=config)
         tm.that(options.scope, eq="BASE")
         tm.that(options.filter_str, eq="(uid=*)")
         tm.that(options.size_limit, eq=50)
-
-    # =========================================================================
-    # OperationResult Tests
-    # =========================================================================
 
     def test_operation_result_creation(self) -> None:
         """Test OperationResult creation."""
@@ -335,8 +284,7 @@ class TestsFlextLdapModels:
     def test_operation_result_default_message(self) -> None:
         """Test OperationResult default message is empty."""
         result = m.Ldap.OperationResult(
-            success=True,
-            operation_type=c.Ldap.OperationType.SEARCH,
+            success=True, operation_type=c.Ldap.OperationType.SEARCH
         )
         tm.that(result.message, eq="")
         tm.that(result.entries_affected, eq=0)
@@ -344,39 +292,23 @@ class TestsFlextLdapModels:
     def test_operation_result_frozen(self) -> None:
         """Test OperationResult is frozen (immutable)."""
         result = m.Ldap.OperationResult(
-            success=True,
-            operation_type=c.Ldap.OperationType.ADD,
+            success=True, operation_type=c.Ldap.OperationType.ADD
         )
-        # Pydantic v2 frozen models raise TypeError on assignment
-
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
             setattr(result, "is_success", False)
 
-    # =========================================================================
-    # SearchResult Tests
-    # =========================================================================
-
     _SEARCH_RESULT_SCENARIOS: ClassVar[dict[str, tuple[int, int]]] = {
-        # name: (num_entries, expected_total_count)
         "empty": (0, 0),
         "single": (1, 1),
         "multiple": (5, 5),
     }
 
     @pytest.mark.parametrize(
-        ("num_entries", "expected_count"),
-        [
-            (0, 0),
-            (1, 1),
-            (5, 5),
-            (10, 10),
-        ],
+        ("num_entries", "expected_count"), [(0, 0), (1, 1), (5, 5), (10, 10)]
     )
     def test_search_result_total_count(
-        self,
-        num_entries: int,
-        expected_count: int,
+        self, num_entries: int, expected_count: int
     ) -> None:
         """Test SearchResult.total_count computed field."""
         entries = [
@@ -396,11 +328,9 @@ class TestsFlextLdapModels:
         result = m.Ldap.SearchResult(entries=[], search_options=options)
         categories = result.by_objectclass
         tm.that(categories, none=False)
-        # Empty result should have no categories or empty categories
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
         """Test extract_attrs_dict_from_entry with None attributes."""
-        # Entry accepts DN for dn (use m.Ldif namespace)
         dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(dn=dn, attributes=None)
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
@@ -411,9 +341,7 @@ class TestsFlextLdapModels:
         category = m.Ldap.SearchResult.extract_objectclass_category({})
         tm.that(category, eq="unknown")
 
-    def test_search_result_extract_objectclass_category_with_objectclass(
-        self,
-    ) -> None:
+    def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
         """Test extract_objectclass_category with objectClass attribute."""
         attrs = {"objectClass": ["person", "top"]}
         category = m.Ldap.SearchResult.extract_objectclass_category(attrs)
@@ -421,16 +349,10 @@ class TestsFlextLdapModels:
 
     def test_search_result_get_entry_category(self) -> None:
         """Test get_entry_category returns category or unknown."""
-        # Entry accepts DN for dn (use m.Ldif namespace)
         dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(dn=dn, attributes=None)
         category = m.Ldap.SearchResult.get_entry_category(entry)
-        # Entry with no attributes should return "unknown"
         tm.that(category, eq="unknown")
-
-    # =========================================================================
-    # SyncOptions Tests
-    # =========================================================================
 
     def test_sync_options_default_values(self) -> None:
         """Test SyncOptions default values."""
@@ -461,10 +383,6 @@ class TestsFlextLdapModels:
         with pytest.raises(ValidationError):
             m.Ldap.SyncOptions(batch_size=invalid_batch)
 
-    # =========================================================================
-    # SyncStats Tests
-    # =========================================================================
-
     def test_sync_stats_default_values(self) -> None:
         """Test SyncStats default values."""
         stats = m.Ldap.SyncStats()
@@ -481,39 +399,24 @@ class TestsFlextLdapModels:
 
     def test_sync_stats_success_rate_calculation(self) -> None:
         """Test SyncStats.success_rate computed field."""
-        stats = m.Ldap.SyncStats(
-            synced=70,
-            skipped=20,
-            failed=10,
-            total=100,
-        )
-        # success_rate = (synced + skipped) / total = (70 + 20) / 100 = 0.9
+        stats = m.Ldap.SyncStats(synced=70, skipped=20, failed=10, total=100)
         tm.that(stats.success_rate, eq=0.9)
 
     def test_sync_stats_from_counters_factory(self) -> None:
         """Test SyncStats.from_counters factory method."""
         stats = m.Ldap.SyncStats.from_counters(
-            synced=50,
-            skipped=30,
-            failed=20,
-            duration_seconds=10.5,
+            synced=50, skipped=30, failed=20, duration_seconds=10.5
         )
         tm.that(stats.synced, eq=50)
         tm.that(stats.skipped, eq=30)
         tm.that(stats.failed, eq=20)
-        tm.that(stats.total, eq=100)  # auto-calculated
+        tm.that(stats.total, eq=100)
         tm.that(stats.duration_seconds, eq=10.5)
-
-    # =========================================================================
-    # UpsertResult Tests
-    # =========================================================================
 
     def test_upsert_result_creation(self) -> None:
         """Test UpsertResult creation."""
         result = m.Ldap.UpsertResult(
-            success=True,
-            dn=tc.RFC.DEFAULT_BASE_DN,
-            operation=c.Ldap.OperationType.ADD,
+            success=True, dn=tc.RFC.DEFAULT_BASE_DN, operation=c.Ldap.OperationType.ADD
         )
         tm.that(result.success, eq=True)
         tm.that(result.dn, eq=tc.RFC.DEFAULT_BASE_DN)
@@ -531,43 +434,22 @@ class TestsFlextLdapModels:
         tm.that(result.success, eq=False)
         tm.that(result.error, eq="Entry already exists")
 
-    # =========================================================================
-    # BatchUpsertResult Tests
-    # =========================================================================
-
     def test_batch_upsert_result_creation(self) -> None:
         """Test BatchUpsertResult creation."""
-        result = m.Ldap.BatchUpsertResult(
-            total_processed=100,
-            successful=90,
-            failed=10,
-        )
+        result = m.Ldap.BatchUpsertResult(total_processed=100, successful=90, failed=10)
         tm.that(result.total_processed, eq=100)
         tm.that(result.successful, eq=90)
         tm.that(result.failed, eq=10)
 
     def test_batch_upsert_result_success_rate_zero(self) -> None:
         """Test BatchUpsertResult.success_rate returns 0.0 when no processing."""
-        result = m.Ldap.BatchUpsertResult(
-            total_processed=0,
-            successful=0,
-            failed=0,
-        )
+        result = m.Ldap.BatchUpsertResult(total_processed=0, successful=0, failed=0)
         tm.that(result.success_rate, eq=0.0)
 
     def test_batch_upsert_result_success_rate_calculation(self) -> None:
         """Test BatchUpsertResult.success_rate computed field."""
-        result = m.Ldap.BatchUpsertResult(
-            total_processed=100,
-            successful=85,
-            failed=15,
-        )
-        # success_rate = successful / total_processed = 85 / 100 = 0.85
+        result = m.Ldap.BatchUpsertResult(total_processed=100, successful=85, failed=15)
         tm.that(result.success_rate, eq=0.85)
-
-    # =========================================================================
-    # SyncPhaseConfig Tests
-    # =========================================================================
 
     def test_sync_phase_config_default_values(self) -> None:
         """Test SyncPhaseConfig default values."""
@@ -581,17 +463,11 @@ class TestsFlextLdapModels:
     def test_sync_phase_config_custom_values(self) -> None:
         """Test SyncPhaseConfig with custom values."""
         config = m.Ldap.SyncPhaseConfig(
-            server_type="oud",
-            max_retries=3,
-            stop_on_error=True,
+            server_type="oud", max_retries=3, stop_on_error=True
         )
         tm.that(config.server_type, eq="oud")
         tm.that(config.max_retries, eq=3)
         tm.that(config.stop_on_error, eq=True)
-
-    # =========================================================================
-    # ConversionMetadata Tests
-    # =========================================================================
 
     def test_conversion_metadata_default_values(self) -> None:
         """Test ConversionMetadata default values."""
@@ -617,10 +493,6 @@ class TestsFlextLdapModels:
         tm.that(metadata.source_attributes, contains="telephoneNumber")
         tm.that(metadata.dn_changed, eq=True)
 
-    # =========================================================================
-    # PhaseSyncResult Tests
-    # =========================================================================
-
     def test_phase_sync_result_creation(self) -> None:
         """Test PhaseSyncResult creation."""
         result = m.Ldap.PhaseSyncResult(
@@ -636,10 +508,6 @@ class TestsFlextLdapModels:
         tm.that(result.total_entries, eq=100)
         tm.that(result.synced, eq=90)
         tm.that(result.success_rate, eq=95.0)
-
-    # =========================================================================
-    # MultiPhaseSyncResult Tests
-    # =========================================================================
 
     def test_multi_phase_sync_result_creation(self) -> None:
         """Test MultiPhaseSyncResult creation."""
@@ -680,20 +548,10 @@ class TestsFlextLdapModels:
         tm.that(result.phase_results, keys=["01-users"])
         tm.that(result.phase_results["01-users"].synced, eq=95)
 
-    # =========================================================================
-    # LdapOperationResult Tests
-    # =========================================================================
-
     def test_ldap_operation_result_creation(self) -> None:
         """Test LdapOperationResult creation."""
-        result = m.Ldap.LdapOperationResult(
-            operation=c.Ldap.UpsertOperations.ADDED,
-        )
+        result = m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperations.ADDED)
         tm.that(result.operation, eq=c.Ldap.UpsertOperations.ADDED)
-
-    # =========================================================================
-    # LdapBatchStats Tests
-    # =========================================================================
 
     def test_ldap_batch_stats_default_values(self) -> None:
         """Test LdapBatchStats default values."""
@@ -704,18 +562,10 @@ class TestsFlextLdapModels:
 
     def test_ldap_batch_stats_custom_values(self) -> None:
         """Test LdapBatchStats with custom values."""
-        stats = m.Ldap.LdapBatchStats(
-            synced=80,
-            failed=10,
-            skipped=10,
-        )
+        stats = m.Ldap.LdapBatchStats(synced=80, failed=10, skipped=10)
         tm.that(stats.synced, eq=80)
         tm.that(stats.failed, eq=10)
         tm.that(stats.skipped, eq=10)
-
-    # =========================================================================
-    # Types Namespace Tests
-    # =========================================================================
 
     def test_types_namespace_exists(self) -> None:
         """Test Types namespace exists."""
@@ -726,26 +576,16 @@ class TestsFlextLdapModels:
         actual = hasattr(m.Ldap.Types, "LdapProgressCallback")
         tm.that(actual, eq=True)
 
-    # =========================================================================
-    # Model Serialization Tests
-    # =========================================================================
-
     def test_connection_config_serialization(self) -> None:
         """Test ConnectionConfig serialization to dict."""
-        config = m.Ldap.ConnectionConfig(
-            host="ldap.example.com",
-            port=636,
-        )
+        config = m.Ldap.ConnectionConfig(host="ldap.example.com", port=636)
         data = config.model_dump()
         tm.that(data["host"], eq="ldap.example.com")
         tm.that(data["port"], eq=636)
 
     def test_search_options_serialization(self) -> None:
         """Test SearchOptions serialization to dict."""
-        options = m.Ldap.SearchOptions(
-            base_dn=tc.RFC.DEFAULT_BASE_DN,
-            scope="SUBTREE",
-        )
+        options = m.Ldap.SearchOptions(base_dn=tc.RFC.DEFAULT_BASE_DN, scope="SUBTREE")
         data = options.model_dump()
         tm.that(data["base_dn"], eq=tc.RFC.DEFAULT_BASE_DN)
         tm.that(data["scope"], eq="SUBTREE")
@@ -756,10 +596,6 @@ class TestsFlextLdapModels:
         data = stats.model_dump()
         tm.that(data, keys=["success_rate"])
         tm.that(data["success_rate"], eq=0.9)
-
-    # =========================================================================
-    # JSON Schema Generation Tests
-    # =========================================================================
 
     def test_connection_config_json_schema(self) -> None:
         """Test ConnectionConfig JSON schema generation."""
@@ -774,6 +610,4 @@ class TestsFlextLdapModels:
         tm.that(schema["properties"], keys=["base_dn", "scope"])
 
 
-__all__ = [
-    "TestsFlextLdapModels",
-]
+__all__ = ["TestsFlextLdapModels"]

@@ -33,10 +33,6 @@ class TestsFlextLdapConstants:
     Demonstrates maximum code reuse through parametrization and nested factories.
     """
 
-    # =========================================================================
-    # PARAMETRIZED ENUM TESTS (Combined similar tests)
-    # =========================================================================
-
     @staticmethod
     def _get_ldap_cqrs_status_values() -> list[tuple[str, str]]:
         """Factory: Return all LdapCqrs.Status enum members for parametrization.
@@ -62,7 +58,6 @@ class TestsFlextLdapConstants:
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values in single parametrized method."""
-        # Map attribute names to enum values
         status_map: dict[str, c.Ldap.LdapCqrs.Status] = {
             "PENDING": c.Ldap.LdapCqrs.Status.PENDING,
             "RUNNING": c.Ldap.LdapCqrs.Status.RUNNING,
@@ -86,31 +81,18 @@ class TestsFlextLdapConstants:
         result = u.Ldap.Validation.is_valid_status("invalid")
         tm.that(result, eq=False)
 
-    # =========================================================================
-    # PARAMETRIZED ENUM TESTS - SearchScope
-    # =========================================================================
-
     @pytest.mark.parametrize(
         ("attr", "expected"),
-        [
-            ("BASE", "BASE"),
-            ("ONELEVEL", "ONELEVEL"),
-            ("SUBTREE", "SUBTREE"),
-        ],
+        [("BASE", "BASE"), ("ONELEVEL", "ONELEVEL"), ("SUBTREE", "SUBTREE")],
     )
     def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        # Map scope names to enum values
         scope_map: dict[str, c.Ldap.SearchScope] = {
             "BASE": c.Ldap.SearchScope.BASE,
             "ONELEVEL": c.Ldap.SearchScope.ONELEVEL,
             "SUBTREE": c.Ldap.SearchScope.SUBTREE,
         }
         tm.that(scope_map[attr].value, eq=expected)
-
-    # =========================================================================
-    # PARAMETRIZED ENUM TESTS - OperationType
-    # =========================================================================
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
@@ -123,7 +105,6 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_enum_values(self, attr: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        # Map operation type names to enum values
         op_type_map: dict[str, c.Ldap.OperationType] = {
             "ADD": c.Ldap.OperationType.ADD,
             "MODIFY": c.Ldap.OperationType.MODIFY,
@@ -131,10 +112,6 @@ class TestsFlextLdapConstants:
             "SEARCH": c.Ldap.OperationType.SEARCH,
         }
         tm.that(op_type_map[attr].value, eq=expected)
-
-    # =========================================================================
-    # SCALAR CONSTANT TESTS
-    # =========================================================================
 
     def test_core_name(self) -> None:
         """Test Core.NAME constant."""
@@ -149,36 +126,7 @@ class TestsFlextLdapConstants:
         tm.that(c.Ldap.ConnectionDefaults.PORT, is_=int, none=False)
         tm.that(c.Ldap.ConnectionDefaults.PORT, gte=1, lte=65535)
 
-    # =========================================================================
-    # VENDOR_STRING_MAX_TOKENS TEST
-    # =========================================================================
-
     def test_vendor_string_max_tokens(self) -> None:
         """Test newly added VENDOR_STRING_MAX_TOKENS constant."""
         tm.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
         tm.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, eq=2)
-
-
-# ============================================================================
-# NOTES FOR OTHER TEST FILES
-# ============================================================================
-# This template demonstrates:
-#
-# 1. PARAMETRIZATION: Combine similar enum tests using @pytest.mark.parametrize
-#
-# 2. FACTORIES: Use nested @staticmethod to make parametrization data explicit
-#    - Returns list[tuple[...]] for parametrize arguments
-#    - Makes data discoverable and reusable
-#
-# 3. TM METHODS: Leverage advanced matchers
-#    - tm.that(a, eq=b) - equality check
-#    - tm.that(value, **comparisons) - multiple comparisons in one call
-#    - tm.that(value, is_=type, none=False) - type assertion with not_none check
-#
-# 4. SINGLE CLASS: All test logic in ONE class per module
-#    - No helpers outside the class
-#    - No fixtures in separate files
-#    - No aliases or wrappers
-#
-# EXPECTED REDUCTION: 90 lines → 35 lines (61% reduction) while maintaining
-# 100% coverage and improving test expressiveness.

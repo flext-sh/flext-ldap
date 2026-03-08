@@ -21,6 +21,4 @@ class TestsFlextLdapServiceBase(FlextService[T]):
 
 
 __all__ = ["TestsFlextLdapServiceBase", "s"]
-
-# Alias for simplified usage
 s = TestsFlextLdapServiceBase

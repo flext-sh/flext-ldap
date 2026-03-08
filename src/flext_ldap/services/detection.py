@@ -87,35 +87,26 @@ class FlextLdapServerDetector(s[str]):
             FlextResult[str]: Always success with normalized server type string.
 
         """
-        # Simple server type detection based on common attributes
-        # This avoids dependency on the broken flext-ldif detector
         detected_type = (
             FlextLdapServerDetector._detect_server_type_from_attributes_simple(
-                supported_extensions,
-                naming_contexts,
-                vendor_name,
-                vendor_version,
+                supported_extensions, naming_contexts, vendor_name, vendor_version
             )
         )
         return FlextResult[str].ok(detected_type)
 
     @staticmethod
     def _detect_from_extensions(
-        supported_extensions: list[str],
-        naming_contexts: list[str],
+        supported_extensions: list[str], naming_contexts: list[str]
     ) -> str:
         """Detect server type from extensions and naming contexts."""
-        # Python 3.13: map_str returns str | list[str]
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
         match ext_str_raw:
             case str():
                 ext_str = ext_str_raw
             case _:
                 ext_str = " ".join(ext_str_raw)
-        # DSL pattern: builder for normalization and join
         context_str = u.Ldap.norm_join(naming_contexts, case="lower")
 
-        # Extension/context-based detection (priority order)
         def check_openldap(*args: str) -> bool:
             """Check for OpenLDAP."""
             e = args[0] if args else ""
@@ -137,7 +128,10 @@ class FlextLdapServerDetector(s[str]):
             e = args[0] if args else ""
             c = args[1] if len(args) > 1 else ""
             return (
-                "microsoft" in e or "windows" in e or "microsoft" in c or "windows" in c
+                "microsoft" in e
+                or "windows" in e
+                or "microsoft" in c
+                or ("windows" in c)
             )
 
         def check_ds389(*args: str) -> bool:
@@ -145,8 +139,6 @@ class FlextLdapServerDetector(s[str]):
             e = args[0] if args else ""
             return "389" in e or "dirsrv" in e
 
-        # Extension checks - manually find matching server type
-        # Avoids ParamSpec[P] complexity of find_callable
         extension_checks = [
             ("openldap", check_openldap),
             ("oid", check_oid),
@@ -170,38 +162,26 @@ class FlextLdapServerDetector(s[str]):
                 ImportError,
             ):
                 logging.getLogger(__name__).debug(
-                    "Server type check failed: %s",
-                    server_name,
-                    exc_info=True,
+                    "Server type check failed: %s", server_name, exc_info=True
                 )
                 continue
-
-        # Return found server type or default to RFC-compliant generic server
         return found if found is not None else "rfc"
 
     @staticmethod
     def _detect_from_vendor(
-        vendor_name: str | None,
-        vendor_version: str | None,
+        vendor_name: str | None, vendor_version: str | None
     ) -> str | None:
         """Detect server type from vendor information."""
-        # Python 3.13: Use modern list comprehension with filter
         vendor_list = u.to_str_list([vendor_name, vendor_version])
         vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
-        # Type narrowing: filter_truthy returns list[t.ContainerValue] | dict[str, t.ContainerValue]
-        # isinstance needed to distinguish list from dict (union type)
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]
             if isinstance(vendor_parts_raw, list)
             else []
         )
-        # Normalize vendor info to lowercase for consistent matching
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
-
         if not vendor_info:
             return None
-
-        # Vendor-based detection (priority order)
         vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
             ("oud", lambda v: "oracle" in v and "unified directory" in v),
             (
@@ -224,12 +204,9 @@ class FlextLdapServerDetector(s[str]):
             ("ad", lambda v: "microsoft" in v or "active directory" in v),
             ("ds389", lambda v: "389" in v or "dirsrv" in v),
         ]
-
-        # Find matching vendor check
         for detected_vendor_name, check_func in vendor_checks:
             if check_func(vendor_info):
                 return detected_vendor_name
-
         return None
 
     @staticmethod
@@ -268,20 +245,11 @@ class FlextLdapServerDetector(s[str]):
             str: Normalized server type (oid, oud, openldap, ad, ds389, rfc).
 
         """
-        # Try vendor-based detection first (most reliable)
         cls = FlextLdapServerDetector
-        vendor_result = cls._detect_from_vendor(
-            vendor_name,
-            vendor_version,
-        )
+        vendor_result = cls._detect_from_vendor(vendor_name, vendor_version)
         if vendor_result:
             return vendor_result
-
-        # Fallback to extension/context-based detection
-        return cls._detect_from_extensions(
-            supported_extensions,
-            naming_contexts,
-        )
+        return cls._detect_from_extensions(supported_extensions, naming_contexts)
 
     @staticmethod
     def _get_first_value(attrs: t.Ldap.Operation.AttributeDict, key: str) -> str | None:
@@ -292,7 +260,6 @@ class FlextLdapServerDetector(s[str]):
         values_raw = attrs.get(key)
         if values_raw is None:
             return None
-        # Python 3.13: Use isinstance for type narrowing (list vs scalar)
         values = [str(item) for item in values_raw]
         return values[0] if values else None
 
@@ -331,9 +298,8 @@ class FlextLdapServerDetector(s[str]):
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
             return FlextResult[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query failed: search unavailable",
+                "rootDSE query failed: search unavailable"
             )
-
         if not search_method(
             search_base="",
             search_filter=str(c.Ldap.Filters.ALL_ENTRIES_FILTER),
@@ -341,26 +307,21 @@ class FlextLdapServerDetector(s[str]):
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
             return FlextResult[t.Ldap.Operation.AttributeDict].fail(
-                f"rootDSE query failed: {connection.result}",
+                f"rootDSE query failed: {connection.result}"
             )
-
         if not connection.entries:
             return FlextResult[Mapping[str, list[str]]].fail(
-                "rootDSE query returned no entries",
+                "rootDSE query returned no entries"
             )
-
         root_dse_entry = connection.entries[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3EntryProtocol):
             return FlextResult[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query returned invalid entry payload",
+                "rootDSE query returned invalid entry payload"
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
-
-        # Python 3.13: Filter None and convert to list[str] in one comprehension
         attributes: dict[str, list[str]] = {
             k: [str(item) for item in v] for k, v in attrs_dict.items()
         }
-
         return FlextResult[Mapping[str, list[str]]].ok(attributes)
 
     def detect_from_connection(self, connection: Connection) -> FlextResult[str]:
@@ -396,32 +357,27 @@ class FlextLdapServerDetector(s[str]):
         root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
         if root_dse_result.is_failure:
             return FlextResult[str].fail(
-                f"Failed to query rootDSE: {root_dse_result.error}",
+                f"Failed to query rootDSE: {root_dse_result.error}"
             )
-
         root_dse_attrs = root_dse_result.value
-        # Python 3.13: Use helper function for concise list conversion
 
         def to_str_list(value: str | Sequence[str] | t.ContainerValue) -> list[str]:
             """Convert value to list[str] using modern Python 3.13 patterns."""
             if not value:
                 return []
-            if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
                 return [str(item) for item in value]
             return [str(value)]
 
-        # Extract and convert values from rootDSE attributes
         naming_contexts = to_str_list(root_dse_attrs.get("namingContexts", []))
         supported_controls = to_str_list(root_dse_attrs.get("supportedControl", []))
         supported_extensions = to_str_list(root_dse_attrs.get("supportedExtension", []))
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs,
-                "vendorName",
+                root_dse_attrs, "vendorName"
             ),
             vendor_version=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs,
-                "vendorVersion",
+                root_dse_attrs, "vendorVersion"
             ),
             naming_contexts=naming_contexts,
             _supported_controls=supported_controls,
@@ -448,13 +404,12 @@ class FlextLdapServerDetector(s[str]):
             - Delegates to detect_from_connection() for actual implementation
             - Uses FlextResult pattern for consistent error handling
         """
-        # Extract connection from kwargs
         connection_raw = _kwargs.get("connection")
         if connection_raw is None:
             return FlextResult[str].fail("connection parameter required")
         if not isinstance(connection_raw, Connection):
             return FlextResult[str].fail(
-                f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
+                f"connection must be ldap3.Connection, got {type(connection_raw).__name__}"
             )
         connection: Connection = connection_raw
         return self.detect_from_connection(connection)

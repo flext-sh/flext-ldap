@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping
 from typing import Self
 
 from flext_ldif import FlextLdifModels
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from flext_ldap import c, p, t
 
@@ -17,7 +17,7 @@ from flext_ldap import c, p, t
 class FlextLdapModelsLdap:
     """LDAP-specific models namespace."""
 
-    class ConnectionConfig(BaseModel):
+    class ConnectionConfig:
         """Connection config."""
 
         host: str = c.Ldap.ConnectionDefaults.DEFAULT_HOST
@@ -38,7 +38,7 @@ class FlextLdapModelsLdap:
                 raise ValueError(msg)
             return self
 
-    class NormalizedConfig(BaseModel):
+    class NormalizedConfig:
         """Configuration for normalized SearchOptions factory."""
 
         scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
@@ -47,13 +47,11 @@ class FlextLdapModelsLdap:
         time_limit: int = 0
         attributes: list[str] | None = None
 
-    class SearchOptions(BaseModel):
+    class SearchOptions:
         """Search options."""
 
         base_dn: str = Field(
-            ...,
-            min_length=1,
-            description="Base DN for search (required, non-empty)",
+            ..., min_length=1, description="Base DN for search (required, non-empty)"
         )
         scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
         filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
@@ -80,7 +78,6 @@ class FlextLdapModelsLdap:
             norm_config = (
                 FlextLdapModelsLdap.NormalizedConfig() if config is None else config
             )
-
             return cls(
                 base_dn=base_dn,
                 scope=norm_config.scope,
@@ -90,14 +87,14 @@ class FlextLdapModelsLdap:
                 attributes=norm_config.attributes,
             )
 
-    class LdapBatchStats(BaseModel):
+    class LdapBatchStats:
         """Batch stats."""
 
         synced: int = 0
         failed: int = 0
         skipped: int = 0
 
-    class SyncOptions(BaseModel):
+    class SyncOptions:
         """Sync options."""
 
         batch_size: int = Field(
@@ -111,7 +108,7 @@ class FlextLdapModelsLdap:
         target_basedn: str = ""
         progress_callback: Callable[[FlextLdapModelsLdap.SyncStats], None] | None = None
 
-    class SyncStats(BaseModel):
+    class SyncStats:
         """Sync stats."""
 
         synced: int = 0
@@ -146,7 +143,7 @@ class FlextLdapModelsLdap:
                 **kwargs,
             )
 
-    class UpsertResult(BaseModel):
+    class UpsertResult:
         """Upsert result."""
 
         success: bool
@@ -154,7 +151,7 @@ class FlextLdapModelsLdap:
         operation: str
         error: str | None = None
 
-    class BatchUpsertResult(BaseModel):
+    class BatchUpsertResult:
         """Batch upsert result."""
 
         total_processed: int = 0
@@ -169,18 +166,17 @@ class FlextLdapModelsLdap:
                 return 0.0
             return self.successful / self.total_processed
 
-    class SyncPhaseConfig(BaseModel):
+    class SyncPhaseConfig:
         """Sync phase config."""
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
-
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
         progress_callback: FlextLdapModelsLdap.Types.ProgressCallbackUnion = None
         retry_on_errors: list[str] | None = None
         max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
 
-    class ConversionMetadata(BaseModel):
+    class ConversionMetadata:
         """Conversion metadata."""
 
         source_attributes: list[str] = Field(default_factory=list)
@@ -191,17 +187,16 @@ class FlextLdapModelsLdap:
         converted_dn: str = ""
         attribute_changes: list[str] = Field(default_factory=list)
 
-    class OperationResult(BaseModel):
+    class OperationResult:
         """LDAP operation result."""
 
         model_config = {"frozen": True}
-
         success: bool
         operation_type: str
         message: str = ""
         entries_affected: int = 0
 
-    class SearchResult(BaseModel):
+    class SearchResult:
         """Search result.
 
         Contains entries from LDAP search operations. The entries field
@@ -238,9 +233,7 @@ class FlextLdapModelsLdap:
             return {key: list(values) for key, values in attrs.attributes.items()}
 
         @staticmethod
-        def extract_objectclass_category(
-            attrs: Mapping[str, t.ContainerValue],
-        ) -> str:
+        def extract_objectclass_category(attrs: Mapping[str, t.ContainerValue]) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:
                 return "unknown"
@@ -255,7 +248,7 @@ class FlextLdapModelsLdap:
         def get_entry_category(entry: FlextLdifModels.Ldif.Entry) -> str:
             """Get category (objectclass) of an entry."""
             attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
-                entry,
+                entry
             )
             if not attrs:
                 return "unknown"
@@ -270,21 +263,19 @@ class FlextLdapModelsLdap:
         """Type definitions for LDAP models."""
 
         LdapProgressCallback = Callable[
-            [int, int, str, "p.Ldap.LdapBatchStatsProtocol"],
-            None,
+            [int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
         ]
         MultiPhaseProgressCallback = Callable[
-            [str, int, int, str, "p.Ldap.LdapBatchStatsProtocol"],
-            None,
+            [str, int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
         ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 
-    class LdapOperationResult(BaseModel):
+    class LdapOperationResult:
         """LDAP operation result."""
 
         operation: str
 
-    class PhaseSyncResult(BaseModel):
+    class PhaseSyncResult:
         """Phase sync result."""
 
         phase_name: str
@@ -295,13 +286,12 @@ class FlextLdapModelsLdap:
         duration_seconds: float = 0.0
         success_rate: float = 0.0
 
-    class MultiPhaseSyncResult(BaseModel):
+    class MultiPhaseSyncResult:
         """Multi-phase sync result."""
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
-
         phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
-            default_factory=dict,
+            default_factory=dict
         )
         total_entries: int = 0
         total_synced: int = 0
@@ -312,6 +302,4 @@ class FlextLdapModelsLdap:
         overall_success: bool = True
 
 
-__all__ = [
-    "FlextLdapModelsLdap",
-]
+__all__ = ["FlextLdapModelsLdap"]

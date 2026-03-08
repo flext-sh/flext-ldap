@@ -54,7 +54,6 @@ from flext_ldap import (
 )
 from flext_ldap._models.ldap import FlextLdapModelsLdap
 
-# Constants for callback parameter counting
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
 SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 
@@ -169,17 +168,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         return FlextLdapSettings
 
     model_config = ConfigDict(
-        frozen=False,  # Facade needs mutable state for logging
-        extra="forbid",
-        arbitrary_types_allowed=True,
+        frozen=False, extra="forbid", arbitrary_types_allowed=True
     )
-
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
-    _config: FlextSettings | None = PrivateAttr(
-        default=None,
-    )
+    _config: FlextSettings | None = PrivateAttr(default=None)
 
     def __init__(
         self,
@@ -210,25 +204,13 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ldif: FlextLdif instance (defaults to get_instance() singleton).
 
         """
-        # Removed unused service_kwargs filtering - super().__init__() doesn't need config kwargs
-        # Type narrowing was: service_kwargs is dict[str, str | float | bool | None]
-        # which matches FlextService.__init__ signature
         super().__init__()
         self._connection = connection
         self._operations = operations
         self._ldif = ldif or FlextLdif()
-        # Use connection's config if available for consistency
-        # Otherwise, super().__init__() already created proper
-        # FlextLdapSettings via _get_service_config_type()
-        # Access private attribute via Protocol for type safety
-        # PrivateAttr is accessible but not part of public API
-        # PrivateAttr access is necessary for copying config from
-        # connection to facade
         connection_config: FlextLdapSettings | None = None
         if isinstance(connection.config, FlextLdapSettings):
             connection_config = connection.config
-        # Type narrowing: connection_config is already FlextLdapSettings | None
-        # After isinstance check above, if it's not None, it's FlextLdapSettings
         if connection_config is not None:
             self._config = connection_config
         self.logger.info(
@@ -309,8 +291,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     @staticmethod
     def _make_phase_progress_callback(
-        phase: str,
-        config: m.Ldap.SyncPhaseConfig,
+        phase: str, config: m.Ldap.SyncPhaseConfig
     ) -> m.Ldap.Types.LdapProgressCallback | None:
         """Create progress callback for a phase, handling both single and multi-phase signatures.
 
@@ -343,31 +324,20 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         callback = config.progress_callback
         if callback is None:
             return None
-
-        # Use type guards for type narrowing
         if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
             multi_phase_cb = callback
 
             def progress_cb(
-                current: int,
-                total: int,
-                dn: str,
-                stats: m.Ldap.SyncStats,
+                current: int, total: int, dn: str, stats: m.Ldap.SyncStats
             ) -> None:
-                # Use narrowed multi-phase callback
                 multi_phase_cb(phase, current, total, dn, stats)
 
             return progress_cb
-
         if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
             return callback
-
         return None
 
-    def add(
-        self,
-        entry: m.Ldif.Entry,
-    ) -> FlextResult[m.Ldap.OperationResult]:
+    def add(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldap.OperationResult]:
         """Add LDAP entry.
 
         Business Rules:
@@ -509,7 +479,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             )
         else:
             config_for_connect = connection_config
-
         self.logger.debug(
             "Connecting to LDAP server",
             host=config_for_connect.host,
@@ -517,14 +486,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             use_ssl=config_for_connect.use_ssl,
             use_tls=config_for_connect.use_tls,
         )
-
         result = self._connection.connect(
             config_for_connect,
             auto_retry=auto_retry,
             max_retries=max_retries,
             retry_delay=retry_delay,
         )
-
         if result.is_success:
             self.logger.info(
                 "LDAP connection established",
@@ -538,13 +505,9 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 port=config_for_connect.port,
                 error=str(result.error),
             )
-
         return result
 
-    def delete(
-        self,
-        dn: str | m.Ldif.DN,
-    ) -> FlextResult[m.Ldap.OperationResult]:
+    def delete(self, dn: str | m.Ldif.DN) -> FlextResult[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -626,9 +589,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         return self._operations.execute()
 
     def modify(
-        self,
-        dn: str | m.Ldif.DN,
-        changes: t.Ldap.Operation.Changes,
+        self, dn: str | m.Ldif.DN, changes: t.Ldap.Operation.Changes
     ) -> FlextResult[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
@@ -665,9 +626,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         return self._operations.modify(dn, changes)
 
     def search(
-        self,
-        search_options: m.Ldap.SearchOptions,
-        server_type: str = "rfc",
+        self, search_options: m.Ldap.SearchOptions, server_type: str = "rfc"
     ) -> FlextResult[m.Ldap.SearchResult]:
         """Perform LDAP search operation.
 
@@ -744,47 +703,29 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
         overall_success = True
         stop_requested = False
-
-        # Process all phases in order
         for phase_name, phase_file in phase_files.items():
             if stop_requested:
                 break
-
             if not phase_file.exists():
                 self.logger.warning(
-                    "Phase file not found",
-                    phase=phase_name,
-                    file=str(phase_file),
+                    "Phase file not found", phase=phase_name, file=str(phase_file)
                 )
                 continue
-
-            # Process single phase and update accumulator state
-            phase_result = self._process_single_phase(
-                phase_name,
-                phase_file,
-                config,
-            )
-
+            phase_result = self._process_single_phase(phase_name, phase_file, config)
             if phase_result.is_failure:
                 self.logger.error(
-                    "Phase sync failed",
-                    phase=phase_name,
-                    error=str(phase_result.error),
+                    "Phase sync failed", phase=phase_name, error=str(phase_result.error)
                 )
                 overall_success = False
                 if config.stop_on_error:
                     stop_requested = True
             else:
                 phase_results[phase_name] = phase_result.value
-
-        # Aggregate totals from phase results
         phase_values = list(phase_results.values())
         totals = {
             "entries": sum(
                 FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result,
-                    "total_entries",
-                    0,
+                    phase_result, "total_entries", 0
                 )
                 for phase_result in phase_values
             ),
@@ -798,9 +739,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ),
             "skipped": sum(
                 FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result,
-                    "skipped",
-                    0,
+                    phase_result, "skipped", 0
                 )
                 for phase_result in phase_values
             ),
@@ -811,7 +750,6 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             if total_processed > 0
             else 0.0
         )
-
         return FlextResult[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
                 phase_results=phase_results,
@@ -822,7 +760,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 overall_success_rate=overall_success_rate,
                 total_duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
                 overall_success=overall_success,
-            ),
+            )
         )
 
     def sync_phase_entries(
@@ -866,9 +804,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         """
         config = config or m.Ldap.SyncPhaseConfig()
-
         start_time = datetime.now(UTC)
-
         try:
             ldif_content = ldif_file_path.read_text(encoding="utf-8")
         except (
@@ -881,16 +817,12 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             ImportError,
         ) as e:
             return FlextResult.fail(f"Failed to read LDIF file: {e!s}")
-
         parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
             return FlextResult.fail(f"Failed to parse LDIF file: {error_msg}")
-
-        # Type narrowing: parse_result.value returns list[m.Ldif.Entry]
-        # Runtime validation ensures correctness
         parse_value = parse_result.value
         entries: list[m.Ldif.Entry] = [
             m.Ldif.Entry.model_validate(entry) for entry in parse_value
@@ -905,64 +837,44 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                     skipped=0,
                     duration_seconds=0.0,
                     success_rate=100.0,
-                ),
+                )
             )
-
-        # Convert multi-phase callback to single-phase if needed
         single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
         callback = config.progress_callback
         if callback is not None:
-            # Use callback signature detection
             if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
                 multi_phase_cb = callback
 
                 def wrapped_cb(
-                    current: int,
-                    total: int,
-                    dn: str,
-                    stats: m.Ldap.SyncStats,
+                    current: int, total: int, dn: str, stats: m.Ldap.SyncStats
                 ) -> None:
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
                 single_phase_callback = wrapped_cb
             elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
                 single_phase_callback = callback
-
-        # Type narrowing: entries is list[FlextLdifModels.Entry] which implements m.Ldif.Entry.EntryProtocol
-        # Structural typing: p.Entry implements m.Ldif.Entry
-        # Convert to list explicitly for type safety
-        # Use helper function for type-safe conversion
         entries_protocol = FlextLdapSyncCallbacks.convert_entries_to_protocol(entries)
         batch_result = self.batch_upsert(
             entries_protocol,
             progress_callback=single_phase_callback,
             retry_on_errors=config.retry_on_errors
-            or [
-                "session terminated",
-                "not connected",
-                "invalid messageid",
-                "socket",
-            ],
+            or ["session terminated", "not connected", "invalid messageid", "socket"],
             max_retries=config.max_retries,
             stop_on_error=config.stop_on_error,
         )
-
         if batch_result.is_failure:
             error_msg = (
                 str(batch_result.error) if batch_result.error else "Unknown error"
             )
             return FlextResult.fail(f"Batch sync failed: {error_msg}")
-
         batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()
-
         total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped
         success_rate = (
             (batch_stats.synced + batch_stats.skipped) / total_processed * 100
             if total_processed > 0
             else 0.0
         )
-
         return FlextResult.ok(
             m.Ldap.PhaseSyncResult(
                 phase_name=phase_name,
@@ -972,7 +884,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 skipped=batch_stats.skipped,
                 duration_seconds=duration,
                 success_rate=success_rate,
-            ),
+            )
         )
 
     def upsert(
@@ -1016,15 +928,11 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
         """
         return self._operations.upsert(
-            entry,
-            retry_on_errors=retry_on_errors,
-            max_retries=max_retries,
+            entry, retry_on_errors=retry_on_errors, max_retries=max_retries
         )
 
     def _prepare_phase_callback(
-        self,
-        phase_name: str,
-        config: m.Ldap.SyncPhaseConfig,
+        self, phase_name: str, config: m.Ldap.SyncPhaseConfig
     ) -> m.Ldap.Types.LdapProgressCallback | None:
         """Prepare phase-specific progress callback.
 
@@ -1039,39 +947,27 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             Prepared callback for single phase or None.
 
         """
-        # Convert callback to single-phase if needed
         phase_callback = (
             FlextLdap._make_phase_progress_callback(phase_name, config)
             or config.progress_callback
         )
-
-        # Ensure result is LdapProgressCallback | None (not MultiPhaseProgressCallback)
         if phase_callback is None:
             return None
-
         if FlextLdapSyncCallbacks.is_single_phase_callback(phase_callback):
             return phase_callback
-
         if FlextLdapSyncCallbacks.is_multi_phase_callback(phase_callback):
             multi_phase_cb = phase_callback
 
             def wrapped_phase_cb(
-                current: int,
-                total: int,
-                dn: str,
-                stats: m.Ldap.SyncStats,
+                current: int, total: int, dn: str, stats: m.Ldap.SyncStats
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 
             return wrapped_phase_cb
-
         return None
 
     def _process_single_phase(
-        self,
-        phase_name: str,
-        ldif_path: Path,
-        config: m.Ldap.SyncPhaseConfig,
+        self, phase_name: str, ldif_path: Path, config: m.Ldap.SyncPhaseConfig
     ) -> FlextResult[m.Ldap.PhaseSyncResult]:
         """Process single phase file and return result.
 
@@ -1086,10 +982,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             Result containing phase sync data or error.
 
         """
-        # Prepare phase-specific callback
         phase_callback = self._prepare_phase_callback(phase_name, config)
-
-        # Execute phase sync with prepared callback
         return self.sync_phase_entries(
             ldif_path,
             phase_name,
@@ -1101,4 +994,3 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 stop_on_error=config.stop_on_error,
             ),
         )
-        # sync_phase_entries already returns FlextResult[m.Ldap.PhaseSyncResult]

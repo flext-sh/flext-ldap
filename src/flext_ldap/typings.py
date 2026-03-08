@@ -26,7 +26,6 @@ class SearchOptionsContract(Protocol):
 
 FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
 FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-
 type LdapScalar = t.Scalar | None
 type LdapCollection = Sequence[str | bytes | int | float | bool]
 
@@ -69,7 +68,6 @@ class FlextLdapTypes(FlextLdifTypes):
 
 
 t = FlextLdapTypes
-
 __all__ = [
     "FlextLdapDomainResultT",
     "FlextLdapEntryT",
