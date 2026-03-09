@@ -32,7 +32,6 @@ import pytest
 from flext_core import FlextLogger, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from flext_tests import FlextTestsDocker
-from ldap3 import Connection, Server
 
 from flext_ldap import (
     FlextLdap,
@@ -40,6 +39,7 @@ from flext_ldap import (
     FlextLdapOperations,
     FlextLdapSettings,
 )
+from ldap3 import Connection, Server
 
 from . import c, m, t
 from .typings import GenericFieldsDict, LdapContainerDict

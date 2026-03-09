@@ -35,11 +35,11 @@ from typing import Final, Literal, TypeAlias, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
-from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap import FlextLdapConstants, c, m, p, s, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from ldap3 import Connection, Server
 
 LdifEntry: TypeAlias = FlextLdifModels.Ldif.Entry
 LDAP3_SCOPE_BASE: Final[int] = 0

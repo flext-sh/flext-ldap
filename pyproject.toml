@@ -120,26 +120,6 @@ known_first_party = [
 ]
 pep621_dev_dependency_groups = [ "dev" ]
 
-[tool.pytest.ini_options]
-addopts = [ "--strict-markers" ]
-markers = [
-  "docker: tests requiring Docker",
-  "e2e: end-to-end integration tests",
-  "edge_cases: edge case tests",
-  "integration: integration tests",
-  "performance: performance and benchmark tests",
-  "resilience: resilience tests",
-  "slow: slow-running tests",
-  "smoke: smoke connectivity tests",
-  "stress: stress tests",
-  "unit: unit tests",
-]
-minversion = "8.0"
-python_classes = [ "Test*" ]
-python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
-
-# [MANAGED] pyright
-enable_assertion_pass_hook = true
 [tool.pyright]
 extraPaths = [
   "../flext-core/src",
@@ -583,3 +563,24 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
+
+[tool.pytest.ini_options]
+addopts = [ "--strict-markers" ]
+markers = [
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "resilience: resilience tests",
+  "slow: slow-running tests",
+  "smoke: smoke connectivity tests",
+  "stress: stress tests",
+  "unit: unit tests",
+]
+minversion = "8.0"
+python_classes = [ "Test*" ]
+python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
+# [MANAGED] pyright
+enable_assertion_pass_hook = true

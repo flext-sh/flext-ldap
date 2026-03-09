@@ -35,9 +35,9 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import ParamSpec, override
 
 from flext_core import FlextResult
-from ldap3 import BASE, Connection
 
 from flext_ldap import c, p, s, t, u
+from ldap3 import BASE, Connection
 
 P = ParamSpec("P")
 

@@ -181,7 +181,7 @@ config = FlextLdapSettings(
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     bind_password="your-password",
     timeout=30,
-    pool_size=5
+    pool_size=5,
 )
 ```
 
@@ -194,6 +194,7 @@ ______________________________________________________________________
 ```python
 from flext_ldap import get_flext_ldap_api
 
+
 def test_connection():
     """Test basic LDAP connectivity."""
     api = get_flext_ldap_api()
@@ -204,6 +205,7 @@ def test_connection():
     else:
         print(f"❌ Connection failed: {result.error}")
 
+
 run(test_connection())
 ```
 
@@ -211,6 +213,7 @@ run(test_connection())
 
 ```python
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+
 
 def basic_search():
     """Perform a basic directory search."""
@@ -220,7 +223,7 @@ def basic_search():
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=organizationalUnit)",
         scope="subtree",
-        attributes=["ou", "description"]
+        attributes=["ou", "description"],
     )
 
     result = api.search_entries(search_request)
@@ -232,6 +235,7 @@ def basic_search():
     else:
         print(f"Search failed: {result.error}")
 
+
 run(basic_search())
 ```
 
@@ -239,6 +243,7 @@ run(basic_search())
 
 ```python
 from flext_ldap import get_flext_ldap_api
+
 
 def authenticate_user():
     """Authenticate a user against LDAP."""
@@ -253,6 +258,7 @@ def authenticate_user():
         print(f"✅ Authentication successful for {user.uid}")
     else:
         print(f"❌ Authentication failed: {result.error}")
+
 
 run(authenticate_user())
 ```
@@ -271,15 +277,16 @@ from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
 
+
 def server_specific_operations():
     """Use server-specific operations with automatic detection."""
 
     # Connect to LDAP server
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     # Initialize adapters
@@ -287,7 +294,7 @@ def server_specific_operations():
     quirks = FlextLdapQuirksAdapter()
 
     # Search for entries
-    connection.search('dc=example,dc=com', '(objectClass=*)', attributes=['*'])
+    connection.search("dc=example,dc=com", "(objectClass=*)", attributes=["*"])
 
     # Convert to FlextLdif
     entries = []
@@ -309,6 +316,7 @@ def server_specific_operations():
             ops = OracleOIDOperations()
         else:
             from flext_ldap import GenericServerOperations
+
             ops = GenericServerOperations()
 
         # Discover schema
@@ -316,6 +324,7 @@ def server_specific_operations():
         if schema_result.is_success:
             schema = schema_result.unwrap()
             print(f"Object classes: {len(schema['object_classes'])}")
+
 
 run(server_specific_operations())
 ```
@@ -332,7 +341,7 @@ import ldap3
 adapter = FlextLdapEntryAdapter()
 
 # ldap3 → FlextLdif
-connection.search('dc=example,dc=com', '(objectClass=person)')
+connection.search("dc=example,dc=com", "(objectClass=person)")
 for ldap3_entry in connection.entries:
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if ldif_result.is_success:
@@ -342,11 +351,9 @@ for ldap3_entry in connection.entries:
 # FlextLdif → ldap3
 ldif_entry = FlextLdifModels.Entry(
     dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-    attributes=FlextLdifModels.Attributes(attributes={
-        "objectClass": ["person"],
-        "cn": ["test"],
-        "sn": ["Test User"]
-    })
+    attributes=FlextLdifModels.Attributes(
+        attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["Test User"]}
+    ),
 )
 
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
@@ -363,15 +370,16 @@ Discover schema from different LDAP server types:
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
+
 def discover_schema():
     """Discover schema from OpenLDAP 2.x server."""
     ops = OpenLDAP2Operations()
 
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     schema_result = ops.discover_schema(connection)
@@ -382,6 +390,7 @@ def discover_schema():
         print(f"Attribute Types: {len(schema['attribute_types'])}")
         print(f"Syntaxes: {len(schema['syntaxes'])}")
         print(f"Server Type: {schema['server_type']}")
+
 
 run(discover_schema())
 ```
@@ -394,19 +403,20 @@ Manage server-specific ACLs:
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
+
 def manage_acls():
     """Get and set ACLs on OpenLDAP 2.x server."""
     ops = OpenLDAP2Operations()
 
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     # Get ACLs
-    dn = 'olcDatabase={1}mdb,cn=config'
+    dn = "olcDatabase={1}mdb,cn=config"
     acl_result = ops.get_acls(connection, dn)
 
     if acl_result.is_success:
@@ -415,13 +425,16 @@ def manage_acls():
 
         # Set new ACLs
         new_acls = [
-            {"raw": "{0}to * by dn=\"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\" write"},
-            {"raw": "{1}to * by self write by anonymous auth"}
+            {
+                "raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'
+            },
+            {"raw": "{1}to * by self write by anonymous auth"},
         ]
 
         set_result = ops.set_acls(connection, dn, new_acls)
         if set_result.is_success:
             print("ACLs updated successfully")
+
 
 run(manage_acls())
 ```
@@ -434,15 +447,16 @@ Execute paged searches with automatic pagination:
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
+
 def paged_search():
     """Execute paged search with automatic pagination."""
     ops = OpenLDAP2Operations()
 
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     result = ops.search_with_paging(
@@ -450,7 +464,7 @@ def paged_search():
         base_dn="ou=users,dc=example,dc=com",
         search_filter="(objectClass=person)",
         attributes=["uid", "cn", "mail"],
-        page_size=100
+        page_size=100,
     )
 
     if result.is_success:
@@ -458,6 +472,7 @@ def paged_search():
         print(f"Found {len(entries)} entries")
         for entry in entries:
             print(f"  DN: {entry.dn}")
+
 
 run(paged_search())
 ```

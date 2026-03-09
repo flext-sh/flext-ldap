@@ -332,8 +332,8 @@ pytest --maxfail=1 --tb=short  # Fail fast on errors
 ```python
 def test_should_perform_operation_under_conditions():
     """Given: specific preconditions
-       When: operation is performed
-       Then: expected outcome occurs"""
+    When: operation is performed
+    Then: expected outcome occurs"""
     # Arrange
     setup_test_data()
 
@@ -354,7 +354,9 @@ def test_ldap_operation_with_real_server():
 
     # Perform LDAP operation
     client = FlextLdapClient()
-    result = client.connect("ldap://localhost:3390", "cn=REDACTED_LDAP_BIND_PASSWORD", "password")
+    result = client.connect(
+        "ldap://localhost:3390", "cn=REDACTED_LDAP_BIND_PASSWORD", "password"
+    )
 
     # Assert results
     assert result.is_success
@@ -393,18 +395,14 @@ def test_service_logic_with_mocked_dependencies():
 @pytest.fixture
 def ldap_client():
     """LDAP client configured for testing."""
-    return FlextLdapClient(
-        server="ldap://localhost:3390",
-        base_dn="dc=flext,dc=local"
-    )
+    return FlextLdapClient(server="ldap://localhost:3390", base_dn="dc=flext,dc=local")
+
 
 @pytest.fixture
 def test_user():
     """Test user entity."""
     return FlextLdapEntities.User(
-        dn="cn=testuser,ou=users,dc=flext,dc=local",
-        uid="testuser",
-        cn="Test User"
+        dn="cn=testuser,ou=users,dc=flext,dc=local", uid="testuser", cn="Test User"
     )
 ```
 

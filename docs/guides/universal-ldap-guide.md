@@ -117,6 +117,7 @@ if ops_result.is_success:
     print(f"ACL format: {ops.get_acl_format()}")
     print(f"Schema DN: {ops.get_schema_dn()}")
 
+
 # Method 2: Auto-detect from connection
 def detect_and_create():
     # Assuming you have an ldap3 connection
@@ -124,6 +125,7 @@ def detect_and_create():
     if ops_result.is_success:
         ops = ops_result.unwrap()
         print(f"Detected: {ops.server_type}")
+
 
 # Method 3: Detect from entries
 from flext_ldif import FlextLdifModels
@@ -196,7 +198,7 @@ result = api.search_universal(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(objectClass=person)",
     attributes=["uid", "cn", "mail", "sn"],
-    use_paging=True  # Automatically uses server's best paging method
+    use_paging=True,  # Automatically uses server's best paging method
 )
 
 if result.is_success:
@@ -220,10 +222,7 @@ if normalized_result.is_success:
     print("Entry normalized for current server")
 
 # Normalize for specific target server
-normalized_result = api.normalize_entry_for_server(
-    entry,
-    target_server_type="oud"
-)
+normalized_result = api.normalize_entry_for_server(entry, target_server_type="oud")
 ```
 
 ### 5. Entry Conversion Between Servers
@@ -235,7 +234,7 @@ openldap1_entry: FlextLdifModels.Entry = ...  # Entry from OpenLDAP 1.x
 convert_result = api.convert_entry_between_servers(
     entry=openldap1_entry,
     source_server_type="openldap1",
-    target_server_type="openldap2"
+    target_server_type="openldap2",
 )
 
 if convert_result.is_success:
@@ -291,6 +290,7 @@ if attrs_result.is_success:
 from flext_ldap import FlextLdap
 from flext_ldif import FlextLdif
 
+
 def migrate_openldap1_to_openldap2():
     # Parse OpenLDAP 1.x LDIF file
     ldif = FlextLdif()
@@ -308,9 +308,7 @@ def migrate_openldap1_to_openldap2():
 
     for entry in openldap1_entries:
         convert_result = api.convert_entry_between_servers(
-            entry=entry,
-            source_server_type="openldap1",
-            target_server_type="openldap2"
+            entry=entry, source_server_type="openldap1", target_server_type="openldap2"
         )
 
         if convert_result.is_success:
@@ -339,9 +337,7 @@ def migrate_oid_to_oud():
     for entry in oid_entries:
         # Convert orclaci ACLs to ds-privilege-name
         convert_result = api.convert_entry_between_servers(
-            entry=entry,
-            source_server_type="oid",
-            target_server_type="oud"
+            entry=entry, source_server_type="oid", target_server_type="oud"
         )
 
         if convert_result.is_success:
@@ -365,6 +361,7 @@ def migrate_oid_to_oud():
 ```python
 from flext_ldap import FlextLdap, ServerOperationsFactory
 
+
 def sync_across_servers():
     """Sync entries across different LDAP server types."""
 
@@ -378,8 +375,7 @@ def sync_across_servers():
 
     # Search source
     search_result = source_api.search_universal(
-        base_dn="ou=users,dc=company,dc=com",
-        filter_str="(objectClass=inetOrgPerson)"
+        base_dn="ou=users,dc=company,dc=com", filter_str="(objectClass=inetOrgPerson)"
     )
 
     if search_result.is_success:
@@ -396,7 +392,7 @@ def sync_across_servers():
             convert_result = source_api.convert_entry_between_servers(
                 entry=entry,
                 source_server_type=source_type,
-                target_server_type=target_type
+                target_server_type=target_type,
             )
 
             if convert_result.is_success:
@@ -404,8 +400,7 @@ def sync_across_servers():
 
                 # Add to target server
                 target_api.add_entry(
-                    str(converted_entry.dn),
-                    converted_entry.attributes.attributes
+                    str(converted_entry.dn), converted_entry.attributes.attributes
                 )
 ```
 
@@ -435,7 +430,7 @@ def progressive_migration():
 
     batch_size = 100
     for i in range(0, len(source_entries), batch_size):
-        batch = source_entries[i:i+batch_size]
+        batch = source_entries[i : i + batch_size]
         converted_batch = []
 
         for entry in batch:
@@ -445,7 +440,7 @@ def progressive_migration():
                 convert_result = api.convert_entry_between_servers(
                     entry=entry,
                     source_server_type=source_type,
-                    target_server_type=target_type
+                    target_server_type=target_type,
                 )
 
                 if convert_result.is_success:
@@ -454,7 +449,7 @@ def progressive_migration():
                 converted_batch.append(entry)
 
         converted_batches.append(converted_batch)
-        print(f"Converted batch {i//batch_size + 1}")
+        print(f"Converted batch {i // batch_size + 1}")
 
     # Phase 3: Validate all entries
     for batch in converted_batches:
@@ -498,7 +493,7 @@ caps_result = api.get_server_capabilities()
 if caps_result.is_success:
     caps = caps_result.unwrap()
 
-    if caps['supports_paged_results']:
+    if caps["supports_paged_results"]:
         # Use paged search
         api.search_universal(..., use_paging=True)
 ```

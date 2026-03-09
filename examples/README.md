@@ -774,6 +774,7 @@ api.unbind()
 from contextlib import contextmanager
 from flext_ldap import FlextLdap
 
+
 @contextmanager
 def ldap_connection():
     api = FlextLdap(config=...)
@@ -784,6 +785,7 @@ def ldap_connection():
         yield api
     finally:
         api.unbind()
+
 
 # Usage
 with ldap_connection() as api:
@@ -800,6 +802,7 @@ if result.is_failure:
     return
 
 entries = result.unwrap()
+
 
 # Pattern 2: Early return
 def process():

@@ -420,7 +420,7 @@ git remote -v
 # Process files in batches
 batch_size = 10
 for i in range(0, len(file_list), batch_size):
-    batch = file_list[i:i+batch_size]
+    batch = file_list[i : i + batch_size]
     # Process batch
 ```
 
@@ -683,6 +683,7 @@ curl -H "User-Agent: Mozilla/5.0" https://example.com
 ```python
 # Debug file operations
 import os
+
 print(f"Current directory: {os.getcwd()}")
 print(f"Docs directory exists: {os.path.exists('docs')}")
 print(f"Docs directory contents: {os.listdir('docs')}")
@@ -703,6 +704,7 @@ def diagnose_link_issues():
     # Validate SSL certificates
     # Check firewall rules
     pass
+
 
 def diagnose_performance_issues():
     """Performance bottleneck analysis."""

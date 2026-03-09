@@ -177,22 +177,20 @@ make clean-all     # Deep clean including venvs
 ```python
 from flext_core import FlextResult
 
+
 def my_operation(data: dict) -> FlextResult[ProcessedData]:
     """Always return FlextResult[T]."""
     if not data:
         return FlextResult[ProcessedData].fail("Data required")
 
-    return (
-        validate(data)
-        .flat_map(transform)
-        .map(enrich)
-    )
+    return validate(data).flat_map(transform).map(enrich)
 ```
 
 ### Use x
 
 ```python
 from flext_core import FlextService
+
 
 class MyService(FlextService[None]):
     """Inherit from FlextService to get mixins."""
@@ -209,8 +207,10 @@ class MyService(FlextService[None]):
 ```python
 from pydantic import BaseModel, PositiveInt
 
+
 class Config(BaseModel):
     """Use Pydantic v2 native types."""
+
     timeout: PositiveInt  # Built-in validation
     host: str
 ```

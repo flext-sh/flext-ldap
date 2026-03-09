@@ -84,10 +84,10 @@ result = api.search_entries(search_request)
 ```python
 # Public API (recommended)
 from flext_ldap import (
-    FlextLdap,              # Main API
-    FlextLdapModels,        # Models
-    FlextLdapClients,       # Client operations
-    FlextLdapAcl,           # ACL management
+    FlextLdap,  # Main API
+    FlextLdapModels,  # Models
+    FlextLdapClients,  # Client operations
+    FlextLdapAcl,  # ACL management
 )
 
 # Server operations
@@ -107,8 +107,7 @@ from flext_ldap import FlextLdapEntryAdapter
 ```python
 api = FlextLdap()
 search_request = FlextLdapModels.SearchRequest(
-    base_dn="dc=example,dc=com",
-    filter_str="(objectClass=person)"
+    base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
 )
 result = api.search_entries(search_request)
 ```
