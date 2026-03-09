@@ -1,7 +1,6 @@
 # Getting Started with FLEXT-LDAP
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Prerequisites](#prerequisites)
   - [**System Requirements**](#system-requirements)
@@ -31,7 +30,6 @@
 - [Troubleshooting](#troubleshooting)
   - [**Common Issues**](#common-issues)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 ## Table of Contents

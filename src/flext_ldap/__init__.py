@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     from flext_ldap.settings import FlextLdapSettings
     from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
     from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdap": ("flext_ldap.api", "FlextLdap"),
     "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
@@ -91,6 +93,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "u": ("flext_ldap.utilities", "FlextLdapUtilities"),
     "x": ("flext_core", "x"),
 }
+
 __all__ = [
     "MULTI_PHASE_CALLBACK_PARAM_COUNT",
     "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
@@ -121,7 +124,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

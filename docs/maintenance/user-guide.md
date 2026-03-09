@@ -1,7 +1,6 @@
 # Documentation Maintenance System - User Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
   - [Key Features](#key-features)
@@ -33,7 +32,6 @@
   - [Content Standards](#content-standards)
   - [Team Collaboration](#team-collaboration)
   - [Performance Considerations](#performance-considerations)
-
 <!-- TOC END -->
 
 **Complete guide for using the Documentation Maintenance System**

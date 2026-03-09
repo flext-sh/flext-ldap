@@ -1,7 +1,6 @@
 # Architecture Decision Record (ADR) Template
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Status](#status)
 - [Context](#context)
@@ -11,7 +10,6 @@
 - [Validation](#validation)
 - [References](#references)
 - [ADR Maintenance](#adr-maintenance)
-
 <!-- TOC END -->
 
 ## Table of Contents

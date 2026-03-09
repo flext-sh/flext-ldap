@@ -1,7 +1,6 @@
 # API Reference
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [🚀 Main API](#main-api)
   - [`get_flext_ldap_api(config=None)`](#getflextldapapiconfignone)
@@ -34,7 +33,6 @@
 - [📝 Type Annotations](#type-annotations)
 - [🔗 Complete Usage Example](#complete-usage-example)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 ## Table of Contents

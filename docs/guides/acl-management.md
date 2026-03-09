@@ -1,7 +1,6 @@
 # ACL Management System
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -30,7 +29,6 @@
   - [FlextLdap ACL Methods](#flextldap-acl-methods)
   - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 ## Table of Contents

@@ -1,7 +1,6 @@
 # Universal LDAP Operations Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Key Features](#key-features)
@@ -35,7 +34,6 @@
   - [Conversion Failures](#conversion-failures)
   - [ACL Translation Issues](#acl-translation-issues)
 - [Contributing](#contributing)
-
 <!-- TOC END -->
 
 **flext-ldap** now provides complete universal LDAP support,

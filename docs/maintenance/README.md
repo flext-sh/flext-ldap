@@ -1,7 +1,6 @@
 # Documentation Maintenance System
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [📋 System Overview](#system-overview)
 - [🏗️ Architecture](#architecture)
@@ -49,7 +48,6 @@
   - [Documentation](#documentation)
   - [Community](#community)
   - [Professional Services](#professional-services)
-
 <!-- TOC END -->
 
 ## Table of Contents

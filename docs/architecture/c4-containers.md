@@ -1,7 +1,6 @@
 # C4 Model: Container Architecture
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [🏗️ Container Architecture Overview](#container-architecture-overview)
 - [📦 Container Descriptions](#container-descriptions)
@@ -11,7 +10,6 @@
 - [📊 Performance Characteristics](#performance-characteristics)
 - [🔒 Security Considerations](#security-considerations)
 - [🔗 Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 ## Table of Contents

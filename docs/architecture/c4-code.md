@@ -1,9 +1,7 @@
 # C4 Model: Code Architecture
 
 <!-- TOC START -->
-
 - No sections found
-
 <!-- TOC END -->
 
 **Level 4: Code Diagram**

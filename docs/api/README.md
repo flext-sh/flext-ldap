@@ -1,7 +1,6 @@
 # API Reference Documentation
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Public API](#public-api)
   - [Primary Entry Point](#primary-entry-point)
@@ -15,7 +14,6 @@
   - [Internal (Subject to Change)](#internal-subject-to-change)
 - [Return Types](#return-types)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Version**: 1.0 (v0.10.0)

@@ -1,7 +1,6 @@
 # C4 Model: System Context
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [🎯 System Context Overview](#system-context-overview)
 - [📋 Context Description](#context-description)
@@ -22,7 +21,6 @@
   - [**Performance Benchmarks**](#performance-benchmarks)
   - [**Quality Metrics**](#quality-metrics)
 - [🔗 Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 ## Table of Contents

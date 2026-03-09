@@ -1,7 +1,6 @@
 # Troubleshooting Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Connection Issues](#connection-issues)
   - [Connection Refused Errors](#connection-refused-errors)
@@ -31,7 +30,6 @@
 - [Getting Help](#getting-help)
   - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
   - [Diagnostic Information Collection](#diagnostic-information-collection)
-
 <!-- TOC END -->
 
 ## Table of Contents

@@ -1,7 +1,6 @@
 # Development Guide
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Table of Contents](#table-of-contents)
   - [Getting Started](#getting-started)
@@ -32,7 +31,6 @@
   - [DO ✅](#do)
   - [DON'T ❌](#dont)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Version**: 1.0

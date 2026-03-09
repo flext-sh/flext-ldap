@@ -1,9 +1,7 @@
 # Security Architecture: Authentication & Authorization
 
 <!-- TOC START -->
-
 - No sections found
-
 <!-- TOC END -->
 
 **Security Model and Implementation**

@@ -7,7 +7,6 @@
 > Project profile: `flext-ldap`
 
 <!-- TOC START -->
-
 - [What is FLEXT](#what-is-flext)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -28,7 +27,6 @@
   - [Build Real Applications](#build-real-applications)
 - [Getting Help](#getting-help)
 - [What's Next](#whats-next)
-
 <!-- TOC END -->
 
 ## What is FLEXT

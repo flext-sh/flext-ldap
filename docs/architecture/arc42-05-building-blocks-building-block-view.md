@@ -1,9 +1,7 @@
 # 05-building-blocks: Building Block View
 
 <!-- TOC START -->
-
 - No sections found
-
 <!-- TOC END -->
 
 **Arc42 Section 05-building-blocks**

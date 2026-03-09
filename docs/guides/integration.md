@@ -1,7 +1,6 @@
 # Integration Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
@@ -27,7 +26,6 @@
 - [Monitoring and Observability](#monitoring-and-observability)
   - [Prometheus Metrics](#prometheus-metrics)
   - [Health Check Endpoints](#health-check-endpoints)
-
 <!-- TOC END -->
 
 ## Table of Contents

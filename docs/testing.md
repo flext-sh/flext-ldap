@@ -1,7 +1,6 @@
 # FLEXT-LDAP Testing Plan & Status
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Testing Overview](#testing-overview)
 - [Test Environment](#test-environment)
@@ -36,7 +35,6 @@
   - [Month 2: Integration & E2E](#month-2-integration-e2e)
   - [Month 3: Advanced Scenarios](#month-3-advanced-scenarios)
 - [Current Status Summary](#current-status-summary)
-
 <!-- TOC END -->
 
 ## Table of Contents

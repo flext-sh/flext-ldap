@@ -1,7 +1,6 @@
 # Development Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Development Environment Setup](#development-environment-setup)
   - [Prerequisites](#prerequisites)
@@ -35,7 +34,6 @@
 - [Contribution Guidelines](#contribution-guidelines)
   - [Pull Request Process](#pull-request-process)
   - [Code Review Checklist](#code-review-checklist)
-
 <!-- TOC END -->
 
 ## Table of Contents

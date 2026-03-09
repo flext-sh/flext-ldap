@@ -14,13 +14,20 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_ldap._models.ldap import FlextLdapModelsLdap
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap")
+    "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
 }
-__all__ = ["FlextLdapModelsLdap"]
+
+__all__ = [
+    "FlextLdapModelsLdap",
+]
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(
+    name: str,
+) -> Any:  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

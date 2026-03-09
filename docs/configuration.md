@@ -1,7 +1,6 @@
 # Configuration Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Configuration Overview](#configuration-overview)
   - [Configuration Hierarchy](#configuration-hierarchy)
@@ -27,7 +26,6 @@
 - [Performance Tuning](#performance-tuning)
   - [Connection Pool Optimization](#connection-pool-optimization)
   - [Search Optimization](#search-optimization)
-
 <!-- TOC END -->
 
 ## Table of Contents
