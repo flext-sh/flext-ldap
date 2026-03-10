@@ -1,3 +1,6 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """FLEXT-LDAP - LDAP Client Library.
 
 LDAP client library with RFC compliance and server-specific quirks
@@ -29,14 +32,14 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core import (
-        FlextDecorators as d,
-        FlextExceptions as e,
-        FlextHandlers as h,
-        r,
-        x,
+    from flext_ldap.__version__ import __all__
+    from flext_ldap._models.ldap import FlextLdapModelsLdap
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import (
+        FlextLdapLdap3Wrappers,
+        Ldap3Adapter,
+        LdifEntry,
     )
-
     from flext_ldap.api import (
         MULTI_PHASE_CALLBACK_PARAM_COUNT,
         SINGLE_PHASE_CALLBACK_PARAM_COUNT,
@@ -44,54 +47,54 @@ if TYPE_CHECKING:
         FlextLdapSyncCallbacks,
     )
     from flext_ldap.base import FlextLdapServiceBase, s
-    from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
-    from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
-    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
+    from flext_ldap.constants import FlextLdapConstants, c
+    from flext_ldap.models import FlextLdapModels, m
+    from flext_ldap.protocols import FlextLdapProtocols, p
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
+    from flext_ldap.services.operations import FlextLdapOperations, LaxStr
     from flext_ldap.services.sync import FlextLdapSyncService
     from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
-    from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
+    from flext_ldap.typings import (
+        FlextLdapTypes,
+        LdapEntryContract,
+        SearchOptionsContract,
+        t,
+    )
+    from flext_ldap.utilities import FlextLdapUtilities, u
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdap": ("flext_ldap.api", "FlextLdap"),
     "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
     "FlextLdapConstants": ("flext_ldap.constants", "FlextLdapConstants"),
+    "FlextLdapEntryAdapter": ("flext_ldap.adapters.entry", "FlextLdapEntryAdapter"),
+    "FlextLdapLdap3Wrappers": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"),
     "FlextLdapModels": ("flext_ldap.models", "FlextLdapModels"),
+    "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
     "FlextLdapProtocols": ("flext_ldap.protocols", "FlextLdapProtocols"),
-    "FlextLdapServerDetector": (
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ),
+    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
     "FlextLdapServiceBase": ("flext_ldap.base", "FlextLdapServiceBase"),
     "FlextLdapSettings": ("flext_ldap.settings", "FlextLdapSettings"),
     "FlextLdapSyncCallbacks": ("flext_ldap.api", "FlextLdapSyncCallbacks"),
     "FlextLdapSyncService": ("flext_ldap.services.sync", "FlextLdapSyncService"),
     "FlextLdapTypes": ("flext_ldap.typings", "FlextLdapTypes"),
     "FlextLdapUtilities": ("flext_ldap.utilities", "FlextLdapUtilities"),
-    "MULTI_PHASE_CALLBACK_PARAM_COUNT": (
-        "flext_ldap.api",
-        "MULTI_PHASE_CALLBACK_PARAM_COUNT",
-    ),
-    "SINGLE_PHASE_CALLBACK_PARAM_COUNT": (
-        "flext_ldap.api",
-        "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
-    ),
-    "c": ("flext_ldap.constants", "FlextLdapConstants"),
-    "d": ("flext_core", "FlextDecorators"),
-    "e": ("flext_core", "FlextExceptions"),
-    "h": ("flext_core", "FlextHandlers"),
-    "m": ("flext_ldap.models", "FlextLdapModels"),
-    "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
-    "r": ("flext_core", "r"),
+    "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
+    "Ldap3Adapter": ("flext_ldap.adapters.ldap3", "Ldap3Adapter"),
+    "LdapEntryContract": ("flext_ldap.typings", "LdapEntryContract"),
+    "LdifEntry": ("flext_ldap.adapters.ldap3", "LdifEntry"),
+    "MULTI_PHASE_CALLBACK_PARAM_COUNT": ("flext_ldap.api", "MULTI_PHASE_CALLBACK_PARAM_COUNT"),
+    "SINGLE_PHASE_CALLBACK_PARAM_COUNT": ("flext_ldap.api", "SINGLE_PHASE_CALLBACK_PARAM_COUNT"),
+    "SearchOptionsContract": ("flext_ldap.typings", "SearchOptionsContract"),
+    "__all__": ("flext_ldap.__version__", "__all__"),
+    "c": ("flext_ldap.constants", "c"),
+    "m": ("flext_ldap.models", "m"),
+    "p": ("flext_ldap.protocols", "p"),
     "s": ("flext_ldap.base", "s"),
-    "t": ("flext_ldap.typings", "FlextLdapTypes"),
-    "u": ("flext_ldap.utilities", "FlextLdapUtilities"),
-    "x": ("flext_core", "x"),
+    "t": ("flext_ldap.typings", "t"),
+    "u": ("flext_ldap.utilities", "u"),
 }
 
 __all__ = [
@@ -100,7 +103,10 @@ __all__ = [
     "FlextLdap",
     "FlextLdapConnection",
     "FlextLdapConstants",
+    "FlextLdapEntryAdapter",
+    "FlextLdapLdap3Wrappers",
     "FlextLdapModels",
+    "FlextLdapModelsLdap",
     "FlextLdapOperations",
     "FlextLdapProtocols",
     "FlextLdapServerDetector",
@@ -110,21 +116,22 @@ __all__ = [
     "FlextLdapSyncService",
     "FlextLdapTypes",
     "FlextLdapUtilities",
+    "LaxStr",
+    "Ldap3Adapter",
+    "LdapEntryContract",
+    "LdifEntry",
+    "SearchOptionsContract",
+    "__all__",
     "c",
-    "d",
-    "e",
-    "h",
     "m",
     "p",
-    "r",
     "s",
     "t",
     "u",
-    "x",
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

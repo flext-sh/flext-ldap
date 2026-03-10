@@ -31,7 +31,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Final, Literal, TypeAlias, override
+from typing import Literal, TypeAlias, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
@@ -42,9 +42,6 @@ from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from ldap3 import Connection, Server
 
 LdifEntry: TypeAlias = FlextLdifModels.Ldif.Entry
-LDAP3_SCOPE_BASE: Final[int] = 0
-LDAP3_SCOPE_LEVEL: Final[int] = 1
-LDAP3_SCOPE_SUBTREE: Final[int] = 2
 
 
 class FlextLdapLdap3Wrappers:
@@ -107,9 +104,9 @@ class FlextLdapLdap3Wrappers:
         normalized_scope: Literal["BASE", "LEVEL", "SUBTREE"]
         if isinstance(search_scope, int):
             scope_map: Mapping[int, str] = {
-                LDAP3_SCOPE_BASE: "BASE",
-                LDAP3_SCOPE_LEVEL: "LEVEL",
-                LDAP3_SCOPE_SUBTREE: "SUBTREE",
+                c.LDAP3_SCOPE_BASE: "BASE",
+                c.LDAP3_SCOPE_LEVEL: "LEVEL",
+                c.LDAP3_SCOPE_SUBTREE: "SUBTREE",
             }
             mapped_scope = scope_map.get(search_scope, "SUBTREE")
             if mapped_scope == "BASE":
@@ -992,6 +989,17 @@ class Ldap3Adapter(s[bool]):
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
 
+        class SearchParams(BaseModel):
+            """Typed LDAP search parameters passed to ldap3 search calls."""
+
+            model_config = ConfigDict(frozen=True, extra="forbid")
+            base_dn: str
+            filter_str: str
+            ldap_scope: int
+            search_attributes: list[str]
+            size_limit: int
+            time_limit: int
+
         def __init__(self, adapter: Ldap3Adapter) -> None:
             """Initialize search executor with adapter instance.
 
@@ -1016,7 +1024,7 @@ class Ldap3Adapter(s[bool]):
         def execute(
             self,
             connection: Connection,
-            params: SearchParams,
+            params: Ldap3Adapter.SearchExecutor.SearchParams,
             server_type: FlextLdapConstants.Ldif.ServerTypes | str,
         ) -> FlextResult[list[LdifEntry]]:
             """Execute LDAP search and convert results.
@@ -1167,9 +1175,9 @@ class Ldap3Adapter(s[bool]):
             except ValueError:
                 return FlextResult[int].fail(f"Invalid LDAP scope: {scope}")
         ldap3_scope_mapping: Mapping[FlextLdapConstants.Ldap.SearchScope, int] = {
-            FlextLdapConstants.Ldap.SearchScope.BASE: LDAP3_SCOPE_BASE,
-            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: LDAP3_SCOPE_LEVEL,
-            FlextLdapConstants.Ldap.SearchScope.SUBTREE: LDAP3_SCOPE_SUBTREE,
+            FlextLdapConstants.Ldap.SearchScope.BASE: c.LDAP3_SCOPE_BASE,
+            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: c.LDAP3_SCOPE_LEVEL,
+            FlextLdapConstants.Ldap.SearchScope.SUBTREE: c.LDAP3_SCOPE_SUBTREE,
         }
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]

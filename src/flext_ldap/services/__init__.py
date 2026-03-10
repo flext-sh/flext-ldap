@@ -1,3 +1,6 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """LDAP services package.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,18 +17,17 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.services.sync import FlextLdapSyncService
+    from flext_ldap.services.operations import FlextLdapOperations, LaxStr
+    from flext_ldap.services.sync import FlextLdapSyncService, FlextLdapSyncService as s
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
-    "FlextLdapServerDetector": (
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ),
+    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
     "FlextLdapSyncService": ("flext_ldap.services.sync", "FlextLdapSyncService"),
+    "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
+    "s": ("flext_ldap.services.sync", "FlextLdapSyncService"),
 }
 
 __all__ = [
@@ -33,10 +35,12 @@ __all__ = [
     "FlextLdapOperations",
     "FlextLdapServerDetector",
     "FlextLdapSyncService",
+    "LaxStr",
+    "s",
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

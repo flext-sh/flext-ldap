@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Protocol, TypeVar
+from typing import ParamSpec, Protocol, TypeVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, t
 from flext_ldif import FlextLdifTypes
 
 
@@ -24,8 +24,6 @@ class SearchOptionsContract(Protocol):
     attributes: Sequence[str]
 
 
-FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
-FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
 type LdapScalar = t.Scalar | None
 type LdapCollection = Sequence[str | bytes | int | float | bool]
 
@@ -66,11 +64,14 @@ class FlextLdapTypes(FlextLdifTypes):
             type Filter = str
             type Scope = str
 
+    FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
+    FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
+    TDomainResult = TypeVar("TDomainResult")
+    P = ParamSpec("P")
+
 
 t = FlextLdapTypes
 __all__ = [
-    "FlextLdapDomainResultT",
-    "FlextLdapEntryT",
     "FlextLdapTypes",
     "LdapEntryContract",
     "SearchOptionsContract",

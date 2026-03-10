@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Final, override
+from typing import override
 
 from flext_core import FlextResult, FlextRuntime, FlextSettings, p
 from flext_ldif import FlextLdifUtilities
@@ -41,9 +41,6 @@ from pydantic import ConfigDict
 from flext_ldap import FlextLdapConnection, FlextLdapSettings, c, m, s, t, u
 
 LaxStr = str | bytes | bytearray
-LDAP3_MODIFY_ADD: Final[int] = 0
-LDAP3_MODIFY_DELETE: Final[int] = 1
-LDAP3_MODIFY_REPLACE: Final[int] = 2
 
 
 class FlextLdapOperations(s[m.Ldap.SearchResult]):
@@ -405,7 +402,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 if k.lower() not in ignore_lower and k.lower() not in processed_lower:
                     filtered_attrs[k] = [str(item) for item in v]
             changes_dict: dict[str, list[tuple[int, list[str]]]] = {
-                k: [(LDAP3_MODIFY_DELETE, [])] for k in filtered_attrs
+                k: [(c.LDAP3_MODIFY_DELETE, [])] for k in filtered_attrs
             }
             return changes_dict
 
@@ -464,7 +461,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 ])
                 if existing_set != new_set:
                     new_list = [str(v) for v in new_vals if v]
-                    return (attr_name, [(LDAP3_MODIFY_REPLACE, new_list)])
+                    return (attr_name, [(c.LDAP3_MODIFY_REPLACE, new_list)])
                 return (attr_name, None)
 
             processed_dict: dict[str, list[tuple[int, list[str]]] | None] = {}
@@ -738,7 +735,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     f"Schema modify entry has only empty values for '{attr_type}'"
                 )
             changes: t.Ldap.Operation.Changes = {
-                attr_type: [(LDAP3_MODIFY_ADD, filtered)]
+                attr_type: [(c.LDAP3_MODIFY_ADD, filtered)]
             }
             entry_model = self._convert_to_model(entry)
             dn_str: str

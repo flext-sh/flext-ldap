@@ -32,14 +32,12 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
-from typing import ParamSpec, override
+from typing import override
 
 from flext_core import FlextResult
 
 from flext_ldap import c, p, s, t, u
 from ldap3 import BASE, Connection
-
-P = ParamSpec("P")
 
 
 class FlextLdapServerDetector(s[str]):
