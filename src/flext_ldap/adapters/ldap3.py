@@ -615,10 +615,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: Mapping[str, t.ContainerValue]
-            | Mapping[str, t.Scalar | None]
-            | Mapping[str, object]
-            | None,
+            attrs_dict: Mapping[str, t.ContainerValue] | None,
         ) -> t.Ldap.Operation.AttributeDict:
             """Normalize attribute values to list[str] format.
 
