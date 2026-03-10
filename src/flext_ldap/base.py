@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from typing import Generic, override
+from typing import override
 
 from flext_core import FlextService, p
 
@@ -25,9 +25,7 @@ from flext_ldap import FlextLdapSettings
 from flext_ldap.typings import t
 
 
-class FlextLdapServiceBase(
-    FlextService[t.TDomainResult], ABC, Generic[t.TDomainResult]
-):
+class FlextLdapServiceBase(FlextService[t.TDomainResult], ABC):
     """Base class for all flext-ldap services with typed config access.
 
     Inherits config property from x which provides:
