@@ -33,14 +33,14 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
-from flext_ldap import c, m, p, s, t
+from flext_ldap import c, m, p, t
 
 
-class FlextLdapEntryAdapter(s[bool]):
+class FlextLdapEntryAdapter(FlextService[bool]):
     """Adapter for converting between ldap3 and FlextLdif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:
