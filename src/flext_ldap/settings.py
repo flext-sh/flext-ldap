@@ -18,7 +18,7 @@ from flext_core import FlextSettings
 
 
 class FlextLdapSettings(FlextSettings):
-    pass
+    """LDAP runtime settings."""
 
 
 __all__ = ["FlextLdapSettings"]

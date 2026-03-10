@@ -75,7 +75,8 @@ class FlextLdapLdap3Wrappers:
     @staticmethod
     def is_bound(connection: Connection) -> bool:
         """Safely read ldap3 bound state from dynamic connection objects."""
-        return bool(connection.bound)
+        bound_state: bool = getattr(connection, "bound", False)
+        return bool(bound_state)
 
     @staticmethod
     def modify(
@@ -101,26 +102,16 @@ class FlextLdapLdap3Wrappers:
         time_limit: int,
     ) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects."""
-        normalized_scope: Literal["BASE", "LEVEL", "SUBTREE"]
+        normalized_scope: int
         if isinstance(search_scope, int):
-            scope_map: Mapping[int, str] = {
-                c.LDAP3_SCOPE_BASE: "BASE",
-                c.LDAP3_SCOPE_LEVEL: "LEVEL",
-                c.LDAP3_SCOPE_SUBTREE: "SUBTREE",
-            }
-            mapped_scope = scope_map.get(search_scope, "SUBTREE")
-            if mapped_scope == "BASE":
-                normalized_scope = "BASE"
-            elif mapped_scope == "LEVEL":
-                normalized_scope = "LEVEL"
-            else:
-                normalized_scope = "SUBTREE"
-        elif search_scope == "BASE":
-            normalized_scope = "BASE"
-        elif search_scope == "LEVEL":
-            normalized_scope = "LEVEL"
+            normalized_scope = search_scope
         else:
-            normalized_scope = "SUBTREE"
+            scope_map: Mapping[str, int] = {
+                "BASE": c.LDAP3_SCOPE_BASE,
+                "LEVEL": c.LDAP3_SCOPE_LEVEL,
+                "SUBTREE": c.LDAP3_SCOPE_SUBTREE,
+            }
+            normalized_scope = scope_map.get(search_scope, c.LDAP3_SCOPE_SUBTREE)
         result = connection.search(
             search_base=search_base,
             search_filter=search_filter,
@@ -140,7 +131,7 @@ class FlextLdapLdap3Wrappers:
     @staticmethod
     def start_tls(connection: Connection) -> bool:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
-        result = connection.start_tls()
+        result: bool = getattr(connection, "start_tls", lambda: False)()
         match result:
             case bool() as bool_result:
                 return bool_result
@@ -171,7 +162,8 @@ class Ldap3Adapter(s[bool]):
     @staticmethod
     def _is_bound(connection: Connection) -> bool:
         """Check if ldap3 connection is bound."""
-        return bool(connection.bound)
+        bound_state: bool = getattr(connection, "bound", False)
+        return bool(bound_state)
 
     class ConnectionManager:
         """Connection management logic (SRP)."""

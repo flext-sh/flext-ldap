@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeIs, override
 
-from flext_core import FlextResult, FlextSettings
+from flext_core import FlextResult, FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -49,6 +49,7 @@ from flext_ldap import (
     FlextLdapOperations,
     FlextLdapSettings,
     m,
+    p,
     s,
     t,
 )
@@ -328,7 +329,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             multi_phase_cb = callback
 
             def progress_cb(
-                current: int, total: int, dn: str, stats: m.Ldap.SyncStats
+                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStatsProtocol
             ) -> None:
                 multi_phase_cb(phase, current, total, dn, stats)
 
@@ -424,7 +425,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     def connect(
         self,
-        connection_config: m.Ldap.ConnectionConfig | FlextLdapSettings,
+        connection_config: m.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
         max_retries: int = 3,
@@ -450,12 +451,10 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         Architecture:
             - Delegates to FlextLdapConnection.connect() for actual connection logic
             - Uses FlextResult pattern - no exceptions raised
-            - Supports both ConnectionConfig and FlextLdapSettings for flexibility
             - Connection must be established before any LDAP operations
 
         Args:
-            connection_config: Connection configuration
-              (ConnectionConfig or FlextLdapSettings)
+            connection_config: Connection configuration (ConnectionConfig)
             auto_retry: Enable automatic retry on connection failure (default: False)
             max_retries: Maximum number of retry attempts (default: 3)
             retry_delay: Delay between retries in seconds (default: 1.0)
@@ -464,21 +463,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             FlextResult[bool] indicating connection success
 
         """
-        config_for_connect: m.Ldap.ConnectionConfig
-        if isinstance(connection_config, FlextLdapSettings):
-            config_for_connect = m.Ldap.ConnectionConfig(
-                host=connection_config.host,
-                port=connection_config.port,
-                use_ssl=connection_config.use_ssl,
-                use_tls=connection_config.use_tls,
-                bind_dn=connection_config.bind_dn,
-                bind_password=connection_config.bind_password,
-                timeout=connection_config.timeout,
-                auto_bind=connection_config.auto_bind,
-                auto_range=connection_config.auto_range,
-            )
-        else:
-            config_for_connect = connection_config
+        config_for_connect: m.Ldap.ConnectionConfig = connection_config
         self.logger.debug(
             "Connecting to LDAP server",
             host=config_for_connect.host,
@@ -816,19 +801,21 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             RuntimeError,
             ImportError,
         ) as e:
-            return FlextResult.fail(f"Failed to read LDIF file: {e!s}")
+            return r[m.Ldap.PhaseSyncResult].fail(f"Failed to read LDIF file: {e!s}")
         parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
-            return FlextResult.fail(f"Failed to parse LDIF file: {error_msg}")
+            return r[m.Ldap.PhaseSyncResult].fail(
+                f"Failed to parse LDIF file: {error_msg}"
+            )
         parse_value = parse_result.value
         entries: list[m.Ldif.Entry] = [
             m.Ldif.Entry.model_validate(entry) for entry in parse_value
         ]
         if not entries:
-            return FlextResult.ok(
+            return r[m.Ldap.PhaseSyncResult].ok(
                 m.Ldap.PhaseSyncResult(
                     phase_name=phase_name,
                     total_entries=0,
@@ -846,7 +833,10 @@ class FlextLdap(s[m.Ldap.SearchResult]):
                 multi_phase_cb = callback
 
                 def wrapped_cb(
-                    current: int, total: int, dn: str, stats: m.Ldap.SyncStats
+                    current: int,
+                    total: int,
+                    dn: str,
+                    stats: p.Ldap.LdapBatchStatsProtocol,
                 ) -> None:
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
@@ -866,7 +856,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             error_msg = (
                 str(batch_result.error) if batch_result.error else "Unknown error"
             )
-            return FlextResult.fail(f"Batch sync failed: {error_msg}")
+            return r[m.Ldap.PhaseSyncResult].fail(f"Batch sync failed: {error_msg}")
         batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()
         total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped
@@ -875,7 +865,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             if total_processed > 0
             else 0.0
         )
-        return FlextResult.ok(
+        return r[m.Ldap.PhaseSyncResult].ok(
             m.Ldap.PhaseSyncResult(
                 phase_name=phase_name,
                 total_entries=len(entries),
@@ -959,7 +949,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             multi_phase_cb = phase_callback
 
             def wrapped_phase_cb(
-                current: int, total: int, dn: str, stats: m.Ldap.SyncStats
+                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStatsProtocol
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 

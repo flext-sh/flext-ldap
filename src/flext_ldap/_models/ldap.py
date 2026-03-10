@@ -108,7 +108,7 @@ class FlextLdapModelsLdap:
         progress_callback: Callable[[FlextLdapModelsLdap.SyncStats], None] | None = None
 
     class SyncStats(BaseModel):
-        """Sync stats."""
+        """Sync stats - implements LdapBatchStatsProtocol."""
 
         synced: int = 0
         skipped: int = 0
@@ -156,7 +156,7 @@ class FlextLdapModelsLdap:
         total_processed: int = 0
         successful: int = 0
         failed: int = 0
-        results: list[Mapping[str, t.Scalar]] = Field(default_factory=list)
+        results: list[dict[str, str | int | float | bool]] = []
 
         @property
         def success_rate(self) -> float:
@@ -202,7 +202,7 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: list[dict[str, list[str]]] = Field(default_factory=list)
+        entries: list[dict[str, list[str]]] = []
         search_options: FlextLdapModelsLdap.SearchOptions | None = None
 
         @property
