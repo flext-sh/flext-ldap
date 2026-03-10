@@ -139,7 +139,7 @@ class TestsFlextLdapBase:
 
         service = GlobalConfigService()
         config = service.config
-        global_config = FlextSettings.get_global_instance()
+        global_config = FlextSettings.get_global()
         assert config.app_name == global_config.app_name
         assert config.version == global_config.version
         assert getattr(config, "debug", False) == getattr(global_config, "debug", False)

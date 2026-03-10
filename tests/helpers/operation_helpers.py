@@ -632,7 +632,7 @@ class TestsFlextLdapOperationHelpers:
     def execute_add_modify_delete_sequence(
         client: LdapClientType,
         entry: LdapEntry,
-        changes: dict[str, list[tuple[str, list[str]]]],
+        changes: Mapping[str, list[tuple[str, list[str]]]],
         *,
         verify_delete: bool = True,
     ) -> dict[str, OperationResultType]:
@@ -684,7 +684,7 @@ class TestsFlextLdapOperationHelpers:
     def execute_crud_sequence(
         client: LdapClientType,
         entry: LdapEntry,
-        changes: dict[str, list[tuple[str, list[str]]]],
+        changes: Mapping[str, list[tuple[str, list[str]]]],
     ) -> dict[str, OperationResultType | SearchResultType]:
         """Execute complete CRUD sequence (add, search, modify, delete).
 
@@ -855,7 +855,7 @@ class TestsFlextLdapOperationHelpers:
     def _execute_modify_when_not_connected(
         client: LdapClientType,
         dn: str,
-        changes: dict[str, t.ContainerValue],
+        changes: Mapping[str, t.ContainerValue],
         expected_error: str,
     ) -> None:
         """Execute modify operation when not connected and assert failure."""

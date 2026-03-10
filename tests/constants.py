@@ -151,10 +151,10 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             DEFAULT_PORT = 3390
             DEFAULT_BIND_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
             DEFAULT_BIND_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
-            SSL_ENABLED = True
-            SSL_DISABLED = False
-            TLS_ENABLED = True
-            TLS_DISABLED = False
+            SSL_ENABLED: Final[bool] = True
+            SSL_DISABLED: Final[bool] = False
+            TLS_ENABLED: Final[bool] = True
+            TLS_DISABLED: Final[bool] = False
             FAST_TIMEOUT = 5
             NORMAL_TIMEOUT = 30
             SLOW_TIMEOUT = 300

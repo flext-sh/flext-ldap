@@ -97,6 +97,7 @@ class FlextLdapModels(FlextLdifModels):
 
 
 # Global instance
-m = FlextLdapModels
 
 __all__ = ["FlextLdapModels", "m"]
+
+m = FlextLdapModels

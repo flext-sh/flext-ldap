@@ -22,6 +22,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 from flext_tests import tm
 
@@ -109,7 +111,7 @@ class TestsFlextLdapDetection:
         ("attrs", "key", "expected"), _get_get_first_value_scenarios()
     )
     def test_get_first_value(
-        self, attrs: dict[str, list[str]], key: str, expected: str | None
+        self, attrs: Mapping[str, list[str]], key: str, expected: str | None
     ) -> None:
         """Test _get_first_value with various attribute scenarios."""
         value = FlextLdapServerDetector._get_first_value(attrs, key)

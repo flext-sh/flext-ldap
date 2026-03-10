@@ -1096,7 +1096,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return FlextResult[m.Ldap.SearchResult].fail(
                 c.Ldap.ErrorStrings.NOT_CONNECTED
             )
-        ldap_config = FlextSettings.get_global_instance().get_namespace(
+        ldap_config = FlextSettings.get_global().get_namespace(
             "ldap", FlextLdapSettings
         )
         base_dn = ldap_config.base_dn or "dc=example,dc=com"

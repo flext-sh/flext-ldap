@@ -490,5 +490,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
 
-p = FlextLdapProtocols
 __all__ = ["FlextLdapProtocols", "p"]
+
+p = FlextLdapProtocols

@@ -24,10 +24,6 @@ class SearchOptionsContract(Protocol):
     attributes: Sequence[str]
 
 
-type LdapScalar = t.Scalar | None
-type LdapCollection = Sequence[str | bytes | int | float | bool]
-
-
 class FlextLdapTypes(FlextLdifTypes):
     """LDAP-specific type namespace."""
 
@@ -38,7 +34,7 @@ class FlextLdapTypes(FlextLdifTypes):
             """Connection type aliases."""
 
             type Config = Mapping[str, str | int | bool]
-            type Options = Mapping[str, LdapScalar]
+            type Options = Mapping[str, t.Core.LdapScalar]
 
         class Operation:
             """Operation type aliases."""
@@ -48,7 +44,7 @@ class FlextLdapTypes(FlextLdifTypes):
             type Attributes = Mapping[str, Sequence[str]]
             type AttributeDict = dict[str, list[str]]
             type Ldap3EntryValue = (
-                str | bytes | int | float | bool | LdapCollection | None
+                str | bytes | int | float | bool | t.Core.LdapCollection | None
             )
 
         class Entry:
@@ -68,6 +64,12 @@ class FlextLdapTypes(FlextLdifTypes):
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
     TDomainResult = TypeVar("TDomainResult")
     P = ParamSpec("P")
+
+    class _Core:
+        type LdapScalar = t.Scalar | None
+        type LdapCollection = Sequence[str | bytes | int | float | bool]
+
+    Core = _Core
 
 
 t = FlextLdapTypes

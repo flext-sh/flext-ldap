@@ -49,8 +49,8 @@ class FlextLdapConstants(FlextLdifConstants):
             DEFAULT_RETRY_DELAY = 1.0
             PORT = 389
             TIMEOUT = 30
-            AUTO_BIND = True
-            AUTO_RANGE = True
+            AUTO_BIND: Final[bool] = True
+            AUTO_RANGE: Final[bool] = True
             POOL_SIZE = 10
             POOL_LIFETIME = 3600
 

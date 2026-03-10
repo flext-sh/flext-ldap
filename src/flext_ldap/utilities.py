@@ -442,5 +442,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
         Ldif: type[FlextLdifUtilities.Ldif] = FlextLdifUtilities.Ldif
 
 
-u = FlextLdapUtilities
 __all__ = ["FlextLdapUtilities", "u"]
+
+u = FlextLdapUtilities

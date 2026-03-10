@@ -46,7 +46,7 @@ class TestsFlextLdapSettings:
     @pytest.fixture(autouse=True)
     def reset_settings_singleton(self) -> None:
         """Reset singleton state for deterministic test behavior."""
-        FlextLdapSettings.reset_global_instance()
+        FlextLdapSettings.reset_for_testing()
 
     def test_config_initialization_defaults(self) -> None:
         """Test configuration initialization with default values and validate all fields.

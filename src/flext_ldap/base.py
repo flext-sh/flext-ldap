@@ -29,7 +29,7 @@ class FlextLdapServiceBase(FlextService[t.TDomainResult], ABC):
     """Base class for all flext-ldap services with typed config access.
 
     Inherits config property from x which provides:
-    - self.config → FlextSettings.get_global_instance()
+    - self.config → FlextSettings.get_global()
     - self.config.ldap → FlextLdapSettings (via @FlextSettings.auto_register)
     - self.config.ldif → FlextLdifSettings (via @FlextSettings.auto_register)
 

@@ -14,4 +14,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-__all__ = ["FlextLdapSettings"]  # noqa: F822
+from flext_core import FlextSettings
+
+
+class FlextLdapSettings(FlextSettings):
+    pass
+
+
+__all__ = ["FlextLdapSettings"]
