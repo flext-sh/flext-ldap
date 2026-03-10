@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import ParamSpec, Protocol, TypeVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, t as _core_t
 from flext_ldif import FlextLdifTypes
 
 
@@ -62,14 +62,14 @@ class FlextLdapTypes(FlextLdifTypes):
 
     FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-    TDomainResult = TypeVar("TDomainResult")
+    TDomainResult = TypeVar("TDomainResult", bound=_core_t.ContainerValue)
     P = ParamSpec("P")
 
-    class _Core:
+    class _LdapCore:
         type LdapScalar = t.Scalar | None
         type LdapCollection = Sequence[str | bytes | int | float | bool]
 
-    Core = _Core
+    Core = _LdapCore
 
 
 t = FlextLdapTypes

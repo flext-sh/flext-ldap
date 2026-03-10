@@ -53,23 +53,27 @@ class FlextLdapUtilities(FlextLdifUtilities):
         """
 
         @staticmethod
-        def to_json_value(value: t.ContainerValue | None) -> t.StrictJsonValue:
-            """Normalize values into strict JSON-safe primitives/collections."""
-            match value:
-                case None | str() | int() | float() | bool():
-                    return value
-                case Mapping() as mapping_value:
-                    return {
-                        str(key): FlextLdapUtilities.Ldap.to_json_value(item)
-                        for key, item in mapping_value.items()
-                    }
-                case list() | tuple() as sequence_value:
-                    return [
-                        FlextLdapUtilities.Ldap.to_json_value(item)
-                        for item in sequence_value
-                    ]
-                case _:
-                    return str(value)
+        def to_json_value(value: t.ContainerValue | None) -> t.JsonValue | None:
+            """Normalize values into JSON-safe primitives/collections."""
+            if isinstance(value, (str, int, float, bool)):
+                return value
+            if value is None:
+                return None
+            if isinstance(value, Mapping):
+                result: dict[str, t.JsonValue] = {}
+                for key, item in value.items():
+                    json_val = FlextLdapUtilities.Ldap.to_json_value(item)
+                    if json_val is not None:
+                        result[str(key)] = json_val
+                return result
+            if isinstance(value, (list, tuple)):
+                result_list: list[t.JsonValue] = []
+                for item in value:
+                    json_val = FlextLdapUtilities.Ldap.to_json_value(item)
+                    if json_val is not None:
+                        result_list.append(json_val)
+                return result_list
+            return str(value)
 
         @staticmethod
         def to_str(value: t.ContainerValue | None, *, default: str = "") -> str:
@@ -87,9 +91,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
             if value is None:
                 return default
-            return FlextLdifUtilities.to_str(
-                FlextLdapUtilities.Ldap.to_json_value(value), default=default
-            )
+            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
+            if json_val is None or isinstance(json_val, (dict, list)):
+                return default
+            return str(json_val) if json_val else default
 
         @staticmethod
         def to_str_list(
@@ -107,9 +112,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 list[str]: Converted list
 
             """
-            return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value), default=default
-            )
+            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
+            if json_val is None or isinstance(json_val, (dict, list)):
+                return default or []
+            if isinstance(json_val, (str, int, float, bool)):
+                return [str(json_val)]
+            return default or []
 
         @staticmethod
         def to_str_list_safe(value: t.ContainerValue | None) -> list[str]:
@@ -127,9 +135,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
             if value is None:
                 return []
-            return FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value), default=[]
-            )
+            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
+            if json_val is None or isinstance(json_val, (dict, list)):
+                return []
+            if isinstance(json_val, (str, int, float, bool)):
+                return [str(json_val)]
+            return []
 
         @staticmethod
         def to_str_list_truthy(
@@ -150,10 +161,13 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
             if value is None:
                 return default or []
-            str_list = FlextLdifUtilities.to_str_list(
-                FlextLdapUtilities.Ldap.to_json_value(value), default=default
-            )
-            return [item for item in str_list if item]
+            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
+            if json_val is None or isinstance(json_val, (dict, list)):
+                return default or []
+            if isinstance(json_val, (str, int, float, bool)):
+                str_val = str(json_val)
+                return [str_val] if str_val else (default or [])
+            return default or []
 
         class Validation:
             """LDAP validation utilities namespace.
@@ -273,7 +287,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                         pass
                 if filter_list_like:
                     return [str(v)]
-                return [str(v)] if v is not None else []
+                return [str(v)]
 
             attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
             if not attrs_dict:
@@ -281,7 +295,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
 
         @staticmethod
-        def dn_str(dn: str | m.Ldif.DN | None, *, default: str = "unknown") -> str:
+        def dn_str(
+            dn: str | m.Ldif.DN | m.Ldif.Entry | None, *, default: str = "unknown"
+        ) -> str:
             """Extract DN string (builder: whn().safe().conv().str()).
 
             Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
@@ -299,12 +315,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
             if isinstance(dn, m.Ldif.DN):
                 value = dn.value
                 return value or default
-            match dn:
-                case str() as dn_str:
-                    return dn_str
-                case _:
-                    pass
-            return str(dn) if dn is not None else default
+            if isinstance(dn, str):
+                return dn
+            return str(dn.dn) if dn.dn else default
 
         @staticmethod
         def filter_truthy(

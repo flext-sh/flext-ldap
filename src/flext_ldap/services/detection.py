@@ -308,7 +308,7 @@ class FlextLdapServerDetector(s[str]):
                 f"rootDSE query failed: {connection.result}"
             )
         if not connection.entries:
-            return FlextResult[Mapping[str, list[str]]].fail(
+            return FlextResult[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query returned no entries"
             )
         root_dse_entry = connection.entries[0]

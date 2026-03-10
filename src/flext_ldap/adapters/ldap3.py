@@ -478,7 +478,7 @@ class Ldap3Adapter(s[bool]):
                 return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
             if isinstance(attrs, BaseModel):
                 dumped = attrs.model_dump()
-                attrs_value_raw = dumped.get("attributes", {})
+                attrs_value_raw: t.ContainerValue | None = dumped.get("attributes", {})
                 if isinstance(attrs_value_raw, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
                         attrs_value_raw
@@ -615,8 +615,8 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: Mapping[str, str]
-            | Mapping[str, t.ContainerValue]
+            attrs_dict: Mapping[str, t.ContainerValue]
+            | Mapping[str, t.Scalar | None]
             | Mapping[str, object]
             | None,
         ) -> t.Ldap.Operation.AttributeDict:
@@ -632,12 +632,18 @@ class Ldap3Adapter(s[bool]):
             if attrs_dict is None:
                 return {}
             result: dict[str, list[str]] = {}
-            for k, v in attrs_dict.items():
-                match v:
-                    case list() | tuple():
-                        result[k] = [str(item) for item in v if item is not None]
-                    case _:
-                        result[k] = [str(v)] if v is not None else []
+            for k, v in attrs_dict.items():  # type: ignore[union-attr]
+                if isinstance(v, (list, tuple)):
+                    # type: ignore[union-attr]
+                    str_list: list[str] = [
+                        str(item)
+                        for item in v
+                        if item is not None
+                        and isinstance(item, (str, int, float, bool))
+                    ]
+                    result[k] = str_list
+                else:
+                    result[k] = [str(v)] if v is not None else []
             return result
 
         @staticmethod
@@ -647,7 +653,7 @@ class Ldap3Adapter(s[bool]):
             | t.ContainerValue
             | object
             | None,
-        ) -> t.MetadataValue | None:
+        ) -> Mapping[str, t.Scalar | list[t.Scalar]] | None:
             """Normalize metadata for Entry model validation.
 
             Business Rules:
@@ -665,7 +671,7 @@ class Ldap3Adapter(s[bool]):
             Architecture:
                 - Uses guard-based type filtering
                 - Uses Pydantic model_dump() for model serialization
-                - Returns dict[str, str | int | float | bool | None] or None
+                - Returns dict[str, str | int | float | bool] or None
 
             Args:
                 metadata: Raw metadata from entry (dict, Mapping, Pydantic model, or None).
@@ -676,26 +682,21 @@ class Ldap3Adapter(s[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: Mapping[str, object] | None = None
+            metadata_dict: dict[str, t.ContainerValue] | None = None
             if isinstance(metadata, Mapping):
-                metadata_dict = dict(metadata)
+                metadata_dict = {}
+                for k, v in metadata.items():  # type: ignore[union-attr]
+                    metadata_dict[str(k)] = v  # type: ignore[assignment]
             elif isinstance(metadata, BaseModel):
                 metadata_dict = metadata.model_dump()
             else:
                 return None
             if not metadata_dict:
                 return None
-            filtered: dict[str, t.Scalar | list[t.Scalar] | None] = {}
-            for k, v in metadata_dict.items():
-                match k:
-                    case str() as key_str:
-                        match v:
-                            case str() | int() | float() | bool() | None:
-                                filtered[key_str] = v
-                            case _:
-                                continue
-                    case _:
-                        continue
+            filtered: dict[str, t.Scalar | list[t.Scalar]] = {}
+            for key, val in metadata_dict.items():
+                if isinstance(val, (str, int, float, bool)):
+                    filtered[str(key)] = val
             return filtered or None
 
         @staticmethod
@@ -1485,10 +1486,11 @@ class Ldap3Adapter(s[bool]):
                 str(entries_result.error) if entries_result.error else ""
             )
         entries_raw = entries_result.value
+        entries_dict: list[dict[str, list[str]]] = [
+            entry.model_dump() for entry in entries_raw
+        ]
         return FlextResult[m.Ldap.SearchResult].ok(
-            m.Ldap.SearchResult(
-                entries=list(entries_raw), search_options=search_options
-            )
+            m.Ldap.SearchResult(entries=entries_dict, search_options=search_options)
         )
 
     def _get_connection(self) -> FlextResult[Connection]:

@@ -34,11 +34,11 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import override
 
-from flext_core import FlextResult, FlextRuntime, FlextSettings, p
+from flext_core import FlextResult, FlextRuntime, p
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
-from flext_ldap import FlextLdapConnection, FlextLdapSettings, c, m, s, t, u
+from flext_ldap import FlextLdapConnection, c, m, s, t, u
 
 LaxStr = str | bytes | bytearray
 
@@ -85,10 +85,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     @staticmethod
     def _get_structlog_logger() -> p.Log.StructlogLogger | None:
         """Return structlog logger when runtime logger satisfies the protocol."""
-        logger = FlextRuntime.get_logger(__name__)
-        if isinstance(logger, p.Log.StructlogLogger):
-            return logger
-        return None
+        return FlextRuntime.get_logger(__name__)
 
     _connection: FlextLdapConnection
 
@@ -238,7 +235,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 """Normalize attribute value to list[str]."""
                 match v:
                     case list() | tuple():
-                        return [str(item) for item in v if item is not None]
+                        return [str(item) for item in v]
                     case _:
                         return [str(v)]
 
@@ -429,7 +426,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             changes: t.Ldap.Operation.Changes = {}
-            processed = set()
+            processed: set[str] = set()
             filtered_attrs: dict[str, list[str]] = {}
             ignore_lower = [k.lower() for k in ignore]
             for k, v in new_attrs.items():
@@ -449,13 +446,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
                 if existing_vals:
                     existing_list = [str(v) for v in existing_vals if v]
-                    existing_set = (
+                    existing_set: set[str] = set(
                         FlextLdapOperations.EntryComparison.normalize_value_set(
                             existing_list
                         )
                     )
                 else:
-                    existing_set = set()
+                    existing_set: set[str] = set()
                 new_set = FlextLdapOperations.EntryComparison.normalize_value_set([
                     x for x in new_vals if x
                 ])
@@ -898,12 +895,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """
         entry_for_adapter: m.Ldif.Entry
         entry_for_adapter = m.Ldif.Entry.model_validate(entry)
-        result = self._connection.adapter.add(entry_for_adapter)
-        if result.is_failure:
-            return FlextResult[m.Ldap.OperationResult].fail(
-                u.to_str(result.error, default="Unknown error")
-            )
-        return FlextResult[m.Ldap.OperationResult].ok(result)
+        return self._connection.adapter.add(entry_for_adapter)
 
     def batch_upsert(
         self,
@@ -953,7 +945,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         for idx_entry in enumerate(entries, 1):
             try:
                 i, entry = idx_entry
-                entry_dn = u.Ldap.dn_str(entry.dn)
+                entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
                 upsert_result = self.upsert(
                     entry, retry_on_errors=retry_on_errors, max_retries=max_retries
                 )
@@ -1096,10 +1088,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return FlextResult[m.Ldap.SearchResult].fail(
                 c.Ldap.ErrorStrings.NOT_CONNECTED
             )
-        ldap_config = FlextSettings.get_global().get_namespace(
-            "ldap", FlextLdapSettings
-        )
-        base_dn = ldap_config.base_dn or "dc=example,dc=com"
+        base_dn: str = "dc=example,dc=com"
         return FlextResult[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(
                 entries=[],
