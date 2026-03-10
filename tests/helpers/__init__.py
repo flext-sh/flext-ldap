@@ -38,7 +38,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "SearchResultType": ("tests.helpers.operation_helpers", "SearchResultType"),
     "SearchScopeType": ("tests.helpers.operation_helpers", "SearchScopeType"),
     "T": ("tests.helpers.operation_helpers", "T"),
-    "TestsFlextLdapOperationHelpers": ("tests.helpers.operation_helpers", "TestsFlextLdapOperationHelpers"),
+    "TestsFlextLdapOperationHelpers": (
+        "tests.helpers.operation_helpers",
+        "TestsFlextLdapOperationHelpers",
+    ),
     "c": ("tests.helpers.operation_helpers", "c"),
     "m": ("tests.helpers.operation_helpers", "m"),
 }

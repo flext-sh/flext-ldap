@@ -190,7 +190,7 @@ class FlextLdapModelsLdap:
     class OperationResult:
         """LDAP operation result."""
 
-        model_config = {"frozen": True}
+        model_config = ConfigDict(frozen=True)
         success: bool
         operation_type: str
         message: str = ""

@@ -14,4 +14,4 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-__all__ = ["FlextLdapSettings"]
+__all__ = ["FlextLdapSettings"]  # noqa: F822

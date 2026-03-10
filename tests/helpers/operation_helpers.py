@@ -47,7 +47,7 @@ def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntryProtoco
         if entry.attributes is not None and hasattr(entry.attributes, "attributes")
         else {}
     )
-    return _LdapEntryProtocolAdapter(dn=dn_str, attributes=attrs)
+    return _LdapEntryProtocolAdapter(dn=dn_str, attributes=attrs)  # noqa: F821
 
 
 def _validate_scope(scope: str | c.Ldap.SearchScope) -> c.Ldap.SearchScope:

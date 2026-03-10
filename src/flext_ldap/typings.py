@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import ParamSpec, Protocol, TypeVar
 
-from flext_core import FlextResult, t
+from flext_core import FlextResult
 from flext_ldif import FlextLdifTypes
 
 
