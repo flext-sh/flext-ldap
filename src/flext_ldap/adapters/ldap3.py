@@ -31,7 +31,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Literal, TypeAlias, override
+from typing import TypeAlias, override
 
 from flext_core import FlextResult
 from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
