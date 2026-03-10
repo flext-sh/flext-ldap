@@ -1,0 +1,23 @@
+src/flext_ldap/adapters/ldap3.py
+  c963d31991094136 618
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "318caae141784cc234ffa20c9c1a4cae166f0bc5",
+  "prompts": {
+    "c963d31991094136": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32797ed69ffeitiORv0NMoXDt9",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 4,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
