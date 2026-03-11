@@ -28,15 +28,15 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextResult, FlextSettings
+from flext_core import FlextResult, FlextService, FlextSettings
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
-from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, s, u
+from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, u
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
 
 
-class FlextLdapConnection(s[bool]):
+class FlextLdapConnection(FlextService[bool]):
     """Manage the LDAP connection lifecycle with typed ergonomics.
 
     The service wraps ``Ldap3Adapter`` to create/bind connections, optionally

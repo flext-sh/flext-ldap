@@ -34,13 +34,13 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 
-from flext_ldap import c, p, s, t, u
+from flext_ldap import c, p, t, u
 from ldap3 import BASE, Connection
 
 
-class FlextLdapServerDetector(s[str]):
+class FlextLdapServerDetector(FlextService[str]):
     """Identify a directory server by querying ``rootDSE`` attributes.
 
     The detector queries the base DN on a bound :class:`ldap3.Connection`,

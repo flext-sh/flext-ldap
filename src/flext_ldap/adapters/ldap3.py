@@ -33,11 +33,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TypeAlias, override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
 from pydantic import BaseModel, ConfigDict
 
-from flext_ldap import FlextLdapConstants, c, m, p, s, t, u
+from flext_ldap import FlextLdapConstants, c, m, p, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from ldap3 import Connection, Server
 
@@ -56,21 +56,13 @@ class FlextLdapLdap3Wrappers:
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add()."""
         result = connection.add(dn, object_class, dict(attributes))
-        match result:
-            case bool() as bool_result:
-                return bool_result
-            case _:
-                return bool(result)
+        return bool(result)
 
     @staticmethod
     def delete(connection: Connection, dn: str) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.delete()."""
         result = connection.delete(dn)
-        match result:
-            case bool() as bool_result:
-                return bool_result
-            case _:
-                return bool(result)
+        return bool(result)
 
     @staticmethod
     def is_bound(connection: Connection) -> bool:
@@ -84,11 +76,7 @@ class FlextLdapLdap3Wrappers:
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
         result = connection.modify(dn, changes)
-        match result:
-            case bool() as bool_result:
-                return bool_result
-            case _:
-                return bool(result)
+        return bool(result)
 
     @staticmethod
     def search(
@@ -122,34 +110,22 @@ class FlextLdapLdap3Wrappers:
             size_limit=size_limit,
             time_limit=time_limit,
         )
-        match result:
-            case bool() as bool_result:
-                return bool_result
-            case _:
-                return bool(result)
+        return bool(result)
 
     @staticmethod
     def start_tls(connection: Connection) -> bool:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
         result: bool = getattr(connection, "start_tls", lambda: False)()
-        match result:
-            case bool() as bool_result:
-                return bool_result
-            case _:
-                return bool(result)
+        return bool(result)
 
     @staticmethod
     def unbind(connection: Connection) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
         result = connection.unbind()
-        match result:
-            case bool() as bool_result:
-                return bool_result
-            case _:
-                return bool(result)
+        return bool(result)
 
 
-class Ldap3Adapter(s[bool]):
+class Ldap3Adapter(FlextService[bool]):
     """Service adapter for ldap3 library following flext-ldif patterns.
 
     Wraps ldap3 Connection and Server objects to provide a simplified
@@ -378,23 +354,20 @@ class Ldap3Adapter(s[bool]):
                 if isinstance(entry_raw, LdifEntry):
                     entries.append(entry_raw)
                     continue
-                entry_for_extraction: LdifEntry | None = None
                 if isinstance(entry_raw, p.Ldap.Ldap3EntryProtocol):
-                    entry_for_extraction = None
+                    protocol_entry: p.Ldap.Ldap3EntryProtocol = entry_raw
                 else:
                     entry_type = entry_raw.__class__
                     error_msg = (
                         f"Entry must be EntryProtocol or LdifEntry, got {entry_type}"
                     )
                     raise TypeError(error_msg)
-                if entry_for_extraction is None:
-                    continue
-                dn_obj = Ldap3Adapter.ResultConverter.extract_dn(entry_for_extraction)
+                dn_obj = Ldap3Adapter.ResultConverter.extract_dn(protocol_entry)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
-                    entry_for_extraction
+                    protocol_entry
                 )
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
-                    entry_for_extraction
+                    protocol_entry
                 )
                 entry = LdifEntry(
                     dn=dn_obj, attributes=attrs_obj, metadata=metadata_obj
@@ -405,7 +378,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: LdifEntry | t.ContainerValue,
+            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | t.ContainerValue,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -489,7 +462,9 @@ class Ldap3Adapter(s[bool]):
             return {}
 
         @staticmethod
-        def extract_dn(parsed: LdifEntry | t.ContainerValue) -> m.Ldif.DN:
+        def extract_dn(
+            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | t.ContainerValue,
+        ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
             Business Rules:
@@ -540,7 +515,7 @@ class Ldap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: LdifEntry | t.ContainerValue,
+            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | t.ContainerValue,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -566,6 +541,12 @@ class Ldap3Adapter(s[bool]):
                 QuirkMetadata instance or None if no metadata available.
 
             """
+            metadata_raw: (
+                t.MetadataValue
+                | Mapping[str, t.Scalar | None]
+                | t.ContainerValue
+                | None
+            ) = None
             if isinstance(parsed, LdifEntry):
                 if parsed.metadata is None:
                     return None
@@ -629,14 +610,13 @@ class Ldap3Adapter(s[bool]):
             if attrs_dict is None:
                 return {}
             result: dict[str, list[str]] = {}
-            for k, v in attrs_dict.items():  # type: ignore[union-attr]
+            for k, v in attrs_dict.items():
                 if isinstance(v, (list, tuple)):
-                    # type: ignore[union-attr]
                     str_list: list[str] = [
-                        str(item)
-                        for item in v
-                        if item is not None
-                        and isinstance(item, (str, int, float, bool))
+                        str(raw_val)
+                        for raw_val in v
+                        if raw_val is not None
+                        and isinstance(raw_val, (str, int, float, bool))
                     ]
                     result[k] = str_list
                 else:
@@ -648,7 +628,6 @@ class Ldap3Adapter(s[bool]):
             metadata: t.MetadataValue
             | Mapping[str, t.Scalar | None]
             | t.ContainerValue
-            | object
             | None,
         ) -> Mapping[str, t.Scalar | list[t.Scalar]] | None:
             """Normalize metadata for Entry model validation.
@@ -682,8 +661,12 @@ class Ldap3Adapter(s[bool]):
             metadata_dict: dict[str, t.ContainerValue] | None = None
             if isinstance(metadata, Mapping):
                 metadata_dict = {}
-                for k, v in metadata.items():  # type: ignore[union-attr]
-                    metadata_dict[str(k)] = v  # type: ignore[assignment]
+                for raw_key, raw_value in metadata.items():
+                    if raw_value is None or isinstance(
+                        raw_value,
+                        (str, int, float, bool),
+                    ):
+                        metadata_dict[raw_key] = raw_value
             elif isinstance(metadata, BaseModel):
                 metadata_dict = metadata.model_dump()
             else:

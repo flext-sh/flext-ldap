@@ -34,7 +34,7 @@ class FlextLdapTypes(FlextLdifTypes):
             """Connection type aliases."""
 
             type Config = Mapping[str, str | int | bool]
-            type Options = Mapping[str, t.Core.LdapScalar]
+            type Options = Mapping[str, _core_t.Scalar | None]
 
         class Operation:
             """Operation type aliases."""
@@ -44,7 +44,13 @@ class FlextLdapTypes(FlextLdifTypes):
             type Attributes = Mapping[str, Sequence[str]]
             type AttributeDict = dict[str, list[str]]
             type Ldap3EntryValue = (
-                str | bytes | int | float | bool | t.Core.LdapCollection | None
+                str
+                | bytes
+                | int
+                | float
+                | bool
+                | Sequence[str | bytes | int | float | bool]
+                | None
             )
 
         class Entry:
@@ -64,12 +70,6 @@ class FlextLdapTypes(FlextLdifTypes):
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
     TDomainResult = TypeVar("TDomainResult", bound=_core_t.ContainerValue)
     P = ParamSpec("P")
-
-    class _LdapCore:
-        type LdapScalar = t.Scalar | None
-        type LdapCollection = Sequence[str | bytes | int | float | bool]
-
-    Core = _LdapCore
 
 
 t = FlextLdapTypes

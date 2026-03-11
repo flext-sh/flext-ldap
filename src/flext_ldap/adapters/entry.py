@@ -269,8 +269,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         """
         if converted_dn != original_dn:
-            conversion_metadata.dn_changed = True
-            conversion_metadata.converted_dn = converted_dn
+            setattr(conversion_metadata, "dn_changed", True)
+            setattr(conversion_metadata, "converted_dn", converted_dn)
 
         def check_attr_changed(
             attr_name: str, original_values: Sequence[object]
@@ -321,7 +321,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         }
         changed_attrs = list(filtered_dict.values())
         if changed_attrs:
-            conversion_metadata.attribute_changes = changed_attrs
+            setattr(conversion_metadata, "attribute_changes", changed_attrs)
 
     @override
     def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:

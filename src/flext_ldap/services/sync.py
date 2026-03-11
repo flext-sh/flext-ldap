@@ -34,14 +34,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import FlextLdapOperations, m, s, u
+from flext_ldap import FlextLdapOperations, m, u
+from flext_ldap._models.ldap import FlextLdapModelsLdap
 
 
-class FlextLdapSyncService(s[m.Ldap.SyncStats]):
+class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
     """Stream LDIF entries into LDAP while tracking progress and totals.
 
     All LDAP mutations are delegated to :class:`FlextLdapOperations`, keeping
@@ -138,7 +139,9 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
             self._ops = operations
 
         def sync(
-            self, entries: list[m.Ldif.Entry], _options: m.Ldap.SyncOptions
+            self,
+            entries: list[m.Ldif.Entry],
+            _options: FlextLdapModelsLdap.SyncOptions,
         ) -> FlextResult[m.Ldap.SyncStats]:
             """Sync entries in batch mode with progress tracking.
 
@@ -358,7 +361,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
         return FlextResult[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
 
     def sync_ldif_file(
-        self, ldif_file: Path, options: m.Ldap.SyncOptions
+        self, ldif_file: Path, options: FlextLdapModelsLdap.SyncOptions
     ) -> FlextResult[m.Ldap.SyncStats]:
         """Parse and sync an LDIF file into the directory.
 
@@ -423,7 +426,7 @@ class FlextLdapSyncService(s[m.Ldap.SyncStats]):
     def _process_entries(
         self,
         entries: list[m.Ldif.Entry],
-        options: m.Ldap.SyncOptions,
+        options: FlextLdapModelsLdap.SyncOptions,
         start_time: datetime,
     ) -> FlextResult[m.Ldap.SyncStats]:
         """Process parsed entries through the sync pipeline.

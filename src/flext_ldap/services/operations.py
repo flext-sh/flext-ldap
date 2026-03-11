@@ -34,16 +34,16 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import override
 
-from flext_core import FlextResult, FlextRuntime, p
+from flext_core import FlextResult, FlextRuntime, FlextService, p
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
-from flext_ldap import FlextLdapConnection, c, m, s, t, u
+from flext_ldap import FlextLdapConnection, c, m, t, u
 
 LaxStr = str | bytes | bytearray
 
 
-class FlextLdapOperations(s[m.Ldap.SearchResult]):
+class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
@@ -452,7 +452,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         )
                     )
                 else:
-                    existing_set: set[str] = set()
+                    existing_set = set()
                 new_set = FlextLdapOperations.EntryComparison.normalize_value_set([
                     x for x in new_vals if x
                 ])
@@ -968,11 +968,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 RuntimeError,
                 ImportError,
             ):
-                match idx_entry:
-                    case tuple():
-                        entry_idx = idx_entry[0]
-                    case _:
-                        entry_idx = None
+                entry_idx = idx_entry[0]
                 logger = FlextLdapOperations._get_structlog_logger()
                 if logger is not None:
                     logger.debug(

@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeIs, override
 
-from flext_core import FlextResult, FlextSettings, r
+from flext_core import FlextResult, FlextService, FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -50,7 +50,6 @@ from flext_ldap import (
     FlextLdapSettings,
     m,
     p,
-    s,
     t,
 )
 from flext_ldap._models.ldap import FlextLdapModelsLdap
@@ -115,7 +114,7 @@ class FlextLdapSyncCallbacks:
             return False
 
 
-class FlextLdap(s[m.Ldap.SearchResult]):
+class FlextLdap(FlextService[m.Ldap.SearchResult]):
     """Main API facade for LDAP operations using dependency injection.
 
     Uses FlextLdapConnection and FlextLdapOperations directly without wrapper logic.
@@ -292,7 +291,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
 
     @staticmethod
     def _make_phase_progress_callback(
-        phase: str, config: m.Ldap.SyncPhaseConfig
+        phase: str, config: FlextLdapModelsLdap.SyncPhaseConfig
     ) -> m.Ldap.Types.LdapProgressCallback | None:
         """Create progress callback for a phase, handling both single and multi-phase signatures.
 
@@ -650,7 +649,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         self,
         phase_files: Mapping[str, Path],
         *,
-        config: m.Ldap.SyncPhaseConfig | None = None,
+        config: FlextLdapModelsLdap.SyncPhaseConfig | None = None,
     ) -> FlextResult[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially.
 
@@ -683,7 +682,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             per-phase statistics, totals, and overall success rate.
 
         """
-        config = config or m.Ldap.SyncPhaseConfig()
+        config = config or FlextLdapModelsLdap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
         phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
         overall_success = True
@@ -753,7 +752,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         ldif_file_path: Path,
         phase_name: str,
         *,
-        config: m.Ldap.SyncPhaseConfig | None = None,
+        config: FlextLdapModelsLdap.SyncPhaseConfig | None = None,
     ) -> FlextResult[m.Ldap.PhaseSyncResult]:
         """Synchronize entries from LDIF file to LDAP server.
 
@@ -788,7 +787,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
             FlextResult containing PhaseSyncResult with statistics and duration
 
         """
-        config = config or m.Ldap.SyncPhaseConfig()
+        config = config or FlextLdapModelsLdap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
         try:
             ldif_content = ldif_file_path.read_text(encoding="utf-8")
@@ -922,7 +921,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         )
 
     def _prepare_phase_callback(
-        self, phase_name: str, config: m.Ldap.SyncPhaseConfig
+        self, phase_name: str, config: FlextLdapModelsLdap.SyncPhaseConfig
     ) -> m.Ldap.Types.LdapProgressCallback | None:
         """Prepare phase-specific progress callback.
 
@@ -957,7 +956,10 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         return None
 
     def _process_single_phase(
-        self, phase_name: str, ldif_path: Path, config: m.Ldap.SyncPhaseConfig
+        self,
+        phase_name: str,
+        ldif_path: Path,
+        config: FlextLdapModelsLdap.SyncPhaseConfig,
     ) -> FlextResult[m.Ldap.PhaseSyncResult]:
         """Process single phase file and return result.
 
@@ -976,7 +978,7 @@ class FlextLdap(s[m.Ldap.SearchResult]):
         return self.sync_phase_entries(
             ldif_path,
             phase_name,
-            config=m.Ldap.SyncPhaseConfig(
+            config=FlextLdapModelsLdap.SyncPhaseConfig(
                 server_type=config.server_type,
                 progress_callback=phase_callback,
                 retry_on_errors=config.retry_on_errors,
