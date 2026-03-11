@@ -61,12 +61,8 @@ class TestsFlextLdapSettings:
             tm.that(config.port, eq=c.Ldap.ConnectionDefaults.PORT)
         tm.that(config.use_ssl, eq=False)
         tm.that(config.use_tls, eq=False)
-        if config.bind_dn is not None:
-            assert isinstance(config.bind_dn, str), "bind_dn should be string or None"
-        if config.bind_password is not None:
-            assert isinstance(config.bind_password, str), (
-                "bind_password should be string or None"
-            )
+        assert isinstance(config.bind_dn, str), "bind_dn should be string"
+        assert isinstance(config.bind_password, str), "bind_password should be string"
         assert isinstance(config.host, str), "Host should be string"
         assert isinstance(config.port, int), "Port should be int"
         assert isinstance(config.use_ssl, bool), "use_ssl should be bool"
@@ -220,7 +216,8 @@ class TestsFlextLdapSettings:
         """Test model_dump behavior with None values."""
         config = FlextLdapSettings()
         dump = config.model_dump()
-        tm.that(dump, keys=["bind_dn", "bind_password", "base_dn"])
+        tm.that(dump, keys=["bind_dn", "bind_password"])
+        tm.that(dump, lacks_keys=["base_dn"])
 
     def test_config_accepts_keyword_args(self) -> None:
         """Test configuration can be initialized with keyword arguments."""

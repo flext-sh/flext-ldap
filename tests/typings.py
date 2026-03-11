@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TypeAlias
+
 from flext_core import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
@@ -48,21 +50,19 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             """TypedDict definitions for LDAP test fixtures."""
 
 
-GenericFieldsDict = TestsFlextLdapTypes.Tests.Fixtures.GenericFieldsDict
-LdapContainerDict = TestsFlextLdapTypes.Tests.Fixtures.LdapContainerDict
-LdapConnectionConfigDict = TestsFlextLdapTypes.Tests.Fixtures.LdapConnectionConfigDict
-LdapSearchOptionsDict = TestsFlextLdapTypes.Tests.Fixtures.LdapSearchOptionsDict
-LdapEntryDataDict = TestsFlextLdapTypes.Tests.Fixtures.LdapEntryDataDict
-LdapSchemaAttributeDict = TestsFlextLdapTypes.Tests.Fixtures.LdapSchemaAttributeDict
-LdapSchemaObjectClassDict = TestsFlextLdapTypes.Tests.Fixtures.LdapSchemaObjectClassDict
-LdapModifyOperationDict = TestsFlextLdapTypes.Tests.Fixtures.LdapModifyOperationDict
-LdapSearchResultDict = TestsFlextLdapTypes.Tests.Fixtures.LdapSearchResultDict
-LdapTestScenarioDict = TestsFlextLdapTypes.Tests.Fixtures.LdapTestScenarioDict
-GenericTestCaseDict = TestsFlextLdapTypes.Tests.Fixtures.GenericTestCaseDict
-GenericCallableParameterDict = (
-    TestsFlextLdapTypes.Tests.Fixtures.GenericCallableParameterDict
-)
-LdapConnectionResultDict = TestsFlextLdapTypes.Tests.Fixtures.LdapConnectionResultDict
+GenericFieldsDict: TypeAlias = dict[str, str | int | bool | list[str]]
+LdapContainerDict: TypeAlias = dict[str, str | int | bool]
+LdapConnectionConfigDict: TypeAlias = dict[str, str | int | bool | None]
+LdapSearchOptionsDict: TypeAlias = dict[str, str | int | bool]
+LdapEntryDataDict: TypeAlias = dict[str, str | int | bool | list[str]]
+LdapSchemaAttributeDict: TypeAlias = dict[str, str | list[str] | bool]
+LdapSchemaObjectClassDict: TypeAlias = dict[str, str | list[str] | bool]
+LdapModifyOperationDict: TypeAlias = dict[str, str | int | bool | list[str]]
+LdapSearchResultDict: TypeAlias = dict[str, str | int | bool | list[str]]
+LdapTestScenarioDict: TypeAlias = dict[str, str | int | bool]
+GenericTestCaseDict: TypeAlias = dict[str, str | int | bool]
+GenericCallableParameterDict: TypeAlias = dict[str, str | int | bool]
+LdapConnectionResultDict: TypeAlias = dict[str, str | int | bool]
 t = TestsFlextLdapTypes
 tt = TestsFlextLdapTypes
 __all__ = [

@@ -90,9 +90,10 @@ class TestsFlextLdap3Adapter:
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
-        tm.that(Ldap3Adapter.__dict__, keys=["ConnectionManager", "ResultConverter"])
-        tm.that(Ldap3Adapter.ConnectionManager, is_=type, none=False)
-        tm.that(Ldap3Adapter.ResultConverter, is_=type, none=False)
+        assert "ConnectionManager" in Ldap3Adapter.__dict__
+        assert "ResultConverter" in Ldap3Adapter.__dict__
+        assert isinstance(Ldap3Adapter.ConnectionManager, type)
+        assert isinstance(Ldap3Adapter.ResultConverter, type)
 
     def test_connection_manager_static_methods_exist(self) -> None:
         """Test that static methods exist on ConnectionManager."""

@@ -31,7 +31,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TypeAlias, override
+from typing import Literal, TypeAlias, override
 
 from flext_core import FlextResult, FlextService
 from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
@@ -90,16 +90,21 @@ class FlextLdapLdap3Wrappers:
         time_limit: int,
     ) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects."""
-        normalized_scope: int
+        normalized_scope: Literal["BASE", "LEVEL", "SUBTREE"]
         if isinstance(search_scope, int):
-            normalized_scope = search_scope
-        else:
-            scope_map: Mapping[str, int] = {
-                "BASE": c.LDAP3_SCOPE_BASE,
-                "LEVEL": c.LDAP3_SCOPE_LEVEL,
-                "SUBTREE": c.LDAP3_SCOPE_SUBTREE,
+            scope_map: Mapping[int, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+                c.LDAP3_SCOPE_BASE: "BASE",
+                c.LDAP3_SCOPE_LEVEL: "LEVEL",
+                c.LDAP3_SCOPE_SUBTREE: "SUBTREE",
             }
-            normalized_scope = scope_map.get(search_scope, c.LDAP3_SCOPE_SUBTREE)
+            normalized_scope = scope_map.get(search_scope, "SUBTREE")
+        else:
+            scope_str_map: Mapping[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+                "BASE": "BASE",
+                "LEVEL": "LEVEL",
+                "SUBTREE": "SUBTREE",
+            }
+            normalized_scope = scope_str_map.get(search_scope.upper(), "SUBTREE")
         result = connection.search(
             search_base=search_base,
             search_filter=search_filter,
