@@ -78,7 +78,7 @@ class TestsFlextLdapBase:
         assert isinstance(service, FlextService)
 
     def test_concrete_service_execute_returns_result(self) -> None:
-        """Test concrete service execute method returns FlextResult."""
+        """Test concrete service execute method returns r."""
 
         class ExecuteTestService(FlextLdapServiceBase[str]):
             """Service that tests execute method."""

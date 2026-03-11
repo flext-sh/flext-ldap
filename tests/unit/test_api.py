@@ -9,7 +9,7 @@ Test Coverage:
 - Type guard functions (_is_multi_phase_callback, _is_single_phase_callback)
 - API method signatures and existence
 - Configuration inheritance from connection
-- FlextResult return types for all operations
+- r return types for all operations
 
 All tests use real functionality without mocks, following FLEXT patterns.
 
@@ -290,7 +290,7 @@ class TestsFlextLdapApi:
         tm.that(callable(api.delete), eq=True)
 
     def test_execute_method_returns_result(self) -> None:
-        """Test execute method returns FlextResult."""
+        """Test execute method returns r."""
         api = self._create_api()
         tm.fail(api.execute())
 

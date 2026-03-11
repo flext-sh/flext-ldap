@@ -33,7 +33,7 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextService, r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
@@ -324,7 +324,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             setattr(conversion_metadata, "attribute_changes", changed_attrs)
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
         """Execute method required by FlextService.
 
         Business Rules:
@@ -347,15 +347,15 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             **_kwargs: Unused - adapter is stateless and requires no configuration
 
         Returns:
-            FlextResult[bool] - success with True as this adapter is stateless
+            r[bool] - success with True as this adapter is stateless
                 and always ready
 
         """
-        return FlextResult[bool].ok(value=True)
+        return r[bool].ok(value=True)
 
     def ldap3_to_ldif_entry(
         self, ldap3_entry: p.Ldap.Ldap3EntryProtocol
-    ) -> FlextResult[m.Ldif.Entry]:
+    ) -> r[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
         Business Rules:
@@ -376,7 +376,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         Architecture:
             - Uses _convert_ldap3_value_to_list() for value normalization
             - Uses _build_conversion_metadata() for tracking transformations
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
             - Server type from adapter._server_type stored in metadata
 
         Args:
@@ -384,7 +384,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:
-            FlextResult[p.Entry]: Converted entry with metadata
+            r[p.Entry]: Converted entry with metadata
             or error if conversion fails (ValueError, TypeError, AttributeError).
 
         """
@@ -443,7 +443,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
-            return FlextResult[m.Ldif.Entry].ok(
+            return r[m.Ldif.Entry].ok(
                 m.Ldif.Entry(
                     dn=m.Ldif.DN(value=dn_str),
                     attributes=ldf_attrs_obj,
@@ -463,11 +463,11 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return FlextResult[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
+            return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
         self, entry: m.Ldif.Entry
-    ) -> FlextResult[t.Ldap.Operation.Attributes]:
+    ) -> r[t.Ldap.Operation.Attributes]:
         """Convert p.Entry to ldap3 attributes format.
 
         Business Rules:
@@ -486,7 +486,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         Architecture:
             - Accesses entry.attributes.attributes dict directly
             - Python 3.13: Uses guard-based sequence handling
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
             - Returns dict[str, list[str]] format expected by ldap3
 
         Args:
@@ -494,26 +494,22 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 Must have non-empty attributes.attributes dict.
 
         Returns:
-            FlextResult[Attributes]: Dict mapping attribute names to list[str] values
+            r[Attributes]: Dict mapping attribute names to list[str] values
             or error if entry has no attributes or conversion fails.
 
         """
         if entry.attributes is None:
-            return FlextResult[t.Ldap.Operation.Attributes].fail(
-                "Entry has no attributes"
-            )
+            return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
-            return FlextResult[t.Ldap.Operation.Attributes].fail(
-                "Entry has no attributes"
-            )
+            return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         try:
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
                 key_str = str(k)
                 filtered_attrs[key_str] = [str(item) for item in v]
-            return FlextResult[t.Ldap.Operation.Attributes].ok(filtered_attrs)
+            return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             dn_value = (
                 getattr(entry.dn, "value", entry.dn)
@@ -533,7 +529,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return FlextResult[t.Ldap.Operation.Attributes].fail(
+            return r[t.Ldap.Operation.Attributes].fail(
                 f"Failed to convert attributes to ldap3 format: {e!s}"
             )
 

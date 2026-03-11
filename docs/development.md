@@ -91,7 +91,7 @@
   - Code Quality Standards
     - Type Safety Requirements
 - All public APIs must have complete type annotations
-- Generic types for FlextResult patterns
+- Generic types for r patterns
   - Import Organization
 - Standard library imports
 - Third-party imports
@@ -308,26 +308,24 @@ class FlextLdapUserService:
         self._client = get_ldap_client()
         self.logger = FlextLogger(__name__)
 
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> FlextResult[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
 
-**2. FlextResult Pattern**
+**2. r Pattern**
 
 ```python
 # ✅ CORRECT - Explicit error handling
-def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
+def create_user(self, request: CreateUserRequest) -> r[FlextLdapUser]:
     if not request.is_valid():
-        return FlextResult[FlextLdapUser].fail("Invalid user data")
+        return r[FlextLdapUser].fail("Invalid user data")
 
     result = self._client.create_entry(request.to_ldap_entry())
     if result.is_failure:
-        return FlextResult[FlextLdapUser].fail(f"User creation failed: {result.error}")
+        return r[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
-    return FlextResult[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
+    return r[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
 
 
 # ❌ WRONG - Try/catch fallbacks
@@ -352,7 +350,7 @@ class SearchRequest:
     size_limit: int = 100
     time_limit: int = 30
 
-def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]:
+def search_entries(self, request: SearchRequest) -> r[List[LdapEntry]]:
     # Implementation using parameter object
 
 # ❌ WRONG - Multiple parameters
@@ -387,11 +385,11 @@ ______________________________________________________________________
 
 ```python
 # All public APIs must have complete type annotations
-def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
+def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
     """Complete type signature required."""
 
 
-# Generic types for FlextResult patterns
+# Generic types for r patterns
 T = TypeVar("T")
 
 
@@ -424,7 +422,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -562,7 +560,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -668,9 +666,7 @@ class FlextLdapClients:
         ...     print(f"Welcome, {user.cn}")
     """
 
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> FlextResult[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
         """Authenticate user credentials against LDAP directory.
 
         Args:
@@ -678,11 +674,11 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            FlextResult containing authenticated user object on success,
+            r containing authenticated user object on success,
             or error message on failure.
 
         Raises:
-            No exceptions raised - all errors returned via FlextResult.
+            No exceptions raised - all errors returned via r.
 
         Examples:
             >>> result = api.authenticate_user("john.doe", "secret123")
@@ -701,7 +697,7 @@ All public APIs require comprehensive documentation including:
 - Purpose and responsibility
 - Parameter descriptions with types
 - Return value descriptions
-- FlextResult usage patterns
+- r usage patterns
 - Complete working examples
 - Integration with Clean Architecture layers
 
@@ -788,7 +784,7 @@ ______________________________________________________________________
 ### Code Review Checklist
 
 - [ ] Follows Clean Architecture patterns
-- [ ] Uses FlextResult for error handling
+- [ ] Uses r for error handling
 - [ ] Includes comprehensive tests
 - [ ] Type annotations complete
 - [ ] Documentation updated

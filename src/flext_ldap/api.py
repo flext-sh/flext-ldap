@@ -8,7 +8,7 @@ Business Rules:
     - All LDAP operations MUST flow through this facade (zero direct ldap3 usage)
     - Connection and operations services are injected (no internal instantiation)
     - FlextLdif singleton is used for LDIF parsing (consistent ecosystem behavior)
-    - FlextResult pattern is used for all operations (no exceptions raised)
+    - r pattern is used for all operations (no exceptions raised)
     - Search results use m.Ldif.Entry for cross-ecosystem compatibility
     - Upsert operations implement add-or-modify pattern with idempotent handling
 
@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeIs, override
 
-from flext_core import FlextResult, FlextService, FlextSettings, r
+from flext_core import FlextService, FlextSettings, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -337,7 +337,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             return callback
         return None
 
-    def add(self, entry: m.Ldif.Entry) -> FlextResult[m.Ldap.OperationResult]:
+    def add(self, entry: m.Ldif.Entry) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry.
 
         Business Rules:
@@ -359,13 +359,13 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - Delegates to FlextLdapOperations.add() for execution
             - Uses Ldap3Adapter for protocol-level operations
             - Entry conversion handled by FlextLdapEntryAdapter
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             entry: Entry model to add (must include DN and required attributes)
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            r containing OperationResult with success status and entries_affected=1
 
         """
         return self._operations.add(entry)
@@ -378,7 +378,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
-    ) -> FlextResult[m.Ldap.LdapBatchStats]:
+    ) -> r[m.Ldap.LdapBatchStats]:
         """Batch upsert multiple LDAP entries with progress tracking.
 
         Business Rules:
@@ -401,7 +401,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - Delegates to FlextLdapOperations.batch_upsert() for execution
             - Uses FlextLdapOperations.upsert() for each entry
             - Progress callback signature: (current: int, total: int, dn: str, stats: LdapBatchStats)
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             entries: List of entries to upsert (must include DN and attributes)
@@ -411,7 +411,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             stop_on_error: Stop processing on first error (default: False, continue)
 
         Returns:
-            FlextResult containing LdapBatchStats with synced/failed/skipped counts
+            r containing LdapBatchStats with synced/failed/skipped counts
 
         """
         return self._operations.batch_upsert(
@@ -430,7 +430,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         max_retries: int = 3,
         retry_delay: float = 1.0,
         **_kwargs: str | float | bool | None,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Establish LDAP connection with optional auto-retry.
 
         Business Rules:
@@ -449,7 +449,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
 
         Architecture:
             - Delegates to FlextLdapConnection.connect() for actual connection logic
-            - Uses FlextResult pattern - no exceptions raised
+            - Uses r pattern - no exceptions raised
             - Connection must be established before any LDAP operations
 
         Args:
@@ -459,7 +459,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             retry_delay: Delay between retries in seconds (default: 1.0)
 
         Returns:
-            FlextResult[bool] indicating connection success
+            r[bool] indicating connection success
 
         """
         config_for_connect: m.Ldap.ConnectionConfig = connection_config
@@ -491,7 +491,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             )
         return result
 
-    def delete(self, dn: str | m.Ldif.DN) -> FlextResult[m.Ldap.OperationResult]:
+    def delete(self, dn: str | m.Ldif.DN) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -512,13 +512,13 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - Delegates to FlextLdapOperations.delete() for execution
             - Uses Ldap3Adapter for protocol-level operations
             - DN conversion handled by FlextLdifUtilities.DN
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             dn: Distinguished name of entry to delete (string or DN model)
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            r containing OperationResult with success status and entries_affected=1
 
         """
         return self._operations.delete(dn)
@@ -548,11 +548,11 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         self.logger.info("LDAP connection closed")
 
     @override
-    def execute(self) -> FlextResult[m.Ldap.SearchResult]:
+    def execute(self) -> r[m.Ldap.SearchResult]:
         """Execute service health check for FlextService pattern compliance.
 
         Implements a custom execute method with extended return type compatibility.
-        The base class execute() expects FlextResult[bool], but this method returns
+        The base class execute() expects r[bool], but this method returns
         SearchResult for operational purposes.
 
         Business Rules:
@@ -567,14 +567,14 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - No logging performed at facade level (delegated to operations)
 
         Returns:
-            FlextResult[SearchResult]: Health status from operations service.
+            r[SearchResult]: Health status from operations service.
 
         """
         return self._operations.execute()
 
     def modify(
         self, dn: str | m.Ldif.DN, changes: t.Ldap.Operation.Changes
-    ) -> FlextResult[m.Ldap.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
         Business Rules:
@@ -597,21 +597,21 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - Delegates to FlextLdapOperations.modify() for execution
             - Uses Ldap3Adapter for protocol-level operations
             - DN conversion handled by FlextLdifUtilities.DN
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             dn: Distinguished name of entry to modify (string or DN model)
             changes: Modification changes dict in ldap3 format
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            r containing OperationResult with success status and entries_affected=1
 
         """
         return self._operations.modify(dn, changes)
 
     def search(
         self, search_options: m.Ldap.SearchOptions, server_type: str = "rfc"
-    ) -> FlextResult[m.Ldap.SearchResult]:
+    ) -> r[m.Ldap.SearchResult]:
         """Perform LDAP search operation.
 
         Business Rules:
@@ -632,7 +632,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         Architecture:
             - Delegates to FlextLdapOperations.search() for execution
             - Uses FlextLdifParser for server-specific entry parsing
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
             - Entry models use m.Ldif.Entry for consistency
 
         Args:
@@ -640,7 +640,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             server_type: LDAP server type for parsing quirks (default: RFC)
 
         Returns:
-            FlextResult containing SearchResult with Entry models
+            r containing SearchResult with Entry models
 
         """
         return self._operations.search(search_options, server_type)
@@ -650,7 +650,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         phase_files: Mapping[str, Path],
         *,
         config: FlextLdapModelsLdap.SyncPhaseConfig | None = None,
-    ) -> FlextResult[m.Ldap.MultiPhaseSyncResult]:
+    ) -> r[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially.
 
         Processes multiple LDIF files (phases) in the order provided by the
@@ -678,7 +678,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 Applied to all phases uniformly.
 
         Returns:
-            FlextResult[MultiPhaseSyncResult]: Aggregated results including
+            r[MultiPhaseSyncResult]: Aggregated results including
             per-phase statistics, totals, and overall success rate.
 
         """
@@ -734,7 +734,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             if total_processed > 0
             else 0.0
         )
-        return FlextResult[m.Ldap.MultiPhaseSyncResult].ok(
+        return r[m.Ldap.MultiPhaseSyncResult].ok(
             m.Ldap.MultiPhaseSyncResult(
                 phase_results=phase_results,
                 total_entries=totals["entries"],
@@ -753,7 +753,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         phase_name: str,
         *,
         config: FlextLdapModelsLdap.SyncPhaseConfig | None = None,
-    ) -> FlextResult[m.Ldap.PhaseSyncResult]:
+    ) -> r[m.Ldap.PhaseSyncResult]:
         """Synchronize entries from LDIF file to LDAP server.
 
         Business Rules:
@@ -776,7 +776,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - Uses FlextLdif.parse() for LDIF parsing with server type support
             - Delegates to batch_upsert() for entry processing
             - Callback conversion handles both single-phase (4 params) and multi-phase (5 params)
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             ldif_file_path: Path to LDIF file (must exist and be readable)
@@ -784,7 +784,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             config: Sync configuration (server_type, progress_callback, retry settings)
 
         Returns:
-            FlextResult containing PhaseSyncResult with statistics and duration
+            r containing PhaseSyncResult with statistics and duration
 
         """
         config = config or FlextLdapModelsLdap.SyncPhaseConfig()
@@ -882,7 +882,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         *,
         retry_on_errors: list[str] | None = None,
         max_retries: int = 1,
-    ) -> FlextResult[m.Ldap.LdapOperationResult]:
+    ) -> r[m.Ldap.LdapOperationResult]:
         """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).
 
         Business Rules:
@@ -905,7 +905,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - Delegates to FlextLdapOperations.upsert() for execution
             - Uses EntryComparison.compare() for attribute-level diff
             - Retry logic uses u.Reliability.retry()
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             entry: Entry model to upsert (must include DN and attributes)
@@ -913,7 +913,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             max_retries: Maximum number of retry attempts (default: 1, no retry)
 
         Returns:
-            FlextResult containing LdapOperationResult with operation type (ADDED|MODIFIED|SKIPPED)
+            r containing LdapOperationResult with operation type (ADDED|MODIFIED|SKIPPED)
 
         """
         return self._operations.upsert(
@@ -960,7 +960,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         phase_name: str,
         ldif_path: Path,
         config: FlextLdapModelsLdap.SyncPhaseConfig,
-    ) -> FlextResult[m.Ldap.PhaseSyncResult]:
+    ) -> r[m.Ldap.PhaseSyncResult]:
         """Process single phase file and return result.
 
         Handles phase-specific callback preparation and execution.

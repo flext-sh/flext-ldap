@@ -120,7 +120,7 @@ make validate  # Must pass: lint + type + security + test
 
 ### Code Quality Rules
 
-1. **Use FlextResult[T]** for all operations
+1. **Use r[T]** for all operations
 1. **Complete type annotations** (Python 3.13+ syntax)
 1. **Pydantic v2** for models
 1. **Clean Architecture** - respect layer boundaries
@@ -173,13 +173,13 @@ make clean-all     # Deep clean including venvs
 ### Railway-Oriented Programming
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
 
-def my_operation(data: dict) -> FlextResult[ProcessedData]:
-    """Always return FlextResult[T]."""
+def my_operation(data: dict) -> r[ProcessedData]:
+    """Always return r[T]."""
     if not data:
-        return FlextResult[ProcessedData].fail("Data required")
+        return r[ProcessedData].fail("Data required")
 
     return validate(data).flat_map(transform).map(enrich)
 ```
@@ -264,7 +264,7 @@ test: add integration tests for OID
 
 ### DO ✅
 
-- Use FlextResult[T] for all operations
+- Use r[T] for all operations
 - Complete type annotations
 - Follow Clean Architecture
 - Write tests for new features

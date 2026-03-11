@@ -13,7 +13,7 @@ from collections.abc import Mapping
 from typing import TypeAlias, TypeVar
 
 import pytest
-from flext_core import FlextResult
+from flext_core import r
 from flext_tests import u
 
 from flext_ldap import FlextLdap, FlextLdapModels, FlextLdapOperations, p, r
@@ -27,8 +27,8 @@ LDAP_MODIFY_REPLACE: int = 2
 c = c_mod.c
 m = FlextLdapModels
 T = TypeVar("T")
-OperationResultType: TypeAlias = FlextResult[FlextLdapModels.Ldap.OperationResult]
-SearchResultType: TypeAlias = FlextResult[FlextLdapModels.Ldap.SearchResult]
+OperationResultType: TypeAlias = r[FlextLdapModels.Ldap.OperationResult]
+SearchResultType: TypeAlias = r[FlextLdapModels.Ldap.SearchResult]
 LdapEntry: TypeAlias = FlextLdapModels.Ldif.Entry
 LdapClientType = FlextLdap | p.Ldap.LdapClientProtocol
 LdapOperationsType = FlextLdap | FlextLdapOperations | p.Ldap.LdapClientProtocol
@@ -83,8 +83,8 @@ class TestsFlextLdapOperationHelpers:
     """
 
     @staticmethod
-    def _ensure_flext_result(result: FlextResult[T] | object) -> FlextResult[T]:
-        """Ensure result is FlextResult, converting from protocol if needed.
+    def _ensure_flext_result(result: r[T] | object) -> r[T]:
+        """Ensure result is r, converting from protocol if needed.
 
         Args:
             result: Result that may be r or protocol result
@@ -100,8 +100,8 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _assert_result_success(
-        result: FlextResult[T], error_msg: str = "Operation failed"
-    ) -> FlextResult[T]:
+        result: r[T], error_msg: str = "Operation failed"
+    ) -> r[T]:
         """Assert result is success and return it.
 
         Args:
@@ -274,8 +274,7 @@ class TestsFlextLdapOperationHelpers:
         )
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
             search_result_raw: (
-                FlextResult[m.Ldap.SearchResult]
-                | FlextResult[p.Ldap.SearchResultProtocol]
+                r[m.Ldap.SearchResult] | r[p.Ldap.SearchResultProtocol]
             ) = client.search(search_options)
         else:
             if not hasattr(search_options, "base_dn"):
@@ -788,7 +787,7 @@ class TestsFlextLdapOperationHelpers:
         else:
             entry_for_protocol = _ldap_entry_to_protocol_adapter(entry)
             add_result_raw = client.add(entry_for_protocol)
-        add_result_typed: FlextResult[p.Ldap.OperationResultProtocol] = (
+        add_result_typed: r[p.Ldap.OperationResultProtocol] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(

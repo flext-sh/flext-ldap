@@ -115,7 +115,7 @@ class TestsFlextLdapOperations:
         tm.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
-        """Test execute method returns a FlextResult."""
+        """Test execute method returns a r."""
         operations = self._create_operations()
         result = operations.execute()
         tm.fail(result)

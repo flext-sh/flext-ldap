@@ -22,7 +22,7 @@
   - [Test Environment Setup](#test-environment-setup)
 - [Error Message Reference](#error-message-reference)
   - [Common Error Patterns](#common-error-patterns)
-  - [FlextResult Error Handling](#flextresult-error-handling)
+  - [r Error Handling](#flextresult-error-handling)
 - [Debugging Tools and Techniques](#debugging-tools-and-techniques)
   - [Enable Debug Logging](#enable-debug-logging)
   - [Network Debugging](#network-debugging)
@@ -56,7 +56,7 @@
     - Test Environment Setup
   - Error Message Reference
     - Common Error Patterns
-    - FlextResult Error Handling
+    - r Error Handling
   - Debugging Tools and Techniques
     - Enable Debug Logging
     - Network Debugging
@@ -669,14 +669,14 @@ ______________________________________________________________________
 | Timeout        | `Operation timed out`       | Slow server or network issues   |
 | SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
 
-### FlextResult Error Handling
+### r Error Handling
 
 ```python
 from flext_ldap import get_flext_ldap_api
 
 
 def handle_errors_properly():
-    """Demonstrate proper error handling with FlextResult."""
+    """Demonstrate proper error handling with r."""
     api = get_flext_ldap_api()
 
     # Always check result status
@@ -724,7 +724,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t

@@ -141,7 +141,7 @@ result = acl_manager.get_acls(connection, dn, server_type)
 
 ## Return Types
 
-All operations return `FlextResult[T]` from flext-core:
+All operations return `r[T]` from flext-core:
 
 ```python
 result = api.search_entries(request)

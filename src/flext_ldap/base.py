@@ -37,7 +37,7 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
 
     Usage in services:
         class MyService(FlextLdapServiceBase[MyResult]):
-            def execute(self) -> FlextResult[MyResult]:
+            def execute(self) -> r[MyResult]:
                 host = self.config.ldap.host  # Typed access!
                 encoding = self.config.ldif.ldif_encoding  # Typed access!
     """

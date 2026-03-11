@@ -22,7 +22,7 @@ Architecture Notes:
     - Uses composition over inheritance (operations service injection)
     - Inner classes (BatchSync, BaseDNTransformer) encapsulate specific concerns
     - Pydantic v2 frozen=False for mutable service state
-    - Railway-Oriented Programming (FlextResult) for error handling
+    - Railway-Oriented Programming (r) for error handling
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextService, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -142,7 +142,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             self,
             entries: list[m.Ldif.Entry],
             _options: FlextLdapModelsLdap.SyncOptions,
-        ) -> FlextResult[m.Ldap.SyncStats]:
+        ) -> r[m.Ldap.SyncStats]:
             """Sync entries in batch mode with progress tracking.
 
             Business Rules:
@@ -162,7 +162,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 _options: Sync options including progress_callback for monitoring.
 
             Returns:
-                FlextResult[SyncStats]: Statistics with added/skipped/failed
+                r[SyncStats]: Statistics with added/skipped/failed
                 counts and zero duration (caller updates).
 
             """
@@ -211,7 +211,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                         exc_info=True,
                     )
                     continue
-            return FlextResult[m.Ldap.SyncStats].ok(
+            return r[m.Ldap.SyncStats].ok(
                 m.Ldap.SyncStats.from_counters(
                     synced=stats_builder["added"],
                     skipped=stats_builder["skipped"],
@@ -335,7 +335,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
         self._generate_datetime_utc = u.Generators.generate_datetime_utc
 
     @override
-    def execute(self) -> FlextResult[m.Ldap.SyncStats]:
+    def execute(self) -> r[m.Ldap.SyncStats]:
         """Return an empty stats payload to indicate service readiness.
 
         Implements the ``FlextService.execute()`` contract for service health
@@ -354,15 +354,15 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             - Zero counters indicate no sync work performed
 
         Returns:
-            FlextResult[SyncStats]: Always ok with ``from_counters()`` defaults
+            r[SyncStats]: Always ok with ``from_counters()`` defaults
             (synced=0, skipped=0, failed=0, duration_seconds=0.0).
 
         """
-        return FlextResult[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
+        return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
 
     def sync_ldif_file(
         self, ldif_file: Path, options: FlextLdapModelsLdap.SyncOptions
-    ) -> FlextResult[m.Ldap.SyncStats]:
+    ) -> r[m.Ldap.SyncStats]:
         """Parse and sync an LDIF file into the directory.
 
         Main entry point for file-based LDIF synchronization. Validates file
@@ -388,14 +388,12 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 progress callback settings.
 
         Returns:
-            FlextResult[SyncStats]: Success with sync statistics or failure
+            r[SyncStats]: Success with sync statistics or failure
             with error message (file not found or parse error).
 
         """
         if not ldif_file.exists():
-            return FlextResult[m.Ldap.SyncStats].fail(
-                f"LDIF file not found: {ldif_file}"
-            )
+            return r[m.Ldap.SyncStats].fail(f"LDIF file not found: {ldif_file}")
         start_time = self._generate_datetime_utc()
         try:
             ldif_content = ldif_file.read_text(encoding="utf-8")
@@ -408,17 +406,13 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             RuntimeError,
             ImportError,
         ) as e:
-            return FlextResult[m.Ldap.SyncStats].fail(
-                f"Failed to read LDIF file: {e!s}"
-            )
+            return r[m.Ldap.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
         parse_result = self._ldif.parse(ldif_content)
         if parse_result.is_failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
-            return FlextResult[m.Ldap.SyncStats].fail(
-                f"Failed to parse LDIF file: {error_msg}"
-            )
+            return r[m.Ldap.SyncStats].fail(f"Failed to parse LDIF file: {error_msg}")
         entries_raw = parse_result.value
         entries: list[m.Ldif.Entry] = list(entries_raw)
         return self._process_entries(entries, options, start_time)
@@ -428,7 +422,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
         entries: list[m.Ldif.Entry],
         options: FlextLdapModelsLdap.SyncOptions,
         start_time: datetime,
-    ) -> FlextResult[m.Ldap.SyncStats]:
+    ) -> r[m.Ldap.SyncStats]:
         """Process parsed entries through the sync pipeline.
 
         Internal method that handles the post-parsing workflow: base DN
@@ -453,7 +447,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             start_time: UTC timestamp from caller for duration calculation.
 
         Returns:
-            FlextResult[SyncStats]: Success with sync statistics including
+            r[SyncStats]: Success with sync statistics including
             duration. Failure propagated from BatchSync if any.
 
         Note:
@@ -462,7 +456,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
 
         """
         if not entries:
-            return FlextResult[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
+            return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
         if options.source_basedn and options.target_basedn:
             entries_transformed = self.BaseDNTransformer.transform(
                 entries, options.source_basedn, options.target_basedn
@@ -473,6 +467,6 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             return batch_result
         stats = batch_result.value
         duration = (self._generate_datetime_utc() - start_time).total_seconds()
-        return FlextResult[m.Ldap.SyncStats].ok(
+        return r[m.Ldap.SyncStats].ok(
             stats.model_copy(update={"duration_seconds": duration})
         )

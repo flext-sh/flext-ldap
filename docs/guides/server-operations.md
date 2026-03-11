@@ -707,7 +707,7 @@ if server_type_result.is_success:
 
 ### **2. Handle Errors Explicitly**
 
-All operations return `FlextResult` - always check for failures:
+All operations return `r` - always check for failures:
 
 ```python
 result = ops.add_entry(connection, entry)

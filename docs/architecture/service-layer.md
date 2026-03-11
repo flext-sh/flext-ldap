@@ -11,7 +11,7 @@
 
 The service layer contains the composable building blocks that power the
 `FlextLdap` facade. Each service is focused on a single responsibility and uses
-`FlextResult` to make success and failure explicit.
+`r` to make success and failure explicit.
 
 ## Services
 
@@ -21,7 +21,7 @@ The service layer contains the composable building blocks that power the
 - **Responsibility**: Manage the `ldap3` connection lifecycle (create, bind,
   disconnect) while optionally retrying transient errors.
 - **Inputs**: `FlextLdapModels.ConnectionConfig`
-- **Outputs**: `FlextResult[bool]` plus logging and optional server detection.
+- **Outputs**: `r[bool]` plus logging and optional server detection.
 
 ### Operations
 
@@ -30,7 +30,7 @@ The service layer contains the composable building blocks that power the
   operations against an active connection.
 - **Inputs**: Typed models such as `SearchOptions`, `Entry`, and
   `ModifyChanges` structures.
-- **Outputs**: `FlextResult` wrappers containing operation metadata and parsed
+- **Outputs**: `r` wrappers containing operation metadata and parsed
   entries.
 
 ### Synchronization
@@ -48,7 +48,7 @@ The service layer contains the composable building blocks that power the
   infer the directory server type using in-project heuristics instead of the
   flext-ldif detector.
 - **Inputs**: Bound `ldap3.Connection`
-- **Outputs**: `FlextResult[str]` containing the detected server label.
+- **Outputs**: `r[str]` containing the detected server label.
 
 ## Collaboration Pattern
 

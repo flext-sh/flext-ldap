@@ -152,8 +152,8 @@ def process(data):
 
 
 # ✅ CORRECT
-def process(data: dict[str, object]) -> FlextResult[ProcessedData]:
-    return FlextResult.ok(ProcessedData(**data))
+def process(data: dict[str, object]) -> r[ProcessedData]:
+    return r.ok(ProcessedData(**data))
 ```
 
 **Run MyPy with details:**
@@ -238,7 +238,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -270,7 +270,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -470,7 +470,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -507,24 +507,24 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
 
-def safe_operation(data: dict) -> FlextResult[dict]:
+def safe_operation(data: dict) -> r[dict]:
     try:
         # Your operation here
         result = process_data(data)
-        return FlextResult.ok(result)
+        return r.ok(result)
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
-        return FlextResult.fail(f"Validation failed: {e}")
+        return r.fail(f"Validation failed: {e}")
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        return FlextResult.fail(f"Operation failed: {e}")
+        return r.fail(f"Operation failed: {e}")
 ```
 
 ### 3. Debug Mode
@@ -545,7 +545,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -757,7 +757,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -775,12 +775,12 @@ from flext_core import u
 
 ### Best Practices
 
-1. **Always Use FlextResult**
+1. **Always Use r**
 
 ```python
 # ✅ GOOD
-def process(data: dict) -> FlextResult[ProcessedData]:
-    return FlextResult.ok(ProcessedData(**data))
+def process(data: dict) -> r[ProcessedData]:
+    return r.ok(ProcessedData(**data))
 
 
 # ❌ BAD
@@ -791,19 +791,19 @@ def process(data: dict) -> ProcessedData:
 2. **Validate Input Early**
 
    ```python
-   def process_data(data: dict) -> FlextResult[dict]:
+   def process_data(data: dict) -> r[dict]:
        if not data:
-           return FlextResult.fail("Data required")
+           return r.fail("Data required")
 
        # Process data
-       return FlextResult.ok(processed_data)
+       return r.ok(processed_data)
    ```
 
 1. **Use Type Hints**
 
    ```python
    # ✅ GOOD
-   def process(items: list[Item]) -> FlextResult[list[ProcessedItem]]:
+   def process(items: list[Item]) -> r[list[ProcessedItem]]:
        pass
 
 

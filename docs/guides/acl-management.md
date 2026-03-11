@@ -79,7 +79,7 @@
   - [Subject Types](#subject-types)
 - [Different subject types](#different-subject-types)
   - [Error Handling](#error-handling)
-- [All operations return FlextResult for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
+- [All operations return r for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
   - [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
 - [Example: Convert Oracle OUD ACLs to OpenLDAP format](#example-convert-oracle-oud-acls-to-openldap-format)
 - [Read Oracle ACLs from OUD](#read-oracle-acls-from-oud)
@@ -358,7 +358,7 @@ FlextLdapConstants.SubjectType.ANYONE  # Anyone
 ## Error Handling
 
 ```python
-# All operations return FlextResult for safe error handling
+# All operations return r for safe error handling
 result = api.parse(acl_string, format_type)
 
 if result.is_failure:

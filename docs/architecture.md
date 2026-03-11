@@ -31,7 +31,7 @@ callers replace services or adapters for testing and alternative runtimes.
 - **Facade**: :class:`flext_ldap.api.FlextLdap` composes the services and exposes
   the high-level API used by callers.
 - **Services**: Connection, Operations, Sync, and Server Detection manage LDAP
-  lifecycle concerns and return typed :class:`flext_core.FlextResult` values.
+  lifecycle concerns and return typed :class:`flext_core.r` values.
 - **Adapters**: :class:`flext_ldap.adapters.ldap3.Ldap3Adapter` and
   :class:`flext_ldap.adapters.entry.FlextLdapEntryAdapter` isolate protocol
   handling and entry normalization.
@@ -65,7 +65,7 @@ callers replace services or adapters for testing and alternative runtimes.
    :class:`~flext_ldap.services.operations.FlextLdapOperations`.
 1. The operations service normalizes DNs and delegates protocol calls to the
    LDAP adapter, which returns typed results already parsed by `flext-ldif`.
-1. Results are wrapped in `FlextResult` instances for explicit
+1. Results are wrapped in `r` instances for explicit
    success/failure handling.
 
 ### Synchronization
@@ -92,7 +92,7 @@ callers replace services or adapters for testing and alternative runtimes.
   services while simplifying tests.
 - **Typed boundaries** use pydantic models and protocols to normalize data
   exchanged across layers.
-- **Railway-oriented results** rely on `FlextResult` to surface errors without
+- **Railway-oriented results** rely on `r` to surface errors without
   exceptions in the main control flow.
 - **Adapter isolation** ensures protocol quirks and conversions stay localized to
   the adapter layer.

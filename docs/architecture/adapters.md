@@ -14,7 +14,7 @@ logic. flext-ldap ships two adapters that wrap `ldap3` and normalize entries to
 
 - **File**: `src/flext_ldap/adapters/ldap3.py`
 - **Role**: Wraps `ldap3.Server` and `ldap3.Connection` objects with a typed API
-  that returns `FlextResult` objects and parsed flext-ldif entries.
+  that returns `r` objects and parsed flext-ldif entries.
 - **Key features**:
   - Connection construction with TLS/SSL handling.
   - Search and CRUD helpers that reuse `FlextLdifParser`.

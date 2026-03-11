@@ -9,8 +9,8 @@ Business Rules:
     - Connection binding uses ldap3.Connection with auto_bind and auto_range options
     - STARTTLS is handled separately from SSL (mutual exclusion enforced in config)
     - Search results are converted to LdifEntry via FlextLdifParser
-    - CRUD operations (add, modify, delete) return FlextResult for consistency
-    - LDAPException is caught and converted to FlextResult.fail() (no exceptions leak)
+    - CRUD operations (add, modify, delete) return r for consistency
+    - LDAPException is caught and converted to r.fail() (no exceptions leak)
 
 Audit Implications:
     - All LDAP operations are traceable via ldap3 connection logging
@@ -33,7 +33,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Literal, TypeAlias, override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextService, r
 from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifParser, FlextLdifUtilities
 from pydantic import BaseModel, ConfigDict
 
@@ -220,7 +220,7 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def handle_tls(
             connection: Connection, config: m.Ldap.ConnectionConfig
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Handle STARTTLS if requested.
 
             Business Rules:
@@ -236,7 +236,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             Architecture:
                 - Uses ldap3 Connection.start_tls() for protocol-level operation
-                - Returns FlextResult pattern - no exceptions raised
+                - Returns r pattern - no exceptions raised
                 - LDAPException is caught and converted to failure
 
             Args:
@@ -244,15 +244,15 @@ class Ldap3Adapter(FlextService[bool]):
                 config: Connection configuration with TLS settings.
 
             Returns:
-                FlextResult[bool]: Success if STARTTLS not needed or succeeds.
+                r[bool]: Success if STARTTLS not needed or succeeds.
 
             """
             if not config.use_tls or config.use_ssl:
-                return FlextResult[bool].ok(value=True)
+                return r[bool].ok(value=True)
             try:
                 if not FlextLdapLdap3Wrappers.start_tls(connection):
-                    return FlextResult[bool].fail("Failed to start TLS")
-                return FlextResult[bool].ok(value=True)
+                    return r[bool].fail("Failed to start TLS")
+                return r[bool].ok(value=True)
             except (
                 ValueError,
                 TypeError,
@@ -263,7 +263,7 @@ class Ldap3Adapter(FlextService[bool]):
                 ImportError,
             ) as tls_error:
                 error_msg = f"Failed to start TLS: {tls_error}"
-                return FlextResult[bool].fail(error_msg)
+                return r[bool].fail(error_msg)
 
     class ResultConverter:
         """Result conversion logic (SRP)."""
@@ -321,7 +321,7 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def convert_parsed_entries(
             parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponseProtocol,
-        ) -> FlextResult[list[LdifEntry]]:
+        ) -> r[list[LdifEntry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
             Business Rules:
@@ -337,11 +337,11 @@ class Ldap3Adapter(FlextService[bool]):
                 - All entries returned are validated LdifEntry instances
                 - Defensive conversion handles edge cases (tests, manual construction)
                 - Empty list returned when parse_response has no entries
-                - Uses FlextResult pattern for consistent error handling
+                - Uses r pattern for consistent error handling
 
             Architecture:
                 - Input: m.Ldif.ParseResponse from FlextLdifParser
-                - Output: FlextResult[list[LdifEntry]] (railway pattern)
+                - Output: r[list[LdifEntry]] (railway pattern)
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
                 - No network calls - processes pre-fetched LDAP results
 
@@ -353,7 +353,7 @@ class Ldap3Adapter(FlextService[bool]):
             """
             entries_raw = parse_response.entries
             if not entries_raw:
-                return FlextResult[list[LdifEntry]].ok([])
+                return r[list[LdifEntry]].ok([])
             entries: list[LdifEntry] = []
             for entry_raw in entries_raw:
                 if isinstance(entry_raw, LdifEntry):
@@ -379,7 +379,7 @@ class Ldap3Adapter(FlextService[bool]):
                 )
                 entries.append(entry)
                 continue
-            return FlextResult[list[LdifEntry]].ok(entries)
+            return r[list[LdifEntry]].ok(entries)
 
         @staticmethod
         def extract_attributes(
@@ -740,7 +740,7 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def _extract_error_result(
             connection: Connection, prefix: str
-        ) -> FlextResult[m.Ldap.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Extract error message from connection result.
 
             Business Rules:
@@ -757,14 +757,14 @@ class Ldap3Adapter(FlextService[bool]):
             Architecture:
                 - Uses connection.result dict from ldap3
                 - Uses u.is_dict_like() for type narrowing
-                - Returns FlextResult.fail() with error message
+                - Returns r.fail() with error message
 
             Args:
                 connection: ldap3.Connection with error in connection.result.
                 prefix: Error message prefix (e.g., "Add failed").
 
             Returns:
-                FlextResult.fail() with extracted error message.
+                r.fail() with extracted error message.
 
             """
             error_msg = f"{prefix}: LDAP operation returned failure status"
@@ -775,7 +775,7 @@ class Ldap3Adapter(FlextService[bool]):
                     error_msg = f"{prefix}: {description_str}"
                 case _:
                     pass
-            return FlextResult[m.Ldap.OperationResult].fail(error_msg)
+            return r[m.Ldap.OperationResult].fail(error_msg)
 
         @staticmethod
         def _modify_entry_in_ldap(
@@ -801,14 +801,14 @@ class Ldap3Adapter(FlextService[bool]):
             connection: Connection,
             dn_str: str,
             ldap_attrs: t.Ldap.Operation.Attributes,
-        ) -> FlextResult[m.Ldap.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP add operation via ldap3 Connection.
 
             Business Rules:
                 - Calls connection.add() with DN and attributes dict
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
-                - Failure returns FlextResult.fail() with error message
+                - Failure returns r.fail() with error message
 
             Audit Implications:
                 - LDAP operation errors are logged with description from server
@@ -817,7 +817,7 @@ class Ldap3Adapter(FlextService[bool]):
             Architecture:
                 - Uses ldap3 Connection.add() for protocol-level operation
                 - Error extraction uses _extract_error_result() helper
-                - Returns FlextResult pattern - no exceptions raised
+                - Returns r pattern - no exceptions raised
 
             Args:
                 connection: Active ldap3 Connection object
@@ -825,7 +825,7 @@ class Ldap3Adapter(FlextService[bool]):
                 ldap_attrs: Attributes dict in ldap3 format
 
             Returns:
-                FlextResult containing OperationResult with success status
+                r containing OperationResult with success status
 
             """
             try:
@@ -833,7 +833,7 @@ class Ldap3Adapter(FlextService[bool]):
                     k: list(v) for k, v in ldap_attrs.items()
                 }
                 if self._add_entry_to_ldap(connection, dn_str, attrs_dict):
-                    return FlextResult[m.Ldap.OperationResult].ok(
+                    return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
                             operation_type=c.Ldap.OperationType.ADD,
@@ -852,11 +852,11 @@ class Ldap3Adapter(FlextService[bool]):
                 ImportError,
             ) as e:
                 error_msg = f"Add failed: {e!s}"
-                return FlextResult[m.Ldap.OperationResult].fail(error_msg)
+                return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_delete(
             self, connection: Connection, dn: str | m.Ldif.DN
-        ) -> FlextResult[m.Ldap.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
 
             Business Rules:
@@ -864,7 +864,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Calls connection.delete() with DN string
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
-                - Failure returns FlextResult.fail() with error message
+                - Failure returns r.fail() with error message
 
             Audit Implications:
                 - LDAP operation errors are logged with description from server
@@ -873,20 +873,20 @@ class Ldap3Adapter(FlextService[bool]):
             Architecture:
                 - Uses ldap3 Connection.delete() for protocol-level operation
                 - Error extraction uses _extract_error_result() helper
-                - Returns FlextResult pattern - no exceptions raised
+                - Returns r pattern - no exceptions raised
 
             Args:
                 connection: Active ldap3 Connection object
                 dn: Distinguished name (string or DN model)
 
             Returns:
-                FlextResult containing OperationResult with success status
+                r containing OperationResult with success status
 
             """
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 if self._delete_entry_from_ldap(connection, dn_str):
-                    return FlextResult[m.Ldap.OperationResult].ok(
+                    return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
                             operation_type=c.Ldap.OperationType.DELETE,
@@ -905,14 +905,14 @@ class Ldap3Adapter(FlextService[bool]):
                 ImportError,
             ) as e:
                 error_msg = f"Delete failed: {e!s}"
-                return FlextResult[m.Ldap.OperationResult].fail(error_msg)
+                return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_modify(
             self,
             connection: Connection,
             dn: str | m.Ldif.DN,
             changes: t.Ldap.Operation.Changes,
-        ) -> FlextResult[m.Ldap.OperationResult]:
+        ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
 
             Business Rules:
@@ -920,7 +920,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Calls connection.modify() with DN and changes dict
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
-                - Failure returns FlextResult.fail() with error message
+                - Failure returns r.fail() with error message
 
             Audit Implications:
                 - LDAP operation errors are logged with description from server
@@ -929,7 +929,7 @@ class Ldap3Adapter(FlextService[bool]):
             Architecture:
                 - Uses ldap3 Connection.modify() for protocol-level operation
                 - Error extraction uses _extract_error_result() helper
-                - Returns FlextResult pattern - no exceptions raised
+                - Returns r pattern - no exceptions raised
 
             Args:
                 connection: Active ldap3 Connection object
@@ -937,13 +937,13 @@ class Ldap3Adapter(FlextService[bool]):
                 changes: Modification changes dict in ldap3 format
 
             Returns:
-                FlextResult containing OperationResult with success status
+                r containing OperationResult with success status
 
             """
             try:
                 dn_str = u.Ldif.DN.get_dn_value(dn)
                 if self._modify_entry_in_ldap(connection, dn_str, changes):
-                    return FlextResult[m.Ldap.OperationResult].ok(
+                    return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
                             success=True,
                             operation_type=c.Ldap.OperationType.MODIFY,
@@ -962,7 +962,7 @@ class Ldap3Adapter(FlextService[bool]):
                 ImportError,
             ) as e:
                 error_msg = f"Modify failed: {e!s}"
-                return FlextResult[m.Ldap.OperationResult].fail(error_msg)
+                return r[m.Ldap.OperationResult].fail(error_msg)
 
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
@@ -1004,7 +1004,7 @@ class Ldap3Adapter(FlextService[bool]):
             connection: Connection,
             params: Ldap3Adapter.SearchExecutor.SearchParams,
             server_type: FlextLdapConstants.Ldif.ServerTypes | str,
-        ) -> FlextResult[list[LdifEntry]]:
+        ) -> r[list[LdifEntry]]:
             """Execute LDAP search and convert results.
 
             Business Rules:
@@ -1013,7 +1013,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Converts server_type to ServerTypeLiteral (validated via c.Ldap.LiteralTypes.LdapServerTypeLiteral)
                 - Parses results using FlextLdifParser.parse_ldap3_results()
                 - Converts ParseResponse to list[Entry] via ResultConverter
-                - LDAPException is caught and converted to FlextResult.fail()
+                - LDAPException is caught and converted to r.fail()
 
             Audit Implications:
                 - Search parameters are logged by connection.search()
@@ -1025,7 +1025,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Uses ldap3 Connection.search() for protocol-level operation
                 - Delegates to FlextLdifParser for server-specific parsing
                 - Uses ResultConverter.convert_parsed_entries() for Entry conversion
-                - Returns FlextResult pattern - no exceptions raised
+                - Returns r pattern - no exceptions raised
 
             Args:
                 connection: Active ldap3.Connection instance (must be bound).
@@ -1033,7 +1033,7 @@ class Ldap3Adapter(FlextService[bool]):
                 server_type: Server type (ServerTypes enum or string) for parsing quirks.
 
             Returns:
-                FlextResult[list[Entry]]: Parsed entries or error if search/parse fails.
+                r[list[Entry]]: Parsed entries or error if search/parse fails.
 
             """
             try:
@@ -1051,7 +1051,7 @@ class Ldap3Adapter(FlextService[bool]):
                 if result_code not in c.Ldap.LdapResultCodes.PARTIAL_SUCCESS_CODES:
                     error_msg = conn_result.get("message", "LDAP search failed")
                     error_desc = conn_result.get("description", "unknown")
-                    return FlextResult[list[LdifEntry]].fail(
+                    return r[list[LdifEntry]].fail(
                         f"LDAP search failed: {error_desc} - {error_msg}"
                     )
                 ldap3_results = self._adapter.ResultConverter.convert_ldap3_results(
@@ -1075,7 +1075,7 @@ class Ldap3Adapter(FlextService[bool]):
                     FlextLdapConstants.Ldif.ServerTypes.RELAXED,
                 }
                 if server_type_str not in valid_server_types:
-                    return FlextResult[list[LdifEntry]].fail(
+                    return r[list[LdifEntry]].fail(
                         f"Unsupported server type: {server_type_str}"
                     )
                 parse_result = self._adapter.parser.parse_ldap3_results(
@@ -1083,7 +1083,7 @@ class Ldap3Adapter(FlextService[bool]):
                 )
                 if parse_result.is_failure:
                     error_msg = str(parse_result.error) if parse_result.error else ""
-                    return FlextResult[list[LdifEntry]].fail(error_msg)
+                    return r[list[LdifEntry]].fail(error_msg)
                 parse_response = parse_result.value
                 return self._adapter.ResultConverter.convert_parsed_entries(
                     parse_response
@@ -1097,7 +1097,7 @@ class Ldap3Adapter(FlextService[bool]):
                 RuntimeError,
                 ImportError,
             ) as e:
-                return FlextResult[list[LdifEntry]].fail(f"Search failed: {e!s}")
+                return r[list[LdifEntry]].fail(f"Search failed: {e!s}")
 
     _connection: Connection | None
     _server: Server | None
@@ -1139,7 +1139,7 @@ class Ldap3Adapter(FlextService[bool]):
     @staticmethod
     def _map_scope(
         scope: FlextLdapConstants.Ldap.SearchScope | str,
-    ) -> FlextResult[int]:
+    ) -> r[int]:
         """Map scope string to ldap3 scope constant.
 
         Uses direct StrEnum value mapping for type-safe conversion.
@@ -1151,7 +1151,7 @@ class Ldap3Adapter(FlextService[bool]):
             try:
                 scope_enum = FlextLdapConstants.Ldap.SearchScope(str(scope).upper())
             except ValueError:
-                return FlextResult[int].fail(f"Invalid LDAP scope: {scope}")
+                return r[int].fail(f"Invalid LDAP scope: {scope}")
         ldap3_scope_mapping: Mapping[FlextLdapConstants.Ldap.SearchScope, int] = {
             FlextLdapConstants.Ldap.SearchScope.BASE: c.LDAP3_SCOPE_BASE,
             FlextLdapConstants.Ldap.SearchScope.ONELEVEL: c.LDAP3_SCOPE_LEVEL,
@@ -1159,12 +1159,12 @@ class Ldap3Adapter(FlextService[bool]):
         }
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]
-            return FlextResult[int].ok(ldap3_value)
-        return FlextResult[int].fail(f"Invalid LDAP scope: {scope}")
+            return r[int].ok(ldap3_value)
+        return r[int].fail(f"Invalid LDAP scope: {scope}")
 
     def add(
         self, entry: LdifEntry, **_kwargs: str | float | bool | None
-    ) -> FlextResult[m.Ldap.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry using Entry model.
 
         Business Rules:
@@ -1183,24 +1183,24 @@ class Ldap3Adapter(FlextService[bool]):
         Architecture:
             - Uses FlextLdapEntryAdapter.ldif_entry_to_ldap3_attributes() for conversion
             - Uses OperationExecutor.execute_add() for protocol-level operation
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             entry: Entry model to add (must include DN and required attributes)
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            r containing OperationResult with success status and entries_affected=1
 
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return FlextResult[m.Ldap.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else ""
             )
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""
-            return FlextResult[m.Ldap.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 f"Failed to convert entry attributes: {error_msg}"
             )
         dn_str = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
@@ -1210,7 +1210,7 @@ class Ldap3Adapter(FlextService[bool]):
 
     def connect(
         self, config: m.Ldap.ConnectionConfig, **_kwargs: str | float | bool | None
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Establish LDAP connection using ldap3 library.
 
         Business Rules:
@@ -1230,13 +1230,13 @@ class Ldap3Adapter(FlextService[bool]):
             - Uses ConnectionManager.create_server() for Server object
             - Uses ConnectionManager.create_connection() for Connection object
             - Uses ConnectionManager.handle_tls() for STARTTLS if needed
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             config: Connection configuration (host, port, bind_dn, bind_password, SSL/TLS)
 
         Returns:
-            FlextResult[bool] indicating connection success
+            r[bool] indicating connection success
 
         """
         try:
@@ -1248,8 +1248,8 @@ class Ldap3Adapter(FlextService[bool]):
             if tls_result.is_failure:
                 return tls_result
             if not FlextLdapLdap3Wrappers.is_bound(self._connection):
-                return FlextResult[bool].fail("Failed to bind to LDAP server")
-            return FlextResult[bool].ok(value=True)
+                return r[bool].fail("Failed to bind to LDAP server")
+            return r[bool].ok(value=True)
         except (
             ValueError,
             TypeError,
@@ -1259,11 +1259,11 @@ class Ldap3Adapter(FlextService[bool]):
             RuntimeError,
             ImportError,
         ) as e:
-            return FlextResult[bool].fail(f"Connection failed: {e!s}")
+            return r[bool].fail(f"Connection failed: {e!s}")
 
     def delete(
         self, dn: str | m.Ldif.DN, **_kwargs: str | float | bool | None
-    ) -> FlextResult[m.Ldap.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -1281,18 +1281,18 @@ class Ldap3Adapter(FlextService[bool]):
         Architecture:
             - Uses OperationExecutor.execute_delete() for protocol-level operation
             - DN conversion handled by FlextLdifUtilities.Ldif.DN
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             dn: Distinguished name of entry to delete (string or DN model)
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            r containing OperationResult with success status and entries_affected=1
 
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return FlextResult[m.Ldap.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else ""
             )
         return self.OperationExecutor(self).execute_delete(connection_result.value, dn)
@@ -1335,7 +1335,7 @@ class Ldap3Adapter(FlextService[bool]):
                 self._server = None
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> FlextResult[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
         """Execute service health check.
 
         Business Rules:
@@ -1351,26 +1351,26 @@ class Ldap3Adapter(FlextService[bool]):
 
         Architecture:
             - Uses is_connected property for state check
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
             - ``_kwargs`` absorbs extra arguments for interface compatibility
 
         Args:
             **_kwargs: Absorbed keyword arguments for interface compatibility.
 
         Returns:
-            FlextResult[bool]: Success if connected, failure with NOT_CONNECTED if not.
+            r[bool]: Success if connected, failure with NOT_CONNECTED if not.
 
         """
         if not self.is_connected:
-            return FlextResult[bool].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
-        return FlextResult[bool].ok(value=True)
+            return r[bool].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
+        return r[bool].ok(value=True)
 
     def modify(
         self,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.Operation.Changes,
         **_kwargs: str | float | bool | None,
-    ) -> FlextResult[m.Ldap.OperationResult]:
+    ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
         Business Rules:
@@ -1388,19 +1388,19 @@ class Ldap3Adapter(FlextService[bool]):
         Architecture:
             - Uses OperationExecutor.execute_modify() for protocol-level operation
             - DN conversion handled by FlextLdifUtilities.Ldif.DN
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             dn: Distinguished name of entry to modify (string or DN model)
             changes: Modification changes dict in ldap3 format
 
         Returns:
-            FlextResult containing OperationResult with success status and entries_affected=1
+            r containing OperationResult with success status and entries_affected=1
 
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
-            return FlextResult[m.Ldap.OperationResult].fail(
+            return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else ""
             )
         return self.OperationExecutor(self).execute_modify(
@@ -1413,7 +1413,7 @@ class Ldap3Adapter(FlextService[bool]):
         server_type: FlextLdapConstants.Ldif.ServerTypes
         | str = FlextLdapConstants.Ldif.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
-    ) -> FlextResult[m.Ldap.SearchResult]:
+    ) -> r[m.Ldap.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
 
         Business Rules:
@@ -1433,26 +1433,26 @@ class Ldap3Adapter(FlextService[bool]):
         Architecture:
             - Uses SearchExecutor.execute() for protocol-level search
             - Uses FlextLdifParser for server-specific entry parsing
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
 
         Args:
             search_options: Search configuration (base_dn, filter_str, scope, attributes)
             server_type: LDAP server type for parsing quirks (default: RFC)
 
         Returns:
-            FlextResult containing SearchResult with Entry models
+            r containing SearchResult with Entry models
 
         """
         connection_result = self._get_connection()
         if connection_result.is_failure:
             error_msg = str(connection_result.error) if connection_result.error else ""
-            return FlextResult[m.Ldap.SearchResult].fail(error_msg)
+            return r[m.Ldap.SearchResult].fail(error_msg)
         scope_for_mapping: str | FlextLdapConstants.Ldap.SearchScope = (
             search_options.scope
         )
         scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
-            return FlextResult[m.Ldap.SearchResult].fail(
+            return r[m.Ldap.SearchResult].fail(
                 str(scope_result.error) if scope_result.error else ""
             )
         search_params = self.SearchExecutor.SearchParams(
@@ -1467,22 +1467,22 @@ class Ldap3Adapter(FlextService[bool]):
             connection_result.value, search_params, server_type
         )
         if entries_result.is_failure:
-            return FlextResult[m.Ldap.SearchResult].fail(
+            return r[m.Ldap.SearchResult].fail(
                 str(entries_result.error) if entries_result.error else ""
             )
         entries_raw = entries_result.value
         entries_dict: list[dict[str, list[str]]] = [
             entry.model_dump() for entry in entries_raw
         ]
-        return FlextResult[m.Ldap.SearchResult].ok(
+        return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(entries=entries_dict, search_options=search_options)
         )
 
-    def _get_connection(self) -> FlextResult[Connection]:
+    def _get_connection(self) -> r[Connection]:
         """Get connection with fast fail if not available."""
         if not self.is_connected or self._connection is None:
-            return FlextResult[Connection].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
-        return FlextResult[Connection].ok(self._connection)
+            return r[Connection].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
+        return r[Connection].ok(self._connection)
 
     def _unbind_connection(self) -> None:
         """Unbind and close LDAP connection.
