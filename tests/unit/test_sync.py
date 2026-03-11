@@ -164,7 +164,7 @@ class TestsFlextLdapSync:
         operations = self._create_operations()
         batch_sync = FlextLdapSyncService.BatchSync(operations=operations)
         tm.that(batch_sync, none=False)
-        tm.that(batch_sync, is_=FlextLdapSyncService.BatchSync, none=False)
+        assert isinstance(batch_sync, FlextLdapSyncService.BatchSync)
 
     def test_sync_service_methods_exist(self) -> None:
         """Test that all expected methods exist on sync service."""
@@ -178,5 +178,5 @@ class TestsFlextLdapSync:
         """Test that inner classes exist."""
         tm.that(hasattr(FlextLdapSyncService, "BatchSync"), eq=True)
         tm.that(hasattr(FlextLdapSyncService, "BaseDNTransformer"), eq=True)
-        tm.that(FlextLdapSyncService.BatchSync, is_=type, none=False)
-        tm.that(FlextLdapSyncService.BaseDNTransformer, is_=type, none=False)
+        assert isinstance(FlextLdapSyncService.BatchSync, type)
+        assert isinstance(FlextLdapSyncService.BaseDNTransformer, type)

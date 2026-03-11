@@ -312,11 +312,7 @@ class TestsFlextLdapModels:
     ) -> None:
         """Test SearchResult.total_count computed field."""
         entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value=f"cn=user{i},{tc.RFC.DEFAULT_BASE_DN}"),
-                attributes=None,
-            )
-            for i in range(num_entries)
+            {"dn": [f"cn=user{i},{tc.RFC.DEFAULT_BASE_DN}"]} for i in range(num_entries)
         ]
         options = m.Ldap.SearchOptions(base_dn=tc.RFC.DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=entries, search_options=options)
@@ -331,8 +327,7 @@ class TestsFlextLdapModels:
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
         """Test extract_attrs_dict_from_entry with None attributes."""
-        dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
-        entry = m.Ldif.Entry(dn=dn, attributes=None)
+        entry: dict[str, list[str]] = {}
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         tm.that(attrs, eq={})
 
@@ -349,8 +344,7 @@ class TestsFlextLdapModels:
 
     def test_search_result_get_entry_category(self) -> None:
         """Test get_entry_category returns category or unknown."""
-        dn = m.Ldif.DN(value=tc.RFC.DEFAULT_BASE_DN)
-        entry = m.Ldif.Entry(dn=dn, attributes=None)
+        entry: dict[str, list[str]] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
         tm.that(category, eq="unknown")
 

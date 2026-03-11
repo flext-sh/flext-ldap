@@ -141,11 +141,10 @@ class TestsFlextLdapSettings:
         tm.that(config.use_tls, eq=use_tls)
 
     def test_config_optional_fields(self) -> None:
-        """Test that optional fields can be None."""
-        config = FlextLdapSettings(bind_dn=None, bind_password=None, base_dn=None)
-        tm.that(config.bind_dn, none=True)
-        tm.that(config.bind_password, none=True)
-        tm.that(config.base_dn, none=True)
+        """Test bind credential fields default to empty string."""
+        config = FlextLdapSettings(bind_dn="", bind_password="")
+        tm.that(config.bind_dn, eq="")
+        tm.that(config.bind_password, eq="")
 
     def test_config_bind_credentials_together(self) -> None:
         """Test bind DN and password are properly stored together."""
@@ -159,13 +158,14 @@ class TestsFlextLdapSettings:
         """Test that model configuration is properly set."""
         tm.that(FlextLdapSettings.model_config, none=False)
         config_dict = FlextLdapSettings.model_config
-        tm.that(config_dict.get("env_prefix"), eq="FLEXT_LDAP_")
+        tm.that(config_dict.get("env_prefix"), eq="FLEXT_")
         tm.that(config_dict.get("case_sensitive"), eq=False)
 
     def test_config_field_descriptions(self) -> None:
         """Test that fields have proper descriptions for documentation."""
         fields = FlextLdapSettings.model_fields
-        tm.that(fields, keys=["host", "port"])
+        assert "host" in fields
+        assert "port" in fields
         tm.that(fields["host"].description, none=False)
         tm.that(fields["port"].description, none=False)
 

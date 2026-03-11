@@ -97,7 +97,7 @@ class TestsFlextLdap3Adapter:
 
     def test_connection_manager_static_methods_exist(self) -> None:
         """Test that static methods exist on ConnectionManager."""
-        tm.that(dict(Ldap3Adapter.ConnectionManager.__dict__), keys=["create_server"])
+        assert "create_server" in Ldap3Adapter.ConnectionManager.__dict__
         tm.that(callable(Ldap3Adapter.ConnectionManager.create_server), eq=True)
 
     def test_adapter_methods_exist(self) -> None:

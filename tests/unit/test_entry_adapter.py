@@ -162,7 +162,7 @@ class TestsFlextLdapEntryAdapter:
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
         tm.that(hasattr(FlextLdapEntryAdapter, "_ConversionHelpers"), eq=True)
-        tm.that(FlextLdapEntryAdapter._ConversionHelpers, is_=type, none=False)
+        assert isinstance(FlextLdapEntryAdapter._ConversionHelpers, type)
 
     def test_conversion_helpers_static_methods_exist(self) -> None:
         """Test that static methods exist on _ConversionHelpers."""

@@ -105,7 +105,7 @@ class FlextLdapModelsLdap:
         allow_deletes: bool = False
         source_basedn: str = ""
         target_basedn: str = ""
-        progress_callback: Callable[[FlextLdapModelsLdap.SyncStats], None] | None = None
+        progress_callback: Callable[..., None] | None = None
 
     class SyncStats(BaseModel):
         """Sync stats - implements LdapBatchStatsProtocol."""
@@ -170,7 +170,7 @@ class FlextLdapModelsLdap:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
-        progress_callback: FlextLdapModelsLdap.Types.ProgressCallbackUnion = None
+        progress_callback: Callable[..., None] | None = None
         retry_on_errors: list[str] | None = None
         max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
