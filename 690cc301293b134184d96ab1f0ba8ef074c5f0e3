@@ -1,0 +1,51 @@
+src/flext_ldap/adapters/ldap3.py
+  1d17972c477ff90a 616
+  e93a413913b0ebf6 36,128
+src/flext_ldap/api.py
+  e93a413913b0ebf6 43,117
+src/flext_ldap/adapters/entry.py
+  1d17972c477ff90a 324
+src/flext_ldap/base.py
+  e93a413913b0ebf6 20,22,26-27,29-30
+src/flext_ldap/services/connection.py
+  e93a413913b0ebf6 31,35,39
+src/flext_ldap/services/operations.py
+  e93a413913b0ebf6 37,46
+src/flext_ldap/services/sync.py
+  e93a413913b0ebf6 37,45
+src/flext_ldap/services/detection.py
+  e93a413913b0ebf6 37,39,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "690cc301293b134184d96ab1f0ba8ef074c5f0e3",
+  "prompts": {
+    "1d17972c477ff90a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3267d0fe2ffe9rwRTGzYIsbY4v",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 8,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "e93a413913b0ebf6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_326980a86ffekYMW057MlAO3fe",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 25,
+      "accepted_lines": 20,
+      "overriden_lines": 0
+    }
+  }
+}
