@@ -647,14 +647,15 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
                     )
                 )
             modify_result = self._ops.modify(entry_dn, changes)
-            if modify_result.is_success:
-                return FlextResult[m.Ldap.LdapOperationResult].ok(
+            return modify_result.fold(
+                on_failure=lambda e: FlextResult[m.Ldap.LdapOperationResult].fail(
+                    u.to_str(e)
+                ),
+                on_success=lambda _: FlextResult[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.MODIFIED
                     )
-                )
-            return FlextResult[m.Ldap.LdapOperationResult].fail(
-                u.to_str(modify_result.error)
+                ),
             )
 
         def handle_regular_add(
@@ -1056,11 +1057,12 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
             case _:
                 dn_model = dn
         result = self._connection.adapter.delete(dn_model)
-        if result.is_failure:
-            return FlextResult[m.Ldap.OperationResult].fail(
-                u.to_str(result.error, default="Unknown error")
-            )
-        return FlextResult[m.Ldap.OperationResult].ok(result.value)
+        return result.fold(
+            on_failure=lambda e: FlextResult[m.Ldap.OperationResult].fail(
+                u.to_str(e, default="Unknown error")
+            ),
+            on_success=lambda v: FlextResult[m.Ldap.OperationResult].ok(v),
+        )
 
     @override
     def execute(self) -> FlextResult[m.Ldap.SearchResult]:
@@ -1135,11 +1137,12 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
             case _:
                 dn_model = dn
         result = self._connection.adapter.modify(dn_model, changes)
-        if result.is_failure:
-            return FlextResult[m.Ldap.OperationResult].fail(
-                u.to_str(result.error, default="Unknown error")
-            )
-        return FlextResult[m.Ldap.OperationResult].ok(result.value)
+        return result.fold(
+            on_failure=lambda e: FlextResult[m.Ldap.OperationResult].fail(
+                u.to_str(e, default="Unknown error")
+            ),
+            on_success=lambda v: FlextResult[m.Ldap.OperationResult].ok(v),
+        )
 
     def search(
         self,
@@ -1185,11 +1188,12 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
         result = self._connection.adapter.search(
             normalized_options, server_type=effective_server_type
         )
-        if result.is_failure:
-            return FlextResult[m.Ldap.SearchResult].fail(
-                u.to_str(result.error, default="Unknown error")
-            )
-        return FlextResult[m.Ldap.SearchResult].ok(result.value)
+        return result.fold(
+            on_failure=lambda e: FlextResult[m.Ldap.SearchResult].fail(
+                u.to_str(e, default="Unknown error")
+            ),
+            on_success=lambda v: FlextResult[m.Ldap.SearchResult].ok(v),
+        )
 
     def upsert(
         self,
