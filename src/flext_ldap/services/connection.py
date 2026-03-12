@@ -8,7 +8,7 @@ connection so callers interact with a single, typed entry point.
 Business Rules:
     - Connection binding uses ldap3 library through Ldap3Adapter abstraction
     - Server type detection is optional and non-blocking after successful bind
-    - Retry logic uses u.Reliability.retry() for transient failures
+    - Retry logic uses u.retry() for transient failures
     - Parser defaults to FlextLdif().parser instance
     - Connection state is tracked via is_connected property
 
@@ -222,7 +222,7 @@ class FlextLdapConnection(FlextService[bool]):
 
         """
         result: r[bool] = (
-            u.Reliability.retry(
+            u.retry(
                 operation=lambda: self._adapter.connect(connection_config),
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,

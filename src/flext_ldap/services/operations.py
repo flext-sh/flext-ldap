@@ -1203,7 +1203,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
             - If entries are identical, operation is SKIPPED (no changes needed)
             - If entries differ, MODIFY operation is applied with computed changes
             - Schema modification entries (changetype=modify) are handled specially
-            - Retry mechanism uses u.Reliability.retry() for transient errors
+            - Retry mechanism uses u.retry() for transient errors
             - Retry only occurs if error matches retry_on_errors patterns
 
         Audit Implications:
@@ -1213,7 +1213,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
 
         Architecture:
             - Uses _UpsertHandler.execute() for core upsert logic
-            - Retry logic uses u.Reliability.retry()
+            - Retry logic uses u.retry()
             - Returns r pattern - no exceptions raised
 
         Args:
@@ -1240,7 +1240,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
         def wrapped_execute() -> r[m.Ldap.LdapOperationResult]:
             return self._upsert_handler.execute(entry)
 
-        return u.Reliability.retry(
+        return u.retry(
             operation=wrapped_execute, max_attempts=max_retries, delay_seconds=1.0
         )
 

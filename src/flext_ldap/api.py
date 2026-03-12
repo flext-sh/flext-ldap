@@ -435,7 +435,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
 
         Business Rules:
             - Connection is established via FlextLdapConnection service layer
-            - Auto-retry mechanism uses exponential backoff (u.Reliability)
+            - Auto-retry mechanism uses exponential backoff (u)
             - Connection state is tracked internally and validated before operations
             - SSL/TLS configuration is validated before connection attempt
             - Bind credentials are validated but not logged (security requirement)
@@ -892,7 +892,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             - If entries are identical, operation is SKIPPED (no changes needed)
             - If entries differ, MODIFY operation is applied with computed changes
             - Schema modification entries (changetype=modify) are handled specially
-            - Retry mechanism uses u.Reliability for transient errors
+            - Retry mechanism uses u for transient errors
 
         Audit Implications:
             - Upsert operations log operation type (ADDED, MODIFIED, SKIPPED)
@@ -904,7 +904,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         Architecture:
             - Delegates to FlextLdapOperations.upsert() for execution
             - Uses EntryComparison.compare() for attribute-level diff
-            - Retry logic uses u.Reliability.retry()
+            - Retry logic uses u.retry()
             - Returns r pattern - no exceptions raised
 
         Args:

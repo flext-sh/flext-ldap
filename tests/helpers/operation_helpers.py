@@ -52,7 +52,7 @@ def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntryProtoco
 def _validate_scope(scope: str | c.Ldap.SearchScope) -> c.Ldap.SearchScope:
     """Validate and return a SearchScope StrEnum.
 
-    Uses u.Enum.parse for unified enum parsing via test utilities.
+    Uses u.parse for unified enum parsing via test utilities.
 
     Args:
         scope: Scope string or StrEnum to validate
@@ -66,7 +66,7 @@ def _validate_scope(scope: str | c.Ldap.SearchScope) -> c.Ldap.SearchScope:
     """
     if isinstance(scope, c.Ldap.SearchScope):
         return scope
-    parse_result = u.Enum.parse(c.Ldap.SearchScope, scope)
+    parse_result = u.parse(c.Ldap.SearchScope, scope)
     if parse_result.is_success:
         return parse_result.value
     msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"

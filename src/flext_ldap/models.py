@@ -24,7 +24,7 @@ class FlextLdapModels(FlextLdifModels):
     Access patterns:
     - m.Ldap.* (LDAP-specific models)
     - m.Ldif.* (inherited from FlextLdifModels)
-    - m.CollectionsCategories, m.CollectionsConfig, etc. (inherited from FlextModels via FlextLdifModels)
+    - m.CollectionsCategories, .Config, etc. (inherited from FlextModels via FlextLdifModels)
     - m.Entity.*, m.Value, etc. (inherited from FlextModels)
 
     This is a FACADE - all implementations are in _models/*.py.
