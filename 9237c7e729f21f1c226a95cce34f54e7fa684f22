@@ -1,0 +1,23 @@
+src/ldap3/__init__.pyi
+  51368697b710d463 1-2,16-17,35-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "9237c7e729f21f1c226a95cce34f54e7fa684f22",
+  "prompts": {
+    "51368697b710d463": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31d7190e7ffetM1zOoM53ubbeq",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 18,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
