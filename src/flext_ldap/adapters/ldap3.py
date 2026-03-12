@@ -546,9 +546,7 @@ class Ldap3Adapter(FlextService[bool]):
                 QuirkMetadata instance or None if no metadata available.
 
             """
-            metadata_raw: (
-                t.MetadataValue | Mapping[str, t.Scalar | None] | object | None
-            ) = None
+            metadata_raw: object | Mapping[str, t.Scalar | None] | None = None
             if isinstance(parsed, LdifEntry):
                 if parsed.metadata is None:
                     return None
@@ -575,7 +573,7 @@ class Ldap3Adapter(FlextService[bool]):
         def get_dynamic_attribute(
             obj: object | p.Ldap.Ldap3EntryProtocol | LdifEntry,
             attr_name: str,
-        ) -> object | t.MetadataValue | None:
+        ) -> object | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -627,7 +625,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_metadata(
-            metadata: t.MetadataValue | Mapping[str, t.Scalar | None] | object | None,
+            metadata: object | Mapping[str, t.Scalar | None] | None,
         ) -> Mapping[str, t.Scalar | list[t.Scalar]] | None:
             """Normalize metadata for Entry model validation.
 

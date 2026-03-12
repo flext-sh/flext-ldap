@@ -497,7 +497,7 @@ if result.is_success:
 # Alternative: direct access (raises if failure)
 try:
     data = result.unwrap()
-except FlextResultError:
+except rError:
     print("Operation failed")
 ```
 

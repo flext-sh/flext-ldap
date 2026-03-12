@@ -53,21 +53,21 @@ class FlextLdapUtilities(FlextLdifUtilities):
         """
 
         @staticmethod
-        def to_json_value(value: object | None) -> t.JsonValue | None:
+        def to_json_value(value: object | None) -> objectne:
             """Normalize values into JSON-safe primitives/collections."""
             if isinstance(value, (str, int, float, bool)):
                 return value
             if value is None:
                 return None
             if isinstance(value, Mapping):
-                result: dict[str, t.JsonValue] = {}
+                result: dict[str, object}
                 for key, item in value.items():
                     json_val = FlextLdapUtilities.Ldap.to_json_value(item)
                     if json_val is not None:
                         result[str(key)] = json_val
                 return result
             if isinstance(value, (list, tuple)):
-                result_list: list[t.JsonValue] = []
+                result_list: list[object]
                 for item in value:
                     json_val = FlextLdapUtilities.Ldap.to_json_value(item)
                     if json_val is not None:

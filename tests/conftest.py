@@ -231,16 +231,16 @@ class TestFixtures:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[t.ConfigurationMapping].fail("Docker config file not found")
+                return r[object].fail("Docker config file not found")
             with filepath.open(encoding="utf-8") as f:
                 config: dict[str, object] = json.load(f)
             if not isinstance(config, dict):
-                return r[t.ConfigurationMapping].fail(
+                return r[object].fail(
                     f"Expected dict in docker_config.json, got {type(config)}"
                 )
-            return r[t.ConfigurationMapping].ok(config)
+            return r[object].ok(config)
         except (OSError, json.JSONDecodeError) as e:
-            return r[t.ConfigurationMapping].fail(f"Failed to load docker config: {e}")
+            return r[object].fail(f"Failed to load docker config: {e}")
 
     @staticmethod
     def load_users_json() -> list[GenericFieldsDict]:
