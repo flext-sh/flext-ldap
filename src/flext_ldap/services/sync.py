@@ -10,7 +10,7 @@ Business Rules:
     - Base DN transformation is case-insensitive for cross-domain migrations
     - Add operations are idempotent: existing entries are counted as "skipped"
     - Progress callbacks receive per-entry statistics for real-time monitoring
-    - Duration tracking uses u.Generators.generate_datetime_utc()
+    - Duration tracking uses u.generate_datetime_utc()
 
 Audit Implications:
     - Sync operations return detailed SyncStats for compliance reporting
@@ -53,7 +53,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
     Business Rules:
         - Operations service is REQUIRED (constructor raises TypeError if None)
         - FlextLdif singleton is used for LDIF parsing (consistent ecosystem behavior)
-        - Datetime generation uses u.Generators for UTC consistency
+        - Datetime generation uses u for UTC consistency
         - Base DN transformation is applied BEFORE batch processing
         - Sync statistics track added/skipped/failed counts independently
         - Duration is measured from start of parsing to end of batch processing
@@ -311,7 +311,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
         Business Rules:
             - Operations parameter is REQUIRED (raises TypeError if None)
             - FlextLdif singleton is resolved at construction for LDIF parsing
-            - Datetime generator uses u.Generators for test injection
+            - Datetime generator uses u for test injection
             - Type validation ensures operations is FlextLdapOperations instance
 
         Audit Implications:
@@ -332,7 +332,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             raise TypeError(error_msg)
         self._operations = operations
         self._ldif = FlextLdif()
-        self._generate_datetime_utc = u.Generators.generate_datetime_utc
+        self._generate_datetime_utc = u.generate_datetime_utc
 
     @override
     def execute(self) -> r[m.Ldap.SyncStats]:
