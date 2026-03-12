@@ -354,7 +354,7 @@ class TestsFlextLdapOperationHelpers:
         mail: str | None = None,
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
-        **extra_attributes: object,
+        **extra_attributes: t.Scalar,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
@@ -446,7 +446,7 @@ class TestsFlextLdapOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create group entry.
 
@@ -485,7 +485,7 @@ class TestsFlextLdapOperationHelpers:
         *,
         sn: str | None = None,
         mail: str | None = None,
-        **extra_attributes: object,
+        **extra_attributes: t.Scalar,
     ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
@@ -883,7 +883,7 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def execute_operation_when_not_connected(
-        client: LdapClientType, operation: str, **kwargs: object
+        client: LdapClientType, operation: str, **kwargs: t.Scalar
     ) -> None:
         """Execute operation when not connected and assert failure.
 
