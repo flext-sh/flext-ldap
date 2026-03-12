@@ -10,7 +10,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
-from flext_ldap import c, p, t
+from flext_ldap import c, p
 
 
 class FlextLdapModelsLdap:
@@ -229,7 +229,7 @@ class FlextLdapModelsLdap:
             return {key: list(values) for key, values in entry.items()}
 
         @staticmethod
-        def extract_objectclass_category(attrs: Mapping[str, t.ContainerValue]) -> str:
+        def extract_objectclass_category(attrs: Mapping[str, object]) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:
                 return "unknown"

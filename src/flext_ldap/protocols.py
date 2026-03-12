@@ -140,7 +140,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 "Indicates if parsing succeeded."
                 error: str | None
                 "Error message if parsing failed."
-                value: t.ContainerValue
+                value: object
                 "Parsed value or result object."
 
         @runtime_checkable
@@ -418,7 +418,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             @property
             def entry_attributes_as_dict(
                 self,
-            ) -> Mapping[str, Sequence[t.ContainerValue]]:
+            ) -> Mapping[str, Sequence[object]]:
                 """Get attributes as dict mapping attribute names to value lists."""
                 ...
 
@@ -435,7 +435,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def values(self) -> Sequence[t.ContainerValue]:
+            def values(self) -> Sequence[object]:
                 """Get attribute values."""
                 ...
 
@@ -455,7 +455,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[tuple[str, t.ContainerValue]]:
+            def items(self) -> Sequence[tuple[str, object]]:
                 """Return items as sequence of tuples."""
                 ...
 
@@ -464,7 +464,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for objects exposing configuration (duck typing for settings)."""
 
             @property
-            def config(self) -> t.ContainerValue:
+            def config(self) -> object:
                 """Return resolved configuration object."""
                 ...
 
@@ -472,7 +472,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasDynamicAttribute(Protocol):
             """Protocol for objects with dynamic attributes accessible via __getattr__."""
 
-            def __getattr__(self, name: str) -> t.ContainerValue:
+            def __getattr__(self, name: str) -> object:
                 """Get dynamic attribute."""
                 ...
 
@@ -485,7 +485,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def attributes(self) -> Mapping[str, t.ContainerValue]:
+            def attributes(self) -> Mapping[str, object]:
                 """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 

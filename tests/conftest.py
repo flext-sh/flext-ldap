@@ -191,9 +191,7 @@ class TestFixtures:
                     f"Fixture file not found: {filename}"
                 )
             with filepath.open(encoding="utf-8") as f:
-                data: dict[str, t.ContainerValue] | list[t.ContainerValue] = json.load(
-                    f
-                )
+                data: dict[str, object] | list[object] = json.load(f)
             if not isinstance(data, list):
                 return r[list[GenericFieldsDict]].fail(
                     f"Expected list in {filename}, got {type(data)}"
@@ -223,7 +221,7 @@ class TestFixtures:
             return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> r[dict[str, t.ContainerValue]]:
+    def load_docker_config() -> r[dict[str, object]]:
         """Load Docker configuration for test container.
 
         Returns:
@@ -235,7 +233,7 @@ class TestFixtures:
             if not filepath.exists():
                 return r[t.ConfigurationMapping].fail("Docker config file not found")
             with filepath.open(encoding="utf-8") as f:
-                config: dict[str, t.ContainerValue] = json.load(f)
+                config: dict[str, object] = json.load(f)
             if not isinstance(config, dict):
                 return r[t.ConfigurationMapping].fail(
                     f"Expected dict in docker_config.json, got {type(config)}"
@@ -371,7 +369,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         logger.info("Test collection mode - skipping Docker initialization")
         return
     worker_input_val = getattr(session.config, "workerinput", None)
-    worker_input: dict[str, t.ContainerValue] = (
+    worker_input: dict[str, object] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = str(worker_input.get("workerid", "master"))
@@ -492,7 +490,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
     )
     if is_infrastructure_failure and (not is_transient):
         worker_input_val = getattr(item.session.config, "workerinput", None)
-        worker_input: dict[str, t.ContainerValue] = (
+        worker_input: dict[str, object] = (
             worker_input_val if isinstance(worker_input_val, dict) else {}
         )
         worker_id = str(worker_input.get("workerid", "master"))
@@ -518,7 +516,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
     """
     worker_input_val = getattr(request.config, "workerinput", None)
-    worker_input: dict[str, t.ContainerValue] = (
+    worker_input: dict[str, object] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = worker_input.get("workerid", "master")
@@ -893,7 +891,7 @@ def ldap_test_data_loader(
                     _ = _ldap3_delete(connection, dn)
                     logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
-                    error_repr: t.ContainerValue = str(e)
+                    error_repr: object = str(e)
                     logger.debug("Cleanup skip for %s: %s", dn, error_repr)
         except Exception as e:
             logger.warning("Cleanup failed (non-critical)", error=e)

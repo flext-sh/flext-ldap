@@ -355,7 +355,7 @@ class TestsFlextLdapOperationHelpers:
         mail: str | None = None,
         use_uid: bool = False,
         additional_attrs: GenericFieldsDict | None = None,
-        **extra_attributes: t.ContainerValue,
+        **extra_attributes: object,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
 
@@ -447,7 +447,7 @@ class TestsFlextLdapOperationHelpers:
         base_dn: str,
         *,
         members: list[str] | None = None,
-        **kwargs: t.ContainerValue,
+        **kwargs: object,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create group entry.
 
@@ -486,7 +486,7 @@ class TestsFlextLdapOperationHelpers:
         *,
         sn: str | None = None,
         mail: str | None = None,
-        **extra_attributes: t.ContainerValue,
+        **extra_attributes: object,
     ) -> GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
@@ -796,7 +796,7 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _convert_changes_to_modify_format(
-        changes: Mapping[str, t.ContainerValue | list[tuple[str | int, list[str]]]],
+        changes: Mapping[str, object | list[tuple[str | int, list[str]]]],
     ) -> t.Ldap.Operation.Changes:
         """Convert dict changes to ldap3 format (int operation codes)."""
         op_str_to_int: dict[str, int] = {
@@ -808,7 +808,7 @@ class TestsFlextLdapOperationHelpers:
         for key, value_raw in changes.items():
             if value_raw is None:
                 continue
-            value: t.ContainerValue
+            value: object
             if isinstance(value_raw, (str, int, float, bool, list, dict, type(None))):
                 value = value_raw
             else:
@@ -854,7 +854,7 @@ class TestsFlextLdapOperationHelpers:
     def _execute_modify_when_not_connected(
         client: LdapClientType,
         dn: str,
-        changes: Mapping[str, t.ContainerValue],
+        changes: Mapping[str, object],
         expected_error: str,
     ) -> None:
         """Execute modify operation when not connected and assert failure."""
@@ -884,7 +884,7 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def execute_operation_when_not_connected(
-        client: LdapClientType, operation: str, **kwargs: t.ContainerValue
+        client: LdapClientType, operation: str, **kwargs: object
     ) -> None:
         """Execute operation when not connected and assert failure.
 

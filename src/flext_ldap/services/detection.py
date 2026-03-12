@@ -357,7 +357,7 @@ class FlextLdapServerDetector(FlextService[str]):
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
         root_dse_attrs = root_dse_result.value
 
-        def to_str_list(value: str | Sequence[str] | t.ContainerValue) -> list[str]:
+        def to_str_list(value: str | Sequence[str] | object) -> list[str]:
             """Convert value to list[str] using modern Python 3.13 patterns."""
             if not value:
                 return []

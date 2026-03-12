@@ -383,7 +383,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | t.ContainerValue,
+            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | object,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -406,7 +406,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - No network calls - pure data transformation
 
             """
-            attrs_raw: m.Ldif.Attributes | t.ContainerValue | None = None
+            attrs_raw: m.Ldif.Attributes | object | None = None
             if isinstance(parsed, LdifEntry):
                 attrs_raw = parsed.attributes
             else:
@@ -423,11 +423,11 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def extract_attrs_dict(
             attrs: p.Ldap.HasAttributesProperty
-            | Mapping[str, t.ContainerValue | Sequence[str]]
+            | Mapping[str, object | Sequence[str]]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
             | BaseModel
-            | t.ContainerValue,
+            | object,
         ) -> t.Ldap.Operation.AttributeDict:
             """Extract LDAP attributes as dictionary from various input formats.
 
@@ -456,7 +456,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
             if isinstance(attrs, BaseModel):
                 dumped = attrs.model_dump()
-                attrs_value_raw: t.ContainerValue | None = dumped.get("attributes", {})
+                attrs_value_raw: object | None = dumped.get("attributes", {})
                 if isinstance(attrs_value_raw, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
                         attrs_value_raw
@@ -468,7 +468,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | t.ContainerValue,
+            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | object,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -501,7 +501,7 @@ class Ldap3Adapter(FlextService[bool]):
                 if parsed.dn is not None:
                     return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
                 return m.Ldif.DN(value="")
-            dn_raw: t.ContainerValue | None = None
+            dn_raw: object | None = None
             if isinstance(parsed, p.Ldap.Ldap3EntryProtocol):
                 dn_raw = parsed.entry_dn
             else:
@@ -520,7 +520,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | t.ContainerValue,
+            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | object,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -547,10 +547,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             metadata_raw: (
-                t.MetadataValue
-                | Mapping[str, t.Scalar | None]
-                | t.ContainerValue
-                | None
+                t.MetadataValue | Mapping[str, t.Scalar | None] | object | None
             ) = None
             if isinstance(parsed, LdifEntry):
                 if parsed.metadata is None:
@@ -576,9 +573,9 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: t.ContainerValue | p.Ldap.Ldap3EntryProtocol | LdifEntry,
+            obj: object | p.Ldap.Ldap3EntryProtocol | LdifEntry,
             attr_name: str,
-        ) -> t.ContainerValue | t.MetadataValue | None:
+        ) -> object | t.MetadataValue | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -601,7 +598,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: Mapping[str, t.ContainerValue] | None,
+            attrs_dict: Mapping[str, object] | None,
         ) -> t.Ldap.Operation.AttributeDict:
             """Normalize attribute values to list[str] format.
 
@@ -630,10 +627,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_metadata(
-            metadata: t.MetadataValue
-            | Mapping[str, t.Scalar | None]
-            | t.ContainerValue
-            | None,
+            metadata: t.MetadataValue | Mapping[str, t.Scalar | None] | object | None,
         ) -> Mapping[str, t.Scalar | list[t.Scalar]] | None:
             """Normalize metadata for Entry model validation.
 
@@ -663,7 +657,7 @@ class Ldap3Adapter(FlextService[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: dict[str, t.ContainerValue] | None = None
+            metadata_dict: dict[str, object] | None = None
             if isinstance(metadata, Mapping):
                 metadata_dict = {}
                 for raw_key, raw_value in metadata.items():

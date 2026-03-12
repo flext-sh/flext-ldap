@@ -19,12 +19,12 @@ from __future__ import annotations
 from abc import ABC
 from typing import TypeVar, override
 
-from flext_core import FlextService, p, t as _core_t
+from flext_core import FlextService, p
 
 from flext_ldap import FlextLdapSettings
 
 # TypeVar for domain result type
-TDomainResult = TypeVar("TDomainResult", bound=_core_t.ContainerValue)
+TDomainResult = TypeVar("TDomainResult", bound=_core_object)
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult], ABC):

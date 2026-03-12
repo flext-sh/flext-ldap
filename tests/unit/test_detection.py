@@ -27,7 +27,7 @@ from collections.abc import Mapping
 import pytest
 from flext_tests import tm
 
-from flext_ldap import FlextLdapServerDetector, t
+from flext_ldap import FlextLdapServerDetector
 
 pytestmark = pytest.mark.unit
 
@@ -45,7 +45,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _get_detector_execute_scenarios() -> list[
-        tuple[dict[str, t.ContainerValue] | None, bool, str]
+        tuple[dict[str, object] | None, bool, str]
     ]:
         """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
         return [
@@ -97,7 +97,7 @@ class TestsFlextLdapDetection:
     )
     def test_execute_error_handling(
         self,
-        kwargs: dict[str, t.ContainerValue] | None,
+        kwargs: dict[str, object] | None,
         expect_failure: bool,
         error_substring: str,
     ) -> None:
