@@ -41,7 +41,7 @@ from flext_ldap import (
 )
 from ldap3 import Connection, Server
 
-from . import c, m, t
+from . import c, m
 from .typings import GenericFieldsDict, LdapContainerDict
 
 logger = FlextLogger(__name__)
