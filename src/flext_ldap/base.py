@@ -22,9 +22,10 @@ from typing import TypeVar, override
 from flext_core import FlextService, p
 
 from flext_ldap import FlextLdapSettings
+from flext_ldap.typings import t
 
 # TypeVar for domain result type
-TDomainResult = TypeVar("TDomainResult", bound=_core_object)
+TDomainResult = TypeVar("TDomainResult", bound=t.Container)
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult], ABC):

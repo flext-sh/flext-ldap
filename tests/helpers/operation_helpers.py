@@ -13,7 +13,6 @@ from collections.abc import Mapping
 from typing import TypeAlias, TypeVar
 
 import pytest
-from flext_core import r
 from flext_tests import u
 
 from flext_ldap import FlextLdap, FlextLdapModels, FlextLdapOperations, p, r
