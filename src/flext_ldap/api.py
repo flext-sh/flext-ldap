@@ -23,7 +23,7 @@ Architecture Notes:
     - Implements Facade pattern over connection and operations services
     - Uses Pydantic v2 with frozen=False for mutable facade state
     - Context manager support for automatic resource cleanup
-    - Decorator validation via u.Args.validated_with_result
+    - Decorator validation via u.validated_with_result
     - Type guards for callback signature detection (multi-phase vs single-phase)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
