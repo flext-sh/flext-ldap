@@ -636,7 +636,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
                     u.Ldap.to_str(retry_result.error)
                 )
             existing_entry_obj = existing_entries[0]
-            existing_entry = m.Ldif.Entry.model_validate(existing_entry_obj)
+            existing_entry = m.Ldif.Entry(existing_entry_obj)
             changes = FlextLdapOperations.EntryComparison.compare(existing_entry, entry)
             if changes is None or not changes:
                 return r[m.Ldap.LdapOperationResult].ok(
@@ -889,7 +889,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
 
         """
         entry_for_adapter: m.Ldif.Entry
-        entry_for_adapter = m.Ldif.Entry.model_validate(entry)
+        entry_for_adapter = m.Ldif.Entry(entry)
         return self._connection.adapter.add(entry_for_adapter)
 
     def batch_upsert(

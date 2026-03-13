@@ -564,9 +564,9 @@ class Ldap3Adapter(FlextService[bool]):
                 return None
             normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
             if normalized:
-                return m.Ldif.QuirkMetadata.model_validate(normalized)
+                return m.Ldif.QuirkMetadata(normalized)
             return None
-
+(
         @staticmethod
         def get_dynamic_attribute(
             obj: object | p.Ldap.Ldap3Entry | LdifEntry,

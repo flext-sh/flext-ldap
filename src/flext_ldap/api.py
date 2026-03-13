@@ -810,9 +810,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}"
             )
         parse_value = parse_result.value
-        entries: list[m.Ldif.Entry] = [
-            m.Ldif.Entry.model_validate(entry) for entry in parse_value
-        ]
+        entries: list[m.Ldif.Entry] = [m.Ldif.Entry(entry) for entry in parse_value]
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
                 m.Ldap.PhaseSyncResult(

@@ -437,9 +437,9 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 conversion_metadata, dn_str, dn_str, original_attrs_dict, ldif_attrs
             )
             ldf_attrs_obj = m.Ldif.Attributes(attributes=ldif_attrs)
-            metadata_obj = m.Ldif.QuirkMetadata.model_validate({
+            metadata_obj = m.Ldif.QuirkMetadata({
                 "quirk_type": self._server_type,
-                "extensions": conversion_metadata.model_dump(exclude_defaults=False),
+                "extensions": conversion_metada(clude_defaults=False),
             })
             return r[m.Ldif.Entry].ok(
                 m.Ldif.Entry(
