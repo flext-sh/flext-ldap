@@ -1295,7 +1295,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
                 stats["synced"] += 1
         else:
             stats["failed"] += 1
-            entry_dn_sliced = entry_dn[:100] if entry_dn else None
+            entry_dn_sliced: str = entry_dn[:100] if entry_dn else ""
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
             logger = FlextLdapOperations._get_structlog_logger()
             if logger is not None:

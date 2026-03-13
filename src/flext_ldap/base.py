@@ -19,7 +19,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TypeVar, override
 
-from flext_core import FlextService, p
+from flext_core import FlextModels, FlextService, p
 
 from flext_ldap import FlextLdapSettings
 from flext_ldap.typings import t
@@ -60,12 +60,7 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
             Runtime bootstrap options with config_type set to FlextLdapSettings
 
         """
-        options = super()._runtime_bootstrap_options()
-        model_copy = getattr(options, "model_copy", None)
-        if model_copy:
-            return model_copy(update={"config_type": FlextLdapSettings})
-        options.config_type = FlextLdapSettings
-        return options
+        return FlextModels.RuntimeBootstrapOptions(config_type=FlextLdapSettings)
 
 
 s = FlextLdapServiceBase

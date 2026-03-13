@@ -170,7 +170,9 @@ class FlextLdapServerDetector(FlextService[str]):
         vendor_name: str | None, vendor_version: str | None
     ) -> str | None:
         """Detect server type from vendor information."""
-        vendor_list = u.to_str_list([vendor_name, vendor_version])
+        vendor_list = u.to_str_list([
+            v for v in [vendor_name, vendor_version] if v is not None
+        ])
         vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
         vendor_parts: list[str] = (
             [str(item) for item in vendor_parts_raw]
