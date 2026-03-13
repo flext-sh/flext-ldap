@@ -59,7 +59,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 return default
             if isinstance(value, (str, int, float, bool)):
                 str_val = str(value)
-                return str_val if str_val else default
+                return str_val or default
             return default
 
         @staticmethod
