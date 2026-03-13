@@ -314,7 +314,7 @@ class FlextLdapServerDetector(FlextService[str]):
                 "rootDSE query returned no entries"
             )
         root_dse_entry = connection.entries[0]
-        if not isinstance(root_dse_entry, p.Ldap.Ldap3EntryProtocol):
+        if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
             return r[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query returned invalid entry payload"
             )

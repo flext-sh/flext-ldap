@@ -29,8 +29,8 @@ T = TypeVar("T")
 OperationResultType: TypeAlias = r[FlextLdapModels.Ldap.OperationResult]
 SearchResultType: TypeAlias = r[FlextLdapModels.Ldap.SearchResult]
 LdapEntry: TypeAlias = FlextLdapModels.Ldif.Entry
-LdapClientType = FlextLdap | p.Ldap.LdapClientProtocol
-LdapOperationsType = FlextLdap | FlextLdapOperations | p.Ldap.LdapClientProtocol
+LdapClientType = FlextLdap | p.Ldap.LdapClient
+LdapOperationsType = FlextLdap | FlextLdapOperations | p.Ldap.LdapClient
 _VALID_SCOPES: frozenset[str] = frozenset({
     c.Ldap.SearchScope.BASE.value,
     c.Ldap.SearchScope.ONELEVEL.value,
@@ -39,7 +39,7 @@ _VALID_SCOPES: frozenset[str] = frozenset({
 SearchScopeType = c.Ldap.SearchScope
 
 
-def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntryProtocol:
+def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntry:
     dn_str = str(entry.dn) if entry.dn is not None else ""
     attrs: dict[str, list[str]] = (
         entry.attributes.attributes
@@ -150,7 +150,7 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _ensure_entry_protocol_compatible(entry: LdapEntry) -> None:
-        """Ensure entry is compatible with EntryProtocol.
+        """Ensure entry is compatible with Entry.
 
         Args:
             entry: LdapEntry to validate
@@ -185,13 +185,13 @@ class TestsFlextLdapOperationHelpers:
 
     @staticmethod
     def _get_entry_for_protocol(entry: LdapEntry) -> LdapEntry:
-        """Get entry compatible with LdapEntryProtocol after validation.
+        """Get entry compatible with LdapEntry after validation.
 
         Args:
             entry: LdapEntry that has been validated via _ensure_entry_protocol_compatible
 
         Returns:
-            Entry (m.Ldif.Entry) compatible with LdapEntryProtocol
+            Entry (m.Ldif.Entry) compatible with LdapEntry
 
         """
         if not (hasattr(entry, "dn") and hasattr(entry, "attributes")):
@@ -205,7 +205,7 @@ class TestsFlextLdapOperationHelpers:
         """Connect client and skip test on failure.
 
         Args:
-            client: LDAP client implementing p.Ldap.LdapClientProtocol
+            client: LDAP client implementing p.Ldap.LdapClient
             connection_config: Connection configuration
 
         """
@@ -222,7 +222,7 @@ class TestsFlextLdapOperationHelpers:
         """Connect client and assert success.
 
         Args:
-            client: LDAP client implementing p.Ldap.LdapClientProtocol
+            client: LDAP client implementing p.Ldap.LdapClient
             connection_config: Connection configuration
 
         """
@@ -272,9 +272,9 @@ class TestsFlextLdapOperationHelpers:
             size_limit=size_limit,
         )
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
-            search_result_raw: (
-                r[m.Ldap.SearchResult] | r[p.Ldap.SearchResultProtocol]
-            ) = client.search(search_options)
+            search_result_raw: r[m.Ldap.SearchResult] | r[p.Ldap.SearchResult] = (
+                client.search(search_options)
+            )
         else:
             if not hasattr(search_options, "base_dn"):
                 raise TypeError(
@@ -786,7 +786,7 @@ class TestsFlextLdapOperationHelpers:
         else:
             entry_for_protocol = _ldap_entry_to_protocol_adapter(entry)
             add_result_raw = client.add(entry_for_protocol)
-        add_result_typed: r[p.Ldap.OperationResultProtocol] = (
+        add_result_typed: r[p.Ldap.OperationResult] = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
         u.Tests.Result.assert_result_failure_with_error(

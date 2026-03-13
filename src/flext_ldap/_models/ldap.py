@@ -118,7 +118,7 @@ class FlextLdapModelsLdap:
         progress_callback: Callable[..., None] | None = None
 
     class SyncStats(BaseModel):
-        """Sync stats - implements LdapBatchStatsProtocol."""
+        """Sync stats - implements LdapBatchStats."""
 
         synced: int = 0
         skipped: int = 0
@@ -268,11 +268,9 @@ class FlextLdapModelsLdap:
     class Types:
         """Type definitions for LDAP models."""
 
-        LdapProgressCallback = Callable[
-            [int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
-        ]
+        LdapProgressCallback = Callable[[int, int, str, "p.Ldap.LdapBatchStats"], None]
         MultiPhaseProgressCallback = Callable[
-            [str, int, int, str, "p.Ldap.LdapBatchStatsProtocol"], None
+            [str, int, int, str, "p.Ldap.LdapBatchStats"], None
         ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 

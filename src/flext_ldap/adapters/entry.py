@@ -353,9 +353,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         """
         return r[bool].ok(value=True)
 
-    def ldap3_to_ldif_entry(
-        self, ldap3_entry: p.Ldap.Ldap3EntryProtocol
-    ) -> r[m.Ldif.Entry]:
+    def ldap3_to_ldif_entry(self, ldap3_entry: p.Ldap.Ldap3Entry) -> r[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
         Business Rules:

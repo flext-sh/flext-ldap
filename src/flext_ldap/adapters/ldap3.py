@@ -301,7 +301,7 @@ class Ldap3Adapter(FlextService[bool]):
             """
             results: list[tuple[str, Mapping[str, list[str]]]] = []
             for entry in connection.entries:
-                if not isinstance(entry, p.Ldap.Ldap3EntryProtocol):
+                if not isinstance(entry, p.Ldap.Ldap3Entry):
                     dn = str(entry) if entry else ""
                     results.append((dn, {}))
                     continue
@@ -320,7 +320,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def convert_parsed_entries(
-            parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponseProtocol,
+            parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
         ) -> r[list[LdifEntry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
@@ -359,13 +359,11 @@ class Ldap3Adapter(FlextService[bool]):
                 if isinstance(entry_raw, LdifEntry):
                     entries.append(entry_raw)
                     continue
-                if isinstance(entry_raw, p.Ldap.Ldap3EntryProtocol):
-                    protocol_entry: p.Ldap.Ldap3EntryProtocol = entry_raw
+                if isinstance(entry_raw, p.Ldap.Ldap3Entry):
+                    protocol_entry: p.Ldap.Ldap3Entry = entry_raw
                 else:
                     entry_type = entry_raw.__class__
-                    error_msg = (
-                        f"Entry must be EntryProtocol or LdifEntry, got {entry_type}"
-                    )
+                    error_msg = f"Entry must be Entry or LdifEntry, got {entry_type}"
                     raise TypeError(error_msg)
                 dn_obj = Ldap3Adapter.ResultConverter.extract_dn(protocol_entry)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
@@ -383,7 +381,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | object,
+            parsed: LdifEntry | p.Ldap.Ldap3Entry | object,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -468,7 +466,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | object,
+            parsed: LdifEntry | p.Ldap.Ldap3Entry | object,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -502,7 +500,7 @@ class Ldap3Adapter(FlextService[bool]):
                     return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
                 return m.Ldif.DN(value="")
             dn_raw: object | None = None
-            if isinstance(parsed, p.Ldap.Ldap3EntryProtocol):
+            if isinstance(parsed, p.Ldap.Ldap3Entry):
                 dn_raw = parsed.entry_dn
             else:
                 dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
@@ -512,7 +510,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return m.Ldif.DN(value="")
             if isinstance(dn_raw, m.Ldif.DN):
                 return dn_raw
-            if isinstance(dn_raw, p.Ldap.DNProtocol):
+            if isinstance(dn_raw, p.Ldap.DN):
                 return m.Ldif.DN(value=dn_raw.value or "")
             dn_str_val = str(dn_raw)
             dn_value: str = FlextLdifUtilities.Ldif.DN.get_dn_value(dn_str_val)
@@ -520,7 +518,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: LdifEntry | p.Ldap.Ldap3EntryProtocol | object,
+            parsed: LdifEntry | p.Ldap.Ldap3Entry | object,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -571,7 +569,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: object | p.Ldap.Ldap3EntryProtocol | LdifEntry,
+            obj: object | p.Ldap.Ldap3Entry | LdifEntry,
             attr_name: str,
         ) -> object | None:
             """Get dynamic attribute with type safety.
@@ -590,7 +588,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return obj.attributes
             if attr_name == "metadata" and isinstance(obj, LdifEntry):
                 return obj.metadata
-            if attr_name == "entry_dn" and isinstance(obj, p.Ldap.Ldap3EntryProtocol):
+            if attr_name == "entry_dn" and isinstance(obj, p.Ldap.Ldap3Entry):
                 return obj.entry_dn
             return None
 
@@ -678,7 +676,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def process_entry_attributes(
-            entry: p.Ldap.Ldap3EntryProtocol,
+            entry: p.Ldap.Ldap3Entry,
         ) -> Mapping[str, list[str]]:
             """Convert LDAP entry attributes to string-list mapping."""
             attrs_dict: dict[str, list[str]] = {}

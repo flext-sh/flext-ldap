@@ -328,7 +328,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             multi_phase_cb = callback
 
             def progress_cb(
-                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStatsProtocol
+                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats
             ) -> None:
                 multi_phase_cb(phase, current, total, dn, stats)
 
@@ -835,7 +835,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                     current: int,
                     total: int,
                     dn: str,
-                    stats: p.Ldap.LdapBatchStatsProtocol,
+                    stats: p.Ldap.LdapBatchStats,
                 ) -> None:
                     multi_phase_cb(phase_name, current, total, dn, stats)
 
@@ -948,7 +948,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             multi_phase_cb = phase_callback
 
             def wrapped_phase_cb(
-                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStatsProtocol
+                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 

@@ -180,7 +180,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
         def _extract_protocol_entry_attributes(
             entry: m.Ldif.Entry,
         ) -> Mapping[str, list[str]]:
-            """Extract attributes from EntryProtocol.
+            """Extract attributes from Entry.
 
             Args:
                 entry: Entry protocol instance
@@ -302,9 +302,9 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
-                Normalizes p.Entry and EntryProtocol to a common
+                Normalizes p.Entry and Entry to a common
                 Mapping[str, Sequence[str]] format. p.Entry has
-                nested Attributes.attributes, while EntryProtocol has direct
+                nested Attributes.attributes, while Entry has direct
                 attributes mapping.
 
             Audit Implication:
