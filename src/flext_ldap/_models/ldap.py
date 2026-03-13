@@ -6,7 +6,7 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
@@ -20,7 +20,9 @@ class FlextLdapModelsLdap:
         """Connection config."""
 
         host: str = c.Ldap.ConnectionDefaults.DEFAULT_HOST
-        port: int = Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535)
+        port: Annotated[
+            int, Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535)
+        ]
         use_ssl: bool = False
         use_tls: bool = False
         bind_dn: str | None = None
@@ -49,9 +51,14 @@ class FlextLdapModelsLdap:
     class SearchOptions(BaseModel):
         """Search options."""
 
-        base_dn: str = Field(
-            ..., min_length=1, description="Base DN for search (required, non-empty)"
-        )
+        base_dn: Annotated[
+            str,
+            Field(
+                ...,
+                min_length=1,
+                description="Base DN for search (required, non-empty)",
+            ),
+        ]
         scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
         filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
         attributes: list[str] | None = None
@@ -96,11 +103,14 @@ class FlextLdapModelsLdap:
     class SyncOptions(BaseModel):
         """Sync options."""
 
-        batch_size: int = Field(
-            default=100,
-            ge=1,
-            description="Batch size for sync operations (must be >= 1)",
-        )
+        batch_size: Annotated[
+            int,
+            Field(
+                default=100,
+                ge=1,
+                description="Batch size for sync operations (must be >= 1)",
+            ),
+        ]
         auto_create_parents: bool = True
         allow_deletes: bool = False
         source_basedn: str = ""
@@ -178,13 +188,13 @@ class FlextLdapModelsLdap:
     class ConversionMetadata(BaseModel):
         """Conversion metadata."""
 
-        source_attributes: list[str] = Field(default_factory=list)
+        source_attributes: Annotated[list[str], Field(default_factory=list)]
         source_dn: str = ""
-        removed_attributes: list[str] = Field(default_factory=list)
-        base64_encoded_attributes: list[str] = Field(default_factory=list)
+        removed_attributes: Annotated[list[str], Field(default_factory=list)]
+        base64_encoded_attributes: Annotated[list[str], Field(default_factory=list)]
         dn_changed: bool = False
         converted_dn: str = ""
-        attribute_changes: list[str] = Field(default_factory=list)
+        attribute_changes: Annotated[list[str], Field(default_factory=list)]
 
     class OperationResult(BaseModel):
         """LDAP operation result."""
@@ -286,9 +296,9 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
-            default_factory=dict
-        )
+        phase_results: Annotated[
+            dict[str, FlextLdapModelsLdap.PhaseSyncResult], Field(default_factory=dict)
+        ]
         total_entries: int = 0
         total_synced: int = 0
         total_failed: int = 0

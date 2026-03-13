@@ -14,6 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from flext_core import FlextSettings
 from pydantic import Field
 
@@ -23,33 +25,50 @@ from flext_ldap.constants import FlextLdapConstants as c
 class FlextLdapSettings(FlextSettings):
     """LDAP runtime settings."""
 
-    host: str = Field(
-        default=c.Ldap.ConnectionDefaults.DEFAULT_HOST,
-        description="LDAP server host",
-    )
-    port: int = Field(
-        default=c.Ldap.ConnectionDefaults.PORT,
-        ge=1,
-        le=65535,
-        description="LDAP server port",
-    )
-    use_ssl: bool = Field(default=False, description="Enable LDAPS")
-    use_tls: bool = Field(default=False, description="Enable STARTTLS")
-    bind_dn: str = Field(default="", description="LDAP bind distinguished name")
-    bind_password: str = Field(default="", description="LDAP bind password")
-    timeout: int = Field(
-        default=c.Ldap.ConnectionDefaults.TIMEOUT,
-        ge=1,
-        description="LDAP operation timeout in seconds",
-    )
-    auto_bind: bool = Field(
-        default=c.Ldap.ConnectionDefaults.AUTO_BIND,
-        description="Auto-bind connection after connect",
-    )
-    auto_range: bool = Field(
-        default=c.Ldap.ConnectionDefaults.AUTO_RANGE,
-        description="Enable LDAP range retrieval",
-    )
+    host: Annotated[
+        str,
+        Field(
+            default=c.Ldap.ConnectionDefaults.DEFAULT_HOST,
+            description="LDAP server host",
+        ),
+    ]
+    port: Annotated[
+        int,
+        Field(
+            default=c.Ldap.ConnectionDefaults.PORT,
+            ge=1,
+            le=65535,
+            description="LDAP server port",
+        ),
+    ]
+    use_ssl: Annotated[bool, Field(default=False, description="Enable LDAPS")]
+    use_tls: Annotated[bool, Field(default=False, description="Enable STARTTLS")]
+    bind_dn: Annotated[
+        str, Field(default="", description="LDAP bind distinguished name")
+    ]
+    bind_password: Annotated[str, Field(default="", description="LDAP bind password")]
+    timeout: Annotated[
+        int,
+        Field(
+            default=c.Ldap.ConnectionDefaults.TIMEOUT,
+            ge=1,
+            description="LDAP operation timeout in seconds",
+        ),
+    ]
+    auto_bind: Annotated[
+        bool,
+        Field(
+            default=c.Ldap.ConnectionDefaults.AUTO_BIND,
+            description="Auto-bind connection after connect",
+        ),
+    ]
+    auto_range: Annotated[
+        bool,
+        Field(
+            default=c.Ldap.ConnectionDefaults.AUTO_RANGE,
+            description="Enable LDAP range retrieval",
+        ),
+    ]
 
 
 __all__ = ["FlextLdapSettings"]
