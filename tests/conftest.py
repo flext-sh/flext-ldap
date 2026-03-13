@@ -19,7 +19,6 @@ Container Lifecycle Rules:
 from __future__ import annotations
 
 import fcntl
-import json
 import os
 import time
 import types
@@ -32,6 +31,7 @@ import pytest
 from flext_core import FlextLogger, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from flext_tests import FlextTestsDocker
+from pydantic import TypeAdapter, ValidationError
 
 from flext_ldap import (
     FlextLdap,
@@ -190,14 +190,10 @@ class TestFixtures:
                 return r[list[GenericFieldsDict]].fail(
                     f"Fixture file not found: {filename}"
                 )
-            with filepath.open(encoding="utf-8") as f:
-                data: dict[str, object] | list[object] = json.load(f)
-            if not isinstance(data, list):
-                return r[list[GenericFieldsDict]].fail(
-                    f"Expected list in {filename}, got {type(data)}"
-                )
+            raw_content = filepath.read_text(encoding="utf-8")
+            data = TypeAdapter(list[GenericFieldsDict]).validate_json(raw_content)
             return r[list[GenericFieldsDict]].ok(data)
-        except (OSError, json.JSONDecodeError) as e:
+        except (OSError, ValueError, ValidationError) as e:
             return r[list[GenericFieldsDict]].fail(
                 f"Failed to load JSON fixture {filename}: {e}"
             )
@@ -231,16 +227,12 @@ class TestFixtures:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[object].fail("Docker config file not found")
-            with filepath.open(encoding="utf-8") as f:
-                config: dict[str, object] = json.load(f)
-            if not isinstance(config, dict):
-                return r[object].fail(
-                    f"Expected dict in docker_config.json, got {type(config)}"
-                )
-            return r[object].ok(config)
-        except (OSError, json.JSONDecodeError) as e:
-            return r[object].fail(f"Failed to load docker config: {e}")
+                return r[dict[str, object]].fail("Docker config file not found")
+            raw_content = filepath.read_text(encoding="utf-8")
+            config = TypeAdapter(dict[str, object]).validate_json(raw_content)
+            return r[dict[str, object]].ok(config)
+        except (OSError, ValueError, ValidationError) as e:
+            return r[dict[str, object]].fail(f"Failed to load docker config: {e}")
 
     @staticmethod
     def load_users_json() -> list[GenericFieldsDict]:

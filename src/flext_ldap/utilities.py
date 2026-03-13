@@ -15,7 +15,7 @@ from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities
 
-from flext_ldap import c, m, t
+from flext_ldap import c, m
 
 
 class FlextLdapUtilities(FlextLdifUtilities):
@@ -53,119 +53,44 @@ class FlextLdapUtilities(FlextLdifUtilities):
         """
 
         @staticmethod
-        def to_json_value(value: object | None) -> t.Container | None:
-            """Normalize values into JSON-safe primitives/collections."""
-            if isinstance(value, (str, int, float, bool)):
-                return value
-            if value is None:
-                return None
-            if isinstance(value, Mapping):
-                result: dict[str, t.Container] = {}
-                for key, item in value.items():
-                    json_val = FlextLdapUtilities.Ldap.to_json_value(item)
-                    if json_val is not None:
-                        result[str(key)] = json_val
-                return result
-            if isinstance(value, (list, tuple)):
-                result_list: list[t.Container] = []
-                for item in value:
-                    json_val = FlextLdapUtilities.Ldap.to_json_value(item)
-                    if json_val is not None:
-                        result_list.append(json_val)
-                return result_list
-            return str(value)
-
-        @staticmethod
         def to_str(value: object | None, *, default: str = "") -> str:
-            """Convert to string using parent convenience shortcut.
-
-            Delegates to FlextLdifUtilities.to_str() for actual conversion.
-
-            Args:
-                value: Value to convert
-                default: Default if None
-
-            Returns:
-                str: Converted string
-
-            """
+            """Convert a value to string, returning default for None or complex types."""
             if value is None:
                 return default
-            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
-            if json_val is None or isinstance(json_val, (dict, list)):
-                return default
-            return str(json_val) if json_val else default
+            if isinstance(value, (str, int, float, bool)):
+                str_val = str(value)
+                return str_val if str_val else default
+            return default
 
         @staticmethod
         def to_str_list(
             value: object | None, *, default: list[str] | None = None
         ) -> list[str]:
-            """Convert to str_list using parent convenience shortcut.
-
-            Delegates to FlextLdifUtilities.to_str_list() for actual conversion.
-
-            Args:
-                value: Value to convert (can be None)
-                default: Default if None
-
-            Returns:
-                list[str]: Converted list
-
-            """
-            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
-            if json_val is None or isinstance(json_val, (dict, list)):
+            """Convert a value to a single-element string list."""
+            if value is None:
                 return default or []
-            if isinstance(json_val, (str, int, float, bool)):
-                return [str(json_val)]
+            if isinstance(value, (str, int, float, bool)):
+                return [str(value)]
             return default or []
 
         @staticmethod
         def to_str_list_safe(value: object | None) -> list[str]:
-            """Safe str_list conversion using parent Conversion utilities.
-
-            Uses parent Conversion utilities for safe None handling and conversion.
-            This is LDAP-specific functionality for safe attribute value processing.
-
-            Args:
-                value: Value to convert (can be None)
-
-            Returns:
-                list[str]: Converted list or []
-
-            """
+            """Safe str_list conversion returning [] for None or complex types."""
             if value is None:
                 return []
-            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
-            if json_val is None or isinstance(json_val, (dict, list)):
-                return []
-            if isinstance(json_val, (str, int, float, bool)):
-                return [str(json_val)]
+            if isinstance(value, (str, int, float, bool)):
+                return [str(value)]
             return []
 
         @staticmethod
         def to_str_list_truthy(
             value: object | None, *, default: list[str] | None = None
         ) -> list[str]:
-            """Convert to str_list and filter truthy values.
-
-            Uses parent Conversion utilities for conversion, then filters truthy values.
-            This is LDAP-specific functionality for attribute value processing.
-
-            Args:
-                value: Value to convert
-                default: Default if None
-
-            Returns:
-                list[str]: Converted and filtered list (truthy values only)
-
-            """
+            """Convert to str_list and filter truthy values."""
             if value is None:
                 return default or []
-            json_val = FlextLdapUtilities.Ldap.to_json_value(value)
-            if json_val is None or isinstance(json_val, (dict, list)):
-                return default or []
-            if isinstance(json_val, (str, int, float, bool)):
-                str_val = str(json_val)
+            if isinstance(value, (str, int, float, bool)):
+                str_val = str(value)
                 return [str_val] if str_val else (default or [])
             return default or []
 
