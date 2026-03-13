@@ -17,15 +17,34 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from types import ModuleType
 from typing import TypeVar, override
 
-from flext_core import FlextModels, FlextService, p
+from flext_core import FlextService, p, t as core_t
+from pydantic_settings import BaseSettings
 
 from flext_ldap import FlextLdapSettings
 from flext_ldap.typings import t
 
 # TypeVar for domain result type
 TDomainResult = TypeVar("TDomainResult", bound=t.Container)
+
+
+@dataclass
+class _LdapRuntimeBootstrapOptions:
+    config_type: type[BaseSettings] | None = FlextLdapSettings
+    config_overrides: Mapping[str, core_t.Scalar] | None = None
+    context: p.Context | None = None
+    subproject: str | None = None
+    services: Mapping[str, core_t.RegisterableService] | None = None
+    factories: Mapping[str, core_t.FactoryCallable] | None = None
+    resources: Mapping[str, core_t.ResourceCallable] | None = None
+    container_overrides: Mapping[str, core_t.Scalar] | None = None
+    wire_modules: Sequence[ModuleType] | None = None
+    wire_packages: Sequence[str] | None = None
+    wire_classes: Sequence[type[object]] | None = None
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
@@ -60,7 +79,7 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
             Runtime bootstrap options with config_type set to FlextLdapSettings
 
         """
-        return FlextModels.RuntimeBootstrapOptions(config_type=FlextLdapSettings)
+        return _LdapRuntimeBootstrapOptions()
 
 
 s = FlextLdapServiceBase

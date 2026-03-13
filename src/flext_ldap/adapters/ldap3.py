@@ -564,9 +564,33 @@ class Ldap3Adapter(FlextService[bool]):
                 return None
             normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
             if normalized:
-                return m.Ldif.QuirkMetadata(normalized)
+                quirk_type_raw = normalized.get("quirk_type")
+                extensions_raw = normalized.get("extensions")
+                if not isinstance(quirk_type_raw, str):
+                    return None
+                if not isinstance(extensions_raw, Mapping):
+                    return m.Ldif.QuirkMetadata.model_validate({
+                        "quirk_type": quirk_type_raw
+                    })
+                extensions_data: dict[str, t.Scalar | list[t.Scalar]] = {}
+                for ext_key, ext_value in extensions_raw.items():
+                    if isinstance(ext_key, str) and isinstance(
+                        ext_value, (str, int, float, bool, list)
+                    ):
+                        if isinstance(ext_value, list):
+                            if all(
+                                isinstance(item, (str, int, float, bool))
+                                for item in ext_value
+                            ):
+                                extensions_data[ext_key] = ext_value
+                            continue
+                        extensions_data[ext_key] = ext_value
+                return m.Ldif.QuirkMetadata.model_validate({
+                    "quirk_type": quirk_type_raw,
+                    "extensions": extensions_data,
+                })
             return None
-(
+
         @staticmethod
         def get_dynamic_attribute(
             obj: object | p.Ldap.Ldap3Entry | LdifEntry,

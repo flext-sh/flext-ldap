@@ -84,7 +84,7 @@ class FlextLdapModelsLdap:
             norm_config = (
                 FlextLdapModelsLdap.NormalizedConfig() if config is None else config
             )
-            return cls({
+            return cls.model_validate({
                 "base_dn": base_dn,
                 "scope": norm_config.scope,
                 "filter_str": norm_config.filter_str,
@@ -143,7 +143,7 @@ class FlextLdapModelsLdap:
             **kwargs: str | float | bool | None,
         ) -> Self:
             """Factory method with auto-calculated total from counters."""
-            return cls({
+            return cls.model_validate({
                 "synced": synced,
                 "skipped": skipped,
                 "failed": failed,
