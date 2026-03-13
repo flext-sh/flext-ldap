@@ -1,0 +1,25 @@
+src/flext_ldap/settings.py
+  badf73c81a657ed4 17-18,28-29,33-36,42-51,56-59,63-66,70-71
+src/flext_ldap/_models/ldap.py
+  badf73c81a657ed4 9,23-25,54-55,59-61,106-107,112-113,191,193-194,197,299-301
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "07e2553a984b72db8d8202b0358f9d090bb9ba11",
+  "prompts": {
+    "badf73c81a657ed4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_317e20b28ffe7c4Sc25FDWTZgu",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 73,
+      "total_deletions": 44,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    }
+  }
+}
