@@ -20,16 +20,15 @@ from abc import ABC
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from types import ModuleType
-from typing import TypeVar, override
+from typing import override
 
 from flext_core import FlextService, p, t as core_t
 from pydantic_settings import BaseSettings
 
 from flext_ldap import FlextLdapSettings
-from flext_ldap.typings import t
+from flext_ldap.typings import TDomainResult
 
 # TypeVar for domain result type
-TDomainResult = TypeVar("TDomainResult", bound=t.Container)
 
 
 @dataclass
