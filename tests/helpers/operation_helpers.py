@@ -15,7 +15,13 @@ from typing import TypeAlias, TypeVar
 import pytest
 from flext_tests import u
 
-from flext_ldap import FlextLdap, FlextLdapModels, FlextLdapOperations, p, r
+from flext_ldap import (
+    FlextLdap,
+    FlextLdapModels,
+    FlextLdapOperations,
+    p,
+    r,
+)
 
 from .. import constants as c_mod
 from ..typings import GenericFieldsDict, t
@@ -42,14 +48,14 @@ SearchScopeType = c.Ldap.SearchScope
 class _LdapEntryProtocolAdapter:
     dn: str | p.Ldap.DN | None
     attributes: Mapping[str, Sequence[str]] | p.Ldap.Attributes | None
-    metadata: t.ConfigMap | None
+    metadata: m.ConfigMap | None
 
     def __init__(
         self,
         dn: str,
         attributes: Mapping[str, Sequence[str]],
         *,
-        metadata: t.ConfigMap | None = None,
+        metadata: m.ConfigMap | None = None,
     ) -> None:
         self.dn = dn
         self.attributes = attributes
