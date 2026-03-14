@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import TypeAlias, TypeVar
 
 import pytest
@@ -39,9 +39,26 @@ _VALID_SCOPES: frozenset[str] = frozenset({
 SearchScopeType = c.Ldap.SearchScope
 
 
+class _LdapEntryProtocolAdapter:
+    dn: str | p.Ldap.DN | None
+    attributes: Mapping[str, Sequence[str]] | p.Ldap.Attributes | None
+    metadata: t.ConfigMap | None
+
+    def __init__(
+        self,
+        dn: str,
+        attributes: Mapping[str, Sequence[str]],
+        *,
+        metadata: t.ConfigMap | None = None,
+    ) -> None:
+        self.dn = dn
+        self.attributes = attributes
+        self.metadata = metadata
+
+
 def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntry:
     dn_str = str(entry.dn) if entry.dn is not None else ""
-    attrs: dict[str, list[str]] = (
+    attrs: Mapping[str, Sequence[str]] = (
         entry.attributes.attributes
         if entry.attributes is not None and hasattr(entry.attributes, "attributes")
         else {}
