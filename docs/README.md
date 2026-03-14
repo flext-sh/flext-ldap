@@ -1,7 +1,6 @@
 # FLEXT-LDAP Documentation
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [📚 Documentation Structure](#documentation-structure)
   - [🏗️ Enterprise Architecture Documentation](#enterprise-architecture-documentation)
@@ -35,7 +34,6 @@
   - [Comprehensive Coverage](#comprehensive-coverage)
   - [Quality Assurance](#quality-assurance)
   - [Innovation and Leadership](#innovation-and-leadership)
-
 <!-- TOC END -->
 
 ## Table of Contents

@@ -40,11 +40,6 @@
     "title": "System Administrator",
     "organization": "Example Corp",
     "organizational_unit": "IT",
-    "object_classes": [
-      "person",
-      "organizationalPerson",
-      "inetOrgPerson",
-      "simpleSecurityObject"
-    ]
+    "object_classes": ["person", "organizationalPerson", "inetOrgPerson", "simpleSecurityObject"]
   }
 ]

@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.protocols import FlextLdapProtocols
-from flext_tests.protocols import FlextTestsProtocols
+from flext_tests import FlextTestsProtocols
+
+from flext_ldap import FlextLdapProtocols
 
 
 class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
@@ -20,16 +21,16 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     protocol definitions.
 
     Provides access to:
-    - tp.Tests.Docker.* (from FlextTestsProtocols)
-    - tp.Tests.Factory.* (from FlextTestsProtocols)
-    - tp.Ldap.* (from FlextLdapProtocols)
+    - p.Tests.Docker.* (from FlextTestsProtocols)
+    - p.Tests.Factory.* (from FlextTestsProtocols)
+    - p.Ldap.* (from FlextLdapProtocols)
 
     Rules:
     - NEVER redeclare protocols from parent classes
     - Only flext-ldap-specific test protocols allowed
     """
 
-    class Tests:
+    class Tests(FlextTestsProtocols.Tests):
         """Project-specific test protocols.
 
         Extends FlextTestsProtocols.Tests with flext-ldap-specific protocols.
@@ -39,12 +40,5 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
             """Flext-ldap-specific test protocols."""
 
 
-# Runtime aliases
 p = TestsFlextLdapProtocols
-tp = TestsFlextLdapProtocols
-
-__all__ = [
-    "TestsFlextLdapProtocols",
-    "p",
-    "tp",
-]
+__all__ = ["TestsFlextLdapProtocols", "p"]

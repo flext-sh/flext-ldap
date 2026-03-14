@@ -1,7 +1,6 @@
 # C4 Model: System Context
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [🎯 System Context Overview](#system-context-overview)
 - [📋 Context Description](#context-description)
@@ -22,7 +21,6 @@
   - [**Performance Benchmarks**](#performance-benchmarks)
   - [**Quality Metrics**](#quality-metrics)
 - [🔗 Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -78,7 +76,7 @@ Person(operator, "DevOps Engineer", "Deploys and monitors LDAP-integrated system
 
 System(flext_ldap, "FLEXT-LDAP", "Universal LDAP operations library with server-specific implementations")
 
-System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextResult, DI, and domain patterns")
+System_Ext(flext_core, "FLEXT-Core", "Foundation library providing r, DI, and domain patterns")
 System_Ext(flext_ldif, "FLEXT-LDIF", "LDIF processing and LDAP entry model management")
 
 System_Ext(openldap, "OpenLDAP Server", "Open-source LDAP directory server")
@@ -96,7 +94,7 @@ Rel(REDACTED_LDAP_BIND_PASSWORD, flext_ldap, "Manages LDAP operations", "LDAP RE
 Rel(developer, flext_ldap, "Integrates LDAP functionality", "Python API")
 Rel(operator, flext_ldap, "Monitors LDAP operations", "Observability")
 
-Rel(flext_ldap, flext_core, "Uses", "FlextResult, DI patterns")
+Rel(flext_ldap, flext_core, "Uses", "r, DI patterns")
 Rel(flext_ldap, flext_ldif, "Integrates with", "Entry models, quirks")
 
 Rel(flext_ldap, openldap, "Connects to", "ldap3 protocol")
@@ -155,7 +153,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 
 #### **FLEXT Ecosystem Components**
 
-- **FLEXT-Core**: Provides foundation patterns (FlextResult, DI, domain models)
+- **FLEXT-Core**: Provides foundation patterns (r, DI, domain models)
 - **FLEXT-LDIF**: Handles LDIF file processing and LDAP entry models
 - **FLEXT-API**: REST API framework using flext-ldap for user management
 - **FLEXT-Auth**: Authentication service leveraging flext-ldap

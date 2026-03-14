@@ -1,7 +1,6 @@
 # API Reference Documentation
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Public API](#public-api)
   - [Primary Entry Point](#primary-entry-point)
@@ -15,7 +14,6 @@
   - [Internal (Subject to Change)](#internal-subject-to-change)
 - [Return Types](#return-types)
 - [Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Version**: 1.0 (v0.10.0)
@@ -84,14 +82,14 @@ result = api.search_entries(search_request)
 ```python
 # Public API (recommended)
 from flext_ldap import (
-    FlextLdap,              # Main API
-    FlextLdapModels,        # Models
-    FlextLdapClients,       # Client operations
-    FlextLdapAcl,           # ACL management
+    FlextLdap,  # Main API
+    FlextLdapModels,  # Models
+    FlextLdapClients,  # Client operations
+    FlextLdapAcl,  # ACL management
 )
 
 # Server operations
-from flext_ldap.servers import (
+from flext_ldap import (
     OpenLDAP2Operations,
     OracleOIDOperations,
 )
@@ -107,8 +105,7 @@ from flext_ldap import FlextLdapEntryAdapter
 ```python
 api = FlextLdap()
 search_request = FlextLdapModels.SearchRequest(
-    base_dn="dc=example,dc=com",
-    filter_str="(objectClass=person)"
+    base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
 )
 result = api.search_entries(search_request)
 ```
@@ -144,7 +141,7 @@ result = acl_manager.get_acls(connection, dn, server_type)
 
 ## Return Types
 
-All operations return `FlextResult[T]` from flext-core:
+All operations return `r[T]` from flext-core:
 
 ```python
 result = api.search_entries(request)

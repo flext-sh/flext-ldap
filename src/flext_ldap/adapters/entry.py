@@ -19,7 +19,7 @@ Audit Implications:
 
 Architecture Notes:
     - Implements Adapter pattern between ldap3 and FlextLdif domains
-    - Python 3.13: Uses isinstance(..., Sequence) directly for type narrowing
+    - Python 3.13: Uses guard-based sequence handling
     - Extends FlextService[bool] for health check capability
     - Inner class _ConversionHelpers follows SRP for value processing
 
@@ -31,49 +31,16 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import TypeGuard
+from typing import override
 
-from flext_core import r
+from flext_core import FlextService, r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import c, m, p, t
 
 
-def _is_ldap3_attrs_dict(
-    value: t.GeneralValueType,
-) -> TypeGuard[Mapping[str, t.Ldap.Operation.Ldap3EntryValue]]:
-    """TypeGuard for ldap3 untyped entry_attributes_as_dict.
-
-    ldap3 is untyped, so this validates the dictionary structure matches
-    our expected type for LDAP attribute dictionaries.
-    """
-    # ldap3 returns dict-like structure - trust it matches our type
-    return isinstance(value, Mapping)
-
-
-def _is_ldap3_entry_value(
-    value: t.GeneralValueType,
-) -> TypeGuard[t.Ldap.Operation.Ldap3EntryValue]:
-    """TypeGuard for ldap3 untyped attribute values.
-
-    Validates value matches Ldap3EntryValue type (primitive or sequence).
-    """
-    if value is None:
-        return True
-    if isinstance(value, (str, bytes, int, float, bool)):
-        return True
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-        return True
-    return True  # Accept all ldap3 values - library contract
-
-
-class FlextLdapEntryAdapter(s[bool]):
+class FlextLdapEntryAdapter(FlextService[bool]):
     """Adapter for converting between ldap3 and FlextLdif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:
@@ -94,11 +61,56 @@ class FlextLdapEntryAdapter(s[bool]):
         Uses FlextRuntime type guards for safe type narrowing (no isinstance checks).
         """
 
-        # ASCII threshold for base64 encoding detection (chars > 127 require encoding)
-        ASCII_THRESHOLD: int = 127
+        ASCII_THRESHOLD: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
 
         @staticmethod
-        def is_base64_encoded(value: str, threshold: int = ASCII_THRESHOLD) -> bool:
+        def convert_value_to_strings(
+            value: t.Ldap.Operation.Ldap3EntryValue,
+        ) -> Sequence[str]:
+            """Convert ldap3 entry value to sequence of strings.
+
+            Business Rules:
+                - List-like values are converted to list[str]
+                - Single values are wrapped in single-item list [str(value)]
+                - None values become empty list []
+                - Python 3.13: Uses guard-based sequence handling
+
+            Audit Implications:
+                - All values normalized to string lists for consistency
+                - Value type information may be lost (all become strings)
+                - Empty lists preserve attribute presence
+
+            Architecture:
+                - Python 3.13: Uses guard-based sequence handling
+                - Returns Sequence[str] for flexible return type
+                - No network calls - pure data transformation
+
+            Args:
+                value: ldap3 attribute value (str, list, bytes, or mixed).
+
+            Returns:
+                Sequence of string values (empty if value is None/empty).
+
+            """
+            match value:
+                case None:
+                    return []
+                case bytes() as value_bytes:
+                    return [value_bytes.decode("utf-8", errors="replace")]
+                case list() | tuple() as sequence_values:
+                    return [
+                        item.decode("utf-8", errors="replace")
+                        if isinstance(item, bytes)
+                        else str(item)
+                        for item in sequence_values
+                    ]
+                case _:
+                    return [str(value)]
+
+        @staticmethod
+        def is_base64_encoded(
+            value: str, threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
+        ) -> bool:
             """Check if value requires base64 encoding.
 
             Business Rules:
@@ -125,40 +137,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 True if value requires base64 encoding, False otherwise.
 
             """
-            # Python 3.13: Use any() for type-safe character iteration over string
             return value.startswith("::") or any(ord(c) > threshold for c in value)
-
-        @staticmethod
-        def convert_value_to_strings(
-            value: t.Ldap.Operation.Ldap3EntryValue,
-        ) -> Sequence[str]:
-            """Convert ldap3 entry value to sequence of strings.
-
-            Business Rules:
-                - List-like values are converted to list[str]
-                - Single values are wrapped in single-item list [str(value)]
-                - None values become empty list []
-                - Python 3.13: Uses isinstance(..., Sequence) for type-safe handling
-
-            Audit Implications:
-                - All values normalized to string lists for consistency
-                - Value type information may be lost (all become strings)
-                - Empty lists preserve attribute presence
-
-            Architecture:
-                - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
-                - Returns Sequence[str] for flexible return type
-                - No network calls - pure data transformation
-
-            Args:
-                value: ldap3 attribute value (str, list, bytes, or mixed).
-
-            Returns:
-                Sequence of string values (empty if value is None/empty).
-
-            """
-            # DSL pattern: builder for safe str_list conversion
-            return u.Ldap.to_str_list_safe(value)
 
         @staticmethod
         def normalize_original_attr_value(
@@ -189,136 +168,24 @@ class FlextLdapEntryAdapter(s[bool]):
                 Sequence of string values from original attribute.
 
             """
-            # DSL pattern: builder for safe str_list conversion
-            return u.Ldap.to_str_list_safe(value)
+            return FlextLdapEntryAdapter._ConversionHelpers.convert_value_to_strings(
+                value
+            )
 
     _ldif: FlextLdif = PrivateAttr()
     _server_type: str = PrivateAttr()
 
-    def __init__(
-        self,
-        **kwargs: t.GeneralValueType,
-    ) -> None:
+    def __init__(self, *, server_type: str | None = None) -> None:
         """Initialize entry adapter with FlextLdif integration and quirks.
 
         Args:
-            **kwargs: Keyword arguments including:
-                - server_type: Server type for normalization (defaults to Constants)
-                - Additional keyword arguments passed to parent class
+            server_type: Server type for normalization (defaults to RFC).
 
         """
-        # Extract server_type from kwargs if provided
-        server_type_raw = kwargs.get("server_type")
-        # DSL pattern: ensure string type with None default
-        # DSL pattern: builder for optional str conversion
-        server_type: str | None = (
-            u.to_str(server_type_raw, default="")
-            if server_type_raw is not None
-            else None
-        )
-        # Remove server_type and _auto_result from kwargs before passing to parent
-        # Filter to only valid service kwargs (str | float | bool | None)
-        # Exclude special parameters like _auto_result which are handled by FlextService
-        # Python 3.13: Extract and validate _auto_result with modern pattern
-        auto_result_raw: object = kwargs.pop("_auto_result", None)
-        auto_result: bool | None = (
-            auto_result_raw if isinstance(auto_result_raw, bool) else None
-        )
-        # Python 3.13: Filter kwargs with modern comprehension
-        # Removed unused kwargs filtering - super().__init__() doesn't need config
-        # Type narrowing: dict[str, str | float | bool | None]
-        # matches FlextService.__init__ signature
-        # Do NOT pass _auto_result to super().__init__() - it's a PrivateAttr
-        # that must be set directly via object.__setattr__() to bypass Pydantic validation
         super().__init__()
-        # Use provided server_type or default from constants
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
-        # FlextLdif accepts config via kwargs, not as direct parameter
-        # Use object.__setattr__ for PrivateAttr fields (frozen model compatibility)
         object.__setattr__(self, "_ldif", FlextLdif())
         object.__setattr__(self, "_server_type", resolved_type)
-        object.__setattr__(self, "_auto_result", auto_result)
-
-    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
-        """Execute method required by FlextService.
-
-        Business Rules:
-            - Entry adapter is stateless and performs no operations
-            - Conversion methods (ldap3_to_ldif_entry, etc.) should be called directly
-            - Always returns success (True) as adapter is always ready
-            - No remote operations performed - pure data transformation adapter
-
-        Audit Implications:
-            - This method exists for FlextService protocol compliance only
-            - No LDAP operations are performed - no audit trail needed
-            - Conversion methods are called directly by service layer
-
-        Architecture:
-            - Stateless adapter pattern - no internal state to manage
-            - Conversion methods handle bidirectional entry transformation
-            - No network calls - pure data transformation
-
-        Args:
-            **_kwargs: Unused - adapter is stateless and requires no configuration
-
-        Returns:
-            r[bool] - success with True as this adapter is stateless
-                and always ready
-
-        """
-        return r[bool].ok(value=True)
-
-    def _convert_ldap3_value_to_list(
-        self,
-        value: t.Ldap.Operation.Ldap3EntryValue | None,
-        key: str,
-        base64_attrs: MutableSequence[str],
-        removed_attrs: MutableSequence[str],
-        ascii_threshold: int = _ConversionHelpers.ASCII_THRESHOLD,
-    ) -> list[str]:
-        """Convert ldap3 attribute value to list format, tracking metadata.
-
-        Business Rules:
-            - None values are tracked in removed_attrs and return []
-            - Values are converted using _ConversionHelpers.convert_value_to_strings()
-            - Base64 encoding detection uses ASCII threshold (127)
-            - Attributes requiring base64 are tracked in base64_attrs
-            - Mutates tracking lists for conversion metadata generation
-
-        Audit Implications:
-            - Base64 attributes tracked for proper LDIF encoding
-            - Removed attributes tracked for conversion metadata
-            - Tracking enables audit trail of value transformations
-
-        Architecture:
-            - Uses _ConversionHelpers for value conversion
-            - Mutates base64_attrs and removed_attrs lists (side effect)
-            - Uses type guards for safe value type narrowing
-            - Returns list[str] for consistent format
-
-        Args:
-            value: ldap3 attribute value to convert.
-            key: Attribute name for tracking in metadata lists.
-            base64_attrs: Mutable list to track attributes needing base64 encoding.
-            removed_attrs: Mutable list to track empty/None attributes.
-            ascii_threshold: ASCII threshold for base64 detection (default: 127).
-
-        Returns:
-            List of string values (empty if None).
-
-        """
-        # Conditional handling for None values
-        if value is None:
-            removed_attrs.append(key)
-            return []
-        converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
-        # Python 3.13: Use any() for type-safe iteration over converted strings
-        if any(
-            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
-            for v in converted_values
-        ):
-            base64_attrs.append(key)
-        return converted_values
 
     @staticmethod
     def _build_conversion_metadata(
@@ -377,7 +244,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Business Rules:
             - DN changes are detected by comparing original_dn vs converted_dn
             - Attribute changes detected by comparing string representations
-            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
+                - Python 3.13: Uses guard-based sequence handling
             - Mutates conversion_metadata to record differences
             - Changes tracked for audit trail generation
 
@@ -389,7 +256,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Architecture:
             - Mutates conversion_metadata object (side effect)
-            - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
+                - Python 3.13: Uses guard-based sequence handling
             - Compares string representations for change detection
             - No network calls - pure metadata tracking
 
@@ -402,36 +269,31 @@ class FlextLdapEntryAdapter(s[bool]):
 
         """
         if converted_dn != original_dn:
-            conversion_metadata.dn_changed = True
-            conversion_metadata.converted_dn = converted_dn
+            setattr(conversion_metadata, "dn_changed", True)
+            setattr(conversion_metadata, "converted_dn", converted_dn)
 
-        # Track attribute differences (changes in values during conversion)
         def check_attr_changed(
-            attr_name: str,
-            original_values: Sequence[object],
+            attr_name: str, original_values: Sequence[object]
         ) -> str | None:
             """Check if attribute values changed during conversion."""
-            # Python 3.13: Use isinstance for type narrowing (TypeGuard limitation)
-            # is_list_like TypeGuard claims Sequence but only checks list
-            original_values_list = (
-                [str(v) for v in original_values]
-                if isinstance(original_values, Sequence)
-                else u.Ldap.to_str_list_safe(original_values)
-            )
+            match original_values:
+                case list() | tuple():
+                    original_values_list = [str(v) for v in original_values]
+                case str() as original_str:
+                    original_values_list = [original_str]
+                case bytes() as original_bytes:
+                    original_values_list = [
+                        original_bytes.decode("utf-8", errors="replace")
+                    ]
+                case _:
+                    original_values_list = [str(v) for v in original_values]
             original_str = ", ".join(original_values_list)
-            # Python 3.13: Extract and convert with modern pattern
             attr_values_raw = converted_attrs_dict.get(attr_name, [])
-            attr_values_list = (
-                [str(v) for v in attr_values_raw]
-                if isinstance(attr_values_raw, Sequence)
-                else ([str(attr_values_raw)] if attr_values_raw else [])
-            )
-            # Filter truthy values
+            attr_values_list = [str(v) for v in attr_values_raw]
             filtered_str_values = [v for v in attr_values_list if v]
             converted_str = ", ".join(filtered_str_values) or ""
             return attr_name if original_str != converted_str else None
 
-        # Process attributes and filter None values
         result_dict: dict[str, str | None] = {}
         logger = logging.getLogger(__name__)
         for attr_name, original_values in original_attrs_dict.items():
@@ -439,28 +301,59 @@ class FlextLdapEntryAdapter(s[bool]):
                 changed = check_attr_changed(attr_name, original_values)
                 if changed is not None:
                     result_dict[attr_name] = changed
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+                OSError,
+                RuntimeError,
+                ImportError,
+            ) as e:
                 logger.debug(
                     "Failed to check attribute change for %s, skipping",
                     attr_name,
                     exc_info=e,
                 )
                 continue
-        # Filter not-none values
         filtered_dict: dict[str, str] = {
             k: v for k, v in result_dict.items() if v is not None
         }
-        # Use u.values() mnemonic: extract values from dict
-        # filtered_dict is already dict[str, str] - no isinstance check needed
         changed_attrs = list(filtered_dict.values())
-
         if changed_attrs:
-            conversion_metadata.attribute_changes = changed_attrs
+            setattr(conversion_metadata, "attribute_changes", changed_attrs)
 
-    def ldap3_to_ldif_entry(
-        self,
-        ldap3_entry: p.Ldap.Ldap3EntryProtocol,
-    ) -> r[m.Ldif.Entry]:
+    @override
+    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
+        """Execute method required by FlextService.
+
+        Business Rules:
+            - Entry adapter is stateless and performs no operations
+            - Conversion methods (ldap3_to_ldif_entry, etc.) should be called directly
+            - Always returns success (True) as adapter is always ready
+            - No remote operations performed - pure data transformation adapter
+
+        Audit Implications:
+            - This method exists for FlextService protocol compliance only
+            - No LDAP operations are performed - no audit trail needed
+            - Conversion methods are called directly by service layer
+
+        Architecture:
+            - Stateless adapter pattern - no internal state to manage
+            - Conversion methods handle bidirectional entry transformation
+            - No network calls - pure data transformation
+
+        Args:
+            **_kwargs: Unused - adapter is stateless and requires no configuration
+
+        Returns:
+            r[bool] - success with True as this adapter is stateless
+                and always ready
+
+        """
+        return r[bool].ok(value=True)
+
+    def ldap3_to_ldif_entry(self, ldap3_entry: p.Ldap.Ldap3Entry) -> r[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
         Business Rules:
@@ -481,7 +374,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Architecture:
             - Uses _convert_ldap3_value_to_list() for value normalization
             - Uses _build_conversion_metadata() for tracking transformations
-            - Returns FlextResult pattern - no exceptions raised
+            - Returns r pattern - no exceptions raised
             - Server type from adapter._server_type stored in metadata
 
         Args:
@@ -495,28 +388,27 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         try:
             dn_str = str(ldap3_entry.entry_dn)
-            # ldap3 is untyped - entry_attributes_as_dict returns dict-like structure
-            # Type from ldap3: Mapping[str, Sequence[object]], compatible with our usage
             attrs_dict = ldap3_entry.entry_attributes_as_dict
             original_attrs_dict = attrs_dict
             removed_attrs: list[str] = []
             base64_attrs: list[str] = []
-            # Convert attributes efficiently
             ldif_attrs: dict[str, list[str]] = {}
             logger = logging.getLogger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:
-                    # ldap3 returns Sequence[object] - convert each item to str
                     str_values: list[str] = []
-                    if isinstance(raw_value, Sequence):
-                        for item in raw_value:
-                            if isinstance(item, bytes):
-                                str_values.append(
-                                    item.decode("utf-8", errors="replace"),
-                                )
-                            else:
-                                str_values.append(str(item))
-                    # Check for base64 encoding requirement
+                    match raw_value:
+                        case list() | tuple():
+                            for item in raw_value:
+                                match item:
+                                    case bytes() as item_bytes:
+                                        str_values.append(
+                                            item_bytes.decode("utf-8", errors="replace")
+                                        )
+                                    case _:
+                                        str_values.append(str(item))
+                        case _:
+                            pass
                     threshold = self._ConversionHelpers.ASCII_THRESHOLD
                     has_base64 = any(
                         self._ConversionHelpers.is_base64_encoded(v, threshold)
@@ -525,47 +417,43 @@ class FlextLdapEntryAdapter(s[bool]):
                     if has_base64:
                         base64_attrs.append(key)
                     ldif_attrs[key] = str_values
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    OSError,
+                    RuntimeError,
+                    ImportError,
+                ) as e:
                     logger.debug(
-                        "Failed to convert attribute %s, skipping",
-                        key,
-                        exc_info=e,
+                        "Failed to convert attribute %s, skipping", key, exc_info=e
                     )
                     continue
             conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
-                removed_attrs,
-                base64_attrs,
-                original_attrs_dict,
-                dn_str,
+                removed_attrs, base64_attrs, original_attrs_dict, dn_str
             )
             FlextLdapEntryAdapter._track_conversion_differences(
-                conversion_metadata,
-                dn_str,
-                dn_str,
-                original_attrs_dict,
-                ldif_attrs,
+                conversion_metadata, dn_str, dn_str, original_attrs_dict, ldif_attrs
             )
-            ldf_attrs_obj = m.Ldif.Attributes.model_validate({
-                "attributes": ldif_attrs,
-            })
+            ldf_attrs_obj = m.Ldif.Attributes(attributes=ldif_attrs)
             metadata_obj = m.Ldif.QuirkMetadata.model_validate({
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
             return r[m.Ldif.Entry].ok(
-                m.Ldif.Entry.model_validate({
-                    "dn": m.Ldif.DN.model_validate({"value": dn_str}),
-                    "attributes": ldf_attrs_obj,
-                    "metadata": metadata_obj,
-                }),
+                m.Ldif.Entry(
+                    dn=m.Ldif.DN(value=dn_str),
+                    attributes=ldf_attrs_obj,
+                    metadata=metadata_obj,
+                )
             )
         except (ValueError, TypeError, AttributeError) as e:
-            # Safe access for logging - use Protocol check for type-safe access
-            entry_dn_for_log = "unknown"
-            if hasattr(ldap3_entry, "entry_dn"):
-                entry_dn_for_log = (
-                    str(ldap3_entry.entry_dn) if ldap3_entry.entry_dn else "unknown"
-                )
+            entry_dn_for_log = (
+                str(ldap3_entry.entry_dn)
+                if ldap3_entry.entry_dn
+                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+            )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
@@ -576,8 +464,7 @@ class FlextLdapEntryAdapter(s[bool]):
             return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
-        self,
-        entry: m.Ldif.Entry,
+        self, entry: m.Ldif.Entry
     ) -> r[t.Ldap.Operation.Attributes]:
         """Convert p.Entry to ldap3 attributes format.
 
@@ -587,7 +474,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Attribute values are already list[str] in LDIF format
             - Values are converted to strings (handles any value types)
             - Empty attributes dict returns failure (no attributes to convert)
-            - Python 3.13: Uses isinstance(..., Sequence) for type-safe value handling
+            - Python 3.13: Uses guard-based sequence handling
 
         Audit Implications:
             - Conversion failures are logged with entry DN and error details
@@ -596,8 +483,8 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Architecture:
             - Accesses entry.attributes.attributes dict directly
-            - Python 3.13: Uses isinstance(..., Sequence) for type narrowing
-            - Returns FlextResult pattern - no exceptions raised
+            - Python 3.13: Uses guard-based sequence handling
+            - Returns r pattern - no exceptions raised
             - Returns dict[str, list[str]] format expected by ldap3
 
         Args:
@@ -609,31 +496,30 @@ class FlextLdapEntryAdapter(s[bool]):
             or error if entry has no attributes or conversion fails.
 
         """
-        # Use entry directly - m.Ldif.Entry is the public API
-        # Check if attributes are empty
         if entry.attributes is None:
             return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
-        # entry.attributes is already m.Ldif.Attributes type (after None check above)
         ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
             return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         try:
-            # Python 3.13: Use isinstance directly for type-safe filtering
-            # Convert to str keys and list values to ensure type compatibility
             filtered_attrs: dict[str, list[str]] = {}
             for k, v in attrs_dict.items():
-                if isinstance(v, Sequence):
-                    # Key is str according to type annotation
-                    key_str = str(k)
-                    filtered_attrs[key_str] = [str(item) for item in v]
+                key_str = str(k)
+                filtered_attrs[key_str] = [str(item) for item in v]
             return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
-            # Get DN value from entry - duck-typing works since entry is validated above
-            # entry.dn can be str or DNProtocol (which has .value)
-            dn_value = getattr(entry.dn, "value", entry.dn) if entry.dn else "unknown"
-            # DSL pattern: builder for str conversion
-            entry_dn_str = u.to_str(dn_value, default="unknown")
+            dn_value = (
+                getattr(entry.dn, "value", entry.dn)
+                if entry.dn
+                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+            )
+            entry_dn_str = (
+                str(dn_value)
+                if dn_value is not None
+                and dn_value != c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+            )
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
                 operation=c.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
@@ -642,5 +528,55 @@ class FlextLdapEntryAdapter(s[bool]):
                 error_type=type(e).__name__,
             )
             return r[t.Ldap.Operation.Attributes].fail(
-                f"Failed to convert attributes to ldap3 format: {e!s}",
+                f"Failed to convert attributes to ldap3 format: {e!s}"
             )
+
+    def _convert_ldap3_value_to_list(
+        self,
+        value: t.Ldap.Operation.Ldap3EntryValue | None,
+        key: str,
+        base64_attrs: MutableSequence[str],
+        removed_attrs: MutableSequence[str],
+        ascii_threshold: int = _ConversionHelpers.ASCII_THRESHOLD,
+    ) -> list[str]:
+        """Convert ldap3 attribute value to list format, tracking metadata.
+
+        Business Rules:
+            - None values are tracked in removed_attrs and return []
+            - Values are converted using _ConversionHelpers.convert_value_to_strings()
+            - Base64 encoding detection uses ASCII threshold (127)
+            - Attributes requiring base64 are tracked in base64_attrs
+            - Mutates tracking lists for conversion metadata generation
+
+        Audit Implications:
+            - Base64 attributes tracked for proper LDIF encoding
+            - Removed attributes tracked for conversion metadata
+            - Tracking enables audit trail of value transformations
+
+        Architecture:
+            - Uses _ConversionHelpers for value conversion
+            - Mutates base64_attrs and removed_attrs lists (side effect)
+            - Uses type guards for safe value type narrowing
+            - Returns list[str] for consistent format
+
+        Args:
+            value: ldap3 attribute value to convert.
+            key: Attribute name for tracking in metadata lists.
+            base64_attrs: Mutable list to track attributes needing base64 encoding.
+            removed_attrs: Mutable list to track empty/None attributes.
+            ascii_threshold: ASCII threshold for base64 detection (default: 127).
+
+        Returns:
+            List of string values (empty if None).
+
+        """
+        if value is None:
+            removed_attrs.append(key)
+            return []
+        converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
+        if any(
+            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
+            for v in converted_values
+        ):
+            base64_attrs.append(key)
+        return converted_values

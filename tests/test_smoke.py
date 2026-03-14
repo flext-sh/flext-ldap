@@ -20,12 +20,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from enum import StrEnum
 
 import pytest
 from flext_core import r
-from ldap3 import Connection, Server
 
 from flext_ldap import (
     FlextLdap,
@@ -34,10 +32,10 @@ from flext_ldap import (
     FlextLdapSettings,
     m,
 )
+from ldap3 import Connection, Server
 
 from .typings import LdapContainerDict
 
-# Mark entire module as smoke tests
 pytestmark = pytest.mark.smoke
 
 
@@ -64,22 +62,18 @@ class TestsFlextLdapSmoke:
         @staticmethod
         def create_ldap3_server(ldap_container: LdapContainerDict) -> Server:
             """Factory for ldap3 Server objects."""
-            return Server(
-                ldap_container["server_url"],
-                get_info="ALL",
-            )
+            return Server(ldap_container["server_url"], get_info="ALL")
 
         @staticmethod
         def create_ldap3_connection(
-            server: Server,
-            ldap_container: LdapContainerDict,
+            server: Server, ldap_container: LdapContainerDict
         ) -> Connection:
             """Factory for ldap3 Connection objects."""
             return Connection(
                 server,
                 user=ldap_container["bind_dn"],
                 password=ldap_container["password"],
-                auto_bind=True,  # REAL bind attempt
+                auto_bind=True,
             )
 
         @staticmethod
@@ -112,15 +106,18 @@ class TestsFlextLdapSmoke:
         @staticmethod
         def assert_connection_bound(connection: Connection) -> None:
             """Assert that LDAP connection is bound."""
-            assert connection.bound, "LDAP server not responding to bind"
+            bound = getattr(connection, "bound", False)
+            assert bound, "LDAP server not responding to bind"
 
         @staticmethod
         def assert_server_info_available(connection: Connection) -> None:
             """Assert that LDAP server info is available."""
-            assert connection.server.info is not None, "LDAP server info not available"
-            assert connection.server.info.naming_contexts is not None, (
-                "LDAP naming contexts not available"
-            )
+            server = getattr(connection, "server", None)
+            assert server is not None, "LDAP connection has no server"
+            info = getattr(server, "info", None)
+            assert info is not None, "LDAP server info not available"
+            naming_contexts = getattr(info, "naming_contexts", None)
+            assert naming_contexts is not None, "LDAP naming contexts not available"
 
         @staticmethod
         def assert_api_instantiated(api: FlextLdap | None) -> None:
@@ -133,9 +130,7 @@ class TestsFlextLdapSmoke:
             assert m is not None, "m (FlextLdapModels) not accessible"
 
         @staticmethod
-        def assert_connection_success(
-            result: r[bool],
-        ) -> None:
+        def assert_connection_success(result: r[bool]) -> None:
             """Assert that connection operation succeeded."""
             assert result.is_success, f"Connection failed: {result.error}"
 
@@ -149,24 +144,13 @@ class TestsFlextLdapSmoke:
             ldap_container: Container connection info from fixture
 
         """
-        # Create REAL ldap3 Server object
         server = TestsFlextLdapSmoke.DataFactories.create_ldap3_server(ldap_container)
-
-        # Create REAL ldap3 Connection
         connection = TestsFlextLdapSmoke.DataFactories.create_ldap3_connection(
-            server,
-            ldap_container,
+            server, ldap_container
         )
-
-        # Verify REAL connection is bound
         TestsFlextLdapSmoke.Assertions.assert_connection_bound(connection)
-
-        # Verify REAL server info is available (schema loaded)
         TestsFlextLdapSmoke.Assertions.assert_server_info_available(connection)
-
-        # REAL unbind (typed wrapper for mypy strict)
-        unbind_func: Callable[[], None] = connection.unbind
-        unbind_func()
+        connection.unbind()
 
     def test_flext_ldap_api_imports(self) -> None:
         """SMOKE TEST: FlextLdap API imports without errors (REGRA 5: REAL code).
@@ -174,24 +158,15 @@ class TestsFlextLdapSmoke:
         Verifies that the API can be imported and instantiated.
         Does NOT test connection - that's in test_ldap_container_health.
         """
-        # Instantiate REAL FlextLdap object (requires connection and operations)
-
-        # but services pass complex objects via __init__ which are validated at runtime
         config = FlextLdapSettings()
         connection = FlextLdapConnection(config=config)
         operations = FlextLdapOperations(connection=connection)
-        api = FlextLdap(
-            connection=connection,
-            operations=operations,
-        )
+        api = FlextLdap(connection=connection, operations=operations)
         TestsFlextLdapSmoke.Assertions.assert_api_instantiated(api)
-
-        # Verify models are accessible
         TestsFlextLdapSmoke.Assertions.assert_models_accessible()
 
     def test_flext_ldap_basic_connection(
-        self,
-        ldap_container: LdapContainerDict,
+        self, ldap_container: LdapContainerDict
     ) -> None:
         """SMOKE TEST: FlextLdap can connect to container (REGRA 5: REAL operations).
 
@@ -202,28 +177,13 @@ class TestsFlextLdapSmoke:
             ldap_container: Container connection info
 
         """
-        # Create REAL config from container info
         config = TestsFlextLdapSmoke.DataFactories.create_flext_config(ldap_container)
-
-        # Create REAL connection and operations instances
-
-        # but services pass complex objects via __init__ which are validated at runtime
         connection = FlextLdapConnection(config=config)
         operations = FlextLdapOperations(connection=connection)
-
-        # Create REAL FlextLdap instance with dependency injection
         client = FlextLdap(connection=connection, operations=operations)
-
-        # Create REAL connection config
         conn_config = TestsFlextLdapSmoke.DataFactories.create_connection_config(
-            ldap_container,
+            ldap_container
         )
-
-        # Attempt REAL connection
         result = client.connect(conn_config)
-
-        # Verify success
         TestsFlextLdapSmoke.Assertions.assert_connection_success(result)
-
-        # REAL disconnect
         client.disconnect()

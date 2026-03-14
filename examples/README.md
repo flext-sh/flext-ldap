@@ -30,7 +30,7 @@
 - [🔧 Common Patterns](#-common-patterns)
   - [Pattern 1: Basic FlextLdap Usage](#pattern-1-basic-flextldap-usage)
   - [Pattern 2: Context Manager](#pattern-2-context-manager)
-  - [Pattern 3: FlextResult Error Handling](#pattern-3-flextresult-error-handling)
+  - [Pattern 3: r Error Handling](#pattern-3-flextresult-error-handling)
   - [Pattern 4: Validation Before Operations](#pattern-4-validation-before-operations)
 - [🐛 Troubleshooting](#-troubleshooting)
   - [Connection Issues](#connection-issues)
@@ -47,13 +47,13 @@
 
 ## 📚 Overview
 
-These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with FlextResult error handling, proper type hints, and zero CLI code.
+These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with r error handling, proper type hints, and zero CLI code.
 
 **Key Principles:**
 
 - ✅ **ALWAYS use api.py (FlextLdap)** as the primary interface
 - ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
-- ✅ **FlextResult patterns** for explicit error handling (NO try/except fallbacks)
+- ✅ **r patterns** for explicit error handling (NO try/except fallbacks)
 - ✅ **Type-safe** with Python 3.13+ patterns
 - ✅ **Library usage only** - NO CLI tools
 
@@ -308,7 +308,7 @@ ______________________________________________________________________
 - Context managers for connection management
 - Retry patterns with exponential backoff
 - Bulk operations with batching
-- Complete FlextResult error handling patterns
+- Complete r error handling patterns
 - Exception handling with FlextExceptions
 - Performance optimization techniques
   - Attribute filtering
@@ -328,7 +328,7 @@ python examples/07_advanced_patterns.py
 - Context manager automatic connection handling
 - Retry pattern with simulated failures
 - Bulk user creation with batching
-- FlextResult error handling patterns
+- r error handling patterns
 - Exception handling demonstrations
 - Performance optimization results
 
@@ -457,7 +457,7 @@ python examples/11_repository_patterns.py
 - Repository pattern concepts and benefits
 - UserRepository and GroupRepository usage
 - Entity lifecycle demonstrations
-- FlextResult integration with repositories
+- r integration with repositories
 - Clean Architecture layer separation
 - Testing benefits explanation
 
@@ -744,8 +744,8 @@ ______________________________________________________________________
 ### Pattern 1: Basic FlextLdap Usage
 
 ```python
-from flext_ldap.api import FlextLdap
-from flext_ldap.settings import FlextLdapSettings
+from flext_ldap import FlextLdap
+from flext_ldap import FlextLdapSettings
 
 # Create and configure
 config = FlextLdapSettings(
@@ -772,7 +772,8 @@ api.unbind()
 
 ```python
 from contextlib import contextmanager
-from flext_ldap.api import FlextLdap
+from flext_ldap import FlextLdap
+
 
 @contextmanager
 def ldap_connection():
@@ -785,12 +786,13 @@ def ldap_connection():
     finally:
         api.unbind()
 
+
 # Usage
 with ldap_connection() as api:
     result = api.search(...)
 ```
 
-### Pattern 3: FlextResult Error Handling
+### Pattern 3: r Error Handling
 
 ```python
 # Pattern 1: Check before unwrap
@@ -801,20 +803,21 @@ if result.is_failure:
 
 entries = result.unwrap()
 
+
 # Pattern 2: Early return
 def process():
     result = api.search(...)
     if result.is_failure:
-        return FlextResult.fail(f"Search failed: {result.error}")
+        return r.fail(f"Search failed: {result.error}")
 
     entries = result.unwrap()
-    return FlextResult.ok(entries)
+    return r.ok(entries)
 ```
 
 ### Pattern 4: Validation Before Operations
 
 ```python
-from flext_ldap.validations import FlextLdapValidations
+from flext_ldap import FlextLdapValidations
 
 # Validate DN
 dn_result = FlextLdapValidations.validate_dn(user_dn)
@@ -873,13 +876,13 @@ pip install flext-ldif
 - **[FLEXT-LDAP Documentation](../README.md)** - Main project documentation
 - **[API Reference](../docs/api-reference.md)** - Complete API documentation
 - **[Architecture Guide](../docs/architecture.md)** - System design and patterns
-- **[FLEXT Standards](../../CLAUDE.md)** - Ecosystem-wide standards
+- **[FLEXT Standards](../../AGENTS.md)** - Ecosystem-wide standards
 
 ## ✅ Best Practices
 
 1. **Always use api.py (FlextLdap)** as the primary interface
 1. **Validate inputs** before LDAP operations (DN, filters)
-1. **Handle FlextResult** explicitly - check is_success before unwrap
+1. **Handle r** explicitly - check is_success before unwrap
 1. **Use context managers** for automatic resource cleanup
 1. **Implement retry patterns** for resilient operations
 1. **Batch bulk operations** for better performance
@@ -894,7 +897,7 @@ After exploring these examples:
 
 1. **Integrate into your application** - Use patterns from examples
 1. **Customize configurations** - Adapt to your LDAP server
-1. **Implement error handling** - Use FlextResult patterns
+1. **Implement error handling** - Use r patterns
 1. **Add business logic** - Build domain-specific validation
 1. **Optimize performance** - Apply advanced patterns from example 07
 

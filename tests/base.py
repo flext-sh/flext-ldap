@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.service import FlextService
-from flext_core.typings import T
+from flext_core import FlextService, T
 
 
 class TestsFlextLdapServiceBase(FlextService[T]):
@@ -22,6 +21,4 @@ class TestsFlextLdapServiceBase(FlextService[T]):
 
 
 __all__ = ["TestsFlextLdapServiceBase", "s"]
-
-# Alias for simplified usage
 s = TestsFlextLdapServiceBase

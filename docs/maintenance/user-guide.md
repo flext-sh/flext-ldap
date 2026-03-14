@@ -1,7 +1,6 @@
 # Documentation Maintenance System - User Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
   - [Key Features](#key-features)
@@ -33,7 +32,6 @@
   - [Content Standards](#content-standards)
   - [Team Collaboration](#team-collaboration)
   - [Performance Considerations](#performance-considerations)
-
 <!-- TOC END -->
 
 **Complete guide for using the Documentation Maintenance System**
@@ -410,10 +408,10 @@ def custom_audit_rule(content, file_path):
     issues = []
 
     # Add your custom validation logic
-    if 'deprecated' in content.lower():
+    if "deprecated" in content.lower():
         issues.append({
-            'type': 'deprecated_content',
-            'message': 'Found deprecated content that should be updated'
+            "type": "deprecated_content",
+            "message": "Found deprecated content that should be updated",
         })
 
     return issues

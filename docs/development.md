@@ -1,7 +1,6 @@
 # Development Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Development Environment Setup](#development-environment-setup)
   - [Prerequisites](#prerequisites)
@@ -35,7 +34,6 @@
 - [Contribution Guidelines](#contribution-guidelines)
   - [Pull Request Process](#pull-request-process)
   - [Code Review Checklist](#code-review-checklist)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -93,7 +91,7 @@
   - Code Quality Standards
     - Type Safety Requirements
 - All public APIs must have complete type annotations
-- Generic types for FlextResult patterns
+- Generic types for r patterns
   - Import Organization
 - Standard library imports
 - Third-party imports
@@ -310,24 +308,25 @@ class FlextLdapUserService:
         self._client = get_ldap_client()
         self.logger = FlextLogger(__name__)
 
-    def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
 
-**2. FlextResult Pattern**
+**2. r Pattern**
 
 ```python
 # ✅ CORRECT - Explicit error handling
-def create_user(self, request: CreateUserRequest) -> FlextResult[FlextLdapUser]:
+def create_user(self, request: CreateUserRequest) -> r[FlextLdapUser]:
     if not request.is_valid():
-        return FlextResult[FlextLdapUser].fail("Invalid user data")
+        return r[FlextLdapUser].fail("Invalid user data")
 
     result = self._client.create_entry(request.to_ldap_entry())
     if result.is_failure:
-        return FlextResult[FlextLdapUser].fail(f"User creation failed: {result.error}")
+        return r[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
-    return FlextResult[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
+    return r[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
+
 
 # ❌ WRONG - Try/catch fallbacks
 def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
@@ -351,7 +350,7 @@ class SearchRequest:
     size_limit: int = 100
     time_limit: int = 30
 
-def search_entries(self, request: SearchRequest) -> FlextResult[List[LdapEntry]]:
+def search_entries(self, request: SearchRequest) -> r[List[LdapEntry]]:
     # Implementation using parameter object
 
 # ❌ WRONG - Multiple parameters
@@ -366,6 +365,7 @@ def search_entries(self, base_dn: str, filter_str: str, scope: str,
 @dataclass(frozen=True)
 class DN:
     """RFC 4514 compliant Distinguished Name."""
+
     value: str
 
     def __post_init__(self) -> None:
@@ -385,15 +385,13 @@ ______________________________________________________________________
 
 ```python
 # All public APIs must have complete type annotations
-def authenticate_user(
-    self,
-    username: str,
-    password: str
-) -> FlextResult[FlextLdapUser]:
+def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
     """Complete type signature required."""
 
-# Generic types for FlextResult patterns
-T = TypeVar('T')
+
+# Generic types for r patterns
+T = TypeVar("T")
+
 
 class FlextLdapService(Generic[T]):
     """Generic service with type constraints."""
@@ -409,8 +407,6 @@ from typing import List, Optional
 # Third-party imports
 import pydantic
 from ldap3 import Connection, Server
-
-# FLEXT imports
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -426,15 +422,13 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-
-# Local imports
-from flext_ldap.entities import FlextLdapUser
-from flext_ldap.value_objects import DN
+from flext_ldap import FlextLdapUser
+from flext_ldap import DN
 ```
 
 ______________________________________________________________________
@@ -445,7 +439,8 @@ ______________________________________________________________________
 
 ```python
 import pytest
-from flext_ldap.entities import FlextLdapUser, CreateUserRequest
+from flext_ldap import FlextLdapUser, CreateUserRequest
+
 
 class TestFlextLdapUser:
     """Test domain entity behavior."""
@@ -456,7 +451,7 @@ class TestFlextLdapUser:
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             uid="john.doe",
             cn="John Doe",
-            sn="Doe"
+            sn="Doe",
         )
 
         assert user.is_valid()
@@ -468,23 +463,23 @@ class TestFlextLdapUser:
             dn="",  # Invalid empty DN
             uid="john.doe",
             cn="John Doe",
-            sn="Doe"
+            sn="Doe",
         )
 
         assert not user.is_valid()
 
-    @pytest.mark.parametrize("uid,expected", [
-        ("john.doe", True),
-        ("", False),
-        ("a", False),  # Too short
-    ])
+    @pytest.mark.parametrize(
+        "uid,expected",
+        [
+            ("john.doe", True),
+            ("", False),
+            ("a", False),  # Too short
+        ],
+    )
     def test_uid_validation(self, uid: str, expected: bool):
         """Test UID validation with parameters."""
         user = FlextLdapUser(
-            dn="cn=test,dc=example,dc=com",
-            uid=uid,
-            cn="Test User",
-            sn="User"
+            dn="cn=test,dc=example,dc=com", uid=uid, cn="Test User", sn="User"
         )
 
         assert user.is_valid() == expected
@@ -495,6 +490,7 @@ class TestFlextLdapUser:
 ```python
 import pytest
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+
 
 @pytest.mark.integration
 @pytest.mark.io
@@ -511,7 +507,7 @@ class TestLdapOperations:
             uid="test.user",
             cn="Test User",
             sn="User",
-            password="test123"
+            password="test123",
         )
 
         create_result = api.create_user(create_request)
@@ -533,7 +529,7 @@ class TestLdapOperations:
             base_dn="dc=flext,dc=local",
             filter_str="(objectClass=person)",
             scope="subtree",
-            attributes=["uid", "cn", "mail"]
+            attributes=["uid", "cn", "mail"],
         )
 
         result = api.search_entries(search_request)
@@ -564,7 +560,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -670,11 +666,7 @@ class FlextLdapClients:
         ...     print(f"Welcome, {user.cn}")
     """
 
-    def authenticate_user(
-        self,
-        username: str,
-        password: str
-    ) -> FlextResult[FlextLdapUser]:
+    def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
         """Authenticate user credentials against LDAP directory.
 
         Args:
@@ -682,11 +674,11 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            FlextResult containing authenticated user object on success,
+            r containing authenticated user object on success,
             or error message on failure.
 
         Raises:
-            No exceptions raised - all errors returned via FlextResult.
+            No exceptions raised - all errors returned via r.
 
         Examples:
             >>> result = api.authenticate_user("john.doe", "secret123")
@@ -705,7 +697,7 @@ All public APIs require comprehensive documentation including:
 - Purpose and responsibility
 - Parameter descriptions with types
 - Return value descriptions
-- FlextResult usage patterns
+- r usage patterns
 - Complete working examples
 - Integration with Clean Architecture layers
 
@@ -723,7 +715,7 @@ config = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=10,  # Adjust based on load
     connection_timeout=5,
-    receive_timeout=15
+    receive_timeout=15,
 )
 ```
 
@@ -737,7 +729,7 @@ search_request = FlextLdapEntities.SearchRequest(
     scope="onelevel",  # Minimal scope needed
     attributes=["uid", "cn"],  # Only required attributes
     size_limit=50,  # Reasonable page size
-    time_limit=10   # Prevent long-running searches
+    time_limit=10,  # Prevent long-running searches
 )
 ```
 
@@ -751,9 +743,7 @@ with get_ldap_client() as client:
 
 # Batch operations for efficiency
 users_to_create = [user1, user2, user3]
-results = gather(*[
-    api.create_user(user) for user in users_to_create
-])
+results = gather(*[api.create_user(user) for user in users_to_create])
 ```
 
 ______________________________________________________________________
@@ -794,7 +784,7 @@ ______________________________________________________________________
 ### Code Review Checklist
 
 - [ ] Follows Clean Architecture patterns
-- [ ] Uses FlextResult for error handling
+- [ ] Uses r for error handling
 - [ ] Includes comprehensive tests
 - [ ] Type annotations complete
 - [ ] Documentation updated

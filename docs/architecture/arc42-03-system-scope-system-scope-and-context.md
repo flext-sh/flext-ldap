@@ -1,9 +1,7 @@
 # 03-system-scope: System Scope and Context
 
 <!-- TOC START -->
-
 - No sections found
-
 <!-- TOC END -->
 
 **Arc42 Section 03-system-scope**

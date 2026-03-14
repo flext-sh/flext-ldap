@@ -1,7 +1,6 @@
 # Troubleshooting Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Connection Issues](#connection-issues)
   - [Connection Refused Errors](#connection-refused-errors)
@@ -23,7 +22,7 @@
   - [Test Environment Setup](#test-environment-setup)
 - [Error Message Reference](#error-message-reference)
   - [Common Error Patterns](#common-error-patterns)
-  - [FlextResult Error Handling](#flextresult-error-handling)
+  - [r Error Handling](#flextresult-error-handling)
 - [Debugging Tools and Techniques](#debugging-tools-and-techniques)
   - [Enable Debug Logging](#enable-debug-logging)
   - [Network Debugging](#network-debugging)
@@ -31,7 +30,6 @@
 - [Getting Help](#getting-help)
   - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
   - [Diagnostic Information Collection](#diagnostic-information-collection)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -58,7 +56,7 @@
     - Test Environment Setup
   - Error Message Reference
     - Common Error Patterns
-    - FlextResult Error Handling
+    - r Error Handling
   - Debugging Tools and Techniques
     - Enable Debug Logging
     - Network Debugging
@@ -143,7 +141,7 @@ config = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
-    verify_certs=False  # Only for testing!
+    verify_certs=False,  # Only for testing!
 )
 
 # Proper certificate configuration
@@ -152,7 +150,7 @@ config = FlextLdapSettings(
     port=636,
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
-    verify_certs=True
+    verify_certs=True,
 )
 ```
 
@@ -173,6 +171,7 @@ AuthenticationError: Authentication failed: Invalid credentials
 ```python
 from flext_ldap import get_flext_ldap_api
 
+
 def diagnose_auth():
     api = get_flext_ldap_api()
 
@@ -181,10 +180,13 @@ def diagnose_auth():
     print(f"Connection: {connection_result.is_success}")
 
     # Test with known REDACTED_LDAP_BIND_PASSWORD credentials
-    auth_result = api.authenticate_user("REDACTED_LDAP_BIND_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD-password")
+    auth_result = api.authenticate_user(
+        "REDACTED_LDAP_BIND_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD-password"
+    )
     print(f"Auth result: {auth_result.is_success}")
     if auth_result.is_failure:
         print(f"Error: {auth_result.error}")
+
 
 run(diagnose_auth())
 ```
@@ -225,6 +227,7 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 ```python
 from flext_ldap import m
 
+
 def validate_dn(dn_string: str) -> bool:
     """Validate DN format."""
     try:
@@ -234,11 +237,12 @@ def validate_dn(dn_string: str) -> bool:
         print(f"Invalid DN: {e}")
         return False
 
+
 # Test DN validation
 test_dns = [
     "cn=John Doe,ou=users,dc=example,dc=com",
     "uid=john.doe,ou=people,dc=company,dc=org",
-    "invalid-dn-format"
+    "invalid-dn-format",
 ]
 
 for test_dn in test_dns:
@@ -285,21 +289,23 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 ```python
 from flext_ldap import m, c
 
+
 def validate_filter(filter_string: str) -> bool:
     """Validate LDAP filter syntax."""
     try:
-        ldap_filter = FlextLdapModels.ValueObjects.Filter(expression=filter_string)
+        ldap_filter = FlextLdapModels.Values.Filter(expression=filter_string)
         return True
     except ValueError as e:
         print(f"Invalid filter: {e}")
         return False
+
 
 # Test filters
 test_filters = [
     "(objectClass=person)",
     "(&(objectClass=person)(uid=j*))",
     "(|(cn=John*)(mail=*@example.com))",
-    "invalid-filter-format"
+    "invalid-filter-format",
 ]
 
 for test_filter in test_filters:
@@ -320,6 +326,7 @@ SearchError: No such object: ou=users,dc=example,dc=com
 ```python
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
+
 def diagnose_base_dn():
     api = get_flext_ldap_api()
 
@@ -328,7 +335,7 @@ def diagnose_base_dn():
         base_dn="dc=example,dc=com",
         filter_str="(objectClass=*)",
         scope="onelevel",  # Only immediate children
-        attributes=["dn", "objectClass"]
+        attributes=["dn", "objectClass"],
     )
 
     result = api.search_entries(search_request)
@@ -339,6 +346,7 @@ def diagnose_base_dn():
             print(f"  {entry.dn}")
     else:
         print(f"Root search failed: {result.error}")
+
 
 run(diagnose_base_dn())
 ```
@@ -360,6 +368,7 @@ ______________________________________________________________________
 import time
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
+
 def diagnose_performance():
     api = get_flext_ldap_api()
 
@@ -369,20 +378,20 @@ def diagnose_performance():
             "name": "Base scope (fastest)",
             "base_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             "scope": "base",
-            "filter": "(objectClass=*)"
+            "filter": "(objectClass=*)",
         },
         {
             "name": "One level scope",
             "base_dn": "dc=example,dc=com",
             "scope": "onelevel",
-            "filter": "(objectClass=organizationalUnit)"
+            "filter": "(objectClass=organizationalUnit)",
         },
         {
             "name": "Subtree scope (slowest)",
             "base_dn": "dc=example,dc=com",
             "scope": "subtree",
-            "filter": "(objectClass=person)"
-        }
+            "filter": "(objectClass=person)",
+        },
     ]
 
     for test_case in test_cases:
@@ -393,7 +402,7 @@ def diagnose_performance():
             filter_str=test_case["filter"],
             scope=test_case["scope"],
             attributes=["dn"],
-            size_limit=100
+            size_limit=100,
         )
 
         result = api.search_entries(search_request)
@@ -405,6 +414,7 @@ def diagnose_performance():
         else:
             print(f"{test_case['name']}: Failed - {result.error}")
 
+
 run(diagnose_performance())
 ```
 
@@ -415,16 +425,12 @@ run(diagnose_performance())
 ```python
 # ❌ Inefficient - searches entire directory
 search_request = FlextLdapEntities.SearchRequest(
-    base_dn="dc=example,dc=com",
-    filter_str="(uid=john.doe)",
-    scope="subtree"
+    base_dn="dc=example,dc=com", filter_str="(uid=john.doe)", scope="subtree"
 )
 
 # ✅ Efficient - searches specific branch
 search_request = FlextLdapEntities.SearchRequest(
-    base_dn="ou=users,dc=example,dc=com",
-    filter_str="(uid=john.doe)",
-    scope="onelevel"
+    base_dn="ou=users,dc=example,dc=com", filter_str="(uid=john.doe)", scope="onelevel"
 )
 ```
 
@@ -449,8 +455,8 @@ search_request = FlextLdapEntities.SearchRequest(
     filter_str="(objectClass=person)",
     scope="subtree",
     attributes=["uid", "cn"],  # Only needed attributes
-    size_limit=100,           # Reasonable limit
-    time_limit=10             # Prevent long-running queries
+    size_limit=100,  # Reasonable limit
+    time_limit=10,  # Prevent long-running queries
 )
 ```
 
@@ -482,7 +488,7 @@ config = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
     connection_timeout=10,
-    receive_timeout=30
+    receive_timeout=30,
 )
 ```
 
@@ -514,6 +520,7 @@ ______________________________________________________________________
 import os
 from Flext_ldap import FlextLdapSettings
 
+
 def diagnose_config():
     """Check configuration values."""
     config = FlextLdapSettings.from_env()
@@ -527,19 +534,20 @@ def diagnose_config():
 
     # Check environment variables
     env_vars = [
-        'FLEXT_LDAP_HOST',
-        'FLEXT_LDAP_PORT',
-        'FLEXT_LDAP_BIND_DN',
-        'FLEXT_LDAP_BIND_PASSWORD',
-        'FLEXT_LDAP_BASE_DN'
+        "FLEXT_LDAP_HOST",
+        "FLEXT_LDAP_PORT",
+        "FLEXT_LDAP_BIND_DN",
+        "FLEXT_LDAP_BIND_PASSWORD",
+        "FLEXT_LDAP_BASE_DN",
     ]
 
     print("\nEnvironment Variables:")
     for var in env_vars:
         value = os.getenv(var)
-        if var == 'FLEXT_LDAP_BIND_PASSWORD':
+        if var == "FLEXT_LDAP_BIND_PASSWORD":
             value = "***" if value else None
         print(f"  {var}: {value}")
+
 
 diagnose_config()
 ```
@@ -597,8 +605,9 @@ ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
 ```python
 # Check package installation
 import pkg_resources
+
 try:
-    version = pkg_resources.get_distribution('flext-ldap').version
+    version = pkg_resources.get_distribution("flext-ldap").version
     print(f"flext-ldap version: {version}")
 except pkg_resources.DistributionNotFound:
     print("flext-ldap not installed")
@@ -606,12 +615,14 @@ except pkg_resources.DistributionNotFound:
 # Check available imports
 try:
     from flext_ldap import get_flext_ldap_api
+
     print("✅ get_flext_ldap_api available")
 except ImportError as e:
     print(f"❌ Import error: {e}")
 
 try:
     from flext_ldap import FlextLdapEntities
+
     print("✅ FlextLdapEntities available")
 except ImportError as e:
     print(f"❌ Import error: {e}")
@@ -658,13 +669,14 @@ ______________________________________________________________________
 | Timeout        | `Operation timed out`       | Slow server or network issues   |
 | SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
 
-### FlextResult Error Handling
+### r Error Handling
 
 ```python
 from flext_ldap import get_flext_ldap_api
 
+
 def handle_errors_properly():
-    """Demonstrate proper error handling with FlextResult."""
+    """Demonstrate proper error handling with r."""
     api = get_flext_ldap_api()
 
     # Always check result status
@@ -685,6 +697,7 @@ def handle_errors_properly():
             print("Suggestion: Check LDAP server status")
         elif "No such object" in error_msg:
             print("Suggestion: Verify user exists in directory")
+
 
 run(handle_errors_properly())
 ```
@@ -711,7 +724,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -746,6 +759,7 @@ import cProfile
 import pstats
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
+
 def profile_ldap_operations():
     """Profile LDAP operations for performance analysis."""
     api = get_flext_ldap_api()
@@ -756,7 +770,7 @@ def profile_ldap_operations():
         filter_str="(objectClass=person)",
         scope="subtree",
         attributes=["uid", "cn", "mail"],
-        size_limit=100
+        size_limit=100,
     )
 
     # Perform multiple operations
@@ -764,6 +778,7 @@ def profile_ldap_operations():
         result = api.search_entries(search_request)
         if result.is_failure:
             print(f"Search failed: {result.error}")
+
 
 def run_profiling():
     profiler = cProfile.Profile()
@@ -773,8 +788,9 @@ def run_profiling():
 
     profiler.disable()
     stats = pstats.Stats(profiler)
-    stats.sort_stats('cumulative')
+    stats.sort_stats("cumulative")
     stats.print_stats(20)  # Top 20 functions
+
 
 # Run profiling
 run_profiling()
@@ -820,6 +836,7 @@ import sys
 import pkg_resources
 from Flext_ldap import FlextLdapSettings
 
+
 def collect_diagnostic_info():
     """Collect diagnostic information for bug reports."""
     print("=== FLEXT-LDAP Diagnostic Information ===")
@@ -829,7 +846,7 @@ def collect_diagnostic_info():
     print(f"Platform: {sys.platform}")
 
     # Package versions
-    packages = ['flext-ldap', 'flext-core', 'ldap3', 'pydantic']
+    packages = ["flext-ldap", "flext-core", "ldap3", "pydantic"]
     for package in packages:
         try:
             version = pkg_resources.get_distribution(package).version
@@ -847,6 +864,7 @@ def collect_diagnostic_info():
         print("Bind credentials: [CONFIGURED]")
     except Exception as e:
         print(f"Configuration error: {e}")
+
 
 collect_diagnostic_info()
 ```

@@ -1,5 +1,36 @@
 # ACL Management System
 
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Basic Usage](#basic-usage)
+  - [Converting ACL Formats](#converting-acl-formats)
+  - [Batch Conversion](#batch-conversion)
+- [ACL Format Examples](#acl-format-examples)
+  - [OpenLDAP Format](#openldap-format)
+  - [Oracle Directory Format](#oracle-directory-format)
+  - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds-apache-ds)
+- [Creating Custom ACLs](#creating-custom-acls)
+  - [Using the Unified Model](#using-the-unified-model)
+- [ACL Validation](#acl-validation)
+- [Migration Scenarios](#migration-scenarios)
+  - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
+  - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
+- [Advanced Features](#advanced-features)
+  - [ACL with Conditions](#acl-with-conditions)
+  - [Permission Mapping](#permission-mapping)
+  - [Subject Types](#subject-types)
+- [Error Handling](#error-handling)
+- [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
+- [Best Practices](#best-practices)
+- [API Reference](#api-reference)
+  - [FlextLdap ACL Methods](#flextldap-acl-methods)
+  - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 ## Table of Contents
 
 - [ACL Management System](#acl-management-system)
@@ -48,7 +79,7 @@
   - [Subject Types](#subject-types)
 - [Different subject types](#different-subject-types)
   - [Error Handling](#error-handling)
-- [All operations return FlextResult for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
+- [All operations return r for safe error handling](#all-operations-return-flextresult-for-safe-error-handling)
   - [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
 - [Example: Convert Oracle OUD ACLs to OpenLDAP format](#example-convert-oracle-oud-acls-to-openldap-format)
 - [Read Oracle ACLs from OUD](#read-oracle-acls-from-oud)
@@ -84,7 +115,7 @@ The ACL system follows Clean Architecture principles with:
 
 ```python
 from flext_ldap import FlextLdap
-from flext_ldap.acl import FlextLdapConstants
+from flext_ldap import FlextLdapConstants
 
 # Initialize API
 api = FlextLdap()
@@ -107,7 +138,7 @@ openldap_acl = "access to attrs=mail by users read"
 conversion_result = api.convert_acl(
     openldap_acl,
     source_format=FlextLdapConstants.AclFormat.OPENLDAP,
-    target_format=FlextLdapConstants.AclFormat.ORACLE
+    target_format=FlextLdapConstants.AclFormat.ORACLE,
 )
 
 if conversion_result.is_success:
@@ -123,13 +154,13 @@ if conversion_result.is_success:
 acl_list = [
     "access to attrs=cn by self write",
     "access to attrs=mail by users read",
-    "access to attrs=telephoneNumber by self write"
+    "access to attrs=telephoneNumber by self write",
 ]
 
 batch_result = api.batch_convert_acls(
     acl_list,
     source_format=FlextLdapConstants.AclFormat.OPENLDAP,
-    target_format=FlextLdapConstants.AclFormat.ACI
+    target_format=FlextLdapConstants.AclFormat.ACI,
 )
 
 if batch_result.is_success:
@@ -184,23 +215,21 @@ if batch_result.is_success:
 ### Using the Unified Model
 
 ```python
-from flext_ldap.acl import FlextLdapModels, FlextLdapConstants
+from flext_ldap import FlextLdapModels, FlextLdapConstants
 
 # Create ACL components
 target_result = FlextLdapModels.AclTarget.create(
     target_type=FlextLdapConstants.TargetType.ATTRIBUTES,
     attributes=["userPassword"],
-    dn_pattern="ou=users,dc=example,dc=com"
+    dn_pattern="ou=users,dc=example,dc=com",
 )
 
 subject_result = FlextLdapModels.AclSubject.create(
-    subject_type=FlextLdapConstants.SubjectType.SELF,
-    identifier="self"
+    subject_type=FlextLdapConstants.SubjectType.SELF, identifier="self"
 )
 
 permissions_result = FlextLdapModels.AclPermissions.create(
-    permissions=[FlextLdapConstants.Permission.WRITE],
-    grant_type="allow"
+    permissions=[FlextLdapConstants.Permission.WRITE], grant_type="allow"
 )
 
 # Create unified ACL
@@ -209,7 +238,7 @@ unified_result = FlextLdapModels.Acl.create(
     target=target_result.unwrap(),
     subject=subject_result.unwrap(),
     permissions=permissions_result.unwrap(),
-    priority=100
+    priority=100,
 )
 
 # Convert to any format
@@ -225,8 +254,7 @@ api.convert_to_aci(unified_result.unwrap())
 acl_string = "access to attrs=mail by self write"
 
 validation_result = api.validate_acl_syntax(
-    acl_string,
-    FlextLdapConstants.AclFormat.OPENLDAP
+    acl_string, FlextLdapConstants.AclFormat.OPENLDAP
 )
 
 if validation_result.is_success:
@@ -244,7 +272,7 @@ else:
 oracle_acls = [
     'access to attr=(cn, sn) by group="cn=users" (read)',
     'access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)',
-    'access to entry by user="cn=REDACTED_LDAP_BIND_PASSWORD" (read,write,delete)'
+    'access to entry by user="cn=REDACTED_LDAP_BIND_PASSWORD" (read,write,delete)',
 ]
 
 # Convert to OpenLDAP format
@@ -252,7 +280,7 @@ for oracle_acl in oracle_acls:
     result = api.convert_acl(
         oracle_acl,
         FlextLdapConstants.AclFormat.ORACLE,
-        FlextLdapConstants.AclFormat.OPENLDAP
+        FlextLdapConstants.AclFormat.OPENLDAP,
     )
 
     if result.is_success:
@@ -268,15 +296,13 @@ for oracle_acl in oracle_acls:
 # Parse OpenLDAP slapd.conf ACLs
 openldap_acls = [
     "access to attrs=userPassword by self write by anonymous auth",
-    'access to dn.exact="ou=users,dc=example,dc=com" by users read'
+    'access to dn.exact="ou=users,dc=example,dc=com" by users read',
 ]
 
 # Convert to ACI format for 389 DS
 for acl in openldap_acls:
     result = api.convert_acl(
-        acl,
-        FlextLdapConstants.AclFormat.OPENLDAP,
-        FlextLdapConstants.AclFormat.ACI
+        acl, FlextLdapConstants.AclFormat.OPENLDAP, FlextLdapConstants.AclFormat.ACI
     )
 
     if result.is_success:
@@ -298,8 +324,8 @@ unified_result = FlextLdapModels.Acl.create(
     conditions={
         "time": "09:00-17:00",
         "ip": "192.168.1.0/24",
-        "day_of_week": "Mon-Fri"
-    }
+        "day_of_week": "Mon-Fri",
+    },
 )
 ```
 
@@ -307,32 +333,32 @@ unified_result = FlextLdapModels.Acl.create(
 
 ```python
 # Standard permissions across formats
-FlextLdapConstants.Permission.READ      # Read access
-FlextLdapConstants.Permission.WRITE     # Write access
-FlextLdapConstants.Permission.ADD       # Add entries
-FlextLdapConstants.Permission.DELETE    # Delete entries
-FlextLdapConstants.Permission.SEARCH    # Search directory
-FlextLdapConstants.Permission.COMPARE   # Compare attributes
-FlextLdapConstants.Permission.AUTH      # Authenticate
+FlextLdapConstants.Permission.READ  # Read access
+FlextLdapConstants.Permission.WRITE  # Write access
+FlextLdapConstants.Permission.ADD  # Add entries
+FlextLdapConstants.Permission.DELETE  # Delete entries
+FlextLdapConstants.Permission.SEARCH  # Search directory
+FlextLdapConstants.Permission.COMPARE  # Compare attributes
+FlextLdapConstants.Permission.AUTH  # Authenticate
 ```
 
 ### Subject Types
 
 ```python
 # Different subject types
-FlextLdapConstants.SubjectType.SELF         # Self (user modifying own entry)
-FlextLdapConstants.SubjectType.USER         # Specific user
-FlextLdapConstants.SubjectType.GROUP        # Group membership
-FlextLdapConstants.SubjectType.DN           # Distinguished Name
-FlextLdapConstants.SubjectType.ANONYMOUS    # Anonymous users
-FlextLdapConstants.SubjectType.AUTHENTICATED # Authenticated users
-FlextLdapConstants.SubjectType.ANYONE       # Anyone
+FlextLdapConstants.SubjectType.SELF  # Self (user modifying own entry)
+FlextLdapConstants.SubjectType.USER  # Specific user
+FlextLdapConstants.SubjectType.GROUP  # Group membership
+FlextLdapConstants.SubjectType.DN  # Distinguished Name
+FlextLdapConstants.SubjectType.ANONYMOUS  # Anonymous users
+FlextLdapConstants.SubjectType.AUTHENTICATED  # Authenticated users
+FlextLdapConstants.SubjectType.ANYONE  # Anyone
 ```
 
 ## Error Handling
 
 ```python
-# All operations return FlextResult for safe error handling
+# All operations return r for safe error handling
 result = api.parse(acl_string, format_type)
 
 if result.is_failure:
@@ -348,7 +374,7 @@ else:
 ```python
 # Example: Convert Oracle OUD ACLs to OpenLDAP format
 from flext_ldap import FlextLdap
-from flext_ldap.acl import FlextLdapConstants
+from flext_ldap import FlextLdapConstants
 
 api = FlextLdap()
 
@@ -359,9 +385,7 @@ oracle_acls = read_oracle_acls()  # Your existing function
 converted_acls = []
 for acl in oracle_acls:
     result = api.convert_acl(
-        acl,
-        FlextLdapConstants.AclFormat.ORACLE,
-        FlextLdapConstants.AclFormat.OPENLDAP
+        acl, FlextLdapConstants.AclFormat.ORACLE, FlextLdapConstants.AclFormat.OPENLDAP
     )
 
     if result.is_success:

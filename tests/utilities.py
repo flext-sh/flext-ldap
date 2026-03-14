@@ -13,8 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.utilities import FlextLdapUtilities
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities
+
+from flext_ldap import FlextLdapUtilities
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -32,6 +33,4 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
 
 __all__ = ["TestsFlextLdapUtilities", "u"]
-
-# Alias for simplified usage
 u = TestsFlextLdapUtilities

@@ -22,18 +22,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
 from flext_tests import tm
 
-from flext_ldap import m
-from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.settings import FlextLdapSettings
-from tests import c
+from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings, m
+
+from .. import c
 
 pytestmark = pytest.mark.unit
 
@@ -48,7 +45,6 @@ class TestsFlextLdapOperations:
     All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    # Error detection scenarios using mapping for DRY
     _ERROR_DETECTION_SCENARIOS: ClassVar[dict[str, bool]] = {
         "Entry already exists": True,
         "already exists": True,
@@ -57,8 +53,6 @@ class TestsFlextLdapOperations:
         "Connection failed": False,
         "": False,
     }
-
-    # Entry comparison scenarios
     _ENTRY_SCENARIOS: ClassVar[dict[str, dict[str, list[str]]]] = {
         "identical": {"cn": ["test"], "sn": ["User"]},
         "different": {"cn": ["test"], "sn": ["Different"]},
@@ -67,13 +61,11 @@ class TestsFlextLdapOperations:
     @classmethod
     def _create_connection(cls) -> FlextLdapConnection:
         """Factory method for creating connection instances."""
-        # but services pass complex objects via __init__ which are validated at runtime
         return FlextLdapConnection(config=FlextLdapSettings())
 
     @classmethod
     def _create_operations(
-        cls,
-        connection: FlextLdapConnection | None = None,
+        cls, connection: FlextLdapConnection | None = None
     ) -> FlextLdapOperations:
         """Factory method for creating operations service instances."""
         conn = connection or cls._create_connection()
@@ -82,8 +74,7 @@ class TestsFlextLdapOperations:
     def test_init_without_connection_raises_type_error(self) -> None:
         """Test that __init__ raises TypeError when connection is not provided."""
         cls = __import__(
-            "flext_ldap.services.operations",
-            fromlist=["FlextLdapOperations"],
+            "flext_ldap.services.operations", fromlist=["FlextLdapOperations"]
         ).FlextLdapOperations
         with pytest.raises(TypeError, match="missing 1 required positional argument"):
             cls()
@@ -117,16 +108,14 @@ class TestsFlextLdapOperations:
         [(msg, expected) for msg, expected in _ERROR_DETECTION_SCENARIOS.items()],
     )
     def test_is_already_exists_error_detection(
-        self,
-        error_message: str,
-        expected: bool,
+        self, error_message: str, expected: bool
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
         tm.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
-        """Test execute method returns a FlextResult."""
+        """Test execute method returns a r."""
         operations = self._create_operations()
         result = operations.execute()
         tm.fail(result)
@@ -134,7 +123,6 @@ class TestsFlextLdapOperations:
     def test_search_method_exists(self) -> None:
         """Test that search method exists and can be called."""
         operations = self._create_operations()
-        # Use constants directly from TestsFlextLdapConstants.RFC
         rfc_constants = c.RFC
         search_options = m.Ldap.SearchOptions(
             base_dn=rfc_constants.DEFAULT_BASE_DN,

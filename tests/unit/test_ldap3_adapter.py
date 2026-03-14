@@ -26,8 +26,8 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
+from flext_ldap import m
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
-from flext_ldap.models import m
 
 pytestmark = pytest.mark.unit
 
@@ -46,11 +46,7 @@ class TestsFlextLdap3Adapter:
     def _create_connection_config(cls) -> m.Ldap.ConnectionConfig:
         """Factory method for creating connection config instances."""
         return m.Ldap.ConnectionConfig(
-            host="localhost",
-            port=389,
-            use_ssl=False,
-            use_tls=False,
-            timeout=5,
+            host="localhost", port=389, use_ssl=False, use_tls=False, timeout=5
         )
 
     def test_adapter_initialization(self) -> None:
@@ -67,57 +63,45 @@ class TestsFlextLdap3Adapter:
     def test_connection_manager_create_server_with_ssl(self) -> None:
         """Test ConnectionManager.create_server with SSL."""
         config = m.Ldap.ConnectionConfig(
-            host="localhost",
-            port=636,
-            use_ssl=True,
-            use_tls=False,
-            timeout=5,
+            host="localhost", port=636, use_ssl=True, use_tls=False, timeout=5
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         tm.that(server, none=False)
-        tm.that(server.host, eq="localhost")
-        tm.that(server.port, eq=636)
+        tm.that(getattr(server, "host", ""), eq="localhost")
+        tm.that(getattr(server, "port", 0), eq=636)
 
     def test_connection_manager_create_server_without_ssl(self) -> None:
         """Test ConnectionManager.create_server without SSL."""
         config = self._create_connection_config()
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         tm.that(server, none=False)
-        tm.that(server.host, eq="localhost")
-        tm.that(server.port, eq=389)
+        tm.that(getattr(server, "host", ""), eq="localhost")
+        tm.that(getattr(server, "port", 0), eq=389)
 
     def test_connection_manager_create_server_with_tls(self) -> None:
         """Test ConnectionManager.create_server with TLS."""
         config = m.Ldap.ConnectionConfig(
-            host="localhost",
-            port=389,
-            use_ssl=False,
-            use_tls=True,
-            timeout=5,
+            host="localhost", port=389, use_ssl=False, use_tls=True, timeout=5
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         tm.that(server, none=False)
-        tm.that(server.host, eq="localhost")
-        tm.that(server.port, eq=389)
+        tm.that(getattr(server, "host", ""), eq="localhost")
+        tm.that(getattr(server, "port", 0), eq=389)
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
-        # Single call validates both keys and types
-        tm.that(
-            Ldap3Adapter.__dict__,
-            keys=["ConnectionManager", "ResultConverter"],
-        )
-        tm.that(Ldap3Adapter.ConnectionManager, is_=type, none=False)
-        tm.that(Ldap3Adapter.ResultConverter, is_=type, none=False)
+        assert "ConnectionManager" in Ldap3Adapter.__dict__
+        assert "ResultConverter" in Ldap3Adapter.__dict__
+        assert isinstance(Ldap3Adapter.ConnectionManager, type)
+        assert isinstance(Ldap3Adapter.ResultConverter, type)
 
     def test_connection_manager_static_methods_exist(self) -> None:
         """Test that static methods exist on ConnectionManager."""
-        tm.that(dict(Ldap3Adapter.ConnectionManager.__dict__), keys=["create_server"])
+        assert "create_server" in Ldap3Adapter.ConnectionManager.__dict__
         tm.that(callable(Ldap3Adapter.ConnectionManager.create_server), eq=True)
 
     def test_adapter_methods_exist(self) -> None:
         """Test that all expected methods exist on adapter."""
         adapter = Ldap3Adapter()
-        # Validate method exists and is callable
         tm.that(hasattr(adapter, "execute"), eq=True)
         tm.that(callable(adapter.execute), eq=True)

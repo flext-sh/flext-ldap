@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.models import FlextLdapModels
-from flext_tests.models import FlextTestsModels
+from flext_tests import FlextTestsModels
+
+from flext_ldap import FlextLdapModels
 
 
 class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
@@ -27,7 +28,7 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
     - m.Ldap.* - Production domain models
     """
 
-    class Tests:
+    class Tests(FlextTestsModels.Tests):
         """Test fixture models namespace.
 
         Convenience aliases for test-only shortcuts.

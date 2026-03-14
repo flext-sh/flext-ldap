@@ -1,7 +1,6 @@
 # Documentation Maintenance System
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [📋 System Overview](#system-overview)
 - [🏗️ Architecture](#architecture)
@@ -49,7 +48,6 @@
   - [Documentation](#documentation)
   - [Community](#community)
   - [Professional Services](#professional-services)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -562,6 +560,7 @@ Extend the system with custom validation:
 # docs/maintenance/custom_validators.py
 from docs.maintenance.base import BaseValidator
 
+
 class CustomValidator(BaseValidator):
     def validate_technical_accuracy(self, content, metadata):
         """Custom validation for technical accuracy."""
@@ -584,6 +583,7 @@ class GitBookIntegration:
     def sync_content(self):
         """Sync with GitBook."""
         pass
+
 
 class ReadMeIntegration:
     def update_api_docs(self):

@@ -15,9 +15,10 @@ from __future__ import annotations
 
 from typing import ClassVar, Final
 
-from flext_ldap.constants import FlextLdapConstants
-from flext_ldif.constants import FlextLdifConstants
-from flext_tests.constants import FlextTestsConstants
+from flext_ldif import FlextLdifConstants
+from flext_tests import FlextTestsConstants
+
+from flext_ldap import FlextLdapConstants
 
 
 class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
@@ -49,10 +50,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
         Test-specific mock constants for test fixtures and mocks.
         """
 
-        MOCK_SERVER_RESPONSE: Final[dict[str, str]] = {
-            "status": "ok",
-            "code": "200",
-        }
+        MOCK_SERVER_RESPONSE: Final[dict[str, str]] = {"status": "ok", "code": "200"}
 
     class Servers:
         """Server-specific test constants (para quirks).
@@ -73,32 +71,20 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     class RFC:
         """RFC server test constants - flat namespace for backward compatibility."""
 
-        # Server type - use production StrEnum from flext-ldif directly
-        # Use TestsFlextLdapConstants.Ldif.ServerTypes.RFC.value - no aliases
-
-        # LDAP connection defaults
         DEFAULT_HOST: Final[str] = "localhost"
         DEFAULT_PORT: Final[int] = 3390
         DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
         DEFAULT_BIND_DN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         DEFAULT_BIND_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
-
-        # Search defaults - use production StrEnum directly
         DEFAULT_FILTER: Final[str] = "(objectClass=*)"
-        # Use TestsFlextLdapConstants.Ldap.SearchScope.SUBTREE.value - no aliases
         DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
-
-        # Test entry defaults
         TEST_USER_CN: Final[str] = "testuser"
         TEST_USER_DN: Final[str] = f"uid={TEST_USER_CN},ou=people,{DEFAULT_BASE_DN}"
         TEST_GROUP_CN: Final[str] = "testgroup"
         TEST_GROUP_DN: Final[str] = f"cn={TEST_GROUP_CN},ou=groups,{DEFAULT_BASE_DN}"
-
-        # Organizational Units
         OU_PEOPLE: Final[str] = "ou=people"
         OU_GROUPS: Final[str] = "ou=groups"
         OU_SYSTEM: Final[str] = "ou=system"
-
         OU_PEOPLE_DN: Final[str] = f"{OU_PEOPLE},{DEFAULT_BASE_DN}"
         OU_GROUPS_DN: Final[str] = f"{OU_GROUPS},{DEFAULT_BASE_DN}"
         OU_SYSTEM_DN: Final[str] = f"{OU_SYSTEM},{DEFAULT_BASE_DN}"
@@ -106,40 +92,27 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     class General:
         """General test constants - flat namespace for backward compatibility."""
 
-        # Common OIDs
         OID_CN: Final[str] = "2.5.4.3"
         OID_SN: Final[str] = "2.5.4.4"
         OID_OBJECTCLASS: Final[str] = "2.5.4.0"
         OID_PERSON: Final[str] = "2.5.6.6"
-
-        # Common names
         NAME_CN: Final[str] = "cn"
         NAME_SN: Final[str] = "sn"
         NAME_OBJECTCLASS: Final[str] = "objectClass"
         NAME_PERSON: Final[str] = "person"
-
-        # Common DNs
         DN_TEST: Final[str] = "cn=test,dc=example,dc=com"
         DN_EXAMPLE: Final[str] = "dc=example,dc=com"
         DN_SCHEMA: Final[str] = "cn=schema"
-
-        # Common syntax OIDs
         SYNTAX_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.115.121.1.15"
         SYNTAX_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
         SYNTAX_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
-
-        # Test values
         VALUE_TEST: Final[str] = "test"
         VALUE_USER: Final[str] = "user"
         VALUE_USER1: Final[str] = "user1"
         VALUE_USER2: Final[str] = "user2"
-
-        # Error messages
         ERROR_MISSING_OID: Final[str] = "Missing OID"
         ERROR_INVALID_FORMAT: Final[str] = "Invalid format"
         ERROR_PARSE_FAILED: Final[str] = "Parse failed"
-
-        # Version validation constants
         VERSION_MIN_LENGTH: Final[int] = 5
         VERSION_MAX_LENGTH: Final[int] = 50
         VERSION_MIN_PARTS: Final[int] = 2
@@ -149,15 +122,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     class TestConstants:
         """Hierarchical test constants for flext-ldap tests with domain-based organization."""
 
-        # Top-level shortcuts for common constants (reference RFC class directly)
         DEFAULT_BASE_DN: ClassVar[str] = "dc=flext,dc=local"
         DEFAULT_HOST: ClassVar[str] = "localhost"
         DEFAULT_PORT: ClassVar[int] = 3390
-        DEFAULT_BIND_DN: ClassVar[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+        DEFAULT_BIND_DN: ClassVar[str] = (
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+        )
         DEFAULT_BIND_PASSWORD: ClassVar[str] = "REDACTED_LDAP_BIND_PASSWORD123"
         DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
-        # Use production StrEnum values directly - no aliases
-        # Access via TestsFlextLdapConstants.Ldap.SearchScope.SUBTREE.value
         DEFAULT_ATTRIBUTES: ClassVar[tuple[str, ...]] = ("objectClass", "cn")
         TEST_USER_CN: ClassVar[str] = "testuser"
         TEST_USER_DN: ClassVar[str] = "uid=testuser,ou=people,dc=flext,dc=local"
@@ -170,11 +142,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             Reuses production StrEnum values from FlextLdifConstants.ServerTypes.
             """
 
-            # Use production StrEnum values directly - no aliases
-            # Access via TestsFlextLdapConstants.Ldif.ServerTypes.RFC.value
-
-            # Valid server types for testing (only those registered in quirks)
-            # Use FlextLdifConstants.Ldif.ServerTypes.RFC.value directly - no aliases
             VALID = (FlextLdifConstants.Ldif.ServerTypes.RFC.value,)
 
         class Connection:
@@ -184,19 +151,13 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             DEFAULT_PORT = 3390
             DEFAULT_BIND_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
             DEFAULT_BIND_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
-
-            # SSL/TLS configurations
-            SSL_ENABLED = True
-            SSL_DISABLED = False
-            TLS_ENABLED = True
-            TLS_DISABLED = False
-
-            # Connection timeouts
+            SSL_ENABLED: Final[bool] = True
+            SSL_DISABLED: Final[bool] = False
+            TLS_ENABLED: Final[bool] = True
+            TLS_DISABLED: Final[bool] = False
             FAST_TIMEOUT = 5
             NORMAL_TIMEOUT = 30
             SLOW_TIMEOUT = 300
-
-            # Connection service test constants
             INVALID_HOST: ClassVar[str] = "invalid.host"
             TEST_BIND_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
 
@@ -205,8 +166,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
             BASE_DN = "dc=flext,dc=local"
             FILTER_ALL = "(objectClass=*)"
-            # Use production StrEnum values directly - no aliases
-            # Access via TestsFlextLdapConstants.Ldap.SearchScope.SUBTREE.value
 
             class OrganizationalUnits:
                 """Organizational unit constants."""
@@ -214,7 +173,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 PEOPLE = "ou=people"
                 GROUPS = "ou=groups"
                 SYSTEM = "ou=system"
-
                 PEOPLE_DN = "ou=people,dc=flext,dc=local"
                 GROUPS_DN = "ou=groups,dc=flext,dc=local"
                 SYSTEM_DN = "ou=system,dc=flext,dc=local"
@@ -255,13 +213,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             SEARCH = "search"
             BIND = "bind"
             UNBIND = "unbind"
-
-            # Operation result codes
             SUCCESS = 0
             FAILURE = 1
             PARTIAL_SUCCESS = 2
-
-            # Operations service test constants
             TEST_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
             TEST_DN_1: ClassVar[str] = "cn=test1,dc=example,dc=com"
             TEST_DN_2: ClassVar[str] = "cn=test2,dc=example,dc=com"
@@ -308,12 +262,5 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             FAST_TIMEOUT: ClassVar[int] = 1
 
 
-# Short aliases per FLEXT convention
-tc = TestsFlextLdapConstants  # Primary test constants alias
-c = TestsFlextLdapConstants  # Alternative alias for compatibility
-
-__all__ = [
-    "TestsFlextLdapConstants",
-    "c",
-    "tc",
-]
+c = TestsFlextLdapConstants
+__all__ = ["TestsFlextLdapConstants", "c"]

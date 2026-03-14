@@ -8,7 +8,7 @@ connection so callers interact with a single, typed entry point.
 Business Rules:
     - Connection binding uses ldap3 library through Ldap3Adapter abstraction
     - Server type detection is optional and non-blocking after successful bind
-    - Retry logic uses u.Reliability.retry() for transient failures
+    - Retry logic uses u.retry() for transient failures
     - Parser defaults to FlextLdif().parser instance
     - Connection state is tracked via is_connected property
 
@@ -18,7 +18,7 @@ Audit Implications:
     - Detection failures are logged at debug level (non-critical)
 
 Architecture Notes:
-    - Uses Railway-Oriented Programming pattern (FlextResult) for error handling
+    - Uses Railway-Oriented Programming pattern (r) for error handling
     - Adapter pattern encapsulates ldap3 protocol details
     - Single responsibility: connection lifecycle only (no CRUD operations)
     - Pydantic v2 frozen=False allows mutable connection state
@@ -26,20 +26,17 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from flext_core import FlextSettings, r
+from typing import override
+
+from flext_core import FlextService, FlextSettings, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
+from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, u
 from flext_ldap.adapters.ldap3 import Ldap3Adapter
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.utilities import u
 
 
-class FlextLdapConnection(s[bool]):
+class FlextLdapConnection(FlextService[bool]):
     """Manage the LDAP connection lifecycle with typed ergonomics.
 
     The service wraps ``Ldap3Adapter`` to create/bind connections, optionally
@@ -84,14 +81,8 @@ class FlextLdapConnection(s[bool]):
 
     """
 
-    model_config = ConfigDict(
-        frozen=False,  # Service needs mutable state for connection lifecycle
-        extra="allow",
-        arbitrary_types_allowed=True,
-    )
-
+    model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
     _adapter: Ldap3Adapter
-    # Use class attribute (not PrivateAttr) to match FlextService pattern
     _config: FlextSettings | None = None
 
     def __init__(
@@ -127,26 +118,70 @@ class FlextLdapConnection(s[bool]):
 
         """
         super().__init__()
-        # Create config instance if not provided
         resolved_config: FlextLdapSettings = (
             config if config is not None else FlextLdapSettings()
         )
-        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
         self._config = resolved_config
-        # Use default parser if not provided
         resolved_parser: FlextLdifParser = (
             parser if parser is not None else FlextLdif().parser
         )
-        # Create adapter directly with parser as explicit parameter
         self._adapter = Ldap3Adapter(parser=resolved_parser)
+
+    @property
+    def adapter(self) -> Ldap3Adapter:
+        """Get the underlying ldap3 adapter for direct protocol access.
+
+        Exposes the adapter for advanced use cases requiring direct ldap3
+        operations not exposed through the service's public methods.
+
+        Business Rules:
+            - Returns the same adapter instance used by service methods
+            - Modifications to adapter state affect service behavior
+            - Caller assumes responsibility for connection state consistency
+            - Primarily used by FlextLdapOperations for CRUD operations
+
+        Audit Implications:
+            - Direct adapter access bypasses service-level logging
+            - Operations performed via adapter are still logged by adapter itself
+            - Useful for testing and advanced integration scenarios
+
+        Returns:
+            Ldap3Adapter: The adapter instance managing the ldap3 connection.
+
+        """
+        return self._adapter
+
+    @property
+    def is_connected(self) -> bool:
+        """Check if service has an active, bound LDAP connection.
+
+        Queries the adapter's connection state to determine if operations
+        can be performed. This property does not verify server reachability.
+
+        Business Rules:
+            - Delegates to adapter's is_connected property (no additional logic)
+            - Returns cached state; does not perform network round-trip
+            - State reflects last known connection status (may be stale)
+            - Use before operations to avoid unnecessary error handling
+
+        Audit Implications:
+            - Read-only property with no logging or side effects
+            - Used by ``execute()`` health check for service status reporting
+
+        Returns:
+            bool: ``True`` if connection is established and bound; ``False``
+            if disconnected or never connected.
+
+        """
+        return self._adapter.is_connected
 
     def connect(
         self,
         connection_config: m.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
+        max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
+        retry_delay: float = c.Ldap.ConnectionDefaults.DEFAULT_RETRY_DELAY,
         **_kwargs: str | float | bool | None,
     ) -> r[bool]:
         """Establish an LDAP connection with optional automatic retry.
@@ -186,9 +221,8 @@ class FlextLdapConnection(s[bool]):
             message for troubleshooting.
 
         """
-        # Modern Python 3.13: Use ternary expression for concise retry logic
         result: r[bool] = (
-            u.Reliability.retry(
+            u.retry(
                 operation=lambda: self._adapter.connect(connection_config),
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,
@@ -196,12 +230,9 @@ class FlextLdapConnection(s[bool]):
             if auto_retry
             else self._adapter.connect(connection_config)
         )
-        # Both retry and connect return r[bool], no type narrowing needed
-
         if result.is_success:
             self._detect_server_type_optional()
             return r[bool].ok(value=True)
-        # Type narrowing: result is r[bool] at this point
         return result
 
     def disconnect(self) -> None:
@@ -224,53 +255,39 @@ class FlextLdapConnection(s[bool]):
         """
         self._adapter.disconnect()
 
-    @property
-    def is_connected(self) -> bool:
-        """Check if service has an active, bound LDAP connection.
+    @override
+    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
+        """Execute service health check for FlextService pattern compliance.
 
-        Queries the adapter's connection state to determine if operations
-        can be performed. This property does not verify server reachability.
-
-        Business Rules:
-            - Delegates to adapter's is_connected property (no additional logic)
-            - Returns cached state; does not perform network round-trip
-            - State reflects last known connection status (may be stale)
-            - Use before operations to avoid unnecessary error handling
-
-        Audit Implications:
-            - Read-only property with no logging or side effects
-            - Used by ``execute()`` health check for service status reporting
-
-        Returns:
-            bool: ``True`` if connection is established and bound; ``False``
-            if disconnected or never connected.
-
-        """
-        return self._adapter.is_connected
-
-    @property
-    def adapter(self) -> Ldap3Adapter:
-        """Get the underlying ldap3 adapter for direct protocol access.
-
-        Exposes the adapter for advanced use cases requiring direct ldap3
-        operations not exposed through the service's public methods.
+        Implements the ``FlextService.execute()`` contract to report service
+        health status. Returns success if connected, failure with standard
+        error message if not.
 
         Business Rules:
-            - Returns the same adapter instance used by service methods
-            - Modifications to adapter state affect service behavior
-            - Caller assumes responsibility for connection state consistency
-            - Primarily used by FlextLdapOperations for CRUD operations
+            - Implements FlextService abstract method for service orchestration
+            - Health is determined solely by ``is_connected`` property
+            - Does not attempt reconnection or network round-trip
+            - Error message uses ``c.Ldap.ErrorStrings.NOT_CONNECTED``
+              for consistent error handling across the ecosystem
+            - ``_kwargs`` absorbs extra arguments for interface compatibility
 
         Audit Implications:
-            - Direct adapter access bypasses service-level logging
-            - Operations performed via adapter are still logged by adapter itself
-            - Useful for testing and advanced integration scenarios
+            - Can be called periodically by service orchestrators for monitoring
+            - Failure result contains NOT_CONNECTED error for diagnostics
+            - No logging performed (lightweight health check)
+
+        Args:
+            **_kwargs: Absorbed keyword arguments for interface compatibility.
+                Not used by this implementation.
 
         Returns:
-            Ldap3Adapter: The adapter instance managing the ldap3 connection.
+            r[bool]: ``ok(True)`` if connection is active and bound;
+            ``fail(NOT_CONNECTED)`` if disconnected or never connected.
 
         """
-        return self._adapter
+        if self.is_connected:
+            return r[bool].ok(value=True)
+        return r[bool].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))
 
     def _detect_server_type_optional(self) -> None:
         """Attempt automatic server type detection after successful connection.
@@ -301,10 +318,8 @@ class FlextLdapConnection(s[bool]):
         connection = self._adapter.connection
         if not connection:
             return
-
         detector = FlextLdapServerDetector()
         detection_result: r[str] = detector.detect_from_connection(connection)
-
         if detection_result.is_success:
             self.logger.info(
                 "Server type detected automatically",
@@ -317,37 +332,3 @@ class FlextLdapConnection(s[bool]):
                 operation=c.Ldap.LdapOperationNames.CONNECT,
                 error=str(detection_result.error) if detection_result.error else "",
             )
-
-    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
-        """Execute service health check for FlextService pattern compliance.
-
-        Implements the ``FlextService.execute()`` contract to report service
-        health status. Returns success if connected, failure with standard
-        error message if not.
-
-        Business Rules:
-            - Implements FlextService abstract method for service orchestration
-            - Health is determined solely by ``is_connected`` property
-            - Does not attempt reconnection or network round-trip
-            - Error message uses ``c.Ldap.ErrorStrings.NOT_CONNECTED``
-              for consistent error handling across the ecosystem
-            - ``_kwargs`` absorbs extra arguments for interface compatibility
-
-        Audit Implications:
-            - Can be called periodically by service orchestrators for monitoring
-            - Failure result contains NOT_CONNECTED error for diagnostics
-            - No logging performed (lightweight health check)
-
-        Args:
-            **_kwargs: Absorbed keyword arguments for interface compatibility.
-                Not used by this implementation.
-
-        Returns:
-            r[bool]: ``ok(True)`` if connection is active and bound;
-            ``fail(NOT_CONNECTED)`` if disconnected or never connected.
-
-        """
-        # Create results
-        if self.is_connected:
-            return r[bool].ok(value=True)
-        return r[bool].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))

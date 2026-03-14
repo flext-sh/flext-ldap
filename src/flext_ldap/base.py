@@ -17,20 +17,41 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from typing import override
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from types import ModuleType
+from typing import TypeVar, override
 
-from flext_core import FlextService
-from flext_core.protocols import p
+from flext_core import FlextService, p, t as core_t
+from pydantic_settings import BaseSettings
 
-from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.typings import FlextLdapDomainResultT as TDomainResult
+from flext_ldap import FlextLdapSettings
+from flext_ldap.typings import t
+
+# TypeVar for domain result type
+TDomainResult = TypeVar("TDomainResult", bound=t.Container)
+
+
+@dataclass
+class _LdapRuntimeBootstrapOptions:
+    config_type: type[BaseSettings] | None = FlextLdapSettings
+    config_overrides: Mapping[str, core_t.Scalar] | None = None
+    context: p.Context | None = None
+    subproject: str | None = None
+    services: Mapping[str, core_t.RegisterableService] | None = None
+    factories: Mapping[str, core_t.FactoryCallable] | None = None
+    resources: Mapping[str, core_t.ResourceCallable] | None = None
+    container_overrides: Mapping[str, core_t.Scalar] | None = None
+    wire_modules: Sequence[ModuleType] | None = None
+    wire_packages: Sequence[str] | None = None
+    wire_classes: Sequence[type[object]] | None = None
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
     """Base class for all flext-ldap services with typed config access.
 
     Inherits config property from x which provides:
-    - self.config → FlextSettings.get_global_instance()
+    - self.config → FlextSettings.get_global()
     - self.config.ldap → FlextLdapSettings (via @FlextSettings.auto_register)
     - self.config.ldif → FlextLdifSettings (via @FlextSettings.auto_register)
 
@@ -58,10 +79,8 @@ class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
             Runtime bootstrap options with config_type set to FlextLdapSettings
 
         """
-        return p.RuntimeBootstrapOptions(config_type=FlextLdapSettings)
+        return _LdapRuntimeBootstrapOptions()
 
 
-# Convenience alias for common usage pattern - exported for domain usage
 s = FlextLdapServiceBase
-
 __all__ = ["FlextLdapServiceBase", "s"]

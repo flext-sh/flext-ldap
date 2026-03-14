@@ -22,17 +22,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import ClassVar
 
 import pytest
-from flext_core import t as t_core
 from flext_tests import tm
 
-from tests import u
+from flext_ldap import t
 
-# FlexibleValue is a type alias in FlextTypes
-FlexibleValue = t_core.FlexibleValue
+from .. import u
 
 pytestmark = pytest.mark.unit
 
@@ -47,14 +45,12 @@ class TestsFlextLdapUtilities:
     All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    # Test data scenarios
     _STRING_VALUES: ClassVar[dict[str, str]] = {
         "simple": "test",
         "empty": "",
         "whitespace": "  test  ",
         "unicode": "café",
     }
-
     _LIST_VALUES: ClassVar[dict[str, object]] = {
         "list_str": ["a", "b", "c"],
         "list_mixed": ["a", 1, True],
@@ -120,22 +116,20 @@ class TestsFlextLdapUtilities:
 
     def test_find_callable_with_mapping(self) -> None:
         """Test find_callable with Mapping (covariant pattern)."""
-        handlers: dict[str, Callable[[], FlexibleValue]] = {
+        handlers: dict[str, Callable[[], t.Scalar]] = {
             "handler1": lambda: "value1",
             "handler2": lambda: False,
         }
-        # find_callable returns key of first truthy callable result
         result = u.Ldap.find_callable(handlers)
         tm.that(result, eq="handler1")
 
     def test_find_callable_not_found(self) -> None:
         """Test find_callable when no handler returns truthy."""
-        handlers: dict[str, Callable[[], FlexibleValue]] = {
+        handlers: dict[str, Callable[[], t.Scalar]] = {
             "handler1": lambda: False,
             "handler2": lambda: None,
             "handler3": lambda: "",
         }
-        # All handlers return falsy values
         result = u.Ldap.find_callable(handlers)
         tm.that(result, none=True)
 

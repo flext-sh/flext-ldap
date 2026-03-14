@@ -1,7 +1,6 @@
 # Server-Specific Operations Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [## 🎯 Overview](#overview)
   - [**Available Implementations**](#available-implementations)
@@ -52,7 +51,6 @@
   - [**Common Issues**](#common-issues)
 - [## 📚 Additional Resources](#additional-resources)
 - [**Last Updated**: 2025-01-08](#last-updated-2025-01-08)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -187,19 +185,19 @@ Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn
 
 ```python
 # Import specific server operations
-from flext_ldap.servers import (
-    BaseServerOperations,          # Abstract base
-    OpenLDAP2Operations,            # OpenLDAP 2.x
-    OpenLDAP1Operations,            # OpenLDAP 1.x (legacy)
-    OracleOIDOperations,            # Oracle Internet Directory
-    OracleOUDOperations,            # Oracle Unified Directory
-    ActiveDirectoryOperations,      # Active Directory (stub)
-    GenericServerOperations,        # Generic fallback
+from flext_ldap import (
+    BaseServerOperations,  # Abstract base
+    OpenLDAP2Operations,  # OpenLDAP 2.x
+    OpenLDAP1Operations,  # OpenLDAP 1.x (legacy)
+    OracleOIDOperations,  # Oracle Internet Directory
+    OracleOUDOperations,  # Oracle Unified Directory
+    ActiveDirectoryOperations,  # Active Directory (stub)
+    GenericServerOperations,  # Generic fallback
 )
 
 # Import supporting components
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldif import FlextLdifModels
 ```
 
@@ -218,7 +216,7 @@ from flext_ldif import FlextLdifModels
 ### **Basic Usage**
 
 ```python
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import OpenLDAP2Operations
 import ldap3
 
 # Initialize operations
@@ -226,10 +224,10 @@ ops = OpenLDAP2Operations()
 
 # Connection
 connection = ldap3.Connection(
-    ldap3.Server('ldap://openldap-server:389'),
-    user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-    password='password',
-    auto_bind=True
+    ldap3.Server("ldap://openldap-server:389"),
+    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    password="password",
+    auto_bind=True,
 )
 
 # Schema discovery
@@ -246,10 +244,7 @@ if schema_result.is_success:
 
 ```python
 # Get ACLs from cn=config entry
-acl_result = ops.get_acls(
-    connection,
-    dn='olcDatabase={1}mdb,cn=config'
-)
+acl_result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=config")
 
 if acl_result.is_success:
     acls = acl_result.unwrap()
@@ -258,15 +253,11 @@ if acl_result.is_success:
 
 # Set ACLs
 new_acls = [
-    {"raw": "{0}to * by dn=\"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\" write"},
-    {"raw": "{1}to * by self write by anonymous auth"}
+    {"raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'},
+    {"raw": "{1}to * by self write by anonymous auth"},
 ]
 
-set_result = ops.set_acls(
-    connection,
-    dn='olcDatabase={1}mdb,cn=config',
-    acls=new_acls
-)
+set_result = ops.set_acls(connection, dn="olcDatabase={1}mdb,cn=config", acls=new_acls)
 ```
 
 ### **Entry Operations**
@@ -277,12 +268,14 @@ from flext_ldif import FlextLdifModels
 # Create entry
 entry = FlextLdifModels.Entry(
     dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
-    attributes=FlextLdifModels.Attributes(attributes={
-        "objectClass": ["person", "organizationalPerson"],
-        "cn": ["test"],
-        "sn": ["Test User"],
-        "mail": ["test@example.com"]
-    })
+    attributes=FlextLdifModels.Attributes(
+        attributes={
+            "objectClass": ["person", "organizationalPerson"],
+            "cn": ["test"],
+            "sn": ["Test User"],
+            "mail": ["test@example.com"],
+        }
+    ),
 )
 
 # Add entry
@@ -294,14 +287,11 @@ if add_result.is_success:
 modify_result = ops.modify_entry(
     connection,
     dn="cn=test,dc=example,dc=com",
-    modifications={"mail": ["newemail@example.com"]}
+    modifications={"mail": ["newemail@example.com"]},
 )
 
 # Delete entry
-delete_result = ops.delete_entry(
-    connection,
-    dn="cn=test,dc=example,dc=com"
-)
+delete_result = ops.delete_entry(connection, dn="cn=test,dc=example,dc=com")
 ```
 
 ### **Paged Search**
@@ -313,7 +303,7 @@ search_result = ops.search_with_paging(
     base_dn="dc=example,dc=com",
     search_filter="(objectClass=person)",
     attributes=["cn", "mail", "sn"],
-    page_size=100
+    page_size=100,
 )
 
 if search_result.is_success:
@@ -339,7 +329,7 @@ if search_result.is_success:
 ### **Key Differences**
 
 ```python
-from flext_ldap.servers import OpenLDAP1Operations
+from flext_ldap import OpenLDAP1Operations
 
 ops = OpenLDAP1Operations()
 
@@ -349,7 +339,7 @@ acl_attr = ops.get_acl_attribute_name()  # Returns "access"
 # ACL format is legacy syntax
 # access to <what> by <who> <access>
 legacy_acl = {
-    "raw": "access to * by dn=\"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\" write"
+    "raw": 'access to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'
 }
 ```
 
@@ -370,16 +360,16 @@ legacy_acl = {
 ### **Basic Usage**
 
 ```python
-from flext_ldap.servers import OracleOIDOperations
+from flext_ldap import OracleOIDOperations
 
 ops = OracleOIDOperations()
 
 # Connection to Oracle OID
 connection = ldap3.Connection(
-    ldap3.Server('ldap://oid-server:389'),
-    user='cn=invalid_user',
-    password='password',
-    auto_bind=True
+    ldap3.Server("ldap://oid-server:389"),
+    user="cn=invalid_user",
+    password="password",
+    auto_bind=True,
 )
 
 # Schema discovery (Oracle-specific)
@@ -393,10 +383,7 @@ if schema_result.is_success:
 
 ```python
 # Get orclaci ACLs
-acl_result = ops.get_acls(
-    connection,
-    dn="dc=example,dc=com"
-)
+acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 
 if acl_result.is_success:
     acls = acl_result.unwrap()
@@ -405,7 +392,9 @@ if acl_result.is_success:
 
 # Set orclaci ACLs
 oid_acls = [
-    {"raw": "access to entry by group=\"cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com\" (browse,add,delete)"}
+    {
+        "raw": 'access to entry by group="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com" (browse,add,delete)'
+    }
 ]
 
 set_result = ops.set_acls(connection, "dc=example,dc=com", oid_acls)
@@ -439,16 +428,16 @@ mechanisms = ops.get_bind_mechanisms()
 ### **Basic Usage**
 
 ```python
-from flext_ldap.servers import OracleOUDOperations
+from flext_ldap import OracleOUDOperations
 
 ops = OracleOUDOperations()
 
 # Connection to Oracle OUD
 connection = ldap3.Connection(
-    ldap3.Server('ldap://oud-server:389'),
-    user='cn=Directory Manager',
-    password='password',
-    auto_bind=True
+    ldap3.Server("ldap://oud-server:389"),
+    user="cn=Directory Manager",
+    password="password",
+    auto_bind=True,
 )
 
 # Schema discovery
@@ -462,19 +451,14 @@ if schema_result.is_success:
 
 ```python
 # Get ds-privilege-name ACLs
-acl_result = ops.get_acls(
-    connection,
-    dn="dc=example,dc=com"
-)
+acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 
 # Set ds-privilege-name ACLs
-oud_acls = [
-    {"raw": "bypass-acl"},
-    {"raw": "config-read"},
-    {"raw": "password-reset"}
-]
+oud_acls = [{"raw": "bypass-acl"}, {"raw": "config-read"}, {"raw": "password-reset"}]
 
-set_result = ops.set_acls(connection, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", oud_acls)
+set_result = ops.set_acls(
+    connection, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", oud_acls
+)
 ```
 
 ### **OUD-Specific Features**
@@ -511,7 +495,7 @@ Currently implemented as a stub with `NotImplementedError` for most operations. 
 ### **Current Usage**
 
 ```python
-from flext_ldap.servers import ActiveDirectoryOperations
+from flext_ldap import ActiveDirectoryOperations
 
 ops = ActiveDirectoryOperations()
 
@@ -559,16 +543,16 @@ RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic
 ### **Usage**
 
 ```python
-from flext_ldap.servers import GenericServerOperations
+from flext_ldap import GenericServerOperations
 
 ops = GenericServerOperations()
 
 # Works with any RFC-compliant LDAP server
 connection = ldap3.Connection(
-    ldap3.Server('ldap://unknown-ldap-server:389'),
-    user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-    password='password',
-    auto_bind=True
+    ldap3.Server("ldap://unknown-ldap-server:389"),
+    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    password="password",
+    auto_bind=True,
 )
 
 # Basic schema discovery
@@ -586,7 +570,7 @@ search_result = ops.search_with_paging(
     connection,
     base_dn="dc=example,dc=com",
     search_filter="(objectClass=*)",
-    page_size=100
+    page_size=100,
 )
 ```
 
@@ -604,8 +588,8 @@ search_result = ops.search_with_paging(
 All server operations integrate with the Entry Adapter for ldap3 ↔ FlextLdif conversion:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import OpenLDAP2Operations
 
 adapter = FlextLdapEntryAdapter()
 ops = OpenLDAP2Operations()
@@ -638,7 +622,7 @@ if attrs_result.is_success:
 Server type detection using FlextLdif quirks:
 
 ```python
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapQuirksAdapter
 
 quirks = FlextLdapQuirksAdapter()
 
@@ -723,7 +707,7 @@ if server_type_result.is_success:
 
 ### **2. Handle Errors Explicitly**
 
-All operations return `FlextResult` - always check for failures:
+All operations return `r` - always check for failures:
 
 ```python
 result = ops.add_entry(connection, entry)
@@ -813,7 +797,7 @@ result = ops.search_with_paging(
     connection,
     base_dn,
     search_filter,
-    page_size=50  # Smaller page size
+    page_size=50,  # Smaller page size
 )
 ```
 

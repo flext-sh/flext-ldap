@@ -1,7 +1,6 @@
 # Integration Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
@@ -27,7 +26,6 @@
 - [Monitoring and Observability](#monitoring-and-observability)
   - [Prometheus Metrics](#prometheus-metrics)
   - [Health Check Endpoints](#health-check-endpoints)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -105,12 +103,13 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 from flext_ldap import get_flext_ldap_api
+
 
 class UserService:
     """Service using FLEXT patterns with LDAP operations."""
@@ -120,23 +119,25 @@ class UserService:
         self._ldap_api = get_flext_ldap_api()
         self._container = FlextContainer.get_global()
 
-    def process_user_authentication(self, username: str, password: str) -> FlextResult[t.Dict]:
+    def process_user_authentication(self, username: str, password: str) -> r[t.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
         auth_result = self._ldap_api.authenticate_user(username, password)
         if auth_result.is_failure:
-            self.logger.error("Authentication failed", extra={"error": auth_result.error})
-            return FlextResult[t.Dict].fail(f"Authentication failed: {auth_result.error}")
+            self.logger.error(
+                "Authentication failed", extra={"error": auth_result.error}
+            )
+            return r[t.Dict].fail(f"Authentication failed: {auth_result.error}")
 
         user = auth_result.unwrap()
         self.logger.info("User authenticated successfully", extra={"uid": user.uid})
 
-        return FlextResult[t.Dict].ok({
+        return r[t.Dict].ok({
             "uid": user.uid,
             "cn": user.cn,
             "email": user.mail,
-            "groups": user.member_of
+            "groups": user.member_of,
         })
 ```
 
@@ -146,6 +147,7 @@ class UserService:
 # Environment-based configuration following FLEXT patterns
 from Flext_ldap import FlextLdapSettings
 from pydantic import BaseSettings
+
 
 class AppSettings(BaseSettings):
     """Application settings with LDAP configuration."""
@@ -170,8 +172,9 @@ class AppSettings(BaseSettings):
             use_ssl=self.ldap_use_ssl,
             bind_dn=self.ldap_bind_dn,
             bind_password=self.ldap_bind_password,
-            base_dn=self.ldap_base_dn
+            base_dn=self.ldap_base_dn,
         )
+
 
 # Usage in FLEXT applications
 settings = AppSettings()
@@ -203,7 +206,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -212,10 +215,12 @@ from flext_core import u
 app = FastAPI(title="FLEXT LDAP API")
 security = HTTPBearer()
 
+
 def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Dependency for LDAP-based token authentication."""
     # Token validation logic here
     return credentials.credentials
+
 
 @app.post("/auth/login")
 def login(username: str, password: str) -> dict[str, object]:
@@ -231,14 +236,15 @@ def login(username: str, password: str) -> dict[str, object]:
         "user_id": user.uid,
         "display_name": user.cn,
         "email": user.mail,
-        "groups": user.member_of
+        "groups": user.member_of,
     }
+
 
 @app.get("/users/search")
 def search_users(
     filter_str: str = "(objectClass=person)",
     limit: int = 100,
-    token: str = Depends(authenticate_token)
+    token: str = Depends(authenticate_token),
 ) -> dict[str, object]:
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
@@ -248,7 +254,7 @@ def search_users(
         filter_str=filter_str,
         scope="subtree",
         attributes=["uid", "cn", "mail", "memberOf"],
-        size_limit=limit
+        size_limit=limit,
     )
 
     result = ldap_api.search_entries(search_request)
@@ -262,17 +268,17 @@ def search_users(
                 "uid": entry.uid,
                 "name": entry.cn,
                 "email": entry.mail,
-                "groups": entry.member_of or []
+                "groups": entry.member_of or [],
             }
             for entry in entries
         ],
-        "count": len(entries)
+        "count": len(entries),
     }
+
 
 @app.post("/users/create")
 def create_user(
-    user_data: dict,
-    token: str = Depends(authenticate_token)
+    user_data: dict, token: str = Depends(authenticate_token)
 ) -> dict[str, object]:
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
@@ -283,7 +289,7 @@ def create_user(
         cn=user_data["cn"],
         sn=user_data["sn"],
         mail=user_data.get("mail"),
-        object_classes=["person", "organizationalPerson", "inetOrgPerson"]
+        object_classes=["person", "organizationalPerson", "inetOrgPerson"],
     )
 
     result = ldap_api.create_user(create_request)
@@ -293,11 +299,7 @@ def create_user(
     user = result.unwrap()
     return {
         "message": "User created successfully",
-        "user": {
-            "uid": user.uid,
-            "dn": user.dn,
-            "name": user.cn
-        }
+        "user": {"uid": user.uid, "dn": user.dn, "name": user.cn},
     }
 ```
 
@@ -311,6 +313,7 @@ ______________________________________________________________________
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 from flext_ldap import get_flext_ldap_api
+
 
 class FlextLdapBackend(BaseBackend):
     """Django authentication backend using FLEXT-LDAP."""
@@ -334,12 +337,12 @@ class FlextLdapBackend(BaseBackend):
             user, created = User.objects.get_or_create(
                 username=ldap_user.uid,
                 defaults={
-                    'first_name': ldap_user.given_name or '',
-                    'last_name': ldap_user.sn or '',
-                    'email': ldap_user.mail or '',
-                    'is_staff': self._is_staff_user(ldap_user),
-                    'is_active': True
-                }
+                    "first_name": ldap_user.given_name or "",
+                    "last_name": ldap_user.sn or "",
+                    "email": ldap_user.mail or "",
+                    "is_staff": self._is_staff_user(ldap_user),
+                    "is_active": True,
+                },
             )
 
             if not created:
@@ -365,13 +368,14 @@ class FlextLdapBackend(BaseBackend):
 
     def _is_staff_user(self, ldap_user) -> bool:
         """Check if LDAP user should have staff privileges."""
-        staff_groups = ['cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com']
+        staff_groups = ["cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"]
         return any(group in ldap_user.member_of for group in staff_groups)
+
 
 # settings.py
 AUTHENTICATION_BACKENDS = [
-    'myapp.auth.FlextLdapBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    "myapp.auth.FlextLdapBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 ```
 
@@ -382,21 +386,22 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
+
 class Command(BaseCommand):
     """Sync users from LDAP to Django database."""
 
-    help = 'Synchronize users from LDAP directory'
+    help = "Synchronize users from LDAP directory"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Show what would be synced without making changes'
+        _ = parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Show what would be synced without making changes",
         )
 
     def handle(self, *args, **options):
         """Handle the sync command."""
-        run(self._sync_users(options['dry_run']))
+        run(self._sync_users(options["dry_run"]))
 
     def _sync_users(self, dry_run: bool):
         """Perform user synchronization."""
@@ -407,14 +412,12 @@ class Command(BaseCommand):
             base_dn="ou=users,dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
-            attributes=["uid", "cn", "sn", "givenName", "mail", "memberOf"]
+            attributes=["uid", "cn", "sn", "givenName", "mail", "memberOf"],
         )
 
         result = ldap_api.search_entries(search_request)
         if result.is_failure:
-            self.stdout.write(
-                self.style.ERROR(f'LDAP search failed: {result.error}')
-            )
+            self.stdout.write(self.style.ERROR(f"LDAP search failed: {result.error}"))
             return
 
         ldap_users = result.unwrap()
@@ -426,49 +429,49 @@ class Command(BaseCommand):
                 user, created = User.objects.get_or_create(
                     username=ldap_user.uid,
                     defaults={
-                        'first_name': ldap_user.given_name or '',
-                        'last_name': ldap_user.sn or '',
-                        'email': ldap_user.mail or '',
-                        'is_active': True
-                    }
+                        "first_name": ldap_user.given_name or "",
+                        "last_name": ldap_user.sn or "",
+                        "email": ldap_user.mail or "",
+                        "is_active": True,
+                    },
                 )
 
                 if not dry_run:
                     if created:
                         created_count += 1
-                        self.stdout.write(f'Created user: {user.username}')
+                        self.stdout.write(f"Created user: {user.username}")
                     else:
                         # Update existing user
                         updated = False
-                        if user.first_name != (ldap_user.given_name or ''):
-                            user.first_name = ldap_user.given_name or ''
+                        if user.first_name != (ldap_user.given_name or ""):
+                            user.first_name = ldap_user.given_name or ""
                             updated = True
-                        if user.last_name != (ldap_user.sn or ''):
-                            user.last_name = ldap_user.sn or ''
+                        if user.last_name != (ldap_user.sn or ""):
+                            user.last_name = ldap_user.sn or ""
                             updated = True
-                        if user.email != (ldap_user.mail or ''):
-                            user.email = ldap_user.mail or ''
+                        if user.email != (ldap_user.mail or ""):
+                            user.email = ldap_user.mail or ""
                             updated = True
 
                         if updated:
                             user.save()
-                            self.stdout.write(f'Updated user: {user.username}')
+                            self.stdout.write(f"Updated user: {user.username}")
 
                 synced_count += 1
 
             except Exception as e:
                 self.stdout.write(
-                    self.style.ERROR(f'Error syncing user {ldap_user.uid}: {e}')
+                    self.style.ERROR(f"Error syncing user {ldap_user.uid}: {e}")
                 )
 
         if dry_run:
             self.stdout.write(
-                self.style.SUCCESS(f'Dry run: Would sync {synced_count} users')
+                self.style.SUCCESS(f"Dry run: Would sync {synced_count} users")
             )
         else:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'Synced {synced_count} users ({created_count} created)'
+                    f"Synced {synced_count} users ({created_count} created)"
                 )
             )
 ```
@@ -486,8 +489,10 @@ from flext_ldap import get_flext_ldap_api, FlextLdapEntities
 
 app = Flask(__name__)
 
+
 def route(f):
     """Decorator to handle routes in Flask."""
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         loop = new_event_loop()
@@ -496,17 +501,22 @@ def route(f):
             return loop.run_until_complete(f(*args, **kwargs))
         finally:
             loop.close()
+
     return wrapper
+
 
 def require_auth(f):
     """Decorator for routes requiring authentication."""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         auth = request.authorization
         if not auth or not check_auth(auth.username, auth.password):
-            return jsonify({'error': 'Authentication required'}), 401
+            return jsonify({"error": "Authentication required"}), 401
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 def check_auth(username: str, password: str) -> bool:
     """Check username/password against LDAP."""
@@ -522,13 +532,14 @@ def check_auth(username: str, password: str) -> bool:
     finally:
         loop.close()
 
-@app.route('/api/users/search')
+
+@app.route("/api/users/search")
 @require_auth
 @route
 def search_users():
     """Search users endpoint."""
-    filter_str = request.args.get('filter', '(objectClass=person)')
-    limit = int(request.args.get('limit', 100))
+    filter_str = request.args.get("filter", "(objectClass=person)")
+    limit = int(request.args.get("limit", 100))
 
     ldap_api = get_flext_ldap_api()
 
@@ -537,26 +548,23 @@ def search_users():
         filter_str=filter_str,
         scope="subtree",
         attributes=["uid", "cn", "mail"],
-        size_limit=limit
+        size_limit=limit,
     )
 
     result = ldap_api.search_entries(search_request)
     if result.is_failure:
-        return jsonify({'error': result.error}), 500
+        return jsonify({"error": result.error}), 500
 
     entries = result.unwrap()
     return jsonify({
-        'users': [
-            {
-                'uid': entry.uid,
-                'name': entry.cn,
-                'email': entry.mail
-            }
+        "users": [
+            {"uid": entry.uid, "name": entry.cn, "email": entry.mail}
             for entry in entries
         ]
     })
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
 ```
 
@@ -743,7 +751,7 @@ ______________________________________________________________________
 FLEXT-LDAP uses FlextLdif for universal LDIF entry handling with automatic server quirks detection:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
 
@@ -751,13 +759,13 @@ adapter = FlextLdapEntryAdapter()
 
 # Convert ldap3 entries to FlextLdif format
 connection = ldap3.Connection(
-    ldap3.Server('ldap://server:389'),
-    user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-    password='password',
-    auto_bind=True
+    ldap3.Server("ldap://server:389"),
+    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    password="password",
+    auto_bind=True,
 )
 
-connection.search('ou=users,dc=example,dc=com', '(objectClass=person)')
+connection.search("ou=users,dc=example,dc=com", "(objectClass=person)")
 
 # Convert search results to FlextLdif
 flextldif_entries = []
@@ -775,8 +783,9 @@ for ldap3_entry in connection.entries:
 Process LDIF files with FlextLdif integration:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import OpenLDAP2Operations
+
 
 def process_ldif_file():
     """Process LDIF file and import to LDAP server."""
@@ -784,7 +793,7 @@ def process_ldif_file():
     ops = OpenLDAP2Operations()
 
     # Load LDIF file
-    result = adapter.convert_ldif_file_to_entries('users.ldif')
+    result = adapter.convert_ldif_file_to_entries("users.ldif")
     if result.is_failure:
         print(f"Failed to load LDIF: {result.error}")
         return
@@ -794,10 +803,10 @@ def process_ldif_file():
 
     # Connect to LDAP server
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     # Import entries
@@ -808,6 +817,7 @@ def process_ldif_file():
         else:
             print(f"Failed to add {entry.dn}: {add_result.error}")
 
+
 run(process_ldif_file())
 ```
 
@@ -816,9 +826,10 @@ run(process_ldif_file())
 Export LDAP entries to LDIF format:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.servers import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import OpenLDAP2Operations
 import ldap3
+
 
 def export_to_ldif():
     """Export LDAP entries to LDIF file."""
@@ -827,18 +838,18 @@ def export_to_ldif():
 
     # Connect and search
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     # Paged search for large result sets
     search_result = ops.search_with_paging(
         connection,
-        base_dn='ou=users,dc=example,dc=com',
-        search_filter='(objectClass=person)',
-        page_size=100
+        base_dn="ou=users,dc=example,dc=com",
+        search_filter="(objectClass=person)",
+        page_size=100,
     )
 
     if search_result.is_success:
@@ -846,15 +857,13 @@ def export_to_ldif():
         print(f"Found {len(entries)} entries")
 
         # Write to LDIF file
-        write_result = adapter.write_entries_to_ldif_file(
-            entries,
-            'export.ldif'
-        )
+        write_result = adapter.write_entries_to_ldif_file(entries, "export.ldif")
 
         if write_result.is_success:
             print("Export completed successfully")
         else:
             print(f"Export failed: {write_result.error}")
+
 
 run(export_to_ldif())
 ```
@@ -864,28 +873,27 @@ run(export_to_ldif())
 Use FlextLdif quirks system for automatic server detection:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
-    OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
-)
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 import ldap3
+
 
 def detect_and_configure():
     """Detect server type and configure operations accordingly."""
     connection = ldap3.Connection(
-        ldap3.Server('ldap://server:389'),
-        user='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        password='password',
-        auto_bind=True
+        ldap3.Server("ldap://server:389"),
+        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        password="password",
+        auto_bind=True,
     )
 
     adapter = FlextLdapEntryAdapter()
     quirks = FlextLdapQuirksAdapter()
 
     # Get root DSE and schema entries
-    connection.search('', '(objectClass=*)', search_scope='BASE', attributes=['*', '+'])
-    connection.search('cn=subschema', '(objectClass=*)', attributes=['*'])
+    connection.search("", "(objectClass=*)", search_scope="BASE", attributes=["*", "+"])
+    connection.search("cn=subschema", "(objectClass=*)", attributes=["*"])
 
     # Convert to FlextLdif
     entries = []
@@ -905,7 +913,10 @@ def detect_and_configure():
         schema_dn_result = quirks.get_schema_subentry(server_type)
         max_page_size_result = quirks.get_max_page_size(server_type)
 
-        if all(r.is_success for r in [acl_attr_result, schema_dn_result, max_page_size_result]):
+        if all(
+            r.is_success
+            for r in [acl_attr_result, schema_dn_result, max_page_size_result]
+        ):
             print(f"ACL attribute: {acl_attr_result.unwrap()}")
             print(f"Schema DN: {schema_dn_result.unwrap()}")
             print(f"Max page size: {max_page_size_result.unwrap()}")
@@ -918,10 +929,12 @@ def detect_and_configure():
         elif server_type == "oud":
             ops = OracleOUDOperations()
         else:
-            from flext_ldap.servers import GenericServerOperations
+            from flext_ldap import GenericServerOperations
+
             ops = GenericServerOperations()
 
         return ops
+
 
 run(detect_and_configure())
 ```
@@ -931,13 +944,17 @@ run(detect_and_configure())
 Complete example combining FlextLdif with server operations:
 
 ```python
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
-    OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations, GenericServerOperations
+from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import (
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+    OracleOUDOperations,
+    GenericServerOperations,
 )
 from flext_ldif import FlextLdifModels
 import ldap3
+
 
 class UniversalLdapProcessor:
     """Universal LDAP processor with FlextLdif integration."""
@@ -957,11 +974,13 @@ class UniversalLdapProcessor:
             ldap3.Server(self.host),
             user=self.bind_dn,
             password=self.bind_password,
-            auto_bind=True
+            auto_bind=True,
         )
 
         # Detect server type
-        self.connection.search('', '(objectClass=*)', search_scope='BASE', attributes=['*'])
+        self.connection.search(
+            "", "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        )
 
         entries = []
         for ldap3_entry in self.connection.entries:
@@ -992,10 +1011,7 @@ class UniversalLdapProcessor:
 
         # Paged search
         search_result = self.ops.search_with_paging(
-            self.connection,
-            base_dn=base_dn,
-            search_filter=filter_str,
-            page_size=100
+            self.connection, base_dn=base_dn, search_filter=filter_str, page_size=100
         )
 
         if search_result.is_failure:
@@ -1004,10 +1020,7 @@ class UniversalLdapProcessor:
         entries = search_result.unwrap()
 
         # Write to LDIF
-        write_result = self.adapter.write_entries_to_ldif_file(
-            entries,
-            output_file
-        )
+        write_result = self.adapter.write_entries_to_ldif_file(entries, output_file)
 
         if write_result.is_failure:
             raise Exception(f"Export failed: {write_result.error}")
@@ -1035,12 +1048,13 @@ class UniversalLdapProcessor:
 
         return success_count
 
+
 # Usage
 def main():
     processor = UniversalLdapProcessor(
-        host='ldap://server:389',
-        bind_dn='cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com',
-        bind_password='password'
+        host="ldap://server:389",
+        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        bind_password="password",
     )
 
     server_type = processor.connect()
@@ -1048,18 +1062,18 @@ def main():
 
     # Export to LDIF
     count = processor.search_and_export(
-        base_dn='ou=users,dc=example,dc=com',
-        filter_str='(objectClass=person)',
-        output_file='users_export.ldif'
+        base_dn="ou=users,dc=example,dc=com",
+        filter_str="(objectClass=person)",
+        output_file="users_export.ldif",
     )
     print(f"Exported {count} entries")
 
     # Import from LDIF
     imported = processor.import_ldif(
-        ldif_file='users_import.ldif',
-        base_dn='ou=users,dc=example,dc=com'
+        ldif_file="users_import.ldif", base_dn="ou=users,dc=example,dc=com"
     )
     print(f"Imported {imported} entries")
+
 
 run(main())
 ```
@@ -1077,16 +1091,13 @@ import time
 
 # Metrics
 ldap_operations_total = Counter(
-    'ldap_operations_total',
-    'Total LDAP operations',
-    ['operation', 'status']
+    "ldap_operations_total", "Total LDAP operations", ["operation", "status"]
 )
 
 ldap_operation_duration = Histogram(
-    'ldap_operation_duration_seconds',
-    'LDAP operation duration',
-    ['operation']
+    "ldap_operation_duration_seconds", "LDAP operation duration", ["operation"]
 )
+
 
 class MetricsWrapper:
     """Wrapper to add metrics to LDAP operations."""
@@ -1101,13 +1112,14 @@ class MetricsWrapper:
         try:
             result = self._ldap_api.authenticate_user(username, password)
 
-            status = 'success' if result.is_success else 'failure'
-            ldap_operations_total.labels(operation='authenticate', status=status).inc()
+            status = "success" if result.is_success else "failure"
+            ldap_operations_total.labels(operation="authenticate", status=status).inc()
 
             return result
         finally:
             duration = time.time() - start_time
-            ldap_operation_duration.labels(operation='authenticate').observe(duration)
+            ldap_operation_duration.labels(operation="authenticate").observe(duration)
+
 
 # Start metrics server
 start_http_server(8001)
@@ -1121,10 +1133,12 @@ from flext_ldap import get_flext_ldap_api
 
 app = FastAPI()
 
+
 @app.get("/health")
 def health_check():
     """Basic health check endpoint."""
     return {"status": "healthy", "service": "flext-ldap-app"}
+
 
 @app.get("/ready")
 def readiness_check():
@@ -1139,7 +1153,7 @@ def readiness_check():
         return {
             "status": "not ready",
             "ldap": "disconnected",
-            "error": connection_result.error
+            "error": connection_result.error,
         }, 503
 ```
 

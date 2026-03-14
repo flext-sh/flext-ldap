@@ -8,13 +8,9 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 from flext_ldap._models.ldap import FlextLdapModelsLdap
-from flext_ldap.protocols import p
-
-# Protocol reference from centralized protocols.py for backward compatibility
-HasItemsMethod = p.Ldap.HasItemsMethod
 
 
 class FlextLdapModels(FlextLdifModels):
@@ -28,7 +24,7 @@ class FlextLdapModels(FlextLdifModels):
     Access patterns:
     - m.Ldap.* (LDAP-specific models)
     - m.Ldif.* (inherited from FlextLdifModels)
-    - m.Collections.* (inherited from FlextModels via FlextLdifModels)
+    - m.CollectionsCategories, .Config, etc. (inherited from FlextModels via FlextLdifModels)
     - m.Entity.*, m.Value, etc. (inherited from FlextModels)
 
     This is a FACADE - all implementations are in _models/*.py.
@@ -51,10 +47,10 @@ class FlextLdapModels(FlextLdifModels):
             """Options for LDAP search operations."""
 
         class SyncOptions(FlextLdapModelsLdap.SyncOptions):
-            """Options for LDAP sync operations."""
+            """Sync options model namespace."""
 
         class SyncPhaseConfig(FlextLdapModelsLdap.SyncPhaseConfig):
-            """Configuration for sync phase operations."""
+            """Sync phase configuration model namespace."""
 
         # Result models
         class SearchResult(FlextLdapModelsLdap.SearchResult):
@@ -104,6 +100,7 @@ class FlextLdapModels(FlextLdifModels):
 
 
 # Global instance
-m = FlextLdapModels
 
-__all__ = ["FlextLdapModels", "HasItemsMethod", "m"]
+__all__ = ["FlextLdapModels", "m"]
+
+m = FlextLdapModels

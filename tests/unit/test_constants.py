@@ -25,7 +25,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests import c, u
+from .. import c, u
 
 pytestmark = pytest.mark.unit
 
@@ -38,10 +38,6 @@ class TestsFlextLdapConstants:
     Expected reduction: 91 lines → 45 lines (51% reduction).
     """
 
-    # =========================================================================
-    # PARAMETRIZED ENUM TESTS (Combined similar tests)
-    # =========================================================================
-
     @staticmethod
     def _get_ldap_cqrs_status_values() -> list[tuple[str, str]]:
         """Factory: Return all LdapCqrs.Status enum members for parametrization."""
@@ -52,13 +48,9 @@ class TestsFlextLdapConstants:
             ("FAILED", "failed"),
         ]
 
-    @pytest.mark.parametrize(
-        ("attr", "expected"),
-        _get_ldap_cqrs_status_values(),
-    )
+    @pytest.mark.parametrize(("attr", "expected"), _get_ldap_cqrs_status_values())
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values."""
-        # Map attribute names to enum values
         status_map: dict[str, c.Ldap.LdapCqrs.Status] = {
             "PENDING": c.Ldap.LdapCqrs.Status.PENDING,
             "RUNNING": c.Ldap.LdapCqrs.Status.RUNNING,
@@ -70,15 +62,10 @@ class TestsFlextLdapConstants:
 
     @pytest.mark.parametrize(
         ("scope", "expected"),
-        [
-            ("BASE", "BASE"),
-            ("ONELEVEL", "ONELEVEL"),
-            ("SUBTREE", "SUBTREE"),
-        ],
+        [("BASE", "BASE"), ("ONELEVEL", "ONELEVEL"), ("SUBTREE", "SUBTREE")],
     )
     def test_search_scope_values(self, scope: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        # Map scope names to enum values
         scope_map: dict[str, c.Ldap.SearchScope] = {
             "BASE": c.Ldap.SearchScope.BASE,
             "ONELEVEL": c.Ldap.SearchScope.ONELEVEL,
@@ -98,7 +85,6 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_values(self, op_type: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        # Map operation type names to enum values
         op_type_map: dict[str, c.Ldap.OperationType] = {
             "ADD": c.Ldap.OperationType.ADD,
             "MODIFY": c.Ldap.OperationType.MODIFY,
@@ -108,10 +94,6 @@ class TestsFlextLdapConstants:
         actual = op_type_map[op_type]
         tm.that(actual, eq=expected)
 
-    # =========================================================================
-    # SCALAR CONSTANT TESTS
-    # =========================================================================
-
     def test_core_name(self) -> None:
         """Test Core.NAME constant."""
         tm.that(c.Ldap.Core.NAME, eq="FLEXT_LDAP")
@@ -119,10 +101,6 @@ class TestsFlextLdapConstants:
     def test_filters_all_entries(self) -> None:
         """Test Filters.ALL_ENTRIES_FILTER constant."""
         tm.that(c.Ldap.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
-
-    # =========================================================================
-    # VALIDATION METHOD TESTS (Parametrized)
-    # =========================================================================
 
     @pytest.mark.parametrize(
         ("status", "expected"),
@@ -134,17 +112,11 @@ class TestsFlextLdapConstants:
         ],
     )
     def test_is_valid_status(
-        self,
-        status: str | c.Ldap.LdapCqrs.Status,
-        expected: bool,
+        self, status: str | c.Ldap.LdapCqrs.Status, expected: bool
     ) -> None:
         """Test is_valid_status with various input types."""
         result = u.Ldap.Validation.is_valid_status(status)
         tm.that(result, eq=expected)
-
-    # =========================================================================
-    # CONNECTION DEFAULTS TESTS
-    # =========================================================================
 
     def test_connection_defaults_port(self) -> None:
         """Test ConnectionDefaults.PORT is valid port number."""

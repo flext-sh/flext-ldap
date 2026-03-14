@@ -6,9 +6,9 @@ This module provides constants for LDAP operations, extending FlextLdifConstants
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Literal
+from typing import ClassVar, Final, Literal
 
-from flext_ldif.constants import FlextLdifConstants
+from flext_ldif import FlextLdifConstants
 
 
 class FlextLdapConstants(FlextLdifConstants):
@@ -44,12 +44,31 @@ class FlextLdapConstants(FlextLdifConstants):
         class ConnectionDefaults:
             """Connection default values."""
 
+            DEFAULT_HOST = "localhost"
+            DEFAULT_MAX_RETRIES = 5
+            DEFAULT_RETRY_DELAY = 1.0
             PORT = 389
             TIMEOUT = 30
-            AUTO_BIND = True
-            AUTO_RANGE = True
+            AUTO_BIND: Final[bool] = True
+            AUTO_RANGE: Final[bool] = True
             POOL_SIZE = 10
             POOL_LIFETIME = 3600
+
+        class SearchDefaults:
+            """Search operation default values."""
+
+            DEFAULT_SCOPE = "SUBTREE"
+
+        class ServerDefaults:
+            """Server configuration default values."""
+
+            DEFAULT_TYPE = "rfc"
+
+        class EntryDefaults:
+            """Entry processing default values."""
+
+            UNKNOWN_VALUE = "unknown"
+            ASCII_THRESHOLD = 127
 
         class LdapCqrs:
             """LDAP CQRS constants."""
@@ -167,11 +186,32 @@ class FlextLdapConstants(FlextLdifConstants):
             ONELEVEL = "ONELEVEL"
             SUBTREE = "SUBTREE"
 
+        class SearchScopeValue:
+            """ldap3-compatible search scope integer values."""
+
+            BASE = 0
+            LEVEL = 1
+            SUBTREE = 2
+
+        class ModifyOperation:
+            """ldap3-compatible modify operation integer values."""
+
+            ADD = 0
+            DELETE = 1
+            REPLACE = 2
+
         class LiteralTypes:
             """Literal type definitions."""
 
             class ServerTypeLiteral:
                 """Server type literals."""
+
+    LDAP3_SCOPE_BASE: Final[int] = 0
+    LDAP3_SCOPE_LEVEL: Final[int] = 1
+    LDAP3_SCOPE_SUBTREE: Final[int] = 2
+    LDAP3_MODIFY_ADD: Final[int] = 0
+    LDAP3_MODIFY_DELETE: Final[int] = 1
+    LDAP3_MODIFY_REPLACE: Final[int] = 2
 
 
 c = FlextLdapConstants

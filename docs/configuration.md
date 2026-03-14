@@ -1,7 +1,6 @@
 # Configuration Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Configuration Overview](#configuration-overview)
   - [Configuration Hierarchy](#configuration-hierarchy)
@@ -27,7 +26,6 @@
 - [Performance Tuning](#performance-tuning)
   - [Connection Pool Optimization](#connection-pool-optimization)
   - [Search Optimization](#search-optimization)
-
 <!-- TOC END -->
 
 ## Table of Contents
@@ -106,7 +104,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -126,7 +124,7 @@ config = FlextLdapSettings(
     use_ssl=True,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     bind_password="REDACTED_LDAP_BIND_PASSWORD-password",
-    base_dn="dc=example,dc=com"
+    base_dn="dc=example,dc=com",
 )
 ```
 
@@ -195,7 +193,7 @@ PRODUCTION_CONFIG = FlextLdapSettings(
     bind_password="${LDAP_PROD_PASSWORD}",
     base_dn="dc=example,dc=com",
     timeout=FlextLdapConstants.DEFAULT_TIMEOUT,
-    pool_size=10
+    pool_size=10,
 )
 
 # Development configuration
@@ -207,7 +205,7 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
     bind_password="${LDAP_DEV_PASSWORD}",
     base_dn="dc=dev,dc=example,dc=com",
     timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
-    pool_size=3
+    pool_size=3,
 )
 ```
 
@@ -216,6 +214,7 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
 ```python
 import os
 from Flext_ldap import FlextLdapSettings
+
 
 def get_config() -> FlextLdapSettings:
     """Get configuration based on environment."""
@@ -227,6 +226,7 @@ def get_config() -> FlextLdapSettings:
         return STAGING_CONFIG
     else:
         return DEVELOPMENT_CONFIG
+
 
 # Usage
 config = get_config()
@@ -301,7 +301,7 @@ TEST_CONFIG = FlextLdapSettings(
     bind_password="REDACTED_LDAP_BIND_PASSWORD",
     base_dn="dc=test,dc=flext,dc=local",
     timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
-    pool_size=2
+    pool_size=2,
 )
 ```
 
@@ -314,6 +314,7 @@ ______________________________________________________________________
 ```python
 from flext_ldap import get_flext_ldap_api
 
+
 def validate_config():
     """Validate LDAP configuration."""
     api = get_flext_ldap_api()
@@ -323,6 +324,7 @@ def validate_config():
         print("✅ Configuration valid - LDAP connection successful")
     else:
         print(f"❌ Configuration invalid: {result.error}")
+
 
 run(validate_config())
 ```
@@ -374,7 +376,7 @@ config = FlextLdapSettings(
     port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
-    verify_certs=True
+    verify_certs=True,
 )
 ```
 
@@ -387,10 +389,10 @@ ______________________________________________________________________
 ```python
 # High-traffic configuration
 config = FlextLdapSettings(
-    pool_size=20,           # Adjust based on concurrent users
-    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,   # Fast connection timeout
-    receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,     # Operation timeout
-    max_retries=2          # Retry failed operations
+    pool_size=20,  # Adjust based on concurrent users
+    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,  # Fast connection timeout
+    receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,  # Operation timeout
+    max_retries=2,  # Retry failed operations
 )
 ```
 
@@ -405,8 +407,8 @@ search_request = FlextLdapEntities.SearchRequest(
     filter_str="(&(objectClass=person)(uid=*))",
     scope="onelevel",  # Use minimal scope needed
     attributes=["uid", "cn"],  # Request only needed attributes
-    size_limit=100,    # Limit result size
-    time_limit=10      # Set search timeout
+    size_limit=100,  # Limit result size
+    time_limit=10,  # Set search timeout
 )
 ```
 
