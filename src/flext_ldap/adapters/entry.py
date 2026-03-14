@@ -272,9 +272,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             setattr(conversion_metadata, "dn_changed", True)
             setattr(conversion_metadata, "converted_dn", converted_dn)
 
-        def check_attr_changed(
-            attr_name: str, original_values: Sequence
-        ) -> str | None:
+        def check_attr_changed(attr_name: str, original_values: Sequence) -> str | None:
             """Check if attribute values changed during conversion."""
             match original_values:
                 case list() | tuple():

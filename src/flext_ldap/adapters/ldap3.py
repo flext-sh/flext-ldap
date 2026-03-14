@@ -595,7 +595,7 @@ class Ldap3Adapter(FlextService[bool]):
         def get_dynamic_attribute(
             obj: p.Ldap.Ldap3Entry | LdifEntry,
             attr_name: str,
-        ) | None:
+        ) -> None | None:
             """Get dynamic attribute with type safety.
 
             Args:

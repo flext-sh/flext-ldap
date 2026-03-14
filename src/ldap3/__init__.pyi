@@ -12,7 +12,7 @@ class Server:
         host: str,
         port: int = ...,
         use_ssl: bool = ...,
-        get_info = ...,
+        get_info=...,
         **kwargs: t.Scalar,
     ) -> None: ...
 
@@ -31,7 +31,7 @@ class Connection:
         check_names: bool = ...,
         read_only: bool = ...,
         raise_exceptions: bool = ...,
-        client_strategy = ...,
+        client_strategy=...,
         **kwargs: t.Scalar,
     ) -> None: ...
     def add(

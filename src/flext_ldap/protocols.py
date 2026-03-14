@@ -13,8 +13,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
+from cbor2 import value
 from flext_core import m, r
 from flext_ldif import FlextLdifProtocols
+from paramiko.agent import value
+from tomlkit import value
+from tomlkit.api import value
+from weasyprint.pdf.metadata import value
 
 from flext_ldap import t
 
@@ -462,7 +467,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for objects exposing configuration (duck typing for settings)."""
 
             @property
-            def config(self):
+            def config(self) -> None:
                 """Return resolved configuration object."""
                 ...
 
@@ -470,7 +475,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasDynamicAttribute(Protocol):
             """Protocol for objects with dynamic attributes accessible via __getattr__."""
 
-            def __getattr__(self, name: str):
+            def __getattr__(self, name: str) -> None:
                 """Get dynamic attribute."""
                 ...
 

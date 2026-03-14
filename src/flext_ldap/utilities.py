@@ -63,9 +63,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return default
 
         @staticmethod
-        def to_str_list(
-            value, *, default: list[str] | None = None
-        ) -> list[str]:
+        def to_str_list(value, *, default: list[str] | None = None) -> list[str]:
             """Convert a value to a single-element string list."""
             if value is None:
                 return default or []
@@ -83,9 +81,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return []
 
         @staticmethod
-        def to_str_list_truthy(
-            value, *, default: list[str] | None = None
-        ) -> list[str]:
+        def to_str_list_truthy(value, *, default: list[str] | None = None) -> list[str]:
             """Convert to str_list and filter truthy values."""
             if value is None:
                 return default or []
@@ -352,9 +348,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
             *,
             condition: bool,
             then_value,
-            else_value = None,
+            else_value=None,
             safe_then: bool = False,
-        ) | None:
+        ) -> None | None:
             """Safe conditional (builder: whn().safe().or_().build()).
 
             Uses advanced DSL: whn() → safe() → or_() for safe composition.
