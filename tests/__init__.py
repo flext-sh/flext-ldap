@@ -109,7 +109,6 @@ if TYPE_CHECKING:
     from tests.unit.test_sync import TestsFlextLdapSync
     from tests.utilities import TestsFlextLdapUtilities, u
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DNSTracker": ("tests.conftest", "DNSTracker"),
     "FLEXT_LDAP_ROOT": ("tests.conftest", "FLEXT_LDAP_ROOT"),
@@ -149,15 +148,27 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "T_co": ("tests.typings", "T_co"),
     "T_contra": ("tests.typings", "T_contra"),
     "TestFixtures": ("tests.conftest", "TestFixtures"),
-    "TestsFlextLdap3Adapter": ("tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"),
+    "TestsFlextLdap3Adapter": (
+        "tests.unit.test_ldap3_adapter",
+        "TestsFlextLdap3Adapter",
+    ),
     "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
     "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
     "TestsFlextLdapConstants": ("tests.constants", "TestsFlextLdapConstants"),
     "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
-    "TestsFlextLdapEntryAdapter": ("tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"),
+    "TestsFlextLdapEntryAdapter": (
+        "tests.unit.test_entry_adapter",
+        "TestsFlextLdapEntryAdapter",
+    ),
     "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
-    "TestsFlextLdapOperationHelpers": ("tests.helpers.operation_helpers", "TestsFlextLdapOperationHelpers"),
-    "TestsFlextLdapOperations": ("tests.unit.test_operations", "TestsFlextLdapOperations"),
+    "TestsFlextLdapOperationHelpers": (
+        "tests.helpers.operation_helpers",
+        "TestsFlextLdapOperationHelpers",
+    ),
+    "TestsFlextLdapOperations": (
+        "tests.unit.test_operations",
+        "TestsFlextLdapOperations",
+    ),
     "TestsFlextLdapProtocols": ("tests.protocols", "TestsFlextLdapProtocols"),
     "TestsFlextLdapServiceBase": ("tests.base", "TestsFlextLdapServiceBase"),
     "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),

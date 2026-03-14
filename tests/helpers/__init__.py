@@ -28,7 +28,6 @@ if TYPE_CHECKING:
         m,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LDAP_MODIFY_ADD": ("tests.helpers.operation_helpers", "LDAP_MODIFY_ADD"),
     "LDAP_MODIFY_DELETE": ("tests.helpers.operation_helpers", "LDAP_MODIFY_DELETE"),
@@ -40,7 +39,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "SearchResultType": ("tests.helpers.operation_helpers", "SearchResultType"),
     "SearchScopeType": ("tests.helpers.operation_helpers", "SearchScopeType"),
     "T": ("tests.helpers.operation_helpers", "T"),
-    "TestsFlextLdapOperationHelpers": ("tests.helpers.operation_helpers", "TestsFlextLdapOperationHelpers"),
+    "TestsFlextLdapOperationHelpers": (
+        "tests.helpers.operation_helpers",
+        "TestsFlextLdapOperationHelpers",
+    ),
     "c": ("tests.helpers.operation_helpers", "c"),
     "m": ("tests.helpers.operation_helpers", "m"),
 }

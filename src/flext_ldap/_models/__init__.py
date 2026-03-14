@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
     from flext_ldap._models.ldap import FlextLdapModelsLdap
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
 }

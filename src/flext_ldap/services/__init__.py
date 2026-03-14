@@ -22,11 +22,13 @@ if TYPE_CHECKING:
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
     from flext_ldap.services.sync import FlextLdapSyncService, FlextLdapSyncService as s
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
-    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
+    "FlextLdapServerDetector": (
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ),
     "FlextLdapSyncService": ("flext_ldap.services.sync", "FlextLdapSyncService"),
     "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
     "s": ("flext_ldap.services.sync", "FlextLdapSyncService"),
