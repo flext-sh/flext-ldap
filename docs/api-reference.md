@@ -58,7 +58,7 @@
   - 🔧 Utilities
     - FlextLdapTypeGuards
       - `is_valid_dn(value: str) -> bool`
-      - `is_ldap_entry(obj: object) -> bool`
+      - `is_ldap_entry(obj) -> bool`
     - FlextLdapConstants
   - 🚨 Exceptions
     - FlextExceptions
@@ -413,7 +413,7 @@ if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
     print("Valid DN")
 ```
 
-#### `is_ldap_entry(obj: object) -> bool`
+#### `is_ldap_entry(obj) -> bool`
 
 Check if object is a valid LDAP entry.
 
@@ -1077,7 +1077,7 @@ def search_entries(
 
 
 # Server operations with FlextLdif integration
-def add_entry(self, connection: object, entry: FlextLdifModels.Entry) -> r[bool]:
+def add_entry(self, connection, entry: FlextLdifModels.Entry) -> r[bool]:
     """Add entry with type safety."""
 ```
 

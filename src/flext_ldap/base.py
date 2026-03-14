@@ -44,7 +44,7 @@ class _LdapRuntimeBootstrapOptions:
     container_overrides: Mapping[str, core_t.Scalar] | None = None
     wire_modules: Sequence[ModuleType] | None = None
     wire_packages: Sequence[str] | None = None
-    wire_classes: Sequence[type[object]] | None = None
+    wire_classes: Sequence[type] | None = None
 
 
 class FlextLdapServiceBase(FlextService[TDomainResult], ABC):

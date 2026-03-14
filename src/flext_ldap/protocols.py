@@ -138,7 +138,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 "Indicates if parsing succeeded."
                 error: str | None
                 "Error message if parsing failed."
-                value: object
+                value
                 "Parsed value or result object."
 
         @runtime_checkable
@@ -416,7 +416,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             @property
             def entry_attributes_as_dict(
                 self,
-            ) -> Mapping[str, Sequence[object]]:
+            ) -> Mapping[str, Sequence]:
                 """Get attributes as dict mapping attribute names to value lists."""
                 ...
 
@@ -433,7 +433,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def values(self) -> Sequence[object]:
+            def values(self) -> Sequence:
                 """Get attribute values."""
                 ...
 
@@ -462,7 +462,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for objects exposing configuration (duck typing for settings)."""
 
             @property
-            def config(self) -> object:
+            def config(self):
                 """Return resolved configuration object."""
                 ...
 
@@ -470,7 +470,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasDynamicAttribute(Protocol):
             """Protocol for objects with dynamic attributes accessible via __getattr__."""
 
-            def __getattr__(self, name: str) -> object:
+            def __getattr__(self, name: str):
                 """Get dynamic attribute."""
                 ...
 

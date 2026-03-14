@@ -12,7 +12,7 @@ class Server:
         host: str,
         port: int = ...,
         use_ssl: bool = ...,
-        get_info: object = ...,
+        get_info = ...,
         **kwargs: t.Scalar,
     ) -> None: ...
 
@@ -31,7 +31,7 @@ class Connection:
         check_names: bool = ...,
         read_only: bool = ...,
         raise_exceptions: bool = ...,
-        client_strategy: object = ...,
+        client_strategy = ...,
         **kwargs: t.Scalar,
     ) -> None: ...
     def add(
@@ -40,7 +40,7 @@ class Connection:
         object_class: list[str] | str | None = ...,
         attributes: dict[str, object] | None = ...,
     ) -> bool: ...
-    def modify(self, dn: str, changes: object) -> bool: ...
+    def modify(self, dn: str, changes) -> bool: ...
     def search(
         self,
         search_base: str,

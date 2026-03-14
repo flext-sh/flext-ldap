@@ -53,7 +53,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         """
 
         @staticmethod
-        def to_str(value: object | None, *, default: str = "") -> str:
+        def to_str(value, *, default: str = "") -> str:
             """Convert a value to string, returning default for None or complex types."""
             if value is None:
                 return default
@@ -64,7 +64,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list(
-            value: object | None, *, default: list[str] | None = None
+            value, *, default: list[str] | None = None
         ) -> list[str]:
             """Convert a value to a single-element string list."""
             if value is None:
@@ -74,7 +74,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return default or []
 
         @staticmethod
-        def to_str_list_safe(value: object | None) -> list[str]:
+        def to_str_list_safe(value) -> list[str]:
             """Safe str_list conversion returning [] for None or complex types."""
             if value is None:
                 return []
@@ -84,7 +84,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list_truthy(
-            value: object | None, *, default: list[str] | None = None
+            value, *, default: list[str] | None = None
         ) -> list[str]:
             """Convert to str_list and filter truthy values."""
             if value is None:
@@ -244,8 +244,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list[object] | Mapping[str, object],
-        ) -> list[object] | Mapping[str, object]:
+            value: list | Mapping[str, object],
+        ) -> list | Mapping[str, object]:
             """Filter truthy values from list or dict.
 
             Args:
@@ -351,10 +351,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def when_safe(
             *,
             condition: bool,
-            then_value: object | None,
-            else_value: object | None = None,
+            then_value,
+            else_value = None,
             safe_then: bool = False,
-        ) -> object | None:
+        ) | None:
             """Safe conditional (builder: whn().safe().or_().build()).
 
             Uses advanced DSL: whn() → safe() → or_() for safe composition.

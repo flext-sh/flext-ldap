@@ -830,7 +830,7 @@ class TestsFlextLdapOperationHelpers:
         for key, value_raw in changes.items():
             if value_raw is None:
                 continue
-            value: object
+            value
             if isinstance(value_raw, (str, int, float, bool, list, dict, type(None))):
                 value = value_raw
             else:

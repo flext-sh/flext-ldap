@@ -883,7 +883,7 @@ def ldap_test_data_loader(
                     _ = _ldap3_delete(connection, dn)
                     logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
-                    error_repr: object = str(e)
+                    error_repr = str(e)
                     logger.debug("Cleanup skip for %s: %s", dn, error_repr)
         except Exception as e:
             logger.warning("Cleanup failed (non-critical)", error=e)

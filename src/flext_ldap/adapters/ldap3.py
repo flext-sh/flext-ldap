@@ -454,7 +454,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
             if isinstance(attrs, BaseModel):
                 dumped = attrs.model_dump()
-                attrs_value_raw: object | None = dumped.get("attributes", {})
+                attrs_value_raw = dumped.get("attributes", {})
                 if isinstance(attrs_value_raw, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
                         attrs_value_raw
@@ -499,7 +499,7 @@ class Ldap3Adapter(FlextService[bool]):
                 if parsed.dn is not None:
                     return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
                 return m.Ldif.DN(value="")
-            dn_raw: object | None = None
+            dn_raw = None
             if isinstance(parsed, p.Ldap.Ldap3Entry):
                 dn_raw = parsed.entry_dn
             else:
@@ -544,7 +544,7 @@ class Ldap3Adapter(FlextService[bool]):
                 QuirkMetadata instance or None if no metadata available.
 
             """
-            metadata_raw: object | Mapping[str, t.Scalar | None] | None = None
+            metadata_raw: Mapping[str, t.Scalar | None] | None = None
             if isinstance(parsed, LdifEntry):
                 if parsed.metadata is None:
                     return None
@@ -593,9 +593,9 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: object | p.Ldap.Ldap3Entry | LdifEntry,
+            obj: p.Ldap.Ldap3Entry | LdifEntry,
             attr_name: str,
-        ) -> object | None:
+        ) | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -647,7 +647,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_metadata(
-            metadata: object | Mapping[str, t.Scalar | None] | None,
+            metadata: Mapping[str, t.Scalar | None] | None,
         ) -> Mapping[str, t.Scalar | list[t.Scalar]] | None:
             """Normalize metadata for Entry model validation.
 
