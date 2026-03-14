@@ -38,26 +38,14 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestsFlextLdap3Adapter": (
-        "tests.unit.test_ldap3_adapter",
-        "TestsFlextLdap3Adapter",
-    ),
+    "TestsFlextLdap3Adapter": ("tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"),
     "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
     "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
-    "TestsFlextLdapConstants": (
-        "tests.unit.test_constants_optimized",
-        "TestsFlextLdapConstants",
-    ),
+    "TestsFlextLdapConstants": ("tests.unit.test_constants_optimized", "TestsFlextLdapConstants"),
     "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
-    "TestsFlextLdapEntryAdapter": (
-        "tests.unit.test_entry_adapter",
-        "TestsFlextLdapEntryAdapter",
-    ),
+    "TestsFlextLdapEntryAdapter": ("tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"),
     "TestsFlextLdapModels": ("tests.unit.test_models", "TestsFlextLdapModels"),
-    "TestsFlextLdapOperations": (
-        "tests.unit.test_operations",
-        "TestsFlextLdapOperations",
-    ),
+    "TestsFlextLdapOperations": ("tests.unit.test_operations", "TestsFlextLdapOperations"),
     "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
     "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
     "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
