@@ -1,14 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Test infrastructure for flext-ldap tests.
-
-Provides centralized test objects that extend production modules from src/flext_ldap/.
-All test objects use real inheritance to expose the full hierarchy without duplication.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Tests package."""
 
 from __future__ import annotations
 
@@ -19,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from tests import helpers, unit
     from tests.base import TestsFlextLdapServiceBase, s
     from tests.conftest import (
         FLEXT_LDAP_ROOT,
@@ -181,6 +175,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "c": ("tests.constants", "c"),
     "connection_config": ("tests.conftest", "connection_config"),
     "create_flext_ldap_instance": ("tests.conftest", "create_flext_ldap_instance"),
+    "helpers": ("tests.helpers", ""),
     "ldap3_connection": ("tests.conftest", "ldap3_connection"),
     "ldap_client": ("tests.conftest", "ldap_client"),
     "ldap_config": ("tests.conftest", "ldap_config"),
@@ -211,6 +206,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "tt": ("tests.typings", "tt"),
     "u": ("tests.utilities", "u"),
     "unique_dn_suffix": ("tests.conftest", "unique_dn_suffix"),
+    "unit": ("tests.unit", ""),
     "worker_id": ("tests.conftest", "worker_id"),
 }
 
@@ -274,6 +270,7 @@ __all__ = [
     "c",
     "connection_config",
     "create_flext_ldap_instance",
+    "helpers",
     "ldap3_connection",
     "ldap_client",
     "ldap_config",
@@ -304,6 +301,7 @@ __all__ = [
     "tt",
     "u",
     "unique_dn_suffix",
+    "unit",
     "worker_id",
 ]
 

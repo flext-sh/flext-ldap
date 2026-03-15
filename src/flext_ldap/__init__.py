@@ -1,29 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""FLEXT-LDAP - LDAP Client Library.
-
-LDAP client library with RFC compliance and server-specific quirks
-for the FLEXT ecosystem. Reuses flext-ldif for Entry models and parsing.
-
-Single Entry Point Architecture:
-    This module enforces a single entry point pattern. ALL LDAP operations must
-    go through the FlextLdap class. Internal modules (adapters, services) are
-    NOT part of the public API and should not be imported directly by consumers.
-
-    Correct usage:
-        from flext_ldap import FlextLdap
-        ldap = FlextLdap()
-        result = ldap.search(options)
-
-    Incorrect usage (bypasses single entry point):
-        from flext_ldap import FlextLdapConnection  # ❌ WRONG
-        from flext_ldap import Ldap3Adapter  # ❌ WRONG
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Flext ldap package."""
 
 from __future__ import annotations
 
@@ -34,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+    from flext_ldap import _models, adapters, services
     from flext_ldap.__version__ import __all__
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -99,10 +78,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "SearchOptionsContract": ("flext_ldap.typings", "SearchOptionsContract"),
     "__all__": ("flext_ldap.__version__", "__all__"),
+    "_models": ("flext_ldap._models", ""),
+    "adapters": ("flext_ldap.adapters", ""),
     "c": ("flext_ldap.constants", "c"),
     "m": ("flext_ldap.models", "m"),
     "p": ("flext_ldap.protocols", "p"),
     "s": ("flext_ldap.base", "s"),
+    "services": ("flext_ldap.services", ""),
     "t": ("flext_ldap.typings", "t"),
     "u": ("flext_ldap.utilities", "u"),
 }
@@ -132,10 +114,13 @@ __all__ = [
     "LdifEntry",
     "SearchOptionsContract",
     "__all__",
+    "_models",
+    "adapters",
     "c",
     "m",
     "p",
     "s",
+    "services",
     "t",
     "u",
 ]
