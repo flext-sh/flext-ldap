@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from typing import TypeAlias, TypeVar
 
 import pytest
-from flext_tests import u
+from tests import u
 
 from flext_ldap import (
     FlextLdap,
@@ -32,9 +32,6 @@ LDAP_MODIFY_REPLACE: int = 2
 c = c_mod.c
 m = FlextLdapModels
 T = TypeVar("T")
-OperationResultType: TypeAlias = r[FlextLdapModels.Ldap.OperationResult]
-SearchResultType: TypeAlias = r[FlextLdapModels.Ldap.SearchResult]
-LdapEntry: TypeAlias = FlextLdapModels.Ldif.Entry
 LdapClientType = FlextLdap | p.Ldap.LdapClient
 LdapOperationsType = FlextLdap | FlextLdapOperations | p.Ldap.LdapClient
 _VALID_SCOPES: frozenset[str] = frozenset({
@@ -43,7 +40,6 @@ _VALID_SCOPES: frozenset[str] = frozenset({
     c.Ldap.SearchScope.SUBTREE.value,
 })
 SearchScopeType = c.Ldap.SearchScope
-
 
 class _LdapEntryProtocolAdapter:
     dn: str | p.Ldap.DN | None
@@ -61,7 +57,6 @@ class _LdapEntryProtocolAdapter:
         self.attributes = attributes
         self.metadata = metadata
 
-
 def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntry:
     dn_str = str(entry.dn) if entry.dn is not None else ""
     attrs: Mapping[str, Sequence[str]] = (
@@ -70,7 +65,6 @@ def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntry:
         else {}
     )
     return _LdapEntryProtocolAdapter(dn=dn_str, attributes=attrs)
-
 
 def _validate_scope(scope: str | c.Ldap.SearchScope) -> c.Ldap.SearchScope:
     """Validate and return a SearchScope StrEnum.
@@ -94,7 +88,6 @@ def _validate_scope(scope: str | c.Ldap.SearchScope) -> c.Ldap.SearchScope:
         return parse_result.value
     msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"
     raise ValueError(msg)
-
 
 class TestsFlextLdapOperationHelpers:
     """Helper methods for LDAP operation testing to reduce code duplication.

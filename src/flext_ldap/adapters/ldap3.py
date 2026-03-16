@@ -41,9 +41,6 @@ from flext_ldap import FlextLdapConstants, c, m, p, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from ldap3 import Connection, Server
 
-LdifEntry: TypeAlias = FlextLdifModels.Ldif.Entry
-
-
 class FlextLdapLdap3Wrappers:
     """Type-safe static wrappers for untyped ldap3 Connection methods."""
 
@@ -128,7 +125,6 @@ class FlextLdapLdap3Wrappers:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
         result = connection.unbind()
         return bool(result)
-
 
 class Ldap3Adapter(FlextService[bool]):
     """Service adapter for ldap3 library following flext-ldif patterns.
