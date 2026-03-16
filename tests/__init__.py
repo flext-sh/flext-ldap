@@ -66,7 +66,6 @@ if TYPE_CHECKING:
         SearchScopeType,
         TestsFlextLdapOperationHelpers,
     )
-    from tests.helpers.typings import LdapEntry, OperationResultType, SearchResultType
     from tests.models import TestsFlextLdapModels, m, tm
     from tests.protocols import TestsFlextLdapProtocols, p
     from tests.test_smoke import TestsFlextLdapSmoke, pytestmark
@@ -122,7 +121,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapConnectionConfigDict": ("tests.typings", "LdapConnectionConfigDict"),
     "LdapConnectionResultDict": ("tests.typings", "LdapConnectionResultDict"),
     "LdapContainerDict": ("tests.typings", "LdapContainerDict"),
-    "LdapEntry": ("tests.helpers.typings", "LdapEntry"),
     "LdapEntryDataDict": ("tests.typings", "LdapEntryDataDict"),
     "LdapModifyOperationDict": ("tests.typings", "LdapModifyOperationDict"),
     "LdapOperationsType": ("tests.helpers.operation_helpers", "LdapOperationsType"),
@@ -131,10 +129,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapSearchOptionsDict": ("tests.typings", "LdapSearchOptionsDict"),
     "LdapSearchResultDict": ("tests.typings", "LdapSearchResultDict"),
     "LdapTestScenarioDict": ("tests.typings", "LdapTestScenarioDict"),
-    "OperationResultType": ("tests.helpers.typings", "OperationResultType"),
     "SAMPLE_GROUP_ENTRY": ("tests.conftest", "SAMPLE_GROUP_ENTRY"),
     "SAMPLE_USER_ENTRY": ("tests.conftest", "SAMPLE_USER_ENTRY"),
-    "SearchResultType": ("tests.helpers.typings", "SearchResultType"),
     "SearchScopeType": ("tests.helpers.operation_helpers", "SearchScopeType"),
     "T": ("tests.typings", "T"),
     "T_co": ("tests.typings", "T_co"),
@@ -231,7 +227,6 @@ __all__ = [
     "LdapConnectionConfigDict",
     "LdapConnectionResultDict",
     "LdapContainerDict",
-    "LdapEntry",
     "LdapEntryDataDict",
     "LdapModifyOperationDict",
     "LdapOperationsType",
@@ -240,8 +235,6 @@ __all__ = [
     "LdapSearchOptionsDict",
     "LdapSearchResultDict",
     "LdapTestScenarioDict",
-    "OperationResultType",
-    "SearchResultType",
     "SearchScopeType",
     "T",
     "T_co",

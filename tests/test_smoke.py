@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 
 import pytest
 from flext_core import r
@@ -49,6 +49,7 @@ class TestsFlextLdapSmoke:
     Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
     """
 
+    @unique
     class Category(StrEnum):
         """Test categories for smoke tests."""
 

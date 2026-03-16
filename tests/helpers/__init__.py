@@ -24,17 +24,13 @@ if TYPE_CHECKING:
         c,
         m,
     )
-    from tests.helpers.typings import LdapEntry, OperationResultType, SearchResultType
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LDAP_MODIFY_ADD": ("tests.helpers.operation_helpers", "LDAP_MODIFY_ADD"),
     "LDAP_MODIFY_DELETE": ("tests.helpers.operation_helpers", "LDAP_MODIFY_DELETE"),
     "LDAP_MODIFY_REPLACE": ("tests.helpers.operation_helpers", "LDAP_MODIFY_REPLACE"),
     "LdapClientType": ("tests.helpers.operation_helpers", "LdapClientType"),
-    "LdapEntry": ("tests.helpers.typings", "LdapEntry"),
     "LdapOperationsType": ("tests.helpers.operation_helpers", "LdapOperationsType"),
-    "OperationResultType": ("tests.helpers.typings", "OperationResultType"),
-    "SearchResultType": ("tests.helpers.typings", "SearchResultType"),
     "SearchScopeType": ("tests.helpers.operation_helpers", "SearchScopeType"),
     "T": ("tests.helpers.operation_helpers", "T"),
     "TestsFlextLdapOperationHelpers": (
@@ -50,10 +46,7 @@ __all__ = [
     "LDAP_MODIFY_DELETE",
     "LDAP_MODIFY_REPLACE",
     "LdapClientType",
-    "LdapEntry",
     "LdapOperationsType",
-    "OperationResultType",
-    "SearchResultType",
     "SearchScopeType",
     "T",
     "TestsFlextLdapOperationHelpers",

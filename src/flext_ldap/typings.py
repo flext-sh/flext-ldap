@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import ParamSpec, TypeAlias, TypeVar
+from typing import ParamSpec, TypeVar
 
 from flext_core import r, t as _core_t
 from flext_ldif import FlextLdifModels, FlextLdifTypes
@@ -69,4 +69,4 @@ __all__ = [
 
 TDomainResult = TypeVar("TDomainResult", bound=t.Container)
 
-LdifEntry: TypeAlias = FlextLdifModels.Ldif.Entry
+type LdifEntry = FlextLdifModels.Ldif.Entry

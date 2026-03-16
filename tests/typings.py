@@ -13,8 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from flext_core import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
@@ -50,19 +48,19 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             """TypedDict definitions for LDAP test fixtures."""
 
 
-GenericFieldsDict: TypeAlias = dict[str, str | int | bool | list[str]]
-LdapContainerDict: TypeAlias = dict[str, str | int | bool]
-LdapConnectionConfigDict: TypeAlias = dict[str, str | int | bool | None]
-LdapSearchOptionsDict: TypeAlias = dict[str, str | int | bool]
-LdapEntryDataDict: TypeAlias = dict[str, str | int | bool | list[str]]
-LdapSchemaAttributeDict: TypeAlias = dict[str, str | list[str] | bool]
-LdapSchemaObjectClassDict: TypeAlias = dict[str, str | list[str] | bool]
-LdapModifyOperationDict: TypeAlias = dict[str, str | int | bool | list[str]]
-LdapSearchResultDict: TypeAlias = dict[str, str | int | bool | list[str]]
-LdapTestScenarioDict: TypeAlias = dict[str, str | int | bool]
-GenericTestCaseDict: TypeAlias = dict[str, str | int | bool]
-GenericCallableParameterDict: TypeAlias = dict[str, str | int | bool]
-LdapConnectionResultDict: TypeAlias = dict[str, str | int | bool]
+type GenericFieldsDict = dict[str, str | int | bool | list[str]]
+type LdapContainerDict = dict[str, str | int | bool]
+type LdapConnectionConfigDict = dict[str, str | int | bool | None]
+type LdapSearchOptionsDict = dict[str, str | int | bool]
+type LdapEntryDataDict = dict[str, str | int | bool | list[str]]
+type LdapSchemaAttributeDict = dict[str, str | list[str] | bool]
+type LdapSchemaObjectClassDict = dict[str, str | list[str] | bool]
+type LdapModifyOperationDict = dict[str, str | int | bool | list[str]]
+type LdapSearchResultDict = dict[str, str | int | bool | list[str]]
+type LdapTestScenarioDict = dict[str, str | int | bool]
+type GenericTestCaseDict = dict[str, str | int | bool]
+type GenericCallableParameterDict = dict[str, str | int | bool]
+type LdapConnectionResultDict = dict[str, str | int | bool]
 t = TestsFlextLdapTypes
 tt = TestsFlextLdapTypes
 __all__ = [

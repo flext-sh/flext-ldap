@@ -5,7 +5,7 @@ This module provides constants for LDAP operations, extending FlextLdifConstants
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar, Final, Literal
 
 from flext_ldif import FlextLdifConstants
@@ -73,6 +73,7 @@ class FlextLdapConstants(FlextLdifConstants):
         class LdapCqrs:
             """LDAP CQRS constants."""
 
+            @unique
             class Status(StrEnum):
                 """LDAP operation status values."""
 
@@ -155,6 +156,7 @@ class FlextLdapConstants(FlextLdifConstants):
 
             ALL_ENTRIES_FILTER = "(objectClass=*)"
 
+        @unique
         class OperationType(StrEnum):
             """LDAP operation types."""
 
@@ -179,6 +181,7 @@ class FlextLdapConstants(FlextLdifConstants):
             MODIFY = "modify"
             DELETE = "delete"
 
+        @unique
         class SearchScope(StrEnum):
             """LDAP search scopes."""
 
