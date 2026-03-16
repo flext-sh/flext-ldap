@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import ParamSpec, TypeVar
+from typing import ParamSpec, TypeAlias, TypeVar
 
 from flext_core import r, t as _core_t
-from flext_ldif import FlextLdifTypes
+from flext_ldif import FlextLdifModels, FlextLdifTypes
+
+from flext_ldap.protocols import LdapEntryContract, SearchOptionsContract
 
 
 class FlextLdapTypes(FlextLdifTypes):
@@ -66,7 +68,5 @@ __all__ = [
 ]
 
 TDomainResult = TypeVar("TDomainResult", bound=t.Container)
-
-from typing import TypeAlias
 
 LdifEntry: TypeAlias = FlextLdifModels.Ldif.Entry

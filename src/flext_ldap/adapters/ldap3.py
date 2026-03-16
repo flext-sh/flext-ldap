@@ -35,11 +35,14 @@ from typing import Literal, override
 
 from flext_core import FlextService, r
 from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifUtilities
+from flext_ldif.models import FlextLdifModels
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap import FlextLdapConstants, c, m, p, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from ldap3 import Connection, Server
+
+LdifEntry = FlextLdifModels.Ldif.Entry
 
 
 class FlextLdapLdap3Wrappers:

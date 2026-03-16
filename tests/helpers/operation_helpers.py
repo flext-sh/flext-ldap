@@ -25,6 +25,7 @@ from tests import u
 
 from .. import constants as c_mod
 from ..typings import GenericFieldsDict, t
+from .typings import LdapEntry, OperationResultType, SearchResultType
 
 LDAP_MODIFY_ADD: int = 0
 LDAP_MODIFY_DELETE: int = 1

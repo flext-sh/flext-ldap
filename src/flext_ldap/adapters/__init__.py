@@ -18,18 +18,24 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers, Ldap3Adapter
+    from flext_ldap.adapters.ldap3 import (
+        FlextLdapLdap3Wrappers,
+        Ldap3Adapter,
+        LdifEntry,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapEntryAdapter": ("flext_ldap.adapters.entry", "FlextLdapEntryAdapter"),
     "FlextLdapLdap3Wrappers": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"),
     "Ldap3Adapter": ("flext_ldap.adapters.ldap3", "Ldap3Adapter"),
+    "LdifEntry": ("flext_ldap.adapters.ldap3", "LdifEntry"),
 }
 
 __all__ = [
     "FlextLdapEntryAdapter",
     "FlextLdapLdap3Wrappers",
     "Ldap3Adapter",
+    "LdifEntry",
 ]
 
 
