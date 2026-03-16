@@ -12,13 +12,13 @@ class Server:
         host: str,
         port: int = ...,
         use_ssl: bool = ...,
-        get_info=...,
+        get_info: t.Container = ...,
         **kwargs: t.Scalar,
     ) -> None: ...
 
 class Connection:
-    result: dict[str, object]
-    entries: list[object]
+    result: dict[str, t.Container]
+    entries: list[t.Container]
     bound: bool
 
     def __init__(
@@ -31,16 +31,18 @@ class Connection:
         check_names: bool = ...,
         read_only: bool = ...,
         raise_exceptions: bool = ...,
-        client_strategy=...,
+        client_strategy: t.Container = ...,
         **kwargs: t.Scalar,
     ) -> None: ...
     def add(
         self,
         dn: str,
         object_class: list[str] | str | None = ...,
-        attributes: dict[str, object] | None = ...,
+        attributes: dict[str, t.Container] | None = ...,
     ) -> bool: ...
-    def modify(self, dn: str, changes) -> bool: ...
+    def modify(
+        self, dn: str, changes: dict[str, list[tuple[int, list[str]]]]
+    ) -> bool: ...
     def search(
         self,
         search_base: str,

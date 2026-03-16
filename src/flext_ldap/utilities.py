@@ -53,7 +53,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         """
 
         @staticmethod
-        def to_str(value, *, default: str = "") -> str:
+        def to_str(value: str | float | bool | None, *, default: str = "") -> str:
             """Convert a value to string, returning default for None or complex types."""
             if value is None:
                 return default
@@ -63,7 +63,11 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return default
 
         @staticmethod
-        def to_str_list(value, *, default: list[str] | None = None) -> list[str]:
+        def to_str_list(
+            value: str | float | bool | None,
+            *,
+            default: list[str] | None = None,
+        ) -> list[str]:
             """Convert a value to a single-element string list."""
             if value is None:
                 return default or []
@@ -72,7 +76,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return default or []
 
         @staticmethod
-        def to_str_list_safe(value) -> list[str]:
+        def to_str_list_safe(value: str | float | bool | None) -> list[str]:
             """Safe str_list conversion returning [] for None or complex types."""
             if value is None:
                 return []
@@ -81,7 +85,11 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return []
 
         @staticmethod
-        def to_str_list_truthy(value, *, default: list[str] | None = None) -> list[str]:
+        def to_str_list_truthy(
+            value: str | float | bool | None,
+            *,
+            default: list[str] | None = None,
+        ) -> list[str]:
             """Convert to str_list and filter truthy values."""
             if value is None:
                 return default or []
@@ -347,10 +355,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def when_safe(
             *,
             condition: bool,
-            then_value,
-            else_value=None,
+            then_value: str | float | bool | None,
+            else_value: str | float | bool | None = None,
             safe_then: bool = False,
-        ) -> None | None:
+        ) -> str | int | float | bool | None:
             """Safe conditional (builder: whn().safe().or_().build()).
 
             Uses advanced DSL: whn() → safe() → or_() for safe composition.
