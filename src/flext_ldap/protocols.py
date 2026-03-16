@@ -13,13 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
-from cbor2 import value
-from flext_core import m, r
+from flext_core import r
 from flext_ldif import FlextLdifProtocols
-from paramiko.agent import value
-from tomlkit import value
-from tomlkit.api import value
-from weasyprint.pdf.metadata import value
 
 from flext_ldap import t
 
@@ -97,7 +92,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             attributes: (
                 Mapping[str, Sequence[str]] | FlextLdapProtocols.Ldap.Attributes | None
             )
-            metadata: m.ConfigMap | None
+            metadata: t.ConfigMap | None
 
         @runtime_checkable
         class LdapBatchStats(Protocol):
@@ -143,7 +138,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 "Indicates if parsing succeeded."
                 error: str | None
                 "Error message if parsing failed."
-                value
+                value: t.Scalar | None
                 "Parsed value or result object."
 
         @runtime_checkable

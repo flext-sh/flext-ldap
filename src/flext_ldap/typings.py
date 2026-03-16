@@ -8,8 +8,6 @@ from typing import ParamSpec, Protocol, TypeVar
 from flext_core import r, t as _core_t
 from flext_ldif import FlextLdifTypes
 
-from flext_ldap.typings import t
-
 
 class LdapEntryContract(Protocol):
     """Structural LDAP entry contract for service boundaries."""

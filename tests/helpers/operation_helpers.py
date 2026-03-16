@@ -48,14 +48,14 @@ SearchScopeType = c.Ldap.SearchScope
 class _LdapEntryProtocolAdapter:
     dn: str | p.Ldap.DN | None
     attributes: Mapping[str, Sequence[str]] | p.Ldap.Attributes | None
-    metadata: m.ConfigMap | None
+    metadata: t.ConfigMap | None
 
     def __init__(
         self,
         dn: str,
         attributes: Mapping[str, Sequence[str]],
         *,
-        metadata: m.ConfigMap | None = None,
+        metadata: t.ConfigMap | None = None,
     ) -> None:
         self.dn = dn
         self.attributes = attributes
