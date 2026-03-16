@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_core import FlextService, FlextSettings, r
+from flext_core import FlextService, FlextSettings, p, r
 
 from flext_ldap import FlextLdapServiceBase, base, s
 
@@ -124,7 +124,7 @@ class TestsFlextLdapBase:
         assert hasattr(service, "config")
         config = service.config
         assert config is not None
-        assert isinstance(config, FlextSettings)
+        assert isinstance(config, p.Settings)
 
     def test_service_config_provides_equivalent_values(self) -> None:
         """Test service config provides equivalent values to global instance."""

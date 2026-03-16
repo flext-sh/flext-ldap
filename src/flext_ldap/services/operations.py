@@ -83,7 +83,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
     model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
 
     @staticmethod
-    def _get_structlog_logger() -> p.StructlogLogger | None:
+    def _get_structlog_logger() -> p.Logger | None:
         """Return structlog logger when runtime logger satisfies the protocol."""
         return FlextRuntime.get_logger(__name__)
 

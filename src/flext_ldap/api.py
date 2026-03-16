@@ -173,7 +173,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
-    _config: p.Config | None = PrivateAttr(default=None)
+    _config: p.Settings | None = PrivateAttr(default=None)
 
     def __init__(
         self,
