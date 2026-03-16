@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import ParamSpec, Protocol, TypeVar
+from typing import ParamSpec, TypeVar
 
 from flext_core import r, t as _core_t
 from flext_ldif import FlextLdifTypes
+
 
 class FlextLdapTypes(FlextLdifTypes):
     """LDAP-specific type namespace."""
@@ -54,6 +55,7 @@ class FlextLdapTypes(FlextLdifTypes):
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
     TDomainResult = TypeVar("TDomainResult", bound=_core_t.Container)
     P = ParamSpec("P")
+
 
 t = FlextLdapTypes
 __all__ = [

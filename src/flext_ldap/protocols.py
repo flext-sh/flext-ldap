@@ -492,11 +492,13 @@ __all__ = ["FlextLdapProtocols", "p"]
 
 p = FlextLdapProtocols
 
+
 class LdapEntryContract(Protocol):
     """Structural LDAP entry contract for service boundaries."""
 
     dn: str
     attributes: Mapping[str, Sequence[str]]
+
 
 class SearchOptionsContract(Protocol):
     """Structural LDAP search options contract."""
