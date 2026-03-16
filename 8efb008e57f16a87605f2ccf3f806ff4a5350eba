@@ -1,0 +1,23 @@
+src/flext_ldap/protocols.py
+  db706e64c0370220 141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "8efb008e57f16a87605f2ccf3f806ff4a5350eba",
+  "prompts": {
+    "db706e64c0370220": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3091847d5ffeTCLuKwyQLDE3l2",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 8,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
