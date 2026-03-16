@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self, TypeIs, override
 
-from flext_core import FlextService, FlextSettings, r
+from flext_core import FlextService, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
@@ -173,7 +173,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
-    _config: FlextSettings | None = PrivateAttr(default=None)
+    _config: p.Config | None = PrivateAttr(default=None)
 
     def __init__(
         self,

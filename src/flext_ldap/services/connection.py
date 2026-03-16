@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextService, FlextSettings, r
+from flext_core import FlextService, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
@@ -83,7 +83,7 @@ class FlextLdapConnection(FlextService[bool]):
 
     model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
     _adapter: Ldap3Adapter
-    _config: FlextSettings | None = None
+    _config: p.Config | None = None
 
     def __init__(
         self,
