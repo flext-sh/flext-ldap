@@ -14,9 +14,8 @@ from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
 from flext_core import r
+from flext_core.typings import t
 from flext_ldif import FlextLdifProtocols
-
-from flext_ldap import t
 
 
 class FlextLdapProtocols(FlextLdifProtocols):
@@ -416,7 +415,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             @property
             def entry_attributes_as_dict(
                 self,
-            ) -> Mapping[str, Sequence]:
+            ) -> Mapping[str, Sequence[str | bytes]]:
                 """Get attributes as dict mapping attribute names to value lists."""
                 ...
 
@@ -433,7 +432,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def values(self) -> Sequence:
+            def values(self) -> Sequence[str | bytes]:
                 """Get attribute values."""
                 ...
 

@@ -236,7 +236,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         conversion_metadata: m.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
-        original_attrs_dict: Mapping[str, Sequence],
+        original_attrs_dict: Mapping[str, Sequence[str | bytes]],
         converted_attrs_dict: Mapping[str, list[str]],
     ) -> None:
         """Track DN and attribute differences in conversion metadata.
@@ -272,7 +272,9 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             setattr(conversion_metadata, "dn_changed", True)
             setattr(conversion_metadata, "converted_dn", converted_dn)
 
-        def check_attr_changed(attr_name: str, original_values: Sequence) -> str | None:
+        def check_attr_changed(
+            attr_name: str, original_values: Sequence[str | bytes]
+        ) -> str | None:
             """Check if attribute values changed during conversion."""
             match original_values:
                 case list() | tuple():

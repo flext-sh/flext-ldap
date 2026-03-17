@@ -41,7 +41,7 @@ class _LdapRuntimeBootstrapOptions:
     factories: Mapping[str, core_t.FactoryCallable] | None = None
     resources: Mapping[str, core_t.ResourceCallable] | None = None
     container_overrides: Mapping[str, core_t.Scalar] | None = None
-    wire_modules: Sequence[ModuleType] | None = None
+    wire_modules: Sequence[ModuleType | str] | None = None
     wire_packages: Sequence[str] | None = None
     wire_classes: Sequence[type] | None = None
 

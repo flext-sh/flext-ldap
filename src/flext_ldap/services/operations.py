@@ -621,7 +621,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
                     )
                 )
             search_data = search_result.map_or(None)
-            existing_entries: list = []
+            existing_entries: list[dict[str, list[str]]] = []
             if search_data is not None and search_data.entries:
                 existing_entries = list(search_data.entries)
             if not existing_entries:
