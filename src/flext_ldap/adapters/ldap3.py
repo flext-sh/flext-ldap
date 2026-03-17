@@ -34,8 +34,7 @@ from collections.abc import Mapping, Sequence
 from typing import Literal, override
 
 from flext_core import FlextService, r
-from flext_ldif import FlextLdif, FlextLdifParser
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+from flext_ldif import FlextLdif, FlextLdifParser, u as ldif_u
 from flext_ldif.models import FlextLdifModels
 from pydantic import BaseModel, ConfigDict
 
@@ -518,7 +517,7 @@ class Ldap3Adapter(FlextService[bool]):
             if isinstance(dn_raw, p.Ldap.DN):
                 return m.Ldif.DN(value=dn_raw.value or "")
             dn_str_val = str(dn_raw)
-            dn_value: str = FlextLdifUtilitiesDN.get_dn_value(dn_str_val)
+            dn_value: str = ldif_u.Ldif.DN.get_dn_value(dn_str_val)
             return m.Ldif.DN(value=dn_value)
 
         @staticmethod
@@ -900,7 +899,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+                dn_str = ldif_u.Ldif.DN.get_dn_value(dn)
                 if self._delete_entry_from_ldap(connection, dn_str):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
@@ -957,7 +956,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+                dn_str = ldif_u.Ldif.DN.get_dn_value(dn)
                 if self._modify_entry_in_ldap(connection, dn_str, changes):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
@@ -1220,9 +1219,7 @@ class Ldap3Adapter(FlextService[bool]):
                 f"Failed to convert entry attributes: {error_msg}"
             )
         dn_str = (
-            FlextLdifUtilitiesDN.get_dn_value(entry.dn)
-            if entry.dn is not None
-            else "unknown"
+            ldif_u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
         )
         return self.OperationExecutor(self).execute_add(
             connection_result.value, dn_str, attrs_result.value
