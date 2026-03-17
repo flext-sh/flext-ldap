@@ -579,10 +579,7 @@ class Ldap3Adapter(FlextService[bool]):
                         ext_value, (str, int, float, bool, list)
                     ):
                         if isinstance(ext_value, list):
-                            if all(
-                                isinstance(item, (str, int, float, bool))
-                                for item in ext_value
-                            ):
+                            if all(u.is_primitive(item) for item in ext_value):
                                 extensions_data[ext_key] = ext_value
                             continue
                         extensions_data[ext_key] = ext_value
@@ -638,8 +635,7 @@ class Ldap3Adapter(FlextService[bool]):
                     str_list: list[str] = [
                         str(raw_val)
                         for raw_val in v
-                        if raw_val is not None
-                        and isinstance(raw_val, (str, int, float, bool))
+                        if raw_val is not None and u.is_primitive(raw_val)
                     ]
                     result[k] = str_list
                 else:
@@ -695,7 +691,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return None
             filtered: dict[str, t.Scalar | list[t.Scalar]] = {}
             for key, val in metadata_dict.items():
-                if isinstance(val, (str, int, float, bool)):
+                if u.is_primitive(val):
                     filtered[str(key)] = val
             return filtered or None
 

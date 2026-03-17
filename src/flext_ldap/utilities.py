@@ -57,7 +57,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """Convert a value to string, returning default for None or complex types."""
             if value is None:
                 return default
-            if isinstance(value, (str, int, float, bool)):
+            if u.is_primitive(value):
                 str_val = str(value)
                 return str_val or default
             return default
@@ -71,7 +71,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """Convert a value to a single-element string list."""
             if value is None:
                 return default or []
-            if isinstance(value, (str, int, float, bool)):
+            if u.is_primitive(value):
                 return [str(value)]
             return default or []
 
@@ -80,7 +80,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """Safe str_list conversion returning [] for None or complex types."""
             if value is None:
                 return []
-            if isinstance(value, (str, int, float, bool)):
+            if u.is_primitive(value):
                 return [str(value)]
             return []
 
@@ -93,7 +93,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """Convert to str_list and filter truthy values."""
             if value is None:
                 return default or []
-            if isinstance(value, (str, int, float, bool)):
+            if u.is_primitive(value):
                 str_val = str(value)
                 return [str_val] if str_val else (default or [])
             return default or []
