@@ -358,7 +358,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             then_value: str | float | bool | None,
             else_value: str | float | bool | None = None,
             safe_then: bool = False,
-        ) -> str | int | float | bool | None:
+        ) -> t.Primitives | None:
             """Safe conditional (builder: whn().safe().or_().build()).
 
             Uses advanced DSL: whn() → safe() → or_() for safe composition.

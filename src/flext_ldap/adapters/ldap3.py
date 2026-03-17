@@ -653,7 +653,7 @@ class Ldap3Adapter(FlextService[bool]):
             """Normalize metadata for Entry model validation.
 
             Business Rules:
-                - Filters to types accepted by QuirkMetadata: str | int | float | bool | None
+                - Filters to types accepted by QuirkMetadata: t.Primitives | None
                 - String keys are required (filters out non-string keys)
                 - Invalid value types are filtered out (preserves valid entries)
                 - Handles dict, Mapping, and Pydantic models with model_dump()
@@ -667,7 +667,7 @@ class Ldap3Adapter(FlextService[bool]):
             Architecture:
                 - Uses guard-based type filtering
                 - Uses Pydantic model_dump() for model serialization
-                - Returns dict[str, str | int | float | bool] or None
+                - Returns dict[str, t.Primitives] or None
 
             Args:
                 metadata: Raw metadata from entry (dict, Mapping, Pydantic model, or None).

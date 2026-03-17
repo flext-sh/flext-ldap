@@ -166,7 +166,7 @@ class FlextLdapModelsLdap:
         total_processed: int = 0
         successful: int = 0
         failed: int = 0
-        results: list[dict[str, str | int | float | bool]] = []
+        results: list[dict[str, t.Primitives]] = []
 
         @property
         def success_rate(self) -> float:
