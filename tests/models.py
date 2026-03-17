@@ -57,12 +57,6 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
         # Metadata models for testing
         ConversionMetadata = FlextLdapModels.Ldap.ConversionMetadata
 
-        # Collection models for testing
-        CollectionsConfig = FlextLdapModels.Collections.Config
-        CollectionsOptions = FlextLdapModels.Collections.Options
-        CollectionsResults = FlextLdapModels.Collections.Results
-        CollectionsStatistics = FlextLdapModels.Collections.Statistics
-
 
 # Short aliases for tests
 tm = TestsFlextLdapModels

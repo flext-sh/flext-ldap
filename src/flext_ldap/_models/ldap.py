@@ -297,7 +297,7 @@ class FlextLdapModelsLdap:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
         phase_results: Annotated[
-            dict[str, FlextLdapModelsLdap.PhaseSyncResult], Field(default_factory=dict)
+            dict[str, PhaseSyncResult], Field(default_factory=dict)
         ]
         total_entries: int = 0
         total_synced: int = 0
