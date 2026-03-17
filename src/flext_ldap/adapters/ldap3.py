@@ -34,7 +34,8 @@ from collections.abc import Mapping, Sequence
 from typing import Literal, override
 
 from flext_core import FlextService, r
-from flext_ldif import FlextLdif, FlextLdifParser, FlextLdifUtilities
+from flext_ldif import FlextLdif, FlextLdifParser
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif.models import FlextLdifModels
 from pydantic import BaseModel, ConfigDict
 
@@ -56,7 +57,10 @@ class FlextLdapLdap3Wrappers:
         attributes: Mapping[str, list[str]],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add()."""
-        result = connection.add(dn, object_class, dict(attributes))
+        normalized_attributes: dict[str, t.Container] = {
+            key: values[0] if values else "" for key, values in attributes.items()
+        }
+        result = connection.add(dn, object_class, normalized_attributes)
         return bool(result)
 
     @staticmethod
@@ -514,7 +518,7 @@ class Ldap3Adapter(FlextService[bool]):
             if isinstance(dn_raw, p.Ldap.DN):
                 return m.Ldif.DN(value=dn_raw.value or "")
             dn_str_val = str(dn_raw)
-            dn_value: str = FlextLdifUtilities.Ldif.DN.get_dn_value(dn_str_val)
+            dn_value: str = FlextLdifUtilitiesDN.get_dn_value(dn_str_val)
             return m.Ldif.DN(value=dn_value)
 
         @staticmethod
@@ -560,7 +564,8 @@ class Ldap3Adapter(FlextService[bool]):
                     return None
                 if isinstance(dynamic_attr, m.Ldif.QuirkMetadata):
                     return dynamic_attr
-                metadata_raw = dynamic_attr
+                if isinstance(dynamic_attr, Mapping):
+                    metadata_raw = dynamic_attr
             if not metadata_raw:
                 return None
             normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
@@ -591,9 +596,9 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: p.Ldap.Ldap3Entry | LdifEntry,
+            obj: p.Ldap.Ldap3Entry | LdifEntry | object,
             attr_name: str,
-        ) -> None:
+        ) -> m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -895,7 +900,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                dn_str = u.Ldif.DN.get_dn_value(dn)
+                dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
                 if self._delete_entry_from_ldap(connection, dn_str):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
@@ -952,7 +957,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                dn_str = u.Ldif.DN.get_dn_value(dn)
+                dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
                 if self._modify_entry_in_ldap(connection, dn_str, changes):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
@@ -1214,7 +1219,11 @@ class Ldap3Adapter(FlextService[bool]):
             return r[m.Ldap.OperationResult].fail(
                 f"Failed to convert entry attributes: {error_msg}"
             )
-        dn_str = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
+        dn_str = (
+            FlextLdifUtilitiesDN.get_dn_value(entry.dn)
+            if entry.dn is not None
+            else "unknown"
+        )
         return self.OperationExecutor(self).execute_add(
             connection_result.value, dn_str, attrs_result.value
         )

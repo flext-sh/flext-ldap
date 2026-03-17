@@ -15,7 +15,7 @@ from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities
 
-from flext_ldap import c, m
+from flext_ldap import c, m, t
 
 
 class FlextLdapUtilities(FlextLdifUtilities):
@@ -53,7 +53,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         """
 
         @staticmethod
-        def to_str(value: str | float | bool | None, *, default: str = "") -> str:
+        def to_str(value: t.Primitives | None, *, default: str = "") -> str:
             """Convert a value to string, returning default for None or complex types."""
             if value is None:
                 return default
@@ -64,7 +64,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list(
-            value: str | float | bool | None,
+            value: t.Primitives | None,
             *,
             default: list[str] | None = None,
         ) -> list[str]:
@@ -76,7 +76,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return default or []
 
         @staticmethod
-        def to_str_list_safe(value: str | float | bool | None) -> list[str]:
+        def to_str_list_safe(value: t.Primitives | None) -> list[str]:
             """Safe str_list conversion returning [] for None or complex types."""
             if value is None:
                 return []
@@ -86,7 +86,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def to_str_list_truthy(
-            value: str | float | bool | None,
+            value: t.Primitives | None,
             *,
             default: list[str] | None = None,
         ) -> list[str]:
@@ -248,8 +248,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list | Mapping[str, object],
-        ) -> list | Mapping[str, object]:
+            value: list[object] | Mapping[str, object],
+        ) -> list[object] | Mapping[str, object]:
             """Filter truthy values from list or dict.
 
             Args:
