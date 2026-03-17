@@ -12,7 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests.helpers.operation_helpers import (
+    from .operation_helpers import (
         LDAP_MODIFY_ADD,
         LDAP_MODIFY_DELETE,
         LDAP_MODIFY_REPLACE,

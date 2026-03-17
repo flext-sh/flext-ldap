@@ -486,22 +486,32 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 
+        class ServiceContracts:
+            """Service boundary contracts - stricter contracts for service interfaces."""
+
+            @runtime_checkable
+            class EntryContract(Protocol):
+                """Structural LDAP entry contract for service boundaries.
+
+                Stricter than LdapEntry - requires non-None dn and attributes.
+                For use at service layer boundaries where data is validated.
+                """
+
+                dn: str
+                attributes: Mapping[str, Sequence[str]]
+
+            @runtime_checkable
+            class SearchOptionsContract(Protocol):
+                """Structural LDAP search options contract for service boundaries.
+
+                Minimal required fields for LDAP search operations at service layer.
+                """
+
+                scope: str
+                filter_str: str
+                attributes: Sequence[str]
+
 
 __all__ = ["FlextLdapProtocols", "p"]
 
 p = FlextLdapProtocols
-
-
-class LdapEntryContract(Protocol):
-    """Structural LDAP entry contract for service boundaries."""
-
-    dn: str
-    attributes: Mapping[str, Sequence[str]]
-
-
-class SearchOptionsContract(Protocol):
-    """Structural LDAP search options contract."""
-
-    scope: str
-    filter_str: str
-    attributes: Sequence[str]

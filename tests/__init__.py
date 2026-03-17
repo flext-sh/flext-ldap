@@ -12,9 +12,9 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests import helpers, unit
-    from tests.base import TestsFlextLdapServiceBase, s
-    from tests.conftest import (
+    from . import helpers as helpers, unit as unit
+    from .base import TestsFlextLdapServiceBase, s
+    from .conftest import (
         FLEXT_LDAP_ROOT,
         FLEXT_WORKSPACE_ROOT,
         LDAP_ADMIN_DN,
@@ -59,17 +59,17 @@ if TYPE_CHECKING:
         unique_dn_suffix,
         worker_id,
     )
-    from tests.constants import TestsFlextLdapConstants, c
-    from tests.helpers.operation_helpers import (
+    from .constants import TestsFlextLdapConstants, c
+    from .helpers.operation_helpers import (
         LdapClientType,
         LdapOperationsType,
         SearchScopeType,
         TestsFlextLdapOperationHelpers,
     )
-    from tests.models import TestsFlextLdapModels, m, tm
-    from tests.protocols import TestsFlextLdapProtocols, p
-    from tests.test_smoke import TestsFlextLdapSmoke, pytestmark
-    from tests.typings import (
+    from .models import TestsFlextLdapModels, m, tm
+    from .protocols import TestsFlextLdapProtocols, p
+    from .test_smoke import TestsFlextLdapSmoke, pytestmark
+    from .typings import (
         GenericCallableParameterDict,
         GenericFieldsDict,
         GenericTestCaseDict,
@@ -90,15 +90,15 @@ if TYPE_CHECKING:
         t,
         tt,
     )
-    from tests.unit.test_api import TestsFlextLdapApi
-    from tests.unit.test_base import TestsFlextLdapBase
-    from tests.unit.test_config import TestsFlextLdapSettings
-    from tests.unit.test_detection import TestsFlextLdapDetection
-    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
-    from tests.unit.test_operations import TestsFlextLdapOperations
-    from tests.unit.test_sync import TestsFlextLdapSync
-    from tests.utilities import TestsFlextLdapUtilities, u
+    from .unit.test_api import TestsFlextLdapApi
+    from .unit.test_base import TestsFlextLdapBase
+    from .unit.test_config import TestsFlextLdapSettings
+    from .unit.test_detection import TestsFlextLdapDetection
+    from .unit.test_entry_adapter import TestsFlextLdapEntryAdapter
+    from .unit.test_ldap3_adapter import TestsFlextLdap3Adapter
+    from .unit.test_operations import TestsFlextLdapOperations
+    from .unit.test_sync import TestsFlextLdapSync
+    from .utilities import TestsFlextLdapUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DNSTracker": ("tests.conftest", "DNSTracker"),

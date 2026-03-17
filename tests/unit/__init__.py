@@ -17,20 +17,20 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from tests.unit.test_api import TestsFlextLdapApi
-    from tests.unit.test_base import TestsFlextLdapBase
-    from tests.unit.test_config import TestsFlextLdapSettings
-    from tests.unit.test_constants_optimized import (
+    from .test_api import TestsFlextLdapApi
+    from .test_base import TestsFlextLdapBase
+    from .test_config import TestsFlextLdapSettings
+    from .test_constants_optimized import (
         TestsFlextLdapConstants,
         TestsFlextLdapConstants as c,
     )
-    from tests.unit.test_detection import TestsFlextLdapDetection
-    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
-    from tests.unit.test_models import TestsFlextLdapModels, TestsFlextLdapModels as m
-    from tests.unit.test_operations import TestsFlextLdapOperations
-    from tests.unit.test_sync import TestsFlextLdapSync
-    from tests.unit.test_utilities import (
+    from .test_detection import TestsFlextLdapDetection
+    from .test_entry_adapter import TestsFlextLdapEntryAdapter
+    from .test_ldap3_adapter import TestsFlextLdap3Adapter
+    from .test_models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .test_operations import TestsFlextLdapOperations
+    from .test_sync import TestsFlextLdapSync
+    from .test_utilities import (
         TestsFlextLdapUtilities,
         TestsFlextLdapUtilities as u,
         pytestmark,
