@@ -12,7 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from . import helpers as helpers, unit as unit
+    from . import unit as unit
     from .base import TestsFlextLdapServiceBase, s
     from .conftest import (
         FLEXT_LDAP_ROOT,
@@ -60,16 +60,33 @@ if TYPE_CHECKING:
         worker_id,
     )
     from .constants import TestsFlextLdapConstants, c
-    from .helpers.operation_helpers import (
-        LdapClientType,
-        LdapOperationsType,
-        SearchScopeType,
-        TestsFlextLdapOperationHelpers,
-    )
     from .models import TestsFlextLdapModels, m
     from .protocols import TestsFlextLdapProtocols, p
     from .test_smoke import TestsFlextLdapSmoke, pytestmark
-    from .typings import TestsFlextLdapTypes, t
+    from .typings import (
+        GenericCallableParameterDict,
+        GenericFieldsDict,
+        GenericTestCaseDict,
+        LdapConnectionConfigDict,
+        LdapConnectionResultDict,
+        LdapContainerDict,
+        LdapEntry,
+        LdapEntryDataDict,
+        LdapModifyOperationDict,
+        LdapSchemaAttributeDict,
+        LdapSchemaObjectClassDict,
+        LdapSearchOptionsDict,
+        LdapSearchResultDict,
+        LdapTestScenarioDict,
+        OperationResultType,
+        SearchResultType,
+        T,
+        T_co,
+        T_contra,
+        TestsFlextLdapTypes,
+        t,
+        tt,
+    )
     from .unit.test_api import TestsFlextLdapApi
     from .unit.test_base import TestsFlextLdapBase
     from .unit.test_config import TestsFlextLdapSettings
@@ -78,13 +95,25 @@ if TYPE_CHECKING:
     from .unit.test_ldap3_adapter import TestsFlextLdap3Adapter
     from .unit.test_operations import TestsFlextLdapOperations
     from .unit.test_sync import TestsFlextLdapSync
-    from .utilities import TestsFlextLdapUtilities, u
+    from .utilities import (
+        LDAP_MODIFY_ADD,
+        LDAP_MODIFY_DELETE,
+        LDAP_MODIFY_REPLACE,
+        LdapClientType,
+        LdapOperationsType,
+        SearchScopeType,
+        TestsFlextLdapUtilities,
+        u,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DNSTracker": ("tests.conftest", "DNSTracker"),
     "FLEXT_LDAP_ROOT": ("tests.conftest", "FLEXT_LDAP_ROOT"),
     "FLEXT_WORKSPACE_ROOT": ("tests.conftest", "FLEXT_WORKSPACE_ROOT"),
     "FileLock": ("tests.conftest", "FileLock"),
+    "GenericCallableParameterDict": ("tests.typings", "GenericCallableParameterDict"),
+    "GenericFieldsDict": ("tests.typings", "GenericFieldsDict"),
+    "GenericTestCaseDict": ("tests.typings", "GenericTestCaseDict"),
     "LDAP_ADMIN_DN": ("tests.conftest", "LDAP_ADMIN_DN"),
     "LDAP_ADMIN_PASSWORD": ("tests.conftest", "LDAP_ADMIN_PASSWORD"),
     "LDAP_BASE_DN": ("tests.conftest", "LDAP_BASE_DN"),
@@ -92,13 +121,32 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LDAP_CONTAINER_NAME": ("tests.conftest", "LDAP_CONTAINER_NAME"),
     "LDAP_LEGACY_ADMIN_DN": ("tests.conftest", "LDAP_LEGACY_ADMIN_DN"),
     "LDAP_LEGACY_ADMIN_PASSWORD": ("tests.conftest", "LDAP_LEGACY_ADMIN_PASSWORD"),
+    "LDAP_MODIFY_ADD": ("tests.utilities", "LDAP_MODIFY_ADD"),
+    "LDAP_MODIFY_DELETE": ("tests.utilities", "LDAP_MODIFY_DELETE"),
+    "LDAP_MODIFY_REPLACE": ("tests.utilities", "LDAP_MODIFY_REPLACE"),
     "LDAP_PORT": ("tests.conftest", "LDAP_PORT"),
     "LDAP_SERVICE_NAME": ("tests.conftest", "LDAP_SERVICE_NAME"),
-    "LdapClientType": ("tests.helpers.operation_helpers", "LdapClientType"),
-    "LdapOperationsType": ("tests.helpers.operation_helpers", "LdapOperationsType"),
+    "LdapClientType": ("tests.utilities", "LdapClientType"),
+    "LdapConnectionConfigDict": ("tests.typings", "LdapConnectionConfigDict"),
+    "LdapConnectionResultDict": ("tests.typings", "LdapConnectionResultDict"),
+    "LdapContainerDict": ("tests.typings", "LdapContainerDict"),
+    "LdapEntry": ("tests.typings", "LdapEntry"),
+    "LdapEntryDataDict": ("tests.typings", "LdapEntryDataDict"),
+    "LdapModifyOperationDict": ("tests.typings", "LdapModifyOperationDict"),
+    "LdapOperationsType": ("tests.utilities", "LdapOperationsType"),
+    "LdapSchemaAttributeDict": ("tests.typings", "LdapSchemaAttributeDict"),
+    "LdapSchemaObjectClassDict": ("tests.typings", "LdapSchemaObjectClassDict"),
+    "LdapSearchOptionsDict": ("tests.typings", "LdapSearchOptionsDict"),
+    "LdapSearchResultDict": ("tests.typings", "LdapSearchResultDict"),
+    "LdapTestScenarioDict": ("tests.typings", "LdapTestScenarioDict"),
+    "OperationResultType": ("tests.typings", "OperationResultType"),
     "SAMPLE_GROUP_ENTRY": ("tests.conftest", "SAMPLE_GROUP_ENTRY"),
     "SAMPLE_USER_ENTRY": ("tests.conftest", "SAMPLE_USER_ENTRY"),
-    "SearchScopeType": ("tests.helpers.operation_helpers", "SearchScopeType"),
+    "SearchResultType": ("tests.typings", "SearchResultType"),
+    "SearchScopeType": ("tests.utilities", "SearchScopeType"),
+    "T": ("tests.typings", "T"),
+    "T_co": ("tests.typings", "T_co"),
+    "T_contra": ("tests.typings", "T_contra"),
     "TestFixtures": ("tests.conftest", "TestFixtures"),
     "TestsFlextLdap3Adapter": (
         "tests.unit.test_ldap3_adapter",
@@ -113,10 +161,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestsFlextLdapEntryAdapter",
     ),
     "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
-    "TestsFlextLdapOperationHelpers": (
-        "tests.helpers.operation_helpers",
-        "TestsFlextLdapOperationHelpers",
-    ),
     "TestsFlextLdapOperations": (
         "tests.unit.test_operations",
         "TestsFlextLdapOperations",
@@ -133,7 +177,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "c": ("tests.constants", "c"),
     "connection_config": ("tests.conftest", "connection_config"),
     "create_flext_ldap_instance": ("tests.conftest", "create_flext_ldap_instance"),
-    "helpers": ("tests.helpers", ""),
     "ldap3_connection": ("tests.conftest", "ldap3_connection"),
     "ldap_client": ("tests.conftest", "ldap_client"),
     "ldap_config": ("tests.conftest", "ldap_config"),
@@ -160,6 +203,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_groups_json": ("tests.conftest", "test_groups_json"),
     "test_user_entry": ("tests.conftest", "test_user_entry"),
     "test_users_json": ("tests.conftest", "test_users_json"),
+    "tt": ("tests.typings", "tt"),
     "u": ("tests.utilities", "u"),
     "unique_dn_suffix": ("tests.conftest", "unique_dn_suffix"),
     "unit": ("tests.unit", ""),
@@ -176,15 +220,37 @@ __all__ = [
     "LDAP_CONTAINER_NAME",
     "LDAP_LEGACY_ADMIN_DN",
     "LDAP_LEGACY_ADMIN_PASSWORD",
+    "LDAP_MODIFY_ADD",
+    "LDAP_MODIFY_DELETE",
+    "LDAP_MODIFY_REPLACE",
     "LDAP_PORT",
     "LDAP_SERVICE_NAME",
     "SAMPLE_GROUP_ENTRY",
     "SAMPLE_USER_ENTRY",
     "DNSTracker",
     "FileLock",
+    "GenericCallableParameterDict",
+    "GenericFieldsDict",
+    "GenericTestCaseDict",
     "LdapClientType",
+    "LdapConnectionConfigDict",
+    "LdapConnectionResultDict",
+    "LdapContainerDict",
+    "LdapEntry",
+    "LdapEntryDataDict",
+    "LdapModifyOperationDict",
     "LdapOperationsType",
+    "LdapSchemaAttributeDict",
+    "LdapSchemaObjectClassDict",
+    "LdapSearchOptionsDict",
+    "LdapSearchResultDict",
+    "LdapTestScenarioDict",
+    "OperationResultType",
+    "SearchResultType",
     "SearchScopeType",
+    "T",
+    "T_co",
+    "T_contra",
     "TestFixtures",
     "TestsFlextLdap3Adapter",
     "TestsFlextLdapApi",
@@ -193,7 +259,6 @@ __all__ = [
     "TestsFlextLdapDetection",
     "TestsFlextLdapEntryAdapter",
     "TestsFlextLdapModels",
-    "TestsFlextLdapOperationHelpers",
     "TestsFlextLdapOperations",
     "TestsFlextLdapProtocols",
     "TestsFlextLdapServiceBase",
@@ -207,7 +272,6 @@ __all__ = [
     "c",
     "connection_config",
     "create_flext_ldap_instance",
-    "helpers",
     "ldap3_connection",
     "ldap_client",
     "ldap_config",
@@ -234,6 +298,7 @@ __all__ = [
     "test_groups_json",
     "test_user_entry",
     "test_users_json",
+    "tt",
     "u",
     "unique_dn_suffix",
     "unit",

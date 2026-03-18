@@ -74,7 +74,9 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
 
 
 # Re-export types at module level for backward compatibility
-GenericCallableParameterDict = TestsFlextLdapTypes.Ldap.Tests.GenericCallableParameterDict
+GenericCallableParameterDict = (
+    TestsFlextLdapTypes.Ldap.Tests.GenericCallableParameterDict
+)
 GenericFieldsDict = TestsFlextLdapTypes.Ldap.Tests.GenericFieldsDict
 GenericTestCaseDict = TestsFlextLdapTypes.Ldap.Tests.GenericTestCaseDict
 LdapConnectionConfigDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionConfigDict
