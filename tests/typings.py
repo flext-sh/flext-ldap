@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import T, T_co, T_contra
-from flext_tests import FlextTestsTypes
+from flext_tests import t
 
 from flext_ldap import FlextLdapTypes
 
