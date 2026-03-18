@@ -35,30 +35,31 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     """
 
     class Ldap(FlextLdapConstants.Ldap):
-        class Tests: 
-        class Fixtures:
-            """Fixture-related test constants.
+        """LDAP test constants."""
 
-            Test-specific fixture constants that complement production constants.
-            """
+        class Tests:
+            """Test-related constants."""
 
-            SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
-            SAMPLE_UID: Final[str] = "testuser"
-            DEFAULT_STATUS: Final[str] = "completed"
+            class Fixtures:
+                """Fixture-related test constants.
 
-        class Mocks:
-            """Mock-related test constants.
+                Test-specific fixture constants that complement production constants.
+                """
 
-            Test-specific mock constants for test fixtures and mocks.
-            """
+                SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
+                SAMPLE_UID: Final[str] = "testuser"
+                DEFAULT_STATUS: Final[str] = "completed"
 
-            MOCK_SERVER_RESPONSE: Final[dict[str, str]] = {"status": "ok", "code": "200"}
+            class Mocks:
+                """Mock-related test constants.
 
-        class Servers:
-            """Server-specific test constants (para quirks).
+                Test-specific mock constants for test fixtures and mocks.
+                """
 
-            Test-specific server constants for quirks testing.
-            """
+                MOCK_SERVER_RESPONSE: Final[dict[str, str]] = {
+                    "status": "ok",
+                    "code": "200",
+                }
 
             class OUD:
                 """OUD server test constants."""
@@ -70,59 +71,64 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
                 SAMPLE_ACL: Final[str] = "aci: (target=*)"
 
-        class RFC:
-            """RFC server test constants - flat namespace for backward compatibility."""
+            class RFC:
+                """RFC server test constants - flat namespace for backward compatibility."""
 
-            DEFAULT_HOST: Final[str] = "localhost"
-            DEFAULT_PORT: Final[int] = 3390
-            DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
-            DEFAULT_BIND_DN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-            DEFAULT_BIND_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
-            DEFAULT_FILTER: Final[str] = "(objectClass=*)"
-            DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
-            TEST_USER_CN: Final[str] = "testuser"
-            TEST_USER_DN: Final[str] = f"uid={TEST_USER_CN},ou=people,{DEFAULT_BASE_DN}"
-            TEST_GROUP_CN: Final[str] = "testgroup"
-            TEST_GROUP_DN: Final[str] = f"cn={TEST_GROUP_CN},ou=groups,{DEFAULT_BASE_DN}"
-            OU_PEOPLE: Final[str] = "ou=people"
-            OU_GROUPS: Final[str] = "ou=groups"
-            OU_SYSTEM: Final[str] = "ou=system"
-            OU_PEOPLE_DN: Final[str] = f"{OU_PEOPLE},{DEFAULT_BASE_DN}"
-            OU_GROUPS_DN: Final[str] = f"{OU_GROUPS},{DEFAULT_BASE_DN}"
-            OU_SYSTEM_DN: Final[str] = f"{OU_SYSTEM},{DEFAULT_BASE_DN}"
+                DEFAULT_HOST: Final[str] = "localhost"
+                DEFAULT_PORT: Final[int] = 3390
+                DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
+                DEFAULT_BIND_DN: Final[str] = (
+                    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+                )
+                DEFAULT_BIND_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+                DEFAULT_FILTER: Final[str] = "(objectClass=*)"
+                DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
+                TEST_USER_CN: Final[str] = "testuser"
+                TEST_USER_DN: Final[str] = (
+                    f"uid={TEST_USER_CN},ou=people,{DEFAULT_BASE_DN}"
+                )
+                TEST_GROUP_CN: Final[str] = "testgroup"
+                TEST_GROUP_DN: Final[str] = (
+                    f"cn={TEST_GROUP_CN},ou=groups,{DEFAULT_BASE_DN}"
+                )
+                OU_PEOPLE: Final[str] = "ou=people"
+                OU_GROUPS: Final[str] = "ou=groups"
+                OU_SYSTEM: Final[str] = "ou=system"
+                OU_PEOPLE_DN: Final[str] = f"{OU_PEOPLE},{DEFAULT_BASE_DN}"
+                OU_GROUPS_DN: Final[str] = f"{OU_GROUPS},{DEFAULT_BASE_DN}"
+                OU_SYSTEM_DN: Final[str] = f"{OU_SYSTEM},{DEFAULT_BASE_DN}"
 
-        class General:
-            """General test constants - flat namespace for backward compatibility."""
+            class General:
+                """General test constants - flat namespace for backward compatibility."""
 
-            OID_CN: Final[str] = "2.5.4.3"
-            OID_SN: Final[str] = "2.5.4.4"
-            OID_OBJECTCLASS: Final[str] = "2.5.4.0"
-            OID_PERSON: Final[str] = "2.5.6.6"
-            NAME_CN: Final[str] = "cn"
-            NAME_SN: Final[str] = "sn"
-            NAME_OBJECTCLASS: Final[str] = "objectClass"
-            NAME_PERSON: Final[str] = "person"
-            DN_TEST: Final[str] = "cn=test,dc=example,dc=com"
-            DN_EXAMPLE: Final[str] = "dc=example,dc=com"
-            DN_SCHEMA: Final[str] = "cn=schema"
-            SYNTAX_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.115.121.1.15"
-            SYNTAX_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-            SYNTAX_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
-            VALUE_TEST: Final[str] = "test"
-            VALUE_USER: Final[str] = "user"
-            VALUE_USER1: Final[str] = "user1"
-            VALUE_USER2: Final[str] = "user2"
-            ERROR_MISSING_OID: Final[str] = "Missing OID"
-            ERROR_INVALID_FORMAT: Final[str] = "Invalid format"
-            ERROR_PARSE_FAILED: Final[str] = "Parse failed"
-            VERSION_MIN_LENGTH: Final[int] = 5
-            VERSION_MAX_LENGTH: Final[int] = 50
-            VERSION_MIN_PARTS: Final[int] = 2
-            VERSION_MAX_PARTS: Final[int] = 3
-            VERSION_MIN_COMPONENTS: Final[int] = 2
-
-        class TestConstants:
-            """Hierarchical test constants for flext-ldap tests with domain-based organization."""
+                OID_CN: Final[str] = "2.5.4.3"
+                OID_SN: Final[str] = "2.5.4.4"
+                OID_OBJECTCLASS: Final[str] = "2.5.4.0"
+                OID_PERSON: Final[str] = "2.5.6.6"
+                NAME_CN: Final[str] = "cn"
+                NAME_SN: Final[str] = "sn"
+                NAME_OBJECTCLASS: Final[str] = "objectClass"
+                NAME_PERSON: Final[str] = "person"
+                DN_TEST: Final[str] = "cn=test,dc=example,dc=com"
+                DN_EXAMPLE: Final[str] = "dc=example,dc=com"
+                DN_SCHEMA: Final[str] = "cn=schema"
+                SYNTAX_DIRECTORY_STRING: Final[str] = (
+                    "1.3.6.1.4.1.1466.115.115.121.1.15"
+                )
+                SYNTAX_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
+                SYNTAX_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
+                VALUE_TEST: Final[str] = "test"
+                VALUE_USER: Final[str] = "user"
+                VALUE_USER1: Final[str] = "user1"
+                VALUE_USER2: Final[str] = "user2"
+                ERROR_MISSING_OID: Final[str] = "Missing OID"
+                ERROR_INVALID_FORMAT: Final[str] = "Invalid format"
+                ERROR_PARSE_FAILED: Final[str] = "Parse failed"
+                VERSION_MIN_LENGTH: Final[int] = 5
+                VERSION_MAX_LENGTH: Final[int] = 50
+                VERSION_MIN_PARTS: Final[int] = 2
+                VERSION_MAX_PARTS: Final[int] = 3
+                VERSION_MIN_COMPONENTS: Final[int] = 2
 
             DEFAULT_BASE_DN: ClassVar[str] = "dc=flext,dc=local"
             DEFAULT_HOST: ClassVar[str] = "localhost"

@@ -22,7 +22,7 @@ import fcntl
 import os
 import time
 import types
-from collections.abc import Callable, Container, Generator, Mapping, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
 from threading import Lock
 from typing import TextIO
@@ -104,8 +104,10 @@ def _ldap3_add(
     oc_list: list[str] = list(object_class)
     if attributes is None:
         return bool(conn.add(dn, oc_list, None))
-    attrs_dict = {k: list(v) for k, v in attributes.items()}
-    return bool(conn.add(dn, oc_list, attrs_dict))
+    attrs_mapping: Mapping[str, str | list[str]] = {
+        k: list(v) for k, v in attributes.items()
+    }
+    return bool(conn.add(dn, oc_list, attrs_mapping))
 
 
 def _ldap3_delete(conn: Connection, dn: str) -> bool:
