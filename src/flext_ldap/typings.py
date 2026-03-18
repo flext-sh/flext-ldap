@@ -8,7 +8,7 @@ from typing import ParamSpec, TypeVar
 from flext_core import r, t as _core_t
 from flext_ldif import FlextLdifModels, FlextLdifTypes
 
-from flext_ldap.protocols import LdapEntryContract, SearchOptionsContract
+from flext_ldap.protocols import p
 
 
 class FlextLdapTypes(FlextLdifTypes):
@@ -43,30 +43,34 @@ class FlextLdapTypes(FlextLdifTypes):
         class Entry:
             """Entry type aliases."""
 
-            type Instance = LdapEntryContract
-            type Collection = Sequence[LdapEntryContract]
+            type Instance = p.Ldap.ServiceContracts.EntryContract
+            type Collection = Sequence[p.Ldap.ServiceContracts.EntryContract]
+            type LdifEntry = FlextLdifModels.Ldif.Entry
 
         class Search:
             """Search type aliases."""
 
-            type Options = SearchOptionsContract
+            type Options = p.Ldap.ServiceContracts.SearchOptionsContract
             type Filter = str
             type Scope = str
 
-    FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
+        # Local alias for cleaner TypeVar bounds
+        _EntryContract = p.Ldap.ServiceContracts.EntryContract
+
+    FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=Ldap._EntryContract)
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
     TDomainResult = TypeVar("TDomainResult", bound=_core_t.Container)
     P = ParamSpec("P")
 
 
 t = FlextLdapTypes
+LdifEntry = FlextLdapTypes.Ldap.Entry.LdifEntry
+
 __all__ = [
     "FlextLdapTypes",
-    "LdapEntryContract",
-    "SearchOptionsContract",
+    "LdifEntry",
+    "p",
     "t",
 ]
 
 TDomainResult = TypeVar("TDomainResult", bound=t.Container)
-
-type LdifEntry = FlextLdifModels.Ldif.Entry
