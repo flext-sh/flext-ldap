@@ -26,7 +26,8 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldap import Ldap3Adapter, m
+from flext_ldap import Ldap3Adapter
+from tests import m
 
 pytestmark = pytest.mark.unit
 

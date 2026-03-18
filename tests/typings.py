@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core._typings.generics import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
 from flext_ldap import FlextLdapTypes
@@ -84,10 +85,6 @@ LdapSearchOptionsDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchOptionsDict
 LdapSearchResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchResultDict
 LdapTestScenarioDict = TestsFlextLdapTypes.Ldap.Tests.LdapTestScenarioDict
 
-# Generic type variables from FlextTestsTypes
-T = FlextTestsTypes.T
-T_co = FlextTestsTypes.T_co
-T_contra = FlextTestsTypes.T_contra
 
 # Aliases
 t = TestsFlextLdapTypes

@@ -28,9 +28,7 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 
-from flext_ldap import t
-
-from .. import u
+from tests import t, u
 
 pytestmark = pytest.mark.unit
 
