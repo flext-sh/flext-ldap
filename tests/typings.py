@@ -13,9 +13,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import r
+from flext_core._typings.generics import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
-from flext_ldap import FlextLdapTypes
+from flext_ldap import FlextLdapModels, FlextLdapTypes
 
 
 class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
@@ -44,9 +46,16 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
         class Tests:
             """flext-ldap-specific test type definitions namespace.
 
-            Use t.Tests.* for generic test types from t.
+            Consolidates all test types from helpers/typings.py and inline locations.
+            Use t.Ldap.Tests.* for all flext-ldap test types.
             """
 
+            # Core operation result types (from helpers/typings.py)
+            type OperationResultType = r[FlextLdapModels.Ldap.OperationResult]
+            type SearchResultType = r[FlextLdapModels.Ldap.SearchResult]
+            type LdapEntry = FlextLdapModels.Ldif.Entry
+
+            # Test data dictionary types
             type GenericFieldsDict = dict[
                 str, str | int | bool | list[str] | dict[str, list[str]]
             ]
@@ -64,10 +73,49 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             type LdapConnectionResultDict = dict[str, str | int | bool]
 
 
+# Re-export types at module level for backward compatibility
+GenericCallableParameterDict = TestsFlextLdapTypes.Ldap.Tests.GenericCallableParameterDict
+GenericFieldsDict = TestsFlextLdapTypes.Ldap.Tests.GenericFieldsDict
+GenericTestCaseDict = TestsFlextLdapTypes.Ldap.Tests.GenericTestCaseDict
+LdapConnectionConfigDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionConfigDict
+LdapConnectionResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionResultDict
+LdapContainerDict = TestsFlextLdapTypes.Ldap.Tests.LdapContainerDict
+LdapEntry = TestsFlextLdapTypes.Ldap.Tests.LdapEntry
+LdapEntryDataDict = TestsFlextLdapTypes.Ldap.Tests.LdapEntryDataDict
+LdapModifyOperationDict = TestsFlextLdapTypes.Ldap.Tests.LdapModifyOperationDict
+LdapSchemaAttributeDict = TestsFlextLdapTypes.Ldap.Tests.LdapSchemaAttributeDict
+LdapSchemaObjectClassDict = TestsFlextLdapTypes.Ldap.Tests.LdapSchemaObjectClassDict
+LdapSearchOptionsDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchOptionsDict
+LdapSearchResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchResultDict
+LdapTestScenarioDict = TestsFlextLdapTypes.Ldap.Tests.LdapTestScenarioDict
+OperationResultType = TestsFlextLdapTypes.Ldap.Tests.OperationResultType
+SearchResultType = TestsFlextLdapTypes.Ldap.Tests.SearchResultType
+
 # Aliases
 t = TestsFlextLdapTypes
+tt = TestsFlextLdapTypes
 
 __all__ = [
+    "GenericCallableParameterDict",
+    "GenericFieldsDict",
+    "GenericTestCaseDict",
+    "LdapConnectionConfigDict",
+    "LdapConnectionResultDict",
+    "LdapContainerDict",
+    "LdapEntry",
+    "LdapEntryDataDict",
+    "LdapModifyOperationDict",
+    "LdapSchemaAttributeDict",
+    "LdapSchemaObjectClassDict",
+    "LdapSearchOptionsDict",
+    "LdapSearchResultDict",
+    "LdapTestScenarioDict",
+    "OperationResultType",
+    "SearchResultType",
+    "T",
+    "T_co",
+    "T_contra",
     "TestsFlextLdapTypes",
     "t",
+    "tt",
 ]

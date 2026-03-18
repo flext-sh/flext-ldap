@@ -40,7 +40,11 @@ from flext_ldap import (
     FlextLdapSettings,
 )
 from ldap3 import Connection, Server
-from tests import GenericFieldsDict, LdapContainerDict, c, m
+from tests import c, m
+
+# Runtime type aliases (PEP 695 TypeAliasType can't be used in r[...]/TypeAdapter at runtime)
+GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
+LdapContainerDict = dict[str, str | int | bool]
 
 logger = FlextLogger(__name__)
 FLEXT_LDAP_ROOT = Path(__file__).parent.parent.resolve()

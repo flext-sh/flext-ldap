@@ -21,11 +21,9 @@ from flext_ldap import (
     FlextLdapOperations,
     p,
 )
-from tests import u
+from tests import t, u
 
 from .. import constants as c_mod
-from ..typings import GenericFieldsDict, t
-from .typings import LdapEntry, OperationResultType, SearchResultType
 
 LDAP_MODIFY_ADD: int = 0
 LDAP_MODIFY_DELETE: int = 1
@@ -60,7 +58,7 @@ class _LdapEntryProtocolAdapter:
         self.metadata = metadata
 
 
-def _ldap_entry_to_protocol_adapter(entry: LdapEntry) -> p.Ldap.LdapEntry:
+def _ldap_entry_to_protocol_adapter(entry: t.Ldap.Tests.LdapEntry) -> p.Ldap.LdapEntry:
     dn_str = str(entry.dn) if entry.dn is not None else ""
     attrs: Mapping[str, Sequence[str]] = (
         entry.attributes.attributes
@@ -140,7 +138,7 @@ class TestsFlextLdapOperationHelpers:
         return result
 
     @staticmethod
-    def _ensure_entry_has_dn(entry: LdapEntry) -> None:
+    def _ensure_entry_has_dn(entry: t.Ldap.Tests.LdapEntry) -> None:
         """Ensure entry has DN for protocol compatibility.
 
         Args:
@@ -155,7 +153,7 @@ class TestsFlextLdapOperationHelpers:
             raise ValueError(error_msg)
 
     @staticmethod
-    def _ensure_entry_has_attributes(entry: LdapEntry) -> None:
+    def _ensure_entry_has_attributes(entry: t.Ldap.Tests.LdapEntry) -> None:
         """Ensure entry has attributes for protocol compatibility.
 
         Args:
@@ -170,7 +168,7 @@ class TestsFlextLdapOperationHelpers:
             raise ValueError(error_msg)
 
     @staticmethod
-    def _ensure_entry_protocol_compatible(entry: LdapEntry) -> None:
+    def _ensure_entry_protocol_compatible(entry: t.Ldap.Tests.LdapEntry) -> None:
         """Ensure entry is compatible with Entry.
 
         Args:
@@ -205,7 +203,7 @@ class TestsFlextLdapOperationHelpers:
         return search_options_raw
 
     @staticmethod
-    def _get_entry_for_protocol(entry: LdapEntry) -> LdapEntry:
+    def _get_entry_for_protocol(entry: t.Ldap.Tests.LdapEntry) -> t.Ldap.Tests.LdapEntry:
         """Get entry compatible with LdapEntry after validation.
 
         Args:
@@ -335,7 +333,7 @@ class TestsFlextLdapOperationHelpers:
 
         """
         execute_result_raw = client.execute()
-        execute_result_typed: SearchResultType = (
+        execute_result_typed: t.Ldap.Tests.SearchResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(execute_result_raw)
         )
         assert execute_result_typed.is_success
@@ -376,7 +374,7 @@ class TestsFlextLdapOperationHelpers:
         sn: str | None = None,
         mail: str | None = None,
         use_uid: bool = False,
-        additional_attrs: GenericFieldsDict | None = None,
+        additional_attrs: t.Ldap.Tests.GenericFieldsDict | None = None,
         **extra_attributes: t.Scalar,
     ) -> FlextLdapModels.Ldif.Entry:
         """Create inetOrgPerson entry - COMMON PATTERN.
@@ -509,7 +507,7 @@ class TestsFlextLdapOperationHelpers:
         sn: str | None = None,
         mail: str | None = None,
         **extra_attributes: t.Scalar,
-    ) -> GenericFieldsDict:
+    ) -> t.Ldap.Tests.GenericFieldsDict:
         """Create entry dictionary - COMMON PATTERN.
 
         Replaces repetitive entry dict creation across tests.
@@ -545,17 +543,17 @@ class TestsFlextLdapOperationHelpers:
             else:
                 normalized_extra_attrs[key] = [str(value)]
         attributes.update(normalized_extra_attrs)
-        result: GenericFieldsDict = {"dn": dn, "attributes": attributes}
+        result: t.Ldap.Tests.GenericFieldsDict = {"dn": dn, "attributes": attributes}
         return result
 
     @staticmethod
     def add_entry_and_assert_success(
         client: LdapOperationsType,
-        entry: LdapEntry,
+        entry: t.Ldap.Tests.LdapEntry,
         *,
         verify_operation_result: bool = False,
         cleanup_after: bool = True,
-    ) -> OperationResultType:
+    ) -> t.Ldap.Tests.OperationResultType:
         """Add entry and assert success.
 
         Args:
@@ -579,10 +577,10 @@ class TestsFlextLdapOperationHelpers:
             add_result_raw = TestsFlextLdapOperationHelpers._ensure_flext_result(
                 add_result_raw_protocol
             )
-        add_result_typed: OperationResultType = (
+        add_result_typed: t.Ldap.Tests.OperationResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(add_result_raw)
         )
-        result: OperationResultType = (
+        result: t.Ldap.Tests.OperationResultType = (
             TestsFlextLdapOperationHelpers._assert_result_success(
                 add_result_typed, error_msg="Add operation failed"
             )
