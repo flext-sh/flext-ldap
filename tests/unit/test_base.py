@@ -53,7 +53,7 @@ class TestsFlextLdapBase:
     def test_class_structure(self) -> None:
         """Test FlextLdapServiceBase class structure, inheritance, and generics."""
         assert FlextLdapServiceBase is not None
-        assert issubclass(FlextLdapServiceBase, FlextService)
+        assert issubclass(FlextLdapServiceBase[str], FlextService)
         assert hasattr(FlextLdapServiceBase, "__class_getitem__")
 
     def test_exports_and_aliases(self) -> None:

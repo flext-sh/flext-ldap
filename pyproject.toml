@@ -165,6 +165,7 @@ project-excludes = [
   "**/*_pb2_grpc*.py",
   "**/_pb2.py",
   "**/_pb2_grpc.py",
+  "tests/**/*.py",
 ]
 search-path = [
   ".",
