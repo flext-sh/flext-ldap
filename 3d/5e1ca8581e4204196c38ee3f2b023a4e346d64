@@ -1,0 +1,38 @@
+tests/conftest.py
+  7c01b96feb535860 103
+tests/test_smoke.py
+  84167fe83c69e77d 66-69,76-81,84-85,92-106,108-112,120-134,136-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "3d5e1ca8581e4204196c38ee3f2b023a4e346d64",
+  "prompts": {
+    "7c01b96feb535860": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdaaa98fffemUrSFyEW46Dfd5",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "84167fe83c69e77d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdabb536fferbuboyACs4UpMh",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 52,
+      "total_deletions": 13,
+      "accepted_lines": 52,
+      "overriden_lines": 0
+    }
+  }
+}
