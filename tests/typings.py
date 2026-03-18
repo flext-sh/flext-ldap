@@ -1,11 +1,11 @@
 """Type system foundation for flext-ldap tests.
 
-Provides TestsLdapTypes, extending t with flext-ldap-specific types.
+Provides TestsFlextLdapTypes, extending t with flext-ldap-specific types.
 All generic test types come from flext_tests, only flext-ldap-specific additions here.
 
 Architecture:
 - t (flext_tests) = Generic types for all FLEXT projects
-- TestsLdapTypes (tests/) = flext-ldap-specific types extending t
+- TestsFlextLdapTypes (tests/) = flext-ldap-specific types extending t
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,11 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
-from flext_core._typings.generics import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
-from flext_ldap import FlextLdapModels, FlextLdapTypes
+from flext_ldap import FlextLdapTypes
 
+from tests import m
 
 class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
     """Type system foundation for flext-ldap tests - extends t and FlextLdapTypes.
@@ -41,8 +41,6 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
     class Ldap(FlextLdapTypes.Ldap):
         """LDAP test types."""
 
-        """LDAP test types."""
-
         class Tests:
             """flext-ldap-specific test type definitions namespace.
 
@@ -51,9 +49,9 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             """
 
             # Core operation result types (from helpers/typings.py)
-            type OperationResultType = r[FlextLdapModels.Ldap.OperationResult]
-            type SearchResultType = r[FlextLdapModels.Ldap.SearchResult]
-            type LdapEntry = FlextLdapModels.Ldif.Entry
+            type OperationResultType = r[m.Ldap.OperationResult]
+            type SearchResultType = r[m.Ldap.SearchResult]
+            type LdapEntry = m.Ldif.Entry
 
             # Test data dictionary types
             type GenericFieldsDict = dict[
@@ -73,51 +71,6 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             type LdapConnectionResultDict = dict[str, str | int | bool]
 
 
-# Re-export types at module level for backward compatibility
-GenericCallableParameterDict = (
-    TestsFlextLdapTypes.Ldap.Tests.GenericCallableParameterDict
-)
-GenericFieldsDict = TestsFlextLdapTypes.Ldap.Tests.GenericFieldsDict
-GenericTestCaseDict = TestsFlextLdapTypes.Ldap.Tests.GenericTestCaseDict
-LdapConnectionConfigDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionConfigDict
-LdapConnectionResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionResultDict
-LdapContainerDict = TestsFlextLdapTypes.Ldap.Tests.LdapContainerDict
-LdapEntry = TestsFlextLdapTypes.Ldap.Tests.LdapEntry
-LdapEntryDataDict = TestsFlextLdapTypes.Ldap.Tests.LdapEntryDataDict
-LdapModifyOperationDict = TestsFlextLdapTypes.Ldap.Tests.LdapModifyOperationDict
-LdapSchemaAttributeDict = TestsFlextLdapTypes.Ldap.Tests.LdapSchemaAttributeDict
-LdapSchemaObjectClassDict = TestsFlextLdapTypes.Ldap.Tests.LdapSchemaObjectClassDict
-LdapSearchOptionsDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchOptionsDict
-LdapSearchResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchResultDict
-LdapTestScenarioDict = TestsFlextLdapTypes.Ldap.Tests.LdapTestScenarioDict
-OperationResultType = TestsFlextLdapTypes.Ldap.Tests.OperationResultType
-SearchResultType = TestsFlextLdapTypes.Ldap.Tests.SearchResultType
-
-# Aliases
 t = TestsFlextLdapTypes
-tt = TestsFlextLdapTypes
 
-__all__ = [
-    "GenericCallableParameterDict",
-    "GenericFieldsDict",
-    "GenericTestCaseDict",
-    "LdapConnectionConfigDict",
-    "LdapConnectionResultDict",
-    "LdapContainerDict",
-    "LdapEntry",
-    "LdapEntryDataDict",
-    "LdapModifyOperationDict",
-    "LdapSchemaAttributeDict",
-    "LdapSchemaObjectClassDict",
-    "LdapSearchOptionsDict",
-    "LdapSearchResultDict",
-    "LdapTestScenarioDict",
-    "OperationResultType",
-    "SearchResultType",
-    "T",
-    "T_co",
-    "T_contra",
-    "TestsFlextLdapTypes",
-    "t",
-    "tt",
-]
+__all__ = ["TestsFlextLdapTypes", "t"]

@@ -34,8 +34,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     - All production constants come from FlextLdapConstants
     """
 
-    RFC: ClassVar[type]
-
     class Ldap(FlextLdapConstants.Ldap):
         """LDAP test constants."""
 
@@ -273,6 +271,5 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
 
 c = TestsFlextLdapConstants
-c.RFC = c.Ldap.Tests.RFC
 
 __all__ = ["TestsFlextLdapConstants", "c"]

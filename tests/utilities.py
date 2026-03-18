@@ -4,29 +4,16 @@ from collections.abc import Mapping, Sequence
 from typing import TypeVar
 
 import pytest
-from flext_core import r, t as core_t
+from flext_core import T, r
+from flext_core.typings import t as core_t
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import (
     FlextLdap,
-    FlextLdapModels,
     FlextLdapOperations,
     FlextLdapUtilities,
-    p,
 )
-
-from . import constants as c_mod, typings as t_mod
-
-c = c_mod.c
-t = t_mod.t
-m = FlextLdapModels
-T = TypeVar("T")
-
-# Runtime aliases for PEP 695 types (not TypeAliasType, regular assignments for runtime use)
-# These are used in isinstance() checks and type annotations at runtime
-ConfigMap = core_t.ConfigMap
-GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
-LdapContainerDict = dict[str, str | int | bool]
+from tests import c, m, p, t
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -79,14 +66,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 class _LdapEntryProtocolAdapter:
                     dn: str | p.Ldap.DN | None
                     attributes: Mapping[str, Sequence[str]] | p.Ldap.Attributes | None
-                    metadata: ConfigMap | None
+                    metadata: core_t.ConfigMap | None
 
                     def __init__(
                         self,
                         dn: str,
                         attributes: Mapping[str, Sequence[str]],
                         *,
-                        metadata: ConfigMap | None = None,
+                        metadata: core_t.ConfigMap | None = None,
                     ) -> None:
                         self.dn = dn
                         self.attributes = attributes
@@ -103,8 +90,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def _validate_scope(
-                scope: str | c_mod.c.Ldap.SearchScope,
-            ) -> c_mod.c.Ldap.SearchScope:
+                scope: str | c.Ldap.SearchScope,
+            ) -> c.Ldap.SearchScope:
                 """Validate and return a SearchScope StrEnum.
 
                 Uses u.parse for unified enum parsing via test utilities.
@@ -120,14 +107,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
                 """
                 valid_scopes: frozenset[str] = frozenset({
-                    c_mod.c.Ldap.SearchScope.BASE.value,
-                    c_mod.c.Ldap.SearchScope.ONELEVEL.value,
-                    c_mod.c.Ldap.SearchScope.SUBTREE.value,
+                    c.Ldap.SearchScope.BASE.value,
+                    c.Ldap.SearchScope.ONELEVEL.value,
+                    c.Ldap.SearchScope.SUBTREE.value,
                 })
-                if isinstance(scope, c_mod.c.Ldap.SearchScope):
+                if isinstance(scope, c.Ldap.SearchScope):
                     return scope
                 parse_result = FlextTestsUtilities.parse(
-                    scope, target=c_mod.c.Ldap.SearchScope
+                    scope, target=c.Ldap.SearchScope
                 )
                 if parse_result.is_success:
                     return parse_result.value
@@ -283,7 +270,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 filter_str: str = "(objectClass=*)",
                 expected_min_count: int = 0,
                 expected_max_count: int | None = None,
-                scope: str = c_mod.c.Ldap.SearchScope.SUBTREE.value,
+                scope: str = c.Ldap.SearchScope.SUBTREE.value,
                 attributes: list[str] | None = None,
                 size_limit: int = 0,
             ) -> m.Ldap.SearchResult:
@@ -354,7 +341,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 sn: str | None = None,
                 mail: str | None = None,
                 use_uid: bool = False,
-                additional_attrs: GenericFieldsDict | None = None,
+                additional_attrs: t.Ldap.Tests.GenericFieldsDict | None = None,
                 **extra_attributes: str | int | bool | list[str],
             ) -> m.Ldif.Entry:
                 """Create inetOrgPerson entry.
@@ -424,22 +411,6 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 )
 
 
-# Backward compatibility aliases for operation_helpers migration
-LDAP_MODIFY_ADD = TestsFlextLdapUtilities.Ldap.Tests.LDAP_MODIFY_ADD
-LDAP_MODIFY_DELETE = TestsFlextLdapUtilities.Ldap.Tests.LDAP_MODIFY_DELETE
-LDAP_MODIFY_REPLACE = TestsFlextLdapUtilities.Ldap.Tests.LDAP_MODIFY_REPLACE
-LdapClientType = TestsFlextLdapUtilities.Ldap.Tests.LdapClientType
-LdapOperationsType = TestsFlextLdapUtilities.Ldap.Tests.LdapOperationsType
-SearchScopeType = TestsFlextLdapUtilities.Ldap.Tests.SearchScopeType
-
-__all__ = [
-    "LDAP_MODIFY_ADD",
-    "LDAP_MODIFY_DELETE",
-    "LDAP_MODIFY_REPLACE",
-    "LdapClientType",
-    "LdapOperationsType",
-    "SearchScopeType",
-    "TestsFlextLdapUtilities",
-    "u",
-]
 u = TestsFlextLdapUtilities
+
+__all__ = ["TestsFlextLdapUtilities", "u"]

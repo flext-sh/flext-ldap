@@ -122,7 +122,7 @@ class TestsFlextLdapOperations:
     def test_search_method_exists(self) -> None:
         """Test that search method exists and can be called."""
         operations = self._create_operations()
-        rfc_constants = c.RFC
+        rfc_constants = c.Ldap.Tests.RFC
         search_options = m.Ldap.SearchOptions(
             base_dn=rfc_constants.DEFAULT_BASE_DN,
             filter_str=rfc_constants.DEFAULT_FILTER,

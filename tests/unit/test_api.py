@@ -259,8 +259,8 @@ class TestsFlextLdapApi:
         """Test search returns failure when not connected."""
         api = self._create_api()
         search_options = m.Ldap.SearchOptions(
-            base_dn=c.RFC.DEFAULT_BASE_DN,
-            filter_str=c.RFC.DEFAULT_FILTER,
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            filter_str=c.Ldap.Tests.RFC.DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
         tm.fail(api.search(search_options))
