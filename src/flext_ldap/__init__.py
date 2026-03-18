@@ -16,11 +16,7 @@ if TYPE_CHECKING:
     from flext_ldap.__version__ import __all__
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import (
-        FlextLdapLdap3Wrappers,
-        Ldap3Adapter,
-        LdifEntry,
-    )
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers, Ldap3Adapter
     from flext_ldap.api import (
         MULTI_PHASE_CALLBACK_PARAM_COUNT,
         SINGLE_PHASE_CALLBACK_PARAM_COUNT,
@@ -30,18 +26,13 @@ if TYPE_CHECKING:
     from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
-    from flext_ldap.protocols import FlextLdapProtocols, p
+    from flext_ldap.protocols import FlextLdapProtocols
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
     from flext_ldap.services.sync import FlextLdapSyncService
     from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import (
-        FlextLdapTypes,
-        LdapEntryContract,
-        SearchOptionsContract,
-        t,
-    )
+    from flext_ldap.typings import FlextLdapTypes, LdifEntry, p, t
     from flext_ldap.utilities import FlextLdapUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -66,8 +57,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapUtilities": ("flext_ldap.utilities", "FlextLdapUtilities"),
     "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
     "Ldap3Adapter": ("flext_ldap.adapters.ldap3", "Ldap3Adapter"),
-    "LdapEntryContract": ("flext_ldap.typings", "LdapEntryContract"),
-    "LdifEntry": ("flext_ldap.adapters.ldap3", "LdifEntry"),
+    "LdifEntry": ("flext_ldap.typings", "LdifEntry"),
     "MULTI_PHASE_CALLBACK_PARAM_COUNT": (
         "flext_ldap.api",
         "MULTI_PHASE_CALLBACK_PARAM_COUNT",
@@ -76,13 +66,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldap.api",
         "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
     ),
-    "SearchOptionsContract": ("flext_ldap.typings", "SearchOptionsContract"),
     "__all__": ("flext_ldap.__version__", "__all__"),
     "_models": ("flext_ldap._models", ""),
     "adapters": ("flext_ldap.adapters", ""),
     "c": ("flext_ldap.constants", "c"),
     "m": ("flext_ldap.models", "m"),
-    "p": ("flext_ldap.protocols", "p"),
+    "p": ("flext_ldap.typings", "p"),
     "s": ("flext_ldap.base", "s"),
     "services": ("flext_ldap.services", ""),
     "t": ("flext_ldap.typings", "t"),
@@ -110,9 +99,7 @@ __all__ = [
     "FlextLdapUtilities",
     "LaxStr",
     "Ldap3Adapter",
-    "LdapEntryContract",
     "LdifEntry",
-    "SearchOptionsContract",
     "__all__",
     "_models",
     "adapters",
