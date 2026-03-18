@@ -28,7 +28,7 @@ from threading import Lock
 from typing import TextIO
 
 import pytest
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, t
 from flext_ldif import FlextLdif, FlextLdifParser
 from flext_tests.docker import tk
 from pydantic import TypeAdapter, ValidationError
@@ -215,22 +215,22 @@ class TestFixtures:
             return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
     @staticmethod
-    def load_docker_config() -> r[dict[str, object]]:
-        """Load Docker configuration for test container.
-
-        Returns:
-            r containing Docker config dictionary or error
-
-        """
+    def load_docker_config() -> r[Mapping[str, t.NormalizedValue]]:
         try:
             filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
             if not filepath.exists():
-                return r[dict[str, object]].fail("Docker config file not found")
+                return r[Mapping[str, t.NormalizedValue]].fail(
+                    "Docker config file not found",
+                )
             raw_content = filepath.read_text(encoding="utf-8")
-            config = TypeAdapter(dict[str, object]).validate_json(raw_content)
-            return r[dict[str, object]].ok(config)
+            config: Mapping[str, t.NormalizedValue] = TypeAdapter(
+                dict[str, t.NormalizedValue],
+            ).validate_json(raw_content)
+            return r[Mapping[str, t.NormalizedValue]].ok(config)
         except (OSError, ValueError, ValidationError) as e:
-            return r[dict[str, object]].fail(f"Failed to load docker config: {e}")
+            return r[Mapping[str, t.NormalizedValue]].fail(
+                f"Failed to load docker config: {e}",
+            )
 
     @staticmethod
     def load_users_json() -> list[GenericFieldsDict]:
