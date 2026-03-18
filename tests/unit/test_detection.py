@@ -45,7 +45,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _get_detector_execute_scenarios() -> list[
-        tuple[dict[str, object] | None, bool, str]
+        tuple[dict[str, bool | float | str | None] | None, bool, str]
     ]:
         """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
         return [

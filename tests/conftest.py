@@ -20,7 +20,7 @@ _ws_root = Path(__file__).parent.parent.parent.resolve()
 
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
-    worker_input: dict[str, object] = (
+    worker_input: dict[str, str | int | bool] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     return str(worker_input.get("workerid", "master"))

@@ -20,10 +20,7 @@ if TYPE_CHECKING:
     from .test_api import TestsFlextLdapApi
     from .test_base import TestsFlextLdapBase
     from .test_config import TestsFlextLdapSettings
-    from .test_constants_optimized import (
-        TestsFlextLdapConstants,
-        TestsFlextLdapConstants as c,
-    )
+    from .test_constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from .test_detection import TestsFlextLdapDetection
     from .test_entry_adapter import TestsFlextLdapEntryAdapter
     from .test_ldap3_adapter import TestsFlextLdap3Adapter
@@ -43,10 +40,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
     "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
-    "TestsFlextLdapConstants": (
-        "tests.unit.test_constants_optimized",
-        "TestsFlextLdapConstants",
-    ),
+    "TestsFlextLdapConstants": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
     "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
     "TestsFlextLdapEntryAdapter": (
         "tests.unit.test_entry_adapter",
@@ -60,7 +54,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
     "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
     "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
-    "c": ("tests.unit.test_constants_optimized", "TestsFlextLdapConstants"),
+    "c": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
     "m": ("tests.unit.test_models", "TestsFlextLdapModels"),
     "pytestmark": ("tests.unit.test_utilities", "pytestmark"),
     "u": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),

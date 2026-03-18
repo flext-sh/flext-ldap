@@ -49,7 +49,9 @@ class TestsFlextLdapUtilities:
         "whitespace": "  test  ",
         "unicode": "café",
     }
-    _LIST_VALUES: ClassVar[dict[str, object]] = {
+    _LIST_VALUES: ClassVar[
+        dict[str, list[str] | list[str | int | bool] | tuple[str, ...] | str | None]
+    ] = {
         "list_str": ["a", "b", "c"],
         "list_mixed": ["a", 1, True],
         "tuple": ("a", "b"),
