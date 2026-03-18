@@ -163,7 +163,7 @@ class TestsFlextLdapSync:
         """Test BatchSync inner class initialization."""
         operations = self._create_operations()
         batch_sync = FlextLdapSyncService.BatchSync(operations=operations)
-        tm.that(batch_sync, none=False)
+        assert batch_sync is not None
         assert isinstance(batch_sync, FlextLdapSyncService.BatchSync)
 
     def test_sync_service_methods_exist(self) -> None:

@@ -95,7 +95,7 @@ class TestsFlextLdapOperations:
     def test_config_property(self) -> None:
         """Test config property returns FlextSettings with ldap namespace."""
         operations = self._create_operations()
-        tm.that(operations.config, is_=FlextSettings, none=False)
+        assert isinstance(operations.config, FlextSettings)
 
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""

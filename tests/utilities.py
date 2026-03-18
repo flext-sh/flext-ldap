@@ -1,35 +1,38 @@
+"""Utilities for flext-ldap tests.
+
+Provides TestsFlextLdapUtilities, extending u with flext-ldap-specific utilities.
+All generic test utilities come from flext_tests.
+
+Architecture:
+- u (flext_tests) = Generic utilities for all FLEXT projects
+- TestsFlextLdapUtilities (tests/) = flext-ldap-specific utilities extending u
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import TypeVar
 
 import pytest
-from flext_core import r, t as core_t
+from flext_core import r
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import (
     FlextLdap,
-    FlextLdapModels,
     FlextLdapOperations,
     FlextLdapUtilities,
     p,
 )
 
-from . import constants as c_mod, typings as t_mod
-
-c = c_mod.c
-t = t_mod.t
-m = FlextLdapModels
-
-# Runtime aliases for PEP 695 types (not TypeAliasType, regular assignments for runtime use)
-# These are used in isinstance() checks and type annotations at runtime
-ConfigMap = core_t.ConfigMap
-GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
-LdapContainerDict = dict[str, str | int | bool]
-
+from . import constants as c_mod, models as m_mod, typings as t_mod
 
 c = c_mod.c
 m = m_mod.m
 t = t_mod.t
+T = TypeVar("T")
 
 # Runtime aliases for PEP 695 types (not TypeAliasType, regular assignments for runtime use)
 # These are used in isinstance() checks and type annotations at runtime
@@ -73,7 +76,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def _ldap_entry_to_protocol_adapter(
                 entry: t.Ldap.Tests.LdapEntry,
-            ) -> p.Ldap.LdapEntry:
+            ) -> object:
                 """Convert LdapEntry to protocol adapter.
 
                 Args:

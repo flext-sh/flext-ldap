@@ -66,7 +66,7 @@ class TestsFlextLdap3Adapter:
             host="localhost", port=636, use_ssl=True, use_tls=False, timeout=5
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.that(server, none=False)
+        assert server is not None
         tm.that(getattr(server, "host", ""), eq="localhost")
         tm.that(getattr(server, "port", 0), eq=636)
 
@@ -74,7 +74,7 @@ class TestsFlextLdap3Adapter:
         """Test ConnectionManager.create_server without SSL."""
         config = self._create_connection_config()
         server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.that(server, none=False)
+        assert server is not None
         tm.that(getattr(server, "host", ""), eq="localhost")
         tm.that(getattr(server, "port", 0), eq=389)
 
@@ -84,7 +84,7 @@ class TestsFlextLdap3Adapter:
             host="localhost", port=389, use_ssl=False, use_tls=True, timeout=5
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.that(server, none=False)
+        assert server is not None
         tm.that(getattr(server, "host", ""), eq="localhost")
         tm.that(getattr(server, "port", 0), eq=389)
 

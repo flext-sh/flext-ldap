@@ -59,7 +59,7 @@ class TestsFlextLdapModels:
         m is a namespace class, not a Pydantic model.
         The model_config exists on nested Pydantic models like ConnectionConfig.
         """
-        tm.that(m.Ldap.ConnectionConfig.model_config, none=False)
+        assert m.Ldap.ConnectionConfig.model_config is not None
         config_frozen = m.Ldap.ConnectionConfig.model_config.get("frozen", False)
         tm.that(isinstance(config_frozen, bool), eq=True)
 
