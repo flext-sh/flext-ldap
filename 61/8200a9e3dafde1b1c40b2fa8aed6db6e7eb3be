@@ -1,0 +1,25 @@
+tests/conftest.py
+  1c4edba619e6ad98 53-63,935-936
+tests/constants.py
+  1c4edba619e6ad98 272-315
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "618200a9e3dafde1b1c40b2fa8aed6db6e7eb3be",
+  "prompts": {
+    "1c4edba619e6ad98": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fd1620e5ffewoFF5zbtUADerq",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 30,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    }
+  }
+}
