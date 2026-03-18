@@ -96,16 +96,11 @@ def _ldap3_add(
     object_class: Sequence[str],
     attributes: Mapping[str, Sequence[str]] | None,
 ) -> bool:
-    """Typed wrapper for Connection.add.
-
-    ldap3 Connection.add accepts dict[str, str | list[str]] for attributes;
-    we accept Mapping[str, Sequence[str]] | None and convert at call site.
-    """
     oc_list: list[str] = list(object_class)
+    add_fn: Callable[..., bool] = conn.add
     if attributes is None:
-        return bool(conn.add(dn, oc_list, None))
-    attrs: dict[str, Sequence[str]] = {k: v for k, v in attributes.items()}
-    return bool(conn.add(dn, oc_list, attrs))
+        return bool(add_fn(dn, oc_list, None))
+    return bool(add_fn(dn, oc_list, attributes))
 
 
 def _ldap3_delete(conn: Connection, dn: str) -> bool:

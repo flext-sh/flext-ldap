@@ -29,14 +29,18 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
     """
 
     class Ldap(FlextLdapModels.Ldap):
-        class Tests(m.Tests):
+        """LDAP test models."""
+
+        class Tests(FlextTestsModels.Tests):
             """Test fixture models namespace."""
 
 
 # Short aliases for tests
 m = TestsFlextLdapModels
+tm = TestsFlextLdapModels
 
 __all__ = [
     "TestsFlextLdapModels",
     "m",
+    "tm",
 ]

@@ -13,12 +13,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import u
+from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdapUtilities
 
 
-class TestsFlextLdapUtilities(u, FlextLdapUtilities):
+class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
     """Utilities for flext-ldap tests - extends u and FlextLdapUtilities.
 
     Architecture: Extends both u and FlextLdapUtilities with flext-ldap-specific utility methods.
@@ -30,6 +30,15 @@ class TestsFlextLdapUtilities(u, FlextLdapUtilities):
     - All generic utilities come from u
     - All production utilities come from FlextLdapUtilities
     """
+
+    class Ldap(FlextLdapUtilities.Ldap):
+        """LDAP test types."""
+
+        class Tests:
+            """flext-ldap-specific test type definitions namespace.
+
+            Use t.Tests.* for generic test types from t.
+            """
 
 
 __all__ = ["TestsFlextLdapUtilities", "u"]
