@@ -87,7 +87,7 @@ def _validate_scope(scope: str | c.Ldap.SearchScope) -> c.Ldap.SearchScope:
     """
     if isinstance(scope, c.Ldap.SearchScope):
         return scope
-    parse_result = u.parse(c.Ldap.SearchScope, scope)
+    parse_result = u.parse(scope, target=c.Ldap.SearchScope)
     if parse_result.is_success:
         return parse_result.value
     msg = f"Invalid scope: {scope}. Must be one of {_VALID_SCOPES}"
@@ -803,7 +803,6 @@ class TestsFlextLdapOperationHelpers:
     ) -> None:
         """Execute add operation when not connected and assert failure."""
         TestsFlextLdapOperationHelpers._ensure_entry_protocol_compatible(entry)
-        add_result_raw: r[m.Ldap.Entry] | None
         if isinstance(client, (FlextLdap, FlextLdapOperations)):
             add_result_raw = client.add(entry)
         else:
@@ -921,6 +920,9 @@ class TestsFlextLdapOperationHelpers:
                 error_msg = "search_options required for search operation"
                 raise ValueError(error_msg)
             search_options_raw = kwargs["search_options"]
+            if not isinstance(search_options_raw, Mapping):
+                error_msg = "search_options must be a Mapping"
+                raise TypeError(error_msg)
             search_options_validated = (
                 TestsFlextLdapOperationHelpers._validate_search_options_type(
                     search_options_raw

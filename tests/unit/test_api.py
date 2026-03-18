@@ -68,7 +68,7 @@ class TestsFlextLdapApi:
         cls, config: FlextLdapSettings | None = None
     ) -> FlextLdapConnection:
         """Factory method for creating FlextLdapConnection."""
-        cfg = config or cls._create_config()
+        cfg = config if config is not None else cls._create_config()
         return FlextLdapConnection(config=cfg)
 
     @classmethod
@@ -185,7 +185,7 @@ class TestsFlextLdapApi:
         """Test _is_multi_phase_callback returns True for 5 parameters."""
 
         def multi_phase_cb(
-            phase: str, current: int, total: int, dn: str, stats: m.Ldap.SyncStats
+            phase: str, current: int, total: int, dn: str, stats: object
         ) -> None:
             pass
 

@@ -105,9 +105,7 @@ def _ldap3_add(
     """
     if attributes is None:
         return bool(conn.add(dn, object_class, None))
-    attrs_arg: dict[str, str | list[str]] = {}
-    for k, v in attributes.items():
-        attrs_arg[k] = list(v)
+    attrs_arg: Mapping[str, Sequence[str]] = {k: list(v) for k, v in attributes.items()}
     return bool(conn.add(dn, object_class, attrs_arg))
 
 
