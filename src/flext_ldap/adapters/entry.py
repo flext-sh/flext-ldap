@@ -239,7 +239,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         converted_dn: str,
         original_attrs_dict: Mapping[str, Sequence[str | bytes]],
         converted_attrs_dict: Mapping[str, list[str]],
-    ) -> None:
+    ) -> m.Ldap.ConversionMetadata:
         """Track DN and attribute differences in conversion metadata.
 
         Business Rules:
@@ -269,9 +269,10 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             converted_attrs_dict: Converted LDIF attributes (lists of strings).
 
         """
+        updates: dict[str, bool | str | list[str]] = {}
         if converted_dn != original_dn:
-            conversion_metadata.dn_changed = True
-            conversion_metadata.converted_dn = converted_dn
+            updates["dn_changed"] = True
+            updates["converted_dn"] = converted_dn
 
         def check_attr_changed(
             attr_name: str,
@@ -323,7 +324,10 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         }
         changed_attrs = list(filtered_dict.values())
         if changed_attrs:
-            conversion_metadata.attribute_changes = changed_attrs
+            updates["attribute_changes"] = changed_attrs
+        if updates:
+            return conversion_metadata.model_copy(update=updates)
+        return conversion_metadata
 
     @override
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
@@ -442,7 +446,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 original_attrs_dict,
                 dn_str,
             )
-            FlextLdapEntryAdapter._track_conversion_differences(
+            conversion_metadata = FlextLdapEntryAdapter._track_conversion_differences(
                 conversion_metadata,
                 dn_str,
                 dn_str,
