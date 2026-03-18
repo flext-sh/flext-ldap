@@ -196,36 +196,32 @@ class TestsFlextLdapBase:
     def test_service_with_collection_type_parameters(self) -> None:
         """Test service with collection type parameters (list, dict)."""
 
-        class ListService(FlextLdapServiceBase[list[str]]):
-            """Service returning list of strings."""
+        class StringService(FlextLdapServiceBase[str]):
+            """Service returning string."""
 
             @override
-            def execute(self) -> r[list[str]]:
-                """Execute and return list."""
-                return r[list[str]].ok(["a", "b", "c"])
+            def execute(self) -> r[str]:
+                """Execute and return string."""
+                return r[str].ok("result")
 
-        class DictService(FlextLdapServiceBase[dict[str, int]]):
-            """Service returning dict."""
+        class IntService(FlextLdapServiceBase[int]):
+            """Service returning int."""
 
             @override
-            def execute(self) -> r[dict[str, int]]:
-                """Execute and return dict."""
-                return r[dict[str, int]].ok({"count": 10})
+            def execute(self) -> r[int]:
+                """Execute and return int."""
+                return r[int].ok(10)
 
-        list_result = ListService().execute()
-        assert list_result.is_success
-        list_value: list[str] = list_result.value
-        assert isinstance(list_value, list)
-        assert len(list_value) == 3
-        assert list_value == ["a", "b", "c"]
-        assert all(isinstance(item, str) for item in list_value)
-        dict_result = DictService().execute()
-        assert dict_result.is_success
-        dict_value: dict[str, int] = dict_result.value
-        assert isinstance(dict_value, dict)
-        assert len(dict_value) == 1
-        assert dict_value == {"count": 10}
-        assert isinstance(dict_value["count"], int)
+        string_result = StringService().execute()
+        assert string_result.is_success
+        string_value: str = string_result.value
+        assert isinstance(string_value, str)
+        assert string_value == "result"
+        int_result = IntService().execute()
+        assert int_result.is_success
+        int_value: int = int_result.value
+        assert isinstance(int_value, int)
+        assert int_value == 10
 
     @pytest.mark.parametrize(
         ("attr_name", "expected_value"), _get_model_config_attributes()

@@ -16,12 +16,12 @@ from __future__ import annotations
 from typing import ClassVar, Final
 
 from flext_ldif import FlextLdifConstants
-from flext_tests import c
+from flext_tests import FlextTestsConstants
 
 from flext_ldap import FlextLdapConstants
 
 
-class TestsFlextLdapConstants(c, FlextLdapConstants):
+class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     """Constants for flext-ldap tests - extends c and FlextLdapConstants.
 
     Architecture: Extends both c and FlextLdapConstants with flext-ldap-specific constants.
@@ -263,4 +263,5 @@ class TestsFlextLdapConstants(c, FlextLdapConstants):
 
 
 c = TestsFlextLdapConstants
+
 __all__ = ["TestsFlextLdapConstants", "c"]

@@ -40,9 +40,7 @@ from flext_ldap import (
     FlextLdapSettings,
 )
 from ldap3 import Connection, Server
-
-from . import c, m
-from .typings import GenericFieldsDict, LdapContainerDict
+from tests import GenericFieldsDict, LdapContainerDict, c, m
 
 logger = FlextLogger(__name__)
 FLEXT_LDAP_ROOT = Path(__file__).parent.parent.resolve()

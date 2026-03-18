@@ -97,7 +97,7 @@ class TestsFlextLdapDetection:
     )
     def test_execute_error_handling(
         self,
-        kwargs: dict[str, object] | None,
+        kwargs: dict[str, bool | float | str | None] | None,
         expect_failure: bool,
         error_substring: str,
     ) -> None:
@@ -114,7 +114,8 @@ class TestsFlextLdapDetection:
         self, attrs: Mapping[str, list[str]], key: str, expected: str | None
     ) -> None:
         """Test _get_first_value with various attribute scenarios."""
-        value = FlextLdapServerDetector._get_first_value(attrs, key)
+        attrs_dict: dict[str, list[str]] = dict(attrs)
+        value = FlextLdapServerDetector._get_first_value(attrs_dict, key)
         assert value == expected
 
     @pytest.mark.parametrize(
