@@ -23,7 +23,8 @@ class FlextLdapModelsLdap:
 
         host: str = c.Ldap.ConnectionDefaults.DEFAULT_HOST
         port: Annotated[
-            int, Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535)
+            int,
+            Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535),
         ]
         use_ssl: bool = False
         use_tls: bool = False
@@ -256,7 +257,7 @@ class FlextLdapModelsLdap:
         def get_entry_category(entry: dict[str, list[str]]) -> str:
             """Get category (objectclass) of an entry."""
             attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
-                entry
+                entry,
             )
             if not attrs:
                 return "unknown"
@@ -272,7 +273,8 @@ class FlextLdapModelsLdap:
 
         LdapProgressCallback = Callable[[int, int, str, "p.Ldap.LdapBatchStats"], None]
         MultiPhaseProgressCallback = Callable[
-            [str, int, int, str, "p.Ldap.LdapBatchStats"], None
+            [str, int, int, str, "p.Ldap.LdapBatchStats"],
+            None,
         ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 
@@ -297,7 +299,8 @@ class FlextLdapModelsLdap:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
         phase_results: Annotated[
-            dict[str, PhaseSyncResult], Field(default_factory=dict)
+            dict[str, PhaseSyncResult],
+            Field(default_factory=dict),
         ]
         total_entries: int = 0
         total_synced: int = 0

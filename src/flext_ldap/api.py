@@ -168,7 +168,9 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         return FlextLdapSettings
 
     model_config = ConfigDict(
-        frozen=False, extra="forbid", arbitrary_types_allowed=True
+        frozen=False,
+        extra="forbid",
+        arbitrary_types_allowed=True,
     )
     _connection: FlextLdapConnection = PrivateAttr()
     _operations: FlextLdapOperations = PrivateAttr()
@@ -291,7 +293,8 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
 
     @staticmethod
     def _make_phase_progress_callback(
-        phase: str, config: FlextLdapModelsLdap.SyncPhaseConfig
+        phase: str,
+        config: FlextLdapModelsLdap.SyncPhaseConfig,
     ) -> m.Ldap.Types.LdapProgressCallback | None:
         """Create progress callback for a phase, handling both single and multi-phase signatures.
 
@@ -328,7 +331,10 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             multi_phase_cb = callback
 
             def progress_cb(
-                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats
+                current: int,
+                total: int,
+                dn: str,
+                stats: p.Ldap.LdapBatchStats,
             ) -> None:
                 multi_phase_cb(phase, current, total, dn, stats)
 
@@ -573,7 +579,9 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         return self._operations.execute()
 
     def modify(
-        self, dn: str | m.Ldif.DN, changes: t.Ldap.Operation.Changes
+        self,
+        dn: str | m.Ldif.DN,
+        changes: t.Ldap.Operation.Changes,
     ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
@@ -610,7 +618,9 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         return self._operations.modify(dn, changes)
 
     def search(
-        self, search_options: m.Ldap.SearchOptions, server_type: str = "rfc"
+        self,
+        search_options: m.Ldap.SearchOptions,
+        server_type: str = "rfc",
     ) -> r[m.Ldap.SearchResult]:
         """Perform LDAP search operation.
 
@@ -692,13 +702,17 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 break
             if not phase_file.exists():
                 self.logger.warning(
-                    "Phase file not found", phase=phase_name, file=str(phase_file)
+                    "Phase file not found",
+                    phase=phase_name,
+                    file=str(phase_file),
                 )
                 continue
             phase_result = self._process_single_phase(phase_name, phase_file, config)
             if phase_result.is_failure:
                 self.logger.error(
-                    "Phase sync failed", phase=phase_name, error=str(phase_result.error)
+                    "Phase sync failed",
+                    phase=phase_name,
+                    error=str(phase_result.error),
                 )
                 overall_success = False
                 if config.stop_on_error:
@@ -709,7 +723,9 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         totals = {
             "entries": sum(
                 FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result, "total_entries", 0
+                    phase_result,
+                    "total_entries",
+                    0,
                 )
                 for phase_result in phase_values
             ),
@@ -723,7 +739,9 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             ),
             "skipped": sum(
                 FlextLdapSyncCallbacks.get_phase_result_value(
-                    phase_result, "skipped", 0
+                    phase_result,
+                    "skipped",
+                    0,
                 )
                 for phase_result in phase_values
             ),
@@ -744,7 +762,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 overall_success_rate=overall_success_rate,
                 total_duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
                 overall_success=overall_success,
-            )
+            ),
         )
 
     def sync_phase_entries(
@@ -807,7 +825,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
             return r[m.Ldap.PhaseSyncResult].fail(
-                f"Failed to parse LDIF file: {error_msg}"
+                f"Failed to parse LDIF file: {error_msg}",
             )
         parse_value = parse_result.value
         entries: list[m.Ldif.Entry] = [
@@ -823,7 +841,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                     skipped=0,
                     duration_seconds=0.0,
                     success_rate=100.0,
-                )
+                ),
             )
         single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
         callback = config.progress_callback
@@ -873,7 +891,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 skipped=batch_stats.skipped,
                 duration_seconds=duration,
                 success_rate=success_rate,
-            )
+            ),
         )
 
     def upsert(
@@ -917,11 +935,15 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
 
         """
         return self._operations.upsert(
-            entry, retry_on_errors=retry_on_errors, max_retries=max_retries
+            entry,
+            retry_on_errors=retry_on_errors,
+            max_retries=max_retries,
         )
 
     def _prepare_phase_callback(
-        self, phase_name: str, config: FlextLdapModelsLdap.SyncPhaseConfig
+        self,
+        phase_name: str,
+        config: FlextLdapModelsLdap.SyncPhaseConfig,
     ) -> m.Ldap.Types.LdapProgressCallback | None:
         """Prepare phase-specific progress callback.
 
@@ -948,7 +970,10 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             multi_phase_cb = phase_callback
 
             def wrapped_phase_cb(
-                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats
+                current: int,
+                total: int,
+                dn: str,
+                stats: p.Ldap.LdapBatchStats,
             ) -> None:
                 multi_phase_cb(phase_name, current, total, dn, stats)
 

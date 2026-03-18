@@ -76,7 +76,9 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def modify(
-        connection: Connection, dn: str, changes: t.Ldap.Operation.Changes
+        connection: Connection,
+        dn: str,
+        changes: t.Ldap.Operation.Changes,
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
         result = connection.modify(dn, changes)
@@ -155,7 +157,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def create_connection(
-            server: Server, config: m.Ldap.ConnectionConfig
+            server: Server,
+            config: m.Ldap.ConnectionConfig,
         ) -> Connection:
             """Create ldap3 Connection object.
 
@@ -218,12 +221,15 @@ class Ldap3Adapter(FlextService[bool]):
                     connect_timeout=config.timeout,
                 )
             return Server(
-                host=config.host, port=config.port, connect_timeout=config.timeout
+                host=config.host,
+                port=config.port,
+                connect_timeout=config.timeout,
             )
 
         @staticmethod
         def handle_tls(
-            connection: Connection, config: m.Ldap.ConnectionConfig
+            connection: Connection,
+            config: m.Ldap.ConnectionConfig,
         ) -> r[bool]:
             """Handle STARTTLS if requested.
 
@@ -317,7 +323,7 @@ class Ldap3Adapter(FlextService[bool]):
                     continue
                 dn = str(dn_raw) if dn_raw is not None else ""
                 attrs_dict = Ldap3Adapter.ResultConverter.process_entry_attributes(
-                    entry
+                    entry,
                 )
                 results.append((dn, attrs_dict))
             return results
@@ -371,13 +377,15 @@ class Ldap3Adapter(FlextService[bool]):
                     raise TypeError(error_msg)
                 dn_obj = Ldap3Adapter.ResultConverter.extract_dn(protocol_entry)
                 attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
-                    protocol_entry
+                    protocol_entry,
                 )
                 metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
-                    protocol_entry
+                    protocol_entry,
                 )
                 entry = LdifEntry(
-                    dn=dn_obj, attributes=attrs_obj, metadata=metadata_obj
+                    dn=dn_obj,
+                    attributes=attrs_obj,
+                    metadata=metadata_obj,
                 )
                 entries.append(entry)
                 continue
@@ -413,7 +421,8 @@ class Ldap3Adapter(FlextService[bool]):
                 attrs_raw = parsed.attributes
             else:
                 attrs_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed, "attributes"
+                    parsed,
+                    "attributes",
                 )
             if attrs_raw is None:
                 return m.Ldif.Attributes(attributes={})
@@ -461,7 +470,7 @@ class Ldap3Adapter(FlextService[bool]):
                 attrs_value_raw = dumped.get("attributes", {})
                 if isinstance(attrs_value_raw, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
-                        attrs_value_raw
+                        attrs_value_raw,
                     )
                 return {}
             if isinstance(attrs, Mapping):
@@ -508,7 +517,8 @@ class Ldap3Adapter(FlextService[bool]):
                 dn_raw = parsed.entry_dn
             else:
                 dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed, "dn"
+                    parsed,
+                    "dn",
                 )
             if dn_raw is None:
                 return m.Ldif.DN(value="")
@@ -557,7 +567,8 @@ class Ldap3Adapter(FlextService[bool]):
                 metadata_raw = parsed.metadata
             else:
                 dynamic_attr = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed, "metadata"
+                    parsed,
+                    "metadata",
                 )
                 if dynamic_attr is None:
                     return None
@@ -575,12 +586,13 @@ class Ldap3Adapter(FlextService[bool]):
                     return None
                 if not isinstance(extensions_raw, Mapping):
                     return m.Ldif.QuirkMetadata.model_validate({
-                        "quirk_type": quirk_type_raw
+                        "quirk_type": quirk_type_raw,
                     })
                 extensions_data: dict[str, t.Scalar | list[t.Scalar]] = {}
                 for ext_key, ext_value in extensions_raw.items():
                     if isinstance(ext_key, str) and isinstance(
-                        ext_value, (str, int, float, bool, list)
+                        ext_value,
+                        (str, int, float, bool, list),
                     ):
                         if isinstance(ext_value, list):
                             if all(u.is_primitive(item) for item in ext_value):
@@ -719,7 +731,9 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def _add_entry_to_ldap(
-            connection: Connection, dn_str: str, attrs_dict: Mapping[str, list[str]]
+            connection: Connection,
+            dn_str: str,
+            attrs_dict: Mapping[str, list[str]],
         ) -> bool:
             """Add entry to LDAP directory.
 
@@ -754,7 +768,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def _extract_error_result(
-            connection: Connection, prefix: str
+            connection: Connection,
+            prefix: str,
         ) -> r[m.Ldap.OperationResult]:
             """Extract error message from connection result.
 
@@ -794,7 +809,9 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def _modify_entry_in_ldap(
-            connection: Connection, dn_str: str, changes: t.Ldap.Operation.Changes
+            connection: Connection,
+            dn_str: str,
+            changes: t.Ldap.Operation.Changes,
         ) -> bool:
             """Modify entry in LDAP directory.
 
@@ -854,7 +871,7 @@ class Ldap3Adapter(FlextService[bool]):
                             operation_type=c.Ldap.OperationType.ADD,
                             message="Entry added successfully",
                             entries_affected=1,
-                        )
+                        ),
                     )
                 return self._extract_error_result(connection, "Add failed")
             except (
@@ -870,7 +887,9 @@ class Ldap3Adapter(FlextService[bool]):
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_delete(
-            self, connection: Connection, dn: str | m.Ldif.DN
+            self,
+            connection: Connection,
+            dn: str | m.Ldif.DN,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
 
@@ -907,7 +926,7 @@ class Ldap3Adapter(FlextService[bool]):
                             operation_type=c.Ldap.OperationType.DELETE,
                             message="Entry deleted successfully",
                             entries_affected=1,
-                        )
+                        ),
                     )
                 return self._extract_error_result(connection, "Delete failed")
             except (
@@ -964,7 +983,7 @@ class Ldap3Adapter(FlextService[bool]):
                             operation_type=c.Ldap.OperationType.MODIFY,
                             message="Entry modified successfully",
                             entries_affected=1,
-                        )
+                        ),
                     )
                 return self._extract_error_result(connection, "Modify failed")
             except (
@@ -1067,10 +1086,10 @@ class Ldap3Adapter(FlextService[bool]):
                     error_msg = conn_result.get("message", "LDAP search failed")
                     error_desc = conn_result.get("description", "unknown")
                     return r[list[LdifEntry]].fail(
-                        f"LDAP search failed: {error_desc} - {error_msg}"
+                        f"LDAP search failed: {error_desc} - {error_msg}",
                     )
                 ldap3_results = self._adapter.ResultConverter.convert_ldap3_results(
-                    connection
+                    connection,
                 )
                 if isinstance(server_type, FlextLdapConstants.Ldif.ServerTypes):
                     server_type_str = server_type.value
@@ -1091,17 +1110,18 @@ class Ldap3Adapter(FlextService[bool]):
                 }
                 if server_type_str not in valid_server_types:
                     return r[list[LdifEntry]].fail(
-                        f"Unsupported server type: {server_type_str}"
+                        f"Unsupported server type: {server_type_str}",
                     )
                 parse_result = self._adapter.parser.parse_ldap3_results(
-                    ldap3_results, None
+                    ldap3_results,
+                    None,
                 )
                 if parse_result.is_failure:
                     error_msg = str(parse_result.error) if parse_result.error else ""
                     return r[list[LdifEntry]].fail(error_msg)
                 parse_response = parse_result.value
                 return self._adapter.ResultConverter.convert_parsed_entries(
-                    parse_response
+                    parse_response,
                 )
             except (
                 ValueError,
@@ -1178,7 +1198,9 @@ class Ldap3Adapter(FlextService[bool]):
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
     def add(
-        self, entry: LdifEntry, **_kwargs: str | float | bool | None
+        self,
+        entry: LdifEntry,
+        **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Add LDAP entry using Entry model.
 
@@ -1210,23 +1232,27 @@ class Ldap3Adapter(FlextService[bool]):
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return r[m.Ldap.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.is_failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""
             return r[m.Ldap.OperationResult].fail(
-                f"Failed to convert entry attributes: {error_msg}"
+                f"Failed to convert entry attributes: {error_msg}",
             )
         dn_str = (
             ldif_u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
         )
         return self.OperationExecutor(self).execute_add(
-            connection_result.value, dn_str, attrs_result.value
+            connection_result.value,
+            dn_str,
+            attrs_result.value,
         )
 
     def connect(
-        self, config: m.Ldap.ConnectionConfig, **_kwargs: str | float | bool | None
+        self,
+        config: m.Ldap.ConnectionConfig,
+        **_kwargs: str | float | bool | None,
     ) -> r[bool]:
         """Establish LDAP connection using ldap3 library.
 
@@ -1259,7 +1285,8 @@ class Ldap3Adapter(FlextService[bool]):
         try:
             self._server = self.ConnectionManager.create_server(config)
             self._connection = self.ConnectionManager.create_connection(
-                self._server, config
+                self._server,
+                config,
             )
             tls_result = self.ConnectionManager.handle_tls(self._connection, config)
             if tls_result.is_failure:
@@ -1279,7 +1306,9 @@ class Ldap3Adapter(FlextService[bool]):
             return r[bool].fail(f"Connection failed: {e!s}")
 
     def delete(
-        self, dn: str | m.Ldif.DN, **_kwargs: str | float | bool | None
+        self,
+        dn: str | m.Ldif.DN,
+        **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
@@ -1310,7 +1339,7 @@ class Ldap3Adapter(FlextService[bool]):
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return r[m.Ldap.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_delete(connection_result.value, dn)
 
@@ -1418,10 +1447,12 @@ class Ldap3Adapter(FlextService[bool]):
         connection_result = self._get_connection()
         if connection_result.is_failure:
             return r[m.Ldap.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else ""
+                str(connection_result.error) if connection_result.error else "",
             )
         return self.OperationExecutor(self).execute_modify(
-            connection_result.value, dn, changes
+            connection_result.value,
+            dn,
+            changes,
         )
 
     def search(
@@ -1470,7 +1501,7 @@ class Ldap3Adapter(FlextService[bool]):
         scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
             return r[m.Ldap.SearchResult].fail(
-                str(scope_result.error) if scope_result.error else ""
+                str(scope_result.error) if scope_result.error else "",
             )
         search_params = self.SearchExecutor.SearchParams(
             base_dn=search_options.base_dn,
@@ -1481,18 +1512,20 @@ class Ldap3Adapter(FlextService[bool]):
             time_limit=search_options.time_limit,
         )
         entries_result = self.SearchExecutor(self).execute(
-            connection_result.value, search_params, server_type
+            connection_result.value,
+            search_params,
+            server_type,
         )
         if entries_result.is_failure:
             return r[m.Ldap.SearchResult].fail(
-                str(entries_result.error) if entries_result.error else ""
+                str(entries_result.error) if entries_result.error else "",
             )
         entries_raw = entries_result.value
         entries_dict: list[dict[str, list[str]]] = [
             entry.model_dump() for entry in entries_raw
         ]
         return r[m.Ldap.SearchResult].ok(
-            m.Ldap.SearchResult(entries=entries_dict, search_options=search_options)
+            m.Ldap.SearchResult(entries=entries_dict, search_options=search_options),
         )
 
     def _get_connection(self) -> r[Connection]:

@@ -183,12 +183,16 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                     if is_skipped:
                         stats_builder["skipped"] += 1
                         entry_stats = m.Ldap.LdapBatchStats(
-                            synced=0, skipped=1, failed=0
+                            synced=0,
+                            skipped=1,
+                            failed=0,
                         )
                     else:
                         stats_builder["failed"] += 1
                         entry_stats = m.Ldap.LdapBatchStats(
-                            synced=0, skipped=0, failed=1
+                            synced=0,
+                            skipped=0,
+                            failed=1,
                         )
                 return entry_stats
 
@@ -217,7 +221,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                     skipped=stats_builder["skipped"],
                     failed=stats_builder["failed"],
                     duration_seconds=0.0,
-                )
+                ),
             )
 
     class BaseDNTransformer:
@@ -258,7 +262,10 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
 
         @classmethod
         def transform(
-            cls, entries: list[m.Ldif.Entry], source_basedn: str, target_basedn: str
+            cls,
+            entries: list[m.Ldif.Entry],
+            source_basedn: str,
+            target_basedn: str,
         ) -> list[m.Ldif.Entry]:
             """Rewrite entry DNs from ``source_basedn`` to ``target_basedn``.
 
@@ -299,7 +306,8 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                         flags=re.IGNORECASE,
                     )
                     return m.Ldif.Entry(
-                        dn=m.Ldif.DN(value=new_dn_value), attributes=entry.attributes
+                        dn=m.Ldif.DN(value=new_dn_value),
+                        attributes=entry.attributes,
                     )
                 return entry
 
@@ -361,7 +369,9 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
         return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
 
     def sync_ldif_file(
-        self, ldif_file: Path, options: FlextLdapModelsLdap.SyncOptions
+        self,
+        ldif_file: Path,
+        options: FlextLdapModelsLdap.SyncOptions,
     ) -> r[m.Ldap.SyncStats]:
         """Parse and sync an LDIF file into the directory.
 
@@ -459,7 +469,9 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
         if options.source_basedn and options.target_basedn:
             entries_transformed = self.BaseDNTransformer.transform(
-                entries, options.source_basedn, options.target_basedn
+                entries,
+                options.source_basedn,
+                options.target_basedn,
             )
             entries = entries_transformed
         batch_result = self.BatchSync(self._operations).sync(entries, options)
@@ -468,5 +480,5 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
         stats = batch_result.value
         duration = (self._generate_datetime_utc() - start_time).total_seconds()
         return r[m.Ldap.SyncStats].ok(
-            stats.model_copy(update={"duration_seconds": duration})
+            stats.model_copy(update={"duration_seconds": duration}),
         )

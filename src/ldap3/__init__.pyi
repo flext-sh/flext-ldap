@@ -41,7 +41,9 @@ class Connection:
         attributes: dict[str, t.Container] | None = ...,
     ) -> bool: ...
     def modify(
-        self, dn: str, changes: dict[str, list[tuple[int, list[str]]]]
+        self,
+        dn: str,
+        changes: dict[str, list[tuple[int, list[str]]]],
     ) -> bool: ...
     def search(
         self,

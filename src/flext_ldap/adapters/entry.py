@@ -109,7 +109,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         @staticmethod
         def is_base64_encoded(
-            value: str, threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
+            value: str,
+            threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD,
         ) -> bool:
             """Check if value requires base64 encoding.
 
@@ -169,7 +170,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
             """
             return FlextLdapEntryAdapter._ConversionHelpers.convert_value_to_strings(
-                value
+                value,
             )
 
     _ldif: FlextLdif = PrivateAttr()
@@ -269,11 +270,12 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
         """
         if converted_dn != original_dn:
-            setattr(conversion_metadata, "dn_changed", True)
-            setattr(conversion_metadata, "converted_dn", converted_dn)
+            conversion_metadata.dn_changed = True
+            conversion_metadata.converted_dn = converted_dn
 
         def check_attr_changed(
-            attr_name: str, original_values: Sequence[str | bytes]
+            attr_name: str,
+            original_values: Sequence[str | bytes],
         ) -> str | None:
             """Check if attribute values changed during conversion."""
             match original_values:
@@ -283,7 +285,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     original_values_list = [original_str]
                 case bytes() as original_bytes:
                     original_values_list = [
-                        original_bytes.decode("utf-8", errors="replace")
+                        original_bytes.decode("utf-8", errors="replace"),
                     ]
                 case _:
                     original_values_list = [str(v) for v in original_values]
@@ -321,7 +323,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
         }
         changed_attrs = list(filtered_dict.values())
         if changed_attrs:
-            setattr(conversion_metadata, "attribute_changes", changed_attrs)
+            conversion_metadata.attribute_changes = changed_attrs
 
     @override
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
@@ -403,7 +405,9 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                                 match item:
                                     case bytes() as item_bytes:
                                         str_values.append(
-                                            item_bytes.decode("utf-8", errors="replace")
+                                            item_bytes.decode(
+                                                "utf-8", errors="replace"
+                                            ),
                                         )
                                     case _:
                                         str_values.append(str(item))
@@ -427,14 +431,23 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     ImportError,
                 ) as e:
                     logger.debug(
-                        "Failed to convert attribute %s, skipping", key, exc_info=e
+                        "Failed to convert attribute %s, skipping",
+                        key,
+                        exc_info=e,
                     )
                     continue
             conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
-                removed_attrs, base64_attrs, original_attrs_dict, dn_str
+                removed_attrs,
+                base64_attrs,
+                original_attrs_dict,
+                dn_str,
             )
             FlextLdapEntryAdapter._track_conversion_differences(
-                conversion_metadata, dn_str, dn_str, original_attrs_dict, ldif_attrs
+                conversion_metadata,
+                dn_str,
+                dn_str,
+                original_attrs_dict,
+                ldif_attrs,
             )
             ldf_attrs_obj = m.Ldif.Attributes(attributes=ldif_attrs)
             metadata_obj = m.Ldif.QuirkMetadata.model_validate({
@@ -446,7 +459,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                     dn=m.Ldif.DN(value=dn_str),
                     attributes=ldf_attrs_obj,
                     metadata=metadata_obj,
-                )
+                ),
             )
         except (ValueError, TypeError, AttributeError) as e:
             entry_dn_for_log = (
@@ -464,7 +477,8 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
-        self, entry: m.Ldif.Entry
+        self,
+        entry: m.Ldif.Entry,
     ) -> r[t.Ldap.Operation.Attributes]:
         """Convert p.Entry to ldap3 attributes format.
 
@@ -528,7 +542,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 error_type=type(e).__name__,
             )
             return r[t.Ldap.Operation.Attributes].fail(
-                f"Failed to convert attributes to ldap3 format: {e!s}"
+                f"Failed to convert attributes to ldap3 format: {e!s}",
             )
 
     def _convert_ldap3_value_to_list(

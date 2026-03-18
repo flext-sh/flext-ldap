@@ -87,14 +87,18 @@ class FlextLdapServerDetector(FlextService[str]):
         """
         detected_type = (
             FlextLdapServerDetector._detect_server_type_from_attributes_simple(
-                supported_extensions, naming_contexts, vendor_name, vendor_version
+                supported_extensions,
+                naming_contexts,
+                vendor_name,
+                vendor_version,
             )
         )
         return r[str].ok(detected_type)
 
     @staticmethod
     def _detect_from_extensions(
-        supported_extensions: list[str], naming_contexts: list[str]
+        supported_extensions: list[str],
+        naming_contexts: list[str],
     ) -> str:
         """Detect server type from extensions and naming contexts."""
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
@@ -160,14 +164,17 @@ class FlextLdapServerDetector(FlextService[str]):
                 ImportError,
             ):
                 logging.getLogger(__name__).debug(
-                    "Server type check failed: %s", server_name, exc_info=True
+                    "Server type check failed: %s",
+                    server_name,
+                    exc_info=True,
                 )
                 continue
         return found if found is not None else "rfc"
 
     @staticmethod
     def _detect_from_vendor(
-        vendor_name: str | None, vendor_version: str | None
+        vendor_name: str | None,
+        vendor_version: str | None,
     ) -> str | None:
         """Detect server type from vendor information."""
         vendor_list = u.to_str_list([
@@ -298,7 +305,7 @@ class FlextLdapServerDetector(FlextService[str]):
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
             return r[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query failed: search unavailable"
+                "rootDSE query failed: search unavailable",
             )
         if not search_method(
             search_base="",
@@ -307,16 +314,16 @@ class FlextLdapServerDetector(FlextService[str]):
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
             return r[t.Ldap.Operation.AttributeDict].fail(
-                f"rootDSE query failed: {connection.result}"
+                f"rootDSE query failed: {connection.result}",
             )
         if not connection.entries:
             return r[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query returned no entries"
+                "rootDSE query returned no entries",
             )
         root_dse_entry = connection.entries[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
             return r[t.Ldap.Operation.AttributeDict].fail(
-                "rootDSE query returned invalid entry payload"
+                "rootDSE query returned invalid entry payload",
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
         attributes: dict[str, list[str]] = {
@@ -372,10 +379,12 @@ class FlextLdapServerDetector(FlextService[str]):
         supported_extensions = to_str_list(root_dse_attrs.get("supportedExtension", []))
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs, "vendorName"
+                root_dse_attrs,
+                "vendorName",
             ),
             vendor_version=FlextLdapServerDetector._get_first_value(
-                root_dse_attrs, "vendorVersion"
+                root_dse_attrs,
+                "vendorVersion",
             ),
             naming_contexts=naming_contexts,
             _supported_controls=supported_controls,
@@ -407,7 +416,7 @@ class FlextLdapServerDetector(FlextService[str]):
             return r[str].fail("connection parameter required")
         if not isinstance(connection_raw, Connection):
             return r[str].fail(
-                f"connection must be ldap3.Connection, got {type(connection_raw).__name__}"
+                f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
             )
         connection: Connection = connection_raw
         return self.detect_from_connection(connection)

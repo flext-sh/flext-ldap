@@ -165,7 +165,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @classmethod
         def norm_join(
-            cls, values: list[str] | tuple[str, ...], *, case: str | None = None
+            cls,
+            values: list[str] | tuple[str, ...],
+            *,
+            case: str | None = None,
         ) -> str:
             """Normalize and join strings (delegates to Parser.norm_join).
 
@@ -223,7 +226,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def dn_str(
-            dn: str | m.Ldif.DN | m.Ldif.Entry | None, *, default: str = "unknown"
+            dn: str | m.Ldif.DN | m.Ldif.Entry | None,
+            *,
+            default: str = "unknown",
         ) -> str:
             """Extract DN string (builder: whn().safe().conv().str()).
 
@@ -296,7 +301,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 ) as e:
                     logger = logging.getLogger(__name__)
                     logger.debug(
-                        "Callable %s raised exception, continuing", key, exc_info=e
+                        "Callable %s raised exception, continuing",
+                        key,
+                        exc_info=e,
                     )
                     continue
             return None

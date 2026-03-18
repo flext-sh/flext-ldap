@@ -207,7 +207,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def add(
-                self, entry: FlextLdapProtocols.Ldap.LdapEntry
+                self,
+                entry: FlextLdapProtocols.Ldap.LdapEntry,
             ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -240,7 +241,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def delete(
-                self, dn: str | FlextLdapProtocols.Ldap.DN
+                self,
+                dn: str | FlextLdapProtocols.Ldap.DN,
             ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -254,7 +256,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def execute(
-                self, **_kwargs: t.Scalar
+                self,
+                **_kwargs: t.Scalar,
             ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
                 """Execute health check or default operation.
 
@@ -314,7 +317,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             type LdapModifyChanges = Mapping[
-                str, Sequence[tuple[str | int, Sequence[str]]]
+                str,
+                Sequence[tuple[str | int, Sequence[str]]],
             ]
 
             @property
@@ -323,7 +327,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def add(
-                self, entry: FlextLdapProtocols.Ldap.LdapEntry
+                self,
+                entry: FlextLdapProtocols.Ldap.LdapEntry,
             ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -333,7 +338,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def delete(
-                self, dn: FlextLdapProtocols.Ldap.DN | str
+                self,
+                dn: FlextLdapProtocols.Ldap.DN | str,
             ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
