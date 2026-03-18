@@ -23,14 +23,8 @@ from flext_ldap import (
     FlextLdap,
     FlextLdapOperations,
     FlextLdapUtilities,
-    p,
 )
-
-from . import constants as c_mod, models as m_mod, typings as t_mod
-
-c = c_mod.c
-m = m_mod.m
-t = t_mod.t
+from tests import c, m, p, t
 
 # Runtime aliases for PEP 695 types (not TypeAliasType, regular assignments for runtime use)
 # These are used in isinstance() checks and type annotations at runtime
@@ -74,7 +68,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def _ldap_entry_to_protocol_adapter(
                 entry: t.Ldap.Tests.LdapEntry,
-            ) -> p.Ldap.LdapEntry:
+            ) -> object:
                 """Convert LdapEntry to protocol adapter.
 
                 Args:
@@ -261,8 +255,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     TypeError: If search_options_raw is not SearchOptions
 
                 """
-                if not isinstance(search_options_raw, m.Ldap.SearchOptions):
-                    error_msg = "search_options must be m.Ldap.SearchOptions"
+                if not isinstance(
+                    search_options_raw, m.Ldap.SearchOptions
+                ):
+                    error_msg = (
+                        "search_options must be m.Ldap.SearchOptions"
+                    )
                     raise TypeError(error_msg)
                 return search_options_raw
 
@@ -428,7 +426,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     entry_attributes.update(normalized_extra)
                 return m.Ldif.Entry(
                     dn=m.Ldif.DN(value=dn),
-                    attributes=m.Ldif.Attributes(attributes=entry_attributes),
+                    attributes=m.Ldif.Attributes(
+                        attributes=entry_attributes
+                    ),
                     metadata=None,
                 )
 
