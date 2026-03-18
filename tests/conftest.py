@@ -104,10 +104,7 @@ def _ldap3_add(
     oc_list: list[str] = list(object_class)
     if attributes is None:
         return bool(conn.add(dn, oc_list, None))
-    attrs_mapping: Mapping[str, str | list[str]] = {
-        k: list(v) for k, v in attributes.items()
-    }
-    return bool(conn.add(dn, oc_list, attrs_mapping))
+    return bool(conn.add(dn, oc_list, dict(attributes)))
 
 
 def _ldap3_delete(conn: Connection, dn: str) -> bool:

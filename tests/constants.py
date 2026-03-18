@@ -271,5 +271,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
 
 c = TestsFlextLdapConstants
+RFC = TestsFlextLdapConstants.Ldap.Tests.RFC
 
-__all__ = ["TestsFlextLdapConstants", "c"]
+__all__ = ["TestsFlextLdapConstants", "c", "RFC"]
