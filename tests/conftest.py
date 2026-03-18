@@ -103,9 +103,9 @@ def _ldap3_add(
     ldap3 Connection.add accepts dict[str, object] | None for attributes;
     we accept Mapping[str, Sequence[str]] | None and convert at call site.
     """
-    attrs_arg: dict[str, object] | None = (
-        {k: list(v) for k, v in attributes.items()} if attributes is not None else None
-    )
+    attrs_arg: dict[str, object] | None = None
+    if attributes is not None:
+        attrs_arg = {k: list(v) for k, v in attributes.items()}
     return bool(conn.add(dn, object_class, attrs_arg))
 
 
@@ -287,9 +287,10 @@ class TestFixtures:
     @staticmethod
     def convert_user_json_to_entry(user_data: GenericFieldsDict) -> GenericFieldsDict:
         """Convert user JSON data to Entry-compatible format."""
-        object_classes = user_data.get("object_classes", [])
-        if not isinstance(object_classes, list):
-            object_classes = []
+        object_classes_raw = user_data.get("object_classes", [])
+        object_classes: list[str] = []
+        if isinstance(object_classes_raw, list):
+            object_classes = object_classes_raw
         attributes: dict[str, list[str]] = {
             "objectClass": [str(oc) for oc in object_classes],
             "uid": [str(user_data.get("uid", ""))],
@@ -321,9 +322,10 @@ class TestFixtures:
     @staticmethod
     def convert_group_json_to_entry(group_data: GenericFieldsDict) -> GenericFieldsDict:
         """Convert group JSON data to Entry-compatible format."""
-        object_classes = group_data.get("object_classes", [])
-        if not isinstance(object_classes, list):
-            object_classes = []
+        object_classes_raw = group_data.get("object_classes", [])
+        object_classes: list[str] = []
+        if isinstance(object_classes_raw, list):
+            object_classes = object_classes_raw
         attributes: dict[str, list[str]] = {
             "objectClass": [str(oc) for oc in object_classes],
             "cn": [str(group_data.get("cn", ""))],

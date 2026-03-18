@@ -13,13 +13,13 @@ from collections.abc import Mapping, Sequence
 from typing import TypeVar
 
 import pytest
+from flext_core import r
 
 from flext_ldap import (
     FlextLdap,
     FlextLdapModels,
     FlextLdapOperations,
     p,
-    r,
 )
 from tests import u
 

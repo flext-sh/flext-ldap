@@ -48,7 +48,7 @@ class TestsFlextLdapTypes(t, FlextLdapTypes):
             """TypedDict definitions for LDAP test fixtures."""
 
 
-type GenericFieldsDict = dict[str, str | int | bool | list[str]]
+type GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
 type LdapContainerDict = dict[str, str | int | bool]
 type LdapConnectionConfigDict = dict[str, str | int | bool | None]
 type LdapSearchOptionsDict = dict[str, str | int | bool]
