@@ -129,7 +129,7 @@ class TestsFlextLdapApi:
         config = self._create_config()
         connection = self._create_connection(config)
         api = self._create_api(connection=connection)
-        tm.that(api._config, none=False)
+        assert api._config is not None
 
     def test_api_logger_available(self) -> None:
         """Test that logger is available on API instance."""
@@ -139,7 +139,7 @@ class TestsFlextLdapApi:
     def test_api_config_property(self) -> None:
         """Test config property returns valid FlextSettings."""
         api = self._create_api()
-        tm.that(api.config, is_=FlextSettings, none=False)
+        assert isinstance(api.config, FlextSettings)
 
     def test_context_manager_enter_returns_self(self) -> None:
         """Test __enter__ returns self for 'with' statement."""

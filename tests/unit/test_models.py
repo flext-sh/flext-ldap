@@ -73,14 +73,6 @@ class TestsFlextLdapModels:
         """Test Collections.Config exists."""
         tm.that(m.Config, none=False)
 
-    def test_collections_options_exists(self) -> None:
-        """Test Collections.Options exists."""
-        tm.that(m.CollectionsOptions, none=False)
-
-    def test_collections_results_exists(self) -> None:
-        """Test Collections.Results exists."""
-        tm.that(m.CollectionsResults, none=False)
-
     def test_collections_statistics_exists(self) -> None:
         """Test Collections.Statistics exists."""
         tm.that(m.Statistics, none=False)

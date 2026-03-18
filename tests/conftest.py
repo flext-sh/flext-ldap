@@ -105,8 +105,7 @@ def _ldap3_add(
     """
     if attributes is None:
         return bool(conn.add(dn, object_class, None))
-    attrs_arg: Mapping[str, Sequence[str]] = {k: list(v) for k, v in attributes.items()}
-    return bool(conn.add(dn, object_class, attrs_arg))
+    return bool(conn.add(dn, object_class, attributes))
 
 
 def _ldap3_delete(conn: Connection, dn: str) -> bool:
