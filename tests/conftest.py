@@ -103,9 +103,11 @@ def _ldap3_add(
     ldap3 Connection.add accepts dict[str, str | list[str]] for attributes;
     we accept Mapping[str, Sequence[str]] | None and convert at call site.
     """
-    attrs_arg: dict[str, list[str]] | None = None
-    if attributes is not None:
-        attrs_arg = {k: list(v) for k, v in attributes.items()}
+    if attributes is None:
+        return bool(conn.add(dn, object_class, None))
+    attrs_arg: dict[str, str | list[str]] = {}
+    for k, v in attributes.items():
+        attrs_arg[k] = list(v)
     return bool(conn.add(dn, object_class, attrs_arg))
 
 
@@ -869,8 +871,8 @@ def ldap_test_data_loader(
                 _ = _ldap3_add(
                     connection,
                     ou_dn,
+                    object_class=["organizationalUnit", "top"],
                     attributes={
-                        "objectClass": ["organizationalUnit", "top"],
                         "ou": [ou_name],
                     },
                 )
