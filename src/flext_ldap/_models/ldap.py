@@ -247,11 +247,14 @@ class FlextLdapModelsLdap:
             if not attrs:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            match oc_list:
-                case list() as oc_values if oc_values:
-                    return str(oc_values[0]).lower()
-                case _:
+            if isinstance(oc_list, list):
+                if len(oc_list) == 0:
                     return "unknown"
+                first_value = oc_list[0]
+                if isinstance(first_value, str):
+                    return first_value.lower()
+                return str(first_value).lower()
+            return "unknown"
 
         @staticmethod
         def get_entry_category(entry: dict[str, list[str]]) -> str:

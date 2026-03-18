@@ -225,12 +225,12 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             ConversionMetadata model with transformation tracking.
 
         """
-        return m.Ldap.ConversionMetadata(
-            source_attributes=list(dict(original_attrs_dict).keys()),
-            source_dn=original_dn,
-            removed_attributes=list(removed_attrs),
-            base64_encoded_attributes=list(set(base64_attrs)),
-        )
+        return m.Ldap.ConversionMetadata.model_validate({
+            "source_attributes": list(dict(original_attrs_dict).keys()),
+            "source_dn": original_dn,
+            "removed_attributes": list(removed_attrs),
+            "base64_encoded_attributes": list(set(base64_attrs)),
+        })
 
     @staticmethod
     def _track_conversion_differences(
@@ -279,17 +279,12 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             original_values: Sequence[str | bytes],
         ) -> str | None:
             """Check if attribute values changed during conversion."""
-            match original_values:
-                case list() | tuple():
-                    original_values_list = [str(v) for v in original_values]
-                case str() as original_str:
-                    original_values_list = [original_str]
-                case bytes() as original_bytes:
-                    original_values_list = [
-                        original_bytes.decode("utf-8", errors="replace"),
-                    ]
-                case _:
-                    original_values_list = [str(v) for v in original_values]
+            original_values_list = [
+                item.decode("utf-8", errors="replace")
+                if isinstance(item, bytes)
+                else str(item)
+                for item in original_values
+            ]
             original_str = ", ".join(original_values_list)
             attr_values_raw = converted_attrs_dict.get(attr_name, [])
             attr_values_list = [str(v) for v in attr_values_raw]
@@ -453,17 +448,17 @@ class FlextLdapEntryAdapter(FlextService[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            ldf_attrs_obj = m.Ldif.Attributes(attributes=ldif_attrs)
+            ldf_attrs_obj = m.Ldif.Attributes.model_validate({"attributes": ldif_attrs})
             metadata_obj = m.Ldif.QuirkMetadata.model_validate({
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
             return r[m.Ldif.Entry].ok(
-                m.Ldif.Entry(
-                    dn=m.Ldif.DN(value=dn_str),
-                    attributes=ldf_attrs_obj,
-                    metadata=metadata_obj,
-                ),
+                m.Ldif.Entry.model_validate({
+                    "dn": m.Ldif.DN.model_validate({"value": dn_str}),
+                    "attributes": ldf_attrs_obj,
+                    "metadata": metadata_obj,
+                }),
             )
         except (ValueError, TypeError, AttributeError) as e:
             entry_dn_for_log = (
