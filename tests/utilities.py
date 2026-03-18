@@ -1,42 +1,30 @@
-"""Utilities for flext-ldap tests.
-
-Provides TestsFlextLdapUtilities, extending u with flext-ldap-specific utilities.
-All generic test utilities come from flext_tests.
-
-Architecture:
-- u (flext_tests) = Generic utilities for all FLEXT projects
-- TestsFlextLdapUtilities (tests/) = flext-ldap-specific utilities extending u
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import TypeVar
 
 import pytest
-from flext_core import r
+from flext_core import r, t as core_t
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import (
     FlextLdap,
+    FlextLdapModels,
     FlextLdapOperations,
     FlextLdapUtilities,
     p,
 )
 
-from . import constants as c_mod, models as m_mod, typings as t_mod
+from . import constants as c_mod, typings as t_mod
 
 c = c_mod.c
-m = m_mod.m
 t = t_mod.t
+m = FlextLdapModels
 T = TypeVar("T")
 
 # Runtime aliases for PEP 695 types (not TypeAliasType, regular assignments for runtime use)
 # These are used in isinstance() checks and type annotations at runtime
-ConfigMap = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
+ConfigMap = core_t.ConfigMap
 GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
 LdapContainerDict = dict[str, str | int | bool]
 
@@ -69,6 +57,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             LDAP_MODIFY_DELETE: int = 1
             LDAP_MODIFY_REPLACE: int = 2
 
+            T = TypeVar("T")
             LdapClientType = FlextLdap | p.Ldap.LdapClient
             LdapOperationsType = FlextLdap | FlextLdapOperations | p.Ldap.LdapClient
             SearchScopeType = c.Ldap.SearchScope
@@ -76,7 +65,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def _ldap_entry_to_protocol_adapter(
                 entry: t.Ldap.Tests.LdapEntry,
-            ) -> object:
+            ) -> p.Ldap.LdapEntry:
                 """Convert LdapEntry to protocol adapter.
 
                 Args:
@@ -263,12 +252,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     TypeError: If search_options_raw is not SearchOptions
 
                 """
-                if not isinstance(
-                    search_options_raw, m.Ldap.SearchOptions
-                ):
-                    error_msg = (
-                        "search_options must be m.Ldap.SearchOptions"
-                    )
+                if not isinstance(search_options_raw, m.Ldap.SearchOptions):
+                    error_msg = "search_options must be m.Ldap.SearchOptions"
                     raise TypeError(error_msg)
                 return search_options_raw
 
@@ -434,9 +419,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     entry_attributes.update(normalized_extra)
                 return m.Ldif.Entry(
                     dn=m.Ldif.DN(value=dn),
-                    attributes=m.Ldif.Attributes(
-                        attributes=entry_attributes
-                    ),
+                    attributes=m.Ldif.Attributes(attributes=entry_attributes),
                     metadata=None,
                 )
 
