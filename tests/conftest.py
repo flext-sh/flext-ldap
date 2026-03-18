@@ -22,7 +22,7 @@ import fcntl
 import os
 import time
 import types
-from collections.abc import Callable, Generator, Mapping, Sequence
+from collections.abc import Callable, Container, Generator, Mapping, Sequence
 from pathlib import Path
 from threading import Lock
 from typing import TextIO

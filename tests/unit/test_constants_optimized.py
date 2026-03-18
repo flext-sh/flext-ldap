@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from .. import c, u
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 
