@@ -32,10 +32,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
     """
 
     class Ldap(FlextLdapUtilities.Ldap):
-        """LDAP test types."""
+        """LDAP test utilities."""
 
         class Tests:
-            """flext-ldap-specific test type definitions namespace.
+            """flext-ldap-specific test utilities definitions namespace.
 
             Use t.Tests.* for generic test types from t.
             """
