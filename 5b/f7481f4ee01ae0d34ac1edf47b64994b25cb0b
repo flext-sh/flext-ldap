@@ -1,0 +1,29 @@
+tests/_utilities/docker_infra.py
+  1c4edba619e6ad98 1-9,17,27-28,30-32,34-38,41-42,67-68,83,85-86,91-93,116,118,123,131,134,139,147,149,153,155,157,160-162,164
+tests/conftest.py
+  1c4edba619e6ad98 19,54,91,161,188-189,232-233,237,277,351,403,408,413,418,434,449
+tests/_utilities/fixture_loaders.py
+  1c4edba619e6ad98 1-9,13,24-35,37-38,41-50,52,57-58,66,69-80,82,84-90,92-99,101,104-105,108-109,111-112,114-116,118-119,121-124,126-127,130,133,136-138,152-154,156-157,163,166,169-171
+tests/utilities.py
+  1c4edba619e6ad98 17-18,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "5bf7481f4ee01ae0d34ac1edf47b64994b25cb0b",
+  "prompts": {
+    "1c4edba619e6ad98": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fd1620e5ffewoFF5zbtUADerq",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 263,
+      "total_deletions": 240,
+      "accepted_lines": 164,
+      "overriden_lines": 6
+    }
+  }
+}
