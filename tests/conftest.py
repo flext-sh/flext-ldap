@@ -95,15 +95,15 @@ def _get_admin_credentials() -> tuple[str, str]:
 def _ldap3_add(
     conn: Connection,
     dn: str,
-    object_class: str | list[str] | None = None,
-    attributes: Mapping[str, Sequence[str]] | None = None,
+    object_class: str | list[str],
+    attributes: Mapping[str, Sequence[str]] | None,
 ) -> bool:
     """Typed wrapper for Connection.add.
 
-    ldap3 Connection.add accepts dict[str, object] | None for attributes;
+    ldap3 Connection.add accepts dict[str, str | list[str]] for attributes;
     we accept Mapping[str, Sequence[str]] | None and convert at call site.
     """
-    attrs_arg: dict[str, object] | None = None
+    attrs_arg: dict[str, list[str]] | None = None
     if attributes is not None:
         attrs_arg = {k: list(v) for k, v in attributes.items()}
     return bool(conn.add(dn, object_class, attrs_arg))

@@ -63,29 +63,53 @@ class TestsFlextLdapSmoke:
         @staticmethod
         def create_ldap3_server(ldap_container: LdapContainerDict) -> Server:
             """Factory for ldap3 Server objects."""
-            return Server(ldap_container["server_url"], get_info="ALL")
+            server_url = ldap_container["server_url"]
+            if not isinstance(server_url, str):
+                server_url = str(server_url)
+            return Server(server_url, get_info="ALL")
 
         @staticmethod
         def create_ldap3_connection(
             server: Server, ldap_container: LdapContainerDict
         ) -> Connection:
             """Factory for ldap3 Connection objects."""
+            bind_dn = ldap_container["bind_dn"]
+            password = ldap_container["password"]
+            if not isinstance(bind_dn, str):
+                bind_dn = str(bind_dn)
+            if not isinstance(password, str):
+                password = str(password)
             return Connection(
                 server,
-                user=ldap_container["bind_dn"],
-                password=ldap_container["password"],
+                user=bind_dn,
+                password=password,
                 auto_bind=True,
             )
 
         @staticmethod
         def create_flext_config(ldap_container: LdapContainerDict) -> FlextLdapSettings:
             """Factory for FlextLdapSettings objects."""
+            host = ldap_container["host"]
+            port = ldap_container["port"]
+            use_ssl = ldap_container["use_ssl"]
+            bind_dn = ldap_container["bind_dn"]
+            password = ldap_container["password"]
+            if not isinstance(host, str):
+                host = str(host)
+            if not isinstance(port, int):
+                port = int(port)
+            if not isinstance(use_ssl, bool):
+                use_ssl = bool(use_ssl)
+            if not isinstance(bind_dn, str):
+                bind_dn = str(bind_dn)
+            if not isinstance(password, str):
+                password = str(password)
             return FlextLdapSettings(
-                host=ldap_container["host"],
-                port=ldap_container["port"],
-                use_ssl=ldap_container["use_ssl"],
-                bind_dn=ldap_container["bind_dn"],
-                bind_password=ldap_container["password"],
+                host=host,
+                port=port,
+                use_ssl=use_ssl,
+                bind_dn=bind_dn,
+                bind_password=password,
             )
 
         @staticmethod
@@ -93,12 +117,27 @@ class TestsFlextLdapSmoke:
             ldap_container: LdapContainerDict,
         ) -> m.Ldap.ConnectionConfig:
             """Factory for ConnectionConfig objects."""
+            host = ldap_container["host"]
+            port = ldap_container["port"]
+            use_ssl = ldap_container["use_ssl"]
+            bind_dn = ldap_container["bind_dn"]
+            password = ldap_container["password"]
+            if not isinstance(host, str):
+                host = str(host)
+            if not isinstance(port, int):
+                port = int(port)
+            if not isinstance(use_ssl, bool):
+                use_ssl = bool(use_ssl)
+            if not isinstance(bind_dn, str):
+                bind_dn = str(bind_dn)
+            if not isinstance(password, str):
+                password = str(password)
             return m.Ldap.ConnectionConfig(
-                host=ldap_container["host"],
-                port=ldap_container["port"],
-                use_ssl=ldap_container["use_ssl"],
-                bind_dn=ldap_container["bind_dn"],
-                bind_password=ldap_container["password"],
+                host=host,
+                port=port,
+                use_ssl=use_ssl,
+                bind_dn=bind_dn,
+                bind_password=password,
             )
 
     class Assertions:

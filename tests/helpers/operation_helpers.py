@@ -249,12 +249,14 @@ class TestsFlextLdapOperationHelpers:
         """
         connect_result = client.connect(connection_config)
         if isinstance(connect_result, r):
-            u.Tests.Result.assert_result_success(connect_result)
+            TestsFlextLdapOperationHelpers._assert_result_success(connect_result)
         elif connect_result.is_success:
-            u.Tests.Result.assert_result_success(r[bool].ok(connect_result.value))
+            TestsFlextLdapOperationHelpers._assert_result_success(
+                r[bool].ok(connect_result.value)
+            )
         else:
             result_as_r = r[bool].fail(str(connect_result.error))
-            u.Tests.Result.assert_result_success(result_as_r)
+            TestsFlextLdapOperationHelpers._assert_result_success(result_as_r)
 
     @staticmethod
     def search_and_assert_success(
@@ -587,7 +589,7 @@ class TestsFlextLdapOperationHelpers:
         )
         if verify_operation_result:
             operation_result = result.value
-            assert operation_result.is_success is True
+            assert operation_result.success is True
             assert operation_result.entries_affected == 1
         if cleanup_after and entry.dn and hasattr(client, "delete"):
             client.delete(str(entry.dn))
@@ -618,7 +620,7 @@ class TestsFlextLdapOperationHelpers:
         delete_result: OperationResultType = (
             TestsFlextLdapOperationHelpers._ensure_flext_result(delete_result_raw)
         )
-        u.Tests.Result.assert_result_success(delete_result)
+        TestsFlextLdapOperationHelpers._assert_result_success(delete_result)
         return (add_result, delete_result)
 
     @staticmethod
@@ -641,7 +643,7 @@ class TestsFlextLdapOperationHelpers:
         """
         assert result.is_success
         operation_result: m.Ldap.OperationResult = result.value
-        assert operation_result.is_success is True
+        assert operation_result.success is True
         assert operation_result.entries_affected == expected_entries_affected
         if expected_operation_type:
             assert operation_result.operation_type == expected_operation_type
