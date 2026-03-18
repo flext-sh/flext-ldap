@@ -195,9 +195,7 @@ class TestsFlextLdapApi:
     def test_is_single_phase_callback_with_4_params(self) -> None:
         """Test _is_single_phase_callback returns True for 4 parameters."""
 
-        def single_phase_cb(
-            current: int, total: int, dn: str, stats: m.Ldap.SyncStats
-        ) -> None:
+        def single_phase_cb(current: int, total: int, dn: str, stats: object) -> None:
             pass
 
         result = FlextLdapSyncCallbacks.is_single_phase_callback(single_phase_cb)
@@ -206,9 +204,7 @@ class TestsFlextLdapApi:
     def test_is_multi_phase_callback_with_4_params_returns_false(self) -> None:
         """Test _is_multi_phase_callback returns False for 4 parameters."""
 
-        def single_phase_cb(
-            current: int, total: int, dn: str, stats: m.Ldap.SyncStats
-        ) -> None:
+        def single_phase_cb(current: int, total: int, dn: str, stats: object) -> None:
             pass
 
         result = FlextLdapSyncCallbacks.is_multi_phase_callback(single_phase_cb)
@@ -218,7 +214,7 @@ class TestsFlextLdapApi:
         """Test _is_single_phase_callback returns False for 5 parameters."""
 
         def multi_phase_cb(
-            phase: str, current: int, total: int, dn: str, stats: m.Ldap.SyncStats
+            phase: str, current: int, total: int, dn: str, stats: object
         ) -> None:
             pass
 
