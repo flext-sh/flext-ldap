@@ -37,10 +37,8 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
 
 # Short aliases for tests
 m = TestsFlextLdapModels
-tm = TestsFlextLdapModels
 
 __all__ = [
     "TestsFlextLdapModels",
     "m",
-    "tm",
 ]

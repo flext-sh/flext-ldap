@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._typings.generics import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
 from flext_ldap import FlextLdapTypes
@@ -42,14 +41,11 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
 
         """LDAP test types."""
 
-        class Tests(FlextTestsTypes.Tests):
+        class Tests:
             """flext-ldap-specific test type definitions namespace.
 
             Use t.Tests.* for generic test types from t.
             """
-
-            class Fixtures:
-                """TypedDict definitions for LDAP test fixtures."""
 
             type GenericFieldsDict = dict[
                 str, str | int | bool | list[str] | dict[str, list[str]]
@@ -68,46 +64,10 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             type LdapConnectionResultDict = dict[str, str | int | bool]
 
 
-# Type aliases from TestsFlextLdapTypes.Tests for module-level access
-GenericCallableParameterDict = (
-    TestsFlextLdapTypes.Ldap.Tests.GenericCallableParameterDict
-)
-GenericFieldsDict = TestsFlextLdapTypes.Ldap.Tests.GenericFieldsDict
-GenericTestCaseDict = TestsFlextLdapTypes.Ldap.Tests.GenericTestCaseDict
-LdapConnectionConfigDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionConfigDict
-LdapConnectionResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapConnectionResultDict
-LdapContainerDict = TestsFlextLdapTypes.Ldap.Tests.LdapContainerDict
-LdapEntryDataDict = TestsFlextLdapTypes.Ldap.Tests.LdapEntryDataDict
-LdapModifyOperationDict = TestsFlextLdapTypes.Ldap.Tests.LdapModifyOperationDict
-LdapSchemaAttributeDict = TestsFlextLdapTypes.Ldap.Tests.LdapSchemaAttributeDict
-LdapSchemaObjectClassDict = TestsFlextLdapTypes.Ldap.Tests.LdapSchemaObjectClassDict
-LdapSearchOptionsDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchOptionsDict
-LdapSearchResultDict = TestsFlextLdapTypes.Ldap.Tests.LdapSearchResultDict
-LdapTestScenarioDict = TestsFlextLdapTypes.Ldap.Tests.LdapTestScenarioDict
-
-
 # Aliases
 t = TestsFlextLdapTypes
-tt = TestsFlextLdapTypes
 
 __all__ = [
-    "GenericCallableParameterDict",
-    "GenericFieldsDict",
-    "GenericTestCaseDict",
-    "LdapConnectionConfigDict",
-    "LdapConnectionResultDict",
-    "LdapContainerDict",
-    "LdapEntryDataDict",
-    "LdapModifyOperationDict",
-    "LdapSchemaAttributeDict",
-    "LdapSchemaObjectClassDict",
-    "LdapSearchOptionsDict",
-    "LdapSearchResultDict",
-    "LdapTestScenarioDict",
-    "T",
-    "T_co",
-    "T_contra",
     "TestsFlextLdapTypes",
     "t",
-    "tt",
 ]
