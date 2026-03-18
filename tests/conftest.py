@@ -22,7 +22,7 @@ import fcntl
 import os
 import time
 import types
-from collections.abc import Callable, Generator, Mapping, Sequence
+from collections.abc import Callable, Generator, Mapping
 from pathlib import Path
 from threading import Lock
 from typing import TextIO
@@ -39,6 +39,7 @@ from flext_ldap import (
     FlextLdapOperations,
     FlextLdapSettings,
 )
+from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
 from tests import c, m
 
@@ -49,15 +50,17 @@ LdapContainerDict = dict[str, str | int | bool]
 logger = FlextLogger(__name__)
 FLEXT_LDAP_ROOT = Path(__file__).parent.parent.resolve()
 FLEXT_WORKSPACE_ROOT = FLEXT_LDAP_ROOT.parent
-LDAP_CONTAINER_NAME = "flext-openldap-test"
-LDAP_COMPOSE_FILE = FLEXT_WORKSPACE_ROOT / "docker" / "docker-compose.openldap.yml"
-LDAP_SERVICE_NAME = "openldap"
-LDAP_PORT = 3390
-LDAP_BASE_DN = "dc=flext,dc=local"
-LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
-LDAP_ADMIN_PASSWORD = "admin123"
-LDAP_LEGACY_ADMIN_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-LDAP_LEGACY_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
+
+_docker = c.Ldap.Tests.Docker
+LDAP_CONTAINER_NAME = _docker.CONTAINER_NAME
+LDAP_COMPOSE_FILE = FLEXT_WORKSPACE_ROOT / _docker.COMPOSE_FILE_REL
+LDAP_SERVICE_NAME = _docker.SERVICE_NAME
+LDAP_PORT = _docker.PORT
+LDAP_BASE_DN = _docker.BASE_DN
+LDAP_ADMIN_DN = _docker.ADMIN_DN
+LDAP_ADMIN_PASSWORD = _docker.ADMIN_PASSWORD
+LDAP_LEGACY_ADMIN_DN = _docker.LEGACY_ADMIN_DN
+LDAP_LEGACY_ADMIN_PASSWORD = _docker.LEGACY_ADMIN_PASSWORD
 _resolved_admin_credentials: list[tuple[str, str] | None] = [None]
 
 
@@ -85,37 +88,13 @@ def _get_admin_credentials() -> tuple[str, str]:
                 receive_timeout=1,
             )
             if test_conn.bound:
-                _ldap3_unbind(test_conn)
+                FlextLdapLdap3Wrappers.unbind(test_conn)
                 _resolved_admin_credentials[0] = (candidate_dn, candidate_password)
                 return (candidate_dn, candidate_password)
         except Exception:
             continue
     _resolved_admin_credentials[0] = (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
     return (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
-
-
-def _ldap3_add(
-    conn: Connection,
-    dn: str,
-    object_class: Sequence[str],
-    attributes: Mapping[str, Sequence[str]] | None,
-) -> bool:
-    oc_list: list[str] = list(object_class)
-    add_fn: Callable[..., bool] = conn.add
-    if attributes is None:
-        return bool(add_fn(dn, oc_list, None))
-    return bool(add_fn(dn, oc_list, attributes))
-
-
-def _ldap3_delete(conn: Connection, dn: str) -> bool:
-    """Typed wrapper for Connection.delete."""
-    delete_func: Callable[[str], bool] = conn.delete
-    return delete_func(dn)
-
-
-def _ldap3_unbind(conn: Connection) -> None:
-    """Typed wrapper for Connection.unbind (ldap3 returns bool; we ignore return)."""
-    conn.unbind()
 
 
 def _get_docker_control(worker_id: str = "master") -> tk:
@@ -417,7 +396,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                     receive_timeout=1,
                 )
                 if test_conn.bound:
-                    _ldap3_unbind(test_conn)
+                    FlextLdapLdap3Wrappers.unbind(test_conn)
                     ldap_ready = True
                     break
             except Exception:
@@ -723,7 +702,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
                     receive_timeout=1,
                 )
                 if test_conn.bound:
-                    _ldap3_unbind(test_conn)
+                    FlextLdapLdap3Wrappers.unbind(test_conn)
                     logger.info(
                         f"Container {LDAP_CONTAINER_NAME} is ready after {waited:.1f}s"
                     )
@@ -864,7 +843,7 @@ def ldap_test_data_loader(
         ]
         for ou_dn, ou_name in ous:
             try:
-                _ = _ldap3_add(
+                _ = FlextLdapLdap3Wrappers.add(
                     connection,
                     ou_dn,
                     object_class=["organizationalUnit", "top"],
@@ -880,7 +859,7 @@ def ldap_test_data_loader(
             logger.info(f"Cleaning up {len(all_dns)} tracked DNs from tests")
             for dn in all_dns:
                 try:
-                    _ = _ldap3_delete(connection, dn)
+                    _ = FlextLdapLdap3Wrappers.delete(connection, dn)
                     logger.debug("Cleaned up DN: %s", dn)
                 except Exception as e:
                     error_repr = str(e)
@@ -888,7 +867,7 @@ def ldap_test_data_loader(
         except Exception as e:
             logger.warning("Cleanup failed (non-critical)", error=e)
         if connection.bound:
-            _ldap3_unbind(connection)
+            FlextLdapLdap3Wrappers.unbind(connection)
     except Exception as e:
         logger.exception("Failed to initialize test data loader")
         pytest.fail(
@@ -953,26 +932,8 @@ def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFields
     return TestFixtures.convert_group_json_to_entry(test_groups_json[0])
 
 
-SAMPLE_USER_ENTRY = {
-    "dn": "cn=testuser,ou=people,dc=flext,dc=local",
-    "attributes": {
-        "cn": ["testuser"],
-        "sn": ["User"],
-        "givenName": ["Test"],
-        "uid": ["testuser"],
-        "mail": ["testuser@internal.invalid"],
-        "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-        "userPassword": ["test123"],
-    },
-}
-SAMPLE_GROUP_ENTRY = {
-    "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
-    "attributes": {
-        "cn": ["testgroup"],
-        "objectClass": ["groupOfNames", "top"],
-        "member": ["cn=testuser,ou=people,dc=flext,dc=local"],
-    },
-}
+SAMPLE_USER_ENTRY = c.Ldap.Tests.SampleData.USER_ENTRY
+SAMPLE_GROUP_ENTRY = c.Ldap.Tests.SampleData.GROUP_ENTRY
 
 
 @pytest.fixture
@@ -1081,29 +1042,6 @@ def ldap_client(
     )
 
 
-def create_flext_ldap_instance(
-    config: FlextLdapSettings | None = None, parser: FlextLdifParser | None = None
-) -> FlextLdap:
-    """Create a FlextLdap instance for testing without connection.
-
-    Helper function to create FlextLdap instances in tests that don't use fixtures.
-    The instance will not be connected - call connect() separately if needed.
-
-    Args:
-        config: Optional LDAP configuration (defaults to FlextLdapSettings())
-        parser: Optional LDIF parser
-
-    Returns:
-        FlextLdap: Unconnected FlextLdap instance
-
-    """
-    if config is None:
-        config = FlextLdapSettings()
-    connection = FlextLdapConnection(config=config, parser=parser)
-    operations = FlextLdapOperations(connection=connection)
-    return FlextLdap(connection=connection, operations=operations, ldif=FlextLdif())
-
-
 def _ensure_basic_ldap_structure() -> None:
     """Ensure basic LDAP structure exists for tests.
 
@@ -1118,7 +1056,7 @@ def _ensure_basic_ldap_structure() -> None:
         )
         conn.search(LDAP_BASE_DN, "(ou=people)", attributes=["ou"])
         if not conn.entries:
-            _ldap3_add(
+            FlextLdapLdap3Wrappers.add(
                 conn,
                 f"ou=people,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
@@ -1130,7 +1068,7 @@ def _ensure_basic_ldap_structure() -> None:
             logger.debug("Created ou=people")
         conn.search(LDAP_BASE_DN, "(ou=groups)", attributes=["ou"])
         if not conn.entries:
-            _ldap3_add(
+            FlextLdapLdap3Wrappers.add(
                 conn,
                 f"ou=groups,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
@@ -1142,7 +1080,7 @@ def _ensure_basic_ldap_structure() -> None:
             logger.debug("Created ou=groups")
         conn.search(LDAP_BASE_DN, "(ou=services)", attributes=["ou"])
         if not conn.entries:
-            _ldap3_add(
+            FlextLdapLdap3Wrappers.add(
                 conn,
                 f"ou=services,{LDAP_BASE_DN}",
                 ["organizationalUnit", "top"],
@@ -1152,7 +1090,7 @@ def _ensure_basic_ldap_structure() -> None:
                 },
             )
             logger.debug("Created ou=services")
-        _ldap3_unbind(conn)
+        FlextLdapLdap3Wrappers.unbind(conn)
         logger.info("Basic LDAP structure verified/created")
     except Exception as e:
         logger.warning("Failed to ensure basic LDAP structure", error=e)

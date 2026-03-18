@@ -59,7 +59,9 @@ class TestsFlextLdapSmoke:
         """Factory methods for generating test data across all smoke tests."""
 
         @staticmethod
-        def create_ldap3_server(ldap_container: t.Ldap.Tests.LdapContainerDict) -> Server:
+        def create_ldap3_server(
+            ldap_container: t.Ldap.Tests.LdapContainerDict,
+        ) -> Server:
             """Factory for ldap3 Server objects."""
             server_url = ldap_container["server_url"]
             if not isinstance(server_url, str):
@@ -85,7 +87,9 @@ class TestsFlextLdapSmoke:
             )
 
         @staticmethod
-        def create_flext_config(ldap_container: t.Ldap.Tests.LdapContainerDict) -> FlextLdapSettings:
+        def create_flext_config(
+            ldap_container: t.Ldap.Tests.LdapContainerDict,
+        ) -> FlextLdapSettings:
             """Factory for FlextLdapSettings objects."""
             host = ldap_container["host"]
             port = ldap_container["port"]
@@ -172,7 +176,9 @@ class TestsFlextLdapSmoke:
             """Assert that connection operation succeeded."""
             assert result.is_success, f"Connection failed: {result.error}"
 
-    def test_ldap_container_health(self, ldap_container: t.Ldap.Tests.LdapContainerDict) -> None:
+    def test_ldap_container_health(
+        self, ldap_container: t.Ldap.Tests.LdapContainerDict
+    ) -> None:
         """SMOKE TEST: LDAP container is responsive (REGRA 5: REAL connection).
 
         This is the minimal test that must pass for ANY other test to work.

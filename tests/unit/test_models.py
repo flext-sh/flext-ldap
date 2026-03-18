@@ -237,7 +237,9 @@ class TestsFlextLdapModels:
 
     def test_search_options_scope_normalization_string(self) -> None:
         """Test SearchOptions normalizes scope from string."""
-        options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="subtree")
+        options = m.Ldap.SearchOptions(
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="subtree"
+        )
         tm.that(options.scope in {"SUBTREE", "subtree"}, eq=True)
 
     def test_search_options_normalized_factory(self) -> None:
@@ -252,7 +254,9 @@ class TestsFlextLdapModels:
         config = m.Ldap.NormalizedConfig(
             scope="BASE", filter_str="(uid=*)", size_limit=50
         )
-        options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC.DEFAULT_BASE_DN, config=config)
+        options = m.Ldap.SearchOptions.normalized(
+            c.Ldap.Tests.RFC.DEFAULT_BASE_DN, config=config
+        )
         tm.that(options.scope, eq="BASE")
         tm.that(options.filter_str, eq="(uid=*)")
         tm.that(options.size_limit, eq=50)
@@ -301,7 +305,8 @@ class TestsFlextLdapModels:
     ) -> None:
         """Test SearchResult.total_count computed field."""
         entries = [
-            {"dn": [f"cn=user{i},{c.Ldap.Tests.RFC.DEFAULT_BASE_DN}"]} for i in range(num_entries)
+            {"dn": [f"cn=user{i},{c.Ldap.Tests.RFC.DEFAULT_BASE_DN}"]}
+            for i in range(num_entries)
         ]
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=entries, search_options=options)
@@ -399,7 +404,9 @@ class TestsFlextLdapModels:
     def test_upsert_result_creation(self) -> None:
         """Test UpsertResult creation."""
         result = m.Ldap.UpsertResult(
-            success=True, dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, operation=c.Ldap.OperationType.ADD
+            success=True,
+            dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            operation=c.Ldap.OperationType.ADD,
         )
         tm.that(result.success, eq=True)
         tm.that(result.dn, eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
@@ -568,7 +575,9 @@ class TestsFlextLdapModels:
 
     def test_search_options_serialization(self) -> None:
         """Test SearchOptions serialization to dict."""
-        options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="SUBTREE")
+        options = m.Ldap.SearchOptions(
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="SUBTREE"
+        )
         data = options.model_dump()
         tm.that(data["base_dn"], eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         tm.that(data["scope"], eq="SUBTREE")

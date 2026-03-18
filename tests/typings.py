@@ -17,8 +17,8 @@ from flext_core import r
 from flext_tests import FlextTestsTypes
 
 from flext_ldap import FlextLdapTypes
-
 from tests import m
+
 
 class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
     """Type system foundation for flext-ldap tests - extends t and FlextLdapTypes.

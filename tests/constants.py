@@ -269,6 +269,50 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 INVALID_BASE_DN: ClassVar[str] = "invalid=base,dn=invalid"
                 FAST_TIMEOUT: ClassVar[int] = 1
 
+            class Docker:
+                """Docker container infrastructure constants for integration tests."""
+
+                CONTAINER_NAME: Final[str] = "flext-openldap-test"
+                COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
+                SERVICE_NAME: Final[str] = "openldap"
+                PORT: Final[int] = 3390
+                BASE_DN: Final[str] = "dc=flext,dc=local"
+                ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+                ADMIN_PASSWORD: Final[str] = "admin123"
+                LEGACY_ADMIN_DN: Final[str] = (
+                    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+                )
+                LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+
+            class SampleData:
+                """Static sample entries for tests."""
+
+                USER_ENTRY: ClassVar[dict[str, str | dict[str, list[str]]]] = {
+                    "dn": "cn=testuser,ou=people,dc=flext,dc=local",
+                    "attributes": {
+                        "cn": ["testuser"],
+                        "sn": ["User"],
+                        "givenName": ["Test"],
+                        "uid": ["testuser"],
+                        "mail": ["testuser@internal.invalid"],
+                        "objectClass": [
+                            "inetOrgPerson",
+                            "organizationalPerson",
+                            "person",
+                            "top",
+                        ],
+                        "userPassword": ["test123"],
+                    },
+                }
+                GROUP_ENTRY: ClassVar[dict[str, str | dict[str, list[str]]]] = {
+                    "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
+                    "attributes": {
+                        "cn": ["testgroup"],
+                        "objectClass": ["groupOfNames", "top"],
+                        "member": ["cn=testuser,ou=people,dc=flext,dc=local"],
+                    },
+                }
+
 
 c = TestsFlextLdapConstants
 
