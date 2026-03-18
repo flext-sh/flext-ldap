@@ -97,7 +97,6 @@ class TestsFlextLdapSettings:
     def test_config_port_field_metadata(self) -> None:
         """Test port field has proper constraint metadata and defaults."""
         port_field = FlextLdapSettings.model_fields.get("port")
-        tm.that(port_field, none=False)
         assert port_field is not None
         metadata_str = str(port_field.metadata)
         tm.that(metadata_str, contains="Ge(ge=1)")
@@ -155,7 +154,7 @@ class TestsFlextLdapSettings:
 
     def test_config_model_config(self) -> None:
         """Test that model configuration is properly set."""
-        tm.that(FlextLdapSettings.model_config, none=False)
+        assert FlextLdapSettings.model_config is not None
         config_dict = FlextLdapSettings.model_config
         tm.that(config_dict.get("env_prefix"), eq="FLEXT_")
         tm.that(config_dict.get("case_sensitive"), eq=False)

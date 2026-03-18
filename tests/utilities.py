@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TypeVar
 
 import pytest
 from flext_core import r, t as core_t
