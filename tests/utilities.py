@@ -14,6 +14,8 @@ from flext_ldap import (
     FlextLdapUtilities,
 )
 from tests import c, m, p, t
+from tests._utilities.docker_infra import _DockerInfraUtils
+from tests._utilities.fixture_loaders import _FixtureLoaderUtils
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -32,7 +34,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
     class Ldap(FlextLdapUtilities.Ldap):
         """LDAP test utilities."""
 
-        class Tests:
+        class Tests(_DockerInfraUtils, _FixtureLoaderUtils):
             """flext-ldap-specific test utilities definitions namespace.
 
             Consolidates operation helpers, type adapters, and utility methods.

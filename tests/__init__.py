@@ -12,7 +12,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from . import unit as unit
+    from . import _utilities as _utilities, unit as unit
+    from ._utilities.fixture_loaders import TestFixtures
     from .base import TestsFlextLdapServiceBase, s
     from .conftest import (
         FLEXT_LDAP_ROOT,
@@ -28,11 +29,8 @@ if TYPE_CHECKING:
         LDAP_SERVICE_NAME,
         SAMPLE_GROUP_ENTRY,
         SAMPLE_USER_ENTRY,
-        DNSTracker,
-        FileLock,
         GenericFieldsDict,
         LdapContainerDict,
-        TestFixtures,
         base_ldif_content,
         base_ldif_entries,
         connection_config,
@@ -76,10 +74,8 @@ if TYPE_CHECKING:
     from .utilities import TestsFlextLdapUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "DNSTracker": ("tests.conftest", "DNSTracker"),
     "FLEXT_LDAP_ROOT": ("tests.conftest", "FLEXT_LDAP_ROOT"),
     "FLEXT_WORKSPACE_ROOT": ("tests.conftest", "FLEXT_WORKSPACE_ROOT"),
-    "FileLock": ("tests.conftest", "FileLock"),
     "GenericFieldsDict": ("tests.conftest", "GenericFieldsDict"),
     "LDAP_ADMIN_DN": ("tests.conftest", "LDAP_ADMIN_DN"),
     "LDAP_ADMIN_PASSWORD": ("tests.conftest", "LDAP_ADMIN_PASSWORD"),
@@ -93,7 +89,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapContainerDict": ("tests.conftest", "LdapContainerDict"),
     "SAMPLE_GROUP_ENTRY": ("tests.conftest", "SAMPLE_GROUP_ENTRY"),
     "SAMPLE_USER_ENTRY": ("tests.conftest", "SAMPLE_USER_ENTRY"),
-    "TestFixtures": ("tests.conftest", "TestFixtures"),
+    "TestFixtures": ("tests._utilities.fixture_loaders", "TestFixtures"),
     "TestsFlextLdap3Adapter": (
         "tests.unit.test_ldap3_adapter",
         "TestsFlextLdap3Adapter",
@@ -118,6 +114,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
     "TestsFlextLdapTypes": ("tests.typings", "TestsFlextLdapTypes"),
     "TestsFlextLdapUtilities": ("tests.utilities", "TestsFlextLdapUtilities"),
+    "_utilities": ("tests._utilities", ""),
     "base_ldif_content": ("tests.conftest", "base_ldif_content"),
     "base_ldif_entries": ("tests.conftest", "base_ldif_entries"),
     "c": ("tests.constants", "c"),
@@ -168,8 +165,6 @@ __all__ = [
     "LDAP_SERVICE_NAME",
     "SAMPLE_GROUP_ENTRY",
     "SAMPLE_USER_ENTRY",
-    "DNSTracker",
-    "FileLock",
     "GenericFieldsDict",
     "LdapContainerDict",
     "TestFixtures",
@@ -188,6 +183,7 @@ __all__ = [
     "TestsFlextLdapSync",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "_utilities",
     "base_ldif_content",
     "base_ldif_entries",
     "c",

@@ -1,37 +1,12 @@
-"""Pytest configuration and fixtures for flext-ldap tests.
-
-Unified test infrastructure following FLEXT standards:
-- Centralized fixture loading (TestFixtures class)
-- Container management via tk
-- Base test foundation modules (t, c, p, m, u, s)
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-Container Lifecycle Rules:
-- Container is started/recreated at session start (if dirty or not running)
-- Container stays running after tests complete (NO teardown stop)
-- Container is marked dirty ONLY for real LDAP service failures (not test assertions)
-- Dirty containers are recreated on next session start
-
-"""
-
 from __future__ import annotations
 
-import fcntl
-import os
 import time
-import types
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Callable, Generator
 from pathlib import Path
-from threading import Lock
-from typing import TextIO
 
 import pytest
-from flext_core import FlextLogger, r, t
+from flext_core import FlextLogger
 from flext_ldif import FlextLdif, FlextLdifParser
-from flext_tests.docker import tk
-from pydantic import TypeAdapter, ValidationError
 
 from flext_ldap import (
     FlextLdap,
@@ -41,13 +16,17 @@ from flext_ldap import (
 )
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
-from tests import c, m
+from tests import c, m, u
+
+logger = FlextLogger(__name__)
 
 # Runtime type aliases (PEP 695 TypeAliasType can't be used in r[...]/TypeAdapter at runtime)
 GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
 LdapContainerDict = dict[str, str | int | bool]
 
-logger = FlextLogger(__name__)
+
+SAMPLE_USER_ENTRY = c.Ldap.Tests.SampleData.USER_ENTRY
+SAMPLE_GROUP_ENTRY = c.Ldap.Tests.SampleData.GROUP_ENTRY
 FLEXT_LDAP_ROOT = Path(__file__).parent.parent.resolve()
 FLEXT_WORKSPACE_ROOT = FLEXT_LDAP_ROOT.parent
 
@@ -61,281 +40,9 @@ LDAP_ADMIN_DN = _docker.ADMIN_DN
 LDAP_ADMIN_PASSWORD = _docker.ADMIN_PASSWORD
 LDAP_LEGACY_ADMIN_DN = _docker.LEGACY_ADMIN_DN
 LDAP_LEGACY_ADMIN_PASSWORD = _docker.LEGACY_ADMIN_PASSWORD
-_resolved_admin_credentials: list[tuple[str, str] | None] = [None]
-
-
-def _get_admin_credentials() -> tuple[str, str]:
-    """Resolve working LDAP admin credentials for current environment."""
-    if _resolved_admin_credentials[0] is not None:
-        return _resolved_admin_credentials[0]
-    env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
-    env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
-    candidates: list[tuple[str, str]] = []
-    if env_dn and env_password:
-        candidates.append((env_dn, env_password))
-    candidates.extend([
-        (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD),
-        (LDAP_LEGACY_ADMIN_DN, LDAP_LEGACY_ADMIN_PASSWORD),
-    ])
-    for candidate_dn, candidate_password in candidates:
-        try:
-            server = Server("localhost", port=LDAP_PORT, get_info="NO_INFO")
-            test_conn = Connection(
-                server,
-                user=candidate_dn,
-                password=candidate_password,
-                auto_bind=True,
-                receive_timeout=1,
-            )
-            if test_conn.bound:
-                FlextLdapLdap3Wrappers.unbind(test_conn)
-                _resolved_admin_credentials[0] = (candidate_dn, candidate_password)
-                return (candidate_dn, candidate_password)
-        except Exception:
-            continue
-    _resolved_admin_credentials[0] = (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
-    return (LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
-
-
-def _get_docker_control(worker_id: str = "master") -> tk:
-    """Create tk with correct workspace root for flext-ldap.
-
-    Uses FLEXT_WORKSPACE_ROOT to ensure docker-compose paths resolve correctly.
-    The compose file is at docker/docker-compose.openldap.yml relative to workspace root.
-
-    Args:
-        worker_id: pytest-xdist worker ID for parallel execution isolation
-
-    Returns:
-        tk instance with correct workspace_root
-
-    """
-    return tk(workspace_root=FLEXT_WORKSPACE_ROOT, worker_id=worker_id)
-
-
-class FileLock:
-    """File-based locking for pytest-xdist parallel execution."""
-
-    def __init__(self, lock_file: Path) -> None:
-        """Initialize file lock.
-
-        Args:
-            lock_file: Path to the lock file
-
-        """
-        self.lock_file = lock_file
-        self._fd: int | None = None
-        self._file_obj: TextIO | None = None
-
-    def __enter__(self) -> None:
-        """Acquire the file lock."""
-        self.lock_file.parent.mkdir(parents=True, exist_ok=True)
-        self._file_obj = self.lock_file.open("w")
-        self._fd = self._file_obj.fileno()
-        fcntl.flock(self._fd, fcntl.LOCK_EX)
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
-    ) -> None:
-        """Release the file lock."""
-        if self._fd is not None:
-            fcntl.flock(self._fd, fcntl.LOCK_UN)
-        if self._file_obj is not None:
-            self._file_obj.close()
-        self.lock_file.unlink(missing_ok=True)
-
-
-class TestFixtures:
-    """Centralized test fixtures loader following FLEXT patterns."""
-
-    FIXTURES_DIR: Path = Path(__file__).parent / "fixtures"
-
-    @staticmethod
-    def load_json(filename: str) -> r[list[GenericFieldsDict]]:
-        """Load JSON test data from fixtures directory.
-
-        Returns:
-            r containing list of dictionaries or error
-
-        """
-        try:
-            filepath = TestFixtures.FIXTURES_DIR / filename
-            if not filepath.exists():
-                return r[list[GenericFieldsDict]].fail(
-                    f"Fixture file not found: {filename}"
-                )
-            raw_content = filepath.read_text(encoding="utf-8")
-            data = TypeAdapter(list[GenericFieldsDict]).validate_json(raw_content)
-            return r[list[GenericFieldsDict]].ok(data)
-        except (OSError, ValueError, ValidationError) as e:
-            return r[list[GenericFieldsDict]].fail(
-                f"Failed to load JSON fixture {filename}: {e}"
-            )
-
-    @staticmethod
-    def load_ldif(filename: str) -> r[str]:
-        """Load LDIF test data from fixtures directory.
-
-        Returns:
-            r containing LDIF content as string or error
-
-        """
-        try:
-            filepath = TestFixtures.FIXTURES_DIR / filename
-            if not filepath.exists():
-                return r[str].fail(f"Fixture file not found: {filename}")
-            with filepath.open(encoding="utf-8") as f:
-                content = f.read()
-            return r[str].ok(content)
-        except OSError as e:
-            return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
-
-    @staticmethod
-    def load_docker_config() -> r[Mapping[str, t.NormalizedValue]]:
-        try:
-            filepath = TestFixtures.FIXTURES_DIR / "docker_config.json"
-            if not filepath.exists():
-                return r[Mapping[str, t.NormalizedValue]].fail(
-                    "Docker config file not found",
-                )
-            raw_content = filepath.read_text(encoding="utf-8")
-            config: Mapping[str, t.NormalizedValue] = TypeAdapter(
-                dict[str, t.NormalizedValue],
-            ).validate_json(raw_content)
-            return r[Mapping[str, t.NormalizedValue]].ok(config)
-        except (OSError, ValueError, ValidationError) as e:
-            return r[Mapping[str, t.NormalizedValue]].fail(
-                f"Failed to load docker config: {e}",
-            )
-
-    @staticmethod
-    def load_users_json() -> list[GenericFieldsDict]:
-        """Load test users from JSON file with default fallback."""
-        result = TestFixtures.load_json("test_users.json")
-        if result.is_success:
-            return result.value
-        logger.warning(f"Failed to load users: {result.error}")
-        return []
-
-    @staticmethod
-    def load_groups_json() -> list[GenericFieldsDict]:
-        """Load test groups from JSON file with default fallback."""
-        result = TestFixtures.load_json("test_groups.json")
-        if result.is_success:
-            return result.value
-        logger.warning(f"Failed to load groups: {result.error}")
-        return []
-
-    @staticmethod
-    def load_base_ldif() -> str:
-        """Load base LDIF structure from file with default fallback."""
-        result = TestFixtures.load_ldif("test_base.ldif")
-        if result.is_success:
-            return result.value
-        logger.warning(f"Failed to load base LDIF: {result.error}")
-        return ""
-
-    @staticmethod
-    def load_base_ldif_entries() -> list[m.Ldif.Entry]:
-        """Load and parse base LDIF structure to Entry models.
-
-        Returns:
-            List of parsed Entry models or empty list on failure
-
-        """
-        ldif_content = TestFixtures.load_base_ldif()
-        if not ldif_content:
-            return []
-        ldif = FlextLdif()
-        result = ldif.parse(ldif_content, server_type="rfc")
-        if result.is_success:
-            entries = result.value
-            return [
-                entry
-                for entry in entries
-                if hasattr(entry, "dn") and hasattr(entry, "attributes")
-            ]
-        logger.warning(f"Failed to parse base LDIF: {result.error}")
-        return []
-
-    @staticmethod
-    def convert_user_json_to_entry(user_data: GenericFieldsDict) -> GenericFieldsDict:
-        """Convert user JSON data to Entry-compatible format."""
-        object_classes_raw = user_data.get("object_classes", [])
-        object_classes: list[str] = []
-        if isinstance(object_classes_raw, list):
-            object_classes = object_classes_raw
-        attributes: dict[str, list[str]] = {
-            "objectClass": [str(oc) for oc in object_classes],
-            "uid": [str(user_data.get("uid", ""))],
-            "cn": [str(user_data.get("cn", ""))],
-            "sn": [str(user_data.get("sn", ""))],
-        }
-        if "given_name" in user_data:
-            attributes["givenName"] = [str(user_data.get("given_name", ""))]
-        if "mail" in user_data:
-            attributes["mail"] = [str(user_data.get("mail", ""))]
-        if "telephone_number" in user_data:
-            attributes["telephoneNumber"] = [str(user_data.get("telephone_number", ""))]
-        if "mobile" in user_data:
-            attributes["mobile"] = [str(user_data.get("mobile", ""))]
-        if "department" in user_data:
-            attributes["departmentNumber"] = [str(user_data.get("department", ""))]
-        if "title" in user_data:
-            attributes["title"] = [str(user_data.get("title", ""))]
-        if "organization" in user_data:
-            attributes["o"] = [str(user_data.get("organization", ""))]
-        if "organizational_unit" in user_data:
-            attributes["ou"] = [str(user_data.get("organizational_unit", ""))]
-        result: GenericFieldsDict = {
-            "dn": str(user_data.get("dn", "")),
-            "attributes": attributes,
-        }
-        return result
-
-    @staticmethod
-    def convert_group_json_to_entry(group_data: GenericFieldsDict) -> GenericFieldsDict:
-        """Convert group JSON data to Entry-compatible format."""
-        object_classes_raw = group_data.get("object_classes", [])
-        object_classes: list[str] = []
-        if isinstance(object_classes_raw, list):
-            object_classes = object_classes_raw
-        attributes: dict[str, list[str]] = {
-            "objectClass": [str(oc) for oc in object_classes],
-            "cn": [str(group_data.get("cn", ""))],
-        }
-        if "description" in group_data:
-            attributes["description"] = [str(group_data.get("description", ""))]
-        if "member_dns" in group_data:
-            member_dns = group_data.get("member_dns", [])
-            if isinstance(member_dns, list):
-                attributes["member"] = [str(m) for m in member_dns]
-            else:
-                attributes["member"] = [str(member_dns)]
-        result: GenericFieldsDict = {
-            "dn": str(group_data.get("dn", "")),
-            "attributes": attributes,
-        }
-        return result
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    """Cleanup dirty containers and ensure LDAP is ready BEFORE tests start.
-
-    This hook executes before ANY test runs and:
-    1. Checks if LDAP container is marked dirty from previous run
-    2. Recreates dirty containers with docker-compose down -v + up -d
-    3. Starts container if stopped (but not dirty) using start_existing_container
-    4. Creates container if not exists using compose up
-
-    Container STAYS RUNNING after tests - no teardown stop.
-
-    IMPORTANT: Skip Docker initialization if only collecting tests (pytest --collect-only)
-    This prevents huge memory consumption during test collection phase.
-    """
     if session.config.option.collectonly:
         logger.info("Test collection mode - skipping Docker initialization")
         return
@@ -344,7 +51,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     worker_id = str(worker_input.get("workerid", "master"))
-    docker_control = _get_docker_control(worker_id)
+    docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     is_dirty = docker_control.is_container_dirty(LDAP_CONTAINER_NAME)
     if is_dirty:
         logger.info(
@@ -381,7 +88,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     container_name = LDAP_CONTAINER_NAME
     port_ready_result = docker_control.wait_for_port_ready("localhost", LDAP_PORT, 90)
     if port_ready_result.is_success and port_ready_result.value:
-        admin_dn, admin_password = _get_admin_credentials()
+        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         ldap_ready = False
         waited = 0.0
         wait_interval = 1.0
@@ -417,20 +124,6 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
-    """Mark container dirty on LDAP infrastructure failures ONLY.
-
-    This hook executes after each test phase (setup/call/teardown) and:
-    1. Checks if exception indicates LDAP INFRASTRUCTURE failure (not test assertion)
-    2. Marks container as dirty for recreation in next session
-    3. Does NOT stop the container - just marks for future recreation
-
-    Rules for marking dirty:
-    - Assertion failures (test logic errors) = NOT dirty
-    - Connection refused/reset = NOT dirty (timing, not infrastructure)
-    - Server terminated session unexpectedly = DIRTY (infrastructure broken)
-    - Server down or unresponsive = DIRTY (infrastructure broken)
-
-    """
     if call.excinfo is None:
         return
     exc_type = call.excinfo.type
@@ -465,7 +158,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
             worker_input_val if isinstance(worker_input_val, dict) else {}
         )
         worker_id = str(worker_input.get("workerid", "master"))
-        docker = _get_docker_control(worker_id)
+        docker = u.Ldap.Tests.get_docker_control(worker_id)
         docker.mark_container_dirty(LDAP_CONTAINER_NAME)
         logger.error(
             f"LDAP INFRASTRUCTURE FAILURE in {item.nodeid}, container marked DIRTY for recreation on next session: {exc_msg}"
@@ -478,14 +171,6 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
-    """Get pytest-xdist worker ID for DN namespacing (REGRA 3).
-
-    Returns:
-        str: Worker ID (e.g., "gw0", "gw1", "master")
-            - "master": single-process execution
-            - "gw0", "gw1", ...: parallel workers from pytest-xdist
-
-    """
     worker_input_val = getattr(request.config, "workerinput", None)
     worker_input: dict[str, object] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
@@ -496,73 +181,18 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
 @pytest.fixture(scope="session")
 def session_id() -> str:
-    """Unique session ID for this test run (REGRA 3).
-
-    Returns:
-        str: Timestamp in milliseconds as string
-
-    Used for DN namespacing to ensure test isolation.
-
-    """
     return str(int(time.time() * 1000))
 
 
-class DNSTracker:
-    """Thread-safe tracker of DNs created during tests."""
-
-    def __init__(self) -> None:
-        """Initialize tracker with thread-safe structures."""
-        self._created_dns: set[str] = set()
-        self._lock = Lock()
-
-    def add(self, dn: str) -> None:
-        """Add DN to tracker."""
-        with self._lock:
-            self._created_dns.add(dn)
-
-    def get_all(self) -> set[str]:
-        """Get all tracked DNs."""
-        with self._lock:
-            return self._created_dns.copy()
-
-
 @pytest.fixture(scope="session")
-def test_dns_tracker() -> DNSTracker:
-    """Thread-safe tracker of DNs created during tests (REGRA 3).
-
-    Tracks ALL DNs created by tests for intelligent cleanup.
-    Thread-safe to support parallel test execution.
-
-    Returns:
-        DNSTracker: Object with add() and get_all() methods
-
-    """
-    return DNSTracker()
+def test_dns_tracker() -> u.Ldap.Tests.DNSTracker:
+    return u.Ldap.Tests.DNSTracker()
 
 
 @pytest.fixture
 def unique_dn_suffix(
     worker_id: str, session_id: str, request: pytest.FixtureRequest
 ) -> str:
-    """Generate unique DN suffix for this worker and test (REGRA 3).
-
-    Combines worker ID, session ID, test function name, and microsecond timestamp
-    to create globally unique DN suffix that prevents conflicts in parallel execution.
-    This ensures complete isolation between tests even when running in parallel.
-
-    Args:
-        worker_id: pytest-xdist worker ID (e.g., "gw0", "master")
-        session_id: Test session timestamp
-        request: Pytest request object for test identification
-
-    Returns:
-        str: Unique suffix (e.g., "gw0-1733000000-test_function-123456")
-
-    Example:
-        >>> suffix = unique_dn_suffix
-        >>> dn = f"uid=testuser-{suffix},ou=people,dc=flext,dc=local"
-
-    """
     test_name = request.node.name if hasattr(request, "node") else "unknown"
     allowed_chars = {"-", "_"}
     test_name_clean = "".join(
@@ -576,35 +206,9 @@ def unique_dn_suffix(
 def make_user_dn(
     unique_dn_suffix: str, ldap_container: LdapContainerDict
 ) -> Callable[[str], str]:
-    """Factory to create unique user DNs with base DN isolation (REGRA 3).
-
-    Uses the base_dn from ldap_container to ensure complete isolation.
-    This allows multiple tests to run in parallel without conflicts.
-
-    Args:
-        unique_dn_suffix: Unique suffix from fixture
-        ldap_container: Container configuration with base_dn
-
-    Returns:
-        callable: Factory function that takes uid and returns unique DN
-
-    Example:
-        >>> make_dn = make_user_dn
-        >>> dn = make_dn("testuser")  # uid=testuser-gw0-...,ou=people,dc=flext,dc=local
-
-    """
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
 
     def _make(uid: str) -> str:
-        """Create unique user DN.
-
-        Args:
-            uid: User ID (e.g., "testuser")
-
-        Returns:
-            str: Unique DN (e.g., "uid=testuser-gw0-123...,ou=people,dc=flext,dc=local")
-
-        """
         return f"uid={uid}-{unique_dn_suffix},ou=people,{base_dn}"
 
     return _make
@@ -614,37 +218,9 @@ def make_user_dn(
 def make_group_dn(
     unique_dn_suffix: str, ldap_container: LdapContainerDict
 ) -> Callable[[str], str]:
-    """Factory to create unique group DNs with base DN isolation (REGRA 3).
-
-    Uses the base_dn from ldap_container to ensure complete isolation.
-    This allows multiple tests to run in parallel without conflicts.
-
-    Args:
-        unique_dn_suffix: Unique suffix from fixture
-        ldap_container: Container configuration with base_dn
-
-    Returns:
-        callable: Factory function that takes cn and returns unique DN
-
-    Example:
-        >>> make_dn = make_group_dn
-        >>> dn = make_dn(
-        ...     "testgroup"
-        ... )  # cn=testgroup-gw0-...,ou=groups,dc=flext,dc=local
-
-    """
     base_dn = str(ldap_container.get("base_dn", "dc=flext,dc=local"))
 
     def _make(cn: str) -> str:
-        """Create unique group DN.
-
-        Args:
-            cn: Common name (e.g., "testgroup")
-
-        Returns:
-            str: Unique DN (e.g., "cn=testgroup-gw0-123...,ou=groups,dc=flext,dc=local")
-
-        """
         return f"cn={cn}-{unique_dn_suffix},ou=groups,{base_dn}"
 
     return _make
@@ -652,35 +228,13 @@ def make_group_dn(
 
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> LdapContainerDict:
-    """Session-scoped LDAP container configuration with worker isolation.
-
-    Container lifecycle is managed by pytest_sessionstart hook:
-    - Container is started/recreated at session start
-    - Container STAYS RUNNING after tests complete (NO teardown stop)
-    - Container is marked dirty only for infrastructure failures
-
-    This fixture:
-    1. Waits for container to be ready (LDAP connection test)
-    2. Ensures basic LDAP structure exists
-    3. Returns connection parameters
-
-    All tests share the SAME container but use unique DNs for isolation.
-    FIXED PORT 3390 - NO random ports, NO dynamic containers.
-
-    Args:
-        worker_id: Worker ID for logging (e.g., "gw0", "master")
-
-    Returns:
-        dict with connection parameters
-
-    """
     lock_file = Path.home() / ".flext" / f"{LDAP_CONTAINER_NAME}.lock"
-    lock = FileLock(lock_file)
-    docker_control = _get_docker_control(worker_id)
+    lock = u.Ldap.Tests.FileLock(lock_file)
+    docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
         max_wait: int = 60
         wait_interval: float = 1.0
-        admin_dn, admin_password = _get_admin_credentials()
+        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         logger.info("Waiting for container %s to be ready...", LDAP_CONTAINER_NAME)
         port_result = docker_control.wait_for_port_ready(
             "localhost", LDAP_PORT, max_wait
@@ -720,7 +274,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
                 f"Container {LDAP_CONTAINER_NAME} LDAP service not ready within {max_wait}s. This test requires a running and responsive LDAP container."
             )
     with lock:
-        _ensure_basic_ldap_structure()
+        u.Ldap.Tests.ensure_basic_ldap_structure()
     container_info: LdapContainerDict = {
         "server_url": f"ldap://localhost:{LDAP_PORT}",
         "host": "localhost",
@@ -742,22 +296,12 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
 
 @pytest.fixture(scope="module")
 def ldap_parser() -> FlextLdifParser:
-    """Get LDIF parser instance for tests.
-
-    Module-scoped to match ldap_client fixture scope for performance.
-    Returns real parser for integration tests, mock for unit tests.
-    """
     ldif = FlextLdif()
     return ldif.parser
 
 
 @pytest.fixture
 def sample_connection_config() -> m.Ldap.ConnectionConfig:
-    """Create simple connection config for unit tests (no Docker dependency).
-
-    This is a lightweight fixture for unit tests without live LDAP connection.
-    For integration tests with real LDAP server, use the 'connection_config' fixture instead.
-    """
     return m.Ldap.ConnectionConfig(
         host="localhost",
         port=3390,
@@ -769,10 +313,6 @@ def sample_connection_config() -> m.Ldap.ConnectionConfig:
 
 @pytest.fixture(scope="module")
 def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapSettings:
-    """Get standard LDAP connection configuration.
-
-    Module-scoped to match ldap_client fixture scope for performance.
-    """
     port_value = ldap_container["port"]
     port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
     return FlextLdapSettings(
@@ -786,10 +326,6 @@ def ldap_config(ldap_container: LdapContainerDict) -> FlextLdapSettings:
 
 @pytest.fixture(scope="module")
 def connection_config(ldap_container: LdapContainerDict) -> m.Ldap.ConnectionConfig:
-    """Create connection configuration for testing.
-
-    Module-scoped to match ldap_client fixture scope for performance.
-    """
     port_value = ldap_container["port"]
     port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
     return m.Ldap.ConnectionConfig(
@@ -803,7 +339,6 @@ def connection_config(ldap_container: LdapContainerDict) -> m.Ldap.ConnectionCon
 
 @pytest.fixture
 def search_options(ldap_container: LdapContainerDict) -> m.Ldap.SearchOptions:
-    """Create search options for testing."""
     base_dn = str(ldap_container.get("base_dn", "dc=example,dc=com"))
     return m.Ldap.SearchOptions(
         base_dn=base_dn, filter_str="(objectClass=*)", scope=c.Ldap.SearchScope.SUBTREE
@@ -812,21 +347,9 @@ def search_options(ldap_container: LdapContainerDict) -> m.Ldap.SearchOptions:
 
 @pytest.fixture(scope="session")
 def ldap_test_data_loader(
-    ldap_container: LdapContainerDict, test_dns_tracker: DNSTracker
+    ldap_container: LdapContainerDict,
+    test_dns_tracker: u.Ldap.Tests.DNSTracker,
 ) -> Generator[Connection]:
-    """Session-scoped test data loader with intelligent cleanup.
-
-    Creates REAL LDAP connection (NO MOCKS) and initializes base test structure.
-    Tracks ALL DNs created during tests for intelligent cleanup at session end.
-
-    Args:
-        ldap_container: Container connection info
-        test_dns_tracker: DN tracker for intelligent cleanup
-
-    Yields:
-        Connection: REAL ldap3 connection to LDAP container
-
-    """
     try:
         server = Server(f"ldap://localhost:{LDAP_PORT}", get_info="ALL")
         connection = Connection(
@@ -877,31 +400,26 @@ def ldap_test_data_loader(
 
 @pytest.fixture
 def test_users_json() -> list[GenericFieldsDict]:
-    """Load test users from JSON fixture file."""
-    return TestFixtures.load_users_json()
+    return u.Ldap.Tests.Fixtures.load_users_json()
 
 
 @pytest.fixture
 def test_groups_json() -> list[GenericFieldsDict]:
-    """Load test groups from JSON fixture file."""
-    return TestFixtures.load_groups_json()
+    return u.Ldap.Tests.Fixtures.load_groups_json()
 
 
 @pytest.fixture
 def base_ldif_content() -> str:
-    """Load base LDIF structure from fixture file."""
-    return TestFixtures.load_base_ldif()
+    return u.Ldap.Tests.Fixtures.load_base_ldif()
 
 
 @pytest.fixture
 def base_ldif_entries() -> list[m.Ldif.Entry]:
-    """Load and parse base LDIF structure to Entry models."""
-    return TestFixtures.load_base_ldif_entries()
+    return u.Ldap.Tests.Fixtures.load_base_ldif_entries()
 
 
 @pytest.fixture
 def test_user_entry(test_users_json: list[GenericFieldsDict]) -> GenericFieldsDict:
-    """Get first test user as Entry-compatible dict."""
     if not test_users_json:
         default_user: GenericFieldsDict = {
             "dn": "uid=testuser,ou=people,dc=flext,dc=local",
@@ -913,12 +431,11 @@ def test_user_entry(test_users_json: list[GenericFieldsDict]) -> GenericFieldsDi
             },
         }
         return default_user
-    return TestFixtures.convert_user_json_to_entry(test_users_json[0])
+    return u.Ldap.Tests.Fixtures.convert_user_json_to_entry(test_users_json[0])
 
 
 @pytest.fixture
 def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFieldsDict:
-    """Get first test group as Entry-compatible dict."""
     if not test_groups_json:
         default_group: GenericFieldsDict = {
             "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
@@ -929,11 +446,7 @@ def test_group_entry(test_groups_json: list[GenericFieldsDict]) -> GenericFields
             },
         }
         return default_group
-    return TestFixtures.convert_group_json_to_entry(test_groups_json[0])
-
-
-SAMPLE_USER_ENTRY = c.Ldap.Tests.SampleData.USER_ENTRY
-SAMPLE_GROUP_ENTRY = c.Ldap.Tests.SampleData.GROUP_ENTRY
+    return u.Ldap.Tests.Fixtures.convert_group_json_to_entry(test_groups_json[0])
 
 
 @pytest.fixture
@@ -942,21 +455,6 @@ def ldap_connection(
     ldap_parser: FlextLdifParser | None,
     ldap_container: LdapContainerDict,
 ) -> Generator[FlextLdapConnection]:
-    """Get FlextLdapConnection instance with established connection for testing.
-
-    Creates a FlextLdapConnection, establishes a real connection to LDAP server,
-    and yields the connected object for tests.
-    Properly disconnects on teardown.
-
-    Args:
-        ldap_config: LDAP configuration
-        ldap_parser: LDIF parser (optional)
-        ldap_container: Container configuration (ensures container is ready first)
-
-    Yields:
-        FlextLdapConnection: Connected LDAP connection object
-
-    """
     connection = FlextLdapConnection(config=ldap_config, parser=ldap_parser)
     try:
         connection_config = m.Ldap.ConnectionConfig(
@@ -987,18 +485,6 @@ def ldap_connection(
 
 @pytest.fixture
 def ldap3_connection(ldap_container: LdapContainerDict) -> Generator[Connection]:
-    """Create real ldap3.Connection for testing.
-
-    Provides direct ldap3.Connection for tests that need low-level ldap3 API access.
-    Reuses container configuration from ldap_container fixture.
-
-    Args:
-        ldap_container: Container configuration
-
-    Yields:
-        Connection: Connected ldap3.Connection object
-
-    """
     server = Server(
         f"ldap://{ldap_container['host']}:{ldap_container['port']}", get_info="ALL"
     )
@@ -1015,7 +501,6 @@ def ldap3_connection(ldap_container: LdapContainerDict) -> Generator[Connection]
 
 @pytest.fixture
 def ldap_operations(ldap_connection: FlextLdapConnection) -> FlextLdapOperations:
-    """Get FlextLdapOperations instance for testing."""
     return FlextLdapOperations(connection=ldap_connection)
 
 
@@ -1023,74 +508,7 @@ def ldap_operations(ldap_connection: FlextLdapConnection) -> FlextLdapOperations
 def ldap_client(
     ldap_connection: FlextLdapConnection, ldap_parser: FlextLdifParser | None
 ) -> FlextLdap:
-    """Get configured LDAP client instance for testing with established connection.
-
-    Creates a FlextLdap instance with injected dependencies.
-    This enables real integration tests with actual LDAP operations.
-
-    Args:
-        ldap_connection: LDAP connection instance
-        ldap_parser: LDIF parser (optional)
-
-    Returns:
-        FlextLdap: Configured LDAP client instance
-
-    """
     operations = FlextLdapOperations(connection=ldap_connection)
     return FlextLdap(
         connection=ldap_connection, operations=operations, ldif=FlextLdif()
     )
-
-
-def _ensure_basic_ldap_structure() -> None:
-    """Ensure basic LDAP structure exists for tests.
-
-    Creates ou=people, ou=groups, ou=services if they don't exist.
-    This is called after container is ready to guarantee test environment.
-    """
-    try:
-        admin_dn, admin_password = _get_admin_credentials()
-        server = Server(f"ldap://localhost:{LDAP_PORT}", get_info="NO_INFO")
-        conn = Connection(
-            server, user=admin_dn, password=admin_password, auto_bind=True
-        )
-        conn.search(LDAP_BASE_DN, "(ou=people)", attributes=["ou"])
-        if not conn.entries:
-            FlextLdapLdap3Wrappers.add(
-                conn,
-                f"ou=people,{LDAP_BASE_DN}",
-                ["organizationalUnit", "top"],
-                {
-                    "ou": ["people"],
-                    "description": ["Organizational unit for people entries"],
-                },
-            )
-            logger.debug("Created ou=people")
-        conn.search(LDAP_BASE_DN, "(ou=groups)", attributes=["ou"])
-        if not conn.entries:
-            FlextLdapLdap3Wrappers.add(
-                conn,
-                f"ou=groups,{LDAP_BASE_DN}",
-                ["organizationalUnit", "top"],
-                {
-                    "ou": ["groups"],
-                    "description": ["Organizational unit for group entries"],
-                },
-            )
-            logger.debug("Created ou=groups")
-        conn.search(LDAP_BASE_DN, "(ou=services)", attributes=["ou"])
-        if not conn.entries:
-            FlextLdapLdap3Wrappers.add(
-                conn,
-                f"ou=services,{LDAP_BASE_DN}",
-                ["organizationalUnit", "top"],
-                {
-                    "ou": ["services"],
-                    "description": ["Organizational unit for service entries"],
-                },
-            )
-            logger.debug("Created ou=services")
-        FlextLdapLdap3Wrappers.unbind(conn)
-        logger.info("Basic LDAP structure verified/created")
-    except Exception as e:
-        logger.warning("Failed to ensure basic LDAP structure", error=e)
