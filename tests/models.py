@@ -33,7 +33,6 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
             """Test fixture models namespace."""
 
 
-
 # Short aliases for tests
 m = TestsFlextLdapModels
 

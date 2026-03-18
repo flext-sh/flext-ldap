@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import p
+from flext_tests import FlextTestsProtocols
 
 from flext_ldap import FlextLdapProtocols
 
 
-class TestsFlextLdapProtocols(p, FlextLdapProtocols):
+class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     """Protocol definitions for flext-ldap tests.
 
     Extends both p and FlextLdapProtocols with flext-ldap-specific
@@ -30,14 +30,15 @@ class TestsFlextLdapProtocols(p, FlextLdapProtocols):
     - Only flext-ldap-specific test protocols allowed
     """
 
-    class Tests(p.Tests):
-        """Project-specific test protocols.
+    class Ldap(FlextLdapProtocols.Ldap):
+        """Flext-ldap-specific test protocols."""
 
-        Extends p.Tests with flext-ldap-specific protocols.
-        """
+        class Tests:
+            """Project-specific test protocols.
 
-        class Ldap:
-            """Flext-ldap-specific test protocols."""
+            Extends p.Tests with flext-ldap-specific protocols.
+            """
+
 
 
 p = TestsFlextLdapProtocols
