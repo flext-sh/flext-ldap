@@ -1,0 +1,38 @@
+tests/conftest.py
+  18be802feb58ee88 108
+tests/unit/test_api.py
+  18be802feb58ee88 132,142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "d83a8435a9587118972971d1e82dd5a7f55831f5",
+  "prompts": {
+    "18be802feb58ee88": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fd8fc9beffeIHI2rON8agt12D",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "7c01b96feb535860": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdaaa98fffemUrSFyEW46Dfd5",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 8,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
