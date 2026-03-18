@@ -255,12 +255,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     TypeError: If search_options_raw is not SearchOptions
 
                 """
-                if not isinstance(
-                    search_options_raw, m.Ldap.SearchOptions
-                ):
-                    error_msg = (
-                        "search_options must be m.Ldap.SearchOptions"
-                    )
+                if not isinstance(search_options_raw, m.Ldap.SearchOptions):
+                    error_msg = "search_options must be m.Ldap.SearchOptions"
                     raise TypeError(error_msg)
                 return search_options_raw
 
@@ -426,9 +422,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     entry_attributes.update(normalized_extra)
                 return m.Ldif.Entry(
                     dn=m.Ldif.DN(value=dn),
-                    attributes=m.Ldif.Attributes(
-                        attributes=entry_attributes
-                    ),
+                    attributes=m.Ldif.Attributes(attributes=entry_attributes),
                     metadata=None,
                 )
 
