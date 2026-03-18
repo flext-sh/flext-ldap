@@ -22,9 +22,10 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_core import FlextService, FlextSettings, p, r
+from flext_core import FlextService, FlextSettings, r
 
 from flext_ldap import FlextLdapServiceBase, base, s
+from tests import p
 
 pytestmark = [pytest.mark.unit]
 
