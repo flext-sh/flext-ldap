@@ -2,7 +2,7 @@
 
 Unified test infrastructure following FLEXT standards:
 - Centralized fixture loading (TestFixtures class)
-- Container management via FlextTestsDocker
+- Container management via tk
 - Base test foundation modules (t, c, p, m, u, s)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -119,8 +119,8 @@ def _ldap3_unbind(conn: Connection) -> None:
     conn.unbind()
 
 
-def _get_docker_control(worker_id: str = "master") -> FlextTestsDocker:
-    """Create FlextTestsDocker with correct workspace root for flext-ldap.
+def _get_docker_control(worker_id: str = "master") -> tk:
+    """Create tk with correct workspace root for flext-ldap.
 
     Uses FLEXT_WORKSPACE_ROOT to ensure docker-compose paths resolve correctly.
     The compose file is at docker/docker-compose.openldap.yml relative to workspace root.
@@ -129,10 +129,10 @@ def _get_docker_control(worker_id: str = "master") -> FlextTestsDocker:
         worker_id: pytest-xdist worker ID for parallel execution isolation
 
     Returns:
-        FlextTestsDocker instance with correct workspace_root
+        tk instance with correct workspace_root
 
     """
-    return FlextTestsDocker(workspace_root=FLEXT_WORKSPACE_ROOT, worker_id=worker_id)
+    return tk(workspace_root=FLEXT_WORKSPACE_ROOT, worker_id=worker_id)
 
 
 class FileLock:

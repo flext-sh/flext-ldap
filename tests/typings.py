@@ -1,11 +1,11 @@
 """Type system foundation for flext-ldap tests.
 
-Provides TestsLdapTypes, extending FlextTestsTypes with flext-ldap-specific types.
+Provides TestsLdapTypes, extending t with flext-ldap-specific types.
 All generic test types come from flext_tests, only flext-ldap-specific additions here.
 
 Architecture:
-- FlextTestsTypes (flext_tests) = Generic types for all FLEXT projects
-- TestsLdapTypes (tests/) = flext-ldap-specific types extending FlextTestsTypes
+- t (flext_tests) = Generic types for all FLEXT projects
+- TestsLdapTypes (tests/) = flext-ldap-specific types extending t
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,29 +19,29 @@ from flext_tests import t
 from flext_ldap import FlextLdapTypes
 
 
-class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
-    """Type system foundation for flext-ldap tests - extends FlextTestsTypes and FlextLdapTypes.
+class TestsFlextLdapTypes(t, FlextLdapTypes):
+    """Type system foundation for flext-ldap tests - extends t and FlextLdapTypes.
 
-    Architecture: Extends both FlextTestsTypes and FlextLdapTypes with flext-ldap-specific type definitions.
-    All generic types from FlextTestsTypes and production types from FlextLdapTypes are available through inheritance.
+    Architecture: Extends both t and FlextLdapTypes with flext-ldap-specific type definitions.
+    All generic types from t and production types from FlextLdapTypes are available through inheritance.
 
     Hierarchy:
-    - FlextTestsTypes.Tests.* (generic test types from flext_tests)
+    - t.Tests.* (generic test types from flext_tests)
     - FlextLdapTypes.Ldap.* (source types from flext_ldap)
     - TestsFlextLdapTypes.Tests.* (flext-ldap-specific test types)
 
     Rules:
-    - NEVER redeclare types from FlextTestsTypes or FlextLdapTypes
+    - NEVER redeclare types from t or FlextLdapTypes
     - Only flext-ldap-specific types allowed (not generic for other projects)
-    - All generic types come from FlextTestsTypes
+    - All generic types come from t
     - All production types come from FlextLdapTypes
     """
 
-    class Tests(FlextTestsTypes.Tests):
+    class Tests(t.Tests):
         """flext-ldap-specific test type definitions namespace.
 
         Use tt.Tests.* for flext-ldap-specific test types.
-        Use t.Tests.* for generic test types from FlextTestsTypes.
+        Use t.Tests.* for generic test types from t.
         """
 
         class Fixtures:

@@ -1,11 +1,11 @@
 """Constants for flext-ldap tests.
 
-Provides TestsLdapConstants, extending FlextTestsConstants with flext-ldap-specific
+Provides TestsLdapConstants, extending c with flext-ldap-specific
 constants. All generic test constants come from flext_tests.
 
 Architecture:
-- FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
-- TestsLdapConstants (tests/) = flext-ldap-specific constants extending FlextTestsConstants
+- c (flext_tests) = Generic constants for all FLEXT projects
+- TestsLdapConstants (tests/) = flext-ldap-specific constants extending c
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,16 +21,16 @@ from flext_tests import c
 from flext_ldap import FlextLdapConstants
 
 
-class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
-    """Constants for flext-ldap tests - extends FlextTestsConstants and FlextLdapConstants.
+class TestsFlextLdapConstants(c, FlextLdapConstants):
+    """Constants for flext-ldap tests - extends c and FlextLdapConstants.
 
-    Architecture: Extends both FlextTestsConstants and FlextLdapConstants with flext-ldap-specific constants.
-    All generic constants from FlextTestsConstants and production constants from FlextLdapConstants are available through inheritance.
+    Architecture: Extends both c and FlextLdapConstants with flext-ldap-specific constants.
+    All generic constants from c and production constants from FlextLdapConstants are available through inheritance.
 
     Rules:
-    - NEVER duplicate constants from FlextTestsConstants or FlextLdapConstants
+    - NEVER duplicate constants from c or FlextLdapConstants
     - Only flext-ldap-specific constants allowed (not generic for other projects)
-    - All generic constants come from FlextTestsConstants
+    - All generic constants come from c
     - All production constants come from FlextLdapConstants
     """
 

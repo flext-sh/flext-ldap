@@ -1,6 +1,6 @@
 """Protocol definitions for flext-ldap tests.
 
-Provides TestsFlextLdapProtocols, extending FlextTestsProtocols with flext-ldap-specific
+Provides TestsFlextLdapProtocols, extending p with flext-ldap-specific
 protocols. All generic test protocols come from flext_tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,15 +14,15 @@ from flext_tests import p
 from flext_ldap import FlextLdapProtocols
 
 
-class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
+class TestsFlextLdapProtocols(p, FlextLdapProtocols):
     """Protocol definitions for flext-ldap tests.
 
-    Extends both FlextTestsProtocols and FlextLdapProtocols with flext-ldap-specific
+    Extends both p and FlextLdapProtocols with flext-ldap-specific
     protocol definitions.
 
     Provides access to:
-    - p.Tests.Docker.* (from FlextTestsProtocols)
-    - p.Tests.Factory.* (from FlextTestsProtocols)
+    - p.Tests.Docker.* (from p)
+    - p.Tests.Factory.* (from p)
     - p.Ldap.* (from FlextLdapProtocols)
 
     Rules:
@@ -30,10 +30,10 @@ class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     - Only flext-ldap-specific test protocols allowed
     """
 
-    class Tests(FlextTestsProtocols.Tests):
+    class Tests(p.Tests):
         """Project-specific test protocols.
 
-        Extends FlextTestsProtocols.Tests with flext-ldap-specific protocols.
+        Extends p.Tests with flext-ldap-specific protocols.
         """
 
         class Ldap:

@@ -1,7 +1,7 @@
 """Helper methods for LDAP operation testing to reduce code duplication.
 
 This module provides LDAP-specific helpers that extend flext_tests utilities.
-Uses FlextRuntime, FlextTestsUtilities for maximum code reuse.
+Uses FlextRuntime, u for maximum code reuse.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
