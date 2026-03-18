@@ -30,6 +30,7 @@ from typing import TextIO
 import pytest
 from flext_core import FlextLogger, r
 from flext_ldif import FlextLdif, FlextLdifParser
+from flext_tests.docker import tk
 from pydantic import TypeAdapter, ValidationError
 
 from flext_ldap import (

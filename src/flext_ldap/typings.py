@@ -54,10 +54,10 @@ class FlextLdapTypes(FlextLdifTypes):
             type Filter = str
             type Scope = str
 
-        # Local alias for cleaner TypeVar bounds
-        _EntryContract = p.Ldap.ServiceContracts.EntryContract
-
-    FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=Ldap._EntryContract)
+    FlextLdapEntryT = TypeVar(
+        "FlextLdapEntryT",
+        bound=p.Ldap.ServiceContracts.EntryContract,
+    )
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
     TDomainResult = TypeVar("TDomainResult", bound=_core_t.Container)
     P = ParamSpec("P")
