@@ -1,0 +1,60 @@
+pyproject.toml
+  ebce207e4e8f8350 600-602
+src/flext_ldap/_models/ldap.py
+  ebce207e4e8f8350 304,306
+tests/unit/test_api.py
+  0d765820e48d17d1 38,186,197,208,219-223,230-234
+tests/unit/test_config.py
+  1c4edba619e6ad98 9,17-34,36-40,42-61,64,66-76,78-87,89,94-95,97-100,102,107,113,115-119,121-124
+tests/unit/test_base.py
+  1c4edba619e6ad98 11,14-17,20-23,26-29,32-35,39,41,45,50-52,54,56-59,61-62,64,66,68-72,75,77-78,80,82,84,86-89,91-95,97-98,100,102-107,109-113,115,118-122
+tests/unit/test_models_sync.py
+  0d765820e48d17d1 46,51
+  1c4edba619e6ad98 11,14-44,47-50,53-57,59-63,65-75,77-85,88-92,94-98,101-105,107-111,113,117-129,136-140,142-143,152-154,156-157,166-167,169-170,179-180,188-189,191,193-199,201-204
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "b894bbbf0b5626d281eca749f16b46e41baf02cb",
+  "prompts": {
+    "0d765820e48d17d1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f934dfa1ffezLYkC3QVM6yoZs",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 41,
+      "total_deletions": 26,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    },
+    "1c4edba619e6ad98": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fd1620e5ffewoFF5zbtUADerq",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 507,
+      "total_deletions": 615,
+      "accepted_lines": 360,
+      "overriden_lines": 21
+    },
+    "ebce207e4e8f8350": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0db7e8bc-d122-449f-9e41-d036330d7a19",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 4,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
