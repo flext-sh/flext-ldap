@@ -44,7 +44,6 @@ class FlextLdapConstants(FlextLdifConstants):
         class ConnectionDefaults:
             """Connection default values."""
 
-            DEFAULT_HOST: Final[str] = FlextLdifConstants.Network.LOCALHOST
             DEFAULT_MAX_RETRIES = 5
             DEFAULT_RETRY_DELAY = 1.0
             PORT = 389

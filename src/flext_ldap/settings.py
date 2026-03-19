@@ -28,7 +28,7 @@ class FlextLdapSettings(FlextSettings):
     host: Annotated[
         str,
         Field(
-            default=c.Ldap.ConnectionDefaults.DEFAULT_HOST,
+            default=c.Network.LOCALHOST,
             description="LDAP server host",
         ),
     ]
