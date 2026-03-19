@@ -148,3 +148,6 @@ class TestsFlextLdapUtilities:
         """Test dn_str with custom default."""
         result = u.Ldap.dn_str(None, default="default")
         tm.that(result, eq="default")
+
+
+__all__ = ["TestsFlextLdapUtilities"]

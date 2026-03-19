@@ -190,7 +190,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: Mapping[str, object] | Mapping[str, list[str]],
+            attrs: Mapping[str, t.ContainerValue] | Mapping[str, list[str]],
             *,
             filter_list_like: bool = False,
         ) -> Mapping[str, list[str]]:
@@ -207,7 +207,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
             """
 
-            def convert_value(_k: str, v: str | list[str] | object) -> list[str]:
+            def convert_value(
+                _k: str,
+                v: str | list[str] | t.ContainerValue,
+            ) -> list[str]:
                 if v is None:
                     return []
                 match v:
@@ -219,7 +222,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     return [str(v)]
                 return [str(v)]
 
-            attrs_dict: dict[str, object | list[str]] = dict(attrs)
+            attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
             if not attrs_dict:
                 return {}
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
@@ -253,8 +256,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list[object] | Mapping[str, object],
-        ) -> list[object] | Mapping[str, object]:
+            value: list[t.ContainerValue] | Mapping[str, t.ContainerValue],
+        ) -> list[t.ContainerValue] | Mapping[str, t.ContainerValue]:
             """Filter truthy values from list or dict.
 
             Args:

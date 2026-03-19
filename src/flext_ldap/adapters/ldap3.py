@@ -393,7 +393,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: LdifEntry | p.Ldap.Ldap3Entry | object,
+            parsed: LdifEntry | p.Ldap.Ldap3Entry | t.ContainerValue,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -416,7 +416,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - No network calls - pure data transformation
 
             """
-            attrs_raw: m.Ldif.Attributes | object | None = None
+            attrs_raw: m.Ldif.Attributes | t.ContainerValue | None = None
             if isinstance(parsed, LdifEntry):
                 attrs_raw = parsed.attributes
             else:
@@ -434,11 +434,11 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def extract_attrs_dict(
             attrs: p.Ldap.HasAttributesProperty
-            | Mapping[str, object | Sequence[str]]
+            | Mapping[str, t.ContainerValue | Sequence[str]]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
             | BaseModel
-            | object,
+            | t.ContainerValue,
         ) -> t.Ldap.Operation.AttributeDict:
             """Extract LDAP attributes as dictionary from various input formats.
 

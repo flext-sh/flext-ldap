@@ -28,12 +28,8 @@ if TYPE_CHECKING:
     from .test_models_search import TestsFlextLdapModelsSearch
     from .test_models_sync import TestsFlextLdapModelsSync
     from .test_operations import TestsFlextLdapOperations
-    from .test_sync import TestsFlextLdapSync
-    from .test_utilities import (
-        TestsFlextLdapUtilities,
-        TestsFlextLdapUtilities as u,
-        pytestmark,
-    )
+    from .test_sync import TestsFlextLdapSync, pytestmark
+    from .test_utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdap3Adapter": (
@@ -66,7 +62,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
     "c": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
     "m": ("tests.unit.test_models", "TestsFlextLdapModels"),
-    "pytestmark": ("tests.unit.test_utilities", "pytestmark"),
+    "pytestmark": ("tests.unit.test_sync", "pytestmark"),
     "u": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
 }
 

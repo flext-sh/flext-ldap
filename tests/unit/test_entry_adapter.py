@@ -168,3 +168,5 @@ class TestsFlextLdapEntryAdapter:
         """Test that static methods exist on _ConversionHelpers."""
         assert hasattr(FlextLdapEntryAdapter._ConversionHelpers, "is_base64_encoded")
         assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)
+
+__all__ = ["TestsFlextLdapEntryAdapter"]
