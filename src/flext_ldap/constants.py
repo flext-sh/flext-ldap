@@ -209,12 +209,5 @@ class FlextLdapConstants(FlextLdifConstants):
             class ServerTypeLiteral:
                 """Server type literals."""
 
-    LDAP3_SCOPE_BASE: Final[int] = 0
-    LDAP3_SCOPE_LEVEL: Final[int] = 1
-    LDAP3_SCOPE_SUBTREE: Final[int] = 2
-    LDAP3_MODIFY_ADD: Final[int] = 0
-    LDAP3_MODIFY_DELETE: Final[int] = 1
-    LDAP3_MODIFY_REPLACE: Final[int] = 2
-
 
 c = FlextLdapConstants

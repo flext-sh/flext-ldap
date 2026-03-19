@@ -37,7 +37,7 @@ from flext_core import FlextService, r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import BaseModel, ConfigDict
 
-from flext_ldap import FlextLdapConstants, FlextLdapEntryAdapter, c, m, p, t, u
+from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
 from ldap3 import Connection, Server
 
 
@@ -1033,7 +1033,7 @@ class Ldap3Adapter(FlextService[bool]):
             self,
             connection: Connection,
             params: Ldap3Adapter.SearchExecutor.SearchParams,
-            server_type: FlextLdapConstants.Ldif.ServerTypes | str,
+            server_type: c.Ldif.ServerTypes | str,
         ) -> r[list[m.Ldif.Entry]]:
             """Execute LDAP search and convert results.
 
@@ -1087,22 +1087,22 @@ class Ldap3Adapter(FlextService[bool]):
                 ldap3_results = self._adapter.ResultConverter.convert_ldap3_results(
                     connection,
                 )
-                if isinstance(server_type, FlextLdapConstants.Ldif.ServerTypes):
+                if isinstance(server_type, c.Ldif.ServerTypes):
                     server_type_str = server_type.value
                 else:
                     server_type_str = str(server_type)
                 valid_server_types = {
-                    FlextLdapConstants.Ldif.ServerTypes.RFC,
-                    FlextLdapConstants.Ldif.ServerTypes.OID,
-                    FlextLdapConstants.Ldif.ServerTypes.OUD,
-                    FlextLdapConstants.Ldif.ServerTypes.OPENLDAP,
-                    FlextLdapConstants.Ldif.ServerTypes.OPENLDAP1,
-                    FlextLdapConstants.Ldif.ServerTypes.APACHE,
-                    FlextLdapConstants.Ldif.ServerTypes.DS389,
-                    FlextLdapConstants.Ldif.ServerTypes.NOVELL,
-                    FlextLdapConstants.Ldif.ServerTypes.IBM_TIVOLI,
-                    FlextLdapConstants.Ldif.ServerTypes.AD,
-                    FlextLdapConstants.Ldif.ServerTypes.RELAXED,
+                    c.Ldif.ServerTypes.RFC,
+                    c.Ldif.ServerTypes.OID,
+                    c.Ldif.ServerTypes.OUD,
+                    c.Ldif.ServerTypes.OPENLDAP,
+                    c.Ldif.ServerTypes.OPENLDAP1,
+                    c.Ldif.ServerTypes.APACHE,
+                    c.Ldif.ServerTypes.DS389,
+                    c.Ldif.ServerTypes.NOVELL,
+                    c.Ldif.ServerTypes.IBM_TIVOLI,
+                    c.Ldif.ServerTypes.AD,
+                    c.Ldif.ServerTypes.RELAXED,
                 }
                 if server_type_str not in valid_server_types:
                     return r[list[m.Ldif.Entry]].fail(
@@ -1169,24 +1169,24 @@ class Ldap3Adapter(FlextService[bool]):
 
     @staticmethod
     def _map_scope(
-        scope: FlextLdapConstants.Ldap.SearchScope | str,
+        scope: c.Ldap.SearchScope | str,
     ) -> r[int]:
         """Map scope string to ldap3 scope constant.
 
         Uses direct StrEnum value mapping for type-safe conversion.
         """
-        scope_enum: FlextLdapConstants.Ldap.SearchScope
-        if isinstance(scope, FlextLdapConstants.Ldap.SearchScope):
+        scope_enum: c.Ldap.SearchScope
+        if isinstance(scope, c.Ldap.SearchScope):
             scope_enum = scope
         else:
             try:
-                scope_enum = FlextLdapConstants.Ldap.SearchScope(str(scope).upper())
+                scope_enum = c.Ldap.SearchScope(str(scope).upper())
             except ValueError:
                 return r[int].fail(f"Invalid LDAP scope: {scope}")
-        ldap3_scope_mapping: Mapping[FlextLdapConstants.Ldap.SearchScope, int] = {
-            FlextLdapConstants.Ldap.SearchScope.BASE: c.LDAP3_SCOPE_BASE,
-            FlextLdapConstants.Ldap.SearchScope.ONELEVEL: c.LDAP3_SCOPE_LEVEL,
-            FlextLdapConstants.Ldap.SearchScope.SUBTREE: c.LDAP3_SCOPE_SUBTREE,
+        ldap3_scope_mapping: Mapping[c.Ldap.SearchScope, int] = {
+            c.Ldap.SearchScope.BASE: c.LDAP3_SCOPE_BASE,
+            c.Ldap.SearchScope.ONELEVEL: c.LDAP3_SCOPE_LEVEL,
+            c.Ldap.SearchScope.SUBTREE: c.LDAP3_SCOPE_SUBTREE,
         }
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]
@@ -1452,8 +1452,7 @@ class Ldap3Adapter(FlextService[bool]):
     def search(
         self,
         search_options: m.Ldap.SearchOptions,
-        server_type: FlextLdapConstants.Ldif.ServerTypes
-        | str = FlextLdapConstants.Ldif.ServerTypes.RFC,
+        server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
@@ -1489,9 +1488,7 @@ class Ldap3Adapter(FlextService[bool]):
         if connection_result.is_failure:
             error_msg = str(connection_result.error) if connection_result.error else ""
             return r[m.Ldap.SearchResult].fail(error_msg)
-        scope_for_mapping: str | FlextLdapConstants.Ldap.SearchScope = (
-            search_options.scope
-        )
+        scope_for_mapping: str | c.Ldap.SearchScope = search_options.scope
         scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
             return r[m.Ldap.SearchResult].fail(

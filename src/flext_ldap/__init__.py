@@ -11,11 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from flext_ldif.decorators import d
-    from flext_ldif.exceptions import e
-    from flext_ldif.handlers import h
-    from flext_ldif.mixins import x
-    from flext_ldif.result import r
+    from flext_ldif import d, e, h, r, x
 
     from flext_ldap import _models, adapters, services
     from flext_ldap.__version__ import __all__
@@ -31,13 +27,13 @@ if TYPE_CHECKING:
     from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
-    from flext_ldap.protocols import FlextLdapProtocols
+    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
     from flext_ldap.services.sync import FlextLdapSyncService
     from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, LdifEntry, p, t
+    from flext_ldap.typings import FlextLdapTypes, LdifEntry, t
     from flext_ldap.utilities import FlextLdapUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -75,17 +71,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_models": ("flext_ldap._models", ""),
     "adapters": ("flext_ldap.adapters", ""),
     "c": ("flext_ldap.constants", "c"),
-    "d": ("flext_ldif.decorators", "d"),
-    "e": ("flext_ldif.exceptions", "e"),
-    "h": ("flext_ldif.handlers", "h"),
+    "d": ("flext_ldif", "d"),
+    "e": ("flext_ldif", "e"),
+    "h": ("flext_ldif", "h"),
     "m": ("flext_ldap.models", "m"),
-    "p": ("flext_ldap.typings", "p"),
-    "r": ("flext_ldif.result", "r"),
+    "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
+    "r": ("flext_ldif", "r"),
     "s": ("flext_ldap.base", "s"),
     "services": ("flext_ldap.services", ""),
     "t": ("flext_ldap.typings", "t"),
     "u": ("flext_ldap.utilities", "u"),
-    "x": ("flext_ldif.mixins", "x"),
+    "x": ("flext_ldif", "x"),
 }
 
 __all__ = [
