@@ -6,10 +6,8 @@ from collections.abc import Mapping, Sequence
 from typing import ParamSpec, TypeVar
 
 from flext_core import r
-from flext_ldif import FlextLdifModels
+from flext_ldif import FlextLdifModels, p
 from flext_ldif.typings import FlextLdifTypes
-
-from flext_ldap import p
 
 
 class FlextLdapTypes(FlextLdifTypes):
