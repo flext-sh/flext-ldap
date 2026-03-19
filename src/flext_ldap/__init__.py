@@ -11,6 +11,11 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_ldif.decorators import d
+    from flext_ldif.exceptions import e
+    from flext_ldif.handlers import h
+    from flext_ldif.mixins import x
+    from flext_ldif.result import r
 
     from flext_ldap import _models, adapters, services
     from flext_ldap.__version__ import __all__
@@ -70,12 +75,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_models": ("flext_ldap._models", ""),
     "adapters": ("flext_ldap.adapters", ""),
     "c": ("flext_ldap.constants", "c"),
+    "d": ("flext_ldif.decorators", "d"),
+    "e": ("flext_ldif.exceptions", "e"),
+    "h": ("flext_ldif.handlers", "h"),
     "m": ("flext_ldap.models", "m"),
     "p": ("flext_ldap.typings", "p"),
+    "r": ("flext_ldif.result", "r"),
     "s": ("flext_ldap.base", "s"),
     "services": ("flext_ldap.services", ""),
     "t": ("flext_ldap.typings", "t"),
     "u": ("flext_ldap.utilities", "u"),
+    "x": ("flext_ldif.mixins", "x"),
 }
 
 __all__ = [
@@ -104,12 +114,17 @@ __all__ = [
     "_models",
     "adapters",
     "c",
+    "d",
+    "e",
+    "h",
     "m",
     "p",
+    "r",
     "s",
     "services",
     "t",
     "u",
+    "x",
 ]
 
 

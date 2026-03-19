@@ -11,6 +11,12 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_tests.decorators import d
+    from flext_tests.exceptions import e
+    from flext_tests.handlers import h
+    from flext_tests.mixins import x
+    from flext_tests.result import r
+    from flext_tests.service import s
 
     from . import _utilities as _utilities, integration as integration, unit as unit
     from ._utilities.fixture_loaders import TestFixtures
@@ -78,6 +84,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_utilities": ("tests._utilities", ""),
     "c": ("tests.constants", "c"),
     "connection_config": ("tests.conftest", "connection_config"),
+    "d": ("flext_tests.decorators", "d"),
+    "e": ("flext_tests.exceptions", "e"),
+    "h": ("flext_tests.handlers", "h"),
     "integration": ("tests.integration", ""),
     "ldap_container": ("tests.conftest", "ldap_container"),
     "logger": ("tests.conftest", "logger"),
@@ -86,11 +95,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "pytest_runtest_makereport": ("tests.conftest", "pytest_runtest_makereport"),
     "pytest_sessionstart": ("tests.conftest", "pytest_sessionstart"),
     "pytestmark": ("tests.integration.test_smoke", "pytestmark"),
+    "r": ("flext_tests.result", "r"),
+    "s": ("flext_tests.service", "s"),
     "search_options": ("tests.conftest", "search_options"),
     "t": ("tests.typings", "t"),
     "u": ("tests.utilities", "u"),
     "unit": ("tests.unit", ""),
     "worker_id": ("tests.conftest", "worker_id"),
+    "x": ("flext_tests.mixins", "x"),
 }
 
 __all__ = [
@@ -115,6 +127,9 @@ __all__ = [
     "_utilities",
     "c",
     "connection_config",
+    "d",
+    "e",
+    "h",
     "integration",
     "ldap_container",
     "logger",
@@ -123,11 +138,14 @@ __all__ = [
     "pytest_runtest_makereport",
     "pytest_sessionstart",
     "pytestmark",
+    "r",
+    "s",
     "search_options",
     "t",
     "u",
     "unit",
     "worker_id",
+    "x",
 ]
 
 

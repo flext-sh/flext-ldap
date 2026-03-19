@@ -20,16 +20,16 @@ if TYPE_CHECKING:
     from .test_api import TestsFlextLdapApi
     from .test_base import TestsFlextLdapBase
     from .test_config import TestsFlextLdapSettings
-    from .test_constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
+    from .test_constants import TestsFlextLdapConstants
     from .test_detection import TestsFlextLdapDetection
     from .test_entry_adapter import TestsFlextLdapEntryAdapter
     from .test_ldap3_adapter import TestsFlextLdap3Adapter
-    from .test_models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .test_models import TestsFlextLdapModels
     from .test_models_search import TestsFlextLdapModelsSearch
     from .test_models_sync import TestsFlextLdapModelsSync
     from .test_operations import TestsFlextLdapOperations
     from .test_sync import TestsFlextLdapSync, pytestmark
-    from .test_utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
+    from .test_utilities import TestsFlextLdapUtilities
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdap3Adapter": (
@@ -60,10 +60,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
     "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
     "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
-    "c": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
-    "m": ("tests.unit.test_models", "TestsFlextLdapModels"),
     "pytestmark": ("tests.unit.test_sync", "pytestmark"),
-    "u": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
 }
 
 __all__ = [
@@ -80,10 +77,7 @@ __all__ = [
     "TestsFlextLdapSettings",
     "TestsFlextLdapSync",
     "TestsFlextLdapUtilities",
-    "c",
-    "m",
     "pytestmark",
-    "u",
 ]
 
 

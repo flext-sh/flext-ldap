@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
-    from flext_ldap.services.sync import FlextLdapSyncService, FlextLdapSyncService as s
+    from flext_ldap.services.sync import FlextLdapSyncService
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
@@ -31,7 +31,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextLdapSyncService": ("flext_ldap.services.sync", "FlextLdapSyncService"),
     "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
-    "s": ("flext_ldap.services.sync", "FlextLdapSyncService"),
 }
 
 __all__ = [
@@ -40,7 +39,6 @@ __all__ = [
     "FlextLdapServerDetector",
     "FlextLdapSyncService",
     "LaxStr",
-    "s",
 ]
 
 
