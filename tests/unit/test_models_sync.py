@@ -42,8 +42,9 @@ class TestsFlextLdapModelsSync:
     # ── Validation constraints ─────────────────────────────────────────
 
     def test_sync_options_rejects_zero_batch_size(self) -> None:
+        invalid_batch_size: int = 0
         with pytest.raises(ValidationError):
-            m.Ldap.SyncOptions(batch_size=1)  # Minimum valid batch_size
+            m.Ldap.SyncOptions(batch_size=invalid_batch_size)
 
     # ── Computed: SyncStats.success_rate ───────────────────────────────
 

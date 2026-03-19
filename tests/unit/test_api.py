@@ -1,17 +1,7 @@
-"""Unit tests for FlextLdap API - Unified facade for LDAP operations.
+"""Unit tests for FlextLdap API facade.
 
-Provides comprehensive testing of FlextLdap facade initialization, context manager
-support, type guards, and method signatures without requiring actual LDAP connections.
-
-Test Coverage:
-- FlextLdap initialization and dependency injection
-- Context manager entry/exit behavior
-- Type guard functions (_is_multi_phase_callback, _is_single_phase_callback)
-- API method signatures and existence
-- Configuration inheritance from connection
-- r return types for all operations
-
-All tests use real functionality without mocks, following FLEXT patterns.
+Tests initialization, context manager, callback type guards, method signatures,
+and model config. All tests use real functionality without mocks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from collections.abc import Callable
 
 import pytest
 from flext_core import FlextSettings
@@ -40,284 +30,205 @@ from tests import c, m, p
 pytestmark = [pytest.mark.unit]
 
 
+def _single_phase_cb(
+    _a: int,
+    _b: int,
+    _c: str,
+    _d: p.Ldap.LdapBatchStats,
+) -> None:
+    """Test callback with 4 parameters (single-phase)."""
+
+
+def _multi_phase_cb(
+    _a: str,
+    _b: int,
+    _c: int,
+    _d: str,
+    _e: p.Ldap.LdapBatchStats,
+) -> None:
+    """Test callback with 5 parameters (multi-phase)."""
+
+
 class TestsFlextLdapApi:
-    """Comprehensive tests for FlextLdap API facade.
+    """Tests for FlextLdap API facade.
 
     Architecture: Single class per module following FLEXT patterns.
-    Uses factory methods for clean instance creation.
     Tests API structure and behavior without requiring LDAP connections.
     """
 
-    _CALLBACK_SCENARIOS: ClassVar[dict[str, tuple[int, bool, bool]]] = {
-        "none": (0, False, False),
-        "single_phase": (4, False, True),
-        "multi_phase": (5, True, False),
-        "invalid_3": (3, False, False),
-        "invalid_6": (6, False, False),
-    }
-
     @classmethod
     def _create_config(cls) -> FlextLdapSettings:
-        """Factory method for creating FlextLdapSettings."""
+        """Factory for FlextLdapSettings."""
         return FlextLdapSettings()
 
     @classmethod
     def _create_connection(
-        cls, config: FlextLdapSettings | None = None
+        cls,
+        config: FlextLdapSettings | None = None,
     ) -> FlextLdapConnection:
-        """Factory method for creating FlextLdapConnection."""
-        cfg = config if config is not None else cls._create_config()
-        return FlextLdapConnection(config=cfg)
-
-    @classmethod
-    def _create_operations(
-        cls, connection: FlextLdapConnection | None = None
-    ) -> FlextLdapOperations:
-        """Factory method for creating FlextLdapOperations."""
-        conn = connection or cls._create_connection()
-        return FlextLdapOperations(connection=conn)
+        """Factory for FlextLdapConnection."""
+        resolved_config = config if config is not None else cls._create_config()
+        return FlextLdapConnection(config=resolved_config)
 
     @classmethod
     def _create_api(
         cls,
         connection: FlextLdapConnection | None = None,
-        operations: FlextLdapOperations | None = None,
         ldif: FlextLdif | None = None,
     ) -> FlextLdap:
-        """Factory method for creating FlextLdap API instance."""
+        """Factory for FlextLdap API instance."""
         conn = connection or cls._create_connection()
-        ops = operations or cls._create_operations(conn)
-        return FlextLdap(connection=conn, operations=ops, ldif=ldif)
+        return FlextLdap(
+            connection=conn,
+            operations=FlextLdapOperations(connection=conn),
+            ldif=ldif,
+        )
 
-    def test_api_init_with_dependencies(self) -> None:
-        """Test FlextLdap initialization with all dependencies."""
+    # --- Initialization ---
+
+    def test_init_with_dependencies(self) -> None:
+        """Test FlextLdap initializes with all dependencies populated."""
         api = self._create_api()
         tm.that(api, none=False)
         tm.that(api._connection, none=False)
         tm.that(api._operations, none=False)
         tm.that(api._ldif, none=False)
 
-    def test_api_init_without_ldif_uses_default(self) -> None:
+    def test_init_default_ldif(self) -> None:
         """Test FlextLdap uses default FlextLdif when not provided."""
-        api = self._create_api(ldif=None)
-        tm.that(api._ldif, is_=FlextLdif, none=False)
+        tm.that(self._create_api(ldif=None)._ldif, is_=FlextLdif, none=False)
 
-    def test_api_init_with_custom_ldif(self) -> None:
+    def test_init_custom_ldif(self) -> None:
         """Test FlextLdap accepts custom FlextLdif instance."""
-        custom_ldif = FlextLdif()
-        api = self._create_api(ldif=custom_ldif)
-        tm.that(api._ldif, eq=custom_ldif)
+        custom = FlextLdif()
+        tm.that(self._create_api(ldif=custom)._ldif, eq=custom)
 
-    def test_api_init_missing_connection_raises_type_error(self) -> None:
-        """Test TypeError when connection is missing."""
-        operations = self._create_operations()
-        connection = self._create_connection()
-        api = FlextLdap(connection=connection, operations=operations)
-        tm.that(api, none=False)
-
-    def test_api_init_missing_operations_raises_type_error(self) -> None:
-        """Test TypeError when operations is missing."""
-        connection = self._create_connection()
-        operations = self._create_operations(connection)
-        api = FlextLdap(connection=connection, operations=operations)
-        tm.that(api, none=False)
-
-    def test_api_inherits_config_from_connection(self) -> None:
-        """Test that API inherits config from connection."""
+    def test_inherits_config_from_connection(self) -> None:
+        """Test API inherits config from connection."""
         config = self._create_config()
-        connection = self._create_connection(config)
-        api = self._create_api(connection=connection)
+        api = self._create_api(connection=self._create_connection(config))
         assert api._config is not None
 
-    def test_api_logger_available(self) -> None:
-        """Test that logger is available on API instance."""
-        api = self._create_api()
-        tm.that(api.logger, none=False)
+    def test_logger_available(self) -> None:
+        """Test logger is available on API instance."""
+        tm.that(self._create_api().logger, none=False)
 
-    def test_api_config_property(self) -> None:
-        """Test config property returns valid FlextSettings."""
-        api = self._create_api()
-        assert isinstance(api.config, FlextSettings)
+    def test_config_returns_flext_settings(self) -> None:
+        """Test config property returns FlextSettings."""
+        assert isinstance(self._create_api().config, FlextSettings)
 
-    def test_context_manager_enter_returns_self(self) -> None:
+    def test_service_config_type(self) -> None:
+        """Test _get_service_config_type returns FlextLdapSettings."""
+        assert FlextLdap._get_service_config_type() is FlextLdapSettings
+
+    # --- Context Manager ---
+
+    def test_enter_returns_self(self) -> None:
         """Test __enter__ returns self for 'with' statement."""
         api = self._create_api()
-        result = api.__enter__()
-        tm.that(result, eq=api)
+        tm.that(api.__enter__(), eq=api)
 
-    def test_context_manager_exit_calls_disconnect(self) -> None:
-        """Test __exit__ calls disconnect for cleanup."""
+    def test_exit_calls_disconnect(self) -> None:
+        """Test __exit__ invokes cleanup without error."""
+        self._create_api().__exit__(None, None, None)
+
+    def test_with_statement(self) -> None:
+        """Test 'with' statement returns same API instance."""
         api = self._create_api()
-        api.__exit__(None, None, None)
+        with api as ctx:
+            tm.that(ctx, eq=api)
 
-    def test_context_manager_with_statement(self) -> None:
-        """Test 'with' statement support."""
-        api = self._create_api()
-        with api as ctx_api:
-            tm.that(ctx_api, eq=api)
+    # --- Constants ---
 
-    def test_get_service_config_type_returns_flext_ldap_settings(self) -> None:
-        """Test _get_service_config_type returns FlextLdapSettings."""
-        config_type = FlextLdap._get_service_config_type()
-        assert config_type is FlextLdapSettings
-
-    def test_multi_phase_callback_param_count_constant(self) -> None:
-        """Test MULTI_PHASE_CALLBACK_PARAM_COUNT is 5."""
+    def test_callback_param_count_constants(self) -> None:
+        """Test callback parameter count constants match expected values."""
         tm.that(MULTI_PHASE_CALLBACK_PARAM_COUNT, eq=5)
-
-    def test_single_phase_callback_param_count_constant(self) -> None:
-        """Test SINGLE_PHASE_CALLBACK_PARAM_COUNT is 4."""
         tm.that(SINGLE_PHASE_CALLBACK_PARAM_COUNT, eq=4)
 
-    def test_is_multi_phase_callback_with_none(self) -> None:
-        """Test _is_multi_phase_callback returns False for None."""
-        result = FlextLdapSyncCallbacks.is_multi_phase_callback(None)
-        tm.that(result, eq=False)
+    # --- Callback Type Guards ---
 
-    def test_is_single_phase_callback_with_none(self) -> None:
-        """Test _is_single_phase_callback returns False for None."""
-        result = FlextLdapSyncCallbacks.is_single_phase_callback(None)
-        tm.that(result, eq=False)
+    @pytest.mark.parametrize(
+        ("callback", "expected"),
+        [
+            pytest.param(None, False, id="none"),
+            pytest.param(_multi_phase_cb, True, id="5_params_true"),
+            pytest.param(_single_phase_cb, False, id="4_params_false"),
+        ],
+    )
+    def test_is_multi_phase_callback(
+        self,
+        callback: Callable[..., None] | None,
+        expected: bool,
+    ) -> None:
+        """Test is_multi_phase_callback with various param counts."""
+        tm.that(
+            FlextLdapSyncCallbacks.is_multi_phase_callback(callback),
+            eq=expected,
+        )
 
-    def test_is_multi_phase_callback_with_5_params(self) -> None:
-        """Test _is_multi_phase_callback returns True for 5 parameters."""
+    @pytest.mark.parametrize(
+        ("callback", "expected"),
+        [
+            pytest.param(None, False, id="none"),
+            pytest.param(_single_phase_cb, True, id="4_params_true"),
+            pytest.param(_multi_phase_cb, False, id="5_params_false"),
+        ],
+    )
+    def test_is_single_phase_callback(
+        self,
+        callback: Callable[..., None] | None,
+        expected: bool,
+    ) -> None:
+        """Test is_single_phase_callback with various param counts."""
+        tm.that(
+            FlextLdapSyncCallbacks.is_single_phase_callback(callback),
+            eq=expected,
+        )
 
-        def multi_phase_cb(
-            _: str, __: int, ___: int, ____: str, _____: p.Ldap.LdapBatchStats
-        ) -> None:
-            pass
+    # --- API Methods ---
 
-        result = FlextLdapSyncCallbacks.is_multi_phase_callback(multi_phase_cb)
-        tm.that(result, eq=True)
-
-    def test_is_single_phase_callback_with_4_params(self) -> None:
-        """Test _is_single_phase_callback returns True for 4 parameters."""
-
-        def single_phase_cb(
-            _: int, __: int, ___: str, ____: p.Ldap.LdapBatchStats
-        ) -> None:
-            pass
-
-        result = FlextLdapSyncCallbacks.is_single_phase_callback(single_phase_cb)
-        tm.that(result, eq=True)
-
-    def test_is_multi_phase_callback_with_4_params_returns_false(self) -> None:
-        """Test _is_multi_phase_callback returns False for 4 parameters."""
-
-        def single_phase_cb(
-            _: int, __: int, ___: str, ____: p.Ldap.LdapBatchStats
-        ) -> None:
-            pass
-
-        result = FlextLdapSyncCallbacks.is_multi_phase_callback(single_phase_cb)
-        tm.that(result, eq=False)
-
-    def test_is_single_phase_callback_with_5_params_returns_false(self) -> None:
-        """Test _is_single_phase_callback returns False for 5 parameters."""
-
-        def multi_phase_cb(
-            _: str, __: int, ___: int, ____: str, _____: p.Ldap.LdapBatchStats
-        ) -> None:
-            pass
-
-        result = FlextLdapSyncCallbacks.is_single_phase_callback(multi_phase_cb)
-        tm.that(result, eq=False)
-
-    def test_is_single_phase_callback_with_5_params_returns_false(self) -> None:
-        """Test _is_single_phase_callback returns False for 5 parameters."""
-
-        def multi_phase_cb(
-            _: str,
-            __: int,
-            ___: int,
-            ____: str,
-            _____: p.Ldap.LdapBatchStats,
-        ) -> None:
-            pass
-
-        result = FlextLdapSyncCallbacks.is_single_phase_callback(multi_phase_cb)
-        tm.that(result, eq=False)
-
-    def test_is_multi_phase_callback_with_invalid_object(self) -> None:
-        """Test _is_multi_phase_callback handles non-callable gracefully."""
-        result: bool = FlextLdapSyncCallbacks.is_multi_phase_callback(None)
-        tm.that(result, eq=False)
-
-    def test_is_single_phase_callback_with_invalid_object(self) -> None:
-        """Test _is_single_phase_callback handles non-callable gracefully."""
-        result: bool = FlextLdapSyncCallbacks.is_single_phase_callback(None)
-        tm.that(result, eq=False)
-
-    def test_connect_method_exists(self) -> None:
-        """Test connect method exists and accepts connection config."""
+    @pytest.mark.parametrize(
+        "method_name",
+        [
+            "connect",
+            "disconnect",
+            "search",
+            "add",
+            "modify",
+            "delete",
+        ],
+    )
+    def test_api_method_exists_and_callable(self, method_name: str) -> None:
+        """Test API facade exposes expected method as callable."""
         api = self._create_api()
-        assert hasattr(api, "connect")
-        has_connect = hasattr(api, "connect")
-        connect_method = api.connect if has_connect else None
-        assert callable(connect_method)
-
-    def test_disconnect_method_exists(self) -> None:
-        """Test disconnect method exists."""
-        api = self._create_api()
-        assert hasattr(api, "disconnect")
-        disconnect_method = api.disconnect
-        assert callable(disconnect_method)
+        assert hasattr(api, method_name)
+        assert callable(getattr(api, method_name))
 
     def test_disconnect_when_not_connected(self) -> None:
         """Test disconnect does not raise when not connected."""
-        api = self._create_api()
-        api.disconnect()
-
-    def test_search_method_exists(self) -> None:
-        """Test search method exists."""
-        api = self._create_api()
-        tm.that(hasattr(api, "search"), eq=True)
-        tm.that(callable(api.search), eq=True)
+        self._create_api().disconnect()
 
     def test_search_without_connection_returns_failure(self) -> None:
-        """Test search returns failure when not connected."""
-        api = self._create_api()
+        """Test search returns r failure when not connected."""
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             filter_str=c.Ldap.Tests.RFC.DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
-        tm.fail(api.search(search_options))
+        tm.fail(self._create_api().search(search_options))
 
-    def test_add_method_exists(self) -> None:
-        """Test add method exists."""
-        api = self._create_api()
-        tm.that(hasattr(api, "add"), eq=True)
-        tm.that(callable(api.add), eq=True)
+    def test_execute_returns_result(self) -> None:
+        """Test execute returns r (failure when not connected)."""
+        tm.fail(self._create_api().execute())
 
-    def test_modify_method_exists(self) -> None:
-        """Test modify method exists."""
-        api = self._create_api()
-        tm.that(hasattr(api, "modify"), eq=True)
-        tm.that(callable(api.modify), eq=True)
+    # --- Model Config ---
 
-    def test_delete_method_exists(self) -> None:
-        """Test delete method exists."""
-        api = self._create_api()
-        tm.that(hasattr(api, "delete"), eq=True)
-        tm.that(callable(api.delete), eq=True)
-
-    def test_execute_method_returns_result(self) -> None:
-        """Test execute method returns r."""
-        api = self._create_api()
-        tm.fail(api.execute())
-
-    def test_model_config_is_not_frozen(self) -> None:
-        """Test that FlextLdap model_config is not frozen (mutable state)."""
-        tm.that(FlextLdap.model_config.get("frozen"), eq=False)
-
-    def test_model_config_forbids_extra(self) -> None:
-        """Test that FlextLdap model_config forbids extra attributes."""
-        tm.that(FlextLdap.model_config.get("extra"), eq="forbid")
-
-    def test_model_config_allows_arbitrary_types(self) -> None:
-        """Test that FlextLdap allows arbitrary types."""
-        tm.that(FlextLdap.model_config.get("arbitrary_types_allowed"), eq=True)
+    def test_model_config(self) -> None:
+        """Test FlextLdap model_config has expected Pydantic v2 settings."""
+        cfg = FlextLdap.model_config
+        tm.that(cfg.get("frozen"), eq=False)
+        tm.that(cfg.get("extra"), eq="forbid")
+        tm.that(cfg.get("arbitrary_types_allowed"), eq=True)
 
 
 __all__ = ["TestsFlextLdapApi"]
