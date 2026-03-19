@@ -1,20 +1,3 @@
-"""Unit tests for FlextLdapSettings - LDAP configuration management.
-
-Provides comprehensive testing of FlextLdapSettings singleton pattern, environment
-variable loading, validation, and Pydantic v2 model functionality.
-
-Test Coverage:
-- Configuration initialization and singleton pattern
-- Environment variable loading and override
-- Field validation and constraints
-- Default values
-- Type conversion
-- Error handling for invalid inputs
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 import pytest
@@ -23,216 +6,119 @@ from flext_tests import tm
 from flext_ldap import FlextLdapSettings
 from tests import c
 
-pytestmark = [pytest.mark.unit]
+pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapSettings:
-    """Unit tests for FlextLdapSettings.
-
-    Tests configuration loading, validation, singleton pattern, and environment
-    variable handling using Pydantic v2 features.
-
-    Architecture: Single class per module following FLEXT patterns.
-    Uses parametrized tests and factory methods for code reuse.
-    Expected reduction: 258 lines → ~180 lines (30% reduction).
-    """
-
-    @staticmethod
-    def _get_port_values() -> list[tuple[int, int]]:
-        """Factory: Return port validation test scenarios (input, expected)."""
-        return [(1, 1), (389, 389), (636, 636), (65535, 65535)]
-
     @pytest.fixture(autouse=True)
     def reset_settings_singleton(self) -> None:
-        """Reset singleton state for deterministic test behavior."""
         FlextLdapSettings.reset_for_testing()
 
-    def test_config_initialization_defaults(self) -> None:
-        """Test configuration initialization with default values and validate all fields.
+    # ── Defaults contract ──────────────────────────────────────────────
 
-        Note: Config may load values from .env files if present, so we validate
-        that port is in valid range rather than exact default value.
-        """
-        config = FlextLdapSettings()
-        tm.that(config.host, eq="localhost")
-        tm.that(config.port, gte=1, lte=65535)
-        if config.port == c.Ldap.ConnectionDefaults.PORT:
-            tm.that(config.port, eq=c.Ldap.ConnectionDefaults.PORT)
-        tm.that(config.use_ssl, eq=False)
-        tm.that(config.use_tls, eq=False)
-        assert isinstance(config.bind_dn, str), "bind_dn should be string"
-        assert isinstance(config.bind_password, str), "bind_password should be string"
-        assert isinstance(config.host, str), "Host should be string"
-        assert isinstance(config.port, int), "Port should be int"
-        assert isinstance(config.use_ssl, bool), "use_ssl should be bool"
-        assert isinstance(config.use_tls, bool), "use_tls should be bool"
-        assert 1 <= config.port <= 65535, f"Default port {config.port} out of range"
+    def test_defaults(self) -> None:
+        cfg = FlextLdapSettings()
+        tm.that(cfg.host, eq="localhost")
+        tm.that(cfg.port, gte=1, lte=65535)
+        tm.that(cfg.use_ssl, eq=False)
+        tm.that(cfg.use_tls, eq=False)
 
-    def test_config_initialization_custom_values(self) -> None:
-        """Test configuration initialization with custom values and validate all fields."""
-        host_value = "example.com"
-        port_value = 636
-        use_ssl_value = True
-        bind_dn_value = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-        bind_password_value = "secret"
-        config = FlextLdapSettings(
-            host=host_value,
-            port=port_value,
-            use_ssl=use_ssl_value,
-            bind_dn=bind_dn_value,
-            bind_password=bind_password_value,
+    # ── Custom initialization ──────────────────────────────────────────
+
+    def test_custom_values(self) -> None:
+        cfg = FlextLdapSettings(
+            host="example.com",
+            port=636,
+            use_ssl=True,
+            bind_dn="cn=admin,dc=x,dc=y",
+            bind_password="secret",
         )
-        tm.that(config.host, eq=host_value)
-        tm.that(config.port, eq=port_value)
-        tm.that(config.use_ssl, eq=use_ssl_value)
-        tm.that(config.bind_dn, eq=bind_dn_value)
-        tm.that(config.bind_password, eq=bind_password_value)
-        assert isinstance(config.host, str), "Host should be string"
-        assert isinstance(config.port, int), "Port should be int"
-        assert 1 <= config.port <= 65535, f"Port {config.port} out of valid range"
-        assert isinstance(config.use_ssl, bool), "use_ssl should be bool"
-        assert isinstance(config.bind_dn, str), "bind_dn should be string"
-        assert isinstance(config.bind_password, str), "bind_password should be string"
+        tm.that(cfg.host, eq="example.com")
+        tm.that(cfg.port, eq=636)
+        tm.that(cfg.use_ssl, eq=True)
+        tm.that(cfg.bind_dn, eq="cn=admin,dc=x,dc=y")
+        tm.that(cfg.bind_password, eq="secret")
 
-    def test_config_port_field_metadata(self) -> None:
-        """Test port field has proper constraint metadata and defaults."""
-        port_field = FlextLdapSettings.model_fields.get("port")
-        assert port_field is not None
-        metadata_str = str(port_field.metadata)
-        tm.that(metadata_str, contains="Ge(ge=1)")
-        tm.that(metadata_str, contains="Le(le=65535)")
-        tm.that(port_field.default, eq=c.Ldap.ConnectionDefaults.PORT)
+    # ── Port validation ────────────────────────────────────────────────
 
-    @pytest.mark.parametrize(("port_value", "expected"), _get_port_values())
-    def test_config_port_valid_range(self, port_value: int, expected: int) -> None:
-        """Test port validation with valid range values and real limits."""
-        config = FlextLdapSettings(port=port_value)
-        tm.that(config.port, eq=expected)
-        assert 1 <= config.port <= 65535, f"Port {config.port} out of valid range"
-        assert isinstance(config.port, int), (
-            f"Port should be int, got {type(config.port)}"
-        )
+    @pytest.mark.parametrize("port", [1, 389, 636, 65535])
+    def test_port_valid(self, port: int) -> None:
+        tm.that(FlextLdapSettings(port=port).port, eq=port)
+
+    def test_port_field_constraints(self) -> None:
+        field = FlextLdapSettings.model_fields["port"]
+        meta = str(field.metadata)
+        tm.that(meta, contains="Ge(ge=1)")
+        tm.that(meta, contains="Le(le=65535)")
+        tm.that(field.default, eq=c.Ldap.ConnectionDefaults.PORT)
+
+    # ── Host values ────────────────────────────────────────────────────
+
+    @pytest.mark.parametrize("host", ["localhost", "example.com", "192.168.1.1", ""])
+    def test_host(self, host: str) -> None:
+        tm.that(FlextLdapSettings(host=host).host, eq=host)
+
+    # ── SSL/TLS combinations ───────────────────────────────────────────
 
     @pytest.mark.parametrize(
-        ("host", "expected"),
-        [
-            ("localhost", "localhost"),
-            ("example.com", "example.com"),
-            ("ldap.example.org", "ldap.example.org"),
-            ("192.168.1.1", "192.168.1.1"),
-            ("", ""),
-        ],
+        ("ssl", "tls"), [(False, False), (True, False), (False, True), (True, True)]
     )
-    def test_config_host_values(self, host: str, expected: str) -> None:
-        """Test various host values."""
-        config = FlextLdapSettings(host=host)
-        tm.that(config.host, eq=expected)
+    def test_tls_options(self, ssl: bool, tls: bool) -> None:
+        cfg = FlextLdapSettings(use_ssl=ssl, use_tls=tls)
+        tm.that(cfg.use_ssl, eq=ssl)
+        tm.that(cfg.use_tls, eq=tls)
 
-    @pytest.mark.parametrize(
-        ("use_ssl", "use_tls"),
-        [(False, False), (True, False), (False, True), (True, True)],
-    )
-    def test_config_tls_options(self, use_ssl: bool, use_tls: bool) -> None:
-        """Test various TLS/SSL configuration combinations."""
-        config = FlextLdapSettings(use_ssl=use_ssl, use_tls=use_tls)
-        tm.that(config.use_ssl, eq=use_ssl)
-        tm.that(config.use_tls, eq=use_tls)
+    # ── Bind credentials ───────────────────────────────────────────────
 
-    def test_config_optional_fields(self) -> None:
-        """Test bind credential fields default to empty string."""
-        config = FlextLdapSettings(bind_dn="", bind_password="")
-        tm.that(config.bind_dn, eq="")
-        tm.that(config.bind_password, eq="")
+    def test_bind_credentials_stored(self) -> None:
+        cfg = FlextLdapSettings(bind_dn="cn=admin,dc=x,dc=y", bind_password="secret")
+        tm.that(cfg.bind_dn, eq="cn=admin,dc=x,dc=y")
+        tm.that(cfg.bind_password, eq="secret")
 
-    def test_config_bind_credentials_together(self) -> None:
-        """Test bind DN and password are properly stored together."""
-        bind_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-        bind_password = "super-secret"
-        config = FlextLdapSettings(bind_dn=bind_dn, bind_password=bind_password)
-        tm.that(config.bind_dn, eq=bind_dn)
-        tm.that(config.bind_password, eq=bind_password)
+    def test_bind_credentials_empty(self) -> None:
+        cfg = FlextLdapSettings(bind_dn="", bind_password="")
+        tm.that(cfg.bind_dn, eq="")
+        tm.that(cfg.bind_password, eq="")
 
-    def test_config_model_config(self) -> None:
-        """Test that model configuration is properly set."""
-        assert FlextLdapSettings.model_config is not None
-        config_dict = FlextLdapSettings.model_config
-        tm.that(config_dict.get("env_prefix"), eq="FLEXT_")
-        tm.that(config_dict.get("case_sensitive"), eq=False)
+    # ── Pydantic model features ────────────────────────────────────────
 
-    def test_config_field_descriptions(self) -> None:
-        """Test that fields have proper descriptions for documentation."""
+    def test_model_config(self) -> None:
+        tm.that(FlextLdapSettings.model_config.get("env_prefix"), eq="FLEXT_")
+        tm.that(FlextLdapSettings.model_config.get("case_sensitive"), eq=False)
+
+    def test_field_descriptions(self) -> None:
         fields = FlextLdapSettings.model_fields
-        assert "host" in fields
-        assert "port" in fields
         tm.that(fields["host"].description, none=False)
         tm.that(fields["port"].description, none=False)
 
-    def test_config_serialization(self) -> None:
-        """Test configuration can be serialized to dict."""
-        config = FlextLdapSettings(host="example.com", port=636, use_ssl=True)
-        config_dict = config.model_dump()
-        tm.that(config_dict["host"], eq="example.com")
-        tm.that(config_dict["port"], eq=636)
-        tm.that(config_dict["use_ssl"], eq=True)
+    def test_serialization(self) -> None:
+        data = FlextLdapSettings(
+            host="example.com", port=636, use_ssl=True
+        ).model_dump()
+        tm.that(data["host"], eq="example.com")
+        tm.that(data["port"], eq=636)
+        tm.that(data["use_ssl"], eq=True)
 
-    def test_config_json_schema(self) -> None:
-        """Test JSON schema generation for documentation."""
+    def test_json_schema(self) -> None:
         schema = FlextLdapSettings.model_json_schema()
         tm.that(schema, keys=["properties", "type"])
         tm.that(dict(schema["properties"]), keys=["host", "port"])
 
-    def test_config_model_copy_deep(self) -> None:
-        """Test configuration deep copy creates new instance.
-
-        FlextLdapSettings uses singleton pattern via FlextSettings.auto_register.
-        model_copy(deep=True) should create independent copies.
-        """
+    def test_deep_copy(self) -> None:
         original = FlextLdapSettings(host="original.com", port=389)
         copied = original.model_copy(deep=True)
         tm.that(copied, is_=FlextLdapSettings, none=False)
         tm.that(original.model_dump()["port"], eq=copied.model_dump()["port"])
 
-    def test_config_singleton_pattern(self) -> None:
-        """Test that FlextLdapSettings follows singleton pattern.
+    # ── Singleton behavior ─────────────────────────────────────────────
 
-        FlextSettings.auto_register("ldap") creates a singleton pattern where
-        all instances of FlextLdapSettings share state.
-        """
-        config1 = FlextLdapSettings(host="first.com", port=389)
-        config2 = FlextLdapSettings(host="second.com", port=636)
-        tm.that(config1, eq=config2)
-        tm.that(config1.host, eq=config2.host)
-        tm.that(config1.port, eq=config2.port)
+    def test_singleton_shares_state(self) -> None:
+        c1 = FlextLdapSettings(host="first.com", port=389)
+        c2 = FlextLdapSettings(host="second.com", port=636)
+        tm.that(c1, eq=c2)
+        tm.that(c1.host, eq=c2.host)
 
-    def test_config_registry_integration(self) -> None:
-        """Test that FlextLdapSettings integrates with FlextSettings registry."""
-        tm.that(hasattr(FlextLdapSettings, "__flext_config_key__") or True, eq=True)
-        config = FlextLdapSettings()
-        tm.that(config, none=False)
-
-    def test_config_model_dump_excludes_none(self) -> None:
-        """Test model_dump behavior with None values."""
-        config = FlextLdapSettings()
-        dump = config.model_dump()
+    def test_model_dump_keys(self) -> None:
+        dump = FlextLdapSettings().model_dump()
         tm.that(dump, keys=["bind_dn", "bind_password"])
         tm.that(dump, lacks_keys=["base_dn"])
-
-    def test_config_accepts_keyword_args(self) -> None:
-        """Test configuration can be initialized with keyword arguments."""
-        host_value = "kwargs.example.com"
-        port_value = 3389
-        use_ssl_value = True
-        use_tls_value = False
-        config = FlextLdapSettings(
-            host=host_value,
-            port=port_value,
-            use_ssl=use_ssl_value,
-            use_tls=use_tls_value,
-        )
-        tm.that(config.host, eq=host_value)
-        tm.that(config.port, eq=port_value)
-        tm.that(config.use_ssl, eq=use_ssl_value)
-        tm.that(config.use_tls, eq=use_tls_value)
-
-
-__all__ = ["TestsFlextLdapSettings"]

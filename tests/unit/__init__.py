@@ -25,6 +25,8 @@ if TYPE_CHECKING:
     from .test_entry_adapter import TestsFlextLdapEntryAdapter
     from .test_ldap3_adapter import TestsFlextLdap3Adapter
     from .test_models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .test_models_search import TestsFlextLdapModelsSearch
+    from .test_models_sync import TestsFlextLdapModelsSync
     from .test_operations import TestsFlextLdapOperations
     from .test_sync import TestsFlextLdapSync
     from .test_utilities import (
@@ -47,6 +49,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestsFlextLdapEntryAdapter",
     ),
     "TestsFlextLdapModels": ("tests.unit.test_models", "TestsFlextLdapModels"),
+    "TestsFlextLdapModelsSearch": (
+        "tests.unit.test_models_search",
+        "TestsFlextLdapModelsSearch",
+    ),
+    "TestsFlextLdapModelsSync": (
+        "tests.unit.test_models_sync",
+        "TestsFlextLdapModelsSync",
+    ),
     "TestsFlextLdapOperations": (
         "tests.unit.test_operations",
         "TestsFlextLdapOperations",
@@ -68,6 +78,8 @@ __all__ = [
     "TestsFlextLdapDetection",
     "TestsFlextLdapEntryAdapter",
     "TestsFlextLdapModels",
+    "TestsFlextLdapModelsSearch",
+    "TestsFlextLdapModelsSync",
     "TestsFlextLdapOperations",
     "TestsFlextLdapSettings",
     "TestsFlextLdapSync",

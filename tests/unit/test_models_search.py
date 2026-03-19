@@ -144,5 +144,42 @@ class TestsFlextLdapModelsSearch:
         category = m.Ldap.SearchResult.get_entry_category(entry)
         tm.that(category, eq="unknown")
 
+    def test_types_namespace_exists(self) -> None:
+        tm.that(m.Ldap.Types, none=False)
+
+    def test_ldap_progress_callback_type_exists(self) -> None:
+        tm.that(hasattr(m.Ldap.Types, "LdapProgressCallback"), eq=True)
+
+    def test_connection_config_serialization(self) -> None:
+        data = m.Ldap.ConnectionConfig(host="ldap.example.com", port=636).model_dump()
+        tm.that(data["host"], eq="ldap.example.com")
+        tm.that(data["port"], eq=636)
+
+    def test_search_options_serialization(self) -> None:
+        data = m.Ldap.SearchOptions(
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="SUBTREE"
+        ).model_dump()
+        tm.that(data["base_dn"], eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
+        tm.that(data["scope"], eq="SUBTREE")
+
+    def test_sync_stats_serialization(self) -> None:
+        data = m.Ldap.SyncStats.from_counters(
+            synced=80, skipped=10, failed=10
+        ).model_dump()
+        tm.that(data, keys=["success_rate"])
+        tm.that(data["success_rate"], eq=0.9)
+
+    def test_connection_config_json_schema(self) -> None:
+        tm.that(
+            m.Ldap.ConnectionConfig.model_json_schema()["properties"],
+            keys=["host", "port"],
+        )
+
+    def test_search_options_json_schema(self) -> None:
+        tm.that(
+            m.Ldap.SearchOptions.model_json_schema()["properties"],
+            keys=["base_dn", "scope"],
+        )
+
 
 __all__ = ["TestsFlextLdapModelsSearch"]

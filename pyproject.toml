@@ -597,6 +597,9 @@ whitelines = 1
 
 [tool.pytest.ini_options]
 addopts = [ "--strict-markers" ]
+filterwarnings = [
+  "ignore::DeprecationWarning:pyasn1.codec.ber.encoder",
+]
 markers = [
   "docker: tests requiring Docker",
   "e2e: end-to-end integration tests",

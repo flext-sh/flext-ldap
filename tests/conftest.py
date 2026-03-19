@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextLogger
+
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException

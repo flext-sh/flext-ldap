@@ -35,7 +35,7 @@ from flext_ldap import (
     FlextLdapSettings,
     FlextLdapSyncCallbacks,
 )
-from tests import c, m
+from tests import c, m, p
 
 pytestmark = [pytest.mark.unit]
 
@@ -183,7 +183,7 @@ class TestsFlextLdapApi:
         """Test _is_multi_phase_callback returns True for 5 parameters."""
 
         def multi_phase_cb(
-            phase: str, current: int, total: int, dn: str, stats: m.Ldap.LdapBatchStats
+            _: str, __: int, ___: int, ____: str, _____: p.Ldap.LdapBatchStats
         ) -> None:
             pass
 
@@ -194,7 +194,7 @@ class TestsFlextLdapApi:
         """Test _is_single_phase_callback returns True for 4 parameters."""
 
         def single_phase_cb(
-            current: int, total: int, dn: str, stats: m.Ldap.LdapBatchStats
+            _: int, __: int, ___: str, ____: p.Ldap.LdapBatchStats
         ) -> None:
             pass
 
@@ -205,7 +205,7 @@ class TestsFlextLdapApi:
         """Test _is_multi_phase_callback returns False for 4 parameters."""
 
         def single_phase_cb(
-            current: int, total: int, dn: str, stats: m.Ldap.LdapBatchStats
+            _: int, __: int, ___: str, ____: p.Ldap.LdapBatchStats
         ) -> None:
             pass
 
@@ -216,7 +216,22 @@ class TestsFlextLdapApi:
         """Test _is_single_phase_callback returns False for 5 parameters."""
 
         def multi_phase_cb(
-            phase: str, current: int, total: int, dn: str, stats: m.Ldap.LdapBatchStats
+            _: str, __: int, ___: int, ____: str, _____: p.Ldap.LdapBatchStats
+        ) -> None:
+            pass
+
+        result = FlextLdapSyncCallbacks.is_single_phase_callback(multi_phase_cb)
+        tm.that(result, eq=False)
+
+    def test_is_single_phase_callback_with_5_params_returns_false(self) -> None:
+        """Test _is_single_phase_callback returns False for 5 parameters."""
+
+        def multi_phase_cb(
+            _: str,
+            __: int,
+            ___: int,
+            ____: str,
+            _____: p.Ldap.LdapBatchStats,
         ) -> None:
             pass
 
