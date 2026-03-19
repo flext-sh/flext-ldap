@@ -25,9 +25,9 @@ from typing import override
 from flext_core import FlextService
 from pydantic_settings import BaseSettings
 
-from flext_ldap import p
+from flext_ldap import p, t
 from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.typings import TDomainResult, t
+from flext_ldap.typings import TDomainResult
 
 # TypeVar for domain result type
 

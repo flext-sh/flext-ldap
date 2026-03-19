@@ -37,8 +37,7 @@ from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
-from flext_ldap import c, m, p, t
-from flext_ldap.base import s
+from flext_ldap import c, m, p, s, t
 
 
 class FlextLdapEntryAdapter(s[bool]):

@@ -34,11 +34,11 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import override
 
-from flext_core import FlextRuntime, p, r, s
+from flext_core import FlextRuntime, r
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
-from flext_ldap import FlextLdapConnection, c, m, t, u
+from flext_ldap import FlextLdapConnection, c, m, p, s, t, u
 
 LaxStr = str | bytes | bytearray
 
