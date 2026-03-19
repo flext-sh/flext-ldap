@@ -6,11 +6,9 @@ All model implementations are in _models/*.py - this is a pure facade.
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from flext_ldif import FlextLdifModels
 
-from flext_ldap._models.ldap import FlextLdapModelsLdap
+from flext_ldap import FlextLdapModelsLdap
 
 
 class FlextLdapModels(FlextLdifModels):
@@ -88,15 +86,11 @@ class FlextLdapModels(FlextLdifModels):
         class Types:
             """Type definitions for LDAP models."""
 
-            LdapProgressCallback: TypeAlias = (
-                FlextLdapModelsLdap.Types.LdapProgressCallback
-            )
-            MultiPhaseProgressCallback: TypeAlias = (
+            LdapProgressCallback = FlextLdapModelsLdap.Types.LdapProgressCallback
+            MultiPhaseProgressCallback = (
                 FlextLdapModelsLdap.Types.MultiPhaseProgressCallback
             )
-            ProgressCallbackUnion: TypeAlias = (
-                FlextLdapModelsLdap.Types.ProgressCallbackUnion
-            )
+            ProgressCallbackUnion = FlextLdapModelsLdap.Types.ProgressCallbackUnion
 
 
 # Global instance

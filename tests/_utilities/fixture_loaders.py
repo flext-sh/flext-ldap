@@ -12,11 +12,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextLogger, r, t
+from flext_core import FlextLogger, r
 from flext_ldif import FlextLdif
 from pydantic import TypeAdapter, ValidationError
 
-from tests import m
+from tests import m, t
 
 GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
 

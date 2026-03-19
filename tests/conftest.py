@@ -15,9 +15,6 @@ logger = FlextLogger(__name__)
 
 LdapContainerDict = dict[str, str | int | bool]
 
-_d = c.Ldap.Tests.Docker
-_ws_root = Path(__file__).parent.parent.parent.resolve()
-
 
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
@@ -32,26 +29,43 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         return
     worker_id = _get_worker_id(session.config)
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
-    compose_file_rel = str((_ws_root / _d.COMPOSE_FILE_REL).relative_to(_ws_root))
-    if docker_control.is_container_dirty(_d.CONTAINER_NAME):
-        logger.info("Container %s is dirty, recreating", _d.CONTAINER_NAME)
+    compose_file_rel = str(
+        (
+            Path(__file__).parent.parent.parent.resolve()
+            / c.Ldap.Tests.Docker.COMPOSE_FILE_REL
+        ).relative_to(Path(__file__).parent.parent.parent.resolve())
+    )
+    if docker_control.is_container_dirty(c.Ldap.Tests.Docker.CONTAINER_NAME):
+        logger.info(
+            "Container %s is dirty, recreating", c.Ldap.Tests.Docker.CONTAINER_NAME
+        )
         docker_control.compose_down(compose_file_rel)
         result = docker_control.compose_up(
-            compose_file_rel, service=_d.SERVICE_NAME, force_recreate=True
+            compose_file_rel,
+            service=c.Ldap.Tests.Docker.SERVICE_NAME,
+            force_recreate=True,
         )
         if result.is_success:
-            docker_control.mark_container_clean(_d.CONTAINER_NAME)
+            docker_control.mark_container_clean(c.Ldap.Tests.Docker.CONTAINER_NAME)
     else:
-        start = docker_control.start_existing_container(_d.CONTAINER_NAME)
+        start = docker_control.start_existing_container(
+            c.Ldap.Tests.Docker.CONTAINER_NAME
+        )
         if start.is_failure:
-            docker_control.compose_up(compose_file_rel, service=_d.SERVICE_NAME)
-    port_ready = docker_control.wait_for_port_ready("localhost", _d.PORT, 90)
+            docker_control.compose_up(
+                compose_file_rel, service=c.Ldap.Tests.Docker.SERVICE_NAME
+            )
+    port_ready = docker_control.wait_for_port_ready(
+        "localhost", c.Ldap.Tests.Docker.PORT, 90
+    )
     if port_ready.is_success and port_ready.value:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0
         while waited < 90:
             try:
-                srv = Server(f"ldap://localhost:{_d.PORT}", get_info="NO_INFO")
+                srv = Server(
+                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}", get_info="NO_INFO"
+                )
                 conn = Connection(
                     srv,
                     user=admin_dn,
@@ -62,7 +76,9 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                 if conn.bound:
                     FlextLdapLdap3Wrappers.unbind(conn)
                     logger.info(
-                        "Container %s bind-ready after %.1fs", _d.CONTAINER_NAME, waited
+                        "Container %s bind-ready after %.1fs",
+                        c.Ldap.Tests.Docker.CONTAINER_NAME,
+                        waited,
                     )
                     break
             except (LDAPException, ConnectionError, TimeoutError, OSError):
@@ -101,7 +117,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
     if is_infra and not is_transient:
         worker_id = _get_worker_id(item.session.config)
         docker = u.Ldap.Tests.get_docker_control(worker_id)
-        docker.mark_container_dirty(_d.CONTAINER_NAME)
+        docker.mark_container_dirty(c.Ldap.Tests.Docker.CONTAINER_NAME)
         logger.error(
             "LDAP INFRASTRUCTURE FAILURE in %s, container marked DIRTY: %s",
             item.nodeid,
@@ -116,19 +132,25 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> LdapContainerDict:
-    lock = u.Ldap.Tests.FileLock(Path.home() / ".flext" / f"{_d.CONTAINER_NAME}.lock")
+    lock = u.Ldap.Tests.FileLock(
+        Path.home() / ".flext" / f"{c.Ldap.Tests.Docker.CONTAINER_NAME}.lock"
+    )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-        port_result = docker_control.wait_for_port_ready("localhost", _d.PORT, 60)
+        port_result = docker_control.wait_for_port_ready(
+            "localhost", c.Ldap.Tests.Docker.PORT, 60
+        )
         if port_result.is_failure or not port_result.value:
             pytest.fail(
-                f"Container {_d.CONTAINER_NAME} port {_d.PORT} not ready within 60s"
+                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within 60s"
             )
         waited: float = 0.0
         while waited < 60:
             try:
-                srv = Server(f"ldap://localhost:{_d.PORT}", get_info="NO_INFO")
+                srv = Server(
+                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}", get_info="NO_INFO"
+                )
                 conn = Connection(
                     srv,
                     user=admin_dn,
@@ -144,16 +166,18 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
             time.sleep(1.0)
             waited += 1.0
         else:
-            pytest.fail(f"Container {_d.CONTAINER_NAME} LDAP not ready within 60s")
+            pytest.fail(
+                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} LDAP not ready within 60s"
+            )
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()
     return {
-        "server_url": f"ldap://localhost:{_d.PORT}",
+        "server_url": f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
         "host": "localhost",
         "bind_dn": admin_dn,
         "password": admin_password,
-        "base_dn": _d.BASE_DN,
-        "port": _d.PORT,
+        "base_dn": c.Ldap.Tests.Docker.BASE_DN,
+        "port": c.Ldap.Tests.Docker.PORT,
         "use_ssl": False,
         "worker_id": worker_id,
     }

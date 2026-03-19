@@ -17,9 +17,9 @@ from threading import Lock
 from typing import ClassVar, TextIO
 
 from flext_core import FlextLogger
-from flext_tests.docker import tk
+from flext_tests import tk
 
-from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
 from tests import c
 

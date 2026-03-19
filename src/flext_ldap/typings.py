@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import ParamSpec, TypeVar
 
-from flext_core import r, t as _core_t
-from flext_ldif import FlextLdifModels, FlextLdifTypes
+from flext_core import r
+from flext_ldif import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
-from flext_ldap.protocols import p
+from flext_ldap import p
 
 
 class FlextLdapTypes(FlextLdifTypes):
@@ -21,7 +22,7 @@ class FlextLdapTypes(FlextLdifTypes):
             """Connection type aliases."""
 
             type Config = Mapping[str, str | int | bool]
-            type Options = Mapping[str, _core_t.Scalar | None]
+            type Options = Mapping[str, FlextLdifTypes.Ldif.Scalar | None]
 
         class Operation:
             """Operation type aliases."""
@@ -59,7 +60,7 @@ class FlextLdapTypes(FlextLdifTypes):
         bound=p.Ldap.ServiceContracts.EntryContract,
     )
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-    TDomainResult = TypeVar("TDomainResult", bound=_core_t.Container)
+    TDomainResult = TypeVar("TDomainResult", bound=FlextLdifTypes.Container)
     P = ParamSpec("P")
 
 
@@ -73,4 +74,4 @@ __all__ = [
     "t",
 ]
 
-TDomainResult = TypeVar("TDomainResult", bound=t.Container)
+TDomainResult = TypeVar("TDomainResult", bound=FlextLdapTypes.Container)

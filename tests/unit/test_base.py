@@ -3,33 +3,33 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_core import FlextService, FlextSettings, r
+from flext_core import FlextSettings, r
 
-from flext_ldap import FlextLdapServiceBase, base, s
+from flext_ldap import base, s
 from tests import p
 
 pytestmark = pytest.mark.unit
 
 
-class _SuccessService(FlextLdapServiceBase[str]):
+class _SuccessService(s[str]):
     @override
     def execute(self) -> r[str]:
         return r[str].ok("ok")
 
 
-class _FailService(FlextLdapServiceBase[str]):
+class _FailService(s[str]):
     @override
     def execute(self) -> r[str]:
         return r[str].fail("nope")
 
 
-class _BoolService(FlextLdapServiceBase[bool]):
+class _BoolService(s[bool]):
     @override
     def execute(self) -> r[bool]:
         return r[bool].ok(True)
 
 
-class _IntService(FlextLdapServiceBase[int]):
+class _IntService(s[int]):
     @override
     def execute(self) -> r[int]:
         return r[int].ok(42)
@@ -39,17 +39,17 @@ class TestsFlextLdapBase:
     # ── Structure & exports ────────────────────────────────────────────
 
     def test_class_inherits_flext_service(self) -> None:
-        assert issubclass(FlextLdapServiceBase[str], FlextService)
-        assert hasattr(FlextLdapServiceBase, "__class_getitem__")
+        assert issubclass(s[str], s)
+        assert hasattr(s, "__class_getitem__")
 
     def test_exports(self) -> None:
-        assert s is FlextLdapServiceBase
-        assert "FlextLdapServiceBase" in base.__all__
+        assert s is s
+        assert "s" in base.__all__
         assert "s" in base.__all__
 
     def test_has_docstring(self) -> None:
-        assert FlextLdapServiceBase.__doc__ is not None
-        assert "config" in FlextLdapServiceBase.__doc__.lower()
+        assert s.__doc__ is not None
+        assert "config" in s.__doc__.lower()
 
     # ── Execute: success + failure ─────────────────────────────────────
 

@@ -14,8 +14,7 @@ from collections.abc import Mapping, Sequence
 from typing import Protocol, override, runtime_checkable
 
 from flext_core import r
-from flext_core.typings import t
-from flext_ldif import FlextLdifProtocols
+from flext_ldif import FlextLdifProtocols, t
 
 
 class FlextLdapProtocols(FlextLdifProtocols):

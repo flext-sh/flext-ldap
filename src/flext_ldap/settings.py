@@ -19,7 +19,7 @@ from typing import Annotated
 from flext_core import FlextSettings
 from pydantic import Field
 
-from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap import c
 
 
 class FlextLdapSettings(FlextSettings):

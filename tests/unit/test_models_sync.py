@@ -8,8 +8,6 @@ from tests import c, m
 
 pytestmark = pytest.mark.unit
 
-_RFC = c.Ldap.Tests.RFC
-
 
 class TestsFlextLdapModelsSync:
     # ── Contract: default values don't drift ───────────────────────────
@@ -103,7 +101,9 @@ class TestsFlextLdapModelsSync:
 
     def test_upsert_success(self) -> None:
         r = m.Ldap.UpsertResult(
-            success=True, dn=_RFC.DEFAULT_BASE_DN, operation=c.Ldap.OperationType.ADD
+            success=True,
+            dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            operation=c.Ldap.OperationType.ADD,
         )
         tm.that(r.success, eq=True)
         tm.that(r.error, none=True)
@@ -111,7 +111,7 @@ class TestsFlextLdapModelsSync:
     def test_upsert_failure_carries_error(self) -> None:
         r = m.Ldap.UpsertResult(
             success=False,
-            dn=_RFC.DEFAULT_BASE_DN,
+            dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             operation=c.Ldap.OperationType.ADD,
             error="Entry already exists",
         )

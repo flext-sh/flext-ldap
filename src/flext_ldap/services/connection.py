@@ -28,15 +28,23 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextService, p, r
+from flext_core import r
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import ConfigDict
 
-from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, u
-from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap import (
+    FlextLdapServerDetector,
+    FlextLdapSettings,
+    Ldap3Adapter,
+    c,
+    m,
+    p,
+    s,
+    u,
+)
 
 
-class FlextLdapConnection(FlextService[bool]):
+class FlextLdapConnection(s[bool]):
     """Manage the LDAP connection lifecycle with typed ergonomics.
 
     The service wraps ``Ldap3Adapter`` to create/bind connections, optionally
@@ -61,7 +69,7 @@ class FlextLdapConnection(FlextService[bool]):
         - Service health checks via ``execute()`` report NOT_CONNECTED errors
 
     Architecture Notes:
-        - Implements FlextService pattern via ``FlextLdapServiceBase[bool]``
+        - Implements s pattern via ``FlextLdapServiceBase[bool]``
         - Returns ``r[bool]`` for composable error handling
         - Adapter injection enables test doubles without modifying service logic
         - Uses ``PrivateAttr`` for ``_config`` to maintain base class compatibility
@@ -257,14 +265,14 @@ class FlextLdapConnection(FlextService[bool]):
 
     @override
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
-        """Execute service health check for FlextService pattern compliance.
+        """Execute service health check for s pattern compliance.
 
-        Implements the ``FlextService.execute()`` contract to report service
+        Implements the ``s.execute()`` contract to report service
         health status. Returns success if connected, failure with standard
         error message if not.
 
         Business Rules:
-            - Implements FlextService abstract method for service orchestration
+            - Implements s abstract method for service orchestration
             - Health is determined solely by ``is_connected`` property
             - Does not attempt reconnection or network round-trip
             - Error message uses ``c.Ldap.ErrorStrings.NOT_CONNECTED``

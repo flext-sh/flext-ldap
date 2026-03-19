@@ -169,4 +169,5 @@ class TestsFlextLdapEntryAdapter:
         assert hasattr(FlextLdapEntryAdapter._ConversionHelpers, "is_base64_encoded")
         assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)
 
+
 __all__ = ["TestsFlextLdapEntryAdapter"]

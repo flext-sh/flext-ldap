@@ -34,7 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import override
 
-from flext_core import FlextRuntime, FlextService, p, r
+from flext_core import FlextRuntime, p, r, s
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
@@ -43,7 +43,7 @@ from flext_ldap import FlextLdapConnection, c, m, t, u
 LaxStr = str | bytes | bytearray
 
 
-class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
+class FlextLdapOperations(s[m.Ldap.SearchResult]):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
@@ -1097,7 +1097,7 @@ class FlextLdapOperations(FlextService[m.Ldap.SearchResult]):
             - Returns failure if connection is not bound (NOT_CONNECTED error)
             - Returns empty SearchResult with configured base_dn on success
             - Uses default base_dn from FlextLdapSettings if not specified
-            - Serves as health check for FlextService.execute() pattern
+            - Serves as health check for s.execute() pattern
 
         Audit Implication:
             Validates connection state before operations; useful for

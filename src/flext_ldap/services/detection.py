@@ -34,13 +34,13 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from flext_core import FlextService, r
+from flext_core import r
 
-from flext_ldap import c, p, t, u
+from flext_ldap import c, p, s, t, u
 from ldap3 import BASE, Connection
 
 
-class FlextLdapServerDetector(FlextService[str]):
+class FlextLdapServerDetector(s[str]):
     """Identify a directory server by querying ``rootDSE`` attributes.
 
     The detector queries the base DN on a bound :class:`ldap3.Connection`,
@@ -407,7 +407,7 @@ class FlextLdapServerDetector(FlextService[str]):
             - Failed detection returns error message for troubleshooting
 
         Architecture:
-            - Entry point for FlextService.execute() protocol compliance
+            - Entry point for s.execute() protocol compliance
             - Delegates to detect_from_connection() for actual implementation
             - Uses r pattern for consistent error handling
         """

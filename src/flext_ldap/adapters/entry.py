@@ -20,7 +20,7 @@ Audit Implications:
 Architecture Notes:
     - Implements Adapter pattern between ldap3 and FlextLdif domains
     - Python 3.13: Uses guard-based sequence handling
-    - Extends FlextService[bool] for health check capability
+    - Extends s[bool] for health check capability
     - Inner class _ConversionHelpers follows SRP for value processing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -33,14 +33,15 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import FlextService, r
+from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
 
 from flext_ldap import c, m, p, t
+from flext_ldap.base import s
 
 
-class FlextLdapEntryAdapter(FlextService[bool]):
+class FlextLdapEntryAdapter(s[bool]):
     """Adapter for converting between ldap3 and FlextLdif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:
@@ -326,7 +327,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
 
     @override
     def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
-        """Execute method required by FlextService.
+        """Execute method required by s.
 
         Business Rules:
             - Entry adapter is stateless and performs no operations
@@ -335,7 +336,7 @@ class FlextLdapEntryAdapter(FlextService[bool]):
             - No remote operations performed - pure data transformation adapter
 
         Audit Implications:
-            - This method exists for FlextService protocol compliance only
+            - This method exists for s protocol compliance only
             - No LDAP operations are performed - no audit trail needed
             - Conversion methods are called directly by service layer
 

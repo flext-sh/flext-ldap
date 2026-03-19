@@ -23,6 +23,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from flext_tests import tm
 
@@ -53,27 +55,22 @@ class TestsFlextLdapSync:
         connection = FlextLdapConnection(config=FlextLdapSettings())
         return FlextLdapOperations(connection=connection)
 
+    @staticmethod
+    def _entry(dn: str) -> m.Ldif.Entry:
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes(attributes={}),
+        )
+
     def test_sync_service_initialization(self) -> None:
-        """Test sync service initialization with operations."""
         operations = self._create_operations()
         sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, none=False)
-        tm.that(sync_service, is_=FlextLdapSyncService, none=False)
-
-    def test_sync_service_initialization_with_ldif(self) -> None:
-        """Test sync service initialization with custom ldif."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, none=False)
-        tm.that(sync_service, is_=FlextLdapSyncService, none=False)
-
-    def test_sync_service_initialization_with_datetime_generator(self) -> None:
-        """Test sync service initialization with datetime generator."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, none=False)
         tm.that(sync_service, is_=FlextLdapSyncService, none=False)
         tm.that(hasattr(sync_service, "_generate_datetime_utc"), eq=True)
+
+    def test_sync_service_init_without_operations_raises_type_error(self) -> None:
+        with pytest.raises(TypeError, match="operations parameter is required"):
+            FlextLdapSyncService(operations=None)
 
     def test_execute_returns_empty_stats(self) -> None:
         """Test execute() returns empty sync stats for health check."""
@@ -98,66 +95,78 @@ class TestsFlextLdapSync:
         tm.that(stats.total, eq=13)
         tm.that(stats.duration_seconds, eq=100.5)
 
-    def test_sync_options_creation(self) -> None:
-        """Test SyncOptions model creation."""
-        options = m.Ldap.SyncOptions(
-            source_basedn="dc=old,dc=com", target_basedn="dc=new,dc=com"
-        )
-        tm.that(options.source_basedn, eq="dc=old,dc=com")
-        tm.that(options.target_basedn, eq="dc=new,dc=com")
+    @pytest.mark.parametrize(
+        ("kwargs", "expected_source", "expected_target"),
+        [
+            pytest.param({}, "", "", id="defaults"),
+            pytest.param(
+                {"source_basedn": "dc=old,dc=com", "target_basedn": "dc=new,dc=com"},
+                "dc=old,dc=com",
+                "dc=new,dc=com",
+                id="explicit_transform",
+            ),
+        ],
+    )
+    def test_sync_options(
+        self,
+        kwargs: dict[str, str],
+        expected_source: str,
+        expected_target: str,
+    ) -> None:
+        options = m.Ldap.SyncOptions(**kwargs)
+        tm.that(options.source_basedn, eq=expected_source)
+        tm.that(options.target_basedn, eq=expected_target)
 
-    def test_sync_options_without_transformation(self) -> None:
-        """Test SyncOptions without base DN transformation."""
-        options = m.Ldap.SyncOptions()
-        tm.that(options.source_basedn, eq="")
-        tm.that(options.target_basedn, eq="")
-
-    def test_base_dn_transformer_no_transformation(self) -> None:
-        """Test BaseDNTransformer with no transformation needed."""
-        entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={}),
-            )
-        ]
+    @pytest.mark.parametrize(
+        ("dn", "source_basedn", "target_basedn", "expected_dn"),
+        [
+            pytest.param(
+                "cn=user,dc=example,dc=com",
+                "",
+                "",
+                "cn=user,dc=example,dc=com",
+                id="no_transformation",
+            ),
+            pytest.param(
+                "cn=user,dc=old,dc=com",
+                "dc=old,dc=com",
+                "dc=new,dc=com",
+                "cn=user,dc=new,dc=com",
+                id="direct_replace",
+            ),
+            pytest.param(
+                "cn=user,dc=old,dc=com",
+                "DC=OLD,DC=COM",
+                "dc=new,dc=com",
+                "cn=user,dc=new,dc=com",
+                id="case_insensitive",
+            ),
+        ],
+    )
+    def test_base_dn_transformer(
+        self,
+        dn: str,
+        source_basedn: str,
+        target_basedn: str,
+        expected_dn: str,
+    ) -> None:
         transformed = FlextLdapSyncService.BaseDNTransformer.transform(
-            entries, source_basedn="", target_basedn=""
+            [self._entry(dn)],
+            source_basedn=source_basedn,
+            target_basedn=target_basedn,
         )
         tm.that(transformed, len=1)
         tm.that(transformed[0].dn, none=False)
         assert transformed[0].dn is not None
-        tm.that(transformed[0].dn.value, eq="cn=user,dc=example,dc=com")
+        tm.that(transformed[0].dn.value, eq=expected_dn)
 
-    def test_base_dn_transformer_with_transformation(self) -> None:
-        """Test BaseDNTransformer with base DN transformation."""
-        entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=user,dc=old,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={}),
-            )
-        ]
-        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
-            entries, source_basedn="dc=old,dc=com", target_basedn="dc=new,dc=com"
+    def test_sync_ldif_file_missing_path_returns_failure(self) -> None:
+        sync_service = FlextLdapSyncService(operations=self._create_operations())
+        result = sync_service.sync_ldif_file(
+            Path("/tmp/flext-nonexistent-sync-input.ldif"),
+            m.Ldap.SyncOptions(),
         )
-        assert len(transformed) == 1
-        assert transformed[0].dn is not None
-        assert transformed[0].dn.value == "cn=user,dc=new,dc=com"
-
-    def test_base_dn_transformer_case_insensitive(self) -> None:
-        """Test BaseDNTransformer with case-insensitive matching."""
-        entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=user,dc=old,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={}),
-            )
-        ]
-        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
-            entries, source_basedn="DC=OLD,DC=COM", target_basedn="dc=new,dc=com"
-        )
-        tm.that(transformed, len=1)
-        tm.that(transformed[0].dn, none=False)
-        assert transformed[0].dn is not None
-        tm.that(transformed[0].dn.value, eq="cn=user,dc=new,dc=com")
+        tm.fail(result)
 
     def test_batch_sync_initialization(self) -> None:
         """Test BatchSync inner class initialization."""
