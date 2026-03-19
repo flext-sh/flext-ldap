@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
-    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
+    from flext_ldap.protocols import FlextLdapProtocols, p
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
@@ -75,7 +75,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "e": ("flext_ldif", "e"),
     "h": ("flext_ldif", "h"),
     "m": ("flext_ldap.models", "m"),
-    "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
+    "p": ("flext_ldap.protocols", "p"),
     "r": ("flext_ldif", "r"),
     "s": ("flext_ldap.base", "s"),
     "services": ("flext_ldap.services", ""),
