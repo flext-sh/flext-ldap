@@ -11,7 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from flext_tests import c, d, e, h, m, p, r, s, t, u, x
+    from flext_tests import d, e, h, r, s, x
 
     from . import _utilities as _utilities, integration as integration, unit as unit
     from ._utilities.fixture_loaders import TestFixtures
@@ -25,11 +25,11 @@ if TYPE_CHECKING:
         search_options,
         worker_id,
     )
-    from .constants import TestsFlextLdapConstants
+    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from .integration.test_smoke import TestsFlextLdapSmoke, pytestmark
-    from .models import TestsFlextLdapModels
-    from .protocols import TestsFlextLdapProtocols
-    from .typings import TestsFlextLdapTypes
+    from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
+    from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
     from .unit.test_api import TestsFlextLdapApi
     from .unit.test_base import TestsFlextLdapBase
     from .unit.test_config import TestsFlextLdapSettings
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from .unit.test_models_sync import TestsFlextLdapModelsSync
     from .unit.test_operations import TestsFlextLdapOperations
     from .unit.test_sync import TestsFlextLdapSync
-    from .utilities import TestsFlextLdapUtilities
+    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapContainerDict": ("tests.conftest", "LdapContainerDict"),
@@ -77,7 +77,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapTypes": ("tests.typings", "TestsFlextLdapTypes"),
     "TestsFlextLdapUtilities": ("tests.utilities", "TestsFlextLdapUtilities"),
     "_utilities": ("tests._utilities", ""),
-    "c": ("flext_tests", "c"),
+    "c": ("tests.constants", "TestsFlextLdapConstants"),
     "connection_config": ("tests.conftest", "connection_config"),
     "d": ("flext_tests", "d"),
     "e": ("flext_tests", "e"),
@@ -85,16 +85,16 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "integration": ("tests.integration", ""),
     "ldap_container": ("tests.conftest", "ldap_container"),
     "logger": ("tests.conftest", "logger"),
-    "m": ("flext_tests", "m"),
-    "p": ("flext_tests", "p"),
+    "m": ("tests.models", "TestsFlextLdapModels"),
+    "p": ("tests.protocols", "TestsFlextLdapProtocols"),
     "pytest_runtest_makereport": ("tests.conftest", "pytest_runtest_makereport"),
     "pytest_sessionstart": ("tests.conftest", "pytest_sessionstart"),
     "pytestmark": ("tests.integration.test_smoke", "pytestmark"),
     "r": ("flext_tests", "r"),
     "s": ("flext_tests", "s"),
     "search_options": ("tests.conftest", "search_options"),
-    "t": ("flext_tests", "t"),
-    "u": ("flext_tests", "u"),
+    "t": ("tests.typings", "TestsFlextLdapTypes"),
+    "u": ("tests.utilities", "TestsFlextLdapUtilities"),
     "unit": ("tests.unit", ""),
     "worker_id": ("tests.conftest", "worker_id"),
     "x": ("flext_tests", "x"),
