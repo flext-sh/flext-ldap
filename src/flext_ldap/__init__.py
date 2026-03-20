@@ -11,7 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from flext_ldif import d, e, h, r, x
+    from flext_ldif import d, e, h, r, s, x
 
     from flext_ldap import _models, adapters, services
     from flext_ldap.__version__ import __all__
@@ -24,17 +24,17 @@ if TYPE_CHECKING:
         FlextLdap,
         FlextLdapSyncCallbacks,
     )
-    from flext_ldap.base import FlextLdapServiceBase, s
-    from flext_ldap.constants import FlextLdapConstants, c
-    from flext_ldap.models import FlextLdapModels, m
-    from flext_ldap.protocols import FlextLdapProtocols, p
+    from flext_ldap.base import FlextLdapServiceBase
+    from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
+    from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
+    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
     from flext_ldap.services.sync import FlextLdapSyncService
     from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, LdifEntry, t
-    from flext_ldap.utilities import FlextLdapUtilities, u
+    from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t, LdifEntry
+    from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdap": ("flext_ldap.api", "FlextLdap"),
@@ -70,17 +70,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__all__": ("flext_ldap.__version__", "__all__"),
     "_models": ("flext_ldap._models", ""),
     "adapters": ("flext_ldap.adapters", ""),
-    "c": ("flext_ldap.constants", "c"),
+    "c": ("flext_ldap.constants", "FlextLdapConstants"),
     "d": ("flext_ldif", "d"),
     "e": ("flext_ldif", "e"),
     "h": ("flext_ldif", "h"),
-    "m": ("flext_ldap.models", "m"),
-    "p": ("flext_ldap.protocols", "p"),
+    "m": ("flext_ldap.models", "FlextLdapModels"),
+    "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
     "r": ("flext_ldif", "r"),
-    "s": ("flext_ldap.base", "s"),
+    "s": ("flext_ldif", "s"),
     "services": ("flext_ldap.services", ""),
-    "t": ("flext_ldap.typings", "t"),
-    "u": ("flext_ldap.utilities", "u"),
+    "t": ("flext_ldap.typings", "FlextLdapTypes"),
+    "u": ("flext_ldap.utilities", "FlextLdapUtilities"),
     "x": ("flext_ldif", "x"),
 }
 
