@@ -43,7 +43,7 @@ class TestsFlextLdapBase:
         assert hasattr(s, "__class_getitem__")
 
     def test_exports(self) -> None:
-        assert s is s
+        assert callable(s)
         assert "s" in base.__all__
         assert "s" in base.__all__
 
