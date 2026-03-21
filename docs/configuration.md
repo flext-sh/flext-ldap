@@ -120,7 +120,7 @@ config = FlextLdapSettings.from_env()
 # 3. Explicit configuration
 config = FlextLdapSettings(
     host="ldap.example.com",
-    port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
+    port=FlextConstants.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     bind_password="REDACTED_LDAP_BIND_PASSWORD-password",
@@ -142,7 +142,7 @@ export FLEXT_LDAP_BIND_PASSWORD="your-password"
 export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 
 # Optional settings
-export FLEXT_LDAP_PORT=${FlextConstants.Platform.LDAPS_DEFAULT_PORT}
+export FLEXT_LDAP_PORT=${FlextConstants.LDAPS_DEFAULT_PORT}
 export FLEXT_LDAP_USE_SSL=true
 export FLEXT_LDAP_TIMEOUT=${FlextLdapConstants.DEFAULT_TIMEOUT}
 export FLEXT_LDAP_POOL_SIZE=5
@@ -187,7 +187,7 @@ from Flext_ldap import FlextLdapSettings
 # Production configuration
 PRODUCTION_CONFIG = FlextLdapSettings(
     host="ldap-prod.example.com",
-    port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
+    port=FlextConstants.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     bind_dn="cn=service-account,ou=applications,dc=example,dc=com",
     bind_password="${LDAP_PROD_PASSWORD}",
@@ -199,7 +199,7 @@ PRODUCTION_CONFIG = FlextLdapSettings(
 # Development configuration
 DEVELOPMENT_CONFIG = FlextLdapSettings(
     host="ldap-dev.example.com",
-    port=FlextConstants.Platform.LDAP_DEFAULT_PORT,
+    port=FlextConstants.LDAP_DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=dev,dc=example,dc=com",
     bind_password="${LDAP_DEV_PASSWORD}",
@@ -295,7 +295,7 @@ from Flext_ldap import FlextLdapSettings
 
 TEST_CONFIG = FlextLdapSettings(
     host=FlextConstants["Platform.DEFAULT_HOST"],
-    port=FlextConstants.Platform.LDAP_DEFAULT_PORT,
+    port=FlextConstants.LDAP_DEFAULT_PORT,
     use_ssl=False,
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=flext,dc=local",
     bind_password="REDACTED_LDAP_BIND_PASSWORD",
@@ -373,7 +373,7 @@ from ssl import create_default_context
 
 config = FlextLdapSettings(
     host="ldap.example.com",
-    port=FlextConstants.Platform.LDAPS_DEFAULT_PORT,
+    port=FlextConstants.LDAPS_DEFAULT_PORT,
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
     verify_certs=True,

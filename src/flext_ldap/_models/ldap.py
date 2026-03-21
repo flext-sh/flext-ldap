@@ -20,7 +20,7 @@ class FlextLdapModelsLdap:
     class ConnectionConfig(BaseModel):
         """Connection config."""
 
-        host: str = c.Network.LOCALHOST
+        host: str = c.LOCALHOST
         port: Annotated[
             int,
             Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535),

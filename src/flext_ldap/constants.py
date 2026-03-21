@@ -22,7 +22,7 @@ class FlextLdapConstants(FlextLdifConstants):
     Access patterns:
     - c.Ldap.* (LDAP-specific constants)
     - c.Ldif.* (inherited from FlextLdifConstants - do NOT override)
-    - c.Platform.* (inherited from FlextConstants via FlextLdifConstants)
+    - c.* (inherited from FlextConstants via FlextLdifConstants)
 
     NOTE: Ldif namespace is inherited from parent - do NOT override.
     """
