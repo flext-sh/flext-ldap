@@ -4,8 +4,6 @@ import pytest
 from flext_tests import c, m, u
 from pydantic import ValidationError
 
-from tests import c, m
-
 pytestmark = pytest.mark.unit
 
 

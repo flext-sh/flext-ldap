@@ -29,7 +29,6 @@ from flext_core import FlextSettings
 from flext_tests import c, m, u
 
 from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings
-from tests import c, m
 
 pytestmark = pytest.mark.unit
 

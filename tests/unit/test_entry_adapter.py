@@ -28,7 +28,6 @@ import pytest
 from flext_tests import m, u
 
 from flext_ldap import FlextLdapEntryAdapter
-from tests import m
 
 pytestmark = pytest.mark.unit
 

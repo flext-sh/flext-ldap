@@ -4,7 +4,6 @@ import pytest
 from flext_tests import c, u
 
 from flext_ldap import FlextLdapSettings
-from tests import c
 
 pytestmark = pytest.mark.unit
 

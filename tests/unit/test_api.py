@@ -25,7 +25,6 @@ from flext_ldap import (
     FlextLdapSettings,
     FlextLdapSyncCallbacks,
 )
-from tests import c, m, p
 
 pytestmark = [pytest.mark.unit]
 

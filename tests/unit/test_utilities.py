@@ -28,8 +28,6 @@ from typing import ClassVar
 import pytest
 from flext_tests import t, u
 
-from tests import t, u
-
 pytestmark = pytest.mark.unit
 
 
