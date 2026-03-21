@@ -38,7 +38,6 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "beartype>=0.22",
   "cryptography>=45.0.5",
   "flext-core @ file:../flext-core",
   "flext-ldif @ file:../flext-ldif",
