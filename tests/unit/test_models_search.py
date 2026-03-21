@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from flext_tests import tm
+from flext_tests import c, m, u
 from pydantic import ValidationError
 
 from tests import c, m
@@ -18,12 +18,12 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_options_default_values(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
-        tm.that(options.base_dn, eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
-        tm.that(options.scope, eq="SUBTREE")
-        tm.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
-        tm.that(options.attributes, none=True)
-        tm.that(options.size_limit, eq=0)
-        tm.that(options.time_limit, eq=0)
+        u.Tests.Matchers.that(options.base_dn, eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
+        u.Tests.Matchers.that(options.scope, eq="SUBTREE")
+        u.Tests.Matchers.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
+        u.Tests.Matchers.that(options.attributes, none=True)
+        u.Tests.Matchers.that(options.size_limit, eq=0)
+        u.Tests.Matchers.that(options.time_limit, eq=0)
 
     def test_search_options_custom_values(self) -> None:
         options = m.Ldap.SearchOptions(
@@ -34,32 +34,32 @@ class TestsFlextLdapModelsSearch:
             size_limit=100,
             time_limit=30,
         )
-        tm.that(options.scope, eq="BASE")
-        tm.that(options.filter_str, eq="(cn=*)")
-        tm.that(options.attributes, eq=["cn", "mail"])
-        tm.that(options.size_limit, eq=100)
+        u.Tests.Matchers.that(options.scope, eq="BASE")
+        u.Tests.Matchers.that(options.filter_str, eq="(cn=*)")
+        u.Tests.Matchers.that(options.attributes, eq=["cn", "mail"])
+        u.Tests.Matchers.that(options.size_limit, eq=100)
 
     def test_search_options_invalid_base_dn_format(self) -> None:
         options = m.Ldap.SearchOptions(base_dn="invalid-dn-format")
-        tm.that(options.base_dn, eq="invalid-dn-format")
+        u.Tests.Matchers.that(options.base_dn, eq="invalid-dn-format")
 
     def test_search_options_scope_normalization_enum(self) -> None:
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope=c.Ldap.SearchScope.BASE
         )
-        tm.that(options.scope, eq="BASE")
+        u.Tests.Matchers.that(options.scope, eq="BASE")
 
     def test_search_options_scope_normalization_string(self) -> None:
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="subtree"
         )
-        tm.that(options.scope in {"SUBTREE", "subtree"}, eq=True)
+        u.Tests.Matchers.that(options.scope in {"SUBTREE", "subtree"}, eq=True)
 
     def test_search_options_normalized_factory(self) -> None:
         options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
-        tm.that(options.base_dn, none=False)
-        tm.that(options.scope, eq="SUBTREE")
-        tm.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
+        u.Tests.Matchers.that(options.base_dn, none=False)
+        u.Tests.Matchers.that(options.scope, eq="SUBTREE")
+        u.Tests.Matchers.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
 
     def test_search_options_normalized_with_config(self) -> None:
         config = m.Ldap.NormalizedConfig(
@@ -68,9 +68,9 @@ class TestsFlextLdapModelsSearch:
         options = m.Ldap.SearchOptions.normalized(
             c.Ldap.Tests.RFC.DEFAULT_BASE_DN, config=config
         )
-        tm.that(options.scope, eq="BASE")
-        tm.that(options.filter_str, eq="(uid=*)")
-        tm.that(options.size_limit, eq=50)
+        u.Tests.Matchers.that(options.scope, eq="BASE")
+        u.Tests.Matchers.that(options.filter_str, eq="(uid=*)")
+        u.Tests.Matchers.that(options.size_limit, eq=50)
 
     def test_operation_result_creation(self) -> None:
         result = m.Ldap.OperationResult(
@@ -79,17 +79,17 @@ class TestsFlextLdapModelsSearch:
             message="Entry added successfully",
             entries_affected=1,
         )
-        tm.that(result.success, eq=True)
-        tm.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
-        tm.that(result.message, eq="Entry added successfully")
-        tm.that(result.entries_affected, eq=1)
+        u.Tests.Matchers.that(result.success, eq=True)
+        u.Tests.Matchers.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
+        u.Tests.Matchers.that(result.message, eq="Entry added successfully")
+        u.Tests.Matchers.that(result.entries_affected, eq=1)
 
     def test_operation_result_default_message(self) -> None:
         result = m.Ldap.OperationResult(
             success=True, operation_type=c.Ldap.OperationType.SEARCH
         )
-        tm.that(result.message, eq="")
-        tm.that(result.entries_affected, eq=0)
+        u.Tests.Matchers.that(result.message, eq="")
+        u.Tests.Matchers.that(result.entries_affected, eq=0)
 
     def test_operation_result_frozen(self) -> None:
         result = m.Ldap.OperationResult(
@@ -117,66 +117,66 @@ class TestsFlextLdapModelsSearch:
         ]
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=entries, search_options=options)
-        tm.that(result.total_count, eq=expected_count)
+        u.Tests.Matchers.that(result.total_count, eq=expected_count)
 
     def test_search_result_by_objectclass_empty(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=[], search_options=options)
         categories = result.by_objectclass
-        tm.that(categories, none=False)
+        u.Tests.Matchers.that(categories, none=False)
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
         entry: dict[str, list[str]] = {}
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
-        tm.that(attrs, eq={})
+        u.Tests.Matchers.that(attrs, eq={})
 
     def test_search_result_extract_objectclass_category_empty(self) -> None:
         category = m.Ldap.SearchResult.extract_objectclass_category({})
-        tm.that(category, eq="unknown")
+        u.Tests.Matchers.that(category, eq="unknown")
 
     def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
         attrs = {"objectClass": ["person", "top"]}
         category = m.Ldap.SearchResult.extract_objectclass_category(attrs)
-        tm.that(category, eq="person")
+        u.Tests.Matchers.that(category, eq="person")
 
     def test_search_result_get_entry_category(self) -> None:
         entry: dict[str, list[str]] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
-        tm.that(category, eq="unknown")
+        u.Tests.Matchers.that(category, eq="unknown")
 
     def test_types_namespace_exists(self) -> None:
-        tm.that(m.Ldap.Types, none=False)
+        u.Tests.Matchers.that(m.Ldap.Types, none=False)
 
     def test_ldap_progress_callback_type_exists(self) -> None:
-        tm.that(hasattr(m.Ldap.Types, "LdapProgressCallback"), eq=True)
+        u.Tests.Matchers.that(hasattr(m.Ldap.Types, "LdapProgressCallback"), eq=True)
 
     def test_connection_config_serialization(self) -> None:
         data = m.Ldap.ConnectionConfig(host="ldap.example.com", port=636).model_dump()
-        tm.that(data["host"], eq="ldap.example.com")
-        tm.that(data["port"], eq=636)
+        u.Tests.Matchers.that(data["host"], eq="ldap.example.com")
+        u.Tests.Matchers.that(data["port"], eq=636)
 
     def test_search_options_serialization(self) -> None:
         data = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="SUBTREE"
         ).model_dump()
-        tm.that(data["base_dn"], eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
-        tm.that(data["scope"], eq="SUBTREE")
+        u.Tests.Matchers.that(data["base_dn"], eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
+        u.Tests.Matchers.that(data["scope"], eq="SUBTREE")
 
     def test_sync_stats_serialization(self) -> None:
         data = m.Ldap.SyncStats.from_counters(
             synced=80, skipped=10, failed=10
         ).model_dump()
-        tm.that(data, keys=["success_rate"])
-        tm.that(data["success_rate"], eq=0.9)
+        u.Tests.Matchers.that(data, keys=["success_rate"])
+        u.Tests.Matchers.that(data["success_rate"], eq=0.9)
 
     def test_connection_config_json_schema(self) -> None:
-        tm.that(
+        u.Tests.Matchers.that(
             m.Ldap.ConnectionConfig.model_json_schema()["properties"],
             keys=["host", "port"],
         )
 
     def test_search_options_json_schema(self) -> None:
-        tm.that(
+        u.Tests.Matchers.that(
             m.Ldap.SearchOptions.model_json_schema()["properties"],
             keys=["base_dn", "scope"],
         )

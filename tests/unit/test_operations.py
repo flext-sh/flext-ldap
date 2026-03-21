@@ -26,7 +26,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
-from flext_tests import tm
+from flext_tests import c, m, u
 
 from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings
 from tests import c, m
@@ -82,15 +82,15 @@ class TestsFlextLdapOperations:
         """Test that __init__ succeeds when connection is provided."""
         connection = self._create_connection()
         operations = self._create_operations(connection)
-        tm.that(operations, none=False)
-        tm.that(operations._connection, eq=connection)
+        u.Tests.Matchers.that(operations, none=False)
+        u.Tests.Matchers.that(operations._connection, eq=connection)
 
     def test_operations_initialization(self) -> None:
         """Test operations service initialization."""
         operations = self._create_operations()
-        tm.that(operations, none=False)
-        tm.that(operations._connection, none=False)
-        tm.that(operations.logger, none=False)
+        u.Tests.Matchers.that(operations, none=False)
+        u.Tests.Matchers.that(operations._connection, none=False)
+        u.Tests.Matchers.that(operations.logger, none=False)
 
     def test_config_property(self) -> None:
         """Test config property returns FlextSettings with ldap namespace."""
@@ -100,7 +100,7 @@ class TestsFlextLdapOperations:
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""
         operations = self._create_operations()
-        tm.that(operations.is_connected, eq=False)
+        u.Tests.Matchers.that(operations.is_connected, eq=False)
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),
@@ -111,13 +111,13 @@ class TestsFlextLdapOperations:
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
-        tm.that(result, eq=expected)
+        u.Tests.Matchers.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
         """Test execute method returns a r."""
         operations = self._create_operations()
         result = operations.execute()
-        tm.fail(result)
+        u.Tests.Matchers.fail(result)
 
     def test_search_method_exists(self) -> None:
         """Test that search method exists and can be called."""
@@ -129,4 +129,4 @@ class TestsFlextLdapOperations:
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
         result = operations.search(search_options)
-        tm.fail(result)
+        u.Tests.Matchers.fail(result)

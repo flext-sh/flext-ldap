@@ -17,7 +17,7 @@ from threading import Lock
 from typing import ClassVar, TextIO
 
 from flext_core import FlextLogger
-from flext_tests import tk
+from flext_tests import c, u
 
 from flext_ldap import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
@@ -81,7 +81,7 @@ class _DockerInfraUtils:
     @staticmethod
     def get_docker_control(worker_id: str = "master") -> tk:
         """Create tk instance for Docker container management."""
-        return tk(
+        return u.Tests.Docker(
             workspace_root=_DockerInfraUtils._workspace_root,
             worker_id=worker_id,
         )

@@ -35,11 +35,13 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextService, r
+from flext_core.models import m
+from flext_core.utilities import u
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import FlextLdapOperations, m, u
 from flext_ldap._models.ldap import FlextLdapModelsLdap
+from flext_ldap.services.operations import FlextLdapOperations
 
 
 class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):

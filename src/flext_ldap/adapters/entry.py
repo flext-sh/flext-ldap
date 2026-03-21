@@ -33,11 +33,14 @@ import logging
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
+from algar_oud_mig.base import s
 from flext_core import r
+from flext_core.constants import c
+from flext_core.models import m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import t
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
-
-from flext_ldap import c, m, p, s, t
 
 
 class FlextLdapEntryAdapter(s[bool]):

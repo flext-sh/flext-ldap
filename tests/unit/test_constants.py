@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
+from flext_tests import c, u
 
 from tests import c, u
 
@@ -64,22 +64,22 @@ class TestsFlextLdapConstants:
             "COMPLETED": c.Ldap.LdapCqrs.Status.COMPLETED,
             "FAILED": c.Ldap.LdapCqrs.Status.FAILED,
         }
-        tm.that(status_map[attr].value, eq=expected)
+        u.Tests.Matchers.that(status_map[attr].value, eq=expected)
 
     def test_is_valid_status_with_enum(self) -> None:
         """Test is_valid_status with Status enum."""
         result = u.Ldap.Validation.is_valid_status(c.Ldap.LdapCqrs.Status.PENDING)
-        tm.that(result, eq=True)
+        u.Tests.Matchers.that(result, eq=True)
 
     def test_is_valid_status_with_string(self) -> None:
         """Test is_valid_status with string literal."""
         result = u.Ldap.Validation.is_valid_status("pending")
-        tm.that(result, eq=True)
+        u.Tests.Matchers.that(result, eq=True)
 
     def test_is_valid_status_invalid(self) -> None:
         """Test is_valid_status with invalid value."""
         result = u.Ldap.Validation.is_valid_status("invalid")
-        tm.that(result, eq=False)
+        u.Tests.Matchers.that(result, eq=False)
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
@@ -92,7 +92,7 @@ class TestsFlextLdapConstants:
             "ONELEVEL": c.Ldap.SearchScope.ONELEVEL,
             "SUBTREE": c.Ldap.SearchScope.SUBTREE,
         }
-        tm.that(scope_map[attr].value, eq=expected)
+        u.Tests.Matchers.that(scope_map[attr].value, eq=expected)
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
@@ -111,22 +111,24 @@ class TestsFlextLdapConstants:
             "DELETE": c.Ldap.OperationType.DELETE,
             "SEARCH": c.Ldap.OperationType.SEARCH,
         }
-        tm.that(op_type_map[attr].value, eq=expected)
+        u.Tests.Matchers.that(op_type_map[attr].value, eq=expected)
 
     def test_core_name(self) -> None:
         """Test Core.NAME constant."""
-        tm.that(c.Ldap.Core.NAME, eq="FLEXT_LDAP")
+        u.Tests.Matchers.that(c.Ldap.Core.NAME, eq="FLEXT_LDAP")
 
     def test_filters_all_entries(self) -> None:
         """Test Filters.ALL_ENTRIES_FILTER constant."""
-        tm.that(c.Ldap.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
+        u.Tests.Matchers.that(c.Ldap.Filters.ALL_ENTRIES_FILTER, eq="(objectClass=*)")
 
     def test_connection_defaults_port_is_valid(self) -> None:
         """Test ConnectionDefaults.PORT is valid port number."""
-        tm.that(c.Ldap.ConnectionDefaults.PORT, is_=int, none=False)
-        tm.that(c.Ldap.ConnectionDefaults.PORT, gte=1, lte=65535)
+        u.Tests.Matchers.that(c.Ldap.ConnectionDefaults.PORT, is_=int, none=False)
+        u.Tests.Matchers.that(c.Ldap.ConnectionDefaults.PORT, gte=1, lte=65535)
 
     def test_vendor_string_max_tokens(self) -> None:
         """Test newly added VENDOR_STRING_MAX_TOKENS constant."""
-        tm.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
-        tm.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, eq=2)
+        u.Tests.Matchers.that(
+            c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, is_=int, none=False
+        )
+        u.Tests.Matchers.that(c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, eq=2)
