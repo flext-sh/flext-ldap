@@ -46,16 +46,31 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapContainerDict": ("tests.conftest", "LdapContainerDict"),
     "TestFixtures": ("tests._utilities.fixture_loaders", "TestFixtures"),
-    "TestsFlextLdap3Adapter": ("tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"),
+    "TestsFlextLdap3Adapter": (
+        "tests.unit.test_ldap3_adapter",
+        "TestsFlextLdap3Adapter",
+    ),
     "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
     "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
     "TestsFlextLdapConstants": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
     "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
-    "TestsFlextLdapEntryAdapter": ("tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"),
+    "TestsFlextLdapEntryAdapter": (
+        "tests.unit.test_entry_adapter",
+        "TestsFlextLdapEntryAdapter",
+    ),
     "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
-    "TestsFlextLdapModelsSearch": ("tests.unit.test_models_search", "TestsFlextLdapModelsSearch"),
-    "TestsFlextLdapModelsSync": ("tests.unit.test_models_sync", "TestsFlextLdapModelsSync"),
-    "TestsFlextLdapOperations": ("tests.unit.test_operations", "TestsFlextLdapOperations"),
+    "TestsFlextLdapModelsSearch": (
+        "tests.unit.test_models_search",
+        "TestsFlextLdapModelsSearch",
+    ),
+    "TestsFlextLdapModelsSync": (
+        "tests.unit.test_models_sync",
+        "TestsFlextLdapModelsSync",
+    ),
+    "TestsFlextLdapOperations": (
+        "tests.unit.test_operations",
+        "TestsFlextLdapOperations",
+    ),
     "TestsFlextLdapProtocols": ("tests.protocols", "TestsFlextLdapProtocols"),
     "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
     "TestsFlextLdapSmoke": ("tests.integration.test_smoke", "TestsFlextLdapSmoke"),
