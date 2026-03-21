@@ -22,8 +22,8 @@ class FlextLdapModelsLdap:
 
         host: str = c.LOCALHOST
         port: Annotated[
-            int,
-            Field(default=c.Ldap.ConnectionDefaults.PORT, ge=1, le=65535),
+            t.PortNumber,
+            Field(default=c.Ldap.ConnectionDefaults.PORT),
         ]
         use_ssl: bool = False
         use_tls: bool = False
@@ -54,10 +54,9 @@ class FlextLdapModelsLdap:
         """Search options."""
 
         base_dn: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 ...,
-                min_length=1,
                 description="Base DN for search (required, non-empty)",
             ),
         ]
@@ -106,10 +105,9 @@ class FlextLdapModelsLdap:
         """Sync options."""
 
         batch_size: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=100,
-                ge=1,
                 description="Batch size for sync operations (must be >= 1)",
             ),
         ]
