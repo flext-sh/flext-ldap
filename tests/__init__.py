@@ -11,10 +11,11 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from flext_tests import d, e, h, r, s, x
+    from flext_tests import c, d, e, h, r, s, u, x
 
     from . import _utilities as _utilities, integration as integration, unit as unit
-    from ._utilities.fixture_loaders import TestFixtures
+    from ._utilities.docker_infra import _DockerInfraUtils
+    from ._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
     from .conftest import (
         LdapContainerDict,
         connection_config,
@@ -25,22 +26,22 @@ if TYPE_CHECKING:
         search_options,
         worker_id,
     )
-    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
-    from .integration.test_smoke import TestsFlextLdapSmoke, pytestmark
+    from .integration.test_smoke import TestsFlextLdapSmoke
     from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
     from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
     from .unit.test_api import TestsFlextLdapApi
     from .unit.test_base import TestsFlextLdapBase
     from .unit.test_config import TestsFlextLdapSettings
+    from .unit.test_constants import TestsFlextLdapConstants
     from .unit.test_detection import TestsFlextLdapDetection
     from .unit.test_entry_adapter import TestsFlextLdapEntryAdapter
     from .unit.test_ldap3_adapter import TestsFlextLdap3Adapter
     from .unit.test_models_search import TestsFlextLdapModelsSearch
     from .unit.test_models_sync import TestsFlextLdapModelsSync
     from .unit.test_operations import TestsFlextLdapOperations
-    from .unit.test_sync import TestsFlextLdapSync
-    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
+    from .unit.test_sync import TestsFlextLdapSync, pytestmark
+    from .unit.test_utilities import TestsFlextLdapUtilities
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapContainerDict": ("tests.conftest", "LdapContainerDict"),
@@ -51,7 +52,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
     "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
-    "TestsFlextLdapConstants": ("tests.constants", "TestsFlextLdapConstants"),
+    "TestsFlextLdapConstants": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
     "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
     "TestsFlextLdapEntryAdapter": (
         "tests.unit.test_entry_adapter",
@@ -75,9 +76,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapSmoke": ("tests.integration.test_smoke", "TestsFlextLdapSmoke"),
     "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
     "TestsFlextLdapTypes": ("tests.typings", "TestsFlextLdapTypes"),
-    "TestsFlextLdapUtilities": ("tests.utilities", "TestsFlextLdapUtilities"),
+    "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
+    "_DockerInfraUtils": ("tests._utilities.docker_infra", "_DockerInfraUtils"),
+    "_FixtureLoaderUtils": ("tests._utilities.fixture_loaders", "_FixtureLoaderUtils"),
     "_utilities": ("tests._utilities", ""),
-    "c": ("tests.constants", "TestsFlextLdapConstants"),
+    "c": ("flext_tests", "c"),
     "connection_config": ("tests.conftest", "connection_config"),
     "d": ("flext_tests", "d"),
     "e": ("flext_tests", "e"),
@@ -89,12 +92,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("tests.protocols", "TestsFlextLdapProtocols"),
     "pytest_runtest_makereport": ("tests.conftest", "pytest_runtest_makereport"),
     "pytest_sessionstart": ("tests.conftest", "pytest_sessionstart"),
-    "pytestmark": ("tests.integration.test_smoke", "pytestmark"),
+    "pytestmark": ("tests.unit.test_sync", "pytestmark"),
     "r": ("flext_tests", "r"),
     "s": ("flext_tests", "s"),
     "search_options": ("tests.conftest", "search_options"),
     "t": ("tests.typings", "TestsFlextLdapTypes"),
-    "u": ("tests.utilities", "TestsFlextLdapUtilities"),
+    "u": ("flext_tests", "u"),
     "unit": ("tests.unit", ""),
     "worker_id": ("tests.conftest", "worker_id"),
     "x": ("flext_tests", "x"),
@@ -119,6 +122,8 @@ __all__ = [
     "TestsFlextLdapSync",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "_DockerInfraUtils",
+    "_FixtureLoaderUtils",
     "_utilities",
     "c",
     "connection_config",
