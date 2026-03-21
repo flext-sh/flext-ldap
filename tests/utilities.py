@@ -31,7 +31,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             """Assertion matchers for test readability."""
 
             @staticmethod
-            def that(  # noqa: PLR0912
+            def that(
                 value: object,
                 *,
                 eq: object = _SENTINEL,
@@ -42,8 +42,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 keys: Sequence[str] | object = _SENTINEL,
                 lacks_keys: Sequence[str] | object = _SENTINEL,
                 kv: dict[str, object] | object = _SENTINEL,
-                gte: int | float | object = _SENTINEL,
-                lte: int | float | object = _SENTINEL,
+                gte: float | object = _SENTINEL,
+                lte: float | object = _SENTINEL,
                 **kwargs: object,
             ) -> None:
                 """Assert value matches expected conditions."""
@@ -109,7 +109,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 error_str = str(result.error) if result.error else ""  # type: ignore[union-attr]
                 has_value = kwargs.get("has")
                 if has_value is not None:
-                    assert has_value in error_str.lower(), (  # type: ignore[operator]
+                    assert str(has_value).lower() in error_str.lower(), (
                         f"Expected error to contain {has_value!r}, got {error_str!r}"
                     )
                 return error_str
