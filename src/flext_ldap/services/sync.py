@@ -308,8 +308,14 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                         flags=re.IGNORECASE,
                     )
                     return m.Ldif.Entry(
-                        dn=m.Ldif.DN(value=new_dn_value),
+                        dn=m.Ldif.DN(
+                            value=new_dn_value,
+                            metadata=m.Ldif.EntryMetadata(),
+                        ),
                         attributes=entry.attributes,
+                        changetype=None,
+                        metadata=None,
+                        validation_metadata=None,
                     )
                 return entry
 

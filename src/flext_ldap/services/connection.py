@@ -124,7 +124,7 @@ class FlextLdapConnection(s[bool]):
         """
         super().__init__()
         resolved_config: FlextLdapSettings = (
-            config if config is not None else FlextLdapSettings()
+            config if config is not None else FlextLdapSettings.model_validate({})
         )
         self._config = resolved_config
         resolved_parser: FlextLdifParser = (

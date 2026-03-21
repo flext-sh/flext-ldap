@@ -95,6 +95,17 @@ class FlextLdapModelsLdap:
                 "attributes": norm_config.attributes,
             })
 
+    class SearchParams(BaseModel):
+        """Typed LDAP search parameters passed to ldap3 search calls."""
+
+        model_config = ConfigDict(frozen=True, extra="forbid")
+        base_dn: str
+        filter_str: str
+        ldap_scope: int
+        search_attributes: list[str]
+        size_limit: int
+        time_limit: int
+
     class LdapBatchStats(BaseModel):
         """Batch stats."""
 

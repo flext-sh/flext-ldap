@@ -356,12 +356,14 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             """
             attr_keys = list(existing_attrs.keys())
+            normalized_target = u.Ldap.norm_str(str(attr_name), case="lower")
+
+            def _match_attr(k: object) -> bool:
+                return u.Ldap.norm_str(str(k), case="lower") == normalized_target
+
             found_key = u.Ldif.find(
                 attr_keys,
-                predicate=lambda k: (
-                    u.Ldap.norm_str(str(k), case="lower")
-                    == u.Ldap.norm_str(str(attr_name), case="lower")
-                ),
+                predicate=_match_attr,
             )
             if found_key is not None:
                 key: str = str(found_key)
@@ -565,8 +567,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 for k, v in dict(attrs_mapping).items()
             }
             return m.Ldif.Entry(
-                dn=m.Ldif.DN(value=dn_value),
-                attributes=m.Ldif.Attributes(attributes=attrs_dict),
+                dn=m.Ldif.DN(value=dn_value, metadata=m.Ldif.EntryMetadata()),
+                attributes=m.Ldif.Attributes(
+                    attributes=attrs_dict,
+                    attribute_metadata={},
+                    metadata=None,
+                ),
+                changetype=None,
+                metadata=None,
+                validation_metadata=None,
             )
 
         def execute(self, entry: m.Ldif.Entry) -> r[m.Ldap.LdapOperationResult]:
@@ -1083,6 +1092,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             case str():
                 dn_model: m.Ldif.DN = m.Ldif.DN(
                     value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
+                    metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
                 dn_model = dn
@@ -1162,6 +1172,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             case str():
                 dn_model: m.Ldif.DN = m.Ldif.DN(
                     value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
+                    metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
                 dn_model = dn

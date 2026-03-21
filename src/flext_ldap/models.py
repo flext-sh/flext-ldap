@@ -44,6 +44,9 @@ class FlextLdapModels(FlextLdifModels):
         class SearchOptions(FlextLdapModelsLdap.SearchOptions):
             """Options for LDAP search operations."""
 
+        class SearchParams(FlextLdapModelsLdap.SearchParams):
+            """Typed LDAP search parameters passed to ldap3 search calls."""
+
         class SyncOptions(FlextLdapModelsLdap.SyncOptions):
             """Sync options model namespace."""
 

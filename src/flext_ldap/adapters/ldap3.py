@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Literal, override
 
 from flext_core import FlextService, r
@@ -44,6 +44,35 @@ from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldap.typings import FlextLdapTypes as t
 from flext_ldap.utilities import FlextLdapUtilities as u
 from ldap3 import Connection, Server
+
+
+def _object_to_str_list(value: object) -> list[str]:
+    """Convert a list/tuple/sequence object to list[str] without isinstance narrowing.
+
+    Pyright narrows isinstance(v, list) on v:object to list[Unknown], making
+    element access return Unknown. This helper avoids that by using __len__
+    and __getitem__ through getattr to maintain type safety.
+    """
+    length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
+    getitem_fn: Callable[[int], object] | None = getattr(value, "__getitem__", None)
+    if length_fn is None or getitem_fn is None:
+        return []
+    result: list[str] = []
+    for idx in range(length_fn()):
+        el: object = getitem_fn(idx)
+        if el is not None and isinstance(el, (str, int, float, bool, bytes)):
+            result.append(str(el))
+    return result
+
+
+def _ldap3_method(connection: Connection, method_name: str) -> Callable[..., bool]:
+    """Get a typed callable for an untyped ldap3 Connection method.
+
+    ldap3 library methods return Unknown types which cause pyright errors.
+    This helper extracts the method via getattr and wraps the return as bool.
+    """
+    method: Callable[..., bool] = getattr(connection, method_name)
+    return method
 
 
 class FlextLdapLdap3Wrappers:
@@ -60,14 +89,14 @@ class FlextLdapLdap3Wrappers:
         normalized_attributes: dict[str, t.Container] = {
             key: values[0] if values else "" for key, values in attributes.items()
         }
-        result = connection.add(dn, object_class, normalized_attributes)
-        return bool(result)
+        add_fn = _ldap3_method(connection, "add")
+        return bool(add_fn(dn, object_class, normalized_attributes))
 
     @staticmethod
     def delete(connection: Connection, dn: str) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.delete()."""
-        result = connection.delete(dn)
-        return bool(result)
+        delete_fn = _ldap3_method(connection, "delete")
+        return bool(delete_fn(dn))
 
     @staticmethod
     def is_bound(connection: Connection) -> bool:
@@ -82,8 +111,8 @@ class FlextLdapLdap3Wrappers:
         changes: t.Ldap.Operation.Changes,
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
-        result = connection.modify(dn, changes)
-        return bool(result)
+        modify_fn = _ldap3_method(connection, "modify")
+        return bool(modify_fn(dn, changes))
 
     @staticmethod
     def search(
@@ -112,17 +141,19 @@ class FlextLdapLdap3Wrappers:
                 "SUBTREE": "SUBTREE",
             }
             normalized_scope = scope_str_map.get(search_scope.upper(), "SUBTREE")
-        result = connection.search(
-            search_base=search_base,
-            search_filter=search_filter,
-            search_scope=normalized_scope,
-            attributes=list(attributes)
-            if not isinstance(attributes, str)
-            else attributes,
-            size_limit=size_limit,
-            time_limit=time_limit,
+        search_fn = _ldap3_method(connection, "search")
+        return bool(
+            search_fn(
+                search_base=search_base,
+                search_filter=search_filter,
+                search_scope=normalized_scope,
+                attributes=list(attributes)
+                if not isinstance(attributes, str)
+                else attributes,
+                size_limit=size_limit,
+                time_limit=time_limit,
+            ),
         )
-        return bool(result)
 
     @staticmethod
     def start_tls(connection: Connection) -> bool:
@@ -133,8 +164,8 @@ class FlextLdapLdap3Wrappers:
     @staticmethod
     def unbind(connection: Connection) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
-        result = connection.unbind()
-        return bool(result)
+        unbind_fn = _ldap3_method(connection, "unbind")
+        return bool(unbind_fn())
 
 
 class Ldap3Adapter(FlextService[bool]):
@@ -311,7 +342,9 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             results: list[tuple[str, Mapping[str, list[str]]]] = []
-            for entry in connection.entries:
+            entries_list: list[object] = getattr(connection, "entries", [])
+            entries_raw: Sequence[object] = entries_list
+            for entry in entries_raw:
                 if not isinstance(entry, p.Ldap.Ldap3Entry):
                     dn = str(entry) if entry else ""
                     results.append((dn, {}))
@@ -386,7 +419,9 @@ class Ldap3Adapter(FlextService[bool]):
                 entry = m.Ldif.Entry(
                     dn=dn_obj,
                     attributes=attrs_obj,
+                    changetype=None,
                     metadata=metadata_obj,
+                    validation_metadata=None,
                 )
                 entries.append(entry)
                 continue
@@ -417,7 +452,9 @@ class Ldap3Adapter(FlextService[bool]):
                 - No network calls - pure data transformation
 
             """
-            attrs_raw: m.Ldif.Attributes | t.ContainerValue | None = None
+            attrs_raw: (
+                m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None
+            ) = None
             if isinstance(parsed, m.Ldif.Entry):
                 attrs_raw = parsed.attributes
             else:
@@ -426,11 +463,19 @@ class Ldap3Adapter(FlextService[bool]):
                     "attributes",
                 )
             if attrs_raw is None:
-                return m.Ldif.Attributes(attributes={})
+                return m.Ldif.Attributes(
+                    attributes={},
+                    attribute_metadata={},
+                    metadata=None,
+                )
             if isinstance(attrs_raw, m.Ldif.Attributes):
                 return attrs_raw
             attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
-            return m.Ldif.Attributes(attributes=attrs_dict)
+            return m.Ldif.Attributes(
+                attributes=attrs_dict,
+                attribute_metadata={},
+                metadata=None,
+            )
 
         @staticmethod
         def extract_attrs_dict(
@@ -464,14 +509,17 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             if isinstance(attrs, p.Ldap.HasAttributesProperty):
-                attrs_attr = attrs.attributes
+                attrs_attr: Mapping[str, object] = attrs.attributes
                 return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
             if isinstance(attrs, BaseModel):
-                dumped = attrs.model_dump()
-                attrs_value_raw = dumped.get("attributes", {})
-                if isinstance(attrs_value_raw, Mapping):
+                model_attrs: Mapping[str, object] | None = getattr(
+                    attrs,
+                    "attributes",
+                    None,
+                )
+                if model_attrs is not None and isinstance(model_attrs, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
-                        attrs_value_raw,
+                        model_attrs,
                     )
                 return {}
             if isinstance(attrs, Mapping):
@@ -509,10 +557,11 @@ class Ldap3Adapter(FlextService[bool]):
                 DN instance with extracted or empty value.
 
             """
+            default_metadata = m.Ldif.EntryMetadata()
             if isinstance(parsed, m.Ldif.Entry):
                 if parsed.dn is not None:
                     return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
-                return m.Ldif.DN(value="")
+                return m.Ldif.DN(value="", metadata=default_metadata)
             dn_raw = None
             if isinstance(parsed, p.Ldap.Ldap3Entry):
                 dn_raw = parsed.entry_dn
@@ -522,14 +571,17 @@ class Ldap3Adapter(FlextService[bool]):
                     "dn",
                 )
             if dn_raw is None:
-                return m.Ldif.DN(value="")
+                return m.Ldif.DN(value="", metadata=default_metadata)
             if isinstance(dn_raw, m.Ldif.DN):
                 return dn_raw
             if isinstance(dn_raw, p.Ldap.DN):
-                return m.Ldif.DN(value=dn_raw.value or "")
+                return m.Ldif.DN(
+                    value=dn_raw.value or "",
+                    metadata=default_metadata,
+                )
             dn_str_val = str(dn_raw)
             dn_value: str = u.Ldif.DN.get_dn_value(dn_str_val)
-            return m.Ldif.DN(value=dn_value)
+            return m.Ldif.DN(value=dn_value, metadata=default_metadata)
 
         @staticmethod
         def extract_metadata(
@@ -582,27 +634,10 @@ class Ldap3Adapter(FlextService[bool]):
             normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
             if normalized:
                 quirk_type_raw = normalized.get("quirk_type")
-                extensions_raw = normalized.get("extensions")
                 if not isinstance(quirk_type_raw, str):
                     return None
-                if not isinstance(extensions_raw, Mapping):
-                    return m.Ldif.QuirkMetadata.model_validate({
-                        "quirk_type": quirk_type_raw,
-                    })
-                extensions_data: dict[str, t.Scalar | list[t.Scalar]] = {}
-                for ext_key, ext_value in extensions_raw.items():
-                    if isinstance(ext_key, str) and isinstance(
-                        ext_value,
-                        (str, int, float, bool, list),
-                    ):
-                        if isinstance(ext_value, list):
-                            if all(u.is_primitive(item) for item in ext_value):
-                                extensions_data[ext_key] = ext_value
-                            continue
-                        extensions_data[ext_key] = ext_value
                 return m.Ldif.QuirkMetadata.model_validate({
                     "quirk_type": quirk_type_raw,
-                    "extensions": extensions_data,
                 })
             return None
 
@@ -647,16 +682,18 @@ class Ldap3Adapter(FlextService[bool]):
             if attrs_dict is None:
                 return {}
             result: dict[str, list[str]] = {}
-            for k, v in attrs_dict.items():
-                if isinstance(v, (list, tuple)):
-                    str_list: list[str] = [
-                        str(raw_val)
-                        for raw_val in v
-                        if raw_val is not None and u.is_primitive(raw_val)
-                    ]
-                    result[k] = str_list
+            for k in attrs_dict:
+                v: object = attrs_dict[k]
+                if isinstance(v, str):
+                    result[k] = [v]
+                elif isinstance(v, (int, float, bool, bytes)):
+                    result[k] = [str(v)]
+                elif hasattr(v, "__len__") and hasattr(v, "__getitem__"):
+                    result[k] = _object_to_str_list(v)
+                elif v is not None:
+                    result[k] = [str(v)]
                 else:
-                    result[k] = [str(v)] if v is not None else []
+                    result[k] = []
             return result
 
         @staticmethod
@@ -1002,17 +1039,6 @@ class Ldap3Adapter(FlextService[bool]):
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
 
-        class SearchParams(BaseModel):
-            """Typed LDAP search parameters passed to ldap3 search calls."""
-
-            model_config = ConfigDict(frozen=True, extra="forbid")
-            base_dn: str
-            filter_str: str
-            ldap_scope: int
-            search_attributes: list[str]
-            size_limit: int
-            time_limit: int
-
         def __init__(self, adapter: Ldap3Adapter) -> None:
             """Initialize search executor with adapter instance.
 
@@ -1037,7 +1063,7 @@ class Ldap3Adapter(FlextService[bool]):
         def execute(
             self,
             connection: Connection,
-            params: Ldap3Adapter.SearchExecutor.SearchParams,
+            params: m.Ldap.SearchParams,
             server_type: c.Ldif.ServerTypes | str,
         ) -> r[list[m.Ldif.Entry]]:
             """Execute LDAP search and convert results.
@@ -1499,7 +1525,7 @@ class Ldap3Adapter(FlextService[bool]):
             return r[m.Ldap.SearchResult].fail(
                 str(scope_result.error) if scope_result.error else "",
             )
-        search_params = self.SearchExecutor.SearchParams(
+        search_params = m.Ldap.SearchParams(
             base_dn=search_options.base_dn,
             filter_str=search_options.filter_str,
             ldap_scope=scope_result.value,

@@ -319,11 +319,13 @@ class FlextLdapServerDetector(s[str]):
             return r[t.Ldap.Operation.AttributeDict].fail(
                 f"rootDSE query failed: {connection.result}",
             )
-        if not connection.entries:
+        entries_list: list[object] = getattr(connection, "entries", [])
+        entries_raw: Sequence[object] = entries_list
+        if not entries_raw:
             return r[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query returned no entries",
             )
-        root_dse_entry = connection.entries[0]
+        root_dse_entry: object = entries_raw[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
             return r[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query returned invalid entry payload",
@@ -369,17 +371,12 @@ class FlextLdapServerDetector(s[str]):
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
         root_dse_attrs = root_dse_result.value
 
-        def to_str_list(value: str | Sequence[str] | object) -> list[str]:
-            """Convert value to list[str] using modern Python 3.13 patterns."""
-            if not value:
-                return []
-            if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
-                return [str(item) for item in value]
-            return [str(value)]
-
-        naming_contexts = to_str_list(root_dse_attrs.get("namingContexts", []))
-        supported_controls = to_str_list(root_dse_attrs.get("supportedControl", []))
-        supported_extensions = to_str_list(root_dse_attrs.get("supportedExtension", []))
+        naming_contexts: list[str] = root_dse_attrs.get("namingContexts", [])
+        supported_controls: list[str] = root_dse_attrs.get("supportedControl", [])
+        supported_extensions: list[str] = root_dse_attrs.get(
+            "supportedExtension",
+            [],
+        )
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
                 root_dse_attrs,
