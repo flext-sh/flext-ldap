@@ -11,7 +11,10 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from flext_tests import c, d, e, h, r, s, u, x
+    from flext_tests import d, e, h, r, s, x
+
+    from tests.constants import TestsFlextLdapConstants as c
+    from tests.utilities import TestsFlextLdapUtilities as u
 
     from . import _utilities as _utilities, integration as integration, unit as unit
     from ._utilities.docker_infra import _DockerInfraUtils
@@ -80,7 +83,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_DockerInfraUtils": ("tests._utilities.docker_infra", "_DockerInfraUtils"),
     "_FixtureLoaderUtils": ("tests._utilities.fixture_loaders", "_FixtureLoaderUtils"),
     "_utilities": ("tests._utilities", ""),
-    "c": ("flext_tests", "c"),
+    "c": ("tests.constants", "TestsFlextLdapConstants"),
     "connection_config": ("tests.conftest", "connection_config"),
     "d": ("flext_tests", "d"),
     "e": ("flext_tests", "e"),
@@ -97,7 +100,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "s": ("flext_tests", "s"),
     "search_options": ("tests.conftest", "search_options"),
     "t": ("tests.typings", "TestsFlextLdapTypes"),
-    "u": ("flext_tests", "u"),
+    "u": ("tests.utilities", "TestsFlextLdapUtilities"),
     "unit": ("tests.unit", ""),
     "worker_id": ("tests.conftest", "worker_id"),
     "x": ("flext_tests", "x"),

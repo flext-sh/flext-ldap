@@ -13,10 +13,11 @@ import logging
 from collections.abc import Callable, Mapping
 from typing import TypeIs
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.typings import t
 from flext_ldif import FlextLdifUtilities
+from flext_ldif.models import FlextLdifModels as m
+
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.typings import FlextLdapTypes as t
 
 
 class FlextLdapUtilities(FlextLdifUtilities):

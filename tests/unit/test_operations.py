@@ -26,9 +26,11 @@ from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
-from flext_tests import c, m, u
 
 from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings
+from tests.constants import TestsFlextLdapConstants as c
+from tests.models import TestsFlextLdapModels as m
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 

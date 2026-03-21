@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import c, u
 
 from flext_ldap import FlextLdapSettings
+from tests.constants import TestsFlextLdapConstants as c
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 

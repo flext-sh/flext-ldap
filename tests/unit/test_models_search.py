@@ -3,8 +3,11 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from flext_tests import c, m, u
 from pydantic import ValidationError
+
+from tests.constants import TestsFlextLdapConstants as c
+from tests.models import TestsFlextLdapModels as m
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 

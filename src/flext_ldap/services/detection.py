@@ -35,11 +35,11 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
 from flext_core import r, s
-from flext_core.constants import c
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import t
-from flext_core.utilities import u
 
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.protocols import FlextLdapProtocols as p
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 from ldap3 import BASE, Connection
 
 

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import socket
 import time
 from pathlib import Path
 
 import pytest
-from flext_core import FlextLogger
+from flext_core import FlextLogger, r
 
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
@@ -22,6 +23,19 @@ def _get_worker_id(config: pytest.Config) -> str:
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     return str(worker_input.get("workerid", "master"))
+
+
+def _wait_for_port_ready(host: str, port: int, timeout: int) -> r[bool]:
+    """Wait until a TCP port is accepting connections."""
+    waited = 0.0
+    while waited < timeout:
+        try:
+            with socket.create_connection((host, port), timeout=1):
+                return r[bool].ok(value=True)
+        except (ConnectionRefusedError, TimeoutError, OSError):
+            time.sleep(1.0)
+            waited += 1.0
+    return r[bool].fail(f"Port {port} not ready after {timeout}s")
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -55,9 +69,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             docker_control.compose_up(
                 compose_file_rel, service=c.Ldap.Tests.Docker.SERVICE_NAME
             )
-    port_ready = docker_control.wait_for_port_ready(
-        "localhost", c.Ldap.Tests.Docker.PORT, 90
-    )
+    port_ready = _wait_for_port_ready("localhost", c.Ldap.Tests.Docker.PORT, 90)
     if port_ready.is_success and port_ready.value:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0
@@ -135,12 +147,10 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
     lock = u.Ldap.Tests.FileLock(
         Path.home() / ".flext" / f"{c.Ldap.Tests.Docker.CONTAINER_NAME}.lock"
     )
-    docker_control = u.Ldap.Tests.get_docker_control(worker_id)
+    u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-        port_result = docker_control.wait_for_port_ready(
-            "localhost", c.Ldap.Tests.Docker.PORT, 60
-        )
+        port_result = _wait_for_port_ready("localhost", c.Ldap.Tests.Docker.PORT, 60)
         if port_result.is_failure or not port_result.value:
             pytest.fail(
                 f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within 60s"

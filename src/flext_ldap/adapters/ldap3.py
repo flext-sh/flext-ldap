@@ -34,15 +34,15 @@ from collections.abc import Mapping, Sequence
 from typing import Literal, override
 
 from flext_core import FlextService, r
-from flext_core.models import m
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import t
-from flext_core.utilities import u
 from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.protocols import FlextLdapProtocols as p
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 from ldap3 import Connection, Server
 
 
@@ -100,9 +100,9 @@ class FlextLdapLdap3Wrappers:
         normalized_scope: Literal["BASE", "LEVEL", "SUBTREE"]
         if isinstance(search_scope, int):
             scope_map: Mapping[int, Literal["BASE", "LEVEL", "SUBTREE"]] = {
-                c.LDAP3_SCOPE_BASE: "BASE",
-                c.LDAP3_SCOPE_LEVEL: "LEVEL",
-                c.LDAP3_SCOPE_SUBTREE: "SUBTREE",
+                c.Ldap.SearchScopeValue.BASE: "BASE",
+                c.Ldap.SearchScopeValue.LEVEL: "LEVEL",
+                c.Ldap.SearchScopeValue.SUBTREE: "SUBTREE",
             }
             normalized_scope = scope_map.get(search_scope, "SUBTREE")
         else:
@@ -1189,9 +1189,9 @@ class Ldap3Adapter(FlextService[bool]):
             except ValueError:
                 return r[int].fail(f"Invalid LDAP scope: {scope}")
         ldap3_scope_mapping: Mapping[c.Ldap.SearchScope, int] = {
-            c.Ldap.SearchScope.BASE: c.LDAP3_SCOPE_BASE,
-            c.Ldap.SearchScope.ONELEVEL: c.LDAP3_SCOPE_LEVEL,
-            c.Ldap.SearchScope.SUBTREE: c.LDAP3_SCOPE_SUBTREE,
+            c.Ldap.SearchScope.BASE: c.Ldap.SearchScopeValue.BASE,
+            c.Ldap.SearchScope.ONELEVEL: c.Ldap.SearchScopeValue.LEVEL,
+            c.Ldap.SearchScope.SUBTREE: c.Ldap.SearchScopeValue.SUBTREE,
         }
         if scope_enum in ldap3_scope_mapping:
             ldap3_value = ldap3_scope_mapping[scope_enum]

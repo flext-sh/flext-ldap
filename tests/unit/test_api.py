@@ -14,7 +14,6 @@ from collections.abc import Callable
 import pytest
 from flext_core import FlextSettings
 from flext_ldif import FlextLdif
-from flext_tests import c, m, p, u
 
 from flext_ldap import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
@@ -25,6 +24,10 @@ from flext_ldap import (
     FlextLdapSettings,
     FlextLdapSyncCallbacks,
 )
+from tests.constants import TestsFlextLdapConstants as c
+from tests.models import TestsFlextLdapModels as m
+from tests.protocols import TestsFlextLdapProtocols as p
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = [pytest.mark.unit]
 

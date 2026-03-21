@@ -23,12 +23,11 @@ from types import ModuleType
 from typing import override
 
 from flext_core import FlextService
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import t
 from pydantic_settings import BaseSettings
 
+from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.typings import TDomainResult
+from flext_ldap.typings import FlextLdapTypes as t, TDomainResult
 
 # TypeVar for domain result type
 

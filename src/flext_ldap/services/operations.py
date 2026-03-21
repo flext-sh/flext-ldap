@@ -35,15 +35,15 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import override
 
 from flext_core import FlextRuntime, r, s
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import t
-from flext_core.utilities import u
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
 from flext_ldap.constants import FlextLdapConstants as c
 from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap.utilities import FlextLdapUtilities as u
 
 LaxStr = str | bytes | bytearray
 
@@ -413,7 +413,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 if k.lower() not in ignore_lower and k.lower() not in processed_lower:
                     filtered_attrs[k] = [str(item) for item in v]
             changes_dict: dict[str, list[tuple[int, list[str]]]] = {
-                k: [(c.LDAP3_MODIFY_DELETE, [])] for k in filtered_attrs
+                k: [(c.Ldap.ModifyOperation.DELETE, [])] for k in filtered_attrs
             }
             return changes_dict
 
@@ -474,7 +474,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 ])
                 if existing_set != new_set:
                     new_list = [str(v) for v in new_vals if v]
-                    return (attr_name, [(c.LDAP3_MODIFY_REPLACE, new_list)])
+                    return (attr_name, [(c.Ldap.ModifyOperation.REPLACE, new_list)])
                 return (attr_name, None)
 
             processed_dict: dict[str, list[tuple[int, list[str]]] | None] = {}
@@ -748,7 +748,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     f"Schema modify entry has only empty values for '{attr_type}'",
                 )
             changes: t.Ldap.Operation.Changes = {
-                attr_type: [(c.LDAP3_MODIFY_ADD, filtered)],
+                attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
             }
             entry_model = self._convert_to_model(entry)
             dn_str: str

@@ -25,9 +25,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import m, u
 
 from flext_ldap import FlextLdapEntryAdapter
+from tests.models import TestsFlextLdapModels as m
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 

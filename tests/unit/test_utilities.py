@@ -26,7 +26,9 @@ from collections.abc import Callable
 from typing import ClassVar
 
 import pytest
-from flext_tests import t, u
+
+from tests.typings import TestsFlextLdapTypes as t
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 

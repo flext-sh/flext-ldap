@@ -26,7 +26,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import m, u
 
 from flext_ldap import (
     FlextLdapConnection,
@@ -34,6 +33,8 @@ from flext_ldap import (
     FlextLdapSettings,
     FlextLdapSyncService,
 )
+from tests.models import TestsFlextLdapModels as m
+from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 
