@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from flext_tests import d, e, h, r, s, x
 
     from . import _utilities as _utilities, integration as integration, unit as unit
-    from ._utilities.fixture_loaders import TestFixtures
+    from ._utilities import TestFixtures
     from .conftest import (
         LdapContainerDict,
         connection_config,
@@ -26,54 +26,41 @@ if TYPE_CHECKING:
         worker_id,
     )
     from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
-    from .integration.test_smoke import TestsFlextLdapSmoke, pytestmark
+    from .integration import TestsFlextLdapSmoke, pytestmark
     from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
     from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
-    from .unit.test_api import TestsFlextLdapApi
-    from .unit.test_base import TestsFlextLdapBase
-    from .unit.test_config import TestsFlextLdapSettings
-    from .unit.test_detection import TestsFlextLdapDetection
-    from .unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from .unit.test_ldap3_adapter import TestsFlextLdap3Adapter
-    from .unit.test_models_search import TestsFlextLdapModelsSearch
-    from .unit.test_models_sync import TestsFlextLdapModelsSync
-    from .unit.test_operations import TestsFlextLdapOperations
-    from .unit.test_sync import TestsFlextLdapSync
+    from .unit import (
+        TestsFlextLdap3Adapter,
+        TestsFlextLdapApi,
+        TestsFlextLdapBase,
+        TestsFlextLdapDetection,
+        TestsFlextLdapEntryAdapter,
+        TestsFlextLdapModelsSearch,
+        TestsFlextLdapModelsSync,
+        TestsFlextLdapOperations,
+        TestsFlextLdapSettings,
+        TestsFlextLdapSync,
+    )
     from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "LdapContainerDict": ("tests.conftest", "LdapContainerDict"),
-    "TestFixtures": ("tests._utilities.fixture_loaders", "TestFixtures"),
-    "TestsFlextLdap3Adapter": (
-        "tests.unit.test_ldap3_adapter",
-        "TestsFlextLdap3Adapter",
-    ),
-    "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
-    "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
+    "TestFixtures": ("tests._utilities", "TestFixtures"),
+    "TestsFlextLdap3Adapter": ("tests.unit", "TestsFlextLdap3Adapter"),
+    "TestsFlextLdapApi": ("tests.unit", "TestsFlextLdapApi"),
+    "TestsFlextLdapBase": ("tests.unit", "TestsFlextLdapBase"),
     "TestsFlextLdapConstants": ("tests.constants", "TestsFlextLdapConstants"),
-    "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
-    "TestsFlextLdapEntryAdapter": (
-        "tests.unit.test_entry_adapter",
-        "TestsFlextLdapEntryAdapter",
-    ),
+    "TestsFlextLdapDetection": ("tests.unit", "TestsFlextLdapDetection"),
+    "TestsFlextLdapEntryAdapter": ("tests.unit", "TestsFlextLdapEntryAdapter"),
     "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
-    "TestsFlextLdapModelsSearch": (
-        "tests.unit.test_models_search",
-        "TestsFlextLdapModelsSearch",
-    ),
-    "TestsFlextLdapModelsSync": (
-        "tests.unit.test_models_sync",
-        "TestsFlextLdapModelsSync",
-    ),
-    "TestsFlextLdapOperations": (
-        "tests.unit.test_operations",
-        "TestsFlextLdapOperations",
-    ),
+    "TestsFlextLdapModelsSearch": ("tests.unit", "TestsFlextLdapModelsSearch"),
+    "TestsFlextLdapModelsSync": ("tests.unit", "TestsFlextLdapModelsSync"),
+    "TestsFlextLdapOperations": ("tests.unit", "TestsFlextLdapOperations"),
     "TestsFlextLdapProtocols": ("tests.protocols", "TestsFlextLdapProtocols"),
-    "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
-    "TestsFlextLdapSmoke": ("tests.integration.test_smoke", "TestsFlextLdapSmoke"),
-    "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
+    "TestsFlextLdapSettings": ("tests.unit", "TestsFlextLdapSettings"),
+    "TestsFlextLdapSmoke": ("tests.integration", "TestsFlextLdapSmoke"),
+    "TestsFlextLdapSync": ("tests.unit", "TestsFlextLdapSync"),
     "TestsFlextLdapTypes": ("tests.typings", "TestsFlextLdapTypes"),
     "TestsFlextLdapUtilities": ("tests.utilities", "TestsFlextLdapUtilities"),
     "_utilities": ("tests._utilities", ""),
@@ -89,7 +76,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("tests.protocols", "TestsFlextLdapProtocols"),
     "pytest_runtest_makereport": ("tests.conftest", "pytest_runtest_makereport"),
     "pytest_sessionstart": ("tests.conftest", "pytest_sessionstart"),
-    "pytestmark": ("tests.integration.test_smoke", "pytestmark"),
+    "pytestmark": ("tests.integration", "pytestmark"),
     "r": ("flext_tests", "r"),
     "s": ("flext_tests", "s"),
     "search_options": ("tests.conftest", "search_options"),
