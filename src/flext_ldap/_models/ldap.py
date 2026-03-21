@@ -240,7 +240,7 @@ class FlextLdapModelsLdap:
             return {key: list(values) for key, values in entry.items()}
 
         @staticmethod
-        def extract_objectclass_category(attrs: Mapping[str, object]) -> str:
+        def extract_objectclass_category(attrs: Mapping[str, str | list[str]]) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:
                 return "unknown"
