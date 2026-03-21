@@ -34,12 +34,13 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
 from flext_core import r, s
-from flext_core.constants import c
 from flext_core.models import m
 from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import t
 from flext_ldif import FlextLdif
 from pydantic import PrivateAttr
+
+from flext_ldap.constants import FlextLdapConstants as c
 
 
 class FlextLdapEntryAdapter(s[bool]):

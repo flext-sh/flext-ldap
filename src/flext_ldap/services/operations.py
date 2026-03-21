@@ -35,14 +35,14 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import override
 
 from flext_core import FlextRuntime, r, s
-from flext_core.constants import c
-from flext_core.models import m
 from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import t
 from flext_core.utilities import u
 from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
+from flext_ldap.constants import FlextLdapConstants as c
+from flext_ldap.models import FlextLdapModels as m
 from flext_ldap.services.connection import FlextLdapConnection
 
 LaxStr = str | bytes | bytearray

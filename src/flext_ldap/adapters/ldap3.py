@@ -34,7 +34,6 @@ from collections.abc import Mapping, Sequence
 from typing import Literal, override
 
 from flext_core import FlextService, r
-from flext_core.constants import c
 from flext_core.models import m
 from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import t
@@ -43,6 +42,7 @@ from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from flext_ldap.constants import FlextLdapConstants as c
 from ldap3 import Connection, Server
 
 

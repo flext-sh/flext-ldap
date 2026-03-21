@@ -44,15 +44,13 @@ from flext_core import FlextService, r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import (
-    FlextLdapConnection,
-    FlextLdapOperations,
-    FlextLdapSettings,
-    m,
-    p,
-    t,
-)
 from flext_ldap._models.ldap import FlextLdapModelsLdap
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.protocols import FlextLdapProtocols as p
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.settings import FlextLdapSettings
+from flext_ldap.typings import FlextLdapTypes as t
 
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
 SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
