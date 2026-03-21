@@ -11,9 +11,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-
-
-if TYPE_CHECKING:
     from flext_ldif import d, e, h, r, s, x
 
     from flext_ldap import _models, adapters, services

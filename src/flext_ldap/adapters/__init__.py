@@ -17,8 +17,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-
-if TYPE_CHECKING:
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers, Ldap3Adapter
 
