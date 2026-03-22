@@ -1,11 +1,11 @@
 """Type system foundation for flext-ldap tests.
 
-Provides TestsFlextLdapTypes, extending t with flext-ldap-specific types.
+Provides FlextLdapTestTypes, extending FlextTestsTypes with flext-ldap-specific types.
 All generic test types come from flext_tests, only flext-ldap-specific additions here.
 
 Architecture:
-- t (flext_tests) = Generic types for all FLEXT projects
-- TestsFlextLdapTypes (tests/) = flext-ldap-specific types extending t
+- FlextTestsTypes (flext_tests) = Generic types for all FLEXT projects
+- FlextLdapTestTypes (tests/) = flext-ldap-specific types extending FlextTestsTypes
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,24 +17,24 @@ from flext_core import r
 from flext_tests import FlextTestsTypes
 
 from flext_ldap import FlextLdapTypes
-from tests import m
+from tests.models import FlextLdapTestModels as _m
 
 
-class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
-    """Type system foundation for flext-ldap tests - extends t and FlextLdapTypes.
+class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
+    """Type system foundation for flext-ldap tests - extends FlextTestsTypes and FlextLdapTypes.
 
-    Architecture: Extends both t and FlextLdapTypes with flext-ldap-specific type definitions.
-    All generic types from t and production types from FlextLdapTypes are available through inheritance.
+    Architecture: Extends both FlextTestsTypes and FlextLdapTypes with flext-ldap-specific type definitions.
+    All generic types from FlextTestsTypes and production types from FlextLdapTypes are available through inheritance.
 
     Hierarchy:
     - t.Tests.* (generic test types from flext_tests)
     - FlextLdapTypes.Ldap.* (source types from flext_ldap)
-    - TestsFlextLdapTypes.Tests.* (flext-ldap-specific test types)
+    - FlextLdapTestTypes.Tests.* (flext-ldap-specific test types)
 
     Rules:
-    - NEVER redeclare types from t or FlextLdapTypes
+    - NEVER redeclare types from FlextTestsTypes or FlextLdapTypes
     - Only flext-ldap-specific types allowed (not generic for other projects)
-    - All generic types come from t
+    - All generic types come from FlextTestsTypes
     - All production types come from FlextLdapTypes
     """
 
@@ -49,9 +49,9 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             """
 
             # Core operation result types (from helpers/typings.py)
-            type OperationResultType = r[m.Ldap.OperationResult]
-            type SearchResultType = r[m.Ldap.SearchResult]
-            type LdapEntry = m.Ldif.Entry
+            type OperationResultType = r[_m.Ldap.OperationResult]
+            type SearchResultType = r[_m.Ldap.SearchResult]
+            type LdapEntry = _m.Ldif.Entry
 
             # Test data dictionary types
             type GenericFieldsDict = dict[
@@ -71,6 +71,6 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             type LdapConnectionResultDict = dict[str, str | int | bool]
 
 
-t = TestsFlextLdapTypes
+t = FlextLdapTestTypes
 
-__all__ = ["TestsFlextLdapTypes", "t"]
+__all__ = ["FlextLdapTestTypes", "t"]

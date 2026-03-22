@@ -15,16 +15,16 @@ from flext_tests import FlextTestsModels
 from flext_ldap import FlextLdapModels
 
 
-class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
-    """Test models - composição de m + FlextLdapModels.
+class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
+    """Test models - composição de FlextTestsModels + FlextLdapModels.
 
     Hierarquia:
-    - m: Utilitários de teste genéricos
+    - FlextTestsModels: Utilitários de teste genéricos
     - FlextLdapModels: Models de domínio do projeto
-    - TestsFlextLdapModels: Composição + namespace .Tests
+    - FlextLdapTestModels: Composição + namespace .Tests
 
     Access patterns:
-    - tm.Tests.* - Test fixtures (ConnectionConfig, SearchOptions, etc.)
+    - m.Tests.* - Test fixtures (ConnectionConfig, SearchOptions, etc.)
     - m.Ldap.* - Production domain models
     """
 
@@ -36,9 +36,9 @@ class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
 
 
 # Short aliases for tests
-m = TestsFlextLdapModels
+m = FlextLdapTestModels
 
 __all__ = [
-    "TestsFlextLdapModels",
+    "FlextLdapTestModels",
     "m",
 ]

@@ -34,7 +34,7 @@ from flext_ldap import (
     FlextLdapSettings,
     FlextLdapSyncService,
 )
-from tests.models import TestsFlextLdapModels as m
+from tests import m
 
 pytestmark = pytest.mark.unit
 

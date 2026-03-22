@@ -11,16 +11,16 @@ from tests._utilities.fixture_loaders import _FixtureLoaderUtils
 _SENTINEL = object()
 
 
-class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
-    """Utilities for flext-ldap tests - extends u and FlextLdapUtilities.
+class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
+    """Utilities for flext-ldap tests - extends FlextTestsUtilities and FlextLdapUtilities.
 
-    Architecture: Extends both u and FlextLdapUtilities with flext-ldap-specific utility methods.
-    All generic utilities from u and production utilities from FlextLdapUtilities are available through inheritance.
+    Architecture: Extends both FlextTestsUtilities and FlextLdapUtilities with flext-ldap-specific utility methods.
+    All generic utilities from FlextTestsUtilities and production utilities from FlextLdapUtilities are available through inheritance.
 
     Rules:
-    - NEVER redeclare utilities from u or FlextLdapUtilities
+    - NEVER redeclare utilities from FlextTestsUtilities or FlextLdapUtilities
     - Only flext-ldap-specific utilities allowed
-    - All generic utilities come from u
+    - All generic utilities come from FlextTestsUtilities
     - All production utilities come from FlextLdapUtilities
     """
 
@@ -98,7 +98,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 )
                 value = result.value
                 if kwargs:
-                    TestsFlextLdapUtilities.Tests.Matchers.that(value, **kwargs)
+                    FlextLdapTestUtilities.Tests.Matchers.that(value, **kwargs)
                 return value
 
             @staticmethod
@@ -129,6 +129,6 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             """
 
 
-u = TestsFlextLdapUtilities
+u = FlextLdapTestUtilities
 
-__all__ = ["TestsFlextLdapUtilities", "u"]
+__all__ = ["FlextLdapTestUtilities", "u"]

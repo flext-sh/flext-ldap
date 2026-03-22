@@ -28,8 +28,7 @@ from typing import ClassVar
 import pytest
 from flext_tests import tm
 
-from tests.typings import TestsFlextLdapTypes as t
-from tests.utilities import TestsFlextLdapUtilities as u
+from tests import t, u
 
 pytestmark = pytest.mark.unit
 

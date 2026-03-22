@@ -10,9 +10,7 @@ from flext_core import FlextLogger, r
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
-from tests.constants import TestsFlextLdapConstants as c
-from tests.models import TestsFlextLdapModels as m
-from tests.utilities import TestsFlextLdapUtilities as u
+from tests import c, m, u
 
 logger = FlextLogger(__name__)
 

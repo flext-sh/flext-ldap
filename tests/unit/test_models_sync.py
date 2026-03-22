@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 from pydantic import ValidationError
 
-from tests.constants import TestsFlextLdapConstants as c
-from tests.models import TestsFlextLdapModels as m
+from tests import c, m
 
 pytestmark = pytest.mark.unit
 

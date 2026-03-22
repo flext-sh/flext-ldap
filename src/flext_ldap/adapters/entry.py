@@ -195,7 +195,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_conversion_metadata(
         removed_attrs: Sequence[str],
         base64_attrs: Sequence[str],
-        original_attrs_dict: Mapping[str, object],
+        original_attrs_dict: Mapping[str, t.NormalizedValue],
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation.

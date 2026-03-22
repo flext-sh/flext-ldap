@@ -27,7 +27,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap import Ldap3Adapter
-from tests.models import TestsFlextLdapModels as m
+from tests import m
 
 pytestmark = pytest.mark.unit
 

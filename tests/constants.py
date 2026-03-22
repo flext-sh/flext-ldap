@@ -1,11 +1,11 @@
 """Constants for flext-ldap tests.
 
-Provides TestsLdapConstants, extending c with flext-ldap-specific
+Provides FlextLdapTestConstants, extending FlextTestsConstants with flext-ldap-specific
 constants. All generic test constants come from flext_tests.
 
 Architecture:
-- c (flext_tests) = Generic constants for all FLEXT projects
-- TestsLdapConstants (tests/) = flext-ldap-specific constants extending c
+- FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
+- FlextLdapTestConstants (tests/) = flext-ldap-specific constants extending FlextTestsConstants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,16 +20,16 @@ from flext_tests import FlextTestsConstants
 from flext_ldap import FlextLdapConstants
 
 
-class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
-    """Constants for flext-ldap tests - extends c and FlextLdapConstants.
+class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
+    """Constants for flext-ldap tests - extends FlextTestsConstants and FlextLdapConstants.
 
-    Architecture: Extends both c and FlextLdapConstants with flext-ldap-specific constants.
-    All generic constants from c and production constants from FlextLdapConstants are available through inheritance.
+    Architecture: Extends both FlextTestsConstants and FlextLdapConstants with flext-ldap-specific constants.
+    All generic constants from FlextTestsConstants and production constants from FlextLdapConstants are available through inheritance.
 
     Rules:
-    - NEVER duplicate constants from c or FlextLdapConstants
+    - NEVER duplicate constants from FlextTestsConstants or FlextLdapConstants
     - Only flext-ldap-specific constants allowed (not generic for other projects)
-    - All generic constants come from c
+    - All generic constants come from FlextTestsConstants
     - All production constants come from FlextLdapConstants
     """
 
@@ -111,6 +111,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 }
 
 
-c = TestsFlextLdapConstants
+c = FlextLdapTestConstants
 
-__all__ = ["TestsFlextLdapConstants", "c"]
+__all__ = ["FlextLdapTestConstants", "c"]

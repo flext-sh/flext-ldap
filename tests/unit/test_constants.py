@@ -21,8 +21,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests.constants import TestsFlextLdapConstants as c
-from tests.utilities import TestsFlextLdapUtilities as u
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 

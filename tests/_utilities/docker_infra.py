@@ -17,11 +17,11 @@ from threading import Lock
 from typing import ClassVar, TextIO
 
 from flext_core import FlextLogger
-from flext_tests.docker import tk
+from flext_tests import tk
 
 from flext_ldap import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
-from tests.constants import TestsFlextLdapConstants as c
+from tests import c
 
 
 class _DockerInfraUtils:

@@ -344,8 +344,8 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             results: list[tuple[str, Mapping[str, list[str]]]] = []
-            entries_list: list[object] = getattr(connection, "entries", [])
-            entries_raw: Sequence[object] = entries_list
+            entries_list: list[p.Ldap.Ldap3Entry] = getattr(connection, "entries", [])
+            entries_raw: Sequence[p.Ldap.Ldap3Entry] = entries_list
             for entry in entries_raw:
                 if not isinstance(entry, p.Ldap.Ldap3Entry):
                     dn = str(entry) if entry else ""
@@ -733,7 +733,7 @@ class Ldap3Adapter(FlextService[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: dict[str, object] | None = None
+            metadata_dict: dict[str, t.NormalizedValue] | None = None
             if isinstance(metadata, Mapping):
                 metadata_dict = {}
                 for raw_key, raw_value in metadata.items():
