@@ -165,7 +165,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         """Get FlextLdapSettings as the service-specific config type."""
         return FlextLdapSettings
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         frozen=False,
         extra="forbid",
         arbitrary_types_allowed=True,

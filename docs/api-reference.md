@@ -121,7 +121,7 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `config` (FlextLdapSettings, optional): Configuration object. If None, uses default config.
+- `config` (FlextLdapSettings, optional): Configuration t.NormalizedValue. If None, uses default config.
 
 **Returns:** FlextLdapClients instance
 
@@ -145,7 +145,7 @@ Search LDAP directory entries.
 
 **Parameters:**
 
-- `request`: SearchRequest object with search criteria
+- `request`: SearchRequest t.NormalizedValue with search criteria
 
 **Returns:** r containing list of matching entries
 
@@ -173,7 +173,7 @@ Authenticate user credentials against LDAP directory.
 - `username` (str): User identifier
 - `password` (str): User password
 
-**Returns:** r containing authenticated user object
+**Returns:** r containing authenticated user t.NormalizedValue
 
 **Example:**
 
@@ -192,7 +192,7 @@ Create a new user in LDAP directory.
 
 - `request`: CreateUserRequest with user details
 
-**Returns:** r containing created user object
+**Returns:** r containing created user t.NormalizedValue
 
 **Example:**
 
@@ -254,7 +254,7 @@ User creation request data.
 - `cn` (str): Common name
 - `sn` (str): Surname
 - `mail` (str, optional): Email address
-- `object_classes` (t.StringList, optional): LDAP object classes
+- `object_classes` (t.StringList, optional): LDAP t.NormalizedValue classes
 
 #### FlextLdapUser
 
@@ -352,7 +352,7 @@ Search scope enumeration.
 
 **Values:**
 
-- `BASE`: Search base object only
+- `BASE`: Search base t.NormalizedValue only
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
@@ -415,7 +415,7 @@ if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
 
 #### `is_ldap_entry(obj) -> bool`
 
-Check if object is a valid LDAP entry.
+Check if t.NormalizedValue is a valid LDAP entry.
 
 ### FlextLdapConstants
 
@@ -543,7 +543,7 @@ Convert ldap3.Entry to FlextLdif entry.
 
 **Parameters:**
 
-- `ldap3_entry`: ldap3.Entry object from search results
+- `ldap3_entry`: ldap3.Entry t.NormalizedValue from search results
 
 **Returns:** r containing FlextLdifModels.Entry
 
@@ -584,7 +584,7 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** r containing attributes dict[str, object] for ldap3 operations
+**Returns:** r containing attributes dict[str, t.NormalizedValue] for ldap3 operations
 
 **Example:**
 
@@ -1024,7 +1024,7 @@ from flext_ldap import OracleOIDOperations
 
 - orclaci ACL format
 - cn=subschemasubentry schema discovery
-- Oracle-specific object classes (orclUserV2, orclContainer)
+- Oracle-specific t.NormalizedValue classes (orclUserV2, orclContainer)
 - VLV support
 - Paged results support
 
@@ -1146,7 +1146,7 @@ def universal_ldap_example():
         schema_result = ops.discover_schema(connection)
         if schema_result.is_success:
             schema = schema_result.unwrap()
-            print(f"Schema: {len(schema['object_classes'])} object classes")
+            print(f"Schema: {len(schema['object_classes'])} t.NormalizedValue classes")
 
         # Get ACLs
         acl_attr = quirks.get_acl_attribute_name(server_type).unwrap()

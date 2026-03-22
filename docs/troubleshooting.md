@@ -318,7 +318,7 @@ for test_filter in test_filters:
 **Symptom:**
 
 ```yaml
-SearchError: No such object: ou=users,dc=example,dc=com
+SearchError: No such t.NormalizedValue: ou=users,dc=example,dc=com
 ```
 
 **Diagnosis:**
@@ -664,7 +664,7 @@ ______________________________________________________________________
 | Authentication | `Invalid credentials`       | Wrong username/password         |
 | Authorization  | `Insufficient access`       | User lacks required permissions |
 | Search         | `Bad search filter`         | Invalid LDAP filter syntax      |
-| Search         | `No such object`            | Base DN doesn't exist           |
+| Search         | `No such t.NormalizedValue`            | Base DN doesn't exist           |
 | Search         | `Size limit exceeded`       | Result set too large            |
 | Timeout        | `Operation timed out`       | Slow server or network issues   |
 | SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
@@ -695,7 +695,7 @@ def handle_errors_properly():
             print("Suggestion: Check username and password")
         elif "Connection refused" in error_msg:
             print("Suggestion: Check LDAP server status")
-        elif "No such object" in error_msg:
+        elif "No such t.NormalizedValue" in error_msg:
             print("Suggestion: Verify user exists in directory")
 
 

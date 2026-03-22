@@ -156,6 +156,7 @@ root = "src"
 reportPrivateUsage = "none"
 root = "tests"
 [tool.pyrefly]
+python-interpreter-path = "/home/marlonsc/flext/.venv/bin/python"
 python-version = "3.13"
 
 ignore-errors-in-generated-code = true

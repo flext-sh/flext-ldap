@@ -108,7 +108,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             """
 
             @staticmethod
-            def is_valid_status(value: str | object) -> TypeIs[str]:
+            def is_valid_status(value: str | t.NormalizedValue) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -240,7 +240,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
 
             Args:
-                dn: DN object (can be None or have .value)
+                dn: DN t.NormalizedValue (can be None or have .value)
                 default: Default if None
 
             Returns:
@@ -275,7 +275,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., object]],
+            callables_dict: Mapping[str, Callable[..., t.NormalizedValue]],
             *args: str | float | bool | None,
             **kwargs: str | float | bool | None,
         ) -> str | None:

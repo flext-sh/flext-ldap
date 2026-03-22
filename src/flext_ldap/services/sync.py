@@ -89,7 +89,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
 
     """
 
-    model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
     _operations: FlextLdapOperations = PrivateAttr()
     _ldif: FlextLdif = PrivateAttr()
     _generate_datetime_utc: Callable[[], datetime] = PrivateAttr()

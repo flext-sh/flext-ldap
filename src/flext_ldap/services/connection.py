@@ -86,7 +86,7 @@ class FlextLdapConnection(s[bool]):
 
     """
 
-    model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
     _adapter: Ldap3Adapter
     _config: p.Settings | None = None
 

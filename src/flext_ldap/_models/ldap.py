@@ -98,7 +98,7 @@ class FlextLdapModelsLdap:
     class SearchParams(BaseModel):
         """Typed LDAP search parameters passed to ldap3 search calls."""
 
-        model_config = ConfigDict(frozen=True, extra="forbid")
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
         base_dn: str
         filter_str: str
         ldap_scope: int
@@ -190,7 +190,7 @@ class FlextLdapModelsLdap:
     class SyncPhaseConfig(BaseModel):
         """Sync phase config."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
         progress_callback: Callable[..., None] | None = None
         retry_on_errors: list[str] | None = None
@@ -211,7 +211,7 @@ class FlextLdapModelsLdap:
     class OperationResult(BaseModel):
         """LDAP operation result."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         success: bool
         operation_type: str
         message: str = ""
@@ -309,7 +309,7 @@ class FlextLdapModelsLdap:
     class MultiPhaseSyncResult(BaseModel):
         """Multi-phase sync result."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
             default_factory=dict
         )

@@ -5,10 +5,11 @@ from collections.abc import Sequence
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdapUtilities
+from tests import t
 from tests._utilities.docker_infra import _DockerInfraUtils
 from tests._utilities.fixture_loaders import _FixtureLoaderUtils
 
-_SENTINEL = object()
+_SENTINEL = t.NormalizedValue()
 
 
 class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -32,19 +33,19 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def that(
-                value: object,
+                value: t.NormalizedValue,
                 *,
-                eq: object = _SENTINEL,
-                none: bool | object = _SENTINEL,
-                is_: type | object = _SENTINEL,
-                contains: object = _SENTINEL,
-                attrs: Sequence[str] | object = _SENTINEL,
-                keys: Sequence[str] | object = _SENTINEL,
-                lacks_keys: Sequence[str] | object = _SENTINEL,
-                kv: dict[str, object] | object = _SENTINEL,
-                gte: float | object = _SENTINEL,
-                lte: float | object = _SENTINEL,
-                **kwargs: object,
+                eq: t.NormalizedValue = _SENTINEL,
+                none: bool | t.NormalizedValue = _SENTINEL,
+                is_: type | t.NormalizedValue = _SENTINEL,
+                contains: t.NormalizedValue = _SENTINEL,
+                attrs: Sequence[str] | t.NormalizedValue = _SENTINEL,
+                keys: Sequence[str] | t.NormalizedValue = _SENTINEL,
+                lacks_keys: Sequence[str] | t.NormalizedValue = _SENTINEL,
+                kv: dict[str, t.NormalizedValue] | t.NormalizedValue = _SENTINEL,
+                gte: float | t.NormalizedValue = _SENTINEL,
+                lte: float | t.NormalizedValue = _SENTINEL,
+                **kwargs: t.NormalizedValue,
             ) -> None:
                 """Assert value matches expected conditions."""
                 if eq is not _SENTINEL:
@@ -90,9 +91,13 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     )
 
             @staticmethod
-            def ok(result: object, **kwargs: object) -> object:
+            def ok(
+                result: t.NormalizedValue, **kwargs: t.NormalizedValue
+            ) -> t.NormalizedValue:
                 """Assert result is success and return its value."""
-                assert hasattr(result, "is_success"), "Expected a Result object"
+                assert hasattr(result, "is_success"), (
+                    "Expected a Result t.NormalizedValue"
+                )
                 assert result.is_success, (
                     f"Expected success, got failure: {getattr(result, 'error', 'unknown')}"
                 )
@@ -102,9 +107,11 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 return value
 
             @staticmethod
-            def fail(result: object, **kwargs: object) -> str:
+            def fail(result: t.NormalizedValue, **kwargs: t.NormalizedValue) -> str:
                 """Assert result is failure and return error string."""
-                assert hasattr(result, "is_failure"), "Expected a Result object"
+                assert hasattr(result, "is_failure"), (
+                    "Expected a Result t.NormalizedValue"
+                )
                 assert result.is_failure, "Expected failure, got success"
                 error_str = str(result.error) if result.error else ""
                 has_value = kwargs.get("has")

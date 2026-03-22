@@ -49,7 +49,7 @@ from ldap3 import Connection, Server
 def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> list[str]:
     """Convert a list/tuple/sequence value to list[str] without isinstance narrowing.
 
-    Pyright narrows isinstance(v, list) on v:object to list[Unknown], making
+    Pyright narrows isinstance(v, list) on v:t.NormalizedValue to list[Unknown], making
     element access return Unknown. This helper avoids that by using __len__
     and __getitem__ through getattr to maintain type safety.
     """
@@ -178,7 +178,7 @@ class Ldap3Adapter(FlextService[bool]):
     conversion of LDAP results to Entry models.
     """
 
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     @staticmethod
     def _is_bound(connection: Connection) -> bool:
@@ -194,7 +194,7 @@ class Ldap3Adapter(FlextService[bool]):
             server: Server,
             config: m.Ldap.ConnectionConfig,
         ) -> Connection:
-            """Create ldap3 Connection object.
+            """Create ldap3 Connection t.NormalizedValue.
 
             Business Rules:
                 - Bind credentials (user, password) from config
@@ -209,11 +209,11 @@ class Ldap3Adapter(FlextService[bool]):
                 - No network calls if auto_bind=False
 
             Args:
-                server: ldap3 Server object from create_server().
+                server: ldap3 Server t.NormalizedValue from create_server().
                 config: Connection configuration with bind credentials.
 
             Returns:
-                ldap3 Connection object (bound if auto_bind=True).
+                ldap3 Connection t.NormalizedValue (bound if auto_bind=True).
 
             """
             return Connection(
@@ -227,24 +227,24 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def create_server(config: m.Ldap.ConnectionConfig) -> Server:
-            """Create ldap3 Server object.
+            """Create ldap3 Server t.NormalizedValue.
 
             Business Rules:
                 - SSL connections use use_ssl=True (port 636 default)
                 - Non-SSL connections use use_ssl=False (port 389 default)
                 - Connect timeout uses config.timeout value
-                - Server object is created without connection attempt
+                - Server t.NormalizedValue is created without connection attempt
 
             Architecture:
                 - Uses ldap3 Server() constructor directly
                 - Returns Server instance for Connection creation
-                - No network calls - object creation only
+                - No network calls - t.NormalizedValue creation only
 
             Args:
                 config: Connection configuration with host, port, SSL/TLS settings.
 
             Returns:
-                ldap3 Server object configured for connection.
+                ldap3 Server t.NormalizedValue configured for connection.
 
             """
             if config.use_ssl:
@@ -533,7 +533,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | object,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.NormalizedValue,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -590,7 +590,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | object,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.NormalizedValue,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -648,7 +648,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | object,
+            obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | t.NormalizedValue,
             attr_name: str,
         ) -> m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None:
             """Get dynamic attribute with type safety.
@@ -783,7 +783,7 @@ class Ldap3Adapter(FlextService[bool]):
             This typed wrapper handles the untyped ldap3 add() call.
 
             Args:
-                connection: Active ldap3 Connection object.
+                connection: Active ldap3 Connection t.NormalizedValue.
                 dn_str: Distinguished name string.
                 attrs_dict: Attributes dictionary (str -> list[str]).
 
@@ -800,7 +800,7 @@ class Ldap3Adapter(FlextService[bool]):
             This typed wrapper handles the untyped ldap3 delete() call.
 
             Args:
-                connection: Active ldap3 Connection object.
+                connection: Active ldap3 Connection t.NormalizedValue.
                 dn_str: Distinguished name string.
 
             Returns:
@@ -861,7 +861,7 @@ class Ldap3Adapter(FlextService[bool]):
             This typed wrapper handles the untyped ldap3 modify() call.
 
             Args:
-                connection: Active ldap3 Connection object.
+                connection: Active ldap3 Connection t.NormalizedValue.
                 dn_str: Distinguished name string.
                 changes: Modification changes dict in ldap3 format.
 
@@ -895,7 +895,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection object
+                connection: Active ldap3 Connection t.NormalizedValue
                 dn_str: Distinguished name as string
                 ldap_attrs: Attributes dict in ldap3 format
 
@@ -953,7 +953,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection object
+                connection: Active ldap3 Connection t.NormalizedValue
                 dn: Distinguished name (string or DN model)
 
             Returns:
@@ -1009,7 +1009,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection object
+                connection: Active ldap3 Connection t.NormalizedValue
                 dn: Distinguished name (string or DN model)
                 changes: Modification changes dict in ldap3 format
 
@@ -1188,7 +1188,7 @@ class Ldap3Adapter(FlextService[bool]):
 
     @property
     def connection(self) -> Connection | None:
-        """Get underlying ldap3 Connection object."""
+        """Get underlying ldap3 Connection t.NormalizedValue."""
         return self._connection
 
     @property
@@ -1287,8 +1287,8 @@ class Ldap3Adapter(FlextService[bool]):
         """Establish LDAP connection using ldap3 library.
 
         Business Rules:
-            - Creates ldap3 Server object based on SSL/TLS configuration
-            - Creates ldap3 Connection object with bind credentials
+            - Creates ldap3 Server t.NormalizedValue based on SSL/TLS configuration
+            - Creates ldap3 Connection t.NormalizedValue with bind credentials
             - STARTTLS is handled if use_tls=True and use_ssl=False
             - Connection must be bound (authenticated) to succeed
             - Connection state is tracked internally for subsequent operations
@@ -1300,8 +1300,8 @@ class Ldap3Adapter(FlextService[bool]):
             - Connection state changes trigger audit events
 
         Architecture:
-            - Uses ConnectionManager.create_server() for Server object
-            - Uses ConnectionManager.create_connection() for Connection object
+            - Uses ConnectionManager.create_server() for Server t.NormalizedValue
+            - Uses ConnectionManager.create_connection() for Connection t.NormalizedValue
             - Uses ConnectionManager.handle_tls() for STARTTLS if needed
             - Returns r pattern - no exceptions raised
 

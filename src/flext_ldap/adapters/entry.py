@@ -259,7 +259,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Metadata mutations are side effects (no return value)
 
         Architecture:
-            - Mutates conversion_metadata object (side effect)
+            - Mutates conversion_metadata t.NormalizedValue (side effect)
                 - Python 3.13: Uses guard-based sequence handling
             - Compares string representations for change detection
             - No network calls - pure metadata tracking
@@ -382,7 +382,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Server type from adapter._server_type stored in metadata
 
         Args:
-            ldap3_entry: ldap3 Entry object (required, no fallback).
+            ldap3_entry: ldap3 Entry t.NormalizedValue (required, no fallback).
                 Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:

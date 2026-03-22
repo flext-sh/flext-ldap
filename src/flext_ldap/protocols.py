@@ -137,7 +137,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 error: str | None
                 "Error message if parsing failed."
                 value: t.Scalar | None
-                "Parsed value or result object."
+                "Parsed value or result t.NormalizedValue."
 
         @runtime_checkable
         class SearchOptions(Protocol):
@@ -457,7 +457,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[tuple[str, object]]:
+            def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
                 """Return items as sequence of tuples."""
                 ...
 
@@ -467,7 +467,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             @property
             def config(self) -> None:
-                """Return resolved configuration object."""
+                """Return resolved configuration t.NormalizedValue."""
                 ...
 
         @runtime_checkable

@@ -85,7 +85,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     """
 
-    model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
 
     @staticmethod
     def _get_structlog_logger() -> p.Logger | None:
@@ -99,7 +99,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """Extract attributes dict from LDIF entry or entry protocol.
 
         Args:
-            entry: LDIF entry model (m.Ldif.Entry) or protocol-compatible object.
+            entry: LDIF entry model (m.Ldif.Entry) or protocol-compatible t.NormalizedValue.
 
         Returns:
             Attributes dict with normalized values.
