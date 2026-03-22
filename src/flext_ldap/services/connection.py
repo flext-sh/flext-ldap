@@ -26,7 +26,7 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import r
 from flext_ldif import FlextLdif, FlextLdifParser, s
@@ -86,7 +86,9 @@ class FlextLdapConnection(s[bool]):
 
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        frozen=False, extra="allow", arbitrary_types_allowed=True
+    )
     _adapter: Ldap3Adapter
     _config: p.Settings | None = None
 

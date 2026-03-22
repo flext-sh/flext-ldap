@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import FlextRuntime, r, s
 from flext_ldif import FlextLdifUtilities
@@ -85,7 +85,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        frozen=False, extra="allow", arbitrary_types_allowed=True
+    )
 
     @staticmethod
     def _get_structlog_logger() -> p.Logger | None:

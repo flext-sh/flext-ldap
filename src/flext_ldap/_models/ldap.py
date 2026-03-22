@@ -6,7 +6,7 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 

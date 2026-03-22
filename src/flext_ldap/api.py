@@ -38,7 +38,7 @@ import types
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self, TypeIs, override
+from typing import ClassVar, Self, TypeIs, override
 
 from flext_core import FlextService, r
 from flext_ldif import FlextLdif
