@@ -46,20 +46,22 @@ from flext_ldap.utilities import FlextLdapUtilities as u
 from ldap3 import Connection, Server
 
 
-def _object_to_str_list(value: object) -> list[str]:
-    """Convert a list/tuple/sequence object to list[str] without isinstance narrowing.
+def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> list[str]:
+    """Convert a list/tuple/sequence value to list[str] without isinstance narrowing.
 
     Pyright narrows isinstance(v, list) on v:object to list[Unknown], making
     element access return Unknown. This helper avoids that by using __len__
     and __getitem__ through getattr to maintain type safety.
     """
     length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
-    getitem_fn: Callable[[int], object] | None = getattr(value, "__getitem__", None)
+    getitem_fn: Callable[[int], t.Ldap.Operation.Ldap3EntryValue] | None = getattr(
+        value, "__getitem__", None
+    )
     if length_fn is None or getitem_fn is None:
         return []
     result: list[str] = []
     for idx in range(length_fn()):
-        el: object = getitem_fn(idx)
+        el: t.Ldap.Operation.Ldap3EntryValue = getitem_fn(idx)
         if el is not None and isinstance(el, (str, int, float, bool, bytes)):
             result.append(str(el))
     return result
@@ -509,13 +511,16 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             if isinstance(attrs, p.Ldap.HasAttributesProperty):
-                attrs_attr: Mapping[str, object] = attrs.attributes
-                return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs_attr)
+                return Ldap3Adapter.ResultConverter.normalize_attr_values(
+                    attrs.attributes
+                )
             if isinstance(attrs, BaseModel):
-                model_attrs: Mapping[str, object] | None = getattr(
-                    attrs,
-                    "attributes",
-                    None,
+                model_attrs: Mapping[str, t.Ldap.Operation.Ldap3EntryValue] | None = (
+                    getattr(
+                        attrs,
+                        "attributes",
+                        None,
+                    )
                 )
                 if model_attrs is not None and isinstance(model_attrs, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
@@ -668,7 +673,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: Mapping[str, object] | None,
+            attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue] | None,
         ) -> t.Ldap.Operation.AttributeDict:
             """Normalize attribute values to list[str] format.
 
@@ -683,13 +688,13 @@ class Ldap3Adapter(FlextService[bool]):
                 return {}
             result: dict[str, list[str]] = {}
             for k in attrs_dict:
-                v: object = attrs_dict[k]
+                v = attrs_dict[k]
                 if isinstance(v, str):
                     result[k] = [v]
                 elif isinstance(v, (int, float, bool, bytes)):
                     result[k] = [str(v)]
                 elif hasattr(v, "__len__") and hasattr(v, "__getitem__"):
-                    result[k] = _object_to_str_list(v)
+                    result[k] = _value_to_str_list(v)
                 elif v is not None:
                     result[k] = [str(v)]
                 else:

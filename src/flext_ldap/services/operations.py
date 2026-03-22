@@ -358,7 +358,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attr_keys = list(existing_attrs.keys())
             normalized_target = u.Ldap.norm_str(str(attr_name), case="lower")
 
-            def _match_attr(k: object) -> bool:
+            def _match_attr(k: str) -> bool:
                 return u.Ldap.norm_str(str(k), case="lower") == normalized_target
 
             found_key = u.Ldif.find(
