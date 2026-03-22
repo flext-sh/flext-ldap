@@ -489,7 +489,16 @@ class FlextLdapProtocols(FlextLdifProtocols):
             @property
             def attributes(
                 self,
-            ) -> Mapping[str, str | bytes | int | float | bool | Sequence[str | bytes | int | float | bool] | None]:
+            ) -> Mapping[
+                str,
+                str
+                | bytes
+                | int
+                | float
+                | bool
+                | Sequence[str | bytes | int | float | bool]
+                | None,
+            ]:
                 """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 
