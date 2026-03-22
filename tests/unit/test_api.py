@@ -14,6 +14,7 @@ from collections.abc import Callable
 import pytest
 from flext_core import FlextSettings
 from flext_ldif import FlextLdif
+from flext_tests import tm
 
 from flext_ldap import (
     MULTI_PHASE_CALLBACK_PARAM_COUNT,
@@ -27,7 +28,6 @@ from flext_ldap import (
 from tests.constants import TestsFlextLdapConstants as c
 from tests.models import TestsFlextLdapModels as m
 from tests.protocols import TestsFlextLdapProtocols as p
-from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = [pytest.mark.unit]
 
@@ -91,21 +91,19 @@ class TestsFlextLdapApi:
     def test_init_with_dependencies(self) -> None:
         """Test FlextLdap initializes with all dependencies populated."""
         api = self._create_api()
-        u.Tests.Matchers.that(api, none=False)
-        u.Tests.Matchers.that(api._connection, none=False)
-        u.Tests.Matchers.that(api._operations, none=False)
-        u.Tests.Matchers.that(api._ldif, none=False)
+        tm.that(api, none=False)
+        tm.that(api._connection, none=False)
+        tm.that(api._operations, none=False)
+        tm.that(api._ldif, none=False)
 
     def test_init_default_ldif(self) -> None:
         """Test FlextLdap uses default FlextLdif when not provided."""
-        u.Tests.Matchers.that(
-            self._create_api(ldif=None)._ldif, is_=FlextLdif, none=False
-        )
+        tm.that(self._create_api(ldif=None)._ldif, is_=FlextLdif, none=False)
 
     def test_init_custom_ldif(self) -> None:
         """Test FlextLdap accepts custom FlextLdif instance."""
         custom = FlextLdif()
-        u.Tests.Matchers.that(self._create_api(ldif=custom)._ldif, eq=custom)
+        tm.that(self._create_api(ldif=custom)._ldif, eq=custom)
 
     def test_inherits_config_from_connection(self) -> None:
         """Test API inherits config from connection."""
@@ -115,7 +113,7 @@ class TestsFlextLdapApi:
 
     def test_logger_available(self) -> None:
         """Test logger is available on API instance."""
-        u.Tests.Matchers.that(self._create_api().logger, none=False)
+        tm.that(self._create_api().logger, none=False)
 
     def test_config_returns_flext_settings(self) -> None:
         """Test config property returns FlextSettings."""
@@ -130,7 +128,7 @@ class TestsFlextLdapApi:
     def test_enter_returns_self(self) -> None:
         """Test __enter__ returns self for 'with' statement."""
         api = self._create_api()
-        u.Tests.Matchers.that(api.__enter__(), eq=api)
+        tm.that(api.__enter__(), eq=api)
 
     def test_exit_calls_disconnect(self) -> None:
         """Test __exit__ invokes cleanup without error."""
@@ -140,14 +138,14 @@ class TestsFlextLdapApi:
         """Test 'with' statement returns same API instance."""
         api = self._create_api()
         with api as ctx:
-            u.Tests.Matchers.that(ctx, eq=api)
+            tm.that(ctx, eq=api)
 
     # --- Constants ---
 
     def test_callback_param_count_constants(self) -> None:
         """Test callback parameter count constants match expected values."""
-        u.Tests.Matchers.that(MULTI_PHASE_CALLBACK_PARAM_COUNT, eq=5)
-        u.Tests.Matchers.that(SINGLE_PHASE_CALLBACK_PARAM_COUNT, eq=4)
+        tm.that(MULTI_PHASE_CALLBACK_PARAM_COUNT, eq=5)
+        tm.that(SINGLE_PHASE_CALLBACK_PARAM_COUNT, eq=4)
 
     # --- Callback Type Guards ---
 
@@ -165,7 +163,7 @@ class TestsFlextLdapApi:
         expected: bool,
     ) -> None:
         """Test is_multi_phase_callback with various param counts."""
-        u.Tests.Matchers.that(
+        tm.that(
             FlextLdapSyncCallbacks.is_multi_phase_callback(callback),
             eq=expected,
         )
@@ -184,7 +182,7 @@ class TestsFlextLdapApi:
         expected: bool,
     ) -> None:
         """Test is_single_phase_callback with various param counts."""
-        u.Tests.Matchers.that(
+        tm.that(
             FlextLdapSyncCallbacks.is_single_phase_callback(callback),
             eq=expected,
         )
@@ -219,20 +217,20 @@ class TestsFlextLdapApi:
             filter_str=c.Ldap.Tests.RFC.DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
-        u.Tests.Matchers.fail(self._create_api().search(search_options))
+        tm.fail(self._create_api().search(search_options))
 
     def test_execute_returns_result(self) -> None:
         """Test execute returns r (failure when not connected)."""
-        u.Tests.Matchers.fail(self._create_api().execute())
+        tm.fail(self._create_api().execute())
 
     # --- Model Config ---
 
     def test_model_config(self) -> None:
         """Test FlextLdap model_config has expected Pydantic v2 settings."""
         cfg = FlextLdap.model_config
-        u.Tests.Matchers.that(cfg.get("frozen"), eq=False)
-        u.Tests.Matchers.that(cfg.get("extra"), eq="forbid")
-        u.Tests.Matchers.that(cfg.get("arbitrary_types_allowed"), eq=True)
+        tm.that(cfg.get("frozen"), eq=False)
+        tm.that(cfg.get("extra"), eq="forbid")
+        tm.that(cfg.get("arbitrary_types_allowed"), eq=True)
 
 
 __all__ = ["TestsFlextLdapApi"]

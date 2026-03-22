@@ -26,6 +26,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap import (
     FlextLdapConnection,
@@ -34,7 +35,6 @@ from flext_ldap import (
     FlextLdapSyncService,
 )
 from tests.models import TestsFlextLdapModels as m
-from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 
@@ -65,8 +65,8 @@ class TestsFlextLdapSync:
     def test_sync_service_initialization(self) -> None:
         operations = self._create_operations()
         sync_service = FlextLdapSyncService(operations=operations)
-        u.Tests.Matchers.that(sync_service, is_=FlextLdapSyncService, none=False)
-        u.Tests.Matchers.that(hasattr(sync_service, "_generate_datetime_utc"), eq=True)
+        tm.that(sync_service, is_=FlextLdapSyncService, none=False)
+        tm.that(hasattr(sync_service, "_generate_datetime_utc"), eq=True)
 
     def test_sync_service_init_without_operations_raises_type_error(self) -> None:
         with pytest.raises(TypeError, match="operations parameter is required"):
@@ -77,23 +77,23 @@ class TestsFlextLdapSync:
         operations = self._create_operations()
         sync_service = FlextLdapSyncService(operations=operations)
         result = sync_service.execute()
-        stats = u.Tests.Matchers.ok(result)
+        stats = tm.ok(result)
         assert isinstance(stats, m.Ldap.SyncStats), "expected SyncStats"
-        u.Tests.Matchers.that(stats.synced, eq=0)
-        u.Tests.Matchers.that(stats.skipped, eq=0)
-        u.Tests.Matchers.that(stats.failed, eq=0)
-        u.Tests.Matchers.that(stats.total, eq=0)
+        tm.that(stats.synced, eq=0)
+        tm.that(stats.skipped, eq=0)
+        tm.that(stats.failed, eq=0)
+        tm.that(stats.total, eq=0)
 
     def test_sync_stats_creation(self) -> None:
         """Test SyncStats model creation."""
         stats = m.Ldap.SyncStats(
             synced=10, skipped=2, failed=1, total=13, duration_seconds=100.5
         )
-        u.Tests.Matchers.that(stats.synced, eq=10)
-        u.Tests.Matchers.that(stats.skipped, eq=2)
-        u.Tests.Matchers.that(stats.failed, eq=1)
-        u.Tests.Matchers.that(stats.total, eq=13)
-        u.Tests.Matchers.that(stats.duration_seconds, eq=100.5)
+        tm.that(stats.synced, eq=10)
+        tm.that(stats.skipped, eq=2)
+        tm.that(stats.failed, eq=1)
+        tm.that(stats.total, eq=13)
+        tm.that(stats.duration_seconds, eq=100.5)
 
     @pytest.mark.parametrize(
         ("kwargs", "expected_source", "expected_target"),
@@ -114,8 +114,8 @@ class TestsFlextLdapSync:
         expected_target: str,
     ) -> None:
         options = m.Ldap.SyncOptions(**kwargs)
-        u.Tests.Matchers.that(options.source_basedn, eq=expected_source)
-        u.Tests.Matchers.that(options.target_basedn, eq=expected_target)
+        tm.that(options.source_basedn, eq=expected_source)
+        tm.that(options.target_basedn, eq=expected_target)
 
     @pytest.mark.parametrize(
         ("dn", "source_basedn", "target_basedn", "expected_dn"),
@@ -155,10 +155,10 @@ class TestsFlextLdapSync:
             source_basedn=source_basedn,
             target_basedn=target_basedn,
         )
-        u.Tests.Matchers.that(transformed, len=1)
-        u.Tests.Matchers.that(transformed[0].dn, none=False)
+        tm.that(transformed, len=1)
+        tm.that(transformed[0].dn, none=False)
         assert transformed[0].dn is not None
-        u.Tests.Matchers.that(transformed[0].dn.value, eq=expected_dn)
+        tm.that(transformed[0].dn.value, eq=expected_dn)
 
     def test_sync_ldif_file_missing_path_returns_failure(self) -> None:
         sync_service = FlextLdapSyncService(operations=self._create_operations())
@@ -166,7 +166,7 @@ class TestsFlextLdapSync:
             Path("/tmp/flext-nonexistent-sync-input.ldif"),
             m.Ldap.SyncOptions(),
         )
-        u.Tests.Matchers.fail(result)
+        tm.fail(result)
 
     def test_batch_sync_initialization(self) -> None:
         """Test BatchSync inner class initialization."""
@@ -179,15 +179,13 @@ class TestsFlextLdapSync:
         """Test that all expected methods exist on sync service."""
         operations = self._create_operations()
         sync_service = FlextLdapSyncService(operations=operations)
-        u.Tests.Matchers.that(sync_service, attrs=["execute", "sync_ldif_file"])
-        u.Tests.Matchers.that(callable(sync_service.execute), eq=True)
-        u.Tests.Matchers.that(callable(sync_service.sync_ldif_file), eq=True)
+        tm.that(sync_service, attrs=["execute", "sync_ldif_file"])
+        tm.that(callable(sync_service.execute), eq=True)
+        tm.that(callable(sync_service.sync_ldif_file), eq=True)
 
     def test_sync_service_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
-        u.Tests.Matchers.that(hasattr(FlextLdapSyncService, "BatchSync"), eq=True)
-        u.Tests.Matchers.that(
-            hasattr(FlextLdapSyncService, "BaseDNTransformer"), eq=True
-        )
+        tm.that(hasattr(FlextLdapSyncService, "BatchSync"), eq=True)
+        tm.that(hasattr(FlextLdapSyncService, "BaseDNTransformer"), eq=True)
         assert isinstance(FlextLdapSyncService.BatchSync, type)
         assert isinstance(FlextLdapSyncService.BaseDNTransformer, type)

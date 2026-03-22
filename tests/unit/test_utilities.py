@@ -26,6 +26,7 @@ from collections.abc import Callable
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 
 from tests.typings import TestsFlextLdapTypes as t
 from tests.utilities import TestsFlextLdapUtilities as u
@@ -62,58 +63,58 @@ class TestsFlextLdapUtilities:
     def test_to_str_simple(self) -> None:
         """Test to_str with simple string value."""
         result = u.to_str("test")
-        u.Tests.Matchers.that(result, eq="test")
+        tm.that(result, eq="test")
 
     def test_to_str_none(self) -> None:
         """Test to_str with None value."""
         result = u.to_str(None)
-        u.Tests.Matchers.that(result, eq="")
+        tm.that(result, eq="")
 
     def test_to_str_with_default(self) -> None:
         """Test to_str with custom default."""
         result = u.to_str(None, default="default")
-        u.Tests.Matchers.that(result, eq="default")
+        tm.that(result, eq="default")
 
     def test_to_str_list_from_list(self) -> None:
         """Test to_str_list with list input."""
         result = u.to_str_list(["a", "b", "c"])
-        u.Tests.Matchers.that(result, eq=["a", "b", "c"])
+        tm.that(result, eq=["a", "b", "c"])
 
     def test_to_str_list_from_single(self) -> None:
         """Test to_str_list with single value."""
         result = u.to_str_list("single")
-        u.Tests.Matchers.that(result, eq=["single"])
+        tm.that(result, eq=["single"])
 
     def test_to_str_list_from_none(self) -> None:
         """Test to_str_list with None."""
         result = u.to_str_list(None)
-        u.Tests.Matchers.that(result, eq=[])
+        tm.that(result, eq=[])
 
     def test_norm_str_lowercase(self) -> None:
         """Test norm_str with lowercase."""
         result = u.Ldap.norm_str("TEST", case="lower")
-        u.Tests.Matchers.that(result, eq="test")
+        tm.that(result, eq="test")
 
     def test_norm_str_uppercase(self) -> None:
         """Test norm_str with uppercase."""
         result = u.Ldap.norm_str("test", case="upper")
-        u.Tests.Matchers.that(result, eq="TEST")
+        tm.that(result, eq="TEST")
 
     def test_norm_join(self) -> None:
         """Test norm_join with list."""
         result = u.Ldap.norm_join(["A", "B", "C"], case="lower")
-        u.Tests.Matchers.that(result, eq="a b c")
+        tm.that(result, eq="a b c")
 
     def test_filter_truthy(self) -> None:
         """Test filter_truthy removes falsy values."""
         result = u.Ldap.filter_truthy({"a": "value", "b": "", "c": None, "d": "value2"})
         assert isinstance(result, dict)
-        u.Tests.Matchers.that(sorted(result.keys()), eq=["a", "d"])
+        tm.that(sorted(result.keys()), eq=["a", "d"])
 
     def test_map_str(self) -> None:
         """Test map_str converts list values to strings."""
         result = u.Ldap.map_str(["a", "b", "c"], case="upper")
-        u.Tests.Matchers.that(result, eq=["A", "B", "C"])
+        tm.that(result, eq=["A", "B", "C"])
 
     def test_find_callable_with_mapping(self) -> None:
         """Test find_callable with Mapping (covariant pattern)."""
@@ -122,7 +123,7 @@ class TestsFlextLdapUtilities:
             "handler2": lambda: False,
         }
         result = u.Ldap.find_callable(handlers)
-        u.Tests.Matchers.that(result, eq="handler1")
+        tm.that(result, eq="handler1")
 
     def test_find_callable_not_found(self) -> None:
         """Test find_callable when no handler returns truthy."""
@@ -132,22 +133,22 @@ class TestsFlextLdapUtilities:
             "handler3": lambda: "",
         }
         result = u.Ldap.find_callable(handlers)
-        u.Tests.Matchers.that(result, none=True)
+        tm.that(result, none=True)
 
     def test_dn_str_with_string(self) -> None:
         """Test dn_str with string DN."""
         result = u.Ldap.dn_str("cn=test,dc=example,dc=com")
-        u.Tests.Matchers.that(result, eq="cn=test,dc=example,dc=com")
+        tm.that(result, eq="cn=test,dc=example,dc=com")
 
     def test_dn_str_with_none(self) -> None:
         """Test dn_str with None."""
         result = u.Ldap.dn_str(None)
-        u.Tests.Matchers.that(result, eq="unknown")
+        tm.that(result, eq="unknown")
 
     def test_dn_str_with_custom_default(self) -> None:
         """Test dn_str with custom default."""
         result = u.Ldap.dn_str(None, default="default")
-        u.Tests.Matchers.that(result, eq="default")
+        tm.that(result, eq="default")
 
 
 __all__ = ["TestsFlextLdapUtilities"]

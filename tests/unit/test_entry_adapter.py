@@ -25,10 +25,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap import FlextLdapEntryAdapter
 from tests.models import TestsFlextLdapModels as m
-from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 
@@ -46,36 +46,36 @@ class TestsFlextLdapEntryAdapter:
     def test_adapter_initialization(self) -> None:
         """Test adapter initialization."""
         adapter = FlextLdapEntryAdapter()
-        u.Tests.Matchers.that(adapter, is_=FlextLdapEntryAdapter, none=False)
+        tm.that(adapter, is_=FlextLdapEntryAdapter, none=False)
 
     def test_execute_returns_success(self) -> None:
         """Test execute() returns success for health check."""
         adapter = FlextLdapEntryAdapter()
         result = adapter.execute()
-        u.Tests.Matchers.ok(result, eq=True)
+        tm.ok(result, eq=True)
 
     def test_is_base64_encoded_with_base64_marker(self) -> None:
         """Test is_base64_encoded with base64 marker."""
-        u.Tests.Matchers.that(
+        tm.that(
             FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("::dGVzdA=="),
             eq=True,
         )
 
     def test_is_base64_encoded_with_ascii_value(self) -> None:
         """Test is_base64_encoded with ASCII value."""
-        u.Tests.Matchers.that(
+        tm.that(
             FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("test"), eq=False
         )
 
     def test_is_base64_encoded_with_non_ascii_value(self) -> None:
         """Test is_base64_encoded with non-ASCII value."""
-        u.Tests.Matchers.that(
+        tm.that(
             FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("testÿ"), eq=True
         )
 
     def test_is_base64_encoded_with_empty_string(self) -> None:
         """Test is_base64_encoded with empty string."""
-        u.Tests.Matchers.that(
+        tm.that(
             FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(""), eq=False
         )
 
@@ -97,13 +97,13 @@ class TestsFlextLdapEntryAdapter:
 
         ldap3_entry = MockLdap3Entry()
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        entry = u.Tests.Matchers.ok(result)
+        entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
-        u.Tests.Matchers.that(entry, is_=m.Ldif.Entry, none=False)
-        u.Tests.Matchers.that(entry.dn, none=False)
+        tm.that(entry, is_=m.Ldif.Entry, none=False)
+        tm.that(entry.dn, none=False)
         assert entry.dn is not None
-        u.Tests.Matchers.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
-        u.Tests.Matchers.that(entry.attributes, none=False)
+        tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
+        tm.that(entry.attributes, none=False)
 
     def test_ldap3_to_ldif_entry_with_empty_attributes(self) -> None:
         """Test conversion from ldap3.Entry to p.Entry with empty attributes."""
@@ -120,12 +120,12 @@ class TestsFlextLdapEntryAdapter:
 
         ldap3_entry = MockLdap3Entry()
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        entry = u.Tests.Matchers.ok(result)
+        entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
-        u.Tests.Matchers.that(entry, is_=m.Ldif.Entry, none=False)
-        u.Tests.Matchers.that(entry.dn, none=False)
+        tm.that(entry, is_=m.Ldif.Entry, none=False)
+        tm.that(entry.dn, none=False)
         assert entry.dn is not None
-        u.Tests.Matchers.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
+        tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
 
     def test_ldif_entry_to_ldap3_attributes(self) -> None:
         """Test conversion from p.Entry to ldap3 attributes."""
@@ -135,10 +135,8 @@ class TestsFlextLdapEntryAdapter:
             attributes=m.Ldif.Attributes(attributes={"cn": ["user"], "sn": ["Doe"]}),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        attributes = u.Tests.Matchers.ok(result)
-        u.Tests.Matchers.that(
-            attributes, keys=["cn", "sn"], kv={"cn": ["user"], "sn": ["Doe"]}
-        )
+        attributes = tm.ok(result)
+        tm.that(attributes, keys=["cn", "sn"], kv={"cn": ["user"], "sn": ["Doe"]})
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
         """Test conversion from p.Entry to ldap3 attributes with empty attributes."""
@@ -148,26 +146,22 @@ class TestsFlextLdapEntryAdapter:
             attributes=m.Ldif.Attributes(attributes={}),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        err = u.Tests.Matchers.fail(result, has="no attributes")
-        u.Tests.Matchers.that(err.lower(), contains="no attributes")
+        err = tm.fail(result, has="no attributes")
+        tm.that(err.lower(), contains="no attributes")
 
     def test_adapter_methods_exist(self) -> None:
         """Test that all expected methods exist on adapter."""
         adapter = FlextLdapEntryAdapter()
-        u.Tests.Matchers.that(hasattr(adapter, "execute"), eq=True)
-        u.Tests.Matchers.that(callable(adapter.execute), eq=True)
-        u.Tests.Matchers.that(hasattr(adapter, "ldap3_to_ldif_entry"), eq=True)
-        u.Tests.Matchers.that(callable(adapter.ldap3_to_ldif_entry), eq=True)
-        u.Tests.Matchers.that(
-            hasattr(adapter, "ldif_entry_to_ldap3_attributes"), eq=True
-        )
-        u.Tests.Matchers.that(callable(adapter.ldif_entry_to_ldap3_attributes), eq=True)
+        tm.that(hasattr(adapter, "execute"), eq=True)
+        tm.that(callable(adapter.execute), eq=True)
+        tm.that(hasattr(adapter, "ldap3_to_ldif_entry"), eq=True)
+        tm.that(callable(adapter.ldap3_to_ldif_entry), eq=True)
+        tm.that(hasattr(adapter, "ldif_entry_to_ldap3_attributes"), eq=True)
+        tm.that(callable(adapter.ldif_entry_to_ldap3_attributes), eq=True)
 
     def test_adapter_inner_classes_exist(self) -> None:
         """Test that inner classes exist."""
-        u.Tests.Matchers.that(
-            hasattr(FlextLdapEntryAdapter, "_ConversionHelpers"), eq=True
-        )
+        tm.that(hasattr(FlextLdapEntryAdapter, "_ConversionHelpers"), eq=True)
         assert isinstance(FlextLdapEntryAdapter._ConversionHelpers, type)
 
     def test_conversion_helpers_static_methods_exist(self) -> None:

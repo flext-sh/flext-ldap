@@ -25,9 +25,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap import FlextLdapServerDetector
-from tests.utilities import TestsFlextLdapUtilities as u
 
 pytestmark = pytest.mark.unit
 
@@ -137,4 +137,4 @@ class TestsFlextLdapDetection:
             _supported_controls=supported_controls,
             supported_extensions=[],
         )
-        u.Tests.Matchers.ok(result, eq=expected)
+        tm.ok(result, eq=expected)
