@@ -57,34 +57,34 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 if is_ is not _SENTINEL:
                     assert isinstance(
                         value,
-                        is_,  # type: ignore[arg-type]
+                        is_,
                     ), f"Expected instance of {is_!r}, got {type(value)!r}"
                 if contains is not _SENTINEL:
-                    assert contains in value, (  # type: ignore[operator]
+                    assert contains in value, (
                         f"Expected {value!r} to contain {contains!r}"
                     )
                 if attrs is not _SENTINEL:
-                    for attr_name in attrs:  # type: ignore[union-attr]
+                    for attr_name in attrs:
                         assert hasattr(value, attr_name), (
                             f"Missing attribute: {attr_name}"
                         )
                 if keys is not _SENTINEL:
-                    for key in keys:  # type: ignore[union-attr]
-                        assert key in value, f"Missing key: {key}"  # type: ignore[operator]
+                    for key in keys:
+                        assert key in value, f"Missing key: {key}"
                 if lacks_keys is not _SENTINEL:
-                    for key in lacks_keys:  # type: ignore[union-attr]
-                        assert key not in value, f"Unexpected key: {key}"  # type: ignore[operator]
+                    for key in lacks_keys:
+                        assert key not in value, f"Unexpected key: {key}"
                 if kv is not _SENTINEL:
-                    for k, v in kv.items():  # type: ignore[union-attr]
-                        actual = value[k]  # type: ignore[index]
+                    for k, v in kv.items():
+                        actual = value[k]
                         assert actual == v, f"Key {k!r}: expected {v!r}, got {actual!r}"
                 if gte is not _SENTINEL:
-                    assert value >= gte, f"Expected >= {gte!r}, got {value!r}"  # type: ignore[operator]
+                    assert value >= gte, f"Expected >= {gte!r}, got {value!r}"
                 if lte is not _SENTINEL:
-                    assert value <= lte, f"Expected <= {lte!r}, got {value!r}"  # type: ignore[operator]
+                    assert value <= lte, f"Expected <= {lte!r}, got {value!r}"
                 if "len" in kwargs:
                     expected_len = kwargs["len"]
-                    actual_len = len(value)  # type: ignore[arg-type]
+                    actual_len = len(value)
                     assert actual_len == expected_len, (
                         f"Expected length {expected_len}, got {actual_len}"
                     )
@@ -93,10 +93,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def ok(result: object, **kwargs: object) -> object:
                 """Assert result is success and return its value."""
                 assert hasattr(result, "is_success"), "Expected a Result object"
-                assert result.is_success, (  # type: ignore[union-attr]
+                assert result.is_success, (
                     f"Expected success, got failure: {getattr(result, 'error', 'unknown')}"
                 )
-                value = result.value  # type: ignore[union-attr]
+                value = result.value
                 if kwargs:
                     TestsFlextLdapUtilities.Tests.Matchers.that(value, **kwargs)
                 return value
@@ -105,8 +105,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def fail(result: object, **kwargs: object) -> str:
                 """Assert result is failure and return error string."""
                 assert hasattr(result, "is_failure"), "Expected a Result object"
-                assert result.is_failure, "Expected failure, got success"  # type: ignore[union-attr]
-                error_str = str(result.error) if result.error else ""  # type: ignore[union-attr]
+                assert result.is_failure, "Expected failure, got success"
+                error_str = str(result.error) if result.error else ""
                 has_value = kwargs.get("has")
                 if has_value is not None:
                     assert str(has_value).lower() in error_str.lower(), (
