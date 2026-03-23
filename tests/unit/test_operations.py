@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 import pytest
@@ -44,7 +45,7 @@ class TestsFlextLdapOperations:
     All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    _ERROR_DETECTION_SCENARIOS: ClassVar[dict[str, bool]] = {
+    _ERROR_DETECTION_SCENARIOS: ClassVar[Mapping[str, bool]] = {
         "Entry already exists": True,
         "already exists": True,
         "ALREADY EXISTS": True,
@@ -52,7 +53,7 @@ class TestsFlextLdapOperations:
         "Connection failed": False,
         "": False,
     }
-    _ENTRY_SCENARIOS: ClassVar[dict[str, dict[str, list[str]]]] = {
+    _ENTRY_SCENARIOS: ClassVar[Mapping[str, Mapping[str, Sequence[str]]]] = {
         "identical": {"cn": ["test"], "sn": ["User"]},
         "different": {"cn": ["test"], "sn": ["Different"]},
     }

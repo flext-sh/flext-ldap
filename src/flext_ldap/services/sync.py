@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, override
@@ -141,7 +141,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
 
         def sync(
             self,
-            entries: list[m.Ldif.Entry],
+            entries: Sequence[m.Ldif.Entry],
             _options: FlextLdapModelsLdap.SyncOptions,
         ) -> r[m.Ldap.SyncStats]:
             """Sync entries in batch mode with progress tracking.
@@ -167,7 +167,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 counts and zero duration (caller updates).
 
             """
-            stats_builder: dict[str, int] = {"added": 0, "skipped": 0, "failed": 0}
+            stats_builder: Mapping[str, int] = {"added": 0, "skipped": 0, "failed": 0}
 
             def process_entry(
                 idx_entry: tuple[int, m.Ldif.Entry],
@@ -264,10 +264,10 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
         @classmethod
         def transform(
             cls,
-            entries: list[m.Ldif.Entry],
+            entries: Sequence[m.Ldif.Entry],
             source_basedn: str,
             target_basedn: str,
-        ) -> list[m.Ldif.Entry]:
+        ) -> Sequence[m.Ldif.Entry]:
             """Rewrite entry DNs from ``source_basedn`` to ``target_basedn``.
 
             Business Rules:
@@ -287,7 +287,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 target_basedn: The replacement base DN (e.g., "dc=new,dc=com").
 
             Returns:
-                list[Entry]: New list with transformed DNs. Original entries
+                Sequence[Entry]: New list with transformed DNs. Original entries
                 unchanged if source_basedn == target_basedn.
 
             """
@@ -431,12 +431,12 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             )
             return r[m.Ldap.SyncStats].fail(f"Failed to parse LDIF file: {error_msg}")
         entries_raw = parse_result.value
-        entries: list[m.Ldif.Entry] = list(entries_raw)
+        entries: Sequence[m.Ldif.Entry] = list(entries_raw)
         return self._process_entries(entries, options, start_time)
 
     def _process_entries(
         self,
-        entries: list[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
         options: FlextLdapModelsLdap.SyncOptions,
         start_time: datetime,
     ) -> r[m.Ldap.SyncStats]:

@@ -5,6 +5,7 @@ This module provides constants for LDAP operations, extending FlextLdifConstants
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import ClassVar, Final, Literal
 
@@ -108,7 +109,7 @@ class FlextLdapConstants(FlextLdifConstants):
             PROTOCOL_ERROR = 2
             NO_SUCH_OBJECT = 32
             REFERRAL = 10
-            PARTIAL_SUCCESS_CODES: ClassVar[list[int]] = [0, 10]
+            PARTIAL_SUCCESS_CODES: ClassVar[Sequence[int]] = [0, 10]
 
         class ErrorStrings:
             """Error message string constants."""

@@ -151,7 +151,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             base_dn: str
             scope: str
             filter_str: str
-            attributes: list[str] | None
+            attributes: Sequence[str] | None
             size_limit: int
             time_limit: int
 

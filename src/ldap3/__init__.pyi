@@ -1,3 +1,5 @@
+from collections.abc import Mapping, Sequence
+
 from flext_core import t
 
 BASE: int
@@ -17,8 +19,8 @@ class Server:
     ) -> None: ...
 
 class Connection:
-    result: dict[str, t.Container]
-    entries: list[t.Container]
+    result: Mapping[str, t.Container]
+    entries: Sequence[t.Container]
     bound: bool
 
     def __init__(
@@ -37,20 +39,20 @@ class Connection:
     def add(
         self,
         dn: str,
-        object_class: list[str] | str | None = ...,
-        attributes: dict[str, t.Container] | None = ...,
+        object_class: Sequence[str] | str | None = ...,
+        attributes: Mapping[str, t.Container] | None = ...,
     ) -> bool: ...
     def modify(
         self,
         dn: str,
-        changes: dict[str, list[tuple[int, list[str]]]],
+        changes: Mapping[str, Sequence[tuple[int, Sequence[str]]]],
     ) -> bool: ...
     def search(
         self,
         search_base: str,
         search_filter: str,
         search_scope: int | str = ...,
-        attributes: list[str] | str = ...,
+        attributes: Sequence[str] | str = ...,
         size_limit: int = ...,
         time_limit: int = ...,
     ) -> bool: ...

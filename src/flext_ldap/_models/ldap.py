@@ -5,7 +5,7 @@ LDAP operation models with validation logic.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
@@ -47,7 +47,7 @@ class FlextLdapModelsLdap:
         filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
         size_limit: int = 0
         time_limit: int = 0
-        attributes: list[str] | None = None
+        attributes: Sequence[str] | None = None
 
     class SearchOptions(BaseModel):
         """Search options."""
@@ -61,7 +61,7 @@ class FlextLdapModelsLdap:
         ]
         scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
         filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
-        attributes: list[str] | None = None
+        attributes: Sequence[str] | None = None
         size_limit: int = 0
         time_limit: int = 0
 
@@ -100,7 +100,7 @@ class FlextLdapModelsLdap:
         base_dn: str
         filter_str: str
         ldap_scope: int
-        search_attributes: list[str]
+        search_attributes: Sequence[str]
         size_limit: int
         time_limit: int
 
@@ -177,7 +177,7 @@ class FlextLdapModelsLdap:
         total_processed: int = 0
         successful: int = 0
         failed: int = 0
-        results: list[dict[str, t.Primitives]] = []
+        results: Sequence[Mapping[str, t.Primitives]] = []
 
         @property
         def success_rate(self) -> float:
@@ -192,20 +192,20 @@ class FlextLdapModelsLdap:
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
         progress_callback: Callable[..., None] | None = None
-        retry_on_errors: list[str] | None = None
+        retry_on_errors: Sequence[str] | None = None
         max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
 
     class ConversionMetadata(BaseModel):
         """Conversion metadata."""
 
-        source_attributes: Annotated[list[str], Field(default_factory=list)]
+        source_attributes: Annotated[Sequence[str], Field(default_factory=list)]
         source_dn: str = ""
-        removed_attributes: Annotated[list[str], Field(default_factory=list)]
-        base64_encoded_attributes: Annotated[list[str], Field(default_factory=list)]
+        removed_attributes: Annotated[Sequence[str], Field(default_factory=list)]
+        base64_encoded_attributes: Annotated[Sequence[str], Field(default_factory=list)]
         dn_changed: bool = False
         converted_dn: str = ""
-        attribute_changes: Annotated[list[str], Field(default_factory=list)]
+        attribute_changes: Annotated[Sequence[str], Field(default_factory=list)]
 
     class OperationResult(BaseModel):
         """LDAP operation result."""
@@ -223,13 +223,13 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: list[dict[str, list[str]]] = []
+        entries: Sequence[Mapping[str, Sequence[str]]] = []
         search_options: FlextLdapModelsLdap.SearchOptions | None = None
 
         @property
-        def by_objectclass(self) -> Mapping[str, list[dict[str, list[str]]]]:
+        def by_objectclass(self) -> Mapping[str, Sequence[Mapping[str, Sequence[str]]]]:
             """Group entries by objectclass."""
-            result: dict[str, list[dict[str, list[str]]]] = {}
+            result: Mapping[str, Sequence[Mapping[str, Sequence[str]]]] = {}
             for entry in self.entries:
                 category = self.get_entry_category(entry)
                 if category not in result:
@@ -244,13 +244,15 @@ class FlextLdapModelsLdap:
 
         @staticmethod
         def extract_attrs_dict_from_entry(
-            entry: dict[str, list[str]],
-        ) -> Mapping[str, list[str]]:
+            entry: Mapping[str, Sequence[str]],
+        ) -> Mapping[str, Sequence[str]]:
             """Extract attributes dict from entry."""
             return {key: list(values) for key, values in entry.items()}
 
         @staticmethod
-        def extract_objectclass_category(attrs: Mapping[str, str | list[str]]) -> str:
+        def extract_objectclass_category(
+            attrs: Mapping[str, str | Sequence[str]],
+        ) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:
                 return "unknown"
@@ -265,7 +267,7 @@ class FlextLdapModelsLdap:
             return "unknown"
 
         @staticmethod
-        def get_entry_category(entry: dict[str, list[str]]) -> str:
+        def get_entry_category(entry: Mapping[str, Sequence[str]]) -> str:
             """Get category (objectclass) of an entry."""
             attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
                 entry,
@@ -309,7 +311,7 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
+        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
             default_factory=dict
         )
         total_entries: int = 0

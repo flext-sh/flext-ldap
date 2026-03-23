@@ -27,9 +27,9 @@ class FlextLdapTypes(FlextLdifTypes):
             """Operation type aliases."""
 
             type Result[T] = r[T]
-            type Changes = dict[str, list[tuple[int, list[str]]]]
+            type Changes = Mapping[str, Sequence[tuple[int, Sequence[str]]]]
             type Attributes = Mapping[str, Sequence[str]]
-            type AttributeDict = dict[str, list[str]]
+            type AttributeDict = Mapping[str, Sequence[str]]
             type Ldap3EntryValue = (
                 str
                 | bytes

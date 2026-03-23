@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 from flext_core import r
 from flext_tests import FlextTestsTypes
 
@@ -54,21 +56,23 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
             type LdapEntry = _m.Ldif.Entry
 
             # Test data dictionary types
-            type GenericFieldsDict = dict[
-                str, str | int | bool | list[str] | dict[str, list[str]]
+            type GenericFieldsDict = Mapping[
+                str, str | int | bool | Sequence[str] | Mapping[str, Sequence[str]]
             ]
-            type LdapContainerDict = dict[str, str | int | bool]
-            type LdapConnectionConfigDict = dict[str, str | int | bool | None]
-            type LdapSearchOptionsDict = dict[str, str | int | bool]
-            type LdapEntryDataDict = dict[str, str | int | bool | list[str]]
-            type LdapSchemaAttributeDict = dict[str, str | list[str] | bool]
-            type LdapSchemaObjectClassDict = dict[str, str | list[str] | bool]
-            type LdapModifyOperationDict = dict[str, str | int | bool | list[str]]
-            type LdapSearchResultDict = dict[str, str | int | bool | list[str]]
-            type LdapTestScenarioDict = dict[str, str | int | bool]
-            type GenericTestCaseDict = dict[str, str | int | bool]
-            type GenericCallableParameterDict = dict[str, str | int | bool]
-            type LdapConnectionResultDict = dict[str, str | int | bool]
+            type LdapContainerDict = Mapping[str, str | int | bool]
+            type LdapConnectionConfigDict = Mapping[str, str | int | bool | None]
+            type LdapSearchOptionsDict = Mapping[str, str | int | bool]
+            type LdapEntryDataDict = Mapping[str, str | int | bool | Sequence[str]]
+            type LdapSchemaAttributeDict = Mapping[str, str | Sequence[str] | bool]
+            type LdapSchemaObjectClassDict = Mapping[str, str | Sequence[str] | bool]
+            type LdapModifyOperationDict = Mapping[
+                str, str | int | bool | Sequence[str]
+            ]
+            type LdapSearchResultDict = Mapping[str, str | int | bool | Sequence[str]]
+            type LdapTestScenarioDict = Mapping[str, str | int | bool]
+            type GenericTestCaseDict = Mapping[str, str | int | bool]
+            type GenericCallableParameterDict = Mapping[str, str | int | bool]
+            type LdapConnectionResultDict = Mapping[str, str | int | bool]
 
 
 t = FlextLdapTestTypes

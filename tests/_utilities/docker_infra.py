@@ -12,6 +12,7 @@ from __future__ import annotations
 import fcntl
 import os
 import types
+from collections.abc import Sequence
 from pathlib import Path
 from threading import Lock
 from typing import ClassVar, TextIO
@@ -35,7 +36,7 @@ class _DockerInfraUtils:
     _workspace_root: ClassVar[Path] = (
         Path(__file__).resolve().parent.parent.parent.parent
     )
-    _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
+    _resolved_admin_credentials: ClassVar[Sequence[tuple[str, str] | None]] = [None]
 
     class FileLock:
         """File-based locking for pytest-xdist parallel test isolation."""
@@ -94,7 +95,7 @@ class _DockerInfraUtils:
         d = c.Ldap.Tests.Docker
         env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
         env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
-        candidates: list[tuple[str, str]] = []
+        candidates: Sequence[tuple[str, str]] = []
         if env_dn and env_password:
             candidates.append((env_dn, env_password))
         candidates.extend([

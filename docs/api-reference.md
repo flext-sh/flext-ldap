@@ -74,7 +74,7 @@
   - 🔄 Universal LDAP Interface
     - FlextLdapEntryAdapter
       - [`ldap3_to_ldif_entry(ldap3_entry) -> r[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
-- Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> r[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> r[dict[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
+- Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> r[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> r[Mapping[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
 - Create FlextLdif entry
 - Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> r[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries, output_path) -> r[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
   - FlextLdapQuirksAdapter
@@ -94,8 +94,8 @@
       - ACL Operations
         - `get_acl_attribute_name() -> str`
         - `get_acl_format() -> str`
-        - [`get_acls(connection, dn) -> r[list[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- Get ACLs from cn=config entry - [`set_acls(connection, dn, acls) -> r[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> r[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> r[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> r[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> r[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> r[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> r[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> r[list[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
+        - [`get_acls(connection, dn) -> r[Sequence[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
+- Get ACLs from cn=config entry - [`set_acls(connection, dn, acls) -> r[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> r[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> r[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> r[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> r[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> r[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> r[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> r[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - Server-Specific Implementations
     - OpenLDAP2Operations
 - Schema discovery
@@ -576,7 +576,7 @@ Batch convert multiple ldap3 entries to FlextLdif entries.
 
 **Returns:** r containing list of FlextLdifModels.Entry
 
-#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> r[dict[str, t.List]]`
+#### `ldif_entry_to_ldap3_attributes(ldif_entry) -> r[Mapping[str, t.List]]`
 
 Convert FlextLdif entry to ldap3 attributes dictionary.
 
@@ -584,7 +584,7 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** r containing attributes dict[str, t.NormalizedValue] for ldap3 operations
+**Returns:** r containing attributes Mapping[str, t.NormalizedValue] for ldap3 operations
 
 **Example:**
 
@@ -830,7 +830,7 @@ Get ACL attribute name for server type.
 
 Get ACL format identifier.
 
-##### `get_acls(connection, dn) -> r[list[t.Dict]]`
+##### `get_acls(connection, dn) -> r[Sequence[t.Dict]]`
 
 Retrieve ACLs from entry.
 
@@ -940,7 +940,7 @@ Check if server supports paged results control.
 
 Check if server supports Virtual List View (VLV).
 
-##### `search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> r[list[FlextLdifModels.Entry]]`
+##### `search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> r[Sequence[FlextLdifModels.Entry]]`
 
 Execute paged search with automatic pagination.
 

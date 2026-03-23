@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar
 
@@ -18,7 +19,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from tests import m, t
 
-GenericFieldsDict = dict[str, str | int | bool | list[str] | dict[str, list[str]]]
+GenericFieldsDict = Mapping[
+    str, str | int | bool | Sequence[str] | Mapping[str, Sequence[str]]
+]
 
 
 class _FixtureLoaderUtils:
@@ -37,18 +40,20 @@ class _FixtureLoaderUtils:
         )
 
         @staticmethod
-        def load_json(filename: str) -> r[list[GenericFieldsDict]]:
+        def load_json(filename: str) -> r[Sequence[GenericFieldsDict]]:
             filepath = _FixtureLoaderUtils.Fixtures.FIXTURES_DIR / filename
             try:
                 if not filepath.exists():
-                    return r[list[GenericFieldsDict]].fail(
+                    return r[Sequence[GenericFieldsDict]].fail(
                         f"Fixture file not found: {filename}"
                     )
                 raw_content = filepath.read_text(encoding="utf-8")
-                data = TypeAdapter(list[GenericFieldsDict]).validate_json(raw_content)
-                return r[list[GenericFieldsDict]].ok(data)
+                data = TypeAdapter(Sequence[GenericFieldsDict]).validate_json(
+                    raw_content
+                )
+                return r[Sequence[GenericFieldsDict]].ok(data)
             except (OSError, ValueError, ValidationError) as e:
-                return r[list[GenericFieldsDict]].fail(
+                return r[Sequence[GenericFieldsDict]].fail(
                     f"Failed to load JSON fixture {filename}: {e}"
                 )
 
@@ -65,25 +70,25 @@ class _FixtureLoaderUtils:
                 return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
         @staticmethod
-        def load_docker_config() -> r[dict[str, t.NormalizedValue]]:
+        def load_docker_config() -> r[Mapping[str, t.NormalizedValue]]:
             filepath = _FixtureLoaderUtils.Fixtures.FIXTURES_DIR / "docker_config.json"
             try:
                 if not filepath.exists():
-                    return r[dict[str, t.NormalizedValue]].fail(
+                    return r[Mapping[str, t.NormalizedValue]].fail(
                         "Docker config file not found"
                     )
                 raw_content = filepath.read_text(encoding="utf-8")
-                config: dict[str, t.NormalizedValue] = TypeAdapter(
-                    dict[str, t.NormalizedValue],
+                config: Mapping[str, t.NormalizedValue] = TypeAdapter(
+                    Mapping[str, t.NormalizedValue],
                 ).validate_json(raw_content)
-                return r[dict[str, t.NormalizedValue]].ok(config)
+                return r[Mapping[str, t.NormalizedValue]].ok(config)
             except (OSError, ValueError, ValidationError) as e:
-                return r[dict[str, t.NormalizedValue]].fail(
+                return r[Mapping[str, t.NormalizedValue]].fail(
                     f"Failed to load docker config: {e}",
                 )
 
         @staticmethod
-        def load_users_json() -> list[GenericFieldsDict]:
+        def load_users_json() -> Sequence[GenericFieldsDict]:
             result = _FixtureLoaderUtils.Fixtures.load_json("test_users.json")
             if result.is_success:
                 return result.value
@@ -91,7 +96,7 @@ class _FixtureLoaderUtils:
             return []
 
         @staticmethod
-        def load_groups_json() -> list[GenericFieldsDict]:
+        def load_groups_json() -> Sequence[GenericFieldsDict]:
             result = _FixtureLoaderUtils.Fixtures.load_json("test_groups.json")
             if result.is_success:
                 return result.value
@@ -111,7 +116,7 @@ class _FixtureLoaderUtils:
             return ""
 
         @staticmethod
-        def load_base_ldif_entries() -> list[m.Ldif.Entry]:
+        def load_base_ldif_entries() -> Sequence[m.Ldif.Entry]:
             ldif_content = _FixtureLoaderUtils.Fixtures.load_base_ldif()
             if not ldif_content:
                 return []
@@ -133,10 +138,10 @@ class _FixtureLoaderUtils:
             user_data: GenericFieldsDict,
         ) -> GenericFieldsDict:
             object_classes_raw = user_data.get("object_classes", [])
-            object_classes: list[str] = (
+            object_classes: Sequence[str] = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
-            attributes: dict[str, list[str]] = {
+            attributes: Mapping[str, Sequence[str]] = {
                 "objectClass": [str(oc) for oc in object_classes],
                 "uid": [str(user_data.get("uid", ""))],
                 "cn": [str(user_data.get("cn", ""))],
@@ -166,10 +171,10 @@ class _FixtureLoaderUtils:
             group_data: GenericFieldsDict,
         ) -> GenericFieldsDict:
             object_classes_raw = group_data.get("object_classes", [])
-            object_classes: list[str] = (
+            object_classes: Sequence[str] = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
-            attributes: dict[str, list[str]] = {
+            attributes: Mapping[str, Sequence[str]] = {
                 "objectClass": [str(oc) for oc in object_classes],
                 "cn": [str(group_data.get("cn", ""))],
             }

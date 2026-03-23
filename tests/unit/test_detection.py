@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 import pytest
 from flext_tests import tm
@@ -44,8 +44,8 @@ class TestsFlextLdapDetection:
     """
 
     @staticmethod
-    def _get_detector_execute_scenarios() -> list[
-        tuple[dict[str, bool | float | str | None] | None, bool, str]
+    def _get_detector_execute_scenarios() -> Sequence[
+        tuple[Mapping[str, bool | float | str | None] | None, bool, str]
     ]:
         """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
         return [
@@ -54,8 +54,8 @@ class TestsFlextLdapDetection:
         ]
 
     @staticmethod
-    def _get_get_first_value_scenarios() -> list[
-        tuple[dict[str, list[str]], str, str | None]
+    def _get_get_first_value_scenarios() -> Sequence[
+        tuple[Mapping[str, Sequence[str]], str, str | None]
     ]:
         """Factory: Return _get_first_value() test scenarios (attrs, key, expected)."""
         return [
@@ -70,8 +70,8 @@ class TestsFlextLdapDetection:
         ]
 
     @staticmethod
-    def _get_detect_from_attributes_scenarios() -> list[
-        tuple[str | None, str | None, list[str], str]
+    def _get_detect_from_attributes_scenarios() -> Sequence[
+        tuple[str | None, str | None, Sequence[str], str]
     ]:
         """Factory: Return _detect_from_attributes() test scenarios (vendor_name, version, controls, expected)."""
         return [
@@ -97,7 +97,7 @@ class TestsFlextLdapDetection:
     )
     def test_execute_error_handling(
         self,
-        kwargs: dict[str, bool | float | str | None] | None,
+        kwargs: Mapping[str, bool | float | str | None] | None,
         expect_failure: bool,
         error_substring: str,
     ) -> None:
@@ -111,10 +111,10 @@ class TestsFlextLdapDetection:
         ("attrs", "key", "expected"), _get_get_first_value_scenarios()
     )
     def test_get_first_value(
-        self, attrs: Mapping[str, list[str]], key: str, expected: str | None
+        self, attrs: Mapping[str, Sequence[str]], key: str, expected: str | None
     ) -> None:
         """Test _get_first_value with various attribute scenarios."""
-        attrs_dict: dict[str, list[str]] = dict(attrs)
+        attrs_dict: Mapping[str, Sequence[str]] = dict(attrs)
         value = FlextLdapServerDetector._get_first_value(attrs_dict, key)
         assert value == expected
 
@@ -126,7 +126,7 @@ class TestsFlextLdapDetection:
         self,
         vendor_name: str | None,
         vendor_version: str | None,
-        supported_controls: list[str],
+        supported_controls: Sequence[str],
         expected: str,
     ) -> None:
         """Test _detect_from_attributes with various server types and variants."""

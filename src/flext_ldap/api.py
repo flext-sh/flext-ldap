@@ -64,7 +64,7 @@ class FlextLdapSyncCallbacks:
     @staticmethod
     def convert_entries_to_protocol(
         entries: Sequence[m.Ldif.Entry],
-    ) -> list[m.Ldif.Entry]:
+    ) -> Sequence[m.Ldif.Entry]:
         """Convert entries to protocol list with type safety."""
         return list(entries)
 
@@ -381,7 +381,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         entries: Sequence[m.Ldif.Entry],
         *,
         progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
-        retry_on_errors: list[str] | None = None,
+        retry_on_errors: Sequence[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> r[m.Ldap.LdapBatchStats]:
@@ -694,7 +694,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         """
         config = config or FlextLdapModelsLdap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
-        phase_results: dict[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
+        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
         overall_success = True
         stop_requested = False
         for phase_name, phase_file in phase_files.items():
@@ -828,7 +828,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 f"Failed to parse LDIF file: {error_msg}",
             )
         parse_value = parse_result.value
-        entries: list[m.Ldif.Entry] = [
+        entries: Sequence[m.Ldif.Entry] = [
             m.Ldif.Entry.model_validate(entry) for entry in parse_value
         ]
         if not entries:
@@ -898,7 +898,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         self,
         entry: m.Ldif.Entry,
         *,
-        retry_on_errors: list[str] | None = None,
+        retry_on_errors: Sequence[str] | None = None,
         max_retries: int = 1,
     ) -> r[m.Ldap.LdapOperationResult]:
         """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).

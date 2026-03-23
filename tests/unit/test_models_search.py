@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 import pytest
@@ -99,7 +100,7 @@ class TestsFlextLdapModelsSearch:
         with pytest.raises(exc_types):
             setattr(result, "is_success", False)
 
-    _SEARCH_RESULT_SCENARIOS: ClassVar[dict[str, tuple[int, int]]] = {
+    _SEARCH_RESULT_SCENARIOS: ClassVar[Mapping[str, tuple[int, int]]] = {
         "empty": (0, 0),
         "single": (1, 1),
         "multiple": (5, 5),
@@ -126,7 +127,7 @@ class TestsFlextLdapModelsSearch:
         tm.that(categories, none=False)
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
-        entry: dict[str, list[str]] = {}
+        entry: Mapping[str, Sequence[str]] = {}
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         tm.that(attrs, eq={})
 
@@ -140,7 +141,7 @@ class TestsFlextLdapModelsSearch:
         tm.that(category, eq="person")
 
     def test_search_result_get_entry_category(self) -> None:
-        entry: dict[str, list[str]] = {}
+        entry: Mapping[str, Sequence[str]] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
         tm.that(category, eq="unknown")
 

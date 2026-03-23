@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from flext_tests import FlextTestsUtilities
 
@@ -40,7 +40,7 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 attrs: Sequence[str] | t.NormalizedValue = _SENTINEL,
                 keys: Sequence[str] | t.NormalizedValue = _SENTINEL,
                 lacks_keys: Sequence[str] | t.NormalizedValue = _SENTINEL,
-                kv: dict[str, t.NormalizedValue] | t.NormalizedValue = _SENTINEL,
+                kv: Mapping[str, t.NormalizedValue] | t.NormalizedValue = _SENTINEL,
                 gte: float | t.NormalizedValue = _SENTINEL,
                 lte: float | t.NormalizedValue = _SENTINEL,
                 **kwargs: t.NormalizedValue,

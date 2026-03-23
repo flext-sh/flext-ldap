@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import socket
 import time
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -14,12 +15,12 @@ from tests import c, m, u
 
 logger = FlextLogger(__name__)
 
-LdapContainerDict = dict[str, str | int | bool]
+LdapContainerDict = Mapping[str, str | int | bool]
 
 
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
-    worker_input: dict[str, str | int | bool] = (
+    worker_input: Mapping[str, str | int | bool] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     return str(worker_input.get("workerid", "master"))

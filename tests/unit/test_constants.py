@@ -18,6 +18,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 import pytest
 from flext_tests import tm
 
@@ -34,7 +36,7 @@ class TestsFlextLdapConstants:
     """
 
     @staticmethod
-    def _get_ldap_cqrs_status_values() -> list[tuple[str, str]]:
+    def _get_ldap_cqrs_status_values() -> Sequence[tuple[str, str]]:
         """Factory: Return all LdapCqrs.Status enum members for parametrization.
 
         Nested static method reduces line count while making parametrization
@@ -58,7 +60,7 @@ class TestsFlextLdapConstants:
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
         """Test all LdapCqrs.Status enum values in single parametrized method."""
-        status_map: dict[str, c.Ldap.LdapCqrs.Status] = {
+        status_map: Mapping[str, c.Ldap.LdapCqrs.Status] = {
             "PENDING": c.Ldap.LdapCqrs.Status.PENDING,
             "RUNNING": c.Ldap.LdapCqrs.Status.RUNNING,
             "COMPLETED": c.Ldap.LdapCqrs.Status.COMPLETED,
@@ -87,7 +89,7 @@ class TestsFlextLdapConstants:
     )
     def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
         """Test all SearchScope enumeration values."""
-        scope_map: dict[str, c.Ldap.SearchScope] = {
+        scope_map: Mapping[str, c.Ldap.SearchScope] = {
             "BASE": c.Ldap.SearchScope.BASE,
             "ONELEVEL": c.Ldap.SearchScope.ONELEVEL,
             "SUBTREE": c.Ldap.SearchScope.SUBTREE,
@@ -105,7 +107,7 @@ class TestsFlextLdapConstants:
     )
     def test_operation_type_enum_values(self, attr: str, expected: str) -> None:
         """Test all OperationType enumeration values."""
-        op_type_map: dict[str, c.Ldap.OperationType] = {
+        op_type_map: Mapping[str, c.Ldap.OperationType] = {
             "ADD": c.Ldap.OperationType.ADD,
             "MODIFY": c.Ldap.OperationType.MODIFY,
             "DELETE": c.Ldap.OperationType.DELETE,

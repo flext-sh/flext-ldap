@@ -5,7 +5,7 @@ enabling integration between LDAP protocol operations and LDIF entry manipulatio
 
 Business Rules:
     - ldap3.Entry → p.Entry conversion preserves all attributes
-    - p.Entry → ldap3 attributes uses dict[str, list[str]] format
+    - p.Entry → ldap3 attributes uses Mapping[str, Sequence[str]] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
     - Server-specific normalization uses flext-ldif quirks system
     - DN normalization via u.Ldif.norm_string() for consistency
@@ -70,7 +70,7 @@ class FlextLdapEntryAdapter(s[bool]):
             """Convert ldap3 entry value to sequence of strings.
 
             Business Rules:
-                - List-like values are converted to list[str]
+                - List-like values are converted to Sequence[str]
                 - Single values are wrapped in single-item list [str(value)]
                 - None values become empty list []
                 - Python 3.13: Uses guard-based sequence handling
@@ -238,7 +238,7 @@ class FlextLdapEntryAdapter(s[bool]):
         original_dn: str,
         converted_dn: str,
         original_attrs_dict: Mapping[str, Sequence[str | bytes]],
-        converted_attrs_dict: Mapping[str, list[str]],
+        converted_attrs_dict: Mapping[str, Sequence[str]],
     ) -> m.Ldap.ConversionMetadata:
         """Track DN and attribute differences in conversion metadata.
 
@@ -269,7 +269,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_attrs_dict: Converted LDIF attributes (lists of strings).
 
         """
-        updates: dict[str, bool | str | list[str]] = {}
+        updates: Mapping[str, bool | str | Sequence[str]] = {}
         if converted_dn != original_dn:
             updates["dn_changed"] = True
             updates["converted_dn"] = converted_dn
@@ -292,7 +292,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_str = ", ".join(filtered_str_values) or ""
             return attr_name if original_str != converted_str else None
 
-        result_dict: dict[str, str | None] = {}
+        result_dict: Mapping[str, str | None] = {}
         logger = logging.getLogger(__name__)
         for attr_name, original_values in original_attrs_dict.items():
             try:
@@ -314,7 +314,7 @@ class FlextLdapEntryAdapter(s[bool]):
                     exc_info=e,
                 )
                 continue
-        filtered_dict: dict[str, str] = {
+        filtered_dict: Mapping[str, str] = {
             k: v for k, v in result_dict.items() if v is not None
         }
         changed_attrs = list(filtered_dict.values())
@@ -360,7 +360,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Business Rules:
             - DN is extracted from entry.entry_dn (string conversion)
             - Attributes are extracted from entry.entry_attributes_as_dict
-            - Attribute values are normalized to list[str] format
+            - Attribute values are normalized to Sequence[str] format
             - Base64 encoding detection uses ASCII threshold (127) for non-printable chars
             - Removed attributes (None values) are tracked in conversion metadata
             - Conversion metadata includes source DN, removed attrs, base64 attrs
@@ -391,13 +391,13 @@ class FlextLdapEntryAdapter(s[bool]):
             dn_str = str(ldap3_entry.entry_dn)
             attrs_dict = ldap3_entry.entry_attributes_as_dict
             original_attrs_dict = attrs_dict
-            removed_attrs: list[str] = []
-            base64_attrs: list[str] = []
-            ldif_attrs: dict[str, list[str]] = {}
+            removed_attrs: Sequence[str] = []
+            base64_attrs: Sequence[str] = []
+            ldif_attrs: Mapping[str, Sequence[str]] = {}
             logger = logging.getLogger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:
-                    str_values: list[str] = []
+                    str_values: Sequence[str] = []
                     match raw_value:
                         case list() | tuple():
                             for item in raw_value:
@@ -484,7 +484,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Business Rules:
             - Entry must have attributes (Attributes model)
             - Attributes must have non-empty attributes dict
-            - Attribute values are already list[str] in LDIF format
+            - Attribute values are already Sequence[str] in LDIF format
             - Values are converted to strings (handles any value types)
             - Empty attributes dict returns failure (no attributes to convert)
             - Python 3.13: Uses guard-based sequence handling
@@ -498,14 +498,14 @@ class FlextLdapEntryAdapter(s[bool]):
             - Accesses entry.attributes.attributes dict directly
             - Python 3.13: Uses guard-based sequence handling
             - Returns r pattern - no exceptions raised
-            - Returns dict[str, list[str]] format expected by ldap3
+            - Returns Mapping[str, Sequence[str]] format expected by ldap3
 
         Args:
             entry: m.Ldif.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:
-            r[Attributes]: Dict mapping attribute names to list[str] values
+            r[Attributes]: Dict mapping attribute names to Sequence[str] values
             or error if entry has no attributes or conversion fails.
 
         """
@@ -516,7 +516,7 @@ class FlextLdapEntryAdapter(s[bool]):
         if not attrs_dict:
             return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         try:
-            filtered_attrs: dict[str, list[str]] = {}
+            filtered_attrs: Mapping[str, Sequence[str]] = {}
             for k, v in attrs_dict.items():
                 key_str = str(k)
                 filtered_attrs[key_str] = [str(item) for item in v]
@@ -551,7 +551,7 @@ class FlextLdapEntryAdapter(s[bool]):
         base64_attrs: MutableSequence[str],
         removed_attrs: MutableSequence[str],
         ascii_threshold: int = _ConversionHelpers.ASCII_THRESHOLD,
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Convert ldap3 attribute value to list format, tracking metadata.
 
         Business Rules:
@@ -570,7 +570,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Uses _ConversionHelpers for value conversion
             - Mutates base64_attrs and removed_attrs lists (side effect)
             - Uses type guards for safe value type narrowing
-            - Returns list[str] for consistent format
+            - Returns Sequence[str] for consistent format
 
         Args:
             value: ldap3 attribute value to convert.

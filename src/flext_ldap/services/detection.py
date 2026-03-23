@@ -52,9 +52,9 @@ class FlextLdapServerDetector(s[str]):
     def _detect_from_attributes(
         vendor_name: str | None,
         vendor_version: str | None,
-        naming_contexts: list[str],
-        _supported_controls: list[str],
-        supported_extensions: list[str],
+        naming_contexts: Sequence[str],
+        _supported_controls: Sequence[str],
+        supported_extensions: Sequence[str],
     ) -> r[str]:
         """Classify the server using collected ``rootDSE`` attributes.
 
@@ -97,8 +97,8 @@ class FlextLdapServerDetector(s[str]):
 
     @staticmethod
     def _detect_from_extensions(
-        supported_extensions: list[str],
-        naming_contexts: list[str],
+        supported_extensions: Sequence[str],
+        naming_contexts: Sequence[str],
     ) -> str:
         """Detect server type from extensions and naming contexts."""
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
@@ -181,7 +181,7 @@ class FlextLdapServerDetector(s[str]):
             v for v in [vendor_name, vendor_version] if v is not None
         ])
         vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
-        vendor_parts: list[str] = (
+        vendor_parts: Sequence[str] = (
             [str(item) for item in vendor_parts_raw]
             if isinstance(vendor_parts_raw, list)
             else []
@@ -189,7 +189,7 @@ class FlextLdapServerDetector(s[str]):
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
         if not vendor_info:
             return None
-        vendor_checks: list[tuple[str, Callable[[str], bool]]] = [
+        vendor_checks: Sequence[tuple[str, Callable[[str], bool]]] = [
             ("oud", lambda v: "oracle" in v and "unified directory" in v),
             (
                 "oid",
@@ -218,8 +218,8 @@ class FlextLdapServerDetector(s[str]):
 
     @staticmethod
     def _detect_server_type_from_attributes_simple(
-        supported_extensions: list[str],
-        naming_contexts: list[str],
+        supported_extensions: Sequence[str],
+        naming_contexts: Sequence[str],
         vendor_name: str | None = None,
         vendor_version: str | None = None,
     ) -> str:
@@ -280,7 +280,7 @@ class FlextLdapServerDetector(s[str]):
             - Queries base DN "" with BASE scope to fetch rootDSE
             - Uses (objectClass=*) filter to match all entries
             - Requests ALL_ATTRIBUTES to get complete rootDSE information
-            - Normalizes attribute values to list[str] format
+            - Normalizes attribute values to Sequence[str] format
             - Filters out None values from attribute dict
             - Returns failure if search fails or no entries returned
 
@@ -298,7 +298,7 @@ class FlextLdapServerDetector(s[str]):
             connection: Active ldap3.Connection instance (must be bound).
 
         Returns:
-            r[Attributes]: Dict mapping attribute names to list[str] values
+            r[Attributes]: Dict mapping attribute names to Sequence[str] values
             or error if rootDSE query fails.
 
         """
@@ -316,7 +316,7 @@ class FlextLdapServerDetector(s[str]):
             return r[t.Ldap.Operation.AttributeDict].fail(
                 f"rootDSE query failed: {connection.result}",
             )
-        entries_list: list[t.NormalizedValue] = getattr(connection, "entries", [])
+        entries_list: Sequence[t.NormalizedValue] = getattr(connection, "entries", [])
         entries_raw: Sequence[t.NormalizedValue] = entries_list
         if not entries_raw:
             return r[t.Ldap.Operation.AttributeDict].fail(
@@ -328,10 +328,10 @@ class FlextLdapServerDetector(s[str]):
                 "rootDSE query returned invalid entry payload",
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
-        attributes: dict[str, list[str]] = {
+        attributes: Mapping[str, Sequence[str]] = {
             k: [str(item) for item in v] for k, v in attrs_dict.items()
         }
-        return r[Mapping[str, list[str]]].ok(attributes)
+        return r[Mapping[str, Sequence[str]]].ok(attributes)
 
     def detect_from_connection(self, connection: Connection) -> r[str]:
         """Query ``rootDSE`` and return a detected server label.
@@ -368,9 +368,9 @@ class FlextLdapServerDetector(s[str]):
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
         root_dse_attrs = root_dse_result.value
 
-        naming_contexts: list[str] = root_dse_attrs.get("namingContexts", [])
-        supported_controls: list[str] = root_dse_attrs.get("supportedControl", [])
-        supported_extensions: list[str] = root_dse_attrs.get(
+        naming_contexts: Sequence[str] = root_dse_attrs.get("namingContexts", [])
+        supported_controls: Sequence[str] = root_dse_attrs.get("supportedControl", [])
+        supported_extensions: Sequence[str] = root_dse_attrs.get(
             "supportedExtension",
             [],
         )

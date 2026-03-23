@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities, m
@@ -66,8 +66,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def to_str_list(
             value: t.Primitives | None,
             *,
-            default: list[str] | None = None,
-        ) -> list[str]:
+            default: Sequence[str] | None = None,
+        ) -> Sequence[str]:
             """Convert a value to a single-element string list."""
             if value is None:
                 return default or []
@@ -76,7 +76,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             return default or []
 
         @staticmethod
-        def to_str_list_safe(value: t.Primitives | None) -> list[str]:
+        def to_str_list_safe(value: t.Primitives | None) -> Sequence[str]:
             """Safe str_list conversion returning [] for None or complex types."""
             if value is None:
                 return []
@@ -88,8 +88,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def to_str_list_truthy(
             value: t.Primitives | None,
             *,
-            default: list[str] | None = None,
-        ) -> list[str]:
+            default: Sequence[str] | None = None,
+        ) -> Sequence[str]:
             """Convert to str_list and filter truthy values."""
             if value is None:
                 return default or []
@@ -136,7 +136,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def norm_in(
             cls,
             value: str,
-            collection: list[str] | tuple[str, ...],
+            collection: Sequence[str] | tuple[str, ...],
             *,
             case: str | None = None,
         ) -> bool:
@@ -166,7 +166,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @classmethod
         def norm_join(
             cls,
-            values: list[str] | tuple[str, ...],
+            values: Sequence[str] | tuple[str, ...],
             *,
             case: str | None = None,
         ) -> str:
@@ -190,10 +190,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: Mapping[str, t.ContainerValue] | Mapping[str, list[str]],
+            attrs: Mapping[str, t.ContainerValue] | Mapping[str, Sequence[str]],
             *,
             filter_list_like: bool = False,
-        ) -> Mapping[str, list[str]]:
+        ) -> Mapping[str, Sequence[str]]:
             """Convert attributes to str_list (generalized: map() + ensure).
 
             Uses advanced DSL: map() → ensure() for fluent composition.
@@ -203,14 +203,14 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 filter_list_like: Only convert list-like values
 
             Returns:
-                dict[str, list[str]]: Converted attributes
+                Mapping[str, Sequence[str]]: Converted attributes
 
             """
 
             def convert_value(
                 _k: str,
-                v: str | list[str] | t.ContainerValue,
-            ) -> list[str]:
+                v: str | Sequence[str] | t.ContainerValue,
+            ) -> Sequence[str]:
                 if v is None:
                     return []
                 match v:
@@ -222,7 +222,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     return [str(v)]
                 return [str(v)]
 
-            attrs_dict: dict[str, t.ContainerValue | list[str]] = dict(attrs)
+            attrs_dict: Mapping[str, t.ContainerValue | Sequence[str]] = dict(attrs)
             if not attrs_dict:
                 return {}
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
@@ -256,8 +256,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: list[t.ContainerValue] | Mapping[str, t.ContainerValue],
-        ) -> list[t.ContainerValue] | Mapping[str, t.ContainerValue]:
+            value: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue],
+        ) -> Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue]:
             """Filter truthy values from list or dict.
 
             Args:
@@ -313,23 +313,23 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def map_str(
-            values: list[str] | tuple[str, ...],
+            values: Sequence[str] | tuple[str, ...],
             *,
             case: str | None = None,
             join: str | None = None,
-        ) -> str | list[str]:
+        ) -> str | Sequence[str]:
             """Map strings with normalization and optional join.
 
             Args:
                 values: List of strings to map
                 case: Case normalization ("lower", "upper", None)
-                join: Join character (if provided, returns str; otherwise list[str])
+                join: Join character (if provided, returns str; otherwise Sequence[str])
 
             Returns:
                 Joined string or list of normalized strings
 
             """
-            normalized: list[str] = []
+            normalized: Sequence[str] = []
             for val in values:
                 normalized_val = val
                 if case == "lower":

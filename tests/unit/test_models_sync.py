@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 from flext_tests import tm
 from pydantic import ValidationError
@@ -47,7 +49,7 @@ class TestsFlextLdapModelsSync:
     # ── Computed: SyncStats.success_rate ───────────────────────────────
 
     _SUCCESS_RATES = [
-        ("zero total", m.Ldap.SyncStats, dict[str, int](), 0.0),
+        ("zero total", m.Ldap.SyncStats, Mapping[str, int](), 0.0),
         (
             "90% rate",
             m.Ldap.SyncStats,
@@ -74,7 +76,7 @@ class TestsFlextLdapModelsSync:
         ids=[x[0] for x in _SUCCESS_RATES],
     )
     def test_success_rate(
-        self, label: str, cls: type, kwargs: dict[str, int], expected: float
+        self, label: str, cls: type, kwargs: Mapping[str, int], expected: float
     ) -> None:
         tm.that(getattr(cls(**kwargs), "success_rate"), eq=expected)
 
