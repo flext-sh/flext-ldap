@@ -966,7 +966,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             r containing LdapBatchStats with synced/failed/skipped counts
 
         """
-        stats_builder: MutableMapping[str, int] = {"synced": 0, "failed": 0, "skipped": 0}
+        stats_builder: MutableMapping[str, int] = {
+            "synced": 0,
+            "failed": 0,
+            "skipped": 0,
+        }
         total_entries = len(entries)
         for idx_entry in enumerate(entries, 1):
             try:

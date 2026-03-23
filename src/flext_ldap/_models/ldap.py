@@ -229,7 +229,9 @@ class FlextLdapModelsLdap:
         @property
         def by_objectclass(self) -> Mapping[str, Sequence[Mapping[str, Sequence[str]]]]:
             """Group entries by objectclass."""
-            result: MutableMapping[str, MutableSequence[Mapping[str, Sequence[str]]]] = {}
+            result: MutableMapping[
+                str, MutableSequence[Mapping[str, Sequence[str]]]
+            ] = {}
             for entry in self.entries:
                 category = self.get_entry_category(entry)
                 if category not in result:

@@ -167,7 +167,11 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 counts and zero duration (caller updates).
 
             """
-            stats_builder: MutableMapping[str, int] = {"added": 0, "skipped": 0, "failed": 0}
+            stats_builder: MutableMapping[str, int] = {
+                "added": 0,
+                "skipped": 0,
+                "failed": 0,
+            }
 
             def process_entry(
                 idx_entry: tuple[int, m.Ldif.Entry],

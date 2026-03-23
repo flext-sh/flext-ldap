@@ -760,7 +760,9 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 "total_failed": totals["failed"],
                 "total_skipped": totals["skipped"],
                 "overall_success_rate": overall_success_rate,
-                "total_duration_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+                "total_duration_seconds": (
+                    datetime.now(UTC) - start_time
+                ).total_seconds(),
                 "overall_success": overall_success,
             }),
         )
