@@ -17,7 +17,7 @@ from flext_core import r
 from flext_tests import FlextTestsTypes
 
 from flext_ldap import FlextLdapTypes
-from tests.models import FlextLdapTestModels as _m
+from tests import FlextLdapTestModels as _m
 
 
 class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):

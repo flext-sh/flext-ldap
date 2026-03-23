@@ -5,9 +5,7 @@ from collections.abc import Sequence
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdapUtilities
-from tests import t
-from tests._utilities.docker_infra import _DockerInfraUtils
-from tests._utilities.fixture_loaders import _FixtureLoaderUtils
+from tests import _DockerInfraUtils, _FixtureLoaderUtils, t
 
 _SENTINEL = t.NormalizedValue()
 

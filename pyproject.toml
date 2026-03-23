@@ -121,9 +121,18 @@ pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.pyright]
 extraPaths = [
+  ".",
+  "../flext-core/examples",
   "../flext-core/src",
+  "../flext-core/tests",
+  "../flext-ldif/examples",
   "../flext-ldif/src",
+  "../flext-ldif/tests",
+  "../typings",
+  "../typings/generated",
+  "docs",
   "src",
+  "tests",
 ]
 pythonVersion = "3.13"
 reportMissingImports = "error"
@@ -133,6 +142,7 @@ reportMissingModuleSource = "warning"
 # [CUSTOM] poetry dev extensions
 # [MANAGED] pyrefly
 pythonPlatform = "Linux"
+reportCallIssue = "none"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
 reportIncompatibleVariableOverride = "error"
@@ -149,12 +159,17 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
+reportPrivateUsage = "none"
+root = "docs"
+
+[[tool.pyright.executionEnvironments]]
 reportPrivateUsage = "error"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
 reportPrivateUsage = "none"
 root = "tests"
+
 [tool.pyrefly]
 python-version = "3.13"
 
@@ -168,6 +183,15 @@ project-excludes = [
 ]
 search-path = [
   ".",
+  "../flext-core/examples",
+  "../flext-core/src",
+  "../flext-core/tests",
+  "../flext-ldif/examples",
+  "../flext-ldif/src",
+  "../flext-ldif/tests",
+  "docs",
+  "src",
+  "tests",
 ]
 
 [tool.pyrefly.errors]
@@ -193,7 +217,18 @@ disable_error_code = [
   "prop-decorator",
 ]
 mypy_path = [
+  ".",
+  "../flext-core/examples",
+  "../flext-core/src",
+  "../flext-core/tests",
+  "../flext-ldif/examples",
+  "../flext-ldif/src",
+  "../flext-ldif/tests",
+  "../typings",
+  "../typings/generated",
+  "docs",
   "src",
+  "tests",
 ]
 plugins = [
   "pydantic.mypy",
@@ -204,6 +239,7 @@ python_version = "3.13"
 explicit_package_bases = true
 ignore_missing_imports = true
 namespace_packages = true
+
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
@@ -234,7 +270,9 @@ preview = true
 respect-gitignore = true
 show-fixes = true
 src = [
+  "docs",
   "src",
+  "tests",
 ]
 target-version = "py313"
 
