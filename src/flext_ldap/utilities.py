@@ -13,11 +13,9 @@ import logging
 from collections.abc import Callable, Mapping
 from typing import TypeIs
 
-from flext_ldif import FlextLdifUtilities
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import FlextLdifUtilities, m
 
-from flext_ldap.constants import FlextLdapConstants as c
-from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap import c, t
 
 
 class FlextLdapUtilities(FlextLdifUtilities):
@@ -33,7 +31,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
     USAGE:
     ──────
-        from flext_core.utilities import u
+        from flext_core import u
 
         # Builder patterns
         values = u.to_str_list(attr_value)
@@ -48,7 +46,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         and cross-project access. Also provides access to LDIF utilities via .Ldif.
 
         Example:
-            from flext_core.utilities import u
+            from flext_core import u
             values = u.Ldap.to_str_list(attr_value)
             result = u.Ldap.DN.parse("cn=test,dc=example")  # Access LDIF utilities
 
