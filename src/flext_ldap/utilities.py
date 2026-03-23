@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities, m
@@ -329,7 +329,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Joined string or list of normalized strings
 
             """
-            normalized: Sequence[str] = []
+            normalized: MutableSequence[str] = []
             for val in values:
                 normalized_val = val
                 if case == "lower":

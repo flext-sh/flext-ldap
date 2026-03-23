@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ParamSpec, TypeVar
 
 from flext_core import r
@@ -27,7 +27,7 @@ class FlextLdapTypes(FlextLdifTypes):
             """Operation type aliases."""
 
             type Result[T] = r[T]
-            type Changes = Mapping[str, Sequence[tuple[int, Sequence[str]]]]
+            type Changes = MutableMapping[str, Sequence[tuple[int, Sequence[str]]]]
             type Attributes = Mapping[str, Sequence[str]]
             type AttributeDict = Mapping[str, Sequence[str]]
             type Ldap3EntryValue = (

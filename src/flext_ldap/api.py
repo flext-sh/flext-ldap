@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import inspect
 import types
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar, Self, TypeIs, override
@@ -694,7 +694,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         """
         config = config or FlextLdapModelsLdap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
-        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
+        phase_results: MutableMapping[str, FlextLdapModelsLdap.PhaseSyncResult] = {}
         overall_success = True
         stop_requested = False
         for phase_name, phase_file in phase_files.items():
@@ -753,16 +753,16 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             else 0.0
         )
         return r[m.Ldap.MultiPhaseSyncResult].ok(
-            m.Ldap.MultiPhaseSyncResult(
-                phase_results=phase_results,
-                total_entries=totals["entries"],
-                total_synced=totals["synced"],
-                total_failed=totals["failed"],
-                total_skipped=totals["skipped"],
-                overall_success_rate=overall_success_rate,
-                total_duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
-                overall_success=overall_success,
-            ),
+            m.Ldap.MultiPhaseSyncResult.model_validate({
+                "phase_results": phase_results,
+                "total_entries": totals["entries"],
+                "total_synced": totals["synced"],
+                "total_failed": totals["failed"],
+                "total_skipped": totals["skipped"],
+                "overall_success_rate": overall_success_rate,
+                "total_duration_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+                "overall_success": overall_success,
+            }),
         )
 
     def sync_phase_entries(

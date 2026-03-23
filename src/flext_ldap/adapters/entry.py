@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
 from flext_core import r, s
@@ -269,7 +269,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_attrs_dict: Converted LDIF attributes (lists of strings).
 
         """
-        updates: Mapping[str, bool | str | Sequence[str]] = {}
+        updates: MutableMapping[str, bool | str | Sequence[str]] = {}
         if converted_dn != original_dn:
             updates["dn_changed"] = True
             updates["converted_dn"] = converted_dn
@@ -292,7 +292,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_str = ", ".join(filtered_str_values) or ""
             return attr_name if original_str != converted_str else None
 
-        result_dict: Mapping[str, str | None] = {}
+        result_dict: MutableMapping[str, str | None] = {}
         logger = logging.getLogger(__name__)
         for attr_name, original_values in original_attrs_dict.items():
             try:
@@ -391,13 +391,13 @@ class FlextLdapEntryAdapter(s[bool]):
             dn_str = str(ldap3_entry.entry_dn)
             attrs_dict = ldap3_entry.entry_attributes_as_dict
             original_attrs_dict = attrs_dict
-            removed_attrs: Sequence[str] = []
-            base64_attrs: Sequence[str] = []
-            ldif_attrs: Mapping[str, Sequence[str]] = {}
+            removed_attrs: MutableSequence[str] = []
+            base64_attrs: MutableSequence[str] = []
+            ldif_attrs: MutableMapping[str, MutableSequence[str]] = {}
             logger = logging.getLogger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:
-                    str_values: Sequence[str] = []
+                    str_values: MutableSequence[str] = []
                     match raw_value:
                         case list() | tuple():
                             for item in raw_value:
@@ -516,7 +516,7 @@ class FlextLdapEntryAdapter(s[bool]):
         if not attrs_dict:
             return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
         try:
-            filtered_attrs: Mapping[str, Sequence[str]] = {}
+            filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
             for k, v in attrs_dict.items():
                 key_str = str(k)
                 filtered_attrs[key_str] = [str(item) for item in v]

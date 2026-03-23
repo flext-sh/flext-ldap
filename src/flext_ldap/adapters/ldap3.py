@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextService, r
@@ -41,7 +41,7 @@ from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
 from ldap3 import Connection, Server
 
 
-def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> Sequence[str]:
+def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> MutableSequence[str]:
     """Convert a list/tuple/sequence value to Sequence[str] without isinstance narrowing.
 
     Pyright narrows isinstance(v, list) on v:t.NormalizedValue to Sequence[Unknown], making
@@ -54,7 +54,7 @@ def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> Sequence[str]
     )
     if length_fn is None or getitem_fn is None:
         return []
-    result: Sequence[str] = []
+    result: MutableSequence[str] = []
     for idx in range(length_fn()):
         el: t.Ldap.Operation.Ldap3EntryValue = getitem_fn(idx)
         if el is not None and isinstance(el, (str, int, float, bool, bytes)):
@@ -338,7 +338,7 @@ class Ldap3Adapter(FlextService[bool]):
                 List of (dn, attributes_dict) tuples in parser format.
 
             """
-            results: Sequence[tuple[str, Mapping[str, Sequence[str]]]] = []
+            results: MutableSequence[tuple[str, Mapping[str, Sequence[str]]]] = []
             entries_list: Sequence[p.Ldap.Ldap3Entry] = getattr(
                 connection, "entries", []
             )
@@ -397,7 +397,7 @@ class Ldap3Adapter(FlextService[bool]):
             entries_raw = parse_response.entries
             if not entries_raw:
                 return r[Sequence[m.Ldif.Entry]].ok([])
-            entries: Sequence[m.Ldif.Entry] = []
+            entries: MutableSequence[m.Ldif.Entry] = []
             for entry_raw in entries_raw:
                 if isinstance(entry_raw, m.Ldif.Entry):
                     entries.append(entry_raw)
@@ -683,7 +683,7 @@ class Ldap3Adapter(FlextService[bool]):
             """
             if attrs_dict is None:
                 return {}
-            result: Mapping[str, Sequence[str]] = {}
+            result: MutableMapping[str, MutableSequence[str]] = {}
             for k in attrs_dict:
                 v = attrs_dict[k]
                 if isinstance(v, str):
@@ -745,7 +745,7 @@ class Ldap3Adapter(FlextService[bool]):
                 return None
             if not metadata_dict:
                 return None
-            filtered: Mapping[str, t.Scalar | Sequence[t.Scalar]] = {}
+            filtered: MutableMapping[str, t.Scalar | Sequence[t.Scalar]] = {}
             for key, val in metadata_dict.items():
                 if u.is_primitive(val):
                     filtered[str(key)] = val
@@ -756,7 +756,7 @@ class Ldap3Adapter(FlextService[bool]):
             entry: p.Ldap.Ldap3Entry,
         ) -> Mapping[str, Sequence[str]]:
             """Convert LDAP entry attributes to string-list mapping."""
-            attrs_dict: Mapping[str, Sequence[str]] = {}
+            attrs_dict: MutableMapping[str, MutableSequence[str]] = {}
             for attr, attr_values in entry.entry_attributes_as_dict.items():
                 attrs_dict[attr] = [str(v) for v in attr_values]
             return attrs_dict
@@ -1548,7 +1548,10 @@ class Ldap3Adapter(FlextService[bool]):
             entry.model_dump() for entry in entries_raw
         ]
         return r[m.Ldap.SearchResult].ok(
-            m.Ldap.SearchResult(entries=entries_dict, search_options=search_options),
+            m.Ldap.SearchResult.model_validate({
+                "entries": entries_dict,
+                "search_options": search_options,
+            }),
         )
 
     def _get_connection(self) -> r[Connection]:

@@ -31,7 +31,7 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
 from flext_core import FlextRuntime, r, s
@@ -102,7 +102,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         """
         attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(entry)
-        result: Mapping[str, Sequence[str]] = {}
+        result: MutableMapping[str, MutableSequence[str]] = {}
         for k, v in dict(attrs_mapping).items():
             result[k] = [str(item) for item in v]
         return result
@@ -144,7 +144,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 Dictionary of attribute names to list of strings
 
             """
-            attrs_result: Mapping[str, Sequence[str]] = {}
+            attrs_result: MutableMapping[str, MutableSequence[str]] = {}
             for k, v in attrs.items():
                 match k:
                     case bytes():
@@ -242,7 +242,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     case _:
                         return [str(v)]
 
-            existing_attrs_transformed: Mapping[str, Sequence[str]] = {}
+            existing_attrs_transformed: MutableMapping[str, Sequence[str]] = {}
             logger = logging.getLogger(__name__)
             for k, v in existing_attrs_raw.items():
                 try:
@@ -264,7 +264,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     )
                     continue
             existing_attrs = existing_attrs_transformed
-            new_attrs: Mapping[str, Sequence[str]] = {}
+            new_attrs: MutableMapping[str, Sequence[str]] = {}
             for k, v in new_attrs_raw.items():
                 try:
                     normalized = normalize_attr(k, v)
@@ -301,7 +301,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     processed,
                 )
             )
-            merged: Mapping[str, Sequence[tuple[int, Sequence[str]]]] = {}
+            merged: MutableMapping[str, Sequence[tuple[int, Sequence[str]]]] = {}
             merged.update(changes)
             merged.update(delete_changes)
             return merged or None
@@ -404,13 +404,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 Dict mapping attribute names to MODIFY_DELETE operations.
 
             """
-            filtered_attrs: Mapping[str, Sequence[str]] = {}
+            filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
             ignore_lower = [k.lower() for k in ignore]
             processed_lower = [k.lower() for k in processed]
             for k, v in existing_attrs.items():
                 if k.lower() not in ignore_lower and k.lower() not in processed_lower:
                     filtered_attrs[k] = [str(item) for item in v]
-            changes_dict: Mapping[str, Sequence[tuple[int, Sequence[str]]]] = {
+            changes_dict: MutableMapping[str, Sequence[tuple[int, Sequence[str]]]] = {
                 k: [(c.Ldap.ModifyOperation.DELETE, [])] for k in filtered_attrs
             }
             return changes_dict
@@ -439,7 +439,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             """
             changes: t.Ldap.Operation.Changes = {}
             processed: set[str] = set()
-            filtered_attrs: Mapping[str, Sequence[str]] = {}
+            filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
             ignore_lower = [k.lower() for k in ignore]
             for k, v in new_attrs.items():
                 if k.lower() not in ignore_lower:
@@ -475,7 +475,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     return (attr_name, [(c.Ldap.ModifyOperation.REPLACE, new_list)])
                 return (attr_name, None)
 
-            processed_dict: Mapping[
+            processed_dict: MutableMapping[
                 str, Sequence[tuple[int, Sequence[str]]] | None
             ] = {}
             logger = logging.getLogger(__name__)
@@ -966,7 +966,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             r containing LdapBatchStats with synced/failed/skipped counts
 
         """
-        stats_builder: Mapping[str, int] = {"synced": 0, "failed": 0, "skipped": 0}
+        stats_builder: MutableMapping[str, int] = {"synced": 0, "failed": 0, "skipped": 0}
         total_entries = len(entries)
         for idx_entry in enumerate(entries, 1):
             try:

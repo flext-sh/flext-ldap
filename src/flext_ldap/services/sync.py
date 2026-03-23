@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, MutableMapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, override
@@ -167,7 +167,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 counts and zero duration (caller updates).
 
             """
-            stats_builder: Mapping[str, int] = {"added": 0, "skipped": 0, "failed": 0}
+            stats_builder: MutableMapping[str, int] = {"added": 0, "skipped": 0, "failed": 0}
 
             def process_entry(
                 idx_entry: tuple[int, m.Ldif.Entry],
