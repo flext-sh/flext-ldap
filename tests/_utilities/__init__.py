@@ -12,8 +12,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from .docker_infra import _DockerInfraUtils
-    from .fixture_loaders import TestFixtures, _FixtureLoaderUtils
+    from tests._utilities.docker_infra import _DockerInfraUtils
+    from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFixtures": ("tests._utilities.fixture_loaders", "TestFixtures"),

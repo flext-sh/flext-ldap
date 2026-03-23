@@ -12,7 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from .test_smoke import TestsFlextLdapSmoke, pytestmark
+    from tests.integration.test_smoke import TestsFlextLdapSmoke, pytestmark
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextLdapSmoke": ("tests.integration.test_smoke", "TestsFlextLdapSmoke"),

@@ -13,10 +13,10 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_tests import d, e, h, r, s, x
 
-    from . import _utilities as _utilities, integration as integration, unit as unit
-    from ._utilities.docker_infra import _DockerInfraUtils
-    from ._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
-    from .conftest import (
+    from tests import _utilities, integration, unit
+    from tests._utilities.docker_infra import _DockerInfraUtils
+    from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
+    from tests.conftest import (
         LdapContainerDict,
         connection_config,
         ldap_container,
@@ -26,25 +26,25 @@ if TYPE_CHECKING:
         search_options,
         worker_id,
     )
-    from .constants import FlextLdapTestConstants, FlextLdapTestConstants as c
-    from .integration.test_smoke import TestsFlextLdapSmoke
-    from .models import FlextLdapTestModels, FlextLdapTestModels as m
-    from .protocols import FlextLdapTestProtocols, FlextLdapTestProtocols as p
-    from .typings import FlextLdapTestTypes, FlextLdapTestTypes as t
-    from .unit.test_api import TestsFlextLdapApi
-    from .unit.test_base import TestsFlextLdapBase
-    from .unit.test_config import TestsFlextLdapSettings
-    from .unit.test_constants import TestsFlextLdapConstants
-    from .unit.test_detection import TestsFlextLdapDetection
-    from .unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from .unit.test_ldap3_adapter import TestsFlextLdap3Adapter
-    from .unit.test_models import TestsFlextLdapModels
-    from .unit.test_models_search import TestsFlextLdapModelsSearch
-    from .unit.test_models_sync import TestsFlextLdapModelsSync
-    from .unit.test_operations import TestsFlextLdapOperations
-    from .unit.test_sync import TestsFlextLdapSync, pytestmark
-    from .unit.test_utilities import TestsFlextLdapUtilities
-    from .utilities import FlextLdapTestUtilities, FlextLdapTestUtilities as u
+    from tests.constants import FlextLdapTestConstants, FlextLdapTestConstants as c
+    from tests.integration.test_smoke import TestsFlextLdapSmoke
+    from tests.models import FlextLdapTestModels, FlextLdapTestModels as m
+    from tests.protocols import FlextLdapTestProtocols, FlextLdapTestProtocols as p
+    from tests.typings import FlextLdapTestTypes, FlextLdapTestTypes as t
+    from tests.unit.test_api import TestsFlextLdapApi
+    from tests.unit.test_base import TestsFlextLdapBase
+    from tests.unit.test_config import TestsFlextLdapSettings
+    from tests.unit.test_constants import TestsFlextLdapConstants
+    from tests.unit.test_detection import TestsFlextLdapDetection
+    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
+    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
+    from tests.unit.test_models import TestsFlextLdapModels
+    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
+    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
+    from tests.unit.test_operations import TestsFlextLdapOperations
+    from tests.unit.test_sync import TestsFlextLdapSync, pytestmark
+    from tests.unit.test_utilities import TestsFlextLdapUtilities
+    from tests.utilities import FlextLdapTestUtilities, FlextLdapTestUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdapTestConstants": ("tests.constants", "FlextLdapTestConstants"),
