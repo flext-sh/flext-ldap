@@ -22,7 +22,7 @@
   - [Test Environment Setup](#test-environment-setup)
 - [Error Message Reference](#error-message-reference)
   - [Common Error Patterns](#common-error-patterns)
-  - [r Error Handling](#flextresult-error-handling)
+  - [r Error Handling](#r-error-handling)
 - [Debugging Tools and Techniques](#debugging-tools-and-techniques)
   - [Enable Debug Logging](#enable-debug-logging)
   - [Network Debugging](#network-debugging)
