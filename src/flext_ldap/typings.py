@@ -59,7 +59,6 @@ class FlextLdapTypes(FlextLdifTypes):
         bound=p.Ldap.ServiceContracts.EntryContract,
     )
     FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-    TDomainResult = TypeVar("TDomainResult", bound=FlextLdifTypes.Container)
     P = ParamSpec("P")
 
 
@@ -72,5 +71,3 @@ __all__ = [
     "p",
     "t",
 ]
-
-TDomainResult = TypeVar("TDomainResult", bound=FlextLdapTypes.Container)

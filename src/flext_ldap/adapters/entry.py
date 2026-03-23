@@ -8,7 +8,7 @@ Business Rules:
     - p.Entry → ldap3 attributes uses dict[str, list[str]] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
     - Server-specific normalization uses flext-ldif quirks system
-    - DN normalization via FlextLdifUtilities.Ldif.DN.norm_string() for consistency
+    - DN normalization via u.Ldif.norm_string() for consistency
     - Empty attribute values are preserved (important for schema compliance)
 
 Audit Implications:

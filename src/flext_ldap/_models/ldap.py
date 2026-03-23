@@ -137,6 +137,7 @@ class FlextLdapModelsLdap:
         duration_seconds: float = 0.0
 
         @computed_field
+        @property
         def success_rate(self) -> float:
             """Calculate success rate (synced + skipped) / total."""
             if self.total == 0:

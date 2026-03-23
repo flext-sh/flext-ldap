@@ -625,7 +625,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         """Perform LDAP search operation.
 
         Business Rules:
-            - Base DN is normalized using FlextLdifUtilities.Ldif.DN.norm_string() before search
+            - Base DN is normalized using u.Ldif.norm_string() before search
             - Search filter is validated against LDAP filter syntax
             - Server type determines parsing quirks (OpenLDAP, OUD, OID, RFC)
             - Search scope (BASE, ONELEVEL, SUBTREE) controls depth of search

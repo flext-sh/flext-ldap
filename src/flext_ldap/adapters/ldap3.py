@@ -535,7 +535,7 @@ class Ldap3Adapter(FlextService[bool]):
             Business Rules:
                 - Extracts DN from m.Ldif.Entry instances directly
                 - Handles protocol-based entries via dynamic attribute access
-                - Uses FlextLdifUtilities.Ldif.DN.get_dn_value() for normalization
+                - Uses u.Ldif.get_dn_value() for normalization
                 - Returns empty DN("") when extraction fails (no exception)
                 - DN normalization ensures consistent format across server types
 
@@ -546,7 +546,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Remote LDAP operations depend on correct DN for targeting entries
 
             Architecture:
-                - Delegates to FlextLdifUtilities.Ldif.DN.get_dn_value() for normalization
+                - Delegates to u.Ldif.get_dn_value() for normalization
                 - Returns m.Ldif.DN (Pydantic model)
                 - No network calls - pure data extraction from local objects
 
@@ -580,7 +580,7 @@ class Ldap3Adapter(FlextService[bool]):
                     metadata=default_metadata,
                 )
             dn_str_val = str(dn_raw)
-            dn_value: str = u.Ldif.DN.get_dn_value(dn_str_val)
+            dn_value: str = u.Ldif.get_dn_value(dn_str_val)
             return m.Ldif.DN(value=dn_value, metadata=default_metadata)
 
         @staticmethod
@@ -932,7 +932,7 @@ class Ldap3Adapter(FlextService[bool]):
             """Execute LDAP delete operation via ldap3 Connection.
 
             Business Rules:
-                - DN is normalized using FlextLdifUtilities.Ldif.DN.get_dn_value()
+                - DN is normalized using u.Ldif.get_dn_value()
                 - Calls connection.delete() with DN string
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
@@ -956,7 +956,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                dn_str = u.Ldif.DN.get_dn_value(dn)
+                dn_str = u.Ldif.get_dn_value(dn)
                 if self._delete_entry_from_ldap(connection, dn_str):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
@@ -988,7 +988,7 @@ class Ldap3Adapter(FlextService[bool]):
             """Execute LDAP modify operation via ldap3 Connection.
 
             Business Rules:
-                - DN is normalized using FlextLdifUtilities.Ldif.DN.get_dn_value()
+                - DN is normalized using u.Ldif.get_dn_value()
                 - Calls connection.modify() with DN and changes dict
                 - LDAP error codes are extracted from connection.result
                 - Success returns OperationResult with entries_affected=1
@@ -1013,7 +1013,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                dn_str = u.Ldif.DN.get_dn_value(dn)
+                dn_str = u.Ldif.get_dn_value(dn)
                 if self._modify_entry_in_ldap(connection, dn_str, changes):
                     return r[m.Ldap.OperationResult].ok(
                         m.Ldap.OperationResult(
@@ -1071,7 +1071,6 @@ class Ldap3Adapter(FlextService[bool]):
             Business Rules:
                 - Performs ldap3 Connection.search() with provided parameters
                 - Validates LDAP result codes (allows partial success codes)
-                - Converts server_type to ServerTypeLiteral (validated via c.Ldap.LiteralTypes.LdapServerTypeLiteral)
                 - Parses results using FlextLdifParser.parse_ldap3_results()
                 - Converts ParseResponse to list[Entry] via ResultConverter
                 - LDAPException is caught and converted to r.fail()
@@ -1233,7 +1232,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         Business Rules:
             - Entry attributes are converted from m.Ldif.Entry to ldap3 format
-            - DN is extracted using FlextLdifUtilities.Ldif.DN.get_dn_value()
+            - DN is extracted using u.Ldif.get_dn_value()
             - Entry must be unique (LDAP error 68 if entry already exists)
             - Entry must conform to LDAP schema constraints
             - Connection must be established and bound before add operation
@@ -1267,7 +1266,7 @@ class Ldap3Adapter(FlextService[bool]):
             return r[m.Ldap.OperationResult].fail(
                 f"Failed to convert entry attributes: {error_msg}",
             )
-        dn_str = u.Ldif.DN.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
+        dn_str = u.Ldif.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
         return self.OperationExecutor(self).execute_add(
             connection_result.value,
             dn_str,
@@ -1340,7 +1339,7 @@ class Ldap3Adapter(FlextService[bool]):
         Business Rules:
             - Entry must exist before deletion (LDAP error 32 if not found)
             - Entry must not have children (LDAP error 66 if has children)
-            - DN normalization is applied using FlextLdifUtilities.Ldif.DN.get_dn_value()
+            - DN normalization is applied using u.Ldif.get_dn_value()
             - String DNs are converted to DN models for type safety
             - Connection must be established and bound before delete operation
 
@@ -1351,7 +1350,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         Architecture:
             - Uses OperationExecutor.execute_delete() for protocol-level operation
-            - DN conversion handled by FlextLdifUtilities.Ldif.DN
+            - DN conversion handled by u.Ldif
             - Returns r pattern - no exceptions raised
 
         Args:
@@ -1447,7 +1446,7 @@ class Ldap3Adapter(FlextService[bool]):
         Business Rules:
             - Entry must exist before modification (LDAP error 32 if not found)
             - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
-            - DN normalization is applied using FlextLdifUtilities.Ldif.DN.get_dn_value()
+            - DN normalization is applied using u.Ldif.get_dn_value()
             - String DNs are converted to DN models for type safety
             - Connection must be established and bound before modify operation
 
@@ -1458,7 +1457,7 @@ class Ldap3Adapter(FlextService[bool]):
 
         Architecture:
             - Uses OperationExecutor.execute_modify() for protocol-level operation
-            - DN conversion handled by FlextLdifUtilities.Ldif.DN
+            - DN conversion handled by u.Ldif
             - Returns r pattern - no exceptions raised
 
         Args:

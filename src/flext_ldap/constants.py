@@ -202,11 +202,5 @@ class FlextLdapConstants(FlextLdifConstants):
             DELETE = 1
             REPLACE = 2
 
-        class LiteralTypes:
-            """Literal type definitions."""
-
-            class ServerTypeLiteral:
-                """Server type literals."""
-
 
 c = FlextLdapConstants

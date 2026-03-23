@@ -6,7 +6,7 @@ inputs, normalized results, and reusable comparison utilities for callers.
 Business Rules:
     - All LDAP operations are delegated to the adapter layer (Ldap3Adapter)
     - DN normalization is applied before all search operations using
-      FlextLdifUtilities.Ldif.DN.norm_string() to ensure consistent DN format
+      u.Ldif.norm_string() to ensure consistent DN format
     - Entry comparison ignores operational attributes defined in
       c.Ldap.OperationalAttributes.IGNORE_SET
     - Upsert operations implement add-or-modify pattern:
@@ -35,7 +35,6 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import ClassVar, override
 
 from flext_core import FlextRuntime, r, s
-from flext_ldif import FlextLdifUtilities
 from pydantic import ConfigDict
 
 from flext_ldap import FlextLdapConnection, c, m, p, t, u
@@ -52,7 +51,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)
-        - Search operations normalize base_dn using FlextLdifUtilities.Ldif.DN.norm_string()
+        - Search operations normalize base_dn using u.Ldif.norm_string()
         - Add/Modify/Delete operations convert string DNs to DN models
         - Upsert implements LDAP idempotent write: add -> exists check -> modify
         - Batch operations track per-entry progress and support stop_on_error
@@ -1064,7 +1063,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         Business Rules:
             - Entry must exist before deletion (LDAP error 32 if not found)
             - Entry must not have children (LDAP error 66 if has children)
-            - DN normalization is applied using FlextLdifUtilities.Ldif.DN.get_dn_value()
+            - DN normalization is applied using u.Ldif.get_dn_value()
             - String DNs are converted to DN models for type safety
             - Deletion is permanent - no undo capability
 
@@ -1075,7 +1074,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         Architecture:
             - Delegates to Ldap3Adapter.delete() for protocol-level execution
-            - DN conversion handled by FlextLdifUtilities.Ldif.DN
+            - DN conversion handled by u.Ldif
             - Returns r pattern - no exceptions raised
 
         Args:
@@ -1088,7 +1087,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         match dn:
             case str():
                 dn_model: m.Ldif.DN = m.Ldif.DN(
-                    value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
+                    value=u.Ldif.get_dn_value(dn),
                     metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
@@ -1143,7 +1142,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         Business Rules:
             - Entry must exist before modification (LDAP error 32 if not found)
             - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
-            - DN normalization is applied using FlextLdifUtilities.Ldif.DN.get_dn_value()
+            - DN normalization is applied using u.Ldif.get_dn_value()
             - String DNs are converted to DN models for type safety
             - Schema constraints are validated by LDAP server
 
@@ -1154,7 +1153,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         Architecture:
             - Delegates to Ldap3Adapter.modify() for protocol-level execution
-            - DN conversion handled by FlextLdifUtilities.Ldif.DN
+            - DN conversion handled by u.Ldif
             - Returns r pattern - no exceptions raised
 
         Args:
@@ -1168,7 +1167,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         match dn:
             case str():
                 dn_model: m.Ldif.DN = m.Ldif.DN(
-                    value=FlextLdifUtilities.Ldif.DN.get_dn_value(dn),
+                    value=u.Ldif.get_dn_value(dn),
                     metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
@@ -1190,7 +1189,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
-            - Base DN is normalized using FlextLdifUtilities.Ldif.DN.norm_string() before search
+            - Base DN is normalized using u.Ldif.norm_string() before search
             - Normalization ensures consistent DN format across server types
             - Search filter syntax is validated by LDAP server
             - Server type determines parsing quirks for entry attributes
@@ -1216,7 +1215,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """
         normalized_options = search_options.model_copy(
             update={
-                "base_dn": FlextLdifUtilities.Ldif.DN.norm_string(
+                "base_dn": u.Ldif.norm_string(
                     search_options.base_dn,
                 ),
             },

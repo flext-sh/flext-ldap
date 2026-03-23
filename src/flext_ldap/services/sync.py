@@ -156,7 +156,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
             Audit Implications:
                 - Returns detailed counts: added, skipped (existing), failed
                 - Progress callback enables real-time audit logging
-                - Entry DN extraction uses u.Ldif.DN.get_dn_value()
+                - Entry DN extraction uses u.Ldif.get_dn_value()
 
             Args:
                 entries: List of LDIF entries to add to the directory.
@@ -298,7 +298,7 @@ class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
                 """Transform entry DN if source_basedn matches."""
                 if entry.dn is None:
                     return entry
-                dn_str = u.Ldif.DN.get_dn_value(entry.dn)
+                dn_str = u.Ldif.get_dn_value(entry.dn)
                 if source_basedn.lower() in dn_str.lower():
                     new_dn_value = re.sub(
                         re.escape(source_basedn),
