@@ -17,9 +17,11 @@ class FlextLdapTypes(FlextLdifTypes):
         """LDAP type aliases."""
 
         # Operation types (formerly Operation.*)
-        type OperationChanges = MutableMapping[str, Sequence[tuple[int, t.StrSequence]]]
-        type OperationAttributes = Mapping[str, t.StrSequence]
-        type OperationAttributeDict = Mapping[str, t.StrSequence]
+        type OperationChanges = MutableMapping[
+            str, Sequence[tuple[int, FlextLdifTypes.StrSequence]]
+        ]
+        type OperationAttributes = Mapping[str, FlextLdifTypes.StrSequence]
+        type OperationAttributeDict = Mapping[str, FlextLdifTypes.StrSequence]
         type Ldap3EntryValue = (
             str
             | bytes
@@ -49,7 +51,7 @@ class FlextLdapTypes(FlextLdifTypes):
         # Modify changes type (moved from protocols.py LdapAdapter)
         type LdapModifyChanges = Mapping[
             str,
-            Sequence[tuple[str | int, t.StrSequence]],
+            Sequence[tuple[str | int, FlextLdifTypes.StrSequence]],
         ]
 
     FlextLdapEntryT = TypeVar(
