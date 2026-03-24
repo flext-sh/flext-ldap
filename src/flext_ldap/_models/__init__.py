@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
     from flext_ldap._models.ldap import FlextLdapModelsLdap
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdapModelsLdap": ["flext_ldap._models.ldap", "FlextLdapModelsLdap"],
 }
 
 __all__ = [

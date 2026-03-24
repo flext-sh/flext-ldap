@@ -26,8 +26,8 @@ classifiers = [
 ]
 dependencies = [
   "cryptography>=45.0.5",
-  "flext-core",
-  "flext-ldif",
+  "flext-core @ file:../flext-core",
+  "flext-ldif @ file:../flext-ldif",
   "ldap3>=2.9",
   "pydantic-core>=2.41.4",
   "pydantic-settings>=2.11",

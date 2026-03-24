@@ -16,10 +16,10 @@ if TYPE_CHECKING:
     from tests._utilities.docker_infra import _DockerInfraUtils
     from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestFixtures": ("tests._utilities.fixture_loaders", "TestFixtures"),
-    "_DockerInfraUtils": ("tests._utilities.docker_infra", "_DockerInfraUtils"),
-    "_FixtureLoaderUtils": ("tests._utilities.fixture_loaders", "_FixtureLoaderUtils"),
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestFixtures": ["tests._utilities.fixture_loaders", "TestFixtures"],
+    "_DockerInfraUtils": ["tests._utilities.docker_infra", "_DockerInfraUtils"],
+    "_FixtureLoaderUtils": ["tests._utilities.fixture_loaders", "_FixtureLoaderUtils"],
 }
 
 __all__ = [

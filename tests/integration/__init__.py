@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 
     from tests.integration.test_smoke import TestsFlextLdapSmoke, pytestmark
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestsFlextLdapSmoke": ("tests.integration.test_smoke", "TestsFlextLdapSmoke"),
-    "pytestmark": ("tests.integration.test_smoke", "pytestmark"),
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestsFlextLdapSmoke": ["tests.integration.test_smoke", "TestsFlextLdapSmoke"],
+    "pytestmark": ["tests.integration.test_smoke", "pytestmark"],
 }
 
 __all__ = [
