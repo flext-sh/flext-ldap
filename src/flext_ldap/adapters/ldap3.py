@@ -688,7 +688,8 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
         @staticmethod
         def normalize_attr_values(
             attrs_dict: Mapping[
-                str, t.Ldap.Ldap3EntryValue | t.ContainerValue | t.StrSequence,
+                str,
+                t.Ldap.Ldap3EntryValue | t.ContainerValue | t.StrSequence,
             ]
             | None,
         ) -> t.Ldap.OperationAttributeDict:
