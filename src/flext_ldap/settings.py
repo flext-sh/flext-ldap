@@ -33,7 +33,8 @@ class FlextLdapSettings(FlextSettings):
     use_ssl: Annotated[bool, Field(default=False, description="Enable LDAPS")]
     use_tls: Annotated[bool, Field(default=False, description="Enable STARTTLS")]
     bind_dn: Annotated[
-        str, Field(default="", description="LDAP bind distinguished name")
+        str,
+        Field(default="", description="LDAP bind distinguished name"),
     ]
     bind_password: Annotated[str, Field(default="", description="LDAP bind password")]
     timeout: Annotated[

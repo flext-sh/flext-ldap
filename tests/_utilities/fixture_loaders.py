@@ -43,16 +43,16 @@ class _FixtureLoaderUtils:
             try:
                 if not filepath.exists():
                     return r[Sequence[GenericFieldsDict]].fail(
-                        f"Fixture file not found: {filename}"
+                        f"Fixture file not found: {filename}",
                     )
                 raw_content = filepath.read_text(encoding="utf-8")
                 data = TypeAdapter(Sequence[GenericFieldsDict]).validate_json(
-                    raw_content
+                    raw_content,
                 )
                 return r[Sequence[GenericFieldsDict]].ok(data)
             except (OSError, ValueError, ValidationError) as e:
                 return r[Sequence[GenericFieldsDict]].fail(
-                    f"Failed to load JSON fixture {filename}: {e}"
+                    f"Failed to load JSON fixture {filename}: {e}",
                 )
 
         @staticmethod
@@ -97,7 +97,7 @@ class _FixtureLoaderUtils:
             if result.is_success:
                 return result.value
             _FixtureLoaderUtils._logger.warning(
-                f"Failed to load groups: {result.error}"
+                f"Failed to load groups: {result.error}",
             )
             return []
 
@@ -107,7 +107,7 @@ class _FixtureLoaderUtils:
             if result.is_success:
                 return result.value
             _FixtureLoaderUtils._logger.warning(
-                f"Failed to load base LDIF: {result.error}"
+                f"Failed to load base LDIF: {result.error}",
             )
             return ""
 
@@ -125,7 +125,7 @@ class _FixtureLoaderUtils:
                     if hasattr(entry, "dn") and hasattr(entry, "attributes")
                 ]
             _FixtureLoaderUtils._logger.warning(
-                f"Failed to parse base LDIF: {result.error}"
+                f"Failed to parse base LDIF: {result.error}",
             )
             return []
 

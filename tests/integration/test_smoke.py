@@ -70,7 +70,8 @@ class TestsFlextLdapSmoke:
 
         @staticmethod
         def create_ldap3_connection(
-            server: Server, ldap_container: t.Ldap.Tests.LdapContainerDict
+            server: Server,
+            ldap_container: t.Ldap.Tests.LdapContainerDict,
         ) -> Connection:
             """Factory for ldap3 Connection objects."""
             bind_dn = ldap_container["bind_dn"]
@@ -177,7 +178,8 @@ class TestsFlextLdapSmoke:
             assert result.is_success, f"Connection failed: {result.error}"
 
     def test_ldap_container_health(
-        self, ldap_container: t.Ldap.Tests.LdapContainerDict
+        self,
+        ldap_container: t.Ldap.Tests.LdapContainerDict,
     ) -> None:
         """SMOKE TEST: LDAP container is responsive (REGRA 5: REAL connection).
 
@@ -190,7 +192,8 @@ class TestsFlextLdapSmoke:
         """
         server = TestsFlextLdapSmoke.DataFactories.create_ldap3_server(ldap_container)
         connection = TestsFlextLdapSmoke.DataFactories.create_ldap3_connection(
-            server, ldap_container
+            server,
+            ldap_container,
         )
         TestsFlextLdapSmoke.Assertions.assert_connection_bound(connection)
         TestsFlextLdapSmoke.Assertions.assert_server_info_available(connection)
@@ -210,7 +213,8 @@ class TestsFlextLdapSmoke:
         TestsFlextLdapSmoke.Assertions.assert_models_accessible()
 
     def test_flext_ldap_basic_connection(
-        self, ldap_container: t.Ldap.Tests.LdapContainerDict
+        self,
+        ldap_container: t.Ldap.Tests.LdapContainerDict,
     ) -> None:
         """SMOKE TEST: FlextLdap can connect to container (REGRA 5: REAL operations).
 
@@ -226,7 +230,7 @@ class TestsFlextLdapSmoke:
         operations = FlextLdapOperations(connection=connection)
         client = FlextLdap(connection=connection, operations=operations)
         conn_config = TestsFlextLdapSmoke.DataFactories.create_connection_config(
-            ldap_container
+            ldap_container,
         )
         result = client.connect(conn_config)
         TestsFlextLdapSmoke.Assertions.assert_connection_success(result)

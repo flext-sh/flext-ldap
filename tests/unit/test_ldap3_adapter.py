@@ -46,7 +46,11 @@ class TestsFlextLdap3Adapter:
     def _create_connection_config(cls) -> m.Ldap.ConnectionConfig:
         """Factory method for creating connection config instances."""
         return m.Ldap.ConnectionConfig(
-            host="localhost", port=389, use_ssl=False, use_tls=False, timeout=5
+            host="localhost",
+            port=389,
+            use_ssl=False,
+            use_tls=False,
+            timeout=5,
         )
 
     def test_adapter_initialization(self) -> None:
@@ -63,7 +67,11 @@ class TestsFlextLdap3Adapter:
     def test_connection_manager_create_server_with_ssl(self) -> None:
         """Test ConnectionManager.create_server with SSL."""
         config = m.Ldap.ConnectionConfig(
-            host="localhost", port=636, use_ssl=True, use_tls=False, timeout=5
+            host="localhost",
+            port=636,
+            use_ssl=True,
+            use_tls=False,
+            timeout=5,
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
@@ -81,7 +89,11 @@ class TestsFlextLdap3Adapter:
     def test_connection_manager_create_server_with_tls(self) -> None:
         """Test ConnectionManager.create_server with TLS."""
         config = m.Ldap.ConnectionConfig(
-            host="localhost", port=389, use_ssl=False, use_tls=True, timeout=5
+            host="localhost",
+            port=389,
+            use_ssl=False,
+            use_tls=True,
+            timeout=5,
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None

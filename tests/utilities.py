@@ -88,7 +88,8 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def ok(
-                result: t.NormalizedValue, **kwargs: t.NormalizedValue
+                result: t.NormalizedValue,
+                **kwargs: t.NormalizedValue,
             ) -> t.NormalizedValue:
                 """Assert result is success and return its value."""
                 assert hasattr(result, "is_success"), (

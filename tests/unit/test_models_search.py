@@ -46,13 +46,15 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_options_scope_normalization_enum(self) -> None:
         options = m.Ldap.SearchOptions(
-            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope=c.Ldap.SearchScope.BASE
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            scope=c.Ldap.SearchScope.BASE,
         )
         tm.that(options.scope, eq="BASE")
 
     def test_search_options_scope_normalization_string(self) -> None:
         options = m.Ldap.SearchOptions(
-            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="subtree"
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            scope="subtree",
         )
         tm.that({"SUBTREE", "subtree"}, has=options.scope)
 
@@ -64,10 +66,13 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_options_normalized_with_config(self) -> None:
         config = m.Ldap.NormalizedConfig(
-            scope="BASE", filter_str="(uid=*)", size_limit=50
+            scope="BASE",
+            filter_str="(uid=*)",
+            size_limit=50,
         )
         options = m.Ldap.SearchOptions.normalized(
-            c.Ldap.Tests.RFC.DEFAULT_BASE_DN, config=config
+            c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            config=config,
         )
         tm.that(options.scope, eq="BASE")
         tm.that(options.filter_str, eq="(uid=*)")
@@ -87,14 +92,16 @@ class TestsFlextLdapModelsSearch:
 
     def test_operation_result_default_message(self) -> None:
         result = m.Ldap.OperationResult(
-            success=True, operation_type=c.Ldap.OperationType.SEARCH
+            success=True,
+            operation_type=c.Ldap.OperationType.SEARCH,
         )
         tm.that(result.message, eq="")
         tm.that(result.entries_affected, eq=0)
 
     def test_operation_result_frozen(self) -> None:
         result = m.Ldap.OperationResult(
-            success=True, operation_type=c.Ldap.OperationType.ADD
+            success=True,
+            operation_type=c.Ldap.OperationType.ADD,
         )
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
@@ -107,10 +114,13 @@ class TestsFlextLdapModelsSearch:
     }
 
     @pytest.mark.parametrize(
-        ("num_entries", "expected_count"), [(0, 0), (1, 1), (5, 5), (10, 10)]
+        ("num_entries", "expected_count"),
+        [(0, 0), (1, 1), (5, 5), (10, 10)],
     )
     def test_search_result_total_count(
-        self, num_entries: int, expected_count: int
+        self,
+        num_entries: int,
+        expected_count: int,
     ) -> None:
         entries = [
             {"dn": [f"cn=user{i},{c.Ldap.Tests.RFC.DEFAULT_BASE_DN}"]}
@@ -160,14 +170,17 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_options_serialization(self) -> None:
         data = m.Ldap.SearchOptions(
-            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="SUBTREE"
+            base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
+            scope="SUBTREE",
         ).model_dump()
         tm.that(data["base_dn"], eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         tm.that(data["scope"], eq="SUBTREE")
 
     def test_sync_stats_serialization(self) -> None:
         data = m.Ldap.SyncStats.from_counters(
-            synced=80, skipped=10, failed=10
+            synced=80,
+            skipped=10,
+            failed=10,
         ).model_dump()
         tm.that(data, keys=["success_rate"])
         tm.that(data["success_rate"], eq=0.9)

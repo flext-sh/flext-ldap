@@ -88,7 +88,11 @@ class TestsFlextLdapSync:
     def test_sync_stats_creation(self) -> None:
         """Test SyncStats model creation."""
         stats = m.Ldap.SyncStats(
-            synced=10, skipped=2, failed=1, total=13, duration_seconds=100.5
+            synced=10,
+            skipped=2,
+            failed=1,
+            total=13,
+            duration_seconds=100.5,
         )
         tm.that(stats.synced, eq=10)
         tm.that(stats.skipped, eq=2)

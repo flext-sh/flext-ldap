@@ -62,7 +62,8 @@ class TestsFlextLdapSettings:
     # ── SSL/TLS combinations ───────────────────────────────────────────
 
     @pytest.mark.parametrize(
-        ("ssl", "tls"), [(False, False), (True, False), (False, True), (True, True)]
+        ("ssl", "tls"),
+        [(False, False), (True, False), (False, True), (True, True)],
     )
     def test_tls_options(self, ssl: bool, tls: bool) -> None:
         cfg = FlextLdapSettings(use_ssl=ssl, use_tls=tls)
@@ -94,7 +95,9 @@ class TestsFlextLdapSettings:
 
     def test_serialization(self) -> None:
         data = FlextLdapSettings(
-            host="example.com", port=636, use_ssl=True
+            host="example.com",
+            port=636,
+            use_ssl=True,
         ).model_dump()
         tm.that(data["host"], eq="example.com")
         tm.that(data["port"], eq=636)

@@ -135,7 +135,10 @@ class _DockerInfraUtils:
             admin_dn, admin_password = _DockerInfraUtils.get_admin_credentials()
             server = Server(f"ldap://localhost:{d.PORT}", get_info="NO_INFO")
             conn = Connection(
-                server, user=admin_dn, password=admin_password, auto_bind=True
+                server,
+                user=admin_dn,
+                password=admin_password,
+                auto_bind=True,
             )
             for ou_name in ("people", "groups", "services"):
                 conn.search(d.BASE_DN, f"(ou={ou_name})", attributes=["ou"])
@@ -147,7 +150,7 @@ class _DockerInfraUtils:
                         {
                             "ou": [ou_name],
                             "description": [
-                                f"Organizational unit for {ou_name} entries"
+                                f"Organizational unit for {ou_name} entries",
                             ],
                         },
                     )
@@ -156,7 +159,8 @@ class _DockerInfraUtils:
             _DockerInfraUtils._logger.info("Basic LDAP structure verified/created")
         except Exception as e:
             _DockerInfraUtils._logger.warning(
-                "Failed to ensure basic LDAP structure", error=e
+                "Failed to ensure basic LDAP structure",
+                error=e,
             )
 
 

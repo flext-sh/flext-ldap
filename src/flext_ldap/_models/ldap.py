@@ -224,7 +224,8 @@ class FlextLdapModelsLdap:
         def by_objectclass(self) -> Mapping[str, Sequence[Mapping[str, t.StrSequence]]]:
             """Group entries by objectclass."""
             result: MutableMapping[
-                str, MutableSequence[Mapping[str, t.StrSequence]]
+                str,
+                MutableSequence[Mapping[str, t.StrSequence]],
             ] = {}
             for entry in self.entries:
                 category = self.get_entry_category(entry)
@@ -295,7 +296,7 @@ class FlextLdapModelsLdap:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
-            default_factory=dict
+            default_factory=dict,
         )
         total_entries: t.NonNegativeInt = 0
         total_synced: t.NonNegativeInt = 0

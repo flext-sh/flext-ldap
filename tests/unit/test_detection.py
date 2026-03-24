@@ -108,10 +108,14 @@ class TestsFlextLdapDetection:
         assert error_substring in str(result.error)
 
     @pytest.mark.parametrize(
-        ("attrs", "key", "expected"), _get_get_first_value_scenarios()
+        ("attrs", "key", "expected"),
+        _get_get_first_value_scenarios(),
     )
     def test_get_first_value(
-        self, attrs: Mapping[str, t.StrSequence], key: str, expected: str | None
+        self,
+        attrs: Mapping[str, t.StrSequence],
+        key: str,
+        expected: str | None,
     ) -> None:
         """Test _get_first_value with various attribute scenarios."""
         attrs_dict: Mapping[str, t.StrSequence] = dict(attrs)

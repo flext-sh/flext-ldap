@@ -47,11 +47,12 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         (
             Path(__file__).parent.parent.parent.resolve()
             / c.Ldap.Tests.Docker.COMPOSE_FILE_REL
-        ).relative_to(Path(__file__).parent.parent.parent.resolve())
+        ).relative_to(Path(__file__).parent.parent.parent.resolve()),
     )
     if docker_control.is_container_dirty(c.Ldap.Tests.Docker.CONTAINER_NAME):
         logger.info(
-            "Container %s is dirty, recreating", c.Ldap.Tests.Docker.CONTAINER_NAME
+            "Container %s is dirty, recreating",
+            c.Ldap.Tests.Docker.CONTAINER_NAME,
         )
         docker_control.compose_down(compose_file_rel)
         result = docker_control.compose_up(
@@ -63,11 +64,12 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             docker_control.mark_container_clean(c.Ldap.Tests.Docker.CONTAINER_NAME)
     else:
         start = docker_control.start_existing_container(
-            c.Ldap.Tests.Docker.CONTAINER_NAME
+            c.Ldap.Tests.Docker.CONTAINER_NAME,
         )
         if start.is_failure:
             docker_control.compose_up(
-                compose_file_rel, service=c.Ldap.Tests.Docker.SERVICE_NAME
+                compose_file_rel,
+                service=c.Ldap.Tests.Docker.SERVICE_NAME,
             )
     port_ready = _wait_for_port_ready("localhost", c.Ldap.Tests.Docker.PORT, 90)
     if port_ready.is_success and port_ready.value:
@@ -76,7 +78,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         while waited < 90:
             try:
                 srv = Server(
-                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}", get_info="NO_INFO"
+                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
+                    get_info="NO_INFO",
                 )
                 conn = Connection(
                     srv,
@@ -145,7 +148,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> LdapContainerDict:
     lock = u.Ldap.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldap.Tests.Docker.CONTAINER_NAME}.lock"
+        Path.home() / ".flext" / f"{c.Ldap.Tests.Docker.CONTAINER_NAME}.lock",
     )
     u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
@@ -153,13 +156,14 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
         port_result = _wait_for_port_ready("localhost", c.Ldap.Tests.Docker.PORT, 60)
         if port_result.is_failure or not port_result.value:
             pytest.fail(
-                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within 60s"
+                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within 60s",
             )
         waited: float = 0.0
         while waited < 60:
             try:
                 srv = Server(
-                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}", get_info="NO_INFO"
+                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
+                    get_info="NO_INFO",
                 )
                 conn = Connection(
                     srv,
@@ -177,7 +181,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
             waited += 1.0
         else:
             pytest.fail(
-                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} LDAP not ready within 60s"
+                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} LDAP not ready within 60s",
             )
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()

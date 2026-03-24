@@ -35,7 +35,10 @@ class TestsFlextLdapModelsSync:
         ids=[f"{c.__name__}.{f}" for c, f, _ in _API_DEFAULTS],
     )
     def test_api_default(
-        self, cls: type, field: str, expected: str | float | bool
+        self,
+        cls: type,
+        field: str,
+        expected: str | float | bool,
     ) -> None:
         assert getattr(cls(), field) == expected
 
@@ -76,7 +79,11 @@ class TestsFlextLdapModelsSync:
         ids=[x[0] for x in _SUCCESS_RATES],
     )
     def test_success_rate(
-        self, label: str, cls: type, kwargs: Mapping[str, int], expected: float
+        self,
+        label: str,
+        cls: type,
+        kwargs: Mapping[str, int],
+        expected: float,
     ) -> None:
         tm.that(getattr(cls(**kwargs), "success_rate"), eq=expected)
 
@@ -84,7 +91,10 @@ class TestsFlextLdapModelsSync:
 
     def test_from_counters_computes_total(self) -> None:
         s = m.Ldap.SyncStats.from_counters(
-            synced=50, skipped=30, failed=20, duration_seconds=10.5
+            synced=50,
+            skipped=30,
+            failed=20,
+            duration_seconds=10.5,
         )
         tm.that(s.total, eq=100)
         tm.that(s.duration_seconds, eq=10.5)
@@ -193,7 +203,7 @@ class TestsFlextLdapModelsSync:
     def test_operation_result_carries_enum(self) -> None:
         tm.that(
             m.Ldap.LdapOperationResult(
-                operation=c.Ldap.UpsertOperations.ADDED
+                operation=c.Ldap.UpsertOperations.ADDED,
             ).operation,
             eq=c.Ldap.UpsertOperations.ADDED,
         )

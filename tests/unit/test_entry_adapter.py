@@ -73,13 +73,15 @@ class TestsFlextLdapEntryAdapter:
     def test_is_base64_encoded_with_non_ascii_value(self) -> None:
         """Test is_base64_encoded with non-ASCII value."""
         tm.that(
-            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("testÿ"), eq=True
+            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("testÿ"),
+            eq=True,
         )
 
     def test_is_base64_encoded_with_empty_string(self) -> None:
         """Test is_base64_encoded with empty string."""
         tm.that(
-            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(""), eq=True
+            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(""),
+            eq=True,
         )
 
     def test_ldap3_to_ldif_entry(self) -> None:

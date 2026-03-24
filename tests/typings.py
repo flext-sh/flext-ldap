@@ -57,7 +57,8 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
 
             # Test data dictionary types
             type GenericFieldsDict = Mapping[
-                str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]
+                str,
+                t.Scalar | t.StrSequence | Mapping[str, t.StrSequence],
             ]
             type LdapContainerDict = t.ScalarMapping
             type LdapConnectionConfigDict = Mapping[str, t.Scalar | None]

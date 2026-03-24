@@ -80,7 +80,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
-        frozen=False, extra="allow", arbitrary_types_allowed=True
+        frozen=False,
+        extra="allow",
+        arbitrary_types_allowed=True,
     )
 
     @staticmethod
@@ -476,7 +478,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 return (attr_name, None)
 
             processed_dict: MutableMapping[
-                str, Sequence[tuple[int, t.StrSequence]] | None
+                str,
+                Sequence[tuple[int, t.StrSequence]] | None,
             ] = {}
             logger = logging.getLogger(__name__)
             for attr_name, new_vals in dict(filtered_attrs).items():

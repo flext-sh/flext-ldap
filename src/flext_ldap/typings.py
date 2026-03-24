@@ -18,7 +18,8 @@ class FlextLdapTypes(FlextLdifTypes):
 
         # Operation types (formerly Operation.*)
         type OperationChanges = MutableMapping[
-            str, Sequence[tuple[int, FlextLdifTypes.StrSequence]]
+            str,
+            Sequence[tuple[int, FlextLdifTypes.StrSequence]],
         ]
         type OperationAttributes = Mapping[str, FlextLdifTypes.StrSequence]
         type OperationAttributeDict = Mapping[str, FlextLdifTypes.StrSequence]

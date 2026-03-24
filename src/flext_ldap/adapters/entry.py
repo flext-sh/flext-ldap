@@ -405,7 +405,8 @@ class FlextLdapEntryAdapter(s[bool]):
                                     case bytes() as item_bytes:
                                         str_values.append(
                                             item_bytes.decode(
-                                                "utf-8", errors="replace"
+                                                "utf-8",
+                                                errors="replace",
                                             ),
                                         )
                                     case _:

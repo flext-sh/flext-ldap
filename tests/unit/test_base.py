@@ -72,10 +72,15 @@ class TestsFlextLdapBase:
     ]
 
     @pytest.mark.parametrize(
-        ("label", "cls", "expected"), _TYPE_SERVICES, ids=[x[0] for x in _TYPE_SERVICES]
+        ("label", "cls", "expected"),
+        _TYPE_SERVICES,
+        ids=[x[0] for x in _TYPE_SERVICES],
     )
     def test_type_parameter(
-        self, label: str, cls: type, expected: str | bool | int
+        self,
+        label: str,
+        cls: type,
+        expected: str | bool | int,
     ) -> None:
         result = cls().execute()
         assert result.is_success
@@ -107,7 +112,9 @@ class TestsFlextLdapBase:
     ]
 
     @pytest.mark.parametrize(
-        ("attr", "expected"), _MODEL_CONFIG, ids=[x[0] for x in _MODEL_CONFIG]
+        ("attr", "expected"),
+        _MODEL_CONFIG,
+        ids=[x[0] for x in _MODEL_CONFIG],
     )
     def test_model_config(self, attr: str, expected: str | bool) -> None:
         assert _SuccessService.model_config.get(attr) == expected

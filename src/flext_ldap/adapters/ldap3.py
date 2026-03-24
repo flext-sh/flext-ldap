@@ -50,7 +50,9 @@ def _value_to_str_list(value: t.Ldap.Ldap3EntryValue) -> MutableSequence[str]:
     """
     length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
     getitem_fn: Callable[[int], t.Ldap.Ldap3EntryValue] | None = getattr(
-        value, "__getitem__", None
+        value,
+        "__getitem__",
+        None,
     )
     if length_fn is None or getitem_fn is None:
         return []
@@ -340,7 +342,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             """
             results: MutableSequence[tuple[str, Mapping[str, t.StrSequence]]] = []
             entries_list: Sequence[p.Ldap.Ldap3Entry] = getattr(
-                connection, "entries", []
+                connection,
+                "entries",
+                [],
             )
             entries_raw: Sequence[p.Ldap.Ldap3Entry] = entries_list
             for entry in entries_raw:
@@ -411,7 +415,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     error_msg = f"Entry must be Entry or m.Ldif.Entry, got {entry_type}"
                     raise TypeError(error_msg)
                 dn_obj = FlextLdapLdap3Adapter.ResultConverter.extract_dn(
-                    protocol_entry
+                    protocol_entry,
                 )
                 attrs_obj = FlextLdapLdap3Adapter.ResultConverter.extract_attributes(
                     protocol_entry,
@@ -474,7 +478,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             if isinstance(attrs_raw, m.Ldif.Attributes):
                 return attrs_raw
             attrs_dict = FlextLdapLdap3Adapter.ResultConverter.extract_attrs_dict(
-                attrs_raw
+                attrs_raw,
             )
             return m.Ldif.Attributes.model_validate({
                 "attributes": attrs_dict,
@@ -515,7 +519,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             """
             if isinstance(attrs, p.Ldap.HasAttributesProperty):
                 return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
-                    attrs.attributes
+                    attrs.attributes,
                 )
             if isinstance(attrs, BaseModel):
                 model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
@@ -530,7 +534,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 return {}
             if isinstance(attrs, Mapping):
                 return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
-                    attrs
+                    attrs,
                 )
             return {}
 
@@ -642,7 +646,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             if not metadata_raw:
                 return None
             normalized = FlextLdapLdap3Adapter.ResultConverter.normalize_metadata(
-                metadata_raw
+                metadata_raw,
             )
             if normalized:
                 quirk_type_raw = normalized.get("quirk_type")
