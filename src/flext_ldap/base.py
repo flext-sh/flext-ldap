@@ -27,7 +27,9 @@ from pydantic_settings import BaseSettings
 
 from flext_ldap import FlextLdapSettings, p, t
 
-TDomainResult = TypeVar("TDomainResult")
+TDomainResult = TypeVar(
+    "TDomainResult", bound=t.ValueOrModel | Sequence[t.ValueOrModel]
+)
 
 
 @dataclass
