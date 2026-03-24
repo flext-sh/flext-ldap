@@ -566,11 +566,11 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             }
             return m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn_value, metadata=m.Ldif.EntryMetadata()),
-                attributes=m.Ldif.Attributes(
-                    attributes=attrs_dict,
-                    attribute_metadata={},
-                    metadata=None,
-                ),
+                attributes=m.Ldif.Attributes.model_validate({
+                    "attributes": attrs_dict,
+                    "attribute_metadata": {},
+                    "metadata": None,
+                }),
                 changetype=None,
                 metadata=None,
                 validation_metadata=None,

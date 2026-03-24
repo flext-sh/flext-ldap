@@ -33,31 +33,16 @@ if TYPE_CHECKING:
     from tests.unit.test_utilities import TestsFlextLdapUtilities
 
 _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestsFlextLdap3Adapter": (
-        "tests.unit.test_ldap3_adapter",
-        "TestsFlextLdap3Adapter",
-    ),
+    "TestsFlextLdap3Adapter": ("tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"),
     "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
     "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
     "TestsFlextLdapConstants": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
     "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
-    "TestsFlextLdapEntryAdapter": (
-        "tests.unit.test_entry_adapter",
-        "TestsFlextLdapEntryAdapter",
-    ),
+    "TestsFlextLdapEntryAdapter": ("tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"),
     "TestsFlextLdapModels": ("tests.unit.test_models", "TestsFlextLdapModels"),
-    "TestsFlextLdapModelsSearch": (
-        "tests.unit.test_models_search",
-        "TestsFlextLdapModelsSearch",
-    ),
-    "TestsFlextLdapModelsSync": (
-        "tests.unit.test_models_sync",
-        "TestsFlextLdapModelsSync",
-    ),
-    "TestsFlextLdapOperations": (
-        "tests.unit.test_operations",
-        "TestsFlextLdapOperations",
-    ),
+    "TestsFlextLdapModelsSearch": ("tests.unit.test_models_search", "TestsFlextLdapModelsSearch"),
+    "TestsFlextLdapModelsSync": ("tests.unit.test_models_sync", "TestsFlextLdapModelsSync"),
+    "TestsFlextLdapOperations": ("tests.unit.test_operations", "TestsFlextLdapOperations"),
     "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
     "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
     "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),

@@ -165,7 +165,7 @@ class FlextLdapLdap3Wrappers:
         return bool(unbind_fn())
 
 
-class Ldap3Adapter(FlextService[bool]):
+class FlextLdapLdap3Adapter(FlextService[bool]):
     """Service adapter for ldap3 library following flext-ldif patterns.
 
     Wraps ldap3 Connection and Server objects to provide a simplified
@@ -355,7 +355,7 @@ class Ldap3Adapter(FlextService[bool]):
                     results.append((dn, {}))
                     continue
                 dn = str(dn_raw) if dn_raw is not None else ""
-                attrs_dict = Ldap3Adapter.ResultConverter.process_entry_attributes(
+                attrs_dict = FlextLdapLdap3Adapter.ResultConverter.process_entry_attributes(
                     entry,
                 )
                 results.append((dn, attrs_dict))
@@ -408,11 +408,11 @@ class Ldap3Adapter(FlextService[bool]):
                     entry_type = entry_raw.__class__
                     error_msg = f"Entry must be Entry or m.Ldif.Entry, got {entry_type}"
                     raise TypeError(error_msg)
-                dn_obj = Ldap3Adapter.ResultConverter.extract_dn(protocol_entry)
-                attrs_obj = Ldap3Adapter.ResultConverter.extract_attributes(
+                dn_obj = FlextLdapLdap3Adapter.ResultConverter.extract_dn(protocol_entry)
+                attrs_obj = FlextLdapLdap3Adapter.ResultConverter.extract_attributes(
                     protocol_entry,
                 )
-                metadata_obj = Ldap3Adapter.ResultConverter.extract_metadata(
+                metadata_obj = FlextLdapLdap3Adapter.ResultConverter.extract_metadata(
                     protocol_entry,
                 )
                 entry = m.Ldif.Entry(
@@ -457,7 +457,7 @@ class Ldap3Adapter(FlextService[bool]):
             if isinstance(parsed, m.Ldif.Entry):
                 attrs_raw = parsed.attributes
             else:
-                attrs_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
+                attrs_raw = FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed,
                     "attributes",
                 )
@@ -469,12 +469,12 @@ class Ldap3Adapter(FlextService[bool]):
                 )
             if isinstance(attrs_raw, m.Ldif.Attributes):
                 return attrs_raw
-            attrs_dict = Ldap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
-            return m.Ldif.Attributes(
-                attributes=attrs_dict,
-                attribute_metadata={},
-                metadata=None,
-            )
+            attrs_dict = FlextLdapLdap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
+            return m.Ldif.Attributes.model_validate({
+                "attributes": attrs_dict,
+                "attribute_metadata": {},
+                "metadata": None,
+            })
 
         @staticmethod
         def extract_attrs_dict(
@@ -508,7 +508,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             if isinstance(attrs, p.Ldap.HasAttributesProperty):
-                return Ldap3Adapter.ResultConverter.normalize_attr_values(
+                return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                     attrs.attributes
                 )
             if isinstance(attrs, BaseModel):
@@ -518,12 +518,12 @@ class Ldap3Adapter(FlextService[bool]):
                     None,
                 )
                 if model_attrs is not None and isinstance(model_attrs, Mapping):
-                    return Ldap3Adapter.ResultConverter.normalize_attr_values(
+                    return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                         model_attrs,
                     )
                 return {}
             if isinstance(attrs, Mapping):
-                return Ldap3Adapter.ResultConverter.normalize_attr_values(attrs)
+                return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(attrs)
             return {}
 
         @staticmethod
@@ -566,7 +566,7 @@ class Ldap3Adapter(FlextService[bool]):
             if isinstance(parsed, p.Ldap.Ldap3Entry):
                 dn_raw = parsed.entry_dn
             else:
-                dn_raw = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
+                dn_raw = FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed,
                     "dn",
                 )
@@ -619,7 +619,7 @@ class Ldap3Adapter(FlextService[bool]):
                     return parsed.metadata
                 metadata_raw = parsed.metadata
             else:
-                dynamic_attr = Ldap3Adapter.ResultConverter.get_dynamic_attribute(
+                dynamic_attr = FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
                     parsed,
                     "metadata",
                 )
@@ -631,7 +631,7 @@ class Ldap3Adapter(FlextService[bool]):
                     metadata_raw = dynamic_attr
             if not metadata_raw:
                 return None
-            normalized = Ldap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
+            normalized = FlextLdapLdap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
             if normalized:
                 quirk_type_raw = normalized.get("quirk_type")
                 if not isinstance(quirk_type_raw, str):
@@ -762,7 +762,7 @@ class Ldap3Adapter(FlextService[bool]):
     class OperationExecutor:
         """LDAP operation execution logic (SRP)."""
 
-        def __init__(self, adapter: Ldap3Adapter) -> None:
+        def __init__(self, adapter: FlextLdapLdap3Adapter) -> None:
             """Initialize with adapter instance."""
             super().__init__()
             self._adapter = adapter
@@ -1039,7 +1039,7 @@ class Ldap3Adapter(FlextService[bool]):
     class SearchExecutor:
         """Search operation execution logic (SRP)."""
 
-        def __init__(self, adapter: Ldap3Adapter) -> None:
+        def __init__(self, adapter: FlextLdapLdap3Adapter) -> None:
             """Initialize search executor with adapter instance.
 
             Business Rules:
@@ -1049,11 +1049,11 @@ class Ldap3Adapter(FlextService[bool]):
 
             Architecture:
                 - Inner class encapsulates search execution logic (SRP)
-                - Delegates all protocol operations to Ldap3Adapter
+                - Delegates all protocol operations to FlextLdapLdap3Adapter
                 - Enables testability through dependency injection
 
             Args:
-                adapter: Ldap3Adapter instance for LDAP protocol operations.
+                adapter: FlextLdapLdap3Adapter instance for LDAP protocol operations.
                     Must have active connection for execute() to succeed.
 
             """
@@ -1190,7 +1190,7 @@ class Ldap3Adapter(FlextService[bool]):
         """Check if adapter has an active connection."""
         if self._connection is None:
             return False
-        return Ldap3Adapter._is_bound(self._connection)
+        return FlextLdapLdap3Adapter._is_bound(self._connection)
 
     @property
     def parser(self) -> FlextLdifParser:
@@ -1519,7 +1519,7 @@ class Ldap3Adapter(FlextService[bool]):
             error_msg = str(connection_result.error) if connection_result.error else ""
             return r[m.Ldap.SearchResult].fail(error_msg)
         scope_for_mapping: str | c.Ldap.SearchScope = search_options.scope
-        scope_result = Ldap3Adapter._map_scope(scope_for_mapping)
+        scope_result = FlextLdapLdap3Adapter._map_scope(scope_for_mapping)
         if scope_result.is_failure:
             return r[m.Ldap.SearchResult].fail(
                 str(scope_result.error) if scope_result.error else "",

@@ -1,12 +1,12 @@
 """LDAP connection lifecycle service.
 
 Encapsulates connection creation, binding, and teardown while delegating the
-protocol surface to :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`. The
+protocol surface to :class:`~flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter`. The
 service keeps retries and optional heuristic server detection close to the
 connection so callers interact with a single, typed entry point.
 
 Business Rules:
-    - Connection binding uses ldap3 library through Ldap3Adapter abstraction
+    - Connection binding uses ldap3 library through FlextLdapLdap3Adapter abstraction
     - Server type detection is optional and non-blocking after successful bind
     - Retry logic uses u.retry() for transient failures
     - Parser defaults to FlextLdif().parser instance
@@ -33,13 +33,13 @@ from flext_ldif import FlextLdif, FlextLdifParser, s
 from pydantic import ConfigDict
 
 from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, p, u
-from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.adapters.ldap3 import FlextLdapFlextLdapLdap3Adapter
 
 
 class FlextLdapConnection(s[bool]):
     """Manage the LDAP connection lifecycle with typed ergonomics.
 
-    The service wraps ``Ldap3Adapter`` to create/bind connections, optionally
+    The service wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally
     retry transient errors, and perform lightweight server detection after a
     successful bind. It is intentionally minimal so that callers can swap the
     adapter or parser during tests without changing behaviour at the API level.
@@ -84,7 +84,7 @@ class FlextLdapConnection(s[bool]):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         frozen=False, extra="allow", arbitrary_types_allowed=True
     )
-    _adapter: Ldap3Adapter
+    _adapter: FlextLdapLdap3Adapter
     _config: p.Settings | None = None
 
     def __init__(
@@ -95,7 +95,7 @@ class FlextLdapConnection(s[bool]):
         """Create a connection service with optional configuration and parser.
 
         Initializes the service with an LDAP configuration and parser, creating
-        the underlying ``Ldap3Adapter`` that handles protocol-level operations.
+        the underlying ``FlextLdapLdap3Adapter`` that handles protocol-level operations.
 
         Business Rules:
             - Configuration is resolved once and stored in ``_config`` private
@@ -127,10 +127,10 @@ class FlextLdapConnection(s[bool]):
         resolved_parser: FlextLdifParser = (
             parser if parser is not None else FlextLdif().parser
         )
-        self._adapter = Ldap3Adapter(parser=resolved_parser)
+        self._adapter = FlextLdapLdap3Adapter(parser=resolved_parser)
 
     @property
-    def adapter(self) -> Ldap3Adapter:
+    def adapter(self) -> FlextLdapLdap3Adapter:
         """Get the underlying ldap3 adapter for direct protocol access.
 
         Exposes the adapter for advanced use cases requiring direct ldap3
@@ -148,7 +148,7 @@ class FlextLdapConnection(s[bool]):
             - Useful for testing and advanced integration scenarios
 
         Returns:
-            Ldap3Adapter: The adapter instance managing the ldap3 connection.
+            FlextLdapLdap3Adapter: The adapter instance managing the ldap3 connection.
 
         """
         return self._adapter
@@ -193,7 +193,7 @@ class FlextLdapConnection(s[bool]):
         ``uretry`` semantics with exponential backoff.
 
         Business Rules:
-            - Connection attempt is delegated entirely to ``Ldap3Adapter.connect()``
+            - Connection attempt is delegated entirely to ``FlextLdapLdap3Adapter.connect()``
             - When ``auto_retry=True``, uses flext-core's Reliability.retry() which
               implements exponential backoff for transient network errors
             - Server type detection runs ONLY after successful connection (non-blocking)
