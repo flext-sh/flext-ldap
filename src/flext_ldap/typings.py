@@ -64,11 +64,9 @@ class FlextLdapTypes(FlextLdifTypes):
 
 
 t = FlextLdapTypes
-LdifEntry = FlextLdapTypes.Ldap.LdifEntry
 
 __all__ = [
     "FlextLdapTypes",
-    "LdifEntry",
     "p",
     "t",
 ]

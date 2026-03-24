@@ -821,7 +821,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             ImportError,
         ) as e:
             return r[m.Ldap.PhaseSyncResult].fail(f"Failed to read LDIF file: {e!s}")
-        parse_result = self._ldif.parse(ldif_content)
+        parse_result = self._ldif.parse_ldif(ldif_content)
         if parse_result.is_failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
