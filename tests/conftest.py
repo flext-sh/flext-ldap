@@ -15,7 +15,7 @@ from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
 
-LdapContainerDict = Mapping[str, t.Scalar]
+LdapContainerDict = t.ScalarMapping
 
 
 def _get_worker_id(config: pytest.Config) -> str:
