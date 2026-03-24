@@ -4,8 +4,11 @@
 # Sections with [CUSTOM] are project-specific extension points.
 # [MANAGED] build system
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2" ]
+build-backend = "hatchling.build"
+requires = [ "hatchling" ]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/flext_ldap" ]
 
 # [CUSTOM] project metadata
 [project]
@@ -23,8 +26,8 @@ classifiers = [
 ]
 dependencies = [
   "cryptography>=45.0.5",
-  "flext-core @ file:../flext-core",
-  "flext-ldif @ file:../flext-ldif",
+  "flext-core",
+  "flext-ldif",
   "ldap3>=2.9",
   "pydantic-core>=2.41.4",
   "pydantic-settings>=2.11",
@@ -143,7 +146,6 @@ plugins = [
 ]
 python_version = "3.13"
 
-[tool.poetry]
 
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
