@@ -59,18 +59,18 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
             type GenericFieldsDict = Mapping[
                 str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]
             ]
-            type LdapContainerDict = Mapping[str, t.Scalar]
+            type LdapContainerDict = t.ScalarMapping
             type LdapConnectionConfigDict = Mapping[str, t.Scalar | None]
-            type LdapSearchOptionsDict = Mapping[str, t.Scalar]
+            type LdapSearchOptionsDict = t.ScalarMapping
             type LdapEntryDataDict = Mapping[str, t.Scalar | t.StrSequence]
             type LdapSchemaAttributeDict = Mapping[str, str | t.StrSequence | bool]
             type LdapSchemaObjectClassDict = Mapping[str, str | t.StrSequence | bool]
             type LdapModifyOperationDict = Mapping[str, t.Scalar | t.StrSequence]
             type LdapSearchResultDict = Mapping[str, t.Scalar | t.StrSequence]
-            type LdapTestScenarioDict = Mapping[str, t.Scalar]
-            type GenericTestCaseDict = Mapping[str, t.Scalar]
-            type GenericCallableParameterDict = Mapping[str, t.Scalar]
-            type LdapConnectionResultDict = Mapping[str, t.Scalar]
+            type LdapTestScenarioDict = t.ScalarMapping
+            type GenericTestCaseDict = t.ScalarMapping
+            type GenericCallableParameterDict = t.ScalarMapping
+            type LdapConnectionResultDict = t.ScalarMapping
 
 
 t = FlextLdapTestTypes

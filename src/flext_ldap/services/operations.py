@@ -91,7 +91,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     _connection: FlextLdapConnection
 
     @staticmethod
-    def _extract_attributes_dict(entry: m.Ldif.Entry) -> Mapping[str, Sequence[str]]:
+    def _extract_attributes_dict(entry: m.Ldif.Entry) -> Mapping[str, t.StrSequence]:
         """Extract attributes dict from LDIF entry or entry protocol.
 
         Args:
@@ -133,9 +133,9 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def _convert_mapping_to_dict(
-            attrs: Mapping[LaxStr, Sequence[LaxStr]] | Mapping[str, Sequence[str]],
-        ) -> Mapping[str, Sequence[str]]:
-            """Convert Mapping to Mapping[str, Sequence[str]].
+            attrs: Mapping[LaxStr, Sequence[LaxStr]] | Mapping[str, t.StrSequence],
+        ) -> Mapping[str, t.StrSequence]:
+            """Convert Mapping to Mapping[str, t.StrSequence].
 
             Args:
                 attrs: Mapping of attribute names to sequences (handles LaxStr keys/values)
@@ -159,7 +159,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_ldif_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> Mapping[str, Sequence[str]]:
+        ) -> Mapping[str, t.StrSequence]:
             """Extract attributes from LDIF Entry.
 
             Args:
@@ -180,7 +180,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def _extract_protocol_entry_attributes(
             entry: m.Ldif.Entry,
-        ) -> Mapping[str, Sequence[str]]:
+        ) -> Mapping[str, t.StrSequence]:
             """Extract attributes from Entry.
 
             Args:
@@ -234,15 +234,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             def normalize_attr(
                 _k: str,
                 v: str | bytes | Sequence[str | bytes],
-            ) -> Sequence[str]:
-                """Normalize attribute value to Sequence[str]."""
+            ) -> t.StrSequence:
+                """Normalize attribute value to t.StrSequence."""
                 match v:
                     case list() | tuple():
                         return [str(item) for item in v]
                     case _:
                         return [str(v)]
 
-            existing_attrs_transformed: MutableMapping[str, Sequence[str]] = {}
+            existing_attrs_transformed: MutableMapping[str, t.StrSequence] = {}
             logger = logging.getLogger(__name__)
             for k, v in existing_attrs_raw.items():
                 try:
@@ -264,7 +264,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     )
                     continue
             existing_attrs = existing_attrs_transformed
-            new_attrs: MutableMapping[str, Sequence[str]] = {}
+            new_attrs: MutableMapping[str, t.StrSequence] = {}
             for k, v in new_attrs_raw.items():
                 try:
                     normalized = normalize_attr(k, v)
@@ -301,18 +301,18 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     processed,
                 )
             )
-            merged: MutableMapping[str, Sequence[tuple[int, Sequence[str]]]] = {}
+            merged: MutableMapping[str, Sequence[tuple[int, t.StrSequence]]] = {}
             merged.update(changes)
             merged.update(delete_changes)
             return merged or None
 
         @staticmethod
-        def extract_attributes(entry: m.Ldif.Entry) -> Mapping[str, Sequence[str]]:
+        def extract_attributes(entry: m.Ldif.Entry) -> Mapping[str, t.StrSequence]:
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
                 Normalizes p.Entry and Entry to a common
-                Mapping[str, Sequence[str]] format. p.Entry has
+                Mapping[str, t.StrSequence] format. p.Entry has
                 nested Attributes.attributes, while Entry has direct
                 attributes mapping.
 
@@ -335,8 +335,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         @staticmethod
         def find_existing_values(
             attr_name: str,
-            existing_attrs: Mapping[str, Sequence[str]],
-        ) -> Sequence[str] | None:
+            existing_attrs: Mapping[str, t.StrSequence],
+        ) -> t.StrSequence | None:
             """Find existing attribute values by case-insensitive name.
 
             Business Rule:
@@ -369,7 +369,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             return None
 
         @staticmethod
-        def normalize_value_set(values: Sequence[str]) -> set[str]:
+        def normalize_value_set(values: t.StrSequence) -> set[str]:
             """Normalize attribute values to a lowercase set for comparison.
 
             Business Rule:
@@ -384,7 +384,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         @staticmethod
         def process_deleted_attributes(
-            existing_attrs: Mapping[str, Sequence[str]],
+            existing_attrs: Mapping[str, t.StrSequence],
             ignore: frozenset[str],
             processed: set[str],
         ) -> t.Ldap.OperationChanges:
@@ -410,15 +410,15 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             for k, v in existing_attrs.items():
                 if k.lower() not in ignore_lower and k.lower() not in processed_lower:
                     filtered_attrs[k] = [str(item) for item in v]
-            changes_dict: MutableMapping[str, Sequence[tuple[int, Sequence[str]]]] = {
+            changes_dict: MutableMapping[str, Sequence[tuple[int, t.StrSequence]]] = {
                 k: [(c.Ldap.ModifyOperation.DELETE, [])] for k in filtered_attrs
             }
             return changes_dict
 
         @staticmethod
         def process_new_attributes(
-            new_attrs: Mapping[str, Sequence[str]],
-            existing_attrs: Mapping[str, Sequence[str]],
+            new_attrs: Mapping[str, t.StrSequence],
+            existing_attrs: Mapping[str, t.StrSequence],
             ignore: frozenset[str],
         ) -> tuple[t.Ldap.OperationChanges, set[str]]:
             """Process new attributes and detect replacement changes.
@@ -447,8 +447,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
             def process_attr(
                 attr_name: str,
-                new_vals: Sequence[str],
-            ) -> tuple[str, Sequence[tuple[int, Sequence[str]]] | None]:
+                new_vals: t.StrSequence,
+            ) -> tuple[str, Sequence[tuple[int, t.StrSequence]] | None]:
                 """Process single attribute and return change if needed."""
                 normalized_name = u.Ldap.norm_str(attr_name, case="lower")
                 processed.add(normalized_name)
@@ -476,7 +476,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 return (attr_name, None)
 
             processed_dict: MutableMapping[
-                str, Sequence[tuple[int, Sequence[str]]] | None
+                str, Sequence[tuple[int, t.StrSequence]] | None
             ] = {}
             logger = logging.getLogger(__name__)
             for attr_name, new_vals in dict(filtered_attrs).items():
@@ -499,7 +499,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         exc_info=e,
                     )
                     continue
-            processed_changes: Mapping[str, Sequence[tuple[int, Sequence[str]]]] = {
+            processed_changes: Mapping[str, Sequence[tuple[int, t.StrSequence]]] = {
                 k: v for k, v in dict(processed_dict).items() if v is not None
             }
             changes.update(processed_changes)
@@ -560,7 +560,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
                 entry,
             )
-            attrs_dict: Mapping[str, Sequence[str]] = {
+            attrs_dict: Mapping[str, t.StrSequence] = {
                 str(k): [str(item) for item in v]
                 for k, v in dict(attrs_mapping).items()
             }
@@ -595,7 +595,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs = FlextLdapOperations._extract_attributes_dict(entry)
             changetype_result = attrs.get(c.Ldap.LdapAttributeNames.CHANGETYPE, [])
             changetype_raw = changetype_result
-            changetype_val: Sequence[str] = [str(item) for item in changetype_raw]
+            changetype_val: t.StrSequence = [str(item) for item in changetype_raw]
             changetype = (
                 u.Ldap.norm_str(changetype_val[0], case="lower")
                 if changetype_val
@@ -645,7 +645,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                     ),
                 )
             search_data = search_result.map_or(None)
-            existing_entries: Sequence[Mapping[str, Sequence[str]]] = []
+            existing_entries: Sequence[Mapping[str, t.StrSequence]] = []
             if search_data is not None and search_data.entries:
                 existing_entries = list(search_data.entries)
             if not existing_entries:
@@ -740,7 +740,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
             add_op_result = attrs.get(c.Ldap.ChangeTypeOperations.ADD, [])
             add_op_raw = add_op_result
-            add_op: Sequence[str] = [str(item) for item in add_op_raw]
+            add_op: t.StrSequence = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[m.Ldap.LdapOperationResult].fail(
                     "Schema modify entry missing 'add' attribute",
@@ -790,7 +790,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
         def _extract_schema_add_operation(
             self,
-            attrs: Mapping[str, Sequence[str]],
+            attrs: Mapping[str, t.StrSequence],
         ) -> r[str]:
             """Extract schema add operation attribute type.
 
@@ -803,16 +803,16 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             """
             add_op_result = attrs.get(c.Ldap.ChangeTypeOperations.ADD, [])
             add_op_raw = add_op_result
-            add_op: Sequence[str] = [str(item) for item in add_op_raw]
+            add_op: t.StrSequence = [str(item) for item in add_op_raw]
             if not add_op:
                 return r[str].fail("Schema modify entry missing 'add' attribute")
             return r[str].ok(add_op[0])
 
         def _extract_schema_attribute_values(
             self,
-            attrs: Mapping[str, Sequence[str]],
+            attrs: Mapping[str, t.StrSequence],
             attr_type: str,
-        ) -> r[Sequence[str]]:
+        ) -> r[t.StrSequence]:
             """Extract and filter schema attribute values.
 
             Args:
@@ -828,10 +828,10 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attr_values = [str(item) for item in attr_values_raw]
             filtered = [x for x in attr_values if x]
             if not filtered:
-                return r[Sequence[str]].fail(
+                return r[t.StrSequence].fail(
                     f"Schema modify entry has only empty values for '{attr_type}'",
                 )
-            return r[Sequence[str]].ok(filtered)
+            return r[t.StrSequence].ok(filtered)
 
     def __init__(self, connection: FlextLdapConnection) -> None:
         """Initialize the operations service with a live connection."""
@@ -929,7 +929,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         *,
         progress_callback: Callable[[int, int, str, m.Ldap.LdapBatchStats], None]
         | None = None,
-        retry_on_errors: Sequence[str] | None = None,
+        retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> r[m.Ldap.LdapBatchStats]:
@@ -1242,7 +1242,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         self,
         entry: m.Ldif.Entry,
         *,
-        retry_on_errors: Sequence[str] | None = None,
+        retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
     ) -> r[m.Ldap.LdapOperationResult]:
         """Upsert an entry, optionally retrying for configured error patterns.

@@ -43,7 +43,7 @@ class TestsFlextLdapUtilities:
     All helper logic is nested within this single class following FLEXT patterns.
     """
 
-    _STRING_VALUES: ClassVar[Mapping[str, str]] = {
+    _STRING_VALUES: ClassVar[t.StrMapping] = {
         "simple": "test",
         "empty": "",
         "whitespace": "  test  ",
@@ -52,7 +52,7 @@ class TestsFlextLdapUtilities:
     _LIST_VALUES: ClassVar[
         Mapping[
             str,
-            Sequence[str] | Sequence[t.Scalar] | tuple[str, ...] | str | None,
+            t.StrSequence | t.ScalarList | tuple[str, ...] | str | None,
         ]
     ] = {
         "list_str": ["a", "b", "c"],

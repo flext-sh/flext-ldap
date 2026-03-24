@@ -42,7 +42,7 @@ from ldap3 import Connection, Server
 
 
 def _value_to_str_list(value: t.Ldap.Ldap3EntryValue) -> MutableSequence[str]:
-    """Convert a list/tuple/sequence value to Sequence[str] without isinstance narrowing.
+    """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
 
     Pyright narrows isinstance(v, list) on v:t.NormalizedValue to Sequence[Unknown], making
     element access return Unknown. This helper avoids that by using __len__
@@ -79,8 +79,8 @@ class FlextLdapLdap3Wrappers:
     def add(
         connection: Connection,
         dn: str,
-        object_class: Sequence[str] | str | None,
-        attributes: Mapping[str, Sequence[str]],
+        object_class: t.StrSequence | str | None,
+        attributes: Mapping[str, t.StrSequence],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add()."""
         normalized_attributes: t.FlatContainerMapping = {
@@ -118,7 +118,7 @@ class FlextLdapLdap3Wrappers:
         search_base: str,
         search_filter: str,
         search_scope: int | str,
-        attributes: Sequence[str] | str,
+        attributes: t.StrSequence | str,
         size_limit: int,
         time_limit: int,
     ) -> bool:
@@ -310,13 +310,13 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def convert_ldap3_results(
             connection: Connection,
-        ) -> Sequence[tuple[str, Mapping[str, Sequence[str]]]]:
+        ) -> Sequence[tuple[str, Mapping[str, t.StrSequence]]]:
             """Convert ldap3 connection entries to parser format.
 
             Business Rules:
                 - Extracts DN from entry.entry_dn (string conversion)
                 - Iterates entry.entry_attributes for all attributes
-                - Converts attribute values to Sequence[str] format
+                - Converts attribute values to t.StrSequence format
                 - None values become empty lists []
                 - Single values become single-item lists [value]
                 - Multiple values become lists [value1, value2, ...]
@@ -328,7 +328,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             Architecture:
                 - Python 3.13: Uses guard-based sequence handling
-                - Returns Sequence[tuple[str, Mapping[str, Sequence[str]]]] for parser compatibility
+                - Returns Sequence[tuple[str, Mapping[str, t.StrSequence]]] for parser compatibility
                 - No network calls - processes connection.entries
 
             Args:
@@ -338,7 +338,7 @@ class Ldap3Adapter(FlextService[bool]):
                 List of (dn, attributes_dict) tuples in parser format.
 
             """
-            results: MutableSequence[tuple[str, Mapping[str, Sequence[str]]]] = []
+            results: MutableSequence[tuple[str, Mapping[str, t.StrSequence]]] = []
             entries_list: Sequence[p.Ldap.Ldap3Entry] = getattr(
                 connection, "entries", []
             )
@@ -479,7 +479,7 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def extract_attrs_dict(
             attrs: p.Ldap.HasAttributesProperty
-            | Mapping[str, t.ContainerValue | Sequence[str]]
+            | Mapping[str, t.ContainerValue | t.StrSequence]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
             | BaseModel
@@ -491,7 +491,7 @@ class Ldap3Adapter(FlextService[bool]):
                 - Handles objects with 'attributes' property (ldap3 Entry, Pydantic models)
                 - Handles Pydantic BaseModel via model_dump() for safe serialization
                 - Handles Mapping types (dict, dict-like objects) directly
-                - All attribute values normalized to Sequence[str] format
+                - All attribute values normalized to t.StrSequence format
                 - Empty dict {} returned on extraction failure (no exception raised)
                 - Python 3.13: Uses guard-based sequence handling
 
@@ -503,7 +503,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             Architecture:
                 - Handles: objects with 'attributes' property, Pydantic BaseModel, Mapping
-                - Returns t.Ldap.OperationAttributeDict (Mapping[str, Sequence[str]])
+                - Returns t.Ldap.OperationAttributeDict (Mapping[str, t.StrSequence])
                 - No network calls - pure data transformation
 
             """
@@ -670,13 +670,13 @@ class Ldap3Adapter(FlextService[bool]):
         def normalize_attr_values(
             attrs_dict: Mapping[str, t.Ldap.Ldap3EntryValue] | None,
         ) -> t.Ldap.OperationAttributeDict:
-            """Normalize attribute values to Sequence[str] format.
+            """Normalize attribute values to t.StrSequence format.
 
             Args:
                 attrs_dict: Dictionary or Mapping with attribute values (or None)
 
             Returns:
-                Normalized Mapping[str, Sequence[str]]
+                Normalized Mapping[str, t.StrSequence]
 
             """
             if attrs_dict is None:
@@ -752,7 +752,7 @@ class Ldap3Adapter(FlextService[bool]):
         @staticmethod
         def process_entry_attributes(
             entry: p.Ldap.Ldap3Entry,
-        ) -> Mapping[str, Sequence[str]]:
+        ) -> Mapping[str, t.StrSequence]:
             """Convert LDAP entry attributes to string-list mapping."""
             attrs_dict: MutableMapping[str, MutableSequence[str]] = {}
             for attr, attr_values in entry.entry_attributes_as_dict.items():
@@ -771,7 +771,7 @@ class Ldap3Adapter(FlextService[bool]):
         def _add_entry_to_ldap(
             connection: Connection,
             dn_str: str,
-            attrs_dict: Mapping[str, Sequence[str]],
+            attrs_dict: Mapping[str, t.StrSequence],
         ) -> bool:
             """Add entry to LDAP directory.
 
@@ -780,7 +780,7 @@ class Ldap3Adapter(FlextService[bool]):
             Args:
                 connection: Active ldap3 Connection t.NormalizedValue.
                 dn_str: Distinguished name string.
-                attrs_dict: Attributes dictionary (str -> Sequence[str]).
+                attrs_dict: Attributes dictionary (str -> t.StrSequence).
 
             Returns:
                 True if add succeeded, False otherwise.
@@ -899,7 +899,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             """
             try:
-                attrs_dict: Mapping[str, Sequence[str]] = {
+                attrs_dict: Mapping[str, t.StrSequence] = {
                     k: list(v) for k, v in ldap_attrs.items()
                 }
                 if self._add_entry_to_ldap(connection, dn_str, attrs_dict):
@@ -1542,7 +1542,7 @@ class Ldap3Adapter(FlextService[bool]):
                 str(entries_result.error) if entries_result.error else "",
             )
         entries_raw = entries_result.value
-        entries_dict: Sequence[Mapping[str, Sequence[str]]] = [
+        entries_dict: Sequence[Mapping[str, t.StrSequence]] = [
             entry.model_dump() for entry in entries_raw
         ]
         return r[m.Ldap.SearchResult].ok(

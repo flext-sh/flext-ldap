@@ -111,7 +111,7 @@ class TestsFlextLdapSync:
     )
     def test_sync_options(
         self,
-        kwargs: Mapping[str, str],
+        kwargs: t.StrMapping,
         expected_source: str,
         expected_target: str,
     ) -> None:

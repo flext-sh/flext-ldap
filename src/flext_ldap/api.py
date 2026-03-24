@@ -381,7 +381,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         entries: Sequence[m.Ldif.Entry],
         *,
         progress_callback: t.Ldap.LdapProgressCallback | None = None,
-        retry_on_errors: Sequence[str] | None = None,
+        retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> r[m.Ldap.LdapBatchStats]:
@@ -900,7 +900,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         self,
         entry: m.Ldif.Entry,
         *,
-        retry_on_errors: Sequence[str] | None = None,
+        retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
     ) -> r[m.Ldap.LdapOperationResult]:
         """Upsert LDAP entry (add if doesn't exist, modify if exists with changes, skip if identical).

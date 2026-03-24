@@ -52,9 +52,9 @@ class FlextLdapServerDetector(s[str]):
     def _detect_from_attributes(
         vendor_name: str | None,
         vendor_version: str | None,
-        naming_contexts: Sequence[str],
-        _supported_controls: Sequence[str],
-        supported_extensions: Sequence[str],
+        naming_contexts: t.StrSequence,
+        _supported_controls: t.StrSequence,
+        supported_extensions: t.StrSequence,
     ) -> r[str]:
         """Classify the server using collected ``rootDSE`` attributes.
 
@@ -97,8 +97,8 @@ class FlextLdapServerDetector(s[str]):
 
     @staticmethod
     def _detect_from_extensions(
-        supported_extensions: Sequence[str],
-        naming_contexts: Sequence[str],
+        supported_extensions: t.StrSequence,
+        naming_contexts: t.StrSequence,
     ) -> str:
         """Detect server type from extensions and naming contexts."""
         ext_str_raw = u.Ldap.map_str(supported_extensions, case="lower", join=" ")
@@ -181,7 +181,7 @@ class FlextLdapServerDetector(s[str]):
             v for v in [vendor_name, vendor_version] if v is not None
         ])
         vendor_parts_raw = u.Ldap.filter_truthy([str(item) for item in vendor_list])
-        vendor_parts: Sequence[str] = (
+        vendor_parts: t.StrSequence = (
             [str(item) for item in vendor_parts_raw]
             if isinstance(vendor_parts_raw, list)
             else []
@@ -218,8 +218,8 @@ class FlextLdapServerDetector(s[str]):
 
     @staticmethod
     def _detect_server_type_from_attributes_simple(
-        supported_extensions: Sequence[str],
-        naming_contexts: Sequence[str],
+        supported_extensions: t.StrSequence,
+        naming_contexts: t.StrSequence,
         vendor_name: str | None = None,
         vendor_version: str | None = None,
     ) -> str:
@@ -280,7 +280,7 @@ class FlextLdapServerDetector(s[str]):
             - Queries base DN "" with BASE scope to fetch rootDSE
             - Uses (objectClass=*) filter to match all entries
             - Requests ALL_ATTRIBUTES to get complete rootDSE information
-            - Normalizes attribute values to Sequence[str] format
+            - Normalizes attribute values to t.StrSequence format
             - Filters out None values from attribute dict
             - Returns failure if search fails or no entries returned
 
@@ -298,7 +298,7 @@ class FlextLdapServerDetector(s[str]):
             connection: Active ldap3.Connection instance (must be bound).
 
         Returns:
-            r[Attributes]: Dict mapping attribute names to Sequence[str] values
+            r[Attributes]: Dict mapping attribute names to t.StrSequence values
             or error if rootDSE query fails.
 
         """
@@ -328,10 +328,10 @@ class FlextLdapServerDetector(s[str]):
                 "rootDSE query returned invalid entry payload",
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
-        attributes: Mapping[str, Sequence[str]] = {
+        attributes: Mapping[str, t.StrSequence] = {
             k: [str(item) for item in v] for k, v in attrs_dict.items()
         }
-        return r[Mapping[str, Sequence[str]]].ok(attributes)
+        return r[Mapping[str, t.StrSequence]].ok(attributes)
 
     def detect_from_connection(self, connection: Connection) -> r[str]:
         """Query ``rootDSE`` and return a detected server label.
@@ -368,9 +368,9 @@ class FlextLdapServerDetector(s[str]):
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
         root_dse_attrs = root_dse_result.value
 
-        naming_contexts: Sequence[str] = root_dse_attrs.get("namingContexts", [])
-        supported_controls: Sequence[str] = root_dse_attrs.get("supportedControl", [])
-        supported_extensions: Sequence[str] = root_dse_attrs.get(
+        naming_contexts: t.StrSequence = root_dse_attrs.get("namingContexts", [])
+        supported_controls: t.StrSequence = root_dse_attrs.get("supportedControl", [])
+        supported_extensions: t.StrSequence = root_dse_attrs.get(
             "supportedExtension",
             [],
         )

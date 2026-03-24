@@ -53,7 +53,7 @@ class TestsFlextLdapOperations:
         "Connection failed": False,
         "": False,
     }
-    _ENTRY_SCENARIOS: ClassVar[Mapping[str, Mapping[str, Sequence[str]]]] = {
+    _ENTRY_SCENARIOS: ClassVar[Mapping[str, Mapping[str, t.StrSequence]]] = {
         "identical": {"cn": ["test"], "sn": ["User"]},
         "different": {"cn": ["test"], "sn": ["Different"]},
     }
