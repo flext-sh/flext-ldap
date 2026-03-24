@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ParamSpec, TypeVar
 
-from flext_core import r
 from flext_ldif import FlextLdifModels, FlextLdifTypes
 
 from flext_ldap import p
@@ -17,16 +16,9 @@ class FlextLdapTypes(FlextLdifTypes):
     class Ldap:
         """LDAP type aliases."""
 
-        class Connection:
-            """Connection type aliases."""
-
-            type Config = Mapping[str, str | int | bool]
-            type Options = Mapping[str, FlextLdifTypes.Ldif.Scalar | None]
-
         class Operation:
             """Operation type aliases."""
 
-            type Result[T] = r[T]
             type Changes = MutableMapping[str, Sequence[tuple[int, Sequence[str]]]]
             type Attributes = Mapping[str, Sequence[str]]
             type AttributeDict = Mapping[str, Sequence[str]]
@@ -51,8 +43,6 @@ class FlextLdapTypes(FlextLdifTypes):
             """Search type aliases."""
 
             type Options = p.Ldap.ServiceContracts.SearchOptionsContract
-            type Filter = str
-            type Scope = str
 
     FlextLdapEntryT = TypeVar(
         "FlextLdapEntryT",
