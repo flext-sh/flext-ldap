@@ -26,7 +26,10 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
-    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
+    "FlextLdapServerDetector": (
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ),
     "FlextLdapSyncService": ("flext_ldap.services.sync", "FlextLdapSyncService"),
     "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
 }
