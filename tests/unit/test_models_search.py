@@ -54,7 +54,7 @@ class TestsFlextLdapModelsSearch:
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN, scope="subtree"
         )
-        tm.that(options.scope in {"SUBTREE", "subtree"}, eq=True)
+        tm.that({"SUBTREE", "subtree"}, has=options.scope)
 
     def test_search_options_normalized_factory(self) -> None:
         options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC.DEFAULT_BASE_DN)

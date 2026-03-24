@@ -91,13 +91,9 @@ class TestsFlextLdapModelsSync:
         tm.that(s.success_rate, eq=0.8)
 
     def test_from_counters_serialization_includes_computed(self) -> None:
-        tm.that(
-            "success_rate"
-            in m.Ldap.SyncStats.from_counters(
-                synced=9, skipped=1, failed=0
-            ).model_dump(),
-            eq=True,
-        )
+        tm.that(m.Ldap.SyncStats.from_counters(
+            synced=9, skipped=1, failed=0
+        ).model_dump(), has="success_rate")
 
     # ── UpsertResult: success vs error ─────────────────────────────────
 

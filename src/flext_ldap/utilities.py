@@ -62,42 +62,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 return str_val or default
             return default
 
-        @staticmethod
-        def to_str_list(
-            value: t.Primitives | None,
-            *,
-            default: Sequence[str] | None = None,
-        ) -> Sequence[str]:
-            """Convert a value to a single-element string list."""
-            if value is None:
-                return default or []
-            if u.is_primitive(value):
-                return [str(value)]
-            return default or []
-
-        @staticmethod
-        def to_str_list_safe(value: t.Primitives | None) -> Sequence[str]:
-            """Safe str_list conversion returning [] for None or complex types."""
-            if value is None:
-                return []
-            if u.is_primitive(value):
-                return [str(value)]
-            return []
-
-        @staticmethod
-        def to_str_list_truthy(
-            value: t.Primitives | None,
-            *,
-            default: Sequence[str] | None = None,
-        ) -> Sequence[str]:
-            """Convert to str_list and filter truthy values."""
-            if value is None:
-                return default or []
-            if u.is_primitive(value):
-                str_val = str(value)
-                return [str_val] if str_val else (default or [])
-            return default or []
-
         class Validation:
             """LDAP validation utilities namespace.
 
