@@ -124,7 +124,7 @@ class FlextLdapModelsLdap:
         target_basedn: str = ""
         progress_callback: Callable[..., None] | None = None
 
-    class SyncStats(FlextLdapModelsLdap.LdapBatchStats):
+    class SyncStats(LdapBatchStats):
         """Sync stats - extends LdapBatchStats."""
 
         total: t.NonNegativeInt = 0
@@ -282,7 +282,7 @@ class FlextLdapModelsLdap:
 
         operation: str
 
-    class PhaseSyncResult(FlextLdapModelsLdap.LdapBatchStats):
+    class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
 
         phase_name: str
@@ -294,9 +294,7 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
-            default_factory=dict
-        )
+        phase_results: Mapping[str, PhaseSyncResult] = Field(default_factory=dict)
         total_entries: t.NonNegativeInt = 0
         total_synced: t.NonNegativeInt = 0
         total_failed: t.NonNegativeInt = 0
@@ -305,5 +303,12 @@ class FlextLdapModelsLdap:
         total_duration_seconds: t.NonNegativeFloat = 0.0
         overall_success: bool = True
 
+
+FlextLdapModelsLdap.MultiPhaseSyncResult.model_rebuild(
+    _types_namespace={
+        "PhaseSyncResult": FlextLdapModelsLdap.PhaseSyncResult,
+        "Mapping": Mapping,
+    },
+)
 
 __all__ = ["FlextLdapModelsLdap"]

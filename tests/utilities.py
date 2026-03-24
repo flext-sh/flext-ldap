@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdapUtilities
 from tests import _DockerInfraUtils, _FixtureLoaderUtils, t
 
-_SENTINEL = t.NormalizedValue()
+_SENTINEL: t.NormalizedValue = "__FLEXT_LDAP_TEST_SENTINEL__"
 
 
 class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -37,9 +35,9 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 none: bool | t.NormalizedValue = _SENTINEL,
                 is_: type | t.NormalizedValue = _SENTINEL,
                 contains: t.NormalizedValue = _SENTINEL,
-                attrs: Sequence[str] | t.NormalizedValue = _SENTINEL,
-                keys: Sequence[str] | t.NormalizedValue = _SENTINEL,
-                lacks_keys: Sequence[str] | t.NormalizedValue = _SENTINEL,
+                attrs: t.StrSequence | t.NormalizedValue = _SENTINEL,
+                keys: t.StrSequence | t.NormalizedValue = _SENTINEL,
+                lacks_keys: t.StrSequence | t.NormalizedValue = _SENTINEL,
                 kv: t.ContainerMapping | t.NormalizedValue = _SENTINEL,
                 gte: float | t.NormalizedValue = _SENTINEL,
                 lte: float | t.NormalizedValue = _SENTINEL,

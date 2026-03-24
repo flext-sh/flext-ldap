@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 import pytest
 from flext_tests import tm
@@ -89,13 +89,13 @@ class TestsFlextLdapEntryAdapter:
         class MockLdap3Entry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=user,dc=example,dc=com"
-                self._entry_attributes_as_dict: Mapping[str, Sequence[str]] = {
+                self._entry_attributes_as_dict: Mapping[str, t.StrSequence] = {
                     "cn": ["user"],
                     "sn": ["Doe"],
                 }
 
             @property
-            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str]]:
+            def entry_attributes_as_dict(self) -> Mapping[str, t.StrSequence]:
                 return self._entry_attributes_as_dict
 
         ldap3_entry = MockLdap3Entry()
@@ -115,10 +115,10 @@ class TestsFlextLdapEntryAdapter:
         class MockLdap3Entry:
             def __init__(self) -> None:
                 self.entry_dn = "cn=user,dc=example,dc=com"
-                self._entry_attributes_as_dict: Mapping[str, Sequence[str]] = {}
+                self._entry_attributes_as_dict: Mapping[str, t.StrSequence] = {}
 
             @property
-            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str]]:
+            def entry_attributes_as_dict(self) -> Mapping[str, t.StrSequence]:
                 return self._entry_attributes_as_dict
 
         ldap3_entry = MockLdap3Entry()

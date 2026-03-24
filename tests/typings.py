@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 from flext_core import r
 from flext_tests import FlextTestsTypes
@@ -57,16 +57,16 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
 
             # Test data dictionary types
             type GenericFieldsDict = Mapping[
-                str, t.Scalar | Sequence[str] | Mapping[str, Sequence[str]]
+                str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]
             ]
             type LdapContainerDict = Mapping[str, t.Scalar]
             type LdapConnectionConfigDict = Mapping[str, t.Scalar | None]
             type LdapSearchOptionsDict = Mapping[str, t.Scalar]
-            type LdapEntryDataDict = Mapping[str, t.Scalar | Sequence[str]]
-            type LdapSchemaAttributeDict = Mapping[str, str | Sequence[str] | bool]
-            type LdapSchemaObjectClassDict = Mapping[str, str | Sequence[str] | bool]
-            type LdapModifyOperationDict = Mapping[str, t.Scalar | Sequence[str]]
-            type LdapSearchResultDict = Mapping[str, t.Scalar | Sequence[str]]
+            type LdapEntryDataDict = Mapping[str, t.Scalar | t.StrSequence]
+            type LdapSchemaAttributeDict = Mapping[str, str | t.StrSequence | bool]
+            type LdapSchemaObjectClassDict = Mapping[str, str | t.StrSequence | bool]
+            type LdapModifyOperationDict = Mapping[str, t.Scalar | t.StrSequence]
+            type LdapSearchResultDict = Mapping[str, t.Scalar | t.StrSequence]
             type LdapTestScenarioDict = Mapping[str, t.Scalar]
             type GenericTestCaseDict = Mapping[str, t.Scalar]
             type GenericCallableParameterDict = Mapping[str, t.Scalar]

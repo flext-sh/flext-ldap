@@ -49,7 +49,7 @@ class TestsFlextLdapModelsSync:
     # ── Computed: SyncStats.success_rate ───────────────────────────────
 
     _SUCCESS_RATES = [
-        ("zero total", m.Ldap.SyncStats, Mapping[str, int](), 0.0),
+        ("zero total", m.Ldap.SyncStats, {}, 0.0),
         (
             "90% rate",
             m.Ldap.SyncStats,

@@ -23,7 +23,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -110,7 +109,7 @@ class TestsFlextLdapSync:
     )
     def test_sync_options(
         self,
-        kwargs: Mapping[str, str],
+        kwargs: t.StrMapping,
         expected_source: str,
         expected_target: str,
     ) -> None:

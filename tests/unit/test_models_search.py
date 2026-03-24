@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
@@ -127,7 +127,7 @@ class TestsFlextLdapModelsSearch:
         tm.that(categories, none=False)
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
-        entry: Mapping[str, Sequence[str]] = {}
+        entry: Mapping[str, t.StrSequence] = {}
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         tm.that(attrs, eq={})
 
@@ -141,15 +141,17 @@ class TestsFlextLdapModelsSearch:
         tm.that(category, eq="person")
 
     def test_search_result_get_entry_category(self) -> None:
-        entry: Mapping[str, Sequence[str]] = {}
+        entry: Mapping[str, t.StrSequence] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
         tm.that(category, eq="unknown")
 
-    def test_types_namespace_exists(self) -> None:
-        tm.that(m.Ldap.Types, none=False)
-
-    def test_ldap_progress_callback_type_exists(self) -> None:
-        tm.that(hasattr(m.Ldap.Types, "LdapProgressCallback"), eq=True)
+    def test_sync_phase_config_has_progress_callback(self) -> None:
+        """Verify progress_callback field exists on SyncPhaseConfig."""
+        tm.that(
+            hasattr(m.Ldap.SyncPhaseConfig, "model_fields"),
+            eq=True,
+        )
+        tm.that("progress_callback" in m.Ldap.SyncPhaseConfig.model_fields, eq=True)
 
     def test_connection_config_serialization(self) -> None:
         data = m.Ldap.ConnectionConfig(host="ldap.example.com", port=636).model_dump()

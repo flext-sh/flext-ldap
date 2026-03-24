@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import ClassVar, Final
 
 from flext_tests import FlextTestsConstants
@@ -86,7 +86,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 """Static sample entries for tests."""
 
                 USER_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, Sequence[str]]]
+                    Mapping[str, str | Mapping[str, t.StrSequence]]
                 ] = {
                     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
                     "attributes": {
@@ -105,7 +105,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                     },
                 }
                 GROUP_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, Sequence[str]]]
+                    Mapping[str, str | Mapping[str, t.StrSequence]]
                 ] = {
                     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
                     "attributes": {

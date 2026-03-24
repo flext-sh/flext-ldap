@@ -39,20 +39,20 @@ class Connection:
     def add(
         self,
         dn: str,
-        object_class: Sequence[str] | str | None = ...,
+        object_class: t.StrSequence | str | None = ...,
         attributes: Mapping[str, t.Container] | None = ...,
     ) -> bool: ...
     def modify(
         self,
         dn: str,
-        changes: Mapping[str, Sequence[tuple[int, Sequence[str]]]],
+        changes: Mapping[str, Sequence[tuple[int, t.StrSequence]]],
     ) -> bool: ...
     def search(
         self,
         search_base: str,
         search_filter: str,
         search_scope: int | str = ...,
-        attributes: Sequence[str] | str = ...,
+        attributes: t.StrSequence | str = ...,
         size_limit: int = ...,
         time_limit: int = ...,
     ) -> bool: ...
