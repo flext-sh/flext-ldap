@@ -28,7 +28,7 @@ class FlextLdapModelsLdap:
         use_tls: bool = False
         bind_dn: str | None = None
         bind_password: str | None = None
-        timeout: int = c.Ldap.ConnectionDefaults.TIMEOUT
+        timeout: t.PositiveInt = c.Ldap.ConnectionDefaults.TIMEOUT
         auto_bind: bool = True
         auto_range: bool = True
 
@@ -45,8 +45,8 @@ class FlextLdapModelsLdap:
 
         scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
         filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
-        size_limit: int = 0
-        time_limit: int = 0
+        size_limit: t.NonNegativeInt = 0
+        time_limit: t.NonNegativeInt = 0
         attributes: Sequence[str] | None = None
 
     class SearchOptions(BaseModel):
@@ -54,16 +54,13 @@ class FlextLdapModelsLdap:
 
         base_dn: Annotated[
             t.NonEmptyStr,
-            Field(
-                ...,
-                description="Base DN for search (required, non-empty)",
-            ),
+            Field(..., description="Base DN for search (required, non-empty)"),
         ]
         scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
         filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
         attributes: Sequence[str] | None = None
-        size_limit: int = 0
-        time_limit: int = 0
+        size_limit: t.NonNegativeInt = 0
+        time_limit: t.NonNegativeInt = 0
 
         @classmethod
         def normalized(
@@ -99,17 +96,17 @@ class FlextLdapModelsLdap:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid")
         base_dn: str
         filter_str: str
-        ldap_scope: int
+        ldap_scope: t.NonNegativeInt
         search_attributes: Sequence[str]
-        size_limit: int
-        time_limit: int
+        size_limit: t.NonNegativeInt
+        time_limit: t.NonNegativeInt
 
     class LdapBatchStats(BaseModel):
         """Batch stats."""
 
-        synced: int = 0
-        failed: int = 0
-        skipped: int = 0
+        synced: t.NonNegativeInt = 0
+        failed: t.NonNegativeInt = 0
+        skipped: t.NonNegativeInt = 0
 
     class SyncOptions(BaseModel):
         """Sync options."""
@@ -130,11 +127,11 @@ class FlextLdapModelsLdap:
     class SyncStats(BaseModel):
         """Sync stats - implements LdapBatchStats."""
 
-        synced: int = 0
-        skipped: int = 0
-        failed: int = 0
-        total: int = 0
-        duration_seconds: float = 0.0
+        synced: t.NonNegativeInt = 0
+        skipped: t.NonNegativeInt = 0
+        failed: t.NonNegativeInt = 0
+        total: t.NonNegativeInt = 0
+        duration_seconds: t.NonNegativeFloat = 0.0
 
         @computed_field
         @property
@@ -174,9 +171,9 @@ class FlextLdapModelsLdap:
     class BatchUpsertResult(BaseModel):
         """Batch upsert result."""
 
-        total_processed: int = 0
-        successful: int = 0
-        failed: int = 0
+        total_processed: t.NonNegativeInt = 0
+        successful: t.NonNegativeInt = 0
+        failed: t.NonNegativeInt = 0
         results: Sequence[Mapping[str, t.Primitives]] = []
 
         @property
@@ -193,7 +190,7 @@ class FlextLdapModelsLdap:
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
         progress_callback: Callable[..., None] | None = None
         retry_on_errors: Sequence[str] | None = None
-        max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
+        max_retries: t.RetryCount = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
 
     class ConversionMetadata(BaseModel):
@@ -214,7 +211,7 @@ class FlextLdapModelsLdap:
         success: bool
         operation_type: str
         message: str = ""
-        entries_affected: int = 0
+        entries_affected: t.NonNegativeInt = 0
 
     class SearchResult(BaseModel):
         """Search result.
@@ -302,12 +299,12 @@ class FlextLdapModelsLdap:
         """Phase sync result."""
 
         phase_name: str
-        total_entries: int = 0
-        synced: int = 0
-        failed: int = 0
-        skipped: int = 0
-        duration_seconds: float = 0.0
-        success_rate: float = 0.0
+        total_entries: t.NonNegativeInt = 0
+        synced: t.NonNegativeInt = 0
+        failed: t.NonNegativeInt = 0
+        skipped: t.NonNegativeInt = 0
+        duration_seconds: t.NonNegativeFloat = 0.0
+        success_rate: t.NonNegativeFloat = 0.0
 
     class MultiPhaseSyncResult(BaseModel):
         """Multi-phase sync result."""
@@ -316,12 +313,12 @@ class FlextLdapModelsLdap:
         phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
             default_factory=dict
         )
-        total_entries: int = 0
-        total_synced: int = 0
-        total_failed: int = 0
-        total_skipped: int = 0
-        overall_success_rate: float = 0.0
-        total_duration_seconds: float = 0.0
+        total_entries: t.NonNegativeInt = 0
+        total_synced: t.NonNegativeInt = 0
+        total_failed: t.NonNegativeInt = 0
+        total_skipped: t.NonNegativeInt = 0
+        overall_success_rate: t.NonNegativeFloat = 0.0
+        total_duration_seconds: t.NonNegativeFloat = 0.0
         overall_success: bool = True
 
 

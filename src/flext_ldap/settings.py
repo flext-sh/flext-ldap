@@ -19,42 +19,23 @@ from typing import Annotated
 from flext_core import FlextSettings
 from pydantic import Field
 
-from flext_ldap import c
+from flext_ldap import c, t
 
 
 class FlextLdapSettings(FlextSettings):
     """LDAP runtime settings."""
 
-    host: Annotated[
-        str,
-        Field(
-            default=c.LOCALHOST,
-            description="LDAP server host",
-        ),
-    ]
+    host: Annotated[str, Field(default=c.LOCALHOST, description="LDAP server host")]
     port: Annotated[
-        int,
-        Field(
-            default=c.Ldap.ConnectionDefaults.PORT,
-            ge=1,
-            le=65535,
-            description="LDAP server port",
-        ),
+        t.PortNumber, Field(default=c.Ldap.ConnectionDefaults.PORT, description="LDAP server port")
     ]
     use_ssl: Annotated[bool, Field(default=False, description="Enable LDAPS")]
     use_tls: Annotated[bool, Field(default=False, description="Enable STARTTLS")]
-    bind_dn: Annotated[
-        str,
-        Field(default="", description="LDAP bind distinguished name"),
-    ]
+    bind_dn: Annotated[str, Field(default="", description="LDAP bind distinguished name")]
     bind_password: Annotated[str, Field(default="", description="LDAP bind password")]
     timeout: Annotated[
-        int,
-        Field(
-            default=c.Ldap.ConnectionDefaults.TIMEOUT,
-            ge=1,
-            description="LDAP operation timeout in seconds",
-        ),
+        t.PositiveInt,
+        Field(default=c.Ldap.ConnectionDefaults.TIMEOUT, description="LDAP operation timeout in seconds"),
     ]
     auto_bind: Annotated[
         bool,
