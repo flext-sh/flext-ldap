@@ -11,16 +11,16 @@ from flext_core import FlextLogger, r
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
-from tests import c, m, u
+from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
 
-LdapContainerDict = Mapping[str, str | int | bool]
+LdapContainerDict = Mapping[str, t.Scalar]
 
 
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
-    worker_input: Mapping[str, str | int | bool] = (
+    worker_input: Mapping[str, t.Scalar] = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     return str(worker_input.get("workerid", "master"))

@@ -57,22 +57,22 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
 
             # Test data dictionary types
             type GenericFieldsDict = Mapping[
-                str, str | int | bool | Sequence[str] | Mapping[str, Sequence[str]]
+                str, t.Scalar | Sequence[str] | Mapping[str, Sequence[str]]
             ]
-            type LdapContainerDict = Mapping[str, str | int | bool]
-            type LdapConnectionConfigDict = Mapping[str, str | int | bool | None]
-            type LdapSearchOptionsDict = Mapping[str, str | int | bool]
-            type LdapEntryDataDict = Mapping[str, str | int | bool | Sequence[str]]
+            type LdapContainerDict = Mapping[str, t.Scalar]
+            type LdapConnectionConfigDict = Mapping[str, t.Scalar | None]
+            type LdapSearchOptionsDict = Mapping[str, t.Scalar]
+            type LdapEntryDataDict = Mapping[str, t.Scalar | Sequence[str]]
             type LdapSchemaAttributeDict = Mapping[str, str | Sequence[str] | bool]
             type LdapSchemaObjectClassDict = Mapping[str, str | Sequence[str] | bool]
             type LdapModifyOperationDict = Mapping[
-                str, str | int | bool | Sequence[str]
+                str, t.Scalar | Sequence[str]
             ]
-            type LdapSearchResultDict = Mapping[str, str | int | bool | Sequence[str]]
-            type LdapTestScenarioDict = Mapping[str, str | int | bool]
-            type GenericTestCaseDict = Mapping[str, str | int | bool]
-            type GenericCallableParameterDict = Mapping[str, str | int | bool]
-            type LdapConnectionResultDict = Mapping[str, str | int | bool]
+            type LdapSearchResultDict = Mapping[str, t.Scalar | Sequence[str]]
+            type LdapTestScenarioDict = Mapping[str, t.Scalar]
+            type GenericTestCaseDict = Mapping[str, t.Scalar]
+            type GenericCallableParameterDict = Mapping[str, t.Scalar]
+            type LdapConnectionResultDict = Mapping[str, t.Scalar]
 
 
 t = FlextLdapTestTypes

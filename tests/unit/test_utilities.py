@@ -52,7 +52,7 @@ class TestsFlextLdapUtilities:
     _LIST_VALUES: ClassVar[
         Mapping[
             str,
-            Sequence[str] | Sequence[str | int | bool] | tuple[str, ...] | str | None,
+            Sequence[str] | Sequence[t.Scalar] | tuple[str, ...] | str | None,
         ]
     ] = {
         "list_str": ["a", "b", "c"],

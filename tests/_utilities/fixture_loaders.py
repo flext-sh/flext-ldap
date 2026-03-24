@@ -20,7 +20,7 @@ from pydantic import TypeAdapter, ValidationError
 from tests import m, t
 
 GenericFieldsDict = Mapping[
-    str, str | int | bool | Sequence[str] | Mapping[str, Sequence[str]]
+    str, t.Scalar | Sequence[str] | Mapping[str, Sequence[str]]
 ]
 
 

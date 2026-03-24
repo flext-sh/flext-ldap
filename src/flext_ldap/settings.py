@@ -27,15 +27,21 @@ class FlextLdapSettings(FlextSettings):
 
     host: Annotated[str, Field(default=c.LOCALHOST, description="LDAP server host")]
     port: Annotated[
-        t.PortNumber, Field(default=c.Ldap.ConnectionDefaults.PORT, description="LDAP server port")
+        t.PortNumber,
+        Field(default=c.Ldap.ConnectionDefaults.PORT, description="LDAP server port"),
     ]
     use_ssl: Annotated[bool, Field(default=False, description="Enable LDAPS")]
     use_tls: Annotated[bool, Field(default=False, description="Enable STARTTLS")]
-    bind_dn: Annotated[str, Field(default="", description="LDAP bind distinguished name")]
+    bind_dn: Annotated[
+        str, Field(default="", description="LDAP bind distinguished name")
+    ]
     bind_password: Annotated[str, Field(default="", description="LDAP bind password")]
     timeout: Annotated[
         t.PositiveInt,
-        Field(default=c.Ldap.ConnectionDefaults.TIMEOUT, description="LDAP operation timeout in seconds"),
+        Field(
+            default=c.Ldap.ConnectionDefaults.TIMEOUT,
+            description="LDAP operation timeout in seconds",
+        ),
     ]
     auto_bind: Annotated[
         bool,

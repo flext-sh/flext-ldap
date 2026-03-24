@@ -353,8 +353,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 return then_value if then_value is not None else else_value
             return else_value
 
-        Ldif: type[FlextLdifUtilities.Ldif] = FlextLdifUtilities.Ldif
-
 
 u = FlextLdapUtilities
 
