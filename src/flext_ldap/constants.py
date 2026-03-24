@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum, unique
-from typing import ClassVar, Final, Literal
+from typing import ClassVar, Final
 
 from flext_ldif import FlextLdifConstants
 
@@ -81,8 +81,6 @@ class FlextLdapConstants(FlextLdifConstants):
                 RUNNING = "running"
                 COMPLETED = "completed"
                 FAILED = "failed"
-
-            StatusLiteral = Literal["pending", "running", "completed", "failed"]
 
         class LdapOperationNames:
             """LDAP operation name constants."""
