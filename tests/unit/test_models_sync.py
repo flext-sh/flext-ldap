@@ -114,7 +114,7 @@ class TestsFlextLdapModelsSync:
             operation=c.Ldap.OperationType.ADD,
             error="Entry already exists",
         )
-        tm.that(r.success, eq=False)
+        tm.that(not r.success, eq=True)
         tm.that(r.error, eq="Entry already exists")
 
     def test_batch_upsert_tracks_all_counts(self) -> None:

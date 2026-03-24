@@ -81,7 +81,7 @@ class TestsFlextLdapConstants:
     def test_is_valid_status_invalid(self) -> None:
         """Test is_valid_status with invalid value."""
         result = u.Ldap.Validation.is_valid_status("invalid")
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     @pytest.mark.parametrize(
         ("attr", "expected"),

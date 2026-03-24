@@ -70,20 +70,18 @@ class _FixtureLoaderUtils:
                 return r[str].fail(f"Failed to load LDIF fixture {filename}: {e}")
 
         @staticmethod
-        def load_docker_config() -> r[Mapping[str, t.NormalizedValue]]:
+        def load_docker_config() -> r[t.ContainerMapping]:
             filepath = _FixtureLoaderUtils.Fixtures.FIXTURES_DIR / "docker_config.json"
             try:
                 if not filepath.exists():
-                    return r[Mapping[str, t.NormalizedValue]].fail(
-                        "Docker config file not found"
-                    )
+                    return r[t.ContainerMapping].fail("Docker config file not found")
                 raw_content = filepath.read_text(encoding="utf-8")
-                config: Mapping[str, t.NormalizedValue] = TypeAdapter(
-                    Mapping[str, t.NormalizedValue],
+                config: t.ContainerMapping = TypeAdapter(
+                    t.ContainerMapping,
                 ).validate_json(raw_content)
-                return r[Mapping[str, t.NormalizedValue]].ok(config)
+                return r[t.ContainerMapping].ok(config)
             except (OSError, ValueError, ValidationError) as e:
-                return r[Mapping[str, t.NormalizedValue]].fail(
+                return r[t.ContainerMapping].fail(
                     f"Failed to load docker config: {e}",
                 )
 

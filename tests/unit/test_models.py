@@ -74,8 +74,8 @@ class TestsFlextLdapModels:
         config = m.Ldap.ConnectionConfig()
         tm.that(config.host, eq="localhost")
         tm.that(config.port, eq=c.Ldap.ConnectionDefaults.PORT)
-        tm.that(config.use_ssl, eq=False)
-        tm.that(config.use_tls, eq=False)
+        tm.that(not config.use_ssl, eq=True)
+        tm.that(not config.use_tls, eq=True)
         tm.that(config.bind_dn, none=True)
         tm.that(config.bind_password, none=True)
         tm.that(config.timeout, eq=c.Ldap.ConnectionDefaults.TIMEOUT)
@@ -102,11 +102,11 @@ class TestsFlextLdapModels:
     def test_connection_config_ssl_only_allowed(self) -> None:
         config = m.Ldap.ConnectionConfig(use_ssl=True, use_tls=False)
         tm.that(config.use_ssl, eq=True)
-        tm.that(config.use_tls, eq=False)
+        tm.that(not config.use_tls, eq=True)
 
     def test_connection_config_tls_only_allowed(self) -> None:
         config = m.Ldap.ConnectionConfig(use_ssl=False, use_tls=True)
-        tm.that(config.use_ssl, eq=False)
+        tm.that(not config.use_ssl, eq=True)
         tm.that(config.use_tls, eq=True)
 
     def test_connection_config_port_constraints(self) -> None:

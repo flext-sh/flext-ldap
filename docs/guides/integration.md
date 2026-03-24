@@ -223,7 +223,7 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 
 
 @app.post("/auth/login")
-def login(username: str, password: str) -> Mapping[str, t.NormalizedValue]:
+def login(username: str, password: str) -> t.ContainerMapping:
     """User login endpoint with LDAP authentication."""
     ldap_api = get_flext_ldap_api()
 
@@ -245,7 +245,7 @@ def search_users(
     filter_str: str = "(objectClass=person)",
     limit: int = 100,
     token: str = Depends(authenticate_token),
-) -> Mapping[str, t.NormalizedValue]:
+) -> t.ContainerMapping:
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
@@ -279,7 +279,7 @@ def search_users(
 @app.post("/users/create")
 def create_user(
     user_data: dict, token: str = Depends(authenticate_token)
-) -> Mapping[str, t.NormalizedValue]:
+) -> t.ContainerMapping:
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 

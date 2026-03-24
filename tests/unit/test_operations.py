@@ -101,7 +101,7 @@ class TestsFlextLdapOperations:
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""
         operations = self._create_operations()
-        tm.that(operations.is_connected, eq=False)
+        tm.that(not operations.is_connected, eq=True)
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),

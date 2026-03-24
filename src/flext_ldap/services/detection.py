@@ -316,8 +316,8 @@ class FlextLdapServerDetector(s[str]):
             return r[t.Ldap.Operation.AttributeDict].fail(
                 f"rootDSE query failed: {connection.result}",
             )
-        entries_list: Sequence[t.NormalizedValue] = getattr(connection, "entries", [])
-        entries_raw: Sequence[t.NormalizedValue] = entries_list
+        entries_list: t.ContainerList = getattr(connection, "entries", [])
+        entries_raw: t.ContainerList = entries_list
         if not entries_raw:
             return r[t.Ldap.Operation.AttributeDict].fail(
                 "rootDSE query returned no entries",

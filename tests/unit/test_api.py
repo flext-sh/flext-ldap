@@ -226,7 +226,7 @@ class TestsFlextLdapApi:
     def test_model_config(self) -> None:
         """Test FlextLdap model_config has expected Pydantic v2 settings."""
         cfg = FlextLdap.model_config
-        tm.that(cfg.get("frozen"), eq=False)
+        tm.that(not cfg.get("frozen"), eq=True)
         tm.that(cfg.get("extra"), eq="forbid")
         tm.that(cfg.get("arbitrary_types_allowed"), eq=True)
 

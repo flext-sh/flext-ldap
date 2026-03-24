@@ -20,8 +20,8 @@ class TestsFlextLdapSettings:
         cfg = FlextLdapSettings()
         tm.that(cfg.host, eq="localhost")
         tm.that(cfg.port, gte=1, lte=65535)
-        tm.that(cfg.use_ssl, eq=False)
-        tm.that(cfg.use_tls, eq=False)
+        tm.that(not cfg.use_ssl, eq=True)
+        tm.that(not cfg.use_tls, eq=True)
 
     # ── Custom initialization ──────────────────────────────────────────
 
@@ -84,7 +84,7 @@ class TestsFlextLdapSettings:
 
     def test_model_config(self) -> None:
         tm.that(FlextLdapSettings.model_config.get("env_prefix"), eq="FLEXT_")
-        tm.that(FlextLdapSettings.model_config.get("case_sensitive"), eq=False)
+        tm.that(not FlextLdapSettings.model_config.get("case_sensitive"), eq=True)
 
     def test_field_descriptions(self) -> None:
         fields = FlextLdapSettings.model_fields

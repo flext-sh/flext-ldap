@@ -730,7 +730,7 @@ class Ldap3Adapter(FlextService[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: Mapping[str, t.NormalizedValue] | None = None
+            metadata_dict: t.ContainerMapping | None = None
             if isinstance(metadata, Mapping):
                 metadata_dict = {}
                 for raw_key, raw_value in metadata.items():

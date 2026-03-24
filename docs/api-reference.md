@@ -584,7 +584,7 @@ Convert FlextLdif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** r containing attributes Mapping[str, t.NormalizedValue] for ldap3 operations
+**Returns:** r containing attributes t.ContainerMapping for ldap3 operations
 
 **Example:**
 
