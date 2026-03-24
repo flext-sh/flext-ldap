@@ -27,7 +27,7 @@ from collections.abc import Mapping, Sequence
 import pytest
 from flext_tests import tm
 
-from flext_ldap import FlextLdapServerDetector
+from flext_ldap import FlextLdapServerDetector, t
 
 pytestmark = pytest.mark.unit
 

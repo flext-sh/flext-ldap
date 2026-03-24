@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdapUtilities

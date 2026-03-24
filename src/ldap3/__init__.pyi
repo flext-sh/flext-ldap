@@ -20,7 +20,7 @@ class Server:
 
 class Connection:
     result: Mapping[str, t.Container]
-    entries: Sequence[t.Container]
+    entries: t.FlatContainerList
     bound: bool
 
     def __init__(

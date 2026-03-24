@@ -22,14 +22,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 from typing import ClassVar
 
 import pytest
 from flext_core import FlextSettings
 from flext_tests import tm
 
-from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings
+from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings, t
 from tests import c, m
 
 pytestmark = pytest.mark.unit

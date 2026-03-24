@@ -13,12 +13,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 from typing import ClassVar, Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import FlextLdapConstants
+from flext_ldap import FlextLdapConstants, t
 
 
 class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
