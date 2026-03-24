@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import socket
 import time
-from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -20,7 +19,7 @@ LdapContainerDict = t.ScalarMapping
 
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
-    worker_input: Mapping[str, t.Scalar] = (
+    worker_input: t.ScalarMapping = (
         worker_input_val if isinstance(worker_input_val, dict) else {}
     )
     return str(worker_input.get("workerid", "master"))

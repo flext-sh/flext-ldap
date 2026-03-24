@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence, Mapping
 
 import pytest
 from flext_tests import tm
