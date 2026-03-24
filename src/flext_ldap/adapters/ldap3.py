@@ -31,6 +31,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from datetime import datetime
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextService, r
@@ -41,41 +42,43 @@ from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
 from ldap3 import Connection, Server
 
 
-def _value_to_str_list(value: t.Ldap.Ldap3EntryValue) -> MutableSequence[str]:
-    """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
-
-    Pyright narrows isinstance(v, list) on v:t.NormalizedValue to Sequence[Unknown], making
-    element access return Unknown. This helper avoids that by using __len__
-    and __getitem__ through getattr to maintain type safety.
-    """
-    length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
-    getitem_fn: Callable[[int], t.Ldap.Ldap3EntryValue] | None = getattr(
-        value,
-        "__getitem__",
-        None,
-    )
-    if length_fn is None or getitem_fn is None:
-        return []
-    result: MutableSequence[str] = []
-    for idx in range(length_fn()):
-        el: t.Ldap.Ldap3EntryValue = getitem_fn(idx)
-        if el is not None and isinstance(el, (str, int, float, bool, bytes)):
-            result.append(str(el))
-    return result
-
-
-def _ldap3_method(connection: Connection, method_name: str) -> Callable[..., bool]:
-    """Get a typed callable for an untyped ldap3 Connection method.
-
-    ldap3 library methods return Unknown types which cause pyright errors.
-    This helper extracts the method via getattr and wraps the return as bool.
-    """
-    method: Callable[..., bool] = getattr(connection, method_name)
-    return method
-
-
 class FlextLdapLdap3Wrappers:
     """Type-safe static wrappers for untyped ldap3 Connection methods."""
+
+    @staticmethod
+    def value_to_str_list(
+        value: t.Ldap.Ldap3EntryValue | t.ContainerValue | t.StrSequence,
+    ) -> MutableSequence[str]:
+        """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
+
+        Pyright narrows isinstance(v, list) on v:t.NormalizedValue to Sequence[Unknown], making
+        element access return Unknown. This helper avoids that by using __len__
+        and __getitem__ through getattr to maintain type safety.
+        """
+        length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
+        getitem_fn: Callable[[int], t.Ldap.Ldap3EntryValue] | None = getattr(
+            value,
+            "__getitem__",
+            None,
+        )
+        if length_fn is None or getitem_fn is None:
+            return []
+        result: MutableSequence[str] = []
+        for idx in range(length_fn()):
+            el: t.Ldap.Ldap3EntryValue = getitem_fn(idx)
+            if el is not None and isinstance(el, (str, int, float, bool, bytes)):
+                result.append(str(el))
+        return result
+
+    @staticmethod
+    def _ldap3_method(connection: Connection, method_name: str) -> Callable[..., bool]:
+        """Get a typed callable for an untyped ldap3 Connection method.
+
+        ldap3 library methods return Unknown types which cause pyright errors.
+        This helper extracts the method via getattr and wraps the return as bool.
+        """
+        method: Callable[..., bool] = getattr(connection, method_name)
+        return method
 
     @staticmethod
     def add(
@@ -88,13 +91,13 @@ class FlextLdapLdap3Wrappers:
         normalized_attributes: t.FlatContainerMapping = {
             key: values[0] if values else "" for key, values in attributes.items()
         }
-        add_fn = _ldap3_method(connection, "add")
+        add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
         return bool(add_fn(dn, object_class, normalized_attributes))
 
     @staticmethod
     def delete(connection: Connection, dn: str) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.delete()."""
-        delete_fn = _ldap3_method(connection, "delete")
+        delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
         return bool(delete_fn(dn))
 
     @staticmethod
@@ -110,7 +113,7 @@ class FlextLdapLdap3Wrappers:
         changes: t.Ldap.OperationChanges,
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
-        modify_fn = _ldap3_method(connection, "modify")
+        modify_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "modify")
         return bool(modify_fn(dn, changes))
 
     @staticmethod
@@ -140,7 +143,7 @@ class FlextLdapLdap3Wrappers:
                 "SUBTREE": "SUBTREE",
             }
             normalized_scope = scope_str_map.get(search_scope.upper(), "SUBTREE")
-        search_fn = _ldap3_method(connection, "search")
+        search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
         return bool(
             search_fn(
                 search_base=search_base,
@@ -163,7 +166,7 @@ class FlextLdapLdap3Wrappers:
     @staticmethod
     def unbind(connection: Connection) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
-        unbind_fn = _ldap3_method(connection, "unbind")
+        unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
         return bool(unbind_fn())
 
 
@@ -705,10 +708,10 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 v = attrs_dict[k]
                 if isinstance(v, str):
                     result[k] = [v]
-                elif isinstance(v, (int, float, bool, bytes)):
+                elif isinstance(v, (int, float, bool, bytes, datetime)):
                     result[k] = [str(v)]
                 elif hasattr(v, "__len__") and hasattr(v, "__getitem__"):
-                    result[k] = _value_to_str_list(v)
+                    result[k] = FlextLdapLdap3Wrappers.value_to_str_list(v)
                 elif v is not None:
                     result[k] = [str(v)]
                 else:
