@@ -716,7 +716,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 elif v is not None:
                     result[k] = [str(v)]
                 else:
-                    result[k] = []
+                    result[k] = list[str]()
             return result
 
         @staticmethod

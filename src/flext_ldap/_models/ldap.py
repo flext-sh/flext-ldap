@@ -230,7 +230,7 @@ class FlextLdapModelsLdap:
             for entry in self.entries:
                 category = self.get_entry_category(entry)
                 if category not in result:
-                    result[category] = []
+                    result[category] = list[Mapping[str, t.StrSequence]]()
                 result[category].append(entry)
             return result
 
