@@ -560,7 +560,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
                 entry,
             )
-            attrs_dict: Mapping[str, t.StrSequence] = {
+            attrs_dict: Mapping[str, Sequence[str]] = {
                 str(k): [str(item) for item in v]
                 for k, v in dict(attrs_mapping).items()
             }
