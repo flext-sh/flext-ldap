@@ -7,7 +7,7 @@ from typing import ParamSpec, TypeVar
 
 from flext_ldif import FlextLdifModels, FlextLdifTypes
 
-from flext_ldap import p
+from flext_ldap.protocols import FlextLdapProtocols as p
 
 
 class FlextLdapTypes(FlextLdifTypes):
