@@ -124,12 +124,9 @@ class FlextLdapModelsLdap:
         target_basedn: str = ""
         progress_callback: Callable[..., None] | None = None
 
-    class SyncStats(BaseModel):
-        """Sync stats - implements LdapBatchStats."""
+    class SyncStats(FlextLdapModelsLdap.LdapBatchStats):
+        """Sync stats - extends LdapBatchStats."""
 
-        synced: t.NonNegativeInt = 0
-        skipped: t.NonNegativeInt = 0
-        failed: t.NonNegativeInt = 0
         total: t.NonNegativeInt = 0
         duration_seconds: t.NonNegativeFloat = 0.0
 
@@ -285,14 +282,11 @@ class FlextLdapModelsLdap:
 
         operation: str
 
-    class PhaseSyncResult(BaseModel):
-        """Phase sync result."""
+    class PhaseSyncResult(FlextLdapModelsLdap.LdapBatchStats):
+        """Phase sync result - extends LdapBatchStats."""
 
         phase_name: str
         total_entries: t.NonNegativeInt = 0
-        synced: t.NonNegativeInt = 0
-        failed: t.NonNegativeInt = 0
-        skipped: t.NonNegativeInt = 0
         duration_seconds: t.NonNegativeFloat = 0.0
         success_rate: t.NonNegativeFloat = 0.0
 
