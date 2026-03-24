@@ -85,15 +85,6 @@ class FlextLdapModels(FlextLdifModels):
         class ConversionMetadata(FlextLdapModelsLdap.ConversionMetadata):
             """Metadata for LDAP entry conversions."""
 
-        # Type definitions namespace
-        class Types:
-            """Type definitions for LDAP models."""
-
-            LdapProgressCallback = FlextLdapModelsLdap.Types.LdapProgressCallback
-            MultiPhaseProgressCallback = (
-                FlextLdapModelsLdap.Types.MultiPhaseProgressCallback
-            )
-            ProgressCallbackUnion = FlextLdapModelsLdap.Types.ProgressCallbackUnion
 
 
 # Global instance

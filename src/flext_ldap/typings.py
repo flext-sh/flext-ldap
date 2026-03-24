@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import ParamSpec, TypeVar
 
 from flext_ldif import FlextLdifModels, FlextLdifTypes
@@ -16,33 +16,35 @@ class FlextLdapTypes(FlextLdifTypes):
     class Ldap:
         """LDAP type aliases."""
 
-        class Operation:
-            """Operation type aliases."""
+        # Operation types (formerly Operation.*)
+        type OperationChanges = MutableMapping[str, Sequence[tuple[int, Sequence[str]]]]
+        type OperationAttributes = Mapping[str, Sequence[str]]
+        type OperationAttributeDict = Mapping[str, Sequence[str]]
+        type Ldap3EntryValue = (
+            str
+            | bytes
+            | int
+            | float
+            | bool
+            | Sequence[str | bytes | int | float | bool]
+            | None
+        )
 
-            type Changes = MutableMapping[str, Sequence[tuple[int, Sequence[str]]]]
-            type Attributes = Mapping[str, Sequence[str]]
-            type AttributeDict = Mapping[str, Sequence[str]]
-            type Ldap3EntryValue = (
-                str
-                | bytes
-                | int
-                | float
-                | bool
-                | Sequence[str | bytes | int | float | bool]
-                | None
-            )
+        # Entry types (formerly Entry.*)
+        type EntryInstance = p.Ldap.ServiceContracts.EntryContract
+        type EntryCollection = Sequence[p.Ldap.ServiceContracts.EntryContract]
+        type LdifEntry = FlextLdifModels.Ldif.Entry
 
-        class Entry:
-            """Entry type aliases."""
+        # Search types (formerly Search.*)
+        type SearchOptions = p.Ldap.ServiceContracts.SearchOptionsContract
 
-            type Instance = p.Ldap.ServiceContracts.EntryContract
-            type Collection = Sequence[p.Ldap.ServiceContracts.EntryContract]
-            type LdifEntry = FlextLdifModels.Ldif.Entry
-
-        class Search:
-            """Search type aliases."""
-
-            type Options = p.Ldap.ServiceContracts.SearchOptionsContract
+        # Progress callback types (moved from _models/ldap.py Types class)
+        LdapProgressCallback = Callable[[int, int, str, "p.Ldap.LdapBatchStats"], None]
+        MultiPhaseProgressCallback = Callable[
+            [str, int, int, str, "p.Ldap.LdapBatchStats"],
+            None,
+        ]
+        ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 
     FlextLdapEntryT = TypeVar(
         "FlextLdapEntryT",
@@ -53,7 +55,7 @@ class FlextLdapTypes(FlextLdifTypes):
 
 
 t = FlextLdapTypes
-LdifEntry = FlextLdapTypes.Ldap.Entry.LdifEntry
+LdifEntry = FlextLdapTypes.Ldap.LdifEntry
 
 __all__ = [
     "FlextLdapTypes",

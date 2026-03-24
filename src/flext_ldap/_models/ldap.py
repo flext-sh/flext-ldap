@@ -280,16 +280,6 @@ class FlextLdapModelsLdap:
                 case _:
                     return "unknown"
 
-    class Types:
-        """Type definitions for LDAP models."""
-
-        LdapProgressCallback = Callable[[int, int, str, "p.Ldap.LdapBatchStats"], None]
-        MultiPhaseProgressCallback = Callable[
-            [str, int, int, str, "p.Ldap.LdapBatchStats"],
-            None,
-        ]
-        ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
-
     class LdapOperationResult(BaseModel):
         """LDAP operation result."""
 
