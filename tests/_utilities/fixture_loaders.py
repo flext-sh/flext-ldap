@@ -19,7 +19,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from tests import m, t
 
-GenericFieldsDict = Mapping[str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]]
+GenericFieldsDict = Mapping[str, t.Scalar | Sequence[str] | Mapping[str, Sequence[str]]]
 
 
 class _FixtureLoaderUtils:
@@ -134,10 +134,10 @@ class _FixtureLoaderUtils:
             user_data: GenericFieldsDict,
         ) -> GenericFieldsDict:
             object_classes_raw = user_data.get("object_classes", [])
-            object_classes: t.StrSequence = (
+            object_classes: Sequence[str] = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
-            attributes: Mapping[str, t.StrSequence] = {
+            attributes: Mapping[str, Sequence[str]] = {
                 "objectClass": [str(oc) for oc in object_classes],
                 "uid": [str(user_data.get("uid", ""))],
                 "cn": [str(user_data.get("cn", ""))],
@@ -167,10 +167,10 @@ class _FixtureLoaderUtils:
             group_data: GenericFieldsDict,
         ) -> GenericFieldsDict:
             object_classes_raw = group_data.get("object_classes", [])
-            object_classes: t.StrSequence = (
+            object_classes: Sequence[str] = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
-            attributes: Mapping[str, t.StrSequence] = {
+            attributes: Mapping[str, Sequence[str]] = {
                 "objectClass": [str(oc) for oc in object_classes],
                 "cn": [str(group_data.get("cn", ""))],
             }

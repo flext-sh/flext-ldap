@@ -55,7 +55,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _get_get_first_value_scenarios() -> Sequence[
-        tuple[Mapping[str, t.StrSequence], str, str | None]
+        tuple[Mapping[str, Sequence[str]], str, str | None]
     ]:
         """Factory: Return _get_first_value() test scenarios (attrs, key, expected)."""
         return [
@@ -71,7 +71,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _get_detect_from_attributes_scenarios() -> Sequence[
-        tuple[str | None, str | None, t.StrSequence, str]
+        tuple[str | None, str | None, Sequence[str], str]
     ]:
         """Factory: Return _detect_from_attributes() test scenarios (vendor_name, version, controls, expected)."""
         return [
@@ -111,10 +111,10 @@ class TestsFlextLdapDetection:
         ("attrs", "key", "expected"), _get_get_first_value_scenarios()
     )
     def test_get_first_value(
-        self, attrs: Mapping[str, t.StrSequence], key: str, expected: str | None
+        self, attrs: Mapping[str, Sequence[str]], key: str, expected: str | None
     ) -> None:
         """Test _get_first_value with various attribute scenarios."""
-        attrs_dict: Mapping[str, t.StrSequence] = dict(attrs)
+        attrs_dict: Mapping[str, Sequence[str]] = dict(attrs)
         value = FlextLdapServerDetector._get_first_value(attrs_dict, key)
         assert value == expected
 
@@ -126,7 +126,7 @@ class TestsFlextLdapDetection:
         self,
         vendor_name: str | None,
         vendor_version: str | None,
-        supported_controls: t.StrSequence,
+        supported_controls: Sequence[str],
         expected: str,
     ) -> None:
         """Test _detect_from_attributes with various server types and variants."""

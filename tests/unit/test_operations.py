@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 import pytest
@@ -53,7 +53,7 @@ class TestsFlextLdapOperations:
         "Connection failed": False,
         "": False,
     }
-    _ENTRY_SCENARIOS: ClassVar[Mapping[str, Mapping[str, t.StrSequence]]] = {
+    _ENTRY_SCENARIOS: ClassVar[Mapping[str, Mapping[str, Sequence[str]]]] = {
         "identical": {"cn": ["test"], "sn": ["User"]},
         "different": {"cn": ["test"], "sn": ["Different"]},
     }

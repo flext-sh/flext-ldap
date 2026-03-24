@@ -100,7 +100,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def norm_in(
             cls,
             value: str,
-            collection: t.StrSequence | tuple[str, ...],
+            collection: Sequence[str] | tuple[str, ...],
             *,
             case: str | None = None,
         ) -> bool:
@@ -130,7 +130,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @classmethod
         def norm_join(
             cls,
-            values: t.StrSequence | tuple[str, ...],
+            values: Sequence[str] | tuple[str, ...],
             *,
             case: str | None = None,
         ) -> str:
@@ -154,10 +154,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: Mapping[str, t.ContainerValue] | Mapping[str, t.StrSequence],
+            attrs: Mapping[str, t.ContainerValue] | Mapping[str, Sequence[str]],
             *,
             filter_list_like: bool = False,
-        ) -> Mapping[str, t.StrSequence]:
+        ) -> Mapping[str, Sequence[str]]:
             """Convert attributes to str_list (generalized: map() + ensure).
 
             Uses advanced DSL: map() → ensure() for fluent composition.
@@ -167,14 +167,14 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 filter_list_like: Only convert list-like values
 
             Returns:
-                Mapping[str, t.StrSequence]: Converted attributes
+                Mapping[str, Sequence[str]]: Converted attributes
 
             """
 
             def convert_value(
                 _k: str,
-                v: str | t.StrSequence | t.ContainerValue,
-            ) -> t.StrSequence:
+                v: str | Sequence[str] | t.ContainerValue,
+            ) -> Sequence[str]:
                 if v is None:
                     return []
                 match v:
@@ -186,7 +186,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                     return [str(v)]
                 return [str(v)]
 
-            attrs_dict: Mapping[str, t.ContainerValue | t.StrSequence] = dict(attrs)
+            attrs_dict: Mapping[str, t.ContainerValue | Sequence[str]] = dict(attrs)
             if not attrs_dict:
                 return {}
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
@@ -277,17 +277,17 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def map_str(
-            values: t.StrSequence | tuple[str, ...],
+            values: Sequence[str] | tuple[str, ...],
             *,
             case: str | None = None,
             join: str | None = None,
-        ) -> str | t.StrSequence:
+        ) -> str | Sequence[str]:
             """Map strings with normalization and optional join.
 
             Args:
                 values: List of strings to map
                 case: Case normalization ("lower", "upper", None)
-                join: Join character (if provided, returns str; otherwise t.StrSequence)
+                join: Join character (if provided, returns str; otherwise Sequence[str])
 
             Returns:
                 Joined string or list of normalized strings

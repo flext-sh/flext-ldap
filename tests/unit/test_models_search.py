@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 import pytest
@@ -127,7 +127,7 @@ class TestsFlextLdapModelsSearch:
         tm.that(categories, none=False)
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
-        entry: Mapping[str, t.StrSequence] = {}
+        entry: Mapping[str, Sequence[str]] = {}
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         tm.that(attrs, eq={})
 
@@ -141,7 +141,7 @@ class TestsFlextLdapModelsSearch:
         tm.that(category, eq="person")
 
     def test_search_result_get_entry_category(self) -> None:
-        entry: Mapping[str, t.StrSequence] = {}
+        entry: Mapping[str, Sequence[str]] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
         tm.that(category, eq="unknown")
 

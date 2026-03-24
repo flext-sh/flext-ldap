@@ -65,7 +65,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for LDIF attributes (structural type)."""
 
             @property
-            def attributes(self) -> Mapping[str, t.StrSequence]:
+            def attributes(self) -> Mapping[str, Sequence[str]]:
                 """Get attributes mapping."""
                 ...
 
@@ -88,7 +88,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             dn: str | FlextLdapProtocols.Ldap.DN | None
             attributes: (
-                Mapping[str, t.StrSequence] | FlextLdapProtocols.Ldap.Attributes | None
+                Mapping[str, Sequence[str]] | FlextLdapProtocols.Ldap.Attributes | None
             )
             metadata: t.ConfigMap | None
 
@@ -151,7 +151,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             base_dn: str
             scope: str
             filter_str: str
-            attributes: t.StrSequence | None
+            attributes: Sequence[str] | None
             size_limit: int
             time_limit: int
 
@@ -273,7 +273,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def modify(
                 self,
                 dn: str | FlextLdapProtocols.Ldap.DN,
-                changes: Mapping[str, Sequence[tuple[str | int, t.StrSequence]]],
+                changes: Mapping[str, Sequence[tuple[str | int, Sequence[str]]]],
             ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
@@ -345,7 +345,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def modify(
                 self,
                 dn: FlextLdapProtocols.Ldap.DN | str,
-                changes: Mapping[str, Sequence[tuple[str | int, t.StrSequence]]],
+                changes: Mapping[str, Sequence[tuple[str | int, Sequence[str]]]],
             ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
@@ -509,7 +509,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
 
                 dn: str
-                attributes: Mapping[str, t.StrSequence]
+                attributes: Mapping[str, Sequence[str]]
 
             @runtime_checkable
             class SearchOptionsContract(Protocol):
@@ -520,7 +520,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
                 scope: str
                 filter_str: str
-                attributes: t.StrSequence
+                attributes: Sequence[str]
 
 
 __all__ = ["FlextLdapProtocols", "p"]
