@@ -48,10 +48,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
     "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
     "FlextLdapProtocols": ("flext_ldap.protocols", "FlextLdapProtocols"),
-    "FlextLdapServerDetector": (
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ),
+    "FlextLdapServerDetector": ("flext_ldap.services.detection", "FlextLdapServerDetector"),
     "FlextLdapServiceBase": ("flext_ldap.base", "FlextLdapServiceBase"),
     "FlextLdapSettings": ("flext_ldap.settings", "FlextLdapSettings"),
     "FlextLdapSyncCallbacks": ("flext_ldap.api", "FlextLdapSyncCallbacks"),
@@ -60,14 +57,8 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "FlextLdapUtilities": ("flext_ldap.utilities", "FlextLdapUtilities"),
     "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
     "LdifEntry": ("flext_ldap.typings", "LdifEntry"),
-    "MULTI_PHASE_CALLBACK_PARAM_COUNT": (
-        "flext_ldap.api",
-        "MULTI_PHASE_CALLBACK_PARAM_COUNT",
-    ),
-    "SINGLE_PHASE_CALLBACK_PARAM_COUNT": (
-        "flext_ldap.api",
-        "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
-    ),
+    "MULTI_PHASE_CALLBACK_PARAM_COUNT": ("flext_ldap.api", "MULTI_PHASE_CALLBACK_PARAM_COUNT"),
+    "SINGLE_PHASE_CALLBACK_PARAM_COUNT": ("flext_ldap.api", "SINGLE_PHASE_CALLBACK_PARAM_COUNT"),
     "__all__": ("flext_ldap.__version__", "__all__"),
     "_models": ("flext_ldap._models", ""),
     "adapters": ("flext_ldap.adapters", ""),
