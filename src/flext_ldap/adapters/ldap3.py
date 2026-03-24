@@ -753,7 +753,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 return None
             metadata_dict: t.ContainerMapping | None = None
             if isinstance(metadata, Mapping):
-                metadata_dict = {}
+                metadata_dict: t.MutableContainerMapping = {}
                 for raw_key, raw_value in metadata.items():
                     if raw_value is None or isinstance(
                         raw_value,

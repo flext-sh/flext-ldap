@@ -460,15 +460,14 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                         existing_attrs,
                     )
                 )
+                existing_set: set[str] = set()
                 if existing_vals:
                     existing_list = [str(v) for v in existing_vals if v]
-                    existing_set: set[str] = set(
+                    existing_set = set(
                         FlextLdapOperations.EntryComparison.normalize_value_set(
                             existing_list,
                         ),
                     )
-                else:
-                    existing_set = set()
                 new_set = FlextLdapOperations.EntryComparison.normalize_value_set([
                     x for x in new_vals if x
                 ])
@@ -597,8 +596,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             """
             attrs = FlextLdapOperations._extract_attributes_dict(entry)
             changetype_result = attrs.get(c.Ldap.LdapAttributeNames.CHANGETYPE, [])
-            changetype_raw = changetype_result
-            changetype_val: t.StrSequence = [str(item) for item in changetype_raw]
+            changetype_val: t.StrSequence = [str(item) for item in changetype_result]
             changetype = (
                 u.Ldap.norm_str(changetype_val[0], case="lower")
                 if changetype_val
