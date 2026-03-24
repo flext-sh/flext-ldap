@@ -295,9 +295,12 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
-            default_factory=dict,
-        )
+        phase_results: Annotated[
+            Mapping[str, FlextLdapModelsLdap.PhaseSyncResult],
+            Field(
+                default_factory=dict,
+            ),
+        ]
         total_entries: t.NonNegativeInt = 0
         total_synced: t.NonNegativeInt = 0
         total_failed: t.NonNegativeInt = 0
