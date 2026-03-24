@@ -260,7 +260,7 @@ class FlextLdapModelsLdap:
                 return "unknown"
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             if isinstance(oc_list, list):
-                if len(oc_list) == 0:
+                if not oc_list:
                     return "unknown"
                 first_value = oc_list[0]
                 if isinstance(first_value, str):
