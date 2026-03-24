@@ -146,7 +146,6 @@ plugins = [
 ]
 python_version = "3.13"
 
-
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
