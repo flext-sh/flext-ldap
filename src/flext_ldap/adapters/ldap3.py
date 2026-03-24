@@ -41,7 +41,7 @@ from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
 from ldap3 import Connection, Server
 
 
-def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> MutableSequence[str]:
+def _value_to_str_list(value: t.Ldap.Ldap3EntryValue) -> MutableSequence[str]:
     """Convert a list/tuple/sequence value to Sequence[str] without isinstance narrowing.
 
     Pyright narrows isinstance(v, list) on v:t.NormalizedValue to Sequence[Unknown], making
@@ -49,14 +49,14 @@ def _value_to_str_list(value: t.Ldap.Operation.Ldap3EntryValue) -> MutableSequen
     and __getitem__ through getattr to maintain type safety.
     """
     length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
-    getitem_fn: Callable[[int], t.Ldap.Operation.Ldap3EntryValue] | None = getattr(
+    getitem_fn: Callable[[int], t.Ldap.Ldap3EntryValue] | None = getattr(
         value, "__getitem__", None
     )
     if length_fn is None or getitem_fn is None:
         return []
     result: MutableSequence[str] = []
     for idx in range(length_fn()):
-        el: t.Ldap.Operation.Ldap3EntryValue = getitem_fn(idx)
+        el: t.Ldap.Ldap3EntryValue = getitem_fn(idx)
         if el is not None and isinstance(el, (str, int, float, bool, bytes)):
             result.append(str(el))
     return result
@@ -105,7 +105,7 @@ class FlextLdapLdap3Wrappers:
     def modify(
         connection: Connection,
         dn: str,
-        changes: t.Ldap.Operation.Changes,
+        changes: t.Ldap.OperationChanges,
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
         modify_fn = _ldap3_method(connection, "modify")
@@ -484,7 +484,7 @@ class Ldap3Adapter(FlextService[bool]):
             | m.Ldif.Attributes
             | BaseModel
             | t.ContainerValue,
-        ) -> t.Ldap.Operation.AttributeDict:
+        ) -> t.Ldap.OperationAttributeDict:
             """Extract LDAP attributes as dictionary from various input formats.
 
             Business Rules:
@@ -503,7 +503,7 @@ class Ldap3Adapter(FlextService[bool]):
 
             Architecture:
                 - Handles: objects with 'attributes' property, Pydantic BaseModel, Mapping
-                - Returns t.Ldap.Operation.AttributeDict (Mapping[str, Sequence[str]])
+                - Returns t.Ldap.OperationAttributeDict (Mapping[str, Sequence[str]])
                 - No network calls - pure data transformation
 
             """
@@ -512,12 +512,10 @@ class Ldap3Adapter(FlextService[bool]):
                     attrs.attributes
                 )
             if isinstance(attrs, BaseModel):
-                model_attrs: Mapping[str, t.Ldap.Operation.Ldap3EntryValue] | None = (
-                    getattr(
-                        attrs,
-                        "attributes",
-                        None,
-                    )
+                model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
+                    attrs,
+                    "attributes",
+                    None,
                 )
                 if model_attrs is not None and isinstance(model_attrs, Mapping):
                     return Ldap3Adapter.ResultConverter.normalize_attr_values(
@@ -670,8 +668,8 @@ class Ldap3Adapter(FlextService[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: Mapping[str, t.Ldap.Operation.Ldap3EntryValue] | None,
-        ) -> t.Ldap.Operation.AttributeDict:
+            attrs_dict: Mapping[str, t.Ldap.Ldap3EntryValue] | None,
+        ) -> t.Ldap.OperationAttributeDict:
             """Normalize attribute values to Sequence[str] format.
 
             Args:
@@ -851,7 +849,7 @@ class Ldap3Adapter(FlextService[bool]):
         def _modify_entry_in_ldap(
             connection: Connection,
             dn_str: str,
-            changes: t.Ldap.Operation.Changes,
+            changes: t.Ldap.OperationChanges,
         ) -> bool:
             """Modify entry in LDAP directory.
 
@@ -872,7 +870,7 @@ class Ldap3Adapter(FlextService[bool]):
             self,
             connection: Connection,
             dn_str: str,
-            ldap_attrs: t.Ldap.Operation.Attributes,
+            ldap_attrs: t.Ldap.OperationAttributes,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP add operation via ldap3 Connection.
 
@@ -985,7 +983,7 @@ class Ldap3Adapter(FlextService[bool]):
             self,
             connection: Connection,
             dn: str | m.Ldif.DN,
-            changes: t.Ldap.Operation.Changes,
+            changes: t.Ldap.OperationChanges,
         ) -> r[m.Ldap.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
 
@@ -1440,7 +1438,7 @@ class Ldap3Adapter(FlextService[bool]):
     def modify(
         self,
         dn: str | m.Ldif.DN,
-        changes: t.Ldap.Operation.Changes,
+        changes: t.Ldap.OperationChanges,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.

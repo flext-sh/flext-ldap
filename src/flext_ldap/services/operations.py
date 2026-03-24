@@ -202,7 +202,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         def compare(
             existing_entry: m.Ldif.Entry,
             new_entry: m.Ldif.Entry,
-        ) -> t.Ldap.Operation.Changes | None:
+        ) -> t.Ldap.OperationChanges | None:
             """Compare two entries and return modify changes when needed.
 
             Business Rules:
@@ -387,7 +387,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             existing_attrs: Mapping[str, Sequence[str]],
             ignore: frozenset[str],
             processed: set[str],
-        ) -> t.Ldap.Operation.Changes:
+        ) -> t.Ldap.OperationChanges:
             """Capture deletions for attributes missing from the new entry.
 
             Business Rules:
@@ -420,7 +420,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             new_attrs: Mapping[str, Sequence[str]],
             existing_attrs: Mapping[str, Sequence[str]],
             ignore: frozenset[str],
-        ) -> tuple[t.Ldap.Operation.Changes, set[str]]:
+        ) -> tuple[t.Ldap.OperationChanges, set[str]]:
             """Process new attributes and detect replacement changes.
 
             Business Rules:
@@ -437,7 +437,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 Tuple of (modify changes dict, set of processed attribute names).
 
             """
-            changes: t.Ldap.Operation.Changes = {}
+            changes: t.Ldap.OperationChanges = {}
             processed: set[str] = set()
             filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
             ignore_lower = [k.lower() for k in ignore]
@@ -754,7 +754,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 return r[m.Ldap.LdapOperationResult].fail(
                     f"Schema modify entry has only empty values for '{attr_type}'",
                 )
-            changes: t.Ldap.Operation.Changes = {
+            changes: t.Ldap.OperationChanges = {
                 attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
             }
             entry_model = self._convert_to_model(entry)
@@ -1140,7 +1140,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     def modify(
         self,
         dn: str | m.Ldif.DN,
-        changes: t.Ldap.Operation.Changes,
+        changes: t.Ldap.OperationChanges,
         **_kwargs: str | float | bool | None,
     ) -> r[m.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.

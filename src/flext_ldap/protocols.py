@@ -315,11 +315,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
             Protocols independent of Models.
             """
 
-            type LdapModifyChanges = Mapping[
-                str,
-                Sequence[tuple[str | int, Sequence[str]]],
-            ]
-
             @property
             def is_connected(self) -> bool:
                 """Check if adapter is connected."""

@@ -86,7 +86,6 @@ class FlextLdapModels(FlextLdifModels):
             """Metadata for LDAP entry conversions."""
 
 
-
 # Global instance
 
 __all__ = ["FlextLdapModels", "m"]

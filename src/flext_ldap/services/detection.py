@@ -259,7 +259,7 @@ class FlextLdapServerDetector(s[str]):
         return cls._detect_from_extensions(supported_extensions, naming_contexts)
 
     @staticmethod
-    def _get_first_value(attrs: t.Ldap.Operation.AttributeDict, key: str) -> str | None:
+    def _get_first_value(attrs: t.Ldap.OperationAttributeDict, key: str) -> str | None:
         """Return the first attribute value for ``key`` when present.
 
         Python 3.13: Use modern pattern matching for concise extraction.
@@ -273,7 +273,7 @@ class FlextLdapServerDetector(s[str]):
     @staticmethod
     def _query_root_dse(
         connection: Connection,
-    ) -> r[t.Ldap.Operation.AttributeDict]:
+    ) -> r[t.Ldap.OperationAttributeDict]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
         Business Rules:
@@ -304,7 +304,7 @@ class FlextLdapServerDetector(s[str]):
         """
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return r[t.Ldap.OperationAttributeDict].fail(
                 "rootDSE query failed: search unavailable",
             )
         if not search_method(
@@ -313,18 +313,18 @@ class FlextLdapServerDetector(s[str]):
             search_scope=BASE,
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return r[t.Ldap.OperationAttributeDict].fail(
                 f"rootDSE query failed: {connection.result}",
             )
         entries_list: t.ContainerList = getattr(connection, "entries", [])
         entries_raw: t.ContainerList = entries_list
         if not entries_raw:
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return r[t.Ldap.OperationAttributeDict].fail(
                 "rootDSE query returned no entries",
             )
         root_dse_entry: t.NormalizedValue = entries_raw[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
-            return r[t.Ldap.Operation.AttributeDict].fail(
+            return r[t.Ldap.OperationAttributeDict].fail(
                 "rootDSE query returned invalid entry payload",
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict

@@ -19,9 +19,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from tests import m, t
 
-GenericFieldsDict = Mapping[
-    str, t.Scalar | Sequence[str] | Mapping[str, Sequence[str]]
-]
+GenericFieldsDict = Mapping[str, t.Scalar | Sequence[str] | Mapping[str, Sequence[str]]]
 
 
 class _FixtureLoaderUtils:

@@ -89,8 +89,8 @@ class FlextLdapSyncCallbacks:
 
     @staticmethod
     def is_multi_phase_callback(
-        callback: m.Ldap.Types.ProgressCallbackUnion,
-    ) -> TypeIs[m.Ldap.Types.MultiPhaseProgressCallback]:
+        callback: t.Ldap.ProgressCallbackUnion,
+    ) -> TypeIs[t.Ldap.MultiPhaseProgressCallback]:
         """Type guard to check if callback is multi-phase (5 parameters)."""
         if callback is None:
             return False
@@ -102,8 +102,8 @@ class FlextLdapSyncCallbacks:
 
     @staticmethod
     def is_single_phase_callback(
-        callback: m.Ldap.Types.ProgressCallbackUnion,
-    ) -> TypeIs[m.Ldap.Types.LdapProgressCallback]:
+        callback: t.Ldap.ProgressCallbackUnion,
+    ) -> TypeIs[t.Ldap.LdapProgressCallback]:
         """Type guard to check if callback is single-phase (4 parameters)."""
         if callback is None:
             return False
@@ -295,7 +295,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
     def _make_phase_progress_callback(
         phase: str,
         config: FlextLdapModelsLdap.SyncPhaseConfig,
-    ) -> m.Ldap.Types.LdapProgressCallback | None:
+    ) -> t.Ldap.LdapProgressCallback | None:
         """Create progress callback for a phase, handling both single and multi-phase signatures.
 
         Internal factory method that converts multi-phase callbacks (5 params) to
@@ -380,7 +380,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         self,
         entries: Sequence[m.Ldif.Entry],
         *,
-        progress_callback: m.Ldap.Types.LdapProgressCallback | None = None,
+        progress_callback: t.Ldap.LdapProgressCallback | None = None,
         retry_on_errors: Sequence[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
@@ -581,7 +581,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
     def modify(
         self,
         dn: str | m.Ldif.DN,
-        changes: t.Ldap.Operation.Changes,
+        changes: t.Ldap.OperationChanges,
     ) -> r[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
@@ -845,7 +845,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                     success_rate=100.0,
                 ),
             )
-        single_phase_callback: m.Ldap.Types.LdapProgressCallback | None = None
+        single_phase_callback: t.Ldap.LdapProgressCallback | None = None
         callback = config.progress_callback
         if callback is not None:
             if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
@@ -946,7 +946,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         self,
         phase_name: str,
         config: FlextLdapModelsLdap.SyncPhaseConfig,
-    ) -> m.Ldap.Types.LdapProgressCallback | None:
+    ) -> t.Ldap.LdapProgressCallback | None:
         """Prepare phase-specific progress callback.
 
         Converts multi-phase callbacks to single-phase callbacks or uses

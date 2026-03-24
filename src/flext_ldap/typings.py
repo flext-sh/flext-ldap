@@ -46,6 +46,12 @@ class FlextLdapTypes(FlextLdifTypes):
         ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
 
+        # Modify changes type (moved from protocols.py LdapAdapter)
+        type LdapModifyChanges = Mapping[
+            str,
+            Sequence[tuple[str | int, Sequence[str]]],
+        ]
+
     FlextLdapEntryT = TypeVar(
         "FlextLdapEntryT",
         bound=p.Ldap.ServiceContracts.EntryContract,

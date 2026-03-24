@@ -45,7 +45,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     This adapter provides bidirectional conversion with universal server support:
     - ldap3.Entry → p.Entry (for result processing)
-    - p.Entry → t.Ldap.Operation.Attributes (for ldap3 operations)
+    - p.Entry → t.Ldap.OperationAttributes (for ldap3 operations)
     - Server-specific entry normalization using quirks
     - Entry validation for target server types
     - Entry format conversion between different servers
@@ -65,7 +65,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         @staticmethod
         def convert_value_to_strings(
-            value: t.Ldap.Operation.Ldap3EntryValue,
+            value: t.Ldap.Ldap3EntryValue,
         ) -> Sequence[str]:
             """Convert ldap3 entry value to sequence of strings.
 
@@ -142,7 +142,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         @staticmethod
         def normalize_original_attr_value(
-            value: t.Ldap.Operation.Ldap3EntryValue,
+            value: t.Ldap.Ldap3EntryValue,
         ) -> Sequence[str]:
             """Normalize attribute value preserving original form for metadata.
 
@@ -478,7 +478,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldif_entry_to_ldap3_attributes(
         self,
         entry: m.Ldif.Entry,
-    ) -> r[t.Ldap.Operation.Attributes]:
+    ) -> r[t.Ldap.OperationAttributes]:
         """Convert p.Entry to ldap3 attributes format.
 
         Business Rules:
@@ -510,17 +510,17 @@ class FlextLdapEntryAdapter(s[bool]):
 
         """
         if entry.attributes is None:
-            return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
+            return r[t.Ldap.OperationAttributes].fail("Entry has no attributes")
         ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
-            return r[t.Ldap.Operation.Attributes].fail("Entry has no attributes")
+            return r[t.Ldap.OperationAttributes].fail("Entry has no attributes")
         try:
             filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
             for k, v in attrs_dict.items():
                 key_str = str(k)
                 filtered_attrs[key_str] = [str(item) for item in v]
-            return r[t.Ldap.Operation.Attributes].ok(filtered_attrs)
+            return r[t.Ldap.OperationAttributes].ok(filtered_attrs)
         except (ValueError, TypeError, AttributeError) as e:
             dn_value = (
                 getattr(entry.dn, "value", entry.dn)
@@ -540,13 +540,13 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[t.Ldap.Operation.Attributes].fail(
+            return r[t.Ldap.OperationAttributes].fail(
                 f"Failed to convert attributes to ldap3 format: {e!s}",
             )
 
     def _convert_ldap3_value_to_list(
         self,
-        value: t.Ldap.Operation.Ldap3EntryValue | None,
+        value: t.Ldap.Ldap3EntryValue | None,
         key: str,
         base64_attrs: MutableSequence[str],
         removed_attrs: MutableSequence[str],
