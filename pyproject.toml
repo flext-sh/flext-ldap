@@ -120,20 +120,7 @@ known_first_party = [
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.pyright]
-extraPaths = [
-  ".",
-  "../flext-core/examples",
-  "../flext-core/src",
-  "../flext-core/tests",
-  "../flext-ldif/examples",
-  "../flext-ldif/src",
-  "../flext-ldif/tests",
-  "../typings",
-  "../typings/generated",
-  "docs",
-  "src",
-  "tests",
-]
+extraPaths = [".", "../flext-core/examples", "../flext-core/src", "../flext-core/tests", "../flext-ldif/examples", "../flext-ldif/src", "../flext-ldif/tests", "../typings", "../typings/generated", "docs", "src", "tests", "../flext-tests/src", "../flext-infra/src"]
 pythonVersion = "3.13"
 reportMissingImports = "error"
 reportMissingModuleSource = "warning"
