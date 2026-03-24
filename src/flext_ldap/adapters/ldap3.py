@@ -355,8 +355,10 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     results.append((dn, {}))
                     continue
                 dn = str(dn_raw) if dn_raw is not None else ""
-                attrs_dict = FlextLdapLdap3Adapter.ResultConverter.process_entry_attributes(
-                    entry,
+                attrs_dict = (
+                    FlextLdapLdap3Adapter.ResultConverter.process_entry_attributes(
+                        entry,
+                    )
                 )
                 results.append((dn, attrs_dict))
             return results
@@ -408,7 +410,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     entry_type = entry_raw.__class__
                     error_msg = f"Entry must be Entry or m.Ldif.Entry, got {entry_type}"
                     raise TypeError(error_msg)
-                dn_obj = FlextLdapLdap3Adapter.ResultConverter.extract_dn(protocol_entry)
+                dn_obj = FlextLdapLdap3Adapter.ResultConverter.extract_dn(
+                    protocol_entry
+                )
                 attrs_obj = FlextLdapLdap3Adapter.ResultConverter.extract_attributes(
                     protocol_entry,
                 )
@@ -469,7 +473,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 )
             if isinstance(attrs_raw, m.Ldif.Attributes):
                 return attrs_raw
-            attrs_dict = FlextLdapLdap3Adapter.ResultConverter.extract_attrs_dict(attrs_raw)
+            attrs_dict = FlextLdapLdap3Adapter.ResultConverter.extract_attrs_dict(
+                attrs_raw
+            )
             return m.Ldif.Attributes.model_validate({
                 "attributes": attrs_dict,
                 "attribute_metadata": {},
@@ -523,7 +529,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     )
                 return {}
             if isinstance(attrs, Mapping):
-                return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(attrs)
+                return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
+                    attrs
+                )
             return {}
 
         @staticmethod
@@ -619,9 +627,11 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     return parsed.metadata
                 metadata_raw = parsed.metadata
             else:
-                dynamic_attr = FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed,
-                    "metadata",
+                dynamic_attr = (
+                    FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
+                        parsed,
+                        "metadata",
+                    )
                 )
                 if dynamic_attr is None:
                     return None
@@ -631,7 +641,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     metadata_raw = dynamic_attr
             if not metadata_raw:
                 return None
-            normalized = FlextLdapLdap3Adapter.ResultConverter.normalize_metadata(metadata_raw)
+            normalized = FlextLdapLdap3Adapter.ResultConverter.normalize_metadata(
+                metadata_raw
+            )
             if normalized:
                 quirk_type_raw = normalized.get("quirk_type")
                 if not isinstance(quirk_type_raw, str):
