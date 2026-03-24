@@ -23,7 +23,7 @@ class TestsFlextLdapModels:
     def test_nested_models_have_model_config(self) -> None:
         assert m.Ldap.ConnectionConfig.model_config is not None
         config_frozen = m.Ldap.ConnectionConfig.model_config.get("frozen", False)
-        tm.that(isinstance(config_frozen, bool), eq=True)
+        tm.that(config_frozen, is_=bool)
 
     def test_collections_exists(self) -> None:
         tm.that(m.Categories, none=False)
