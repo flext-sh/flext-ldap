@@ -1,0 +1,47 @@
+tests/conftest.py
+  e722c052f29389d9 6,18,23-24,26-27
+tests/unit/test_sync.py
+  e722c052f29389d9 62-65,106,118-119,121-127,178
+tests/unit/test_models.py
+  e722c052f29389d9 21-22,42-43,76,102,105,110,131
+src/flext_ldap/adapters/ldap3.py
+  e722c052f29389d9 1328
+tests/unit/test_models_sync.py
+  e722c052f29389d9 55
+tests/integration/test_smoke.py
+  e722c052f29389d9 103,131
+tests/_utilities/fixture_loaders.py
+  e722c052f29389d9 49-50,78,120,140,173
+tests/unit/test_utilities.py
+  e722c052f29389d9 112,115,118,120
+src/flext_ldap/api.py
+  e722c052f29389d9 331,341,344
+tests/unit/test_ldap3_adapter.py
+  e722c052f29389d9 29
+tests/unit/test_entry_adapter.py
+  e722c052f29389d9 140-143,154-157
+tests/_utilities/docker_infra.py
+  e722c052f29389d9 38,97
+tests/utilities.py
+  e722c052f29389d9 104,106,121,127,141,151,162,172-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "0b2afc4308223e8e7dbbf8061bcdec755cb121f1",
+  "prompts": {
+    "e722c052f29389d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41d20397-78d2-4352-9e45-0f73cc1d2267",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 232,
+      "total_deletions": 201,
+      "accepted_lines": 72,
+      "overriden_lines": 22
+    }
+  }
+}
