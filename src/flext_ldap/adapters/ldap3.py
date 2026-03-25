@@ -1324,7 +1324,10 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             tls_result = self.ConnectionManager.handle_tls(self._connection, config)
             if tls_result.is_failure:
                 return tls_result
-            if not FlextLdapLdap3Wrappers.is_bound(self._connection):
+            # Check bound state - connection is guaranteed to be non-None after create_connection
+            if self._connection is None or not FlextLdapLdap3Wrappers.is_bound(
+                self._connection
+            ):
                 return r[bool].fail("Failed to bind to LDAP server")
             return r[bool].ok(value=True)
         except (

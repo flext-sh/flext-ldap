@@ -176,8 +176,13 @@ make clean-all     # Deep clean including venvs
 from flext_core import r
 
 
+<<<<<<< Updated upstream
 def my_operation(data: dict) -> r[ProcessedData]:
     """Always return r[T]."""
+=======
+def my_operation(data: dict) -> FlextResult[ProcessedData]:
+    """Always return FlextResult[T]."""
+>>>>>>> Stashed changes
     if not data:
         return r[ProcessedData].fail("Data required")
 

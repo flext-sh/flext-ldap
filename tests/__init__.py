@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_tests import d, e, h, r, s, x
 
-    from tests import _utilities, integration, unit
+    import tests._utilities as _utilities
     from tests._utilities.docker_infra import _DockerInfraUtils
     from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
     from tests.conftest import (
@@ -28,10 +29,12 @@ if TYPE_CHECKING:
         worker_id,
     )
     from tests.constants import FlextLdapTestConstants, FlextLdapTestConstants as c
+    import tests.integration as integration
     from tests.integration.test_smoke import TestsFlextLdapSmoke
     from tests.models import FlextLdapTestModels, FlextLdapTestModels as m
     from tests.protocols import FlextLdapTestProtocols, FlextLdapTestProtocols as p
     from tests.typings import FlextLdapTestTypes, FlextLdapTestTypes as t
+    import tests.unit as unit
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
     from tests.unit.test_config import TestsFlextLdapSettings
@@ -55,31 +58,16 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapTestUtilities": ["tests.utilities", "FlextLdapTestUtilities"],
     "LdapContainerDict": ["tests.conftest", "LdapContainerDict"],
     "TestFixtures": ["tests._utilities.fixture_loaders", "TestFixtures"],
-    "TestsFlextLdap3Adapter": [
-        "tests.unit.test_ldap3_adapter",
-        "TestsFlextLdap3Adapter",
-    ],
+    "TestsFlextLdap3Adapter": ["tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"],
     "TestsFlextLdapApi": ["tests.unit.test_api", "TestsFlextLdapApi"],
     "TestsFlextLdapBase": ["tests.unit.test_base", "TestsFlextLdapBase"],
     "TestsFlextLdapConstants": ["tests.unit.test_constants", "TestsFlextLdapConstants"],
     "TestsFlextLdapDetection": ["tests.unit.test_detection", "TestsFlextLdapDetection"],
-    "TestsFlextLdapEntryAdapter": [
-        "tests.unit.test_entry_adapter",
-        "TestsFlextLdapEntryAdapter",
-    ],
+    "TestsFlextLdapEntryAdapter": ["tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"],
     "TestsFlextLdapModels": ["tests.unit.test_models", "TestsFlextLdapModels"],
-    "TestsFlextLdapModelsSearch": [
-        "tests.unit.test_models_search",
-        "TestsFlextLdapModelsSearch",
-    ],
-    "TestsFlextLdapModelsSync": [
-        "tests.unit.test_models_sync",
-        "TestsFlextLdapModelsSync",
-    ],
-    "TestsFlextLdapOperations": [
-        "tests.unit.test_operations",
-        "TestsFlextLdapOperations",
-    ],
+    "TestsFlextLdapModelsSearch": ["tests.unit.test_models_search", "TestsFlextLdapModelsSearch"],
+    "TestsFlextLdapModelsSync": ["tests.unit.test_models_sync", "TestsFlextLdapModelsSync"],
+    "TestsFlextLdapOperations": ["tests.unit.test_operations", "TestsFlextLdapOperations"],
     "TestsFlextLdapSettings": ["tests.unit.test_config", "TestsFlextLdapSettings"],
     "TestsFlextLdapSmoke": ["tests.integration.test_smoke", "TestsFlextLdapSmoke"],
     "TestsFlextLdapSync": ["tests.unit.test_sync", "TestsFlextLdapSync"],
@@ -176,7 +164,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -191,7 +178,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

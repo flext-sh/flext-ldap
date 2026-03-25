@@ -775,6 +775,7 @@ from contextlib import contextmanager
 from flext_ldap import FlextLdap
 
 
+
 @contextmanager
 def ldap_connection():
     api = FlextLdap(config=...)

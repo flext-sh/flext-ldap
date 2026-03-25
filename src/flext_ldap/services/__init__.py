@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
@@ -26,10 +26,7 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapConnection": ["flext_ldap.services.connection", "FlextLdapConnection"],
     "FlextLdapOperations": ["flext_ldap.services.operations", "FlextLdapOperations"],
-    "FlextLdapServerDetector": [
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ],
+    "FlextLdapServerDetector": ["flext_ldap.services.detection", "FlextLdapServerDetector"],
     "FlextLdapSyncService": ["flext_ldap.services.sync", "FlextLdapSyncService"],
     "LaxStr": ["flext_ldap.services.operations", "LaxStr"],
 }
@@ -60,7 +57,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -75,7 +71,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

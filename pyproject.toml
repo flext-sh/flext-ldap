@@ -5,6 +5,7 @@
 
 # [MANAGED] build system
 [build-system]
+<<<<<<< Updated upstream
 build-backend = "hatchling.build"
 requires = [ "hatchling" ]
 
@@ -12,6 +13,31 @@ requires = [ "hatchling" ]
 [project]
 
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+=======
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=2"]
+
+# [CUSTOM] project metadata
+[project]
+name = "flext-ldap"
+version = "0.12.0-dev"
+description = "Enterprise LDAP Operations Library for FLEXT Framework"
+readme = "README.md"
+keywords = [
+  "adapter",
+  "clean-architecture",
+  "ddd",
+  "enterprise",
+  "flext",
+  "integration",
+  "ldap",
+  "typed",
+]
+license = "MIT"
+maintainers = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+authors = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+requires-python = ">=3.13,<3.14"
+>>>>>>> Stashed changes
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -123,6 +149,7 @@ skip_covered = false
 
 # [MANAGED] deptry
 [tool.deptry]
+<<<<<<< Updated upstream
 known_first_party = [
   "flext_ldap",
   "ldap3",
@@ -130,6 +157,9 @@ known_first_party = [
 pep621_dev_dependency_groups = [
   "dev",
 ]
+=======
+pep621_dev_dependency_groups = ["dev"]
+>>>>>>> Stashed changes
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -272,6 +302,7 @@ root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
+<<<<<<< Updated upstream
 addopts = [
   "--strict-markers",
 ]
@@ -716,3 +747,25 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
+=======
+minversion = "8.0"
+python_classes = ["Test*"]
+python_files = ["*_test.py", "*_tests.py", "test_*.py"]
+addopts = ["--strict-markers"]
+markers = [
+  "unit: unit tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "slow: slow-running tests",
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "stress: stress tests",
+  "resilience: resilience tests",
+]
+
+# [MANAGED] ruff
+
+# [CUSTOM] poetry dev extensions
+[tool.poetry.group.dev.dependencies]
+>>>>>>> Stashed changes

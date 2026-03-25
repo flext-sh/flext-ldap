@@ -276,6 +276,7 @@ from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
 
 
+
 def server_specific_operations():
     """Use server-specific operations with automatic detection."""
 
@@ -313,7 +314,11 @@ def server_specific_operations():
         elif server_type == "oid":
             ops = OracleOIDOperations()
         else:
+<<<<<<< Updated upstream
             from flext_ldap import GenericServerOperations
+=======
+            from flext_ldap.servers import GenericServerOperations
+>>>>>>> Stashed changes
 
             ops = GenericServerOperations()
 
