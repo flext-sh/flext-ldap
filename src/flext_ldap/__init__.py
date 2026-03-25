@@ -18,11 +18,7 @@ if TYPE_CHECKING:
     from flext_ldap.__version__ import __all__
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import (
-        FlextLdapLdap3Adapter,
-        FlextLdapLdap3Adapter as Ldap3Adapter,
-        FlextLdapLdap3Wrappers,
-    )
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
     from flext_ldap.api import (
         MULTI_PHASE_CALLBACK_PARAM_COUNT,
         SINGLE_PHASE_CALLBACK_PARAM_COUNT,
@@ -47,7 +43,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapConstants": ["flext_ldap.constants", "FlextLdapConstants"],
     "FlextLdapEntryAdapter": ["flext_ldap.adapters.entry", "FlextLdapEntryAdapter"],
     "FlextLdapLdap3Adapter": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"],
-    "Ldap3Adapter": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"],
     "FlextLdapLdap3Wrappers": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"],
     "FlextLdapModels": ["flext_ldap.models", "FlextLdapModels"],
     "FlextLdapModelsLdap": ["flext_ldap._models.ldap", "FlextLdapModelsLdap"],
@@ -110,7 +105,6 @@ __all__ = [
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "LaxStr",
-    "Ldap3Adapter",
     "__all__",
     "_models",
     "adapters",

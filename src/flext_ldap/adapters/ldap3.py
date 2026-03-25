@@ -628,11 +628,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 if parsed.metadata is None:
                     return None
                 return parsed.metadata
-            dynamic_attr = (
-                FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed,
-                    "metadata",
-                )
+            dynamic_attr = FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
+                parsed,
+                "metadata",
             )
             if dynamic_attr is None:
                 return None

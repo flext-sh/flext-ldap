@@ -6,7 +6,10 @@ All model implementations are in _models/*.py - this is a pure facade.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_ldif import FlextLdifModels
+from pydantic import Field
 
 from flext_ldap import FlextLdapModelsLdap
 
@@ -79,7 +82,14 @@ class FlextLdapModels(FlextLdifModels):
             """Result of phase sync operations."""
 
         class MultiPhaseSyncResult(FlextLdapModelsLdap.MultiPhaseSyncResult):
-            """Result of multi-phase sync operations."""
+            """Result of multi-phase sync operations.
+
+            Overrides phase_results to ensure Mapping resolves in facade namespace.
+            """
+
+            phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
+                default_factory=dict,
+            )
 
         # Metadata models
         class ConversionMetadata(FlextLdapModelsLdap.ConversionMetadata):
