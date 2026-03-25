@@ -7,7 +7,7 @@ import pytest
 from flext_tests import tm
 from pydantic import ValidationError
 
-from tests import c, m
+from tests import c, m, t
 
 pytestmark = pytest.mark.unit
 

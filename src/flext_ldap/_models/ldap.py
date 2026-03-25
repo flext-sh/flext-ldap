@@ -193,13 +193,13 @@ class FlextLdapModelsLdap:
     class ConversionMetadata(BaseModel):
         """Conversion metadata."""
 
-        source_attributes: Annotated[t.StrSequence, Field(default_factory=list)]
+        source_attributes: t.StrSequence = Field(default_factory=list)
         source_dn: str = ""
-        removed_attributes: Annotated[t.StrSequence, Field(default_factory=list)]
-        base64_encoded_attributes: Annotated[t.StrSequence, Field(default_factory=list)]
+        removed_attributes: t.StrSequence = Field(default_factory=list)
+        base64_encoded_attributes: t.StrSequence = Field(default_factory=list)
         dn_changed: bool = False
         converted_dn: str = ""
-        attribute_changes: Annotated[t.StrSequence, Field(default_factory=list)]
+        attribute_changes: t.StrSequence = Field(default_factory=list)
 
     class OperationResult(BaseModel):
         """LDAP operation result."""
@@ -295,12 +295,9 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: Annotated[
-            Mapping[str, FlextLdapModelsLdap.PhaseSyncResult],
-            Field(
-                default_factory=dict,
-            ),
-        ]
+        phase_results: Annotated[Mapping[str, FlextLdapModelsLdap.PhaseSyncResult]] = (
+            Field(default_factory=dict)
+        )
         total_entries: t.NonNegativeInt = 0
         total_synced: t.NonNegativeInt = 0
         total_failed: t.NonNegativeInt = 0
