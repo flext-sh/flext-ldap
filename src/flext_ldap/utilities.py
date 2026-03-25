@@ -177,11 +177,9 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 _k: str,
                 v: str | t.StrSequence | t.ContainerValue,
             ) -> t.StrSequence:
-                if v is None:
-                    return []
                 match v:
                     case list() | tuple() | range():
-                        return [str(item) for item in v if item is not None]
+                        return [str(item) for item in v]
                     case _:
                         pass
                 if filter_list_like:

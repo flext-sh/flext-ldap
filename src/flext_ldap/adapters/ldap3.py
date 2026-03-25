@@ -411,12 +411,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 if isinstance(entry_raw, m.Ldif.Entry):
                     entries.append(entry_raw)
                     continue
-                if isinstance(entry_raw, p.Ldap.Ldap3Entry):
-                    protocol_entry: p.Ldap.Ldap3Entry = entry_raw
-                else:
-                    entry_type = entry_raw.__class__
-                    error_msg = f"Entry must be Entry or m.Ldif.Entry, got {entry_type}"
-                    raise TypeError(error_msg)
+                protocol_entry: p.Ldap.Ldap3Entry = entry_raw
                 dn_obj = FlextLdapLdap3Adapter.ResultConverter.extract_dn(
                     protocol_entry,
                 )
@@ -530,7 +525,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     "attributes",
                     None,
                 )
-                if model_attrs is not None and isinstance(model_attrs, Mapping):
+                if model_attrs is not None:
                     return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                         model_attrs,
                     )
@@ -632,22 +627,19 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             if isinstance(parsed, m.Ldif.Entry):
                 if parsed.metadata is None:
                     return None
-                if isinstance(parsed.metadata, m.Ldif.QuirkMetadata):
-                    return parsed.metadata
-                metadata_raw = parsed.metadata
-            else:
-                dynamic_attr = (
-                    FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
-                        parsed,
-                        "metadata",
-                    )
+                return parsed.metadata
+            dynamic_attr = (
+                FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
+                    parsed,
+                    "metadata",
                 )
-                if dynamic_attr is None:
-                    return None
-                if isinstance(dynamic_attr, m.Ldif.QuirkMetadata):
-                    return dynamic_attr
-                if isinstance(dynamic_attr, Mapping):
-                    metadata_raw = dynamic_attr
+            )
+            if dynamic_attr is None:
+                return None
+            if isinstance(dynamic_attr, m.Ldif.QuirkMetadata):
+                return dynamic_attr
+            if isinstance(dynamic_attr, Mapping):
+                metadata_raw = dynamic_attr
             if not metadata_raw:
                 return None
             normalized = FlextLdapLdap3Adapter.ResultConverter.normalize_metadata(
@@ -753,19 +745,13 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: t.MutableContainerMapping | None = None
-            if isinstance(metadata, Mapping):
-                metadata_dict = {}
-                for raw_key, raw_value in metadata.items():
-                    if raw_value is None or isinstance(
-                        raw_value,
-                        (str, int, float, bool),
-                    ):
-                        metadata_dict[raw_key] = raw_value
-            elif isinstance(metadata, BaseModel):
-                metadata_dict = metadata.model_dump()
-            else:
-                return None
+            metadata_dict: t.MutableContainerMapping = {}
+            for raw_key, raw_value in metadata.items():
+                if raw_value is None or isinstance(
+                    raw_value,
+                    (str, int, float, bool),
+                ):
+                    metadata_dict[raw_key] = raw_value
             if not metadata_dict:
                 return None
             filtered: MutableMapping[str, t.Scalar | t.ScalarList] = {}

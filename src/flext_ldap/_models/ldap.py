@@ -258,9 +258,7 @@ class FlextLdapModelsLdap:
                 if not oc_list:
                     return "unknown"
                 first_value = oc_list[0]
-                if isinstance(first_value, str):
-                    return first_value.lower()
-                return str(first_value).lower()
+                return first_value.lower()
             return "unknown"
 
         @staticmethod
@@ -295,7 +293,7 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: Mapping[str, PhaseSyncResult] = Field(  # noqa: F821
+        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
             default_factory=dict
         )
         total_entries: t.NonNegativeInt = 0

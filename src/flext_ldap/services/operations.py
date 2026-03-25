@@ -760,10 +760,8 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             }
             entry_model = self._convert_to_model(entry)
             dn_str: str
-            if entry_model.dn is not None and isinstance(entry_model.dn, m.Ldif.DN):
+            if entry_model.dn is not None:
                 dn_str = entry_model.dn.value or c.Ldap.EntryDefaults.UNKNOWN_VALUE
-            elif entry_model.dn is not None:
-                dn_str = str(entry_model.dn)
             else:
                 dn_str = c.Ldap.EntryDefaults.UNKNOWN_VALUE
             return (
