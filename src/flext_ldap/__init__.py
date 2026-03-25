@@ -12,7 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldif import d, e, h, r, s, x
+    from flext_ldif import d, e, h, r, x
 
     from flext_ldap import _models, adapters, services
     from flext_ldap.__version__ import __all__
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
         FlextLdap,
         FlextLdapSyncCallbacks,
     )
-    from flext_ldap.base import FlextLdapServiceBase
+    from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
     from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
     from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
@@ -77,7 +77,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "m": ["flext_ldap.models", "FlextLdapModels"],
     "p": ["flext_ldap.protocols", "FlextLdapProtocols"],
     "r": ["flext_ldif", "r"],
-    "s": ["flext_ldif", "s"],
+    "s": ["flext_ldap.base", "s"],
     "services": ["flext_ldap.services", ""],
     "t": ["flext_ldap.typings", "FlextLdapTypes"],
     "u": ["flext_ldap.utilities", "FlextLdapUtilities"],
