@@ -328,10 +328,7 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         if callback is None:
             return None
         if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
-            multi_phase_cb = cast(
-                "m.Ldap.Types.MultiPhaseProgressCallback",
-                callback,
-            )
+            multi_phase_cb = cast("t.Ldap.MultiPhaseProgressCallback", callback)
 
             def progress_cb(
                 current: int,
@@ -341,10 +338,10 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
             ) -> None:
                 multi_phase_cb(phase, current, total, dn, stats)
 
-            return cast("m.Ldap.Types.LdapProgressCallback", progress_cb)
+            return cast("t.Ldap.LdapProgressCallback", progress_cb)
 
         if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
-            return cast("m.Ldap.Types.LdapProgressCallback", callback)
+            return cast("t.Ldap.LdapProgressCallback", callback)
 
         return None
 

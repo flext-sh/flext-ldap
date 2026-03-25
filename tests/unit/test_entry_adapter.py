@@ -137,7 +137,10 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes(attributes={"cn": ["user"], "sn": ["Doe"]}),
+            attributes=m.Ldif.Attributes(
+                attributes={"cn": ["user"], "sn": ["Doe"]},
+                attribute_metadata={},
+            ),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attributes = tm.ok(result)
@@ -148,7 +151,10 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes(attributes={}),
+            attributes=m.Ldif.Attributes(
+                attributes={},
+                attribute_metadata={},
+            ),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         err = tm.fail(result, has="no attributes")

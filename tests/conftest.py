@@ -3,6 +3,7 @@ from __future__ import annotations
 import socket
 import time
 from pathlib import Path
+from typing import TypeAlias, cast
 
 import pytest
 from flext_core import FlextLogger, r
@@ -14,15 +15,16 @@ from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
 
-LdapContainerDict = t.ScalarMapping
+LdapContainerDict: TypeAlias = t.ScalarMapping
 
 
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
-    worker_input: t.ScalarMapping = (
-        worker_input_val if isinstance(worker_input_val, dict) else {}
-    )
-    return str(worker_input.get("workerid", "master"))
+    if not isinstance(worker_input_val, dict):
+        return "master"
+    worker_dict: t.ScalarMapping = cast("t.ScalarMapping", worker_input_val)
+    result = worker_dict.get("workerid", "master")
+    return str(result)
 
 
 def _wait_for_port_ready(host: str, port: int, timeout: int) -> r[bool]:

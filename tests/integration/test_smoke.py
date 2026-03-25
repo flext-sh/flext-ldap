@@ -100,7 +100,7 @@ class TestsFlextLdapSmoke:
             if not isinstance(host, str):
                 host = str(host)
             if not isinstance(port, int):
-                port = int(port)
+                port = int(port) if isinstance(port, (str, float)) else 389
             if not isinstance(use_ssl, bool):
                 use_ssl = bool(use_ssl)
             if not isinstance(bind_dn, str):
@@ -128,7 +128,7 @@ class TestsFlextLdapSmoke:
             if not isinstance(host, str):
                 host = str(host)
             if not isinstance(port, int):
-                port = int(port)
+                port = int(port) if isinstance(port, (str, float)) else 389
             if not isinstance(use_ssl, bool):
                 use_ssl = bool(use_ssl)
             if not isinstance(bind_dn, str):

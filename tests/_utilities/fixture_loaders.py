@@ -46,9 +46,9 @@ class _FixtureLoaderUtils:
                         f"Fixture file not found: {filename}",
                     )
                 raw_content = filepath.read_text(encoding="utf-8")
-                data = TypeAdapter(Sequence[GenericFieldsDict]).validate_json(
-                    raw_content,
-                )
+                data: Sequence[GenericFieldsDict] = TypeAdapter(
+                    Sequence[GenericFieldsDict],
+                ).validate_json(raw_content)
                 return r[Sequence[GenericFieldsDict]].ok(data)
             except (OSError, ValueError, ValidationError) as e:
                 return r[Sequence[GenericFieldsDict]].fail(
@@ -75,7 +75,7 @@ class _FixtureLoaderUtils:
                     return r[t.ContainerMapping].fail("Docker config file not found")
                 raw_content = filepath.read_text(encoding="utf-8")
                 config: t.ContainerMapping = TypeAdapter(
-                    t.ContainerMapping,
+                    Mapping[str, t.Scalar]
                 ).validate_json(raw_content)
                 return r[t.ContainerMapping].ok(config)
             except (OSError, ValueError, ValidationError) as e:
@@ -117,7 +117,7 @@ class _FixtureLoaderUtils:
             if not ldif_content:
                 return []
             ldif = FlextLdif()
-            result = ldif.parse(ldif_content, server_type="rfc")
+            result = ldif.parse_ldif(ldif_content, server_type="rfc")
             if result.is_success:
                 return [
                     entry
@@ -137,7 +137,7 @@ class _FixtureLoaderUtils:
             object_classes: t.StrSequence = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
-            attributes: Mapping[str, t.StrSequence] = {
+            attributes: dict[str, t.StrSequence] = {
                 "objectClass": [str(oc) for oc in object_classes],
                 "uid": [str(user_data.get("uid", ""))],
                 "cn": [str(user_data.get("cn", ""))],
@@ -170,7 +170,7 @@ class _FixtureLoaderUtils:
             object_classes: t.StrSequence = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
-            attributes: Mapping[str, t.StrSequence] = {
+            attributes: dict[str, t.StrSequence] = {
                 "objectClass": [str(oc) for oc in object_classes],
                 "cn": [str(group_data.get("cn", ""))],
             }

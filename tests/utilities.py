@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence, Sized
+from typing import TypeGuard
+
+from flext_core import r
 from flext_tests import FlextTestsUtilities
 
 from flext_ldap import FlextLdapUtilities
-from tests import _DockerInfraUtils, _FixtureLoaderUtils, t
-
-_SENTINEL: t.NormalizedValue = "__FLEXT_LDAP_TEST_SENTINEL__"
+from tests import t
+from tests._utilities.docker_infra import _DockerInfraUtils
+from tests._utilities.fixture_loaders import _FixtureLoaderUtils
 
 
 class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -28,59 +32,123 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
             """Assertion matchers for test readability."""
 
             @staticmethod
+            def _is_mapping(value: t.NormalizedValue) -> TypeGuard[t.ContainerMapping]:
+                """Return whether value supports mapping-style access."""
+                return isinstance(value, Mapping)
+
+            @staticmethod
+            def _is_numeric(value: t.NormalizedValue) -> TypeGuard[int | float]:
+                """Return whether value is a numeric scalar excluding bool."""
+                return isinstance(value, int | float) and not isinstance(value, bool)
+
+            @staticmethod
+            def _is_sized(value: t.NormalizedValue) -> TypeGuard[Sized]:
+                """Return whether value supports len()."""
+                return isinstance(value, Sized)
+
+            @staticmethod
+            def _is_str_sequence(value: t.NormalizedValue) -> TypeGuard[t.StrSequence]:
+                """Return whether value is a non-string sequence of strings."""
+                if isinstance(value, str) or not isinstance(value, Sequence):
+                    return False
+                return all(isinstance(item, str) for item in value)
+
+            @staticmethod
             def that(
                 value: t.NormalizedValue,
                 *,
-                eq: t.NormalizedValue = _SENTINEL,
-                none: bool | t.NormalizedValue = _SENTINEL,
-                is_: type | t.NormalizedValue = _SENTINEL,
-                contains: t.NormalizedValue = _SENTINEL,
-                attrs: t.StrSequence | t.NormalizedValue = _SENTINEL,
-                keys: t.StrSequence | t.NormalizedValue = _SENTINEL,
-                lacks_keys: t.StrSequence | t.NormalizedValue = _SENTINEL,
-                kv: t.ContainerMapping | t.NormalizedValue = _SENTINEL,
-                gte: float | t.NormalizedValue = _SENTINEL,
-                lte: float | t.NormalizedValue = _SENTINEL,
+                eq: t.NormalizedValue | None = None,
+                none: bool | None = None,
+                is_: type | None = None,
+                contains: t.NormalizedValue | None = None,
+                attrs: t.StrSequence | None = None,
+                keys: t.StrSequence | None = None,
+                lacks_keys: t.StrSequence | None = None,
+                kv: t.ContainerMapping | None = None,
+                gte: float | None = None,
+                lte: float | None = None,
                 **kwargs: t.NormalizedValue,
             ) -> None:
                 """Assert value matches expected conditions."""
-                if eq is not _SENTINEL:
+                if eq is not None:
                     assert value == eq, f"Expected {eq!r}, got {value!r}"
-                if none is not _SENTINEL:
+                if none is not None:
                     if none is True:
                         assert value is None, f"Expected None, got {value!r}"
-                    elif none is False:
+                    else:
                         assert value is not None, "Expected non-None value"
-                if is_ is not _SENTINEL:
-                    assert isinstance(
-                        value,
-                        is_,
-                    ), f"Expected instance of {is_!r}, got {type(value)!r}"
-                if contains is not _SENTINEL:
-                    assert contains in value, (
-                        f"Expected {value!r} to contain {contains!r}"
+                if is_ is not None:
+                    assert isinstance(value, is_), (
+                        f"Expected instance of {is_!r}, got {type(value)!r}"
                     )
-                if attrs is not _SENTINEL:
+                if contains is not None:
+                    if isinstance(value, str):
+                        assert isinstance(contains, str), (
+                            "String containment expects a string search value"
+                        )
+                        assert contains in value, (
+                            f"Expected {value!r} to contain {contains!r}"
+                        )
+                    elif FlextLdapTestUtilities.Tests.Matchers._is_mapping(value):
+                        assert isinstance(contains, str), (
+                            "Mapping containment expects a string key"
+                        )
+                        assert contains in value, (
+                            f"Expected {value!r} to contain key {contains!r}"
+                        )
+                    elif isinstance(value, Sequence):
+                        assert contains in value, (
+                            f"Expected {value!r} to contain {contains!r}"
+                        )
+                    else:
+                        raise AssertionError(
+                            f"Value {value!r} does not support containment check"
+                        )
+                if attrs is not None:
                     for attr_name in attrs:
                         assert hasattr(value, attr_name), (
                             f"Missing attribute: {attr_name}"
                         )
-                if keys is not _SENTINEL:
+                if keys is not None:
+                    assert FlextLdapTestUtilities.Tests.Matchers._is_mapping(value), (
+                        f"Value {value!r} does not support key lookup"
+                    )
                     for key in keys:
                         assert key in value, f"Missing key: {key}"
-                if lacks_keys is not _SENTINEL:
+                if lacks_keys is not None:
+                    assert FlextLdapTestUtilities.Tests.Matchers._is_mapping(value), (
+                        f"Value {value!r} does not support key lookup"
+                    )
                     for key in lacks_keys:
                         assert key not in value, f"Unexpected key: {key}"
-                if kv is not _SENTINEL:
-                    for k, v in kv.items():
-                        actual = value[k]
-                        assert actual == v, f"Key {k!r}: expected {v!r}, got {actual!r}"
-                if gte is not _SENTINEL:
+                if kv is not None:
+                    assert FlextLdapTestUtilities.Tests.Matchers._is_mapping(value), (
+                        f"Value {value!r} does not support key lookup"
+                    )
+                    for key, expected_value in kv.items():
+                        actual = value[key]
+                        assert actual == expected_value, (
+                            f"Key {key!r}: expected {expected_value!r}, got {actual!r}"
+                        )
+                if gte is not None:
+                    assert FlextLdapTestUtilities.Tests.Matchers._is_numeric(value), (
+                        f"Expected numeric value for gte comparison, got {value!r}"
+                    )
                     assert value >= gte, f"Expected >= {gte!r}, got {value!r}"
-                if lte is not _SENTINEL:
+                if lte is not None:
+                    assert FlextLdapTestUtilities.Tests.Matchers._is_numeric(value), (
+                        f"Expected numeric value for lte comparison, got {value!r}"
+                    )
                     assert value <= lte, f"Expected <= {lte!r}, got {value!r}"
                 if "len" in kwargs:
                     expected_len = kwargs["len"]
+                    assert isinstance(expected_len, int) and not isinstance(
+                        expected_len,
+                        bool,
+                    ), "len expectation must be an integer"
+                    assert FlextLdapTestUtilities.Tests.Matchers._is_sized(value), (
+                        f"Value {value!r} does not support len()"
+                    )
                     actual_len = len(value)
                     assert actual_len == expected_len, (
                         f"Expected length {expected_len}, got {actual_len}"
@@ -88,8 +156,10 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def ok(
-                result: t.NormalizedValue,
-                **kwargs: t.NormalizedValue,
+                result: r[t.NormalizedValue],
+                *,
+                eq: t.NormalizedValue | None = None,
+                expected_len: int | None = None,
             ) -> t.NormalizedValue:
                 """Assert result is success and return its value."""
                 assert hasattr(result, "is_success"), (
@@ -99,22 +169,27 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     f"Expected success, got failure: {getattr(result, 'error', 'unknown')}"
                 )
                 value = result.value
-                if kwargs:
-                    FlextLdapTestUtilities.Tests.Matchers.that(value, **kwargs)
+                if expected_len is not None:
+                    FlextLdapTestUtilities.Tests.Matchers.that(value, len=expected_len)
+                if eq is not None:
+                    FlextLdapTestUtilities.Tests.Matchers.that(value, eq=eq)
                 return value
 
             @staticmethod
-            def fail(result: t.NormalizedValue, **kwargs: t.NormalizedValue) -> str:
+            def fail(
+                result: r[t.NormalizedValue],
+                *,
+                has: t.NormalizedValue | None = None,
+            ) -> str:
                 """Assert result is failure and return error string."""
                 assert hasattr(result, "is_failure"), (
                     "Expected a Result t.NormalizedValue"
                 )
                 assert result.is_failure, "Expected failure, got success"
                 error_str = str(result.error) if result.error else ""
-                has_value = kwargs.get("has")
-                if has_value is not None:
-                    assert str(has_value).lower() in error_str.lower(), (
-                        f"Expected error to contain {has_value!r}, got {error_str!r}"
+                if has is not None:
+                    assert str(has).lower() in error_str.lower(), (
+                        f"Expected error to contain {has!r}, got {error_str!r}"
                     )
                 return error_str
 

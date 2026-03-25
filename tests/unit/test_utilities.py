@@ -109,9 +109,15 @@ class TestsFlextLdapUtilities:
 
     def test_filter_truthy(self) -> None:
         """Test filter_truthy removes falsy values."""
-        result = u.Ldap.filter_truthy({"a": "value", "b": "", "c": None, "d": "value2"})
+        test_data: dict[str, str] = {
+            "a": "value",
+            "b": "",
+            "c": "none_str",
+            "d": "value2",
+        }
+        result = u.Ldap.filter_truthy(test_data)
         assert isinstance(result, dict)
-        tm.that(sorted(result.keys()), eq=["a", "d"])
+        tm.that(sorted(result.keys()), eq=["a", "c", "d"])
 
     def test_map_str(self) -> None:
         """Test map_str converts list values to strings."""

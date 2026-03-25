@@ -33,7 +33,6 @@ from flext_ldap import (
     FlextLdapOperations,
     FlextLdapSettings,
     FlextLdapSyncService,
-    t,
 )
 from tests import m
 
@@ -60,7 +59,10 @@ class TestsFlextLdapSync:
     def _entry(dn: str) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes(attributes={}),
+            attributes=m.Ldif.Attributes(
+                attributes={},
+                attribute_metadata={},
+            ),
         )
 
     def test_sync_service_initialization(self) -> None:
@@ -101,11 +103,10 @@ class TestsFlextLdapSync:
         tm.that(stats.duration_seconds, eq=100.5)
 
     @pytest.mark.parametrize(
-        ("kwargs", "expected_source", "expected_target"),
+        ("source_basedn", "target_basedn"),
         [
-            pytest.param({}, "", "", id="defaults"),
+            pytest.param("", "", id="defaults"),
             pytest.param(
-                {"source_basedn": "dc=old,dc=com", "target_basedn": "dc=new,dc=com"},
                 "dc=old,dc=com",
                 "dc=new,dc=com",
                 id="explicit_transform",
@@ -114,11 +115,16 @@ class TestsFlextLdapSync:
     )
     def test_sync_options(
         self,
-        kwargs: t.StrMapping,
-        expected_source: str,
-        expected_target: str,
+        source_basedn: str,
+        target_basedn: str,
     ) -> None:
-        options = m.Ldap.SyncOptions(**kwargs)
+        options = m.Ldap.SyncOptions(
+            batch_size=100,
+            source_basedn=source_basedn,
+            target_basedn=target_basedn,
+        )
+        expected_source = source_basedn
+        expected_target = target_basedn
         tm.that(options.source_basedn, eq=expected_source)
         tm.that(options.target_basedn, eq=expected_target)
 
@@ -169,7 +175,7 @@ class TestsFlextLdapSync:
         sync_service = FlextLdapSyncService(operations=self._create_operations())
         result = sync_service.sync_ldif_file(
             Path("/tmp/flext-nonexistent-sync-input.ldif"),
-            m.Ldap.SyncOptions(),
+            m.Ldap.SyncOptions(batch_size=100),
         )
         tm.fail(result)
 
