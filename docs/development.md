@@ -308,13 +308,7 @@ class FlextLdapUserService:
         self._client = get_ldap_client()
         self.logger = FlextLogger(__name__)
 
-<<<<<<< Updated upstream
     def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
-=======
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> FlextResult[FlextLdapUser]:
->>>>>>> Stashed changes
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
@@ -332,7 +326,6 @@ def create_user(self, request: CreateUserRequest) -> r[FlextLdapUser]:
         return r[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
     return r[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
-
 
 
 # ❌ WRONG - Try/catch fallbacks
@@ -392,19 +385,11 @@ ______________________________________________________________________
 
 ```python
 # All public APIs must have complete type annotations
-<<<<<<< Updated upstream
 def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
     """Complete type signature required."""
 
 
 # Generic types for r patterns
-=======
-def authenticate_user(self, username: str, password: str) -> FlextResult[FlextLdapUser]:
-    """Complete type signature required."""
-
-
-# Generic types for FlextResult patterns
->>>>>>> Stashed changes
 T = TypeVar("T")
 
 
@@ -455,7 +440,6 @@ ______________________________________________________________________
 ```python
 import pytest
 from flext_ldap import FlextLdapUser, CreateUserRequest
-
 
 
 class TestFlextLdapUser:
@@ -682,13 +666,7 @@ class FlextLdapClients:
         ...     print(f"Welcome, {user.cn}")
     """
 
-<<<<<<< Updated upstream
     def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
-=======
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> FlextResult[FlextLdapUser]:
->>>>>>> Stashed changes
         """Authenticate user credentials against LDAP directory.
 
         Args:

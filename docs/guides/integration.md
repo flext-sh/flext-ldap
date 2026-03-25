@@ -119,13 +119,7 @@ class UserService:
         self._ldap_api = get_flext_ldap_api()
         self._container = FlextContainer.get_global()
 
-<<<<<<< Updated upstream
     def process_user_authentication(self, username: str, password: str) -> r[t.Dict]:
-=======
-    def process_user_authentication(
-        self, username: str, password: str
-    ) -> FlextResult[t.Dict]:
->>>>>>> Stashed changes
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
@@ -134,13 +128,7 @@ class UserService:
             self.logger.error(
                 "Authentication failed", extra={"error": auth_result.error}
             )
-<<<<<<< Updated upstream
             return r[t.Dict].fail(f"Authentication failed: {auth_result.error}")
-=======
-            return FlextResult[t.Dict].fail(
-                f"Authentication failed: {auth_result.error}"
-            )
->>>>>>> Stashed changes
 
         user = auth_result.unwrap()
         self.logger.info("User authenticated successfully", extra={"uid": user.uid})
@@ -257,11 +245,7 @@ def search_users(
     filter_str: str = "(objectClass=person)",
     limit: int = 100,
     token: str = Depends(authenticate_token),
-<<<<<<< Updated upstream
 ) -> t.ContainerMapping:
-=======
-) -> dict[str, object]:
->>>>>>> Stashed changes
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
@@ -295,11 +279,7 @@ def search_users(
 @app.post("/users/create")
 def create_user(
     user_data: dict, token: str = Depends(authenticate_token)
-<<<<<<< Updated upstream
 ) -> t.ContainerMapping:
-=======
-) -> dict[str, object]:
->>>>>>> Stashed changes
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
@@ -413,11 +393,7 @@ class Command(BaseCommand):
     help = "Synchronize users from LDAP directory"
 
     def add_arguments(self, parser):
-<<<<<<< Updated upstream
         _ = parser.add_argument(
-=======
-        parser.add_argument(
->>>>>>> Stashed changes
             "--dry-run",
             action="store_true",
             help="Show what would be synced without making changes",
@@ -811,7 +787,6 @@ from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import OpenLDAP2Operations
 
 
-
 def process_ldif_file():
     """Process LDIF file and import to LDAP server."""
     adapter = FlextLdapEntryAdapter()
@@ -898,19 +873,9 @@ run(export_to_ldif())
 Use FlextLdif quirks system for automatic server detection:
 
 ```python
-<<<<<<< Updated upstream
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
-=======
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
-    OpenLDAP2Operations,
-    OracleOIDOperations,
-    OracleOUDOperations,
-)
->>>>>>> Stashed changes
 import ldap3
 
 
@@ -964,11 +929,7 @@ def detect_and_configure():
         elif server_type == "oud":
             ops = OracleOUDOperations()
         else:
-<<<<<<< Updated upstream
             from flext_ldap import GenericServerOperations
-=======
-            from flext_ldap.servers import GenericServerOperations
->>>>>>> Stashed changes
 
             ops = GenericServerOperations()
 
@@ -983,15 +944,9 @@ run(detect_and_configure())
 Complete example combining FlextLdif with server operations:
 
 ```python
-<<<<<<< Updated upstream
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldap import (
-=======
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
->>>>>>> Stashed changes
     OpenLDAP2Operations,
     OracleOIDOperations,
     OracleOUDOperations,

@@ -315,11 +315,7 @@ RFC 4514 compliant distinguished name.
 **Example:**
 
 ```python
-<<<<<<< Updated upstream
 dn = FlextLdapModels.Values.DN("cn=user,ou=people,dc=example,dc=com")
-=======
-dn = FlextLdapModels.ValueObjects.DN("cn=user,ou=people,dc=example,dc=com")
->>>>>>> Stashed changes
 print(dn.rdn)  # "cn=user"
 print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
 ```
@@ -347,13 +343,7 @@ user_filter = FlextLdapModels.Values.LdapFilter.equals("uid", "john.doe")
 person_filter = FlextLdapModels.Values.LdapFilter.object_class("person")
 
 # Combine filters
-<<<<<<< Updated upstream
 combined = FlextLdapModels.Values.LdapFilter.and_filters(user_filter, person_filter)
-=======
-combined = FlextLdapModels.ValueObjects.LdapFilter.and_filters(
-    user_filter, person_filter
-)
->>>>>>> Stashed changes
 ```
 
 #### LdapScope
@@ -678,17 +668,8 @@ Detect LDAP server type from entry analysis.
 **Example:**
 
 ```python
-<<<<<<< Updated upstream
 from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
-=======
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
-    OpenLDAP2Operations,
-    OracleOIDOperations,
-    OracleOUDOperations,
-)
->>>>>>> Stashed changes
 
 quirks = FlextLdapQuirksAdapter()
 
@@ -1091,22 +1072,12 @@ All public APIs include comprehensive type annotations for IDE support and stati
 ```python
 def search_entries(
     self, request: FlextLdapEntities.SearchRequest
-<<<<<<< Updated upstream
 ) -> r[List[FlextLdapEntities.LdapEntry]]:
-=======
-) -> FlextResult[List[FlextLdapEntities.LdapEntry]]:
->>>>>>> Stashed changes
     """Search LDAP entries with full type safety."""
 
 
 # Server operations with FlextLdif integration
-<<<<<<< Updated upstream
 def add_entry(self, connection, entry: FlextLdifModels.Entry) -> r[bool]:
-=======
-def add_entry(
-    self, connection: object, entry: FlextLdifModels.Entry
-) -> FlextResult[bool]:
->>>>>>> Stashed changes
     """Add entry with type safety."""
 ```
 
@@ -1122,19 +1093,9 @@ ______________________________________________________________________
 
 ```python
 import ldap3
-<<<<<<< Updated upstream
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapQuirksAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
-=======
-from flext_ldap.entry_adapter import FlextLdapEntryAdapter
-from flext_ldap.quirks_integration import FlextLdapQuirksAdapter
-from flext_ldap.servers import (
-    OpenLDAP2Operations,
-    OracleOIDOperations,
-    OracleOUDOperations,
-)
->>>>>>> Stashed changes
 from flext_ldif import FlextLdifModels
 
 
@@ -1177,11 +1138,7 @@ def universal_ldap_example():
         elif server_type == "oud":
             ops = OracleOUDOperations()
         else:
-<<<<<<< Updated upstream
             from flext_ldap import GenericServerOperations
-=======
-            from flext_ldap.servers import GenericServerOperations
->>>>>>> Stashed changes
 
             ops = GenericServerOperations()
 

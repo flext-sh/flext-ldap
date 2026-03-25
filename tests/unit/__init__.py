@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
     from tests.unit.test_config import TestsFlextLdapSettings
@@ -33,16 +33,31 @@ if TYPE_CHECKING:
     from tests.unit.test_utilities import TestsFlextLdapUtilities
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TestsFlextLdap3Adapter": ["tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"],
+    "TestsFlextLdap3Adapter": [
+        "tests.unit.test_ldap3_adapter",
+        "TestsFlextLdap3Adapter",
+    ],
     "TestsFlextLdapApi": ["tests.unit.test_api", "TestsFlextLdapApi"],
     "TestsFlextLdapBase": ["tests.unit.test_base", "TestsFlextLdapBase"],
     "TestsFlextLdapConstants": ["tests.unit.test_constants", "TestsFlextLdapConstants"],
     "TestsFlextLdapDetection": ["tests.unit.test_detection", "TestsFlextLdapDetection"],
-    "TestsFlextLdapEntryAdapter": ["tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"],
+    "TestsFlextLdapEntryAdapter": [
+        "tests.unit.test_entry_adapter",
+        "TestsFlextLdapEntryAdapter",
+    ],
     "TestsFlextLdapModels": ["tests.unit.test_models", "TestsFlextLdapModels"],
-    "TestsFlextLdapModelsSearch": ["tests.unit.test_models_search", "TestsFlextLdapModelsSearch"],
-    "TestsFlextLdapModelsSync": ["tests.unit.test_models_sync", "TestsFlextLdapModelsSync"],
-    "TestsFlextLdapOperations": ["tests.unit.test_operations", "TestsFlextLdapOperations"],
+    "TestsFlextLdapModelsSearch": [
+        "tests.unit.test_models_search",
+        "TestsFlextLdapModelsSearch",
+    ],
+    "TestsFlextLdapModelsSync": [
+        "tests.unit.test_models_sync",
+        "TestsFlextLdapModelsSync",
+    ],
+    "TestsFlextLdapOperations": [
+        "tests.unit.test_operations",
+        "TestsFlextLdapOperations",
+    ],
     "TestsFlextLdapSettings": ["tests.unit.test_config", "TestsFlextLdapSettings"],
     "TestsFlextLdapSync": ["tests.unit.test_sync", "TestsFlextLdapSync"],
     "TestsFlextLdapUtilities": ["tests.unit.test_utilities", "TestsFlextLdapUtilities"],
@@ -84,6 +99,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -98,6 +114,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

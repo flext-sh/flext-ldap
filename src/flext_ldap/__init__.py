@@ -10,20 +10,25 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_ldif import d, e, h, r, s, x
+
+    from flext_ldap import _models, adapters, services
     from flext_ldap.__version__ import __all__
-    import flext_ldap._models as _models
     from flext_ldap._models.ldap import FlextLdapModelsLdap
-    import flext_ldap.adapters as adapters
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
+    from flext_ldap.api import (
+        MULTI_PHASE_CALLBACK_PARAM_COUNT,
+        SINGLE_PHASE_CALLBACK_PARAM_COUNT,
+        FlextLdap,
+        FlextLdapSyncCallbacks,
+    )
     from flext_ldap.base import FlextLdapServiceBase
     from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
     from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
     from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
-    import flext_ldap.services as services
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
@@ -32,9 +37,8 @@ if TYPE_CHECKING:
     from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
     from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
 
-    from flext_ldif import d, e, h, r, s, x
-
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextLdap": ["flext_ldap.api", "FlextLdap"],
     "FlextLdapConnection": ["flext_ldap.services.connection", "FlextLdapConnection"],
     "FlextLdapConstants": ["flext_ldap.constants", "FlextLdapConstants"],
     "FlextLdapEntryAdapter": ["flext_ldap.adapters.entry", "FlextLdapEntryAdapter"],
@@ -44,13 +48,25 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapModelsLdap": ["flext_ldap._models.ldap", "FlextLdapModelsLdap"],
     "FlextLdapOperations": ["flext_ldap.services.operations", "FlextLdapOperations"],
     "FlextLdapProtocols": ["flext_ldap.protocols", "FlextLdapProtocols"],
-    "FlextLdapServerDetector": ["flext_ldap.services.detection", "FlextLdapServerDetector"],
+    "FlextLdapServerDetector": [
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ],
     "FlextLdapServiceBase": ["flext_ldap.base", "FlextLdapServiceBase"],
     "FlextLdapSettings": ["flext_ldap.settings", "FlextLdapSettings"],
+    "FlextLdapSyncCallbacks": ["flext_ldap.api", "FlextLdapSyncCallbacks"],
     "FlextLdapSyncService": ["flext_ldap.services.sync", "FlextLdapSyncService"],
     "FlextLdapTypes": ["flext_ldap.typings", "FlextLdapTypes"],
     "FlextLdapUtilities": ["flext_ldap.utilities", "FlextLdapUtilities"],
     "LaxStr": ["flext_ldap.services.operations", "LaxStr"],
+    "MULTI_PHASE_CALLBACK_PARAM_COUNT": [
+        "flext_ldap.api",
+        "MULTI_PHASE_CALLBACK_PARAM_COUNT",
+    ],
+    "SINGLE_PHASE_CALLBACK_PARAM_COUNT": [
+        "flext_ldap.api",
+        "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
+    ],
     "__all__": ["flext_ldap.__version__", "__all__"],
     "_models": ["flext_ldap._models", ""],
     "adapters": ["flext_ldap.adapters", ""],
@@ -69,6 +85,9 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 }
 
 __all__ = [
+    "MULTI_PHASE_CALLBACK_PARAM_COUNT",
+    "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
+    "FlextLdap",
     "FlextLdapConnection",
     "FlextLdapConstants",
     "FlextLdapEntryAdapter",
@@ -81,6 +100,7 @@ __all__ = [
     "FlextLdapServerDetector",
     "FlextLdapServiceBase",
     "FlextLdapSettings",
+    "FlextLdapSyncCallbacks",
     "FlextLdapSyncService",
     "FlextLdapTypes",
     "FlextLdapUtilities",
@@ -120,6 +140,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -134,6 +155,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

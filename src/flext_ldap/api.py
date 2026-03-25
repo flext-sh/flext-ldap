@@ -840,17 +840,15 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
         retry_delay: float = 1.0,
         **_kwargs: str | float | bool | None,
     ) -> r[bool]:
-        """Establish LDAP connection with optional auto-retry.
-
-        if FlextLdapSyncCallbacks.is_single_phase_callback(phase_callback):
-            return cast("m.Ldap.Types.LdapProgressCallback", phase_callback)
-
-        if FlextLdapSyncCallbacks.is_multi_phase_callback(phase_callback):
-            multi_phase_cb = cast(
-                "m.Ldap.Types.MultiPhaseProgressCallback",
-                phase_callback,
-            )
-        else:
+        """Establish LDAP connection with optional auto-retry."""
+        config_for_connect = connection_config
+        result = self._connection.connect(
+            config_for_connect,
+            auto_retry=auto_retry,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+        )
+        if result.is_failure:
             self.logger.error(
                 "LDAP connection failed",
                 host=config_for_connect.host,
@@ -861,8 +859,6 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
 
     def delete(self, dn: str | m.Ldif.DN) -> r[m.Ldap.OperationResult]:
         """Delete LDAP entry.
-
-            return cast("m.Ldap.Types.LdapProgressCallback", wrapped_phase_cb)
 
         Audit Implications:
             - Delete operations are logged with DN for critical audit trail

@@ -185,11 +185,7 @@ Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn
 
 ```python
 # Import specific server operations
-<<<<<<< Updated upstream
 from flext_ldap import (
-=======
-from flext_ldap.servers import (
->>>>>>> Stashed changes
     BaseServerOperations,  # Abstract base
     OpenLDAP2Operations,  # OpenLDAP 2.x
     OpenLDAP1Operations,  # OpenLDAP 1.x (legacy)
