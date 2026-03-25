@@ -115,6 +115,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 True if normalized value is in collection
 
             """
+            collection_list: Sequence[str]
             match collection:
                 case tuple():
                     collection_list = list(collection)
@@ -144,6 +145,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Joined normalized string
 
             """
+            values_list: Sequence[str]
             match values:
                 case tuple():
                     values_list = list(values)
