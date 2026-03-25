@@ -577,7 +577,9 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 if parsed.dn is not None:
                     return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
                 return m.Ldif.DN(value="", metadata=default_metadata)
-            dn_raw: m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None = None
+            dn_raw: (
+                m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None
+            ) = None
             if isinstance(parsed, p.Ldap.Ldap3Entry):
                 dn_raw = parsed.entry_dn
             else:
