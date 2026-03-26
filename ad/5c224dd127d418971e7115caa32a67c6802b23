@@ -1,0 +1,23 @@
+src/flext_ldap/services/sync.py
+  c410e5f73c8a826c 39,100,125,128,130,205,208,289,317,324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "ad5c224dd127d418971e7115caa32a67c6802b23",
+  "prompts": {
+    "c410e5f73c8a826c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "687f7bdf-1496-4f2a-9abb-a2e27c434070",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 11,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
