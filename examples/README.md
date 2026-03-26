@@ -28,7 +28,7 @@
   - [Validation Best Practices](#validation-best-practices)
 - [🎯 Module Coverage Matrix](#-module-coverage-matrix)
 - [🔧 Common Patterns](#-common-patterns)
-  - [Pattern 1: Basic FlextLdap Usage](#pattern-1-basic-flextldap-usage)
+  - [Pattern 1: Basic ldap Usage](#pattern-1-basic-flextldap-usage)
   - [Pattern 2: Context Manager](#pattern-2-context-manager)
   - [Pattern 3: r Error Handling](#pattern-3-flextresult-error-handling)
   - [Pattern 4: Validation Before Operations](#pattern-4-validation-before-operations)
@@ -43,7 +43,7 @@
 
 <!-- TOC END -->
 
-**12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **FlextLdap API** (api.py) as the primary interface.
+**12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **ldap API** (api.py) as the primary interface.
 
 ## 📚 Overview
 
@@ -51,7 +51,7 @@ These examples showcase enterprise-grade LDAP operations using clean, maintainab
 
 **Key Principles:**
 
-- ✅ **ALWAYS use api.py (FlextLdap)** as the primary interface
+- ✅ **ALWAYS use api.py (ldap)** as the primary interface
 - ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
 - ✅ **r patterns** for explicit error handling (NO try/except fallbacks)
 - ✅ **Type-safe** with Python 3.13+ patterns
@@ -102,7 +102,7 @@ python examples/02_search_operations.py
 
 ### 01. Basic Operations (`01_basic_operations.py`)
 
-**Purpose**: Fundamental LDAP CRUD operations using FlextLdap API
+**Purpose**: Fundamental LDAP CRUD operations using ldap API
 
 **Demonstrates:**
 
@@ -200,13 +200,13 @@ ______________________________________________________________________
 
 ### 04. LDIF Operations (`04_ldif_operations.py`)
 
-**Purpose**: LDIF file import/export with FlextLdif integration
+**Purpose**: LDIF file import/export with ldif integration
 
 **Demonstrates:**
 
 - Import entries from LDIF files (import_from_ldif)
 - Export entries to LDIF files (export_to_ldif)
-- FlextLdif integration and availability checking
+- ldif integration and availability checking
 - Entry model usage (m.Entry)
 - LDIF round-trip operations (import → modify → export)
 
@@ -222,7 +222,7 @@ python examples/04_ldif_operations.py
 
 **Expected Output:**
 
-- FlextLdif availability check
+- ldif availability check
 - Sample LDIF file creation
 - LDIF import with entry parsing
 - LDIF export with file creation
@@ -713,7 +713,7 @@ ______________________________________________________________________
 
 | Module                    | Examples               | Functionality Demonstrated                             |
 | ------------------------- | ---------------------- | ------------------------------------------------------ |
-| **api.py (FlextLdap)**    | ALL                    | Primary facade - all operations                        |
+| **api.py (ldap)**    | ALL                    | Primary facade - all operations                        |
 | **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
 | **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
 | **config.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
@@ -741,10 +741,10 @@ ______________________________________________________________________
 
 ## 🔧 Common Patterns
 
-### Pattern 1: Basic FlextLdap Usage
+### Pattern 1: Basic ldap Usage
 
 ```python
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 from flext_ldap import FlextLdapSettings
 
 # Create and configure
@@ -753,7 +753,7 @@ config = FlextLdapSettings(
     ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
 )
-api = FlextLdap()
+api = ldap()
 
 # Connect
 result = api.connect()
@@ -772,12 +772,12 @@ api.unbind()
 
 ```python
 from contextlib import contextmanager
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 
 
 @contextmanager
 def ldap_connection():
-    api = FlextLdap(config=...)
+    api = ldap(config=...)
     connect_result = api.connect()
     if connect_result.is_failure:
         raise ConnectionError(connect_result.error)
@@ -880,7 +880,7 @@ pip install flext-ldif
 
 ## ✅ Best Practices
 
-1. **Always use api.py (FlextLdap)** as the primary interface
+1. **Always use api.py (ldap)** as the primary interface
 1. **Validate inputs** before LDAP operations (DN, filters)
 1. **Handle r** explicitly - check is_success before unwrap
 1. **Use context managers** for automatic resource cleanup

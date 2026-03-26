@@ -26,7 +26,7 @@
 - [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
 - [Best Practices](#best-practices)
 - [API Reference](#api-reference)
-  - [FlextLdap ACL Methods](#flextldap-acl-methods)
+  - [ldap ACL Methods](#flextldap-acl-methods)
   - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
 - [See Also](#see-also)
 <!-- TOC END -->
@@ -87,7 +87,7 @@
 - [Write to OpenLDAP configuration](#write-to-openldap-configuration)
   - [Best Practices](#best-practices)
   - [API Reference](#api-reference)
-    - [FlextLdap ACL Methods](#flextldap-acl-methods)
+    - [ldap ACL Methods](#flextldap-acl-methods)
     - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
   - [See Also](#see-also)
 
@@ -114,11 +114,11 @@ The ACL system follows Clean Architecture principles with:
 ### Basic Usage
 
 ```python
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 from flext_ldap import FlextLdapConstants
 
 # Initialize API
-api = FlextLdap()
+api = ldap()
 
 # Parse an OpenLDAP ACL
 openldap_acl = "access to attrs=userPassword by self write"
@@ -373,10 +373,10 @@ else:
 
 ```python
 # Example: Convert Oracle OUD ACLs to OpenLDAP format
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 from flext_ldap import FlextLdapConstants
 
-api = FlextLdap()
+api = ldap()
 
 # Read Oracle ACLs from OUD
 oracle_acls = read_oracle_acls()  # Your existing function
@@ -407,7 +407,7 @@ write_openldap_acls(converted_acls)
 
 ## API Reference
 
-### FlextLdap ACL Methods
+### ldap ACL Methods
 
 - `parse(acl_string, format_type)` - Parse ACL to unified model
 - `convert_acl(acl_string, source_format, target_format)` - Convert ACL between formats

@@ -10,7 +10,7 @@
 <!-- TOC END -->
 
 The service layer contains the composable building blocks that power the
-`FlextLdap` facade. Each service is focused on a single responsibility and uses
+`ldap` facade. Each service is focused on a single responsibility and uses
 `r` to make success and failure explicit.
 
 ## Services
@@ -53,10 +53,10 @@ The service layer contains the composable building blocks that power the
 ## Collaboration Pattern
 
 ```
-FlextLdap → Connection → (optional) ServerDetector
+ldap → Connection → (optional) ServerDetector
           → Operations (search/CRUD/upsert)
           → SyncService (uses Operations under the hood)
 ```
 
-Services are constructed directly and passed into `FlextLdap`, allowing callers
+Services are constructed directly and passed into `ldap`, allowing callers
 or tests to replace implementations without altering the facade API.

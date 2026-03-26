@@ -18,7 +18,7 @@
   - [**User Authentication**](#user-authentication)
 - [Universal LDAP Interface](#universal-ldap-interface)
   - [**Server-Specific Operations**](#server-specific-operations)
-  - [**Entry Conversion (ldap3 ↔ FlextLdif)**](#entry-conversion-ldap3-flextldif)
+  - [**Entry Conversion (ldap3 ↔ ldif)**](#entry-conversion-ldap3-flextldif)
   - [**Schema Discovery**](#schema-discovery)
   - [**ACL Management**](#acl-management)
   - [**Paged Search**](#paged-search)
@@ -55,9 +55,9 @@
     - **User Authentication**
   - Universal LDAP Interface
     - **Server-Specific Operations**
-    - **Entry Conversion (ldap3 ↔ FlextLdif)**
-- ldap3 → FlextLdif
-- FlextLdif → ldap3
+    - **Entry Conversion (ldap3 ↔ ldif)**
+- ldap3 → ldif
+- ldif → ldap3
   - **Schema Discovery**
   - **ACL Management**
   - **Paged Search**
@@ -294,7 +294,7 @@ def server_specific_operations():
     # Search for entries
     connection.search("dc=example,dc=com", "(objectClass=*)", attributes=["*"])
 
-    # Convert to FlextLdif
+    # Convert to ldif
     entries = []
     for ldap3_entry in connection.entries:
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -327,9 +327,9 @@ def server_specific_operations():
 run(server_specific_operations())
 ```
 
-### **Entry Conversion (ldap3 ↔ FlextLdif)**
+### **Entry Conversion (ldap3 ↔ ldif)**
 
-Convert between ldap3 and FlextLdif entry formats:
+Convert between ldap3 and ldif entry formats:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -338,7 +338,7 @@ import ldap3
 
 adapter = FlextLdapEntryAdapter()
 
-# ldap3 → FlextLdif
+# ldap3 → ldif
 connection.search("dc=example,dc=com", "(objectClass=person)")
 for ldap3_entry in connection.entries:
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -346,7 +346,7 @@ for ldap3_entry in connection.entries:
         ldif_entry = ldif_result.unwrap()
         print(f"DN: {ldif_entry.dn}")
 
-# FlextLdif → ldap3
+# ldif → ldap3
 ldif_entry = FlextLdifModels.Entry(
     dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
     attributes=FlextLdifModels.Attributes(
@@ -529,7 +529,7 @@ Once you have flext-ldap installed and working:
 1. **Server Operations Guide** - Server-specific LDAP operations
 1. **Architecture Guide** - Universal LDAP interface architecture
 1. **API Reference** - Complete API documentation
-1. **Integration Guide** - FLEXT ecosystem and FlextLdif integration
+1. **Integration Guide** - FLEXT ecosystem and ldif integration
 1. **Examples** - Working code examples
 1. **Development Guide** - Contributing to the project
 

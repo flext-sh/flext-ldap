@@ -34,5 +34,5 @@ logic. flext-ldap ships two adapters that wrap `ldap3` and normalize entries to
 
 Isolating protocol nuances in the adapter layer means the service layer can stay
 small, composable, and easy to test. Mocking adapters or swapping them out for
-stubs does not require changes to business logic or the public `FlextLdap`
+stubs does not require changes to business logic or the public `ldap`
 interface.

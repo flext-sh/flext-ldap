@@ -1,7 +1,7 @@
 """Unit tests for flext_ldap.adapters.entry.FlextLdapEntryAdapter.
 
 **Modules Tested:**
-- `flext_ldap.adapters.entry.FlextLdapEntryAdapter` - Entry adapter for ldap3 ↔ FlextLdif conversion
+- `flext_ldap.adapters.entry.FlextLdapEntryAdapter` - Entry adapter for ldap3 ↔ ldif conversion
 
 **Test Scope:**
 - Adapter initialization

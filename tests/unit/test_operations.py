@@ -4,17 +4,13 @@
 - `flext_ldap.services.operations.FlextLdapOperations` - LDAP operations service
 
 **Test Scope:**
-- Operations service initialization and configuration access
+- Operations service initialization (MRO-based, no constructor args)
 - Fast-fail pattern for disconnected operations
 - Error handling and validation
 - Entry comparison functionality
 - Method existence validation
 
-All tests use real functionality without mocks, leveraging flext-core test utilities
-and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
-
-Architecture: Single class per module following FLEXT patterns.
-Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+All tests use real functionality without mocks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -29,20 +25,17 @@ import pytest
 from flext_core import FlextSettings
 from flext_tests import tm
 
-from flext_ldap import FlextLdapConnection, FlextLdapOperations, FlextLdapSettings, t
+from flext_ldap import FlextLdapOperations, t
 from tests import c, m
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapOperations:
-    """Comprehensive tests for FlextLdapOperations using factories and DRY principles.
+    """Tests for FlextLdapOperations MRO mixin.
 
-    Architecture: Single class per module following FLEXT patterns.
-    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
-
-    Uses parametrized tests and constants for maximum code reuse.
-    All helper logic is nested within this single class following FLEXT patterns.
+    Operations is now an MRO mixin inheriting from FlextLdapConnection.
+    Instantiate with FlextLdapOperations() — no constructor args needed.
     """
 
     _ERROR_DETECTION_SCENARIOS: ClassVar[Mapping[str, bool]] = {
@@ -59,40 +52,14 @@ class TestsFlextLdapOperations:
     }
 
     @classmethod
-    def _create_connection(cls) -> FlextLdapConnection:
-        """Factory method for creating connection instances."""
-        return FlextLdapConnection(config=FlextLdapSettings())
-
-    @classmethod
-    def _create_operations(
-        cls,
-        connection: FlextLdapConnection | None = None,
-    ) -> FlextLdapOperations:
-        """Factory method for creating operations service instances."""
-        conn = connection or cls._create_connection()
-        return FlextLdapOperations(connection=conn)
-
-    def test_init_without_connection_raises_type_error(self) -> None:
-        """Test that __init__ raises TypeError when connection is not provided."""
-        cls = __import__(
-            "flext_ldap.services.operations",
-            fromlist=["FlextLdapOperations"],
-        ).FlextLdapOperations
-        with pytest.raises(TypeError, match="missing 1 required positional argument"):
-            cls()
-
-    def test_init_with_connection_succeeds(self) -> None:
-        """Test that __init__ succeeds when connection is provided."""
-        connection = self._create_connection()
-        operations = self._create_operations(connection)
-        tm.that(operations, none=False)
-        tm.that(operations._connection, eq=connection)
+    def _create_operations(cls) -> FlextLdapOperations:
+        """Factory — MRO-based, no constructor args."""
+        return FlextLdapOperations()
 
     def test_operations_initialization(self) -> None:
-        """Test operations service initialization."""
+        """Test operations service initializes via MRO (no args)."""
         operations = self._create_operations()
         tm.that(operations, none=False)
-        tm.that(operations._connection, none=False)
         tm.that(operations.logger, none=False)
 
     def test_config_property(self) -> None:
@@ -119,13 +86,13 @@ class TestsFlextLdapOperations:
         tm.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
-        """Test execute method returns a r."""
+        """Test execute method returns a r (fail when not connected)."""
         operations = self._create_operations()
         result = operations.execute()
         tm.fail(result)
 
     def test_search_method_exists(self) -> None:
-        """Test that search method exists and can be called."""
+        """Test that search method exists and returns fail when not connected."""
         operations = self._create_operations()
         rfc_constants = c.Ldap.Tests.RFC
         search_options = m.Ldap.SearchOptions(

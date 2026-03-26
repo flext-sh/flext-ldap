@@ -50,14 +50,14 @@ shipped in the source tree rather than legacy server-specific stacks.
 
 ```
 API Facade → Service Layer → Adapter Layer → Protocol + Models
-   FlextLdap     Connection/Ops     Ldap3Adapter       ldap3 / flext-ldif
+   ldap     Connection/Ops     Ldap3Adapter       ldap3 / flext-ldif
 ```
 
 ### Module Structure (v0.11.0)
 
 **Root Modules**:
 
-- `api.py` (FlextLdap facade)
+- `api.py` (ldap facade)
 - `config.py`, `constants.py`, `models.py`, `protocols.py`, `typings.py`
 - `utilities.py` and `base.py` for shared helpers
 

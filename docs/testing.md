@@ -245,7 +245,7 @@ docker exec -it flext-ldap-test-server ldapsearch \
 
 1. **adapters.py** (801 lines, low coverage)
 
-   - **Challenge**: ldap3 ↔ FlextLdif conversion
+   - **Challenge**: ldap3 ↔ ldif conversion
    - **Strategy**: Adapter pattern testing
    - **Data-Driven Tests**: Multiple conversion scenarios
    - **Estimated Tests**: 35+ test methods

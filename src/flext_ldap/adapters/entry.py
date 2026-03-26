@@ -1,6 +1,6 @@
-"""Entry adapter for ldap3 ↔ FlextLdif bidirectional conversion.
+"""Entry adapter for ldap3 ↔ ldif bidirectional conversion.
 
-Provides seamless conversion between ldap3 Entry objects and FlextLdif Entry models,
+Provides seamless conversion between ldap3 Entry objects and ldif Entry models,
 enabling integration between LDAP protocol operations and LDIF entry manipulation.
 
 Business Rules:
@@ -8,7 +8,7 @@ Business Rules:
     - p.Entry → ldap3 attributes uses Mapping[str, t.StrSequence] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
     - Server-specific normalization uses flext-ldif quirks system
-    - DN normalization via u.Ldif.norm_string() for consistency
+    - DN normalization via u.Ldif.norm_or_fallback() for consistency
     - Empty attribute values are preserved (important for schema compliance)
 
 Audit Implications:
@@ -18,7 +18,7 @@ Audit Implications:
     - Conversion operations are stateless (no side effects)
 
 Architecture Notes:
-    - Implements Adapter pattern between ldap3 and FlextLdif domains
+    - Implements Adapter pattern between ldap3 and ldif domains
     - Python 3.13: Uses guard-based sequence handling
     - Extends s[bool] for health check capability
     - Inner class _ConversionHelpers follows SRP for value processing
@@ -34,14 +34,14 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
 from flext_core import r, s
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pydantic import PrivateAttr
 
 from flext_ldap import c, m, p, t
 
 
 class FlextLdapEntryAdapter(s[bool]):
-    """Adapter for converting between ldap3 and FlextLdif entry representations.
+    """Adapter for converting between ldap3 and ldif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:
     - ldap3.Entry → p.Entry (for result processing)
@@ -173,11 +173,11 @@ class FlextLdapEntryAdapter(s[bool]):
                 value,
             )
 
-    _ldif: FlextLdif = PrivateAttr()
+    _ldif: ldif = PrivateAttr()
     _server_type: str = PrivateAttr()
 
     def __init__(self, *, server_type: str | None = None) -> None:
-        """Initialize entry adapter with FlextLdif integration and quirks.
+        """Initialize entry adapter with ldif integration and quirks.
 
         Args:
             server_type: Server type for normalization (defaults to RFC).
@@ -185,7 +185,7 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         super().__init__()
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
-        object.__setattr__(self, "_ldif", FlextLdif())
+        object.__setattr__(self, "_ldif", ldif())
         object.__setattr__(self, "_server_type", resolved_type)
 
     @staticmethod

@@ -9,7 +9,7 @@ This module tests flext-ldap smoke functionality using advanced Python 3.13 patt
 
 Tests verify:
 1. LDAP container is running and responsive
-2. FlextLdap API imports correctly
+2. ldap API imports correctly
 3. Basic connection works
 
 
@@ -25,12 +25,7 @@ from enum import StrEnum, unique
 import pytest
 from flext_core import r
 
-from flext_ldap import (
-    FlextLdap,
-    FlextLdapConnection,
-    FlextLdapOperations,
-    FlextLdapSettings,
-)
+from flext_ldap import ldap
 from ldap3 import Connection, Server
 from tests import m, t
 
@@ -88,34 +83,6 @@ class TestsFlextLdapSmoke:
             )
 
         @staticmethod
-        def create_flext_config(
-            ldap_container: t.Ldap.Tests.LdapContainerDict,
-        ) -> FlextLdapSettings:
-            """Factory for FlextLdapSettings objects."""
-            host = ldap_container["host"]
-            port = ldap_container["port"]
-            use_ssl = ldap_container["use_ssl"]
-            bind_dn = ldap_container["bind_dn"]
-            password = ldap_container["password"]
-            if not isinstance(host, str):
-                host = str(host)
-            if not isinstance(port, int):
-                port = int(port) if isinstance(port, (str, float)) else 389
-            if not isinstance(use_ssl, bool):
-                use_ssl = bool(use_ssl)
-            if not isinstance(bind_dn, str):
-                bind_dn = str(bind_dn)
-            if not isinstance(password, str):
-                password = str(password)
-            return FlextLdapSettings(
-                host=host,
-                port=port,
-                use_ssl=use_ssl,
-                bind_dn=bind_dn,
-                bind_password=password,
-            )
-
-        @staticmethod
         def create_connection_config(
             ldap_container: t.Ldap.Tests.LdapContainerDict,
         ) -> m.Ldap.ConnectionConfig:
@@ -163,9 +130,9 @@ class TestsFlextLdapSmoke:
             assert naming_contexts is not None, "LDAP naming contexts not available"
 
         @staticmethod
-        def assert_api_instantiated(api: FlextLdap | None) -> None:
-            """Assert that FlextLdap API is instantiated."""
-            assert api is not None, "FlextLdap API instantiation failed"
+        def assert_api_instantiated(api: ldap | None) -> None:
+            """Assert that ldap API is instantiated."""
+            assert api is not None, "ldap API instantiation failed"
 
         @staticmethod
         def assert_models_accessible() -> None:
@@ -200,15 +167,12 @@ class TestsFlextLdapSmoke:
         connection.unbind()
 
     def test_flext_ldap_api_imports(self) -> None:
-        """SMOKE TEST: FlextLdap API imports without errors (REGRA 5: REAL code).
+        """SMOKE TEST: ldap API imports without errors (REGRA 5: REAL code).
 
         Verifies that the API can be imported and instantiated.
         Does NOT test connection - that's in test_ldap_container_health.
         """
-        config = FlextLdapSettings()
-        connection = FlextLdapConnection(config=config)
-        operations = FlextLdapOperations(connection=connection)
-        api = FlextLdap(connection=connection, operations=operations)
+        api = ldap()
         TestsFlextLdapSmoke.Assertions.assert_api_instantiated(api)
         TestsFlextLdapSmoke.Assertions.assert_models_accessible()
 
@@ -216,19 +180,16 @@ class TestsFlextLdapSmoke:
         self,
         ldap_container: t.Ldap.Tests.LdapContainerDict,
     ) -> None:
-        """SMOKE TEST: FlextLdap can connect to container (REGRA 5: REAL operations).
+        """SMOKE TEST: ldap can connect to container (REGRA 5: REAL operations).
 
-        Tests basic connectivity through FlextLdap API.
+        Tests basic connectivity through ldap API.
         Uses REAL LDAP container and connection (NO MOCKS).
 
         Args:
             ldap_container: Container connection info
 
         """
-        config = TestsFlextLdapSmoke.DataFactories.create_flext_config(ldap_container)
-        connection = FlextLdapConnection(config=config)
-        operations = FlextLdapOperations(connection=connection)
-        client = FlextLdap(connection=connection, operations=operations)
+        client = ldap()
         conn_config = TestsFlextLdapSmoke.DataFactories.create_connection_config(
             ldap_container,
         )

@@ -20,17 +20,12 @@ from abc import ABC
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from types import ModuleType
-from typing import TypeVar, override
+from typing import override
 
 from flext_core import FlextService
 from pydantic_settings import BaseSettings
 
-from flext_ldap import FlextLdapSettings, p, t
-
-TDomainResult = TypeVar(
-    "TDomainResult",
-    bound=t.ValueOrModel | Sequence[t.ValueOrModel],
-)
+from flext_ldap import FlextLdapSettings, m, p, t
 
 
 @dataclass
@@ -48,38 +43,16 @@ class _LdapRuntimeBootstrapOptions:
     wire_classes: Sequence[type] | None = None
 
 
-class FlextLdapServiceBase(FlextService[TDomainResult], ABC):
-    """Base class for all flext-ldap services with typed config access.
+class FlextLdapServiceBase(FlextService[m.Ldap.SearchResult], ABC):
+    """Base class for all flext-ldap services with fixed SearchResult type.
 
-    Inherits config property from x which provides:
-    - self.config → FlextSettings.get_global()
-    - self.config.ldap → FlextLdapSettings (via @FlextSettings.auto_register)
-    - self.config.ldif → FlextLdifSettings (via @FlextSettings.auto_register)
-
-    Usage in services:
-        class MyService(FlextLdapServiceBase[MyResult]):
-            def execute(self) -> r[MyResult]:
-                host = self.config.ldap.host  # Typed access!
-                encoding = self.config.ldif.ldif_encoding  # Typed access!
+    Follows FlextCli pattern: single fixed generic type shared by all mixins.
     """
 
     @classmethod
     @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-        """Return runtime bootstrap options for LDAP services.
-
-        Business Rule: This method provides runtime bootstrap configuration for
-        all LDAP services, ensuring they use FlextLdapSettings as the configuration
-        type. This enables proper DI integration and namespace access.
-
-        Implication: All services extending FlextLdapServiceBase automatically
-        use FlextLdapSettings for their runtime configuration, ensuring consistent
-        configuration handling across all LDAP services.
-
-        Returns:
-            Runtime bootstrap options with config_type set to FlextLdapSettings
-
-        """
+        """Return runtime bootstrap options for LDAP services."""
         return _LdapRuntimeBootstrapOptions()
 
 

@@ -42,8 +42,7 @@ if TYPE_CHECKING:
     from tests.unit.test_models import TestsFlextLdapModels
     from tests.unit.test_models_search import TestsFlextLdapModelsSearch
     from tests.unit.test_models_sync import TestsFlextLdapModelsSync
-    from tests.unit.test_operations import TestsFlextLdapOperations
-    from tests.unit.test_sync import TestsFlextLdapSync, pytestmark
+    from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
     from tests.unit.test_utilities import TestsFlextLdapUtilities
     from tests.utilities import FlextLdapTestUtilities, FlextLdapTestUtilities as u
 
@@ -55,19 +54,33 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapTestUtilities": ["tests.utilities", "FlextLdapTestUtilities"],
     "LdapContainerDict": ["tests.conftest", "LdapContainerDict"],
     "TestFixtures": ["tests._utilities.fixture_loaders", "TestFixtures"],
-    "TestsFlextLdap3Adapter": ["tests.unit.test_ldap3_adapter", "TestsFlextLdap3Adapter"],
+    "TestsFlextLdap3Adapter": [
+        "tests.unit.test_ldap3_adapter",
+        "TestsFlextLdap3Adapter",
+    ],
     "TestsFlextLdapApi": ["tests.unit.test_api", "TestsFlextLdapApi"],
     "TestsFlextLdapBase": ["tests.unit.test_base", "TestsFlextLdapBase"],
     "TestsFlextLdapConstants": ["tests.unit.test_constants", "TestsFlextLdapConstants"],
     "TestsFlextLdapDetection": ["tests.unit.test_detection", "TestsFlextLdapDetection"],
-    "TestsFlextLdapEntryAdapter": ["tests.unit.test_entry_adapter", "TestsFlextLdapEntryAdapter"],
+    "TestsFlextLdapEntryAdapter": [
+        "tests.unit.test_entry_adapter",
+        "TestsFlextLdapEntryAdapter",
+    ],
     "TestsFlextLdapModels": ["tests.unit.test_models", "TestsFlextLdapModels"],
-    "TestsFlextLdapModelsSearch": ["tests.unit.test_models_search", "TestsFlextLdapModelsSearch"],
-    "TestsFlextLdapModelsSync": ["tests.unit.test_models_sync", "TestsFlextLdapModelsSync"],
-    "TestsFlextLdapOperations": ["tests.unit.test_operations", "TestsFlextLdapOperations"],
+    "TestsFlextLdapModelsSearch": [
+        "tests.unit.test_models_search",
+        "TestsFlextLdapModelsSearch",
+    ],
+    "TestsFlextLdapModelsSync": [
+        "tests.unit.test_models_sync",
+        "TestsFlextLdapModelsSync",
+    ],
+    "TestsFlextLdapOperations": [
+        "tests.unit.test_operations",
+        "TestsFlextLdapOperations",
+    ],
     "TestsFlextLdapSettings": ["tests.unit.test_config", "TestsFlextLdapSettings"],
     "TestsFlextLdapSmoke": ["tests.integration.test_smoke", "TestsFlextLdapSmoke"],
-    "TestsFlextLdapSync": ["tests.unit.test_sync", "TestsFlextLdapSync"],
     "TestsFlextLdapUtilities": ["tests.unit.test_utilities", "TestsFlextLdapUtilities"],
     "_DockerInfraUtils": ["tests._utilities.docker_infra", "_DockerInfraUtils"],
     "_FixtureLoaderUtils": ["tests._utilities.fixture_loaders", "_FixtureLoaderUtils"],
@@ -84,7 +97,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "p": ["tests.protocols", "FlextLdapTestProtocols"],
     "pytest_runtest_makereport": ["tests.conftest", "pytest_runtest_makereport"],
     "pytest_sessionstart": ["tests.conftest", "pytest_sessionstart"],
-    "pytestmark": ["tests.unit.test_sync", "pytestmark"],
+    "pytestmark": ["tests.unit.test_operations", "pytestmark"],
     "r": ["flext_tests", "r"],
     "s": ["flext_tests", "s"],
     "search_options": ["tests.conftest", "search_options"],
@@ -115,7 +128,6 @@ __all__ = [
     "TestsFlextLdapOperations",
     "TestsFlextLdapSettings",
     "TestsFlextLdapSmoke",
-    "TestsFlextLdapSync",
     "TestsFlextLdapUtilities",
     "_DockerInfraUtils",
     "_FixtureLoaderUtils",

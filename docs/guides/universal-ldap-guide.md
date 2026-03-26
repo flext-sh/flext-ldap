@@ -154,9 +154,9 @@ print(f"Replication: {oud.get_replication_mechanism()}")
 ### 1. Get Detected Server Type
 
 ```python
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 
-api = FlextLdap()
+api = ldap()
 api.connect()
 
 # Get detected server type
@@ -285,14 +285,13 @@ if attrs_result.is_success:
 ### OpenLDAP 1.x → OpenLDAP 2.x Migration
 
 ```python
-from flext_ldap import FlextLdap
-from flext_ldif import FlextLdif
+from flext_ldap import ldap
+from flext_ldif import ldif
 
 
 def migrate_openldap1_to_openldap2():
     # Parse OpenLDAP 1.x LDIF file
-    ldif = FlextLdif()
-    parse_result = ldif.parse_file("openldap1_backup.ldif")
+        parse_result = ldif.parse_file("openldap1_backup.ldif")
 
     if parse_result.is_failure:
         print(f"Parse failed: {parse_result.error}")
@@ -301,7 +300,7 @@ def migrate_openldap1_to_openldap2():
     openldap1_entries = parse_result.unwrap()
 
     # Convert each entry to OpenLDAP 2.x format
-    api = FlextLdap()
+    api = ldap()
     openldap2_entries = []
 
     for entry in openldap1_entries:
@@ -324,9 +323,8 @@ def migrate_openldap1_to_openldap2():
 
 ```python
 def migrate_oid_to_oud():
-    api = FlextLdap()
-    ldif = FlextLdif()
-
+    api = ldap()
+    
     # Load OID entries
     oid_entries = ldif.parse_file("oid_export.ldif").unwrap()
 
@@ -357,18 +355,18 @@ def migrate_oid_to_oud():
 ### Scenario 1: Multi-Server Environment
 
 ```python
-from flext_ldap import FlextLdap, ServerOperationsFactory
+from flext_ldap import ldap, ServerOperationsFactory
 
 
 def sync_across_servers():
     """Sync entries across different LDAP server types."""
 
     # Source: OpenLDAP 2.x
-    source_api = FlextLdap()
+    source_api = ldap()
     source_api.connect()  # Connects to OpenLDAP 2.x
 
     # Target: Oracle OUD
-    target_api = FlextLdap()
+    target_api = ldap()
     target_api.connect()  # Connects to Oracle OUD
 
     # Search source
@@ -408,7 +406,7 @@ def sync_across_servers():
 def progressive_migration():
     """Gradually migrate from old to new LDAP server."""
 
-    api = FlextLdap()
+    api = ldap()
 
     # Phase 1: Analyze source entries
     source_entries = []  # Load from source
@@ -551,7 +549,7 @@ To add support for additional LDAP servers:
 
 1. Create new server operations class inheriting from `BaseServerOperations`
 1. Implement all required methods (connection, schema, ACL, entry, search)
-1. Add server-specific quirks to FlextLdif quirks system
+1. Add server-specific quirks to ldif quirks system
 1. Register in `ServerOperationsFactory`
 1. Add tests and documentation
 

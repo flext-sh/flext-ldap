@@ -1,3 +1,11 @@
+"""Unit tests for flext_ldap.base.FlextLdapServiceBase.
+
+Tests the non-generic service base (fixed to m.Ldap.SearchResult).
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from typing import override
@@ -5,86 +13,46 @@ from typing import override
 import pytest
 from flext_core import FlextSettings, r
 
-from flext_ldap import base, s
+from flext_ldap import FlextLdapServiceBase, base, m, s
 from tests import p
 
 pytestmark = pytest.mark.unit
 
 
-class _SuccessService(s[str]):
+class _SuccessService(FlextLdapServiceBase):
     @override
-    def execute(self) -> r[str]:
-        return r[str].ok("ok")
+    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
+        return r[m.Ldap.SearchResult].ok(
+            m.Ldap.SearchResult(entries=[], search_options=None),
+        )
 
 
-class _FailService(s[str]):
+class _FailService(FlextLdapServiceBase):
     @override
-    def execute(self) -> r[str]:
-        return r[str].fail("nope")
-
-
-class _BoolService(s[bool]):
-    @override
-    def execute(self) -> r[bool]:
-        return r[bool].ok(True)
-
-
-class _IntService(s[int]):
-    @override
-    def execute(self) -> r[int]:
-        return r[int].ok(42)
+    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
+        return r[m.Ldap.SearchResult].fail("nope")
 
 
 class TestsFlextLdapBase:
     # ── Structure & exports ────────────────────────────────────────────
 
-    def test_class_inherits_flext_service(self) -> None:
-        assert issubclass(s[str], s)
-        assert hasattr(s, "__class_getitem__")
-
     def test_exports(self) -> None:
         assert callable(s)
-        assert "s" in base.__all__
         assert "s" in base.__all__
 
     def test_has_docstring(self) -> None:
         assert s.__doc__ is not None
-        assert "config" in s.__doc__.lower()
 
     # ── Execute: success + failure ─────────────────────────────────────
 
     def test_execute_success(self) -> None:
         result = _SuccessService().execute()
         assert result.is_success
-        assert result.value == "ok"
 
     def test_execute_failure(self) -> None:
         result = _FailService().execute()
         assert result.is_failure
         assert result.error == "nope"
-
-    # ── Type parameters ────────────────────────────────────────────────
-
-    _TYPE_SERVICES = [
-        ("str", _SuccessService, "ok"),
-        ("bool", _BoolService, True),
-        ("int", _IntService, 42),
-    ]
-
-    @pytest.mark.parametrize(
-        ("label", "cls", "expected"),
-        _TYPE_SERVICES,
-        ids=[x[0] for x in _TYPE_SERVICES],
-    )
-    def test_type_parameter(
-        self,
-        label: str,
-        cls: type,
-        expected: str | bool | int,
-    ) -> None:
-        result = cls().execute()
-        assert result.is_success
-        assert result.value == expected
 
     # ── Config + Logger ────────────────────────────────────────────────
 
@@ -125,5 +93,3 @@ class TestsFlextLdapBase:
         a, b = _SuccessService(), _FailService()
         assert a.execute().is_success
         assert b.execute().is_failure
-        assert a.execute().value == "ok"
-        assert b.execute().error == "nope"

@@ -35,7 +35,6 @@ from datetime import datetime
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextService, r
-from flext_ldif import FlextLdif, FlextLdifParser
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
@@ -1147,17 +1146,21 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     return r[Sequence[m.Ldif.Entry]].fail(
                         f"Unsupported server type: {server_type_str}",
                     )
-                parse_result = self._adapter.parser.parse_ldap3_results(
-                    ldap3_results,
-                    None,
-                )
-                if parse_result.is_failure:
-                    error_msg = str(parse_result.error) if parse_result.error else ""
-                    return r[Sequence[m.Ldif.Entry]].fail(error_msg)
-                parse_response = parse_result.value
-                return self._adapter.ResultConverter.convert_parsed_entries(
-                    parse_response,
-                )
+                entries: MutableSequence[m.Ldif.Entry] = []
+                for dn, attrs in ldap3_results:
+                    mutable_attrs: MutableMapping[
+                        str | bytes | bytearray,
+                        MutableSequence[str | bytes | bytearray],
+                    ] = {k: list(v) for k, v in attrs.items()}
+                    entry = m.Ldif.Entry(
+                        dn=m.Ldif.DN(value=dn),
+                        attributes=m.Ldif.Attributes(attributes=mutable_attrs),
+                        changetype=None,
+                        metadata=None,
+                        validation_metadata=None,
+                    )
+                    entries.append(entry)
+                return r[Sequence[m.Ldif.Entry]].ok(entries)
             except (
                 ValueError,
                 TypeError,
@@ -1171,22 +1174,13 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
 
     _connection: Connection | None
     _server: Server | None
-    _parser: FlextLdifParser
     _entry_adapter: FlextLdapEntryAdapter
 
-    def __init__(self, parser: FlextLdifParser | None = None) -> None:
-        """Initialize adapter service with parser.
-
-        Args:
-            parser: Optional FlextLdifParser instance. If None, uses default from FlextLdif.
-
-        """
+    def __init__(self) -> None:
+        """Initialize adapter service."""
         super().__init__()
-        if parser is None:
-            parser = FlextLdif().parser
         self._connection = None
         self._server = None
-        self._parser = parser
         self._entry_adapter = FlextLdapEntryAdapter()
 
     @property
@@ -1200,11 +1194,6 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
         if self._connection is None:
             return False
         return FlextLdapLdap3Adapter._is_bound(self._connection)
-
-    @property
-    def parser(self) -> FlextLdifParser:
-        """Get parser instance."""
-        return self._parser
 
     @staticmethod
     def _map_scope(

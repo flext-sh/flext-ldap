@@ -75,7 +75,7 @@
     - FlextLdapEntryAdapter
       - [`ldap3_to_ldif_entry(ldap3_entry) -> r[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
 - Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> r[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> r[Mapping[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
-- Create FlextLdif entry
+- Create ldif entry
 - Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> r[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries, output_path) -> r[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
   - FlextLdapQuirksAdapter
     - [`detect_server_type_from_entries(entries) -> r[str]`](#detect_server_type_from_entriesentries---flextresultstr)
@@ -101,7 +101,7 @@
 - Schema discovery
 - ACL management - OracleOIDOperations - OracleOUDOperations - GenericServerOperations
   - 📝 Type Annotations
-- Server operations with FlextLdif integration
+- Server operations with ldif integration
   - 🔗 Complete Usage Example
 
 **Complete API documentation for flext-ldap**
@@ -529,7 +529,7 @@ ______________________________________________________________________
 
 ### FlextLdapEntryAdapter
 
-Bidirectional converter between ldap3 entries and FlextLdif entries.
+Bidirectional converter between ldap3 entries and ldif entries.
 
 **Import:**
 
@@ -539,7 +539,7 @@ from flext_ldap import FlextLdapEntryAdapter
 
 #### `ldap3_to_ldif_entry(ldap3_entry) -> r[FlextLdifModels.Entry]`
 
-Convert ldap3.Entry to FlextLdif entry.
+Convert ldap3.Entry to ldif entry.
 
 **Parameters:**
 
@@ -559,7 +559,7 @@ adapter = FlextLdapEntryAdapter()
 connection.search("dc=example,dc=com", "(objectClass=person)")
 
 for ldap3_entry in connection.entries:
-    # Convert to FlextLdif
+    # Convert to ldif
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if result.is_success:
         ldif_entry = result.unwrap()
@@ -568,7 +568,7 @@ for ldap3_entry in connection.entries:
 
 #### `ldap3_entries_to_ldif_entries(ldap3_entries) -> r[List[FlextLdifModels.Entry]]`
 
-Batch convert multiple ldap3 entries to FlextLdif entries.
+Batch convert multiple ldap3 entries to ldif entries.
 
 **Parameters:**
 
@@ -578,7 +578,7 @@ Batch convert multiple ldap3 entries to FlextLdif entries.
 
 #### `ldif_entry_to_ldap3_attributes(ldif_entry) -> r[Mapping[str, t.List]]`
 
-Convert FlextLdif entry to ldap3 attributes dictionary.
+Convert ldif entry to ldap3 attributes dictionary.
 
 **Parameters:**
 
@@ -594,7 +594,7 @@ from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter()
 
-# Create FlextLdif entry
+# Create ldif entry
 ldif_entry = FlextLdifModels.Entry(
     dn=FlextLdifModels.DN(value="cn=test,dc=example,dc=com"),
     attributes=FlextLdifModels.Attributes(
@@ -615,7 +615,7 @@ if result.is_success:
 
 #### `convert_ldif_file_to_entries(ldif_file_path) -> r[List[FlextLdifModels.Entry]]`
 
-Load and convert LDIF file to FlextLdif entries.
+Load and convert LDIF file to ldif entries.
 
 **Parameters:**
 
@@ -625,7 +625,7 @@ Load and convert LDIF file to FlextLdif entries.
 
 #### `write_entries_to_ldif_file(entries, output_path) -> r[bool]`
 
-Write FlextLdif entries to LDIF file.
+Write ldif entries to LDIF file.
 
 **Parameters:**
 
@@ -638,7 +638,7 @@ ______________________________________________________________________
 
 ### FlextLdapQuirksAdapter
 
-Server detection and quirks system integration using FlextLdif.
+Server detection and quirks system integration using ldif.
 
 **Import:**
 
@@ -674,7 +674,7 @@ from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperat
 quirks = FlextLdapQuirksAdapter()
 
 # Detect from entries
-entries = [...]  # FlextLdif entries from search
+entries = [...]  # ldif entries from search
 result = quirks.detect_server_type_from_entries(entries)
 
 if result.is_success:
@@ -877,7 +877,7 @@ Format ACL dictionary to server-specific string.
 
 ##### `add_entry(connection, entry) -> r[bool]`
 
-Add FlextLdif entry to directory.
+Add ldif entry to directory.
 
 **Example:**
 
@@ -1076,7 +1076,7 @@ def search_entries(
     """Search LDAP entries with full type safety."""
 
 
-# Server operations with FlextLdif integration
+# Server operations with ldif integration
 def add_entry(self, connection, entry: FlextLdifModels.Entry) -> r[bool]:
     """Add entry with type safety."""
 ```
@@ -1117,7 +1117,7 @@ def universal_ldap_example():
     # Search for entries
     connection.search("dc=example,dc=com", "(objectClass=*)", attributes=["*"])
 
-    # Convert to FlextLdif
+    # Convert to ldif
     entries = []
     for ldap3_entry in connection.entries:
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)

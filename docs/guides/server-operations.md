@@ -125,8 +125,8 @@
 - Paged search (if supported by server)
   - **Limitations**
   - 🔄 Entry Adapter Integration
-- Search and convert to FlextLdif
-- Create FlextLdif entry and convert to ldap3
+- Search and convert to ldif
+- Create ldif entry and convert to ldap3
   - 🔍 Quirks Detection
 - Detect server type from entries
 - Automatic server operations selection
@@ -139,8 +139,8 @@
     - **1. Use Server Detection**
     - **2. Handle Errors Explicitly**
     - **3. Use Entry Adapter**
-- ldap3 → FlextLdif
-- FlextLdif → ldap3
+- ldap3 → ldif
+- ldif → ldap3
   - **4. Server-Specific Normalization**
   - **5. Connection Management**
 - Create connection
@@ -168,7 +168,7 @@ This document provides detailed information about server-specific implementation
 ## 🎯 Overview
 
 FLEXT-LDAP provides complete,
-server-specific implementations for major LDAP servers with automatic quirks handling and FlextLdif integration.
+server-specific implementations for major LDAP servers with automatic quirks handling and ldif integration.
 
 ### **Available Implementations**
 
@@ -585,7 +585,7 @@ search_result = ops.search_with_paging(
 
 ## 🔄 Entry Adapter Integration
 
-All server operations integrate with the Entry Adapter for ldap3 ↔ FlextLdif conversion:
+All server operations integrate with the Entry Adapter for ldap3 ↔ ldif conversion:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -594,19 +594,19 @@ from flext_ldap import OpenLDAP2Operations
 adapter = FlextLdapEntryAdapter()
 ops = OpenLDAP2Operations()
 
-# Search and convert to FlextLdif
+# Search and convert to ldif
 connection.search(base_dn, search_filter, attributes=attributes)
 for ldap3_entry in connection.entries:
-    # Convert ldap3 entry to FlextLdif
+    # Convert ldap3 entry to ldif
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if ldif_result.is_success:
         ldif_entry = ldif_result.unwrap()
 
-        # Process with FlextLdif models
+        # Process with ldif models
         print(f"DN: {ldif_entry.dn.value}")
         print(f"Attributes: {ldif_entry.attributes.attributes}")
 
-# Create FlextLdif entry and convert to ldap3
+# Create ldif entry and convert to ldap3
 ldif_entry = FlextLdifModels.Entry(...)
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 if attrs_result.is_success:
@@ -619,7 +619,7 @@ if attrs_result.is_success:
 
 ## 🔍 Quirks Detection
 
-Server type detection using FlextLdif quirks:
+Server type detection using ldif quirks:
 
 ```python
 from flext_ldap import FlextLdapQuirksAdapter
@@ -725,10 +725,10 @@ Always use the Entry Adapter for conversions:
 ```python
 adapter = FlextLdapEntryAdapter()
 
-# ldap3 → FlextLdif
+# ldap3 → ldif
 ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
 
-# FlextLdif → ldap3
+# ldif → ldap3
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 ```
 
@@ -818,7 +818,7 @@ if norm_result.is_failure:
 
 - **Architecture Guide** - Universal LDAP architecture
 - **API Reference** - Complete API documentation
-- **Integration Guide** - FlextLdif integration patterns
+- **Integration Guide** - ldif integration patterns
 - **ACL Management** - Server-specific ACL handling
 - **Troubleshooting** - Common issues and solutions
 

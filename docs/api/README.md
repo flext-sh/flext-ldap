@@ -28,12 +28,12 @@ Complete API reference for flext-ldap v0.10.0, covering all public interfaces, c
 
 ### Primary Entry Point
 
-**FlextLdap** - Main API facade
+**ldap** - Main API facade
 
 ```python
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 
-api = FlextLdap()
+api = ldap()
 result = api.search_entries(search_request)
 ```
 
@@ -82,7 +82,7 @@ result = api.search_entries(search_request)
 ```python
 # Public API (recommended)
 from flext_ldap import (
-    FlextLdap,  # Main API
+    ldap,  # Main API
     FlextLdapModels,  # Models
     FlextLdapClients,  # Client operations
     FlextLdapAcl,  # ACL management
@@ -103,7 +103,7 @@ from flext_ldap import FlextLdapEntryAdapter
 **Search**:
 
 ```python
-api = FlextLdap()
+api = ldap()
 search_request = FlextLdapModels.SearchRequest(
     base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
 )
@@ -128,7 +128,7 @@ result = acl_manager.get_acls(connection, dn, server_type)
 
 ### Stable (Public API)
 
-- ✅ FlextLdap - Main API facade
+- ✅ ldap - Main API facade
 - ✅ FlextLdapModels - Domain models
 - ✅ FlextLdapClients - Client operations
 - ✅ FlextLdapAcl - ACL management

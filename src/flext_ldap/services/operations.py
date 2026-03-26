@@ -6,7 +6,7 @@ inputs, normalized results, and reusable comparison utilities for callers.
 Business Rules:
     - All LDAP operations are delegated to the adapter layer (Ldap3Adapter)
     - DN normalization is applied before all search operations using
-      u.Ldif.norm_string() to ensure consistent DN format
+      u.Ldif.norm_or_fallback() to ensure consistent DN format
     - Entry comparison ignores operational attributes defined in
       c.Ldap.OperationalAttributes.IGNORE_SET
     - Upsert operations implement add-or-modify pattern:
@@ -34,15 +34,16 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
-from flext_core import FlextRuntime, r, s
+from flext_core import FlextRuntime, r
 from pydantic import ConfigDict
 
-from flext_ldap import FlextLdapConnection, c, m, p, t, u
+from flext_ldap import c, m, p, t, u
+from flext_ldap.services.connection import FlextLdapConnection
 
 LaxStr = str | bytes | bytearray
 
 
-class FlextLdapOperations(s[m.Ldap.SearchResult]):
+class FlextLdapOperations(FlextLdapConnection):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
@@ -51,7 +52,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
 
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)
-        - Search operations normalize base_dn using u.Ldif.norm_string()
+        - Search operations normalize base_dn using u.Ldif.norm_or_fallback()
         - Add/Modify/Delete operations convert string DNs to DN models
         - Upsert implements LDAP idempotent write: add -> exists check -> modify
         - Batch operations track per-entry progress and support stop_on_error
@@ -89,8 +90,6 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
     def _get_structlog_logger() -> p.Logger | None:
         """Return structlog logger when runtime logger satisfies the protocol."""
         return FlextRuntime.get_logger(__name__)
-
-    _connection: FlextLdapConnection
 
     @staticmethod
     def _extract_attributes_dict(entry: m.Ldif.Entry) -> Mapping[str, t.StrSequence]:
@@ -832,32 +831,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
             return r[t.StrSequence].ok(filtered)
 
-    def __init__(self, connection: FlextLdapConnection) -> None:
-        """Initialize the operations service with a live connection."""
-        super().__init__()
-        self._connection = connection
-        self._upsert_handler = self._UpsertHandler(self)
-
     @property
-    def is_connected(self) -> bool:
-        """Check if operations service has an active connection.
-
-        Business Rules:
-            - Delegates to Flexun.is_connected property
-            - Returns True if connection is bound and ready for operations
-            - Returns False if connection is closed or not established
-            - State is checked synchronously (no network calls)
-
-        Audit Implications:
-            - Connection state checks are not logged (frequent operation)
-            - State changes are logged via connect/disconnect methods
-            - State can be queried before operations for validation
-
-        Returns:
-            True if connected and bound, False otherwise.
-
-        """
-        return self._connection.is_connected
+    def _upsert_handler(self) -> FlextLdapOperations._UpsertHandler:
+        """Lazy-init upsert handler."""
+        handler_key = "_upsert_handler_instance"
+        if not hasattr(self, handler_key):
+            object.__setattr__(self, handler_key, self._UpsertHandler(self))
+        return object.__getattribute__(self, handler_key)
 
     @staticmethod
     def is_already_exists_error(error_message: str) -> bool:
@@ -920,7 +900,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """
         entry_for_adapter: m.Ldif.Entry
         entry_for_adapter = m.Ldif.Entry.model_validate(entry)
-        return self._connection.adapter.add(entry_for_adapter)
+        return self.adapter.add(entry_for_adapter)
 
     def batch_upsert(
         self,
@@ -1097,7 +1077,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
             case _:
                 dn_model = dn
-        result = self._connection.adapter.delete(dn_model)
+        result = self.adapter.delete(dn_model)
         return result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -1106,7 +1086,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         )
 
     @override
-    def execute(self) -> r[m.Ldap.SearchResult]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:
@@ -1123,7 +1103,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
             r with empty SearchResult (success) or NOT_CONNECTED error.
 
         """
-        if not self._connection.is_connected:
+        if not self.is_connected:
             return r[m.Ldap.SearchResult].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
         base_dn: str = "dc=example,dc=com"
         return r[m.Ldap.SearchResult].ok(
@@ -1177,7 +1157,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
                 )
             case _:
                 dn_model = dn
-        result = self._connection.adapter.modify(dn_model, changes)
+        result = self.adapter.modify(dn_model, changes)
         return result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -1194,7 +1174,7 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
-            - Base DN is normalized using u.Ldif.norm_string() before search
+            - Base DN is normalized using u.Ldif.norm_or_fallback() before search
             - Normalization ensures consistent DN format across server types
             - Search filter syntax is validated by LDAP server
             - Server type determines parsing quirks for entry attributes
@@ -1220,13 +1200,13 @@ class FlextLdapOperations(s[m.Ldap.SearchResult]):
         """
         normalized_options = search_options.model_copy(
             update={
-                "base_dn": u.Ldif.norm_string(
+                "base_dn": u.Ldif.norm_or_fallback(
                     search_options.base_dn,
                 ),
             },
         )
         effective_server_type = server_type or c.Ldif.ServerTypes.RFC
-        result = self._connection.adapter.search(
+        result = self.adapter.search(
             normalized_options,
             server_type=effective_server_type,
         )

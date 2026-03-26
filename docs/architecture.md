@@ -19,7 +19,7 @@ callers replace services or adapters for testing and alternative runtimes.
 ## Layered View
 
 ```
- FlextLdap facade (api.py)
+ ldap facade (api.py)
   ├── Connection (services/connection.py)
   ├── Operations (services/operations.py)
   ├── Sync (services/sync.py)
@@ -28,7 +28,7 @@ callers replace services or adapters for testing and alternative runtimes.
             └── ldap3 + flext-ldif
 ```
 
-- **Facade**: :class:`flext_ldap.api.FlextLdap` composes the services and exposes
+- **Facade**: :class:`flext_ldap.api.ldap` composes the services and exposes
   the high-level API used by callers.
 - **Services**: Connection, Operations, Sync, and Server Detection manage LDAP
   lifecycle concerns and return typed :class:`flext_core.r` values.
@@ -50,7 +50,7 @@ callers replace services or adapters for testing and alternative runtimes.
 
 ### Connecting
 
-1. `FlextLdap.connect` converts incoming dictionaries to
+1. `ldap.connect` converts incoming dictionaries to
    :class:`~flext_ldap.models.FlextLdapModels.ConnectionConfig` when needed.
 1. :class:`~flext_ldap.services.connection.FlextLdapConnection` delegates
    binding to :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`, with optional

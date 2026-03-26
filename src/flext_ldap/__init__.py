@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
-    from flext_ldap.api import FlextLdap, ldap
+    from flext_ldap.api import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap
     from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
     from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations, LaxStr
-    from flext_ldap.services.sync import FlextLdapSyncService
     from flext_ldap.settings import FlextLdapSettings
     from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
     from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
@@ -43,10 +42,14 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapModelsLdap": ["flext_ldap._models.ldap", "FlextLdapModelsLdap"],
     "FlextLdapOperations": ["flext_ldap.services.operations", "FlextLdapOperations"],
     "FlextLdapProtocols": ["flext_ldap.protocols", "FlextLdapProtocols"],
-    "FlextLdapServerDetector": ["flext_ldap.services.detection", "FlextLdapServerDetector"],
+    "FlextLdapServerDetector": [
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ],
     "FlextLdapServiceBase": ["flext_ldap.base", "FlextLdapServiceBase"],
     "FlextLdapSettings": ["flext_ldap.settings", "FlextLdapSettings"],
-    "FlextLdapSyncService": ["flext_ldap.services.sync", "FlextLdapSyncService"],
+    "FlextLdapSync": ["flext_ldap.api", "FlextLdapSync"],
+    "FlextLdapSyncCallbacks": ["flext_ldap.api", "FlextLdapSyncCallbacks"],
     "FlextLdapTypes": ["flext_ldap.typings", "FlextLdapTypes"],
     "FlextLdapUtilities": ["flext_ldap.utilities", "FlextLdapUtilities"],
     "LaxStr": ["flext_ldap.services.operations", "LaxStr"],
@@ -82,7 +85,8 @@ __all__ = [
     "FlextLdapServerDetector",
     "FlextLdapServiceBase",
     "FlextLdapSettings",
-    "FlextLdapSyncService",
+    "FlextLdapSync",
+    "FlextLdapSyncCallbacks",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "LaxStr",

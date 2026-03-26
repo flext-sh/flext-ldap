@@ -17,7 +17,7 @@
   - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
 - [Kubernetes Integration](#kubernetes-integration)
   - [Kubernetes Deployment](#kubernetes-deployment)
-- [FlextLdif Integration](#flextldif-integration)
+- [ldif Integration](#flextldif-integration)
   - [Entry Format Conversion](#entry-format-conversion)
   - [LDIF File Processing](#ldif-file-processing)
   - [Export to LDIF](#export-to-ldif)
@@ -56,10 +56,10 @@
   - Kubernetes Integration
     - Kubernetes Deployment
 - k8s-deployment.yml
-  - FlextLdif Integration
+  - ldif Integration
     - Entry Format Conversion
-- Convert ldap3 entries to FlextLdif format
-- Convert search results to FlextLdif
+- Convert ldap3 entries to ldif format
+- Convert search results to ldif
   - LDIF File Processing
   - Export to LDIF
   - Server Quirks Detection
@@ -744,11 +744,11 @@ data:
 
 ______________________________________________________________________
 
-## FlextLdif Integration
+## ldif Integration
 
 ### Entry Format Conversion
 
-FLEXT-LDAP uses FlextLdif for universal LDIF entry handling with automatic server quirks detection:
+FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server quirks detection:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -757,7 +757,7 @@ import ldap3
 
 adapter = FlextLdapEntryAdapter()
 
-# Convert ldap3 entries to FlextLdif format
+# Convert ldap3 entries to ldif format
 connection = ldap3.Connection(
     ldap3.Server("ldap://server:389"),
     user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
@@ -767,7 +767,7 @@ connection = ldap3.Connection(
 
 connection.search("ou=users,dc=example,dc=com", "(objectClass=person)")
 
-# Convert search results to FlextLdif
+# Convert search results to ldif
 flextldif_entries = []
 for ldap3_entry in connection.entries:
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -780,7 +780,7 @@ for ldap3_entry in connection.entries:
 
 ### LDIF File Processing
 
-Process LDIF files with FlextLdif integration:
+Process LDIF files with ldif integration:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -870,7 +870,7 @@ run(export_to_ldif())
 
 ### Server Quirks Detection
 
-Use FlextLdif quirks system for automatic server detection:
+Use ldif quirks system for automatic server detection:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -895,7 +895,7 @@ def detect_and_configure():
     connection.search("", "(objectClass=*)", search_scope="BASE", attributes=["*", "+"])
     connection.search("cn=subschema", "(objectClass=*)", attributes=["*"])
 
-    # Convert to FlextLdif
+    # Convert to ldif
     entries = []
     for ldap3_entry in connection.entries:
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -941,7 +941,7 @@ run(detect_and_configure())
 
 ### Universal LDAP Processor
 
-Complete example combining FlextLdif with server operations:
+Complete example combining ldif with server operations:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -957,7 +957,7 @@ import ldap3
 
 
 class UniversalLdapProcessor:
-    """Universal LDAP processor with FlextLdif integration."""
+    """Universal LDAP processor with ldif integration."""
 
     def __init__(self, host: str, bind_dn: str, bind_password: str):
         self.host = host

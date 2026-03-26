@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_core import FlextLogger, r
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 from pydantic import TypeAdapter, ValidationError
 
 from tests import m, t
@@ -116,8 +116,8 @@ class _FixtureLoaderUtils:
             ldif_content = _FixtureLoaderUtils.Fixtures.load_base_ldif()
             if not ldif_content:
                 return []
-            ldif = FlextLdif()
-            result = ldif.parse_ldif(ldif_content, server_type="rfc")
+            ldif_instance = ldif()
+            result = ldif_instance.parse_ldif(ldif_content, server_type="rfc")
             if result.is_success:
                 return [
                     entry

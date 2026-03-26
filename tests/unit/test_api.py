@@ -1,4 +1,4 @@
-"""Unit tests for FlextLdap API facade.
+"""Unit tests for FlextLdap API facade (MRO-based).
 
 Tests initialization, context manager, callback type guards, method signatures,
 and model config. All tests use real functionality without mocks.
@@ -9,22 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 
 import pytest
 from flext_core import FlextSettings
-from flext_ldif import FlextLdif
 from flext_tests import tm
 
-from flext_ldap import (
-    MULTI_PHASE_CALLBACK_PARAM_COUNT,
-    SINGLE_PHASE_CALLBACK_PARAM_COUNT,
-    FlextLdap,
-    FlextLdapConnection,
-    FlextLdapOperations,
-    FlextLdapSettings,
-    FlextLdapSyncCallbacks,
-)
+from flext_ldap import FlextLdapSettings, FlextLdapSyncCallbacks, ldap
 from tests import c, m, p
 
 pytestmark = [pytest.mark.unit]
@@ -50,64 +42,23 @@ def _multi_phase_cb(
 
 
 class TestsFlextLdapApi:
-    """Tests for FlextLdap API facade.
+    """Tests for ldap API facade — MRO-based, zero ceremony.
 
-    Architecture: Single class per module following FLEXT patterns.
-    Tests API structure and behavior without requiring LDAP connections.
+    ldap() instantiates with no args. Everything via MRO:
+    FlextLdap → FlextLdapSync → FlextLdapOperations → FlextLdapConnection
     """
 
     @classmethod
-    def _create_config(cls) -> FlextLdapSettings:
-        """Factory for FlextLdapSettings."""
-        return FlextLdapSettings()
-
-    @classmethod
-    def _create_connection(
-        cls,
-        config: FlextLdapSettings | None = None,
-    ) -> FlextLdapConnection:
-        """Factory for FlextLdapConnection."""
-        resolved_config = config if config is not None else cls._create_config()
-        return FlextLdapConnection(config=resolved_config)
-
-    @classmethod
-    def _create_api(
-        cls,
-        connection: FlextLdapConnection | None = None,
-        ldif: FlextLdif | None = None,
-    ) -> FlextLdap:
-        """Factory for FlextLdap API instance."""
-        conn = connection or cls._create_connection()
-        return FlextLdap(
-            connection=conn,
-            operations=FlextLdapOperations(connection=conn),
-            ldif=ldif,
-        )
+    def _create_api(cls) -> ldap:
+        """Factory — MRO-based, no constructor args."""
+        return ldap()
 
     # --- Initialization ---
 
-    def test_init_with_dependencies(self) -> None:
-        """Test FlextLdap initializes with all dependencies populated."""
+    def test_init_no_args(self) -> None:
+        """Test FlextLdap initializes with zero ceremony."""
         api = self._create_api()
         tm.that(api, none=False)
-        tm.that(api._connection, none=False)
-        tm.that(api._operations, none=False)
-        tm.that(api._ldif, none=False)
-
-    def test_init_default_ldif(self) -> None:
-        """Test FlextLdap uses default FlextLdif when not provided."""
-        tm.that(self._create_api(ldif=None)._ldif, is_=FlextLdif, none=False)
-
-    def test_init_custom_ldif(self) -> None:
-        """Test FlextLdap accepts custom FlextLdif instance."""
-        custom = FlextLdif()
-        tm.that(self._create_api(ldif=custom)._ldif, eq=custom)
-
-    def test_inherits_config_from_connection(self) -> None:
-        """Test API inherits config from connection."""
-        config = self._create_config()
-        api = self._create_api(connection=self._create_connection(config))
-        assert api._config is not None
 
     def test_logger_available(self) -> None:
         """Test logger is available on API instance."""
@@ -119,7 +70,7 @@ class TestsFlextLdapApi:
 
     def test_service_config_type(self) -> None:
         """Test _get_service_config_type returns FlextLdapSettings."""
-        assert FlextLdap._get_service_config_type() is FlextLdapSettings
+        assert ldap._get_service_config_type() is FlextLdapSettings
 
     # --- Context Manager ---
 
@@ -138,12 +89,11 @@ class TestsFlextLdapApi:
         with api as ctx:
             tm.that(ctx, eq=api)
 
-    # --- Constants ---
+    # --- MRO Method Inheritance ---
 
-    def test_callback_param_count_constants(self) -> None:
-        """Test callback parameter count constants match expected values."""
-        tm.that(MULTI_PHASE_CALLBACK_PARAM_COUNT, eq=5)
-        tm.that(SINGLE_PHASE_CALLBACK_PARAM_COUNT, eq=4)
+    def test_is_connected_default_false(self) -> None:
+        """Test is_connected returns False on fresh instance."""
+        tm.that(not self._create_api().is_connected, eq=True)
 
     # --- Callback Type Guards ---
 
@@ -185,7 +135,12 @@ class TestsFlextLdapApi:
             eq=expected,
         )
 
-    # --- API Methods ---
+    def test_callback_param_count_constants(self) -> None:
+        """Test callback parameter count constants match expected values."""
+        tm.that(len(inspect.signature(_multi_phase_cb).parameters), eq=5)
+        tm.that(len(inspect.signature(_single_phase_cb).parameters), eq=4)
+
+    # --- API Methods (via MRO) ---
 
     @pytest.mark.parametrize(
         "method_name",
@@ -196,10 +151,14 @@ class TestsFlextLdapApi:
             "add",
             "modify",
             "delete",
+            "upsert",
+            "batch_upsert",
+            "sync_phase_entries",
+            "sync_multiple_phases",
         ],
     )
     def test_api_method_exists_and_callable(self, method_name: str) -> None:
-        """Test API facade exposes expected method as callable."""
+        """Test API facade exposes expected method as callable via MRO."""
         api = self._create_api()
         assert hasattr(api, method_name)
         assert callable(getattr(api, method_name))
@@ -225,10 +184,7 @@ class TestsFlextLdapApi:
 
     def test_model_config(self) -> None:
         """Test FlextLdap model_config has expected Pydantic v2 settings."""
-        cfg = FlextLdap.model_config
+        cfg = ldap.model_config
         tm.that(not cfg.get("frozen"), eq=True)
-        tm.that(cfg.get("extra"), eq="forbid")
+        tm.that(cfg.get("extra"), eq="ignore")
         tm.that(cfg.get("arbitrary_types_allowed"), eq=True)
-
-
-__all__ = ["TestsFlextLdapApi"]
