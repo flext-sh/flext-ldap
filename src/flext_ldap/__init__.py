@@ -19,12 +19,7 @@ if TYPE_CHECKING:
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
-    from flext_ldap.api import (
-        MULTI_PHASE_CALLBACK_PARAM_COUNT,
-        SINGLE_PHASE_CALLBACK_PARAM_COUNT,
-        FlextLdap,
-        FlextLdapSyncCallbacks,
-    )
+    from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
     from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
@@ -51,13 +46,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapServerDetector": ["flext_ldap.services.detection", "FlextLdapServerDetector"],
     "FlextLdapServiceBase": ["flext_ldap.base", "FlextLdapServiceBase"],
     "FlextLdapSettings": ["flext_ldap.settings", "FlextLdapSettings"],
-    "FlextLdapSyncCallbacks": ["flext_ldap.api", "FlextLdapSyncCallbacks"],
     "FlextLdapSyncService": ["flext_ldap.services.sync", "FlextLdapSyncService"],
     "FlextLdapTypes": ["flext_ldap.typings", "FlextLdapTypes"],
     "FlextLdapUtilities": ["flext_ldap.utilities", "FlextLdapUtilities"],
     "LaxStr": ["flext_ldap.services.operations", "LaxStr"],
-    "MULTI_PHASE_CALLBACK_PARAM_COUNT": ["flext_ldap.api", "MULTI_PHASE_CALLBACK_PARAM_COUNT"],
-    "SINGLE_PHASE_CALLBACK_PARAM_COUNT": ["flext_ldap.api", "SINGLE_PHASE_CALLBACK_PARAM_COUNT"],
     "__all__": ["flext_ldap.__version__", "__all__"],
     "_models": ["flext_ldap._models", ""],
     "adapters": ["flext_ldap.adapters", ""],
@@ -65,6 +57,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "d": ["flext_ldif", "d"],
     "e": ["flext_ldif", "e"],
     "h": ["flext_ldif", "h"],
+    "ldap": ["flext_ldap.api", "ldap"],
     "m": ["flext_ldap.models", "FlextLdapModels"],
     "p": ["flext_ldap.protocols", "FlextLdapProtocols"],
     "r": ["flext_ldif", "r"],
@@ -76,8 +69,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 }
 
 __all__ = [
-    "MULTI_PHASE_CALLBACK_PARAM_COUNT",
-    "SINGLE_PHASE_CALLBACK_PARAM_COUNT",
     "FlextLdap",
     "FlextLdapConnection",
     "FlextLdapConstants",
@@ -91,7 +82,6 @@ __all__ = [
     "FlextLdapServerDetector",
     "FlextLdapServiceBase",
     "FlextLdapSettings",
-    "FlextLdapSyncCallbacks",
     "FlextLdapSyncService",
     "FlextLdapTypes",
     "FlextLdapUtilities",
@@ -103,6 +93,7 @@ __all__ = [
     "d",
     "e",
     "h",
+    "ldap",
     "m",
     "p",
     "r",

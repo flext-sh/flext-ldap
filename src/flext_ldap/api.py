@@ -1,31 +1,5 @@
 """FLEXT-LDAP API - Unified Facade for LDAP Operations.
 
-This module provides the primary entry point for all LDAP operations in the FLEXT
-ecosystem. The FlextLdap class serves as a facade for LDAP operations using clean
-dependency injection of connection and operations services.
-
-Business Rules:
-    - All LDAP operations MUST flow through this facade (zero direct ldap3 usage)
-    - Connection and operations services are injected (no internal instantiation)
-    - FlextLdif singleton is used for LDIF parsing (consistent ecosystem behavior)
-    - r pattern is used for all operations (no exceptions raised)
-    - Search results use m.Ldif.Entry for cross-ecosystem compatibility
-    - Upsert operations implement add-or-modify pattern with idempotent handling
-
-Audit Implications:
-    - All operations are logged via FlextLdapServiceBase.logger
-    - Connection/disconnection events create audit trail
-    - Operation results include affected counts for compliance reporting
-    - Progress callbacks enable real-time audit during batch operations
-    - Error messages include operation context for forensic analysis
-
-Architecture Notes:
-    - Implements Facade pattern over connection and operations services
-    - Uses Pydantic v2 with frozen=False for mutable facade state
-    - Context manager support for automatic resource cleanup
-    - Decorator validation via u.validated_with_result
-    - Type guards for callback signature detection (multi-phase vs single-phase)
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -961,3 +935,8 @@ class FlextLdap(FlextService[m.Ldap.SearchResult]):
                 stop_on_error=config.stop_on_error,
             ),
         )
+
+
+ldap = FlextLdap
+
+__all__ = ["FlextLdap", "ldap"]
