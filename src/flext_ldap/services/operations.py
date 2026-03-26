@@ -37,10 +37,7 @@ from typing import ClassVar, override
 from flext_core import FlextRuntime, r
 from pydantic import ConfigDict
 
-from flext_ldap import c, m, p, t, u
-from flext_ldap.services.connection import FlextLdapConnection
-
-LaxStr = str | bytes | bytearray
+from flext_ldap import FlextLdapConnection, c, m, p, t, u
 
 
 class FlextLdapOperations(FlextLdapConnection):
@@ -134,12 +131,13 @@ class FlextLdapOperations(FlextLdapConnection):
 
         @staticmethod
         def _convert_mapping_to_dict(
-            attrs: Mapping[LaxStr, Sequence[LaxStr]] | Mapping[str, t.StrSequence],
+            attrs: Mapping[t.Ldap.LaxStr, Sequence[t.Ldap.LaxStr]]
+            | Mapping[str, t.StrSequence],
         ) -> Mapping[str, t.StrSequence]:
             """Convert Mapping to Mapping[str, t.StrSequence].
 
             Args:
-                attrs: Mapping of attribute names to sequences (handles LaxStr keys/values)
+                attrs: Mapping of attribute names to sequences (handles t.Ldap.LaxStr keys/values)
 
             Returns:
                 Dictionary of attribute names to list of strings

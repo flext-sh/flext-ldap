@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldap import FlextLdapSync, FlextLdapSyncCallbacks, ldap, p
+from flext_ldap import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap, p
 from tests import m
 
 pytestmark = pytest.mark.unit
@@ -40,7 +40,7 @@ class TestsFlextLdapSync:
         )
 
     @staticmethod
-    def _create_client() -> ldap:
+    def _create_client() -> FlextLdap:
         return ldap()
 
     def test_sync_mixin_execute_is_placeholder(self) -> None:

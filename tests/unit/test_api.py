@@ -1,4 +1,4 @@
-"""Unit tests for FlextLdap API facade (MRO-based).
+"""Unit tests for ldap API facade (MRO-based).
 
 Tests initialization, context manager, callback type guards, method signatures,
 and model config. All tests use real functionality without mocks.
@@ -45,7 +45,7 @@ class TestsFlextLdapApi:
     """Tests for ldap API facade — MRO-based, zero ceremony.
 
     ldap() instantiates with no args. Everything via MRO:
-    FlextLdap → FlextLdapSync → FlextLdapOperations → FlextLdapConnection
+    ldap → FlextLdapSync → FlextLdapOperations → FlextLdapConnection
     """
 
     @classmethod
@@ -56,7 +56,7 @@ class TestsFlextLdapApi:
     # --- Initialization ---
 
     def test_init_no_args(self) -> None:
-        """Test FlextLdap initializes with zero ceremony."""
+        """Test ldap initializes with zero ceremony."""
         api = self._create_api()
         tm.that(api, none=False)
 
@@ -183,7 +183,7 @@ class TestsFlextLdapApi:
     # --- Model Config ---
 
     def test_model_config(self) -> None:
-        """Test FlextLdap model_config has expected Pydantic v2 settings."""
+        """Test ldap model_config has expected Pydantic v2 settings."""
         cfg = ldap.model_config
         tm.that(not cfg.get("frozen"), eq=True)
         tm.that(cfg.get("extra"), eq="ignore")

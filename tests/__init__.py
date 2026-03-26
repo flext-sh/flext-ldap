@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from tests.unit.test_models_search import TestsFlextLdapModelsSearch
     from tests.unit.test_models_sync import TestsFlextLdapModelsSync
     from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
+    from tests.unit.test_sync import TestsFlextLdapSync
     from tests.unit.test_utilities import TestsFlextLdapUtilities
     from tests.utilities import FlextLdapTestUtilities, FlextLdapTestUtilities as u
 
@@ -81,6 +82,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "TestsFlextLdapSettings": ["tests.unit.test_config", "TestsFlextLdapSettings"],
     "TestsFlextLdapSmoke": ["tests.integration.test_smoke", "TestsFlextLdapSmoke"],
+    "TestsFlextLdapSync": ["tests.unit.test_sync", "TestsFlextLdapSync"],
     "TestsFlextLdapUtilities": ["tests.unit.test_utilities", "TestsFlextLdapUtilities"],
     "_DockerInfraUtils": ["tests._utilities.docker_infra", "_DockerInfraUtils"],
     "_FixtureLoaderUtils": ["tests._utilities.fixture_loaders", "_FixtureLoaderUtils"],
@@ -128,6 +130,7 @@ __all__ = [
     "TestsFlextLdapOperations",
     "TestsFlextLdapSettings",
     "TestsFlextLdapSmoke",
+    "TestsFlextLdapSync",
     "TestsFlextLdapUtilities",
     "_DockerInfraUtils",
     "_FixtureLoaderUtils",

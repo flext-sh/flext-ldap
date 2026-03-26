@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations, LaxStr
+    from flext_ldap.services.operations import FlextLdapOperations
+    from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapConnection": ["flext_ldap.services.connection", "FlextLdapConnection"],
@@ -29,14 +30,16 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_ldap.services.detection",
         "FlextLdapServerDetector",
     ],
-    "LaxStr": ["flext_ldap.services.operations", "LaxStr"],
+    "FlextLdapSync": ["flext_ldap.services.sync", "FlextLdapSync"],
+    "FlextLdapSyncCallbacks": ["flext_ldap.services.sync", "FlextLdapSyncCallbacks"],
 }
 
 __all__ = [
     "FlextLdapConnection",
     "FlextLdapOperations",
     "FlextLdapServerDetector",
-    "LaxStr",
+    "FlextLdapSync",
+    "FlextLdapSyncCallbacks",
 ]
 
 

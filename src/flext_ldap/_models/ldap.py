@@ -17,20 +17,35 @@ class FlextLdapModelsLdap:
     """LDAP-specific models namespace."""
 
     class ConnectionConfig(BaseModel):
-        """Connection config."""
+        """Connection configuration for LDAP server."""
 
-        host: str = c.LOCALHOST
+        host: Annotated[str, Field(description="LDAP server hostname")] = c.LOCALHOST
         port: Annotated[
             t.PortNumber,
-            Field(default=c.Ldap.ConnectionDefaults.PORT),
-        ]
-        use_ssl: bool = False
-        use_tls: bool = False
-        bind_dn: str | None = None
-        bind_password: str | None = None
-        timeout: t.PositiveInt = c.Ldap.ConnectionDefaults.TIMEOUT
-        auto_bind: bool = True
-        auto_range: bool = True
+            Field(description="LDAP server port"),
+        ] = c.Ldap.ConnectionDefaults.PORT
+        use_ssl: Annotated[bool, Field(description="Enable SSL (LDAPS)")] = False
+        use_tls: Annotated[bool, Field(description="Enable StartTLS")] = False
+        bind_dn: Annotated[
+            str | None,
+            Field(description="Bind DN for authentication"),
+        ] = None
+        bind_password: Annotated[
+            str | None,
+            Field(description="Bind password for authentication"),
+        ] = None
+        timeout: Annotated[
+            t.PositiveInt,
+            Field(description="Connection timeout in seconds"),
+        ] = c.Ldap.ConnectionDefaults.TIMEOUT
+        auto_bind: Annotated[
+            bool,
+            Field(description="Auto-bind on connection"),
+        ] = True
+        auto_range: Annotated[
+            bool,
+            Field(description="Enable auto-range for paged results"),
+        ] = True
 
         @model_validator(mode="after")
         def validate_ssl_tls_exclusion(self) -> Self:
@@ -102,26 +117,44 @@ class FlextLdapModelsLdap:
         time_limit: t.NonNegativeInt
 
     class LdapBatchStats(BaseModel):
-        """Batch stats."""
+        """Base counters for batch LDAP operations (reused via MRO)."""
 
-        synced: t.NonNegativeInt = 0
-        failed: t.NonNegativeInt = 0
-        skipped: t.NonNegativeInt = 0
+        synced: Annotated[
+            t.NonNegativeInt,
+            Field(description="Entries synced successfully"),
+        ] = 0
+        failed: Annotated[
+            t.NonNegativeInt,
+            Field(description="Entries that failed"),
+        ] = 0
+        skipped: Annotated[
+            t.NonNegativeInt,
+            Field(description="Entries skipped"),
+        ] = 0
 
     class SyncOptions(BaseModel):
-        """Sync options."""
+        """Configuration for LDAP sync operations."""
 
         batch_size: Annotated[
             t.PositiveInt,
-            Field(
-                default=100,
-                description="Batch size for sync operations (must be >= 1)",
-            ),
-        ]
-        auto_create_parents: bool = True
-        allow_deletes: bool = False
-        source_basedn: str = ""
-        target_basedn: str = ""
+            Field(description="Batch size for sync operations"),
+        ] = 100
+        auto_create_parents: Annotated[
+            bool,
+            Field(description="Auto-create parent entries if missing"),
+        ] = True
+        allow_deletes: Annotated[
+            bool,
+            Field(description="Allow deletion of entries during sync"),
+        ] = False
+        source_basedn: Annotated[
+            str,
+            Field(description="Source base DN for sync"),
+        ] = ""
+        target_basedn: Annotated[
+            str,
+            Field(description="Target base DN for sync"),
+        ] = ""
         progress_callback: Callable[..., None] | None = None
 
     class SyncStats(LdapBatchStats):
@@ -158,12 +191,18 @@ class FlextLdapModelsLdap:
             })
 
     class UpsertResult(BaseModel):
-        """Upsert result."""
+        """Result of a single upsert operation."""
 
-        success: bool
-        dn: str
-        operation: str
-        error: str | None = None
+        success: Annotated[bool, Field(description="Whether the upsert succeeded")]
+        dn: Annotated[str, Field(description="Distinguished name of the entry")]
+        operation: Annotated[
+            str,
+            Field(description="Operation performed (ADD/MODIFY/SKIP)"),
+        ]
+        error: Annotated[
+            str | None,
+            Field(description="Error message if operation failed"),
+        ] = None
 
     class BatchUpsertResult(BaseModel):
         """Batch upsert result."""
@@ -173,6 +212,7 @@ class FlextLdapModelsLdap:
         failed: t.NonNegativeInt = 0
         results: Sequence[Mapping[str, t.Primitives]] = []
 
+        @computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (successful / total_processed)."""
@@ -202,13 +242,22 @@ class FlextLdapModelsLdap:
         attribute_changes: t.StrSequence = Field(default_factory=list)
 
     class OperationResult(BaseModel):
-        """LDAP operation result."""
+        """Immutable result of an LDAP operation (add/modify/delete/search)."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        success: bool
-        operation_type: str
-        message: str = ""
-        entries_affected: t.NonNegativeInt = 0
+        success: Annotated[bool, Field(description="Whether the operation succeeded")]
+        operation_type: Annotated[
+            str,
+            Field(description="Type of operation performed"),
+        ]
+        message: Annotated[
+            str,
+            Field(description="Result or error message"),
+        ] = ""
+        entries_affected: Annotated[
+            t.NonNegativeInt,
+            Field(description="Number of entries affected"),
+        ] = 0
 
     class SearchResult(BaseModel):
         """Search result.
@@ -220,6 +269,7 @@ class FlextLdapModelsLdap:
         entries: Sequence[Mapping[str, t.StrSequence]] = []
         search_options: FlextLdapModelsLdap.SearchOptions | None = None
 
+        @computed_field
         @property
         def by_objectclass(self) -> Mapping[str, Sequence[Mapping[str, t.StrSequence]]]:
             """Group entries by objectclass."""
@@ -230,10 +280,11 @@ class FlextLdapModelsLdap:
             for entry in self.entries:
                 category = self.get_entry_category(entry)
                 if category not in result:
-                    result[category] = list[Mapping[str, t.StrSequence]]()
+                    result[category] = []
                 result[category].append(entry)
             return result
 
+        @computed_field
         @property
         def total_count(self) -> int:
             """Total count of entries in result."""

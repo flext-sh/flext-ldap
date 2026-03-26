@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import ParamSpec, TypeVar
+from typing import TypeVar
 
 from flext_ldif import FlextLdifModels, FlextLdifTypes
 
@@ -34,17 +34,12 @@ class FlextLdapTypes(FlextLdifTypes):
         )
 
         # Entry types (formerly Entry.*)
-        type EntryInstance = p.Ldap.ServiceContracts.EntryContract
-        type EntryCollection = Sequence[p.Ldap.ServiceContracts.EntryContract]
         type LdifEntry = FlextLdifModels.Ldif.Entry
 
-        # Search types (formerly Search.*)
-        type SearchOptions = p.Ldap.ServiceContracts.SearchOptionsContract
-
         # Progress callback types (moved from _models/ldap.py Types class)
-        LdapProgressCallback = Callable[[int, int, str, "p.Ldap.LdapBatchStats"], None]
+        LdapProgressCallback = Callable[[int, int, str, p.Ldap.LdapBatchStats], None]
         MultiPhaseProgressCallback = Callable[
-            [str, int, int, str, "p.Ldap.LdapBatchStats"],
+            [str, int, int, str, p.Ldap.LdapBatchStats],
             None,
         ]
         ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
@@ -55,18 +50,22 @@ class FlextLdapTypes(FlextLdifTypes):
             Sequence[tuple[str | int, FlextLdifTypes.StrSequence]],
         ]
 
-    FlextLdapEntryT = TypeVar(
-        "FlextLdapEntryT",
-        bound=p.Ldap.ServiceContracts.EntryContract,
-    )
-    FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-    P = ParamSpec("P")
+        # Lax string type for ldap3 interop (bytes/bytearray from wire)
+        type LaxStr = str | bytes | bytearray
 
+
+FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
+
+FlextLdapEntryT = TypeVar(
+    "FlextLdapEntryT",
+    bound=p.Ldap.ServiceContracts.EntryContract,
+)
 
 t = FlextLdapTypes
 
 __all__ = [
+    "FlextLdapDomainResultT",
+    "FlextLdapEntryT",
     "FlextLdapTypes",
-    "p",
     "t",
 ]

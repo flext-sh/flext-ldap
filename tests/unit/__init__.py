@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from tests.unit.test_models_search import TestsFlextLdapModelsSearch
     from tests.unit.test_models_sync import TestsFlextLdapModelsSync
     from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
+    from tests.unit.test_sync import TestsFlextLdapSync
     from tests.unit.test_utilities import TestsFlextLdapUtilities
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
@@ -58,6 +59,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "TestsFlextLdapOperations",
     ],
     "TestsFlextLdapSettings": ["tests.unit.test_config", "TestsFlextLdapSettings"],
+    "TestsFlextLdapSync": ["tests.unit.test_sync", "TestsFlextLdapSync"],
     "TestsFlextLdapUtilities": ["tests.unit.test_utilities", "TestsFlextLdapUtilities"],
     "pytestmark": ["tests.unit.test_operations", "pytestmark"],
 }
@@ -74,6 +76,7 @@ __all__ = [
     "TestsFlextLdapModelsSync",
     "TestsFlextLdapOperations",
     "TestsFlextLdapSettings",
+    "TestsFlextLdapSync",
     "TestsFlextLdapUtilities",
     "pytestmark",
 ]

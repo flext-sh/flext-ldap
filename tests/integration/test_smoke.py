@@ -25,7 +25,7 @@ from enum import StrEnum, unique
 import pytest
 from flext_core import r
 
-from flext_ldap import ldap
+from flext_ldap import FlextLdap, ldap
 from ldap3 import Connection, Server
 from tests import m, t
 
@@ -130,7 +130,7 @@ class TestsFlextLdapSmoke:
             assert naming_contexts is not None, "LDAP naming contexts not available"
 
         @staticmethod
-        def assert_api_instantiated(api: ldap | None) -> None:
+        def assert_api_instantiated(api: FlextLdap | None) -> None:
             """Assert that ldap API is instantiated."""
             assert api is not None, "ldap API instantiation failed"
 

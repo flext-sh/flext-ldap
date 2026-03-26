@@ -1148,17 +1148,19 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     )
                 entries: MutableSequence[m.Ldif.Entry] = []
                 for dn, attrs in ldap3_results:
-                    mutable_attrs: MutableMapping[
-                        str | bytes | bytearray,
-                        MutableSequence[str | bytes | bytearray],
-                    ] = {k: list(v) for k, v in attrs.items()}
-                    entry = m.Ldif.Entry(
-                        dn=m.Ldif.DN(value=dn),
-                        attributes=m.Ldif.Attributes(attributes=mutable_attrs),
-                        changetype=None,
-                        metadata=None,
-                        validation_metadata=None,
-                    )
+                    str_attrs: MutableMapping[str, MutableSequence[str]] = {
+                        k: list(v) for k, v in attrs.items()
+                    }
+                    entry = m.Ldif.Entry.model_validate({
+                        "dn": m.Ldif.DN(value=dn),
+                        "attributes": m.Ldif.Attributes.model_validate({
+                            "attributes": str_attrs,
+                            "attribute_metadata": {},
+                        }),
+                        "changetype": None,
+                        "metadata": None,
+                        "validation_metadata": None,
+                    })
                     entries.append(entry)
                 return r[Sequence[m.Ldif.Entry]].ok(entries)
             except (
