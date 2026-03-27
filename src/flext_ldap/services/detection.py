@@ -59,7 +59,7 @@ class FlextLdapServerDetector(s[str]):
         """Classify the server using collected ``rootDSE`` attributes.
 
         Business Rules:
-            - Delegates to _detect_server_type_from_attributes_simple() for heuristics
+            - Delegates to _detect_server_type_heuristic() for heuristics
             - Vendor info is prioritized over extension/context checks
             - Returns normalized server type string (oid, oud, openldap, ad, ds389, rfc)
             - Always returns success (defaults to "rfc" if no match)
@@ -86,7 +86,7 @@ class FlextLdapServerDetector(s[str]):
 
         """
         detected_type = (
-            FlextLdapServerDetector._detect_server_type_from_attributes_simple(
+            FlextLdapServerDetector._detect_server_type_heuristic(
                 supported_extensions,
                 naming_contexts,
                 vendor_name,
@@ -217,7 +217,7 @@ class FlextLdapServerDetector(s[str]):
         return None
 
     @staticmethod
-    def _detect_server_type_from_attributes_simple(
+    def _detect_server_type_heuristic(
         supported_extensions: t.StrSequence,
         naming_contexts: t.StrSequence,
         vendor_name: str | None = None,
