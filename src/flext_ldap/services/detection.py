@@ -85,13 +85,11 @@ class FlextLdapServerDetector(s[str]):
             r[str]: Always success with normalized server type string.
 
         """
-        detected_type = (
-            FlextLdapServerDetector._detect_server_type_heuristic(
-                supported_extensions,
-                naming_contexts,
-                vendor_name,
-                vendor_version,
-            )
+        detected_type = FlextLdapServerDetector._detect_server_type_heuristic(
+            supported_extensions,
+            naming_contexts,
+            vendor_name,
+            vendor_version,
         )
         return r[str].ok(detected_type)
 
