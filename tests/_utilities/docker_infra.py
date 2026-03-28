@@ -118,7 +118,7 @@ class _DockerInfraUtils:
                         candidate_password,
                     )
                     return (candidate_dn, candidate_password)
-            except Exception:
+            except (ConnectionError, OSError, ValueError):
                 continue
         _DockerInfraUtils._resolved_admin_credentials[0] = (
             d.ADMIN_DN,
