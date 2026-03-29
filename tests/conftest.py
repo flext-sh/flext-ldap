@@ -9,8 +9,6 @@ import pytest
 from flext_core import FlextLogger, r
 
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
-from ldap3 import Connection, Server
-from ldap3.core.exceptions import LDAPException
 from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
@@ -79,11 +77,11 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         waited = 0.0
         while waited < 90:
             try:
-                srv = Server(
+                srv = u.Ldap.create_server_from_url(
                     f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
                     get_info="NO_INFO",
                 )
-                conn = Connection(
+                conn = u.Ldap.create_connection(
                     srv,
                     user=admin_dn,
                     password=admin_password,
@@ -98,7 +96,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                         waited,
                     )
                     break
-            except (LDAPException, ConnectionError, TimeoutError, OSError):
+            except (u.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
                 pass
             time.sleep(1.0)
             waited += 1.0
@@ -163,11 +161,11 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
         waited: float = 0.0
         while waited < 60:
             try:
-                srv = Server(
+                srv = u.Ldap.create_server_from_url(
                     f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
                     get_info="NO_INFO",
                 )
-                conn = Connection(
+                conn = u.Ldap.create_connection(
                     srv,
                     user=admin_dn,
                     password=admin_password,
@@ -177,7 +175,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
                 if conn.bound:
                     FlextLdapLdap3Wrappers.unbind(conn)
                     break
-            except (LDAPException, ConnectionError, TimeoutError, OSError):
+            except (u.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
                 pass
             time.sleep(1.0)
             waited += 1.0

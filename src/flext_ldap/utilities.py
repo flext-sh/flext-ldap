@@ -15,7 +15,14 @@ from typing import TypeIs
 
 from flext_ldif import FlextLdifUtilities, m
 
-from flext_ldap import c, t
+from flext_ldap import c, p, t
+from ldap3 import (
+    ALL as LDAP3_ALL,
+    NONE as LDAP3_NONE,
+    Connection as Ldap3Connection,
+    Server as Ldap3Server,
+)
+from ldap3.core.exceptions import LDAPException as Ldap3LDAPException
 
 
 class FlextLdapUtilities(FlextLdifUtilities):
@@ -51,6 +58,93 @@ class FlextLdapUtilities(FlextLdifUtilities):
             result = u.Ldap.DN.parse("cn=test,dc=example")  # Access LDIF utilities
 
         """
+
+        LDAPException: type[Exception] = Ldap3LDAPException
+        """Re-exported ldap3 LDAPException for catch blocks in test code."""
+
+        @staticmethod
+        def create_server(
+            host: str,
+            port: int = 389,
+            *,
+            use_ssl: bool = False,
+            get_info: str = "ALL",
+        ) -> p.Ldap.Ldap3Server:
+            """Create an ldap3 Server instance.
+
+            The ONLY sanctioned way for test code outside flext-ldap/src and
+            flext-ldif/src to create an LDAP server object.
+            """
+            info_map: Mapping[str, int] = {"ALL": LDAP3_ALL, "NONE": LDAP3_NONE}
+            info_value = info_map.get(get_info, LDAP3_ALL)
+            scheme = "ldaps" if use_ssl else "ldap"
+            server: p.Ldap.Ldap3Server = Ldap3Server(
+                f"{scheme}://{host}:{port}",
+                get_info=info_value,
+            )
+            return server
+
+        @staticmethod
+        def create_server_from_url(
+            server_url: str,
+            *,
+            get_info: str = "ALL",
+        ) -> p.Ldap.Ldap3Server:
+            """Create an ldap3 Server instance from a URL string.
+
+            Args:
+                server_url: Full LDAP URL (e.g. "ldap://localhost:3390").
+                get_info: Info level ("ALL", "NONE", "NO_INFO").
+
+            """
+            info_map: Mapping[str, int | str] = {
+                "ALL": LDAP3_ALL,
+                "NONE": LDAP3_NONE,
+                "NO_INFO": "NO_INFO",
+            }
+            info_value = info_map.get(get_info, LDAP3_ALL)
+            server: p.Ldap.Ldap3Server = Ldap3Server(server_url, get_info=info_value)
+            return server
+
+        @staticmethod
+        def create_connection(
+            server: p.Ldap.Ldap3Server,
+            *,
+            user: str,
+            password: str,
+            auto_bind: bool = True,
+            receive_timeout: int | None = None,
+        ) -> p.Ldap.Ldap3Connection:
+            """Create an ldap3 Connection instance.
+
+            The ONLY sanctioned way for test code outside flext-ldap/src and
+            flext-ldif/src to create an LDAP connection object.
+            """
+            kwargs: dict[str, str | bool | int | p.Ldap.Ldap3Server] = {
+                "server": server,
+                "user": user,
+                "password": password,
+                "auto_bind": auto_bind,
+            }
+            if receive_timeout is not None:
+                kwargs["receive_timeout"] = receive_timeout
+            conn: p.Ldap.Ldap3Connection = Ldap3Connection(**kwargs)
+            return conn
+
+        @staticmethod
+        def create_bare_server(
+            host: str,
+            *,
+            port: int = 389,
+            get_info: str = "NO_INFO",
+        ) -> p.Ldap.Ldap3Server:
+            """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
+            server: p.Ldap.Ldap3Server = Ldap3Server(
+                host,
+                port=port,
+                get_info=get_info,
+            )
+            return server
 
         @staticmethod
         def to_str(value: t.Primitives | None, *, default: str = "") -> str:

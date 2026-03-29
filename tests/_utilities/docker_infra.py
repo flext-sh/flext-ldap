@@ -19,8 +19,7 @@ from typing import ClassVar, TextIO
 from flext_core import FlextLogger
 from flext_tests import tk
 
-from flext_ldap import FlextLdapLdap3Wrappers
-from ldap3 import Connection, Server
+from flext_ldap import FlextLdapLdap3Wrappers, u
 from tests import c
 
 
@@ -103,8 +102,8 @@ class _DockerInfraUtils:
         ])
         for candidate_dn, candidate_password in candidates:
             try:
-                server = Server("localhost", port=d.PORT, get_info="NO_INFO")
-                test_conn = Connection(
+                server = u.Ldap.create_bare_server("localhost", port=d.PORT)
+                test_conn = u.Ldap.create_connection(
                     server,
                     user=candidate_dn,
                     password=candidate_password,
@@ -132,8 +131,11 @@ class _DockerInfraUtils:
         d = c.Ldap.Tests.Docker
         try:
             admin_dn, admin_password = _DockerInfraUtils.get_admin_credentials()
-            server = Server(f"ldap://localhost:{d.PORT}", get_info="NO_INFO")
-            conn = Connection(
+            server = u.Ldap.create_server_from_url(
+                f"ldap://localhost:{d.PORT}",
+                get_info="NO_INFO",
+            )
+            conn = u.Ldap.create_connection(
                 server,
                 user=admin_dn,
                 password=admin_password,

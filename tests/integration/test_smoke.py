@@ -25,8 +25,7 @@ from enum import StrEnum, unique
 import pytest
 from flext_core import r
 
-from flext_ldap import FlextLdap, ldap
-from ldap3 import Connection, Server
+from flext_ldap import FlextLdap, ldap, p, u
 from tests import m, t
 
 pytestmark = pytest.mark.smoke
@@ -56,18 +55,18 @@ class TestsFlextLdapSmoke:
         @staticmethod
         def create_ldap3_server(
             ldap_container: t.Ldap.Tests.LdapContainerDict,
-        ) -> Server:
+        ) -> p.Ldap.Ldap3Server:
             """Factory for ldap3 Server objects."""
             server_url = ldap_container["server_url"]
             if not isinstance(server_url, str):
                 server_url = str(server_url)
-            return Server(server_url, get_info="ALL")
+            return u.Ldap.create_server_from_url(server_url)
 
         @staticmethod
         def create_ldap3_connection(
-            server: Server,
+            server: p.Ldap.Ldap3Server,
             ldap_container: t.Ldap.Tests.LdapContainerDict,
-        ) -> Connection:
+        ) -> p.Ldap.Ldap3Connection:
             """Factory for ldap3 Connection objects."""
             bind_dn = ldap_container["bind_dn"]
             password = ldap_container["password"]
@@ -75,11 +74,10 @@ class TestsFlextLdapSmoke:
                 bind_dn = str(bind_dn)
             if not isinstance(password, str):
                 password = str(password)
-            return Connection(
+            return u.Ldap.create_connection(
                 server,
                 user=bind_dn,
                 password=password,
-                auto_bind=True,
             )
 
         @staticmethod
@@ -114,13 +112,13 @@ class TestsFlextLdapSmoke:
         """Assertion helpers for smoke tests across all test methods."""
 
         @staticmethod
-        def assert_connection_bound(connection: Connection) -> None:
+        def assert_connection_bound(connection: p.Ldap.Ldap3Connection) -> None:
             """Assert that LDAP connection is bound."""
             bound = getattr(connection, "bound", False)
             assert bound, "LDAP server not responding to bind"
 
         @staticmethod
-        def assert_server_info_available(connection: Connection) -> None:
+        def assert_server_info_available(connection: p.Ldap.Ldap3Connection) -> None:
             """Assert that LDAP server info is available."""
             server = getattr(connection, "server", None)
             assert server is not None, "LDAP connection has no server"

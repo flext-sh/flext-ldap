@@ -403,6 +403,84 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
         @runtime_checkable
+        class Ldap3Connection(Protocol):
+            """Protocol for ldap3.Connection objects (structural type).
+
+            Provides the structural interface for LDAP connections so test code
+            outside flext-ldap/src and flext-ldif/src never imports ldap3 directly.
+            """
+
+            bound: bool
+
+            @property
+            def server(self) -> p.Ldap.Ldap3Server:
+                """Get the server this connection is bound to."""
+                ...
+
+            @property
+            def entries(self) -> Sequence[p.Ldap.Ldap3Entry]:
+                """Get entries from last search operation."""
+                ...
+
+            def bind(self) -> bool:
+                """Bind the connection."""
+                ...
+
+            def unbind(self) -> bool:
+                """Unbind the connection."""
+                ...
+
+            def search(
+                self,
+                search_base: str,
+                search_filter: str,
+                *,
+                search_scope: str,
+                attributes: Sequence[str] | str | None,
+            ) -> bool:
+                """Perform LDAP search."""
+                ...
+
+            def add(
+                self,
+                dn: str,
+                object_class: Sequence[str] | str | None,
+                attributes: Mapping[str, str | Sequence[str]] | None,
+            ) -> bool:
+                """Add an LDAP entry."""
+                ...
+
+            def delete(self, dn: str) -> bool:
+                """Delete an LDAP entry."""
+                ...
+
+            def modify(
+                self,
+                dn: str,
+                changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
+            ) -> bool:
+                """Modify an LDAP entry."""
+                ...
+
+        @runtime_checkable
+        class Ldap3Server(Protocol):
+            """Protocol for ldap3.Server objects (structural type)."""
+
+            @property
+            def info(self) -> p.Ldap.Ldap3ServerInfo | None:
+                """Get server info."""
+                ...
+
+        @runtime_checkable
+        class Ldap3ServerInfo(Protocol):
+            """Protocol for ldap3 server info objects (structural type)."""
+
+            @property
+            def naming_contexts(self) -> Sequence[str]:
+                """Get naming contexts."""
+                ...
+
+        @runtime_checkable
         class Ldap3Entry(Protocol):
             """Protocol for ldap3.Entry objects (structural type).
 
