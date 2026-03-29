@@ -45,7 +45,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapModelsLdap": ["flext_ldap._models.ldap", "FlextLdapModelsLdap"],
     "FlextLdapOperations": ["flext_ldap.services.operations", "FlextLdapOperations"],
     "FlextLdapProtocols": ["flext_ldap.protocols", "FlextLdapProtocols"],
-    "FlextLdapServerDetector": ["flext_ldap.services.detection", "FlextLdapServerDetector"],
+    "FlextLdapServerDetector": [
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ],
     "FlextLdapServiceBase": ["flext_ldap.base", "FlextLdapServiceBase"],
     "FlextLdapSettings": ["flext_ldap.settings", "FlextLdapSettings"],
     "FlextLdapSync": ["flext_ldap.services.sync", "FlextLdapSync"],
