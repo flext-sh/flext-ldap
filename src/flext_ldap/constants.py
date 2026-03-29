@@ -124,14 +124,22 @@ class FlextLdapConstants(FlextLdifConstants):
             UNKNOWN_ERROR = "unknown error"
 
         class LdapAttributeNames:
-            """Common LDAP attribute name constants."""
+            """LDAP protocol control attributes — only protocol-level constants.
 
-            ALL_ATTRIBUTES = "*"
-            COMMON_NAME = "cn"
-            SURNAME = "sn"
-            MAIL = "mail"
-            OBJECT_CLASS = "objectClass"
-            CHANGETYPE = "changetype"
+            Domain-specific attributes (department, manager, telephoneNumber, etc.)
+            are potentially hundreds and vary per LDAP schema/deployment. They belong
+            in consumer Pydantic settings models, NOT as hardcoded constants.
+
+            Only attributes required by the LDAP protocol operations themselves
+            (objectClass for filtering, dn for entry identity, changetype for
+            LDIF operations, * for search-all) live here.
+            """
+
+            ALL_ATTRIBUTES: Final[str] = "*"
+            OBJECT_CLASS: Final[str] = "objectClass"
+            DN: Final[str] = "dn"
+            CHANGETYPE: Final[str] = "changetype"
+            COMMON_NAME: Final[str] = "cn"
 
         class OperationalAttributes:
             """Operational attributes to ignore in LDAP entries."""
@@ -150,9 +158,14 @@ class FlextLdapConstants(FlextLdifConstants):
             }
 
         class Filters:
-            """LDAP filter constants."""
+            """LDAP protocol filter constants.
 
-            ALL_ENTRIES_FILTER = "(objectClass=*)"
+            Only the universal protocol-level filter lives here.
+            Domain-specific filters (user, group, membership) are
+            deployment-specific and belong in consumer Pydantic settings.
+            """
+
+            ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
 
         @unique
         class OperationType(StrEnum):
@@ -200,6 +213,7 @@ class FlextLdapConstants(FlextLdifConstants):
             ADD = 0
             DELETE = 1
             REPLACE = 2
+
 
 
 c = FlextLdapConstants
