@@ -8,7 +8,7 @@ Business Rules:
     - DN normalization is applied before all search operations using
       u.Ldif.norm_or_fallback() to ensure consistent DN format
     - Entry comparison ignores operational attributes defined in
-      c.Ldap.OperationalAttributes.IGNORE_SET
+      c.Ldif.OperationalAttributes.IGNORE_SET
     - Upsert operations implement add-or-modify pattern:
       1. First attempts ADD operation
       2. If entry exists (LDAP error 68), compares attributes and applies MODIFY
@@ -285,7 +285,7 @@ class FlextLdapOperations(FlextLdapConnection):
                     continue
             if not existing_attrs or not new_attrs:
                 return None
-            ignore = c.Ldap.OperationalAttributes.IGNORE_SET
+            ignore = c.Ldif.OperationalAttributes.IGNORE_SET
             changes, processed = (
                 FlextLdapOperations.EntryComparison.process_new_attributes(
                     new_attrs,
@@ -599,7 +599,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 if changetype_val
                 else ""
             )
-            if changetype == c.Ldap.ChangeTypeOperations.MODIFY:
+            if changetype == c.Ldif.ChangeTypeOperations.MODIFY:
                 return self.handle_schema_modify(entry)
             return self.handle_regular_add(entry)
 
@@ -628,7 +628,7 @@ class FlextLdapOperations(FlextLdapConnection):
             entry_dn = (
                 str(entry.dn.value)
                 if entry.dn is not None
-                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
             )
             search_options = m.Ldap.SearchOptions(
                 base_dn=entry_dn,
@@ -736,7 +736,7 @@ class FlextLdapOperations(FlextLdapConnection):
             """
             entry_model = self._convert_to_model(entry)
             attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
-            add_op_result = attrs.get(c.Ldap.ChangeTypeOperations.ADD, [])
+            add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
             add_op_raw = add_op_result
             add_op: t.StrSequence = [str(item) for item in add_op_raw]
             if not add_op:
@@ -758,9 +758,9 @@ class FlextLdapOperations(FlextLdapConnection):
             entry_model = self._convert_to_model(entry)
             dn_str: str
             if entry_model.dn is not None:
-                dn_str = entry_model.dn.value or c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                dn_str = entry_model.dn.value or c.Ldif.EntryDefaults.UNKNOWN_VALUE
             else:
-                dn_str = c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                dn_str = c.Ldif.EntryDefaults.UNKNOWN_VALUE
             return (
                 self._ops
                 .modify(dn_str, changes)
@@ -797,7 +797,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 r with attribute type or error.
 
             """
-            add_op_result = attrs.get(c.Ldap.ChangeTypeOperations.ADD, [])
+            add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
             add_op_raw = add_op_result
             add_op: t.StrSequence = [str(item) for item in add_op_raw]
             if not add_op:

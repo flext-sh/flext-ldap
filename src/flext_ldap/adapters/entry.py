@@ -61,7 +61,7 @@ class FlextLdapEntryAdapter(s[bool]):
         Uses FlextRuntime type guards for safe type narrowing (no isinstance checks).
         """
 
-        ASCII_THRESHOLD: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD
+        ASCII_THRESHOLD: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD
 
         @staticmethod
         def convert_value_to_strings(
@@ -110,7 +110,7 @@ class FlextLdapEntryAdapter(s[bool]):
         @staticmethod
         def is_base64_encoded(
             value: str,
-            threshold: int = c.Ldap.EntryDefaults.ASCII_THRESHOLD,
+            threshold: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD,
         ) -> bool:
             """Check if value requires base64 encoding.
 
@@ -465,7 +465,7 @@ class FlextLdapEntryAdapter(s[bool]):
             entry_dn_for_log = (
                 str(ldap3_entry.entry_dn)
                 if ldap3_entry.entry_dn
-                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
             )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
@@ -526,13 +526,13 @@ class FlextLdapEntryAdapter(s[bool]):
             dn_value = (
                 getattr(entry.dn, "value", entry.dn)
                 if entry.dn
-                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
             )
             entry_dn_str = (
                 str(dn_value)
                 if dn_value is not None
-                and dn_value != c.Ldap.EntryDefaults.UNKNOWN_VALUE
-                else c.Ldap.EntryDefaults.UNKNOWN_VALUE
+                and dn_value != c.Ldif.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
             )
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",

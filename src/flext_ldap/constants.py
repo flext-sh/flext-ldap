@@ -64,12 +64,6 @@ class FlextLdapConstants(FlextLdifConstants):
 
             DEFAULT_TYPE = "rfc"
 
-        class EntryDefaults:
-            """Entry processing default values."""
-
-            UNKNOWN_VALUE = "unknown"
-            ASCII_THRESHOLD = 127
-
         class LdapCqrs:
             """LDAP CQRS constants."""
 
@@ -141,22 +135,6 @@ class FlextLdapConstants(FlextLdifConstants):
             CHANGETYPE: Final[str] = "changetype"
             COMMON_NAME: Final[str] = "cn"
 
-        class OperationalAttributes:
-            """Operational attributes to ignore in LDAP entries."""
-
-            IGNORE_SET: ClassVar[set[str]] = {
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "entryUUID",
-                "entryCSN",
-                "hasSubordinates",
-                "numSubordinates",
-                "subschemaSubentry",
-                "dseType",
-            }
-
         class Filters:
             """LDAP protocol filter constants.
 
@@ -185,13 +163,6 @@ class FlextLdapConstants(FlextLdifConstants):
             ADDED = "added"
             MODIFIED = "modified"
 
-        class ChangeTypeOperations:
-            """Change type operations."""
-
-            ADD = "add"
-            MODIFY = "modify"
-            DELETE = "delete"
-
         @unique
         class SearchScope(StrEnum):
             """LDAP search scopes."""
@@ -213,7 +184,6 @@ class FlextLdapConstants(FlextLdifConstants):
             ADD = 0
             DELETE = 1
             REPLACE = 2
-
 
 
 c = FlextLdapConstants
