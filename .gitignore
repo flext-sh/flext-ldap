@@ -425,3 +425,6 @@ __pycache__/
 
 # --- workspace-sync: required ignores (auto-managed) ---
 !base.mk
+
+# --- workspace-sync: required ignores (auto-managed) ---
+base.mk

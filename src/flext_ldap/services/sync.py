@@ -15,10 +15,12 @@ from typing import ClassVar, TypeIs, override
 from flext_core import r
 from pydantic import ConfigDict
 
-from flext_ldap.models import FlextLdapModels as m
-from flext_ldap.protocols import FlextLdapProtocols as p
-from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldap.typings import FlextLdapTypes as t
+from flext_ldap import (
+    FlextLdapModels as m,
+    FlextLdapOperations,
+    FlextLdapProtocols as p,
+    FlextLdapTypes as t,
+)
 
 MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
 SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4

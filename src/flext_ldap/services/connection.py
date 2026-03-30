@@ -17,9 +17,15 @@ from flext_core import r
 from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import FlextLdapServerDetector, FlextLdapSettings, c, m, u
+from flext_ldap import (
+    FlextLdapServerDetector,
+    FlextLdapServiceBase,
+    FlextLdapSettings,
+    c,
+    m,
+    u,
+)
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
-from flext_ldap.base import FlextLdapServiceBase
 
 
 class FlextLdapConnection(FlextLdapServiceBase):
