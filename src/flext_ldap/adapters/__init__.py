@@ -16,28 +16,17 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap.adapters import entry as entry, ldap3 as ldap3
-    from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import (
-        FlextLdapLdap3Adapter as FlextLdapLdap3Adapter,
-        FlextLdapLdap3Wrappers as FlextLdapLdap3Wrappers,
-    )
+    from flext_ldap.adapters import entry, ldap3
+    from flext_ldap.adapters.entry import *
+    from flext_ldap.adapters.ldap3 import *
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdapEntryAdapter": ["flext_ldap.adapters.entry", "FlextLdapEntryAdapter"],
-    "FlextLdapLdap3Adapter": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"],
-    "FlextLdapLdap3Wrappers": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"],
-    "entry": ["flext_ldap.adapters.entry", ""],
-    "ldap3": ["flext_ldap.adapters.ldap3", ""],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "FlextLdapEntryAdapter": "flext_ldap.adapters.entry",
+    "FlextLdapLdap3Adapter": "flext_ldap.adapters.ldap3",
+    "FlextLdapLdap3Wrappers": "flext_ldap.adapters.ldap3",
+    "entry": "flext_ldap.adapters.entry",
+    "ldap3": "flext_ldap.adapters.ldap3",
 }
 
-_EXPORTS: Sequence[str] = [
-    "FlextLdapEntryAdapter",
-    "FlextLdapLdap3Adapter",
-    "FlextLdapLdap3Wrappers",
-    "entry",
-    "ldap3",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))

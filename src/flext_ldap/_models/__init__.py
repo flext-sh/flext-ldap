@@ -17,18 +17,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap._models import ldap as ldap
-    from flext_ldap._models.ldap import FlextLdapModelsLdap as FlextLdapModelsLdap
+    from flext_ldap._models import ldap
+    from flext_ldap._models.ldap import *
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdapModelsLdap": ["flext_ldap._models.ldap", "FlextLdapModelsLdap"],
-    "ldap": ["flext_ldap._models.ldap", ""],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "FlextLdapModelsLdap": "flext_ldap._models.ldap",
+    "ldap": "flext_ldap._models.ldap",
 }
 
-_EXPORTS: Sequence[str] = [
-    "FlextLdapModelsLdap",
-    "ldap",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))

@@ -16,52 +16,23 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap.services import (
-        connection as connection,
-        detection as detection,
-        operations as operations,
-        sync as sync,
-    )
-    from flext_ldap.services.connection import (
-        FlextLdapConnection as FlextLdapConnection,
-    )
-    from flext_ldap.services.detection import (
-        FlextLdapServerDetector as FlextLdapServerDetector,
-    )
-    from flext_ldap.services.operations import (
-        FlextLdapOperations as FlextLdapOperations,
-    )
-    from flext_ldap.services.sync import (
-        FlextLdapSync as FlextLdapSync,
-        FlextLdapSyncCallbacks as FlextLdapSyncCallbacks,
-    )
+    from flext_ldap.services import connection, detection, operations, sync
+    from flext_ldap.services.connection import *
+    from flext_ldap.services.detection import *
+    from flext_ldap.services.operations import *
+    from flext_ldap.services.sync import *
 
-_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "FlextLdapConnection": ["flext_ldap.services.connection", "FlextLdapConnection"],
-    "FlextLdapOperations": ["flext_ldap.services.operations", "FlextLdapOperations"],
-    "FlextLdapServerDetector": [
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ],
-    "FlextLdapSync": ["flext_ldap.services.sync", "FlextLdapSync"],
-    "FlextLdapSyncCallbacks": ["flext_ldap.services.sync", "FlextLdapSyncCallbacks"],
-    "connection": ["flext_ldap.services.connection", ""],
-    "detection": ["flext_ldap.services.detection", ""],
-    "operations": ["flext_ldap.services.operations", ""],
-    "sync": ["flext_ldap.services.sync", ""],
+_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    "FlextLdapConnection": "flext_ldap.services.connection",
+    "FlextLdapOperations": "flext_ldap.services.operations",
+    "FlextLdapServerDetector": "flext_ldap.services.detection",
+    "FlextLdapSync": "flext_ldap.services.sync",
+    "FlextLdapSyncCallbacks": "flext_ldap.services.sync",
+    "connection": "flext_ldap.services.connection",
+    "detection": "flext_ldap.services.detection",
+    "operations": "flext_ldap.services.operations",
+    "sync": "flext_ldap.services.sync",
 }
 
-_EXPORTS: Sequence[str] = [
-    "FlextLdapConnection",
-    "FlextLdapOperations",
-    "FlextLdapServerDetector",
-    "FlextLdapSync",
-    "FlextLdapSyncCallbacks",
-    "connection",
-    "detection",
-    "operations",
-    "sync",
-]
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
