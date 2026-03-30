@@ -5,57 +5,86 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 from flext_ldap.__version__ import (
-    __author__,
-    __author_email__,
-    __description__,
-    __license__,
-    __title__,
-    __url__,
-    __version__,
-    __version_info__,
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+    __version_info__ as __version_info__,
 )
-from flext_ldap.typings import FlextLdapDomainResultT, FlextLdapEntryT
+from flext_ldap.typings import (
+    FlextLdapDomainResultT as FlextLdapDomainResultT,
+    FlextLdapEntryT as FlextLdapEntryT,
+)
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldif import d, e, h, r, x
-
     from flext_ldap import (
-        _models,
-        adapters,
-        api,
-        base,
-        constants,
-        models,
-        protocols,
-        services,
-        settings,
-        typings,
-        utilities,
+        _models as _models,
+        adapters as adapters,
+        api as api,
+        base as base,
+        constants as constants,
+        models as models,
+        protocols as protocols,
+        services as services,
+        settings as settings,
+        typings as typings,
+        utilities as utilities,
     )
-    from flext_ldap._models.ldap import FlextLdapModelsLdap
-    from flext_ldap.adapters import entry, ldap3
-    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
-    from flext_ldap.api import FlextLdap, ldap
-    from flext_ldap.base import FlextLdapServiceBase, s
-    from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
-    from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
-    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
-    from flext_ldap.services import connection, detection, operations, sync
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
-    from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
-    from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
+    from flext_ldap._models.ldap import FlextLdapModelsLdap as FlextLdapModelsLdap
+    from flext_ldap.adapters import entry as entry, ldap3 as ldap3
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import (
+        FlextLdapLdap3Adapter as FlextLdapLdap3Adapter,
+        FlextLdapLdap3Wrappers as FlextLdapLdap3Wrappers,
+    )
+    from flext_ldap.api import FlextLdap as FlextLdap, ldap as ldap
+    from flext_ldap.base import FlextLdapServiceBase as FlextLdapServiceBase, s as s
+    from flext_ldap.constants import (
+        FlextLdapConstants as FlextLdapConstants,
+        FlextLdapConstants as c,
+    )
+    from flext_ldap.models import (
+        FlextLdapModels as FlextLdapModels,
+        FlextLdapModels as m,
+    )
+    from flext_ldap.protocols import (
+        FlextLdapProtocols as FlextLdapProtocols,
+        FlextLdapProtocols as p,
+    )
+    from flext_ldap.services import (
+        connection as connection,
+        detection as detection,
+        operations as operations,
+        sync as sync,
+    )
+    from flext_ldap.services.connection import (
+        FlextLdapConnection as FlextLdapConnection,
+    )
+    from flext_ldap.services.detection import (
+        FlextLdapServerDetector as FlextLdapServerDetector,
+    )
+    from flext_ldap.services.operations import (
+        FlextLdapOperations as FlextLdapOperations,
+    )
+    from flext_ldap.services.sync import (
+        FlextLdapSync as FlextLdapSync,
+        FlextLdapSyncCallbacks as FlextLdapSyncCallbacks,
+    )
+    from flext_ldap.settings import FlextLdapSettings as FlextLdapSettings
+    from flext_ldap.typings import FlextLdapTypes as FlextLdapTypes, FlextLdapTypes as t
+    from flext_ldap.utilities import (
+        FlextLdapUtilities as FlextLdapUtilities,
+        FlextLdapUtilities as u,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdap": ["flext_ldap.api", "FlextLdap"],
@@ -109,7 +138,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "x": ["flext_ldif", "x"],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextLdap",
     "FlextLdapConnection",
     "FlextLdapConstants",
@@ -169,41 +198,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

@@ -10,42 +10,57 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-
     from tests.unit import (
-        test_api,
-        test_base,
-        test_config,
-        test_constants,
-        test_detection,
-        test_entry_adapter,
-        test_ldap3_adapter,
-        test_models,
-        test_models_search,
-        test_models_sync,
-        test_operations,
-        test_sync,
-        test_utilities,
+        test_api as test_api,
+        test_base as test_base,
+        test_config as test_config,
+        test_constants as test_constants,
+        test_detection as test_detection,
+        test_entry_adapter as test_entry_adapter,
+        test_ldap3_adapter as test_ldap3_adapter,
+        test_models as test_models,
+        test_models_search as test_models_search,
+        test_models_sync as test_models_sync,
+        test_operations as test_operations,
+        test_sync as test_sync,
+        test_utilities as test_utilities,
     )
-    from tests.unit.test_api import TestsFlextLdapApi
-    from tests.unit.test_base import TestsFlextLdapBase
-    from tests.unit.test_config import TestsFlextLdapSettings
-    from tests.unit.test_constants import TestsFlextLdapConstants
-    from tests.unit.test_detection import TestsFlextLdapDetection
-    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
-    from tests.unit.test_models import TestsFlextLdapModels
-    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
-    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
-    from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
-    from tests.unit.test_sync import TestsFlextLdapSync
-    from tests.unit.test_utilities import TestsFlextLdapUtilities
+    from tests.unit.test_api import TestsFlextLdapApi as TestsFlextLdapApi
+    from tests.unit.test_base import TestsFlextLdapBase as TestsFlextLdapBase
+    from tests.unit.test_config import TestsFlextLdapSettings as TestsFlextLdapSettings
+    from tests.unit.test_constants import (
+        TestsFlextLdapConstants as TestsFlextLdapConstants,
+    )
+    from tests.unit.test_detection import (
+        TestsFlextLdapDetection as TestsFlextLdapDetection,
+    )
+    from tests.unit.test_entry_adapter import (
+        TestsFlextLdapEntryAdapter as TestsFlextLdapEntryAdapter,
+    )
+    from tests.unit.test_ldap3_adapter import (
+        TestsFlextLdap3Adapter as TestsFlextLdap3Adapter,
+    )
+    from tests.unit.test_models import TestsFlextLdapModels as TestsFlextLdapModels
+    from tests.unit.test_models_search import (
+        TestsFlextLdapModelsSearch as TestsFlextLdapModelsSearch,
+    )
+    from tests.unit.test_models_sync import (
+        TestsFlextLdapModelsSync as TestsFlextLdapModelsSync,
+    )
+    from tests.unit.test_operations import (
+        TestsFlextLdapOperations as TestsFlextLdapOperations,
+        pytestmark as pytestmark,
+    )
+    from tests.unit.test_sync import TestsFlextLdapSync as TestsFlextLdapSync
+    from tests.unit.test_utilities import (
+        TestsFlextLdapUtilities as TestsFlextLdapUtilities,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestsFlextLdap3Adapter": [
@@ -92,7 +107,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "test_utilities": ["tests.unit.test_utilities", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "TestsFlextLdap3Adapter",
     "TestsFlextLdapApi",
     "TestsFlextLdapBase",
@@ -123,41 +138,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)
