@@ -11,10 +11,14 @@ This allows protocols to remain independent of model implementations.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Protocol, override, runtime_checkable
+from typing import Literal, Protocol, override, runtime_checkable
 
 from flext_core import r
 from flext_ldif import FlextLdifProtocols, t
+
+type _Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
+type _Ldap3DerefAliases = Literal["NEVER", "SEARCH", "FINDING_BASE", "ALWAYS"]
+type _Ldap3ModifyChanges = dict[str, list[tuple[str, list[str]]]]
 
 
 class FlextLdapProtocols(FlextLdifProtocols):
@@ -434,9 +438,19 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 search_base: str,
                 search_filter: str,
+                search_scope: _Ldap3SearchScope = "SUBTREE",
+                dereference_aliases: _Ldap3DerefAliases = "ALWAYS",
+                attributes: Sequence[str] | str | None = None,
+                size_limit: int = 0,
+                time_limit: int = 0,
                 *,
-                search_scope: str,
-                attributes: Sequence[str] | str | None,
+                types_only: bool = False,
+                get_operational_attributes: bool = False,
+                controls: None = None,
+                paged_size: int | None = None,
+                paged_criticality: bool = False,
+                paged_cookie: str | bytes | None = None,
+                auto_escape: bool | None = None,
             ) -> bool:
                 """Perform LDAP search."""
                 ...
@@ -457,7 +471,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def modify(
                 self,
                 dn: str,
-                changes: Mapping[str, Sequence[tuple[str, Sequence[str]]]],
+                changes: _Ldap3ModifyChanges,
+                controls: None = None,
             ) -> bool:
                 """Modify an LDAP entry."""
                 ...

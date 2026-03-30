@@ -11,18 +11,18 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import TypeIs
+from typing import Literal, TypeIs
 
 from flext_ldif import FlextLdifUtilities, m
 
 from flext_ldap import c, p, t
 from ldap3 import (
-    ALL as LDAP3_ALL,
-    NONE as LDAP3_NONE,
     Connection as Ldap3Connection,
     Server as Ldap3Server,
 )
 from ldap3.core.exceptions import LDAPException as Ldap3LDAPException
+
+type _Ldap3GetInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
 
 
 class FlextLdapUtilities(FlextLdifUtilities):
@@ -68,19 +68,20 @@ class FlextLdapUtilities(FlextLdifUtilities):
             port: int = 389,
             *,
             use_ssl: bool = False,
-            get_info: str = "ALL",
+            get_info: _Ldap3GetInfo = "ALL",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance.
 
             The ONLY sanctioned way for test code outside flext-ldap/src and
             flext-ldif/src to create an LDAP server object.
             """
-            info_map: Mapping[str, int] = {"ALL": LDAP3_ALL, "NONE": LDAP3_NONE}
-            info_value = info_map.get(get_info, LDAP3_ALL)
+            resolved_info: _Ldap3GetInfo = (
+                "NO_INFO" if get_info == "NO_INFO" else get_info
+            )
             scheme = "ldaps" if use_ssl else "ldap"
             server: p.Ldap.Ldap3Server = Ldap3Server(
                 f"{scheme}://{host}:{port}",
-                get_info=info_value,
+                get_info=resolved_info,
             )
             return server
 
@@ -88,22 +89,16 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def create_server_from_url(
             server_url: str,
             *,
-            get_info: str = "ALL",
+            get_info: _Ldap3GetInfo = "ALL",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance from a URL string.
 
             Args:
                 server_url: Full LDAP URL (e.g. "ldap://localhost:3390").
-                get_info: Info level ("ALL", "NONE", "NO_INFO").
+                get_info: Info level ("ALL", "NONE", "NO_INFO", "DSA", "SCHEMA").
 
             """
-            info_map: Mapping[str, int | str] = {
-                "ALL": LDAP3_ALL,
-                "NONE": LDAP3_NONE,
-                "NO_INFO": "NO_INFO",
-            }
-            info_value = info_map.get(get_info, LDAP3_ALL)
-            server: p.Ldap.Ldap3Server = Ldap3Server(server_url, get_info=info_value)
+            server: p.Ldap.Ldap3Server = Ldap3Server(server_url, get_info=get_info)
             return server
 
         @staticmethod
@@ -120,15 +115,18 @@ class FlextLdapUtilities(FlextLdifUtilities):
             The ONLY sanctioned way for test code outside flext-ldap/src and
             flext-ldif/src to create an LDAP connection object.
             """
-            kwargs: dict[str, str | bool | int | p.Ldap.Ldap3Server] = {
-                "server": server,
-                "user": user,
-                "password": password,
-                "auto_bind": auto_bind,
-            }
-            if receive_timeout is not None:
-                kwargs["receive_timeout"] = receive_timeout
-            conn: p.Ldap.Ldap3Connection = Ldap3Connection(**kwargs)
+            ldap3_server: Ldap3Server
+            if isinstance(server, Ldap3Server):
+                ldap3_server = server
+            else:
+                ldap3_server = Ldap3Server(str(server))
+            conn: p.Ldap.Ldap3Connection = Ldap3Connection(
+                server=ldap3_server,
+                user=user,
+                password=password,
+                auto_bind=auto_bind,
+                receive_timeout=receive_timeout,
+            )
             return conn
 
         @staticmethod
@@ -136,7 +134,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
             host: str,
             *,
             port: int = 389,
-            get_info: str = "NO_INFO",
+            get_info: _Ldap3GetInfo = "NO_INFO",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
             server: p.Ldap.Ldap3Server = Ldap3Server(
