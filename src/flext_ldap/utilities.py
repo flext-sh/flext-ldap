@@ -120,13 +120,21 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 ldap3_server = server
             else:
                 ldap3_server = Ldap3Server(str(server))
-            conn: p.Ldap.Ldap3Connection = Ldap3Connection(
-                server=ldap3_server,
-                user=user,
-                password=password,
-                auto_bind=auto_bind,
-                receive_timeout=receive_timeout,
-            )
+            if receive_timeout is not None:
+                conn = Ldap3Connection(
+                    ldap3_server,
+                    user=user,
+                    password=password,
+                    auto_bind=auto_bind,
+                    receive_timeout=receive_timeout,
+                )
+            else:
+                conn = Ldap3Connection(
+                    ldap3_server,
+                    user=user,
+                    password=password,
+                    auto_bind=auto_bind,
+                )
             return conn
 
         @staticmethod
