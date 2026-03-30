@@ -26,32 +26,23 @@ if TYPE_CHECKING:
     from flext_ldif import *
 
     from flext_ldap import (
-        _models,
-        adapters,
         api,
         base,
         constants,
         models,
         protocols,
-        services,
         settings,
         typings,
         utilities,
     )
-    from flext_ldap._models.ldap import *
-    from flext_ldap.adapters import entry, ldap3
-    from flext_ldap.adapters.entry import *
-    from flext_ldap.adapters.ldap3 import *
+    from flext_ldap._models import *
+    from flext_ldap.adapters import *
     from flext_ldap.api import *
     from flext_ldap.base import *
     from flext_ldap.constants import *
     from flext_ldap.models import *
     from flext_ldap.protocols import *
-    from flext_ldap.services import connection, detection, operations, sync
-    from flext_ldap.services.connection import *
-    from flext_ldap.services.detection import *
-    from flext_ldap.services.operations import *
-    from flext_ldap.services.sync import *
+    from flext_ldap.services import *
     from flext_ldap.settings import *
     from flext_ldap.typings import *
     from flext_ldap.utilities import *

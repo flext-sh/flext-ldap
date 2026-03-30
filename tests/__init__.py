@@ -13,55 +13,15 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_tests import *
 
-    from tests import (
-        _utilities,
-        conftest,
-        constants,
-        integration,
-        models,
-        protocols,
-        typings,
-        unit,
-        utilities,
-    )
-    from tests._utilities import docker_infra, fixture_loaders
-    from tests._utilities.docker_infra import *
-    from tests._utilities.fixture_loaders import *
+    from tests import conftest, constants, models, protocols, typings, utilities
+    from tests._utilities import *
     from tests.conftest import *
     from tests.constants import *
-    from tests.integration import test_smoke
-    from tests.integration.test_smoke import *
+    from tests.integration import *
     from tests.models import *
     from tests.protocols import *
     from tests.typings import *
-    from tests.unit import (
-        test_api,
-        test_base,
-        test_config,
-        test_constants,
-        test_detection,
-        test_entry_adapter,
-        test_ldap3_adapter,
-        test_models,
-        test_models_search,
-        test_models_sync,
-        test_operations,
-        test_sync,
-        test_utilities,
-    )
-    from tests.unit.test_api import *
-    from tests.unit.test_base import *
-    from tests.unit.test_config import *
-    from tests.unit.test_constants import *
-    from tests.unit.test_detection import *
-    from tests.unit.test_entry_adapter import *
-    from tests.unit.test_ldap3_adapter import *
-    from tests.unit.test_models import *
-    from tests.unit.test_models_search import *
-    from tests.unit.test_models_sync import *
-    from tests.unit.test_operations import *
-    from tests.unit.test_sync import *
-    from tests.unit.test_utilities import *
+    from tests.unit import *
     from tests.utilities import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {

@@ -310,6 +310,7 @@ exclude = [
   "**/site-packages/**",
   "**/venv",
   "**/venv/**",
+  ".ruff_cache",
   ".venv",
 ]
 extraPaths = [
