@@ -6,13 +6,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 from flext_ldap.typings import FlextLdapDomainResultT, FlextLdapEntryT
 
-if TYPE_CHECKING:
+if _TYPE_CHECKING:
+    from flext_ldif import d, e, h, r, x
+
     from flext_ldap.__version__ import *
     from flext_ldap._models import *
     from flext_ldap.adapters import *
@@ -25,7 +27,6 @@ if TYPE_CHECKING:
     from flext_ldap.settings import *
     from flext_ldap.typings import *
     from flext_ldap.utilities import *
-
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     (
