@@ -10,6 +10,16 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 from flext_ldap.typings import FlextLdapDomainResultT, FlextLdapEntryT
 
 if TYPE_CHECKING:
@@ -17,16 +27,6 @@ if TYPE_CHECKING:
     from flext_ldif import d, e, h, r, x
 
     from flext_ldap import _models, adapters, services
-    from flext_ldap.__version__ import (
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
@@ -64,14 +64,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapSyncCallbacks": ["flext_ldap.services.sync", "FlextLdapSyncCallbacks"],
     "FlextLdapTypes": ["flext_ldap.typings", "FlextLdapTypes"],
     "FlextLdapUtilities": ["flext_ldap.utilities", "FlextLdapUtilities"],
-    "__author__": ["flext_ldap.__version__", "__author__"],
-    "__author_email__": ["flext_ldap.__version__", "__author_email__"],
-    "__description__": ["flext_ldap.__version__", "__description__"],
-    "__license__": ["flext_ldap.__version__", "__license__"],
-    "__title__": ["flext_ldap.__version__", "__title__"],
-    "__url__": ["flext_ldap.__version__", "__url__"],
-    "__version__": ["flext_ldap.__version__", "__version__"],
-    "__version_info__": ["flext_ldap.__version__", "__version_info__"],
     "_models": ["flext_ldap._models", ""],
     "adapters": ["flext_ldap.adapters", ""],
     "c": ["flext_ldap.constants", "FlextLdapConstants"],
