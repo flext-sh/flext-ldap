@@ -14,7 +14,18 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_tests import d, e, h, r, s, x
 
-    from tests import _utilities, integration, unit
+    from tests import (
+        _utilities,
+        conftest,
+        constants,
+        integration,
+        models,
+        protocols,
+        typings,
+        unit,
+        utilities,
+    )
+    from tests._utilities import docker_infra, fixture_loaders
     from tests._utilities.docker_infra import _DockerInfraUtils
     from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
     from tests.conftest import (
@@ -28,10 +39,26 @@ if TYPE_CHECKING:
         worker_id,
     )
     from tests.constants import FlextLdapTestConstants, FlextLdapTestConstants as c
+    from tests.integration import test_smoke
     from tests.integration.test_smoke import TestsFlextLdapSmoke
     from tests.models import FlextLdapTestModels, FlextLdapTestModels as m
     from tests.protocols import FlextLdapTestProtocols, FlextLdapTestProtocols as p
     from tests.typings import FlextLdapTestTypes, FlextLdapTestTypes as t
+    from tests.unit import (
+        test_api,
+        test_base,
+        test_config,
+        test_constants,
+        test_detection,
+        test_entry_adapter,
+        test_ldap3_adapter,
+        test_models,
+        test_models_search,
+        test_models_sync,
+        test_operations,
+        test_sync,
+        test_utilities,
+    )
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
     from tests.unit.test_config import TestsFlextLdapSettings
@@ -88,15 +115,21 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "_FixtureLoaderUtils": ["tests._utilities.fixture_loaders", "_FixtureLoaderUtils"],
     "_utilities": ["tests._utilities", ""],
     "c": ["tests.constants", "FlextLdapTestConstants"],
+    "conftest": ["tests.conftest", ""],
     "connection_config": ["tests.conftest", "connection_config"],
+    "constants": ["tests.constants", ""],
     "d": ["flext_tests", "d"],
+    "docker_infra": ["tests._utilities.docker_infra", ""],
     "e": ["flext_tests", "e"],
+    "fixture_loaders": ["tests._utilities.fixture_loaders", ""],
     "h": ["flext_tests", "h"],
     "integration": ["tests.integration", ""],
     "ldap_container": ["tests.conftest", "ldap_container"],
     "logger": ["tests.conftest", "logger"],
     "m": ["tests.models", "FlextLdapTestModels"],
+    "models": ["tests.models", ""],
     "p": ["tests.protocols", "FlextLdapTestProtocols"],
+    "protocols": ["tests.protocols", ""],
     "pytest_runtest_makereport": ["tests.conftest", "pytest_runtest_makereport"],
     "pytest_sessionstart": ["tests.conftest", "pytest_sessionstart"],
     "pytestmark": ["tests.unit.test_operations", "pytestmark"],
@@ -104,8 +137,24 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "s": ["flext_tests", "s"],
     "search_options": ["tests.conftest", "search_options"],
     "t": ["tests.typings", "FlextLdapTestTypes"],
+    "test_api": ["tests.unit.test_api", ""],
+    "test_base": ["tests.unit.test_base", ""],
+    "test_config": ["tests.unit.test_config", ""],
+    "test_constants": ["tests.unit.test_constants", ""],
+    "test_detection": ["tests.unit.test_detection", ""],
+    "test_entry_adapter": ["tests.unit.test_entry_adapter", ""],
+    "test_ldap3_adapter": ["tests.unit.test_ldap3_adapter", ""],
+    "test_models": ["tests.unit.test_models", ""],
+    "test_models_search": ["tests.unit.test_models_search", ""],
+    "test_models_sync": ["tests.unit.test_models_sync", ""],
+    "test_operations": ["tests.unit.test_operations", ""],
+    "test_smoke": ["tests.integration.test_smoke", ""],
+    "test_sync": ["tests.unit.test_sync", ""],
+    "test_utilities": ["tests.unit.test_utilities", ""],
+    "typings": ["tests.typings", ""],
     "u": ["tests.utilities", "FlextLdapTestUtilities"],
     "unit": ["tests.unit", ""],
+    "utilities": ["tests.utilities", ""],
     "worker_id": ["tests.conftest", "worker_id"],
     "x": ["flext_tests", "x"],
 }
@@ -136,15 +185,21 @@ __all__ = [
     "_FixtureLoaderUtils",
     "_utilities",
     "c",
+    "conftest",
     "connection_config",
+    "constants",
     "d",
+    "docker_infra",
     "e",
+    "fixture_loaders",
     "h",
     "integration",
     "ldap_container",
     "logger",
     "m",
+    "models",
     "p",
+    "protocols",
     "pytest_runtest_makereport",
     "pytest_sessionstart",
     "pytestmark",
@@ -152,8 +207,24 @@ __all__ = [
     "s",
     "search_options",
     "t",
+    "test_api",
+    "test_base",
+    "test_config",
+    "test_constants",
+    "test_detection",
+    "test_entry_adapter",
+    "test_ldap3_adapter",
+    "test_models",
+    "test_models_search",
+    "test_models_sync",
+    "test_operations",
+    "test_smoke",
+    "test_sync",
+    "test_utilities",
+    "typings",
     "u",
     "unit",
+    "utilities",
     "worker_id",
     "x",
 ]

@@ -18,6 +18,21 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.unit import (
+        test_api,
+        test_base,
+        test_config,
+        test_constants,
+        test_detection,
+        test_entry_adapter,
+        test_ldap3_adapter,
+        test_models,
+        test_models_search,
+        test_models_sync,
+        test_operations,
+        test_sync,
+        test_utilities,
+    )
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
     from tests.unit.test_config import TestsFlextLdapSettings
@@ -62,6 +77,19 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestsFlextLdapSync": ["tests.unit.test_sync", "TestsFlextLdapSync"],
     "TestsFlextLdapUtilities": ["tests.unit.test_utilities", "TestsFlextLdapUtilities"],
     "pytestmark": ["tests.unit.test_operations", "pytestmark"],
+    "test_api": ["tests.unit.test_api", ""],
+    "test_base": ["tests.unit.test_base", ""],
+    "test_config": ["tests.unit.test_config", ""],
+    "test_constants": ["tests.unit.test_constants", ""],
+    "test_detection": ["tests.unit.test_detection", ""],
+    "test_entry_adapter": ["tests.unit.test_entry_adapter", ""],
+    "test_ldap3_adapter": ["tests.unit.test_ldap3_adapter", ""],
+    "test_models": ["tests.unit.test_models", ""],
+    "test_models_search": ["tests.unit.test_models_search", ""],
+    "test_models_sync": ["tests.unit.test_models_sync", ""],
+    "test_operations": ["tests.unit.test_operations", ""],
+    "test_sync": ["tests.unit.test_sync", ""],
+    "test_utilities": ["tests.unit.test_utilities", ""],
 }
 
 __all__ = [
@@ -79,6 +107,19 @@ __all__ = [
     "TestsFlextLdapSync",
     "TestsFlextLdapUtilities",
     "pytestmark",
+    "test_api",
+    "test_base",
+    "test_config",
+    "test_constants",
+    "test_detection",
+    "test_entry_adapter",
+    "test_ldap3_adapter",
+    "test_models",
+    "test_models_search",
+    "test_models_sync",
+    "test_operations",
+    "test_sync",
+    "test_utilities",
 ]
 
 

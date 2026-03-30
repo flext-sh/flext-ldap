@@ -18,6 +18,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from flext_ldap.adapters import entry, ldap3
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
 
@@ -25,12 +26,16 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapEntryAdapter": ["flext_ldap.adapters.entry", "FlextLdapEntryAdapter"],
     "FlextLdapLdap3Adapter": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"],
     "FlextLdapLdap3Wrappers": ["flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"],
+    "entry": ["flext_ldap.adapters.entry", ""],
+    "ldap3": ["flext_ldap.adapters.ldap3", ""],
 }
 
 __all__ = [
     "FlextLdapEntryAdapter",
     "FlextLdapLdap3Adapter",
     "FlextLdapLdap3Wrappers",
+    "entry",
+    "ldap3",
 ]
 
 

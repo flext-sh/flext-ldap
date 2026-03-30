@@ -26,8 +26,21 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_ldif import d, e, h, r, x
 
-    from flext_ldap import _models, adapters, services
+    from flext_ldap import (
+        _models,
+        adapters,
+        api,
+        base,
+        constants,
+        models,
+        protocols,
+        services,
+        settings,
+        typings,
+        utilities,
+    )
     from flext_ldap._models.ldap import FlextLdapModelsLdap
+    from flext_ldap.adapters import entry, ldap3
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
     from flext_ldap.api import FlextLdap, ldap
@@ -35,6 +48,7 @@ if TYPE_CHECKING:
     from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
     from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
     from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
+    from flext_ldap.services import connection, detection, operations, sync
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations
@@ -66,18 +80,32 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextLdapUtilities": ["flext_ldap.utilities", "FlextLdapUtilities"],
     "_models": ["flext_ldap._models", ""],
     "adapters": ["flext_ldap.adapters", ""],
+    "api": ["flext_ldap.api", ""],
+    "base": ["flext_ldap.base", ""],
     "c": ["flext_ldap.constants", "FlextLdapConstants"],
+    "connection": ["flext_ldap.services.connection", ""],
+    "constants": ["flext_ldap.constants", ""],
     "d": ["flext_ldif", "d"],
+    "detection": ["flext_ldap.services.detection", ""],
     "e": ["flext_ldif", "e"],
+    "entry": ["flext_ldap.adapters.entry", ""],
     "h": ["flext_ldif", "h"],
     "ldap": ["flext_ldap.api", "ldap"],
+    "ldap3": ["flext_ldap.adapters.ldap3", ""],
     "m": ["flext_ldap.models", "FlextLdapModels"],
+    "models": ["flext_ldap.models", ""],
+    "operations": ["flext_ldap.services.operations", ""],
     "p": ["flext_ldap.protocols", "FlextLdapProtocols"],
+    "protocols": ["flext_ldap.protocols", ""],
     "r": ["flext_ldif", "r"],
     "s": ["flext_ldap.base", "s"],
     "services": ["flext_ldap.services", ""],
+    "settings": ["flext_ldap.settings", ""],
+    "sync": ["flext_ldap.services.sync", ""],
     "t": ["flext_ldap.typings", "FlextLdapTypes"],
+    "typings": ["flext_ldap.typings", ""],
     "u": ["flext_ldap.utilities", "FlextLdapUtilities"],
+    "utilities": ["flext_ldap.utilities", ""],
     "x": ["flext_ldif", "x"],
 }
 
@@ -111,18 +139,32 @@ __all__ = [
     "__version_info__",
     "_models",
     "adapters",
+    "api",
+    "base",
     "c",
+    "connection",
+    "constants",
     "d",
+    "detection",
     "e",
+    "entry",
     "h",
     "ldap",
+    "ldap3",
     "m",
+    "models",
+    "operations",
     "p",
+    "protocols",
     "r",
     "s",
     "services",
+    "settings",
+    "sync",
     "t",
+    "typings",
     "u",
+    "utilities",
     "x",
 ]
 

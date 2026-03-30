@@ -13,6 +13,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests._utilities import docker_infra, fixture_loaders
     from tests._utilities.docker_infra import _DockerInfraUtils
     from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
 
@@ -20,12 +21,16 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestFixtures": ["tests._utilities.fixture_loaders", "TestFixtures"],
     "_DockerInfraUtils": ["tests._utilities.docker_infra", "_DockerInfraUtils"],
     "_FixtureLoaderUtils": ["tests._utilities.fixture_loaders", "_FixtureLoaderUtils"],
+    "docker_infra": ["tests._utilities.docker_infra", ""],
+    "fixture_loaders": ["tests._utilities.fixture_loaders", ""],
 }
 
 __all__ = [
     "TestFixtures",
     "_DockerInfraUtils",
     "_FixtureLoaderUtils",
+    "docker_infra",
+    "fixture_loaders",
 ]
 
 

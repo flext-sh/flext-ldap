@@ -13,16 +13,19 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.integration import test_smoke
     from tests.integration.test_smoke import TestsFlextLdapSmoke, pytestmark
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestsFlextLdapSmoke": ["tests.integration.test_smoke", "TestsFlextLdapSmoke"],
     "pytestmark": ["tests.integration.test_smoke", "pytestmark"],
+    "test_smoke": ["tests.integration.test_smoke", ""],
 }
 
 __all__ = [
     "TestsFlextLdapSmoke",
     "pytestmark",
+    "test_smoke",
 ]
 
 
