@@ -141,7 +141,6 @@ omit = [
 [tool.deptry]
 known_first_party = [
   "flext_ldap",
-  "ldap3",
 ]
 pep621_dev_dependency_groups = [
   "dev",
@@ -423,7 +422,6 @@ combine-as-imports = true
 force-single-line = false
 known-first-party = [
   "flext_ldap",
-  "ldap3",
 ]
 split-on-trailing-comma = true
 

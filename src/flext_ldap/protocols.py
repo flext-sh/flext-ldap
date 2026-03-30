@@ -430,6 +430,10 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Bind the connection."""
                 ...
 
+            def start_tls(self) -> bool:
+                """Negotiate STARTTLS for the active connection."""
+                ...
+
             def unbind(self) -> bool:
                 """Unbind the connection."""
                 ...
@@ -459,7 +463,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 dn: str,
                 object_class: Sequence[str] | str | None,
-                attributes: Mapping[str, str | Sequence[str]] | None,
+                attributes: Mapping[str, str | bytes | Sequence[str] | Sequence[bytes]]
+                | None,
             ) -> bool:
                 """Add an LDAP entry."""
                 ...
@@ -499,8 +504,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class Ldap3Entry(Protocol):
             """Protocol for ldap3.Entry objects (structural type).
 
-            ldap3.Entry has dynamic attributes accessed via entry_dn and
-            entry_attributes_as_dict properties, plus attribute-specific objects.
+            ldap3.Entry has dynamic attributes accessed via entry_dn,
+            entry_attributes, entry_attributes_as_dict properties,
+            plus attribute-specific objects via __getitem__.
             """
 
             @property
@@ -511,20 +517,39 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             @property
+            def entry_attributes(self) -> Sequence[str]:
+                """Get list of attribute names present in this entry."""
+                ...
+
+            @property
             def entry_dn(self) -> str | None:
                 """Get entry distinguished name."""
+                ...
+
+            def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
+                """Get attribute object by name."""
                 ...
 
         @runtime_checkable
         class Ldap3Attribute(Protocol):
             """Protocol for ldap3.Attribute objects (structural type).
 
-            ldap3.Attribute has a values property containing attribute values.
+            ldap3.Attribute has values, raw_values and value properties.
             """
 
             @property
             def values(self) -> Sequence[str | bytes]:
-                """Get attribute values."""
+                """Get processed attribute values."""
+                ...
+
+            @property
+            def raw_values(self) -> Sequence[bytes]:
+                """Get unprocessed attribute values."""
+                ...
+
+            @property
+            def value(self) -> str | bytes | Sequence[str | bytes]:
+                """Get single value or all values."""
                 ...
 
         @runtime_checkable

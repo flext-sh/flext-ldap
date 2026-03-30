@@ -14,13 +14,13 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Literal, TypeIs
 
 from flext_ldif import FlextLdifUtilities, m
-
-from flext_ldap import c, p, t
 from ldap3 import (
     Connection as Ldap3Connection,
     Server as Ldap3Server,
 )
 from ldap3.core.exceptions import LDAPException as Ldap3LDAPException
+
+from flext_ldap import c, p, t
 
 type _Ldap3GetInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
 

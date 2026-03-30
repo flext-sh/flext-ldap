@@ -35,10 +35,10 @@ from datetime import datetime
 from typing import ClassVar, Literal, override
 
 from flext_core import FlextService, r
+from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
 
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
-from ldap3 import Connection, Server
 
 
 class FlextLdapLdap3Wrappers:
@@ -70,7 +70,10 @@ class FlextLdapLdap3Wrappers:
         return result
 
     @staticmethod
-    def _ldap3_method(connection: Connection, method_name: str) -> Callable[..., bool]:
+    def _ldap3_method(
+        connection: p.Ldap.Ldap3Connection,
+        method_name: str,
+    ) -> Callable[..., bool]:
         """Get a typed callable for an untyped ldap3 Connection method.
 
         ldap3 library methods return Unknown types which cause pyright errors.
@@ -81,7 +84,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def add(
-        connection: Connection,
+        connection: p.Ldap.Ldap3Connection,
         dn: str,
         object_class: t.StrSequence | str | None,
         attributes: Mapping[str, t.StrSequence],
@@ -94,20 +97,20 @@ class FlextLdapLdap3Wrappers:
         return bool(add_fn(dn, object_class, normalized_attributes))
 
     @staticmethod
-    def delete(connection: Connection, dn: str) -> bool:
+    def delete(connection: p.Ldap.Ldap3Connection, dn: str) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.delete()."""
         delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
         return bool(delete_fn(dn))
 
     @staticmethod
-    def is_bound(connection: Connection) -> bool:
+    def is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
         """Safely read ldap3 bound state from dynamic connection objects."""
         bound_state: bool = getattr(connection, "bound", False)
         return bool(bound_state)
 
     @staticmethod
     def modify(
-        connection: Connection,
+        connection: p.Ldap.Ldap3Connection,
         dn: str,
         changes: t.Ldap.OperationChanges,
     ) -> bool:
@@ -117,7 +120,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def search(
-        connection: Connection,
+        connection: p.Ldap.Ldap3Connection,
         *,
         search_base: str,
         search_filter: str,
@@ -157,13 +160,13 @@ class FlextLdapLdap3Wrappers:
         )
 
     @staticmethod
-    def start_tls(connection: Connection) -> bool:
+    def start_tls(connection: p.Ldap.Ldap3Connection) -> bool:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
         result: bool = getattr(connection, "start_tls", lambda: False)()
         return bool(result)
 
     @staticmethod
-    def unbind(connection: Connection) -> bool:
+    def unbind(connection: p.Ldap.Ldap3Connection) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
         unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
         return bool(unbind_fn())
