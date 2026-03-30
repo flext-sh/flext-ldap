@@ -24,13 +24,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 import pytest
 from flext_tests import tm
 
-from flext_ldap import FlextLdapEntryAdapter, t
-from tests import m
+from flext_ldap import FlextLdapEntryAdapter
+from tests import m, p
 
 pytestmark = pytest.mark.unit
 
@@ -88,19 +88,34 @@ class TestsFlextLdapEntryAdapter:
         """Test conversion from ldap3.Entry to p.Entry."""
         adapter = FlextLdapEntryAdapter()
 
+        class _MockAttr:
+            def __init__(self, vals: Sequence[str]) -> None:
+                self.values: Sequence[str | bytes] = vals
+                self.raw_values: Sequence[bytes] = [v.encode() for v in vals]
+                self.value: str | bytes | Sequence[str | bytes] = (
+                    vals[0] if vals else ""
+                )
+
         class MockLdap3Entry:
             def __init__(self) -> None:
-                self.entry_dn = "cn=user,dc=example,dc=com"
-                self._entry_attributes_as_dict: Mapping[str, t.StrSequence] = {
+                self.entry_dn: str | None = "cn=user,dc=example,dc=com"
+                self._attrs: Mapping[str, Sequence[str]] = {
                     "cn": ["user"],
                     "sn": ["Doe"],
                 }
 
             @property
-            def entry_attributes_as_dict(self) -> Mapping[str, t.StrSequence]:
-                return self._entry_attributes_as_dict
+            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str | bytes]]:
+                return self._attrs
 
-        ldap3_entry = MockLdap3Entry()
+            @property
+            def entry_attributes(self) -> Sequence[str]:
+                return list(self._attrs)
+
+            def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
+                return _MockAttr(list(self._attrs.get(item, [])))
+
+        ldap3_entry: p.Ldap.Ldap3Entry = MockLdap3Entry()
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
@@ -114,16 +129,31 @@ class TestsFlextLdapEntryAdapter:
         """Test conversion from ldap3.Entry to p.Entry with empty attributes."""
         adapter = FlextLdapEntryAdapter()
 
+        class _MockAttr:
+            def __init__(self, vals: Sequence[str]) -> None:
+                self.values: Sequence[str | bytes] = vals
+                self.raw_values: Sequence[bytes] = [v.encode() for v in vals]
+                self.value: str | bytes | Sequence[str | bytes] = (
+                    vals[0] if vals else ""
+                )
+
         class MockLdap3Entry:
             def __init__(self) -> None:
-                self.entry_dn = "cn=user,dc=example,dc=com"
-                self._entry_attributes_as_dict: Mapping[str, t.StrSequence] = {}
+                self.entry_dn: str | None = "cn=user,dc=example,dc=com"
+                self._attrs: Mapping[str, Sequence[str]] = {}
 
             @property
-            def entry_attributes_as_dict(self) -> Mapping[str, t.StrSequence]:
-                return self._entry_attributes_as_dict
+            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str | bytes]]:
+                return self._attrs
 
-        ldap3_entry = MockLdap3Entry()
+            @property
+            def entry_attributes(self) -> Sequence[str]:
+                return list(self._attrs)
+
+            def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
+                return _MockAttr(list(self._attrs.get(item, [])))
+
+        ldap3_entry: p.Ldap.Ldap3Entry = MockLdap3Entry()
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
