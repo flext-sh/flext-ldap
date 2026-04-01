@@ -18,19 +18,19 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from tests.unit.test_api import *
-    from tests.unit.test_base import *
-    from tests.unit.test_config import *
-    from tests.unit.test_constants import *
-    from tests.unit.test_detection import *
-    from tests.unit.test_entry_adapter import *
-    from tests.unit.test_ldap3_adapter import *
-    from tests.unit.test_models import *
-    from tests.unit.test_models_search import *
-    from tests.unit.test_models_sync import *
-    from tests.unit.test_operations import *
-    from tests.unit.test_sync import *
-    from tests.unit.test_utilities import *
+    from tests.unit.test_api import TestsFlextLdapApi
+    from tests.unit.test_base import TestsFlextLdapBase
+    from tests.unit.test_config import TestsFlextLdapSettings
+    from tests.unit.test_constants import TestsFlextLdapConstants
+    from tests.unit.test_detection import TestsFlextLdapDetection
+    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
+    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
+    from tests.unit.test_models import TestsFlextLdapModels
+    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
+    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
+    from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
+    from tests.unit.test_sync import TestsFlextLdapSync
+    from tests.unit.test_utilities import TestsFlextLdapUtilities
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TestsFlextLdap3Adapter": "tests.unit.test_ldap3_adapter",
