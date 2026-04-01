@@ -570,6 +570,8 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
 
             """
             default_metadata = m.Ldif.EntryMetadata()
+            if parsed is None:
+                return m.Ldif.DN(value="", metadata=default_metadata)
             if isinstance(parsed, m.Ldif.Entry):
                 if parsed.dn is not None:
                     return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
@@ -626,6 +628,8 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
 
             """
             metadata_raw: Mapping[str, t.Scalar | None] | None = None
+            if parsed is None:
+                return None
             if isinstance(parsed, m.Ldif.Entry):
                 if parsed.metadata is None:
                     return None
@@ -669,6 +673,8 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 Attribute value or None
 
             """
+            if obj is None:
+                return None
             if attr_name == "dn" and isinstance(obj, m.Ldif.Entry):
                 return obj.dn
             if attr_name == "attributes" and isinstance(obj, m.Ldif.Entry):

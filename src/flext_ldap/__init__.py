@@ -10,12 +10,22 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 from flext_ldap.typings import FlextLdapDomainResultT, FlextLdapEntryT
 
 if _TYPE_CHECKING:
+    from flext_core import FlextTypes
     from flext_ldif import d, e, h, r, x
 
-    from flext_ldap.__version__ import *
     from flext_ldap._models import *
     from flext_ldap.adapters import *
     from flext_ldap.api import *
@@ -43,14 +53,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "FlextLdapSettings": "flext_ldap.settings",
         "FlextLdapTypes": "flext_ldap.typings",
         "FlextLdapUtilities": "flext_ldap.utilities",
-        "__author__": "flext_ldap.__version__",
-        "__author_email__": "flext_ldap.__version__",
-        "__description__": "flext_ldap.__version__",
-        "__license__": "flext_ldap.__version__",
-        "__title__": "flext_ldap.__version__",
-        "__url__": "flext_ldap.__version__",
-        "__version__": "flext_ldap.__version__",
-        "__version_info__": "flext_ldap.__version__",
         "_models": "flext_ldap._models",
         "adapters": "flext_ldap.adapters",
         "api": "flext_ldap.api",
@@ -85,5 +87,13 @@ install_lazy_exports(
     [
         "FlextLdapDomainResultT",
         "FlextLdapEntryT",
+        "__author__",
+        "__author_email__",
+        "__description__",
+        "__license__",
+        "__title__",
+        "__url__",
+        "__version__",
+        "__version_info__",
     ],
 )
