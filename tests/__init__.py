@@ -14,15 +14,69 @@ if _TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_tests import d, e, h, r, s, x
 
-    from tests._utilities import *
-    from tests.conftest import *
-    from tests.constants import *
-    from tests.integration import *
-    from tests.models import *
-    from tests.protocols import *
-    from tests.typings import *
-    from tests.unit import *
-    from tests.utilities import *
+    from tests import (
+        _utilities,
+        conftest,
+        constants,
+        integration,
+        models,
+        protocols,
+        typings,
+        unit,
+        utilities,
+    )
+    from tests._utilities import (
+        TestFixtures,
+        _DockerInfraUtils,
+        _FixtureLoaderUtils,
+        docker_infra,
+        fixture_loaders,
+    )
+    from tests.conftest import (
+        LdapContainerDict,
+        connection_config,
+        ldap_container,
+        logger,
+        pytest_runtest_makereport,
+        pytest_sessionstart,
+        search_options,
+        worker_id,
+    )
+    from tests.constants import FlextLdapTestConstants, FlextLdapTestConstants as c
+    from tests.integration import TestsFlextLdapSmoke, test_smoke
+    from tests.models import FlextLdapTestModels, FlextLdapTestModels as m
+    from tests.protocols import FlextLdapTestProtocols, FlextLdapTestProtocols as p
+    from tests.typings import FlextLdapTestTypes, FlextLdapTestTypes as t
+    from tests.unit import (
+        TestsFlextLdap3Adapter,
+        TestsFlextLdapApi,
+        TestsFlextLdapBase,
+        TestsFlextLdapConstants,
+        TestsFlextLdapDetection,
+        TestsFlextLdapEntryAdapter,
+        TestsFlextLdapModels,
+        TestsFlextLdapModelsSearch,
+        TestsFlextLdapModelsSync,
+        TestsFlextLdapOperations,
+        TestsFlextLdapSettings,
+        TestsFlextLdapSync,
+        TestsFlextLdapUtilities,
+        pytestmark,
+        test_api,
+        test_base,
+        test_config,
+        test_constants,
+        test_detection,
+        test_entry_adapter,
+        test_ldap3_adapter,
+        test_models,
+        test_models_search,
+        test_models_sync,
+        test_operations,
+        test_sync,
+        test_utilities,
+    )
+    from tests.utilities import FlextLdapTestUtilities, FlextLdapTestUtilities as u
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     (

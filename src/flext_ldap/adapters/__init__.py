@@ -18,8 +18,9 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
-    from flext_ldap.adapters.entry import *
-    from flext_ldap.adapters.ldap3 import *
+    from flext_ldap.adapters import entry, ldap3
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextLdapEntryAdapter": "flext_ldap.adapters.entry",

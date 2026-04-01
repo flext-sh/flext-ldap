@@ -18,6 +18,21 @@ from flext_core.lazy import install_lazy_exports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
 
+    from tests.unit import (
+        test_api,
+        test_base,
+        test_config,
+        test_constants,
+        test_detection,
+        test_entry_adapter,
+        test_ldap3_adapter,
+        test_models,
+        test_models_search,
+        test_models_sync,
+        test_operations,
+        test_sync,
+        test_utilities,
+    )
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
     from tests.unit.test_config import TestsFlextLdapSettings
