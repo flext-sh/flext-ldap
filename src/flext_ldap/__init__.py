@@ -22,6 +22,11 @@ from flext_ldap.__version__ import (
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.result import FlextResult as r
     from flext_ldap import (
         _models,
         adapters,
@@ -62,7 +67,6 @@ if _TYPE_CHECKING:
     from flext_ldap.settings import FlextLdapSettings
     from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
     from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
-    from flext_ldif import d, e, h, r, x
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
@@ -85,15 +89,15 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "base": "flext_ldap.base",
         "c": ("flext_ldap.constants", "FlextLdapConstants"),
         "constants": "flext_ldap.constants",
-        "d": "flext_ldif",
-        "e": "flext_ldif",
-        "h": "flext_ldif",
+        "d": ("flext_core.decorators", "FlextDecorators"),
+        "e": ("flext_core.exceptions", "FlextExceptions"),
+        "h": ("flext_core.handlers", "FlextHandlers"),
         "ldap": "flext_ldap.api",
         "m": ("flext_ldap.models", "FlextLdapModels"),
         "models": "flext_ldap.models",
         "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
         "protocols": "flext_ldap.protocols",
-        "r": "flext_ldif",
+        "r": ("flext_core.result", "FlextResult"),
         "s": "flext_ldap.base",
         "services": "flext_ldap.services",
         "settings": "flext_ldap.settings",
@@ -101,7 +105,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "typings": "flext_ldap.typings",
         "u": ("flext_ldap.utilities", "FlextLdapUtilities"),
         "utilities": "flext_ldap.utilities",
-        "x": "flext_ldif",
+        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 

@@ -11,9 +11,13 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
-    from flext_tests import d, e, h, r, s, x
-
     from flext_core import FlextTypes
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
     from tests import (
         _utilities,
         conftest,
@@ -96,9 +100,9 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "conftest": "tests.conftest",
         "connection_config": "tests.conftest",
         "constants": "tests.constants",
-        "d": "flext_tests",
-        "e": "flext_tests",
-        "h": "flext_tests",
+        "d": ("flext_core.decorators", "FlextDecorators"),
+        "e": ("flext_core.exceptions", "FlextExceptions"),
+        "h": ("flext_core.handlers", "FlextHandlers"),
         "integration": "tests.integration",
         "ldap_container": "tests.conftest",
         "logger": "tests.conftest",
@@ -108,8 +112,8 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "protocols": "tests.protocols",
         "pytest_runtest_makereport": "tests.conftest",
         "pytest_sessionstart": "tests.conftest",
-        "r": "flext_tests",
-        "s": "flext_tests",
+        "r": ("flext_core.result", "FlextResult"),
+        "s": ("flext_core.service", "FlextService"),
         "search_options": "tests.conftest",
         "t": ("tests.typings", "FlextLdapTestTypes"),
         "typings": "tests.typings",
@@ -117,7 +121,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "unit": "tests.unit",
         "utilities": "tests.utilities",
         "worker_id": "tests.conftest",
-        "x": "flext_tests",
+        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 
