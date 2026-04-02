@@ -36,6 +36,9 @@ class _FixtureLoaderUtils:
         FIXTURES_DIR: ClassVar[Path] = (
             Path(__file__).resolve().parent.parent / "fixtures"
         )
+        JSON_FIELDS_SEQUENCE_ADAPTER: ClassVar[
+            TypeAdapter[Sequence[GenericFieldsDict]]
+        ] = TypeAdapter(Sequence[GenericFieldsDict])
 
         @staticmethod
         def load_json(filename: str) -> r[Sequence[GenericFieldsDict]]:
@@ -46,9 +49,11 @@ class _FixtureLoaderUtils:
                         f"Fixture file not found: {filename}",
                     )
                 raw_content = filepath.read_text(encoding="utf-8")
-                data: Sequence[GenericFieldsDict] = TypeAdapter(
-                    Sequence[GenericFieldsDict],
-                ).validate_json(raw_content)
+                data: Sequence[GenericFieldsDict] = (
+                    _FixtureLoaderUtils.Fixtures.JSON_FIELDS_SEQUENCE_ADAPTER.validate_json(
+                        raw_content
+                    )
+                )
                 return r[Sequence[GenericFieldsDict]].ok(data)
             except (OSError, ValueError, ValidationError) as e:
                 return r[Sequence[GenericFieldsDict]].fail(
@@ -74,7 +79,7 @@ class _FixtureLoaderUtils:
                 if not filepath.exists():
                     return r[t.ContainerMapping].fail("Docker config file not found")
                 raw_content = filepath.read_text(encoding="utf-8")
-                config: t.ContainerMapping = TypeAdapter(t.ScalarMapping).validate_json(
+                config: t.ContainerMapping = t.SCALAR_MAPPING_ADAPTER.validate_json(
                     raw_content
                 )
                 return r[t.ContainerMapping].ok(config)
