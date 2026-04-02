@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import FlextLdifModels
 from pydantic import Field
 
 from flext_ldap import FlextLdapModelsLdap
+from flext_ldif import FlextLdifModels
 
 
 class FlextLdapModels(FlextLdifModels):

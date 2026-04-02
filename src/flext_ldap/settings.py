@@ -16,9 +16,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextSettings
 from pydantic import Field
 
+from flext_core import FlextSettings
 from flext_ldap import c, t
 
 

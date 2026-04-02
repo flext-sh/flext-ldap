@@ -13,10 +13,9 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_core import r
-from flext_ldif import FlextLdif
 from pydantic import ConfigDict, PrivateAttr
 
+from flext_core import r
 from flext_ldap import (
     FlextLdapServerDetector,
     FlextLdapServiceBase,
@@ -26,6 +25,7 @@ from flext_ldap import (
     u,
 )
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
+from flext_ldif import FlextLdif
 
 
 class FlextLdapConnection(FlextLdapServiceBase):

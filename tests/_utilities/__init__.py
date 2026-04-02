@@ -12,12 +12,11 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests._utilities import docker_infra, fixture_loaders
     from tests._utilities.docker_infra import _DockerInfraUtils
     from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "TestFixtures": "tests._utilities.fixture_loaders",
     "_DockerInfraUtils": "tests._utilities.docker_infra",
     "_FixtureLoaderUtils": "tests._utilities.fixture_loaders",

@@ -17,7 +17,6 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from tests.unit import (
         test_api,
         test_base,
@@ -47,7 +46,7 @@ if _TYPE_CHECKING:
     from tests.unit.test_sync import TestsFlextLdapSync
     from tests.unit.test_utilities import TestsFlextLdapUtilities
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "TestsFlextLdap3Adapter": "tests.unit.test_ldap3_adapter",
     "TestsFlextLdapApi": "tests.unit.test_api",
     "TestsFlextLdapBase": "tests.unit.test_base",

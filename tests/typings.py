@@ -15,9 +15,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import r
 from flext_tests import FlextTestsTypes
 
+from flext_core import r
 from flext_ldap import FlextLdapTypes
 from tests import FlextLdapTestModels as _m
 

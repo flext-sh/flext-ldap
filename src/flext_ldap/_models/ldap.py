@@ -299,7 +299,7 @@ class FlextLdapModelsLdap:
 
         @staticmethod
         def extract_objectclass_category(
-            attrs: Mapping[str, str | t.StrSequence],
+            attrs: t.AttributeMapping,
         ) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:

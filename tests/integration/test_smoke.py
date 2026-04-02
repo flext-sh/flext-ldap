@@ -23,8 +23,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
-from flext_core import r
 
+from flext_core import r
 from flext_ldap import FlextLdap, ldap
 from tests import m, p, t, u
 

@@ -12,9 +12,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar, TypeIs, override
 
-from flext_core import r
 from pydantic import ConfigDict
 
+from flext_core import r
 from flext_ldap import (
     FlextLdapModels as m,
     FlextLdapOperations,

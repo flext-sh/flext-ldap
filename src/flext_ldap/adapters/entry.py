@@ -33,11 +33,11 @@ import logging
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
-from flext_core import r, s
-from flext_ldif import ldif
 from pydantic import PrivateAttr
 
+from flext_core import r, s
 from flext_ldap import c, m, p, t
+from flext_ldif import ldif
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -292,7 +292,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_str = ", ".join(filtered_str_values) or ""
             return attr_name if original_str != converted_str else None
 
-        result_dict: MutableMapping[str, str | None] = {}
+        result_dict: t.MutableOptionalStrMapping = {}
         logger = logging.getLogger(__name__)
         for attr_name, original_values in original_attrs_dict.items():
             try:

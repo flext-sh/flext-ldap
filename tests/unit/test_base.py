@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_core import FlextSettings, r
 
+from flext_core import FlextSettings, r
 from flext_ldap import FlextLdapServiceBase, base, s
 from tests import m, p
 

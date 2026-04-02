@@ -34,9 +34,9 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
-from flext_core import FlextRuntime, r
 from pydantic import ConfigDict
 
+from flext_core import FlextRuntime, r
 from flext_ldap import FlextLdapConnection, c, m, p, t, u
 
 

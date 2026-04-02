@@ -3,9 +3,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Sized
 from typing import TypeGuard
 
-from flext_core import r
 from flext_tests import FlextTestsUtilities
 
+from flext_core import r
 from flext_ldap import FlextLdapUtilities
 from tests import t
 from tests._utilities.docker_infra import _DockerInfraUtils

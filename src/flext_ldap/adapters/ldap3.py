@@ -34,10 +34,10 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from datetime import datetime
 from typing import ClassVar, Literal, override
 
-from flext_core import FlextService, r
 from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
 
+from flext_core import FlextService, r
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
 
 

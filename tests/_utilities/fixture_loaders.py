@@ -13,10 +13,10 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextLogger, r
-from flext_ldif import ldif
 from pydantic import TypeAdapter, ValidationError
 
+from flext_core import FlextLogger, r
+from flext_ldif import ldif
 from tests import m, t
 
 GenericFieldsDict = Mapping[str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]]

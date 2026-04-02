@@ -9,9 +9,9 @@ from __future__ import annotations
 import types
 from typing import ClassVar, Self, override
 
-from flext_core import r
 from pydantic import ConfigDict
 
+from flext_core import r
 from flext_ldap import (
     FlextLdapConnection,
     FlextLdapOperations,

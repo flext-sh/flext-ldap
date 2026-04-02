@@ -17,14 +17,13 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-
     from flext_ldap.services import connection, detection, operations, sync
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations
     from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextLdapConnection": "flext_ldap.services.connection",
     "FlextLdapOperations": "flext_ldap.services.operations",
     "FlextLdapServerDetector": "flext_ldap.services.detection",

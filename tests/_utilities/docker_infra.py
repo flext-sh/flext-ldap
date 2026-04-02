@@ -16,9 +16,9 @@ from pathlib import Path
 from threading import Lock
 from typing import ClassVar, TextIO
 
-from flext_core import FlextLogger
 from flext_tests import tk
 
+from flext_core import FlextLogger
 from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapUtilities
 from tests import c
 

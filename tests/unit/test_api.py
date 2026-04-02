@@ -13,9 +13,9 @@ import inspect
 from collections.abc import Callable
 
 import pytest
-from flext_core import FlextSettings
 from flext_tests import tm
 
+from flext_core import FlextSettings
 from flext_ldap import FlextLdapSettings, FlextLdapSyncCallbacks, ldap
 from tests import c, m, p
 

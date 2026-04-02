@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import TypeAlias, cast
 
 import pytest
-from flext_core import FlextLogger, r
 
+from flext_core import FlextLogger, r
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from tests import c, m, t, u
 

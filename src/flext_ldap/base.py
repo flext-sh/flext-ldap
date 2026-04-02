@@ -22,9 +22,9 @@ from dataclasses import dataclass
 from types import ModuleType
 from typing import override
 
-from flext_core import FlextService
 from pydantic_settings import BaseSettings
 
+from flext_core import FlextService
 from flext_ldap import FlextLdapSettings, m, p, t
 
 
