@@ -74,9 +74,9 @@ class _FixtureLoaderUtils:
                 if not filepath.exists():
                     return r[t.ContainerMapping].fail("Docker config file not found")
                 raw_content = filepath.read_text(encoding="utf-8")
-                config: t.ContainerMapping = TypeAdapter(
-                    Mapping[str, t.Scalar]
-                ).validate_json(raw_content)
+                config: t.ContainerMapping = TypeAdapter(t.ScalarMapping).validate_json(
+                    raw_content
+                )
                 return r[t.ContainerMapping].ok(config)
             except (OSError, ValueError, ValidationError) as e:
                 return r[t.ContainerMapping].fail(

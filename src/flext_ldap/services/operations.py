@@ -31,7 +31,7 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import ClassVar, override
 
 from pydantic import ConfigDict
@@ -100,7 +100,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
         """
         attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(entry)
-        result: MutableMapping[str, MutableSequence[str]] = {}
+        result: t.MutableStrSequenceMapping = {}
         for k, v in dict(attrs_mapping).items():
             result[k] = [str(item) for item in v]
         return result
@@ -143,7 +143,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 Dictionary of attribute names to list of strings
 
             """
-            attrs_result: MutableMapping[str, MutableSequence[str]] = {}
+            attrs_result: t.MutableStrSequenceMapping = {}
             for k, v in attrs.items():
                 match k:
                     case bytes():
@@ -403,7 +403,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 Dict mapping attribute names to MODIFY_DELETE operations.
 
             """
-            filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            filtered_attrs: t.MutableStrSequenceMapping = {}
             ignore_lower = [k.lower() for k in ignore]
             processed_lower = [k.lower() for k in processed]
             for k, v in existing_attrs.items():
@@ -438,7 +438,7 @@ class FlextLdapOperations(FlextLdapConnection):
             """
             changes: t.Ldap.OperationChanges = {}
             processed: set[str] = set()
-            filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            filtered_attrs: t.MutableStrSequenceMapping = {}
             ignore_lower = [k.lower() for k in ignore]
             for k, v in new_attrs.items():
                 if k.lower() not in ignore_lower:
@@ -559,7 +559,7 @@ class FlextLdapOperations(FlextLdapConnection):
             attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
                 entry,
             )
-            attrs_dict: Mapping[str, Sequence[str]] = {
+            attrs_dict: t.StrSequenceMapping = {
                 str(k): [str(item) for item in v]
                 for k, v in dict(attrs_mapping).items()
             }
@@ -943,7 +943,7 @@ class FlextLdapOperations(FlextLdapConnection):
             r containing LdapBatchStats with synced/failed/skipped counts
 
         """
-        stats_builder: MutableMapping[str, int] = {
+        stats_builder: t.MutableIntMapping = {
             "synced": 0,
             "failed": 0,
             "skipped": 0,
@@ -1280,7 +1280,7 @@ class FlextLdapOperations(FlextLdapConnection):
         entry_index: int,
         total: int,
         entry_dn: str | None,
-        stats: Mapping[str, int],
+        stats: t.IntMapping,
     ) -> None:
         """Invoke progress callback with error handling."""
         try:
@@ -1310,7 +1310,7 @@ class FlextLdapOperations(FlextLdapConnection):
     def _update_batch_stats(
         self,
         upsert_result: r[m.Ldap.LdapOperationResult],
-        stats: MutableMapping[str, int],
+        stats: t.MutableIntMapping,
         entry_index: int,
         entry_dn: str | None,
         total_entries: int,

@@ -444,7 +444,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 search_filter: str,
                 search_scope: _Ldap3SearchScope = "SUBTREE",
                 dereference_aliases: _Ldap3DerefAliases = "ALWAYS",
-                attributes: Sequence[str] | str | None = None,
+                attributes: t.StrSequence | str | None = None,
                 size_limit: int = 0,
                 time_limit: int = 0,
                 *,
@@ -462,8 +462,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def add(
                 self,
                 dn: str,
-                object_class: Sequence[str] | str | None,
-                attributes: Mapping[str, str | bytes | Sequence[str] | Sequence[bytes]]
+                object_class: t.StrSequence | str | None,
+                attributes: Mapping[str, str | bytes | t.StrSequence | Sequence[bytes]]
                 | None,
             ) -> bool:
                 """Add an LDAP entry."""
@@ -496,7 +496,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for ldap3 server info objects (structural type)."""
 
             @property
-            def naming_contexts(self) -> Sequence[str]:
+            def naming_contexts(self) -> t.StrSequence:
                 """Get naming contexts."""
                 ...
 
@@ -517,7 +517,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             @property
-            def entry_attributes(self) -> Sequence[str]:
+            def entry_attributes(self) -> t.StrSequence:
                 """Get list of attribute names present in this entry."""
                 ...
 
@@ -607,7 +607,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 | int
                 | float
                 | bool
-                | Sequence[str | bytes | int | float | bool]
+                | Sequence[str | bytes | t.Numeric | bool]
                 | None,
             ]:
                 """Get attributes property - covariant Mapping for structural compatibility."""

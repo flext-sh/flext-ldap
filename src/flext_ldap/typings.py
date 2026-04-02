@@ -27,7 +27,7 @@ class FlextLdapTypes(FlextLdifTypes):
             | int
             | float
             | bool
-            | Sequence[str | bytes | int | float | bool]
+            | Sequence[str | bytes | t.Numeric | bool]
             | None
         )
 

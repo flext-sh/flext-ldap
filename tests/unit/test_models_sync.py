@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-
 import pytest
 from flext_tests import tm
 from pydantic import ValidationError
 
-from tests import c, m
+from tests import c, m, t
 
 pytestmark = pytest.mark.unit
 
@@ -82,7 +80,7 @@ class TestsFlextLdapModelsSync:
         self,
         label: str,
         cls: type,
-        kwargs: Mapping[str, int],
+        kwargs: t.IntMapping,
         expected: float,
     ) -> None:
         tm.that(getattr(cls(**kwargs), "success_rate"), eq=expected)

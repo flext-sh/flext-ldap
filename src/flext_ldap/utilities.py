@@ -215,7 +215,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 True if normalized value is in collection
 
             """
-            collection_list: Sequence[str]
+            collection_list: t.StrSequence
             match collection:
                 case tuple():
                     collection_list = list(collection)
@@ -245,7 +245,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
                 Joined normalized string
 
             """
-            values_list: Sequence[str]
+            values_list: t.StrSequence
             match values:
                 case tuple():
                     values_list = list(values)
@@ -256,7 +256,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def attr_to_str_list(
-            attrs: Mapping[str, t.ContainerValue] | Mapping[str, t.StrSequence],
+            attrs: t.ContainerValueMapping | Mapping[str, t.StrSequence],
             *,
             filter_list_like: bool = False,
         ) -> Mapping[str, t.StrSequence]:
@@ -320,8 +320,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def filter_truthy(
-            value: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue],
-        ) -> Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue]:
+            value: Sequence[t.ContainerValue] | t.ContainerValueMapping,
+        ) -> Sequence[t.ContainerValue] | t.ContainerValueMapping:
             """Filter truthy values from list or dict.
 
             Args:

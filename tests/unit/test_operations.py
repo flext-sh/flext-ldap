@@ -38,7 +38,7 @@ class TestsFlextLdapOperations:
     Instantiate with FlextLdapOperations() — no constructor args needed.
     """
 
-    _ERROR_DETECTION_SCENARIOS: ClassVar[Mapping[str, bool]] = {
+    _ERROR_DETECTION_SCENARIOS: ClassVar[t.BoolMapping] = {
         "Entry already exists": True,
         "already exists": True,
         "ALREADY EXISTS": True,

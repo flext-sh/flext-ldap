@@ -30,7 +30,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap import FlextLdapEntryAdapter
-from tests import m, p
+from tests import m, p, t
 
 pytestmark = pytest.mark.unit
 
@@ -89,7 +89,7 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
 
         class _MockAttr:
-            def __init__(self, vals: Sequence[str]) -> None:
+            def __init__(self, vals: t.StrSequence) -> None:
                 self.values: Sequence[str | bytes] = vals
                 self.raw_values: Sequence[bytes] = [v.encode() for v in vals]
                 self.value: str | bytes | Sequence[str | bytes] = (
@@ -99,7 +99,7 @@ class TestsFlextLdapEntryAdapter:
         class MockLdap3Entry:
             def __init__(self) -> None:
                 self.entry_dn: str | None = "cn=user,dc=example,dc=com"
-                self._attrs: Mapping[str, Sequence[str]] = {
+                self._attrs: t.StrSequenceMapping = {
                     "cn": ["user"],
                     "sn": ["Doe"],
                 }
@@ -109,7 +109,7 @@ class TestsFlextLdapEntryAdapter:
                 return self._attrs
 
             @property
-            def entry_attributes(self) -> Sequence[str]:
+            def entry_attributes(self) -> t.StrSequence:
                 return list(self._attrs)
 
             def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
@@ -130,7 +130,7 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
 
         class _MockAttr:
-            def __init__(self, vals: Sequence[str]) -> None:
+            def __init__(self, vals: t.StrSequence) -> None:
                 self.values: Sequence[str | bytes] = vals
                 self.raw_values: Sequence[bytes] = [v.encode() for v in vals]
                 self.value: str | bytes | Sequence[str | bytes] = (
@@ -140,14 +140,14 @@ class TestsFlextLdapEntryAdapter:
         class MockLdap3Entry:
             def __init__(self) -> None:
                 self.entry_dn: str | None = "cn=user,dc=example,dc=com"
-                self._attrs: Mapping[str, Sequence[str]] = {}
+                self._attrs: t.StrSequenceMapping = {}
 
             @property
             def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str | bytes]]:
                 return self._attrs
 
             @property
-            def entry_attributes(self) -> Sequence[str]:
+            def entry_attributes(self) -> t.StrSequence:
                 return list(self._attrs)
 
             def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:

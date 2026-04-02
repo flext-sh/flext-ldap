@@ -704,7 +704,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             """
             if attrs_dict is None:
                 return {}
-            result: MutableMapping[str, MutableSequence[str]] = {}
+            result: t.MutableStrSequenceMapping = {}
             for k in attrs_dict:
                 v = attrs_dict[k]
                 if isinstance(v, str):
@@ -771,7 +771,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             entry: p.Ldap.Ldap3Entry,
         ) -> Mapping[str, t.StrSequence]:
             """Convert LDAP entry attributes to string-list mapping."""
-            attrs_dict: MutableMapping[str, MutableSequence[str]] = {}
+            attrs_dict: t.MutableStrSequenceMapping = {}
             for attr, attr_values in entry.entry_attributes_as_dict.items():
                 attrs_dict[attr] = [str(v) for v in attr_values]
             return attrs_dict
@@ -1157,7 +1157,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                     )
                 entries: MutableSequence[m.Ldif.Entry] = []
                 for dn, attrs in ldap3_results:
-                    str_attrs: MutableMapping[str, MutableSequence[str]] = {
+                    str_attrs: t.MutableStrSequenceMapping = {
                         k: list(v) for k, v in attrs.items()
                     }
                     entry = m.Ldif.Entry.model_validate({

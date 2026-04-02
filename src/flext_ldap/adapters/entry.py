@@ -393,7 +393,7 @@ class FlextLdapEntryAdapter(s[bool]):
             original_attrs_dict = attrs_dict
             removed_attrs: MutableSequence[str] = []
             base64_attrs: MutableSequence[str] = []
-            ldif_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            ldif_attrs: t.MutableStrSequenceMapping = {}
             logger = logging.getLogger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:
@@ -517,7 +517,7 @@ class FlextLdapEntryAdapter(s[bool]):
         if not attrs_dict:
             return r[t.Ldap.OperationAttributes].fail("Entry has no attributes")
         try:
-            filtered_attrs: MutableMapping[str, MutableSequence[str]] = {}
+            filtered_attrs: t.MutableStrSequenceMapping = {}
             for k, v in attrs_dict.items():
                 key_str = str(k)
                 filtered_attrs[key_str] = [str(item) for item in v]

@@ -37,9 +37,9 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 return isinstance(value, Mapping)
 
             @staticmethod
-            def _is_numeric(value: t.NormalizedValue) -> TypeGuard[int | float]:
+            def _is_numeric(value: t.NormalizedValue) -> TypeGuard[t.Numeric]:
                 """Return whether value is a numeric scalar excluding bool."""
-                return isinstance(value, int | float) and not isinstance(value, bool)
+                return isinstance(value, t.Numeric) and not isinstance(value, bool)
 
             @staticmethod
             def _is_sized(value: t.NormalizedValue) -> TypeGuard[Sized]:
