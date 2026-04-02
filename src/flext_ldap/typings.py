@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import TypeVar
 
 from flext_ldif import FlextLdifModels, FlextLdifTypes
 
@@ -54,18 +53,9 @@ class FlextLdapTypes(FlextLdifTypes):
         type LaxStr = str | bytes | bytearray
 
 
-FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-
-FlextLdapEntryT = TypeVar(
-    "FlextLdapEntryT",
-    bound=p.Ldap.ServiceContracts.EntryContract,
-)
-
 t = FlextLdapTypes
 
 __all__ = [
-    "FlextLdapDomainResultT",
-    "FlextLdapEntryT",
     "FlextLdapTypes",
     "t",
 ]

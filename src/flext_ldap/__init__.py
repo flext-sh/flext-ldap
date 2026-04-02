@@ -20,7 +20,6 @@ from flext_ldap.__version__ import (
     __version__,
     __version_info__,
 )
-from flext_ldap.typings import FlextLdapDomainResultT, FlextLdapEntryT
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
@@ -114,8 +113,6 @@ install_lazy_exports(
     globals(),
     _LAZY_IMPORTS,
     [
-        "FlextLdapDomainResultT",
-        "FlextLdapEntryT",
         "__author__",
         "__author_email__",
         "__description__",

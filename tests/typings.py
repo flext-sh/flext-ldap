@@ -61,7 +61,7 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
                 t.Scalar | t.StrSequence | Mapping[str, t.StrSequence],
             ]
             type LdapContainerDict = t.ScalarMapping
-            type LdapConnectionConfigDict = Mapping[str, t.Scalar | None]
+            type LdapConnectionConfigDict = Mapping[str, t.OptionalScalar]
             type LdapSearchOptionsDict = t.ScalarMapping
             type LdapEntryDataDict = Mapping[str, t.Scalar | t.StrSequence]
             type LdapSchemaAttributeDict = Mapping[str, str | t.StrSequence | bool]
