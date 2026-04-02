@@ -1,7 +1,7 @@
 """Docker infrastructure utilities for flext-ldap test setup.
 
-Provides _DockerInfraUtils class composable into u.Ldap.Tests via MRO.
-Access: u.Ldap.Tests.FileLock, u.Ldap.Tests.get_docker_control(), etc.
+Provides _DockerInfraUtils class composable into FlextLdapUtilities.Ldap.Tests via MRO.
+Access: FlextLdapUtilities.Ldap.Tests.FileLock, FlextLdapUtilities.Ldap.Tests.get_docker_control(), etc.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,15 +19,15 @@ from typing import ClassVar, TextIO
 from flext_core import FlextLogger
 from flext_tests import tk
 
-from flext_ldap import FlextLdapLdap3Wrappers, u
+from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapUtilities
 from tests import c
 
 
 class _DockerInfraUtils:
-    """Docker infrastructure helpers composed into u.Ldap.Tests via MRO.
+    """Docker infrastructure helpers composed into FlextLdapUtilities.Ldap.Tests via MRO.
 
     Provides FileLock, DNSTracker, get_docker_control, get_admin_credentials,
-    ensure_basic_ldap_structure — all accessible flat from u.Ldap.Tests.*.
+    ensure_basic_ldap_structure — all accessible flat from FlextLdapUtilities.Ldap.Tests.*.
     """
 
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
@@ -102,8 +102,10 @@ class _DockerInfraUtils:
         ])
         for candidate_dn, candidate_password in candidates:
             try:
-                server = u.Ldap.create_bare_server("localhost", port=d.PORT)
-                test_conn = u.Ldap.create_connection(
+                server = FlextLdapUtilities.Ldap.create_bare_server(
+                    "localhost", port=d.PORT
+                )
+                test_conn = FlextLdapUtilities.Ldap.create_connection(
                     server,
                     user=candidate_dn,
                     password=candidate_password,
@@ -131,11 +133,11 @@ class _DockerInfraUtils:
         d = c.Ldap.Tests.Docker
         try:
             admin_dn, admin_password = _DockerInfraUtils.get_admin_credentials()
-            server = u.Ldap.create_server_from_url(
+            server = FlextLdapUtilities.Ldap.create_server_from_url(
                 f"ldap://localhost:{d.PORT}",
                 get_info="NO_INFO",
             )
-            conn = u.Ldap.create_connection(
+            conn = FlextLdapUtilities.Ldap.create_connection(
                 server,
                 user=admin_dn,
                 password=admin_password,

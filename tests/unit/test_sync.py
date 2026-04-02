@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldap import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap, p
-from tests import m
+from flext_ldap import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap
+from tests import m, p
 
 pytestmark = pytest.mark.unit
 

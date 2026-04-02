@@ -18,7 +18,7 @@ from typing import ClassVar, Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import FlextLdapConstants, t
+from flext_ldap import FlextLdapConstants, FlextLdapTypes
 
 
 class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
@@ -86,7 +86,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 """Static sample entries for tests."""
 
                 USER_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, t.StrSequence]]
+                    Mapping[str, str | Mapping[str, FlextLdapTypes.StrSequence]]
                 ] = {
                     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
                     "attributes": {
@@ -105,7 +105,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                     },
                 }
                 GROUP_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, t.StrSequence]]
+                    Mapping[str, str | Mapping[str, FlextLdapTypes.StrSequence]]
                 ] = {
                     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
                     "attributes": {

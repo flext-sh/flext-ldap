@@ -25,8 +25,8 @@ from enum import StrEnum, unique
 import pytest
 from flext_core import r
 
-from flext_ldap import FlextLdap, ldap, p, u
-from tests import m, t
+from flext_ldap import FlextLdap, ldap
+from tests import m, p, t, u
 
 pytestmark = pytest.mark.smoke
 
