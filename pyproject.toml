@@ -739,6 +739,7 @@ split-on-trailing-comma = true
   "S603",
 ]
 "**/__init__.py" = [
+  "A004",
   "ANN401",
   "D107",
   "F401",
@@ -748,6 +749,7 @@ split-on-trailing-comma = true
   "N999",
   "PLC2701",
   "RUF067",
+  "TC004",
 ]
 "**/_utilities/parser.py" = [
   "ARG004",
