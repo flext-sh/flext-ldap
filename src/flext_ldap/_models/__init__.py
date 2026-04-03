@@ -1,13 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""FlextLdap internal models package.
-
-This package contains the actual model implementations.
-The public models.py facade imports and exposes these.
-
-NOTE: Collections is inherited from FlextModels - no custom implementation needed.
-"""
+"""Models package."""
 
 from __future__ import annotations
 
@@ -18,12 +12,12 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldap._models import ldap
-    from flext_ldap._models.ldap import FlextLdapModelsLdap
+    from flext_ldap import ldap
+    from flext_ldap.ldap import FlextLdapModelsLdap
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdapModelsLdap": "flext_ldap._models.ldap",
-    "ldap": "flext_ldap._models.ldap",
+    "FlextLdapModelsLdap": "flext_ldap.ldap",
+    "ldap": "flext_ldap.ldap",
 }
 
 

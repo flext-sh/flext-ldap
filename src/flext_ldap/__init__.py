@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 from flext_ldap.__version__ import (
+    __all__,
     __author__,
     __author_email__,
     __description__,
@@ -17,7 +18,6 @@ from flext_ldap.__version__ import (
     __title__,
     __url__,
     __version__,
-    __version_info__,
 )
 
 if _TYPE_CHECKING:
@@ -32,22 +32,22 @@ if _TYPE_CHECKING:
         adapters,
         api,
         base,
+        connection,
         constants,
+        detection,
+        entry,
+        ldap3,
         models,
+        operations,
         protocols,
         services,
         settings,
+        sync,
         typings,
         utilities,
     )
     from flext_ldap._models import FlextLdapModelsLdap
-    from flext_ldap.adapters import (
-        FlextLdapEntryAdapter,
-        FlextLdapLdap3Adapter,
-        FlextLdapLdap3Wrappers,
-        entry,
-        ldap3,
-    )
+    from flext_ldap.adapters import FlextLdapEntryAdapter, FlextLdapLdap3Wrappers
     from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapServiceBase, s
     from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
@@ -59,10 +59,6 @@ if _TYPE_CHECKING:
         FlextLdapServerDetector,
         FlextLdapSync,
         FlextLdapSyncCallbacks,
-        connection,
-        detection,
-        operations,
-        sync,
     )
     from flext_ldap.settings import FlextLdapSettings
     from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
@@ -88,19 +84,25 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "api": "flext_ldap.api",
         "base": "flext_ldap.base",
         "c": ("flext_ldap.constants", "FlextLdapConstants"),
+        "connection": "flext_ldap.connection",
         "constants": "flext_ldap.constants",
         "d": ("flext_core.decorators", "FlextDecorators"),
+        "detection": "flext_ldap.detection",
         "e": ("flext_core.exceptions", "FlextExceptions"),
+        "entry": "flext_ldap.entry",
         "h": ("flext_core.handlers", "FlextHandlers"),
         "ldap": "flext_ldap.api",
+        "ldap3": "flext_ldap.ldap3",
         "m": ("flext_ldap.models", "FlextLdapModels"),
         "models": "flext_ldap.models",
+        "operations": "flext_ldap.operations",
         "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
         "protocols": "flext_ldap.protocols",
         "r": ("flext_core.result", "FlextResult"),
         "s": "flext_ldap.base",
         "services": "flext_ldap.services",
         "settings": "flext_ldap.settings",
+        "sync": "flext_ldap.sync",
         "t": ("flext_ldap.typings", "FlextLdapTypes"),
         "typings": "flext_ldap.typings",
         "u": ("flext_ldap.utilities", "FlextLdapUtilities"),
@@ -115,6 +117,7 @@ install_lazy_exports(
     globals(),
     _LAZY_IMPORTS,
     [
+        "__all__",
         "__author__",
         "__author_email__",
         "__description__",
@@ -122,6 +125,5 @@ install_lazy_exports(
         "__title__",
         "__url__",
         "__version__",
-        "__version_info__",
     ],
 )
