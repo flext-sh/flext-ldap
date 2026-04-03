@@ -58,7 +58,7 @@ class FlextLdapEntryAdapter(s[bool]):
         """Conversion helper methods for entry value and attribute processing (SRP).
 
         Handles normalization of ldap3 values to LDIF list format with base64 detection.
-        Uses FlextRuntime type guards for safe type narrowing (no isinstance checks).
+        Uses u type guards for safe type narrowing (no isinstance checks).
         """
 
         ASCII_THRESHOLD: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD

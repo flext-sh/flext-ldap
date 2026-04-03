@@ -36,8 +36,7 @@ from typing import ClassVar, override
 
 from pydantic import ConfigDict
 
-from flext_core import FlextRuntime, r
-from flext_ldap import FlextLdapConnection, c, m, p, t, u
+from flext_ldap import FlextLdapConnection, c, m, p, r, t, u
 
 
 class FlextLdapOperations(FlextLdapConnection):
@@ -86,7 +85,7 @@ class FlextLdapOperations(FlextLdapConnection):
     @staticmethod
     def _get_structlog_logger() -> p.Logger | None:
         """Return structlog logger when runtime logger satisfies the protocol."""
-        return FlextRuntime.get_logger(__name__)
+        return u.get_logger(__name__)
 
     @staticmethod
     def _extract_attributes_dict(entry: m.Ldif.Entry) -> Mapping[str, t.StrSequence]:
