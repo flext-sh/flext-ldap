@@ -5,20 +5,28 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_ldap._models import ldap
-    from flext_ldap._models.ldap import FlextLdapModelsLdap
+if _t.TYPE_CHECKING:
+    import flext_ldap._models.ldap as _flext_ldap__models_ldap
 
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+    ldap = _flext_ldap__models_ldap
+
+    _ = (
+        FlextLdapModelsLdap,
+        ldap,
+    )
+_LAZY_IMPORTS = {
     "FlextLdapModelsLdap": "flext_ldap._models.ldap",
     "ldap": "flext_ldap._models.ldap",
 }
+
+__all__ = [
+    "FlextLdapModelsLdap",
+    "ldap",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

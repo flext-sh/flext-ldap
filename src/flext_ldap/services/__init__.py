@@ -5,31 +5,58 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from flext_core.constants import FlextConstants as c
+from flext_core.decorators import FlextDecorators as d
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.handlers import FlextHandlers as h
 from flext_core.lazy import install_lazy_exports
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
+from flext_core.service import FlextService as s
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.models import FlextModels as m
-    from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import FlextResult as r
-    from flext_core.service import FlextService as s
-    from flext_core.typings import FlextTypes as t
-    from flext_core.utilities import FlextUtilities as u
-    from flext_ldap.services import connection, detection, operations, sync
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
+if _t.TYPE_CHECKING:
+    import flext_ldap.services.connection as _flext_ldap_services_connection
 
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+    connection = _flext_ldap_services_connection
+    import flext_ldap.services.detection as _flext_ldap_services_detection
+
+    detection = _flext_ldap_services_detection
+    import flext_ldap.services.operations as _flext_ldap_services_operations
+
+    operations = _flext_ldap_services_operations
+    import flext_ldap.services.sync as _flext_ldap_services_sync
+
+    sync = _flext_ldap_services_sync
+
+    _ = (
+        FlextLdapConnection,
+        FlextLdapOperations,
+        FlextLdapServerDetector,
+        FlextLdapSync,
+        FlextLdapSyncCallbacks,
+        c,
+        connection,
+        d,
+        detection,
+        e,
+        h,
+        m,
+        operations,
+        p,
+        r,
+        s,
+        sync,
+        t,
+        u,
+        x,
+    )
+_LAZY_IMPORTS = {
     "FlextLdapConnection": "flext_ldap.services.connection",
     "FlextLdapOperations": "flext_ldap.services.operations",
     "FlextLdapServerDetector": "flext_ldap.services.detection",
@@ -51,6 +78,29 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }
+
+__all__ = [
+    "FlextLdapConnection",
+    "FlextLdapOperations",
+    "FlextLdapServerDetector",
+    "FlextLdapSync",
+    "FlextLdapSyncCallbacks",
+    "c",
+    "connection",
+    "d",
+    "detection",
+    "e",
+    "h",
+    "m",
+    "operations",
+    "p",
+    "r",
+    "s",
+    "sync",
+    "t",
+    "u",
+    "x",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

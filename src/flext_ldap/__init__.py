@@ -5,33 +5,97 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from flext_core.decorators import FlextDecorators as d
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.handlers import FlextHandlers as h
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.mixins import FlextMixins as x
+from flext_core.result import FlextResult as r
 from flext_ldap.__version__ import *
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.result import FlextResult as r
-    from flext_ldap import (
-        _models,
-        adapters,
-        api,
-        base,
-        constants,
-        models,
-        protocols,
-        services,
-        settings,
-        typings,
-        utilities,
-    )
-    from flext_ldap.__version__ import (
+if _t.TYPE_CHECKING:
+    import flext_ldap._models as _flext_ldap__models
+
+    _models = _flext_ldap__models
+    import flext_ldap.adapters as _flext_ldap_adapters
+
+    adapters = _flext_ldap_adapters
+    import flext_ldap.adapters.entry as _flext_ldap_adapters_entry
+
+    entry = _flext_ldap_adapters_entry
+    import flext_ldap.adapters.ldap3 as _flext_ldap_adapters_ldap3
+
+    ldap3 = _flext_ldap_adapters_ldap3
+    import flext_ldap.api as _flext_ldap_api
+
+    api = _flext_ldap_api
+    import flext_ldap.base as _flext_ldap_base
+
+    base = _flext_ldap_base
+    import flext_ldap.constants as _flext_ldap_constants
+
+    constants = _flext_ldap_constants
+    import flext_ldap.models as _flext_ldap_models
+
+    models = _flext_ldap_models
+    import flext_ldap.protocols as _flext_ldap_protocols
+
+    protocols = _flext_ldap_protocols
+    import flext_ldap.services as _flext_ldap_services
+
+    services = _flext_ldap_services
+    import flext_ldap.services.connection as _flext_ldap_services_connection
+
+    connection = _flext_ldap_services_connection
+    import flext_ldap.services.detection as _flext_ldap_services_detection
+
+    detection = _flext_ldap_services_detection
+    import flext_ldap.services.operations as _flext_ldap_services_operations
+
+    operations = _flext_ldap_services_operations
+    import flext_ldap.services.sync as _flext_ldap_services_sync
+
+    sync = _flext_ldap_services_sync
+    import flext_ldap.settings as _flext_ldap_settings
+
+    settings = _flext_ldap_settings
+    import flext_ldap.typings as _flext_ldap_typings
+
+    typings = _flext_ldap_typings
+    import flext_ldap.utilities as _flext_ldap_utilities
+
+    utilities = _flext_ldap_utilities
+
+    _ = (
+        FlextLdap,
+        FlextLdapConnection,
+        FlextLdapConstants,
+        FlextLdapEntryAdapter,
+        FlextLdapLdap3Adapter,
+        FlextLdapLdap3Wrappers,
+        FlextLdapModels,
+        FlextLdapModelsLdap,
+        FlextLdapOperations,
+        FlextLdapProtocols,
+        FlextLdapServerDetector,
+        FlextLdapServiceBase,
+        FlextLdapSettings,
+        FlextLdapSync,
+        FlextLdapSyncCallbacks,
+        FlextLdapTypes,
+        FlextLdapUtilities,
         __author__,
         __author_email__,
         __description__,
@@ -40,36 +104,37 @@ if _TYPE_CHECKING:
         __url__,
         __version__,
         __version_info__,
-    )
-    from flext_ldap._models import FlextLdapModelsLdap
-    from flext_ldap.adapters import (
-        FlextLdapEntryAdapter,
-        FlextLdapLdap3Adapter,
-        FlextLdapLdap3Wrappers,
-        entry,
-        ldap3,
-    )
-    from flext_ldap.api import FlextLdap, ldap
-    from flext_ldap.base import FlextLdapServiceBase, s
-    from flext_ldap.constants import FlextLdapConstants, FlextLdapConstants as c
-    from flext_ldap.models import FlextLdapModels, FlextLdapModels as m
-    from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
-    from flext_ldap.services import (
-        FlextLdapConnection,
-        FlextLdapOperations,
-        FlextLdapServerDetector,
-        FlextLdapSync,
-        FlextLdapSyncCallbacks,
+        _models,
+        adapters,
+        api,
+        base,
+        c,
         connection,
+        constants,
+        d,
         detection,
+        e,
+        entry,
+        h,
+        ldap,
+        ldap3,
+        m,
+        models,
         operations,
+        p,
+        protocols,
+        r,
+        s,
+        services,
+        settings,
         sync,
+        t,
+        typings,
+        u,
+        utilities,
+        x,
     )
-    from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, FlextLdapTypes as t
-    from flext_ldap.utilities import FlextLdapUtilities, FlextLdapUtilities as u
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
+_LAZY_IMPORTS = merge_lazy_imports(
     (
         "flext_ldap._models",
         "flext_ldap.adapters",
@@ -107,7 +172,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
         "protocols": "flext_ldap.protocols",
         "r": ("flext_core.result", "FlextResult"),
-        "s": "flext_ldap.base",
+        "s": ("flext_ldap.base", "FlextLdapServiceBase"),
         "services": "flext_ldap.services",
         "settings": "flext_ldap.settings",
         "t": ("flext_ldap.typings", "FlextLdapTypes"),
@@ -117,6 +182,63 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
+
+__all__ = [
+    "FlextLdap",
+    "FlextLdapConnection",
+    "FlextLdapConstants",
+    "FlextLdapEntryAdapter",
+    "FlextLdapLdap3Adapter",
+    "FlextLdapLdap3Wrappers",
+    "FlextLdapModels",
+    "FlextLdapModelsLdap",
+    "FlextLdapOperations",
+    "FlextLdapProtocols",
+    "FlextLdapServerDetector",
+    "FlextLdapServiceBase",
+    "FlextLdapSettings",
+    "FlextLdapSync",
+    "FlextLdapSyncCallbacks",
+    "FlextLdapTypes",
+    "FlextLdapUtilities",
+    "__author__",
+    "__author_email__",
+    "__description__",
+    "__license__",
+    "__title__",
+    "__url__",
+    "__version__",
+    "__version_info__",
+    "_models",
+    "adapters",
+    "api",
+    "base",
+    "c",
+    "connection",
+    "constants",
+    "d",
+    "detection",
+    "e",
+    "entry",
+    "h",
+    "ldap",
+    "ldap3",
+    "m",
+    "models",
+    "operations",
+    "p",
+    "protocols",
+    "r",
+    "s",
+    "services",
+    "settings",
+    "sync",
+    "t",
+    "typings",
+    "u",
+    "utilities",
+    "x",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
