@@ -23,30 +23,30 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldap import connection, detection, operations, sync
-    from flext_ldap.connection import FlextLdapConnection
-    from flext_ldap.detection import FlextLdapServerDetector
-    from flext_ldap.operations import FlextLdapOperations
-    from flext_ldap.sync import FlextLdapSync, FlextLdapSyncCallbacks
+    from flext_ldap.services import connection, detection, operations, sync
+    from flext_ldap.services.connection import FlextLdapConnection
+    from flext_ldap.services.detection import FlextLdapServerDetector
+    from flext_ldap.services.operations import FlextLdapOperations
+    from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdapConnection": "flext_ldap.connection",
-    "FlextLdapOperations": "flext_ldap.operations",
-    "FlextLdapServerDetector": "flext_ldap.detection",
-    "FlextLdapSync": "flext_ldap.sync",
-    "FlextLdapSyncCallbacks": "flext_ldap.sync",
+    "FlextLdapConnection": "flext_ldap.services.connection",
+    "FlextLdapOperations": "flext_ldap.services.operations",
+    "FlextLdapServerDetector": "flext_ldap.services.detection",
+    "FlextLdapSync": "flext_ldap.services.sync",
+    "FlextLdapSyncCallbacks": "flext_ldap.services.sync",
     "c": ("flext_core.constants", "FlextConstants"),
-    "connection": "flext_ldap.connection",
+    "connection": "flext_ldap.services.connection",
     "d": ("flext_core.decorators", "FlextDecorators"),
-    "detection": "flext_ldap.detection",
+    "detection": "flext_ldap.services.detection",
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
-    "operations": "flext_ldap.operations",
+    "operations": "flext_ldap.services.operations",
     "p": ("flext_core.protocols", "FlextProtocols"),
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
-    "sync": "flext_ldap.sync",
+    "sync": "flext_ldap.services.sync",
     "t": ("flext_core.typings", "FlextTypes"),
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),

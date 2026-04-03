@@ -23,22 +23,22 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldap import test_smoke
-    from flext_ldap.test_smoke import TestsFlextLdapSmoke, pytestmark
+    from tests.integration import test_smoke
+    from tests.integration.test_smoke import TestsFlextLdapSmoke, pytestmark
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "TestsFlextLdapSmoke": "flext_ldap.test_smoke",
+    "TestsFlextLdapSmoke": "tests.integration.test_smoke",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
     "p": ("flext_core.protocols", "FlextProtocols"),
-    "pytestmark": "flext_ldap.test_smoke",
+    "pytestmark": "tests.integration.test_smoke",
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
-    "test_smoke": "flext_ldap.test_smoke",
+    "test_smoke": "tests.integration.test_smoke",
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }

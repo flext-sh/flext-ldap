@@ -12,12 +12,12 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_ldap import ldap
-    from flext_ldap.ldap import FlextLdapModelsLdap
+    from flext_ldap._models import ldap
+    from flext_ldap._models.ldap import FlextLdapModelsLdap
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdapModelsLdap": "flext_ldap.ldap",
-    "ldap": "flext_ldap.ldap",
+    "FlextLdapModelsLdap": "flext_ldap._models.ldap",
+    "ldap": "flext_ldap._models.ldap",
 }
 
 

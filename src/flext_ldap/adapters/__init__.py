@@ -23,19 +23,20 @@ if _TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from flext_ldap import entry, ldap3
-    from flext_ldap.entry import FlextLdapEntryAdapter
-    from flext_ldap.ldap3 import FlextLdapLdap3Wrappers
+    from flext_ldap.adapters import entry, ldap3
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
-    "FlextLdapEntryAdapter": "flext_ldap.entry",
-    "FlextLdapLdap3Wrappers": "flext_ldap.ldap3",
+    "FlextLdapEntryAdapter": "flext_ldap.adapters.entry",
+    "FlextLdapLdap3Adapter": "flext_ldap.adapters.ldap3",
+    "FlextLdapLdap3Wrappers": "flext_ldap.adapters.ldap3",
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
-    "entry": "flext_ldap.entry",
+    "entry": "flext_ldap.adapters.entry",
     "h": ("flext_core.handlers", "FlextHandlers"),
-    "ldap3": "flext_ldap.ldap3",
+    "ldap3": "flext_ldap.adapters.ldap3",
     "m": ("flext_core.models", "FlextModels"),
     "p": ("flext_core.protocols", "FlextProtocols"),
     "r": ("flext_core.result", "FlextResult"),
