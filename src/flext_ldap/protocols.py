@@ -40,7 +40,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
     Layer 2: Handler Protocols (can use Layer 0 and 1)
     """
 
-    class Ldap:
+    @runtime_checkable
+    class Ldap(Protocol):
         """LDAP-specific protocol namespace.
 
         All LDAP domain-specific protocols are organized here at ROOT level
