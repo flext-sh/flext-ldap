@@ -101,7 +101,7 @@ class FlextLdapConstants(FlextLdifConstants):
             PROTOCOL_ERROR = 2
             NO_SUCH_OBJECT = 32
             REFERRAL = 10
-            PARTIAL_SUCCESS_CODES: ClassVar[Sequence[int]] = [0, 10]
+            PARTIAL_SUCCESS_CODES: ClassVar[Sequence[int]] = (0, 10)
 
         class ErrorStrings:
             """Error message string constants."""
