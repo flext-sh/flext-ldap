@@ -13,15 +13,14 @@ if _t.TYPE_CHECKING:
     import tests._utilities as _tests__utilities
 
     _utilities = _tests__utilities
-    import tests._utilities.docker_infra as _tests__utilities_docker_infra
-
-    docker_infra = _tests__utilities_docker_infra
-    import tests._utilities.fixture_loaders as _tests__utilities_fixture_loaders
-    from tests._utilities.docker_infra import _DockerInfraUtils
-
-    fixture_loaders = _tests__utilities_fixture_loaders
     import tests.conftest as _tests_conftest
-    from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
+    from tests._utilities import (
+        TestFixtures,
+        _DockerInfraUtils,
+        _FixtureLoaderUtils,
+        docker_infra,
+        fixture_loaders,
+    )
 
     conftest = _tests_conftest
     import tests.constants as _tests_constants
@@ -41,11 +40,8 @@ if _t.TYPE_CHECKING:
     from tests.constants import FlextLdapTestConstants, FlextLdapTestConstants as c
 
     integration = _tests_integration
-    import tests.integration.test_smoke as _tests_integration_test_smoke
-
-    test_smoke = _tests_integration_test_smoke
     import tests.models as _tests_models
-    from tests.integration.test_smoke import TestsFlextLdapSmoke
+    from tests.integration import TestsFlextLdapSmoke, test_smoke
 
     models = _tests_models
     import tests.protocols as _tests_protocols
@@ -60,59 +56,36 @@ if _t.TYPE_CHECKING:
     from tests.typings import FlextLdapTestTypes, FlextLdapTestTypes as t
 
     unit = _tests_unit
-    import tests.unit.test_api as _tests_unit_test_api
-
-    test_api = _tests_unit_test_api
-    import tests.unit.test_base as _tests_unit_test_base
-    from tests.unit.test_api import TestsFlextLdapApi
-
-    test_base = _tests_unit_test_base
-    import tests.unit.test_config as _tests_unit_test_config
-    from tests.unit.test_base import TestsFlextLdapBase
-
-    test_config = _tests_unit_test_config
-    import tests.unit.test_constants as _tests_unit_test_constants
-    from tests.unit.test_config import TestsFlextLdapSettings
-
-    test_constants = _tests_unit_test_constants
-    import tests.unit.test_detection as _tests_unit_test_detection
-    from tests.unit.test_constants import TestsFlextLdapConstants
-
-    test_detection = _tests_unit_test_detection
-    import tests.unit.test_entry_adapter as _tests_unit_test_entry_adapter
-    from tests.unit.test_detection import TestsFlextLdapDetection
-
-    test_entry_adapter = _tests_unit_test_entry_adapter
-    import tests.unit.test_ldap3_adapter as _tests_unit_test_ldap3_adapter
-    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-
-    test_ldap3_adapter = _tests_unit_test_ldap3_adapter
-    import tests.unit.test_models as _tests_unit_test_models
-    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
-
-    test_models = _tests_unit_test_models
-    import tests.unit.test_models_search as _tests_unit_test_models_search
-    from tests.unit.test_models import TestsFlextLdapModels
-
-    test_models_search = _tests_unit_test_models_search
-    import tests.unit.test_models_sync as _tests_unit_test_models_sync
-    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
-
-    test_models_sync = _tests_unit_test_models_sync
-    import tests.unit.test_operations as _tests_unit_test_operations
-    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
-
-    test_operations = _tests_unit_test_operations
-    import tests.unit.test_sync as _tests_unit_test_sync
-    from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
-
-    test_sync = _tests_unit_test_sync
-    import tests.unit.test_utilities as _tests_unit_test_utilities
-    from tests.unit.test_sync import TestsFlextLdapSync
-
-    test_utilities = _tests_unit_test_utilities
     import tests.utilities as _tests_utilities
-    from tests.unit.test_utilities import TestsFlextLdapUtilities
+    from tests.unit import (
+        TestsFlextLdap3Adapter,
+        TestsFlextLdapApi,
+        TestsFlextLdapBase,
+        TestsFlextLdapConstants,
+        TestsFlextLdapDetection,
+        TestsFlextLdapEntryAdapter,
+        TestsFlextLdapModels,
+        TestsFlextLdapModelsSearch,
+        TestsFlextLdapModelsSync,
+        TestsFlextLdapOperations,
+        TestsFlextLdapSettings,
+        TestsFlextLdapSync,
+        TestsFlextLdapUtilities,
+        pytestmark,
+        test_api,
+        test_base,
+        test_config,
+        test_constants,
+        test_detection,
+        test_entry_adapter,
+        test_ldap3_adapter,
+        test_models,
+        test_models_search,
+        test_models_sync,
+        test_operations,
+        test_sync,
+        test_utilities,
+    )
 
     utilities = _tests_utilities
     from flext_core.decorators import FlextDecorators as d

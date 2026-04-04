@@ -25,18 +25,17 @@ if _t.TYPE_CHECKING:
 
     _models = _flext_ldap__models
     import flext_ldap.adapters as _flext_ldap_adapters
-    from flext_ldap._models.ldap import FlextLdapModelsLdap
+    from flext_ldap._models import FlextLdapModelsLdap
 
     adapters = _flext_ldap_adapters
-    import flext_ldap.adapters.entry as _flext_ldap_adapters_entry
-
-    entry = _flext_ldap_adapters_entry
-    import flext_ldap.adapters.ldap3 as _flext_ldap_adapters_ldap3
-    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-
-    ldap3 = _flext_ldap_adapters_ldap3
     import flext_ldap.api as _flext_ldap_api
-    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
+    from flext_ldap.adapters import (
+        FlextLdapEntryAdapter,
+        FlextLdapLdap3Adapter,
+        FlextLdapLdap3Wrappers,
+        entry,
+        ldap3,
+    )
 
     api = _flext_ldap_api
     import flext_ldap.base as _flext_ldap_base
@@ -59,23 +58,18 @@ if _t.TYPE_CHECKING:
     from flext_ldap.protocols import FlextLdapProtocols, FlextLdapProtocols as p
 
     services = _flext_ldap_services
-    import flext_ldap.services.connection as _flext_ldap_services_connection
-
-    connection = _flext_ldap_services_connection
-    import flext_ldap.services.detection as _flext_ldap_services_detection
-    from flext_ldap.services.connection import FlextLdapConnection
-
-    detection = _flext_ldap_services_detection
-    import flext_ldap.services.operations as _flext_ldap_services_operations
-    from flext_ldap.services.detection import FlextLdapServerDetector
-
-    operations = _flext_ldap_services_operations
-    import flext_ldap.services.sync as _flext_ldap_services_sync
-    from flext_ldap.services.operations import FlextLdapOperations
-
-    sync = _flext_ldap_services_sync
     import flext_ldap.settings as _flext_ldap_settings
-    from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
+    from flext_ldap.services import (
+        FlextLdapConnection,
+        FlextLdapOperations,
+        FlextLdapServerDetector,
+        FlextLdapSync,
+        FlextLdapSyncCallbacks,
+        connection,
+        detection,
+        operations,
+        sync,
+    )
 
     settings = _flext_ldap_settings
     import flext_ldap.typings as _flext_ldap_typings
