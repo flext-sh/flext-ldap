@@ -1,0 +1,29 @@
+tests/utilities.py
+  ab51b21cbf8b2240 4,10-13,216-316
+tests/integration/test_smoke.py
+  ab51b21cbf8b2240 17-18,26-27,34-36,40-41,45,47-48,54,56,60
+tests/models.py
+  ab51b21cbf8b2240 13-14,17-20,42-108
+tests/unit/test_entry_adapter.py
+  ab51b21cbf8b2240 16,24,70,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "a20897acfd8e0b3c4f1ab23ebbf066371c810bdc",
+  "prompts": {
+    "ab51b21cbf8b2240": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2aa31a45-74c3-4c4e-9ace-30b7d6d064a7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 202,
+      "total_deletions": 199,
+      "accepted_lines": 200,
+      "overriden_lines": 0
+    }
+  }
+}
