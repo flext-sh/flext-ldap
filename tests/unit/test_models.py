@@ -85,15 +85,15 @@ class TestsFlextLdapModels:
 
     def test_connection_config_custom_values(self) -> None:
         config = m.Ldap.ConnectionConfig(
-            host="ldap.example.com",
-            port=636,
+            host=c.Ldap.Tests.Models.LDAP_EXAMPLE_HOST,
+            port=c.Ldap.Tests.Config.LDAPS_PORT,
             use_ssl=True,
             bind_dn=c.Ldap.Tests.EntryDN.ADMIN_EXAMPLE,
             bind_password=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD,
-            timeout=60,
+            timeout=c.Ldap.Tests.Models.CUSTOM_TIMEOUT,
         )
-        tm.that(config.host, eq="ldap.example.com")
-        tm.that(config.port, eq=636)
+        tm.that(config.host, eq=c.Ldap.Tests.Models.LDAP_EXAMPLE_HOST)
+        tm.that(config.port, eq=c.Ldap.Tests.Config.LDAPS_PORT)
         tm.that(config.use_ssl, eq=True)
         tm.that(config.bind_dn, eq=c.Ldap.Tests.EntryDN.ADMIN_EXAMPLE)
 
@@ -118,18 +118,18 @@ class TestsFlextLdapModels:
         tm.that(config.use_tls, eq=True)
 
     def test_connection_config_port_constraints(self) -> None:
-        config_min = m.Ldap.ConnectionConfig(port=1)
-        tm.that(config_min.port, eq=1)
-        config_max = m.Ldap.ConnectionConfig(port=65535)
-        tm.that(config_max.port, eq=65535)
+        config_min = m.Ldap.ConnectionConfig(port=c.Ldap.Tests.Config.PORT_MIN)
+        tm.that(config_min.port, eq=c.Ldap.Tests.Config.PORT_MIN)
+        config_max = m.Ldap.ConnectionConfig(port=c.Ldap.Tests.Config.PORT_MAX)
+        tm.that(config_max.port, eq=c.Ldap.Tests.Config.PORT_MAX)
 
     def test_connection_config_port_constraint_violation_min(self) -> None:
-        invalid_port: int = 0
+        invalid_port: int = c.Ldap.Tests.Models.INVALID_PORT_BELOW_MIN
         with pytest.raises(ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_port_constraint_violation_max(self) -> None:
-        invalid_port: int = 65536
+        invalid_port: int = c.Ldap.Tests.Models.INVALID_PORT_ABOVE_MAX
         with pytest.raises(ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
@@ -139,7 +139,7 @@ class TestsFlextLdapModels:
         tm.that(config.host, eq=c.LOCALHOST)
         tm.that(config.port, eq=c.Ldap.ConnectionDefaults.PORT)
         dump = config.model_dump()
-        tm.that(dump, keys=["host", "port"])
+        tm.that(dump, keys=[c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.FieldNames.PORT])
 
 
 __all__ = ["TestsFlextLdapModels"]

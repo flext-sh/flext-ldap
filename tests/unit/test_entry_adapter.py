@@ -31,7 +31,9 @@ class TestsFlextLdapEntryAdapter:
         def __init__(self, vals: t.StrSequence) -> None:
             self.values: t.Ldap.Ldap3AttributeValues = vals
             self.raw_values: list[bytes] = [v.encode() for v in vals]
-            self.value: t.Ldap.Ldap3AttributeValue = vals[0] if vals else ""
+            self.value: t.Ldap.Ldap3AttributeValue = (
+                vals[0] if vals else c.Ldap.Tests.StringValues.EMPTY
+            )
 
     class _MockLdap3Entry:
         """Mock ldap3 Entry satisfying p.Ldap.Ldap3Entry."""
@@ -68,32 +70,40 @@ class TestsFlextLdapEntryAdapter:
 
     def test_is_base64_encoded_with_base64_marker(self) -> None:
         tm.that(
-            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("::dGVzdA=="),
+            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
+                c.Ldap.Tests.EntryAdapter.BASE64_MARKER_VALUE,
+            ),
             eq=True,
         )
 
     def test_is_base64_encoded_with_ascii_value(self) -> None:
         tm.that(
-            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("test"),
+            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
+                c.Ldap.Tests.StringValues.SIMPLE,
+            ),
             eq=True,
         )
 
     def test_is_base64_encoded_with_non_ascii_value(self) -> None:
         tm.that(
-            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("testÿ"),
+            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
+                c.Ldap.Tests.EntryAdapter.NON_ASCII_VALUE,
+            ),
             eq=True,
         )
 
     def test_is_base64_encoded_with_empty_string(self) -> None:
         tm.that(
-            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(""),
+            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
+                c.Ldap.Tests.StringValues.EMPTY,
+            ),
             eq=True,
         )
 
     def test_ldap3_to_ldif_entry(self) -> None:
         adapter = FlextLdapEntryAdapter()
         ldap3_entry: p.Ldap.Ldap3Entry = self._MockLdap3Entry(
-            attrs={"cn": ["user"], "sn": ["Doe"]},
+            attrs=dict(c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES),
         )
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
@@ -120,13 +130,20 @@ class TestsFlextLdapEntryAdapter:
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.EntryDN.USER_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["user"], "sn": ["Doe"]},
+                attributes={
+                    k: list(v)
+                    for k, v in c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES.items()
+                },
                 attribute_metadata={},
             ),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         attributes = tm.ok(result)
-        tm.that(attributes, keys=["cn", "sn"], kv={"cn": ["user"], "sn": ["Doe"]})
+        tm.that(
+            attributes,
+            keys=list(c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES),
+            kv=dict(c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES),
+        )
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
         adapter = FlextLdapEntryAdapter()
@@ -138,8 +155,8 @@ class TestsFlextLdapEntryAdapter:
             ),
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
-        err = tm.fail(result, has="no attributes")
-        tm.that(err.lower(), contains="no attributes")
+        err = tm.fail(result, has=c.Ldap.Tests.EntryAdapter.NO_ATTRIBUTES_ERROR)
+        tm.that(err.lower(), contains=c.Ldap.Tests.EntryAdapter.NO_ATTRIBUTES_ERROR)
 
     def test_adapter_methods_exist(self) -> None:
         adapter = FlextLdapEntryAdapter()

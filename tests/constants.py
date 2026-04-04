@@ -126,6 +126,8 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 SCOPE: Final[str] = "scope"
                 PROPERTIES: Final[str] = "properties"
                 TYPE: Final[str] = "type"
+                USE_SSL: Final[str] = "use_ssl"
+                SUCCESS_RATE: Final[str] = "success_rate"
 
             class ApiModelConfig:
                 """Expected model_config values for the ldap API facade."""
@@ -148,6 +150,12 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                     "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
                 )
                 LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+                STARTUP_TIMEOUT: Final[int] = 90
+                BIND_READY_TIMEOUT: Final[int] = 60
+                LDAP3_GET_INFO: Final[str] = "NO_INFO"
+                DEFAULT_WORKER_ID: Final[str] = "master"
+                OU_NAMES: ClassVar[Sequence[str]] = ["people", "groups", "services"]
+                OU_SEARCH_ATTRS: ClassVar[Sequence[str]] = ["ou"]
 
             class ErrorPatterns:
                 """Error classification patterns for test infrastructure."""
@@ -324,6 +332,9 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 """Handler names for find_callable tests."""
 
                 FOUND_KEY: Final[str] = "handler1"
+                SECOND_KEY: Final[str] = "handler2"
+                THIRD_KEY: Final[str] = "handler3"
+                FOUND_RETURN_VALUE: Final[str] = "value1"
 
             class SampleData:
                 """Static sample entries for tests."""
@@ -357,6 +368,233 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                         "member": ["cn=testuser,ou=people,dc=flext,dc=local"],
                     },
                 }
+
+            # ── Contract verification (test_constants.py) ────────────────
+
+            class ConstantVerification:
+                """Expected enum/constant values for contract tests."""
+
+                STATUS_SCENARIOS: ClassVar[Sequence[tuple[str, str]]] = [
+                    ("PENDING", "pending"),
+                    ("RUNNING", "running"),
+                    ("COMPLETED", "completed"),
+                    ("FAILED", "failed"),
+                ]
+                SCOPE_SCENARIOS: ClassVar[Sequence[tuple[str, str]]] = [
+                    ("BASE", "BASE"),
+                    ("ONELEVEL", "ONELEVEL"),
+                    ("SUBTREE", "SUBTREE"),
+                ]
+                OPERATION_TYPE_SCENARIOS: ClassVar[Sequence[tuple[str, str]]] = [
+                    ("ADD", "add"),
+                    ("MODIFY", "modify"),
+                    ("DELETE", "delete"),
+                    ("SEARCH", "search"),
+                ]
+                INVALID_STATUS: Final[str] = "invalid"
+                EXPECTED_CORE_NAME: Final[str] = "FLEXT_LDAP"
+                EXPECTED_ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
+                EXPECTED_VENDOR_STRING_MAX_TOKENS: Final[int] = 2
+
+            # ── Entry adapter (test_entry_adapter.py) ────────────────────
+
+            class EntryAdapter:
+                """Entry adapter test data."""
+
+                BASE64_MARKER_VALUE: Final[str] = "::dGVzdA=="
+                NON_ASCII_VALUE: Final[str] = "testÿ"
+                SAMPLE_ATTRIBUTES: ClassVar[Mapping[str, Sequence[str]]] = {
+                    "cn": ["user"],
+                    "sn": ["Doe"],
+                }
+                NO_ATTRIBUTES_ERROR: Final[str] = "no attributes"
+
+            # ── Ldap3 adapter (test_ldap3_adapter.py) ────────────────────
+
+            class Ldap3Adapter:
+                """Ldap3 adapter test data."""
+
+                INNER_CLASS_CONNECTION_MANAGER: Final[str] = "ConnectionManager"
+                INNER_CLASS_RESULT_CONVERTER: Final[str] = "ResultConverter"
+                CREATE_SERVER_METHOD: Final[str] = "create_server"
+                DEFAULT_TIMEOUT: Final[int] = 5
+                NOT_CONNECTED_ERROR: Final[str] = "Not connected"
+
+            # ── Model tests (test_models.py) ─────────────────────────────
+
+            class Models:
+                """Model test data."""
+
+                LDAP_EXAMPLE_HOST: Final[str] = "ldap.example.com"
+                CUSTOM_TIMEOUT: Final[int] = 60
+                MUTUALLY_EXCLUSIVE_ERROR: Final[str] = "mutually exclusive"
+                INVALID_PORT_BELOW_MIN: Final[int] = 0
+                INVALID_PORT_ABOVE_MAX: Final[int] = 65536
+                INVALID_DN_FORMAT: Final[str] = "invalid-dn-format"
+
+            # ── Search model tests (test_models_search.py) ───────────────
+
+            class Search:
+                """Search model test data."""
+
+                SCOPE_BASE: Final[str] = "BASE"
+                SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
+                FILTER_CN: Final[str] = "(cn=*)"
+                FILTER_UID: Final[str] = "(uid=*)"
+                SEARCH_ATTRIBUTES: ClassVar[Sequence[str]] = ["cn", "mail"]
+                SIZE_LIMIT_CUSTOM: Final[int] = 100
+                TIME_LIMIT_CUSTOM: Final[int] = 30
+                NORMALIZED_SIZE_LIMIT: Final[int] = 50
+                ENTRY_ADDED_MESSAGE: Final[str] = "Entry added successfully"
+                DEFAULT_LIMIT_ZERO: Final[int] = 0
+                OBJECTCLASS_PERSON_TOP: ClassVar[Mapping[str, Sequence[str]]] = {
+                    "objectClass": ["person", "top"],
+                }
+                EXPECTED_CATEGORY_PERSON: Final[str] = "person"
+                EXTRA_RESULT_COUNT: Final[int] = 10
+                ENTRIES_AFFECTED_ONE: Final[int] = 1
+                SYNC_COUNTERS_SYNCED: Final[int] = 80
+                SYNC_COUNTERS_SKIPPED: Final[int] = 10
+                SYNC_COUNTERS_FAILED: Final[int] = 10
+                EXPECTED_SUCCESS_RATE_90: Final[float] = 0.9
+
+            # ── Sync model tests (test_models_sync.py) ───────────────────
+
+            class Sync:
+                """Sync model test data."""
+
+                PHASE_NAME: Final[str] = "01-users"
+                ENTRY_ALREADY_EXISTS: Final[str] = "Entry already exists"
+                ZERO_BATCH_SIZE: Final[int] = 0
+
+                class Defaults:
+                    """Expected default values for sync models."""
+
+                    AUTO_CREATE_PARENTS: Final[bool] = True
+                    ALLOW_DELETES: Final[bool] = False
+                    ZERO_COUNT: Final[int] = 0
+                    STOP_ON_ERROR: Final[bool] = False
+                    DN_CHANGED: Final[bool] = False
+                    EMPTY_SOURCE_DN: Final[str] = ""
+
+                class FromCounters:
+                    """from_counters factory test data."""
+
+                    SYNCED: Final[int] = 50
+                    SKIPPED: Final[int] = 30
+                    FAILED: Final[int] = 20
+                    TOTAL: Final[int] = 100
+                    DURATION: Final[float] = 10.5
+                    SUCCESS_RATE: Final[float] = 0.8
+
+                class Serialization:
+                    """Serialization round-trip data."""
+
+                    SYNCED: Final[int] = 9
+                    SKIPPED: Final[int] = 1
+                    FAILED: Final[int] = 0
+
+                class SuccessRate90:
+                    """SyncStats 90% success rate scenario."""
+
+                    KWARGS: ClassVar[Mapping[str, int]] = {
+                        "synced": 70,
+                        "skipped": 20,
+                        "failed": 10,
+                        "total": 100,
+                    }
+                    EXPECTED: Final[float] = 0.9
+
+                class SuccessRateBatch85:
+                    """BatchUpsertResult 85% scenario."""
+
+                    KWARGS: ClassVar[Mapping[str, int]] = {
+                        "total_processed": 100,
+                        "successful": 85,
+                        "failed": 15,
+                    }
+                    EXPECTED: Final[float] = 0.85
+
+                class SuccessRateBatchZero:
+                    """BatchUpsertResult 0% scenario."""
+
+                    KWARGS: ClassVar[Mapping[str, int]] = {
+                        "total_processed": 0,
+                        "successful": 0,
+                        "failed": 0,
+                    }
+                    EXPECTED: Final[float] = 0.0
+
+                class Upsert:
+                    """Batch upsert test data."""
+
+                    BATCH_TOTAL: Final[int] = 100
+                    BATCH_SUCCESSFUL: Final[int] = 90
+                    BATCH_FAILED: Final[int] = 10
+
+                class Metadata:
+                    """ConversionMetadata test data."""
+
+                    SOURCE_ATTRIBUTES: ClassVar[Sequence[str]] = [
+                        "cn",
+                        "mail",
+                        "telephoneNumber",
+                    ]
+                    REMOVED_ATTRIBUTES: ClassVar[Sequence[str]] = ["userPassword"]
+
+                class Phase:
+                    """PhaseSyncResult test data."""
+
+                    TOTAL_ENTRIES: Final[int] = 100
+                    SYNCED: Final[int] = 90
+                    FAILED: Final[int] = 5
+                    SKIPPED: Final[int] = 5
+                    DURATION: Final[float] = 30.0
+                    SUCCESS_RATE: Final[float] = 95.0
+
+                class MultiPhase:
+                    """MultiPhaseSyncResult test data."""
+
+                    TOTAL_ENTRIES: Final[int] = 500
+                    TOTAL_SYNCED: Final[int] = 450
+                    TOTAL_FAILED: Final[int] = 25
+                    TOTAL_SKIPPED: Final[int] = 25
+                    OVERALL_SUCCESS_RATE: Final[float] = 95.0
+                    TOTAL_DURATION: Final[float] = 120.0
+
+                class PhaseResults:
+                    """Phase results dict scenario."""
+
+                    SYNCED: Final[int] = 95
+                    FAILED: Final[int] = 5
+                    SKIPPED: Final[int] = 0
+                    DURATION: Final[float] = 10.0
+                    SUCCESS_RATE: Final[float] = 95.0
+
+                class BatchStats:
+                    """LdapBatchStats test data."""
+
+                    SYNCED: Final[int] = 80
+                    FAILED: Final[int] = 10
+                    SKIPPED: Final[int] = 10
+
+            # ── Sync facade (test_sync.py) ───────────────────────────────
+
+            class SyncFacade:
+                """Sync facade test data."""
+
+                MISSING_LDIF_PATH: Final[str] = "/tmp/flext-ldap-sync-missing.ldif"
+                PHASE_NAME_USERS: Final[str] = "users"
+                ZERO_COUNT: Final[int] = 0
+
+            # ── Smoke tests (test_smoke.py) ──────────────────────────────
+
+            class Smoke:
+                """Smoke test categorization constants."""
+
+                CONTAINER_HEALTH: Final[str] = "container_health"
+                API_IMPORTS: Final[str] = "api_imports"
+                BASIC_CONNECTION: Final[str] = "basic_connection"
 
 
 c = FlextLdapTestConstants

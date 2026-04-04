@@ -14,21 +14,37 @@ class TestsFlextLdapModelsSync:
 
     _API_DEFAULTS = [
         (m.Ldap.SyncOptions, "batch_size", c.Ldap.SyncDefaults.BATCH_SIZE),
-        (m.Ldap.SyncOptions, "auto_create_parents", True),
-        (m.Ldap.SyncOptions, "allow_deletes", False),
-        (m.Ldap.SyncStats, "synced", 0),
-        (m.Ldap.SyncStats, "total", 0),
+        (
+            m.Ldap.SyncOptions,
+            "auto_create_parents",
+            c.Ldap.Tests.Sync.Defaults.AUTO_CREATE_PARENTS,
+        ),
+        (m.Ldap.SyncOptions, "allow_deletes", c.Ldap.Tests.Sync.Defaults.ALLOW_DELETES),
+        (m.Ldap.SyncStats, "synced", c.Ldap.Tests.Sync.Defaults.ZERO_COUNT),
+        (m.Ldap.SyncStats, "total", c.Ldap.Tests.Sync.Defaults.ZERO_COUNT),
         (m.Ldap.SyncPhaseConfig, "server_type", c.Ldap.ServerDefaults.DEFAULT_TYPE),
         (
             m.Ldap.SyncPhaseConfig,
             "max_retries",
             c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
         ),
-        (m.Ldap.SyncPhaseConfig, "stop_on_error", False),
-        (m.Ldap.LdapBatchStats, "synced", 0),
-        (m.Ldap.LdapBatchStats, "failed", 0),
-        (m.Ldap.ConversionMetadata, "dn_changed", False),
-        (m.Ldap.ConversionMetadata, "source_dn", ""),
+        (
+            m.Ldap.SyncPhaseConfig,
+            "stop_on_error",
+            c.Ldap.Tests.Sync.Defaults.STOP_ON_ERROR,
+        ),
+        (m.Ldap.LdapBatchStats, "synced", c.Ldap.Tests.Sync.Defaults.ZERO_COUNT),
+        (m.Ldap.LdapBatchStats, "failed", c.Ldap.Tests.Sync.Defaults.ZERO_COUNT),
+        (
+            m.Ldap.ConversionMetadata,
+            "dn_changed",
+            c.Ldap.Tests.Sync.Defaults.DN_CHANGED,
+        ),
+        (
+            m.Ldap.ConversionMetadata,
+            "source_dn",
+            c.Ldap.Tests.Sync.Defaults.EMPTY_SOURCE_DN,
+        ),
     ]
 
     @pytest.mark.parametrize(
@@ -54,24 +70,29 @@ class TestsFlextLdapModelsSync:
     # ── Computed: SyncStats.success_rate ───────────────────────────────
 
     _SUCCESS_RATES = [
-        ("zero total", m.Ldap.SyncStats, dict[str, int](), 0.0),
+        (
+            "zero total",
+            m.Ldap.SyncStats,
+            dict[str, int](),
+            c.Ldap.Tests.Sync.SuccessRateBatchZero.EXPECTED,
+        ),
         (
             "90% rate",
             m.Ldap.SyncStats,
-            {"synced": 70, "skipped": 20, "failed": 10, "total": 100},
-            0.9,
+            dict(c.Ldap.Tests.Sync.SuccessRate90.KWARGS),
+            c.Ldap.Tests.Sync.SuccessRate90.EXPECTED,
         ),
         (
             "batch zero",
             m.Ldap.BatchUpsertResult,
-            {"total_processed": 0, "successful": 0, "failed": 0},
-            0.0,
+            dict(c.Ldap.Tests.Sync.SuccessRateBatchZero.KWARGS),
+            c.Ldap.Tests.Sync.SuccessRateBatchZero.EXPECTED,
         ),
         (
             "batch 85%",
             m.Ldap.BatchUpsertResult,
-            {"total_processed": 100, "successful": 85, "failed": 15},
-            0.85,
+            dict(c.Ldap.Tests.Sync.SuccessRateBatch85.KWARGS),
+            c.Ldap.Tests.Sync.SuccessRateBatch85.EXPECTED,
         ),
     ]
 
@@ -93,19 +114,23 @@ class TestsFlextLdapModelsSync:
 
     def test_from_counters_computes_total(self) -> None:
         s = m.Ldap.SyncStats.from_counters(
-            synced=50,
-            skipped=30,
-            failed=20,
-            duration_seconds=10.5,
+            synced=c.Ldap.Tests.Sync.FromCounters.SYNCED,
+            skipped=c.Ldap.Tests.Sync.FromCounters.SKIPPED,
+            failed=c.Ldap.Tests.Sync.FromCounters.FAILED,
+            duration_seconds=c.Ldap.Tests.Sync.FromCounters.DURATION,
         )
-        tm.that(s.total, eq=100)
-        tm.that(s.duration_seconds, eq=10.5)
-        tm.that(s.success_rate, eq=0.8)
+        tm.that(s.total, eq=c.Ldap.Tests.Sync.FromCounters.TOTAL)
+        tm.that(s.duration_seconds, eq=c.Ldap.Tests.Sync.FromCounters.DURATION)
+        tm.that(s.success_rate, eq=c.Ldap.Tests.Sync.FromCounters.SUCCESS_RATE)
 
     def test_from_counters_serialization_includes_computed(self) -> None:
         tm.that(
-            m.Ldap.SyncStats.from_counters(synced=9, skipped=1, failed=0).model_dump(),
-            has="success_rate",
+            m.Ldap.SyncStats.from_counters(
+                synced=c.Ldap.Tests.Sync.Serialization.SYNCED,
+                skipped=c.Ldap.Tests.Sync.Serialization.SKIPPED,
+                failed=c.Ldap.Tests.Sync.Serialization.FAILED,
+            ).model_dump(),
+            has=c.Ldap.Tests.FieldNames.SUCCESS_RATE,
         )
 
     # ── UpsertResult: success vs error ─────────────────────────────────
@@ -124,81 +149,93 @@ class TestsFlextLdapModelsSync:
             success=False,
             dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             operation=c.Ldap.OperationType.ADD,
-            error="Entry already exists",
+            error=c.Ldap.Tests.Sync.ENTRY_ALREADY_EXISTS,
         )
         tm.that(not r.success, eq=True)
-        tm.that(r.error, eq="Entry already exists")
+        tm.that(r.error, eq=c.Ldap.Tests.Sync.ENTRY_ALREADY_EXISTS)
 
     def test_batch_upsert_tracks_all_counts(self) -> None:
-        r = m.Ldap.BatchUpsertResult(total_processed=100, successful=90, failed=10)
-        tm.that(r.total_processed, eq=100)
-        tm.that(r.successful, eq=90)
-        tm.that(r.failed, eq=10)
+        r = m.Ldap.BatchUpsertResult(
+            total_processed=c.Ldap.Tests.Sync.Upsert.BATCH_TOTAL,
+            successful=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL,
+            failed=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED,
+        )
+        tm.that(r.total_processed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_TOTAL)
+        tm.that(r.successful, eq=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL)
+        tm.that(r.failed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED)
 
     # ── ConversionMetadata: tracks attribute changes ───────────────────
 
     def test_conversion_metadata_tracks_changes(self) -> None:
         md = m.Ldap.ConversionMetadata(
-            source_attributes=["cn", "mail", "telephoneNumber"],
+            source_attributes=list(c.Ldap.Tests.Sync.Metadata.SOURCE_ATTRIBUTES),
             source_dn=c.Ldap.Tests.EntryDN.USER_EXAMPLE,
-            removed_attributes=["userPassword"],
+            removed_attributes=list(c.Ldap.Tests.Sync.Metadata.REMOVED_ATTRIBUTES),
             dn_changed=True,
             converted_dn=c.Ldap.Tests.EntryDN.USER_NEW,
         )
-        tm.that(md.source_attributes, len=3)
-        tm.that(md.removed_attributes, contains="userPassword")
+        tm.that(
+            md.source_attributes, len=len(c.Ldap.Tests.Sync.Metadata.SOURCE_ATTRIBUTES)
+        )
+        tm.that(
+            md.removed_attributes,
+            contains=c.Ldap.Tests.Sync.Metadata.REMOVED_ATTRIBUTES[0],
+        )
         tm.that(md.dn_changed, eq=True)
 
     # ── PhaseSyncResult + MultiPhase aggregation ───────────────────────
 
     def test_phase_sync_result_captures_phase_stats(self) -> None:
         r = m.Ldap.PhaseSyncResult(
-            phase_name="01-users",
-            total_entries=100,
-            synced=90,
-            failed=5,
-            skipped=5,
-            duration_seconds=30.0,
-            success_rate=95.0,
+            phase_name=c.Ldap.Tests.Sync.PHASE_NAME,
+            total_entries=c.Ldap.Tests.Sync.Phase.TOTAL_ENTRIES,
+            synced=c.Ldap.Tests.Sync.Phase.SYNCED,
+            failed=c.Ldap.Tests.Sync.Phase.FAILED,
+            skipped=c.Ldap.Tests.Sync.Phase.SKIPPED,
+            duration_seconds=c.Ldap.Tests.Sync.Phase.DURATION,
+            success_rate=c.Ldap.Tests.Sync.Phase.SUCCESS_RATE,
         )
-        tm.that(r.phase_name, eq="01-users")
-        tm.that(r.synced, eq=90)
-        tm.that(r.success_rate, eq=95.0)
+        tm.that(r.phase_name, eq=c.Ldap.Tests.Sync.PHASE_NAME)
+        tm.that(r.synced, eq=c.Ldap.Tests.Sync.Phase.SYNCED)
+        tm.that(r.success_rate, eq=c.Ldap.Tests.Sync.Phase.SUCCESS_RATE)
 
     def test_multi_phase_aggregates_overall(self) -> None:
         r = m.Ldap.MultiPhaseSyncResult(
-            total_entries=500,
-            total_synced=450,
-            total_failed=25,
-            total_skipped=25,
-            overall_success_rate=95.0,
-            total_duration_seconds=120.0,
+            total_entries=c.Ldap.Tests.Sync.MultiPhase.TOTAL_ENTRIES,
+            total_synced=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SYNCED,
+            total_failed=c.Ldap.Tests.Sync.MultiPhase.TOTAL_FAILED,
+            total_skipped=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SKIPPED,
+            overall_success_rate=c.Ldap.Tests.Sync.MultiPhase.OVERALL_SUCCESS_RATE,
+            total_duration_seconds=c.Ldap.Tests.Sync.MultiPhase.TOTAL_DURATION,
             overall_success=True,
         )
-        tm.that(r.total_synced, eq=450)
+        tm.that(r.total_synced, eq=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SYNCED)
         tm.that(r.overall_success, eq=True)
 
     def test_multi_phase_with_phase_results_dict(self) -> None:
         phase = m.Ldap.PhaseSyncResult(
-            phase_name="01-users",
-            total_entries=100,
-            synced=95,
-            failed=5,
-            skipped=0,
-            duration_seconds=10.0,
-            success_rate=95.0,
+            phase_name=c.Ldap.Tests.Sync.PHASE_NAME,
+            total_entries=c.Ldap.Tests.Sync.Phase.TOTAL_ENTRIES,
+            synced=c.Ldap.Tests.Sync.PhaseResults.SYNCED,
+            failed=c.Ldap.Tests.Sync.PhaseResults.FAILED,
+            skipped=c.Ldap.Tests.Sync.PhaseResults.SKIPPED,
+            duration_seconds=c.Ldap.Tests.Sync.PhaseResults.DURATION,
+            success_rate=c.Ldap.Tests.Sync.PhaseResults.SUCCESS_RATE,
         )
         r = m.Ldap.MultiPhaseSyncResult(
-            phase_results={"01-users": phase},
-            total_entries=100,
-            total_synced=95,
-            total_failed=5,
-            total_skipped=0,
-            overall_success_rate=95.0,
-            total_duration_seconds=10.0,
+            phase_results={c.Ldap.Tests.Sync.PHASE_NAME: phase},
+            total_entries=c.Ldap.Tests.Sync.Phase.TOTAL_ENTRIES,
+            total_synced=c.Ldap.Tests.Sync.PhaseResults.SYNCED,
+            total_failed=c.Ldap.Tests.Sync.PhaseResults.FAILED,
+            total_skipped=c.Ldap.Tests.Sync.PhaseResults.SKIPPED,
+            overall_success_rate=c.Ldap.Tests.Sync.PhaseResults.SUCCESS_RATE,
+            total_duration_seconds=c.Ldap.Tests.Sync.PhaseResults.DURATION,
         )
-        tm.that(r.phase_results, keys=["01-users"])
-        tm.that(r.phase_results["01-users"].synced, eq=95)
+        tm.that(r.phase_results, keys=[c.Ldap.Tests.Sync.PHASE_NAME])
+        tm.that(
+            r.phase_results[c.Ldap.Tests.Sync.PHASE_NAME].synced,
+            eq=c.Ldap.Tests.Sync.PhaseResults.SYNCED,
+        )
 
     # ── LdapOperationResult + LdapBatchStats ───────────────────────────
 
@@ -211,6 +248,10 @@ class TestsFlextLdapModelsSync:
         )
 
     def test_batch_stats_custom(self) -> None:
-        s = m.Ldap.LdapBatchStats(synced=80, failed=10, skipped=10)
-        tm.that(s.synced, eq=80)
-        tm.that(s.failed, eq=10)
+        s = m.Ldap.LdapBatchStats(
+            synced=c.Ldap.Tests.Sync.BatchStats.SYNCED,
+            failed=c.Ldap.Tests.Sync.BatchStats.FAILED,
+            skipped=c.Ldap.Tests.Sync.BatchStats.SKIPPED,
+        )
+        tm.that(s.synced, eq=c.Ldap.Tests.Sync.BatchStats.SYNCED)
+        tm.that(s.failed, eq=c.Ldap.Tests.Sync.BatchStats.FAILED)

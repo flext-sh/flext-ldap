@@ -19,9 +19,9 @@ LdapContainerDict = t.Ldap.Tests.LdapContainerDict
 def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
     if not isinstance(worker_input_val, dict):
-        return "master"
+        return c.Ldap.Tests.Docker.DEFAULT_WORKER_ID
     worker_dict: t.ScalarMapping = cast("t.ScalarMapping", worker_input_val)
-    result = worker_dict.get("workerid", "master")
+    result = worker_dict.get("workerid", c.Ldap.Tests.Docker.DEFAULT_WORKER_ID)
     return str(result)
 
 
@@ -71,7 +71,9 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                 compose_file_rel,
                 service=c.Ldap.Tests.Docker.SERVICE_NAME,
             )
-    port_ready = _wait_for_port_ready(c.LOCALHOST, c.Ldap.Tests.Docker.PORT, 90)
+    port_ready = _wait_for_port_ready(
+        c.LOCALHOST, c.Ldap.Tests.Docker.PORT, c.Ldap.Tests.Docker.STARTUP_TIMEOUT
+    )
     if port_ready.is_success and port_ready.value:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0

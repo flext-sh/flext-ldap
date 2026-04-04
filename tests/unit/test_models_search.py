@@ -22,40 +22,46 @@ class TestsFlextLdapModelsSearch:
         tm.that(options.scope, eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
         tm.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
         tm.that(options.attributes, none=True)
-        tm.that(options.size_limit, eq=0)
-        tm.that(options.time_limit, eq=0)
+        tm.that(options.size_limit, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO)
+        tm.that(options.time_limit, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO)
 
     def test_search_options_custom_values(self) -> None:
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
-            scope="BASE",
-            filter_str="(cn=*)",
-            attributes=["cn", "mail"],
-            size_limit=100,
-            time_limit=30,
+            scope=c.Ldap.Tests.Search.SCOPE_BASE,
+            filter_str=c.Ldap.Tests.Search.FILTER_CN,
+            attributes=list(c.Ldap.Tests.Search.SEARCH_ATTRIBUTES),
+            size_limit=c.Ldap.Tests.Search.SIZE_LIMIT_CUSTOM,
+            time_limit=c.Ldap.Tests.Search.TIME_LIMIT_CUSTOM,
         )
-        tm.that(options.scope, eq="BASE")
-        tm.that(options.filter_str, eq="(cn=*)")
-        tm.that(options.attributes, eq=["cn", "mail"])
-        tm.that(options.size_limit, eq=100)
+        tm.that(options.scope, eq=c.Ldap.Tests.Search.SCOPE_BASE)
+        tm.that(options.filter_str, eq=c.Ldap.Tests.Search.FILTER_CN)
+        tm.that(options.attributes, eq=list(c.Ldap.Tests.Search.SEARCH_ATTRIBUTES))
+        tm.that(options.size_limit, eq=c.Ldap.Tests.Search.SIZE_LIMIT_CUSTOM)
 
     def test_search_options_invalid_base_dn_format(self) -> None:
-        options = m.Ldap.SearchOptions(base_dn="invalid-dn-format")
-        tm.that(options.base_dn, eq="invalid-dn-format")
+        options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.Models.INVALID_DN_FORMAT)
+        tm.that(options.base_dn, eq=c.Ldap.Tests.Models.INVALID_DN_FORMAT)
 
     def test_search_options_scope_normalization_enum(self) -> None:
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             scope=c.Ldap.SearchScope.BASE,
         )
-        tm.that(options.scope, eq="BASE")
+        tm.that(options.scope, eq=c.Ldap.Tests.Search.SCOPE_BASE)
 
     def test_search_options_scope_normalization_string(self) -> None:
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
-            scope="subtree",
+            scope=c.Ldap.Tests.Search.SCOPE_SUBTREE_LOWER,
         )
-        tm.that({c.Ldap.SearchDefaults.DEFAULT_SCOPE, "subtree"}, has=options.scope)
+        tm.that(
+            {
+                c.Ldap.SearchDefaults.DEFAULT_SCOPE,
+                c.Ldap.Tests.Search.SCOPE_SUBTREE_LOWER,
+            },
+            has=options.scope,
+        )
 
     def test_search_options_normalized_factory(self) -> None:
         options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
@@ -65,37 +71,37 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_options_normalized_with_config(self) -> None:
         config = m.Ldap.NormalizedConfig(
-            scope="BASE",
-            filter_str="(uid=*)",
-            size_limit=50,
+            scope=c.Ldap.Tests.Search.SCOPE_BASE,
+            filter_str=c.Ldap.Tests.Search.FILTER_UID,
+            size_limit=c.Ldap.Tests.Search.NORMALIZED_SIZE_LIMIT,
         )
         options = m.Ldap.SearchOptions.normalized(
             c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             config=config,
         )
-        tm.that(options.scope, eq="BASE")
-        tm.that(options.filter_str, eq="(uid=*)")
-        tm.that(options.size_limit, eq=50)
+        tm.that(options.scope, eq=c.Ldap.Tests.Search.SCOPE_BASE)
+        tm.that(options.filter_str, eq=c.Ldap.Tests.Search.FILTER_UID)
+        tm.that(options.size_limit, eq=c.Ldap.Tests.Search.NORMALIZED_SIZE_LIMIT)
 
     def test_operation_result_creation(self) -> None:
         result = m.Ldap.OperationResult(
             success=True,
             operation_type=c.Ldap.OperationType.ADD,
-            message="Entry added successfully",
-            entries_affected=1,
+            message=c.Ldap.Tests.Search.ENTRY_ADDED_MESSAGE,
+            entries_affected=c.Ldap.Tests.Search.ENTRIES_AFFECTED_ONE,
         )
         tm.that(result.success, eq=True)
         tm.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
-        tm.that(result.message, eq="Entry added successfully")
-        tm.that(result.entries_affected, eq=1)
+        tm.that(result.message, eq=c.Ldap.Tests.Search.ENTRY_ADDED_MESSAGE)
+        tm.that(result.entries_affected, eq=c.Ldap.Tests.Search.ENTRIES_AFFECTED_ONE)
 
     def test_operation_result_default_message(self) -> None:
         result = m.Ldap.OperationResult(
             success=True,
             operation_type=c.Ldap.OperationType.SEARCH,
         )
-        tm.that(result.message, eq="")
-        tm.that(result.entries_affected, eq=0)
+        tm.that(result.message, eq=c.Ldap.Tests.Sync.Defaults.EMPTY_SOURCE_DN)
+        tm.that(result.entries_affected, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO)
 
     def test_operation_result_frozen(self) -> None:
         result = m.Ldap.OperationResult(
@@ -139,9 +145,11 @@ class TestsFlextLdapModelsSearch:
         tm.that(category, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
 
     def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
-        attrs = {"objectClass": ["person", "top"]}
+        attrs = {
+            k: list(v) for k, v in c.Ldap.Tests.Search.OBJECTCLASS_PERSON_TOP.items()
+        }
         category = m.Ldap.SearchResult.extract_objectclass_category(attrs)
-        tm.that(category, eq="person")
+        tm.that(category, eq=c.Ldap.Tests.Search.EXPECTED_CATEGORY_PERSON)
 
     def test_search_result_get_entry_category(self) -> None:
         entry: Mapping[str, t.StrSequence] = {}
@@ -157,9 +165,12 @@ class TestsFlextLdapModelsSearch:
         tm.that("progress_callback" in m.Ldap.SyncPhaseConfig.model_fields, eq=True)
 
     def test_connection_config_serialization(self) -> None:
-        data = m.Ldap.ConnectionConfig(host="ldap.example.com", port=636).model_dump()
-        tm.that(data["host"], eq="ldap.example.com")
-        tm.that(data["port"], eq=636)
+        data = m.Ldap.ConnectionConfig(
+            host=c.Ldap.Tests.Models.LDAP_EXAMPLE_HOST,
+            port=c.Ldap.Tests.Config.LDAPS_PORT,
+        ).model_dump()
+        tm.that(data["host"], eq=c.Ldap.Tests.Models.LDAP_EXAMPLE_HOST)
+        tm.that(data["port"], eq=c.Ldap.Tests.Config.LDAPS_PORT)
 
     def test_search_options_serialization(self) -> None:
         data = m.Ldap.SearchOptions(
@@ -171,23 +182,26 @@ class TestsFlextLdapModelsSearch:
 
     def test_sync_stats_serialization(self) -> None:
         data = m.Ldap.SyncStats.from_counters(
-            synced=80,
-            skipped=10,
-            failed=10,
+            synced=c.Ldap.Tests.Search.SYNC_COUNTERS_SYNCED,
+            skipped=c.Ldap.Tests.Search.SYNC_COUNTERS_SKIPPED,
+            failed=c.Ldap.Tests.Search.SYNC_COUNTERS_FAILED,
         ).model_dump()
-        tm.that(data, keys=["success_rate"])
-        tm.that(data["success_rate"], eq=0.9)
+        tm.that(data, keys=[c.Ldap.Tests.FieldNames.SUCCESS_RATE])
+        tm.that(
+            data[c.Ldap.Tests.FieldNames.SUCCESS_RATE],
+            eq=c.Ldap.Tests.Search.EXPECTED_SUCCESS_RATE_90,
+        )
 
     def test_connection_config_json_schema(self) -> None:
         tm.that(
             m.Ldap.ConnectionConfig.model_json_schema()["properties"],
-            keys=["host", "port"],
+            keys=[c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.FieldNames.PORT],
         )
 
     def test_search_options_json_schema(self) -> None:
         tm.that(
             m.Ldap.SearchOptions.model_json_schema()["properties"],
-            keys=["base_dn", "scope"],
+            keys=[c.Ldap.Tests.FieldNames.BASE_DN, c.Ldap.Tests.FieldNames.SCOPE],
         )
 
 
