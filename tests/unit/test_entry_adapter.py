@@ -1,20 +1,5 @@
 """Unit tests for flext_ldap.adapters.entry.FlextLdapEntryAdapter.
 
-**Modules Tested:**
-- `flext_ldap.adapters.entry.FlextLdapEntryAdapter` - Entry adapter for ldap3 ↔ ldif conversion
-
-**Test Scope:**
-- Adapter initialization
-- Execute method (health check)
-- ldap3.Entry → p.Entry conversion
-- p.Entry → ldap3 attributes conversion
-- Base64 encoding detection
-- Server-specific normalization
-- Method existence validation
-
-All tests use real functionality without mocks, leveraging flext-core test utilities
-and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
-
 Architecture: Single class per module following FLEXT patterns.
 Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
 
@@ -24,149 +9,116 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-
 import pytest
 from flext_tests import tm
 
 from flext_ldap import FlextLdapEntryAdapter
-from tests import m, p, t
+from tests import c, m, p, t
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapEntryAdapter:
-    """Comprehensive tests for FlextLdapEntryAdapter using factories and DRY principles.
+    """Comprehensive tests for FlextLdapEntryAdapter.
 
-    Architecture: Single class per module following FLEXT patterns.
-    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
-
-    Uses parametrized tests and constants for maximum code reuse.
-    All helper logic is nested within this single class following FLEXT patterns.
+    All helper classes are nested within this single class.
+    Mock classes are class-level (not duplicated per method).
     """
 
+    class _MockAttr:
+        """Mock ldap3 Attribute satisfying p.Ldap.Ldap3Attribute."""
+
+        def __init__(self, vals: t.StrSequence) -> None:
+            self.values: t.Ldap.Ldap3AttributeValues = vals
+            self.raw_values: list[bytes] = [v.encode() for v in vals]
+            self.value: t.Ldap.Ldap3AttributeValue = vals[0] if vals else ""
+
+    class _MockLdap3Entry:
+        """Mock ldap3 Entry satisfying p.Ldap.Ldap3Entry."""
+
+        def __init__(
+            self,
+            dn: str = c.Ldap.Tests.EntryDN.USER_EXAMPLE,
+            attrs: t.StrSequenceMapping | None = None,
+        ) -> None:
+            self.entry_dn: str | None = dn
+            self._attrs: t.StrSequenceMapping = attrs or {}
+
+        @property
+        def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
+            return self._attrs
+
+        @property
+        def entry_attributes(self) -> t.StrSequence:
+            return list(self._attrs)
+
+        def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
+            return TestsFlextLdapEntryAdapter._MockAttr(
+                list(self._attrs.get(item, [])),
+            )
+
     def test_adapter_initialization(self) -> None:
-        """Test adapter initialization."""
         adapter = FlextLdapEntryAdapter()
         tm.that(adapter, is_=FlextLdapEntryAdapter, none=False)
 
     def test_execute_returns_success(self) -> None:
-        """Test execute() returns success for health check."""
         adapter = FlextLdapEntryAdapter()
         result = adapter.execute()
         tm.ok(result, eq=True)
 
     def test_is_base64_encoded_with_base64_marker(self) -> None:
-        """Test is_base64_encoded with base64 marker."""
         tm.that(
             FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("::dGVzdA=="),
             eq=True,
         )
 
     def test_is_base64_encoded_with_ascii_value(self) -> None:
-        """Test is_base64_encoded with ASCII value."""
         tm.that(
             not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("test"),
             eq=True,
         )
 
     def test_is_base64_encoded_with_non_ascii_value(self) -> None:
-        """Test is_base64_encoded with non-ASCII value."""
         tm.that(
             FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded("testÿ"),
             eq=True,
         )
 
     def test_is_base64_encoded_with_empty_string(self) -> None:
-        """Test is_base64_encoded with empty string."""
         tm.that(
             not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(""),
             eq=True,
         )
 
     def test_ldap3_to_ldif_entry(self) -> None:
-        """Test conversion from ldap3.Entry to p.Entry."""
         adapter = FlextLdapEntryAdapter()
-
-        class _MockAttr:
-            def __init__(self, vals: t.StrSequence) -> None:
-                self.values: Sequence[str | bytes] = vals
-                self.raw_values: Sequence[bytes] = [v.encode() for v in vals]
-                self.value: str | bytes | Sequence[str | bytes] = (
-                    vals[0] if vals else ""
-                )
-
-        class MockLdap3Entry:
-            def __init__(self) -> None:
-                self.entry_dn: str | None = "cn=user,dc=example,dc=com"
-                self._attrs: t.StrSequenceMapping = {
-                    "cn": ["user"],
-                    "sn": ["Doe"],
-                }
-
-            @property
-            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str | bytes]]:
-                return self._attrs
-
-            @property
-            def entry_attributes(self) -> t.StrSequence:
-                return list(self._attrs)
-
-            def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
-                return _MockAttr(list(self._attrs.get(item, [])))
-
-        ldap3_entry: p.Ldap.Ldap3Entry = MockLdap3Entry()
+        ldap3_entry: p.Ldap.Ldap3Entry = self._MockLdap3Entry(
+            attrs={"cn": ["user"], "sn": ["Doe"]},
+        )
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None
-        tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
+        tm.that(entry.dn.value, eq=c.Ldap.Tests.EntryDN.USER_EXAMPLE)
         tm.that(entry.attributes, none=False)
 
     def test_ldap3_to_ldif_entry_with_empty_attributes(self) -> None:
-        """Test conversion from ldap3.Entry to p.Entry with empty attributes."""
         adapter = FlextLdapEntryAdapter()
-
-        class _MockAttr:
-            def __init__(self, vals: t.StrSequence) -> None:
-                self.values: Sequence[str | bytes] = vals
-                self.raw_values: Sequence[bytes] = [v.encode() for v in vals]
-                self.value: str | bytes | Sequence[str | bytes] = (
-                    vals[0] if vals else ""
-                )
-
-        class MockLdap3Entry:
-            def __init__(self) -> None:
-                self.entry_dn: str | None = "cn=user,dc=example,dc=com"
-                self._attrs: t.StrSequenceMapping = {}
-
-            @property
-            def entry_attributes_as_dict(self) -> Mapping[str, Sequence[str | bytes]]:
-                return self._attrs
-
-            @property
-            def entry_attributes(self) -> t.StrSequence:
-                return list(self._attrs)
-
-            def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
-                return _MockAttr(list(self._attrs.get(item, [])))
-
-        ldap3_entry: p.Ldap.Ldap3Entry = MockLdap3Entry()
+        ldap3_entry: p.Ldap.Ldap3Entry = self._MockLdap3Entry()
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"
         tm.that(entry, is_=m.Ldif.Entry, none=False)
         tm.that(entry.dn, none=False)
         assert entry.dn is not None
-        tm.that(entry.dn.value, eq="cn=user,dc=example,dc=com")
+        tm.that(entry.dn.value, eq=c.Ldap.Tests.EntryDN.USER_EXAMPLE)
 
     def test_ldif_entry_to_ldap3_attributes(self) -> None:
-        """Test conversion from p.Entry to ldap3 attributes."""
         adapter = FlextLdapEntryAdapter()
         entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
+            dn=m.Ldif.DN(value=c.Ldap.Tests.EntryDN.USER_EXAMPLE),
             attributes=m.Ldif.Attributes(
                 attributes={"cn": ["user"], "sn": ["Doe"]},
                 attribute_metadata={},
@@ -177,10 +129,9 @@ class TestsFlextLdapEntryAdapter:
         tm.that(attributes, keys=["cn", "sn"], kv={"cn": ["user"], "sn": ["Doe"]})
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:
-        """Test conversion from p.Entry to ldap3 attributes with empty attributes."""
         adapter = FlextLdapEntryAdapter()
         entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
+            dn=m.Ldif.DN(value=c.Ldap.Tests.EntryDN.USER_EXAMPLE),
             attributes=m.Ldif.Attributes(
                 attributes={},
                 attribute_metadata={},
@@ -191,7 +142,6 @@ class TestsFlextLdapEntryAdapter:
         tm.that(err.lower(), contains="no attributes")
 
     def test_adapter_methods_exist(self) -> None:
-        """Test that all expected methods exist on adapter."""
         adapter = FlextLdapEntryAdapter()
         tm.that(hasattr(adapter, "execute"), eq=True)
         tm.that(callable(adapter.execute), eq=True)
@@ -201,12 +151,10 @@ class TestsFlextLdapEntryAdapter:
         tm.that(callable(adapter.ldif_entry_to_ldap3_attributes), eq=True)
 
     def test_adapter_inner_classes_exist(self) -> None:
-        """Test that inner classes exist."""
         tm.that(hasattr(FlextLdapEntryAdapter, "_ConversionHelpers"), eq=True)
         assert isinstance(FlextLdapEntryAdapter._ConversionHelpers, type)
 
     def test_conversion_helpers_static_methods_exist(self) -> None:
-        """Test that static methods exist on _ConversionHelpers."""
         assert hasattr(FlextLdapEntryAdapter._ConversionHelpers, "is_base64_encoded")
         assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)
 

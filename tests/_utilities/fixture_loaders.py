@@ -17,7 +17,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_ldif import ldif
-from tests import m, t
+from tests import c, m, t
 
 GenericFieldsDict = Mapping[str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]]
 
@@ -122,7 +122,10 @@ class _FixtureLoaderUtils:
             if not ldif_content:
                 return []
             ldif_instance = ldif()
-            result = ldif_instance.parse_ldif(ldif_content, server_type="rfc")
+            result = ldif_instance.parse_ldif(
+                ldif_content,
+                server_type=c.Ldap.ServerDefaults.DEFAULT_TYPE,
+            )
             if result.is_success:
                 return [
                     entry

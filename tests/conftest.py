@@ -3,7 +3,7 @@ from __future__ import annotations
 import socket
 import time
 from pathlib import Path
-from typing import TypeAlias, cast
+from typing import cast
 
 import pytest
 
@@ -13,7 +13,7 @@ from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
 
-LdapContainerDict: TypeAlias = t.ScalarMapping
+LdapContainerDict = t.Ldap.Tests.LdapContainerDict
 
 
 def _get_worker_id(config: pytest.Config) -> str:
@@ -71,14 +71,14 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                 compose_file_rel,
                 service=c.Ldap.Tests.Docker.SERVICE_NAME,
             )
-    port_ready = _wait_for_port_ready("localhost", c.Ldap.Tests.Docker.PORT, 90)
+    port_ready = _wait_for_port_ready(c.LOCALHOST, c.Ldap.Tests.Docker.PORT, 90)
     if port_ready.is_success and port_ready.value:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0
         while waited < 90:
             try:
                 srv = u.Ldap.create_server_from_url(
-                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
+                    f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.Docker.PORT}",
                     get_info="NO_INFO",
                 )
                 conn = u.Ldap.create_connection(
@@ -102,23 +102,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             waited += 1.0
 
 
-_INFRASTRUCTURE_ERRORS = frozenset({
-    "ldapsessionterminatedbyservererror",
-    "ldapserverdownerror",
-    "ldap server is not responding",
-    "broken pipe",
-    "session terminated by server",
-    "ldapoperationresult",
-})
-_TRANSIENT_ERRORS = frozenset({
-    "connection refused",
-    "connection reset by peer",
-    "cannot connect to ldap",
-    "ldapsocketopenerror",
-    "ldapcommunicationerror",
-    "ldap bind failed",
-    "timeout",
-})
+_INFRASTRUCTURE_ERRORS = c.Ldap.Tests.ErrorPatterns.INFRASTRUCTURE_ERRORS
+_TRANSIENT_ERRORS = c.Ldap.Tests.ErrorPatterns.TRANSIENT_ERRORS
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
@@ -153,7 +138,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
     u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-        port_result = _wait_for_port_ready("localhost", c.Ldap.Tests.Docker.PORT, 60)
+        port_result = _wait_for_port_ready(c.LOCALHOST, c.Ldap.Tests.Docker.PORT, 60)
         if port_result.is_failure or not port_result.value:
             pytest.fail(
                 f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within 60s",
@@ -162,7 +147,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
         while waited < 60:
             try:
                 srv = u.Ldap.create_server_from_url(
-                    f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
+                    f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.Docker.PORT}",
                     get_info="NO_INFO",
                 )
                 conn = u.Ldap.create_connection(
@@ -186,8 +171,8 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()
     return {
-        "server_url": f"ldap://localhost:{c.Ldap.Tests.Docker.PORT}",
-        "host": "localhost",
+        "server_url": f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.Docker.PORT}",
+        "host": c.LOCALHOST,
         "bind_dn": admin_dn,
         "password": admin_password,
         "base_dn": c.Ldap.Tests.Docker.BASE_DN,
@@ -212,9 +197,9 @@ def connection_config(ldap_container: LdapContainerDict) -> m.Ldap.ConnectionCon
 
 @pytest.fixture
 def search_options(ldap_container: LdapContainerDict) -> m.Ldap.SearchOptions:
-    base_dn = str(ldap_container.get("base_dn", "dc=example,dc=com"))
+    base_dn = str(ldap_container.get("base_dn", c.Ldap.Defaults.EXAMPLE_BASE_DN))
     return m.Ldap.SearchOptions(
         base_dn=base_dn,
-        filter_str="(objectClass=*)",
+        filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,
         scope=c.Ldap.SearchScope.SUBTREE,
     )

@@ -257,7 +257,7 @@ class FlextLdapServerDetector(s[str]):
         return cls._detect_from_extensions(supported_extensions, naming_contexts)
 
     @staticmethod
-    def _get_first_value(attrs: t.Ldap.OperationAttributeDict, key: str) -> str | None:
+    def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
         """Return the first attribute value for ``key`` when present.
 
         Python 3.13: Use modern pattern matching for concise extraction.
@@ -271,7 +271,7 @@ class FlextLdapServerDetector(s[str]):
     @staticmethod
     def _query_root_dse(
         connection: Connection,
-    ) -> r[t.Ldap.OperationAttributeDict]:
+    ) -> r[t.Ldap.OperationAttributes]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
         Business Rules:
@@ -302,7 +302,7 @@ class FlextLdapServerDetector(s[str]):
         """
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
-            return r[t.Ldap.OperationAttributeDict].fail(
+            return r[t.Ldap.OperationAttributes].fail(
                 "rootDSE query failed: search unavailable",
             )
         if not search_method(
@@ -311,18 +311,18 @@ class FlextLdapServerDetector(s[str]):
             search_scope=BASE,
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
-            return r[t.Ldap.OperationAttributeDict].fail(
+            return r[t.Ldap.OperationAttributes].fail(
                 f"rootDSE query failed: {connection.result}",
             )
         entries_list: t.ContainerList = getattr(connection, "entries", [])
         entries_raw: t.ContainerList = entries_list
         if not entries_raw:
-            return r[t.Ldap.OperationAttributeDict].fail(
+            return r[t.Ldap.OperationAttributes].fail(
                 "rootDSE query returned no entries",
             )
         root_dse_entry: t.NormalizedValue = entries_raw[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
-            return r[t.Ldap.OperationAttributeDict].fail(
+            return r[t.Ldap.OperationAttributes].fail(
                 "rootDSE query returned invalid entry payload",
             )
         attrs_dict = root_dse_entry.entry_attributes_as_dict
@@ -366,20 +366,26 @@ class FlextLdapServerDetector(s[str]):
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
         root_dse_attrs = root_dse_result.value
 
-        naming_contexts: t.StrSequence = root_dse_attrs.get("namingContexts", [])
-        supported_controls: t.StrSequence = root_dse_attrs.get("supportedControl", [])
+        naming_contexts: t.StrSequence = root_dse_attrs.get(
+            c.Ldap.RootDseAttributes.NAMING_CONTEXTS,
+            [],
+        )
+        supported_controls: t.StrSequence = root_dse_attrs.get(
+            c.Ldap.RootDseAttributes.SUPPORTED_CONTROLS,
+            [],
+        )
         supported_extensions: t.StrSequence = root_dse_attrs.get(
-            "supportedExtension",
+            c.Ldap.RootDseAttributes.SUPPORTED_EXTENSIONS,
             [],
         )
         return FlextLdapServerDetector._detect_from_attributes(
             vendor_name=FlextLdapServerDetector._get_first_value(
                 root_dse_attrs,
-                "vendorName",
+                c.Ldap.RootDseAttributes.VENDOR_NAME,
             ),
             vendor_version=FlextLdapServerDetector._get_first_value(
                 root_dse_attrs,
-                "vendorVersion",
+                c.Ldap.RootDseAttributes.VENDOR_VERSION,
             ),
             naming_contexts=naming_contexts,
             _supported_controls=supported_controls,

@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
-from typing import ClassVar, Literal, override
+from typing import ClassVar, override
 
 from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
@@ -130,16 +130,16 @@ class FlextLdapLdap3Wrappers:
         time_limit: int,
     ) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects."""
-        normalized_scope: Literal["BASE", "LEVEL", "SUBTREE"]
+        normalized_scope: t.Ldap.Ldap3SearchScope
         if isinstance(search_scope, int):
-            scope_map: Mapping[int, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+            scope_map: Mapping[int, t.Ldap.Ldap3SearchScope] = {
                 c.Ldap.SearchScopeValue.BASE: "BASE",
                 c.Ldap.SearchScopeValue.LEVEL: "LEVEL",
                 c.Ldap.SearchScopeValue.SUBTREE: "SUBTREE",
             }
             normalized_scope = scope_map.get(search_scope, "SUBTREE")
         else:
-            scope_str_map: Mapping[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
+            scope_str_map: Mapping[str, t.Ldap.Ldap3SearchScope] = {
                 "BASE": "BASE",
                 "LEVEL": "LEVEL",
                 "SUBTREE": "SUBTREE",
@@ -494,7 +494,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             | m.Ldif.Attributes
             | BaseModel
             | t.ContainerValue,
-        ) -> t.Ldap.OperationAttributeDict:
+        ) -> t.Ldap.OperationAttributes:
             """Extract LDAP attributes as dictionary from various input formats.
 
             Business Rules:
@@ -513,7 +513,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
 
             Architecture:
                 - Handles: objects with 'attributes' property, Pydantic BaseModel, Mapping
-                - Returns t.Ldap.OperationAttributeDict (Mapping[str, t.StrSequence])
+                - Returns t.Ldap.OperationAttributes (Mapping[str, t.StrSequence])
                 - No network calls - pure data transformation
 
             """
@@ -590,7 +590,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 return m.Ldif.DN(value="", metadata=default_metadata)
             if isinstance(dn_raw, m.Ldif.DN):
                 return dn_raw
-            if isinstance(dn_raw, p.Ldap.DN):
+            if isinstance(dn_raw, p.Ldif.DN):
                 return m.Ldif.DN(
                     value=dn_raw.value or "",
                     metadata=default_metadata,
@@ -692,7 +692,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 t.Ldap.Ldap3EntryValue | t.ContainerValue | t.StrSequence,
             ]
             | None,
-        ) -> t.Ldap.OperationAttributeDict:
+        ) -> t.Ldap.OperationAttributes:
             """Normalize attribute values to t.StrSequence format.
 
             Args:

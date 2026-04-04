@@ -12,16 +12,6 @@ from flext_ldap.__version__ import *
 
 if _t.TYPE_CHECKING:
     import flext_ldap._models as _flext_ldap__models
-    from flext_ldap.__version__ import (
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
 
     _models = _flext_ldap__models
     import flext_ldap.adapters as _flext_ldap_adapters

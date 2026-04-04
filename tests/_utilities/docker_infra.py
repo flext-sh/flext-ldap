@@ -103,7 +103,7 @@ class _DockerInfraUtils:
         for candidate_dn, candidate_password in candidates:
             try:
                 server = FlextLdapUtilities.Ldap.create_bare_server(
-                    "localhost", port=d.PORT
+                    c.LOCALHOST, port=d.PORT
                 )
                 test_conn = FlextLdapUtilities.Ldap.create_connection(
                     server,
@@ -134,7 +134,7 @@ class _DockerInfraUtils:
         try:
             admin_dn, admin_password = _DockerInfraUtils.get_admin_credentials()
             server = FlextLdapUtilities.Ldap.create_server_from_url(
-                f"ldap://localhost:{d.PORT}",
+                f"ldap://{c.LOCALHOST}:{d.PORT}",
                 get_info="NO_INFO",
             )
             conn = FlextLdapUtilities.Ldap.create_connection(

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import Literal, TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from ldap3 import (
     Connection as Ldap3Connection,
@@ -19,10 +19,13 @@ from ldap3 import (
 )
 from ldap3.core.exceptions import LDAPException as Ldap3LDAPException
 
-from flext_ldap import c, p, t
+from flext_ldap import c, p
 from flext_ldif import FlextLdifUtilities, m
 
-type _Ldap3GetInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+if TYPE_CHECKING:
+    from flext_ldap.typings import FlextLdapTypes as t
+else:
+    from flext_ldap import t
 
 
 class FlextLdapUtilities(FlextLdifUtilities):
@@ -65,17 +68,17 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @staticmethod
         def create_server(
             host: str,
-            port: int = 389,
+            port: int = c.Ldap.ConnectionDefaults.PORT,
             *,
             use_ssl: bool = False,
-            get_info: _Ldap3GetInfo = "ALL",
+            get_info: t.Ldap.Ldap3GetInfo = "ALL",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance.
 
             The ONLY sanctioned way for test code outside flext-ldap/src and
             flext-ldif/src to create an LDAP server object.
             """
-            resolved_info: _Ldap3GetInfo = (
+            resolved_info: t.Ldap.Ldap3GetInfo = (
                 "NO_INFO" if get_info == "NO_INFO" else get_info
             )
             scheme = "ldaps" if use_ssl else "ldap"
@@ -89,7 +92,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def create_server_from_url(
             server_url: str,
             *,
-            get_info: _Ldap3GetInfo = "ALL",
+            get_info: t.Ldap.Ldap3GetInfo = "ALL",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance from a URL string.
 
@@ -141,8 +144,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def create_bare_server(
             host: str,
             *,
-            port: int = 389,
-            get_info: _Ldap3GetInfo = "NO_INFO",
+            port: int = c.Ldap.ConnectionDefaults.PORT,
+            get_info: t.Ldap.Ldap3GetInfo = "NO_INFO",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
             server: p.Ldap.Ldap3Server = Ldap3Server(
@@ -295,7 +298,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def dn_str(
             dn: str | m.Ldif.DN | m.Ldif.Entry | None,
             *,
-            default: str = "unknown",
+            default: str = c.Ldap.Defaults.UNKNOWN_CATEGORY,
         ) -> str:
             """Extract DN string (builder: whn().safe().conv().str()).
 

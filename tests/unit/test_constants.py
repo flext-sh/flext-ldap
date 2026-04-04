@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 import pytest
 from flext_tests import tm
@@ -34,20 +34,6 @@ class TestsFlextLdapConstants:
     Architecture: Single class per module following FLEXT patterns.
     Demonstrates maximum code reuse through parametrization and nested factories.
     """
-
-    @staticmethod
-    def _get_ldap_cqrs_status_values() -> Sequence[tuple[str, str]]:
-        """Factory: Return all LdapCqrs.Status enum members for parametrization.
-
-        Nested static method reduces line count while making parametrization
-        data explicit and reusable across multiple parametrized tests.
-        """
-        return [
-            ("PENDING", "pending"),
-            ("RUNNING", "running"),
-            ("COMPLETED", "completed"),
-            ("FAILED", "failed"),
-        ]
 
     @pytest.mark.parametrize(
         ("attr", "expected"),

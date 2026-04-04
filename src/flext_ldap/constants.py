@@ -185,5 +185,42 @@ class FlextLdapConstants(FlextLdifConstants):
             DELETE = 1
             REPLACE = 2
 
+        class Defaults:
+            """Domain default values."""
+
+            UNKNOWN_CATEGORY: Final[str] = "unknown"
+            EXAMPLE_BASE_DN: Final[str] = "dc=example,dc=com"
+
+        class RootDseAttributes:
+            """rootDSE query attribute names for server type detection."""
+
+            VENDOR_NAME: Final[str] = "vendorName"
+            VENDOR_VERSION: Final[str] = "vendorVersion"
+            NAMING_CONTEXTS: Final[str] = "namingContexts"
+            SUPPORTED_CONTROLS: Final[str] = "supportedControl"
+            SUPPORTED_EXTENSIONS: Final[str] = "supportedExtension"
+
+        class Callback:
+            """Callback protocol constants."""
+
+            MULTI_PHASE_PARAM_COUNT: Final[int] = 5
+            SINGLE_PHASE_PARAM_COUNT: Final[int] = 4
+
+        class Logging:
+            """Logging-related constants."""
+
+            DN_TRUNCATION_LENGTH: Final[int] = 100
+
+        class SyncDefaults:
+            """Sync operation default values."""
+
+            BATCH_SIZE: Final[int] = 100
+            DEFAULT_RETRY_ERROR_PATTERNS: ClassVar[Sequence[str]] = [
+                "session terminated",
+                "not connected",
+                "invalid messageid",
+                "socket",
+            ]
+
 
 c = FlextLdapConstants

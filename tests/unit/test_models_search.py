@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar
 
 import pytest
 from flext_tests import tm
@@ -20,7 +19,7 @@ class TestsFlextLdapModelsSearch:
     def test_search_options_default_values(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         tm.that(options.base_dn, eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
-        tm.that(options.scope, eq="SUBTREE")
+        tm.that(options.scope, eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
         tm.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
         tm.that(options.attributes, none=True)
         tm.that(options.size_limit, eq=0)
@@ -56,12 +55,12 @@ class TestsFlextLdapModelsSearch:
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             scope="subtree",
         )
-        tm.that({"SUBTREE", "subtree"}, has=options.scope)
+        tm.that({c.Ldap.SearchDefaults.DEFAULT_SCOPE, "subtree"}, has=options.scope)
 
     def test_search_options_normalized_factory(self) -> None:
         options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
         tm.that(options.base_dn, none=False)
-        tm.that(options.scope, eq="SUBTREE")
+        tm.that(options.scope, eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
         tm.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
 
     def test_search_options_normalized_with_config(self) -> None:
@@ -107,15 +106,9 @@ class TestsFlextLdapModelsSearch:
         with pytest.raises(exc_types):
             setattr(result, "is_success", False)
 
-    _SEARCH_RESULT_SCENARIOS: ClassVar[Mapping[str, tuple[int, int]]] = {
-        "empty": (0, 0),
-        "single": (1, 1),
-        "multiple": (5, 5),
-    }
-
     @pytest.mark.parametrize(
         ("num_entries", "expected_count"),
-        [(0, 0), (1, 1), (5, 5), (10, 10)],
+        [*c.Ldap.Tests.SearchResultScenarios.COUNTS.values(), (10, 10)],
     )
     def test_search_result_total_count(
         self,
@@ -143,7 +136,7 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_result_extract_objectclass_category_empty(self) -> None:
         category = m.Ldap.SearchResult.extract_objectclass_category({})
-        tm.that(category, eq="unknown")
+        tm.that(category, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
 
     def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
         attrs = {"objectClass": ["person", "top"]}
@@ -153,7 +146,7 @@ class TestsFlextLdapModelsSearch:
     def test_search_result_get_entry_category(self) -> None:
         entry: Mapping[str, t.StrSequence] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
-        tm.that(category, eq="unknown")
+        tm.that(category, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
 
     def test_sync_phase_config_has_progress_callback(self) -> None:
         """Verify progress_callback field exists on SyncPhaseConfig."""
@@ -171,10 +164,10 @@ class TestsFlextLdapModelsSearch:
     def test_search_options_serialization(self) -> None:
         data = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
-            scope="SUBTREE",
+            scope=c.Ldap.SearchDefaults.DEFAULT_SCOPE,
         ).model_dump()
         tm.that(data["base_dn"], eq=c.Ldap.Tests.RFC.DEFAULT_BASE_DN)
-        tm.that(data["scope"], eq="SUBTREE")
+        tm.that(data["scope"], eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
 
     def test_sync_stats_serialization(self) -> None:
         data = m.Ldap.SyncStats.from_counters(

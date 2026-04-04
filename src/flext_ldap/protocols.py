@@ -11,14 +11,15 @@ This allows protocols to remain independent of model implementations.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Literal, Protocol, override, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 from flext_core import r
-from flext_ldif import FlextLdifProtocols, t
+from flext_ldif import FlextLdifProtocols
 
-type _Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
-type _Ldap3DerefAliases = Literal["NEVER", "SEARCH", "FINDING_BASE", "ALWAYS"]
-type _Ldap3ModifyChanges = dict[str, list[tuple[str, list[str]]]]
+if TYPE_CHECKING:
+    from flext_ldap.typings import FlextLdapTypes as t
+else:
+    from flext_ldif import t
 
 
 class FlextLdapProtocols(FlextLdifProtocols):
@@ -51,49 +52,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
         Pattern: `p.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
         """
 
-        @runtime_checkable
-        class DN(Protocol):
-            """Protocol for Distinguished Name (structural type)."""
-
-            @override
-            def __str__(self) -> str:
-                """Return string representation of DN."""
-                ...
-
-            @property
-            def value(self) -> str:
-                """Get DN value."""
-                ...
-
-        @runtime_checkable
-        class Attributes(Protocol):
-            """Protocol for LDIF attributes (structural type)."""
-
-            @property
-            def attributes(self) -> Mapping[str, t.StrSequence]:
-                """Get attributes mapping."""
-                ...
-
-        @runtime_checkable
-        class LdapEntry(Protocol):
-            """Protocol for LDAP entry (structural type).
-
-            Accepts both simple types and complex types (models).
-            DN has __str__ method, Attributes has
-            .attributes property.
-            Models are structurally compatible through attribute access.
-
-            IMPORTANT: Allows None for dn and attributes to be compatible with
-            FlextLdifModels.Ldif.Entry which allows None for RFC violation capture
-            during LDIF processing. Application layer validates non-None requirement.
-
-            Type Strategy: Accept both concrete Attributes class (from flext-ldif)
-            and dict types for flexibility with structural typing.
-            """
-
-            dn: str | p.Ldap.DN | None
-            attributes: Mapping[str, t.StrSequence] | p.Ldap.Attributes | None
-            metadata: t.ConfigMap | None
+        # ── Layer 0: Domain Protocols ────────────────────────────
+        # DN, Attributes, Entry → use p.Ldif.DN, p.Ldif.Attributes, p.Ldif.Entry
+        # directly from flext-ldif (SSOT — no redefinition in Ldap namespace)
 
         @runtime_checkable
         class LdapBatchStats(Protocol):
@@ -175,7 +136,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class SearchResult(Protocol):
             """Protocol for LDAP search result (structural type)."""
 
-            entries: Sequence[p.Ldap.LdapEntry]
+            entries: Sequence[p.Ldif.Entry]
             search_options: p.Ldap.SearchOptions
 
         @runtime_checkable
@@ -189,6 +150,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
             synced: int
             failed: int
             skipped: int
+
+        # ── Layer 1: Service Protocols ───────────────────────────
 
         @runtime_checkable
         class LdapClient(Protocol):
@@ -210,7 +173,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def add(
                 self,
-                entry: p.Ldap.LdapEntry,
+                entry: p.Ldif.Entry,
             ) -> r[p.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -244,7 +207,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def delete(
                 self,
-                dn: str | p.Ldap.DN,
+                dn: str | p.Ldif.DN,
             ) -> r[p.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -275,8 +238,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def modify(
                 self,
-                dn: str | p.Ldap.DN,
-                changes: Mapping[str, Sequence[tuple[str | int, t.StrSequence]]],
+                dn: str | p.Ldif.DN,
+                changes: t.Ldap.LdapModifyChanges,
             ) -> r[p.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
@@ -325,7 +288,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def add(
                 self,
-                entry: p.Ldap.LdapEntry,
+                entry: p.Ldif.Entry,
             ) -> r[p.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -336,7 +299,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def delete(
                 self,
-                dn: p.Ldap.DN | str,
+                dn: p.Ldif.DN | str,
             ) -> r[p.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -347,8 +310,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def modify(
                 self,
-                dn: p.Ldap.DN | str,
-                changes: Mapping[str, Sequence[tuple[str | int, t.StrSequence]]],
+                dn: p.Ldif.DN | str,
+                changes: t.Ldap.LdapModifyChanges,
             ) -> r[p.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
@@ -407,6 +370,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
+        # ── ldap3 Library Structural Protocols ───────────────────
+
         @runtime_checkable
         class Ldap3Connection(Protocol):
             """Protocol for ldap3.Connection objects (structural type).
@@ -443,8 +408,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 search_base: str,
                 search_filter: str,
-                search_scope: _Ldap3SearchScope = "SUBTREE",
-                dereference_aliases: _Ldap3DerefAliases = "ALWAYS",
+                search_scope: t.Ldap.Ldap3SearchScope = "SUBTREE",
+                dereference_aliases: t.Ldap.Ldap3DerefAliases = "ALWAYS",
                 attributes: t.StrSequence | str | None = None,
                 size_limit: int = 0,
                 time_limit: int = 0,
@@ -464,8 +429,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 dn: str,
                 object_class: t.StrSequence | str | None,
-                attributes: Mapping[str, str | bytes | t.StrSequence | Sequence[bytes]]
-                | None,
+                attributes: t.Ldap.Ldap3AddAttributes,
             ) -> bool:
                 """Add an LDAP entry."""
                 ...
@@ -477,7 +441,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def modify(
                 self,
                 dn: str,
-                changes: _Ldap3ModifyChanges,
+                changes: t.Ldap.Ldap3ModifyChangesDict,
                 controls: None = None,
             ) -> bool:
                 """Modify an LDAP entry."""
@@ -513,7 +477,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             @property
             def entry_attributes_as_dict(
                 self,
-            ) -> Mapping[str, Sequence[str | bytes]]:
+            ) -> t.Ldap.Ldap3AttributeDict:
                 """Get attributes as dict mapping attribute names to value lists."""
                 ...
 
@@ -539,7 +503,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def values(self) -> Sequence[str | bytes]:
+            def values(self) -> t.Ldap.Ldap3AttributeValues:
                 """Get processed attribute values."""
                 ...
 
@@ -549,7 +513,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             @property
-            def value(self) -> str | bytes | Sequence[str | bytes]:
+            def value(self) -> t.Ldap.Ldap3AttributeValue:
                 """Get single value or all values."""
                 ...
 
@@ -564,6 +528,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def entries(self) -> Sequence[p.Ldap.Ldap3Entry]:
                 """Get list of entries."""
                 ...
+
+        # ── Structural Duck-Typing Protocols ─────────────────────
 
         @runtime_checkable
         class HasItemsMethod(Protocol):
@@ -601,16 +567,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             @property
             def attributes(
                 self,
-            ) -> Mapping[
-                str,
-                str
-                | bytes
-                | int
-                | float
-                | bool
-                | Sequence[str | bytes | t.Numeric | bool]
-                | None,
-            ]:
+            ) -> Mapping[str, t.Ldap.Ldap3EntryValue]:
                 """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 

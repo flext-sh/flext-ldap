@@ -6,7 +6,7 @@ from typing import TypeGuard
 from flext_tests import FlextTestsUtilities
 
 from flext_core import r
-from flext_ldap import FlextLdapUtilities
+from flext_ldap import FlextLdapProtocols, FlextLdapUtilities
 from tests import t
 from tests._utilities.docker_infra import _DockerInfraUtils
 from tests._utilities.fixture_loaders import _FixtureLoaderUtils
@@ -209,6 +209,25 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             Access: u.Ldap.Tests.*
             """
+
+            @staticmethod
+            def single_phase_cb(
+                _a: int,
+                _b: int,
+                _c: str,
+                _d: FlextLdapProtocols.Ldap.LdapBatchStats,
+            ) -> None:
+                """Test callback with 4 parameters (single-phase)."""
+
+            @staticmethod
+            def multi_phase_cb(
+                _a: str,
+                _b: int,
+                _c: int,
+                _d: str,
+                _e: FlextLdapProtocols.Ldap.LdapBatchStats,
+            ) -> None:
+                """Test callback with 5 parameters (multi-phase)."""
 
 
 u = FlextLdapTestUtilities

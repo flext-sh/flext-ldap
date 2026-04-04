@@ -12,18 +12,9 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap
-from tests import m, p
+from tests import c, m, u
 
 pytestmark = pytest.mark.unit
-
-
-def _single_phase_callback(
-    _current: int,
-    _total: int,
-    _dn: str,
-    _stats: p.Ldap.LdapBatchStats,
-) -> None:
-    """Callback with the single-phase signature."""
 
 
 class TestsFlextLdapSync:
@@ -68,15 +59,16 @@ class TestsFlextLdapSync:
         tm.that(sync_result.phase_results, empty=True)
 
     def test_convert_entries_to_protocol_returns_copy(self) -> None:
-        entries = [self._entry("cn=test,dc=example,dc=com")]
+        entries = [self._entry(c.Ldap.Tests.EntryDN.TEST_EXAMPLE)]
         protocol_entries = FlextLdapSyncCallbacks.convert_entries_to_protocol(entries)
         tm.that(protocol_entries, len=1)
         assert protocol_entries is not entries
 
     def test_make_phase_progress_callback_keeps_single_phase_callback(self) -> None:
-        config = m.Ldap.SyncPhaseConfig(progress_callback=_single_phase_callback)
+        cb = u.Ldap.Tests.single_phase_cb
+        config = m.Ldap.SyncPhaseConfig(progress_callback=cb)
         callback = FlextLdapSync._make_phase_progress_callback("users", config)
-        assert callback is _single_phase_callback
+        assert callback is cb
 
 
 __all__ = ["TestsFlextLdapSync", "pytestmark"]

@@ -138,7 +138,7 @@ class FlextLdapModelsLdap:
         batch_size: Annotated[
             t.PositiveInt,
             Field(description="Batch size for sync operations"),
-        ] = 100
+        ] = c.Ldap.SyncDefaults.BATCH_SIZE
         auto_create_parents: Annotated[
             bool,
             Field(description="Auto-create parent entries if missing"),
@@ -303,14 +303,14 @@ class FlextLdapModelsLdap:
         ) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:
-                return "unknown"
+                return c.Ldap.Defaults.UNKNOWN_CATEGORY
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             if isinstance(oc_list, list):
                 if not oc_list:
-                    return "unknown"
+                    return c.Ldap.Defaults.UNKNOWN_CATEGORY
                 first_value = oc_list[0]
                 return first_value.lower()
-            return "unknown"
+            return c.Ldap.Defaults.UNKNOWN_CATEGORY
 
         @staticmethod
         def get_entry_category(entry: Mapping[str, t.StrSequence]) -> str:
@@ -319,13 +319,13 @@ class FlextLdapModelsLdap:
                 entry,
             )
             if not attrs:
-                return "unknown"
+                return c.Ldap.Defaults.UNKNOWN_CATEGORY
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             match oc_list:
                 case list() as oc_values if oc_values:
                     return str(oc_values[0]).lower()
                 case _:
-                    return "unknown"
+                    return c.Ldap.Defaults.UNKNOWN_CATEGORY
 
     class LdapOperationResult(BaseModel):
         """LDAP operation result."""

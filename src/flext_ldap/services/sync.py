@@ -16,14 +16,12 @@ from pydantic import ConfigDict
 
 from flext_core import r
 from flext_ldap import (
+    FlextLdapConstants as c,
     FlextLdapModels as m,
     FlextLdapOperations,
     FlextLdapProtocols as p,
     FlextLdapTypes as t,
 )
-
-MULTI_PHASE_CALLBACK_PARAM_COUNT: int = 5
-SINGLE_PHASE_CALLBACK_PARAM_COUNT: int = 4
 
 
 class FlextLdapSyncCallbacks:
@@ -66,7 +64,7 @@ class FlextLdapSyncCallbacks:
             signature = inspect.signature(callback)
         except (TypeError, ValueError, AttributeError):
             return False
-        return len(signature.parameters) == MULTI_PHASE_CALLBACK_PARAM_COUNT
+        return len(signature.parameters) == c.Ldap.Callback.MULTI_PHASE_PARAM_COUNT
 
     @staticmethod
     def is_single_phase_callback(
@@ -79,7 +77,7 @@ class FlextLdapSyncCallbacks:
             signature = inspect.signature(callback)
         except (TypeError, ValueError, AttributeError):
             return False
-        return len(signature.parameters) == SINGLE_PHASE_CALLBACK_PARAM_COUNT
+        return len(signature.parameters) == c.Ldap.Callback.SINGLE_PHASE_PARAM_COUNT
 
 
 class FlextLdapSync(FlextLdapOperations):

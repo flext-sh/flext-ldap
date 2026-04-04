@@ -53,7 +53,6 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
             # Core operation result types (from helpers/typings.py)
             type OperationResultType = r[_m.Ldap.OperationResult]
             type SearchResultType = r[_m.Ldap.SearchResult]
-            type LdapEntry = _m.Ldif.Entry
 
             # Test data dictionary types
             type GenericFieldsDict = Mapping[

@@ -22,13 +22,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 import pytest
 from flext_tests import tm
 
 from flext_ldap import FlextLdapServerDetector
-from tests import t
+from tests import c, t
 
 pytestmark = pytest.mark.unit
 
@@ -44,48 +44,6 @@ class TestsFlextLdapDetection:
     Expected reduction: 217 lines → 95 lines (56% reduction).
     """
 
-    @staticmethod
-    def _get_detector_execute_scenarios() -> Sequence[
-        tuple[Mapping[str, bool | float | str | None] | None, bool, str]
-    ]:
-        """Factory: Return execute() test scenarios (kwargs, expect_failure, error_substring)."""
-        return [
-            ({}, True, "connection parameter required"),
-            ({"connection": "invalid"}, True, "connection must be ldap3.Connection"),
-        ]
-
-    @staticmethod
-    def _get_get_first_value_scenarios() -> Sequence[
-        tuple[Mapping[str, t.StrSequence], str, str | None]
-    ]:
-        """Factory: Return _get_first_value() test scenarios (attrs, key, expected)."""
-        return [
-            (
-                {"vendorName": ["Oracle Corporation", "Version 2"]},
-                "vendorName",
-                "Oracle Corporation",
-            ),
-            ({"vendorName": ["OpenLDAP"]}, "vendorName", "OpenLDAP"),
-            ({"otherKey": ["value"]}, "vendorName", None),
-            ({"vendorName": []}, "vendorName", None),
-        ]
-
-    @staticmethod
-    def _get_detect_from_attributes_scenarios() -> Sequence[
-        tuple[str | None, str | None, t.StrSequence, str]
-    ]:
-        """Factory: Return _detect_from_attributes() test scenarios (vendor_name, version, controls, expected)."""
-        return [
-            ("Oracle Corporation", "12.2.1.4.0", [], "oid"),
-            ("Oracle Unified Directory", "12.2.1.4.0", [], "oud"),
-            ("OpenLDAP", "2.4.57", [], "openldap"),
-            ("Microsoft Corporation", None, ["1.2.840.113556.1.4.319"], "ad"),
-            ("389 Project", "2.0.0", [], "ds389"),
-            (None, None, [], "rfc"),
-            ("oracle corporation", "12.2.1.4.0", [], "oid"),
-            ("Oracle", None, [], "oid"),
-        ]
-
     def test_detector_initialization(self) -> None:
         """Test detector initialization."""
         detector = FlextLdapServerDetector()
@@ -94,7 +52,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("kwargs", "expect_failure", "error_substring"),
-        _get_detector_execute_scenarios(),
+        c.Ldap.Tests.Detection.EXECUTE_SCENARIOS,
     )
     def test_execute_error_handling(
         self,
@@ -110,7 +68,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("attrs", "key", "expected"),
-        _get_get_first_value_scenarios(),
+        c.Ldap.Tests.Detection.GET_FIRST_VALUE_SCENARIOS,
     )
     def test_get_first_value(
         self,
@@ -125,7 +83,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
-        _get_detect_from_attributes_scenarios(),
+        c.Ldap.Tests.Detection.DETECT_FROM_ATTRIBUTES_SCENARIOS,
     )
     def test_detect_from_attributes(
         self,
@@ -138,7 +96,7 @@ class TestsFlextLdapDetection:
         result = FlextLdapServerDetector._detect_from_attributes(
             vendor_name=vendor_name,
             vendor_version=vendor_version,
-            naming_contexts=["dc=example,dc=com"],
+            naming_contexts=[c.Ldap.Defaults.EXAMPLE_BASE_DN],
             _supported_controls=supported_controls,
             supported_extensions=[],
         )

@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import override
 
 from pydantic import PrivateAttr
@@ -237,7 +237,7 @@ class FlextLdapEntryAdapter(s[bool]):
         conversion_metadata: m.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
-        original_attrs_dict: Mapping[str, Sequence[str | bytes]],
+        original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: Mapping[str, t.StrSequence],
     ) -> m.Ldap.ConversionMetadata:
         """Track DN and attribute differences in conversion metadata.
@@ -276,7 +276,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         def check_attr_changed(
             attr_name: str,
-            original_values: Sequence[str | bytes],
+            original_values: t.Ldap.Ldap3AttributeValues,
         ) -> str | None:
             """Check if attribute values changed during conversion."""
             original_values_list = [

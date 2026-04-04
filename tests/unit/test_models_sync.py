@@ -13,13 +13,17 @@ class TestsFlextLdapModelsSync:
     # ── Contract: default values don't drift ───────────────────────────
 
     _API_DEFAULTS = [
-        (m.Ldap.SyncOptions, "batch_size", 100),
+        (m.Ldap.SyncOptions, "batch_size", c.Ldap.SyncDefaults.BATCH_SIZE),
         (m.Ldap.SyncOptions, "auto_create_parents", True),
         (m.Ldap.SyncOptions, "allow_deletes", False),
         (m.Ldap.SyncStats, "synced", 0),
         (m.Ldap.SyncStats, "total", 0),
-        (m.Ldap.SyncPhaseConfig, "server_type", "rfc"),
-        (m.Ldap.SyncPhaseConfig, "max_retries", 5),
+        (m.Ldap.SyncPhaseConfig, "server_type", c.Ldap.ServerDefaults.DEFAULT_TYPE),
+        (
+            m.Ldap.SyncPhaseConfig,
+            "max_retries",
+            c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
+        ),
         (m.Ldap.SyncPhaseConfig, "stop_on_error", False),
         (m.Ldap.LdapBatchStats, "synced", 0),
         (m.Ldap.LdapBatchStats, "failed", 0),
@@ -136,10 +140,10 @@ class TestsFlextLdapModelsSync:
     def test_conversion_metadata_tracks_changes(self) -> None:
         md = m.Ldap.ConversionMetadata(
             source_attributes=["cn", "mail", "telephoneNumber"],
-            source_dn="cn=user,dc=example,dc=com",
+            source_dn=c.Ldap.Tests.EntryDN.USER_EXAMPLE,
             removed_attributes=["userPassword"],
             dn_changed=True,
-            converted_dn="cn=user,dc=new,dc=com",
+            converted_dn=c.Ldap.Tests.EntryDN.USER_NEW,
         )
         tm.that(md.source_attributes, len=3)
         tm.that(md.removed_attributes, contains="userPassword")

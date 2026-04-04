@@ -27,7 +27,7 @@ class TestsFlextLdapModels:
         tm.that(config_frozen, is_=bool)
 
     def test_collections_exists(self) -> None:
-        tm.that(m.Categories, none=False)
+        tm.that(m.Ldif.FlexibleCategories, none=False)
 
     def test_collections_config_exists(self) -> None:
         tm.that(m.Config, none=False)
@@ -73,8 +73,8 @@ class TestsFlextLdapModels:
         tm.that(actual, eq=True)
 
     def test_connection_config_default_values(self) -> None:
-        config = m.Ldap.ConnectionConfig(port=389)
-        tm.that(config.host, eq="localhost")
+        config = m.Ldap.ConnectionConfig(port=c.Ldap.ConnectionDefaults.PORT)
+        tm.that(config.host, eq=c.LOCALHOST)
         tm.that(config.port, eq=c.Ldap.ConnectionDefaults.PORT)
         tm.that(not config.use_ssl, eq=True)
         tm.that(not config.use_tls, eq=True)
@@ -88,26 +88,32 @@ class TestsFlextLdapModels:
             host="ldap.example.com",
             port=636,
             use_ssl=True,
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            bind_password="secret",
+            bind_dn=c.Ldap.Tests.EntryDN.ADMIN_EXAMPLE,
+            bind_password=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD,
             timeout=60,
         )
         tm.that(config.host, eq="ldap.example.com")
         tm.that(config.port, eq=636)
         tm.that(config.use_ssl, eq=True)
-        tm.that(config.bind_dn, eq="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
+        tm.that(config.bind_dn, eq=c.Ldap.Tests.EntryDN.ADMIN_EXAMPLE)
 
     def test_connection_config_ssl_tls_mutual_exclusion(self) -> None:
         with pytest.raises(ValidationError, match="mutually exclusive"):
-            m.Ldap.ConnectionConfig(port=389, use_ssl=True, use_tls=True)
+            m.Ldap.ConnectionConfig(
+                port=c.Ldap.ConnectionDefaults.PORT, use_ssl=True, use_tls=True
+            )
 
     def test_connection_config_ssl_only_allowed(self) -> None:
-        config = m.Ldap.ConnectionConfig(port=389, use_ssl=True, use_tls=False)
+        config = m.Ldap.ConnectionConfig(
+            port=c.Ldap.ConnectionDefaults.PORT, use_ssl=True, use_tls=False
+        )
         tm.that(config.use_ssl, eq=True)
         tm.that(not config.use_tls, eq=True)
 
     def test_connection_config_tls_only_allowed(self) -> None:
-        config = m.Ldap.ConnectionConfig(port=389, use_ssl=False, use_tls=True)
+        config = m.Ldap.ConnectionConfig(
+            port=c.Ldap.ConnectionDefaults.PORT, use_ssl=False, use_tls=True
+        )
         tm.that(not config.use_ssl, eq=True)
         tm.that(config.use_tls, eq=True)
 
@@ -128,10 +134,10 @@ class TestsFlextLdapModels:
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_inherits_from_collections_config(self) -> None:
-        config = m.Ldap.ConnectionConfig(port=389)
+        config = m.Ldap.ConnectionConfig(port=c.Ldap.ConnectionDefaults.PORT)
         tm.that(config, none=False)
-        tm.that(config.host, eq="localhost")
-        tm.that(config.port, eq=389)
+        tm.that(config.host, eq=c.LOCALHOST)
+        tm.that(config.port, eq=c.Ldap.ConnectionDefaults.PORT)
         dump = config.model_dump()
         tm.that(dump, keys=["host", "port"])
 

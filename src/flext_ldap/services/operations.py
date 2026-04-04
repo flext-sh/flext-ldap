@@ -31,7 +31,7 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, override
 
 from pydantic import ConfigDict
@@ -88,7 +88,7 @@ class FlextLdapOperations(FlextLdapConnection):
         return u.get_logger(__name__)
 
     @staticmethod
-    def _extract_attributes_dict(entry: m.Ldif.Entry) -> Mapping[str, t.StrSequence]:
+    def _extract_attributes_dict(entry: p.Ldif.Entry) -> Mapping[str, t.StrSequence]:
         """Extract attributes dict from LDIF entry or entry protocol.
 
         Args:
@@ -156,7 +156,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
         @staticmethod
         def _extract_ldif_entry_attributes(
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> Mapping[str, t.StrSequence]:
             """Extract attributes from LDIF Entry.
 
@@ -177,7 +177,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
         @staticmethod
         def _extract_protocol_entry_attributes(
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> Mapping[str, t.StrSequence]:
             """Extract attributes from Entry.
 
@@ -198,8 +198,8 @@ class FlextLdapOperations(FlextLdapConnection):
 
         @staticmethod
         def compare(
-            existing_entry: m.Ldif.Entry,
-            new_entry: m.Ldif.Entry,
+            existing_entry: p.Ldif.Entry,
+            new_entry: p.Ldif.Entry,
         ) -> t.Ldap.OperationChanges | None:
             """Compare two entries and return modify changes when needed.
 
@@ -231,7 +231,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
             def normalize_attr(
                 _k: str,
-                v: str | bytes | Sequence[str | bytes],
+                v: t.Ldap.Ldap3AttributeValue,
             ) -> t.StrSequence:
                 """Normalize attribute value to t.StrSequence."""
                 match v:
@@ -299,13 +299,13 @@ class FlextLdapOperations(FlextLdapConnection):
                     processed,
                 )
             )
-            merged: MutableMapping[str, Sequence[tuple[int, t.StrSequence]]] = {}
+            merged: t.Ldap.OperationChanges = {}
             merged.update(changes)
             merged.update(delete_changes)
             return merged or None
 
         @staticmethod
-        def extract_attributes(entry: m.Ldif.Entry) -> Mapping[str, t.StrSequence]:
+        def extract_attributes(entry: p.Ldif.Entry) -> Mapping[str, t.StrSequence]:
             """Return entry attributes as a normalized mapping of lists.
 
             Business Rule:
@@ -408,7 +408,7 @@ class FlextLdapOperations(FlextLdapConnection):
             for k, v in existing_attrs.items():
                 if k.lower() not in ignore_lower and k.lower() not in processed_lower:
                     filtered_attrs[k] = [str(item) for item in v]
-            changes_dict: MutableMapping[str, Sequence[tuple[int, t.StrSequence]]] = {
+            changes_dict: t.Ldap.OperationChanges = {
                 k: [(c.Ldap.ModifyOperation.DELETE, [])] for k in filtered_attrs
             }
             return changes_dict
@@ -903,8 +903,7 @@ class FlextLdapOperations(FlextLdapConnection):
         self,
         entries: Sequence[m.Ldif.Entry],
         *,
-        progress_callback: Callable[[int, int, str, m.Ldap.LdapBatchStats], None]
-        | None = None,
+        progress_callback: t.Ldap.LdapProgressCallback | None = None,
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
@@ -1102,7 +1101,7 @@ class FlextLdapOperations(FlextLdapConnection):
         """
         if not self.is_connected:
             return r[m.Ldap.SearchResult].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
-        base_dn: str = "dc=example,dc=com"
+        base_dn: str = c.Ldap.Defaults.EXAMPLE_BASE_DN
         return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(
                 entries=[],
@@ -1275,7 +1274,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
     def _invoke_batch_progress_callback(
         self,
-        callback: Callable[[int, int, str, m.Ldap.LdapBatchStats], None],
+        callback: t.Ldap.LdapProgressCallback,
         entry_index: int,
         total: int,
         entry_dn: str | None,
@@ -1326,7 +1325,9 @@ class FlextLdapOperations(FlextLdapConnection):
                 stats["synced"] += 1
         else:
             stats["failed"] += 1
-            entry_dn_sliced: str = entry_dn[:100] if entry_dn else ""
+            entry_dn_sliced: str = (
+                entry_dn[: c.Ldap.Logging.DN_TRUNCATION_LENGTH] if entry_dn else ""
+            )
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
             logger = FlextLdapOperations._get_structlog_logger()
             if logger is not None:

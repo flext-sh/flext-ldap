@@ -26,7 +26,7 @@ import pytest
 
 from flext_core import r
 from flext_ldap import FlextLdap, ldap
-from tests import m, p, t, u
+from tests import c, m, p, t, u
 
 pytestmark = pytest.mark.smoke
 
@@ -93,7 +93,11 @@ class TestsFlextLdapSmoke:
             if not isinstance(host, str):
                 host = str(host)
             if not isinstance(port, int):
-                port = int(port) if isinstance(port, (str, float)) else 389
+                port = (
+                    int(port)
+                    if isinstance(port, (str, float))
+                    else c.Ldap.ConnectionDefaults.PORT
+                )
             if not isinstance(use_ssl, bool):
                 use_ssl = bool(use_ssl)
             if not isinstance(bind_dn, str):

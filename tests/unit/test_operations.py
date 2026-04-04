@@ -18,15 +18,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import ClassVar
-
 import pytest
 from flext_tests import tm
 
 from flext_core import FlextSettings
 from flext_ldap import FlextLdapOperations
-from tests import c, m, t
+from tests import c, m
 
 pytestmark = pytest.mark.unit
 
@@ -37,19 +34,6 @@ class TestsFlextLdapOperations:
     Operations is now an MRO mixin inheriting from FlextLdapConnection.
     Instantiate with FlextLdapOperations() — no constructor args needed.
     """
-
-    _ERROR_DETECTION_SCENARIOS: ClassVar[t.BoolMapping] = {
-        "Entry already exists": True,
-        "already exists": True,
-        "ALREADY EXISTS": True,
-        "entryAlreadyExists": True,
-        "Connection failed": False,
-        "": False,
-    }
-    _ENTRY_SCENARIOS: ClassVar[Mapping[str, Mapping[str, t.StrSequence]]] = {
-        "identical": {"cn": ["test"], "sn": ["User"]},
-        "different": {"cn": ["test"], "sn": ["Different"]},
-    }
 
     @classmethod
     def _create_operations(cls) -> FlextLdapOperations:
@@ -74,7 +58,7 @@ class TestsFlextLdapOperations:
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),
-        [(msg, expected) for msg, expected in _ERROR_DETECTION_SCENARIOS.items()],
+        list(c.Ldap.Tests.Operations.ERROR_DETECTION_SCENARIOS.items()),
     )
     def test_is_already_exists_error_detection(
         self,
