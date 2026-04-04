@@ -143,8 +143,12 @@ class _DockerInfraUtils:
                 password=admin_password,
                 auto_bind=True,
             )
-            for ou_name in ("people", "groups", "services"):
-                conn.search(d.BASE_DN, f"(ou={ou_name})", attributes=["ou"])
+            for ou_name in c.Ldap.Tests.Docker.OU_NAMES:
+                conn.search(
+                    d.BASE_DN,
+                    f"(ou={ou_name})",
+                    attributes=list(c.Ldap.Tests.Docker.OU_SEARCH_ATTRS),
+                )
                 if not conn.entries:
                     FlextLdapLdap3Wrappers.add(
                         conn,

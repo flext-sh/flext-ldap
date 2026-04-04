@@ -13,7 +13,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap import FlextLdapEntryAdapter
-from tests import c, m, p, t
+from tests import c, m, p
 
 pytestmark = pytest.mark.unit
 
@@ -21,43 +21,8 @@ pytestmark = pytest.mark.unit
 class TestsFlextLdapEntryAdapter:
     """Comprehensive tests for FlextLdapEntryAdapter.
 
-    All helper classes are nested within this single class.
-    Mock classes are class-level (not duplicated per method).
+    Mock classes centralized in m.Ldap.Tests.MockLdap3Attribute / MockLdap3Entry.
     """
-
-    class _MockAttr:
-        """Mock ldap3 Attribute satisfying p.Ldap.Ldap3Attribute."""
-
-        def __init__(self, vals: t.StrSequence) -> None:
-            self.values: t.Ldap.Ldap3AttributeValues = vals
-            self.raw_values: list[bytes] = [v.encode() for v in vals]
-            self.value: t.Ldap.Ldap3AttributeValue = (
-                vals[0] if vals else c.Ldap.Tests.StringValues.EMPTY
-            )
-
-    class _MockLdap3Entry:
-        """Mock ldap3 Entry satisfying p.Ldap.Ldap3Entry."""
-
-        def __init__(
-            self,
-            dn: str = c.Ldap.Tests.EntryDN.USER_EXAMPLE,
-            attrs: t.StrSequenceMapping | None = None,
-        ) -> None:
-            self.entry_dn: str | None = dn
-            self._attrs: t.StrSequenceMapping = attrs or {}
-
-        @property
-        def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
-            return self._attrs
-
-        @property
-        def entry_attributes(self) -> t.StrSequence:
-            return list(self._attrs)
-
-        def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
-            return TestsFlextLdapEntryAdapter._MockAttr(
-                list(self._attrs.get(item, [])),
-            )
 
     def test_adapter_initialization(self) -> None:
         adapter = FlextLdapEntryAdapter()
@@ -102,7 +67,7 @@ class TestsFlextLdapEntryAdapter:
 
     def test_ldap3_to_ldif_entry(self) -> None:
         adapter = FlextLdapEntryAdapter()
-        ldap3_entry: p.Ldap.Ldap3Entry = self._MockLdap3Entry(
+        ldap3_entry: p.Ldap.Ldap3Entry = m.Ldap.Tests.MockLdap3Entry(
             attrs=dict(c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES),
         )
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
@@ -116,7 +81,7 @@ class TestsFlextLdapEntryAdapter:
 
     def test_ldap3_to_ldif_entry_with_empty_attributes(self) -> None:
         adapter = FlextLdapEntryAdapter()
-        ldap3_entry: p.Ldap.Ldap3Entry = self._MockLdap3Entry()
+        ldap3_entry: p.Ldap.Ldap3Entry = m.Ldap.Tests.MockLdap3Entry()
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
         entry = tm.ok(result)
         assert isinstance(entry, m.Ldif.Entry), "expected Ldif.Entry"

@@ -152,7 +152,6 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
                 STARTUP_TIMEOUT: Final[int] = 90
                 BIND_READY_TIMEOUT: Final[int] = 60
-                LDAP3_GET_INFO: Final[str] = "NO_INFO"
                 DEFAULT_WORKER_ID: Final[str] = "master"
                 OU_NAMES: ClassVar[Sequence[str]] = ["people", "groups", "services"]
                 OU_SEARCH_ATTRS: ClassVar[Sequence[str]] = ["ou"]

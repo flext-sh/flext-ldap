@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from typing import ClassVar
 
@@ -19,7 +19,7 @@ from flext_core import FlextLogger, r
 from flext_ldif import ldif
 from tests import c, m, t
 
-GenericFieldsDict = Mapping[str, t.Scalar | t.StrSequence | Mapping[str, t.StrSequence]]
+GenericFieldsDict = t.Ldap.Tests.GenericFieldsDict
 
 
 class _FixtureLoaderUtils:

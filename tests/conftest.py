@@ -77,7 +77,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     if port_ready.is_success and port_ready.value:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0
-        while waited < 90:
+        while waited < c.Ldap.Tests.Docker.STARTUP_TIMEOUT:
             try:
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.Docker.PORT}",
@@ -140,13 +140,17 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
     u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-        port_result = _wait_for_port_ready(c.LOCALHOST, c.Ldap.Tests.Docker.PORT, 60)
+        port_result = _wait_for_port_ready(
+            c.LOCALHOST,
+            c.Ldap.Tests.Docker.PORT,
+            c.Ldap.Tests.Docker.BIND_READY_TIMEOUT,
+        )
         if port_result.is_failure or not port_result.value:
             pytest.fail(
-                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within 60s",
+                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} port {c.Ldap.Tests.Docker.PORT} not ready within {c.Ldap.Tests.Docker.BIND_READY_TIMEOUT}s",
             )
         waited: float = 0.0
-        while waited < 60:
+        while waited < c.Ldap.Tests.Docker.BIND_READY_TIMEOUT:
             try:
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.Docker.PORT}",
@@ -168,7 +172,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
             waited += 1.0
         else:
             pytest.fail(
-                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} LDAP not ready within 60s",
+                f"Container {c.Ldap.Tests.Docker.CONTAINER_NAME} LDAP not ready within {c.Ldap.Tests.Docker.BIND_READY_TIMEOUT}s",
             )
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()
@@ -187,7 +191,11 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
 @pytest.fixture(scope="module")
 def connection_config(ldap_container: LdapContainerDict) -> m.Ldap.ConnectionConfig:
     port_value = ldap_container["port"]
-    port_int = int(port_value) if isinstance(port_value, (int, str)) else 3390
+    port_int = (
+        int(port_value)
+        if isinstance(port_value, (int, str))
+        else c.Ldap.Tests.Docker.PORT
+    )
     return m.Ldap.ConnectionConfig(
         host=str(ldap_container["host"]),
         port=port_int,

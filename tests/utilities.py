@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence, Sized
-from typing import TypeGuard
+from typing import TYPE_CHECKING, TypeGuard
 
 from flext_tests import FlextTestsUtilities
 
 from flext_core import r
 from flext_ldap import FlextLdapProtocols, FlextLdapUtilities
-from tests import t
+from tests import c, m, p, t  # noqa: F401 — used at runtime in nested class methods
+
+if TYPE_CHECKING:
+    from flext_ldap import FlextLdap
 from tests._utilities.docker_infra import _DockerInfraUtils
 from tests._utilities.fixture_loaders import _FixtureLoaderUtils
 
@@ -209,6 +212,107 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             Access: u.Ldap.Tests.*
             """
+
+            class SmokeFactories:
+                """Factory methods for smoke test data generation."""
+
+                @staticmethod
+                def create_ldap3_server(
+                    ldap_container: t.Ldap.Tests.LdapContainerDict,
+                ) -> p.Ldap.Ldap3Server:
+                    """Factory for ldap3 Server objects."""
+                    server_url = ldap_container["server_url"]
+                    if not isinstance(server_url, str):
+                        server_url = str(server_url)
+                    return FlextLdapUtilities.Ldap.create_server_from_url(server_url)
+
+                @staticmethod
+                def create_ldap3_connection(
+                    server: p.Ldap.Ldap3Server,
+                    ldap_container: t.Ldap.Tests.LdapContainerDict,
+                ) -> p.Ldap.Ldap3Connection:
+                    """Factory for ldap3 Connection objects."""
+                    bind_dn = ldap_container["bind_dn"]
+                    password = ldap_container["password"]
+                    if not isinstance(bind_dn, str):
+                        bind_dn = str(bind_dn)
+                    if not isinstance(password, str):
+                        password = str(password)
+                    return FlextLdapUtilities.Ldap.create_connection(
+                        server,
+                        user=bind_dn,
+                        password=password,
+                    )
+
+                @staticmethod
+                def create_connection_config(
+                    ldap_container: t.Ldap.Tests.LdapContainerDict,
+                ) -> m.Ldap.ConnectionConfig:
+                    """Factory for ConnectionConfig objects."""
+                    host = ldap_container["host"]
+                    port = ldap_container["port"]
+                    use_ssl = ldap_container["use_ssl"]
+                    bind_dn = ldap_container["bind_dn"]
+                    password = ldap_container["password"]
+                    if not isinstance(host, str):
+                        host = str(host)
+                    if not isinstance(port, int):
+                        port = (
+                            int(port)
+                            if isinstance(port, (str, float))
+                            else c.Ldap.ConnectionDefaults.PORT
+                        )
+                    if not isinstance(use_ssl, bool):
+                        use_ssl = bool(use_ssl)
+                    if not isinstance(bind_dn, str):
+                        bind_dn = str(bind_dn)
+                    if not isinstance(password, str):
+                        password = str(password)
+                    return m.Ldap.ConnectionConfig(
+                        host=host,
+                        port=port,
+                        use_ssl=use_ssl,
+                        bind_dn=bind_dn,
+                        bind_password=password,
+                    )
+
+            class SmokeAssertions:
+                """Assertion helpers for smoke tests."""
+
+                @staticmethod
+                def assert_connection_bound(connection: p.Ldap.Ldap3Connection) -> None:
+                    """Assert that LDAP connection is bound."""
+                    bound = getattr(connection, "bound", False)
+                    assert bound, "LDAP server not responding to bind"
+
+                @staticmethod
+                def assert_server_info_available(
+                    connection: p.Ldap.Ldap3Connection,
+                ) -> None:
+                    """Assert that LDAP server info is available."""
+                    server = getattr(connection, "server", None)
+                    assert server is not None, "LDAP connection has no server"
+                    info = getattr(server, "info", None)
+                    assert info is not None, "LDAP server info not available"
+                    naming_contexts = getattr(info, "naming_contexts", None)
+                    assert naming_contexts is not None, (
+                        "LDAP naming contexts not available"
+                    )
+
+                @staticmethod
+                def assert_api_instantiated(api: FlextLdap | None) -> None:
+                    """Assert that ldap API is instantiated."""
+                    assert api is not None, "ldap API instantiation failed"
+
+                @staticmethod
+                def assert_models_accessible() -> None:
+                    """Assert that m (FlextLdapModels) class is accessible."""
+                    assert m is not None, "m (FlextLdapModels) not accessible"
+
+                @staticmethod
+                def assert_connection_success(result: r[bool]) -> None:
+                    """Assert that connection operation succeeded."""
+                    assert result.is_success, f"Connection failed: {result.error}"
 
             @staticmethod
             def single_phase_cb(

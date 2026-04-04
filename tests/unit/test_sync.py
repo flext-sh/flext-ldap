@@ -44,18 +44,20 @@ class TestsFlextLdapSync:
 
     def test_sync_phase_entries_missing_path_returns_failure(self) -> None:
         result = self._create_client().sync_phase_entries(
-            Path("/tmp/flext-ldap-sync-missing.ldif"),
-            "users",
+            Path(c.Ldap.Tests.SyncFacade.MISSING_LDIF_PATH),
+            c.Ldap.Tests.SyncFacade.PHASE_NAME_USERS,
         )
         tm.fail(result)
 
     def test_sync_multiple_phases_skips_missing_files(self) -> None:
         result = self._create_client().sync_multiple_phases({
-            "users": Path("/tmp/flext-ldap-sync-missing.ldif"),
+            c.Ldap.Tests.SyncFacade.PHASE_NAME_USERS: Path(
+                c.Ldap.Tests.SyncFacade.MISSING_LDIF_PATH
+            ),
         })
         sync_result = tm.ok(result)
-        tm.that(sync_result.total_entries, eq=0)
-        tm.that(sync_result.total_synced, eq=0)
+        tm.that(sync_result.total_entries, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT)
+        tm.that(sync_result.total_synced, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT)
         tm.that(sync_result.phase_results, empty=True)
 
     def test_convert_entries_to_protocol_returns_copy(self) -> None:
@@ -67,7 +69,9 @@ class TestsFlextLdapSync:
     def test_make_phase_progress_callback_keeps_single_phase_callback(self) -> None:
         cb = u.Ldap.Tests.single_phase_cb
         config = m.Ldap.SyncPhaseConfig(progress_callback=cb)
-        callback = FlextLdapSync._make_phase_progress_callback("users", config)
+        callback = FlextLdapSync._make_phase_progress_callback(
+            c.Ldap.Tests.SyncFacade.PHASE_NAME_USERS, config
+        )
         assert callback is cb
 
 
