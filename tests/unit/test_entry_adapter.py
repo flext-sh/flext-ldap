@@ -107,7 +107,10 @@ class TestsFlextLdapEntryAdapter:
         tm.that(
             attributes,
             keys=list(c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES),
-            kv=dict(c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES),
+            kv={
+                key: list(values)
+                for key, values in c.Ldap.Tests.EntryAdapter.SAMPLE_ATTRIBUTES.items()
+            },
         )
 
     def test_ldif_entry_to_ldap3_attributes_with_empty_attributes(self) -> None:

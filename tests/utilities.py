@@ -7,7 +7,7 @@ from flext_tests import FlextTestsUtilities
 
 from flext_core import r
 from flext_ldap import FlextLdapProtocols, FlextLdapUtilities
-from tests import c, m, p, t  # noqa: F401 — used at runtime in nested class methods
+from tests import c, m, p, t
 
 if TYPE_CHECKING:
     from flext_ldap import FlextLdap

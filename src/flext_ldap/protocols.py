@@ -17,7 +17,7 @@ from flext_core import r
 from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
-    from flext_ldap.typings import FlextLdapTypes as t
+    from flext_ldap import t
 else:
     from flext_ldif import t
 

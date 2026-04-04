@@ -23,7 +23,7 @@ from flext_ldap import c, p
 from flext_ldif import FlextLdifUtilities, m
 
 if TYPE_CHECKING:
-    from flext_ldap.typings import FlextLdapTypes as t
+    from flext_ldap import t
 else:
     from flext_ldap import t
 
