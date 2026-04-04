@@ -1,0 +1,93 @@
+src/flext_ldap/utilities.py
+  8d7ab25203cbe7bf 14,22,25-28,71,74,81,95,147-148,301
+src/flext_ldap/adapters/ldap3.py
+  8d7ab25203cbe7bf 35,133,135,142,497,516,593,695
+tests/unit/test_config.py
+  8d7ab25203cbe7bf 1-6,27,30-31,40-41,43-44,46-47,49-50,55,57-61,67,69-70,75,77-79,81,88,98-99,101-102,114,120-121,125-126,129-130,135-142,146-147,152-153,159-166,172-175,177-179
+src/flext_ldap/adapters/entry.py
+  8d7ab25203cbe7bf 33,240,279
+tests/unit/test_api.py
+  8d7ab25203cbe7bf 17,23,32,68-69,83-84,95-102,108,133-134,137
+src/flext_ldap/services/operations.py
+  8d7ab25203cbe7bf 91,159,180,201-202,234,302,308,411,906,1104,1277,1329
+tests/unit/test_models_search.py
+  8d7ab25203cbe7bf 22,58,63,111,139,149,167,170
+tests/unit/test_ldap3_adapter.py
+  8d7ab25203cbe7bf 30,49-50,70,78,86-87,92-93,100-101
+tests/integration/test_smoke.py
+  8d7ab25203cbe7bf 29,99
+src/flext_ldap/protocols.py
+  8d7ab25203cbe7bf 14,17,19-22,55-57,139,154-155,176,210,241-242,291,302,313-314,373-374,411-412,432,444,480,506,516,532-533,570
+tests/constants.py
+  8d7ab25203cbe7bf 16,70-136,152-327
+tests/unit/test_models_sync.py
+  8d7ab25203cbe7bf 16,21-24,26,143,146
+tests/unit/test_detection.py
+  8d7ab25203cbe7bf 31,99
+tests/utilities.py
+  8d7ab25203cbe7bf 9,213-231
+tests/_utilities/docker_infra.py
+  8d7ab25203cbe7bf 106,137
+tests/unit/test_constants.py
+  8d7ab25203cbe7bf 21
+tests/unit/test_operations.py
+  8d7ab25203cbe7bf 61
+tests/unit/test_models.py
+  8d7ab25203cbe7bf 76-77,91-92,98,102-104,107-109,114-116,137,139-140
+  e1d2767e43e21b6f 30
+tests/unit/test_utilities.py
+  8d7ab25203cbe7bf 17,23,25,29-30,34,37-38,41-42,45-46,53-54,57-58,61-62,65,69,73-74,78,82,94-95,99,104,106
+tests/_utilities/fixture_loaders.py
+  8d7ab25203cbe7bf 20,127
+src/flext_ldap/services/sync.py
+  8d7ab25203cbe7bf 19,67,80
+src/flext_ldap/services/detection.py
+  8d7ab25203cbe7bf 260,274,305,314,320,325,369-376,378,384,388
+src/flext_ldap/_models/ldap.py
+  8d7ab25203cbe7bf 141,306,310,313,322,328
+tests/conftest.py
+  8d7ab25203cbe7bf 6,16,74,81,105-106,141,150,174-175,200,203
+tests/unit/test_sync.py
+  8d7ab25203cbe7bf 15,62,68-69,71
+src/flext_ldap/typings.py
+  8d7ab25203cbe7bf 6,9,18-37,53,61
+tests/unit/test_base.py
+  8d7ab25203cbe7bf 15,21-40,45,53,57,59,64,68,74,80-81,84,89
+tests/unit/test_entry_adapter.py
+  8d7ab25203cbe7bf 16,22,24-25,28-59,95-97,104,109,116,121,134
+src/flext_ldap/constants.py
+  8d7ab25203cbe7bf 188-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "2965a80c543a23cb9a42aaad874b6739affe77af",
+  "prompts": {
+    "8d7ab25203cbe7bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1c9f9afa-9f33-4c60-8061-cd2c417ad49c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 2111,
+      "total_deletions": 1445,
+      "accepted_lines": 1231,
+      "overriden_lines": 3
+    },
+    "e1d2767e43e21b6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b88f5b43-f2ee-4bd5-8e49-f0bc2c3099ed",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
