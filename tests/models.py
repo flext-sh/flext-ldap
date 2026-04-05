@@ -10,17 +10,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import ClassVar, override
 
 from flext_tests import FlextTestsModels
 
 from flext_core import r
-from flext_ldap import FlextLdapModels, FlextLdapServiceBase
-from tests.constants import FlextLdapTestConstants
-from tests.typings import FlextLdapTestTypes
+from flext_ldap import (
+    FlextLdapModels,
+    FlextLdapServiceBase,
+    FlextLdapTypes,
+)
+
+# Constants used as defaults in mock classes — direct strings to avoid
+# circular import with tests.constants (which loads through tests.__init__)
+_EMPTY = ""
+_USER_EXAMPLE_DN = "cn=user,dc=example,dc=com"
+_FAIL_ERROR_MESSAGE = "nope"
 
 
 class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
+    _flext_enforcement_exempt: ClassVar[bool] = True
     """Test models - composição de FlextTestsModels + FlextLdapModels.
 
     Hierarquia:
@@ -42,13 +51,11 @@ class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
             class MockLdap3Attribute:
                 """Mock ldap3 Attribute satisfying p.Ldap.Ldap3Attribute."""
 
-                def __init__(self, vals: FlextLdapTestTypes.StrSequence) -> None:
-                    self.values: FlextLdapTestTypes.Ldap.Ldap3AttributeValues = vals
+                def __init__(self, vals: FlextLdapTypes.StrSequence) -> None:
+                    self.values: FlextLdapTypes.Ldap.Ldap3AttributeValues = vals
                     self.raw_values: list[bytes] = [v.encode() for v in vals]
-                    self.value: FlextLdapTestTypes.Ldap.Ldap3AttributeValue = (
-                        vals[0]
-                        if vals
-                        else FlextLdapTestConstants.Ldap.Tests.StringValues.EMPTY
+                    self.value: FlextLdapTypes.Ldap.Ldap3AttributeValue = (
+                        vals[0] if vals else _EMPTY
                     )
 
             class MockLdap3Entry:
@@ -56,23 +63,23 @@ class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
 
                 def __init__(
                     self,
-                    dn: str = FlextLdapTestConstants.Ldap.Tests.EntryDN.USER_EXAMPLE,
-                    attrs: FlextLdapTestTypes.StrSequenceMapping | None = None,
+                    dn: str = _USER_EXAMPLE_DN,
+                    attrs: FlextLdapTypes.StrSequenceMapping | None = None,
                 ) -> None:
                     self.entry_dn: str | None = dn
-                    self._attrs: FlextLdapTestTypes.StrSequenceMapping = attrs or {}
+                    self._attrs: FlextLdapTypes.StrSequenceMapping = attrs or {}
 
                 @property
                 def entry_attributes_as_dict(
                     self,
-                ) -> FlextLdapTestTypes.Ldap.Ldap3AttributeDict:
+                ) -> FlextLdapTypes.Ldap.Ldap3AttributeDict:
                     return self._attrs
 
                 @property
-                def entry_attributes(self) -> FlextLdapTestTypes.StrSequence:
+                def entry_attributes(self) -> FlextLdapTypes.StrSequence:
                     return list(self._attrs)
 
-                def __getitem__(
+                def __getitem__(  # noqa: D105
                     self,
                     item: str,
                 ) -> FlextLdapTestModels.Ldap.Tests.MockLdap3Attribute:
@@ -104,7 +111,7 @@ class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
                     **_kwargs: str | float | bool | None,
                 ) -> r[FlextLdapModels.Ldap.SearchResult]:
                     return r[FlextLdapModels.Ldap.SearchResult].fail(
-                        FlextLdapTestConstants.Ldap.Tests.Base.FAIL_ERROR_MESSAGE,
+                        _FAIL_ERROR_MESSAGE,
                     )
 
 

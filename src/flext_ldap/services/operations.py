@@ -65,7 +65,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
     Pydantic v2 Integration:
         - model_config allows frozen=False for mutable service state (_connection)
-        - Uses extra="allow" for compatibility with service configuration
+        - Uses extra="forbid" for strict validation
         - arbitrary_types_allowed=True enables non-Pydantic types in fields
 
     Examples:
@@ -78,7 +78,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         frozen=False,
-        extra="allow",
+        extra="forbid",
         arbitrary_types_allowed=True,
     )
 

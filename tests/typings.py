@@ -17,9 +17,8 @@ from collections.abc import Mapping
 
 from flext_tests import FlextTestsTypes
 
-from flext_core import r
-from flext_ldap import FlextLdapTypes
-from tests import m, t as _t
+from flext_core import FlextTypes, r
+from flext_ldap import FlextLdapModels, FlextLdapTypes
 
 
 class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
@@ -51,26 +50,38 @@ class FlextLdapTestTypes(FlextTestsTypes, FlextLdapTypes):
             """
 
             # Core operation result types (from helpers/typings.py)
-            type OperationResultType = r[m.Ldap.OperationResult]
-            type SearchResultType = r[m.Ldap.SearchResult]
+            type OperationResultType = r[FlextLdapModels.Ldap.OperationResult]
+            type SearchResultType = r[FlextLdapModels.Ldap.SearchResult]
 
             # Test data dictionary types
             type GenericFieldsDict = Mapping[
                 str,
-                _t.Scalar | _t.StrSequence | Mapping[str, _t.StrSequence],
+                FlextTypes.Scalar
+                | FlextTypes.StrSequence
+                | Mapping[str, FlextTypes.StrSequence],
             ]
-            type LdapContainerDict = _t.ScalarMapping
-            type LdapConnectionConfigDict = Mapping[str, _t.OptionalScalar]
-            type LdapSearchOptionsDict = _t.ScalarMapping
-            type LdapEntryDataDict = Mapping[str, _t.Scalar | _t.StrSequence]
-            type LdapSchemaAttributeDict = Mapping[str, str | _t.StrSequence | bool]
-            type LdapSchemaObjectClassDict = Mapping[str, str | _t.StrSequence | bool]
-            type LdapModifyOperationDict = Mapping[str, _t.Scalar | _t.StrSequence]
-            type LdapSearchResultDict = Mapping[str, _t.Scalar | _t.StrSequence]
-            type LdapTestScenarioDict = _t.ScalarMapping
-            type GenericTestCaseDict = _t.ScalarMapping
-            type GenericCallableParameterDict = _t.ScalarMapping
-            type LdapConnectionResultDict = _t.ScalarMapping
+            type LdapContainerDict = FlextTypes.ScalarMapping
+            type LdapConnectionConfigDict = Mapping[str, FlextTypes.OptionalScalar]
+            type LdapSearchOptionsDict = FlextTypes.ScalarMapping
+            type LdapEntryDataDict = Mapping[
+                str, FlextTypes.Scalar | FlextTypes.StrSequence
+            ]
+            type LdapSchemaAttributeDict = Mapping[
+                str, str | FlextTypes.StrSequence | bool
+            ]
+            type LdapSchemaObjectClassDict = Mapping[
+                str, str | FlextTypes.StrSequence | bool
+            ]
+            type LdapModifyOperationDict = Mapping[
+                str, FlextTypes.Scalar | FlextTypes.StrSequence
+            ]
+            type LdapSearchResultDict = Mapping[
+                str, FlextTypes.Scalar | FlextTypes.StrSequence
+            ]
+            type LdapTestScenarioDict = FlextTypes.ScalarMapping
+            type GenericTestCaseDict = FlextTypes.ScalarMapping
+            type GenericCallableParameterDict = FlextTypes.ScalarMapping
+            type LdapConnectionResultDict = FlextTypes.ScalarMapping
 
 
 t = FlextLdapTestTypes

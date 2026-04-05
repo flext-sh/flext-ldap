@@ -133,7 +133,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 """Expected model_config values for the ldap API facade."""
 
                 FROZEN: Final[bool] = False
-                EXTRA: Final[str] = "ignore"
+                EXTRA: Final[str] = "forbid"
                 ARBITRARY_TYPES_ALLOWED: Final[bool] = True
 
             class Docker:

@@ -27,7 +27,7 @@ class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         frozen=False,
-        extra="ignore",
+        extra="forbid",
         arbitrary_types_allowed=True,
     )
 

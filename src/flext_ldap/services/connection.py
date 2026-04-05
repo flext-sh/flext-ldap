@@ -38,7 +38,7 @@ class FlextLdapConnection(FlextLdapServiceBase):
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         frozen=False,
-        extra="allow",
+        extra="forbid",
         arbitrary_types_allowed=True,
     )
     _adapter: FlextLdapLdap3Adapter | None = PrivateAttr(default=None)

@@ -215,12 +215,12 @@ class FlextLdapConstants(FlextLdifConstants):
             """Sync operation default values."""
 
             BATCH_SIZE: Final[int] = 100
-            DEFAULT_RETRY_ERROR_PATTERNS: ClassVar[Sequence[str]] = [
+            DEFAULT_RETRY_ERROR_PATTERNS: ClassVar[tuple[str, ...]] = (
                 "session terminated",
                 "not connected",
                 "invalid messageid",
                 "socket",
-            ]
+            )
 
 
 c = FlextLdapConstants
