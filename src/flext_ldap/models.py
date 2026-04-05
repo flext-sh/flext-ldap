@@ -89,6 +89,7 @@ class FlextLdapModels(FlextLdifModels):
 
             phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
                 default_factory=dict,
+                description="Per-phase sync results keyed by phase name",
             )
 
         # Metadata models

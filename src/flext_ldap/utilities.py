@@ -341,8 +341,8 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @staticmethod
         def find_callable(
             callables_dict: Mapping[str, Callable[..., t.NormalizedValue]],
-            *args: str | float | bool | None,
-            **kwargs: str | float | bool | None,
+            *args: t.Primitives | None,
+            **kwargs: t.Primitives | None,
         ) -> str | None:
             """Find first callable that returns truthy value.
 

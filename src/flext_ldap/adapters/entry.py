@@ -173,8 +173,8 @@ class FlextLdapEntryAdapter(s[bool]):
                 value,
             )
 
-    _ldif: ldif = PrivateAttr()
-    _server_type: str = PrivateAttr()
+    _ldif: ldif = PrivateAttr(default_factory=ldif)
+    _server_type: str = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
 
     def __init__(self, *, server_type: str | None = None) -> None:
         """Initialize entry adapter with ldif integration and quirks.
@@ -185,8 +185,8 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         super().__init__()
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
-        object.__setattr__(self, "_ldif", ldif())
-        object.__setattr__(self, "_server_type", resolved_type)
+        self._ldif = ldif()
+        self._server_type = resolved_type
 
     @staticmethod
     def _build_conversion_metadata(

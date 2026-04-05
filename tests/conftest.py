@@ -2,14 +2,26 @@ from __future__ import annotations
 
 import socket
 import time
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from flext_core import FlextLogger, r
+from flext_ldap import FlextLdapSettings
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
 from tests import c, m, t, u
+
+pytest_plugins = ["flext_tests.conftest_plugin"]
+
+
+@pytest.fixture
+def ldap_settings(
+    settings_factory: Callable[..., FlextLdapSettings],
+) -> FlextLdapSettings:
+    """Provide clean FlextLdapSettings for tests."""
+    return settings_factory(FlextLdapSettings)
+
 
 logger = FlextLogger(__name__)
 
@@ -20,7 +32,7 @@ def _get_worker_id(config: pytest.Config) -> str:
     worker_input_val = getattr(config, "workerinput", None)
     if not isinstance(worker_input_val, dict):
         return c.Ldap.Tests.Docker.DEFAULT_WORKER_ID
-    worker_dict: t.ScalarMapping = cast("t.ScalarMapping", worker_input_val)
+    worker_dict: Mapping[str, str] = worker_input_val
     result = worker_dict.get("workerid", c.Ldap.Tests.Docker.DEFAULT_WORKER_ID)
     return str(result)
 
@@ -104,18 +116,18 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             waited += 1.0
 
 
-_INFRASTRUCTURE_ERRORS = c.Ldap.Tests.ErrorPatterns.INFRASTRUCTURE_ERRORS
-_TRANSIENT_ERRORS = c.Ldap.Tests.ErrorPatterns.TRANSIENT_ERRORS
-
-
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
     if call.excinfo is None:
         return
     exc_msg = str(call.excinfo.value).lower()
     exc_type_str = str(call.excinfo.type).lower()
     combined = exc_type_str + " " + exc_msg
-    is_infra = any(e in combined for e in _INFRASTRUCTURE_ERRORS)
-    is_transient = any(e in combined for e in _TRANSIENT_ERRORS)
+    is_infra = any(
+        e in combined for e in c.Ldap.Tests.ErrorPatterns.INFRASTRUCTURE_ERRORS
+    )
+    is_transient = any(
+        e in combined for e in c.Ldap.Tests.ErrorPatterns.TRANSIENT_ERRORS
+    )
     if is_infra and not is_transient:
         worker_id = _get_worker_id(item.session.config)
         docker = u.Ldap.Tests.get_docker_control(worker_id)

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, override
+from typing import override
 
 from flext_tests import FlextTestsModels
 
@@ -29,7 +29,6 @@ _FAIL_ERROR_MESSAGE = "nope"
 
 
 class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
-    _flext_enforcement_exempt: ClassVar[bool] = True
     """Test models - composição de FlextTestsModels + FlextLdapModels.
 
     Hierarquia:
@@ -79,10 +78,11 @@ class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
                 def entry_attributes(self) -> FlextLdapTypes.StrSequence:
                     return list(self._attrs)
 
-                def __getitem__(  # noqa: D105
+                def __getitem__(
                     self,
                     item: str,
                 ) -> FlextLdapTestModels.Ldap.Tests.MockLdap3Attribute:
+                    """Return mock attribute for the given item name."""
                     return FlextLdapTestModels.Ldap.Tests.MockLdap3Attribute(
                         list(self._attrs.get(item, [])),
                     )
@@ -91,10 +91,7 @@ class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
                 """Test service that always succeeds."""
 
                 @override
-                def execute(
-                    self,
-                    **_kwargs: str | float | bool | None,
-                ) -> r[FlextLdapModels.Ldap.SearchResult]:
+                def execute(self) -> r[FlextLdapModels.Ldap.SearchResult]:
                     return r[FlextLdapModels.Ldap.SearchResult].ok(
                         FlextLdapModels.Ldap.SearchResult(
                             entries=[],
@@ -106,10 +103,7 @@ class FlextLdapTestModels(FlextTestsModels, FlextLdapModels):
                 """Test service that always fails."""
 
                 @override
-                def execute(
-                    self,
-                    **_kwargs: str | float | bool | None,
-                ) -> r[FlextLdapModels.Ldap.SearchResult]:
+                def execute(self) -> r[FlextLdapModels.Ldap.SearchResult]:
                     return r[FlextLdapModels.Ldap.SearchResult].fail(
                         _FAIL_ERROR_MESSAGE,
                     )

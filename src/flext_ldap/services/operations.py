@@ -34,7 +34,7 @@ import logging
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, override
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, PrivateAttr
 
 from flext_ldap import FlextLdapConnection, c, m, p, r, t, u
 
@@ -80,6 +80,10 @@ class FlextLdapOperations(FlextLdapConnection):
         frozen=False,
         extra="forbid",
         arbitrary_types_allowed=True,
+    )
+
+    _upsert_handler_instance: FlextLdapOperations._UpsertHandler | None = PrivateAttr(
+        default=None,
     )
 
     @staticmethod
@@ -831,10 +835,9 @@ class FlextLdapOperations(FlextLdapConnection):
     @property
     def _upsert_handler(self) -> FlextLdapOperations._UpsertHandler:
         """Lazy-init upsert handler."""
-        handler_key = "_upsert_handler_instance"
-        if not hasattr(self, handler_key):
-            object.__setattr__(self, handler_key, self._UpsertHandler(self))
-        return object.__getattribute__(self, handler_key)
+        if self._upsert_handler_instance is None:
+            self._upsert_handler_instance = self._UpsertHandler(self)
+        return self._upsert_handler_instance
 
     @staticmethod
     def is_already_exists_error(error_message: str) -> bool:

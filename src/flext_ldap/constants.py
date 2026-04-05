@@ -53,6 +53,10 @@ class FlextLdapConstants(FlextLdifConstants):
             AUTO_RANGE: Final[bool] = True
             POOL_SIZE = 10
             POOL_LIFETIME = 3600
+            DEFAULT_BIND_DN: Final[str] = ""
+            DEFAULT_BIND_PASSWORD: Final[str] = ""
+            DEFAULT_USE_SSL: Final[bool] = False
+            DEFAULT_USE_TLS: Final[bool] = False
 
         class SearchDefaults:
             """Search operation default values."""

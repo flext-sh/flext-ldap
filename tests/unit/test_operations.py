@@ -21,9 +21,8 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextSettings
 from flext_ldap import FlextLdapOperations
-from tests import c, m
+from tests import c, m, p
 
 pytestmark = pytest.mark.unit
 
@@ -49,7 +48,7 @@ class TestsFlextLdapOperations:
     def test_config_property(self) -> None:
         """Test config property returns FlextSettings with ldap namespace."""
         operations = self._create_operations()
-        assert isinstance(operations.config, FlextSettings)
+        assert isinstance(operations.config, p.Settings)
 
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""

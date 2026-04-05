@@ -7,14 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import Callable
 
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextSettings
 from flext_ldap import FlextLdapSettings, FlextLdapSyncCallbacks, ldap
-from tests import c, m, u
+from tests import c, m, p, t, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -35,7 +33,7 @@ class TestsFlextLdapApi:
         tm.that(self._create_api().logger, none=False)
 
     def test_config_returns_flext_settings(self) -> None:
-        assert isinstance(self._create_api().config, FlextSettings)
+        assert isinstance(self._create_api().config, p.Settings)
 
     def test_service_config_type(self) -> None:
         assert ldap._get_service_config_type() is FlextLdapSettings
@@ -71,7 +69,7 @@ class TestsFlextLdapApi:
     )
     def test_is_multi_phase_callback(
         self,
-        callback: Callable[..., None] | None,
+        callback: t.Ldap.ProgressCallbackUnion,
         expected: bool,
     ) -> None:
         tm.that(FlextLdapSyncCallbacks.is_multi_phase_callback(callback), eq=expected)
@@ -86,7 +84,7 @@ class TestsFlextLdapApi:
     )
     def test_is_single_phase_callback(
         self,
-        callback: Callable[..., None] | None,
+        callback: t.Ldap.ProgressCallbackUnion,
         expected: bool,
     ) -> None:
         tm.that(FlextLdapSyncCallbacks.is_single_phase_callback(callback), eq=expected)

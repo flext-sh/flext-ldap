@@ -5,7 +5,7 @@ LDAP operation models with validation logic.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
@@ -155,7 +155,7 @@ class FlextLdapModelsLdap:
             str,
             Field(description="Target base DN for sync"),
         ] = ""
-        progress_callback: Callable[..., None] | None = None
+        progress_callback: t.Ldap.ProgressCallbackUnion = None
 
     class SyncStats(LdapBatchStats):
         """Sync stats - extends LdapBatchStats."""
@@ -178,7 +178,7 @@ class FlextLdapModelsLdap:
             skipped: int = 0,
             failed: int = 0,
             duration_seconds: float = 0.0,
-            **kwargs: str | float | bool | None,
+            **kwargs: t.Primitives | None,
         ) -> Self:
             """Factory method with auto-calculated total from counters."""
             return cls.model_validate({
@@ -225,7 +225,7 @@ class FlextLdapModelsLdap:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
-        progress_callback: Callable[..., None] | None = None
+        progress_callback: t.Ldap.ProgressCallbackUnion = None
         retry_on_errors: t.StrSequence | None = None
         max_retries: t.RetryCount = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
@@ -233,13 +233,21 @@ class FlextLdapModelsLdap:
     class ConversionMetadata(BaseModel):
         """Conversion metadata."""
 
-        source_attributes: t.StrSequence = Field(default_factory=list)
+        source_attributes: t.StrSequence = Field(
+            default_factory=list, description="Source attribute names"
+        )
         source_dn: str = ""
-        removed_attributes: t.StrSequence = Field(default_factory=list)
-        base64_encoded_attributes: t.StrSequence = Field(default_factory=list)
+        removed_attributes: t.StrSequence = Field(
+            default_factory=list, description="Attributes removed during conversion"
+        )
+        base64_encoded_attributes: t.StrSequence = Field(
+            default_factory=list, description="Attributes that were base64-encoded"
+        )
         dn_changed: bool = False
         converted_dn: str = ""
-        attribute_changes: t.StrSequence = Field(default_factory=list)
+        attribute_changes: t.StrSequence = Field(
+            default_factory=list, description="Tracked attribute change descriptions"
+        )
 
     class OperationResult(BaseModel):
         """Immutable result of an LDAP operation (add/modify/delete/search)."""
@@ -345,7 +353,8 @@ class FlextLdapModelsLdap:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
-            default_factory=dict
+            default_factory=dict,
+            description="Per-phase sync results keyed by phase name",
         )
         total_entries: t.NonNegativeInt = 0
         total_synced: t.NonNegativeInt = 0
