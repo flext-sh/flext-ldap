@@ -90,7 +90,7 @@ class FlextLdapSync(FlextLdapOperations):
     )
 
     @override
-    def execute(self) -> r[m.Ldap.SearchResult]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
         """Placeholder for mixin compliance; overridden by the public facade."""
         return r[m.Ldap.SearchResult].fail("Not implemented in mixin")
 

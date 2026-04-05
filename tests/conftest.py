@@ -4,6 +4,7 @@ import socket
 import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import Protocol, TypeGuard
 
 import pytest
 
@@ -28,13 +29,23 @@ logger = FlextLogger(__name__)
 LdapContainerDict = t.Ldap.Tests.LdapContainerDict
 
 
+class WorkerInputConfig(Protocol):
+    workerinput: Mapping[str, str]
+
+
+def _has_workerinput(config: pytest.Config) -> TypeGuard[WorkerInputConfig]:
+    workerinput = getattr(config, "workerinput", None)
+    return isinstance(workerinput, Mapping)
+
+
 def _get_worker_id(config: pytest.Config) -> str:
-    worker_input_val = getattr(config, "workerinput", None)
-    if not isinstance(worker_input_val, dict):
+    if not _has_workerinput(config):
         return c.Ldap.Tests.Docker.DEFAULT_WORKER_ID
-    worker_dict: Mapping[str, str] = worker_input_val
-    result = worker_dict.get("workerid", c.Ldap.Tests.Docker.DEFAULT_WORKER_ID)
-    return str(result)
+    worker_id_obj = config.workerinput.get(
+        "workerid",
+        c.Ldap.Tests.Docker.DEFAULT_WORKER_ID,
+    )
+    return str(worker_id_obj)
 
 
 def _wait_for_port_ready(host: str, port: int, timeout: int) -> r[bool]:

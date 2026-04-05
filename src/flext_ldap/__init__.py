@@ -33,7 +33,7 @@ if _t.TYPE_CHECKING:
 
     base = _flext_ldap_base
     import flext_ldap.constants as _flext_ldap_constants
-    from flext_ldap.base import FlextLdapServiceBase, FlextLdapServiceBase as s
+    from flext_ldap.base import FlextLdapServiceBase, s
 
     constants = _flext_ldap_constants
     import flext_ldap.models as _flext_ldap_models
@@ -114,7 +114,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "p": ("flext_ldap.protocols", "FlextLdapProtocols"),
         "protocols": "flext_ldap.protocols",
         "r": ("flext_core.result", "FlextResult"),
-        "s": ("flext_ldap.base", "FlextLdapServiceBase"),
+        "s": "flext_ldap.base",
         "services": "flext_ldap.services",
         "settings": "flext_ldap.settings",
         "t": ("flext_ldap.typings", "FlextLdapTypes"),

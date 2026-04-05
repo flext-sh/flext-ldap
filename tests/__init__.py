@@ -26,6 +26,7 @@ if _t.TYPE_CHECKING:
     import tests.constants as _tests_constants
     from tests.conftest import (
         LdapContainerDict,
+        WorkerInputConfig,
         connection_config,
         ldap_container,
         ldap_settings,
@@ -110,6 +111,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "FlextLdapTestTypes": "tests.typings",
         "FlextLdapTestUtilities": "tests.utilities",
         "LdapContainerDict": "tests.conftest",
+        "WorkerInputConfig": "tests.conftest",
         "_utilities": "tests._utilities",
         "c": ("tests.constants", "FlextLdapTestConstants"),
         "conftest": "tests.conftest",
@@ -164,6 +166,7 @@ __all__ = [
     "TestsFlextLdapSmoke",
     "TestsFlextLdapSync",
     "TestsFlextLdapUtilities",
+    "WorkerInputConfig",
     "_DockerInfraUtils",
     "_FixtureLoaderUtils",
     "_utilities",

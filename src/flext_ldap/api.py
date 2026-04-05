@@ -51,7 +51,7 @@ class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
         self.disconnect()
 
     @override
-    def execute(self) -> r[m.Ldap.SearchResult]:
+    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
         """Execute service health check."""
         if not self.is_connected:
             return r[m.Ldap.SearchResult].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))
