@@ -1,0 +1,27 @@
+src/flext_ldap/services/connection.py
+  e66089ff2dc71c80 31
+src/flext_ldap/base.py
+  e66089ff2dc71c80 46-50,52
+tests/utilities.py
+  e66089ff2dc71c80 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "480882288a464ce6b6b9dfc2ae391ce6d04614cc",
+  "prompts": {
+    "e66089ff2dc71c80": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "959fdf1e-7a51-411f-8874-5add099cda81",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 181,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
