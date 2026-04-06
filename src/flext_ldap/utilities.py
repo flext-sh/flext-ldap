@@ -17,14 +17,11 @@ from ldap3 import (
     Connection as Ldap3Connection,
     Server as Ldap3Server,
 )
-from ldap3.core.exceptions import LDAPException as Ldap3LDAPException
 
 from flext_ldap import c, p
 from flext_ldif import FlextLdifUtilities, m
 
 if TYPE_CHECKING:
-    from flext_ldap import t
-else:
     from flext_ldap import t
 
 
@@ -61,9 +58,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
             result = u.Ldap.DN.parse("cn=test,dc=example")  # Access LDIF utilities
 
         """
-
-        LDAPException: type[Exception] = Ldap3LDAPException
-        """Re-exported ldap3 LDAPException for catch blocks in test code."""
 
         @staticmethod
         def create_server(

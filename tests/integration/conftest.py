@@ -109,7 +109,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                         waited,
                     )
                     break
-            except (u.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
+            except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
                 pass
             time.sleep(1.0)
             waited += 1.0
@@ -177,7 +177,7 @@ def ldap_container(worker_id: str) -> LdapContainerDict:
                 if conn.bound:
                     FlextLdapLdap3Wrappers.unbind(conn)
                     break
-            except (u.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
+            except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
                 pass
             time.sleep(1.0)
             waited += 1.0

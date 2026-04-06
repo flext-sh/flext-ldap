@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal
 
+from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
+
 from flext_ldap import FlextLdapProtocols as p
 from flext_ldif import FlextLdifTypes
 
@@ -14,6 +16,8 @@ class FlextLdapTypes(FlextLdifTypes):
 
     class Ldap:
         """LDAP type aliases."""
+
+        LDAPException: type[Exception] = _Ldap3LDAPException
 
         # ── ldap3 library interop types ──────────────────────────────
         type Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
