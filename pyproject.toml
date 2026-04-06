@@ -534,6 +534,7 @@ split-on-trailing-comma = true
 "**/*_pb2*.py" = [
   "ALL",
 ]
+"**/*dispatcher*" = [  ]
 "**/*docs*" = [
   "INP001",
   "S404",
@@ -564,6 +565,7 @@ split-on-trailing-comma = true
   "S105",
   "SLF001",
 ]
+"**/*handlers*" = [  ]
 "**/*instrumentation*" = [
   "C901",
   "FBT001",
@@ -594,6 +596,7 @@ split-on-trailing-comma = true
   "PLC2701",
   "SLF001",
 ]
+"**/*runtime*" = [  ]
 "**/*scripts*" = [
   "EXE001",
   "FIX002",
@@ -721,6 +724,7 @@ split-on-trailing-comma = true
   "RUF067",
   "TC004",
 ]
+"**/_constants/*.py" = [ "S105" ]
 "**/_utilities/parser.py" = [
   "ARG004",
   "FBT001",
@@ -740,6 +744,7 @@ split-on-trailing-comma = true
   "ANN401",
   "SLF001",
 ]
+"**/context.py" = [  ]
 "**/external_command*.py" = [
   "S404",
   "S603",
