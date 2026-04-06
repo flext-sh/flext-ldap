@@ -28,7 +28,7 @@ from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 from flext_ldif import FlextLdif
 
 
-class FlextLdapConnection(FlextLdapServiceBase):
+class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
     """Manage the LDAP connection lifecycle as an MRO mixin.
 
     Wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally
