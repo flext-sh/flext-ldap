@@ -100,7 +100,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 LDAPS_PORT: Final[int] = 636
                 PORT_MIN: Final[int] = 1
                 PORT_MAX: Final[int] = 65535
-                ENV_PREFIX: Final[str] = "FLEXT_"
+                ENV_PREFIX: Final[str] = "FLEXT_LDAP_"
                 VALID_PORTS: ClassVar[Sequence[int]] = [1, 389, 636, 65535]
                 SSL_TLS_COMBOS: ClassVar[Sequence[tuple[bool, bool]]] = [
                     (False, False),

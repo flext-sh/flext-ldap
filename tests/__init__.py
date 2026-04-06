@@ -24,19 +24,7 @@ if _t.TYPE_CHECKING:
 
     conftest = _tests_conftest
     import tests.constants as _tests_constants
-    from tests.conftest import (
-        LdapContainerDict,
-        WorkerInputConfig,
-        connection_config,
-        ldap_container,
-        ldap_settings,
-        logger,
-        pytest_plugins,
-        pytest_runtest_makereport,
-        pytest_sessionstart,
-        search_options,
-        worker_id,
-    )
+    from tests.conftest import ldap_settings, pytest_plugins
 
     constants = _tests_constants
     import tests.integration as _tests_integration
@@ -44,7 +32,19 @@ if _t.TYPE_CHECKING:
 
     integration = _tests_integration
     import tests.models as _tests_models
-    from tests.integration import TestsFlextLdapSmoke, test_smoke
+    from tests.integration import (
+        LdapContainerDict,
+        TestsFlextLdapSmoke,
+        WorkerInputConfig,
+        connection_config,
+        ldap_container,
+        logger,
+        pytest_runtest_makereport,
+        pytest_sessionstart,
+        search_options,
+        test_smoke,
+        worker_id,
+    )
 
     models = _tests_models
     import tests.protocols as _tests_protocols
@@ -105,41 +105,32 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "tests.unit",
     ),
     {
-        "FlextLdapTestConstants": "tests.constants",
-        "FlextLdapTestModels": "tests.models",
-        "FlextLdapTestProtocols": "tests.protocols",
-        "FlextLdapTestTypes": "tests.typings",
-        "FlextLdapTestUtilities": "tests.utilities",
-        "LdapContainerDict": "tests.conftest",
-        "WorkerInputConfig": "tests.conftest",
+        "FlextLdapTestConstants": ("tests.constants", "FlextLdapTestConstants"),
+        "FlextLdapTestModels": ("tests.models", "FlextLdapTestModels"),
+        "FlextLdapTestProtocols": ("tests.protocols", "FlextLdapTestProtocols"),
+        "FlextLdapTestTypes": ("tests.typings", "FlextLdapTestTypes"),
+        "FlextLdapTestUtilities": ("tests.utilities", "FlextLdapTestUtilities"),
         "_utilities": "tests._utilities",
         "c": ("tests.constants", "FlextLdapTestConstants"),
         "conftest": "tests.conftest",
-        "connection_config": "tests.conftest",
         "constants": "tests.constants",
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "h": ("flext_core.handlers", "FlextHandlers"),
         "integration": "tests.integration",
-        "ldap_container": "tests.conftest",
-        "ldap_settings": "tests.conftest",
-        "logger": "tests.conftest",
+        "ldap_settings": ("tests.conftest", "ldap_settings"),
         "m": ("tests.models", "FlextLdapTestModels"),
         "models": "tests.models",
         "p": ("tests.protocols", "FlextLdapTestProtocols"),
         "protocols": "tests.protocols",
-        "pytest_plugins": "tests.conftest",
-        "pytest_runtest_makereport": "tests.conftest",
-        "pytest_sessionstart": "tests.conftest",
+        "pytest_plugins": ("tests.conftest", "pytest_plugins"),
         "r": ("flext_core.result", "FlextResult"),
         "s": ("flext_core.service", "FlextService"),
-        "search_options": "tests.conftest",
         "t": ("tests.typings", "FlextLdapTestTypes"),
         "typings": "tests.typings",
         "u": ("tests.utilities", "FlextLdapTestUtilities"),
         "unit": "tests.unit",
         "utilities": "tests.utilities",
-        "worker_id": "tests.conftest",
         "x": ("flext_core.mixins", "FlextMixins"),
     },
 )

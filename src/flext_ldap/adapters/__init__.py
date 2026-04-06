@@ -30,9 +30,9 @@ if _t.TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities as u
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
 _LAZY_IMPORTS = {
-    "FlextLdapEntryAdapter": "flext_ldap.adapters.entry",
-    "FlextLdapLdap3Adapter": "flext_ldap.adapters.ldap3",
-    "FlextLdapLdap3Wrappers": "flext_ldap.adapters.ldap3",
+    "FlextLdapEntryAdapter": ("flext_ldap.adapters.entry", "FlextLdapEntryAdapter"),
+    "FlextLdapLdap3Adapter": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"),
+    "FlextLdapLdap3Wrappers": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

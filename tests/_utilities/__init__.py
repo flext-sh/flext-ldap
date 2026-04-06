@@ -19,9 +19,9 @@ if _t.TYPE_CHECKING:
     fixture_loaders = _tests__utilities_fixture_loaders
     from tests._utilities.fixture_loaders import TestFixtures, _FixtureLoaderUtils
 _LAZY_IMPORTS = {
-    "TestFixtures": "tests._utilities.fixture_loaders",
-    "_DockerInfraUtils": "tests._utilities.docker_infra",
-    "_FixtureLoaderUtils": "tests._utilities.fixture_loaders",
+    "TestFixtures": ("tests._utilities.fixture_loaders", "TestFixtures"),
+    "_DockerInfraUtils": ("tests._utilities.docker_infra", "_DockerInfraUtils"),
+    "_FixtureLoaderUtils": ("tests._utilities.fixture_loaders", "_FixtureLoaderUtils"),
     "docker_infra": "tests._utilities.docker_infra",
     "fixture_loaders": "tests._utilities.fixture_loaders",
 }

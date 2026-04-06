@@ -15,7 +15,7 @@ if _t.TYPE_CHECKING:
     ldap = _flext_ldap__models_ldap
     from flext_ldap._models.ldap import FlextLdapModelsLdap
 _LAZY_IMPORTS = {
-    "FlextLdapModelsLdap": "flext_ldap._models.ldap",
+    "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
     "ldap": "flext_ldap._models.ldap",
 }
 

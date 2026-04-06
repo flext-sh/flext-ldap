@@ -38,11 +38,14 @@ if _t.TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities as u
     from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
 _LAZY_IMPORTS = {
-    "FlextLdapConnection": "flext_ldap.services.connection",
-    "FlextLdapOperations": "flext_ldap.services.operations",
-    "FlextLdapServerDetector": "flext_ldap.services.detection",
-    "FlextLdapSync": "flext_ldap.services.sync",
-    "FlextLdapSyncCallbacks": "flext_ldap.services.sync",
+    "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
+    "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
+    "FlextLdapServerDetector": (
+        "flext_ldap.services.detection",
+        "FlextLdapServerDetector",
+    ),
+    "FlextLdapSync": ("flext_ldap.services.sync", "FlextLdapSync"),
+    "FlextLdapSyncCallbacks": ("flext_ldap.services.sync", "FlextLdapSyncCallbacks"),
     "c": ("flext_core.constants", "FlextConstants"),
     "connection": "flext_ldap.services.connection",
     "d": ("flext_core.decorators", "FlextDecorators"),
