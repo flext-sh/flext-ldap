@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import FlextLdapLdap3Adapter as Ldap3Adapter
-from tests import c, m
+from tests import c, m, u
 
 pytestmark = pytest.mark.unit
 
@@ -36,12 +35,12 @@ class TestsFlextLdap3Adapter:
 
     def test_adapter_initialization(self) -> None:
         adapter = Ldap3Adapter()
-        tm.that(adapter, is_=Ldap3Adapter, none=False)
+        u.Tests.Matchers.that(adapter, is_=Ldap3Adapter, none=False)
 
     def test_execute_returns_success(self) -> None:
         adapter = Ldap3Adapter()
         result = adapter.execute()
-        tm.fail(result, has=c.Ldap.Tests.Ldap3Adapter.NOT_CONNECTED_ERROR)
+        u.Tests.Matchers.fail(result, has=c.Ldap.Tests.Ldap3Adapter.NOT_CONNECTED_ERROR)
 
     def test_connection_manager_create_server_with_ssl(self) -> None:
         config = m.Ldap.ConnectionConfig(
@@ -53,13 +52,13 @@ class TestsFlextLdap3Adapter:
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
-        tm.that(
+        u.Tests.Matchers.that(
             getattr(
                 server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY
             ),
             eq=c.LOCALHOST,
         )
-        tm.that(
+        u.Tests.Matchers.that(
             getattr(
                 server,
                 c.Ldap.Tests.FieldNames.PORT,
@@ -72,13 +71,13 @@ class TestsFlextLdap3Adapter:
         config = self._create_connection_config()
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
-        tm.that(
+        u.Tests.Matchers.that(
             getattr(
                 server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY
             ),
             eq=c.LOCALHOST,
         )
-        tm.that(
+        u.Tests.Matchers.that(
             getattr(
                 server,
                 c.Ldap.Tests.FieldNames.PORT,
@@ -97,13 +96,13 @@ class TestsFlextLdap3Adapter:
         )
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
-        tm.that(
+        u.Tests.Matchers.that(
             getattr(
                 server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY
             ),
             eq=c.LOCALHOST,
         )
-        tm.that(
+        u.Tests.Matchers.that(
             getattr(
                 server,
                 c.Ldap.Tests.FieldNames.PORT,
@@ -129,9 +128,11 @@ class TestsFlextLdap3Adapter:
             c.Ldap.Tests.Ldap3Adapter.CREATE_SERVER_METHOD
             in Ldap3Adapter.ConnectionManager.__dict__
         )
-        tm.that(callable(Ldap3Adapter.ConnectionManager.create_server), eq=True)
+        u.Tests.Matchers.that(
+            callable(Ldap3Adapter.ConnectionManager.create_server), eq=True
+        )
 
     def test_adapter_methods_exist(self) -> None:
         adapter = Ldap3Adapter()
-        tm.that(hasattr(adapter, "execute"), eq=True)
-        tm.that(callable(adapter.execute), eq=True)
+        u.Tests.Matchers.that(hasattr(adapter, "execute"), eq=True)
+        u.Tests.Matchers.that(callable(adapter.execute), eq=True)

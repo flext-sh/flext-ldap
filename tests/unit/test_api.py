@@ -9,7 +9,6 @@ from __future__ import annotations
 import inspect
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import FlextLdapSettings, FlextLdapSyncCallbacks, ldap
 from tests import c, m, p, t, u
@@ -27,10 +26,10 @@ class TestsFlextLdapApi:
     # --- Initialization ---
 
     def test_init_no_args(self) -> None:
-        tm.that(self._create_api(), none=False)
+        u.Tests.Matchers.that(self._create_api(), none=False)
 
     def test_logger_available(self) -> None:
-        tm.that(self._create_api().logger, none=False)
+        u.Tests.Matchers.that(self._create_api().logger, none=False)
 
     def test_config_returns_flext_settings(self) -> None:
         assert isinstance(self._create_api().config, p.Settings)
@@ -42,7 +41,7 @@ class TestsFlextLdapApi:
 
     def test_enter_returns_self(self) -> None:
         api = self._create_api()
-        tm.that(api.__enter__(), eq=api)
+        u.Tests.Matchers.that(api.__enter__(), eq=api)
 
     def test_exit_calls_disconnect(self) -> None:
         self._create_api().__exit__(None, None, None)
@@ -50,12 +49,12 @@ class TestsFlextLdapApi:
     def test_with_statement(self) -> None:
         api = self._create_api()
         with api as ctx:
-            tm.that(ctx, eq=api)
+            u.Tests.Matchers.that(ctx, eq=api)
 
     # --- MRO Method Inheritance ---
 
     def test_is_connected_default_false(self) -> None:
-        tm.that(not self._create_api().is_connected, eq=True)
+        u.Tests.Matchers.that(not self._create_api().is_connected, eq=True)
 
     # --- Callback Type Guards ---
 
@@ -72,7 +71,9 @@ class TestsFlextLdapApi:
         callback: t.Ldap.ProgressCallbackUnion,
         expected: bool,
     ) -> None:
-        tm.that(FlextLdapSyncCallbacks.is_multi_phase_callback(callback), eq=expected)
+        u.Tests.Matchers.that(
+            FlextLdapSyncCallbacks.is_multi_phase_callback(callback), eq=expected
+        )
 
     @pytest.mark.parametrize(
         ("callback", "expected"),
@@ -87,14 +88,16 @@ class TestsFlextLdapApi:
         callback: t.Ldap.ProgressCallbackUnion,
         expected: bool,
     ) -> None:
-        tm.that(FlextLdapSyncCallbacks.is_single_phase_callback(callback), eq=expected)
+        u.Tests.Matchers.that(
+            FlextLdapSyncCallbacks.is_single_phase_callback(callback), eq=expected
+        )
 
     def test_callback_param_count_constants(self) -> None:
-        tm.that(
+        u.Tests.Matchers.that(
             len(inspect.signature(u.Ldap.Tests.multi_phase_cb).parameters),
             eq=c.Ldap.Callback.MULTI_PHASE_PARAM_COUNT,
         )
-        tm.that(
+        u.Tests.Matchers.that(
             len(inspect.signature(u.Ldap.Tests.single_phase_cb).parameters),
             eq=c.Ldap.Callback.SINGLE_PHASE_PARAM_COUNT,
         )
@@ -119,18 +122,20 @@ class TestsFlextLdapApi:
             filter_str=c.Ldap.Tests.RFC.DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
-        tm.fail(self._create_api().search(search_options))
+        u.Tests.Matchers.fail(self._create_api().search(search_options))
 
     def test_execute_returns_result(self) -> None:
-        tm.fail(self._create_api().execute())
+        u.Tests.Matchers.fail(self._create_api().execute())
 
     # --- Model Config ---
 
     def test_model_config(self) -> None:
         cfg = ldap.model_config
-        tm.that(not cfg.get("frozen"), eq=not c.Ldap.Tests.ApiModelConfig.FROZEN)
-        tm.that(cfg.get("extra"), eq=c.Ldap.Tests.ApiModelConfig.EXTRA)
-        tm.that(
+        u.Tests.Matchers.that(
+            not cfg.get("frozen"), eq=not c.Ldap.Tests.ApiModelConfig.FROZEN
+        )
+        u.Tests.Matchers.that(cfg.get("extra"), eq=c.Ldap.Tests.ApiModelConfig.EXTRA)
+        u.Tests.Matchers.that(
             cfg.get("arbitrary_types_allowed"),
             eq=c.Ldap.Tests.ApiModelConfig.ARBITRARY_TYPES_ALLOWED,
         )

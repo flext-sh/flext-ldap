@@ -14,7 +14,7 @@ from flext_ldap import FlextLdapModelsLdap
 from flext_ldif import FlextLdifModels
 
 
-class FlextLdapModels(FlextLdifModels):
+class FlextLdapModels(FlextLdifModels, FlextLdapModelsLdap):
     """LDAP domain models extending FlextLdifModels.
 
     Hierarchy:
@@ -32,54 +32,8 @@ class FlextLdapModels(FlextLdifModels):
     NOTE: Collections is inherited from parent - do NOT override.
     """
 
-    # LDAP namespace with real inheritance from _models classes
-    # Following flext-ldif pattern: define classes that inherit from _models
-    class Ldap:
-        """LDAP-specific models namespace."""
-
-        # Configuration models
-        class ConnectionConfig(FlextLdapModelsLdap.ConnectionConfig):
-            """Connection configuration for LDAP connections."""
-
-        class NormalizedConfig(FlextLdapModelsLdap.NormalizedConfig):
-            """Configuration for normalized SearchOptions factory."""
-
-        class SearchOptions(FlextLdapModelsLdap.SearchOptions):
-            """Options for LDAP search operations."""
-
-        class SearchParams(FlextLdapModelsLdap.SearchParams):
-            """Typed LDAP search parameters passed to ldap3 search calls."""
-
-        class SyncOptions(FlextLdapModelsLdap.SyncOptions):
-            """Sync options model namespace."""
-
-        class SyncPhaseConfig(FlextLdapModelsLdap.SyncPhaseConfig):
-            """Sync phase configuration model namespace."""
-
-        # Result models
-        class SearchResult(FlextLdapModelsLdap.SearchResult):
-            """Result of LDAP search operations."""
-
-        class OperationResult(FlextLdapModelsLdap.OperationResult):
-            """Result of LDAP operations."""
-
-        class LdapOperationResult(FlextLdapModelsLdap.LdapOperationResult):
-            """LDAP operation result."""
-
-        class SyncStats(FlextLdapModelsLdap.SyncStats):
-            """Statistics from sync operations."""
-
-        class LdapBatchStats(FlextLdapModelsLdap.LdapBatchStats):
-            """Batch statistics for LDAP operations."""
-
-        class UpsertResult(FlextLdapModelsLdap.UpsertResult):
-            """Result of upsert operations."""
-
-        class BatchUpsertResult(FlextLdapModelsLdap.BatchUpsertResult):
-            """Result of batch upsert operations."""
-
-        class PhaseSyncResult(FlextLdapModelsLdap.PhaseSyncResult):
-            """Result of phase sync operations."""
+    class Ldap(FlextLdapModelsLdap):
+        """LDAP-specific models namespace via pure MRO composition."""
 
         class MultiPhaseSyncResult(FlextLdapModelsLdap.MultiPhaseSyncResult):
             """Result of multi-phase sync operations.
@@ -91,10 +45,6 @@ class FlextLdapModels(FlextLdifModels):
                 default_factory=dict,
                 description="Per-phase sync results keyed by phase name",
             )
-
-        # Metadata models
-        class ConversionMetadata(FlextLdapModelsLdap.ConversionMetadata):
-            """Metadata for LDAP entry conversions."""
 
 
 # Global instance

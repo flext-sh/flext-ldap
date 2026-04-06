@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap
 from tests import c, m, u
@@ -35,19 +34,19 @@ class TestsFlextLdapSync:
         return ldap()
 
     def test_sync_mixin_execute_is_placeholder(self) -> None:
-        tm.fail(FlextLdapSync().execute())
+        u.Tests.Matchers.fail(FlextLdapSync().execute())
 
     def test_sync_methods_are_available_on_public_facade(self) -> None:
         client = self._create_client()
-        tm.that(callable(client.sync_phase_entries), eq=True)
-        tm.that(callable(client.sync_multiple_phases), eq=True)
+        u.Tests.Matchers.that(callable(client.sync_phase_entries), eq=True)
+        u.Tests.Matchers.that(callable(client.sync_multiple_phases), eq=True)
 
     def test_sync_phase_entries_missing_path_returns_failure(self) -> None:
         result = self._create_client().sync_phase_entries(
             Path(c.Ldap.Tests.SyncFacade.MISSING_LDIF_PATH),
             c.Ldap.Tests.SyncFacade.PHASE_NAME_USERS,
         )
-        tm.fail(result)
+        u.Tests.Matchers.fail(result)
 
     def test_sync_multiple_phases_skips_missing_files(self) -> None:
         result = self._create_client().sync_multiple_phases({
@@ -55,15 +54,19 @@ class TestsFlextLdapSync:
                 c.Ldap.Tests.SyncFacade.MISSING_LDIF_PATH
             ),
         })
-        sync_result = tm.ok(result)
-        tm.that(sync_result.total_entries, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT)
-        tm.that(sync_result.total_synced, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT)
-        tm.that(sync_result.phase_results, empty=True)
+        sync_result = u.Tests.Matchers.ok(result)
+        u.Tests.Matchers.that(
+            sync_result.total_entries, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT
+        )
+        u.Tests.Matchers.that(
+            sync_result.total_synced, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT
+        )
+        u.Tests.Matchers.that(sync_result.phase_results, empty=True)
 
     def test_convert_entries_to_protocol_returns_copy(self) -> None:
         entries = [self._entry(c.Ldap.Tests.EntryDN.TEST_EXAMPLE)]
         protocol_entries = FlextLdapSyncCallbacks.convert_entries_to_protocol(entries)
-        tm.that(protocol_entries, len=1)
+        u.Tests.Matchers.that(protocol_entries, len=1)
         assert protocol_entries is not entries
 
     def test_make_phase_progress_callback_keeps_single_phase_callback(self) -> None:

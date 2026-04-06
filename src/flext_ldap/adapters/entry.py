@@ -35,8 +35,8 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import r, s
-from flext_ldap import c, m, p, t
+from flext_core import r
+from flext_ldap import c, m, p, s, t
 from flext_ldif import ldif
 
 

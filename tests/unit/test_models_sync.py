@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 from pydantic import ValidationError
 
-from tests import c, m, t
+from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -108,7 +107,7 @@ class TestsFlextLdapModelsSync:
         kwargs: t.IntMapping,
         expected: float,
     ) -> None:
-        tm.that(getattr(cls(**kwargs), "success_rate"), eq=expected)
+        u.Tests.Matchers.that(getattr(cls(**kwargs), "success_rate"), eq=expected)
 
     # ── Factory: SyncStats.from_counters ───────────────────────────────
 
@@ -119,12 +118,16 @@ class TestsFlextLdapModelsSync:
             failed=c.Ldap.Tests.Sync.FromCounters.FAILED,
             duration_seconds=c.Ldap.Tests.Sync.FromCounters.DURATION,
         )
-        tm.that(s.total, eq=c.Ldap.Tests.Sync.FromCounters.TOTAL)
-        tm.that(s.duration_seconds, eq=c.Ldap.Tests.Sync.FromCounters.DURATION)
-        tm.that(s.success_rate, eq=c.Ldap.Tests.Sync.FromCounters.SUCCESS_RATE)
+        u.Tests.Matchers.that(s.total, eq=c.Ldap.Tests.Sync.FromCounters.TOTAL)
+        u.Tests.Matchers.that(
+            s.duration_seconds, eq=c.Ldap.Tests.Sync.FromCounters.DURATION
+        )
+        u.Tests.Matchers.that(
+            s.success_rate, eq=c.Ldap.Tests.Sync.FromCounters.SUCCESS_RATE
+        )
 
     def test_from_counters_serialization_includes_computed(self) -> None:
-        tm.that(
+        u.Tests.Matchers.that(
             m.Ldap.SyncStats.from_counters(
                 synced=c.Ldap.Tests.Sync.Serialization.SYNCED,
                 skipped=c.Ldap.Tests.Sync.Serialization.SKIPPED,
@@ -141,8 +144,8 @@ class TestsFlextLdapModelsSync:
             dn=c.Ldap.Tests.RFC.DEFAULT_BASE_DN,
             operation=c.Ldap.OperationType.ADD,
         )
-        tm.that(r.success, eq=True)
-        tm.that(r.error, none=True)
+        u.Tests.Matchers.that(r.success, eq=True)
+        u.Tests.Matchers.that(r.error, none=True)
 
     def test_upsert_failure_carries_error(self) -> None:
         r = m.Ldap.UpsertResult(
@@ -151,8 +154,8 @@ class TestsFlextLdapModelsSync:
             operation=c.Ldap.OperationType.ADD,
             error=c.Ldap.Tests.Sync.ENTRY_ALREADY_EXISTS,
         )
-        tm.that(not r.success, eq=True)
-        tm.that(r.error, eq=c.Ldap.Tests.Sync.ENTRY_ALREADY_EXISTS)
+        u.Tests.Matchers.that(not r.success, eq=True)
+        u.Tests.Matchers.that(r.error, eq=c.Ldap.Tests.Sync.ENTRY_ALREADY_EXISTS)
 
     def test_batch_upsert_tracks_all_counts(self) -> None:
         r = m.Ldap.BatchUpsertResult(
@@ -160,9 +163,13 @@ class TestsFlextLdapModelsSync:
             successful=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL,
             failed=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED,
         )
-        tm.that(r.total_processed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_TOTAL)
-        tm.that(r.successful, eq=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL)
-        tm.that(r.failed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED)
+        u.Tests.Matchers.that(
+            r.total_processed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_TOTAL
+        )
+        u.Tests.Matchers.that(
+            r.successful, eq=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL
+        )
+        u.Tests.Matchers.that(r.failed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED)
 
     # ── ConversionMetadata: tracks attribute changes ───────────────────
 
@@ -174,14 +181,14 @@ class TestsFlextLdapModelsSync:
             dn_changed=True,
             converted_dn=c.Ldap.Tests.EntryDN.USER_NEW,
         )
-        tm.that(
+        u.Tests.Matchers.that(
             md.source_attributes, len=len(c.Ldap.Tests.Sync.Metadata.SOURCE_ATTRIBUTES)
         )
-        tm.that(
+        u.Tests.Matchers.that(
             md.removed_attributes,
             contains=c.Ldap.Tests.Sync.Metadata.REMOVED_ATTRIBUTES[0],
         )
-        tm.that(md.dn_changed, eq=True)
+        u.Tests.Matchers.that(md.dn_changed, eq=True)
 
     # ── PhaseSyncResult + MultiPhase aggregation ───────────────────────
 
@@ -195,9 +202,9 @@ class TestsFlextLdapModelsSync:
             duration_seconds=c.Ldap.Tests.Sync.Phase.DURATION,
             success_rate=c.Ldap.Tests.Sync.Phase.SUCCESS_RATE,
         )
-        tm.that(r.phase_name, eq=c.Ldap.Tests.Sync.PHASE_NAME)
-        tm.that(r.synced, eq=c.Ldap.Tests.Sync.Phase.SYNCED)
-        tm.that(r.success_rate, eq=c.Ldap.Tests.Sync.Phase.SUCCESS_RATE)
+        u.Tests.Matchers.that(r.phase_name, eq=c.Ldap.Tests.Sync.PHASE_NAME)
+        u.Tests.Matchers.that(r.synced, eq=c.Ldap.Tests.Sync.Phase.SYNCED)
+        u.Tests.Matchers.that(r.success_rate, eq=c.Ldap.Tests.Sync.Phase.SUCCESS_RATE)
 
     def test_multi_phase_aggregates_overall(self) -> None:
         r = m.Ldap.MultiPhaseSyncResult(
@@ -209,8 +216,10 @@ class TestsFlextLdapModelsSync:
             total_duration_seconds=c.Ldap.Tests.Sync.MultiPhase.TOTAL_DURATION,
             overall_success=True,
         )
-        tm.that(r.total_synced, eq=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SYNCED)
-        tm.that(r.overall_success, eq=True)
+        u.Tests.Matchers.that(
+            r.total_synced, eq=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SYNCED
+        )
+        u.Tests.Matchers.that(r.overall_success, eq=True)
 
     def test_multi_phase_with_phase_results_dict(self) -> None:
         phase = m.Ldap.PhaseSyncResult(
@@ -231,8 +240,8 @@ class TestsFlextLdapModelsSync:
             overall_success_rate=c.Ldap.Tests.Sync.PhaseResults.SUCCESS_RATE,
             total_duration_seconds=c.Ldap.Tests.Sync.PhaseResults.DURATION,
         )
-        tm.that(r.phase_results, keys=[c.Ldap.Tests.Sync.PHASE_NAME])
-        tm.that(
+        u.Tests.Matchers.that(r.phase_results, keys=[c.Ldap.Tests.Sync.PHASE_NAME])
+        u.Tests.Matchers.that(
             r.phase_results[c.Ldap.Tests.Sync.PHASE_NAME].synced,
             eq=c.Ldap.Tests.Sync.PhaseResults.SYNCED,
         )
@@ -240,7 +249,7 @@ class TestsFlextLdapModelsSync:
     # ── LdapOperationResult + LdapBatchStats ───────────────────────────
 
     def test_operation_result_carries_enum(self) -> None:
-        tm.that(
+        u.Tests.Matchers.that(
             m.Ldap.LdapOperationResult(
                 operation=c.Ldap.UpsertOperations.ADDED,
             ).operation,
@@ -253,5 +262,5 @@ class TestsFlextLdapModelsSync:
             failed=c.Ldap.Tests.Sync.BatchStats.FAILED,
             skipped=c.Ldap.Tests.Sync.BatchStats.SKIPPED,
         )
-        tm.that(s.synced, eq=c.Ldap.Tests.Sync.BatchStats.SYNCED)
-        tm.that(s.failed, eq=c.Ldap.Tests.Sync.BatchStats.FAILED)
+        u.Tests.Matchers.that(s.synced, eq=c.Ldap.Tests.Sync.BatchStats.SYNCED)
+        u.Tests.Matchers.that(s.failed, eq=c.Ldap.Tests.Sync.BatchStats.FAILED)

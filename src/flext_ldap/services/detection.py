@@ -36,8 +36,8 @@ from typing import override
 
 from ldap3 import BASE, Connection
 
-from flext_core import r, s
-from flext_ldap import c, p, t, u
+from flext_core import r
+from flext_ldap import c, p, s, t, u
 
 
 class FlextLdapServerDetector(s[str]):

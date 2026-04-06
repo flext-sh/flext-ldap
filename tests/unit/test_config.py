@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import FlextLdapSettings
-from tests import c
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 
@@ -24,14 +23,14 @@ class TestsFlextLdapSettings:
 
     def test_defaults(self) -> None:
         cfg = FlextLdapSettings()
-        tm.that(cfg.host, eq=c.LOCALHOST)
-        tm.that(
+        u.Tests.Matchers.that(cfg.host, eq=c.LOCALHOST)
+        u.Tests.Matchers.that(
             cfg.port,
             gte=c.Ldap.Tests.Config.PORT_MIN,
             lte=c.Ldap.Tests.Config.PORT_MAX,
         )
-        tm.that(not cfg.use_ssl, eq=True)
-        tm.that(not cfg.use_tls, eq=True)
+        u.Tests.Matchers.that(not cfg.use_ssl, eq=True)
+        u.Tests.Matchers.that(not cfg.use_tls, eq=True)
 
     # ── Custom initialization ──────────────────────────────────────────
 
@@ -43,11 +42,13 @@ class TestsFlextLdapSettings:
             bind_dn=c.Ldap.Tests.BindCredentials.ADMIN_DN,
             bind_password=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD,
         )
-        tm.that(cfg.host, eq=c.Ldap.Tests.Config.EXAMPLE_HOST)
-        tm.that(cfg.port, eq=c.Ldap.Tests.Config.LDAPS_PORT)
-        tm.that(cfg.use_ssl, eq=True)
-        tm.that(cfg.bind_dn, eq=c.Ldap.Tests.BindCredentials.ADMIN_DN)
-        tm.that(cfg.bind_password, eq=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD)
+        u.Tests.Matchers.that(cfg.host, eq=c.Ldap.Tests.Config.EXAMPLE_HOST)
+        u.Tests.Matchers.that(cfg.port, eq=c.Ldap.Tests.Config.LDAPS_PORT)
+        u.Tests.Matchers.that(cfg.use_ssl, eq=True)
+        u.Tests.Matchers.that(cfg.bind_dn, eq=c.Ldap.Tests.BindCredentials.ADMIN_DN)
+        u.Tests.Matchers.that(
+            cfg.bind_password, eq=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD
+        )
 
     # ── Port validation ────────────────────────────────────────────────
 
@@ -61,13 +62,13 @@ class TestsFlextLdapSettings:
         ],
     )
     def test_port_valid(self, port: int) -> None:
-        tm.that(FlextLdapSettings(port=port).port, eq=port)
+        u.Tests.Matchers.that(FlextLdapSettings(port=port).port, eq=port)
 
     def test_port_field_constraints(self) -> None:
         field = FlextLdapSettings.model_fields[c.Ldap.Tests.FieldNames.PORT]
-        tm.that(field.default, eq=c.Ldap.ConnectionDefaults.PORT)
+        u.Tests.Matchers.that(field.default, eq=c.Ldap.ConnectionDefaults.PORT)
         settings = FlextLdapSettings(port=c.Ldap.ConnectionDefaults.PORT)
-        tm.that(settings.port, eq=c.Ldap.ConnectionDefaults.PORT)
+        u.Tests.Matchers.that(settings.port, eq=c.Ldap.ConnectionDefaults.PORT)
 
     # ── Host values ────────────────────────────────────────────────────
 
@@ -81,15 +82,15 @@ class TestsFlextLdapSettings:
         ],
     )
     def test_host(self, host: str) -> None:
-        tm.that(FlextLdapSettings(host=host).host, eq=host)
+        u.Tests.Matchers.that(FlextLdapSettings(host=host).host, eq=host)
 
     # ── SSL/TLS combinations ───────────────────────────────────────────
 
     @pytest.mark.parametrize(("ssl", "tls"), c.Ldap.Tests.Config.SSL_TLS_COMBOS)
     def test_tls_options(self, ssl: bool, tls: bool) -> None:
         cfg = FlextLdapSettings(use_ssl=ssl, use_tls=tls)
-        tm.that(cfg.use_ssl, eq=ssl)
-        tm.that(cfg.use_tls, eq=tls)
+        u.Tests.Matchers.that(cfg.use_ssl, eq=ssl)
+        u.Tests.Matchers.that(cfg.use_tls, eq=tls)
 
     # ── Bind credentials ───────────────────────────────────────────────
 
@@ -98,27 +99,35 @@ class TestsFlextLdapSettings:
             bind_dn=c.Ldap.Tests.BindCredentials.ADMIN_DN,
             bind_password=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD,
         )
-        tm.that(cfg.bind_dn, eq=c.Ldap.Tests.BindCredentials.ADMIN_DN)
-        tm.that(cfg.bind_password, eq=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD)
+        u.Tests.Matchers.that(cfg.bind_dn, eq=c.Ldap.Tests.BindCredentials.ADMIN_DN)
+        u.Tests.Matchers.that(
+            cfg.bind_password, eq=c.Ldap.Tests.BindCredentials.ADMIN_PASSWORD
+        )
 
     def test_bind_credentials_empty(self) -> None:
         cfg = FlextLdapSettings(bind_dn="", bind_password="")
-        tm.that(cfg.bind_dn, eq="")
-        tm.that(cfg.bind_password, eq="")
+        u.Tests.Matchers.that(cfg.bind_dn, eq="")
+        u.Tests.Matchers.that(cfg.bind_password, eq="")
 
     # ── Pydantic model features ────────────────────────────────────────
 
     def test_model_config(self) -> None:
-        tm.that(
+        u.Tests.Matchers.that(
             FlextLdapSettings.model_config.get("env_prefix"),
             eq=c.Ldap.Tests.Config.ENV_PREFIX,
         )
-        tm.that(not FlextLdapSettings.model_config.get("case_sensitive"), eq=True)
+        u.Tests.Matchers.that(
+            not FlextLdapSettings.model_config.get("case_sensitive"), eq=True
+        )
 
     def test_field_descriptions(self) -> None:
         fields = FlextLdapSettings.model_fields
-        tm.that(fields[c.Ldap.Tests.FieldNames.HOST].description, none=False)
-        tm.that(fields[c.Ldap.Tests.FieldNames.PORT].description, none=False)
+        u.Tests.Matchers.that(
+            fields[c.Ldap.Tests.FieldNames.HOST].description, none=False
+        )
+        u.Tests.Matchers.that(
+            fields[c.Ldap.Tests.FieldNames.PORT].description, none=False
+        )
 
     def test_serialization(self) -> None:
         data = FlextLdapSettings(
@@ -126,17 +135,21 @@ class TestsFlextLdapSettings:
             port=c.Ldap.Tests.Config.LDAPS_PORT,
             use_ssl=True,
         ).model_dump()
-        tm.that(data[c.Ldap.Tests.FieldNames.HOST], eq=c.Ldap.Tests.Config.EXAMPLE_HOST)
-        tm.that(data[c.Ldap.Tests.FieldNames.PORT], eq=c.Ldap.Tests.Config.LDAPS_PORT)
-        tm.that(data["use_ssl"], eq=True)
+        u.Tests.Matchers.that(
+            data[c.Ldap.Tests.FieldNames.HOST], eq=c.Ldap.Tests.Config.EXAMPLE_HOST
+        )
+        u.Tests.Matchers.that(
+            data[c.Ldap.Tests.FieldNames.PORT], eq=c.Ldap.Tests.Config.LDAPS_PORT
+        )
+        u.Tests.Matchers.that(data["use_ssl"], eq=True)
 
     def test_json_schema(self) -> None:
         schema = FlextLdapSettings.model_json_schema()
-        tm.that(
+        u.Tests.Matchers.that(
             schema,
             keys=[c.Ldap.Tests.FieldNames.PROPERTIES, c.Ldap.Tests.FieldNames.TYPE],
         )
-        tm.that(
+        u.Tests.Matchers.that(
             dict(schema[c.Ldap.Tests.FieldNames.PROPERTIES]),
             keys=[c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.FieldNames.PORT],
         )
@@ -147,8 +160,8 @@ class TestsFlextLdapSettings:
             port=c.Ldap.ConnectionDefaults.PORT,
         )
         copied = original.model_copy(deep=True)
-        tm.that(copied, is_=FlextLdapSettings, none=False)
-        tm.that(
+        u.Tests.Matchers.that(copied, is_=FlextLdapSettings, none=False)
+        u.Tests.Matchers.that(
             original.model_dump()[c.Ldap.Tests.FieldNames.PORT],
             eq=copied.model_dump()[c.Ldap.Tests.FieldNames.PORT],
         )
@@ -164,16 +177,16 @@ class TestsFlextLdapSettings:
             host=c.Ldap.Tests.Config.SECOND_HOST,
             port=c.Ldap.Tests.Config.LDAPS_PORT,
         )
-        tm.that(c1, eq=c2)
-        tm.that(c1.host, eq=c2.host)
+        u.Tests.Matchers.that(c1, eq=c2)
+        u.Tests.Matchers.that(c1.host, eq=c2.host)
 
     def test_model_dump_keys(self) -> None:
         dump = FlextLdapSettings().model_dump()
-        tm.that(
+        u.Tests.Matchers.that(
             dump,
             keys=[
                 c.Ldap.Tests.FieldNames.BIND_DN,
                 c.Ldap.Tests.FieldNames.BIND_PASSWORD,
             ],
         )
-        tm.that(dump, lacks_keys=[c.Ldap.Tests.FieldNames.BASE_DN])
+        u.Tests.Matchers.that(dump, lacks_keys=[c.Ldap.Tests.FieldNames.BASE_DN])

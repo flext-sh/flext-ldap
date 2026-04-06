@@ -19,10 +19,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import FlextLdapOperations
-from tests import c, m, p
+from tests import c, m, p, u
 
 pytestmark = pytest.mark.unit
 
@@ -42,8 +41,8 @@ class TestsFlextLdapOperations:
     def test_operations_initialization(self) -> None:
         """Test operations service initializes via MRO (no args)."""
         operations = self._create_operations()
-        tm.that(operations, none=False)
-        tm.that(operations.logger, none=False)
+        u.Tests.Matchers.that(operations, none=False)
+        u.Tests.Matchers.that(operations.logger, none=False)
 
     def test_config_property(self) -> None:
         """Test config property returns FlextSettings with ldap namespace."""
@@ -53,7 +52,7 @@ class TestsFlextLdapOperations:
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""
         operations = self._create_operations()
-        tm.that(not operations.is_connected, eq=True)
+        u.Tests.Matchers.that(not operations.is_connected, eq=True)
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),
@@ -66,13 +65,13 @@ class TestsFlextLdapOperations:
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
-        tm.that(result, eq=expected)
+        u.Tests.Matchers.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
         """Test execute method returns a r (fail when not connected)."""
         operations = self._create_operations()
         result = operations.execute()
-        tm.fail(result)
+        u.Tests.Matchers.fail(result)
 
     def test_search_method_exists(self) -> None:
         """Test that search method exists and returns fail when not connected."""
@@ -84,4 +83,4 @@ class TestsFlextLdapOperations:
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
         result = operations.search(search_options)
-        tm.fail(result)
+        u.Tests.Matchers.fail(result)
