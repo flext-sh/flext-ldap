@@ -602,6 +602,8 @@ class FlextLdapOperations(FlextLdapConnection):
                 if changetype_val
                 else ""
             )
+            if not changetype and hasattr(entry, "changetype") and entry.changetype:
+                changetype = str(entry.changetype).lower()
             if changetype == c.Ldif.ChangeTypeOperations.MODIFY:
                 return self.handle_schema_modify(entry)
             return self.handle_regular_add(entry)
@@ -721,10 +723,11 @@ class FlextLdapOperations(FlextLdapConnection):
             self,
             entry: m.Ldif.Entry,
         ) -> r[m.Ldap.LdapOperationResult]:
-            """Apply a schema modification entry.
+            """Apply a schema modification entry (supports multiple add operations).
 
             Business Rules:
-                - Entry must have 'add' attribute specifying the schema attribute to add
+                - Entry must have 'add' attribute specifying schema attribute(s) to add
+                - Loops ALL add operations (supports both split and interleaved entries)
                 - Uses MODIFY_ADD operation (not REPLACE) for additive schema changes
                 - "Entry already exists" is interpreted as schema element exists -> SKIPPED
                 - Empty values are filtered out before modification
@@ -740,52 +743,55 @@ class FlextLdapOperations(FlextLdapConnection):
             entry_model = self._convert_to_model(entry)
             attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
             add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
-            add_op_raw = add_op_result
-            add_op: t.StrSequence = [str(item) for item in add_op_raw]
+            add_op: t.StrSequence = [str(item) for item in add_op_result]
             if not add_op:
                 return r[m.Ldap.LdapOperationResult].fail(
                     "Schema modify entry missing 'add' attribute",
                 )
-            attr_type = add_op[0]
-            attr_values_result = attrs.get(attr_type, [])
-            attr_values_raw = attr_values_result
-            attr_values = [str(item) for item in attr_values_raw]
-            filtered = [x for x in attr_values if x]
-            if not filtered:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    f"Schema modify entry has only empty values for '{attr_type}'",
-                )
-            changes: t.Ldap.OperationChanges = {
-                attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
-            }
-            entry_model = self._convert_to_model(entry)
             dn_str: str
             if entry_model.dn is not None:
                 dn_str = entry_model.dn.value or c.Ldif.EntryDefaults.UNKNOWN_VALUE
             else:
                 dn_str = c.Ldif.EntryDefaults.UNKNOWN_VALUE
-            return (
-                self._ops
-                .modify(dn_str, changes)
-                .map(
-                    lambda _: m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.MODIFIED,
-                    ),
+            last_result: r[m.Ldap.LdapOperationResult] | None = None
+            for attr_type in add_op:
+                attr_values_raw = attrs.get(attr_type, [])
+                attr_values = [str(item) for item in attr_values_raw]
+                filtered = [x for x in attr_values if x]
+                if not filtered:
+                    continue
+                changes: t.Ldap.OperationChanges = {
+                    attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
+                }
+                last_result = (
+                    self._ops
+                    .modify(dn_str, changes)
+                    .map(
+                        lambda _: m.Ldap.LdapOperationResult(
+                            operation=c.Ldap.UpsertOperations.MODIFIED,
+                        ),
+                    )
+                    .lash(
+                        lambda e: (
+                            r[m.Ldap.LdapOperationResult].ok(
+                                m.Ldap.LdapOperationResult(
+                                    operation=c.Ldap.UpsertOperations.SKIPPED,
+                                ),
+                            )
+                            if self._ops.is_already_exists_error(u.to_str(e))
+                            else r[m.Ldap.LdapOperationResult].fail(
+                                u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR,
+                            )
+                        ),
+                    )
                 )
-                .lash(
-                    lambda e: (
-                        r[m.Ldap.LdapOperationResult].ok(
-                            m.Ldap.LdapOperationResult(
-                                operation=c.Ldap.UpsertOperations.SKIPPED,
-                            ),
-                        )
-                        if self._ops.is_already_exists_error(u.to_str(e))
-                        else r[m.Ldap.LdapOperationResult].fail(
-                            u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR,
-                        )
-                    ),
+                if last_result.is_failure:
+                    return last_result
+            if last_result is None:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    "Schema modify entry has only empty values",
                 )
-            )
+            return last_result
 
         def _extract_schema_add_operation(
             self,

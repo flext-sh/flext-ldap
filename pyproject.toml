@@ -233,9 +233,8 @@ project-includes = [
 ]
 python-version = "3.13"
 search-path = [
-  "examples",
+  ".",
   "src",
-  "tests",
 ]
 use-ignore-files = false
 
