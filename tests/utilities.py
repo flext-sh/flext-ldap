@@ -10,8 +10,7 @@ from tests import c, m, p, t
 
 if TYPE_CHECKING:
     from flext_ldap import FlextLdap
-from tests._utilities.docker_infra import _DockerInfraUtils
-from tests._utilities.fixture_loaders import _FixtureLoaderUtils
+from tests import _DockerInfraUtils, _FixtureLoaderUtils
 
 
 class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from importlib.metadata import metadata
 
-from flext_ldap.typings import t
+from flext_ldap import t
 
 _metadata = metadata("flext-ldap")
 __version__: str = _metadata.get("Version", "0.12.0-dev")
