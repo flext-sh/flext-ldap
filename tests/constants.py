@@ -18,23 +18,23 @@ from typing import ClassVar, Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import FlextLdapConstants, FlextLdapTypes
+from flext_ldap import c, t
 
 
-class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
-    """Constants for flext-ldap tests - extends FlextTestsConstants and FlextLdapConstants.
+class FlextLdapTestConstants(FlextTestsConstants, c):
+    """Constants for flext-ldap tests - extends FlextTestsConstants and c.
 
-    Architecture: Extends both FlextTestsConstants and FlextLdapConstants with flext-ldap-specific constants.
-    All generic constants from FlextTestsConstants and production constants from FlextLdapConstants are available through inheritance.
+    Architecture: Extends both FlextTestsConstants and c with flext-ldap-specific constants.
+    All generic constants from FlextTestsConstants and production constants from c are available through inheritance.
 
     Rules:
-    - NEVER duplicate constants from FlextTestsConstants or FlextLdapConstants
+    - NEVER duplicate constants from FlextTestsConstants or c
     - Only flext-ldap-specific constants allowed (not generic for other projects)
     - All generic constants come from FlextTestsConstants
-    - All production constants come from FlextLdapConstants
+    - All production constants come from c
     """
 
-    class Ldap(FlextLdapConstants.Ldap):
+    class Ldap(c.Ldap):
         """LDAP test constants."""
 
         class Tests:
@@ -198,7 +198,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
 
                 EXECUTE_SCENARIOS: ClassVar[
                     Sequence[
-                        tuple[
+                        t.Triple[
                             Mapping[str, bool | float | str | None] | None,
                             bool,
                             str,
@@ -215,7 +215,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
 
                 GET_FIRST_VALUE_SCENARIOS: ClassVar[
                     Sequence[
-                        tuple[
+                        t.Triple[
                             Mapping[str, Sequence[str]],
                             str,
                             str | None,
@@ -233,7 +233,14 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 ]
 
                 DETECT_FROM_ATTRIBUTES_SCENARIOS: ClassVar[
-                    Sequence[tuple[str | None, str | None, Sequence[str], str]]
+                    Sequence[
+                        t.Quad[
+                            str | None,
+                            str | None,
+                            Sequence[str],
+                            str,
+                        ]
+                    ]
                 ] = [
                     ("Oracle Corporation", "12.2.1.4.0", [], "oid"),
                     ("Oracle Unified Directory", "12.2.1.4.0", [], "oud"),
@@ -339,7 +346,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                 """Static sample entries for tests."""
 
                 USER_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, FlextLdapTypes.StrSequence]]
+                    Mapping[str, str | Mapping[str, t.StrSequence]]
                 ] = {
                     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
                     "attributes": {
@@ -358,7 +365,7 @@ class FlextLdapTestConstants(FlextTestsConstants, FlextLdapConstants):
                     },
                 }
                 GROUP_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, FlextLdapTypes.StrSequence]]
+                    Mapping[str, str | Mapping[str, t.StrSequence]]
                 ] = {
                     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
                     "attributes": {

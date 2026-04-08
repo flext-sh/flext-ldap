@@ -18,15 +18,15 @@ from ldap3 import (
     Server as Ldap3Server,
 )
 
-from flext_ldap import c, p
-from flext_ldif import FlextLdifUtilities, m
+from flext_ldap import c, p, t
+from flext_ldif import m, u
 
 if TYPE_CHECKING:
     from flext_ldap import t
 
 
-class FlextLdapUtilities(FlextLdifUtilities):
-    """FlextLdap utilities - extends FlextLdifUtilities with advanced builders.
+class FlextLdapUtilities(u):
+    """FlextLdap utilities - extends u with advanced builders.
 
     ARCHITECTURE:
     ────────────
@@ -197,7 +197,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         def norm_in(
             cls,
             value: str,
-            collection: t.StrSequence | tuple[str, ...],
+            collection: t.StrSequence | t.VariadicTuple[str],
             *,
             case: str | None = None,
         ) -> bool:
@@ -228,7 +228,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
         @classmethod
         def norm_join(
             cls,
-            values: t.StrSequence | tuple[str, ...],
+            values: t.StrSequence | t.VariadicTuple[str],
             *,
             case: str | None = None,
         ) -> str:
@@ -374,7 +374,7 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
         @staticmethod
         def map_str(
-            values: t.StrSequence | tuple[str, ...],
+            values: t.StrSequence | t.VariadicTuple[str],
             *,
             case: str | None = None,
             join: str | None = None,

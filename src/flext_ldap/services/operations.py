@@ -422,7 +422,7 @@ class FlextLdapOperations(FlextLdapConnection):
             new_attrs: Mapping[str, t.StrSequence],
             existing_attrs: Mapping[str, t.StrSequence],
             ignore: frozenset[str],
-        ) -> tuple[t.Ldap.OperationChanges, set[str]]:
+        ) -> t.Pair[t.Ldap.OperationChanges, set[str]]:
             """Process new attributes and detect replacement changes.
 
             Business Rules:
@@ -450,7 +450,7 @@ class FlextLdapOperations(FlextLdapConnection):
             def process_attr(
                 attr_name: str,
                 new_vals: t.StrSequence,
-            ) -> tuple[str, Sequence[tuple[int, t.StrSequence]] | None]:
+            ) -> t.Pair[str, Sequence[t.Pair[int, t.StrSequence]] | None]:
                 """Process single attribute and return change if needed."""
                 normalized_name = u.Ldap.norm_str(attr_name, case="lower")
                 processed.add(normalized_name)
@@ -478,7 +478,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
             processed_dict: MutableMapping[
                 str,
-                Sequence[tuple[int, t.StrSequence]] | None,
+                Sequence[t.Pair[int, t.StrSequence]] | None,
             ] = {}
             logger = logging.getLogger(__name__)
             for attr_name, new_vals in dict(filtered_attrs).items():
@@ -501,7 +501,7 @@ class FlextLdapOperations(FlextLdapConnection):
                         exc_info=e,
                     )
                     continue
-            processed_changes: Mapping[str, Sequence[tuple[int, t.StrSequence]]] = {
+            processed_changes: Mapping[str, Sequence[t.Pair[int, t.StrSequence]]] = {
                 k: v for k, v in dict(processed_dict).items() if v is not None
             }
             changes.update(processed_changes)

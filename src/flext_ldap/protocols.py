@@ -14,15 +14,13 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 from flext_core import r
-from flext_ldif import FlextLdifProtocols
+from flext_ldif import p
 
 if TYPE_CHECKING:
     from flext_ldap import t
-else:
-    from flext_ldif import t
 
 
-class FlextLdapProtocols(FlextLdifProtocols):
+class FlextLdapProtocols(p):
     """LDAP-specific protocol definitions.
 
     Domain-specific protocol interfaces for LDAP operations.
@@ -49,7 +47,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         to enable proper namespace separation. LDIF protocols from parent
         are accessed via `.Ldif` namespace (e.g., `m.Ldif.Entry`).
 
-        Pattern: `p.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
+        Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
         """
 
         # ── Layer 0: Domain Protocols ────────────────────────────
@@ -137,7 +135,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for LDAP search result (structural type)."""
 
             entries: Sequence[p.Ldif.Entry]
-            search_options: p.Ldap.SearchOptions
+            search_options: FlextLdapProtocols.Ldap.SearchOptions
 
         @runtime_checkable
         class PhaseSyncResult(Protocol):
@@ -174,7 +172,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def add(
                 self,
                 entry: p.Ldif.Entry,
-            ) -> r[p.Ldap.OperationResult]:
+            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Args:
@@ -188,7 +186,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def connect(
                 self,
-                config: p.Ldap.ConnectionConfig,
+                config: FlextLdapProtocols.Ldap.ConnectionConfig,
                 **kwargs: t.Scalar,
             ) -> r[bool]:
                 """Connect to LDAP server.
@@ -208,7 +206,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def delete(
                 self,
                 dn: str | p.Ldif.DN,
-            ) -> r[p.Ldap.OperationResult]:
+            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Args:
@@ -223,7 +221,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def execute(
                 self,
                 **_kwargs: t.Scalar,
-            ) -> r[p.Ldap.SearchResult]:
+            ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
                 """Execute health check or default operation.
 
                 Args:
@@ -240,7 +238,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 dn: str | p.Ldif.DN,
                 changes: t.Ldap.LdapModifyChanges,
-            ) -> r[p.Ldap.OperationResult]:
+            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Args:
@@ -255,9 +253,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def search(
                 self,
-                search_options: p.Ldap.SearchOptions,
+                search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> r[p.Ldap.SearchResult]:
+            ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -289,7 +287,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def add(
                 self,
                 entry: p.Ldif.Entry,
-            ) -> r[p.Ldap.OperationResult]:
+            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Returns Result containing OperationResult model.
@@ -300,7 +298,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def delete(
                 self,
                 dn: p.Ldif.DN | str,
-            ) -> r[p.Ldap.OperationResult]:
+            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Returns Result containing OperationResult model.
@@ -312,7 +310,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 dn: p.Ldif.DN | str,
                 changes: t.Ldap.LdapModifyChanges,
-            ) -> r[p.Ldap.OperationResult]:
+            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Returns Result containing OperationResult model.
@@ -322,9 +320,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def search(
                 self,
-                search_options: p.Ldap.SearchOptions,
+                search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> r[p.Ldap.SearchResult]:
+            ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Returns Result containing SearchResult model.
@@ -342,7 +340,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def adapter(self) -> p.Ldap.LdapAdapter:
+            def adapter(self) -> FlextLdapProtocols.Ldap.LdapAdapter:
                 """Get LDAP adapter instance.
 
                 Returns:
@@ -383,12 +381,12 @@ class FlextLdapProtocols(FlextLdifProtocols):
             bound: bool
 
             @property
-            def server(self) -> p.Ldap.Ldap3Server:
+            def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
                 """Get the server this connection is bound to."""
                 ...
 
             @property
-            def entries(self) -> Sequence[p.Ldap.Ldap3Entry]:
+            def entries(self) -> Sequence[FlextLdapProtocols.Ldap.Ldap3Entry]:
                 """Get entries from last search operation."""
                 ...
 
@@ -452,7 +450,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for ldap3.Server objects (structural type)."""
 
             @property
-            def info(self) -> p.Ldap.Ldap3ServerInfo | None:
+            def info(self) -> FlextLdapProtocols.Ldap.Ldap3ServerInfo | None:
                 """Get server info."""
                 ...
 
@@ -491,7 +489,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Get entry distinguished name."""
                 ...
 
-            def __getitem__(self, item: str) -> p.Ldap.Ldap3Attribute:
+            def __getitem__(self, item: str) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
                 """Get attribute object by name."""
                 ...
 
@@ -525,7 +523,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def entries(self) -> Sequence[p.Ldap.Ldap3Entry]:
+            def entries(self) -> Sequence[FlextLdapProtocols.Ldap.Ldap3Entry]:
                 """Get list of entries."""
                 ...
 
@@ -535,7 +533,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
+            def items(self) -> Sequence[t.Pair[str, t.NormalizedValue]]:
                 """Return items as sequence of tuples."""
                 ...
 

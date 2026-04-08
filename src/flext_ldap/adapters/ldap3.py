@@ -21,7 +21,7 @@ Audit Implications:
 Architecture Notes:
     - Implements Adapter pattern between ldap3 and flext-ldap service layer
     - Uses SRP via inner classes: ConnectionManager, ResultConverter, AttributeNormalizer
-    - Extends FlextService[bool] for health check capability
+    - Extends s[bool] for health check capability
     - Pydantic frozen=False allows mutable connection state
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -37,8 +37,7 @@ from typing import ClassVar, override
 from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import FlextService, r
-from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
+from flext_ldap import FlextLdapEntryAdapter, c, m, p, r, s, t, u
 
 
 class FlextLdapLdap3Wrappers:
@@ -172,7 +171,7 @@ class FlextLdapLdap3Wrappers:
         return bool(unbind_fn())
 
 
-class FlextLdapLdap3Adapter(FlextService[bool]):
+class FlextLdapLdap3Adapter(s[bool]):
     """Service adapter for ldap3 library following flext-ldif patterns.
 
     Wraps ldap3 Connection and Server objects to provide a simplified
@@ -317,7 +316,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
         @staticmethod
         def convert_ldap3_results(
             connection: Connection,
-        ) -> Sequence[tuple[str, Mapping[str, t.StrSequence]]]:
+        ) -> Sequence[t.Pair[str, Mapping[str, t.StrSequence]]]:
             """Convert ldap3 connection entries to parser format.
 
             Business Rules:
@@ -345,7 +344,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 List of (dn, attributes_dict) tuples in parser format.
 
             """
-            results: MutableSequence[tuple[str, Mapping[str, t.StrSequence]]] = []
+            results: MutableSequence[t.Pair[str, Mapping[str, t.StrSequence]]] = []
             entries_list: Sequence[p.Ldap.Ldap3Entry] = getattr(
                 connection,
                 "entries",
@@ -716,7 +715,8 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
                 elif v is not None:
                     result[k] = [str(v)]
                 else:
-                    result[k] = list[str]()
+                    empty_values: t.MutableSequenceOf[str] = []
+                    result[k] = empty_values
             return result
 
         @staticmethod
@@ -1422,7 +1422,7 @@ class FlextLdapLdap3Adapter(FlextService[bool]):
             - Returns failure if connection is not bound (NOT_CONNECTED error)
             - Returns success if connection is active and bound
             - Does not perform network round-trip (cached state check)
-            - Implements FlextService.execute() contract
+            - Implements s.execute() contract
 
         Audit Implications:
             - Can be called by service orchestrators for health checks

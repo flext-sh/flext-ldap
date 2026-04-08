@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Literal
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from flext_ldap import FlextLdapProtocols as p
-from flext_ldif import FlextLdifTypes
+from flext_ldif import t
+
+if TYPE_CHECKING:
+    from flext_ldap import p
 
 
-class FlextLdapTypes(FlextLdifTypes):
+class FlextLdapTypes(t):
     """LDAP-specific type namespace."""
 
     class Ldap:
@@ -19,56 +21,62 @@ class FlextLdapTypes(FlextLdifTypes):
 
         LDAPException: type[Exception] = _Ldap3LDAPException
 
-        # ── ldap3 library interop types ──────────────────────────────
         type Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
         type Ldap3DerefAliases = Literal["NEVER", "SEARCH", "FINDING_BASE", "ALWAYS"]
-        type Ldap3ModifyChangesDict = dict[str, list[tuple[str, list[str]]]]
         type Ldap3GetInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
-
-        # ldap3 attribute value types (wire-level)
-        type Ldap3AttributeValues = Sequence[str | bytes]
-        """Attribute value list as returned by ldap3 Entry/Attribute."""
-        type Ldap3AttributeDict = Mapping[str, Sequence[str | bytes]]
-        """Attribute dict as returned by ldap3 entry_attributes_as_dict."""
-        type Ldap3AttributeValue = str | bytes | Sequence[str | bytes]
-        """Single or multi-valued attribute from ldap3."""
-        type Ldap3AddAttributes = (
-            Mapping[str, str | bytes | FlextLdifTypes.StrSequence | Sequence[bytes]]
-            | None
+        type Ldap3AttributeScalar = str | bytes
+        type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
+        type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]
+        type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
+        type Ldap3AddAttributeValue = (
+            Ldap3AttributeScalar | t.StrSequence | t.SequenceOf[bytes]
         )
-        """Attribute mapping accepted by ldap3 Connection.add()."""
-
-        # ── Operation types ──────────────────────────────────────────
-        type OperationChanges = MutableMapping[
+        type Ldap3AddAttributes = t.MappingKV[str, Ldap3AddAttributeValue] | None
+        type Ldap3ModifyChangeValue = t.Pair[
             str,
-            Sequence[tuple[int, FlextLdifTypes.StrSequence]],
+            t.MutableSequenceOf[str],
         ]
-        type OperationAttributes = Mapping[str, FlextLdifTypes.StrSequence]
+        type Ldap3ModifyChangesDict = t.MutableMappingKV[
+            str,
+            t.MutableSequenceOf[Ldap3ModifyChangeValue],
+        ]
+        type OperationChangeValue = t.Pair[
+            int,
+            t.StrSequence,
+        ]
+        type OperationChanges = t.MutableMappingKV[
+            str,
+            t.SequenceOf[OperationChangeValue],
+        ]
+        type OperationAttributes = t.MappingKV[
+            str,
+            t.StrSequence,
+        ]
+        type Ldap3EntrySequenceValue = t.SequenceOf[
+            Ldap3AttributeScalar | t.Numeric | bool
+        ]
         type Ldap3EntryValue = (
-            str
-            | bytes
-            | int
-            | float
-            | bool
-            | Sequence[str | bytes | t.Numeric | bool]
-            | None
+            Ldap3AttributeScalar | t.Numeric | bool | Ldap3EntrySequenceValue | None
         )
-
-        # ── Callback types ───────────────────────────────────────────
-        LdapProgressCallback = Callable[[int, int, str, p.Ldap.LdapBatchStats], None]
-        MultiPhaseProgressCallback = Callable[
+        type LdapProgressCallback = Callable[
+            [int, int, str, p.Ldap.LdapBatchStats],
+            None,
+        ]
+        type MultiPhaseProgressCallback = Callable[
             [str, int, int, str, p.Ldap.LdapBatchStats],
             None,
         ]
-        ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback | None
-
-        # ── Modify changes type ──────────────────────────────────────
-        type LdapModifyChanges = Mapping[
-            str,
-            Sequence[tuple[str | int, FlextLdifTypes.StrSequence]],
+        type ProgressCallbackUnion = (
+            LdapProgressCallback | MultiPhaseProgressCallback | None
+        )
+        type LdapModifyChangeValue = t.Pair[
+            str | int,
+            t.StrSequence,
         ]
-
-        # Lax string type for ldap3 interop (bytes/bytearray from wire)
+        type LdapModifyChanges = t.MappingKV[
+            str,
+            t.SequenceOf[LdapModifyChangeValue],
+        ]
         type LaxStr = str | bytes | bytearray
 
 

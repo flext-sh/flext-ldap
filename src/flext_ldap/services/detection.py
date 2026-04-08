@@ -187,7 +187,7 @@ class FlextLdapServerDetector(s[str]):
         vendor_info = " ".join(vendor_parts).lower() if vendor_parts else ""
         if not vendor_info:
             return None
-        vendor_checks: Sequence[tuple[str, Callable[[str], bool]]] = [
+        vendor_checks: Sequence[t.Pair[str, Callable[[str], bool]]] = [
             ("oud", lambda v: "oracle" in v and "unified directory" in v),
             (
                 "oid",

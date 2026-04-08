@@ -1,6 +1,6 @@
 """FlextLdap constants module.
 
-This module provides constants for LDAP operations, extending FlextLdifConstants.
+This module provides constants for LDAP operations, extending c.
 """
 
 from __future__ import annotations
@@ -9,21 +9,22 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import ClassVar, Final
 
-from flext_ldif import FlextLdifConstants
+from flext_ldap import t
+from flext_ldif import c
 
 
-class FlextLdapConstants(FlextLdifConstants):
-    """FlextLdap domain constants extending FlextLdifConstants.
+class FlextLdapConstants(c):
+    """FlextLdap domain constants extending c.
 
     Hierarchy:
     FlextConstants (flext-core)
-    -> FlextLdifConstants (flext-ldif)
+    -> c (flext-ldif)
     -> FlextLdapConstants (this module)
 
     Access patterns:
     - c.Ldap.* (LDAP-specific constants)
-    - c.Ldif.* (inherited from FlextLdifConstants - do NOT override)
-    - c.* (inherited from FlextConstants via FlextLdifConstants)
+    - c.Ldif.* (inherited from c - do NOT override)
+    - c.* (inherited from FlextConstants via c)
 
     NOTE: Ldif namespace is inherited from parent - do NOT override.
     """
@@ -219,7 +220,7 @@ class FlextLdapConstants(FlextLdifConstants):
             """Sync operation default values."""
 
             BATCH_SIZE: Final[int] = 100
-            DEFAULT_RETRY_ERROR_PATTERNS: ClassVar[tuple[str, ...]] = (
+            DEFAULT_RETRY_ERROR_PATTERNS: ClassVar[t.VariadicTuple[str]] = (
                 "session terminated",
                 "not connected",
                 "invalid messageid",
@@ -228,3 +229,5 @@ class FlextLdapConstants(FlextLdifConstants):
 
 
 c = FlextLdapConstants
+
+__all__ = ["FlextLdapConstants", "c"]
