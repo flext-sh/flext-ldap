@@ -309,7 +309,7 @@ ______________________________________________________________________
 - Retry patterns with exponential backoff
 - Bulk operations with batching
 - Complete r error handling patterns
-- Exception handling with FlextExceptions
+- Exception handling with e
 - Performance optimization techniques
   - Attribute filtering
   - Scope limitation

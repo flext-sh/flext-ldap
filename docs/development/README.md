@@ -187,11 +187,11 @@ def my_operation(data: dict) -> r[ProcessedData]:
 ### Use x
 
 ```python
-from flext_core import FlextService
+from flext_core import s
 
 
-class MyService(FlextService[None]):
-    """Inherit from FlextService to get mixins."""
+class MyService(s[None]):
+    """Inherit from s to get mixins."""
 
     def operation(self):
         # ✅ Use inherited properties

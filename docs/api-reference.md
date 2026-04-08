@@ -19,7 +19,7 @@
   - [FlextLdapTypeGuards](#flextldaptypeguards)
   - [FlextLdapConstants](#flextldapconstants)
 - [🚨 Exceptions](#exceptions)
-  - [FlextExceptions](#flextexceptions)
+  - [e](#flextexceptions)
 - [🔄 r Usage](#r-usage)
   - [Success Handling](#success-handling)
   - [Error Handling](#error-handling)
@@ -61,7 +61,7 @@
       - `is_ldap_entry(obj) -> bool`
     - FlextLdapConstants
   - 🚨 Exceptions
-    - FlextExceptions
+    - e
       - ConnectionError
       - AuthenticationError
       - SearchError
@@ -433,7 +433,7 @@ ______________________________________________________________________
 
 ## 🚨 Exceptions
 
-### FlextExceptions
+### e
 
 LDAP-specific exception classes.
 
@@ -468,14 +468,14 @@ Search operation errors.
 **Example:**
 
 ```python
-from flext_ldap import FlextExceptions
+from flext_ldap import e
 
 try:
     result = api.search_entries(request)
     if result.is_failure:
         # Handle r error
         print(f"Search failed: {result.error}")
-except FlextExceptions.ConnectionError as e:
+except e.ConnectionError as e:
     print(f"Connection error: {e.message}")
 ```
 

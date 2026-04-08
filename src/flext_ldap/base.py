@@ -24,7 +24,7 @@ from typing import override
 
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextService
+from flext_core import s
 from flext_ldap import FlextLdapSettings, p, t
 
 
@@ -46,7 +46,7 @@ class _LdapRuntimeBootstrapOptions:
 class FlextLdapServiceBase[
     TResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.ValueOrModel
     | Sequence[t.ValueOrModel]
-](FlextService[TResult], ABC):
+](s[TResult], ABC):
     """Base class for all flext-ldap services.
 
     Subclasses parametrize via s[T] for their specific result type.
