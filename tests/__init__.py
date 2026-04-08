@@ -15,7 +15,6 @@ if _t.TYPE_CHECKING:
     _utilities = _tests__utilities
     import tests.conftest as _tests_conftest
     from tests._utilities import (
-        TestFixtures,
         _DockerInfraUtils,
         _FixtureLoaderUtils,
         docker_infra,
@@ -148,7 +147,6 @@ __all__ = [
     "FlextLdapTestTypes",
     "FlextLdapTestUtilities",
     "LdapContainerDict",
-    "TestFixtures",
     "TestsFlextLdap3Adapter",
     "TestsFlextLdapApi",
     "TestsFlextLdapBase",

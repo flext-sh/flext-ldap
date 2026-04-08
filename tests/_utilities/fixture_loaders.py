@@ -15,9 +15,9 @@ from typing import ClassVar
 
 from pydantic import TypeAdapter, ValidationError
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger
 from flext_ldif import ldif
-from tests import c, m, t
+from tests import c, m, r, t
 
 GenericFieldsDict = t.Ldap.Tests.GenericFieldsDict
 
@@ -197,8 +197,4 @@ class _FixtureLoaderUtils:
             return result
 
 
-class TestFixtures(_FixtureLoaderUtils.Fixtures):
-    pass
-
-
-__all__ = ["TestFixtures", "_FixtureLoaderUtils"]
+__all__ = ["_FixtureLoaderUtils"]
