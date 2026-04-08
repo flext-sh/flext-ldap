@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar, TypeIs, override
+from typing import ClassVar, TypeIs
 
 from pydantic import ConfigDict
 
@@ -26,32 +26,6 @@ from flext_ldap import (
 
 class FlextLdapSyncCallbacks:
     """Helpers and type guards for LDAP sync callbacks."""
-
-    @staticmethod
-    def convert_entries_to_protocol(
-        entries: Sequence[m.Ldif.Entry],
-    ) -> Sequence[m.Ldif.Entry]:
-        """Return a concrete sequence for downstream protocol consumers."""
-        return list(entries)
-
-    @staticmethod
-    def get_phase_result_value(
-        phase_result: m.Ldap.PhaseSyncResult,
-        attr_name: str,
-        default: int = 0,
-    ) -> int:
-        """Read integer counters from phase results with a safe default."""
-        match attr_name:
-            case "total_entries":
-                return phase_result.total_entries
-            case "synced":
-                return phase_result.synced
-            case "failed":
-                return phase_result.failed
-            case "skipped":
-                return phase_result.skipped
-            case _:
-                return default
 
     @staticmethod
     def is_multi_phase_callback(
@@ -88,11 +62,6 @@ class FlextLdapSync(FlextLdapOperations):
         extra="forbid",
         arbitrary_types_allowed=True,
     )
-
-    @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
-        """Placeholder for mixin compliance; overridden by the public facade."""
-        return r[m.Ldap.SearchResult].fail("Not implemented in mixin")
 
     @staticmethod
     def _make_phase_progress_callback(
@@ -157,25 +126,10 @@ class FlextLdapSync(FlextLdapOperations):
                 continue
             phase_results[phase_name] = phase_result.value
         phase_values = list(phase_results.values())
-        total_entries = sum(
-            FlextLdapSyncCallbacks.get_phase_result_value(
-                phase_result,
-                "total_entries",
-            )
-            for phase_result in phase_values
-        )
-        total_synced = sum(
-            FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "synced")
-            for phase_result in phase_values
-        )
-        total_failed = sum(
-            FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "failed")
-            for phase_result in phase_values
-        )
-        total_skipped = sum(
-            FlextLdapSyncCallbacks.get_phase_result_value(phase_result, "skipped")
-            for phase_result in phase_values
-        )
+        total_entries = sum(phase_result.total_entries for phase_result in phase_values)
+        total_synced = sum(phase_result.synced for phase_result in phase_values)
+        total_failed = sum(phase_result.failed for phase_result in phase_values)
+        total_skipped = sum(phase_result.skipped for phase_result in phase_values)
         total_processed = total_synced + total_failed + total_skipped
         overall_success_rate = (
             (total_synced + total_skipped) / total_processed * 100
@@ -221,7 +175,9 @@ class FlextLdapSync(FlextLdapOperations):
             return r[m.Ldap.PhaseSyncResult].fail(
                 f"Failed to parse LDIF file: {error_msg}",
             )
-        entries = [m.Ldif.Entry.model_validate(entry) for entry in parse_result.value]
+        entries = [
+            m.Ldif.Entry.model_validate(entry) for entry in parse_result.value.entries
+        ]
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
                 m.Ldap.PhaseSyncResult(
@@ -251,7 +207,7 @@ class FlextLdapSync(FlextLdapOperations):
             elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
                 single_phase_callback = callback
         batch_result = self.batch_upsert(
-            FlextLdapSyncCallbacks.convert_entries_to_protocol(entries),
+            list(entries),
             progress_callback=single_phase_callback,
             retry_on_errors=sync_config.retry_on_errors
             or ["session terminated", "not connected", "invalid messageid", "socket"],

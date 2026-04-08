@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldap import FlextLdap, FlextLdapSync, FlextLdapSyncCallbacks, ldap
+from flext_ldap import FlextLdap, FlextLdapSync, ldap
 from tests import c, m, u
 
 pytestmark = pytest.mark.unit
@@ -62,12 +62,6 @@ class TestsFlextLdapSync:
             sync_result.total_synced, eq=c.Ldap.Tests.SyncFacade.ZERO_COUNT
         )
         u.Tests.Matchers.that(sync_result.phase_results, empty=True)
-
-    def test_convert_entries_to_protocol_returns_copy(self) -> None:
-        entries = [self._entry(c.Ldap.Tests.EntryDN.TEST_EXAMPLE)]
-        protocol_entries = FlextLdapSyncCallbacks.convert_entries_to_protocol(entries)
-        u.Tests.Matchers.that(protocol_entries, len=1)
-        assert protocol_entries is not entries
 
     def test_make_phase_progress_callback_keeps_single_phase_callback(self) -> None:
         cb = u.Ldap.Tests.single_phase_cb
