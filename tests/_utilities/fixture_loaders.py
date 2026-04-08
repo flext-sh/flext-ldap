@@ -129,7 +129,7 @@ class _FixtureLoaderUtils:
             if result.is_success:
                 return [
                     entry
-                    for entry in result.value
+                    for entry in result.value.entries
                     if hasattr(entry, "dn") and hasattr(entry, "attributes")
                 ]
             _FixtureLoaderUtils._logger.warning(

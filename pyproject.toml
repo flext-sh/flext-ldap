@@ -393,8 +393,13 @@ root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
+
 addopts = [
   "--strict-markers",
+]
+filterwarnings = [
+  "ignore:tagMap is deprecated\\. Please use TAG_MAP instead\\.:DeprecationWarning",
+  "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning",
 ]
 markers = [
   "docker: tests requiring Docker",
@@ -404,6 +409,7 @@ markers = [
   "performance: performance and benchmark tests",
   "resilience: resilience tests",
   "slow: slow-running tests",
+  "smoke: smoke tests",
   "stress: stress tests",
   "unit: unit tests",
 ]
