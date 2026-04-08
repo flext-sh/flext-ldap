@@ -544,7 +544,7 @@ class TestLdapOperations:
 ```python
 # tests/conftest.py
 import pytest
-from flext_tests import FlextTestsDocker
+from flext_tests import TestsFlextDocker
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -569,10 +569,10 @@ from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
 
 @pytest.fixture(scope="session")
 def ldap_server():
-    """Docker LDAP server for integration tests using FlextTestsDocker."""
-    docker_manager = FlextTestsDocker()
+    """Docker LDAP server for integration tests using TestsFlextDocker."""
+    docker_manager = TestsFlextDocker()
 
-    # Start LDAP container using FlextTestsDocker
+    # Start LDAP container using TestsFlextDocker
     container_result = docker_manager.run_container(
         image="osixia/openldap:1.5.0",
         name="flext-ldap-test-server",
@@ -591,7 +591,7 @@ def ldap_server():
 
     container_id = container_result.unwrap()
 
-    # Wait for server to be ready using FlextTestsDocker health check
+    # Wait for server to be ready using TestsFlextDocker health check
     health_result = docker_manager.wait_for_container_health(
         container_name="flext-ldap-test-server",
         health_command="ldapsearch -x -H ldap://localhost:389 -b '' -s base",
@@ -613,7 +613,7 @@ def ldap_server():
 
     yield container_id
 
-    # Cleanup using FlextTestsDocker
+    # Cleanup using TestsFlextDocker
     docker_manager.stop_container("flext-ldap-test-server", remove=True)
 
 @pytest.fixture

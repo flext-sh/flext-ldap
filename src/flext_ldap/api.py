@@ -25,11 +25,19 @@ from flext_ldap import (
 class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
     """Public LDAP facade composed through cooperative MRO."""
 
+    _instance: ClassVar[Self | None] = None
     model_config: ClassVar[ConfigDict] = ConfigDict(
         frozen=False,
         extra="forbid",
         arbitrary_types_allowed=True,
     )
+
+    @classmethod
+    def get_instance(cls) -> Self:
+        """Return the shared LDAP facade instance."""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     @classmethod
     @override
@@ -60,6 +68,7 @@ class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
         )
 
 
-ldap = FlextLdap
+ldap = FlextLdap.get_instance()
+
 
 __all__ = ["FlextLdap", "ldap"]

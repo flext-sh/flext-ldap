@@ -14,51 +14,39 @@ if _t.TYPE_CHECKING:
 
     test_api = _tests_unit_test_api
     import tests.unit.test_base as _tests_unit_test_base
-    from tests.unit.test_api import TestsFlextLdapApi
 
     test_base = _tests_unit_test_base
     import tests.unit.test_config as _tests_unit_test_config
-    from tests.unit.test_base import TestsFlextLdapBase
 
     test_config = _tests_unit_test_config
     import tests.unit.test_constants as _tests_unit_test_constants
-    from tests.unit.test_config import TestsFlextLdapSettings
 
     test_constants = _tests_unit_test_constants
     import tests.unit.test_detection as _tests_unit_test_detection
-    from tests.unit.test_constants import TestsFlextLdapConstants
 
     test_detection = _tests_unit_test_detection
     import tests.unit.test_entry_adapter as _tests_unit_test_entry_adapter
-    from tests.unit.test_detection import TestsFlextLdapDetection
 
     test_entry_adapter = _tests_unit_test_entry_adapter
     import tests.unit.test_ldap3_adapter as _tests_unit_test_ldap3_adapter
-    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
 
     test_ldap3_adapter = _tests_unit_test_ldap3_adapter
     import tests.unit.test_models as _tests_unit_test_models
-    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
 
     test_models = _tests_unit_test_models
     import tests.unit.test_models_search as _tests_unit_test_models_search
-    from tests.unit.test_models import TestsFlextLdapModels
 
     test_models_search = _tests_unit_test_models_search
     import tests.unit.test_models_sync as _tests_unit_test_models_sync
-    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
 
     test_models_sync = _tests_unit_test_models_sync
     import tests.unit.test_operations as _tests_unit_test_operations
-    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
 
     test_operations = _tests_unit_test_operations
     import tests.unit.test_sync as _tests_unit_test_sync
-    from tests.unit.test_operations import TestsFlextLdapOperations, pytestmark
 
     test_sync = _tests_unit_test_sync
     import tests.unit.test_utilities as _tests_unit_test_utilities
-    from tests.unit.test_sync import TestsFlextLdapSync
 
     test_utilities = _tests_unit_test_utilities
     from flext_core.constants import FlextConstants as c
@@ -72,43 +60,13 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from tests.unit.test_utilities import TestsFlextLdapUtilities
 _LAZY_IMPORTS = {
-    "TestsFlextLdap3Adapter": (
-        "tests.unit.test_ldap3_adapter",
-        "TestsFlextLdap3Adapter",
-    ),
-    "TestsFlextLdapApi": ("tests.unit.test_api", "TestsFlextLdapApi"),
-    "TestsFlextLdapBase": ("tests.unit.test_base", "TestsFlextLdapBase"),
-    "TestsFlextLdapConstants": ("tests.unit.test_constants", "TestsFlextLdapConstants"),
-    "TestsFlextLdapDetection": ("tests.unit.test_detection", "TestsFlextLdapDetection"),
-    "TestsFlextLdapEntryAdapter": (
-        "tests.unit.test_entry_adapter",
-        "TestsFlextLdapEntryAdapter",
-    ),
-    "TestsFlextLdapModels": ("tests.unit.test_models", "TestsFlextLdapModels"),
-    "TestsFlextLdapModelsSearch": (
-        "tests.unit.test_models_search",
-        "TestsFlextLdapModelsSearch",
-    ),
-    "TestsFlextLdapModelsSync": (
-        "tests.unit.test_models_sync",
-        "TestsFlextLdapModelsSync",
-    ),
-    "TestsFlextLdapOperations": (
-        "tests.unit.test_operations",
-        "TestsFlextLdapOperations",
-    ),
-    "TestsFlextLdapSettings": ("tests.unit.test_config", "TestsFlextLdapSettings"),
-    "TestsFlextLdapSync": ("tests.unit.test_sync", "TestsFlextLdapSync"),
-    "TestsFlextLdapUtilities": ("tests.unit.test_utilities", "TestsFlextLdapUtilities"),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
     "p": ("flext_core.protocols", "FlextProtocols"),
-    "pytestmark": ("tests.unit.test_operations", "pytestmark"),
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),
@@ -130,26 +88,12 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "TestsFlextLdap3Adapter",
-    "TestsFlextLdapApi",
-    "TestsFlextLdapBase",
-    "TestsFlextLdapConstants",
-    "TestsFlextLdapDetection",
-    "TestsFlextLdapEntryAdapter",
-    "TestsFlextLdapModels",
-    "TestsFlextLdapModelsSearch",
-    "TestsFlextLdapModelsSync",
-    "TestsFlextLdapOperations",
-    "TestsFlextLdapSettings",
-    "TestsFlextLdapSync",
-    "TestsFlextLdapUtilities",
     "c",
     "d",
     "e",
     "h",
     "m",
     "p",
-    "pytestmark",
     "r",
     "s",
     "t",

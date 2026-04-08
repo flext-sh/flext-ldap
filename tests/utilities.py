@@ -1,33 +1,27 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_tests import FlextTestsUtilities
 
 from flext_core import r
 from flext_ldap import FlextLdapProtocols, FlextLdapUtilities
-from tests import c, m, p, t
-
-if TYPE_CHECKING:
-    from flext_ldap import FlextLdap
-from tests import _DockerInfraUtils, _FixtureLoaderUtils
+from tests import _DockerInfraUtils, _FixtureLoaderUtils, c, m, p, t
 
 
-class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
-    """Utilities for flext-ldap tests - extends FlextTestsUtilities and FlextLdapUtilities.
+class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
+    """Utilities for flext-ldap tests - extends TestsFlextUtilities and FlextLdapUtilities.
 
-    Architecture: Extends both FlextTestsUtilities and FlextLdapUtilities with flext-ldap-specific utility methods.
-    All generic utilities from FlextTestsUtilities and production utilities from FlextLdapUtilities are available through inheritance.
+    Architecture: Extends both TestsFlextUtilities and FlextLdapUtilities with flext-ldap-specific utility methods.
+    All generic utilities from TestsFlextUtilities and production utilities from FlextLdapUtilities are available through inheritance.
 
     Rules:
-    - NEVER redeclare utilities from FlextTestsUtilities or FlextLdapUtilities
+    - NEVER redeclare utilities from TestsFlextUtilities or FlextLdapUtilities
     - Only flext-ldap-specific utilities allowed
-    - All generic utilities come from FlextTestsUtilities
+    - All generic utilities come from TestsFlextUtilities
     - All production utilities come from FlextLdapUtilities
     """
 
     class Tests(FlextTestsUtilities.Tests):
-        """Test utilities — inherits Matchers from FlextTestsUtilities.Tests."""
+        """Test utilities — inherits Matchers from TestsFlextUtilities.Tests."""
 
     class Ldap(FlextLdapUtilities.Ldap):
         """LDAP test utilities."""
@@ -130,7 +124,7 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     )
 
                 @staticmethod
-                def assert_api_instantiated(api: FlextLdap | None) -> None:
+                def assert_api_instantiated(api: p.Ldap.LdapClient | None) -> None:
                     """Assert that ldap API is instantiated."""
                     assert api is not None, "ldap API instantiation failed"
 
@@ -164,6 +158,6 @@ class FlextLdapTestUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Test callback with 5 parameters (multi-phase)."""
 
 
-u = FlextLdapTestUtilities
+u = TestsFlextLdapUtilities
 
-__all__ = ["FlextLdapTestUtilities", "u"]
+__all__ = ["TestsFlextLdapUtilities", "u"]

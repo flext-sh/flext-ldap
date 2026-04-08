@@ -1,11 +1,11 @@
 """Constants for flext-ldap tests.
 
-Provides FlextLdapTestConstants, extending FlextTestsConstants with flext-ldap-specific
+Provides TestsFlextLdapConstants, extending FlextTestsConstants with flext-ldap-specific
 constants. All generic test constants come from flext_tests.
 
 Architecture:
 - FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
-- FlextLdapTestConstants (tests/) = flext-ldap-specific constants extending FlextTestsConstants
+- TestsFlextLdapConstants (tests/) = flext-ldap-specific constants extending FlextTestsConstants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +21,7 @@ from flext_tests import FlextTestsConstants
 from flext_ldap import c, t
 
 
-class FlextLdapTestConstants(FlextTestsConstants, c):
+class TestsFlextLdapConstants(FlextTestsConstants, c):
     """Constants for flext-ldap tests - extends FlextTestsConstants and c.
 
     Architecture: Extends both FlextTestsConstants and c with flext-ldap-specific constants.
@@ -603,6 +603,6 @@ class FlextLdapTestConstants(FlextTestsConstants, c):
                 BASIC_CONNECTION: Final[str] = "basic_connection"
 
 
-c = FlextLdapTestConstants
+c = TestsFlextLdapConstants
 
-__all__ = ["FlextLdapTestConstants", "c"]
+__all__ = ["TestsFlextLdapConstants", "c"]
