@@ -9,7 +9,6 @@ from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
     "FlextLdapModelsLdap": ("flext_ldap._models.ldap", "FlextLdapModelsLdap"),
-    "ldap": "flext_ldap._models.ldap",
 }
 
 

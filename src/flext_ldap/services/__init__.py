@@ -16,10 +16,6 @@ _LAZY_IMPORTS = {
     ),
     "FlextLdapSync": ("flext_ldap.services.sync", "FlextLdapSync"),
     "FlextLdapSyncCallbacks": ("flext_ldap.services.sync", "FlextLdapSyncCallbacks"),
-    "connection": "flext_ldap.services.connection",
-    "detection": "flext_ldap.services.detection",
-    "operations": "flext_ldap.services.operations",
-    "sync": "flext_ldap.services.sync",
 }
 
 

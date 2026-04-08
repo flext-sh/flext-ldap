@@ -11,8 +11,6 @@ _LAZY_IMPORTS = {
     "FlextLdapEntryAdapter": ("flext_ldap.adapters.entry", "FlextLdapEntryAdapter"),
     "FlextLdapLdap3Adapter": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"),
     "FlextLdapLdap3Wrappers": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"),
-    "entry": "flext_ldap.adapters.entry",
-    "ldap3": "flext_ldap.adapters.ldap3",
 }
 
 
