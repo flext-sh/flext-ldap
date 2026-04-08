@@ -8,9 +8,9 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextLdapEntryAdapter": ("flext_ldap.adapters.entry", "FlextLdapEntryAdapter"),
-    "FlextLdapLdap3Adapter": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Adapter"),
-    "FlextLdapLdap3Wrappers": ("flext_ldap.adapters.ldap3", "FlextLdapLdap3Wrappers"),
+    "FlextLdapEntryAdapter": ".entry",
+    "FlextLdapLdap3Adapter": ".ldap3",
+    "FlextLdapLdap3Wrappers": ".ldap3",
 }
 
 

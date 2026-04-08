@@ -22,33 +22,36 @@ if _t.TYPE_CHECKING:
     from tests.typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
     from tests.utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
-    ("tests._utilities",),
+    ("._utilities",),
     {
-        "TestsFlextLdapConstants": ("tests.constants", "TestsFlextLdapConstants"),
-        "TestsFlextLdapModels": ("tests.models", "TestsFlextLdapModels"),
-        "TestsFlextLdapProtocols": ("tests.protocols", "TestsFlextLdapProtocols"),
-        "TestsFlextLdapTypes": ("tests.typings", "TestsFlextLdapTypes"),
-        "TestsFlextLdapUtilities": ("tests.utilities", "TestsFlextLdapUtilities"),
-        "c": ("tests.constants", "TestsFlextLdapConstants"),
+        "TestsFlextLdapConstants": ".constants",
+        "TestsFlextLdapModels": ".models",
+        "TestsFlextLdapProtocols": ".protocols",
+        "TestsFlextLdapTypes": ".typings",
+        "TestsFlextLdapUtilities": ".utilities",
+        "c": (".constants", "TestsFlextLdapConstants"),
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "h": ("flext_core.handlers", "FlextHandlers"),
-        "m": ("tests.models", "TestsFlextLdapModels"),
-        "p": ("tests.protocols", "TestsFlextLdapProtocols"),
+        "m": (".models", "TestsFlextLdapModels"),
+        "p": (".protocols", "TestsFlextLdapProtocols"),
         "r": ("flext_core.result", "FlextResult"),
         "s": ("flext_core.service", "FlextService"),
-        "t": ("tests.typings", "TestsFlextLdapTypes"),
-        "u": ("tests.utilities", "TestsFlextLdapUtilities"),
+        "t": (".typings", "TestsFlextLdapTypes"),
+        "u": (".utilities", "TestsFlextLdapUtilities"),
         "x": ("flext_core.mixins", "FlextMixins"),
     },
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+    ),
+    module_name=__name__,
 )
-_ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
-_ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
-_ = _LAZY_IMPORTS.pop("lazy_getattr", None)
-_ = _LAZY_IMPORTS.pop("logger", None)
-_ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
-_ = _LAZY_IMPORTS.pop("output", None)
-_ = _LAZY_IMPORTS.pop("output_reporting", None)
 
 __all__ = [
     "TestsFlextLdapConstants",

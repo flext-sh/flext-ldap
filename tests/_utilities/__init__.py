@@ -8,8 +8,8 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "_DockerInfraUtils": ("tests._utilities.docker_infra", "_DockerInfraUtils"),
-    "_FixtureLoaderUtils": ("tests._utilities.fixture_loaders", "_FixtureLoaderUtils"),
+    "_DockerInfraUtils": ".docker_infra",
+    "_FixtureLoaderUtils": ".fixture_loaders",
 }
 
 
