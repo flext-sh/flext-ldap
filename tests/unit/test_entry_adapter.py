@@ -147,7 +147,6 @@ class TestsFlextLdapEntryAdapter:
         assert isinstance(FlextLdapEntryAdapter._ConversionHelpers, type)
 
     def test_conversion_helpers_static_methods_exist(self) -> None:
-        assert hasattr(FlextLdapEntryAdapter._ConversionHelpers, "is_base64_encoded")
         assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)
 
 

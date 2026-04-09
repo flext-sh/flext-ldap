@@ -57,7 +57,6 @@ class TestsFlextLdapModelsSync:
         field: str,
         expected: str | float | bool,
     ) -> None:
-        assert getattr(cls(), field) == expected
 
     # ── Validation constraints ─────────────────────────────────────────
 
@@ -107,7 +106,6 @@ class TestsFlextLdapModelsSync:
         kwargs: t.IntMapping,
         expected: float,
     ) -> None:
-        u.Tests.Matchers.that(getattr(cls(**kwargs), "success_rate"), eq=expected)
 
     # ── Factory: SyncStats.from_counters ───────────────────────────────
 

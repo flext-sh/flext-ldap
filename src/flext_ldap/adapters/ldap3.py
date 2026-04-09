@@ -223,6 +223,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 password=config.bind_password,
                 auto_bind=config.auto_bind,
                 auto_range=config.auto_range,
+                check_names=False,
                 receive_timeout=config.timeout,
             )
 

@@ -193,12 +193,14 @@ class FlextLdapModelsLdap:
     class UpsertResult(BaseModel):
         """Result of a single upsert operation."""
 
-        success: Annotated[bool, Field(description="Whether the upsert succeeded")]
-        dn: Annotated[str, Field(description="Distinguished name of the entry")]
+        success: Annotated[
+            bool, Field(description="Whether the upsert succeeded")
+        ] = False
+        dn: Annotated[str, Field(description="Distinguished name of the entry")] = ""
         operation: Annotated[
             str,
             Field(description="Operation performed (ADD/MODIFY/SKIP)"),
-        ]
+        ] = ""
         error: Annotated[
             str | None,
             Field(description="Error message if operation failed"),
@@ -253,11 +255,13 @@ class FlextLdapModelsLdap:
         """Immutable result of an LDAP operation (add/modify/delete/search)."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        success: Annotated[bool, Field(description="Whether the operation succeeded")]
+        success: Annotated[
+            bool, Field(description="Whether the operation succeeded")
+        ] = False
         operation_type: Annotated[
             str,
             Field(description="Type of operation performed"),
-        ]
+        ] = ""
         message: Annotated[
             str,
             Field(description="Result or error message"),
@@ -338,12 +342,12 @@ class FlextLdapModelsLdap:
     class LdapOperationResult(BaseModel):
         """LDAP operation result."""
 
-        operation: str
+        operation: str = ""
 
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
 
-        phase_name: str
+        phase_name: str = ""
         total_entries: t.NonNegativeInt = 0
         duration_seconds: t.NonNegativeFloat = 0.0
         success_rate: t.NonNegativeFloat = 0.0

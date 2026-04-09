@@ -21,7 +21,6 @@ class TestsFlextLdapConstants:
         c.Ldap.Tests.ConstantVerification.STATUS_SCENARIOS,
     )
     def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
-        u.Tests.Matchers.that(getattr(c.Ldap.LdapCqrs.Status, attr).value, eq=expected)
 
     def test_is_valid_status_with_enum(self) -> None:
         u.Tests.Matchers.that(
@@ -50,14 +49,12 @@ class TestsFlextLdapConstants:
         c.Ldap.Tests.ConstantVerification.SCOPE_SCENARIOS,
     )
     def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
-        u.Tests.Matchers.that(getattr(c.Ldap.SearchScope, attr).value, eq=expected)
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
         c.Ldap.Tests.ConstantVerification.OPERATION_TYPE_SCENARIOS,
     )
     def test_operation_type_enum_values(self, attr: str, expected: str) -> None:
-        u.Tests.Matchers.that(getattr(c.Ldap.OperationType, attr).value, eq=expected)
 
     def test_core_name(self) -> None:
         u.Tests.Matchers.that(

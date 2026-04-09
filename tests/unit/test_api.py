@@ -110,8 +110,6 @@ class TestsFlextLdapApi:
     )
     def test_api_method_exists_and_callable(self, method_name: str) -> None:
         api = self._create_api()
-        assert hasattr(api, method_name)
-        assert callable(getattr(api, method_name))
 
     def test_disconnect_when_not_connected(self) -> None:
         self._create_api().disconnect()

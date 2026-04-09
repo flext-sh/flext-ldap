@@ -558,7 +558,11 @@ class FlextLdapOperations(FlextLdapConnection):
                 m.Ldif.Entry instance.
 
             """
-            dn_value = str(entry.dn)
+            dn_value = (
+                entry.dn.value
+                if entry.dn is not None
+                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
+            )
             attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
                 entry,
             )
@@ -566,17 +570,21 @@ class FlextLdapOperations(FlextLdapConnection):
                 str(k): [str(item) for item in v]
                 for k, v in dict(attrs_mapping).items()
             }
-            return m.Ldif.Entry(
-                dn=m.Ldif.DN(value=dn_value, metadata=m.Ldif.EntryMetadata()),
-                attributes=m.Ldif.Attributes.model_validate({
+            return m.Ldif.Entry.model_validate({
+                "dn": m.Ldif.DN(
+                    value=dn_value,
+                    metadata=m.Ldif.EntryMetadata(),
+                ),
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": attrs_dict,
                     "attribute_metadata": {},
                     "metadata": None,
                 }),
-                changetype=None,
-                metadata=None,
-                validation_metadata=None,
-            )
+                "changetype": entry.changetype,
+                "change_operations": list(entry.change_operations),
+                "metadata": None,
+                "validation_metadata": None,
+            })
 
         def execute(self, entry: m.Ldif.Entry) -> r[m.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
@@ -741,25 +749,39 @@ class FlextLdapOperations(FlextLdapConnection):
 
             """
             entry_model = self._convert_to_model(entry)
-            attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
-            add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
-            add_op: t.StrSequence = [str(item) for item in add_op_result]
-            if not add_op:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    "Schema modify entry missing 'add' attribute",
-                )
             dn_str: str
             if entry_model.dn is not None:
                 dn_str = entry_model.dn.value or c.Ldif.EntryDefaults.UNKNOWN_VALUE
             else:
                 dn_str = c.Ldif.EntryDefaults.UNKNOWN_VALUE
-            last_result: r[m.Ldap.LdapOperationResult] | None = None
-            for attr_type in add_op:
-                attr_values_raw = attrs.get(attr_type, [])
-                attr_values = [str(item) for item in attr_values_raw]
-                filtered = [x for x in attr_values if x]
-                if not filtered:
+            schema_additions: list[tuple[str, t.StrSequence]] = []
+            for change_operation in entry_model.change_operations:
+                if change_operation.operation != c.Ldif.ChangeOperation.ADD:
                     continue
+                filtered_values = [
+                    change_value.value
+                    for change_value in change_operation.values
+                    if change_value.value
+                ]
+                if filtered_values:
+                    schema_additions.append(
+                        (change_operation.attribute, filtered_values)
+                    )
+            if not schema_additions:
+                attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
+                add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
+                add_op: t.StrSequence = [str(item) for item in add_op_result]
+                for attr_type in add_op:
+                    attr_values_raw = attrs.get(attr_type, [])
+                    filtered_values = [str(item) for item in attr_values_raw if item]
+                    if filtered_values:
+                        schema_additions.append((attr_type, filtered_values))
+            if not schema_additions:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    "Schema modify entry missing add operations",
+                )
+            last_result: r[m.Ldap.LdapOperationResult] | None = None
+            for attr_type, filtered in schema_additions:
                 changes: t.Ldap.OperationChanges = {
                     attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
                 }
