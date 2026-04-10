@@ -13,10 +13,7 @@ import logging
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import TYPE_CHECKING, TypeIs
 
-from ldap3 import (
-    Connection as Ldap3Connection,
-    Server as Ldap3Server,
-)
+import ldap3
 
 from flext_ldap import c, p, t
 from flext_ldif import m, u
@@ -76,7 +73,7 @@ class FlextLdapUtilities(u):
                 "NO_INFO" if get_info == "NO_INFO" else get_info
             )
             scheme = "ldaps" if use_ssl else "ldap"
-            server: p.Ldap.Ldap3Server = Ldap3Server(
+            server: p.Ldap.Ldap3Server = ldap3.Server(
                 f"{scheme}://{host}:{port}",
                 get_info=resolved_info,
             )
@@ -95,7 +92,7 @@ class FlextLdapUtilities(u):
                 get_info: Info level ("ALL", "NONE", "NO_INFO", "DSA", "SCHEMA").
 
             """
-            server: p.Ldap.Ldap3Server = Ldap3Server(server_url, get_info=get_info)
+            server: p.Ldap.Ldap3Server = ldap3.Server(server_url, get_info=get_info)
             return server
 
         @staticmethod
@@ -112,13 +109,13 @@ class FlextLdapUtilities(u):
             The ONLY sanctioned way for test code outside flext-ldap/src and
             flext-ldif/src to create an LDAP connection object.
             """
-            ldap3_server: Ldap3Server
-            if isinstance(server, Ldap3Server):
+            ldap3_server: ldap3.Server
+            if isinstance(server, ldap3.Server):
                 ldap3_server = server
             else:
-                ldap3_server = Ldap3Server(str(server))
+                ldap3_server = ldap3.Server(str(server))
             if receive_timeout is not None:
-                conn = Ldap3Connection(
+                conn = ldap3.Connection(
                     ldap3_server,
                     user=user,
                     password=password,
@@ -126,7 +123,7 @@ class FlextLdapUtilities(u):
                     receive_timeout=receive_timeout,
                 )
             else:
-                conn = Ldap3Connection(
+                conn = ldap3.Connection(
                     ldap3_server,
                     user=user,
                     password=password,
@@ -142,7 +139,7 @@ class FlextLdapUtilities(u):
             get_info: t.Ldap.Ldap3GetInfo = "NO_INFO",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
-            server: p.Ldap.Ldap3Server = Ldap3Server(
+            server: p.Ldap.Ldap3Server = ldap3.Server(
                 host,
                 port=port,
                 get_info=get_info,

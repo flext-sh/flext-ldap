@@ -119,12 +119,8 @@ class TestsFlextLdapModelsSync:
             duration_seconds=c.Ldap.Tests.Sync.FromCounters.DURATION,
         )
         u.Tests.Matchers.that(s.total, eq=c.Ldap.Tests.Sync.FromCounters.TOTAL)
-        u.Tests.Matchers.that(
-            s.duration_seconds, eq=c.Ldap.Tests.Sync.FromCounters.DURATION
-        )
-        u.Tests.Matchers.that(
-            s.success_rate, eq=c.Ldap.Tests.Sync.FromCounters.SUCCESS_RATE
-        )
+        u.Tests.Matchers.that(s.duration_seconds, eq=c.Ldap.Tests.Sync.FromCounters.DURATION)
+        u.Tests.Matchers.that(s.success_rate, eq=c.Ldap.Tests.Sync.FromCounters.SUCCESS_RATE)
 
     def test_from_counters_serialization_includes_computed(self) -> None:
         u.Tests.Matchers.that(
@@ -163,12 +159,8 @@ class TestsFlextLdapModelsSync:
             successful=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL,
             failed=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED,
         )
-        u.Tests.Matchers.that(
-            r.total_processed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_TOTAL
-        )
-        u.Tests.Matchers.that(
-            r.successful, eq=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL
-        )
+        u.Tests.Matchers.that(r.total_processed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_TOTAL)
+        u.Tests.Matchers.that(r.successful, eq=c.Ldap.Tests.Sync.Upsert.BATCH_SUCCESSFUL)
         u.Tests.Matchers.that(r.failed, eq=c.Ldap.Tests.Sync.Upsert.BATCH_FAILED)
 
     # ── ConversionMetadata: tracks attribute changes ───────────────────
@@ -216,9 +208,7 @@ class TestsFlextLdapModelsSync:
             total_duration_seconds=c.Ldap.Tests.Sync.MultiPhase.TOTAL_DURATION,
             overall_success=True,
         )
-        u.Tests.Matchers.that(
-            r.total_synced, eq=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SYNCED
-        )
+        u.Tests.Matchers.that(r.total_synced, eq=c.Ldap.Tests.Sync.MultiPhase.TOTAL_SYNCED)
         u.Tests.Matchers.that(r.overall_success, eq=True)
 
     def test_multi_phase_with_phase_results_dict(self) -> None:

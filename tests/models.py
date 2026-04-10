@@ -14,28 +14,27 @@ from typing import override
 
 from flext_tests import FlextTestsModels
 
-from flext_core import r
-from flext_ldap import FlextLdapModels
-from tests import s, t
+from flext_ldap import m
+from tests import s, t, r
 
 
-class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
+class TestsFlextLdapModels(m, FlextTestsModels):
     """Test models - composição de TestsFlextModels + m.
 
     Hierarquia:
     - TestsFlextModels: Utilitários de teste genéricos
-    - FlextLdapModels: Models de domínio do projeto
+    - m: Models de domínio do projeto
     - TestsFlextLdapModels: Composição + namespace .Tests
 
     Access patterns:
-    - m.Tests.* - Test fixtures (ConnectionConfig, SearchOptions, etc.)
+    - m.Ldap.Tests.* - Test fixtures (ConnectionConfig, SearchOptions, etc.)
     - m.Ldap.* - Production domain models
     """
 
-    class Ldap(FlextLdapModels.Ldap):
+    class Ldap(m.Ldap):
         """LDAP test models."""
 
-        class Tests(FlextTestsModels.Tests):
+        class Tests:
             """Test fixture models namespace."""
 
             EMPTY = ""
@@ -47,11 +46,9 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
 
                 def __init__(self, vals: t.StrSequence) -> None:
                     self.values: t.Ldap.Ldap3AttributeValues = vals
-                    self.raw_values: t.MutableSequenceOf[bytes] = [
-                        v.encode() for v in vals
-                    ]
+                    self.raw_values: t.MutableSequenceOf[bytes] = [v.encode() for v in vals]
                     self.value: t.Ldap.Ldap3AttributeValue = (
-                        vals[0] if vals else TestsFlextLdapModels.Ldap.Tests.EMPTY
+                        vals[0] if vals else m.Ldap.Tests.EMPTY
                     )
 
             class MockLdap3Entry:
@@ -65,7 +62,7 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
                     self.entry_dn: str | None = (
                         dn
                         if dn is not None
-                        else TestsFlextLdapModels.Ldap.Tests.USER_EXAMPLE_DN
+                        else m.Ldap.Tests.USER_EXAMPLE_DN
                     )
                     self._attrs: t.StrSequenceMapping = attrs or {}
 
@@ -82,33 +79,32 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
                 def __getitem__(
                     self,
                     item: str,
-                ) -> TestsFlextLdapModels.Ldap.Tests.MockLdap3Attribute:
+                ) -> m.Ldap.Tests.MockLdap3Attribute:
                     """Return mock attribute for the given item name."""
-                    return TestsFlextLdapModels.Ldap.Tests.MockLdap3Attribute(
+                    return m.Ldap.Tests.MockLdap3Attribute(
                         list(self._attrs.get(item, [])),
                     )
 
-            class SuccessService(s[FlextLdapModels.Ldap.SearchResult]):
+            class SuccessService(s[m.Ldap.SearchResult]):
                 """Test service that always succeeds."""
 
                 @override
-                def execute(self) -> r[FlextLdapModels.Ldap.SearchResult]:
-                    return r[FlextLdapModels.Ldap.SearchResult].ok(
-                        FlextLdapModels.Ldap.SearchResult(
+                def execute(self) -> r[m.Ldap.SearchResult]:
+                    return r[m.Ldap.SearchResult].ok(
+                        m.Ldap.SearchResult(
                             entries=[],
                             search_options=None,
                         ),
                     )
 
-            class FailService(s[FlextLdapModels.Ldap.SearchResult]):
+            class FailService(s[m.Ldap.SearchResult]):
                 """Test service that always fails."""
 
                 @override
-                def execute(self) -> r[FlextLdapModels.Ldap.SearchResult]:
-                    return r[FlextLdapModels.Ldap.SearchResult].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
+                def execute(self) -> r[m.Ldap.SearchResult]:
+                    return r[m.Ldap.SearchResult].fail(
+                        m.Ldap.Tests.FAIL_ERROR_MESSAGE,
                     )
-
 
 # Short aliases for tests
 m = TestsFlextLdapModels

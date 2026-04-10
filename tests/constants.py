@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from typing import ClassVar, Final
 
 from flext_tests import FlextTestsConstants
+from frozenlist import FrozenList
 
 from flext_ldap import c, t
 
@@ -53,9 +54,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 DEFAULT_FILTER: Final[str] = "(objectClass=*)"
                 DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
                 TEST_USER_CN: Final[str] = "testuser"
-                TEST_USER_DN: Final[str] = (
-                    f"uid={TEST_USER_CN},ou=people,{DEFAULT_BASE_DN}"
-                )
+                TEST_USER_DN: Final[str] = f"uid={TEST_USER_CN},ou=people,{DEFAULT_BASE_DN}"
                 TEST_GROUP_CN: Final[str] = "testgroup"
                 TEST_GROUP_DN: Final[str] = (
                     f"cn={TEST_GROUP_CN},ou=groups,{DEFAULT_BASE_DN}"
@@ -176,6 +175,46 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     "ldap bind failed",
                     "timeout",
                 })
+
+            DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
+            DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
+            DOCKER_SERVICE_NAME: Final[str] = "openldap"
+            DOCKER_PORT: Final[int] = 3390
+            DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
+            DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+            DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
+            DOCKER_LEGACY_ADMIN_DN: Final[str] = (
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+            )
+            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = (
+                "REDACTED_LDAP_BIND_PASSWORD123"
+            )
+            DOCKER_STARTUP_TIMEOUT: Final[int] = 90
+            DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
+            DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
+            DOCKER_OU_NAMES: Final[FrozenList[str]] = FrozenList(
+                ["people", "groups", "services"],
+            )
+            DOCKER_OU_NAMES.freeze()
+            DOCKER_OU_SEARCH_ATTRS: Final[FrozenList[str]] = FrozenList(["ou"])
+            DOCKER_OU_SEARCH_ATTRS.freeze()
+            ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset({
+                "ldapsessionterminatedbyservererror",
+                "ldapserverdownerror",
+                "ldap server is not responding",
+                "broken pipe",
+                "session terminated by server",
+                "ldapoperationresult",
+            })
+            ERROR_TRANSIENT_PATTERNS: Final[frozenset[str]] = frozenset({
+                "connection refused",
+                "connection reset by peer",
+                "cannot connect to ldap",
+                "ldapsocketopenerror",
+                "ldapcommunicationerror",
+                "ldap bind failed",
+                "timeout",
+            })
 
             class EntryDN:
                 """Test DN constants used across adapter/entry/sync tests."""
@@ -345,9 +384,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             class SampleData:
                 """Static sample entries for tests."""
 
-                USER_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, t.StrSequence]]
-                ] = {
+                USER_ENTRY: ClassVar[Mapping[str, str | Mapping[str, t.StrSequence]]] = {
                     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
                     "attributes": {
                         "cn": ["testuser"],
@@ -364,9 +401,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                         "userPassword": ["test123"],
                     },
                 }
-                GROUP_ENTRY: ClassVar[
-                    Mapping[str, str | Mapping[str, t.StrSequence]]
-                ] = {
+                GROUP_ENTRY: ClassVar[Mapping[str, str | Mapping[str, t.StrSequence]]] = {
                     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
                     "attributes": {
                         "cn": ["testgroup"],
@@ -601,7 +636,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 CONTAINER_HEALTH: Final[str] = "container_health"
                 API_IMPORTS: Final[str] = "api_imports"
                 BASIC_CONNECTION: Final[str] = "basic_connection"
-
 
 c = TestsFlextLdapConstants
 

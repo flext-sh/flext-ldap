@@ -53,9 +53,7 @@ class TestsFlextLdap3Adapter:
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
         u.Tests.Matchers.that(
-            getattr(
-                server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY
-            ),
+            getattr(server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY),
             eq=c.LOCALHOST,
         )
         u.Tests.Matchers.that(
@@ -72,9 +70,7 @@ class TestsFlextLdap3Adapter:
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
         u.Tests.Matchers.that(
-            getattr(
-                server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY
-            ),
+            getattr(server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY),
             eq=c.LOCALHOST,
         )
         u.Tests.Matchers.that(
@@ -97,9 +93,7 @@ class TestsFlextLdap3Adapter:
         server = Ldap3Adapter.ConnectionManager.create_server(config)
         assert server is not None
         u.Tests.Matchers.that(
-            getattr(
-                server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY
-            ),
+            getattr(server, c.Ldap.Tests.FieldNames.HOST, c.Ldap.Tests.StringValues.EMPTY),
             eq=c.LOCALHOST,
         )
         u.Tests.Matchers.that(
@@ -113,12 +107,10 @@ class TestsFlextLdap3Adapter:
 
     def test_adapter_inner_classes_exist(self) -> None:
         assert (
-            c.Ldap.Tests.Ldap3Adapter.INNER_CLASS_CONNECTION_MANAGER
-            in Ldap3Adapter.__dict__
+            c.Ldap.Tests.Ldap3Adapter.INNER_CLASS_CONNECTION_MANAGER in Ldap3Adapter.__dict__
         )
         assert (
-            c.Ldap.Tests.Ldap3Adapter.INNER_CLASS_RESULT_CONVERTER
-            in Ldap3Adapter.__dict__
+            c.Ldap.Tests.Ldap3Adapter.INNER_CLASS_RESULT_CONVERTER in Ldap3Adapter.__dict__
         )
         assert isinstance(Ldap3Adapter.ConnectionManager, type)
         assert isinstance(Ldap3Adapter.ResultConverter, type)

@@ -122,12 +122,8 @@ class TestsFlextLdapSettings:
 
     def test_field_descriptions(self) -> None:
         fields = FlextLdapSettings.model_fields
-        u.Tests.Matchers.that(
-            fields[c.Ldap.Tests.FieldNames.HOST].description, none=False
-        )
-        u.Tests.Matchers.that(
-            fields[c.Ldap.Tests.FieldNames.PORT].description, none=False
-        )
+        u.Tests.Matchers.that(fields[c.Ldap.Tests.FieldNames.HOST].description, none=False)
+        u.Tests.Matchers.that(fields[c.Ldap.Tests.FieldNames.PORT].description, none=False)
 
     def test_serialization(self) -> None:
         data = FlextLdapSettings(

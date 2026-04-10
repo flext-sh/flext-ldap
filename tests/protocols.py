@@ -11,34 +11,35 @@ from __future__ import annotations
 
 from flext_tests import FlextTestsProtocols
 
-from flext_ldap import FlextLdapProtocols
+from flext_ldap import p
 
 
-class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
+class TestsFlextLdapProtocols(FlextTestsProtocols, p):
     """Protocol definitions for flext-ldap tests.
 
-    Extends both TestsFlextProtocols and FlextLdapProtocols with flext-ldap-specific
+    Extends both TestsFlextProtocols and p with flext-ldap-specific
     protocol definitions.
 
     Provides access to:
     - p.Tests.Docker.* (from TestsFlextProtocols)
     - p.Tests.Factory.* (from TestsFlextProtocols)
-    - p.Ldap.* (from FlextLdapProtocols)
+    - p.Ldap.* (from p)
 
     Rules:
     - NEVER redeclare protocols from parent classes
     - Only flext-ldap-specific test protocols allowed
     """
 
-    class Ldap(FlextLdapProtocols.Ldap):
+    class Ldap(p.Ldap):
         """Flext-ldap-specific test protocols."""
 
+    
         class Tests:
             """Project-specific test protocols.
 
             Extends TestsFlextProtocols.Tests with flext-ldap-specific protocols.
             """
 
-
 p = TestsFlextLdapProtocols
+
 __all__ = ["TestsFlextLdapProtocols", "p"]

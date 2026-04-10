@@ -34,8 +34,6 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from ldap3 import BASE, Connection
-
 from flext_core import r
 from flext_ldap import c, p, s, t, u
 
@@ -270,7 +268,7 @@ class FlextLdapServerDetector(s[str]):
 
     @staticmethod
     def _query_root_dse(
-        connection: Connection,
+        connection: p.Ldap.Ldap3Connection,
     ) -> r[t.Ldap.OperationAttributes]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
@@ -308,7 +306,7 @@ class FlextLdapServerDetector(s[str]):
         if not search_method(
             search_base="",
             search_filter=str(c.Ldap.Filters.ALL_ENTRIES_FILTER),
-            search_scope=BASE,
+            search_scope=c.Ldap.SearchScopeValue.BASE,
             attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
         ):
             return r[t.Ldap.OperationAttributes].fail(
@@ -331,7 +329,7 @@ class FlextLdapServerDetector(s[str]):
         }
         return r[Mapping[str, t.StrSequence]].ok(attributes)
 
-    def detect_from_connection(self, connection: Connection) -> r[str]:
+    def detect_from_connection(self, connection: p.Ldap.Ldap3Connection) -> r[str]:
         """Query ``rootDSE`` and return a detected server label.
 
         Business Rules:
@@ -415,9 +413,9 @@ class FlextLdapServerDetector(s[str]):
         connection_raw = _kwargs.get("connection")
         if connection_raw is None:
             return r[str].fail("connection parameter required")
-        if not isinstance(connection_raw, Connection):
+        if not isinstance(connection_raw, p.Ldap.Ldap3Connection):
             return r[str].fail(
                 f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
             )
-        connection: Connection = connection_raw
+        connection: p.Ldap.Ldap3Connection = connection_raw
         return self.detect_from_connection(connection)

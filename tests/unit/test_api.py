@@ -100,7 +100,7 @@ class TestsFlextLdapApi:
         c.Ldap.Tests.Api.EXPECTED_METHODS,
     )
     def test_api_method_exists_and_callable(self, method_name: str) -> None:
-        ldap
+        u.Tests.Matchers.that(callable(getattr(ldap, method_name)), eq=True)
 
     def test_disconnect_when_not_connected(self) -> None:
         ldap.disconnect()

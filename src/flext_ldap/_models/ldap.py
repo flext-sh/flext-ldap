@@ -135,6 +135,7 @@ class FlextLdapModelsLdap:
     class SyncOptions(BaseModel):
         """Configuration for LDAP sync operations."""
 
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         batch_size: Annotated[
             t.PositiveInt,
             Field(description="Batch size for sync operations"),

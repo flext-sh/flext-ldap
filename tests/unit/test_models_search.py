@@ -21,12 +21,8 @@ class TestsFlextLdapModelsSearch:
         u.Tests.Matchers.that(options.scope, eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
         u.Tests.Matchers.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
         u.Tests.Matchers.that(options.attributes, none=True)
-        u.Tests.Matchers.that(
-            options.size_limit, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO
-        )
-        u.Tests.Matchers.that(
-            options.time_limit, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO
-        )
+        u.Tests.Matchers.that(options.size_limit, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO)
+        u.Tests.Matchers.that(options.time_limit, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO)
 
     def test_search_options_custom_values(self) -> None:
         options = m.Ldap.SearchOptions(
@@ -42,9 +38,7 @@ class TestsFlextLdapModelsSearch:
         u.Tests.Matchers.that(
             options.attributes, eq=list(c.Ldap.Tests.Search.SEARCH_ATTRIBUTES)
         )
-        u.Tests.Matchers.that(
-            options.size_limit, eq=c.Ldap.Tests.Search.SIZE_LIMIT_CUSTOM
-        )
+        u.Tests.Matchers.that(options.size_limit, eq=c.Ldap.Tests.Search.SIZE_LIMIT_CUSTOM)
 
     def test_search_options_invalid_base_dn_format(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.Models.INVALID_DN_FORMAT)
@@ -101,9 +95,7 @@ class TestsFlextLdapModelsSearch:
         )
         u.Tests.Matchers.that(result.success, eq=True)
         u.Tests.Matchers.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
-        u.Tests.Matchers.that(
-            result.message, eq=c.Ldap.Tests.Search.ENTRY_ADDED_MESSAGE
-        )
+        u.Tests.Matchers.that(result.message, eq=c.Ldap.Tests.Search.ENTRY_ADDED_MESSAGE)
         u.Tests.Matchers.that(
             result.entries_affected, eq=c.Ldap.Tests.Search.ENTRIES_AFFECTED_ONE
         )
@@ -113,9 +105,7 @@ class TestsFlextLdapModelsSearch:
             success=True,
             operation_type=c.Ldap.OperationType.SEARCH,
         )
-        u.Tests.Matchers.that(
-            result.message, eq=c.Ldap.Tests.Sync.Defaults.EMPTY_SOURCE_DN
-        )
+        u.Tests.Matchers.that(result.message, eq=c.Ldap.Tests.Sync.Defaults.EMPTY_SOURCE_DN)
         u.Tests.Matchers.that(
             result.entries_affected, eq=c.Ldap.Tests.Search.DEFAULT_LIMIT_ZERO
         )
@@ -162,9 +152,7 @@ class TestsFlextLdapModelsSearch:
         u.Tests.Matchers.that(category, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
 
     def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
-        attrs = {
-            k: list(v) for k, v in c.Ldap.Tests.Search.OBJECTCLASS_PERSON_TOP.items()
-        }
+        attrs = {k: list(v) for k, v in c.Ldap.Tests.Search.OBJECTCLASS_PERSON_TOP.items()}
         category = m.Ldap.SearchResult.extract_objectclass_category(attrs)
         u.Tests.Matchers.that(category, eq=c.Ldap.Tests.Search.EXPECTED_CATEGORY_PERSON)
 
