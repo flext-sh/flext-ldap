@@ -28,7 +28,10 @@ class TestsFlextLdapSmoke:
 
     def test_ldap_container_health(
         self,
-        ldap_container: t.Ldap.Tests.LdapContainerDict,
+        ldap_container: t.MappingKV[
+            str,
+            t.Scalar,
+        ],
     ) -> None:
         """SMOKE TEST: LDAP container is responsive (REGRA 5: REAL connection)."""
         server = u.Ldap.Tests.create_ldap3_server(ldap_container)
@@ -47,7 +50,10 @@ class TestsFlextLdapSmoke:
 
     def test_flext_ldap_basic_connection(
         self,
-        ldap_container: t.Ldap.Tests.LdapContainerDict,
+        ldap_container: t.MappingKV[
+            str,
+            t.Scalar,
+        ],
     ) -> None:
         """SMOKE TEST: ldap can connect to container (REGRA 5: REAL operations)."""
         client = ldap

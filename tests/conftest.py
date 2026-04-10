@@ -10,12 +10,9 @@ import pytest
 
 from flext_core import FlextLogger, r
 from flext_ldap import FlextLdapSettings
-from flext_ldap.adapters.ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap import FlextLdapLdap3Wrappers
 
-from .constants import c
-from .models import m
-from .typings import t
-from .utilities import u
+from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
 
@@ -155,7 +152,9 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture(scope="session")
-def ldap_container(worker_id: str) -> t.Ldap.Tests.LdapContainerDict:
+def ldap_container(
+    worker_id: str,
+) -> t.MappingKV[str, t.Scalar]:
     lock = u.Ldap.Tests.FileLock(
         Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
@@ -212,7 +211,7 @@ def ldap_container(worker_id: str) -> t.Ldap.Tests.LdapContainerDict:
 
 @pytest.fixture(scope="module")
 def connection_config(
-    ldap_container: t.Ldap.Tests.LdapContainerDict,
+    ldap_container: t.MappingKV[str, t.Scalar],
 ) -> m.Ldap.ConnectionConfig:
     port_value = ldap_container["port"]
     port_int = (
@@ -231,7 +230,7 @@ def connection_config(
 
 @pytest.fixture
 def search_options(
-    ldap_container: t.Ldap.Tests.LdapContainerDict,
+    ldap_container: t.MappingKV[str, t.Scalar],
 ) -> m.Ldap.SearchOptions:
     base_dn = str(ldap_container.get("base_dn", c.Ldap.Defaults.EXAMPLE_BASE_DN))
     return m.Ldap.SearchOptions(

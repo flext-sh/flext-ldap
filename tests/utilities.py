@@ -65,7 +65,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def create_ldap3_server(
-                ldap_container: t.Ldap.Tests.LdapContainerDict,
+                ldap_container: t.MappingKV[
+                    str,
+                    t.Scalar,
+                ],
             ) -> p.Ldap.Ldap3Server:
                 """Create an ldap3 server from container metadata."""
                 server_url = ldap_container["server_url"]
@@ -74,7 +77,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def create_ldap3_connection(
                 server: p.Ldap.Ldap3Server,
-                ldap_container: t.Ldap.Tests.LdapContainerDict,
+                ldap_container: t.MappingKV[
+                    str,
+                    t.Scalar,
+                ],
             ) -> p.Ldap.Ldap3Connection:
                 """Create an ldap3 connection from container metadata."""
                 return u.Ldap.create_connection(
@@ -85,7 +91,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def create_connection_config(
-                ldap_container: t.Ldap.Tests.LdapContainerDict,
+                ldap_container: t.MappingKV[
+                    str,
+                    t.Scalar,
+                ],
             ) -> m.Ldap.ConnectionConfig:
                 """Build a typed connection config from container metadata."""
                 port = ldap_container["port"]
@@ -123,7 +132,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def assert_models_accessible() -> None:
                 """Assert that the project models facade is available."""
-                assert m is not None, "m (TestsFlextLdapModels) not accessible"
+                assert m is not None, "m (m) not accessible"
 
             @staticmethod
             def assert_connection_success(result: p.Result[bool]) -> None:
