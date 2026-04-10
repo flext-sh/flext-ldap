@@ -22,7 +22,7 @@ class TestsFlextLdapBase:
 
     def test_exports(self) -> None:
         assert callable(s)
-        assert c.Ldap.Tests.Base.EXPORT_ALIAS in base.__all__
+        assert c.Ldap.Tests.BASE_EXPORT_ALIAS in base.__all__
 
     def test_has_docstring(self) -> None:
         assert s.__doc__ is not None
@@ -36,7 +36,7 @@ class TestsFlextLdapBase:
     def test_execute_failure(self) -> None:
         result = m.Ldap.Tests.FailService().execute()
         assert result.is_failure
-        assert result.error == c.Ldap.Tests.Base.FAIL_ERROR_MESSAGE
+        assert result.error == c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE
 
     # ── Config + Logger ────────────────────────────────────────────────
 
@@ -57,8 +57,8 @@ class TestsFlextLdapBase:
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
-        c.Ldap.Tests.ModelConfig.SERVICE_BASE_CONFIG,
-        ids=[x[0] for x in c.Ldap.Tests.ModelConfig.SERVICE_BASE_CONFIG],
+        c.Ldap.Tests.MODEL_CONFIG_SERVICE_BASE_CONFIG,
+        ids=[x[0] for x in c.Ldap.Tests.MODEL_CONFIG_SERVICE_BASE_CONFIG],
     )
     def test_model_config(self, attr: str, expected: str | bool) -> None:
         assert m.Ldap.Tests.SuccessService.model_config.get(attr) == expected

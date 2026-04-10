@@ -51,7 +51,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("kwargs", "expect_failure", "error_substring"),
-        c.Ldap.Tests.Detection.EXECUTE_SCENARIOS,
+        c.Ldap.Tests.DETECTION_EXECUTE_SCENARIOS,
     )
     def test_execute_error_handling(
         self,
@@ -67,7 +67,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("attrs", "key", "expected"),
-        c.Ldap.Tests.Detection.GET_FIRST_VALUE_SCENARIOS,
+        c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
     )
     def test_get_first_value(
         self,
@@ -82,7 +82,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
-        c.Ldap.Tests.Detection.DETECT_FROM_ATTRIBUTES_SCENARIOS,
+        c.Ldap.Tests.DETECTION_FROM_ATTRIBUTES_SCENARIOS,
     )
     def test_detect_from_attributes(
         self,
@@ -99,4 +99,4 @@ class TestsFlextLdapDetection:
             _supported_controls=supported_controls,
             supported_extensions=[],
         )
-        u.Tests.Matchers.ok(result, eq=expected)
+        u.Ldap.Tests.ok(result, eq=expected)

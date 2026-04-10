@@ -41,8 +41,8 @@ class TestsFlextLdapOperations:
     def test_operations_initialization(self) -> None:
         """Test operations service initializes via MRO (no args)."""
         operations = self._create_operations()
-        u.Tests.Matchers.that(operations, none=False)
-        u.Tests.Matchers.that(operations.logger, none=False)
+        u.Ldap.Tests.that(operations, none=False)
+        u.Ldap.Tests.that(operations.logger, none=False)
 
     def test_config_property(self) -> None:
         """Test config property returns FlextSettings with ldap namespace."""
@@ -52,11 +52,11 @@ class TestsFlextLdapOperations:
     def test_is_connected_not_connected(self) -> None:
         """Test is_connected returns False when not connected."""
         operations = self._create_operations()
-        u.Tests.Matchers.that(not operations.is_connected, eq=True)
+        u.Ldap.Tests.that(not operations.is_connected, eq=True)
 
     @pytest.mark.parametrize(
         ("error_message", "expected"),
-        list(c.Ldap.Tests.Operations.ERROR_DETECTION_SCENARIOS.items()),
+        list(c.Ldap.Tests.OPERATIONS_ERROR_DETECTION_SCENARIOS.items()),
     )
     def test_is_already_exists_error_detection(
         self,
@@ -65,22 +65,21 @@ class TestsFlextLdapOperations:
     ) -> None:
         """Test is_already_exists_error detects various 'already exists' patterns."""
         result = FlextLdapOperations.is_already_exists_error(error_message)
-        u.Tests.Matchers.that(result, eq=expected)
+        u.Ldap.Tests.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:
         """Test execute method returns a r (fail when not connected)."""
         operations = self._create_operations()
         result = operations.execute()
-        u.Tests.Matchers.fail(result)
+        u.Ldap.Tests.fail(result)
 
     def test_search_method_exists(self) -> None:
         """Test that search method exists and returns fail when not connected."""
         operations = self._create_operations()
-        rfc_constants = c.Ldap.Tests.RFC
         search_options = m.Ldap.SearchOptions(
-            base_dn=rfc_constants.DEFAULT_BASE_DN,
-            filter_str=rfc_constants.DEFAULT_FILTER,
+            base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+            filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
         result = operations.search(search_options)
-        u.Tests.Matchers.fail(result)
+        u.Ldap.Tests.fail(result)

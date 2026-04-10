@@ -4,26 +4,64 @@ import fcntl
 import os
 import types
 from pathlib import Path
-from typing import ClassVar, TextIO
+from typing import ClassVar, TextIO, overload
 
 from flext_tests import FlextTestsUtilities, tk
 
 from flext_ldap import u
-from tests import c, m, p, r, t
+from tests import c, m, p, t
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, u):
     """Utilities for flext-ldap tests."""
 
     class Ldap(u.Ldap):
-        """LDAP test utilities."""
-
-        class Tests(FlextTestsUtilities.Tests):
+        class Tests:
             """Direct test utility surface for flext-ldap."""
 
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [
                 None,
             ]
+
+            @staticmethod
+            def that(
+                value: t.Tests.Testobject,
+                **kwargs: t.Tests.MatcherKwargValue,
+            ) -> None:
+                FlextTestsUtilities.Tests.Matchers.that(value, **kwargs)
+
+            @staticmethod
+            def fail[TResult](
+                result: p.Result[TResult],
+                **kwargs: t.Tests.MatcherKwargValue,
+            ) -> str:
+                return FlextTestsUtilities.Tests.Matchers.fail(result, **kwargs)
+
+            @staticmethod
+            @overload
+            def ok[TResult](
+                result: p.Result[TResult],
+            ) -> TResult: ...
+
+            @staticmethod
+            @overload
+            def ok[TResult](
+                result: p.Result[TResult],
+                **kwargs: t.Tests.MatcherKwargValue,
+            ) -> TResult | t.Tests.TestobjectSerializable: ...
+
+            @staticmethod
+            def ok[TResult](
+                result: p.Result[TResult],
+                **kwargs: t.Tests.MatcherKwargValue,
+            ) -> TResult | t.Tests.TestobjectSerializable:
+                return FlextTestsUtilities.Tests.Matchers.ok(result, **kwargs)
+
+            @staticmethod
+            def check[TResult](
+                result: p.Result[TResult],
+            ) -> m.Tests.Chain[TResult]:
+                return FlextTestsUtilities.Tests.Matchers.check(result)
 
             @staticmethod
             def create_ldap3_server(
@@ -55,7 +93,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     port
                     if isinstance(port, int)
                     else int(port)
-                    if isinstance(port, str | float)
+                    if isinstance(port, (str, float))
                     else c.Ldap.ConnectionDefaults.PORT
                 )
                 return m.Ldap.ConnectionConfig(
@@ -78,14 +116,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 """Assert that server info is available on the connection."""
                 server = connection.server
                 assert server.info is not None, "LDAP server info not available"
-                assert (
-                    server.info.naming_contexts is not None
-                ), "LDAP naming contexts not available"
-
-            @staticmethod
-            def assert_api_instantiated(api: p.Ldap.LdapClient | None) -> None:
-                """Assert that the LDAP API facade is instantiated."""
-                assert api is not None, "ldap API instantiation failed"
+                assert server.info.naming_contexts is not None, (
+                    "LDAP naming contexts not available"
+                )
 
             @staticmethod
             def assert_models_accessible() -> None:
@@ -93,7 +126,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 assert m is not None, "m (TestsFlextLdapModels) not accessible"
 
             @staticmethod
-            def assert_connection_success(result: r[bool]) -> None:
+            def assert_connection_success(result: p.Result[bool]) -> None:
                 """Assert that a connection result succeeded."""
                 assert result.is_success, f"Connection failed: {result.error}"
 
@@ -116,6 +149,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     self._file_obj: TextIO | None = None
 
                 def __enter__(self) -> None:
+                    """Acquire the lock."""
                     self.lock_file.parent.mkdir(parents=True, exist_ok=True)
                     self._file_obj = self.lock_file.open("w")
                     self._fd = self._file_obj.fileno()
@@ -127,6 +161,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     exc_val: BaseException | None,
                     exc_tb: types.TracebackType | None,
                 ) -> None:
+                    """Release the lock."""
                     if self._fd is not None:
                         fcntl.flock(self._fd, fcntl.LOCK_UN)
                     if self._file_obj is not None:

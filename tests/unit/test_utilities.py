@@ -25,60 +25,59 @@ class TestsFlextLdapUtilities:
     """
 
     def test_to_str_simple(self) -> None:
-        result = u.to_str(c.Ldap.Tests.StringValues.SIMPLE)
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.StringValues.SIMPLE)
+        result = u.to_str(c.Ldap.Tests.STRING_SIMPLE)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_SIMPLE)
 
     def test_to_str_none(self) -> None:
         result = u.to_str(None)
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.StringValues.EMPTY)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_EMPTY)
 
     def test_to_str_with_default(self) -> None:
-        result = u.to_str(None, default=c.Ldap.Tests.StringValues.DEFAULT_CUSTOM)
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.StringValues.DEFAULT_CUSTOM)
+        result = u.to_str(None, default=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
 
     def test_to_str_list_from_list(self) -> None:
-        result = u.to_str_list(list(c.Ldap.Tests.ListValues.ABC))
-        u.Tests.Matchers.that(result, eq=list(c.Ldap.Tests.ListValues.ABC))
+        result = u.to_str_list(list(c.Ldap.Tests.LIST_ABC))
+        u.Ldap.Tests.that(result, eq=list(c.Ldap.Tests.LIST_ABC))
 
     def test_to_str_list_from_single(self) -> None:
-        result = u.to_str_list(c.Ldap.Tests.ListValues.SINGLE)
-        u.Tests.Matchers.that(result, eq=[c.Ldap.Tests.ListValues.SINGLE])
+        result = u.to_str_list(c.Ldap.Tests.LIST_SINGLE)
+        u.Ldap.Tests.that(result, eq=[c.Ldap.Tests.LIST_SINGLE])
 
     def test_to_str_list_from_none(self) -> None:
         result = u.to_str_list(None)
-        u.Tests.Matchers.that(result, eq=[])
+        u.Ldap.Tests.that(result, eq=[])
 
     def test_norm_str_lowercase(self) -> None:
-        result = u.Ldap.norm_str(c.Ldap.Tests.StringValues.SIMPLE_UPPER, case="lower")
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.StringValues.SIMPLE)
+        result = u.Ldap.norm_str(c.Ldap.Tests.STRING_SIMPLE_UPPER, case="lower")
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_SIMPLE)
 
     def test_norm_str_uppercase(self) -> None:
-        result = u.Ldap.norm_str(c.Ldap.Tests.StringValues.SIMPLE, case="upper")
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.StringValues.SIMPLE_UPPER)
+        result = u.Ldap.norm_str(c.Ldap.Tests.STRING_SIMPLE, case="upper")
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_SIMPLE_UPPER)
 
     def test_norm_join(self) -> None:
-        result = u.Ldap.norm_join(list(c.Ldap.Tests.NormData.JOIN_INPUT), case="lower")
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.NormData.JOIN_EXPECTED)
+        result = u.Ldap.norm_join(list(c.Ldap.Tests.NORM_JOIN_INPUT), case="lower")
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.NORM_JOIN_EXPECTED)
 
     def test_filter_truthy(self) -> None:
-        result = u.Ldap.filter_truthy(dict(c.Ldap.Tests.FilterTruthyData.INPUT))
+        result = u.Ldap.filter_truthy(dict(c.Ldap.Tests.FILTER_TRUTHY_INPUT))
         assert isinstance(result, dict)
-        u.Tests.Matchers.that(
-            sorted(result.keys()),
-            eq=list(c.Ldap.Tests.FilterTruthyData.EXPECTED_KEYS),
+        u.Ldap.Tests.that(
+            sorted(result.keys()), eq=list(c.Ldap.Tests.FILTER_TRUTHY_EXPECTED_KEYS)
         )
 
     def test_map_str(self) -> None:
-        result = u.Ldap.map_str(list(c.Ldap.Tests.ListValues.ABC), case="upper")
-        u.Tests.Matchers.that(result, eq=list(c.Ldap.Tests.ListValues.ABC_UPPER))
+        result = u.Ldap.map_str(list(c.Ldap.Tests.LIST_ABC), case="upper")
+        u.Ldap.Tests.that(result, eq=list(c.Ldap.Tests.LIST_ABC_UPPER))
 
     def test_find_callable_with_mapping(self) -> None:
         handlers: Mapping[str, Callable[[], t.Scalar]] = {
-            c.Ldap.Tests.CallableHandlers.FOUND_KEY: lambda: "value1",
+            c.Ldap.Tests.CALLABLE_HANDLER_FOUND_KEY: lambda: "value1",
             "handler2": lambda: False,
         }
         result = u.Ldap.find_callable(handlers)
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.CallableHandlers.FOUND_KEY)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.CALLABLE_HANDLER_FOUND_KEY)
 
     def test_find_callable_not_found(self) -> None:
         handlers: Mapping[str, Callable[[], t.Scalar | None]] = {
@@ -87,22 +86,22 @@ class TestsFlextLdapUtilities:
             "handler3": lambda: "",
         }
         result = u.Ldap.find_callable(handlers)
-        u.Tests.Matchers.that(result, none=True)
+        u.Ldap.Tests.that(result, none=True)
 
     def test_dn_str_with_string(self) -> None:
-        result = u.Ldap.dn_str(c.Ldap.Tests.EntryDN.TEST_EXAMPLE)
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.EntryDN.TEST_EXAMPLE)
+        result = u.Ldap.dn_str(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
 
     def test_dn_str_with_none(self) -> None:
         result = u.Ldap.dn_str(None)
-        u.Tests.Matchers.that(result, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
 
     def test_dn_str_with_custom_default(self) -> None:
         result = u.Ldap.dn_str(
             None,
-            default=c.Ldap.Tests.StringValues.DEFAULT_CUSTOM,
+            default=c.Ldap.Tests.STRING_DEFAULT_CUSTOM,
         )
-        u.Tests.Matchers.that(result, eq=c.Ldap.Tests.StringValues.DEFAULT_CUSTOM)
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
 
 
 __all__ = ["TestsFlextLdapUtilities"]

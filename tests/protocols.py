@@ -15,30 +15,17 @@ from flext_ldap import p
 
 
 class TestsFlextLdapProtocols(FlextTestsProtocols, p):
-    """Protocol definitions for flext-ldap tests.
-
-    Extends both TestsFlextProtocols and p with flext-ldap-specific
-    protocol definitions.
-
-    Provides access to:
-    - p.Tests.Docker.* (from TestsFlextProtocols)
-    - p.Tests.Factory.* (from TestsFlextProtocols)
-    - p.Ldap.* (from p)
-
-    Rules:
-    - NEVER redeclare protocols from parent classes
-    - Only flext-ldap-specific test protocols allowed
-    """
+    """Protocol definitions for flext-ldap tests."""
 
     class Ldap(p.Ldap):
         """Flext-ldap-specific test protocols."""
 
-    
         class Tests:
             """Project-specific test protocols.
 
             Extends TestsFlextProtocols.Tests with flext-ldap-specific protocols.
             """
+
 
 p = TestsFlextLdapProtocols
 
