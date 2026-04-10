@@ -193,9 +193,9 @@ class FlextLdapModelsLdap:
     class UpsertResult(BaseModel):
         """Result of a single upsert operation."""
 
-        success: Annotated[
-            bool, Field(description="Whether the upsert succeeded")
-        ] = False
+        success: Annotated[bool, Field(description="Whether the upsert succeeded")] = (
+            False
+        )
         dn: Annotated[str, Field(description="Distinguished name of the entry")] = ""
         operation: Annotated[
             str,

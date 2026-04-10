@@ -17,30 +17,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
-from types import ModuleType
+from collections.abc import Sequence
 from typing import override
 
-from pydantic_settings import BaseSettings
-
-from flext_core import s
+from flext_core import m, s
 from flext_ldap import FlextLdapSettings, p, t
-
-
-@dataclass
-class _LdapRuntimeBootstrapOptions:
-    config_type: type[BaseSettings] | None = FlextLdapSettings
-    config_overrides: t.ConfigurationMapping | None = None
-    context: p.Context | None = None
-    subproject: str | None = None
-    services: Mapping[str, t.RegisterableService] | None = None
-    factories: Mapping[str, t.FactoryCallable] | None = None
-    resources: Mapping[str, t.ResourceCallable] | None = None
-    container_overrides: t.ConfigurationMapping | None = None
-    wire_modules: Sequence[ModuleType | str] | None = None
-    wire_packages: t.StrSequence | None = None
-    wire_classes: Sequence[type] | None = None
 
 
 class FlextLdapServiceBase[
@@ -56,7 +37,7 @@ class FlextLdapServiceBase[
     @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services."""
-        return _LdapRuntimeBootstrapOptions()
+        return m.RuntimeBootstrapOptions(config_type=FlextLdapSettings)
 
 
 s = FlextLdapServiceBase

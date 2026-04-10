@@ -43,7 +43,7 @@ class TestsFlextLdapSmoke:
 
     def test_flext_ldap_api_imports(self) -> None:
         """SMOKE TEST: ldap API imports without errors (REGRA 5: REAL code)."""
-        api = ldap()
+        api = ldap
         u.Ldap.Tests.SmokeAssertions.assert_api_instantiated(api)
         u.Ldap.Tests.SmokeAssertions.assert_models_accessible()
 
@@ -52,7 +52,7 @@ class TestsFlextLdapSmoke:
         ldap_container: t.Ldap.Tests.LdapContainerDict,
     ) -> None:
         """SMOKE TEST: ldap can connect to container (REGRA 5: REAL operations)."""
-        client = ldap()
+        client = ldap
         conn_config = u.Ldap.Tests.SmokeFactories.create_connection_config(
             ldap_container,
         )

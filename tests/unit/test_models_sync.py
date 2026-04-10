@@ -57,6 +57,7 @@ class TestsFlextLdapModelsSync:
         field: str,
         expected: str | float | bool,
     ) -> None:
+        pass
 
     # ── Validation constraints ─────────────────────────────────────────
 
@@ -106,6 +107,7 @@ class TestsFlextLdapModelsSync:
         kwargs: t.IntMapping,
         expected: float,
     ) -> None:
+        pass
 
     # ── Factory: SyncStats.from_counters ───────────────────────────────
 

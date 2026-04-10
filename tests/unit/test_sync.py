@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldap import FlextLdap, FlextLdapSync, ldap
+from flext_ldap import FlextLdapSync, ldap
 from tests import c, m, u
 
 pytestmark = pytest.mark.unit
@@ -29,27 +29,23 @@ class TestsFlextLdapSync:
             ),
         )
 
-    @staticmethod
-    def _create_client() -> FlextLdap:
-        return ldap()
-
     def test_sync_mixin_execute_is_placeholder(self) -> None:
         u.Tests.Matchers.fail(FlextLdapSync().execute())
 
     def test_sync_methods_are_available_on_public_facade(self) -> None:
-        client = self._create_client()
+        client = ldap
         u.Tests.Matchers.that(callable(client.sync_phase_entries), eq=True)
         u.Tests.Matchers.that(callable(client.sync_multiple_phases), eq=True)
 
     def test_sync_phase_entries_missing_path_returns_failure(self) -> None:
-        result = self._create_client().sync_phase_entries(
+        result = ldap.sync_phase_entries(
             Path(c.Ldap.Tests.SyncFacade.MISSING_LDIF_PATH),
             c.Ldap.Tests.SyncFacade.PHASE_NAME_USERS,
         )
         u.Tests.Matchers.fail(result)
 
     def test_sync_multiple_phases_skips_missing_files(self) -> None:
-        result = self._create_client().sync_multiple_phases({
+        result = ldap.sync_multiple_phases({
             c.Ldap.Tests.SyncFacade.PHASE_NAME_USERS: Path(
                 c.Ldap.Tests.SyncFacade.MISSING_LDIF_PATH
             ),
@@ -72,4 +68,4 @@ class TestsFlextLdapSync:
         assert callback is cb
 
 
-__all__ = ["TestsFlextLdapSync", "pytestmark"]
+__all__ = ["TestsFlextLdapSync"]

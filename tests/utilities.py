@@ -4,7 +4,7 @@ from flext_tests import FlextTestsUtilities
 
 from flext_core import r
 from flext_ldap import FlextLdapProtocols, FlextLdapUtilities
-from tests import _DockerInfraUtils, _FixtureLoaderUtils, c, m, p, t
+from tests import c, m, p, t
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -12,30 +12,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
     Architecture: Extends both TestsFlextUtilities and FlextLdapUtilities with flext-ldap-specific utility methods.
     All generic utilities from TestsFlextUtilities and production utilities from FlextLdapUtilities are available through inheritance.
-
-    Rules:
-    - NEVER redeclare utilities from TestsFlextUtilities or FlextLdapUtilities
-    - Only flext-ldap-specific utilities allowed
-    - All generic utilities come from TestsFlextUtilities
-    - All production utilities come from FlextLdapUtilities
     """
-
-    class Tests(FlextTestsUtilities.Tests):
-        """Test utilities — inherits Matchers from TestsFlextUtilities.Tests."""
 
     class Ldap(FlextLdapUtilities.Ldap):
         """LDAP test utilities."""
 
-        class Tests(_DockerInfraUtils, _FixtureLoaderUtils):
-            """flext-ldap-specific test utilities namespace.
-
-            Composed via MRO from:
-            - _DockerInfraUtils: FileLock, DNSTracker, get_docker_control,
-              get_admin_credentials, ensure_basic_ldap_structure
-            - _FixtureLoaderUtils: Fixtures (load_json, load_ldif, etc.)
-
-            Access: u.Ldap.Tests.*
-            """
+        class Tests:
+            """flext-ldap-specific test utilities namespace."""
 
             class SmokeFactories:
                 """Factory methods for smoke test data generation."""

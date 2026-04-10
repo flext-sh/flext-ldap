@@ -19,45 +19,37 @@ pytestmark = [pytest.mark.unit]
 class TestsFlextLdapApi:
     """Tests for ldap API facade — MRO-based, zero ceremony."""
 
-    @classmethod
-    def _create_api(cls) -> ldap:
-        return ldap()
-
     # --- Initialization ---
-
     def test_init_no_args(self) -> None:
-        u.Tests.Matchers.that(self._create_api(), none=False)
+        u.Tests.Matchers.that(ldap, none=False)
 
     def test_logger_available(self) -> None:
-        u.Tests.Matchers.that(self._create_api().logger, none=False)
+        u.Tests.Matchers.that(ldap.logger, none=False)
 
     def test_config_returns_flext_settings(self) -> None:
-        assert isinstance(self._create_api().config, p.Settings)
+        assert isinstance(ldap.config, p.Settings)
 
     def test_service_config_type(self) -> None:
         assert ldap._get_service_config_type() is FlextLdapSettings
 
     # --- Context Manager ---
-
     def test_enter_returns_self(self) -> None:
-        api = self._create_api()
+        api = ldap
         u.Tests.Matchers.that(api.__enter__(), eq=api)
 
     def test_exit_calls_disconnect(self) -> None:
-        self._create_api().__exit__(None, None, None)
+        ldap.__exit__(None, None, None)
 
     def test_with_statement(self) -> None:
-        api = self._create_api()
+        api = ldap
         with api as ctx:
             u.Tests.Matchers.that(ctx, eq=api)
 
     # --- MRO Method Inheritance ---
-
     def test_is_connected_default_false(self) -> None:
-        u.Tests.Matchers.that(not self._create_api().is_connected, eq=True)
+        u.Tests.Matchers.that(not ldap.is_connected, eq=True)
 
     # --- Callback Type Guards ---
-
     @pytest.mark.parametrize(
         ("callback", "expected"),
         [
@@ -103,16 +95,15 @@ class TestsFlextLdapApi:
         )
 
     # --- API Methods (via MRO) ---
-
     @pytest.mark.parametrize(
         "method_name",
         c.Ldap.Tests.Api.EXPECTED_METHODS,
     )
     def test_api_method_exists_and_callable(self, method_name: str) -> None:
-        api = self._create_api()
+        ldap
 
     def test_disconnect_when_not_connected(self) -> None:
-        self._create_api().disconnect()
+        ldap.disconnect()
 
     def test_search_without_connection_returns_failure(self) -> None:
         search_options = m.Ldap.SearchOptions(
@@ -120,13 +111,12 @@ class TestsFlextLdapApi:
             filter_str=c.Ldap.Tests.RFC.DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
-        u.Tests.Matchers.fail(self._create_api().search(search_options))
+        u.Tests.Matchers.fail(ldap.search(search_options))
 
     def test_execute_returns_result(self) -> None:
-        u.Tests.Matchers.fail(self._create_api().execute())
+        u.Tests.Matchers.fail(ldap.execute())
 
     # --- Model Config ---
-
     def test_model_config(self) -> None:
         cfg = ldap.model_config
         u.Tests.Matchers.that(

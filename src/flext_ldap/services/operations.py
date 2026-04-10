@@ -764,9 +764,10 @@ class FlextLdapOperations(FlextLdapConnection):
                     if change_value.value
                 ]
                 if filtered_values:
-                    schema_additions.append(
-                        (change_operation.attribute, filtered_values)
-                    )
+                    schema_additions.append((
+                        change_operation.attribute,
+                        filtered_values,
+                    ))
             if not schema_additions:
                 attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
                 add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
