@@ -1,7 +1,13 @@
-"""Architecture documentation tools and generators.
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Architecture package."""
 
-This package contains tools for generating architecture documentation
-including C4 model diagrams, PlantUML diagrams, and ADR templates.
-"""
+from __future__ import annotations
 
-__version__ = "0.1.0"
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+
+_LAZY_IMPORTS = build_lazy_import_map(
+    {},
+)
+
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
