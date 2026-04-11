@@ -115,7 +115,7 @@ class UserService:
     """Service using FLEXT patterns with LDAP operations."""
 
     def __init__(self) -> None:
-        self.logger = FlextLogger(__name__)
+        self.logger = u.fetch_logger(__name__)
         self._ldap_api = get_flext_ldap_api()
         self._container = FlextContainer.get_global()
 

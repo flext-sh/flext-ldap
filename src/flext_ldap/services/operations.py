@@ -89,7 +89,7 @@ class FlextLdapOperations(FlextLdapConnection):
     @staticmethod
     def _get_structlog_logger() -> p.Logger | None:
         """Return structlog logger when runtime logger satisfies the protocol."""
-        return u.get_logger(__name__)
+        return u.fetch_logger(__name__)
 
     @staticmethod
     def _extract_attributes_dict(entry: p.Ldif.Entry) -> Mapping[str, t.StrSequence]:

@@ -734,7 +734,7 @@ from flext_core import u
 logging.basicConfig(level=logging.DEBUG)
 
 # FLEXT logger with debug level
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 logger.setLevel(logging.DEBUG)
 ```
 

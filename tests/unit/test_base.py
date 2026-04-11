@@ -46,7 +46,7 @@ class TestsFlextLdapBase:
 
     def test_config_matches_global(self) -> None:
         cfg = m.Ldap.Tests.SuccessService().config
-        glob = FlextSettings.get_global()
+        glob = FlextSettings.fetch_global()
         assert cfg.app_name == glob.app_name
         assert cfg.version == glob.version
 
