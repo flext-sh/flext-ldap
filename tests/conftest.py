@@ -9,9 +9,7 @@ from typing import Protocol, TypeGuard
 import pytest
 
 from flext_core import FlextLogger, r
-from flext_ldap import FlextLdapSettings
-from flext_ldap import FlextLdapLdap3Wrappers
-
+from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapSettings
 from tests import c, m, t, u
 
 logger = FlextLogger(__name__)
