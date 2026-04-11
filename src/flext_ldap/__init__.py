@@ -16,7 +16,7 @@ if _t.TYPE_CHECKING:
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
-    from flext_ldap.api import FlextLdap
+    from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapServiceBase
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
@@ -47,7 +47,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version__",
                 "__version_info__",
             ),
-            ".api": ("FlextLdap",),
+            ".api": (
+                "FlextLdap",
+                "ldap",
+            ),
             ".base": ("FlextLdapServiceBase",),
             ".constants": (
                 "FlextLdapConstants",
@@ -125,6 +128,7 @@ __all__ = [
     "d",
     "e",
     "h",
+    "ldap",
     "m",
     "p",
     "r",
