@@ -1271,12 +1271,12 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         """
         connection_result = self._get_connection()
-        if connection_result.is_failure:
+        if connection_result.failure:
             return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else "",
             )
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
-        if attrs_result.is_failure:
+        if attrs_result.failure:
             error_msg = str(attrs_result.error) if attrs_result.error else ""
             return r[m.Ldap.OperationResult].fail(
                 f"Failed to convert entry attributes: {error_msg}",
@@ -1328,7 +1328,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 config,
             )
             tls_result = self.ConnectionManager.handle_tls(self._connection, config)
-            if tls_result.is_failure:
+            if tls_result.failure:
                 return tls_result
             # Check bound state - connection is guaranteed to be non-None after create_connection
             if not FlextLdapLdap3Wrappers.is_bound(self._connection):
@@ -1377,7 +1377,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         """
         connection_result = self._get_connection()
-        if connection_result.is_failure:
+        if connection_result.failure:
             return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else "",
             )
@@ -1485,7 +1485,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         """
         connection_result = self._get_connection()
-        if connection_result.is_failure:
+        if connection_result.failure:
             return r[m.Ldap.OperationResult].fail(
                 str(connection_result.error) if connection_result.error else "",
             )
@@ -1531,12 +1531,12 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         """
         connection_result = self._get_connection()
-        if connection_result.is_failure:
+        if connection_result.failure:
             error_msg = str(connection_result.error) if connection_result.error else ""
             return r[m.Ldap.SearchResult].fail(error_msg)
         scope_for_mapping: str | c.Ldap.SearchScope = search_options.scope
         scope_result = FlextLdapLdap3Adapter._map_scope(scope_for_mapping)
-        if scope_result.is_failure:
+        if scope_result.failure:
             return r[m.Ldap.SearchResult].fail(
                 str(scope_result.error) if scope_result.error else "",
             )
@@ -1553,7 +1553,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             search_params,
             server_type,
         )
-        if entries_result.is_failure:
+        if entries_result.failure:
             return r[m.Ldap.SearchResult].fail(
                 str(entries_result.error) if entries_result.error else "",
             )

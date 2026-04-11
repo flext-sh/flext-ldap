@@ -93,9 +93,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
             class ParseResult(Protocol):
                 """Protocol for parse results (structural type)."""
 
-                is_failure: bool
+                failure: bool
                 "Indicates if parsing failed."
-                is_success: bool
+                success: bool
                 "Indicates if parsing succeeded."
                 error: str | None
                 "Error message if parsing failed."

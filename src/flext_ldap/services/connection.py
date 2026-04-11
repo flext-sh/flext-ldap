@@ -93,7 +93,7 @@ class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
             if auto_retry
             else adapter.connect(connection_config)
         )
-        if result.is_success:
+        if result.success:
             self._detect_server_type_optional()
             return r[bool].ok(value=True)
         return result
@@ -120,7 +120,7 @@ class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
             return
         detector = FlextLdapServerDetector()
         detection_result: r[str] = detector.detect_from_connection(connection)
-        if detection_result.is_success:
+        if detection_result.success:
             self.logger.info(
                 "Server type detected automatically",
                 operation=c.Ldap.LdapOperationNames.CONNECT,

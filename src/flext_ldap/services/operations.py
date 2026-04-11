@@ -649,7 +649,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 scope=c.Ldap.SearchScope.BASE,
             )
             search_result = self._ops.search(search_options)
-            if search_result.is_failure:
+            if search_result.failure:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.SKIPPED,
@@ -661,7 +661,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 existing_entries = list(search_data.entries)
             if not existing_entries:
                 retry_result = self._ops.add(entry)
-                if retry_result.is_success:
+                if retry_result.success:
                     return r[m.Ldap.LdapOperationResult].ok(
                         m.Ldap.LdapOperationResult(
                             operation=c.Ldap.UpsertOperations.ADDED,
@@ -808,7 +808,7 @@ class FlextLdapOperations(FlextLdapConnection):
                         ),
                     )
                 )
-                if last_result.is_failure:
+                if last_result.failure:
                     return last_result
             if last_result is None:
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -995,7 +995,7 @@ class FlextLdapOperations(FlextLdapConnection):
                     entry_dn,
                     total_entries,
                 )
-                if stop_on_error and upsert_result.is_failure:
+                if stop_on_error and upsert_result.failure:
                     stats_builder["_stop_error"] = i
                     break
                 if progress_callback:
@@ -1286,7 +1286,7 @@ class FlextLdapOperations(FlextLdapConnection):
         if not (retry_on_errors and max_retries > 1):
             return self._upsert_handler.execute(entry)
         result = self._upsert_handler.execute(entry)
-        if result.is_success or not retry_on_errors:
+        if result.success or not retry_on_errors:
             return result
         error_str = u.Ldap.norm_str(str(result.error), case="lower")
         if not any(
@@ -1346,7 +1346,7 @@ class FlextLdapOperations(FlextLdapConnection):
         total_entries: int,
     ) -> None:
         """Update batch stats from upsert result."""
-        if upsert_result.is_success:
+        if upsert_result.success:
             operation = upsert_result.value.operation
             if operation == c.Ldap.UpsertOperations.SKIPPED:
                 stats["skipped"] += 1

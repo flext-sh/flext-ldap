@@ -115,7 +115,7 @@ class TestsFlextLdapModelsSearch:
         )
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
-            setattr(result, "is_success", False)
+            setattr(result, "success", False)
 
     @pytest.mark.parametrize(
         ("num_entries", "expected_count"),

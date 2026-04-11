@@ -137,7 +137,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def assert_connection_success(result: p.Result[bool]) -> None:
                 """Assert that a connection result succeeded."""
-                assert result.is_success, f"Connection failed: {result.error}"
+                assert result.success, f"Connection failed: {result.error}"
 
             @staticmethod
             def get_docker_control(

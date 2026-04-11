@@ -360,7 +360,7 @@ class FlextLdapServerDetector(s[str]):
 
         """
         root_dse_result = FlextLdapServerDetector._query_root_dse(connection)
-        if root_dse_result.is_failure:
+        if root_dse_result.failure:
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
         root_dse_attrs = root_dse_result.value
 

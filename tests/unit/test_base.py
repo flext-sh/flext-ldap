@@ -31,11 +31,11 @@ class TestsFlextLdapBase:
 
     def test_execute_success(self) -> None:
         result = m.Ldap.Tests.SuccessService().execute()
-        assert result.is_success
+        assert result.success
 
     def test_execute_failure(self) -> None:
         result = m.Ldap.Tests.FailService().execute()
-        assert result.is_failure
+        assert result.failure
         assert result.error == c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE
 
     # ── Config + Logger ────────────────────────────────────────────────
@@ -67,5 +67,5 @@ class TestsFlextLdapBase:
 
     def test_multiple_services_independent(self) -> None:
         a, b = m.Ldap.Tests.SuccessService(), m.Ldap.Tests.FailService()
-        assert a.execute().is_success
-        assert b.execute().is_failure
+        assert a.execute().success
+        assert b.execute().failure

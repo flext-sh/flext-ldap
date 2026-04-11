@@ -62,7 +62,7 @@ class TestsFlextLdapDetection:
         """Test execute() with various error scenarios."""
         detector = FlextLdapServerDetector()
         result = detector.execute() if kwargs is None else detector.execute(**kwargs)
-        assert result.is_failure == expect_failure
+        assert result.failure == expect_failure
         assert error_substring in str(result.error)
 
     @pytest.mark.parametrize(

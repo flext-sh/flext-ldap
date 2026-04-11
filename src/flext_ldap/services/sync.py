@@ -114,7 +114,7 @@ class FlextLdapSync(FlextLdapOperations):
                 phase_file,
                 sync_config,
             )
-            if phase_result.is_failure:
+            if phase_result.failure:
                 self.logger.error(
                     "Phase sync failed",
                     phase=phase_name,
@@ -168,7 +168,7 @@ class FlextLdapSync(FlextLdapOperations):
                 f"Failed to read LDIF file: {error!s}",
             )
         parse_result = self._get_ldif().parse_ldif(ldif_content)
-        if parse_result.is_failure:
+        if parse_result.failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
             )
@@ -214,7 +214,7 @@ class FlextLdapSync(FlextLdapOperations):
             max_retries=sync_config.max_retries,
             stop_on_error=sync_config.stop_on_error,
         )
-        if batch_result.is_failure:
+        if batch_result.failure:
             error_msg = (
                 str(batch_result.error) if batch_result.error else "Unknown error"
             )

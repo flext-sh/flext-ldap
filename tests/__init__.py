@@ -12,23 +12,23 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_cli.base import s
-    from flext_tests._fixtures.settings import (
+    from flext_tests import (
+        d,
+        e,
+        h,
+        r,
         reset_settings,
+        s,
         settings,
         settings_factory,
+        td,
+        tf,
+        tk,
+        tm,
+        tv,
+        x,
     )
-    from flext_tests._utilities.matchers import tm
-    from flext_tests.docker import tk
-    from flext_tests.domains import td
-    from flext_tests.files import tf
-    from flext_tests.validator import tv
 
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.result import r
     from tests.constants import TestsFlextLdapConstants, c
     from tests.models import TestsFlextLdapModels, m
     from tests.protocols import TestsFlextLdapProtocols, p
@@ -61,22 +61,22 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdapUtilities",
                 "u",
             ),
-            "flext_cli.base": ("s",),
-            "flext_core.decorators": ("d",),
-            "flext_core.exceptions": ("e",),
-            "flext_core.handlers": ("h",),
-            "flext_core.mixins": ("x",),
-            "flext_core.result": ("r",),
-            "flext_tests._fixtures.settings": (
+            "flext_tests": (
+                "d",
+                "e",
+                "h",
+                "r",
                 "reset_settings",
+                "s",
                 "settings",
                 "settings_factory",
+                "td",
+                "tf",
+                "tk",
+                "tm",
+                "tv",
+                "x",
             ),
-            "flext_tests._utilities.matchers": ("tm",),
-            "flext_tests.docker": ("tk",),
-            "flext_tests.domains": ("td",),
-            "flext_tests.files": ("tf",),
-            "flext_tests.validator": ("tv",),
         },
     ),
     exclude_names=(

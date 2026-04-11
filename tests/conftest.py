@@ -79,13 +79,13 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
             force_recreate=True,
         )
-        if result.is_success:
+        if result.success:
             docker_control.mark_container_clean(c.Ldap.Tests.DOCKER_CONTAINER_NAME)
     else:
         start = docker_control.start_existing_container(
             c.Ldap.Tests.DOCKER_CONTAINER_NAME,
         )
-        if start.is_failure:
+        if start.failure:
             docker_control.compose_up(
                 compose_file_rel,
                 service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
@@ -95,7 +95,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         c.Ldap.Tests.DOCKER_PORT,
         c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
     )
-    if port_ready.is_success and port_ready.value:
+    if port_ready.success and port_ready.value:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0
         while waited < c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT:
@@ -164,7 +164,7 @@ def ldap_container(
             c.Ldap.Tests.DOCKER_PORT,
             c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT,
         )
-        if port_result.is_failure or not port_result.value:
+        if port_result.failure or not port_result.value:
             pytest.fail(
                 f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} port {c.Ldap.Tests.DOCKER_PORT} not ready within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s",
             )

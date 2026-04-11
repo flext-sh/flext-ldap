@@ -13,16 +13,11 @@ from flext_core.lazy import (
 from flext_ldap.__version__ import *
 
 if _t.TYPE_CHECKING:
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.result import r
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
-    from flext_ldap.api import FlextLdap, ldap
-    from flext_ldap.base import FlextLdapServiceBase, s
+    from flext_ldap.api import FlextLdap
+    from flext_ldap.base import FlextLdapServiceBase
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
     from flext_ldap.protocols import FlextLdapProtocols, p
@@ -33,6 +28,7 @@ if _t.TYPE_CHECKING:
     from flext_ldap.settings import FlextLdapSettings
     from flext_ldap.typings import FlextLdapTypes, t
     from flext_ldap.utilities import FlextLdapUtilities, u
+    from flext_ldif import d, e, h, r, s, x
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "._models",
@@ -51,14 +47,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version__",
                 "__version_info__",
             ),
-            ".api": (
-                "FlextLdap",
-                "ldap",
-            ),
-            ".base": (
-                "FlextLdapServiceBase",
-                "s",
-            ),
+            ".api": ("FlextLdap",),
+            ".base": ("FlextLdapServiceBase",),
             ".constants": (
                 "FlextLdapConstants",
                 "c",
@@ -80,11 +70,14 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextLdapUtilities",
                 "u",
             ),
-            "flext_core.decorators": ("d",),
-            "flext_core.exceptions": ("e",),
-            "flext_core.handlers": ("h",),
-            "flext_core.mixins": ("x",),
-            "flext_core.result": ("r",),
+            "flext_ldif": (
+                "d",
+                "e",
+                "h",
+                "r",
+                "s",
+                "x",
+            ),
         },
     ),
     exclude_names=(
@@ -132,7 +125,6 @@ __all__ = [
     "d",
     "e",
     "h",
-    "ldap",
     "m",
     "p",
     "r",
