@@ -27,7 +27,7 @@ class TestsFlextLdapApi:
         u.Ldap.Tests.that(ldap.logger, none=False)
 
     def test_config_returns_flext_settings(self) -> None:
-        assert isinstance(ldap.config, p.Settings)
+        assert isinstance(ldap.settings, p.Settings)
 
     def test_service_config_type(self) -> None:
         assert ldap._get_service_config_type() is FlextLdapSettings

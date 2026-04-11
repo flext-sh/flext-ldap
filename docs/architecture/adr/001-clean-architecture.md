@@ -92,7 +92,7 @@ src/flext_ldap/
 │   ├── operations/          # Server-specific operations
 │   ├── adapters/            # Protocol adapters (ldap3 ↔ domain)
 │   ├── repositories.py      # Data access implementations
-│   └── config.py            # Infrastructure configuration
+│   └── settings.py            # Infrastructure configuration
 ├── protocols/               # Interface contracts
 ├── utilities/               # Shared utilities
 └── __init__.py              # Public API facade

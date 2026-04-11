@@ -35,7 +35,7 @@ callers replace services or adapters for testing and alternative runtimes.
 - **Adapters**: :class:`flext_ldap.adapters.ldap3.Ldap3Adapter` and
   :class:`flext_ldap.adapters.entry.FlextLdapEntryAdapter` isolate protocol
   handling and entry normalization.
-- **Shared types**: `config.py`, `models.py`, `constants.py`,
+- **Shared types**: `settings.py`, `models.py`, `constants.py`,
   `protocols.py`, and `typings.py` define pydantic models, enums, and typing
   contracts used across layers.
 
@@ -44,7 +44,7 @@ callers replace services or adapters for testing and alternative runtimes.
 - **Facade**: `src/flext_ldap/api.py`
 - **Services**: `src/flext_ldap/services/{connection,operations,sync,detection}.py`
 - **Adapters**: `src/flext_ldap/adapters/{ldap3,entry}.py`
-- **Shared contracts**: `src/flext_ldap/{config,models,constants,protocols,typings}.py`
+- **Shared contracts**: `src/flext_ldap/{settings,models,constants,protocols,typings}.py`
 
 ## Runtime Flows
 

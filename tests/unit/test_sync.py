@@ -61,9 +61,9 @@ class TestsFlextLdapSync:
 
     def test_make_phase_progress_callback_keeps_single_phase_callback(self) -> None:
         cb = u.Ldap.Tests.single_phase_cb
-        config = m.Ldap.SyncPhaseConfig(progress_callback=cb)
+        settings = m.Ldap.SyncPhaseConfig(progress_callback=cb)
         callback = FlextLdapSync._make_phase_progress_callback(
-            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS, config
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS, settings
         )
         assert callback is cb
 

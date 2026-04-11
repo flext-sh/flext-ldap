@@ -96,7 +96,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     t.Scalar,
                 ],
             ) -> m.Ldap.ConnectionConfig:
-                """Build a typed connection config from container metadata."""
+                """Build a typed connection settings from container metadata."""
                 port = ldap_container["port"]
                 port_value = (
                     port

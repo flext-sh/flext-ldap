@@ -253,7 +253,7 @@ python docs/maintenance/maintain.py --optimize-all
 
 ### Main Configuration File
 
-Create `docs/maintenance/config.yaml`:
+Create `docs/maintenance/settings.yaml`:
 
 ```yaml
 # Documentation Maintenance Configuration
@@ -405,7 +405,7 @@ jobs:
 
 ### Git Hooks Integration
 
-Add to `.pre-commit-config.yaml`:
+Add to `.pre-commit-settings.yaml`:
 
 ```yaml
 repos:

@@ -68,7 +68,7 @@
 - Connection
 - Schema discovery
   - **ACL Operations**
-- Get ACLs from cn=config entry
+- Get ACLs from cn=settings entry
 - Set ACLs
   - **Entry Operations**
 - Create entry
@@ -207,7 +207,7 @@ from flext_ldif import FlextLdifModels
 
 ### **Features**
 
-- **cn=config** dynamic configuration
+- **cn=settings** dynamic configuration
 - **olcAccess** ACL syntax
 - Paged results and VLV support
 - Full schema discovery
@@ -243,8 +243,8 @@ if schema_result.is_success:
 ### **ACL Operations**
 
 ```python
-# Get ACLs from cn=config entry
-acl_result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=config")
+# Get ACLs from cn=settings entry
+acl_result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 
 if acl_result.is_success:
     acls = acl_result.unwrap()
@@ -257,7 +257,9 @@ new_acls = [
     {"raw": "{1}to * by self write by anonymous auth"},
 ]
 
-set_result = ops.set_acls(connection, dn="olcDatabase={1}mdb,cn=config", acls=new_acls)
+set_result = ops.set_acls(
+    connection, dn="olcDatabase={1}mdb,cn=settings", acls=new_acls
+)
 ```
 
 ### **Entry Operations**
@@ -454,7 +456,7 @@ if schema_result.is_success:
 acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 
 # Set ds-privilege-name ACLs
-oud_acls = [{"raw": "bypass-acl"}, {"raw": "config-read"}, {"raw": "password-reset"}]
+oud_acls = [{"raw": "bypass-acl"}, {"raw": "settings-read"}, {"raw": "password-reset"}]
 
 set_result = ops.set_acls(
     connection, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", oud_acls
@@ -668,7 +670,7 @@ Feature: SASL/GSSAPI - OpenLDAP 2.x: ❌ No - OpenLDAP 1.x: ❌ No - Oracle OID:
 
 ### **Schema Operations**
 
-Feature: Schema DN - OpenLDAP 2.x: cn=subschema - OpenLDAP 1.x: cn=subschema - Oracle OID: cn=subschemasubentry - Oracle OUD: cn=schema - AD: cn=schema,cn=config - Generic: cn=subschema
+Feature: Schema DN - OpenLDAP 2.x: cn=subschema - OpenLDAP 1.x: cn=subschema - Oracle OID: cn=subschemasubentry - Oracle OUD: cn=schema - AD: cn=schema,cn=settings - Generic: cn=subschema
 Feature: Object Classes - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ⚠️ Basic
 Feature: Attribute Types - OpenLDAP 2.x: ✅ Full - OpenLDAP 1.x: ✅ Full - Oracle OID: ✅ Full - Oracle OUD: ✅ Full - AD: 🟡 Stub - Generic: ⚠️ Basic
 Feature: Syntaxes - OpenLDAP 2.x: ✅ Yes - OpenLDAP 1.x: ✅ Yes - Oracle OID: ❌ No - Oracle OUD: ✅ Yes - AD: 🟡 Stub - Generic: ❌ No

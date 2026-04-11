@@ -137,7 +137,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -145,7 +145,7 @@ config = FlextLdapSettings(
 )
 
 # Proper certificate configuration
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -474,9 +474,9 @@ ConnectionError: Connection pool exhausted
 # Check connection pool configuration
 from Flext_ldap import FlextLdapSettings
 
-config = FlextLdapSettings.from_env()
-print(f"Pool size: {config.pool_size}")
-print(f"Connection timeout: {config.connection_timeout}")
+settings = FlextLdapSettings.from_env()
+print(f"Pool size: {settings.pool_size}")
+print(f"Connection timeout: {settings.connection_timeout}")
 ```
 
 **Solutions:**
@@ -484,7 +484,7 @@ print(f"Connection timeout: {config.connection_timeout}")
 1. **Increase pool size:**
 
 ```python
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
     connection_timeout=10,
@@ -523,14 +523,14 @@ from Flext_ldap import FlextLdapSettings
 
 def diagnose_config():
     """Check configuration values."""
-    config = FlextLdapSettings.from_env()
+    settings = FlextLdapSettings.from_env()
 
     print("LDAP Configuration:")
-    print(f"  Host: {config.host}")
-    print(f"  Port: {config.port}")
-    print(f"  Use SSL: {config.use_ssl}")
-    print(f"  Bind DN: {config.bind_dn}")
-    print(f"  Base DN: {config.base_dn}")
+    print(f"  Host: {settings.host}")
+    print(f"  Port: {settings.port}")
+    print(f"  Use SSL: {settings.use_ssl}")
+    print(f"  Bind DN: {settings.bind_dn}")
+    print(f"  Base DN: {settings.base_dn}")
 
     # Check environment variables
     env_vars = [
@@ -856,11 +856,11 @@ def collect_diagnostic_info():
 
     # Configuration (sanitized)
     try:
-        config = FlextLdapSettings.from_env()
-        print(f"LDAP Host: {config.host}")
-        print(f"LDAP Port: {config.port}")
-        print(f"Use SSL: {config.use_ssl}")
-        print(f"Base DN: {config.base_dn}")
+        settings = FlextLdapSettings.from_env()
+        print(f"LDAP Host: {settings.host}")
+        print(f"LDAP Port: {settings.port}")
+        print(f"Use SSL: {settings.use_ssl}")
+        print(f"Base DN: {settings.base_dn}")
         print("Bind credentials: [CONFIGURED]")
     except Exception as e:
         print(f"Configuration error: {e}")

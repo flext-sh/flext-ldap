@@ -3,7 +3,7 @@
 <!-- TOC START -->
 - [Table of Contents](#table-of-contents)
 - [🚀 Main API](#main-api)
-  - [`get_flext_ldap_api(config=None)`](#getflextldapapiconfignone)
+  - [`get_flext_ldap_api(settings=None)`](#getflextldapapiconfignone)
 - [🏗️ FlextLdapClients](#flextldapclients)
   - [`search_entries(request: SearchRequest) -> r[List[LdapEntry]]`](#searchentriesrequest-searchrequest-rlistldapentry)
   - [`authenticate_user(username: str, password: str) -> r[FlextLdapUser]`](#authenticateuserusername-str-password-str-rflextldapuser)
@@ -39,7 +39,7 @@
 
 - API Reference
   - 🚀 Main API
-    - `get_flext_ldap_api(config=None)`
+    - `get_flext_ldap_api(settings=None)`
   - 🏗️ FlextLdapClients - [`search_entries(request: SearchRequest) -> r[List[LdapEntry]]`](#search_entriesrequest-searchrequest---flextresultlistldapentry) - [`authenticate_user(username: str, password: str) -> r[FlextLdapUser]`](#authenticate_userusername-str-password-str---flextresultflextldapuser) - [`create_user(request: CreateUserRequest) -> r[FlextLdapUser]`](#create_userrequest-createuserrequest---flextresultflextldapuser) - [`test_connection() -> r[str]`](#test_connection---flextresultstr)
   - 📊 Domain Entities
     - FlextLdapEntities
@@ -95,7 +95,7 @@
         - `get_acl_attribute_name() -> str`
         - `get_acl_format() -> str`
         - [`get_acls(connection, dn) -> r[Sequence[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- Get ACLs from cn=config entry - [`set_acls(connection, dn, acls) -> r[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> r[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> r[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> r[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> r[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> r[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> r[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> r[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
+- Get ACLs from cn=settings entry - [`set_acls(connection, dn, acls) -> r[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> r[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> r[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> r[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> r[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> r[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> r[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> r[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - Server-Specific Implementations
     - OpenLDAP2Operations
 - Schema discovery
@@ -115,13 +115,13 @@ ______________________________________________________________________
 
 ## 🚀 Main API
 
-### `get_flext_ldap_api(config=None)`
+### `get_flext_ldap_api(settings=None)`
 
 Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `config` (FlextLdapSettings, optional): Configuration t.NormalizedValue. If None, uses default config.
+- `settings` (FlextLdapSettings, optional): Configuration t.NormalizedValue. If None, uses default settings.
 
 **Returns:** FlextLdapClients instance
 
@@ -380,7 +380,7 @@ LDAP connection configuration.
 ```python
 from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
 
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -389,7 +389,7 @@ config = FlextLdapSettings(
     base_dn="dc=example,dc=com"
 )
 
-set_flext_ldap.settings(config)
+set_flext_ldap.settings(settings)
 ```
 
 ______________________________________________________________________
@@ -658,7 +658,7 @@ Detect LDAP server type from entry analysis.
 
 **Server Types:**
 
-- `"openldap2"` - OpenLDAP 2.x (cn=config)
+- `"openldap2"` - OpenLDAP 2.x (cn=settings)
 - `"openldap1"` - OpenLDAP 1.x (legacy)
 - `"oid"` - Oracle Internet Directory
 - `"oud"` - Oracle Unified Directory
@@ -747,7 +747,7 @@ from flext_ldap import BaseServerOperations
 
 **Server Implementations:**
 
-- `OpenLDAP2Operations` - OpenLDAP 2.x (cn=config, olcAccess ACLs)
+- `OpenLDAP2Operations` - OpenLDAP 2.x (cn=settings, olcAccess ACLs)
 - `OpenLDAP1Operations` - OpenLDAP 1.x (slapd.conf, access ACLs)
 - `OracleOIDOperations` - Oracle Internet Directory (orclaci ACLs)
 - `OracleOUDOperations` - Oracle Unified Directory (ds-privilege-name ACLs)
@@ -841,8 +841,8 @@ from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
 
-# Get ACLs from cn=config entry
-result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=config")
+# Get ACLs from cn=settings entry
+result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 
 if result.is_success:
     acls = result.unwrap()
@@ -972,7 +972,7 @@ ______________________________________________________________________
 
 #### OpenLDAP2Operations
 
-Complete implementation for OpenLDAP 2.x (cn=config style).
+Complete implementation for OpenLDAP 2.x (cn=settings style).
 
 **Import:**
 
@@ -1007,7 +1007,7 @@ connection = ldap3.Connection(
 schema = ops.discover_schema(connection)
 
 # ACL management
-acls = ops.get_acls(connection, "olcDatabase={1}mdb,cn=config")
+acls = ops.get_acls(connection, "olcDatabase={1}mdb,cn=settings")
 ```
 
 #### OracleOIDOperations

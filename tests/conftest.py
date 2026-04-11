@@ -29,15 +29,15 @@ class WorkerInputConfig(Protocol):
     workerinput: Mapping[str, str]
 
 
-def _has_workerinput(config: pytest.Config) -> TypeGuard[WorkerInputConfig]:
-    workerinput = getattr(config, "workerinput", None)
+def _has_workerinput(settings: pytest.Config) -> TypeGuard[WorkerInputConfig]:
+    workerinput = getattr(settings, "workerinput", None)
     return isinstance(workerinput, Mapping)
 
 
-def _get_worker_id(config: pytest.Config) -> str:
-    if not _has_workerinput(config):
+def _get_worker_id(settings: pytest.Config) -> str:
+    if not _has_workerinput(settings):
         return c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
-    worker_id_obj = config.workerinput.get(
+    worker_id_obj = settings.workerinput.get(
         "workerid",
         c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
     )
@@ -58,9 +58,9 @@ def _wait_for_port_ready(host: str, port: int, timeout: int) -> r[bool]:
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    if session.config.option.collectonly:
+    if session.settings.option.collectonly:
         return
-    worker_id = _get_worker_id(session.config)
+    worker_id = _get_worker_id(session.settings)
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     compose_file_rel = str(
         (
@@ -134,7 +134,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
     is_infra = any(e in combined for e in c.Ldap.Tests.ERROR_INFRASTRUCTURE_PATTERNS)
     is_transient = any(e in combined for e in c.Ldap.Tests.ERROR_TRANSIENT_PATTERNS)
     if is_infra and not is_transient:
-        worker_id = _get_worker_id(item.session.config)
+        worker_id = _get_worker_id(item.session.settings)
         docker = u.Ldap.Tests.get_docker_control(worker_id)
         docker.mark_container_dirty(c.Ldap.Tests.DOCKER_CONTAINER_NAME)
         logger.error(
@@ -146,7 +146,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
-    return _get_worker_id(request.config)
+    return _get_worker_id(request.settings)
 
 
 @pytest.fixture(scope="session")

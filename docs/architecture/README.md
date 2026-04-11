@@ -58,7 +58,7 @@ API Facade → Service Layer → Adapter Layer → Protocol + Models
 **Root Modules**:
 
 - `api.py` (ldap facade)
-- `config.py`, `constants.py`, `models.py`, `protocols.py`, `typings.py`
+- `settings.py`, `constants.py`, `models.py`, `protocols.py`, `typings.py`
 - `utilities.py` and `base.py` for shared helpers
 
 **Service Packages**:

@@ -112,13 +112,13 @@ from flext_core import u  # For platform constants
 from flext_ldap import FlextLdapSettings
 
 # 1. Default configuration
-config = FlextLdapSettings()
+settings = FlextLdapSettings()
 
 # 2. Environment variables (preferred)
-config = FlextLdapSettings.from_env()
+settings = FlextLdapSettings.from_env()
 
 # 3. Explicit configuration
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     port=FlextConstants.LDAPS_DEFAULT_PORT,
     use_ssl=True,
@@ -229,7 +229,7 @@ def get_config() -> FlextLdapSettings:
 
 
 # Usage
-config = get_config()
+settings = get_config()
 ```
 
 ______________________________________________________________________
@@ -359,7 +359,7 @@ ______________________________________________________________________
 # Use environment variables for secrets
 import os
 
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host=os.getenv("FLEXT_LDAP_HOST"),
     bind_password=os.getenv("FLEXT_LDAP_BIND_PASSWORD"),
     # ... other settings
@@ -371,7 +371,7 @@ config = FlextLdapSettings(
 ```python
 from ssl import create_default_context
 
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     port=FlextConstants.LDAPS_DEFAULT_PORT,
     use_ssl=True,
@@ -388,7 +388,7 @@ ______________________________________________________________________
 
 ```python
 # High-traffic configuration
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     pool_size=20,  # Adjust based on concurrent users
     connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,  # Fast connection timeout
     receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,  # Operation timeout

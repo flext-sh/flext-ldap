@@ -81,10 +81,10 @@ python docs/maintenance/report.py --generate-dashboard
 # Validate configuration file
 python -c "
 import yaml
-with open('docs/maintenance/config.yaml') as f:
-    config = yaml.safe_load(f)
+with open('docs/maintenance/settings.yaml') as f:
+    settings = yaml.safe_load(f)
     print('✅ Configuration file is valid')
-    print(f'Found {len(config)} top-level sections')
+    print(f'Found {len(settings)} top-level sections')
 "
 ```
 
@@ -170,7 +170,7 @@ yaml.YAMLError: mapping values are not allowed here
 python -c "
 import yaml
 try:
-    with open('docs/maintenance/config.yaml') as f:
+    with open('docs/maintenance/settings.yaml') as f:
         yaml.safe_load(f)
     print('✅ YAML syntax is valid')
 except yaml.YAMLError as e:
@@ -223,7 +223,7 @@ python -c "import os; print(os.path.abspath('docs'))"
 **Solutions:**
 
 ```yaml
-# config.yaml - Optimize audit settings
+# settings.yaml - Optimize audit settings
 audit:
   include_patterns:
     - "*.md" # Limit to markdown only
@@ -265,7 +265,7 @@ curl -I https://example.com
 
 **Solutions:**
 
-- Add domains to skip list in config
+- Add domains to skip list in settings
 - Increase timeout values
 - Check firewall/proxy settings
 
@@ -276,7 +276,7 @@ curl -I https://example.com
 **Solutions:**
 
 ```yaml
-# config.yaml - Reduce request frequency
+# settings.yaml - Reduce request frequency
 validation:
   timeout: 15
   retries: 2
@@ -313,7 +313,7 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 **Solutions:**
 
-- Adjust heading hierarchy rules in config
+- Adjust heading hierarchy rules in settings
 - Use proper markdown heading syntax
 - Document intentional deviations
 
@@ -355,7 +355,7 @@ python maintenance/sync.py --rollback docs/example.md
 **Solutions:**
 
 ```yaml
-# config.yaml - Be more conservative
+# settings.yaml - Be more conservative
 optimization:
   auto_fix: false # Manual review required
   fix_common_typos: true
@@ -425,7 +425,7 @@ for i in range(0, len(file_list), batch_size):
 ```
 
 ```yaml
-# config.yaml - Limit concurrent operations
+# settings.yaml - Limit concurrent operations
 validation:
   max_workers: 2
 ```
@@ -481,11 +481,11 @@ schema = {
     }
 }
 
-with open('docs/maintenance/config.yaml') as f:
-    config = yaml.safe_load(f)
+with open('docs/maintenance/settings.yaml') as f:
+    settings = yaml.safe_load(f)
 
 v = Validator(schema)
-if v.validate(config):
+if v.validate(settings):
     print('✅ Configuration is valid')
 else:
     print('❌ Configuration errors:', v.errors)
@@ -499,12 +499,12 @@ else:
 **Solutions:**
 
 - Use environment variables for sensitive data
-- Create environment-specific config files
-- Use config inheritance (base + environment overrides)
+- Create environment-specific settings files
+- Use settings inheritance (base + environment overrides)
 
 ```yaml
-# config.prod.yaml
-extends: config.yaml
+# settings.prod.yaml
+extends: settings.yaml
 sync:
   auto_commit: true
   push_after_commit: true
@@ -568,7 +568,7 @@ rm -rf docs/maintenance/backups/
 rm -rf docs/maintenance/reports/
 
 # Reset configuration to defaults
-cp docs/maintenance/config.yaml.backup docs/maintenance/config.yaml
+cp docs/maintenance/settings.yaml.backup docs/maintenance/settings.yaml
 
 # Reinitialize
 python docs/maintenance/audit.py --rebuild-db
@@ -729,11 +729,11 @@ python -c "import yaml, requests, bs4; print('✅ Dependencies OK')" 2>/dev/null
 
 # Check configuration
 echo "Checking configuration..."
-python -c "import yaml; yaml.safe_load(open('docs/maintenance/config.yaml')); print('✅ Config OK')" 2>/dev/null || echo "❌ Config invalid"
+python -c "import yaml; yaml.safe_load(open('docs/maintenance/settings.yaml')); print('✅ Config OK')" 2>/dev/null || echo "❌ Config invalid"
 
 # Check file permissions
 echo "Checking permissions..."
-[ -r docs/maintenance/config.yaml ] && echo "✅ Config readable" || echo "❌ Config not readable"
+[ -r docs/maintenance/settings.yaml ] && echo "✅ Config readable" || echo "❌ Config not readable"
 [ -w docs/ ] && echo "✅ Docs writable" || echo "❌ Docs not writable"
 
 # Check disk space

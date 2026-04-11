@@ -171,7 +171,7 @@ Create `flext_ldap.settings.py`:
 ```python
 from Flext_ldap import FlextLdapSettings
 
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     host="ldap.example.com",
     port=636,
     use_ssl=True,
@@ -414,7 +414,7 @@ def manage_acls():
     )
 
     # Get ACLs
-    dn = "olcDatabase={1}mdb,cn=config"
+    dn = "olcDatabase={1}mdb,cn=settings"
     acl_result = ops.get_acls(connection, dn)
 
     if acl_result.is_success:

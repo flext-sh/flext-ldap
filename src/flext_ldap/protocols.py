@@ -187,13 +187,13 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def connect(
                 self,
-                config: FlextLdapProtocols.Ldap.ConnectionConfig,
+                settings: FlextLdapProtocols.Ldap.ConnectionConfig,
                 **kwargs: t.Scalar,
             ) -> r[bool]:
                 """Connect to LDAP server.
 
                 Args:
-                    config: Connection configuration (may be named 'config' or
+                    settings: Connection configuration (may be named 'settings' or
                         'connection_config' in implementations)
                     **kwargs: Additional keyword arguments (e.g., auto_retry: bool,
                         max_retries: int, retry_delay: float)
@@ -548,7 +548,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for objects exposing configuration (duck typing for settings)."""
 
             @property
-            def config(self) -> None:
+            def settings(self) -> None:
                 """Return resolved configuration t.NormalizedValue."""
                 ...
 

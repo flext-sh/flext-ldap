@@ -42,10 +42,10 @@ class TestsFlextLdapBase:
 
     def test_config_property(self) -> None:
         svc = m.Ldap.Tests.SuccessService()
-        assert isinstance(svc.config, p.Settings)
+        assert isinstance(svc.settings, p.Settings)
 
     def test_config_matches_global(self) -> None:
-        cfg = m.Ldap.Tests.SuccessService().config
+        cfg = m.Ldap.Tests.SuccessService().settings
         glob = FlextSettings.fetch_global()
         assert cfg.app_name == glob.app_name
         assert cfg.version == glob.version
@@ -53,7 +53,7 @@ class TestsFlextLdapBase:
     def test_logger_property(self) -> None:
         assert m.Ldap.Tests.SuccessService().logger is not None
 
-    # ── Model config inheritance ───────────────────────────────────────
+    # ── Model settings inheritance ───────────────────────────────────────
 
     @pytest.mark.parametrize(
         ("attr", "expected"),

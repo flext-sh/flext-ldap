@@ -43,14 +43,14 @@ class TestsFlextLdap3Adapter:
         u.Ldap.Tests.fail(result, has=c.Ldap.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR)
 
     def test_connection_manager_create_server_with_ssl(self) -> None:
-        config = m.Ldap.ConnectionConfig(
+        settings = m.Ldap.ConnectionConfig(
             host=c.LOCALHOST,
             port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
             use_ssl=True,
             use_tls=False,
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
-        server = Ldap3Adapter.ConnectionManager.create_server(config)
+        server = Ldap3Adapter.ConnectionManager.create_server(settings)
         assert server is not None
         u.Ldap.Tests.that(
             getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
@@ -66,8 +66,8 @@ class TestsFlextLdap3Adapter:
         )
 
     def test_connection_manager_create_server_without_ssl(self) -> None:
-        config = self._create_connection_config()
-        server = Ldap3Adapter.ConnectionManager.create_server(config)
+        settings = self._create_connection_config()
+        server = Ldap3Adapter.ConnectionManager.create_server(settings)
         assert server is not None
         u.Ldap.Tests.that(
             getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
@@ -83,14 +83,14 @@ class TestsFlextLdap3Adapter:
         )
 
     def test_connection_manager_create_server_with_tls(self) -> None:
-        config = m.Ldap.ConnectionConfig(
+        settings = m.Ldap.ConnectionConfig(
             host=c.LOCALHOST,
             port=c.Ldap.ConnectionDefaults.PORT,
             use_ssl=False,
             use_tls=True,
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
-        server = Ldap3Adapter.ConnectionManager.create_server(config)
+        server = Ldap3Adapter.ConnectionManager.create_server(settings)
         assert server is not None
         u.Ldap.Tests.that(
             getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),

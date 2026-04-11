@@ -81,20 +81,20 @@ class FlextLdapModelsLdap:
         def normalized(
             cls,
             base_dn: str,
-            config: FlextLdapModelsLdap.NormalizedConfig | None = None,
+            settings: FlextLdapModelsLdap.NormalizedConfig | None = None,
         ) -> FlextLdapModelsLdap.SearchOptions:
             """Create SearchOptions with normalized configuration.
 
             Args:
                 base_dn: Base DN for search
-                config: Optional NormalizedConfig with custom values
+                settings: Optional NormalizedConfig with custom values
 
             Returns:
                 SearchOptions with specified or default values
 
             """
             norm_config = (
-                FlextLdapModelsLdap.NormalizedConfig() if config is None else config
+                FlextLdapModelsLdap.NormalizedConfig() if settings is None else settings
             )
             return cls.model_validate({
                 "base_dn": base_dn,
@@ -224,7 +224,7 @@ class FlextLdapModelsLdap:
             return self.successful / self.total_processed
 
     class SyncPhaseConfig(BaseModel):
-        """Sync phase config."""
+        """Sync phase settings."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE

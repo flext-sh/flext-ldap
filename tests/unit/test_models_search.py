@@ -69,14 +69,14 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
 
     def test_search_options_normalized_with_config(self) -> None:
-        config = m.Ldap.NormalizedConfig(
+        settings = m.Ldap.NormalizedConfig(
             scope=c.Ldap.Tests.SEARCH_SCOPE_BASE,
             filter_str=c.Ldap.Tests.SEARCH_FILTER_UID,
             size_limit=c.Ldap.Tests.SEARCH_NORMALIZED_SIZE_LIMIT,
         )
         options = m.Ldap.SearchOptions.normalized(
             c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-            config=config,
+            settings=settings,
         )
         u.Ldap.Tests.that(options.scope, eq=c.Ldap.Tests.SEARCH_SCOPE_BASE)
         u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.Tests.SEARCH_FILTER_UID)

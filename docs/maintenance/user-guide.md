@@ -372,7 +372,7 @@ python maintenance/sync.py --sync
 
 ### Main Configuration File
 
-Edit `docs/maintenance/config.yaml`:
+Edit `docs/maintenance/settings.yaml`:
 
 ```yaml
 # Quality thresholds
@@ -451,7 +451,7 @@ rm -rf docs/maintenance/.cache/
 rm -rf docs/maintenance/backups/
 
 # Reset configuration
-cp docs/maintenance/config.yaml.backup docs/maintenance/config.yaml
+cp docs/maintenance/settings.yaml.backup docs/maintenance/settings.yaml
 ```
 
 #### Git Integration Issues
@@ -470,7 +470,7 @@ git diff docs/
 For large documentation sets:
 
 ```yaml
-# config.yaml optimizations
+# settings.yaml optimizations
 validation:
   max_workers: 2 # Reduce concurrent requests
   timeout: 5 # Faster timeout

@@ -7,7 +7,7 @@ directly; all other modules work with protocol abstractions.
 Business Rules:
     - ldap3 library is ONLY imported here (zero tolerance for direct imports elsewhere)
     - Connection binding uses ldap3.Connection with auto_bind and auto_range options
-    - STARTTLS is handled separately from SSL (mutual exclusion enforced in config)
+    - STARTTLS is handled separately from SSL (mutual exclusion enforced in settings)
     - Search results are converted to m.Ldif.Entry via FlextLdifParser
     - CRUD operations (add, modify, delete) return r for consistency
     - LDAPException is caught and converted to r.fail() (no exceptions leak)
@@ -193,15 +193,15 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def create_connection(
             server: p.Ldap.Ldap3Server,
-            config: m.Ldap.ConnectionConfig,
+            settings: m.Ldap.ConnectionConfig,
         ) -> p.Ldap.Ldap3Connection:
             """Create ldap3 Connection t.NormalizedValue.
 
             Business Rules:
-                - Bind credentials (user, password) from config
-                - auto_bind from config controls automatic binding
-                - auto_range from config controls automatic range handling
-                - Receive timeout uses config.timeout value
+                - Bind credentials (user, password) from settings
+                - auto_bind from settings controls automatic binding
+                - auto_range from settings controls automatic range handling
+                - Receive timeout uses settings.timeout value
                 - Connection is created but may not be bound yet
 
             Architecture:
@@ -211,7 +211,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Args:
                 server: ldap3 Server t.NormalizedValue from create_server().
-                config: Connection configuration with bind credentials.
+                settings: Connection configuration with bind credentials.
 
             Returns:
                 ldap3 Connection t.NormalizedValue (bound if auto_bind=True).
@@ -222,22 +222,22 @@ class FlextLdapLdap3Adapter(s[bool]):
             )
             return Connection(
                 server=ldap3_server,
-                user=config.bind_dn,
-                password=config.bind_password,
-                auto_bind=config.auto_bind,
-                auto_range=config.auto_range,
+                user=settings.bind_dn,
+                password=settings.bind_password,
+                auto_bind=settings.auto_bind,
+                auto_range=settings.auto_range,
                 check_names=False,
-                receive_timeout=config.timeout,
+                receive_timeout=settings.timeout,
             )
 
         @staticmethod
-        def create_server(config: m.Ldap.ConnectionConfig) -> p.Ldap.Ldap3Server:
+        def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldap.Ldap3Server:
             """Create ldap3 Server t.NormalizedValue.
 
             Business Rules:
                 - SSL connections use use_ssl=True (port 636 default)
                 - Non-SSL connections use use_ssl=False (port 389 default)
-                - Connect timeout uses config.timeout value
+                - Connect timeout uses settings.timeout value
                 - Server t.NormalizedValue is created without connection attempt
 
             Architecture:
@@ -246,29 +246,29 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - No network calls - t.NormalizedValue creation only
 
             Args:
-                config: Connection configuration with host, port, SSL/TLS settings.
+                settings: Connection configuration with host, port, SSL/TLS settings.
 
             Returns:
                 ldap3 Server t.NormalizedValue configured for connection.
 
             """
-            if config.use_ssl:
+            if settings.use_ssl:
                 return Server(
-                    host=config.host,
-                    port=config.port,
+                    host=settings.host,
+                    port=settings.port,
                     use_ssl=True,
-                    connect_timeout=config.timeout,
+                    connect_timeout=settings.timeout,
                 )
             return Server(
-                host=config.host,
-                port=config.port,
-                connect_timeout=config.timeout,
+                host=settings.host,
+                port=settings.port,
+                connect_timeout=settings.timeout,
             )
 
         @staticmethod
         def handle_tls(
             connection: p.Ldap.Ldap3Connection,
-            config: m.Ldap.ConnectionConfig,
+            settings: m.Ldap.ConnectionConfig,
         ) -> r[bool]:
             """Handle STARTTLS if requested.
 
@@ -290,13 +290,13 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Args:
                 connection: Active ldap3.Connection instance.
-                config: Connection configuration with TLS settings.
+                settings: Connection configuration with TLS settings.
 
             Returns:
                 r[bool]: Success if STARTTLS not needed or succeeds.
 
             """
-            if not config.use_tls or config.use_ssl:
+            if not settings.use_tls or settings.use_ssl:
                 return r[bool].ok(value=True)
             try:
                 if not FlextLdapLdap3Wrappers.start_tls(connection):
@@ -1290,7 +1290,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def connect(
         self,
-        config: m.Ldap.ConnectionConfig,
+        settings: m.Ldap.ConnectionConfig,
         **_kwargs: str | float | bool | None,
     ) -> r[bool]:
         """Establish LDAP connection using ldap3 library.
@@ -1315,19 +1315,19 @@ class FlextLdapLdap3Adapter(s[bool]):
             - Returns r pattern - no exceptions raised
 
         Args:
-            config: Connection configuration (host, port, bind_dn, bind_password, SSL/TLS)
+            settings: Connection configuration (host, port, bind_dn, bind_password, SSL/TLS)
 
         Returns:
             r[bool] indicating connection success
 
         """
         try:
-            self._server = self.ConnectionManager.create_server(config)
+            self._server = self.ConnectionManager.create_server(settings)
             self._connection = self.ConnectionManager.create_connection(
                 self._server,
-                config,
+                settings,
             )
-            tls_result = self.ConnectionManager.handle_tls(self._connection, config)
+            tls_result = self.ConnectionManager.handle_tls(self._connection, settings)
             if tls_result.failure:
                 return tls_result
             # Check bound state - connection is guaranteed to be non-None after create_connection

@@ -66,10 +66,10 @@ class FlextLdapSync(FlextLdapOperations):
     @staticmethod
     def _make_phase_progress_callback(
         phase: str,
-        config: m.Ldap.SyncPhaseConfig,
+        settings: m.Ldap.SyncPhaseConfig,
     ) -> t.Ldap.LdapProgressCallback | None:
         """Normalize configured callbacks to the single-phase protocol."""
-        callback = config.progress_callback
+        callback = settings.progress_callback
         if callback is None:
             return None
         if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
@@ -91,10 +91,10 @@ class FlextLdapSync(FlextLdapOperations):
         self,
         phase_files: Mapping[str, Path],
         *,
-        config: m.Ldap.SyncPhaseConfig | None = None,
+        settings: m.Ldap.SyncPhaseConfig | None = None,
     ) -> r[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially."""
-        sync_config = config or m.Ldap.SyncPhaseConfig()
+        sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
         phase_results: MutableMapping[str, m.Ldap.PhaseSyncResult] = {}
         overall_success = True
@@ -156,10 +156,10 @@ class FlextLdapSync(FlextLdapOperations):
         ldif_file_path: Path,
         phase_name: str,
         *,
-        config: m.Ldap.SyncPhaseConfig | None = None,
+        settings: m.Ldap.SyncPhaseConfig | None = None,
     ) -> r[m.Ldap.PhaseSyncResult]:
         """Synchronize a single phase file into LDAP."""
-        sync_config = config or m.Ldap.SyncPhaseConfig()
+        sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
         try:
             ldif_content = ldif_file_path.read_text(encoding="utf-8")
@@ -242,12 +242,12 @@ class FlextLdapSync(FlextLdapOperations):
     def _prepare_phase_callback(
         self,
         phase_name: str,
-        config: m.Ldap.SyncPhaseConfig,
+        settings: m.Ldap.SyncPhaseConfig,
     ) -> t.Ldap.LdapProgressCallback | None:
         """Prepare a phase-aware callback from the configured sync callback."""
         phase_callback = (
-            FlextLdapSync._make_phase_progress_callback(phase_name, config)
-            or config.progress_callback
+            FlextLdapSync._make_phase_progress_callback(phase_name, settings)
+            or settings.progress_callback
         )
         if phase_callback is None:
             return None
@@ -270,19 +270,19 @@ class FlextLdapSync(FlextLdapOperations):
         self,
         phase_name: str,
         ldif_path: Path,
-        config: m.Ldap.SyncPhaseConfig,
+        settings: m.Ldap.SyncPhaseConfig,
     ) -> r[m.Ldap.PhaseSyncResult]:
         """Process one phase file with a callback normalized for that phase."""
-        phase_callback = self._prepare_phase_callback(phase_name, config)
+        phase_callback = self._prepare_phase_callback(phase_name, settings)
         return self.sync_phase_entries(
             ldif_path,
             phase_name,
-            config=m.Ldap.SyncPhaseConfig(
-                server_type=config.server_type,
+            settings=m.Ldap.SyncPhaseConfig(
+                server_type=settings.server_type,
                 progress_callback=phase_callback,
-                retry_on_errors=config.retry_on_errors,
-                max_retries=config.max_retries,
-                stop_on_error=config.stop_on_error,
+                retry_on_errors=settings.retry_on_errors,
+                max_retries=settings.max_retries,
+                stop_on_error=settings.stop_on_error,
             ),
         )
 

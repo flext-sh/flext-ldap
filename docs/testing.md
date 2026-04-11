@@ -174,7 +174,7 @@ docker exec -it flext-ldap-test-server ldapsearch \
 | **entry_adapter.py**  | 180   | 9%       | 🚧 Conversion Logic | **P2**   |
 | **authentication.py** | 85    | 18%      | 🚧 Auth Logic       | **P2**   |
 | **clients.py**        | 455   | 26%      | 🚧 Infrastructure   | **P2**   |
-| **config.py**         | 344   | 22%      | 🚧 Configuration    | **P2**   |
+| **settings.py**         | 344   | 22%      | 🚧 Configuration    | **P2**   |
 | **domain.py**         | 114   | 21%      | 🚧 Business Rules   | **P2**   |
 | **acl/parsers.py**    | 283   | 15%      | 🚧 ACL Parsing      | **P3**   |
 | **acl/manager.py**    | 110   | 11%      | 🚧 ACL Management   | **P3**   |
@@ -252,7 +252,7 @@ docker exec -it flext-ldap-test-server ldapsearch \
 
 ### Phase 2: Supporting Module Coverage (Priority 2)
 
-**Target Modules**: entry_adapter.py, authentication.py, clients.py, config.py, domain.py
+**Target Modules**: entry_adapter.py, authentication.py, clients.py, settings.py, domain.py
 **Strategy**: Mix of unit and integration testing
 
 ### Phase 3: Advanced Feature Testing (Priority 3)

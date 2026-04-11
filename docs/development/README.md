@@ -196,7 +196,7 @@ class MyService(s[None]):
     def operation(self):
         # ✅ Use inherited properties
         self.logger.info("message")  # From x
-        timeout = self.config.timeout  # From x
+        timeout = self.settings.timeout  # From x
         service = self.container.get("service")  # From x
 ```
 

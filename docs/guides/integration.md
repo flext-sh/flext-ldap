@@ -637,7 +637,7 @@ RUN apt-get update && apt-get install -y \
 # Install Python dependencies
 COPY pyproject.toml poetry.lock ./
 RUN pip install poetry && \
-    poetry config virtualenvs.create false && \
+    poetry settings virtualenvs.create false && \
     poetry install --no-dev
 
 # Copy application
@@ -683,22 +683,22 @@ spec:
             - name: FLEXT_LDAP_HOST
               valueFrom:
                 secretKeyRef:
-                  name: ldap-config
+                  name: ldap-settings
                   key: host
             - name: FLEXT_LDAP_BIND_DN
               valueFrom:
                 secretKeyRef:
-                  name: ldap-config
+                  name: ldap-settings
                   key: bind_dn
             - name: FLEXT_LDAP_BIND_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ldap-config
+                  name: ldap-settings
                   key: bind_password
             - name: FLEXT_LDAP_BASE_DN
               valueFrom:
                 configMapKeyRef:
-                  name: ldap-config
+                  name: ldap-settings
                   key: base_dn
           livenessProbe:
             httpGet:
@@ -724,7 +724,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: ldap-config
+  name: ldap-settings
 type: Opaque
 stringData:
   host: "ldap.example.com"
@@ -735,7 +735,7 @@ stringData:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ldap-config
+  name: ldap-settings
 data:
   base_dn: "dc=example,dc=com"
   port: "636"

@@ -114,7 +114,7 @@ python examples/02_search_operations.py
 - Configuration setup (FlextLdapSettings)
 - Constants usage (FlextLdapConstants)
 
-**Modules**: api.py, models.py, config.py, constants.py
+**Modules**: api.py, models.py, settings.py, constants.py
 
 **Run:**
 
@@ -413,7 +413,7 @@ ______________________________________________________________________
 - Retry patterns with exponential backoff
 - Multiple connection management
 
-**Modules**: api.py, connection_manager.py (conceptual), config.py
+**Modules**: api.py, connection_manager.py (conceptual), settings.py
 
 **Run:**
 
@@ -716,7 +716,7 @@ ______________________________________________________________________
 | **api.py (ldap)**    | ALL                    | Primary facade - all operations                        |
 | **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
 | **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
-| **config.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
+| **settings.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
 | **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                             |
 | **validations.py**        | 02, 06                 | DN, filter validation                                  |
 | **authentication.py**     | 03                     | User authentication flows                              |
@@ -748,7 +748,7 @@ from flext_ldap import ldap
 from flext_ldap import FlextLdapSettings
 
 # Create and configure
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     ldap_server_uri="ldap://localhost:389",
     ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
@@ -777,7 +777,7 @@ from flext_ldap import ldap
 
 @contextmanager
 def ldap_connection():
-    api = ldap(config=...)
+    api = ldap(settings=...)
     connect_result = api.connect()
     if connect_result.is_failure:
         raise ConnectionError(connect_result.error)
