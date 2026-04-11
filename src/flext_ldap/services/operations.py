@@ -71,7 +71,7 @@ class FlextLdapOperations(FlextLdapConnection):
     Examples:
         >>> ops = FlextLdapOperations(connection=conn)
         >>> result = ops.search(m.Ldap.SearchOptions(base_dn="dc=example,dc=com"))
-        >>> if result.is_success:
+        >>> if result.success:
         ...     entries = result.value.entries
 
     """

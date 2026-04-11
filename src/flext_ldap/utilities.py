@@ -151,7 +151,7 @@ class FlextLdapUtilities(u):
             """Convert a value to string, returning default for None or complex types."""
             if value is None:
                 return default
-            if u.is_primitive(value):
+            if u.primitive(value):
                 str_val = str(value)
                 return str_val or default
             return default

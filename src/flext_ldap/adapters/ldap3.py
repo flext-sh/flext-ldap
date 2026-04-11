@@ -766,7 +766,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 return None
             filtered: MutableMapping[str, t.Scalar | t.ScalarList] = {}
             for key, val in metadata_dict.items():
-                if u.is_primitive(val):
+                if u.primitive(val):
                     filtered[str(key)] = val
             return filtered or None
 
@@ -838,7 +838,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Extracts error description from connection.result dict
                 - Uses "description" field if available (most detailed)
                 - Falls back to generic error message if description missing
-                - Uses u.is_dict_like() for type-safe dict access
+                - Uses u.dict_like() for type-safe dict access
 
             Audit Implications:
                 - Error messages preserve LDAP server error context
@@ -847,7 +847,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Architecture:
                 - Uses connection.result dict from ldap3
-                - Uses u.is_dict_like() for type narrowing
+                - Uses u.dict_like() for type narrowing
                 - Returns r.fail() with error message
 
             Args:
