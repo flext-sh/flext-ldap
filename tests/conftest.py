@@ -68,7 +68,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
         ).relative_to(Path(__file__).parent.parent.parent.resolve()),
     )
-    if docker_control.is_container_dirty(c.Ldap.Tests.DOCKER_CONTAINER_NAME):
+    if docker_control.container_dirty(c.Ldap.Tests.DOCKER_CONTAINER_NAME):
         logger.info(
             "Container %s is dirty, recreating",
             c.Ldap.Tests.DOCKER_CONTAINER_NAME,
