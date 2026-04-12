@@ -28,8 +28,7 @@ class FlextLdapSettings(FlextSettings):
     """LDAP runtime settings."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_prefix="FLEXT_LDAP_",
-        extra="ignore",
+        env_prefix="FLEXT_LDAP_", extra="ignore"
     )
 
     host: Annotated[str, Field(default=c.LOCALHOST, description="LDAP server host")]
