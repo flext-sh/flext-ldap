@@ -23,7 +23,7 @@ __author__: str = _metadata.get("Author", "FLEXT Team")
 __author_email__: str = _metadata.get("Author-Email", "")
 __license__: str = _metadata.get("License", "MIT")
 __url__: str = _metadata.get("Homepage", "https://github.com/flext-sh/flext")
-__all__ = [
+__all__: list[str] = [
     "__author__",
     "__author_email__",
     "__description__",

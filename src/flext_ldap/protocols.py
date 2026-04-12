@@ -601,6 +601,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 attributes: t.StrSequence
 
 
-__all__ = ["FlextLdapProtocols", "p"]
+__all__: list[str] = ["FlextLdapProtocols", "p"]
 
 p = FlextLdapProtocols

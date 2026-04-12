@@ -71,4 +71,4 @@ class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
 ldap = FlextLdap.get_instance()
 
 
-__all__ = ["FlextLdap", "ldap"]
+__all__: list[str] = ["FlextLdap", "ldap"]

@@ -81,7 +81,7 @@ class FlextLdapTypes(FlextLdifTypes):
 
 t = FlextLdapTypes
 
-__all__ = [
+__all__: list[str] = [
     "FlextLdapTypes",
     "t",
 ]

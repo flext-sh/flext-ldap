@@ -87,4 +87,4 @@ class FlextLdapSettings(FlextSettings):
     ]
 
 
-__all__ = ["FlextLdapSettings"]
+__all__: list[str] = ["FlextLdapSettings"]

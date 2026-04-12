@@ -287,4 +287,4 @@ class FlextLdapSync(FlextLdapOperations):
         )
 
 
-__all__ = ["FlextLdapSync", "FlextLdapSyncCallbacks"]
+__all__: list[str] = ["FlextLdapSync", "FlextLdapSyncCallbacks"]

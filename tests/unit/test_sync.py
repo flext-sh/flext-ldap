@@ -68,4 +68,4 @@ class TestsFlextLdapSync:
         assert callback is cb
 
 
-__all__ = ["TestsFlextLdapSync"]
+__all__: list[str] = ["TestsFlextLdapSync"]

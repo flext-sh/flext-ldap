@@ -433,4 +433,4 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
 c = TestsFlextLdapConstants
 
-__all__ = ["TestsFlextLdapConstants", "c"]
+__all__: list[str] = ["TestsFlextLdapConstants", "c"]

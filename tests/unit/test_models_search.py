@@ -209,4 +209,4 @@ class TestsFlextLdapModelsSearch:
         )
 
 
-__all__ = ["TestsFlextLdapModelsSearch"]
+__all__: list[str] = ["TestsFlextLdapModelsSearch"]

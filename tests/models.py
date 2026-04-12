@@ -98,7 +98,7 @@ class TestsFlextLdapModels(m, FlextTestsModels):
 # Short aliases for tests
 m = TestsFlextLdapModels
 
-__all__ = [
+__all__: list[str] = [
     "TestsFlextLdapModels",
     "m",
 ]

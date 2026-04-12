@@ -286,4 +286,4 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
 u = TestsFlextLdapUtilities
 
-__all__ = ["TestsFlextLdapUtilities", "u"]
+__all__: list[str] = ["TestsFlextLdapUtilities", "u"]

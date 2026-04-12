@@ -41,4 +41,4 @@ class FlextLdapServiceBase[
 
 
 s = FlextLdapServiceBase
-__all__ = ["FlextLdapServiceBase", "s"]
+__all__: list[str] = ["FlextLdapServiceBase", "s"]

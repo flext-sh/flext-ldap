@@ -140,4 +140,4 @@ class TestsFlextLdapModels:
         u.Ldap.Tests.that(dump, keys=[c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.FIELD_PORT])
 
 
-__all__ = ["TestsFlextLdapModels"]
+__all__: list[str] = ["TestsFlextLdapModels"]

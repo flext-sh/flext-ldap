@@ -450,4 +450,4 @@ class FlextLdapUtilities(u):
 
 u = FlextLdapUtilities
 
-__all__ = ["FlextLdapUtilities", "u"]
+__all__: list[str] = ["FlextLdapUtilities", "u"]

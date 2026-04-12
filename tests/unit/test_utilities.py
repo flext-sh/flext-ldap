@@ -104,4 +104,4 @@ class TestsFlextLdapUtilities:
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
 
 
-__all__ = ["TestsFlextLdapUtilities"]
+__all__: list[str] = ["TestsFlextLdapUtilities"]

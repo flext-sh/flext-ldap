@@ -370,4 +370,4 @@ class FlextLdapModelsLdap:
         overall_success: bool = True
 
 
-__all__ = ["FlextLdapModelsLdap"]
+__all__: list[str] = ["FlextLdapModelsLdap"]

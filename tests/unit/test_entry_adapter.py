@@ -146,4 +146,4 @@ class TestsFlextLdapEntryAdapter:
         assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)
 
 
-__all__ = ["TestsFlextLdapEntryAdapter"]
+__all__: list[str] = ["TestsFlextLdapEntryAdapter"]
