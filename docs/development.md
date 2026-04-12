@@ -351,7 +351,7 @@ class SearchRequest:
     time_limit: int = 30
 
 def search_entries(self, request: SearchRequest) -> r[List[LdapEntry]]:
-    # Implementation using parameter t.NormalizedValue
+    # Implementation using parameter t.RecursiveContainer
 
 # ❌ WRONG - Multiple parameters
 def search_entries(self, base_dn: str, filter_str: str, scope: str,
@@ -672,7 +672,7 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            r containing authenticated user t.NormalizedValue on success,
+            r containing authenticated user t.RecursiveContainer on success,
             or error message on failure.
 
         Raises:

@@ -164,7 +164,7 @@ class FlextLdapUtilities(u):
             """
 
             @staticmethod
-            def is_valid_status(value: str | t.NormalizedValue) -> TypeIs[str]:
+            def is_valid_status(value: str | t.RecursiveContainer) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -296,7 +296,7 @@ class FlextLdapUtilities(u):
             Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
 
             Args:
-                dn: DN t.NormalizedValue (can be None or have .value)
+                dn: DN t.RecursiveContainer (can be None or have .value)
                 default: Default if None
 
             Returns:
@@ -331,7 +331,7 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.NormalizedValue]],
+            callables_dict: Mapping[str, Callable[..., t.RecursiveContainer]],
             *args: t.Primitives | None,
             **kwargs: t.Primitives | None,
         ) -> str | None:

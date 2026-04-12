@@ -153,7 +153,7 @@
 - ACL operations typically require REDACTED_LDAP_BIND_PASSWORD privileges
 - Reduce page size
 - Check entry normalization
-- Verify required t.NormalizedValue classes and attributes
+- Verify required t.RecursiveContainer classes and attributes
   - 📚 Additional Resources
 
 **Complete guide to using server-specific LDAP operations in flext-ldap**
@@ -355,7 +355,7 @@ legacy_acl = {
 
 - **orclaci** ACL syntax
 - **cn=subschemasubentry** schema location
-- Oracle-specific t.NormalizedValue classes (orclUserV2, orclContainer)
+- Oracle-specific t.RecursiveContainer classes (orclUserV2, orclContainer)
 - VLV support
 - Full replication support
 
@@ -811,7 +811,7 @@ norm_result = ops.normalize_entry(entry)
 if norm_result.is_failure:
     print(f"Normalization failed: {norm_result.error}")
 
-# Verify required t.NormalizedValue classes and attributes
+# Verify required t.RecursiveContainer classes and attributes
 ```
 
 ##

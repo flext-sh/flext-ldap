@@ -100,7 +100,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 error: str | None
                 "Error message if parsing failed."
                 value: t.Scalar | None
-                "Parsed value or result t.NormalizedValue."
+                "Parsed value or result t.RecursiveContainer."
 
         @runtime_checkable
         class SearchOptions(Protocol):
@@ -539,7 +539,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[t.Pair[str, t.NormalizedValue]]:
+            def items(self) -> Sequence[t.Pair[str, t.RecursiveContainer]]:
                 """Return items as sequence of tuples."""
                 ...
 
@@ -549,7 +549,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             @property
             def settings(self) -> None:
-                """Return resolved configuration t.NormalizedValue."""
+                """Return resolved configuration t.RecursiveContainer."""
                 ...
 
         @runtime_checkable

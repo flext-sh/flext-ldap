@@ -26,7 +26,7 @@ def ldap_settings(
 
 
 class WorkerInputConfig(Protocol):
-    workerinput: Mapping[str, str]
+    workerinput: t.StrMapping
 
 
 def _has_workerinput(settings: pytest.Config) -> TypeGuard[WorkerInputConfig]:

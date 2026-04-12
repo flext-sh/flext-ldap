@@ -139,7 +139,7 @@ ______________________________________________________________________
 
 - Basic search with filters (search)
 - Single entry search (search_one)
-- Structured search with SearchRequest parameter t.NormalizedValue
+- Structured search with SearchRequest parameter t.RecursiveContainer
 - Group searches (search_groups)
 - Search scopes (BASE, ONE_LEVEL, SUBTREE)
 - Attribute filtering
@@ -160,7 +160,7 @@ python examples/02_search_operations.py
 - DN and filter validation results
 - Basic search with person objects
 - Single entry search (REDACTED_LDAP_BIND_PASSWORD)
-- SearchRequest parameter t.NormalizedValue usage
+- SearchRequest parameter t.RecursiveContainer usage
 - Group searches
 - Different scope demonstrations
 - Attribute filtering examples
@@ -558,7 +558,7 @@ ______________________________________________________________________
 
    - Direct method calls
    - Context manager pattern
-   - Parameter t.NormalizedValue pattern
+   - Parameter t.RecursiveContainer pattern
    - Convenience methods
    - Batch operations
 

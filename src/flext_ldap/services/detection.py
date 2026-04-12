@@ -312,13 +312,13 @@ class FlextLdapServerDetector(s[str]):
             return r[t.Ldap.OperationAttributes].fail(
                 f"rootDSE query failed: {connection.result}",
             )
-        entries_list: t.ContainerList = getattr(connection, "entries", [])
-        entries_raw: t.ContainerList = entries_list
+        entries_list: t.RecursiveContainerList = getattr(connection, "entries", [])
+        entries_raw: t.RecursiveContainerList = entries_list
         if not entries_raw:
             return r[t.Ldap.OperationAttributes].fail(
                 "rootDSE query returned no entries",
             )
-        root_dse_entry: t.NormalizedValue = entries_raw[0]
+        root_dse_entry: t.RecursiveContainer = entries_raw[0]
         if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
             return r[t.Ldap.OperationAttributes].fail(
                 "rootDSE query returned invalid entry payload",

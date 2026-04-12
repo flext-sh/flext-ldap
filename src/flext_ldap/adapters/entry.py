@@ -192,7 +192,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_conversion_metadata(
         removed_attrs: t.StrSequence,
         base64_attrs: t.StrSequence,
-        original_attrs_dict: t.ContainerMapping,
+        original_attrs_dict: t.RecursiveContainerMapping,
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation.
@@ -256,7 +256,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Metadata mutations are side effects (no return value)
 
         Architecture:
-            - Mutates conversion_metadata t.NormalizedValue (side effect)
+            - Mutates conversion_metadata t.RecursiveContainer (side effect)
                 - Python 3.13: Uses guard-based sequence handling
             - Compares string representations for change detection
             - No network calls - pure metadata tracking
@@ -379,7 +379,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Server type from adapter._server_type stored in metadata
 
         Args:
-            ldap3_entry: ldap3 Entry t.NormalizedValue (required, no fallback).
+            ldap3_entry: ldap3 Entry t.RecursiveContainer (required, no fallback).
                 Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:

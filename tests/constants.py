@@ -7,6 +7,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Final
 
+from flext_cli import t
 from flext_tests import FlextTestsConstants
 from frozenlist import FrozenList
 
@@ -169,7 +170,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
-                Sequence[tuple[Mapping[str, Sequence[str]], str, str | None]]
+                Sequence[tuple[Mapping[str, t.StrSequence], str, str | None]]
             ] = (
                 (
                     MappingProxyType(
@@ -187,7 +188,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 (MappingProxyType({"vendorName": ()}), "vendorName", None),
             )
             DETECTION_FROM_ATTRIBUTES_SCENARIOS: Final[
-                Sequence[tuple[str | None, str | None, Sequence[str], str]]
+                Sequence[tuple[str | None, str | None, t.StrSequence, str]]
             ] = (
                 ("Oracle Corporation", "12.2.1.4.0", (), "oid"),
                 ("Oracle Unified Directory", "12.2.1.4.0", (), "oud"),
@@ -247,7 +248,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             LIST_ABC_UPPER.freeze()
             LIST_SINGLE: Final[str] = "single"
 
-            FILTER_TRUTHY_INPUT: Final[Mapping[str, str]] = MappingProxyType(
+            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType(
                 {
                     "a": "value",
                     "b": "",
@@ -290,7 +291,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             ENTRY_ADAPTER_BASE64_MARKER_VALUE: Final[str] = "::dGVzdA=="
             ENTRY_ADAPTER_NON_ASCII_VALUE: Final[str] = "testÿ"
-            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[Mapping[str, Sequence[str]]] = (
+            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[Mapping[str, t.StrSequence]] = (
                 MappingProxyType(
                     {
                         "cn": ("user",),
@@ -325,7 +326,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SEARCH_NORMALIZED_SIZE_LIMIT: Final[int] = 50
             SEARCH_ENTRY_ADDED_MESSAGE: Final[str] = "Entry added successfully"
             SEARCH_DEFAULT_LIMIT_ZERO: Final[int] = 0
-            SEARCH_OBJECTCLASS_PERSON_TOP: Final[Mapping[str, Sequence[str]]] = (
+            SEARCH_OBJECTCLASS_PERSON_TOP: Final[Mapping[str, t.StrSequence]] = (
                 MappingProxyType({"objectClass": ("person", "top")})
             )
             SEARCH_EXPECTED_CATEGORY_PERSON: Final[str] = "person"

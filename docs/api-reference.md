@@ -121,7 +121,7 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `settings` (FlextLdapSettings, optional): Configuration t.NormalizedValue. If None, uses default settings.
+- `settings` (FlextLdapSettings, optional): Configuration t.RecursiveContainer. If None, uses default settings.
 
 **Returns:** FlextLdapClients instance
 
@@ -145,7 +145,7 @@ Search LDAP directory entries.
 
 **Parameters:**
 
-- `request`: SearchRequest t.NormalizedValue with search criteria
+- `request`: SearchRequest t.RecursiveContainer with search criteria
 
 **Returns:** r containing list of matching entries
 
@@ -173,7 +173,7 @@ Authenticate user credentials against LDAP directory.
 - `username` (str): User identifier
 - `password` (str): User password
 
-**Returns:** r containing authenticated user t.NormalizedValue
+**Returns:** r containing authenticated user t.RecursiveContainer
 
 **Example:**
 
@@ -192,7 +192,7 @@ Create a new user in LDAP directory.
 
 - `request`: CreateUserRequest with user details
 
-**Returns:** r containing created user t.NormalizedValue
+**Returns:** r containing created user t.RecursiveContainer
 
 **Example:**
 
@@ -254,7 +254,7 @@ User creation request data.
 - `cn` (str): Common name
 - `sn` (str): Surname
 - `mail` (str, optional): Email address
-- `object_classes` (t.StringList, optional): LDAP t.NormalizedValue classes
+- `object_classes` (t.StringList, optional): LDAP t.RecursiveContainer classes
 
 #### FlextLdapUser
 
@@ -352,7 +352,7 @@ Search scope enumeration.
 
 **Values:**
 
-- `BASE`: Search base t.NormalizedValue only
+- `BASE`: Search base t.RecursiveContainer only
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
@@ -415,7 +415,7 @@ if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
 
 #### `is_ldap_entry(obj) -> bool`
 
-Check if t.NormalizedValue is a valid LDAP entry.
+Check if t.RecursiveContainer is a valid LDAP entry.
 
 ### FlextLdapConstants
 
@@ -543,7 +543,7 @@ Convert ldap3.Entry to ldif entry.
 
 **Parameters:**
 
-- `ldap3_entry`: ldap3.Entry t.NormalizedValue from search results
+- `ldap3_entry`: ldap3.Entry t.RecursiveContainer from search results
 
 **Returns:** r containing FlextLdifModels.Entry
 
@@ -584,7 +584,7 @@ Convert ldif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** r containing attributes t.ContainerMapping for ldap3 operations
+**Returns:** r containing attributes t.RecursiveContainerMapping for ldap3 operations
 
 **Example:**
 
@@ -1024,7 +1024,7 @@ from flext_ldap import OracleOIDOperations
 
 - orclaci ACL format
 - cn=subschemasubentry schema discovery
-- Oracle-specific t.NormalizedValue classes (orclUserV2, orclContainer)
+- Oracle-specific t.RecursiveContainer classes (orclUserV2, orclContainer)
 - VLV support
 - Paged results support
 
@@ -1146,7 +1146,9 @@ def universal_ldap_example():
         schema_result = ops.discover_schema(connection)
         if schema_result.is_success:
             schema = schema_result.unwrap()
-            print(f"Schema: {len(schema['object_classes'])} t.NormalizedValue classes")
+            print(
+                f"Schema: {len(schema['object_classes'])} t.RecursiveContainer classes"
+            )
 
         # Get ACLs
         acl_attr = quirks.get_acl_attribute_name(server_type).unwrap()

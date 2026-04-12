@@ -96,7 +96,7 @@ class FlextLdapOperations(FlextLdapConnection):
         """Extract attributes dict from LDIF entry or entry protocol.
 
         Args:
-            entry: LDIF entry model (m.Ldif.Entry) or protocol-compatible t.NormalizedValue.
+            entry: LDIF entry model (m.Ldif.Entry) or protocol-compatible t.RecursiveContainer.
 
         Returns:
             Attributes dict with normalized values.
