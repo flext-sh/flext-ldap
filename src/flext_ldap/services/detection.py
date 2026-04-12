@@ -2,7 +2,7 @@
 
 The service inspects ``rootDSE`` attributes and applies lightweight heuristics
 so callers can classify a live directory server without relying on external
-detectors. Results are returned as :class:`flext_core.r` instances.
+detectors. Results are returned as :class:`flext_core` instances.
 
 Business Rules:
     - Connection MUST be bound before detection (queries rootDSE base DN "")

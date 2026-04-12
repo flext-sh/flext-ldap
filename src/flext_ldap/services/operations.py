@@ -44,7 +44,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
     so this layer can concentrate on typed arguments, predictable
-    :class:`flext_core.r` responses, and shared comparison helpers.
+    :class:`flext_core` responses, and shared comparison helpers.
 
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)

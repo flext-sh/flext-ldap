@@ -14,8 +14,6 @@ from tests import c, m, t, u
 
 logger = u.fetch_logger(__name__)
 
-pytest_plugins = ["flext_tests.conftest_plugin"]
-
 
 @pytest.fixture
 def ldap_settings(
