@@ -58,9 +58,9 @@ def _wait_for_port_ready(host: str, port: int, timeout: int) -> r[bool]:
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    if session.settings.option.collectonly:
+    if session.config.option.collectonly:
         return
-    worker_id = _get_worker_id(session.settings)
+    worker_id = _get_worker_id(session.config)
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     compose_file_rel = str(
         (
@@ -134,7 +134,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
     is_infra = any(e in combined for e in c.Ldap.Tests.ERROR_INFRASTRUCTURE_PATTERNS)
     is_transient = any(e in combined for e in c.Ldap.Tests.ERROR_TRANSIENT_PATTERNS)
     if is_infra and not is_transient:
-        worker_id = _get_worker_id(item.session.settings)
+        worker_id = _get_worker_id(item.session.config)
         docker = u.Ldap.Tests.get_docker_control(worker_id)
         docker.mark_container_dirty(c.Ldap.Tests.DOCKER_CONTAINER_NAME)
         logger.error(
@@ -146,7 +146,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
-    return _get_worker_id(request.settings)
+    return _get_worker_id(request.config)
 
 
 @pytest.fixture(scope="session")
