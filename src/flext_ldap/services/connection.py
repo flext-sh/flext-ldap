@@ -15,13 +15,14 @@ from typing import ClassVar, override
 
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_core import p, r
 from flext_ldap import (
     FlextLdapServerDetector,
     FlextLdapServiceBase,
     FlextLdapSettings,
     c,
     m,
+    p,
+    r,
     u,
 )
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
@@ -84,9 +85,16 @@ class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
     ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry."""
         adapter = self._ensure_adapter()
-        result: r[bool] = (
+
+        def connect_once() -> r[bool]:
+            connect_result = adapter.connect(connection_config)
+            if connect_result.success:
+                return r[bool].ok(value=bool(connect_result.value))
+            return r[bool].fail(connect_result.error)
+
+        result: p.Result[bool] = (
             u.retry(
-                operation=lambda: adapter.connect(connection_config),
+                operation=connect_once,
                 max_attempts=max_retries,
                 delay_seconds=retry_delay,
             )
@@ -121,12 +129,12 @@ class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
         if not connection:
             return
         detector = FlextLdapServerDetector()
-        detection_result: r[str] = detector.detect_from_connection(connection)
+        detection_result: p.Result[str] = detector.detect_from_connection(connection)
         if detection_result.success:
             self.logger.info(
                 "Server type detected automatically",
                 operation=c.Ldap.LdapOperationNames.CONNECT,
-                detected_server_type=detection_result.value,
+                detected_server_type=str(detection_result.value),
             )
         else:
             self.logger.debug(

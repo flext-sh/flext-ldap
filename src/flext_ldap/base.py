@@ -20,8 +20,8 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import override
 
-from flext_core import m, s
-from flext_ldap import FlextLdapSettings, p, t
+from flext_core import s
+from flext_ldap import FlextLdapSettings, m, p, t
 
 
 class FlextLdapServiceBase[

@@ -11,7 +11,6 @@ from typing import ClassVar, Self, override
 
 from pydantic import ConfigDict
 
-from flext_core import p, r
 from flext_ldap import (
     FlextLdapConnection,
     FlextLdapOperations,
@@ -19,6 +18,8 @@ from flext_ldap import (
     FlextLdapSync,
     c,
     m,
+    p,
+    r,
 )
 
 
