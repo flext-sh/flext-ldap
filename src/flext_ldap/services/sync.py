@@ -14,12 +14,12 @@ from typing import ClassVar, TypeIs
 
 from pydantic import ConfigDict
 
-from flext_core import p, r
 from flext_ldap import (
     FlextLdapOperations,
-    FlextLdapProtocols as p,
     c,
     m,
+    p,
+    r,
     t,
 )
 

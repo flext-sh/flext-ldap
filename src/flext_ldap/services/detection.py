@@ -34,8 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from flext_core import p, r
-from flext_ldap import c, p, s, t, u
+from flext_ldap import c, p, r, s, t, u
 
 
 class FlextLdapServerDetector(s[str]):
