@@ -269,7 +269,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         def handle_tls(
             connection: p.Ldap.Ldap3Connection,
             settings: m.Ldap.ConnectionConfig,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Handle STARTTLS if requested.
 
             Business Rules:
@@ -378,7 +378,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def convert_parsed_entries(
             parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
-        ) -> r[Sequence[m.Ldif.Entry]]:
+        ) -> p.Result[Sequence[m.Ldif.Entry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
             Business Rules:
@@ -831,7 +831,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         def _extract_error_result(
             connection: p.Ldap.Ldap3Connection,
             prefix: str,
-        ) -> r[m.Ldap.OperationResult]:
+        ) -> p.Result[m.Ldap.OperationResult]:
             """Extract error message from connection result.
 
             Business Rules:
@@ -894,7 +894,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             connection: p.Ldap.Ldap3Connection,
             dn_str: str,
             ldap_attrs: t.Ldap.OperationAttributes,
-        ) -> r[m.Ldap.OperationResult]:
+        ) -> p.Result[m.Ldap.OperationResult]:
             """Execute LDAP add operation via ldap3 Connection.
 
             Business Rules:
@@ -951,7 +951,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             self,
             connection: p.Ldap.Ldap3Connection,
             dn: str | m.Ldif.DN,
-        ) -> r[m.Ldap.OperationResult]:
+        ) -> p.Result[m.Ldap.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
 
             Business Rules:
@@ -1007,7 +1007,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             connection: p.Ldap.Ldap3Connection,
             dn: str | m.Ldif.DN,
             changes: t.Ldap.OperationChanges,
-        ) -> r[m.Ldap.OperationResult]:
+        ) -> p.Result[m.Ldap.OperationResult]:
             """Execute LDAP modify operation via ldap3 Connection.
 
             Business Rules:
@@ -1088,7 +1088,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             connection: p.Ldap.Ldap3Connection,
             params: m.Ldap.SearchParams,
             server_type: c.Ldif.ServerTypes | str,
-        ) -> r[Sequence[m.Ldif.Entry]]:
+        ) -> p.Result[Sequence[m.Ldif.Entry]]:
             """Execute LDAP search and convert results.
 
             Business Rules:
@@ -1215,7 +1215,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     @staticmethod
     def _map_scope(
         scope: c.Ldap.SearchScope | str,
-    ) -> r[int]:
+    ) -> p.Result[int]:
         """Map scope string to ldap3 scope constant.
 
         Uses direct StrEnum value mapping for type-safe conversion.
@@ -1242,7 +1242,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         entry: m.Ldif.Entry,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> p.Result[m.Ldap.OperationResult]:
         """Add LDAP entry using Entry model.
 
         Business Rules:
@@ -1292,7 +1292,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         settings: m.Ldap.ConnectionConfig,
         **_kwargs: str | float | bool | None,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Establish LDAP connection using ldap3 library.
 
         Business Rules:
@@ -1349,7 +1349,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         dn: str | m.Ldif.DN,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> p.Result[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
         Business Rules:
@@ -1421,7 +1421,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 self._server = None
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> p.Result[bool]:
         """Execute service health check.
 
         Business Rules:
@@ -1456,7 +1456,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> p.Result[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
         Business Rules:
@@ -1500,7 +1500,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.SearchResult]:
+    ) -> p.Result[m.Ldap.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
 
         Business Rules:
@@ -1568,7 +1568,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             }),
         )
 
-    def _get_connection(self) -> r[p.Ldap.Ldap3Connection]:
+    def _get_connection(self) -> p.Result[p.Ldap.Ldap3Connection]:
         """Get connection with fast fail if not available."""
         if not self.is_connected or self._connection is None:
             return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)

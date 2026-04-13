@@ -586,7 +586,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 "validation_metadata": None,
             })
 
-        def execute(self, entry: m.Ldif.Entry) -> r[m.Ldap.LdapOperationResult]:
+        def execute(self, entry: m.Ldif.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
             Business Rules:
@@ -619,7 +619,7 @@ class FlextLdapOperations(FlextLdapConnection):
         def handle_existing_entry(
             self,
             entry: m.Ldif.Entry,
-        ) -> r[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
             Business Rules:
@@ -692,7 +692,7 @@ class FlextLdapOperations(FlextLdapConnection):
         def handle_regular_add(
             self,
             entry: m.Ldif.Entry,
-        ) -> r[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
             Business Rules:
@@ -730,7 +730,7 @@ class FlextLdapOperations(FlextLdapConnection):
         def handle_schema_modify(
             self,
             entry: m.Ldif.Entry,
-        ) -> r[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Apply a schema modification entry (supports multiple add operations).
 
             Business Rules:
@@ -819,7 +819,7 @@ class FlextLdapOperations(FlextLdapConnection):
         def _extract_schema_add_operation(
             self,
             attrs: Mapping[str, t.StrSequence],
-        ) -> r[str]:
+        ) -> p.Result[str]:
             """Extract schema add operation attribute type.
 
             Args:
@@ -840,7 +840,7 @@ class FlextLdapOperations(FlextLdapConnection):
             self,
             attrs: Mapping[str, t.StrSequence],
             attr_type: str,
-        ) -> r[t.StrSequence]:
+        ) -> p.Result[t.StrSequence]:
             """Extract and filter schema attribute values.
 
             Args:
@@ -901,7 +901,7 @@ class FlextLdapOperations(FlextLdapConnection):
         self,
         entry: m.Ldif.Entry,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> p.Result[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
         Business Rules:
@@ -939,7 +939,7 @@ class FlextLdapOperations(FlextLdapConnection):
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
-    ) -> r[m.Ldap.LdapBatchStats]:
+    ) -> p.Result[m.Ldap.LdapBatchStats]:
         """Upsert multiple entries and track per-item progress.
 
         Business Rules:
@@ -1070,7 +1070,7 @@ class FlextLdapOperations(FlextLdapConnection):
         self,
         dn: str | m.Ldif.DN,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> p.Result[m.Ldap.OperationResult]:
         """Delete an LDAP entry identified by DN.
 
         Business Rules:
@@ -1114,7 +1114,9 @@ class FlextLdapOperations(FlextLdapConnection):
         )
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
+    def execute(
+        self, **_kwargs: str | float | bool | None
+    ) -> p.Result[m.Ldap.SearchResult]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:
@@ -1149,7 +1151,7 @@ class FlextLdapOperations(FlextLdapConnection):
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.OperationResult]:
+    ) -> p.Result[m.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.
 
         Business Rules:
@@ -1198,7 +1200,7 @@ class FlextLdapOperations(FlextLdapConnection):
         search_options: m.Ldap.SearchOptions,
         server_type: str | None = None,
         **_kwargs: str | float | bool | None,
-    ) -> r[m.Ldap.SearchResult]:
+    ) -> p.Result[m.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
@@ -1251,7 +1253,7 @@ class FlextLdapOperations(FlextLdapConnection):
         *,
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
-    ) -> r[m.Ldap.LdapOperationResult]:
+    ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Upsert an entry, optionally retrying for configured error patterns.
 
         Business Rules:
@@ -1295,7 +1297,7 @@ class FlextLdapOperations(FlextLdapConnection):
         ):
             return result
 
-        def wrapped_execute() -> r[m.Ldap.LdapOperationResult]:
+        def wrapped_execute() -> p.Result[m.Ldap.LdapOperationResult]:
             return self._upsert_handler.execute(entry)
 
         return u.retry(

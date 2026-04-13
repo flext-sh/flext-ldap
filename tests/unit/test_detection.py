@@ -14,7 +14,7 @@ All tests use real functionality without mocks, leveraging flext-core test utili
 and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
 
 Architecture: Single class per module following FLEXT patterns.
-Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -36,7 +36,7 @@ class TestsFlextLdapDetection:
     """Comprehensive tests for FlextLdapServerDetector using factories and DRY principles.
 
     Architecture: Single class per module following FLEXT patterns.
-    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+    Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.
 
     Parametrized tests and factory methods for maximum code reuse (DRY).
     All helper logic nested within this single class following FLEXT patterns.

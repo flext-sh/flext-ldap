@@ -8,7 +8,7 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_core import r
+from flext_core import p, r
 from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapSettings
 from tests import c, m, t, u
 
@@ -42,7 +42,7 @@ def _get_worker_id(settings: pytest.Config) -> str:
     return str(worker_id_obj)
 
 
-def _wait_for_port_ready(host: str, port: int, timeout: int) -> r[bool]:
+def _wait_for_port_ready(host: str, port: int, timeout: int) -> p.Result[bool]:
     """Wait until a TCP port is accepting connections."""
     waited = 0.0
     while waited < timeout:

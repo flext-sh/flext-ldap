@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core import r
 from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
@@ -173,7 +172,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def add(
                 self,
                 entry: FlextLdifProtocols.Ldif.Entry,
-            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Args:
@@ -189,7 +188,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 settings: FlextLdapProtocols.Ldap.ConnectionConfig,
                 **kwargs: t.Scalar,
-            ) -> r[bool]:
+            ) -> p.Result[bool]:
                 """Connect to LDAP server.
 
                 Args:
@@ -207,7 +206,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def delete(
                 self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
-            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Args:
@@ -222,7 +221,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def execute(
                 self,
                 **_kwargs: t.Scalar,
-            ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Execute health check or default operation.
 
                 Args:
@@ -239,7 +238,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
                 changes: t.Ldap.LdapModifyChanges,
-            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Args:
@@ -256,7 +255,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -288,7 +287,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def add(
                 self,
                 entry: FlextLdifProtocols.Ldif.Entry,
-            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Returns Result containing OperationResult model.
@@ -299,7 +298,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def delete(
                 self,
                 dn: FlextLdifProtocols.Ldif.DN | str,
-            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Returns Result containing OperationResult model.
@@ -311,7 +310,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 dn: FlextLdifProtocols.Ldif.DN | str,
                 changes: t.Ldap.LdapModifyChanges,
-            ) -> r[FlextLdapProtocols.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Returns Result containing OperationResult model.
@@ -323,7 +322,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> r[FlextLdapProtocols.Ldap.SearchResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Returns Result containing SearchResult model.

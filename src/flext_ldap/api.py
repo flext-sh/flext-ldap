@@ -11,7 +11,7 @@ from typing import ClassVar, Self, override
 
 from pydantic import ConfigDict
 
-from flext_core import r
+from flext_core import p, r
 from flext_ldap import (
     FlextLdapConnection,
     FlextLdapOperations,
@@ -59,7 +59,9 @@ class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
         self.disconnect()
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
+    def execute(
+        self, **_kwargs: str | float | bool | None
+    ) -> p.Result[m.Ldap.SearchResult]:
         """Execute service health check."""
         if not self.is_connected:
             return r[m.Ldap.SearchResult].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))

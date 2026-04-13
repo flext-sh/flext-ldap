@@ -34,7 +34,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from flext_core import r
+from flext_core import p, r
 from flext_ldap import c, p, s, t, u
 
 
@@ -53,7 +53,7 @@ class FlextLdapServerDetector(s[str]):
         naming_contexts: t.StrSequence,
         _supported_controls: t.StrSequence,
         supported_extensions: t.StrSequence,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Classify the server using collected ``rootDSE`` attributes.
 
         Business Rules:
@@ -269,7 +269,7 @@ class FlextLdapServerDetector(s[str]):
     @staticmethod
     def _query_root_dse(
         connection: p.Ldap.Ldap3Connection,
-    ) -> r[t.Ldap.OperationAttributes]:
+    ) -> p.Result[t.Ldap.OperationAttributes]:
         """Fetch ``rootDSE`` attributes from the active connection.
 
         Business Rules:
@@ -329,7 +329,9 @@ class FlextLdapServerDetector(s[str]):
         }
         return r[Mapping[str, t.StrSequence]].ok(attributes)
 
-    def detect_from_connection(self, connection: p.Ldap.Ldap3Connection) -> r[str]:
+    def detect_from_connection(
+        self, connection: p.Ldap.Ldap3Connection
+    ) -> p.Result[str]:
         """Query ``rootDSE`` and return a detected server label.
 
         Business Rules:
@@ -391,7 +393,7 @@ class FlextLdapServerDetector(s[str]):
         )
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[str]:
+    def execute(self, **_kwargs: str | float | bool | None) -> p.Result[str]:
         """Detect server type using a provided ``ldap3.Connection`` instance.
 
         Business Rules:

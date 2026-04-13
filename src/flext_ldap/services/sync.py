@@ -14,7 +14,7 @@ from typing import ClassVar, TypeIs
 
 from pydantic import ConfigDict
 
-from flext_core import r
+from flext_core import p, r
 from flext_ldap import (
     FlextLdapOperations,
     FlextLdapProtocols as p,
@@ -92,7 +92,7 @@ class FlextLdapSync(FlextLdapOperations):
         phase_files: Mapping[str, Path],
         *,
         settings: m.Ldap.SyncPhaseConfig | None = None,
-    ) -> r[m.Ldap.MultiPhaseSyncResult]:
+    ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
@@ -157,7 +157,7 @@ class FlextLdapSync(FlextLdapOperations):
         phase_name: str,
         *,
         settings: m.Ldap.SyncPhaseConfig | None = None,
-    ) -> r[m.Ldap.PhaseSyncResult]:
+    ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Synchronize a single phase file into LDAP."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
@@ -271,7 +271,7 @@ class FlextLdapSync(FlextLdapOperations):
         phase_name: str,
         ldif_path: Path,
         settings: m.Ldap.SyncPhaseConfig,
-    ) -> r[m.Ldap.PhaseSyncResult]:
+    ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Process one phase file with a callback normalized for that phase."""
         phase_callback = self._prepare_phase_callback(phase_name, settings)
         return self.sync_phase_entries(

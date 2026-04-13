@@ -1,7 +1,7 @@
 """Unit tests for flext_ldap.utilities.FlextLdapUtilities.
 
 Architecture: Single class per module following FLEXT patterns.
-Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

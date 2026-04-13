@@ -308,7 +308,9 @@ class FlextLdapUserService:
         self._client = get_ldap_client()
         self.logger = u.fetch_logger(__name__)
 
-    def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
+    def authenticate_user(
+        self, username: str, password: str
+    ) -> p.Result[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
 ```
@@ -317,7 +319,7 @@ class FlextLdapUserService:
 
 ```python
 # ✅ CORRECT - Explicit error handling
-def create_user(self, request: CreateUserRequest) -> r[FlextLdapUser]:
+def create_user(self, request: CreateUserRequest) -> p.Result[FlextLdapUser]:
     if not request.is_valid():
         return r[FlextLdapUser].fail("Invalid user data")
 
@@ -350,7 +352,7 @@ class SearchRequest:
     size_limit: int = 100
     time_limit: int = 30
 
-def search_entries(self, request: SearchRequest) -> r[List[LdapEntry]]:
+def search_entries(self, request: SearchRequest) -> p.Result[List[LdapEntry]]:
     # Implementation using parameter t.RecursiveContainer
 
 # ❌ WRONG - Multiple parameters
@@ -385,7 +387,7 @@ ______________________________________________________________________
 
 ```python
 # All public APIs must have complete type annotations
-def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
+def authenticate_user(self, username: str, password: str) -> p.Result[FlextLdapUser]:
     """Complete type signature required."""
 
 
@@ -421,7 +423,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -558,7 +560,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -664,7 +666,9 @@ class FlextLdapClients:
         ...     print(f"Welcome, {user.cn}")
     """
 
-    def authenticate_user(self, username: str, password: str) -> r[FlextLdapUser]:
+    def authenticate_user(
+        self, username: str, password: str
+    ) -> p.Result[FlextLdapUser]:
         """Authenticate user credentials against LDAP directory.
 
         Args:

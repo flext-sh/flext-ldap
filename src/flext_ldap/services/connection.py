@@ -15,7 +15,7 @@ from typing import ClassVar, override
 
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_core import r
+from flext_core import p, r
 from flext_ldap import (
     FlextLdapServerDetector,
     FlextLdapServiceBase,
@@ -81,7 +81,7 @@ class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
         max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
         retry_delay: float = c.Ldap.ConnectionDefaults.DEFAULT_RETRY_DELAY,
         **_kwargs: str | float | bool | None,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry."""
         adapter = self._ensure_adapter()
         result: r[bool] = (
@@ -104,7 +104,9 @@ class FlextLdapConnection(FlextLdapServiceBase[m.Ldap.SearchResult]):
             self._adapter.disconnect()
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[m.Ldap.SearchResult]:
+    def execute(
+        self, **_kwargs: str | float | bool | None
+    ) -> p.Result[m.Ldap.SearchResult]:
         """Execute service health check."""
         if self.is_connected:
             return r[m.Ldap.SearchResult].ok(

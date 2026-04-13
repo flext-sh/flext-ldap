@@ -173,10 +173,10 @@ make clean-all     # Deep clean including venvs
 ### Railway-Oriented Programming
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def my_operation(data: dict) -> r[ProcessedData]:
+def my_operation(data: dict) -> p.Result[ProcessedData]:
     """Always return r[T]."""
     if not data:
         return r[ProcessedData].fail("Data required")

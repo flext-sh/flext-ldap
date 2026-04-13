@@ -102,7 +102,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -118,7 +118,9 @@ class UserService:
         self._ldap_api = get_flext_ldap_api()
         self._container = FlextContainer.get_global()
 
-    def process_user_authentication(self, username: str, password: str) -> r[t.Dict]:
+    def process_user_authentication(
+        self, username: str, password: str
+    ) -> p.Result[t.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
@@ -204,7 +206,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t

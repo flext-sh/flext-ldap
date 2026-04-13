@@ -35,7 +35,7 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import r
+from flext_core import p, r
 from flext_ldap import c, m, p, s, t
 from flext_ldif import ldif
 
@@ -325,7 +325,7 @@ class FlextLdapEntryAdapter(s[bool]):
         return conversion_metadata
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> r[bool]:
+    def execute(self, **_kwargs: str | float | bool | None) -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:
@@ -354,7 +354,9 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         return r[bool].ok(value=True)
 
-    def ldap3_to_ldif_entry(self, ldap3_entry: p.Ldap.Ldap3Entry) -> r[m.Ldif.Entry]:
+    def ldap3_to_ldif_entry(
+        self, ldap3_entry: p.Ldap.Ldap3Entry
+    ) -> p.Result[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
         Business Rules:
@@ -479,7 +481,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldif_entry_to_ldap3_attributes(
         self,
         entry: m.Ldif.Entry,
-    ) -> r[t.Ldap.OperationAttributes]:
+    ) -> p.Result[t.Ldap.OperationAttributes]:
         """Convert p.Entry to ldap3 attributes format.
 
         Business Rules:

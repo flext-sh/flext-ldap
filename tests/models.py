@@ -14,7 +14,7 @@ from typing import override
 
 from flext_tests import FlextTestsModels
 
-from flext_core import r, s
+from flext_core import p, r, s
 from flext_ldap import m
 from tests import t
 
@@ -82,14 +82,14 @@ class TestsFlextLdapModels(m, FlextTestsModels):
                 """Test service that always succeeds."""
 
                 @override
-                def execute(self) -> r[bool]:
+                def execute(self) -> p.Result[bool]:
                     return r[bool].ok(True)
 
             class FailService(s[bool]):
                 """Test service that always fails."""
 
                 @override
-                def execute(self) -> r[bool]:
+                def execute(self) -> p.Result[bool]:
                     return r[bool].fail(
                         TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
                     )
