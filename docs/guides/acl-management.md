@@ -124,7 +124,7 @@ api = ldap()
 openldap_acl = "access to attrs=userPassword by self write"
 result = api.parse(openldap_acl, FlextLdapConstants.AclFormat.OPENLDAP)
 
-if result.is_success:
+if result.success:
     unified_acl = result.unwrap()
     print(f"Parsed ACL: {unified_acl.name}")
 ```
@@ -141,7 +141,7 @@ conversion_result = api.convert_acl(
     target_format=FlextLdapConstants.AclFormat.ORACLE,
 )
 
-if conversion_result.is_success:
+if conversion_result.success:
     conv = conversion_result.unwrap()
     print(f"Oracle ACL: {conv.converted_acl}")
     # Output: access to attr=(mail) by group="*" (read)
@@ -163,7 +163,7 @@ batch_result = api.batch_convert_acls(
     target_format=FlextLdapConstants.AclFormat.ACI,
 )
 
-if batch_result.is_success:
+if batch_result.success:
     for conv in batch_result.unwrap():
         print(f"Converted: {conv.converted_acl}")
 ```
@@ -257,7 +257,7 @@ validation_result = api.validate_acl_syntax(
     acl_string, FlextLdapConstants.AclFormat.OPENLDAP
 )
 
-if validation_result.is_success:
+if validation_result.success:
     print("ACL syntax is valid")
 else:
     print(f"Invalid ACL: {validation_result.error}")
@@ -283,7 +283,7 @@ for oracle_acl in oracle_acls:
         FlextLdapConstants.AclFormat.OPENLDAP,
     )
 
-    if result.is_success:
+    if result.success:
         conv = result.unwrap()
         print(f"OpenLDAP ACL: {conv.converted_acl}")
         if conv.warnings:
@@ -305,7 +305,7 @@ for acl in openldap_acls:
         acl, FlextLdapConstants.AclFormat.OPENLDAP, FlextLdapConstants.AclFormat.ACI
     )
 
-    if result.is_success:
+    if result.success:
         conv = result.unwrap()
         print(f"389 DS ACI: {conv.converted_acl}")
 ```
@@ -361,7 +361,7 @@ FlextLdapConstants.SubjectType.ANYONE  # Anyone
 # All operations return r for safe error handling
 result = api.parse(acl_string, format_type)
 
-if result.is_failure:
+if result.failure:
     print(f"Error: {result.error}")
     # Handle error appropriately
 else:
@@ -388,7 +388,7 @@ for acl in oracle_acls:
         acl, FlextLdapConstants.AclFormat.ORACLE, FlextLdapConstants.AclFormat.OPENLDAP
     )
 
-    if result.is_success:
+    if result.success:
         converted_acls.append(result.unwrap().converted_acl)
     else:
         print(f"Conversion failed for: {acl} - {result.error}")

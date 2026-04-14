@@ -29,8 +29,8 @@ class TestsFlextLdapApi:
     def test_config_returns_flext_settings(self) -> None:
         assert isinstance(ldap.settings, p.Settings)
 
-    def test_service_config_type(self) -> None:
-        assert ldap._get_service_config_type() is FlextLdapSettings
+    def test_settings_are_typed_for_ldap_namespace(self) -> None:
+        assert isinstance(ldap.settings, FlextLdapSettings)
 
     # --- Context Manager ---
     def test_enter_returns_self(self) -> None:
@@ -113,17 +113,9 @@ class TestsFlextLdapApi:
         )
         u.Ldap.Tests.fail(ldap.search(search_options))
 
-    def test_execute_returns_result(self) -> None:
-        u.Ldap.Tests.fail(ldap.execute())
-
-    # --- Model Config ---
-    def test_model_config(self) -> None:
-        cfg = ldap.model_config
+    def test_execute_without_connection_reports_not_connected(self) -> None:
+        error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            not cfg.get("frozen"), eq=not c.Ldap.Tests.API_MODEL_CONFIG_FROZEN
-        )
-        u.Ldap.Tests.that(cfg.get("extra"), eq=c.Ldap.Tests.API_MODEL_CONFIG_EXTRA)
-        u.Ldap.Tests.that(
-            cfg.get("arbitrary_types_allowed"),
-            eq=c.Ldap.Tests.API_MODEL_CONFIG_ARBITRARY_TYPES_ALLOWED,
+            error.lower(),
+            contains=str(c.Ldap.ErrorStrings.NOT_CONNECTED).lower(),
         )

@@ -4,7 +4,7 @@
 - `flext_ldap.services.detection.FlextLdapServerDetector` - LDAP server type detection
 
 **Test Scope:**
-- Server detection from attributes (static methods)
+- Server detection from public utility behavior
 - Attribute value extraction
 - Server type normalization
 - Error handling for missing connection
@@ -69,34 +69,34 @@ class TestsFlextLdapDetection:
         ("attrs", "key", "expected"),
         c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
     )
-    def test_get_first_value(
+    def test_get_first_attribute_value(
         self,
         attrs: Mapping[str, t.StrSequence],
         key: str,
         expected: str | None,
     ) -> None:
-        """Test _get_first_value with various attribute scenarios."""
+        """Test public attribute value extraction with various scenarios."""
         attrs_dict: Mapping[str, t.StrSequence] = dict(attrs)
-        value = FlextLdapServerDetector._get_first_value(attrs_dict, key)
+        value = u.Ldap.get_first_attribute_value(attrs_dict, key)
         assert value == expected
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
         c.Ldap.Tests.DETECTION_FROM_ATTRIBUTES_SCENARIOS,
     )
-    def test_detect_from_attributes(
+    def test_detect_server_type(
         self,
         vendor_name: str | None,
         vendor_version: str | None,
         supported_controls: t.StrSequence,
         expected: str,
     ) -> None:
-        """Test _detect_from_attributes with various server types and variants."""
-        result = FlextLdapServerDetector._detect_from_attributes(
+        """Test public server detection heuristics with various variants."""
+        _ = supported_controls
+        result = u.Ldap.detect_server_type(
             vendor_name=vendor_name,
             vendor_version=vendor_version,
             naming_contexts=[c.Ldap.Defaults.EXAMPLE_BASE_DN],
-            _supported_controls=supported_controls,
             supported_extensions=[],
         )
-        u.Ldap.Tests.ok(result, eq=expected)
+        assert result == expected

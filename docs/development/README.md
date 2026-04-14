@@ -35,7 +35,7 @@
 
 **Version**: 1.0
 **Date**: 2025-01-24
-**Target**: v0.10.0+
+**Target**: v0.12.0-dev+
 
 ## Overview
 
@@ -197,7 +197,7 @@ class MyService(s[None]):
         # ✅ Use inherited properties
         self.logger.info("message")  # From x
         timeout = self.settings.timeout  # From x
-        service = self.container.get("service")  # From x
+        service = self.container.resolve("service")  # From x
 ```
 
 ### Pydantic v2 Models
@@ -284,7 +284,7 @@ test: add integration tests for OID
 
 - Architecture - System architecture
 - API Reference - Complete API docs
-- Migration Guide - v0.9.0 → v0.10.0
+- Migration Guide - v0.9.0 → v0.12.0-dev
 
 ______________________________________________________________________
 

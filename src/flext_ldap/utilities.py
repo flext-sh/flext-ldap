@@ -10,12 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TypeIs
 
 import ldap3
 
+from flext_core import r
 from flext_ldap.constants import c
+from flext_ldap.models import m as ldap_m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldif import m, u
@@ -285,6 +287,188 @@ class FlextLdapUtilities(u):
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
 
         @staticmethod
+        def ldap3_value_to_strings(
+            value: t.Ldap.Ldap3EntryValue | None,
+        ) -> t.StrSequence:
+            """Convert an ldap3 attribute payload to canonical string values."""
+            match value:
+                case None:
+                    empty_values: t.StrSequence = []
+                    return empty_values
+                case bytes() as value_bytes:
+                    return [value_bytes.decode("utf-8", errors="replace")]
+                case list() | tuple() as sequence_values:
+                    return [
+                        item.decode("utf-8", errors="replace")
+                        if isinstance(item, bytes)
+                        else str(item)
+                        for item in sequence_values
+                    ]
+                case _:
+                    return [str(value)]
+
+        @staticmethod
+        def is_base64_encoded(
+            value: str,
+            threshold: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD,
+        ) -> bool:
+            """Return ``True`` when a value requires LDIF base64 encoding."""
+            return value.startswith("::") or any(
+                ord(char) > threshold for char in value
+            )
+
+        @classmethod
+        def normalize_original_attr_value(
+            cls,
+            value: t.Ldap.Ldap3EntryValue | None,
+        ) -> t.StrSequence:
+            """Normalize original ldap3 values while preserving list semantics."""
+            return cls.ldap3_value_to_strings(value)
+
+        @staticmethod
+        def build_conversion_metadata(
+            removed_attrs: t.StrSequence,
+            base64_attrs: t.StrSequence,
+            original_attrs_dict: t.RecursiveContainerMapping,
+            original_dn: str,
+        ) -> ldap_m.Ldap.ConversionMetadata:
+            """Create canonical conversion metadata for LDAP entry adaptation."""
+            return ldap_m.Ldap.ConversionMetadata.model_validate({
+                "source_attributes": list(dict(original_attrs_dict).keys()),
+                "source_dn": original_dn,
+                "removed_attributes": list(removed_attrs),
+                "base64_encoded_attributes": list(set(base64_attrs)),
+            })
+
+        @classmethod
+        def track_conversion_differences(
+            cls,
+            conversion_metadata: ldap_m.Ldap.ConversionMetadata,
+            *,
+            original_dn: str,
+            converted_dn: str,
+            original_attrs_dict: t.Ldap.Ldap3AttributeDict,
+            converted_attrs_dict: Mapping[str, t.StrSequence],
+        ) -> ldap_m.Ldap.ConversionMetadata:
+            """Record DN and attribute changes observed during entry conversion."""
+            updates: MutableMapping[str, bool | str | t.StrSequence] = {}
+            if converted_dn != original_dn:
+                updates["dn_changed"] = True
+                updates["converted_dn"] = converted_dn
+            changed_attrs = [
+                attr_name
+                for attr_name, original_values in original_attrs_dict.items()
+                if ", ".join(cls.normalize_original_attr_value(original_values))
+                != ", ".join(
+                    str(value)
+                    for value in converted_attrs_dict.get(attr_name, [])
+                    if value
+                )
+            ]
+            if changed_attrs:
+                updates["attribute_changes"] = changed_attrs
+            if not updates:
+                return conversion_metadata
+            return conversion_metadata.model_copy(update=updates)
+
+        @classmethod
+        def extract_entry_attributes(
+            cls,
+            entry: p.Ldif.Entry,
+        ) -> Mapping[str, t.StrSequence]:
+            """Normalize entry attributes to the canonical LDAP comparison mapping."""
+            attrs = entry.attributes
+            if attrs is None:
+                return {}
+            return cls.attr_to_str_list(attrs.attributes)
+
+        @classmethod
+        def find_existing_values(
+            cls,
+            attr_name: str,
+            existing_attrs: Mapping[str, t.StrSequence],
+        ) -> t.StrSequence | None:
+            """Resolve attribute values by case-insensitive LDAP name matching."""
+            normalized_target = cls.norm_str(attr_name, case="lower")
+            for key, values in existing_attrs.items():
+                if cls.norm_str(str(key), case="lower") == normalized_target:
+                    return [str(item) for item in values]
+            return None
+
+        @staticmethod
+        def normalize_value_set(values: t.StrSequence) -> set[str]:
+            """Normalize LDAP attribute values for stable comparison."""
+            return {str(value).lower() for value in values if value}
+
+        @classmethod
+        def process_new_attributes(
+            cls,
+            new_attrs: Mapping[str, t.StrSequence],
+            existing_attrs: Mapping[str, t.StrSequence],
+            ignore: frozenset[str],
+        ) -> t.Pair[t.Ldap.OperationChanges, set[str]]:
+            """Build replacement changes for non-operational attributes."""
+            changes: t.Ldap.OperationChanges = {}
+            processed: set[str] = set()
+            ignored = {value.lower() for value in ignore}
+            for attr_name, raw_values in new_attrs.items():
+                normalized_name = cls.norm_str(attr_name, case="lower")
+                if normalized_name in ignored:
+                    continue
+                processed.add(normalized_name)
+                new_values = [str(value) for value in raw_values if value]
+                existing_values = cls.find_existing_values(attr_name, existing_attrs)
+                existing_set = cls.normalize_value_set(existing_values or [])
+                new_set = cls.normalize_value_set(new_values)
+                if existing_set != new_set:
+                    changes[attr_name] = [
+                        (c.Ldap.ModifyOperation.REPLACE, new_values),
+                    ]
+            return changes, processed
+
+        @classmethod
+        def process_deleted_attributes(
+            cls,
+            existing_attrs: Mapping[str, t.StrSequence],
+            ignore: frozenset[str],
+            processed: set[str],
+        ) -> t.Ldap.OperationChanges:
+            """Build delete operations for attributes absent from the target entry."""
+            empty_values: t.StrSequence = []
+            ignored = {value.lower() for value in ignore}
+            return {
+                attr_name: [(c.Ldap.ModifyOperation.DELETE, empty_values)]
+                for attr_name in existing_attrs
+                if cls.norm_str(attr_name, case="lower") not in ignored
+                and cls.norm_str(attr_name, case="lower") not in processed
+            }
+
+        @classmethod
+        def compare_entries(
+            cls,
+            existing_entry: p.Ldif.Entry,
+            new_entry: p.Ldif.Entry,
+        ) -> t.Ldap.OperationChanges | None:
+            """Compare canonical LDIF entries and return LDAP modify operations."""
+            existing_attrs = cls.extract_entry_attributes(existing_entry)
+            new_attrs = cls.extract_entry_attributes(new_entry)
+            if not existing_attrs or not new_attrs:
+                return None
+            changes, processed = cls.process_new_attributes(
+                new_attrs,
+                existing_attrs,
+                frozenset(c.Ldif.OperationalAttributes.IGNORE_SET),
+            )
+            changes.update(
+                cls.process_deleted_attributes(
+                    existing_attrs,
+                    frozenset(c.Ldif.OperationalAttributes.IGNORE_SET),
+                    processed,
+                ),
+            )
+            return changes or None
+
+        @staticmethod
         def dn_str(
             dn: str | m.Ldif.DN | m.Ldif.Entry | None,
             *,
@@ -417,6 +601,179 @@ class FlextLdapUtilities(u):
             if case == "upper":
                 return value.upper()
             return value
+
+        @classmethod
+        def detect_from_extensions(
+            cls,
+            supported_extensions: t.StrSequence,
+            naming_contexts: t.StrSequence,
+        ) -> str:
+            """Infer server type from rootDSE extensions and naming contexts."""
+            ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
+            context_str = cls.norm_join(naming_contexts, case="lower")
+            checks: Sequence[t.Pair[str, Callable[[str, str], bool]]] = [
+                ("openldap", lambda ext, _ctx: "openldap" in ext),
+                (
+                    "oid",
+                    lambda ext, ctx: "oracle" in ext or "oid" in ext or "oracle" in ctx,
+                ),
+                ("oud", lambda ext, _ctx: "oud" in ext),
+                (
+                    "ad",
+                    lambda ext, ctx: (
+                        "microsoft" in ext
+                        or "windows" in ext
+                        or "microsoft" in ctx
+                        or "windows" in ctx
+                    ),
+                ),
+                ("ds389", lambda ext, _ctx: "389" in ext or "dirsrv" in ext),
+            ]
+            for server_name, predicate in checks:
+                if predicate(ext_str, context_str):
+                    return server_name
+            return c.Ldif.ServerTypes.RFC.value
+
+        @classmethod
+        def detect_from_vendor(
+            cls,
+            vendor_name: str | None,
+            vendor_version: str | None,
+        ) -> str | None:
+            """Infer server type from vendor metadata when available."""
+            vendor_parts = [
+                cls.to_str(value)
+                for value in (vendor_name, vendor_version)
+                if value is not None
+            ]
+            vendor_info = " ".join(
+                str(value) for value in cls.filter_truthy(vendor_parts)
+            ).lower()
+            if not vendor_info:
+                return None
+            checks: Sequence[t.Pair[str, Callable[[str], bool]]] = [
+                (
+                    "oud",
+                    lambda value: "oracle" in value and "unified directory" in value,
+                ),
+                (
+                    "oid",
+                    lambda value: (
+                        "oracle" in value
+                        and (
+                            "internet directory" in value
+                            or "oid" in value
+                            or "corporation" in value
+                            or (
+                                "unified directory" not in value
+                                and len(value.split())
+                                <= c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS
+                            )
+                        )
+                    ),
+                ),
+                ("openldap", lambda value: "openldap" in value),
+                (
+                    "ad",
+                    lambda value: "microsoft" in value or "active directory" in value,
+                ),
+                ("ds389", lambda value: "389" in value or "dirsrv" in value),
+            ]
+            for detected_type, predicate in checks:
+                if predicate(vendor_info):
+                    return detected_type
+            return None
+
+        @classmethod
+        def detect_server_type(
+            cls,
+            *,
+            vendor_name: str | None,
+            vendor_version: str | None,
+            naming_contexts: t.StrSequence,
+            supported_extensions: t.StrSequence,
+        ) -> str:
+            """Resolve the effective server type from rootDSE metadata."""
+            return cls.detect_from_vendor(
+                vendor_name,
+                vendor_version,
+            ) or cls.detect_from_extensions(supported_extensions, naming_contexts)
+
+        @staticmethod
+        def get_first_attribute_value(
+            attrs: t.Ldap.OperationAttributes,
+            key: str,
+        ) -> str | None:
+            """Return the first normalized value for a rootDSE attribute."""
+            values = attrs.get(key)
+            if values is None:
+                return None
+            return next((str(value) for value in values if value), None)
+
+        @classmethod
+        def query_root_dse(
+            cls,
+            connection: p.Ldap.Ldap3Connection,
+        ) -> p.Result[t.Ldap.OperationAttributes]:
+            """Read rootDSE data from a bound ldap3 connection."""
+            search_method = getattr(connection, "search", None)
+            if not callable(search_method):
+                return r[t.Ldap.OperationAttributes].fail(
+                    "rootDSE query failed: search unavailable",
+                )
+            if not search_method(
+                search_base="",
+                search_filter=str(c.Ldap.Filters.ALL_ENTRIES_FILTER),
+                search_scope=c.Ldap.SearchScopeValue.BASE,
+                attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
+            ):
+                return r[t.Ldap.OperationAttributes].fail(
+                    f"rootDSE query failed: {connection.result}",
+                )
+            entries = getattr(connection, "entries", [])
+            if not entries:
+                return r[t.Ldap.OperationAttributes].fail(
+                    "rootDSE query returned no entries",
+                )
+            root_dse_entry = entries[0]
+            if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
+                return r[t.Ldap.OperationAttributes].fail(
+                    "rootDSE query returned invalid entry payload",
+                )
+            return r[t.Ldap.OperationAttributes].ok(
+                cls.attr_to_str_list(root_dse_entry.entry_attributes_as_dict),
+            )
+
+        @classmethod
+        def detect_from_connection(
+            cls,
+            connection: p.Ldap.Ldap3Connection,
+        ) -> p.Result[str]:
+            """Detect LDAP server type from rootDSE on an active connection."""
+            root_dse_result = cls.query_root_dse(connection)
+            if root_dse_result.failure:
+                return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
+            root_dse_attrs = root_dse_result.value
+            return r[str].ok(
+                cls.detect_server_type(
+                    vendor_name=cls.get_first_attribute_value(
+                        root_dse_attrs,
+                        c.Ldap.RootDseAttributes.VENDOR_NAME,
+                    ),
+                    vendor_version=cls.get_first_attribute_value(
+                        root_dse_attrs,
+                        c.Ldap.RootDseAttributes.VENDOR_VERSION,
+                    ),
+                    naming_contexts=root_dse_attrs.get(
+                        c.Ldap.RootDseAttributes.NAMING_CONTEXTS,
+                        [],
+                    ),
+                    supported_extensions=root_dse_attrs.get(
+                        c.Ldap.RootDseAttributes.SUPPORTED_EXTENSIONS,
+                        [],
+                    ),
+                ),
+            )
 
         @staticmethod
         def when_safe(

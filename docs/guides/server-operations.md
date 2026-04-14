@@ -232,7 +232,7 @@ connection = ldap3.Connection(
 
 # Schema discovery
 schema_result = ops.discover_schema(connection)
-if schema_result.is_success:
+if schema_result.success:
     schema = schema_result.unwrap()
     print(f"Object classes: {len(schema['object_classes'])}")
     print(f"Attribute types: {len(schema['attribute_types'])}")
@@ -246,7 +246,7 @@ if schema_result.is_success:
 # Get ACLs from cn=settings entry
 acl_result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 
-if acl_result.is_success:
+if acl_result.success:
     acls = acl_result.unwrap()
     for acl in acls:
         print(f"ACL: {acl}")
@@ -282,7 +282,7 @@ entry = FlextLdifModels.Entry(
 
 # Add entry
 add_result = ops.add_entry(connection, entry)
-if add_result.is_success:
+if add_result.success:
     print("Entry added successfully")
 
 # Modify entry
@@ -308,7 +308,7 @@ search_result = ops.search_with_paging(
     page_size=100,
 )
 
-if search_result.is_success:
+if search_result.success:
     entries = search_result.unwrap()
     print(f"Found {len(entries)} entries")
 
@@ -376,7 +376,7 @@ connection = ldap3.Connection(
 
 # Schema discovery (Oracle-specific)
 schema_result = ops.discover_schema(connection)
-if schema_result.is_success:
+if schema_result.success:
     schema = schema_result.unwrap()
     print(f"Server type: {schema['server_type']}")  # "oid"
 ```
@@ -387,7 +387,7 @@ if schema_result.is_success:
 # Get orclaci ACLs
 acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 
-if acl_result.is_success:
+if acl_result.success:
     acls = acl_result.unwrap()
     for acl in acls:
         print(f"OID ACL: {acl['raw']}")
@@ -444,7 +444,7 @@ connection = ldap3.Connection(
 
 # Schema discovery
 schema_result = ops.discover_schema(connection)
-if schema_result.is_success:
+if schema_result.success:
     schema = schema_result.unwrap()
     print(f"Server type: {schema['server_type']}")  # "oud"
 ```
@@ -559,7 +559,7 @@ connection = ldap3.Connection(
 
 # Basic schema discovery
 schema_result = ops.discover_schema(connection)
-if schema_result.is_success:
+if schema_result.success:
     schema = schema_result.unwrap()
     print(f"Server type: {schema['server_type']}")  # "generic"
 
@@ -601,7 +601,7 @@ connection.search(base_dn, search_filter, attributes=attributes)
 for ldap3_entry in connection.entries:
     # Convert ldap3 entry to ldif
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-    if ldif_result.is_success:
+    if ldif_result.success:
         ldif_entry = ldif_result.unwrap()
 
         # Process with ldif models
@@ -611,7 +611,7 @@ for ldap3_entry in connection.entries:
 # Create ldif entry and convert to ldap3
 ldif_entry = FlextLdifModels.Entry(...)
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
-if attrs_result.is_success:
+if attrs_result.success:
     attributes = attrs_result.unwrap()
     # Use with server operations
     ops.add_entry(connection, ldif_entry)
@@ -632,7 +632,7 @@ quirks = FlextLdapQuirksAdapter()
 entries = [...]  # List of FlextLdifModels.Entry
 server_type_result = quirks.detect_server_type_from_entries(entries)
 
-if server_type_result.is_success:
+if server_type_result.success:
     server_type = server_type_result.unwrap()
     print(f"Detected server: {server_type}")
 
@@ -702,7 +702,7 @@ Always detect the server type for optimal operations:
 quirks = FlextLdapQuirksAdapter()
 server_type_result = quirks.detect_server_type_from_entries(entries)
 
-if server_type_result.is_success:
+if server_type_result.success:
     server_type = server_type_result.unwrap()
     # Select appropriate operations class
 ```
@@ -713,7 +713,7 @@ All operations return `r` - always check for failures:
 
 ```python
 result = ops.add_entry(connection, entry)
-if result.is_failure:
+if result.failure:
     print(f"Operation failed: {result.error}")
     # Handle error appropriately
 else:
@@ -740,7 +740,7 @@ Each server may require specific entry normalization:
 
 ```python
 norm_result = ops.normalize_entry(entry)
-if norm_result.is_success:
+if norm_result.success:
     normalized_entry = norm_result.unwrap()
     # Use normalized entry
 ```
@@ -808,7 +808,7 @@ result = ops.search_with_paging(
 ```python
 # Check entry normalization
 norm_result = ops.normalize_entry(entry)
-if norm_result.is_failure:
+if norm_result.failure:
     print(f"Normalization failed: {norm_result.error}")
 
 # Verify required t.RecursiveContainer classes and attributes

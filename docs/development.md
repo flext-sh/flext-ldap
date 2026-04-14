@@ -324,7 +324,7 @@ def create_user(self, request: CreateUserRequest) -> p.Result[FlextLdapUser]:
         return r[FlextLdapUser].fail("Invalid user data")
 
     result = self._client.create_entry(request.to_ldap_entry())
-    if result.is_failure:
+    if result.failure:
         return r[FlextLdapUser].fail(f"User creation failed: {result.error}")
 
     return r[FlextLdapUser].ok(FlextLdapUser.from_ldap_entry(result.unwrap()))
@@ -512,11 +512,11 @@ class TestLdapOperations:
         )
 
         create_result = api.create_user(create_request)
-        assert create_result.is_success
+        assert create_result.success
 
         # Test authentication
         auth_result = api.authenticate_user("test.user", "test123")
-        assert auth_result.is_success
+        assert auth_result.success
 
         user = auth_result.unwrap()
         assert user.uid == "test.user"
@@ -534,7 +534,7 @@ class TestLdapOperations:
         )
 
         result = api.search_entries(search_request)
-        assert result.is_success
+        assert result.success
 
         entries = result.unwrap()
         assert isinstance(entries, list)
@@ -586,7 +586,7 @@ def ldap_server():
         remove=True,
     )
 
-    if container_result.is_failure:
+    if container_result.failure:
         pytest.skip(f"Failed to start LDAP container: {container_result.error}")
 
     container_id = container_result.unwrap()
@@ -598,7 +598,7 @@ def ldap_server():
         timeout=30
     )
 
-    if health_result.is_failure:
+    if health_result.failure:
         pytest.skip(f"LDAP server not ready: {health_result.error}")
 
     # Configure flext-ldap for testing
@@ -631,7 +631,7 @@ def authenticated_user():
     )
 
     create_result = api.create_user(create_request)
-    assert create_result.is_success
+    assert create_result.success
 
     yield create_result.unwrap()
 
@@ -656,12 +656,12 @@ class FlextLdapClients:
         Basic usage:
         >>> api = get_flext_ldap_api()
         >>> result = api.test_connection()
-        >>> if result.is_success:
+        >>> if result.success:
         ...     print("Connected to LDAP server")
 
         User authentication:
         >>> auth_result = api.authenticate_user("john.doe", "password")
-        >>> if auth_result.is_success:
+        >>> if auth_result.success:
         ...     user = auth_result.unwrap()
         ...     print(f"Welcome, {user.cn}")
     """
@@ -684,7 +684,7 @@ class FlextLdapClients:
 
         Examples:
             >>> result = api.authenticate_user("john.doe", "secret123")
-            >>> if result.is_success:
+            >>> if result.success:
             ...     user = result.unwrap()
             ...     print(f"Authenticated: {user.cn}")
             >>> else:

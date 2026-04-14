@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableSequence
 from typing import override
 
 from pydantic import PrivateAttr
@@ -40,6 +40,7 @@ from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -69,111 +70,23 @@ class FlextLdapEntryAdapter(s[bool]):
         def convert_value_to_strings(
             value: t.Ldap.Ldap3EntryValue,
         ) -> t.StrSequence:
-            """Convert ldap3 entry value to sequence of strings.
-
-            Business Rules:
-                - List-like values are converted to t.StrSequence
-                - Single values are wrapped in single-item list [str(value)]
-                - None values become empty list []
-                - Python 3.13: Uses guard-based sequence handling
-
-            Audit Implications:
-                - All values normalized to string lists for consistency
-                - Value type information may be lost (all become strings)
-                - Empty lists preserve attribute presence
-
-            Architecture:
-                - Python 3.13: Uses guard-based sequence handling
-                - Returns t.StrSequence for flexible return type
-                - No network calls - pure data transformation
-
-            Args:
-                value: ldap3 attribute value (str, list, bytes, or mixed).
-
-            Returns:
-                Sequence of string values (empty if value is None/empty).
-
-            """
-            match value:
-                case None:
-                    return []
-                case bytes() as value_bytes:
-                    return [value_bytes.decode("utf-8", errors="replace")]
-                case list() | tuple() as sequence_values:
-                    return [
-                        item.decode("utf-8", errors="replace")
-                        if isinstance(item, bytes)
-                        else str(item)
-                        for item in sequence_values
-                    ]
-                case _:
-                    return [str(value)]
+            """Compatibility shim delegating value normalization to ``u.Ldap``."""
+            return u.Ldap.ldap3_value_to_strings(value)
 
         @staticmethod
         def is_base64_encoded(
             value: str,
             threshold: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD,
         ) -> bool:
-            """Check if value requires base64 encoding.
-
-            Business Rules:
-                - Values starting with "::" are base64 encoded (LDIF marker)
-                - Values with characters > threshold (127) require encoding
-                - ASCII threshold detects non-printable characters
-                - Binary values (non-ASCII) must be base64 encoded per RFC 2849
-
-            Audit Implications:
-                - Base64 encoding detection affects LDIF output format
-                - Binary values are properly encoded for transport safety
-                - Encoding detection enables proper LDIF serialization
-
-            Architecture:
-                - Uses ord() for character code checking
-                - Threshold of 127 detects non-ASCII characters
-                - Returns bool for simple predicate usage
-
-            Args:
-                value: String value to check for base64 encoding requirement.
-                threshold: ASCII threshold for non-printable detection (default: 127).
-
-            Returns:
-                True if value requires base64 encoding, False otherwise.
-
-            """
-            return value.startswith("::") or any(ord(c) > threshold for c in value)
+            """Compatibility shim delegating encoding detection to ``u.Ldap``."""
+            return u.Ldap.is_base64_encoded(value, threshold)
 
         @staticmethod
         def normalize_original_attr_value(
             value: t.Ldap.Ldap3EntryValue,
         ) -> t.StrSequence:
-            """Normalize attribute value preserving original form for metadata.
-
-            Business Rules:
-                - Preserves original value form for metadata tracking
-                - Handles tuple types in addition to list-like values
-                - Converts all values to strings for consistency
-                - Empty values become empty list []
-
-            Audit Implications:
-                - Original value form preserved for audit trail
-                - Metadata tracking enables value transformation auditing
-                - Used for conversion metadata generation
-
-            Architecture:
-                - Python 3.13: Uses isinstance and tuple checks
-                - Returns t.StrSequence for flexible return type
-                - No network calls - pure data transformation
-
-            Args:
-                value: Original ldap3 attribute value (preserved form).
-
-            Returns:
-                Sequence of string values from original attribute.
-
-            """
-            return FlextLdapEntryAdapter._ConversionHelpers.convert_value_to_strings(
-                value,
-            )
+            """Compatibility shim delegating normalization to ``u.Ldap``."""
+            return u.Ldap.normalize_original_attr_value(value)
 
     _server_type: str = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
 
@@ -195,42 +108,13 @@ class FlextLdapEntryAdapter(s[bool]):
         original_attrs_dict: t.RecursiveContainerMapping,
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
-        """Build conversion metadata tracking ldap3 to LDIF transformation.
-
-        Business Rules:
-            - Source attributes extracted from original_attrs_dict keys
-            - Removed attributes (None values) tracked for audit
-            - Base64 attributes deduplicated using set() for uniqueness
-            - Source DN preserved for transformation tracking
-            - Metadata enables audit trail of conversion process
-
-        Audit Implications:
-            - Conversion metadata enables forensic analysis
-            - Removed attributes indicate data loss during conversion
-            - Base64 attributes indicate binary value handling
-            - Source DN enables entry tracking across transformations
-
-        Architecture:
-            - Uses m.Ldap.ConversionMetadata Pydantic model
-            - Returns validated metadata model
-            - No network calls - pure metadata construction
-
-        Args:
-            removed_attrs: Attributes removed during conversion (None values).
-            base64_attrs: Attributes requiring base64 encoding.
-            original_attrs_dict: Original ldap3 attributes mapping.
-            original_dn: Original ldap3 entry distinguished name.
-
-        Returns:
-            ConversionMetadata model with transformation tracking.
-
-        """
-        return m.Ldap.ConversionMetadata.model_validate({
-            "source_attributes": list(dict(original_attrs_dict).keys()),
-            "source_dn": original_dn,
-            "removed_attributes": list(removed_attrs),
-            "base64_encoded_attributes": list(set(base64_attrs)),
-        })
+        """Build conversion metadata tracking ldap3 to LDIF transformation."""
+        return u.Ldap.build_conversion_metadata(
+            removed_attrs,
+            base64_attrs,
+            original_attrs_dict,
+            original_dn,
+        )
 
     @staticmethod
     def _track_conversion_differences(
@@ -240,89 +124,14 @@ class FlextLdapEntryAdapter(s[bool]):
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: Mapping[str, t.StrSequence],
     ) -> m.Ldap.ConversionMetadata:
-        """Track DN and attribute differences in conversion metadata.
-
-        Business Rules:
-            - DN changes are detected by comparing original_dn vs converted_dn
-            - Attribute changes detected by comparing string representations
-                - Python 3.13: Uses guard-based sequence handling
-            - Mutates conversion_metadata to record differences
-            - Changes tracked for audit trail generation
-
-        Audit Implications:
-            - DN changes indicate normalization or transformation occurred
-            - Attribute changes indicate value transformation during conversion
-            - Tracking enables forensic analysis of conversion process
-            - Metadata mutations are side effects (no return value)
-
-        Architecture:
-            - Mutates conversion_metadata t.RecursiveContainer (side effect)
-                - Python 3.13: Uses guard-based sequence handling
-            - Compares string representations for change detection
-            - No network calls - pure metadata tracking
-
-        Args:
-            conversion_metadata: Metadata model to update with changes (mutated).
-            original_dn: Original ldap3 entry DN.
-            converted_dn: Converted LDIF entry DN.
-            original_attrs_dict: Original ldap3 attributes.
-            converted_attrs_dict: Converted LDIF attributes (lists of strings).
-
-        """
-        updates: MutableMapping[str, bool | str | t.StrSequence] = {}
-        if converted_dn != original_dn:
-            updates["dn_changed"] = True
-            updates["converted_dn"] = converted_dn
-
-        def check_attr_changed(
-            attr_name: str,
-            original_values: t.Ldap.Ldap3AttributeValues,
-        ) -> str | None:
-            """Check if attribute values changed during conversion."""
-            original_values_list = [
-                item.decode("utf-8", errors="replace")
-                if isinstance(item, bytes)
-                else str(item)
-                for item in original_values
-            ]
-            original_str = ", ".join(original_values_list)
-            attr_values_raw = converted_attrs_dict.get(attr_name, [])
-            attr_values_list = [str(v) for v in attr_values_raw]
-            filtered_str_values = [v for v in attr_values_list if v]
-            converted_str = ", ".join(filtered_str_values) or ""
-            return attr_name if original_str != converted_str else None
-
-        result_dict: t.MutableOptionalStrMapping = {}
-        logger = logging.getLogger(__name__)
-        for attr_name, original_values in original_attrs_dict.items():
-            try:
-                changed = check_attr_changed(attr_name, original_values)
-                if changed is not None:
-                    result_dict[attr_name] = changed
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-            ) as e:
-                logger.debug(
-                    "Failed to check attribute change for %s, skipping",
-                    attr_name,
-                    exc_info=e,
-                )
-                continue
-        filtered_dict: t.StrMapping = {
-            k: v for k, v in result_dict.items() if v is not None
-        }
-        changed_attrs = list(filtered_dict.values())
-        if changed_attrs:
-            updates["attribute_changes"] = changed_attrs
-        if updates:
-            return conversion_metadata.model_copy(update=updates)
-        return conversion_metadata
+        """Track DN and attribute differences in conversion metadata."""
+        return u.Ldap.track_conversion_differences(
+            conversion_metadata,
+            original_dn=original_dn,
+            converted_dn=converted_dn,
+            original_attrs_dict=original_attrs_dict,
+            converted_attrs_dict=converted_attrs_dict,
+        )
 
     @override
     def execute(self, **_kwargs: str | float | bool | None) -> p.Result[bool]:
@@ -503,11 +312,7 @@ class FlextLdapEntryAdapter(s[bool]):
         if not attrs_dict:
             return r[t.Ldap.OperationAttributes].fail("Entry has no attributes")
         try:
-            filtered_attrs: t.MutableStrSequenceMapping = {}
-            for k, v in attrs_dict.items():
-                key_str = str(k)
-                filtered_attrs[key_str] = [str(item) for item in v]
-            return r[t.Ldap.OperationAttributes].ok(filtered_attrs)
+            return r[t.Ldap.OperationAttributes].ok(u.Ldap.attr_to_str_list(attrs_dict))
         except (ValueError, TypeError, AttributeError) as e:
             dn_value = (
                 getattr(entry.dn, "value", entry.dn)
@@ -572,7 +377,8 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         if value is None:
             removed_attrs.append(key)
-            return []
+            empty_values: t.StrSequence = []
+            return empty_values
         converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
         if any(
             self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)

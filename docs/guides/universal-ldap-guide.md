@@ -109,7 +109,7 @@ from flext_core import u
 # Method 1: Explicit server type
 factory = ServerOperationsFactory()
 ops_result = factory.create_from_server_type("openldap2")
-if ops_result.is_success:
+if ops_result.success:
     ops = ops_result.unwrap()
     print(f"ACL format: {ops.get_acl_format()}")
     print(f"Schema DN: {ops.get_schema_dn()}")
@@ -119,7 +119,7 @@ if ops_result.is_success:
 def detect_and_create():
     # Assuming you have an ldap3 connection
     ops_result = factory.create_from_connection(connection)
-    if ops_result.is_success:
+    if ops_result.success:
         ops = ops_result.unwrap()
         print(f"Detected: {ops.server_type}")
 
@@ -160,7 +160,7 @@ api.connect()
 
 # Get detected server type
 server_type_result = api.get_detected_server_type()
-if server_type_result.is_success:
+if server_type_result.success:
     server_type = server_type_result.unwrap()
     print(f"Connected to: {server_type}")
     # Output: "Connected to: openldap2" or "oud", "oid", etc.
@@ -171,7 +171,7 @@ if server_type_result.is_success:
 ```python
 # Get comprehensive server capabilities
 caps_result = api.get_server_capabilities()
-if caps_result.is_success:
+if caps_result.success:
     caps = caps_result.unwrap()
 
     print(f"Server type: {caps['server_type']}")
@@ -198,7 +198,7 @@ result = api.search_universal(
     use_paging=True,  # Automatically uses server's best paging method
 )
 
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     print(f"Found {len(entries)} entries")
     for entry in entries:
@@ -214,7 +214,7 @@ from flext_ldif import FlextLdifModels
 entry: FlextLdifModels.Entry = ...  # Your entry
 normalized_result = api.normalize_entry_for_server(entry)
 
-if normalized_result.is_success:
+if normalized_result.success:
     normalized_entry = normalized_result.unwrap()
     print("Entry normalized for current server")
 
@@ -234,7 +234,7 @@ convert_result = api.convert_entry_between_servers(
     target_server_type="openldap2",
 )
 
-if convert_result.is_success:
+if convert_result.success:
     openldap2_entry = convert_result.unwrap()
     # Entry now has:
     # - olcAccess instead of access
@@ -249,7 +249,7 @@ if convert_result.is_success:
 unknown_entry: FlextLdifModels.Entry = ...  # Entry from unknown source
 
 detection_result = api.detect_entry_server_type(unknown_entry)
-if detection_result.is_success:
+if detection_result.success:
     detected_type = detection_result.unwrap()
     print(f"Entry originated from: {detected_type}")
     # Output: "openldap2", "oud", "oid", etc.
@@ -262,7 +262,7 @@ if detection_result.is_success:
 entry: FlextLdifModels.Entry = ...
 
 validation_result = api.validate_entry_for_server(entry, "oud")
-if validation_result.is_success and validation_result.unwrap():
+if validation_result.success and validation_result.unwrap():
     print("Entry is compatible with Oracle OUD")
 else:
     print(f"Validation failed: {validation_result.error}")
@@ -273,7 +273,7 @@ else:
 ```python
 # Get server-specific attribute information
 attrs_result = api.get_server_specific_attributes("oid")
-if attrs_result.is_success:
+if attrs_result.success:
     attrs = attrs_result.unwrap()
     print(f"Required attributes: {attrs.get('required_attributes', [])}")
     print(f"Optional attributes: {attrs.get('optional_attributes', [])}")
@@ -292,7 +292,7 @@ def migrate_openldap1_to_openldap2():
     # Parse OpenLDAP 1.x LDIF file
         parse_result = ldif.parse_file("openldap1_backup.ldif")
 
-    if parse_result.is_failure:
+    if parse_result.failure:
         print(f"Parse failed: {parse_result.error}")
         return
 
@@ -307,14 +307,14 @@ def migrate_openldap1_to_openldap2():
             entry=entry, source_server_type="openldap1", target_server_type="openldap2"
         )
 
-        if convert_result.is_success:
+        if convert_result.success:
             openldap2_entries.append(convert_result.unwrap())
         else:
             print(f"Conversion failed for {entry.dn}: {convert_result.error}")
 
     # Write converted entries to new LDIF
     write_result = ldif.write_file(openldap2_entries, "openldap2_converted.ldif")
-    if write_result.is_success:
+    if write_result.success:
         print(f"Successfully converted {len(openldap2_entries)} entries")
 ```
 
@@ -335,12 +335,12 @@ def migrate_oid_to_oud():
             entry=entry, source_server_type="oid", target_server_type="oud"
         )
 
-        if convert_result.is_success:
+        if convert_result.success:
             oud_entry = convert_result.unwrap()
 
             # Validate for OUD
             validation_result = api.validate_entry_for_server(oud_entry, "oud")
-            if validation_result.is_success and validation_result.unwrap():
+            if validation_result.success and validation_result.unwrap():
                 oud_entries.append(oud_entry)
             else:
                 print(f"Validation failed: {validation_result.error}")
@@ -373,7 +373,7 @@ def sync_across_servers():
         base_dn="ou=users,dc=company,dc=com", filter_str="(objectClass=inetOrgPerson)"
     )
 
-    if search_result.is_success:
+    if search_result.success:
         source_entries = search_result.unwrap()
 
         for entry in source_entries:
@@ -390,7 +390,7 @@ def sync_across_servers():
                 target_server_type=target_type,
             )
 
-            if convert_result.is_success:
+            if convert_result.success:
                 converted_entry = convert_result.unwrap()
 
                 # Add to target server
@@ -413,7 +413,7 @@ def progressive_migration():
     server_types = {}
     for entry in source_entries:
         detection_result = api.detect_entry_server_type(entry)
-        if detection_result.is_success:
+        if detection_result.success:
             detected_type = detection_result.unwrap()
             server_types[detected_type] = server_types.get(detected_type, 0) + 1
 
@@ -438,7 +438,7 @@ def progressive_migration():
                     target_server_type=target_type,
                 )
 
-                if convert_result.is_success:
+                if convert_result.success:
                     converted_batch.append(convert_result.unwrap())
             else:
                 converted_batch.append(entry)
@@ -450,7 +450,7 @@ def progressive_migration():
     for batch in converted_batches:
         for entry in batch:
             validation_result = api.validate_entry_for_server(entry, target_type)
-            if validation_result.is_failure or not validation_result.unwrap():
+            if validation_result.failure or not validation_result.unwrap():
                 print(f"Validation failed for {entry.dn}")
 ```
 
@@ -461,7 +461,7 @@ def progressive_migration():
 ```python
 # Good: Detect before operations
 server_type_result = api.get_detected_server_type()
-if server_type_result.is_success:
+if server_type_result.success:
     server_type = server_type_result.unwrap()
     # Use server_type for operations
 ```
@@ -471,11 +471,11 @@ if server_type_result.is_success:
 ```python
 # Good: Validate converted entries
 convert_result = api.convert_entry_between_servers(...)
-if convert_result.is_success:
+if convert_result.success:
     entry = convert_result.unwrap()
 
     validation_result = api.validate_entry_for_server(entry, target_type)
-    if validation_result.is_success and validation_result.unwrap():
+    if validation_result.success and validation_result.unwrap():
         # Proceed with entry
         pass
 ```
@@ -485,7 +485,7 @@ if convert_result.is_success:
 ```python
 # Good: Check capabilities before operations
 caps_result = api.get_server_capabilities()
-if caps_result.is_success:
+if caps_result.success:
     caps = caps_result.unwrap()
 
     if caps["supports_paged_results"]:
@@ -526,7 +526,7 @@ If conversion fails, check entry compatibility:
 ```python
 # Validate source entry
 validation_result = api.validate_entry_for_server(entry, source_type)
-if validation_result.is_failure:
+if validation_result.failure:
     print(f"Source entry invalid: {validation_result.error}")
 ```
 
@@ -536,7 +536,7 @@ Different servers have different ACL formats. Check server capabilities:
 
 ```python
 caps_result = api.get_server_capabilities()
-if caps_result.is_success:
+if caps_result.success:
     caps = caps_result.unwrap()
     print(f"ACL format: {caps['acl_format']}")
     print(f"ACL attribute: {caps['acl_attribute']}")

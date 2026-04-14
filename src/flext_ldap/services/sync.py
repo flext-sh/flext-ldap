@@ -10,9 +10,7 @@ import inspect
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar, TypeIs
-
-from pydantic import ConfigDict
+from typing import TypeIs
 
 from flext_core import r
 from flext_ldap.constants import c
@@ -54,12 +52,6 @@ class FlextLdapSyncCallbacks:
 
 class FlextLdapSync(FlextLdapOperations):
     """MRO mixin that syncs parsed LDIF phases into LDAP."""
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        frozen=False,
-        extra="forbid",
-        arbitrary_types_allowed=True,
-    )
 
     @staticmethod
     def _make_phase_progress_callback(

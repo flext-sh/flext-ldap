@@ -105,23 +105,7 @@ class TestsFlextLdap3Adapter:
             eq=c.Ldap.ConnectionDefaults.PORT,
         )
 
-    def test_adapter_inner_classes_exist(self) -> None:
-        assert (
-            c.Ldap.Tests.LDAP3_ADAPTER_INNER_CLASS_CONNECTION_MANAGER
-            in Ldap3Adapter.__dict__
-        )
-        assert (
-            c.Ldap.Tests.LDAP3_ADAPTER_INNER_CLASS_RESULT_CONVERTER
-            in Ldap3Adapter.__dict__
-        )
-        assert isinstance(Ldap3Adapter.ConnectionManager, type)
-        assert isinstance(Ldap3Adapter.ResultConverter, type)
-
-    def test_connection_manager_static_methods_exist(self) -> None:
-        assert (
-            c.Ldap.Tests.LDAP3_ADAPTER_CREATE_SERVER_METHOD
-            in Ldap3Adapter.ConnectionManager.__dict__
-        )
+    def test_connection_manager_create_server_api_is_callable(self) -> None:
         u.Ldap.Tests.that(
             callable(Ldap3Adapter.ConnectionManager.create_server), eq=True
         )

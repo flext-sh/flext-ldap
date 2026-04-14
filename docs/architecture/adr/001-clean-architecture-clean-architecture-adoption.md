@@ -27,7 +27,7 @@
 ## Status
 
 **Status**: accepted
-**Date**: 2025-10-10
+**Date**: 2026-04-14
 **Deciders**: FLEXT Architecture Committee
 **Consulted**: Development Team
 **Informed**: Stakeholders
@@ -84,4 +84,4 @@
 ______________________________________________________________________
 
 **ADR 001-clean-architecture: Clean Architecture Adoption**
-_Accepted on 2025-10-10_
+_Accepted on 2026-04-14_

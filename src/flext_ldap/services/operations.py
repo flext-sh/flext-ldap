@@ -31,10 +31,10 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, MutableMapping, Sequence
-from typing import ClassVar, override
+from collections.abc import Mapping, Sequence
+from typing import override
 
-from pydantic import ConfigDict, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import r
 from flext_ldap.base import FlextLdapService
@@ -83,12 +83,6 @@ class FlextLdapOperations(FlextLdapService):
 
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        frozen=False,
-        extra="forbid",
-        arbitrary_types_allowed=True,
-    )
-
     _upsert_handler_instance: FlextLdapOperations._UpsertHandler | None = PrivateAttr(
         default=None,
     )
@@ -97,422 +91,6 @@ class FlextLdapOperations(FlextLdapService):
     def _get_structlog_logger() -> p.Logger | None:
         """Return structlog logger when runtime logger satisfies the protocol."""
         return u.fetch_logger(__name__)
-
-    @staticmethod
-    def _extract_attributes_dict(entry: p.Ldif.Entry) -> Mapping[str, t.StrSequence]:
-        """Extract attributes dict from LDIF entry or entry protocol.
-
-        Args:
-            entry: LDIF entry model (m.Ldif.Entry) or protocol-compatible t.RecursiveContainer.
-
-        Returns:
-            Attributes dict with normalized values.
-
-        """
-        attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(entry)
-        result: t.MutableStrSequenceMapping = {}
-        for k, v in dict(attrs_mapping).items():
-            result[k] = [str(item) for item in v]
-        return result
-
-    class EntryComparison:
-        """Compute attribute-level differences between entries.
-
-        Utilities normalize attribute keys and values to build precise
-        ``MODIFY`` payloads without duplicating comparison logic across
-        services or tests.
-
-        Business Rules:
-            - Attribute comparison is case-insensitive for both names and values
-            - Operational attributes (objectClass, entryUUID, etc.) are ignored
-            - Empty values are filtered out before comparison
-            - MODIFY_REPLACE is used for changed attributes
-            - MODIFY_DELETE is used for attributes removed in new entry
-
-        Audit Implications:
-            - Returns precise change set for audit trail of modifications
-            - Null return indicates no changes needed (idempotent)
-            - Changes dict maps attribute name -> list of LDAP modify operations
-
-        Performance Notes:
-            - O(n) for attribute extraction and comparison
-            - Uses set comparison for value differences (O(1) lookups)
-        """
-
-        @staticmethod
-        def _convert_mapping_to_dict(
-            attrs: Mapping[t.Ldap.LaxStr, Sequence[t.Ldap.LaxStr]]
-            | Mapping[str, t.StrSequence],
-        ) -> Mapping[str, t.StrSequence]:
-            """Convert Mapping to Mapping[str, t.StrSequence].
-
-            Args:
-                attrs: Mapping of attribute names to sequences (handles t.Ldap.LaxStr keys/values)
-
-            Returns:
-                Dictionary of attribute names to list of strings
-
-            """
-            attrs_result: t.MutableStrSequenceMapping = {}
-            for k, v in attrs.items():
-                match k:
-                    case bytes():
-                        key_str = k.decode("utf-8", errors="replace")
-                    case bytearray():
-                        key_str = bytes(k).decode("utf-8", errors="replace")
-                    case _:
-                        key_str = str(k)
-                attrs_result[key_str] = [str(item) for item in v]
-            return attrs_result
-
-        @staticmethod
-        def _extract_ldif_entry_attributes(
-            entry: p.Ldif.Entry,
-        ) -> Mapping[str, t.StrSequence]:
-            """Extract attributes from LDIF Entry.
-
-            Args:
-                entry: LDIF entry model (m.Ldif.Entry)
-
-            Returns:
-                Mapping of attribute names to sequences
-
-            """
-            ldif_attrs = entry.attributes
-            if ldif_attrs is None:
-                return {}
-            attrs_dict = ldif_attrs.attributes
-            return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                attrs_dict,
-            )
-
-        @staticmethod
-        def _extract_protocol_entry_attributes(
-            entry: p.Ldif.Entry,
-        ) -> Mapping[str, t.StrSequence]:
-            """Extract attributes from Entry.
-
-            Args:
-                entry: Entry protocol instance
-
-            Returns:
-                Mapping of attribute names to sequences
-
-            """
-            attrs = entry.attributes
-            if attrs is None:
-                return {}
-            attrs_dict = attrs.attributes
-            return FlextLdapOperations.EntryComparison._convert_mapping_to_dict(
-                attrs_dict,
-            )
-
-        @staticmethod
-        def compare(
-            existing_entry: p.Ldif.Entry,
-            new_entry: p.Ldif.Entry,
-        ) -> t.Ldap.OperationChanges | None:
-            """Compare two entries and return modify changes when needed.
-
-            Business Rules:
-                - Returns None if either entry has no attributes (no-op)
-                - Computes MODIFY_REPLACE for changed attributes
-                - Computes MODIFY_DELETE for removed attributes
-                - Operational attributes (IGNORE_SET) are excluded from comparison
-                - Case-insensitive attribute name and value comparison
-
-            Audit Implication:
-                Returns precise change set for audit trail. None indicates
-                entries are equivalent (idempotent upsert operation).
-
-            Args:
-                existing_entry: Current entry from LDAP server
-                new_entry: Desired state entry to synchronize
-
-            Returns:
-                ModifyChanges dict or None if no changes needed.
-
-            """
-            existing_attrs_raw = FlextLdapOperations.EntryComparison.extract_attributes(
-                existing_entry,
-            )
-            new_attrs_raw = FlextLdapOperations.EntryComparison.extract_attributes(
-                new_entry,
-            )
-
-            def normalize_attr(
-                _k: str,
-                v: t.Ldap.Ldap3AttributeValue,
-            ) -> t.StrSequence:
-                """Normalize attribute value to t.StrSequence."""
-                match v:
-                    case list() | tuple():
-                        return [str(item) for item in v]
-                    case _:
-                        return [str(v)]
-
-            existing_attrs_transformed: MutableMapping[str, t.StrSequence] = {}
-            logger = logging.getLogger(__name__)
-            for k, v in existing_attrs_raw.items():
-                try:
-                    normalized = normalize_attr(k, v)
-                    existing_attrs_transformed[k] = normalized
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    OSError,
-                    RuntimeError,
-                    ImportError,
-                ) as e:
-                    logger.debug(
-                        "Failed to normalize existing attribute %s, skipping",
-                        k,
-                        exc_info=e,
-                    )
-                    continue
-            existing_attrs = existing_attrs_transformed
-            new_attrs: MutableMapping[str, t.StrSequence] = {}
-            for k, v in new_attrs_raw.items():
-                try:
-                    normalized = normalize_attr(k, v)
-                    new_attrs[k] = normalized
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    OSError,
-                    RuntimeError,
-                    ImportError,
-                ) as e:
-                    logger.debug(
-                        "Failed to normalize new attribute %s, skipping",
-                        k,
-                        exc_info=e,
-                    )
-                    continue
-            if not existing_attrs or not new_attrs:
-                return None
-            ignore = c.Ldif.OperationalAttributes.IGNORE_SET
-            changes, processed = (
-                FlextLdapOperations.EntryComparison.process_new_attributes(
-                    new_attrs,
-                    existing_attrs,
-                    frozenset(ignore),
-                )
-            )
-            delete_changes = (
-                FlextLdapOperations.EntryComparison.process_deleted_attributes(
-                    existing_attrs,
-                    frozenset(ignore),
-                    processed,
-                )
-            )
-            merged: t.Ldap.OperationChanges = {}
-            merged.update(changes)
-            merged.update(delete_changes)
-            return merged or None
-
-        @staticmethod
-        def extract_attributes(entry: p.Ldif.Entry) -> Mapping[str, t.StrSequence]:
-            """Return entry attributes as a normalized mapping of lists.
-
-            Business Rule:
-                Normalizes p.Entry and Entry to a common
-                Mapping[str, t.StrSequence] format. p.Entry has
-                nested Attributes.attributes, while Entry has direct
-                attributes mapping.
-
-            Audit Implication:
-                Returns empty dict for entries without attributes, ensuring
-                comparison operations handle edge cases gracefully.
-
-            Returns:
-                Mapping of attribute names to list of string values.
-
-            """
-            if entry.attributes is None:
-                return {}
-            return (
-                FlextLdapOperations.EntryComparison._extract_protocol_entry_attributes(
-                    entry,
-                )
-            )
-
-        @staticmethod
-        def find_existing_values(
-            attr_name: str,
-            existing_attrs: Mapping[str, t.StrSequence],
-        ) -> t.StrSequence | None:
-            """Find existing attribute values by case-insensitive name.
-
-            Business Rule:
-                Attribute names are case-insensitive per LDAP schema (RFC 4512).
-                Searches existing attributes for case-insensitive match.
-
-            Audit Implication:
-                Returns None if attribute not found, enabling distinction between
-                missing attribute (add) and empty attribute (replace with empty).
-
-            Returns:
-                List of values if attribute exists, None otherwise.
-
-            """
-            attr_keys = list(existing_attrs.keys())
-            normalized_target = u.Ldap.norm_str(str(attr_name), case="lower")
-
-            def _match_attr(k: str) -> bool:
-                return u.Ldap.norm_str(str(k), case="lower") == normalized_target
-
-            found_key = u.Ldif.find(
-                attr_keys,
-                predicate=_match_attr,
-            )
-            if found_key is not None:
-                key: str = str(found_key)
-                values = existing_attrs.get(key)
-                if values is not None:
-                    return [str(item) for item in values]
-            return None
-
-        @staticmethod
-        def normalize_value_set(values: t.StrSequence) -> set[str]:
-            """Normalize attribute values to a lowercase set for comparison.
-
-            Business Rule:
-                Case-insensitive comparison per LDAP matching rules (RFC 4518).
-                Empty/None values are filtered to avoid false differences.
-
-            Audit Implication:
-                Lowercase normalization ensures consistent comparison regardless
-                of source system case conventions.
-            """
-            return {str(v).lower() for v in values if v}
-
-        @staticmethod
-        def process_deleted_attributes(
-            existing_attrs: Mapping[str, t.StrSequence],
-            ignore: frozenset[str],
-            processed: set[str],
-        ) -> t.Ldap.OperationChanges:
-            """Capture deletions for attributes missing from the new entry.
-
-            Business Rules:
-                - Only deletes attributes NOT in processed set (already handled)
-                - Skips operational attributes in ignore set
-                - Uses MODIFY_DELETE with empty list to remove attribute entirely
-                - Python 3.13: guard-based sequence validation
-
-            Audit Implication:
-                Returns deletions needed to sync existing entry with new state.
-                Critical for maintaining data integrity during upsert operations.
-
-            Returns:
-                Dict mapping attribute names to MODIFY_DELETE operations.
-
-            """
-            filtered_attrs: t.MutableStrSequenceMapping = {}
-            ignore_lower = [k.lower() for k in ignore]
-            processed_lower = [k.lower() for k in processed]
-            for k, v in existing_attrs.items():
-                if k.lower() not in ignore_lower and k.lower() not in processed_lower:
-                    filtered_attrs[k] = [str(item) for item in v]
-            changes_dict: t.Ldap.OperationChanges = {
-                k: [(c.Ldap.ModifyOperation.DELETE, [])] for k in filtered_attrs
-            }
-            return changes_dict
-
-        @staticmethod
-        def process_new_attributes(
-            new_attrs: Mapping[str, t.StrSequence],
-            existing_attrs: Mapping[str, t.StrSequence],
-            ignore: frozenset[str],
-        ) -> t.Pair[t.Ldap.OperationChanges, set[str]]:
-            """Process new attributes and detect replacement changes.
-
-            Business Rules:
-                - Skips operational attributes in ignore set (objectClass, etc.)
-                - Uses MODIFY_REPLACE for changed values (not ADD/DELETE pair)
-                - Tracks processed attributes to detect deletions later
-                - Python 3.13: guard-based sequence validation
-
-            Audit Implication:
-                Returns tuple of (changes, processed_attrs) for audit trail.
-                processed_attrs enables deletion detection in second pass.
-
-            Returns:
-                Tuple of (modify changes dict, set of processed attribute names).
-
-            """
-            changes: t.Ldap.OperationChanges = {}
-            processed: set[str] = set()
-            filtered_attrs: t.MutableStrSequenceMapping = {}
-            ignore_lower = [k.lower() for k in ignore]
-            for k, v in new_attrs.items():
-                if k.lower() not in ignore_lower:
-                    filtered_attrs[k] = [str(item) for item in v]
-
-            def process_attr(
-                attr_name: str,
-                new_vals: t.StrSequence,
-            ) -> t.Pair[str, Sequence[t.Pair[int, t.StrSequence]] | None]:
-                """Process single attribute and return change if needed."""
-                normalized_name = u.Ldap.norm_str(attr_name, case="lower")
-                processed.add(normalized_name)
-                existing_vals = (
-                    FlextLdapOperations.EntryComparison.find_existing_values(
-                        attr_name,
-                        existing_attrs,
-                    )
-                )
-                existing_set: set[str] = set()
-                if existing_vals:
-                    existing_list = [str(v) for v in existing_vals if v]
-                    existing_set = set(
-                        FlextLdapOperations.EntryComparison.normalize_value_set(
-                            existing_list,
-                        ),
-                    )
-                new_set = FlextLdapOperations.EntryComparison.normalize_value_set([
-                    x for x in new_vals if x
-                ])
-                if existing_set != new_set:
-                    new_list = [str(v) for v in new_vals if v]
-                    return (attr_name, [(c.Ldap.ModifyOperation.REPLACE, new_list)])
-                return (attr_name, None)
-
-            processed_dict: MutableMapping[
-                str,
-                Sequence[t.Pair[int, t.StrSequence]] | None,
-            ] = {}
-            logger = logging.getLogger(__name__)
-            for attr_name, new_vals in dict(filtered_attrs).items():
-                try:
-                    result = process_attr(attr_name, new_vals)
-                    if result[1] is not None:
-                        processed_dict[result[0]] = result[1]
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    OSError,
-                    RuntimeError,
-                    ImportError,
-                ) as e:
-                    logger.debug(
-                        "Failed to process attribute %s, skipping",
-                        attr_name,
-                        exc_info=e,
-                    )
-                    continue
-            processed_changes: Mapping[str, Sequence[t.Pair[int, t.StrSequence]]] = {
-                k: v for k, v in dict(processed_dict).items() if v is not None
-            }
-            changes.update(processed_changes)
-            return (changes, processed)
 
     class _UpsertHandler:
         """Handle add-or-modify flows for upsert calls.
@@ -554,45 +132,6 @@ class FlextLdapOperations(FlextLdapService):
             super().__init__()
             self._ops = operations
 
-        @staticmethod
-        def _convert_to_model(entry: m.Ldif.Entry) -> m.Ldif.Entry:
-            """Convert protocol entry to model type.
-
-            Args:
-                entry: Entry protocol instance to convert.
-
-            Returns:
-                m.Ldif.Entry instance.
-
-            """
-            dn_value = (
-                entry.dn.value
-                if entry.dn is not None
-                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
-            )
-            attrs_mapping = FlextLdapOperations.EntryComparison.extract_attributes(
-                entry,
-            )
-            attrs_dict: t.StrSequenceMapping = {
-                str(k): [str(item) for item in v]
-                for k, v in dict(attrs_mapping).items()
-            }
-            return m.Ldif.Entry.model_validate({
-                "dn": m.Ldif.DN(
-                    value=dn_value,
-                    metadata=m.Ldif.EntryMetadata(),
-                ),
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": attrs_dict,
-                    "attribute_metadata": {},
-                    "metadata": None,
-                }),
-                "changetype": entry.changetype,
-                "change_operations": list(entry.change_operations),
-                "metadata": None,
-                "validation_metadata": None,
-            })
-
         def execute(self, entry: m.Ldif.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
@@ -609,7 +148,7 @@ class FlextLdapOperations(FlextLdapService):
                 r with LdapOperationResult indicating operation type.
 
             """
-            attrs = FlextLdapOperations._extract_attributes_dict(entry)
+            attrs = u.Ldap.extract_entry_attributes(entry)
             changetype_result = attrs.get(c.Ldap.LdapAttributeNames.CHANGETYPE, [])
             changetype_val: t.StrSequence = [str(item) for item in changetype_result]
             changetype = (
@@ -650,16 +189,12 @@ class FlextLdapOperations(FlextLdapService):
                 if entry.dn is not None
                 else c.Ldif.EntryDefaults.UNKNOWN_VALUE
             )
-            search_options = m.Ldap.SearchOptions(
-                base_dn=entry_dn,
-                filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,
-                scope=c.Ldap.SearchScope.BASE,
-            )
+            search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
                 return r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.SKIPPED,
+                    m.Ldap.LdapOperationResult.with_operation(
+                        c.Ldap.UpsertOperations.SKIPPED,
                     ),
                 )
             search_data = search_result.map_or(None)
@@ -670,30 +205,28 @@ class FlextLdapOperations(FlextLdapService):
                 retry_result = self._ops.add(entry)
                 if retry_result.success:
                     return r[m.Ldap.LdapOperationResult].ok(
-                        m.Ldap.LdapOperationResult(
-                            operation=c.Ldap.UpsertOperations.ADDED,
+                        m.Ldap.LdapOperationResult.with_operation(
+                            c.Ldap.UpsertOperations.ADDED,
                         ),
                     )
                 return r[m.Ldap.LdapOperationResult].fail(
                     u.Ldap.to_str(retry_result.error),
                 )
             existing_entry_obj = existing_entries[0]
-            existing_entry = m.Ldif.Entry.model_validate(existing_entry_obj)
-            changes = FlextLdapOperations.EntryComparison.compare(existing_entry, entry)
+            existing_entry = u.Ldif.as_entry(existing_entry_obj)
+            changes = u.Ldap.compare_entries(existing_entry, entry)
             if changes is None or not changes:
                 return r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.SKIPPED,
+                    m.Ldap.LdapOperationResult.with_operation(
+                        c.Ldap.UpsertOperations.SKIPPED,
                     ),
                 )
             modify_result = self._ops.modify(entry_dn, changes)
             return modify_result.fold(
-                on_failure=lambda e: p.Result[m.Ldap.LdapOperationResult].fail(
-                    u.to_str(e)
-                ),
-                on_success=lambda _: p.Result[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.MODIFIED,
+                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(u.to_str(e)),
+                on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
+                    m.Ldap.LdapOperationResult.with_operation(
+                        c.Ldap.UpsertOperations.MODIFIED,
                     ),
                 ),
             )
@@ -718,13 +251,13 @@ class FlextLdapOperations(FlextLdapService):
                 r with ADDED or delegates to existing entry handler.
 
             """
-            entry_for_add = self._convert_to_model(entry)
+            entry_for_add = u.Ldif.as_entry(entry)
             return (
                 self._ops
                 .add(entry_for_add)
                 .map(
-                    lambda _: m.Ldap.LdapOperationResult(
-                        operation=c.Ldap.UpsertOperations.ADDED,
+                    lambda _: m.Ldap.LdapOperationResult.with_operation(
+                        c.Ldap.UpsertOperations.ADDED,
                     ),
                 )
                 .lash(
@@ -757,7 +290,7 @@ class FlextLdapOperations(FlextLdapService):
                 r with operation type (MODIFIED or SKIPPED).
 
             """
-            entry_model = self._convert_to_model(entry)
+            entry_model = u.Ldif.as_entry(entry)
             dn_str: str
             if entry_model.dn is not None:
                 dn_str = entry_model.dn.value or c.Ldif.EntryDefaults.UNKNOWN_VALUE
@@ -778,7 +311,7 @@ class FlextLdapOperations(FlextLdapService):
                         filtered_values,
                     ))
             if not schema_additions:
-                attrs = FlextLdapOperations._extract_attributes_dict(entry_model)
+                attrs = u.Ldap.extract_entry_attributes(entry_model)
                 add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
                 add_op: t.StrSequence = [str(item) for item in add_op_result]
                 for attr_type in add_op:
@@ -799,15 +332,15 @@ class FlextLdapOperations(FlextLdapService):
                     self._ops
                     .modify(dn_str, changes)
                     .map(
-                        lambda _: m.Ldap.LdapOperationResult(
-                            operation=c.Ldap.UpsertOperations.MODIFIED,
+                        lambda _: m.Ldap.LdapOperationResult.with_operation(
+                            c.Ldap.UpsertOperations.MODIFIED,
                         ),
                     )
                     .lash(
                         lambda e: (
                             r[m.Ldap.LdapOperationResult].ok(
-                                m.Ldap.LdapOperationResult(
-                                    operation=c.Ldap.UpsertOperations.SKIPPED,
+                                m.Ldap.LdapOperationResult.with_operation(
+                                    c.Ldap.UpsertOperations.SKIPPED,
                                 ),
                             )
                             if self._ops.is_already_exists_error(u.to_str(e))
@@ -1149,16 +682,16 @@ class FlextLdapOperations(FlextLdapService):
                 dn_model = dn
         result = self._ensure_adapter().delete(dn_model)
         return result.fold(
-            on_failure=lambda e: p.Result[m.Ldap.OperationResult].fail(
+            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: p.Result[m.Ldap.OperationResult].ok(v),
+            on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
         )
 
     @override
     def execute(
         self, **_kwargs: str | float | bool | None
-    ) -> p.Result[m.Ldap.SearchResult]:
+    ) -> p.Result[m.Ldap.Response]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:
@@ -1176,9 +709,9 @@ class FlextLdapOperations(FlextLdapService):
 
         """
         if not self.is_connected:
-            return r[m.Ldap.SearchResult].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
+            return r[m.Ldap.Response].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
         base_dn: str = c.Ldap.Defaults.EXAMPLE_BASE_DN
-        return r[m.Ldap.SearchResult].ok(
+        return r[m.Ldap.Response].ok(
             m.Ldap.SearchResult(
                 entries=[],
                 search_options=m.Ldap.SearchOptions(
@@ -1231,10 +764,10 @@ class FlextLdapOperations(FlextLdapService):
                 dn_model = dn
         result = self._ensure_adapter().modify(dn_model, changes)
         return result.fold(
-            on_failure=lambda e: p.Result[m.Ldap.OperationResult].fail(
+            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: p.Result[m.Ldap.OperationResult].ok(v),
+            on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
         )
 
     def search(
@@ -1283,10 +816,10 @@ class FlextLdapOperations(FlextLdapService):
             server_type=effective_server_type,
         )
         return result.fold(
-            on_failure=lambda e: p.Result[m.Ldap.SearchResult].fail(
+            on_failure=lambda e: r[m.Ldap.SearchResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: p.Result[m.Ldap.SearchResult].ok(v),
+            on_success=lambda v: r[m.Ldap.SearchResult].ok(v),
         )
 
     def upsert(

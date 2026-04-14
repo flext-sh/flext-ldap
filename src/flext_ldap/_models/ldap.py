@@ -6,7 +6,7 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
@@ -105,6 +105,14 @@ class FlextLdapModelsLdap:
                 "time_limit": norm_config.time_limit,
                 "attributes": norm_config.attributes,
             })
+
+        @classmethod
+        def base_scope(cls, base_dn: str) -> Self:
+            """Build base-scope search options using model defaults everywhere else."""
+            return cls(
+                base_dn=base_dn,
+                scope=c.Ldap.SearchScope.BASE,
+            )
 
     class SearchParams(BaseModel):
         """Typed LDAP search parameters passed to ldap3 search calls."""
@@ -346,6 +354,11 @@ class FlextLdapModelsLdap:
 
         operation: str = ""
 
+        @classmethod
+        def with_operation(cls, operation: str) -> Self:
+            """Build a minimal LDAP operation result."""
+            return cls(operation=operation)
+
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
 
@@ -358,7 +371,7 @@ class FlextLdapModelsLdap:
         """Multi-phase sync result."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: Mapping[str, FlextLdapModelsLdap.PhaseSyncResult] = Field(
+        phase_results: Mapping[str, BaseModel] = Field(
             default_factory=dict,
             description="Per-phase sync results keyed by phase name",
         )
@@ -369,6 +382,17 @@ class FlextLdapModelsLdap:
         overall_success_rate: t.NonNegativeFloat = 0.0
         total_duration_seconds: t.NonNegativeFloat = 0.0
         overall_success: bool = True
+
+    Response: TypeAlias = (
+        OperationResult
+        | SearchResult
+        | LdapOperationResult
+        | UpsertResult
+        | BatchUpsertResult
+        | LdapBatchStats
+        | PhaseSyncResult
+        | MultiPhaseSyncResult
+    )
 
 
 __all__: list[str] = ["FlextLdapModelsLdap"]

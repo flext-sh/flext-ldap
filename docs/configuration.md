@@ -319,7 +319,7 @@ def validate_config():
     api = get_flext_ldap_api()
 
     result = api.test_connection()
-    if result.is_success:
+    if result.success:
         print("✅ Configuration valid - LDAP connection successful")
     else:
         print(f"❌ Configuration invalid: {result.error}")

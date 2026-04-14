@@ -125,7 +125,7 @@ class UserService:
         self.logger.info("Processing user authentication", extra={"username": username})
 
         auth_result = self._ldap_api.authenticate_user(username, password)
-        if auth_result.is_failure:
+        if auth_result.failure:
             self.logger.error(
                 "Authentication failed", extra={"error": auth_result.error}
             )
@@ -228,7 +228,7 @@ def login(username: str, password: str) -> t.RecursiveContainerMapping:
     ldap_api = get_flext_ldap_api()
 
     auth_result = ldap_api.authenticate_user(username, password)
-    if auth_result.is_failure:
+    if auth_result.failure:
         raise HTTPException(status_code=401, detail=auth_result.error)
 
     user = auth_result.unwrap()
@@ -258,7 +258,7 @@ def search_users(
     )
 
     result = ldap_api.search_entries(search_request)
-    if result.is_failure:
+    if result.failure:
         raise HTTPException(status_code=500, detail=result.error)
 
     entries = result.unwrap()
@@ -293,7 +293,7 @@ def create_user(
     )
 
     result = ldap_api.create_user(create_request)
-    if result.is_failure:
+    if result.failure:
         raise HTTPException(status_code=400, detail=result.error)
 
     user = result.unwrap()
@@ -328,7 +328,7 @@ class FlextLdapBackend(BaseBackend):
             ldap_api = get_flext_ldap_api()
             auth_result = run(ldap_api.authenticate_user(username, password))
 
-            if auth_result.is_failure:
+            if auth_result.failure:
                 return None
 
             ldap_user = auth_result.unwrap()
@@ -416,7 +416,7 @@ class Command(BaseCommand):
         )
 
         result = ldap_api.search_entries(search_request)
-        if result.is_failure:
+        if result.failure:
             self.stdout.write(self.style.ERROR(f"LDAP search failed: {result.error}"))
             return
 
@@ -528,7 +528,7 @@ def check_auth(username: str, password: str) -> bool:
         auth_result = loop.run_until_complete(
             ldap_api.authenticate_user(username, password)
         )
-        return auth_result.is_success
+        return auth_result.success
     finally:
         loop.close()
 
@@ -552,7 +552,7 @@ def search_users():
     )
 
     result = ldap_api.search_entries(search_request)
-    if result.is_failure:
+    if result.failure:
         return jsonify({"error": result.error}), 500
 
     entries = result.unwrap()
@@ -771,7 +771,7 @@ connection.search("ou=users,dc=example,dc=com", "(objectClass=person)")
 flextldif_entries = []
 for ldap3_entry in connection.entries:
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-    if result.is_success:
+    if result.success:
         ldif_entry = result.unwrap()
         flextldif_entries.append(ldif_entry)
         print(f"DN: {ldif_entry.dn}")
@@ -794,7 +794,7 @@ def process_ldif_file():
 
     # Load LDIF file
     result = adapter.convert_ldif_file_to_entries("users.ldif")
-    if result.is_failure:
+    if result.failure:
         print(f"Failed to load LDIF: {result.error}")
         return
 
@@ -812,7 +812,7 @@ def process_ldif_file():
     # Import entries
     for entry in entries:
         add_result = ops.add_entry(connection, entry)
-        if add_result.is_success:
+        if add_result.success:
             print(f"Added: {entry.dn}")
         else:
             print(f"Failed to add {entry.dn}: {add_result.error}")
@@ -852,14 +852,14 @@ def export_to_ldif():
         page_size=100,
     )
 
-    if search_result.is_success:
+    if search_result.success:
         entries = search_result.unwrap()
         print(f"Found {len(entries)} entries")
 
         # Write to LDIF file
         write_result = adapter.write_entries_to_ldif_file(entries, "export.ldif")
 
-        if write_result.is_success:
+        if write_result.success:
             print("Export completed successfully")
         else:
             print(f"Export failed: {write_result.error}")
@@ -899,12 +899,12 @@ def detect_and_configure():
     entries = []
     for ldap3_entry in connection.entries:
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        if result.is_success:
+        if result.success:
             entries.append(result.unwrap())
 
     # Detect server type
     server_type_result = quirks.detect_server_type_from_entries(entries)
-    if server_type_result.is_success:
+    if server_type_result.success:
         server_type = server_type_result.unwrap()
         print(f"Detected server: {server_type}")
 
@@ -914,8 +914,7 @@ def detect_and_configure():
         max_page_size_result = quirks.get_max_page_size(server_type)
 
         if all(
-            r.is_success
-            for r in [acl_attr_result, schema_dn_result, max_page_size_result]
+            r.success for r in [acl_attr_result, schema_dn_result, max_page_size_result]
         ):
             print(f"ACL attribute: {acl_attr_result.unwrap()}")
             print(f"Schema DN: {schema_dn_result.unwrap()}")
@@ -985,11 +984,11 @@ class UniversalLdapProcessor:
         entries = []
         for ldap3_entry in self.connection.entries:
             result = self.adapter.ldap3_to_ldif_entry(ldap3_entry)
-            if result.is_success:
+            if result.success:
                 entries.append(result.unwrap())
 
         server_type_result = self.quirks.detect_server_type_from_entries(entries)
-        if server_type_result.is_success:
+        if server_type_result.success:
             server_type = server_type_result.unwrap()
 
             # Select operations
@@ -1014,7 +1013,7 @@ class UniversalLdapProcessor:
             self.connection, base_dn=base_dn, search_filter=filter_str, page_size=100
         )
 
-        if search_result.is_failure:
+        if search_result.failure:
             raise Exception(f"Search failed: {search_result.error}")
 
         entries = search_result.unwrap()
@@ -1022,7 +1021,7 @@ class UniversalLdapProcessor:
         # Write to LDIF
         write_result = self.adapter.write_entries_to_ldif_file(entries, output_file)
 
-        if write_result.is_failure:
+        if write_result.failure:
             raise Exception(f"Export failed: {write_result.error}")
 
         return len(entries)
@@ -1034,7 +1033,7 @@ class UniversalLdapProcessor:
 
         # Load LDIF
         load_result = self.adapter.convert_ldif_file_to_entries(ldif_file)
-        if load_result.is_failure:
+        if load_result.failure:
             raise Exception(f"Load failed: {load_result.error}")
 
         entries = load_result.unwrap()
@@ -1043,7 +1042,7 @@ class UniversalLdapProcessor:
         success_count = 0
         for entry in entries:
             add_result = self.ops.add_entry(self.connection, entry)
-            if add_result.is_success:
+            if add_result.success:
                 success_count += 1
 
         return success_count
@@ -1112,7 +1111,7 @@ class MetricsWrapper:
         try:
             result = self._ldap_api.authenticate_user(username, password)
 
-            status = "success" if result.is_success else "failure"
+            status = "success" if result.success else "failure"
             ldap_operations_total.labels(operation="authenticate", status=status).inc()
 
             return result
@@ -1147,7 +1146,7 @@ def readiness_check():
 
     connection_result = ldap_api.test_connection()
 
-    if connection_result.is_success:
+    if connection_result.success:
         return {"status": "ready", "ldap": "connected"}
     else:
         return {

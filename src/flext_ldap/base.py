@@ -23,12 +23,7 @@ from typing import override
 from pydantic import PrivateAttr
 
 from flext_core import s
-from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
-from flext_ldap.settings import FlextLdapSettings
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
+from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, m, p, t
 from flext_ldif import FlextLdif
 
 
@@ -38,7 +33,8 @@ class FlextLdapService[
 ](s[TResult], ABC):
     """Base class for all flext-ldap services.
 
-    Subclasses parametrize via s[T] for their specific result type.
+    Services default to the centralized ``m.Ldap.Response`` pipeline and may
+    specialize only when bridging adapter-level protocols.
     """
 
     _adapter: FlextLdapLdap3Adapter | None = PrivateAttr(default=None)
@@ -50,6 +46,11 @@ class FlextLdapService[
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdapSettings)
+
+    @classmethod
+    def _get_service_config_type(cls) -> type[FlextLdapSettings]:
+        """Expose the canonical LDAP settings model for legacy callers."""
+        return FlextLdapSettings
 
     def _ensure_adapter(self) -> FlextLdapLdap3Adapter:
         """Return the shared ldap3 adapter for this service instance."""
@@ -66,5 +67,6 @@ class FlextLdapService[
         return adapter.is_connected
 
 
+FlextLdapServiceBase = FlextLdapService
 s = FlextLdapService
-__all__: list[str] = ["FlextLdapService", "s"]
+__all__: list[str] = ["FlextLdapService", "FlextLdapServiceBase", "s"]

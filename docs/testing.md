@@ -357,7 +357,7 @@ def test_ldap_operation_with_real_server():
     )
 
     # Assert results
-    assert result.is_success
+    assert result.success
     assert connection_established()
 ```
 
@@ -375,7 +375,7 @@ def test_service_logic_with_mocked_dependencies():
 
     # Test service logic
     result = service.authenticate_user("username", "password")
-    assert result.is_success
+    assert result.success
 ```
 
 ### Test Data Management

@@ -32,36 +32,34 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.execute()
         u.Ldap.Tests.ok(result, eq=True)
 
-    def test_is_base64_encoded_with_base64_marker(self) -> None:
-        u.Ldap.Tests.that(
-            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
-                c.Ldap.Tests.ENTRY_ADAPTER_BASE64_MARKER_VALUE,
-            ),
-            eq=True,
+    def test_ldap3_to_ldif_entry_tracks_base64_metadata_for_non_ascii_values(
+        self,
+    ) -> None:
+        adapter = FlextLdapEntryAdapter()
+        ldap3_entry = m.Ldap.Tests.MockLdap3Entry(
+            attrs={"displayName": [c.Ldap.Tests.ENTRY_ADAPTER_NON_ASCII_VALUE]},
+        )
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+        entry = u.Ldap.Tests.ok(result)
+        assert entry.metadata is not None
+        extensions = entry.metadata.extensions.model_dump()
+        assert "displayName" in extensions.get(
+            "base64_encoded_attributes",
+            [],
         )
 
-    def test_is_base64_encoded_with_ascii_value(self) -> None:
-        u.Ldap.Tests.that(
-            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
-                c.Ldap.Tests.STRING_SIMPLE,
-            ),
-            eq=True,
+    def test_ldap3_to_ldif_entry_omits_base64_metadata_for_ascii_values(self) -> None:
+        adapter = FlextLdapEntryAdapter()
+        ldap3_entry = m.Ldap.Tests.MockLdap3Entry(
+            attrs={"cn": [c.Ldap.Tests.STRING_SIMPLE]},
         )
-
-    def test_is_base64_encoded_with_non_ascii_value(self) -> None:
-        u.Ldap.Tests.that(
-            FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
-                c.Ldap.Tests.ENTRY_ADAPTER_NON_ASCII_VALUE,
-            ),
-            eq=True,
-        )
-
-    def test_is_base64_encoded_with_empty_string(self) -> None:
-        u.Ldap.Tests.that(
-            not FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded(
-                c.Ldap.Tests.STRING_EMPTY,
-            ),
-            eq=True,
+        result = adapter.ldap3_to_ldif_entry(ldap3_entry)
+        entry = u.Ldap.Tests.ok(result)
+        assert entry.metadata is not None
+        extensions = entry.metadata.extensions.model_dump()
+        assert "cn" not in extensions.get(
+            "base64_encoded_attributes",
+            [],
         )
 
     def test_ldap3_to_ldif_entry(self) -> None:
@@ -137,13 +135,6 @@ class TestsFlextLdapEntryAdapter:
         u.Ldap.Tests.that(callable(adapter.ldap3_to_ldif_entry), eq=True)
         u.Ldap.Tests.that(hasattr(adapter, "ldif_entry_to_ldap3_attributes"), eq=True)
         u.Ldap.Tests.that(callable(adapter.ldif_entry_to_ldap3_attributes), eq=True)
-
-    def test_adapter_inner_classes_exist(self) -> None:
-        u.Ldap.Tests.that(hasattr(FlextLdapEntryAdapter, "_ConversionHelpers"), eq=True)
-        assert isinstance(FlextLdapEntryAdapter._ConversionHelpers, type)
-
-    def test_conversion_helpers_static_methods_exist(self) -> None:
-        assert callable(FlextLdapEntryAdapter._ConversionHelpers.is_base64_encoded)
 
 
 __all__: list[str] = ["TestsFlextLdapEntryAdapter"]

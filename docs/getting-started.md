@@ -198,7 +198,7 @@ def test_connection():
     api = get_flext_ldap_api()
 
     result = api.test_connection()
-    if result.is_success:
+    if result.success:
         print("✅ LDAP connection successful")
     else:
         print(f"❌ Connection failed: {result.error}")
@@ -225,7 +225,7 @@ def basic_search():
     )
 
     result = api.search_entries(search_request)
-    if result.is_success:
+    if result.success:
         entries = result.unwrap()
         print(f"Found {len(entries)} organizational units:")
         for entry in entries:
@@ -251,7 +251,7 @@ def authenticate_user():
     password = "user-password"
 
     result = api.authenticate_user(username, password)
-    if result.is_success:
+    if result.success:
         user = result.unwrap()
         print(f"✅ Authentication successful for {user.uid}")
     else:
@@ -298,12 +298,12 @@ def server_specific_operations():
     entries = []
     for ldap3_entry in connection.entries:
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        if result.is_success:
+        if result.success:
             entries.append(result.unwrap())
 
     # Detect server type
     server_type_result = quirks.detect_server_type_from_entries(entries)
-    if server_type_result.is_success:
+    if server_type_result.success:
         server_type = server_type_result.unwrap()
         print(f"Detected server: {server_type}")
 
@@ -319,7 +319,7 @@ def server_specific_operations():
 
         # Discover schema
         schema_result = ops.discover_schema(connection)
-        if schema_result.is_success:
+        if schema_result.success:
             schema = schema_result.unwrap()
             print(f"Object classes: {len(schema['object_classes'])}")
 
@@ -342,7 +342,7 @@ adapter = FlextLdapEntryAdapter()
 connection.search("dc=example,dc=com", "(objectClass=person)")
 for ldap3_entry in connection.entries:
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-    if ldif_result.is_success:
+    if ldif_result.success:
         ldif_entry = ldif_result.unwrap()
         print(f"DN: {ldif_entry.dn}")
 
@@ -355,7 +355,7 @@ ldif_entry = FlextLdifModels.Entry(
 )
 
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
-if attrs_result.is_success:
+if attrs_result.success:
     attributes = attrs_result.unwrap()
     connection.add(str(ldif_entry.dn), attributes=attributes)
 ```
@@ -381,7 +381,7 @@ def discover_schema():
     )
 
     schema_result = ops.discover_schema(connection)
-    if schema_result.is_success:
+    if schema_result.success:
         schema = schema_result.unwrap()
 
         print(f"Object Classes: {len(schema['object_classes'])}")
@@ -417,7 +417,7 @@ def manage_acls():
     dn = "olcDatabase={1}mdb,cn=settings"
     acl_result = ops.get_acls(connection, dn)
 
-    if acl_result.is_success:
+    if acl_result.success:
         acls = acl_result.unwrap()
         print(f"Found {len(acls)} ACLs")
 
@@ -430,7 +430,7 @@ def manage_acls():
         ]
 
         set_result = ops.set_acls(connection, dn, new_acls)
-        if set_result.is_success:
+        if set_result.success:
             print("ACLs updated successfully")
 
 
@@ -465,7 +465,7 @@ def paged_search():
         page_size=100,
     )
 
-    if result.is_success:
+    if result.success:
         entries = result.unwrap()
         print(f"Found {len(entries)} entries")
         for entry in entries:

@@ -11,9 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, override
-
-from pydantic import ConfigDict
+from typing import override
 
 from flext_core import r
 from flext_ldap.base import FlextLdapService
@@ -21,7 +19,6 @@ from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.utilities import u
 
 
@@ -32,17 +29,6 @@ class FlextLdapConnection(FlextLdapService):
     retry transient errors, and perform lightweight server detection after a
     successful bind. Adapter is initialized lazily on first ``connect()`` call.
     """
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        frozen=False,
-        extra="forbid",
-        arbitrary_types_allowed=True,
-    )
-
-    @classmethod
-    @override
-    def _get_service_config_type(cls) -> type[FlextLdapSettings]:
-        return FlextLdapSettings
 
     def connect(
         self,
@@ -85,13 +71,13 @@ class FlextLdapConnection(FlextLdapService):
     @override
     def execute(
         self, **_kwargs: str | float | bool | None
-    ) -> p.Result[m.Ldap.SearchResult]:
+    ) -> p.Result[m.Ldap.Response]:
         """Execute service health check."""
         if self.is_connected:
-            return r[m.Ldap.SearchResult].ok(
+            return r[m.Ldap.Response].ok(
                 m.Ldap.SearchResult(entries=[], search_options=None),
             )
-        return r[m.Ldap.SearchResult].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))
+        return r[m.Ldap.Response].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))
 
     def _detect_server_type_optional(self) -> None:
         """Attempt automatic server type detection after successful connection."""

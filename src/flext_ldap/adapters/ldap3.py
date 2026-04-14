@@ -540,12 +540,14 @@ class FlextLdapLdap3Adapter(s[bool]):
                     return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                         model_attrs,
                     )
-                return {}
+                empty_attrs: t.Ldap.OperationAttributes = {}
+                return empty_attrs
             if isinstance(attrs, Mapping):
                 return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                     attrs,
                 )
-            return {}
+            empty_attrs: t.Ldap.OperationAttributes = {}
+            return empty_attrs
 
         @staticmethod
         def extract_dn(
@@ -712,7 +714,8 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             """
             if attrs_dict is None:
-                return {}
+                empty_attrs: t.Ldap.OperationAttributes = {}
+                return empty_attrs
             result: t.MutableStrSequenceMapping = {}
             for k in attrs_dict:
                 v = attrs_dict[k]

@@ -177,14 +177,14 @@ def diagnose_auth():
 
     # Test connection without authentication
     connection_result = api.test_connection()
-    print(f"Connection: {connection_result.is_success}")
+    print(f"Connection: {connection_result.success}")
 
     # Test with known REDACTED_LDAP_BIND_PASSWORD credentials
     auth_result = api.authenticate_user(
         "REDACTED_LDAP_BIND_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD-password"
     )
-    print(f"Auth result: {auth_result.is_success}")
-    if auth_result.is_failure:
+    print(f"Auth result: {auth_result.success}")
+    if auth_result.failure:
         print(f"Error: {auth_result.error}")
 
 
@@ -339,7 +339,7 @@ def diagnose_base_dn():
     )
 
     result = api.search_entries(search_request)
-    if result.is_success:
+    if result.success:
         entries = result.unwrap()
         print("Available organizational units:")
         for entry in entries:
@@ -408,7 +408,7 @@ def diagnose_performance():
         result = api.search_entries(search_request)
         duration = time.time() - start_time
 
-        if result.is_success:
+        if result.success:
             count = len(result.unwrap())
             print(f"{test_case['name']}: {count} results in {duration:.2f}s")
         else:
@@ -682,7 +682,7 @@ def handle_errors_properly():
     # Always check result status
     result = api.authenticate_user("test", "wrong-password")
 
-    if result.is_success:
+    if result.success:
         user = result.unwrap()
         print(f"Success: {user.cn}")
     else:
@@ -775,7 +775,7 @@ def profile_ldap_operations():
     # Perform multiple operations
     for _ in range(10):
         result = api.search_entries(search_request)
-        if result.is_failure:
+        if result.failure:
             print(f"Search failed: {result.error}")
 
 

@@ -197,10 +197,10 @@ pytest tests/unit/test_module.py::TestClass::test_method -v --pdb
 def test_with_debug():
     result = my_function()
     print(f"Result: {result}")
-    print(f"Success: {result.is_success}")
-    if result.is_failure:
+    print(f"Success: {result.success}")
+    if result.failure:
         print(f"Error: {result.failure()}")
-    assert result.is_success
+    assert result.success
 ```
 
 ### 4. Configuration Issues
@@ -305,7 +305,7 @@ cn: test
 objectClass: inetOrgPerson"""
 
 result = ldif.parse(content)
-if result.is_failure:
+if result.failure:
     print(f"Parse error: {result.failure()}")
     print(f"Content: {repr(content)}")
 ```
@@ -384,7 +384,7 @@ cn: test
 objectClass: inetOrgPerson"""
 
 result = ldif.parse(sample_ldif)
-if result.is_success:
+if result.success:
     print("Sample parsing successful")
 else:
     print(f"Sample parsing failed: {result.failure()}")
@@ -579,7 +579,7 @@ def debug_ldif_processing(content: str):
     from flext_ldif import ldif
 
     result = ldif.parse(content)
-    if result.is_success:
+    if result.success:
         entries = result.unwrap()
         print(f"SUCCESS: Parsed {len(entries)} entries")
     else:
@@ -809,11 +809,11 @@ def process(data: dict) -> ProcessedData:
    def test_process_data():
        # Test success case
        result = process_data({"key": "value"})
-       assert result.is_success
+       assert result.success
 
        # Test failure case
        result = process_data(None)
-       assert result.is_failure
+       assert result.failure
    ```
 
 ## Resources

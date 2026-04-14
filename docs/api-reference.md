@@ -160,7 +160,7 @@ search_request = FlextLdapEntities.SearchRequest(
 )
 
 result = api.search_entries(search_request)
-if result.is_success:
+if result.success:
     entries = result.unwrap()
 ```
 
@@ -179,7 +179,7 @@ Authenticate user credentials against LDAP directory.
 
 ```python
 result = api.authenticate_user("john.doe", "password123")
-if result.is_success:
+if result.success:
     user = result.unwrap()
     print(f"Authenticated: {user.cn}")
 ```
@@ -218,7 +218,7 @@ Test LDAP server connectivity.
 
 ```python
 result = api.test_connection()
-if result.is_success:
+if result.success:
     print("Connection successful")
 ```
 
@@ -472,7 +472,7 @@ from flext_ldap import e
 
 try:
     result = api.search_entries(request)
-    if result.is_failure:
+    if result.failure:
         # Handle r error
         print(f"Search failed: {result.error}")
 except e.ConnectionError as e:
@@ -491,7 +491,7 @@ All API methods return `r[T]` for consistent error handling.
 result = api.search_entries(request)
 
 # Check success
-if result.is_success:
+if result.success:
     data = result.unwrap()
 
 # Alternative: direct access (raises if failure)
@@ -506,7 +506,7 @@ except rError:
 ```python
 result = api.authenticate_user(username, password)
 
-if result.is_failure:
+if result.failure:
     error_message = result.error
     print(f"Authentication failed: {error_message}")
 ```
@@ -515,7 +515,7 @@ if result.is_failure:
 
 ```python
 search_result = api.search_entries(request)
-if search_result.is_success:
+if search_result.success:
     entries = search_result.unwrap()
     # Process entries...
 else:
@@ -561,7 +561,7 @@ connection.search("dc=example,dc=com", "(objectClass=person)")
 for ldap3_entry in connection.entries:
     # Convert to ldif
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-    if result.is_success:
+    if result.success:
         ldif_entry = result.unwrap()
         print(f"DN: {ldif_entry.dn}")
 ```
@@ -608,7 +608,7 @@ ldif_entry = FlextLdifModels.Entry(
 
 # Convert to ldap3 attributes
 result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
-if result.is_success:
+if result.success:
     attributes = result.unwrap()
     connection.add(str(ldif_entry.dn), attributes=attributes)
 ```
@@ -677,7 +677,7 @@ quirks = FlextLdapQuirksAdapter()
 entries = [...]  # ldif entries from search
 result = quirks.detect_server_type_from_entries(entries)
 
-if result.is_success:
+if result.success:
     server_type = result.unwrap()
 
     # Select appropriate server operations
@@ -806,7 +806,7 @@ connection = ldap3.Connection(
 )
 
 schema_result = ops.discover_schema(connection)
-if schema_result.is_success:
+if schema_result.success:
     schema = schema_result.unwrap()
     print(f"Object classes: {len(schema['object_classes'])}")
     print(f"Attribute types: {len(schema['attribute_types'])}")
@@ -844,7 +844,7 @@ ops = OpenLDAP2Operations()
 # Get ACLs from cn=settings entry
 result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 
-if result.is_success:
+if result.success:
     acls = result.unwrap()
     for acl in acls:
         print(f"ACL: {acl.get('raw')}")
@@ -900,7 +900,7 @@ entry = FlextLdifModels.Entry(
 )
 
 result = ops.add_entry(connection, entry)
-if result.is_success:
+if result.success:
     print("Entry added successfully")
 ```
 
@@ -959,7 +959,7 @@ result = ops.search_with_paging(
     page_size=100,
 )
 
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     print(f"Found {len(entries)} entries")
     for entry in entries:
@@ -1121,12 +1121,12 @@ def universal_ldap_example():
     entries = []
     for ldap3_entry in connection.entries:
         result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-        if result.is_success:
+        if result.success:
             entries.append(result.unwrap())
 
     # Detect server type
     server_type_result = quirks.detect_server_type_from_entries(entries)
-    if server_type_result.is_success:
+    if server_type_result.success:
         server_type = server_type_result.unwrap()
         print(f"Detected server: {server_type}")
 
@@ -1144,7 +1144,7 @@ def universal_ldap_example():
 
         # Discover schema
         schema_result = ops.discover_schema(connection)
-        if schema_result.is_success:
+        if schema_result.success:
             schema = schema_result.unwrap()
             print(
                 f"Schema: {len(schema['object_classes'])} t.RecursiveContainer classes"
@@ -1161,7 +1161,7 @@ def universal_ldap_example():
             search_filter="(objectClass=person)",
             page_size=100,
         )
-        if paged_result.is_success:
+        if paged_result.success:
             paged_entries = paged_result.unwrap()
             print(f"Paged search: {len(paged_entries)} entries")
 
