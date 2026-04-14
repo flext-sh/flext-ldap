@@ -398,7 +398,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Architecture:
                 - Input: m.Ldif.ParseResponse from FlextLdifParser
-                - Output: r[Sequence[m.Ldif.Entry]] (railway pattern)
+                - Output: p.Result[Sequence[m.Ldif.Entry]] (railway pattern)
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
                 - No network calls - processes pre-fetched LDAP results
 
@@ -515,7 +515,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Uses Pydantic's model_dump() for safe model serialization
 
             Architecture:
-                - Handles: objects with 'attributes' property, Pydantic BaseModel, Mapping
+                - Handless with 'attributes' property, Pydantic BaseModel, Mapping
                 - Returns t.Ldap.OperationAttributes (Mapping[str, t.StrSequence])
                 - No network calls - pure data transformation
 

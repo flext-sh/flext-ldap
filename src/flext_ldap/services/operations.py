@@ -681,8 +681,10 @@ class FlextLdapOperations(FlextLdapConnection):
                 )
             modify_result = self._ops.modify(entry_dn, changes)
             return modify_result.fold(
-                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(u.to_str(e)),
-                on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
+                on_failure=lambda e: p.Result[m.Ldap.LdapOperationResult].fail(
+                    u.to_str(e)
+                ),
+                on_success=lambda _: p.Result[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult(
                         operation=c.Ldap.UpsertOperations.MODIFIED,
                     ),
@@ -781,7 +783,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 return r[m.Ldap.LdapOperationResult].fail(
                     "Schema modify entry missing add operations",
                 )
-            last_result: r[m.Ldap.LdapOperationResult] | None = None
+            last_result: p.Result[m.Ldap.LdapOperationResult] | None = None
             for attr_type, filtered in schema_additions:
                 changes: t.Ldap.OperationChanges = {
                     attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
@@ -1107,10 +1109,10 @@ class FlextLdapOperations(FlextLdapConnection):
                 dn_model = dn
         result = self.adapter.delete(dn_model)
         return result.fold(
-            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
+            on_failure=lambda e: p.Result[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
+            on_success=lambda v: p.Result[m.Ldap.OperationResult].ok(v),
         )
 
     @override
@@ -1189,10 +1191,10 @@ class FlextLdapOperations(FlextLdapConnection):
                 dn_model = dn
         result = self.adapter.modify(dn_model, changes)
         return result.fold(
-            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
+            on_failure=lambda e: p.Result[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
+            on_success=lambda v: p.Result[m.Ldap.OperationResult].ok(v),
         )
 
     def search(
@@ -1241,10 +1243,10 @@ class FlextLdapOperations(FlextLdapConnection):
             server_type=effective_server_type,
         )
         return result.fold(
-            on_failure=lambda e: r[m.Ldap.SearchResult].fail(
+            on_failure=lambda e: p.Result[m.Ldap.SearchResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: r[m.Ldap.SearchResult].ok(v),
+            on_success=lambda v: p.Result[m.Ldap.SearchResult].ok(v),
         )
 
     def upsert(
@@ -1341,7 +1343,7 @@ class FlextLdapOperations(FlextLdapConnection):
 
     def _update_batch_stats(
         self,
-        upsert_result: r[m.Ldap.LdapOperationResult],
+        upsert_result: p.Result[m.Ldap.LdapOperationResult],
         stats: t.MutableIntMapping,
         entry_index: int,
         entry_dn: str | None,
