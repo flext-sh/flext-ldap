@@ -11,15 +11,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import TYPE_CHECKING, TypeIs
+from typing import TypeIs
 
 import ldap3
 
-from flext_ldap import c, p, t
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 from flext_ldif import m, u
-
-if TYPE_CHECKING:
-    from flext_ldap import t
 
 
 class FlextLdapUtilities(u):

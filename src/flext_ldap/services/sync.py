@@ -14,14 +14,12 @@ from typing import ClassVar, TypeIs
 
 from pydantic import ConfigDict
 
-from flext_ldap import (
-    FlextLdapOperations,
-    c,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import r
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.typings import t
 
 
 class FlextLdapSyncCallbacks:
@@ -161,13 +159,10 @@ class FlextLdapSync(FlextLdapOperations):
         """Synchronize a single phase file into LDAP."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = datetime.now(UTC)
-        try:
-            ldif_content = ldif_file_path.read_text(encoding="utf-8")
-        except OSError as error:
-            return r[m.Ldap.PhaseSyncResult].fail(
-                f"Failed to read LDIF file: {error!s}",
-            )
-        parse_result = self._get_ldif().parse_ldif(ldif_content)
+        parse_result = self._ldif.parse_ldif_file(
+            ldif_file_path,
+            server_type=sync_config.server_type,
+        )
         if parse_result.failure:
             error_msg = (
                 str(parse_result.error) if parse_result.error else "Unknown error"
@@ -175,9 +170,7 @@ class FlextLdapSync(FlextLdapOperations):
             return r[m.Ldap.PhaseSyncResult].fail(
                 f"Failed to parse LDIF file: {error_msg}",
             )
-        entries = [
-            m.Ldif.Entry.model_validate(entry) for entry in parse_result.value.entries
-        ]
+        entries = list(parse_result.value.entries)
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
                 m.Ldap.PhaseSyncResult(
@@ -190,22 +183,7 @@ class FlextLdapSync(FlextLdapOperations):
                     success_rate=100.0,
                 ),
             )
-        callback = sync_config.progress_callback
-        single_phase_callback: t.Ldap.LdapProgressCallback | None = None
-        if callback is not None:
-            if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
-
-                def wrapped_callback(
-                    current: int,
-                    total: int,
-                    dn: str,
-                    stats: p.Ldap.LdapBatchStats,
-                ) -> None:
-                    callback(phase_name, current, total, dn, stats)
-
-                single_phase_callback = wrapped_callback
-            elif FlextLdapSyncCallbacks.is_single_phase_callback(callback):
-                single_phase_callback = callback
+        single_phase_callback = self._prepare_phase_callback(phase_name, sync_config)
         batch_result = self.batch_upsert(
             list(entries),
             progress_callback=single_phase_callback,

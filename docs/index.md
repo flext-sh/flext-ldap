@@ -18,7 +18,7 @@ This project portal is generated from `pyproject.toml`, package exports, and rea
 
 ## Public Surface Summary
 
-- Primary facades: `FlextLdap`, `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapServiceBase`, `FlextLdapSettings` (+2 more)
+- Primary facades: `FlextLdap`, `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`, `FlextLdapSettings` (+2 more)
 - Alias namespaces: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `9`
 - Exported module shortcuts: `adapters`, `api`, `base`, `constants`, `models`, `protocols` (+4 more)

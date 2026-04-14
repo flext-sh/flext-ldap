@@ -35,8 +35,11 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_ldap import c, m, p, r, s, t
-from flext_ldif import ldif
+from flext_core import r, s
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -172,7 +175,6 @@ class FlextLdapEntryAdapter(s[bool]):
                 value,
             )
 
-    _ldif: ldif = PrivateAttr(default_factory=ldif)
     _server_type: str = PrivateAttr(default=c.Ldif.ServerTypes.RFC)
 
     def __init__(self, *, server_type: str | None = None) -> None:
@@ -184,7 +186,6 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         super().__init__()
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
-        self._ldif = ldif()
         self._server_type = resolved_type
 
     @staticmethod
@@ -398,30 +399,14 @@ class FlextLdapEntryAdapter(s[bool]):
             logger = logging.getLogger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:
-                    str_values: MutableSequence[str] = []
-                    match raw_value:
-                        case list() | tuple():
-                            for item in raw_value:
-                                match item:
-                                    case bytes() as item_bytes:
-                                        str_values.append(
-                                            item_bytes.decode(
-                                                "utf-8",
-                                                errors="replace",
-                                            ),
-                                        )
-                                    case _:
-                                        str_values.append(str(item))
-                        case _:
-                            pass
-                    threshold = self._ConversionHelpers.ASCII_THRESHOLD
-                    has_base64 = any(
-                        self._ConversionHelpers.is_base64_encoded(v, threshold)
-                        for v in str_values
+                    ldif_attrs[key] = list(
+                        self._convert_ldap3_value_to_list(
+                            raw_value,
+                            key,
+                            base64_attrs,
+                            removed_attrs,
+                        ),
                     )
-                    if has_base64:
-                        base64_attrs.append(key)
-                    ldif_attrs[key] = str_values
                 except (
                     ValueError,
                     TypeError,

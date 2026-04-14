@@ -11,19 +11,16 @@ from typing import ClassVar, Self, override
 
 from pydantic import ConfigDict
 
-from flext_ldap import (
-    FlextLdapConnection,
-    FlextLdapOperations,
-    FlextLdapSettings,
-    FlextLdapSync,
-    c,
-    m,
-    p,
-    r,
-)
+from flext_core import r
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.sync import FlextLdapSync
+from flext_ldap.settings import FlextLdapSettings
 
 
-class FlextLdap(FlextLdapSync, FlextLdapOperations, FlextLdapConnection):
+class FlextLdap(FlextLdapSync, FlextLdapConnection):
     """Public LDAP facade composed through cooperative MRO."""
 
     _instance: ClassVar[Self | None] = None

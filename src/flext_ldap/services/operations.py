@@ -16,7 +16,7 @@ Business Rules:
     - Schema modifications are handled specially via changetype=modify entries
 
 Audit Implications:
-    - All operations log to FlextLdapServiceBase.logger for traceability
+    - All operations log to FlextLdapService.logger for traceability
     - batch_upsert tracks synced/failed/skipped counts for compliance reporting
     - Progress callbacks enable real-time audit trail during batch operations
     - Error messages are logged with entry DN and index for forensic analysis
@@ -36,10 +36,17 @@ from typing import ClassVar, override
 
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap import FlextLdapConnection, c, m, p, r, t, u
+from flext_core import r
+from flext_ldap.base import FlextLdapService
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
+from flext_ldif import FlextLdifConversion
 
 
-class FlextLdapOperations(FlextLdapConnection):
+class FlextLdapOperations(FlextLdapService):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
@@ -931,7 +938,40 @@ class FlextLdapOperations(FlextLdapConnection):
         """
         entry_for_adapter: m.Ldif.Entry
         entry_for_adapter = m.Ldif.Entry.model_validate(entry)
-        return self.adapter.add(entry_for_adapter)
+        metadata = entry_for_adapter.metadata
+        current_server_raw = (
+            metadata.target_server_type
+            or metadata.original_server_type
+            or metadata.quirk_type
+            if metadata is not None
+            else None
+        )
+        current_server = (
+            u.try_(
+                lambda: u.Ldif.normalize_server_type(str(current_server_raw)),
+                default=None,
+            ).map_or(None)
+            if current_server_raw is not None
+            else None
+        )
+        target_server = u.Ldif.normalize_server_type(self._server_type)
+        if current_server is not None and current_server != target_server:
+            conversion_result = FlextLdifConversion().convert_entry(
+                current_server,
+                target_server,
+                entry_for_adapter,
+            )
+            if conversion_result.failure:
+                return r[m.Ldap.OperationResult].fail(
+                    conversion_result.error or "Failed to convert entry for LDAP add",
+                )
+            converted_entry = conversion_result.value
+            if not isinstance(converted_entry, m.Ldif.Entry):
+                return r[m.Ldap.OperationResult].fail(
+                    f"Expected converted Entry, got {type(converted_entry).__name__}",
+                )
+            entry_for_adapter = converted_entry
+        return self._ensure_adapter().add(entry_for_adapter)
 
     def batch_upsert(
         self,
@@ -1107,7 +1147,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 )
             case _:
                 dn_model = dn
-        result = self.adapter.delete(dn_model)
+        result = self._ensure_adapter().delete(dn_model)
         return result.fold(
             on_failure=lambda e: p.Result[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -1189,7 +1229,7 @@ class FlextLdapOperations(FlextLdapConnection):
                 )
             case _:
                 dn_model = dn
-        result = self.adapter.modify(dn_model, changes)
+        result = self._ensure_adapter().modify(dn_model, changes)
         return result.fold(
             on_failure=lambda e: p.Result[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -1237,8 +1277,8 @@ class FlextLdapOperations(FlextLdapConnection):
                 ),
             },
         )
-        effective_server_type = server_type or c.Ldif.ServerTypes.RFC
-        result = self.adapter.search(
+        effective_server_type = server_type or self._server_type
+        result = self._ensure_adapter().search(
             normalized_options,
             server_type=effective_server_type,
         )

@@ -10,7 +10,8 @@ from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
-from flext_ldap import c, t
+from flext_ldap.constants import c
+from flext_ldap.typings import t
 
 
 class FlextLdapModelsLdap:

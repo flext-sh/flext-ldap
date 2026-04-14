@@ -20,7 +20,7 @@ Audit Implications:
 Architecture Notes:
     - Uses static methods for testability (_query_root_dse, _detect_from_attributes)
     - Returns r pattern - no exceptions raised from detection logic
-    - Extends FlextLdapServiceBase[str] for health check capability
+    - Extends FlextLdapService[str] for health check capability
     - Detection is non-blocking (failures don't affect connection state)
     - ldap3 Connection import is required here (infrastructure layer)
 
@@ -34,7 +34,12 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from flext_ldap import c, p, r, s, t, u
+from flext_core import r
+from flext_ldap.base import s
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
 class FlextLdapServerDetector(s[str]):

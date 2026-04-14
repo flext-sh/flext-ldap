@@ -1,4 +1,4 @@
-"""Unit tests for flext_ldap.base.FlextLdapServiceBase.
+"""Unit tests for flext_ldap.base.FlextLdapService.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapBase:
-    """Tests for FlextLdapServiceBase."""
+    """Tests for FlextLdapService."""
 
     # ── Structure & exports ────────────────────────────────────────────
 

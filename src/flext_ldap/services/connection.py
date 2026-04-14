@@ -13,23 +13,19 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from pydantic import ConfigDict, PrivateAttr
+from pydantic import ConfigDict
 
-from flext_ldap import (
-    FlextLdapServerDetector,
-    FlextLdapServiceBase,
-    FlextLdapSettings,
-    c,
-    m,
-    p,
-    r,
-    u,
-)
-from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
-from flext_ldif import FlextLdif
+from flext_core import r
+from flext_ldap.base import FlextLdapService
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.services.detection import FlextLdapServerDetector
+from flext_ldap.settings import FlextLdapSettings
+from flext_ldap.utilities import u
 
 
-class FlextLdapConnection(FlextLdapServiceBase):
+class FlextLdapConnection(FlextLdapService):
     """Manage the LDAP connection lifecycle as an MRO mixin.
 
     Wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally
@@ -42,37 +38,11 @@ class FlextLdapConnection(FlextLdapServiceBase):
         extra="forbid",
         arbitrary_types_allowed=True,
     )
-    _adapter: FlextLdapLdap3Adapter | None = PrivateAttr(default=None)
-    _ldif: FlextLdif | None = PrivateAttr(default=None)
 
     @classmethod
     @override
     def _get_service_config_type(cls) -> type[FlextLdapSettings]:
         return FlextLdapSettings
-
-    def _ensure_adapter(self) -> FlextLdapLdap3Adapter:
-        """Return adapter, creating it lazily if needed."""
-        if self._adapter is None:
-            self._adapter = FlextLdapLdap3Adapter()
-        return self._adapter
-
-    def _get_ldif(self) -> FlextLdif:
-        """Return FlextLdif instance, creating lazily if needed."""
-        if self._ldif is None:
-            self._ldif = FlextLdif()
-        return self._ldif
-
-    @property
-    def adapter(self) -> FlextLdapLdap3Adapter:
-        """Get the underlying ldap3 adapter for direct protocol access."""
-        return self._ensure_adapter()
-
-    @property
-    def is_connected(self) -> bool:
-        """Check if service has an active, bound LDAP connection."""
-        if self._adapter is None:
-            return False
-        return self._adapter.is_connected
 
     def connect(
         self,
@@ -110,6 +80,7 @@ class FlextLdapConnection(FlextLdapServiceBase):
         """Close the active LDAP connection if present."""
         if self._adapter is not None:
             self._adapter.disconnect()
+        self._server_type = c.Ldap.ServerDefaults.DEFAULT_TYPE
 
     @override
     def execute(
@@ -131,6 +102,7 @@ class FlextLdapConnection(FlextLdapServiceBase):
         detector = FlextLdapServerDetector()
         detection_result: p.Result[str] = detector.detect_from_connection(connection)
         if detection_result.success:
+            self._server_type = str(detection_result.value)
             self.logger.info(
                 "Server type detected automatically",
                 operation=c.Ldap.LdapOperationNames.CONNECT,
