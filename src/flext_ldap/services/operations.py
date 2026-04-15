@@ -16,7 +16,7 @@ Business Rules:
     - Schema modifications are handled specially via changetype=modify entries
 
 Audit Implications:
-    - All operations log to FlextLdapService.logger for traceability
+    - All operations log to s.logger for traceability
     - batch_upsert tracks synced/failed/skipped counts for compliance reporting
     - Progress callbacks enable real-time audit trail during batch operations
     - Error messages are logged with entry DN and index for forensic analysis
@@ -36,12 +36,11 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import r
-from flext_ldap import FlextLdapService, c, m, p, t, u
+from flext_ldap import c, m, p, r, s, t, u
 from flext_ldif import FlextLdifConversion
 
 
-class FlextLdapOperations(FlextLdapService):
+class FlextLdapOperations(s):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`

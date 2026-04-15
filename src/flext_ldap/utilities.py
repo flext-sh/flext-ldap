@@ -15,9 +15,8 @@ from typing import TypeIs
 
 import ldap3
 
-from flext_core import r
-from flext_ldap import c, m as ldap_m, p, t
-from flext_ldif import m, u
+from flext_ldap import c, m, p, r, t
+from flext_ldif import u
 
 
 class FlextLdapUtilities(u):
@@ -328,9 +327,9 @@ class FlextLdapUtilities(u):
             base64_attrs: t.StrSequence,
             original_attrs_dict: t.RecursiveContainerMapping,
             original_dn: str,
-        ) -> ldap_m.Ldap.ConversionMetadata:
+        ) -> m.Ldap.ConversionMetadata:
             """Create canonical conversion metadata for LDAP entry adaptation."""
-            return ldap_m.Ldap.ConversionMetadata.model_validate({
+            return m.Ldap.ConversionMetadata.model_validate({
                 "source_attributes": list(dict(original_attrs_dict).keys()),
                 "source_dn": original_dn,
                 "removed_attributes": list(removed_attrs),
@@ -340,13 +339,13 @@ class FlextLdapUtilities(u):
         @classmethod
         def track_conversion_differences(
             cls,
-            conversion_metadata: ldap_m.Ldap.ConversionMetadata,
+            conversion_metadata: m.Ldap.ConversionMetadata,
             *,
             original_dn: str,
             converted_dn: str,
             original_attrs_dict: t.Ldap.Ldap3AttributeDict,
             converted_attrs_dict: Mapping[str, t.StrSequence],
-        ) -> ldap_m.Ldap.ConversionMetadata:
+        ) -> m.Ldap.ConversionMetadata:
             """Record DN and attribute changes observed during entry conversion."""
             updates: MutableMapping[str, bool | str | t.StrSequence] = {}
             if converted_dn != original_dn:

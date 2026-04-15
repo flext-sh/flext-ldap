@@ -13,13 +13,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_ldif import FlextLdifProtocols
+from flext_ldif import p
 
 if TYPE_CHECKING:
     from flext_ldap import t
 
 
-class FlextLdapProtocols(FlextLdifProtocols):
+class FlextLdapProtocols(p):
     """LDAP-specific protocol definitions.
 
     Domain-specific protocol interfaces for LDAP operations.
@@ -50,8 +50,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
         """
 
         # ── Layer 0: Domain Protocols ────────────────────────────
-        # DN, Attributes, Entry → use FlextLdifProtocols.Ldif.DN,
-        # FlextLdifProtocols.Ldif.Attributes, FlextLdifProtocols.Ldif.Entry
+        # DN, Attributes, Entry → use p.Ldif.DN,
+        # p.Ldif.Attributes, p.Ldif.Entry
         # directly from flext-ldif (SSOT — no redefinition in Ldap namespace)
 
         @runtime_checkable
@@ -134,7 +134,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
         class SearchResult(Protocol):
             """Protocol for LDAP search result (structural type)."""
 
-            entries: Sequence[FlextLdifProtocols.Ldif.Entry]
+            entries: Sequence[p.Ldif.Entry]
             search_options: FlextLdapProtocols.Ldap.SearchOptions
 
         @runtime_checkable
@@ -171,7 +171,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def add(
                 self,
-                entry: FlextLdifProtocols.Ldif.Entry,
+                entry: p.Ldif.Entry,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -205,7 +205,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def delete(
                 self,
-                dn: str | FlextLdifProtocols.Ldif.DN,
+                dn: str | p.Ldif.DN,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -236,7 +236,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def modify(
                 self,
-                dn: str | FlextLdifProtocols.Ldif.DN,
+                dn: str | p.Ldif.DN,
                 changes: t.Ldap.LdapModifyChanges,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
@@ -286,7 +286,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def add(
                 self,
-                entry: FlextLdifProtocols.Ldif.Entry,
+                entry: p.Ldif.Entry,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -297,7 +297,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def delete(
                 self,
-                dn: FlextLdifProtocols.Ldif.DN | str,
+                dn: p.Ldif.DN | str,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -308,7 +308,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             def modify(
                 self,
-                dn: FlextLdifProtocols.Ldif.DN | str,
+                dn: p.Ldif.DN | str,
                 changes: t.Ldap.LdapModifyChanges,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
@@ -600,6 +600,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 attributes: t.StrSequence
 
 
-__all__: list[str] = ["FlextLdapProtocols", "p"]
-
 p = FlextLdapProtocols
+
+__all__: list[str] = ["FlextLdapProtocols", "p"]

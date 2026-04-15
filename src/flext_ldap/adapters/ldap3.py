@@ -37,8 +37,7 @@ from typing import ClassVar, override
 from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import r, s
-from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
+from flext_ldap import FlextLdapEntryAdapter, c, m, p, r, s, t, u
 
 
 class FlextLdapLdap3Wrappers:

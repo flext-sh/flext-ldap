@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import r
-from flext_ldap import FlextLdapService, c, m, p, t, u
+from flext_ldap import c, m, p, r, s, t, u
 
 
-class FlextLdapServerDetector(FlextLdapService):
+class FlextLdapServerDetector(s):
     """High-level detector that delegates rootDSE parsing to ``u.Ldap``."""
 
     @staticmethod

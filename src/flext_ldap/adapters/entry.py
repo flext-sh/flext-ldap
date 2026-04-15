@@ -35,8 +35,7 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import r, s
-from flext_ldap import c, m, p, t, u
+from flext_ldap import c, m, p, r, s, t, u
 
 
 class FlextLdapEntryAdapter(s[bool]):

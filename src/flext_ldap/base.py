@@ -22,8 +22,7 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import s
-from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, m, p, t
+from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, m, p, s, t
 from flext_ldif import FlextLdif
 
 
@@ -67,6 +66,6 @@ class FlextLdapService[
         return adapter.is_connected
 
 
-FlextLdapServiceBase = FlextLdapService
 s = FlextLdapService
-__all__: list[str] = ["FlextLdapService", "FlextLdapServiceBase", "s"]
+
+__all__: list[str] = ["FlextLdapService", "s"]

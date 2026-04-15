@@ -13,11 +13,10 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import r
-from flext_ldap import FlextLdapServerDetector, FlextLdapService, c, m, p, u
+from flext_ldap import FlextLdapServerDetector, c, m, p, r, s, u
 
 
-class FlextLdapConnection(FlextLdapService):
+class FlextLdapConnection(s):
     """Manage the LDAP connection lifecycle as an MRO mixin.
 
     Wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally

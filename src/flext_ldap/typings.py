@@ -7,10 +7,10 @@ from typing import Literal
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from flext_ldif import FlextLdifTypes
+from flext_ldif import h
 
 
-class FlextLdapTypes(FlextLdifTypes):
+class FlextLdapTypes(h):
     """LDAP-specific type namespace."""
 
     class Ldap:
@@ -22,59 +22,51 @@ class FlextLdapTypes(FlextLdifTypes):
         type Ldap3DerefAliases = Literal["NEVER", "SEARCH", "FINDING_BASE", "ALWAYS"]
         type Ldap3GetInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
         type Ldap3AttributeScalar = str | bytes
-        type Ldap3AttributeValues = FlextLdifTypes.SequenceOf[Ldap3AttributeScalar]
-        type Ldap3AttributeDict = FlextLdifTypes.MappingKV[str, Ldap3AttributeValues]
+        type Ldap3AttributeValues = h.SequenceOf[Ldap3AttributeScalar]
+        type Ldap3AttributeDict = h.MappingKV[str, Ldap3AttributeValues]
         type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
         type Ldap3AddAttributeValue = (
-            Ldap3AttributeScalar
-            | FlextLdifTypes.StrSequence
-            | FlextLdifTypes.SequenceOf[bytes]
+            Ldap3AttributeScalar | h.StrSequence | h.SequenceOf[bytes]
         )
-        type Ldap3AddAttributes = (
-            FlextLdifTypes.MappingKV[str, Ldap3AddAttributeValue] | None
-        )
-        type Ldap3ModifyChangeValue = FlextLdifTypes.Pair[
+        type Ldap3AddAttributes = h.MappingKV[str, Ldap3AddAttributeValue] | None
+        type Ldap3ModifyChangeValue = h.Pair[
             str,
-            FlextLdifTypes.MutableSequenceOf[str],
+            h.MutableSequenceOf[str],
         ]
-        type Ldap3ModifyChangesDict = FlextLdifTypes.MutableMappingKV[
+        type Ldap3ModifyChangesDict = h.MutableMappingKV[
             str,
-            FlextLdifTypes.MutableSequenceOf[Ldap3ModifyChangeValue],
+            h.MutableSequenceOf[Ldap3ModifyChangeValue],
         ]
-        type OperationChangeValue = FlextLdifTypes.Pair[
+        type OperationChangeValue = h.Pair[
             int,
-            FlextLdifTypes.StrSequence,
+            h.StrSequence,
         ]
-        type OperationChanges = FlextLdifTypes.MutableMappingKV[
+        type OperationChanges = h.MutableMappingKV[
             str,
-            FlextLdifTypes.SequenceOf[OperationChangeValue],
+            h.SequenceOf[OperationChangeValue],
         ]
-        type OperationAttributes = FlextLdifTypes.MappingKV[
+        type OperationAttributes = h.MappingKV[
             str,
-            FlextLdifTypes.StrSequence,
+            h.StrSequence,
         ]
-        type Ldap3EntrySequenceValue = FlextLdifTypes.SequenceOf[
-            Ldap3AttributeScalar | FlextLdifTypes.Numeric | bool
+        type Ldap3EntrySequenceValue = h.SequenceOf[
+            Ldap3AttributeScalar | h.Numeric | bool
         ]
         type Ldap3EntryValue = (
-            Ldap3AttributeScalar
-            | FlextLdifTypes.Numeric
-            | bool
-            | Ldap3EntrySequenceValue
-            | None
+            Ldap3AttributeScalar | h.Numeric | bool | Ldap3EntrySequenceValue | None
         )
         type LdapProgressCallback = Callable[..., None]
         type MultiPhaseProgressCallback = Callable[..., None]
         type ProgressCallbackUnion = (
             LdapProgressCallback | MultiPhaseProgressCallback | None
         )
-        type LdapModifyChangeValue = FlextLdifTypes.Pair[
+        type LdapModifyChangeValue = h.Pair[
             str | int,
-            FlextLdifTypes.StrSequence,
+            h.StrSequence,
         ]
-        type LdapModifyChanges = FlextLdifTypes.MappingKV[
+        type LdapModifyChanges = h.MappingKV[
             str,
-            FlextLdifTypes.SequenceOf[LdapModifyChangeValue],
+            h.SequenceOf[LdapModifyChangeValue],
         ]
         type LaxStr = str | bytes | bytearray
 

@@ -8,9 +8,8 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_core import p, r
 from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapSettings
-from tests import c, m, t, u
+from tests import c, m, p, r, t, u
 
 logger = u.fetch_logger(__name__)
 
