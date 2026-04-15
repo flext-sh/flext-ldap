@@ -14,12 +14,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import r
-from flext_ldap.base import FlextLdapService
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_ldap.utilities import u
+from flext_ldap import FlextLdapServerDetector, FlextLdapService, c, m, p, u
 
 
 class FlextLdapConnection(FlextLdapService):

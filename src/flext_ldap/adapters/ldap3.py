@@ -38,12 +38,7 @@ from ldap3 import Connection, Server
 from pydantic import BaseModel, ConfigDict
 
 from flext_core import r, s
-from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import FlextLdapEntryAdapter, c, m, p, t, u
 
 
 class FlextLdapLdap3Wrappers:

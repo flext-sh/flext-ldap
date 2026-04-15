@@ -37,12 +37,7 @@ from typing import override
 from pydantic import PrivateAttr
 
 from flext_core import r
-from flext_ldap.base import FlextLdapService
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import FlextLdapService, c, m, p, t, u
 from flext_ldif import FlextLdifConversion
 
 

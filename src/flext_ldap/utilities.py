@@ -16,10 +16,7 @@ from typing import TypeIs
 import ldap3
 
 from flext_core import r
-from flext_ldap.constants import c
-from flext_ldap.models import m as ldap_m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
+from flext_ldap import c, m as ldap_m, p, t
 from flext_ldif import m, u
 
 

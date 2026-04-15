@@ -20,6 +20,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_operations": ("test_operations",),
         ".test_sync": ("test_sync",),
         ".test_utilities": ("test_utilities",),
+        "flext_ldap": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

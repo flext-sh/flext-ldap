@@ -10,7 +10,7 @@ from collections.abc import Mapping
 
 from pydantic import Field
 
-from flext_ldap._models.ldap import FlextLdapModelsLdap
+from flext_ldap import FlextLdapModelsLdap
 from flext_ldif import FlextLdifModels
 
 
