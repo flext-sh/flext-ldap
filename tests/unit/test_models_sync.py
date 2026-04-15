@@ -235,8 +235,11 @@ class TestsFlextLdapModelsSync:
             total_duration_seconds=c.Ldap.Tests.SYNC_PHASE_RESULTS_DURATION,
         )
         u.Ldap.Tests.that(r.phase_results, keys=[c.Ldap.Tests.SYNC_PHASE_NAME])
+        phase_result = m.Ldap.PhaseSyncResult.model_validate(
+            r.phase_results[c.Ldap.Tests.SYNC_PHASE_NAME],
+        )
         u.Ldap.Tests.that(
-            r.phase_results[c.Ldap.Tests.SYNC_PHASE_NAME].synced,
+            phase_result.synced,
             eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED,
         )
 

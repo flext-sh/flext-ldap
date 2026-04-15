@@ -1209,6 +1209,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         return self._connection
 
     @property
+    @override
     def is_connected(self) -> bool:
         """Check if adapter has an active connection."""
         if self._connection is None:
