@@ -206,7 +206,7 @@ class MyService(s[None]):
 from pydantic import BaseModel, PositiveInt
 
 
-class Config(BaseModel):
+class Config(m.BaseModel):
     """Use Pydantic v2 native types."""
 
     timeout: PositiveInt  # Built-in validation

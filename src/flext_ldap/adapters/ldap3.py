@@ -1198,7 +1198,6 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def __init__(self) -> None:
         """Initialize adapter service."""
-        super().__init__()
         self._connection = None
         self._server = None
         self._entry_adapter = FlextLdapEntryAdapter()
