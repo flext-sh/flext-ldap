@@ -243,7 +243,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             Architecture:
                 - Uses ldap3 Server() constructor directly
                 - Returns Server instance for Connection creation
-                - No network calls - t.RecursiveContainer creation only
+                - No network calls - object creation only
 
             Args:
                 settings: Connection configuration with host, port, SSL/TLS settings.

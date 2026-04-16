@@ -254,7 +254,7 @@ User creation request data.
 - `cn` (str): Common name
 - `sn` (str): Surname
 - `mail` (str, optional): Email address
-- `object_classes` (t.StringList, optional): LDAP t.RecursiveContainer classes
+- `object_classes` (t.StringList, optional): LDAP object classes
 
 #### FlextLdapUser
 
@@ -1024,7 +1024,7 @@ from flext_ldap import OracleOIDOperations
 
 - orclaci ACL format
 - cn=subschemasubentry schema discovery
-- Oracle-specific t.RecursiveContainer classes (orclUserV2, orclContainer)
+- Oracle-specific object classes (orclUserV2, orclContainer)
 - VLV support
 - Paged results support
 
@@ -1146,9 +1146,7 @@ def universal_ldap_example():
         schema_result = ops.discover_schema(connection)
         if schema_result.success:
             schema = schema_result.unwrap()
-            print(
-                f"Schema: {len(schema['object_classes'])} t.RecursiveContainer classes"
-            )
+            print(f"Schema: {len(schema['object_classes'])} object classes")
 
         # Get ACLs
         acl_attr = quirks.get_acl_attribute_name(server_type).unwrap()

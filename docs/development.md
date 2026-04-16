@@ -353,7 +353,7 @@ class SearchRequest:
     time_limit: int = 30
 
 def search_entries(self, request: SearchRequest) -> p.Result[List[LdapEntry]]:
-    # Implementation using parameter t.RecursiveContainer
+    # Implementation using parameter object
 
 # ❌ WRONG - Multiple parameters
 def search_entries(self, base_dn: str, filter_str: str, scope: str,
