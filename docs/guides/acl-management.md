@@ -425,5 +425,5 @@ write_openldap_acls(converted_acls)
 ## See Also
 
 - [FLEXT LDAP API Documentation](README.md)
-- [FLEXT OUD Migration Guide](../flext-oud-mig/README.md)
+- [FLEXT OUD Migration Guide](../../../algar-oud-mig/README.md)
 - [Clean Architecture Patterns](ARCHITECTURE.md)

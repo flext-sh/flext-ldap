@@ -19,7 +19,8 @@ from typing import Annotated, ClassVar
 from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextSettings, u
-from flext_ldap import c, m, t
+from flext_ldap import c, t
+from flext_ldif import m
 
 
 @FlextSettings.auto_register("ldap")

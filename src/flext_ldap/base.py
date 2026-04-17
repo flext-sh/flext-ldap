@@ -21,8 +21,8 @@ from collections.abc import Sequence
 from typing import override
 
 from flext_core import s
-from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, m, p, t, u
-from flext_ldif import FlextLdif
+from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, p, t
+from flext_ldif import FlextLdif, m, u
 
 
 class FlextLdapService[
