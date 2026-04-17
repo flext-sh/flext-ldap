@@ -367,7 +367,7 @@ class MyAppConfig(FlextSettings):
     custom_setting: str = "default_value"
     another_setting: int = 42
 
-    @field_validator("another_setting")
+    @u.field_validator("another_setting")
     @classmethod
     def validate_another_setting(cls, v):
         if v < 0:
@@ -381,11 +381,11 @@ class MyAppConfig(FlextSettings):
 class FlextLdifSettings(m.BaseModel):
     """Configuration for LDIF processing."""
 
-    default_encoding: str = m.Field(
+    default_encoding: str = u.Field(
         default="utf-8", description="Default encoding for LDIF files"
     )
 
-    strict_validation: bool = m.Field(
+    strict_validation: bool = u.Field(
         default=True, description="Enable strict RFC validation"
     )
 ```

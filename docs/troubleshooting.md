@@ -434,7 +434,7 @@ search_request = FlextLdapEntities.SearchRequest(
 )
 ```
 
-2. **Optimize search filters:**
+1. **Optimize search filters:**
 
 ```python
 # ❌ Inefficient - broad filter
@@ -447,7 +447,7 @@ filter_str = "(uid=john.doe)"
 filter_str = "(&(objectClass=person)(uid=john.doe))"
 ```
 
-3. **Limit result sets:**
+1. **Limit result sets:**
 
 ```python
 search_request = FlextLdapEntities.SearchRequest(
@@ -492,7 +492,7 @@ settings = FlextLdapSettings(
 )
 ```
 
-2. **Implement connection reuse:**
+1. **Implement connection reuse:**
 
 ```python
 class LDAPService:
@@ -569,7 +569,7 @@ services:
     image: osixia/openldap:1.5.0
 ```
 
-2. **Network connectivity:**
+1. **Network connectivity:**
 
 ```bash
 # Test from within container
@@ -577,7 +577,7 @@ docker exec -it app-container ping ldap-server
 docker exec -it app-container telnet ldap-server 389
 ```
 
-3. **Volume persistence:**
+1. **Volume persistence:**
 
 ```yaml
 services:
@@ -658,16 +658,16 @@ ______________________________________________________________________
 
 ### Common Error Patterns
 
-| Error Type     | Pattern                     | Common Cause                    |
-| -------------- | --------------------------- | ------------------------------- |
-| Connection     | `Connection refused`        | Server down or port blocked     |
-| Authentication | `Invalid credentials`       | Wrong username/password         |
-| Authorization  | `Insufficient access`       | User lacks required permissions |
-| Search         | `Bad search filter`         | Invalid LDAP filter syntax      |
-| Search         | `No such t.RecursiveContainer`            | Base DN doesn't exist           |
-| Search         | `Size limit exceeded`       | Result set too large            |
-| Timeout        | `Operation timed out`       | Slow server or network issues   |
-| SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
+| Error Type     | Pattern                        | Common Cause                    |
+| -------------- | ------------------------------ | ------------------------------- |
+| Connection     | `Connection refused`           | Server down or port blocked     |
+| Authentication | `Invalid credentials`          | Wrong username/password         |
+| Authorization  | `Insufficient access`          | User lacks required permissions |
+| Search         | `Bad search filter`            | Invalid LDAP filter syntax      |
+| Search         | `No such t.RecursiveContainer` | Base DN doesn't exist           |
+| Search         | `Size limit exceeded`          | Result set too large            |
+| Timeout        | `Operation timed out`          | Slow server or network issues   |
+| SSL/TLS        | `Certificate verify failed`    | Invalid or expired certificate  |
 
 ### r Error Handling
 

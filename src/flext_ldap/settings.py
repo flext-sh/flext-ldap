@@ -18,7 +18,7 @@ from typing import Annotated, ClassVar
 
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextSettings
+from flext_core import FlextSettings, u
 from flext_ldap import c, m, t
 
 
@@ -30,49 +30,49 @@ class FlextLdapSettings(FlextSettings):
         env_prefix="FLEXT_LDAP_", extra="ignore"
     )
 
-    host: Annotated[str, m.Field(description="LDAP server host")] = c.LOCALHOST
-    port: Annotated[t.PortNumber, m.Field(description="LDAP server port")] = (
+    host: Annotated[str, u.Field(description="LDAP server host")] = c.LOCALHOST
+    port: Annotated[t.PortNumber, u.Field(description="LDAP server port")] = (
         c.Ldap.ConnectionDefaults.PORT
     )
     use_ssl: Annotated[
         bool,
-        m.Field(
+        u.Field(
             description="Enable LDAPS",
         ),
     ] = c.Ldap.ConnectionDefaults.DEFAULT_USE_SSL
     use_tls: Annotated[
         bool,
-        m.Field(
+        u.Field(
             description="Enable STARTTLS",
         ),
     ] = c.Ldap.ConnectionDefaults.DEFAULT_USE_TLS
     bind_dn: Annotated[
         str,
-        m.Field(
+        u.Field(
             description="LDAP bind distinguished name",
         ),
     ] = c.Ldap.ConnectionDefaults.DEFAULT_BIND_DN
     bind_password: Annotated[
         str,
-        m.Field(
+        u.Field(
             description="LDAP bind password",
         ),
     ] = c.Ldap.ConnectionDefaults.DEFAULT_BIND_PASSWORD
     timeout: Annotated[
         t.PositiveInt,
-        m.Field(
+        u.Field(
             description="LDAP operation timeout in seconds",
         ),
     ] = c.Ldap.ConnectionDefaults.TIMEOUT
     auto_bind: Annotated[
         bool,
-        m.Field(
+        u.Field(
             description="Auto-bind connection after connect",
         ),
     ] = c.Ldap.ConnectionDefaults.AUTO_BIND
     auto_range: Annotated[
         bool,
-        m.Field(
+        u.Field(
             description="Enable LDAP range retrieval",
         ),
     ] = c.Ldap.ConnectionDefaults.AUTO_RANGE

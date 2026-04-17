@@ -67,7 +67,7 @@ result = api.search_entries(search_request)
 
 ### Server Operations
 
-6. **Server Operations** - Server-specific implementations
+1. **Server Operations** - Server-specific implementations
    - OpenLDAP2Operations
    - OpenLDAP1Operations
    - OracleOIDOperations

@@ -20,10 +20,8 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import override
 
-from pydantic import PrivateAttr
-
 from flext_core import s
-from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, m, p, t
+from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, m, p, t, u
 from flext_ldif import FlextLdif
 
 
@@ -37,9 +35,11 @@ class FlextLdapService[
     specialize only when bridging adapter-level protocols.
     """
 
-    _adapter: FlextLdapLdap3Adapter | None = PrivateAttr(default=None)
-    _ldif: FlextLdif = PrivateAttr(default_factory=FlextLdif)
-    _server_type: str = PrivateAttr(default=c.Ldap.ServerDefaults.DEFAULT_TYPE)
+    _adapter: FlextLdapLdap3Adapter | None = u.PrivateAttr(default_factory=lambda: None)
+    _ldif: FlextLdif = u.PrivateAttr(default_factory=FlextLdif)
+    _server_type: str = u.PrivateAttr(
+        default_factory=lambda: c.Ldap.ServerDefaults.DEFAULT_TYPE
+    )
 
     @classmethod
     @override

@@ -485,7 +485,7 @@ settings = FlextNewlibSettings(new_setting="value")
    pytest tests/unit/test_specific.py::test_function -v
 ````
 
-3. **Build Issues**
+1. **Build Issues**
 
    ```bash
    # Clean and rebuild

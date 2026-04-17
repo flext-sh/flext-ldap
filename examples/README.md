@@ -713,10 +713,10 @@ ______________________________________________________________________
 
 | Module                    | Examples               | Functionality Demonstrated                             |
 | ------------------------- | ---------------------- | ------------------------------------------------------ |
-| **api.py (ldap)**    | ALL                    | Primary facade - all operations                        |
+| **api.py (ldap)**         | ALL                    | Primary facade - all operations                        |
 | **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
 | **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
-| **settings.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
+| **settings.py**           | 01, 10                 | FlextLdapSettings configuration, connection management |
 | **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                             |
 | **validations.py**        | 02, 06                 | DN, filter validation                                  |
 | **authentication.py**     | 03                     | User authentication flows                              |

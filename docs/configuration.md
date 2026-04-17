@@ -34,8 +34,8 @@
   - Configuration Overview
     - Configuration Hierarchy
 - 1. Default configuration
-- 2. Environment variables (preferred)
-- 3. Explicit configuration
+- 1. Environment variables (preferred)
+- 1. Explicit configuration
   - Environment Variables
     - LDAP Server Configuration
 - Required settings

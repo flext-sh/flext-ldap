@@ -179,7 +179,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     conversion of LDAP results to Entry models.
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=False)
 
     @staticmethod
     def _is_bound(connection: p.Ldap.Ldap3Connection) -> bool:

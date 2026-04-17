@@ -51,13 +51,13 @@ Comprehensive development guides for contributing to flext-ldap, including setup
 
 ### Development Practices
 
-4. **Testing Guide** - Unit, integration, E2E testing
+1. **Testing Guide** - Unit, integration, E2E testing
 1. **Code Standards** - Style, types, documentation
 1. **Architecture Guide** - Clean Architecture patterns
 
 ### Contributing
 
-7. **Contributing** - How to contribute
+1. **Contributing** - How to contribute
 1. **Pull Request Guide** - PR process and checklist
 1. **Release Process** - Versioning and releases
 

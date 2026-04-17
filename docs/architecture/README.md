@@ -35,12 +35,12 @@ shipped in the source tree rather than legacy server-specific stacks.
 
 ### Implementation Details
 
-5. **Service Layer** - Connection, operations, detection, and sync services
+1. **Service Layer** - Connection, operations, detection, and sync services
 1. **Adapters** - How ldap3 integration is wrapped in flext services
 
 ### Design Principles
 
-7. **arc42 Views** - System scope and context
+1. **arc42 Views** - System scope and context
 1. **Quality Requirements** - Cross-cutting quality criteria
 1. **Risks and Decisions** - Notable ADRs and open risks
 

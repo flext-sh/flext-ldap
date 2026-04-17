@@ -590,11 +590,11 @@ def debug_ldif_processing(content: str):
 
 ### FLEXT Core Errors
 
-| Error Code  | Description                     | Solution                                         |
-| ----------- | ------------------------------- | ------------------------------------------------ |
-| `FLEXT_001` | Configuration validation failed | Check environment variables and settings files   |
-| `FLEXT_002` | Dependency injection failed     | Verify service registration in container         |
-| `FLEXT_003` | Type validation failed          | Fix type annotations and data types              |
+| Error Code  | Description                     | Solution                                       |
+| ----------- | ------------------------------- | ---------------------------------------------- |
+| `FLEXT_001` | Configuration validation failed | Check environment variables and settings files |
+| `FLEXT_002` | Dependency injection failed     | Verify service registration in container       |
+| `FLEXT_003` | Type validation failed          | Fix type annotations and data types            |
 
 ### LDIF Processing Errors
 
@@ -756,7 +756,7 @@ from flext_core import u
 
 ### Your minimal example here
 
-4. **Expected vs Actual Behavior**
+1. **Expected vs Actual Behavior**
 
 - What you expected to happen
 - What actually happened
@@ -779,7 +779,7 @@ def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
 ```
 
-2. **Validate Input Early**
+1. **Validate Input Early**
 
    ```python
    def process_data(data: dict) -> p.Result[dict]:

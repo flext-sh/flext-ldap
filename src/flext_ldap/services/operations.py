@@ -34,8 +34,6 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from pydantic import PrivateAttr
-
 from flext_ldap import c, m, p, r, s, t, u
 from flext_ldif import FlextLdifConversion
 
@@ -77,8 +75,8 @@ class FlextLdapOperations(s):
 
     """
 
-    _upsert_handler_instance: FlextLdapOperations._UpsertHandler | None = PrivateAttr(
-        default=None,
+    _upsert_handler_instance: FlextLdapOperations._UpsertHandler | None = u.PrivateAttr(
+        default_factory=lambda: None,
     )
 
     @staticmethod
