@@ -19,7 +19,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_models_sync": ("TestsFlextLdapModelsSync",),
         ".test_operations": ("TestsFlextLdapOperations",),
         ".test_sync": ("TestsFlextLdapSync",),
-        ".test_utilities": ("TestsFlextLdapUtilities",),
+        ".test_utilities": ("TestsFlextLdapUtilitiesUnit",),
     },
 )
 

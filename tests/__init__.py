@@ -33,6 +33,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_models_sync import TestsFlextLdapModelsSync
     from tests.unit.test_operations import TestsFlextLdapOperations
     from tests.unit.test_sync import TestsFlextLdapSync
+    from tests.unit.test_utilities import TestsFlextLdapUtilitiesUnit
     from tests.utilities import TestsFlextLdapUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -71,6 +72,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_models_sync": ("TestsFlextLdapModelsSync",),
             ".unit.test_operations": ("TestsFlextLdapOperations",),
             ".unit.test_sync": ("TestsFlextLdapSync",),
+            ".unit.test_utilities": ("TestsFlextLdapUtilitiesUnit",),
             ".utilities": (
                 "TestsFlextLdapUtilities",
                 "u",
@@ -126,6 +128,7 @@ __all__: list[str] = [
     "TestsFlextLdapSync",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "TestsFlextLdapUtilitiesUnit",
     "WorkerInputConfig",
     "c",
     "d",
