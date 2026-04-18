@@ -474,7 +474,6 @@ class FlextLdapOperations(s):
         current_server = (
             u.try_(
                 lambda: u.Ldif.normalize_server_type(str(current_server_raw)),
-                default=None,
             ).map_or(None)
             if current_server_raw is not None
             else None
