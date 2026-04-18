@@ -15,8 +15,8 @@ from typing import TypeIs
 
 import ldap3
 
-from flext_ldap import c, p, r, t
-from flext_ldif import m, u
+from flext_ldap import c, m, p, r, t
+from flext_ldif import u
 
 
 class FlextLdapUtilities(u):

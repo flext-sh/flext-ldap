@@ -15,10 +15,22 @@ if _t.TYPE_CHECKING:
     from flext_tests import td, tf, tk, tm, tv
 
     from flext_ldap import d, e, h, r, s, x
+    from tests.conftest import WorkerInputConfig
     from tests.constants import TestsFlextLdapConstants, c
+    from tests.integration.test_smoke import TestsFlextLdapSmoke
     from tests.models import TestsFlextLdapModels, m
     from tests.protocols import TestsFlextLdapProtocols, p
     from tests.typings import TestsFlextLdapTypes, t
+    from tests.unit.test_api import TestsFlextLdapApi
+    from tests.unit.test_base import TestsFlextLdapBase
+    from tests.unit.test_config import TestsFlextLdapSettings
+    from tests.unit.test_detection import TestsFlextLdapDetection
+    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
+    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
+    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
+    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
+    from tests.unit.test_operations import TestsFlextLdapOperations
+    from tests.unit.test_sync import TestsFlextLdapSync
     from tests.utilities import TestsFlextLdapUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -27,10 +39,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            ".conftest": ("WorkerInputConfig",),
             ".constants": (
                 "TestsFlextLdapConstants",
                 "c",
             ),
+            ".integration.test_smoke": ("TestsFlextLdapSmoke",),
             ".models": (
                 "TestsFlextLdapModels",
                 "m",
@@ -43,6 +57,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdapTypes",
                 "t",
             ),
+            ".unit.test_api": ("TestsFlextLdapApi",),
+            ".unit.test_base": ("TestsFlextLdapBase",),
+            ".unit.test_config": ("TestsFlextLdapSettings",),
+            ".unit.test_detection": ("TestsFlextLdapDetection",),
+            ".unit.test_entry_adapter": ("TestsFlextLdapEntryAdapter",),
+            ".unit.test_ldap3_adapter": ("TestsFlextLdap3Adapter",),
+            ".unit.test_models_search": ("TestsFlextLdapModelsSearch",),
+            ".unit.test_models_sync": ("TestsFlextLdapModelsSync",),
+            ".unit.test_operations": ("TestsFlextLdapOperations",),
+            ".unit.test_sync": ("TestsFlextLdapSync",),
             ".utilities": (
                 "TestsFlextLdapUtilities",
                 "u",
@@ -80,11 +104,23 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
+    "TestsFlextLdap3Adapter",
+    "TestsFlextLdapApi",
+    "TestsFlextLdapBase",
     "TestsFlextLdapConstants",
+    "TestsFlextLdapDetection",
+    "TestsFlextLdapEntryAdapter",
     "TestsFlextLdapModels",
+    "TestsFlextLdapModelsSearch",
+    "TestsFlextLdapModelsSync",
+    "TestsFlextLdapOperations",
     "TestsFlextLdapProtocols",
+    "TestsFlextLdapSettings",
+    "TestsFlextLdapSmoke",
+    "TestsFlextLdapSync",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "WorkerInputConfig",
     "c",
     "d",
     "e",

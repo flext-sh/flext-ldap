@@ -13,8 +13,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import FlextLdapServerDetector, c, p, r, s
-from flext_ldif import m, u
+from flext_ldap import FlextLdapServerDetector, c, m, p, r, s, u
 
 
 class FlextLdapConnection(s):

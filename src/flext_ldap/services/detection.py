@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import s
-from flext_ldap import c, p, r, t
-from flext_ldif import m, u
+from flext_ldap import c, m, p, r, s, t, u
 
 
 class FlextLdapServerDetector(s):
