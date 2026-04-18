@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
 from tests import c, m, u
 
@@ -96,7 +95,7 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(settings.bind_dn, eq=c.Ldap.Tests.ENTRY_DN_ADMIN_EXAMPLE)
 
     def test_connection_config_ssl_tls_mutual_exclusion(self) -> None:
-        with pytest.raises(ValidationError, match="mutually exclusive"):
+        with pytest.raises(c.ValidationError, match="mutually exclusive"):
             m.Ldap.ConnectionConfig(
                 port=c.Ldap.ConnectionDefaults.PORT, use_ssl=True, use_tls=True
             )
@@ -123,12 +122,12 @@ class TestsFlextLdapModelsUnit:
 
     def test_connection_config_port_constraint_violation_min(self) -> None:
         invalid_port: int = c.Ldap.Tests.MODELS_INVALID_PORT_BELOW_MIN
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_port_constraint_violation_max(self) -> None:
         invalid_port: int = c.Ldap.Tests.MODELS_INVALID_PORT_ABOVE_MAX
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_inherits_from_collections_config(self) -> None:
@@ -140,4 +139,4 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(dump, keys=[c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.FIELD_PORT])
 
 
-__all__: list[str] = ["TestsFlextLdapModels"]
+__all__: list[str] = ["TestsFlextLdapModelsUnit"]

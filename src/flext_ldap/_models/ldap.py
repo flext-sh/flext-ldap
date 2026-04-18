@@ -8,8 +8,6 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, TypeAlias
 
-from pydantic import BaseModel, ConfigDict
-
 from flext_ldap import c, t
 from flext_ldif import m, u
 
@@ -117,7 +115,10 @@ class FlextLdapModelsLdap:
     class SearchParams(m.BaseModel):
         """Typed LDAP search parameters passed to ldap3 search calls."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True, extra="forbid")
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            frozen=True,
+            extra="forbid",
+        )
         base_dn: str
         filter_str: str
         ldap_scope: t.NonNegativeInt
@@ -144,7 +145,9 @@ class FlextLdapModelsLdap:
     class SyncOptions(m.BaseModel):
         """Configuration for LDAP sync operations."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            arbitrary_types_allowed=True,
+        )
         batch_size: Annotated[
             t.PositiveInt,
             u.Field(description="Batch size for sync operations"),
@@ -235,7 +238,9 @@ class FlextLdapModelsLdap:
     class SyncPhaseConfig(m.BaseModel):
         """Sync phase settings."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            arbitrary_types_allowed=True,
+        )
         server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
         progress_callback: t.Ldap.ProgressCallbackUnion = None
         retry_on_errors: t.StrSequence | None = None
@@ -264,7 +269,7 @@ class FlextLdapModelsLdap:
     class OperationResult(m.BaseModel):
         """Immutable result of an LDAP operation (add/modify/delete/search)."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         success: Annotated[
             bool, u.Field(description="Whether the operation succeeded")
         ] = False
@@ -370,8 +375,10 @@ class FlextLdapModelsLdap:
     class MultiPhaseSyncResult(m.BaseModel):
         """Multi-phase sync result."""
 
-        model_config: ClassVar[m.ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        phase_results: Mapping[str, BaseModel] = u.Field(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            arbitrary_types_allowed=True,
+        )
+        phase_results: Mapping[str, m.BaseModel] = u.Field(
             default_factory=dict,
             description="Per-phase sync results keyed by phase name",
         )

@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
-from pydantic import ValidationError
 
 from tests import c, m, t, u
 
@@ -12,7 +11,7 @@ pytestmark = pytest.mark.unit
 
 class TestsFlextLdapModelsSearch:
     def test_search_options_required_base_dn(self) -> None:
-        with pytest.raises(ValidationError, match="base_dn"):
+        with pytest.raises(c.ValidationError, match="base_dn"):
             m.Ldap.SearchOptions(base_dn="")
 
     def test_search_options_default_values(self) -> None:
@@ -113,7 +112,7 @@ class TestsFlextLdapModelsSearch:
             success=True,
             operation_type=c.Ldap.OperationType.ADD,
         )
-        exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
+        exc_types: tuple[type[Exception], ...] = (TypeError, c.ValidationError)
         with pytest.raises(exc_types):
             setattr(result, "success", False)
 

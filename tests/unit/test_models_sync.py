@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
 from tests import c, m, t, u
 
@@ -63,7 +62,7 @@ class TestsFlextLdapModelsSync:
 
     def test_sync_options_rejects_zero_batch_size(self) -> None:
         invalid_batch_size: int = 0
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             m.Ldap.SyncOptions(batch_size=invalid_batch_size)
 
     # ── Computed: SyncStats.success_rate ───────────────────────────────

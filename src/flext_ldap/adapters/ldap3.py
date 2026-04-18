@@ -35,7 +35,6 @@ from datetime import datetime
 from typing import ClassVar, override
 
 from ldap3 import Connection, Server
-from pydantic import BaseModel, ConfigDict
 
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, r, s, t, u
 
@@ -179,7 +178,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     conversion of LDAP results to Entry models.
     """
 
-    model_config: ClassVar[m.ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
     @staticmethod
     def _is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
@@ -495,7 +494,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             | Mapping[str, t.ContainerValue | t.StrSequence]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
-            | BaseModel
+            | m.BaseModel
             | t.ContainerValue,
         ) -> t.Ldap.OperationAttributes:
             """Extract LDAP attributes as dictionary from various input formats.
@@ -524,7 +523,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                     attrs.attributes,
                 )
-            if isinstance(attrs, BaseModel):
+            if isinstance(attrs, m.BaseModel):
                 model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
                     attrs,
                     "attributes",
