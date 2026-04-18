@@ -14,7 +14,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_detection": ("TestsFlextLdapDetection",),
         ".test_entry_adapter": ("TestsFlextLdapEntryAdapter",),
         ".test_ldap3_adapter": ("TestsFlextLdap3Adapter",),
-        ".test_models": ("TestsFlextLdapModels",),
+        ".test_models": ("TestsFlextLdapModelsUnit",),
         ".test_models_search": ("TestsFlextLdapModelsSearch",),
         ".test_models_sync": ("TestsFlextLdapModelsSync",),
         ".test_operations": ("TestsFlextLdapOperations",),

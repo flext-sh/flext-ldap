@@ -6,7 +6,6 @@ All model implementations are in _models/*.py - this is a pure facade.
 
 from __future__ import annotations
 
-
 from flext_ldap import FlextLdapModelsLdap
 from flext_ldif import m
 
