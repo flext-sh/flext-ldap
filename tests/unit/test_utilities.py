@@ -18,7 +18,7 @@ from tests import c, t, u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapUtilities:
+class TestsFlextLdapUtilitiesUnit:
     """Comprehensive tests for FlextLdapUtilities.
 
     All test data comes from c.Ldap.Tests.* — zero inline constants.

@@ -8,7 +8,7 @@ from tests import c, m, u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapModels:
+class TestsFlextLdapModelsUnit:
     def test_models_class_exists(self) -> None:
         u.Ldap.Tests.that(m, none=False)
         u.Ldap.Tests.that(

@@ -24,6 +24,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
     from tests.unit.test_config import TestsFlextLdapSettings
+    from tests.unit.test_constants import TestsFlextLdapConstantsUnit
     from tests.unit.test_detection import TestsFlextLdapDetection
     from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
     from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
@@ -60,6 +61,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_api": ("TestsFlextLdapApi",),
             ".unit.test_base": ("TestsFlextLdapBase",),
             ".unit.test_config": ("TestsFlextLdapSettings",),
+            ".unit.test_constants": ("TestsFlextLdapConstantsUnit",),
             ".unit.test_detection": ("TestsFlextLdapDetection",),
             ".unit.test_entry_adapter": ("TestsFlextLdapEntryAdapter",),
             ".unit.test_ldap3_adapter": ("TestsFlextLdap3Adapter",),
@@ -108,6 +110,7 @@ __all__: list[str] = [
     "TestsFlextLdapApi",
     "TestsFlextLdapBase",
     "TestsFlextLdapConstants",
+    "TestsFlextLdapConstantsUnit",
     "TestsFlextLdapDetection",
     "TestsFlextLdapEntryAdapter",
     "TestsFlextLdapModels",

@@ -13,7 +13,7 @@ from tests import c, u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapConstants:
+class TestsFlextLdapConstantsUnit:
     """Contract tests for FlextLdapConstants enum/constant values."""
 
     @pytest.mark.parametrize(
