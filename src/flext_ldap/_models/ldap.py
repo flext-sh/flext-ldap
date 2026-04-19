@@ -8,7 +8,8 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, TypeAlias
 
-from flext_ldap import c, t
+from flext_ldap.constants import c
+from flext_ldap.typings import t
 from flext_ldif import m, u
 
 

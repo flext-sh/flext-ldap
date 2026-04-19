@@ -9,8 +9,8 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextSettings
-from flext_ldap import base, s
-from tests import c, m, p
+from flext_ldap import base
+from tests import c, m, p, s
 
 pytestmark = pytest.mark.unit
 

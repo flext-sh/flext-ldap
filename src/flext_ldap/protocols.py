@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 from flext_ldif import p
 
 if TYPE_CHECKING:
-    from flext_ldap import t
+    from flext_ldap.typings import t
 
 
 class FlextLdapProtocols(p):

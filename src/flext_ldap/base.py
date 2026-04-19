@@ -21,7 +21,11 @@ from collections.abc import Sequence
 from typing import override
 
 from flext_core import s
-from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, p, t
+from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.settings import FlextLdapSettings
+from flext_ldap.typings import t
 from flext_ldif import FlextLdif, m, u
 
 

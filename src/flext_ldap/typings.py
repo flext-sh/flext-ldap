@@ -7,7 +7,7 @@ from typing import Literal
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from flext_ldif import t
+from flext_ldif.typings import t
 
 
 class FlextLdapTypes(t):

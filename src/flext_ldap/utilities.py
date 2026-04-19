@@ -15,8 +15,11 @@ from typing import TypeIs
 
 import ldap3
 
-from flext_ldap import c, m, p, r, t
-from flext_ldif import u
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldif import r, u
 
 
 class FlextLdapUtilities(u):
