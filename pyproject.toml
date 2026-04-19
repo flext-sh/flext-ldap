@@ -363,7 +363,7 @@ root = "tests"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
-addopts = [ "--markdown-check", "--strict-markers" ]
+addopts = [ "--markdown-docs", "--strict-markers" ]
 filterwarnings = [
   "ignore:tagMap is deprecated\\. Please use TAG_MAP instead\\.:DeprecationWarning",
   "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning",
