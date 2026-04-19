@@ -88,14 +88,14 @@
         - `get_bind_mechanisms() -> t.StringList`
       - Schema Operations
         - `get_schema_dn() -> str`
-        - [`discover_schema(connection) -> p.Result[t.Dict]`](#discover_schemaconnection---flextresultflexttypesdict)
-        - [`parse_object_class(object_class_def) -> p.Result[t.Dict]`](#parse_object_classobject_class_def---flextresultflexttypesdict)
-        - [`parse_attribute_type(attribute_def) -> p.Result[t.Dict]`](#parse_attribute_typeattribute_def---flextresultflexttypesdict)
+        - [`discover_schema(connection) -> p.Result[m.Dict]`](#discover_schemaconnection---flextresultflexttypesdict)
+        - [`parse_object_class(object_class_def) -> p.Result[m.Dict]`](#parse_object_classobject_class_def---flextresultflexttypesdict)
+        - [`parse_attribute_type(attribute_def) -> p.Result[m.Dict]`](#parse_attribute_typeattribute_def---flextresultflexttypesdict)
       - ACL Operations
         - `get_acl_attribute_name() -> str`
         - `get_acl_format() -> str`
-        - [`get_acls(connection, dn) -> p.Result[Sequence[t.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
-- Get ACLs from cn=settings entry - [`set_acls(connection, dn, acls) -> p.Result[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> p.Result[t.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> p.Result[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> p.Result[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> p.Result[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> p.Result[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> p.Result[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> p.Result[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
+        - [`get_acls(connection, dn) -> p.Result[Sequence[m.Dict]]`](#get_aclsconnection-dn---flextresultlistflexttypesdict)
+- Get ACLs from cn=settings entry - [`set_acls(connection, dn, acls) -> p.Result[bool]`](#set_aclsconnection-dn-acls---flextresultbool) - [`parse(acl_string) -> p.Result[m.Dict]`](#parseacl_string---flextresultflexttypesdict) - [`format_acl(acl_dict) -> p.Result[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations - [`add_entry(connection, entry) -> p.Result[bool]`](#add_entryconnection-entry---flextresultbool) - [`modify_entry(connection, dn, modifications) -> p.Result[bool]`](#modify_entryconnection-dn-modifications---flextresultbool) - [`delete_entry(connection, dn) -> p.Result[bool]`](#delete_entryconnection-dn---flextresultbool) - [`normalize_entry(entry) -> p.Result[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool` - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> p.Result[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - Server-Specific Implementations
     - OpenLDAP2Operations
 - Schema discovery
@@ -121,7 +121,7 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `settings` (FlextLdapSettings, optional): Configuration t.RecursiveContainer. If None, uses default settings.
+- `settings` (FlextLdapSettings, optional): Configuration t.Container. If None, uses default settings.
 
 **Returns:** FlextLdapClients instance
 
@@ -145,7 +145,7 @@ Search LDAP directory entries.
 
 **Parameters:**
 
-- `request`: SearchRequest t.RecursiveContainer with search criteria
+- `request`: SearchRequest t.Container with search criteria
 
 **Returns:** r containing list of matching entries
 
@@ -173,7 +173,7 @@ Authenticate user credentials against LDAP directory.
 - `username` (str): User identifier
 - `password` (str): User password
 
-**Returns:** r containing authenticated user t.RecursiveContainer
+**Returns:** r containing authenticated user t.Container
 
 **Example:**
 
@@ -192,7 +192,7 @@ Create a new user in LDAP directory.
 
 - `request`: CreateUserRequest with user details
 
-**Returns:** r containing created user t.RecursiveContainer
+**Returns:** r containing created user t.Container
 
 **Example:**
 
@@ -352,7 +352,7 @@ Search scope enumeration.
 
 **Values:**
 
-- `BASE`: Search base t.RecursiveContainer only
+- `BASE`: Search base t.Container only
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
@@ -415,7 +415,7 @@ if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
 
 #### `is_ldap_entry(obj) -> bool`
 
-Check if t.RecursiveContainer is a valid LDAP entry.
+Check if t.Container is a valid LDAP entry.
 
 ### FlextLdapConstants
 
@@ -543,7 +543,7 @@ Convert ldap3.Entry to ldif entry.
 
 **Parameters:**
 
-- `ldap3_entry`: ldap3.Entry t.RecursiveContainer from search results
+- `ldap3_entry`: ldap3.Entry t.Container from search results
 
 **Returns:** r containing FlextLdifModels.Entry
 
@@ -584,7 +584,7 @@ Convert ldif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** r containing attributes t.RecursiveContainerMapping for ldap3 operations
+**Returns:** r containing attributes Mapping[str, t.Container] for ldap3 operations
 
 **Example:**
 
@@ -779,7 +779,7 @@ Get supported BIND mechanisms (SIMPLE, SASL/EXTERNAL, etc.).
 
 Get schema discovery DN for server type.
 
-##### `discover_schema(connection) -> p.Result[t.Dict]`
+##### `discover_schema(connection) -> p.Result[m.Dict]`
 
 Discover schema from server.
 
@@ -812,11 +812,11 @@ if schema_result.success:
     print(f"Attribute types: {len(schema['attribute_types'])}")
 ```
 
-##### `parse_object_class(object_class_def) -> p.Result[t.Dict]`
+##### `parse_object_class(object_class_def) -> p.Result[m.Dict]`
 
 Parse objectClass definition string.
 
-##### `parse_attribute_type(attribute_def) -> p.Result[t.Dict]`
+##### `parse_attribute_type(attribute_def) -> p.Result[m.Dict]`
 
 Parse attributeType definition string.
 
@@ -830,7 +830,7 @@ Get ACL attribute name for server type.
 
 Get ACL format identifier.
 
-##### `get_acls(connection, dn) -> p.Result[Sequence[t.Dict]]`
+##### `get_acls(connection, dn) -> p.Result[Sequence[m.Dict]]`
 
 Retrieve ACLs from entry.
 
@@ -865,7 +865,7 @@ new_acls = [
 result = ops.set_acls(connection, dn, acls=new_acls)
 ```
 
-##### `parse(acl_string) -> p.Result[t.Dict]`
+##### `parse(acl_string) -> p.Result[m.Dict]`
 
 Parse server-specific ACL string to dictionary.
 

@@ -676,7 +676,7 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            r containing authenticated user t.RecursiveContainer on success,
+            r containing authenticated user t.Container on success,
             or error message on failure.
 
         Raises:

@@ -55,7 +55,7 @@ class FlextLdapLdap3Wrappers:
     ) -> MutableSequence[str]:
         """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
 
-        Pyright narrows isinstance(v, list) on v:t.RecursiveContainer to Sequence[Unknown], making
+        Pyright narrows isinstance(v, list) on v:t.Container to Sequence[Unknown], making
         element access return Unknown. This helper avoids that by using __len__
         and __getitem__ through getattr to maintain type safety.
         """
@@ -201,7 +201,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             server: p.Ldap.Ldap3Server,
             settings: m.Ldap.ConnectionConfig,
         ) -> p.Ldap.Ldap3Connection:
-            """Create ldap3 Connection t.RecursiveContainer.
+            """Create ldap3 Connection t.Container.
 
             Business Rules:
                 - Bind credentials (user, password) from settings
@@ -216,11 +216,11 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - No network calls if auto_bind=False
 
             Args:
-                server: ldap3 Server t.RecursiveContainer from create_server().
+                server: ldap3 Server t.Container from create_server().
                 settings: Connection configuration with bind credentials.
 
             Returns:
-                ldap3 Connection t.RecursiveContainer (bound if auto_bind=True).
+                ldap3 Connection t.Container (bound if auto_bind=True).
 
             """
             ldap3_server: Server = (
@@ -238,13 +238,13 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldap.Ldap3Server:
-            """Create ldap3 Server t.RecursiveContainer.
+            """Create ldap3 Server t.Container.
 
             Business Rules:
                 - SSL connections use use_ssl=True (port 636 default)
                 - Non-SSL connections use use_ssl=False (port 389 default)
                 - Connect timeout uses settings.timeout value
-                - Server t.RecursiveContainer is created without connection attempt
+                - Server t.Container is created without connection attempt
 
             Architecture:
                 - Uses ldap3 Server() constructor directly
@@ -255,7 +255,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 settings: Connection configuration with host, port, SSL/TLS settings.
 
             Returns:
-                ldap3 Server t.RecursiveContainer configured for connection.
+                ldap3 Server t.Container configured for connection.
 
             """
             if settings.use_ssl:
@@ -551,7 +551,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.RecursiveContainer,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.Container,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -612,7 +612,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.RecursiveContainer,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.Container,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -671,7 +671,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | t.RecursiveContainer,
+            obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | t.Container,
             attr_name: str,
         ) -> m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None:
             """Get dynamic attribute with type safety.
@@ -808,7 +808,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             This typed wrapper handles the untyped ldap3 add() call.
 
             Args:
-                connection: Active ldap3 Connection t.RecursiveContainer.
+                connection: Active ldap3 Connection t.Container.
                 dn_str: Distinguished name string.
                 attrs_dict: Attributes dictionary (str -> t.StrSequence).
 
@@ -827,7 +827,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             This typed wrapper handles the untyped ldap3 delete() call.
 
             Args:
-                connection: Active ldap3 Connection t.RecursiveContainer.
+                connection: Active ldap3 Connection t.Container.
                 dn_str: Distinguished name string.
 
             Returns:
@@ -888,7 +888,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             This typed wrapper handles the untyped ldap3 modify() call.
 
             Args:
-                connection: Active ldap3 Connection t.RecursiveContainer.
+                connection: Active ldap3 Connection t.Container.
                 dn_str: Distinguished name string.
                 changes: Modification changes dict in ldap3 format.
 
@@ -922,7 +922,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection t.RecursiveContainer
+                connection: Active ldap3 Connection t.Container
                 dn_str: Distinguished name as string
                 ldap_attrs: Attributes dict in ldap3 format
 
@@ -980,7 +980,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection t.RecursiveContainer
+                connection: Active ldap3 Connection t.Container
                 dn: Distinguished name (string or DN model)
 
             Returns:
@@ -1036,7 +1036,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection t.RecursiveContainer
+                connection: Active ldap3 Connection t.Container
                 dn: Distinguished name (string or DN model)
                 changes: Modification changes dict in ldap3 format
 
@@ -1210,7 +1210,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @property
     def connection(self) -> p.Ldap.Ldap3Connection | None:
-        """Get underlying ldap3 Connection t.RecursiveContainer."""
+        """Get underlying ldap3 Connection t.Container."""
         return self._connection
 
     @property
@@ -1305,8 +1305,8 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Establish LDAP connection using ldap3 library.
 
         Business Rules:
-            - Creates ldap3 Server t.RecursiveContainer based on SSL/TLS configuration
-            - Creates ldap3 Connection t.RecursiveContainer with bind credentials
+            - Creates ldap3 Server t.Container based on SSL/TLS configuration
+            - Creates ldap3 Connection t.Container with bind credentials
             - STARTTLS is handled if use_tls=True and use_ssl=False
             - Connection must be bound (authenticated) to succeed
             - Connection state is tracked internally for subsequent operations
@@ -1318,8 +1318,8 @@ class FlextLdapLdap3Adapter(s[bool]):
             - Connection state changes trigger audit events
 
         Architecture:
-            - Uses ConnectionManager.create_server() for Server t.RecursiveContainer
-            - Uses ConnectionManager.create_connection() for Connection t.RecursiveContainer
+            - Uses ConnectionManager.create_server() for Server t.Container
+            - Uses ConnectionManager.create_connection() for Connection t.Container
             - Uses ConnectionManager.handle_tls() for STARTTLS if needed
             - Returns r pattern - no exceptions raised
 

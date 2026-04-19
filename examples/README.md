@@ -558,7 +558,7 @@ ______________________________________________________________________
 
    - Direct method calls
    - Context manager pattern
-   - Parameter t.RecursiveContainer pattern
+   - Parameter t.Container pattern
    - Convenience methods
    - Batch operations
 

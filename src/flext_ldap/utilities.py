@@ -164,7 +164,7 @@ class FlextLdapUtilities(u):
             """
 
             @staticmethod
-            def is_valid_status(value: str | t.RecursiveContainer) -> TypeIs[str]:
+            def is_valid_status(value: str | t.Container) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -328,7 +328,7 @@ class FlextLdapUtilities(u):
         def build_conversion_metadata(
             removed_attrs: t.StrSequence,
             base64_attrs: t.StrSequence,
-            original_attrs_dict: t.RecursiveContainerMapping,
+            original_attrs_dict: Mapping[str, t.Container],
             original_dn: str,
         ) -> m.Ldap.ConversionMetadata:
             """Create canonical conversion metadata for LDAP entry adaptation."""
@@ -478,7 +478,7 @@ class FlextLdapUtilities(u):
             Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
 
             Args:
-                dn: DN t.RecursiveContainer (can be None or have .value)
+                dn: DN t.Container (can be None or have .value)
                 default: Default if None
 
             Returns:
@@ -513,7 +513,7 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.RecursiveContainer]],
+            callables_dict: Mapping[str, Callable[..., t.Container]],
             *args: t.Primitives | None,
             **kwargs: t.Primitives | None,
         ) -> str | None:

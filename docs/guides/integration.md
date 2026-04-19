@@ -120,7 +120,7 @@ class UserService:
 
     def process_user_authentication(
         self, username: str, password: str
-    ) -> p.Result[t.Dict]:
+    ) -> p.Result[m.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
@@ -129,12 +129,12 @@ class UserService:
             self.logger.error(
                 "Authentication failed", extra={"error": auth_result.error}
             )
-            return r[t.Dict].fail(f"Authentication failed: {auth_result.error}")
+            return r[m.Dict].fail(f"Authentication failed: {auth_result.error}")
 
         user = auth_result.unwrap()
         self.logger.info("User authenticated successfully", extra={"uid": user.uid})
 
-        return r[t.Dict].ok({
+        return r[m.Dict].ok({
             "uid": user.uid,
             "cn": user.cn,
             "email": user.mail,
@@ -223,7 +223,7 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 
 
 @app.post("/auth/login")
-def login(username: str, password: str) -> t.RecursiveContainerMapping:
+def login(username: str, password: str) -> Mapping[str, t.Container]:
     """User login endpoint with LDAP authentication."""
     ldap_api = get_flext_ldap_api()
 
@@ -245,7 +245,7 @@ def search_users(
     filter_str: str = "(objectClass=person)",
     limit: int = 100,
     token: str = Depends(authenticate_token),
-) -> t.RecursiveContainerMapping:
+) -> Mapping[str, t.Container]:
     """Search users endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
@@ -279,7 +279,7 @@ def search_users(
 @app.post("/users/create")
 def create_user(
     user_data: dict, token: str = Depends(authenticate_token)
-) -> t.RecursiveContainerMapping:
+) -> Mapping[str, t.Container]:
     """Create user endpoint with LDAP integration."""
     ldap_api = get_flext_ldap_api()
 
