@@ -57,7 +57,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def value_to_str_list(
-        value: t.Ldap.Ldap3EntryValue | t.ContainerValue | t.StrSequence,
+        value: t.Ldap.Ldap3EntryValue | t.Container | t.StrSequence,
     ) -> MutableSequence[str]:
         """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
 
@@ -451,7 +451,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.ContainerValue,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.Container,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -504,11 +504,11 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def extract_attrs_dict(
             attrs: p.Ldap.HasAttributesProperty
-            | Mapping[str, t.ContainerValue | t.StrSequence]
+            | Mapping[str, t.Container | t.StrSequence]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
             | m.BaseModel
-            | t.ContainerValue,
+            | t.Container,
         ) -> t.Ldap.OperationAttributes:
             """Extract LDAP attributes as dictionary from various input formats.
 
@@ -706,7 +706,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         def normalize_attr_values(
             attrs_dict: Mapping[
                 str,
-                t.Ldap.Ldap3EntryValue | t.ContainerValue | t.StrSequence,
+                t.Ldap.Ldap3EntryValue | t.Container | t.StrSequence,
             ]
             | None,
         ) -> t.Ldap.OperationAttributes:
@@ -770,7 +770,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: t.MutableRecursiveContainerMapping = {}
+            metadata_dict: t.MutableFlatContainerMapping = {}
             for raw_key, raw_value in metadata.items():
                 if raw_value is None or isinstance(
                     raw_value,

@@ -394,7 +394,7 @@ class FlextLdapProtocols(p):
                 ...
 
             @property
-            def result(self) -> Mapping[str, t.ContainerValue]:
+            def result(self) -> Mapping[str, t.Container]:
                 """Get the raw ldap3 operation result payload."""
                 ...
 

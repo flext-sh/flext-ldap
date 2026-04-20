@@ -275,7 +275,7 @@ class FlextLdapUtilities(u):
 
             def convert_value(
                 _k: str,
-                v: str | t.StrSequence | t.ContainerValue,
+                v: str | t.StrSequence | t.Container,
             ) -> t.StrSequence:
                 match v:
                     case list() | tuple() | range():
@@ -286,7 +286,7 @@ class FlextLdapUtilities(u):
                     return [str(v)]
                 return [str(v)]
 
-            attrs_dict: Mapping[str, t.ContainerValue | t.StrSequence] = dict(attrs)
+            attrs_dict: Mapping[str, t.Container | t.StrSequence] = dict(attrs)
             if not attrs_dict:
                 return {}
             return {k: convert_value(k, v) for k, v in attrs_dict.items()}
@@ -502,8 +502,8 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def filter_truthy(
-            value: Sequence[t.ContainerValue] | t.ContainerValueMapping,
-        ) -> Sequence[t.ContainerValue] | t.ContainerValueMapping:
+            value: Sequence[t.Container] | t.ContainerValueMapping,
+        ) -> Sequence[t.Container] | t.ContainerValueMapping:
             """Filter truthy values from list or dict.
 
             Args:
