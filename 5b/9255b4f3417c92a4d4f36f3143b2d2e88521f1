@@ -1,0 +1,18 @@
+src/flext_ldap/adapters/ldap3.py
+  h_9db9d35f50cf33 60,454,507,511,709,773
+src/flext_ldap/protocols.py
+  h_9db9d35f50cf33 397
+src/flext_ldap/utilities.py
+  h_9db9d35f50cf33 278,289,505-506
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "5b9255b4f3417c92a4d4f36f3143b2d2e88521f1",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
