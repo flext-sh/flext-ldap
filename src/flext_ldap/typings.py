@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 from typing import Literal
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException

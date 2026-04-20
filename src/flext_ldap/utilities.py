@@ -10,7 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import TypeIs
 
 import ldap3

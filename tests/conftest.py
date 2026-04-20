@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import socket
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import (
+    Callable,
+    Mapping,
+)
 from pathlib import Path
 from typing import Protocol, TypeGuard
 

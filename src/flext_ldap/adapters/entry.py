@@ -30,7 +30,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, MutableSequence
+from collections.abc import (
+    Mapping,
+    MutableSequence,
+)
 from typing import override
 
 from flext_ldap.base import s

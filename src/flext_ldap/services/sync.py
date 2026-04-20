@@ -7,7 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import Mapping, MutableMapping
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+)
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeIs

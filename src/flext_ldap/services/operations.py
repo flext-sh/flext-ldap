@@ -31,7 +31,10 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
 from typing import override
 
 from flext_ldap.base import s

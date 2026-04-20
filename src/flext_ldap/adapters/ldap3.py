@@ -30,7 +30,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from datetime import datetime
 from typing import ClassVar, override
 

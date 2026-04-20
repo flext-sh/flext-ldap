@@ -5,7 +5,9 @@ This module provides constants for LDAP operations, extending c.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import (
+    Sequence,
+)
 from enum import StrEnum, unique
 from typing import ClassVar, Final
 
