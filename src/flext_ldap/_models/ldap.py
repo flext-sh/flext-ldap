@@ -13,9 +13,10 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self, TypeAlias
 
+from flext_ldif import m, u
+
 from flext_ldap.constants import c
 from flext_ldap.typings import t
-from flext_ldif import m, u
 
 
 class FlextLdapModelsLdap:

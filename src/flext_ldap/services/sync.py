@@ -15,12 +15,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeIs
 
+from flext_ldif import r
+
 from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.typings import t
-from flext_ldif import r
 
 
 class FlextLdapSyncCallbacks:

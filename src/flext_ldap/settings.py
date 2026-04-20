@@ -17,9 +17,10 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import FlextSettings, u
+from flext_ldif import m
+
 from flext_ldap.constants import c
 from flext_ldap.typings import t
-from flext_ldif import m
 
 
 @FlextSettings.auto_register("ldap")

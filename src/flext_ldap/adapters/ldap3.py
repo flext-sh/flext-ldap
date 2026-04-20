@@ -40,7 +40,7 @@ from collections.abc import (
 from datetime import datetime
 from typing import ClassVar, override
 
-from ldap3 import Connection, Server
+from flext_ldif import r
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldap.base import s
@@ -49,7 +49,7 @@ from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
-from flext_ldif import r
+from ldap3 import Connection, Server
 
 
 class FlextLdapLdap3Wrappers:

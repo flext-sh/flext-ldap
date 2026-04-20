@@ -23,12 +23,13 @@ from collections.abc import (
 from typing import override
 
 from flext_core import s
+from flext_ldif import FlextLdif, m, u
+
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 from flext_ldap.constants import c
 from flext_ldap.protocols import p
 from flext_ldap.settings import FlextLdapSettings
 from flext_ldap.typings import t
-from flext_ldif import FlextLdif, m, u
 
 
 class FlextLdapService[
