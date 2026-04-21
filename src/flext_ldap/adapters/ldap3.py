@@ -42,13 +42,7 @@ from typing import ClassVar, override
 
 from flext_ldif import r
 
-from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import FlextLdapEntryAdapter, c, m, p, s, t, u
 from ldap3 import Connection, Server
 
 
@@ -1181,17 +1175,15 @@ class FlextLdapLdap3Adapter(s[bool]):
                     str_attrs: t.MutableStrSequenceMapping = {
                         k: list(v) for k, v in attrs.items()
                     }
-                    entry = m.Ldif.Entry.model_validate({
-                        "dn": m.Ldif.DN(value=dn),
-                        "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": str_attrs,
-                            "attribute_metadata": {},
-                        }),
-                        "changetype": None,
-                        "metadata": None,
-                        "validation_metadata": None,
-                    })
-                    entries.append(entry)
+                    entry_result = m.Ldif.Entry.create(
+                        dn=dn,
+                        attributes=str_attrs,
+                    )
+                    if entry_result.failure:
+                        return r[Sequence[m.Ldif.Entry]].fail(
+                            entry_result.error or "Failed to create LDAP search entry",
+                        )
+                    entries.append(entry_result.value)
                 return r[Sequence[m.Ldif.Entry]].ok(entries)
             except (
                 ValueError,

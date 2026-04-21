@@ -39,12 +39,7 @@ from typing import override
 
 from flext_ldif import FlextLdifConversion, r
 
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import c, m, p, s, t, u
 
 
 class FlextLdapOperations(s):
@@ -214,7 +209,7 @@ class FlextLdapOperations(s):
                     u.Ldap.to_str(retry_result.error),
                 )
             existing_entry_obj = existing_entries[0]
-            existing_entry = u.Ldif.as_entry(existing_entry_obj)
+            existing_entry = u.Ldap.search_entry_to_ldif_entry(existing_entry_obj)
             changes = u.Ldap.compare_entries(existing_entry, entry)
             if changes is None or not changes:
                 return r[m.Ldap.LdapOperationResult].ok(

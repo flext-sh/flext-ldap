@@ -9,8 +9,7 @@ from __future__ import annotations
 import types
 from typing import Self
 
-from flext_ldap.services.connection import FlextLdapConnection
-from flext_ldap.services.sync import FlextLdapSync
+from flext_ldap import FlextLdapConnection, FlextLdapSync
 
 
 class FlextLdap(FlextLdapSync, FlextLdapConnection):

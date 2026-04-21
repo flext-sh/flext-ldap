@@ -6,12 +6,7 @@ from typing import override
 
 from flext_ldif import r
 
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import c, m, p, s, t, u
 
 
 class FlextLdapServerDetector(s):

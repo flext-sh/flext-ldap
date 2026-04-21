@@ -560,7 +560,7 @@ Extend the system with custom validation:
 
 ```python
 # docs/maintenance/custom_validators.py
-from docs.maintenance.base import BaseValidator
+from docs import BaseValidator
 
 
 class CustomValidator(BaseValidator):

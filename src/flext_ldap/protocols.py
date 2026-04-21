@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 from flext_ldif import p
 
 if TYPE_CHECKING:
-    from flext_ldap.typings import t
+    from flext_ldap import t
 
 
 class FlextLdapProtocols(p):
@@ -285,6 +285,15 @@ class FlextLdapProtocols(p):
             @property
             def is_connected(self) -> bool:
                 """Check if adapter is connected."""
+                ...
+
+            @property
+            def connection(self) -> FlextLdapProtocols.Ldap.Ldap3Connection | None:
+                """Return the active ldap3 connection when one exists."""
+                ...
+
+            def disconnect(self) -> None:
+                """Close any active adapter connection."""
                 ...
 
             def add(

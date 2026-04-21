@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from flext_ldif import m
 
-from flext_ldap._models.ldap import FlextLdapModelsLdap
+from flext_ldap import FlextLdapModelsLdap
 
 
 class FlextLdapModels(m):

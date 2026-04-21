@@ -13,7 +13,7 @@ from typing import ClassVar, Final
 
 from flext_ldif import c
 
-from flext_ldap.typings import t
+from flext_ldap import t
 
 
 class FlextLdapConstants(c):

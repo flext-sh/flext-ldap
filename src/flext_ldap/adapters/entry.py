@@ -38,12 +38,7 @@ from typing import override
 
 from flext_ldif import r
 
-from flext_ldap.base import s
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
-from flext_ldap.utilities import u
+from flext_ldap import c, m, p, s, t, u
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -108,7 +103,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_conversion_metadata(
         removed_attrs: t.StrSequence,
         base64_attrs: t.StrSequence,
-        original_attrs_dict: Mapping[str, t.Container],
+        original_attrs_dict: Mapping[str, t.Container | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation."""
@@ -203,8 +198,8 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         try:
             dn_str = str(ldap3_entry.entry_dn)
-            attrs_dict = ldap3_entry.entry_attributes_as_dict
-            original_attrs_dict = attrs_dict
+            attrs_dict: t.Ldap.Ldap3AttributeDict = ldap3_entry.entry_attributes_as_dict
+            original_attrs_dict: t.Ldap.Ldap3AttributeDict = attrs_dict
             removed_attrs: MutableSequence[str] = []
             base64_attrs: MutableSequence[str] = []
             ldif_attrs: t.MutableStrSequenceMapping = {}
@@ -247,17 +242,14 @@ class FlextLdapEntryAdapter(s[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            ldf_attrs_obj = m.Ldif.Attributes.model_validate({"attributes": ldif_attrs})
             metadata_obj = m.Ldif.QuirkMetadata.model_validate({
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
-            return r[m.Ldif.Entry].ok(
-                m.Ldif.Entry.model_validate({
-                    "dn": m.Ldif.DN.model_validate({"value": dn_str}),
-                    "attributes": ldf_attrs_obj,
-                    "metadata": metadata_obj,
-                }),
+            return m.Ldif.Entry.create(
+                dn=dn_str,
+                attributes=ldif_attrs,
+                metadata=metadata_obj,
             )
         except (ValueError, TypeError, AttributeError) as e:
             entry_dn_for_log = (

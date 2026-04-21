@@ -22,10 +22,7 @@ from typing import TypeIs
 from flext_ldif import r, u
 
 import ldap3
-from flext_ldap.constants import c
-from flext_ldap.models import m
-from flext_ldap.protocols import p
-from flext_ldap.typings import t
+from flext_ldap import c, m, p, t
 
 
 class FlextLdapUtilities(u):
@@ -254,9 +251,14 @@ class FlextLdapUtilities(u):
             normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
             return " ".join(normalized)
 
-        @staticmethod
+        @classmethod
         def attr_to_str_list(
-            attrs: t.ContainerValueMapping | Mapping[str, t.StrSequence],
+            cls,
+            attrs: (
+                t.Ldap.Ldap3AttributeDict
+                | t.ContainerValueMapping
+                | Mapping[str, t.StrSequence]
+            ),
             *,
             filter_list_like: bool = False,
         ) -> Mapping[str, t.StrSequence]:
@@ -274,22 +276,31 @@ class FlextLdapUtilities(u):
             """
 
             def convert_value(
-                _k: str,
-                v: str | t.StrSequence | t.Container,
+                value: t.Container | t.Ldap.Ldap3AttributeValue | t.StrSequence,
             ) -> t.StrSequence:
-                match v:
+                match value:
+                    case None:
+                        return []
+                    case bytes() | str() | bool() | int() | float():
+                        return cls.ldap3_value_to_strings(value)
                     case list() | tuple() | range():
-                        return [str(item) for item in v]
+                        return [
+                            item.decode("utf-8", errors="replace")
+                            if isinstance(item, bytes)
+                            else str(item)
+                            for item in value
+                        ]
                     case _:
-                        pass
-                if filter_list_like:
-                    return [str(v)]
-                return [str(v)]
+                        if filter_list_like:
+                            return [str(value)]
+                        return [str(value)]
 
-            attrs_dict: Mapping[str, t.Container | t.StrSequence] = dict(attrs)
+            attrs_dict: Mapping[
+                str, t.Container | t.Ldap.Ldap3AttributeValue | t.StrSequence
+            ] = dict(attrs)
             if not attrs_dict:
                 return {}
-            return {k: convert_value(k, v) for k, v in attrs_dict.items()}
+            return {k: convert_value(v) for k, v in attrs_dict.items()}
 
         @staticmethod
         def ldap3_value_to_strings(
@@ -334,7 +345,7 @@ class FlextLdapUtilities(u):
         def build_conversion_metadata(
             removed_attrs: t.StrSequence,
             base64_attrs: t.StrSequence,
-            original_attrs_dict: Mapping[str, t.Container],
+            original_attrs_dict: Mapping[str, t.Container | t.Ldap.Ldap3AttributeValue],
             original_dn: str,
         ) -> m.Ldap.ConversionMetadata:
             """Create canonical conversion metadata for LDAP entry adaptation."""
@@ -344,6 +355,25 @@ class FlextLdapUtilities(u):
                 "removed_attributes": list(removed_attrs),
                 "base64_encoded_attributes": list(set(base64_attrs)),
             })
+
+        @classmethod
+        def search_entry_to_ldif_entry(
+            cls,
+            entry: Mapping[str, t.Ldap.Ldap3AttributeValue | t.StrSequence],
+        ) -> m.Ldif.Entry:
+            """Convert LDAP search-result mappings into canonical LDIF entries."""
+            raw_entry = dict(entry)
+            dn_values = cls.ldap3_value_to_strings(raw_entry.get("dn"))
+            dn_value = dn_values[0] if dn_values else c.Ldif.EntryDefaults.UNKNOWN_VALUE
+            attributes = {
+                key: cls.ldap3_value_to_strings(value)
+                for key, value in raw_entry.items()
+                if key != "dn"
+            }
+            return m.Ldif.Entry.create(
+                dn=dn_value,
+                attributes=attributes,
+            ).unwrap()
 
         @classmethod
         def track_conversion_differences(

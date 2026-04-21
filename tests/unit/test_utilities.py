@@ -31,14 +31,6 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.to_str(c.Ldap.Tests.STRING_SIMPLE)
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_SIMPLE)
 
-    def test_to_str_none(self) -> None:
-        result = u.to_str(None)
-        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_EMPTY)
-
-    def test_to_str_with_default(self) -> None:
-        result = u.to_str(None, default=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
-        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
-
     def test_to_str_list_from_list(self) -> None:
         result = u.to_str_list(list(c.Ldap.Tests.LIST_ABC))
         u.Ldap.Tests.that(result, eq=list(c.Ldap.Tests.LIST_ABC))
@@ -47,8 +39,8 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.to_str_list(c.Ldap.Tests.LIST_SINGLE)
         u.Ldap.Tests.that(result, eq=[c.Ldap.Tests.LIST_SINGLE])
 
-    def test_to_str_list_from_none(self) -> None:
-        result = u.to_str_list(None)
+    def test_ldap3_value_to_strings_from_none(self) -> None:
+        result = u.Ldap.ldap3_value_to_strings(None)
         u.Ldap.Tests.that(result, eq=[])
 
     def test_norm_str_lowercase(self) -> None:

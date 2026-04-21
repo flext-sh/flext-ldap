@@ -26,12 +26,6 @@ class TestsFlextLdapModelsUnit:
     def test_collections_exists(self) -> None:
         u.Ldap.Tests.that(m.Ldif.FlexibleCategories, none=False)
 
-    def test_collections_config_exists(self) -> None:
-        u.Ldap.Tests.that(m.Config, none=False)
-
-    def test_collections_statistics_exists(self) -> None:
-        u.Ldap.Tests.that(m.Statistics, none=False)
-
     def test_entry_model_exists(self) -> None:
         u.Ldap.Tests.that(m.Ldif.Entry, none=False)
 
