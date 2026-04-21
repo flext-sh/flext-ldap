@@ -32,8 +32,8 @@ if TYPE_CHECKING:
 
 
 class FlextLdapService[
-    TResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.ValueOrModel
-    | Sequence[t.ValueOrModel]
+    TResult: t.RuntimeData | Sequence[t.RuntimeData] = t.RuntimeData
+    | Sequence[t.RuntimeData]
 ](s[TResult], ABC):
     """Base class for all flext-ldap services.
 
