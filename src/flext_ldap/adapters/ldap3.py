@@ -41,9 +41,9 @@ from datetime import datetime
 from typing import ClassVar, override
 
 from flext_ldif import r
+from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, s, t, u
-from ldap3 import Connection, Server
 
 
 class FlextLdapLdap3Wrappers:
