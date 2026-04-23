@@ -51,7 +51,7 @@ callers replace services or adapters for testing and alternative runtimes.
 ### Connecting
 
 1. `ldap.connect` converts incoming dictionaries to
-   :class:`~flext_ldap.models.FlextLdapModels.ConnectionConfig` when needed.
+   :class:`~flext_ldap._models.FlextLdapModels.ConnectionConfig` when needed.
 1. :class:`~flext_ldap.services.connection.FlextLdapConnection` delegates
    binding to :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`, with optional
    retry handling.
@@ -76,7 +76,7 @@ callers replace services or adapters for testing and alternative runtimes.
 1. Batch mode collects per-entry stats and supports progress callbacks;
    multi-phase syncs reuse the same pipeline while attaching phase metadata.
 1. Final statistics are returned via
-   :class:`flext_ldap.models.FlextLdapModels.SyncStats`.
+   :class:`flext_ldap._models.FlextLdapModels.SyncStats`.
 
 ### Server Detection
 

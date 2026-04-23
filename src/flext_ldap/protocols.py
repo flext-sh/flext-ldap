@@ -223,12 +223,12 @@ class FlextLdapProtocols(p):
 
             def execute(
                 self,
-                **_kwargs: t.Scalar,
+                **kwargs: t.Scalar,
             ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Execute health check or default operation.
 
                 Args:
-                    **_kwargs: Additional keyword arguments
+                    **kwargs: Additional keyword arguments
                         (flexible types for extensibility)
 
                 Returns:

@@ -33,7 +33,7 @@ class FlextLdapConnection(s):
         auto_retry: bool = False,
         max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
         retry_delay: float = c.Ldap.ConnectionDefaults.DEFAULT_RETRY_DELAY,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry."""
         adapter = self._ensure_adapter()
@@ -65,9 +65,7 @@ class FlextLdapConnection(s):
         self._server_type = c.Ldap.ServerDefaults.DEFAULT_TYPE
 
     @override
-    def execute(
-        self, **_kwargs: str | float | bool | None
-    ) -> p.Result[m.Ldap.Response]:
+    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
         """Execute service health check."""
         if self.is_connected:
             return r[m.Ldap.Response].ok(

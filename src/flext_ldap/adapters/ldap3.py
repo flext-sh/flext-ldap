@@ -1248,7 +1248,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def add(
         self,
         entry: m.Ldif.Entry,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Add LDAP entry using Entry model.
 
@@ -1298,7 +1298,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def connect(
         self,
         settings: m.Ldap.ConnectionConfig,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[bool]:
         """Establish LDAP connection using ldap3 library.
 
@@ -1355,7 +1355,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def delete(
         self,
         dn: str | m.Ldif.DN,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
@@ -1428,7 +1428,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 self._server = None
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> p.Result[bool]:
+    def execute(self, **kwargs: str | float | bool | None) -> p.Result[bool]:
         """Execute service health check.
 
         Business Rules:
@@ -1445,10 +1445,10 @@ class FlextLdapLdap3Adapter(s[bool]):
         Architecture:
             - Uses is_connected property for state check
             - Returns r pattern - no exceptions raised
-            - ``_kwargs`` absorbs extra arguments for interface compatibility
+            - ``kwargs`` absorbs extra arguments for interface compatibility
 
         Args:
-            **_kwargs: Absorbed keyword arguments for interface compatibility.
+            **kwargs: Absorbed keyword arguments for interface compatibility.
 
         Returns:
             r[bool]: Success if connected, failure with NOT_CONNECTED if not.
@@ -1462,7 +1462,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
@@ -1506,7 +1506,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
 

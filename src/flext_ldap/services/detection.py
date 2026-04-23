@@ -46,10 +46,10 @@ class FlextLdapServerDetector(s):
     @override
     def execute(
         self,
-        **_kwargs: str | float | bool | None,
+        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.Response]:
         """Detect server type using the provided ``connection`` keyword argument."""
-        connection_raw = _kwargs.get("connection")
+        connection_raw = kwargs.get("connection")
         if connection_raw is None:
             return r[m.Ldap.Response].fail("connection parameter required")
         if not isinstance(connection_raw, p.Ldap.Ldap3Connection):

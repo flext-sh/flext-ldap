@@ -132,7 +132,7 @@ class FlextLdapEntryAdapter(s[bool]):
         )
 
     @override
-    def execute(self, **_kwargs: str | float | bool | None) -> p.Result[bool]:
+    def execute(self, **kwargs: str | float | bool | None) -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:
@@ -152,7 +152,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - No network calls - pure data transformation
 
         Args:
-            **_kwargs: Unused - adapter is stateless and requires no configuration
+            **kwargs: Unused - adapter is stateless and requires no configuration
 
         Returns:
             r[bool] - success with True as this adapter is stateless
