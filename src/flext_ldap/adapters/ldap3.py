@@ -1248,7 +1248,6 @@ class FlextLdapLdap3Adapter(s[bool]):
     def add(
         self,
         entry: m.Ldif.Entry,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Add LDAP entry using Entry model.
 
@@ -1298,7 +1297,6 @@ class FlextLdapLdap3Adapter(s[bool]):
     def connect(
         self,
         settings: m.Ldap.ConnectionConfig,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[bool]:
         """Establish LDAP connection using ldap3 library.
 
@@ -1355,7 +1353,6 @@ class FlextLdapLdap3Adapter(s[bool]):
     def delete(
         self,
         dn: str | m.Ldif.DN,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Delete LDAP entry.
 
@@ -1462,7 +1459,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Modify LDAP entry.
 
@@ -1506,7 +1502,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.SearchResult]:
         """Perform LDAP search operation and convert to Entry models.
 

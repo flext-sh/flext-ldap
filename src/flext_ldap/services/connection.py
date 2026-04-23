@@ -33,7 +33,6 @@ class FlextLdapConnection(s):
         auto_retry: bool = False,
         max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
         retry_delay: float = c.Ldap.ConnectionDefaults.DEFAULT_RETRY_DELAY,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry."""
         adapter = self._ensure_adapter()

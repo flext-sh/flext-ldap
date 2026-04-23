@@ -438,7 +438,6 @@ class FlextLdapOperations(s):
     def add(
         self,
         entry: m.Ldif.Entry,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
@@ -639,7 +638,6 @@ class FlextLdapOperations(s):
     def delete(
         self,
         dn: str | m.Ldif.DN,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Delete an LDAP entry identified by DN.
 
@@ -718,7 +716,6 @@ class FlextLdapOperations(s):
         self,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.
 
@@ -767,7 +764,6 @@ class FlextLdapOperations(s):
         self,
         search_options: m.Ldap.SearchOptions,
         server_type: str | None = None,
-        **kwargs: str | float | bool | None,
     ) -> p.Result[m.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
 
