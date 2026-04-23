@@ -34,7 +34,6 @@ from collections.abc import (
     Mapping,
     MutableSequence,
 )
-from typing import override
 
 from flext_ldif import r
 
@@ -131,8 +130,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_attrs_dict=converted_attrs_dict,
         )
 
-    @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[bool]:
+    def execute(self) -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:
@@ -150,9 +148,6 @@ class FlextLdapEntryAdapter(s[bool]):
             - Stateless adapter pattern - no internal state to manage
             - Conversion methods handle bidirectional entry transformation
             - No network calls - pure data transformation
-
-        Args:
-            **kwargs: Unused - adapter is stateless and requires no configuration
 
         Returns:
             r[bool] - success with True as this adapter is stateless

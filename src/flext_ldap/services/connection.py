@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_ldif import r
 
 from flext_ldap import FlextLdapServerDetector, c, m, p, s, u
@@ -63,8 +61,9 @@ class FlextLdapConnection(s):
             self._adapter.disconnect()
         self._server_type = c.Ldap.ServerDefaults.DEFAULT_TYPE
 
-    @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
+    def execute(
+        self,
+    ) -> p.Result[m.Ldap.Response]:
         """Execute service health check."""
         if self.is_connected:
             return r[m.Ldap.Response].ok(

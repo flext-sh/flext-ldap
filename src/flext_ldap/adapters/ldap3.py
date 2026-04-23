@@ -1424,8 +1424,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 self._connection = None
                 self._server = None
 
-    @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[bool]:
+    def execute(self) -> p.Result[bool]:
         """Execute service health check.
 
         Business Rules:
@@ -1442,10 +1441,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         Architecture:
             - Uses is_connected property for state check
             - Returns r pattern - no exceptions raised
-            - ``kwargs`` absorbs extra arguments for interface compatibility
-
-        Args:
-            **kwargs: Absorbed keyword arguments for interface compatibility.
 
         Returns:
             r[bool]: Success if connected, failure with NOT_CONNECTED if not.

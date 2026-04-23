@@ -20,7 +20,7 @@ from abc import ABC
 from collections.abc import (
     Sequence,
 )
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
 
 from flext_core import s
 from flext_ldif import FlextLdif, m, u
@@ -48,18 +48,15 @@ class FlextLdapService[
     )
 
     @classmethod
-    @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdapSettings)
 
     @classmethod
-    @override
     def _get_service_config_type(cls) -> type[FlextLdapSettings]:
         """Expose the canonical LDAP settings model for legacy callers."""
         return FlextLdapSettings
 
-    @override
     def _ensure_adapter(self) -> FlextLdapLdap3Adapter:
         """Return the shared ldap3 adapter for this service instance."""
         if self._adapter is None:
@@ -69,7 +66,6 @@ class FlextLdapService[
         return self._adapter
 
     @property
-    @override
     def is_connected(self) -> bool:
         """Return ``True`` when the shared adapter has an active bind."""
         adapter = self._adapter

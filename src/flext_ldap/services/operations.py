@@ -35,7 +35,6 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import override
 
 from flext_ldif import FlextLdifConversion, r
 
@@ -681,8 +680,9 @@ class FlextLdapOperations(s):
             on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
         )
 
-    @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
+    def execute(
+        self,
+    ) -> p.Result[m.Ldap.Response]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:
