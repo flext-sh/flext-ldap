@@ -323,7 +323,7 @@ class FlextLdapOperations(s):
                 changes: t.Ldap.OperationChanges = {
                     attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
                 }
-                last_result = (
+                current_result: p.Result[m.Ldap.LdapOperationResult] = (
                     self._ops
                     .modify(dn_str, changes)
                     .map(
@@ -345,8 +345,9 @@ class FlextLdapOperations(s):
                         ),
                     )
                 )
-                if last_result.failure:
-                    return last_result
+                last_result = current_result
+                if current_result.failure:
+                    return current_result
             if last_result is None:
                 return r[m.Ldap.LdapOperationResult].fail(
                     "Schema modify entry has only empty values",
@@ -605,6 +606,8 @@ class FlextLdapOperations(s):
                     return r[m.Ldap.LdapBatchStats].fail(
                         f"Batch upsert stopped on error at entry {error_idx}/{total_entries}",
                     )
+                case _:
+                    pass
         stats = m.Ldap.LdapBatchStats(
             synced=stats_builder["synced"],
             failed=stats_builder["failed"],
