@@ -32,8 +32,8 @@ if TYPE_CHECKING:
 
 
 class FlextLdapService[
-    TResult: t.RuntimeData | Sequence[t.RuntimeData] = t.RuntimeData
-    | Sequence[t.RuntimeData]
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] = t.JsonPayload
+    | Sequence[t.JsonPayload]
 ](s[TResult], ABC):
     """Base class for all flext-ldap services.
 

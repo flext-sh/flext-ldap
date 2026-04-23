@@ -363,8 +363,8 @@ class FlextLdapUtilities(u):
             raw_entry = dict(entry)
             dn_values = cls.ldap3_value_to_strings(raw_entry.get("dn"))
             dn_value = dn_values[0] if dn_values else c.Ldif.EntryDefaults.UNKNOWN_VALUE
-            attributes = {
-                key: cls.ldap3_value_to_strings(value)
+            attributes: MutableMapping[str, MutableSequence[str] | str] = {
+                key: list(cls.ldap3_value_to_strings(value))
                 for key, value in raw_entry.items()
                 if key != "dn"
             }
@@ -547,7 +547,7 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.JsonValue]],
+            callables_dict: Mapping[str, Callable[..., t.JsonPayload]],
             *args: t.Primitives | None,
             **kwargs: t.Primitives | None,
         ) -> str | None:

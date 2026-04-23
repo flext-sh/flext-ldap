@@ -202,7 +202,7 @@ class FlextLdapEntryAdapter(s[bool]):
             original_attrs_dict: t.Ldap.Ldap3AttributeDict = attrs_dict
             removed_attrs: MutableSequence[str] = []
             base64_attrs: MutableSequence[str] = []
-            ldif_attrs: t.MutableStrSequenceMapping = {}
+            ldif_attrs: t.MutableMappingKV[str, t.MutableSequenceOf[str] | str] = {}
             logger = logging.getLogger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:

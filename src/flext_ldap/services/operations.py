@@ -154,7 +154,7 @@ class FlextLdapOperations(s):
             )
             if not changetype and hasattr(entry, "changetype") and entry.changetype:
                 changetype = str(entry.changetype).lower()
-            if changetype == c.Ldif.ChangeTypeOperations.MODIFY:
+            if changetype == c.Ldif.LdifChangeType.MODIFY:
                 return self.handle_schema_modify(entry)
             return self.handle_regular_add(entry)
 
@@ -308,7 +308,7 @@ class FlextLdapOperations(s):
                     ))
             if not schema_additions:
                 attrs = u.Ldap.extract_entry_attributes(entry_model)
-                add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
+                add_op_result = attrs.get(c.Ldif.ChangeOperation.ADD, [])
                 add_op: t.StrSequence = [str(item) for item in add_op_result]
                 for attr_type in add_op:
                     attr_values_raw = attrs.get(attr_type, [])
@@ -367,7 +367,7 @@ class FlextLdapOperations(s):
                 r with attribute type or error.
 
             """
-            add_op_result = attrs.get(c.Ldif.ChangeTypeOperations.ADD, [])
+            add_op_result = attrs.get(c.Ldif.ChangeOperation.ADD, [])
             add_op_raw = add_op_result
             add_op: t.StrSequence = [str(item) for item in add_op_raw]
             if not add_op:

@@ -24,6 +24,7 @@ if _t.TYPE_CHECKING:
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
     from flext_ldap.protocols import FlextLdapProtocols, p
+    from flext_ldap.services.api_runtime import FlextLdapApiRuntime
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations
@@ -75,6 +76,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextLdapProtocols",
                 "p",
             ),
+            ".services.api_runtime": ("FlextLdapApiRuntime",),
             ".services.connection": ("FlextLdapConnection",),
             ".services.detection": ("FlextLdapServerDetector",),
             ".services.operations": ("FlextLdapOperations",),
@@ -117,6 +119,7 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
     "FlextLdap",
+    "FlextLdapApiRuntime",
     "FlextLdapConnection",
     "FlextLdapConstants",
     "FlextLdapEntryAdapter",

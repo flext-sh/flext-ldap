@@ -1172,9 +1172,9 @@ class FlextLdapLdap3Adapter(s[bool]):
                     )
                 entries: MutableSequence[m.Ldif.Entry] = []
                 for dn, attrs in ldap3_results:
-                    str_attrs: t.MutableStrSequenceMapping = {
-                        k: list(v) for k, v in attrs.items()
-                    }
+                    str_attrs: t.MutableMappingKV[
+                        str, t.MutableSequenceOf[str] | str
+                    ] = {k: list(v) for k, v in attrs.items()}
                     entry_result = m.Ldif.Entry.create(
                         dn=dn,
                         attributes=str_attrs,

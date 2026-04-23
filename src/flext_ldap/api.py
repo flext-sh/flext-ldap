@@ -6,27 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import types
-from typing import Self
-
 from flext_ldap import FlextLdapConnection, FlextLdapSync
+from flext_ldap.services.api_runtime import FlextLdapApiRuntime
 
 
-class FlextLdap(FlextLdapSync, FlextLdapConnection):
+class FlextLdap(FlextLdapConnection, FlextLdapSync, FlextLdapApiRuntime):
     """Public LDAP facade composed through cooperative MRO."""
 
-    def __enter__(self) -> Self:
-        """Context manager entry."""
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
-    ) -> None:
-        """Context manager exit with automatic disconnection."""
-        self.disconnect()
+    pass
 
 
 ldap = FlextLdap()

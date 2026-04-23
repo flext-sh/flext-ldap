@@ -7,6 +7,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        ".api_runtime": ("FlextLdapApiRuntime",),
         ".connection": ("FlextLdapConnection",),
         ".detection": ("FlextLdapServerDetector",),
         ".operations": ("FlextLdapOperations",),
