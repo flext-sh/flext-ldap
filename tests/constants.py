@@ -208,7 +208,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ("Oracle", None, (), "oid"),
             )
 
-            OPERATIONS_ERROR_DETECTION_SCENARIOS: Final[Mapping[str, bool]] = (
+            OPERATIONS_ERROR_DETECTION_SCENARIOS: Final[t.BoolMapping] = (
                 MappingProxyType(
                     {
                         "Entry already exists": True,
@@ -359,7 +359,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_SERIALIZATION_SKIPPED: Final[int] = 1
             SYNC_SERIALIZATION_FAILED: Final[int] = 0
 
-            SYNC_SUCCESS_RATE_90_KWARGS: Final[Mapping[str, int]] = MappingProxyType(
+            SYNC_SUCCESS_RATE_90_KWARGS: Final[t.IntMapping] = MappingProxyType(
                 {
                     "synced": 70,
                     "skipped": 20,
@@ -369,25 +369,21 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             SYNC_SUCCESS_RATE_90_EXPECTED: Final[float] = 0.9
 
-            SYNC_SUCCESS_RATE_BATCH_85_KWARGS: Final[Mapping[str, int]] = (
-                MappingProxyType(
-                    {
-                        "total_processed": 100,
-                        "successful": 85,
-                        "failed": 15,
-                    },
-                )
+            SYNC_SUCCESS_RATE_BATCH_85_KWARGS: Final[t.IntMapping] = MappingProxyType(
+                {
+                    "total_processed": 100,
+                    "successful": 85,
+                    "failed": 15,
+                },
             )
             SYNC_SUCCESS_RATE_BATCH_85_EXPECTED: Final[float] = 0.85
 
-            SYNC_SUCCESS_RATE_BATCH_ZERO_KWARGS: Final[Mapping[str, int]] = (
-                MappingProxyType(
-                    {
-                        "total_processed": 0,
-                        "successful": 0,
-                        "failed": 0,
-                    },
-                )
+            SYNC_SUCCESS_RATE_BATCH_ZERO_KWARGS: Final[t.IntMapping] = MappingProxyType(
+                {
+                    "total_processed": 0,
+                    "successful": 0,
+                    "failed": 0,
+                },
             )
             SYNC_SUCCESS_RATE_BATCH_ZERO_EXPECTED: Final[float] = 0.0
 

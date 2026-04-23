@@ -121,7 +121,7 @@ Factory function to get the main LDAP API instance.
 
 **Parameters:**
 
-- `settings` (FlextLdapSettings, optional): Configuration t.Container. If None, uses default settings.
+- `settings` (FlextLdapSettings, optional): Configuration t.JsonValue. If None, uses default settings.
 
 **Returns:** FlextLdapClients instance
 
@@ -145,7 +145,7 @@ Search LDAP directory entries.
 
 **Parameters:**
 
-- `request`: SearchRequest t.Container with search criteria
+- `request`: SearchRequest t.JsonValue with search criteria
 
 **Returns:** r containing list of matching entries
 
@@ -173,7 +173,7 @@ Authenticate user credentials against LDAP directory.
 - `username` (str): User identifier
 - `password` (str): User password
 
-**Returns:** r containing authenticated user t.Container
+**Returns:** r containing authenticated user t.JsonValue
 
 **Example:**
 
@@ -192,7 +192,7 @@ Create a new user in LDAP directory.
 
 - `request`: CreateUserRequest with user details
 
-**Returns:** r containing created user t.Container
+**Returns:** r containing created user t.JsonValue
 
 **Example:**
 
@@ -352,7 +352,7 @@ Search scope enumeration.
 
 **Values:**
 
-- `BASE`: Search base t.Container only
+- `BASE`: Search base t.JsonValue only
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
@@ -415,7 +415,7 @@ if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
 
 #### `is_ldap_entry(obj) -> bool`
 
-Check if t.Container is a valid LDAP entry.
+Check if t.JsonValue is a valid LDAP entry.
 
 ### FlextLdapConstants
 
@@ -543,7 +543,7 @@ Convert ldap3.Entry to ldif entry.
 
 **Parameters:**
 
-- `ldap3_entry`: ldap3.Entry t.Container from search results
+- `ldap3_entry`: ldap3.Entry t.JsonValue from search results
 
 **Returns:** r containing FlextLdifModels.Entry
 
@@ -584,7 +584,7 @@ Convert ldif entry to ldap3 attributes dictionary.
 
 - `ldif_entry`: FlextLdifModels.Entry to convert
 
-**Returns:** r containing attributes Mapping[str, t.Container] for ldap3 operations
+**Returns:** r containing attributes t.JsonMapping for ldap3 operations
 
 **Example:**
 

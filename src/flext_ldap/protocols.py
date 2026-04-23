@@ -102,7 +102,7 @@ class FlextLdapProtocols(p):
                 error: str | None
                 "Error message if parsing failed."
                 value: t.Scalar | None
-                "Parsed value or result t.Container."
+                "Parsed value or result t.JsonValue."
 
         @runtime_checkable
         class SearchOptions(Protocol):
@@ -403,7 +403,7 @@ class FlextLdapProtocols(p):
                 ...
 
             @property
-            def result(self) -> Mapping[str, t.Container]:
+            def result(self) -> t.JsonMapping:
                 """Get the raw ldap3 operation result payload."""
                 ...
 
@@ -550,7 +550,7 @@ class FlextLdapProtocols(p):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[t.Pair[str, t.Container]]:
+            def items(self) -> Sequence[t.Pair[str, t.JsonValue]]:
                 """Return items as sequence of tuples."""
                 ...
 
@@ -560,7 +560,7 @@ class FlextLdapProtocols(p):
 
             @property
             def settings(self) -> None:
-                """Return resolved configuration t.Container."""
+                """Return resolved configuration t.JsonValue."""
                 ...
 
         @runtime_checkable

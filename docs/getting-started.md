@@ -129,7 +129,7 @@ Clone and setup development environment:
 git clone <repository-url>
 cd flext-ldap
 make setup      # Install dependencies, pre-commit hooks, dev tools
-make validate   # Run quality checks to verify installation
+make val   # Run quality checks to verify installation
 ```
 
 ### **Verify Installation**
@@ -517,7 +517,7 @@ make format     # Auto-format code
 make lint       # Check code style
 make type-check # Verify type annotations
 make test       # Run tests
-make validate   # Complete quality pipeline
+make val   # Complete quality pipeline
 ```
 
 ______________________________________________________________________

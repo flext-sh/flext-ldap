@@ -558,7 +558,7 @@ ______________________________________________________________________
 
    - Direct method calls
    - Context manager pattern
-   - Parameter t.Container pattern
+   - Parameter t.JsonValue pattern
    - Convenience methods
    - Batch operations
 

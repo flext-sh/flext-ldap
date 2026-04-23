@@ -49,7 +49,7 @@ This guide covers common issues, their solutions, and debugging techniques for F
 
 ```bash
 # Check overall system health
-make validate
+make val
 
 # Check specific components
 make lint          # Code quality
@@ -58,9 +58,9 @@ make test          # Functionality
 make security      # Security issues
 
 # Check individual projects
-cd flext-core && make validate
-cd flext-ldif && make validate
-cd flext-api && make validate
+cd flext-core && make val
+cd flext-ldif && make val
+cd flext-api && make val
 ```
 
 ### System Status
@@ -138,7 +138,7 @@ except ImportError as e:
 
 ```python
 # Error
-error: Argument 1 to "process" has incompatible type "str"; expected "Mapping[str, t.Container]"
+error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapping"
 ```
 
 #### Solutions
@@ -152,7 +152,7 @@ def process(data):
 
 
 # ✅ CORRECT
-def process(data: Mapping[str, t.Container]) -> p.Result[ProcessedData]:
+def process(data: t.JsonMapping) -> p.Result[ProcessedData]:
     return r.ok(ProcessedData(**data))
 ```
 
@@ -672,10 +672,10 @@ monitor_cpu()
 
    ```bash
    # System health check
-   make validate
+   make val
 
    # Project-specific check
-   cd flext-core && make validate
+   cd flext-core && make val
    ```
 
 1. **Check Logs**

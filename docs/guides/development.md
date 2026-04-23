@@ -81,7 +81,7 @@ pre-commit install
 
 ```bash
 # Run quality gates to verify setup
-make validate
+make val
 
 # Check individual components
 make lint-all
@@ -134,7 +134,7 @@ Follow FLEXT development standards:
 make check
 
 # Full validation (before push)
-make validate
+make val
 ```
 
 ### 4. Commit Changes
@@ -151,7 +151,7 @@ git push origin feature/amazing-feature
 
 ```python
 # ✅ CORRECT - Complete type annotations
-def process_data(data: Mapping[str, t.Container]) -> p.Result[ProcessedData]:
+def process_data(data: t.JsonMapping) -> p.Result[ProcessedData]:
     """Process data with type safety."""
     if not data:
         return r[ProcessedData].fail("Data required")
@@ -190,16 +190,16 @@ def validate_and_process(data: dict) -> ProcessedData:
 # ✅ CORRECT - Use [Project]Models pattern
 class FlextApiModels:
     class Request(m.BaseModel):
-        data: Mapping[str, t.Container]
+        data: t.JsonMapping
 
     class Response(m.BaseModel):
-        result: p.Result[t.Container]
+        result: p.Result[t.JsonValue]
         status: int
 
 
 # ❌ WRONG - Scattered model definitions
 class ApiRequest(m.BaseModel):
-    data: Mapping[str, t.Container]
+    data: t.JsonMapping
 
 
 class ApiResponse(m.BaseModel):
@@ -292,7 +292,7 @@ make type-check
 make security
 
 # All quality checks
-make validate
+make val
 ```
 
 ## Adding New Projects
@@ -350,10 +350,10 @@ class FlextNewlibModels:
         setting: str = "default"
 
     class Request(m.BaseModel):
-        data: Mapping[str, t.Container]
+        data: t.JsonMapping
 
     class Response(m.BaseModel):
-        result: p.Result[t.Container]
+        result: p.Result[t.JsonValue]
 ```
 
 ### 3. Add to Workspace
@@ -402,7 +402,7 @@ poetry env info
 ### Code Documentation
 
 ```python
-def process_data(data: Mapping[str, t.Container]) -> p.Result[ProcessedData]:
+def process_data(data: t.JsonMapping) -> p.Result[ProcessedData]:
     """
     Process data using the FLEXT pipeline.
 

@@ -103,7 +103,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_conversion_metadata(
         removed_attrs: t.StrSequence,
         base64_attrs: t.StrSequence,
-        original_attrs_dict: Mapping[str, t.Container | t.Ldap.Ldap3AttributeValue],
+        original_attrs_dict: Mapping[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation."""
@@ -188,7 +188,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Server type from adapter._server_type stored in metadata
 
         Args:
-            ldap3_entry: ldap3 Entry t.Container (required, no fallback).
+            ldap3_entry: ldap3 Entry t.JsonValue (required, no fallback).
                 Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:

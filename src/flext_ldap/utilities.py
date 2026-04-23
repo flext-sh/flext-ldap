@@ -167,7 +167,7 @@ class FlextLdapUtilities(u):
             """
 
             @staticmethod
-            def is_valid_status(value: str | t.Container) -> TypeIs[str]:
+            def is_valid_status(value: str | t.JsonValue) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -255,9 +255,7 @@ class FlextLdapUtilities(u):
         def attr_to_str_list(
             cls,
             attrs: (
-                t.Ldap.Ldap3AttributeDict
-                | t.ContainerValueMapping
-                | Mapping[str, t.StrSequence]
+                t.Ldap.Ldap3AttributeDict | t.JsonMapping | Mapping[str, t.StrSequence]
             ),
             *,
             filter_list_like: bool = False,
@@ -276,7 +274,7 @@ class FlextLdapUtilities(u):
             """
 
             def convert_value(
-                value: t.Container | t.Ldap.Ldap3AttributeValue | t.StrSequence,
+                value: t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence,
             ) -> t.StrSequence:
                 match value:
                     case None:
@@ -296,7 +294,7 @@ class FlextLdapUtilities(u):
                         return [str(value)]
 
             attrs_dict: Mapping[
-                str, t.Container | t.Ldap.Ldap3AttributeValue | t.StrSequence
+                str, t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence
             ] = dict(attrs)
             if not attrs_dict:
                 return {}
@@ -345,7 +343,7 @@ class FlextLdapUtilities(u):
         def build_conversion_metadata(
             removed_attrs: t.StrSequence,
             base64_attrs: t.StrSequence,
-            original_attrs_dict: Mapping[str, t.Container | t.Ldap.Ldap3AttributeValue],
+            original_attrs_dict: Mapping[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
             original_dn: str,
         ) -> m.Ldap.ConversionMetadata:
             """Create canonical conversion metadata for LDAP entry adaptation."""
@@ -514,7 +512,7 @@ class FlextLdapUtilities(u):
             Uses advanced DSL: whn() → safe() → conv() → str() for fluent composition.
 
             Args:
-                dn: DN t.Container (can be None or have .value)
+                dn: DN t.JsonValue (can be None or have .value)
                 default: Default if None
 
             Returns:
@@ -532,8 +530,8 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def filter_truthy(
-            value: Sequence[t.Container] | t.ContainerValueMapping,
-        ) -> Sequence[t.Container] | t.ContainerValueMapping:
+            value: t.JsonList | t.JsonMapping,
+        ) -> t.JsonList | t.JsonMapping:
             """Filter truthy values from list or dict.
 
             Args:
@@ -549,7 +547,7 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.Container]],
+            callables_dict: Mapping[str, Callable[..., t.JsonValue]],
             *args: t.Primitives | None,
             **kwargs: t.Primitives | None,
         ) -> str | None:

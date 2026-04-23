@@ -150,7 +150,7 @@ cd flext-ldap
 make setup
 
 # Verify installation
-make validate
+make val
 ```
 
 ### Development Tools Installation
@@ -181,7 +181,7 @@ make type-check         # Validate type annotations
 make test               # Run test suite
 
 # Complete validation
-make validate           # Run all quality gates
+make val           # Run all quality gates
 ```
 
 ### Code Formatting
@@ -676,7 +676,7 @@ class FlextLdapClients:
             password: User password for authentication
 
         Returns:
-            r containing authenticated user t.Container on success,
+            r containing authenticated user t.JsonValue on success,
             or error message on failure.
 
         Raises:
@@ -773,7 +773,7 @@ ______________________________________________________________________
 1. **Validate Quality**
 
    ```bash
-   make validate  # Must pass all gates
+   make val  # Must pass all gates
    ```
 
 1. **Submit Pull Request**

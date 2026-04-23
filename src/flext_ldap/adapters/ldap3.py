@@ -51,11 +51,11 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def value_to_str_list(
-        value: t.Ldap.Ldap3EntryValue | t.Container | t.StrSequence,
+        value: t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
     ) -> MutableSequence[str]:
         """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
 
-        Pyright narrows isinstance(v, list) on v:t.Container to Sequence[Unknown], making
+        Pyright narrows isinstance(v, list) on v:t.JsonValue to Sequence[Unknown], making
         element access return Unknown. This helper avoids that by using __len__
         and __getitem__ through getattr to maintain type safety.
         """
@@ -95,7 +95,7 @@ class FlextLdapLdap3Wrappers:
         attributes: Mapping[str, t.StrSequence],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add()."""
-        normalized_attributes: t.FlatContainerMapping = {
+        normalized_attributes = {
             key: values[0] if values else "" for key, values in attributes.items()
         }
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
@@ -201,7 +201,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             server: p.Ldap.Ldap3Server,
             settings: m.Ldap.ConnectionConfig,
         ) -> p.Ldap.Ldap3Connection:
-            """Create ldap3 Connection t.Container.
+            """Create ldap3 Connection t.JsonValue.
 
             Business Rules:
                 - Bind credentials (user, password) from settings
@@ -216,11 +216,11 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - No network calls if auto_bind=False
 
             Args:
-                server: ldap3 Server t.Container from create_server().
+                server: ldap3 Server t.JsonValue from create_server().
                 settings: Connection configuration with bind credentials.
 
             Returns:
-                ldap3 Connection t.Container (bound if auto_bind=True).
+                ldap3 Connection t.JsonValue (bound if auto_bind=True).
 
             """
             ldap3_server: Server = (
@@ -238,13 +238,13 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldap.Ldap3Server:
-            """Create ldap3 Server t.Container.
+            """Create ldap3 Server t.JsonValue.
 
             Business Rules:
                 - SSL connections use use_ssl=True (port 636 default)
                 - Non-SSL connections use use_ssl=False (port 389 default)
                 - Connect timeout uses settings.timeout value
-                - Server t.Container is created without connection attempt
+                - Server t.JsonValue is created without connection attempt
 
             Architecture:
                 - Uses ldap3 Server() constructor directly
@@ -255,7 +255,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 settings: Connection configuration with host, port, SSL/TLS settings.
 
             Returns:
-                ldap3 Server t.Container configured for connection.
+                ldap3 Server t.JsonValue configured for connection.
 
             """
             if settings.use_ssl:
@@ -445,7 +445,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def extract_attributes(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.Container,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
         ) -> m.Ldif.Attributes:
             """Extract LDAP attributes as m.Ldif.Attributes.
 
@@ -498,11 +498,11 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def extract_attrs_dict(
             attrs: p.Ldap.HasAttributesProperty
-            | Mapping[str, t.Container | t.StrSequence]
+            | Mapping[str, t.JsonValue | t.StrSequence]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
             | m.BaseModel
-            | t.Container,
+            | t.JsonValue,
         ) -> t.Ldap.OperationAttributes:
             """Extract LDAP attributes as dictionary from various input formats.
 
@@ -551,7 +551,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def extract_dn(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.Container,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
         ) -> m.Ldif.DN:
             """Extract Distinguished Name from LDAP entry.
 
@@ -612,7 +612,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def extract_metadata(
-            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.Container,
+            parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
         ) -> m.Ldif.QuirkMetadata | None:
             """Extract server-specific quirk metadata from LDAP entry.
 
@@ -671,7 +671,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def get_dynamic_attribute(
-            obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | t.Container,
+            obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | t.JsonValue,
             attr_name: str,
         ) -> m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None:
             """Get dynamic attribute with type safety.
@@ -700,7 +700,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         def normalize_attr_values(
             attrs_dict: Mapping[
                 str,
-                t.Ldap.Ldap3EntryValue | t.Container | t.StrSequence,
+                t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
             ]
             | None,
         ) -> t.Ldap.OperationAttributes:
@@ -764,7 +764,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             """
             if not metadata:
                 return None
-            metadata_dict: t.MutableFlatContainerMapping = {}
+            metadata_dict: t.MutableJsonMapping = {}
             for raw_key, raw_value in metadata.items():
                 if raw_value is None or isinstance(
                     raw_value,
@@ -808,7 +808,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             This typed wrapper handles the untyped ldap3 add() call.
 
             Args:
-                connection: Active ldap3 Connection t.Container.
+                connection: Active ldap3 Connection t.JsonValue.
                 dn_str: Distinguished name string.
                 attrs_dict: Attributes dictionary (str -> t.StrSequence).
 
@@ -827,7 +827,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             This typed wrapper handles the untyped ldap3 delete() call.
 
             Args:
-                connection: Active ldap3 Connection t.Container.
+                connection: Active ldap3 Connection t.JsonValue.
                 dn_str: Distinguished name string.
 
             Returns:
@@ -888,7 +888,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             This typed wrapper handles the untyped ldap3 modify() call.
 
             Args:
-                connection: Active ldap3 Connection t.Container.
+                connection: Active ldap3 Connection t.JsonValue.
                 dn_str: Distinguished name string.
                 changes: Modification changes dict in ldap3 format.
 
@@ -922,7 +922,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection t.Container
+                connection: Active ldap3 Connection t.JsonValue
                 dn_str: Distinguished name as string
                 ldap_attrs: Attributes dict in ldap3 format
 
@@ -980,7 +980,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection t.Container
+                connection: Active ldap3 Connection t.JsonValue
                 dn: Distinguished name (string or DN model)
 
             Returns:
@@ -1036,7 +1036,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 - Returns r pattern - no exceptions raised
 
             Args:
-                connection: Active ldap3 Connection t.Container
+                connection: Active ldap3 Connection t.JsonValue
                 dn: Distinguished name (string or DN model)
                 changes: Modification changes dict in ldap3 format
 
@@ -1208,7 +1208,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @property
     def connection(self) -> p.Ldap.Ldap3Connection | None:
-        """Get underlying ldap3 Connection t.Container."""
+        """Get underlying ldap3 Connection t.JsonValue."""
         return self._connection
 
     @property
@@ -1303,8 +1303,8 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Establish LDAP connection using ldap3 library.
 
         Business Rules:
-            - Creates ldap3 Server t.Container based on SSL/TLS configuration
-            - Creates ldap3 Connection t.Container with bind credentials
+            - Creates ldap3 Server t.JsonValue based on SSL/TLS configuration
+            - Creates ldap3 Connection t.JsonValue with bind credentials
             - STARTTLS is handled if use_tls=True and use_ssl=False
             - Connection must be bound (authenticated) to succeed
             - Connection state is tracked internally for subsequent operations
@@ -1316,8 +1316,8 @@ class FlextLdapLdap3Adapter(s[bool]):
             - Connection state changes trigger audit events
 
         Architecture:
-            - Uses ConnectionManager.create_server() for Server t.Container
-            - Uses ConnectionManager.create_connection() for Connection t.Container
+            - Uses ConnectionManager.create_server() for Server t.JsonValue
+            - Uses ConnectionManager.create_connection() for Connection t.JsonValue
             - Uses ConnectionManager.handle_tls() for STARTTLS if needed
             - Returns r pattern - no exceptions raised
 
