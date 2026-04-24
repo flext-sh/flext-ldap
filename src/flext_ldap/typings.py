@@ -69,7 +69,6 @@ class FlextLdapTypes(t):
             str,
             t.SequenceOf[LdapModifyChangeValue],
         ]
-        type LaxStr = str | bytes | bytearray
 
 
 t = FlextLdapTypes
