@@ -4,8 +4,8 @@ Provides seamless conversion between ldap3 Entry objects and ldif Entry models,
 enabling integration between LDAP protocol operations and LDIF entry manipulation.
 
 Business Rules:
-    - ldap3.Entry → p.Entry conversion preserves all attributes
-    - p.Entry → ldap3 attributes uses Mapping[str, t.StrSequence] format
+    - ldap3.Entry → p.Ldif.Entry conversion preserves all attributes
+    - p.Ldif.Entry → ldap3 attributes uses Mapping[str, t.StrSequence] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
     - Server-specific normalization uses flext-ldif quirks system
     - DN normalization via u.Ldif.norm_or_fallback() for consistency
@@ -44,8 +44,8 @@ class FlextLdapEntryAdapter(s[bool]):
     """Adapter for converting between ldap3 and ldif entry representations.
 
     This adapter provides bidirectional conversion with universal server support:
-    - ldap3.Entry → p.Entry (for result processing)
-    - p.Entry → t.Ldap.OperationAttributes (for ldap3 operations)
+    - ldap3.Entry → p.Ldif.Entry (for result processing)
+    - p.Ldif.Entry → t.Ldap.OperationAttributes (for ldap3 operations)
     - Server-specific entry normalization using quirks
     - Entry validation for target server types
     - Entry format conversion between different servers
@@ -158,8 +158,10 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         return r[bool].ok(value=True)
 
-    def ldap3_to_ldif_entry(self, ldap3_entry: p.Ldap.Ldap3Entry) -> p.Result[m.Entry]:
-        """Convert ldap3.Entry to p.Entry.
+    def ldap3_to_ldif_entry(
+        self, ldap3_entry: p.Ldap.Ldap3Entry
+    ) -> p.Result[m.Ldif.Entry]:
+        """Convert ldap3.Entry to p.Ldif.Entry.
 
         Business Rules:
             - DN is extracted from entry.entry_dn (string conversion)
@@ -187,7 +189,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 Must have entry_dn and entry_attributes_as_dict attributes.
 
         Returns:
-            r[p.Entry]: Converted entry with metadata
+            r[p.Ldif.Entry]: Converted entry with metadata
             or error if conversion fails (ValueError, TypeError, AttributeError).
 
         """
@@ -241,7 +243,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
-            return m.Entry.create(
+            return m.Ldif.Entry.create(
                 dn=dn_str,
                 attributes=ldif_attrs,
                 metadata=metadata_obj,
@@ -259,13 +261,13 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[m.Entry].fail(f"Failed to create Entry: {e!s}")
+            return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
     ) -> p.Result[t.Ldap.OperationAttributes]:
-        """Convert p.Entry to ldap3 attributes format.
+        """Convert p.Ldif.Entry to ldap3 attributes format.
 
         Business Rules:
             - Entry must have attributes (Attributes model)
@@ -287,7 +289,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns Mapping[str, t.StrSequence] format expected by ldap3
 
         Args:
-            entry: m.Entry with attributes to convert.
+            entry: m.Ldif.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:

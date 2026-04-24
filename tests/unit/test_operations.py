@@ -58,13 +58,13 @@ class TestsFlextLdapOperations:
         ("error_message", "expected"),
         list(c.Ldap.Tests.OPERATIONS_ERROR_DETECTION_SCENARIOS.items()),
     )
-    def test_is_already_exists_error_detection(
+    def test_already_exists_error_detection(
         self,
         error_message: str,
         expected: bool,
     ) -> None:
-        """Test is_already_exists_error detects various 'already exists' patterns."""
-        result = FlextLdapOperations.is_already_exists_error(error_message)
+        """Test already_exists_error detects various 'already exists' patterns."""
+        result = FlextLdapOperations.already_exists_error(error_message)
         u.Ldap.Tests.that(result, eq=expected)
 
     def test_execute_method_returns_result(self) -> None:

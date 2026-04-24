@@ -127,7 +127,7 @@ class FlextLdapOperations(s):
             super().__init__()
             self._ops = operations
 
-        def execute(self, entry: m.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
+        def execute(self, entry: m.Ldif.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
             Business Rules:
@@ -159,7 +159,7 @@ class FlextLdapOperations(s):
 
         def handle_existing_entry(
             self,
-            entry: m.Entry,
+            entry: m.Ldif.Entry,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
@@ -228,7 +228,7 @@ class FlextLdapOperations(s):
 
         def handle_regular_add(
             self,
-            entry: m.Entry,
+            entry: m.Ldif.Entry,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
@@ -258,7 +258,7 @@ class FlextLdapOperations(s):
                 .lash(
                     lambda e: (
                         self.handle_existing_entry(entry)
-                        if self._ops.is_already_exists_error(u.to_str(e))
+                        if self._ops.already_exists_error(u.to_str(e))
                         else r[m.Ldap.LdapOperationResult].fail(u.to_str(e))
                     ),
                 )
@@ -266,7 +266,7 @@ class FlextLdapOperations(s):
 
         def handle_schema_modify(
             self,
-            entry: m.Entry,
+            entry: m.Ldif.Entry,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Apply a schema modification entry (supports multiple add operations).
 
@@ -338,7 +338,7 @@ class FlextLdapOperations(s):
                                     c.Ldap.UpsertOperations.SKIPPED,
                                 ),
                             )
-                            if self._ops.is_already_exists_error(u.to_str(e))
+                            if self._ops.already_exists_error(u.to_str(e))
                             else r[m.Ldap.LdapOperationResult].fail(
                                 u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR,
                             )
@@ -407,7 +407,7 @@ class FlextLdapOperations(s):
         return self._upsert_handler_instance
 
     @staticmethod
-    def is_already_exists_error(error_message: str) -> bool:
+    def already_exists_error(error_message: str) -> bool:
         """Return ``True`` when the error indicates an existing entry.
 
         Business Rules:
@@ -437,7 +437,7 @@ class FlextLdapOperations(s):
 
     def add(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
@@ -464,8 +464,8 @@ class FlextLdapOperations(s):
             r containing OperationResult with success status and entries_affected=1
 
         """
-        entry_for_adapter: m.Entry
-        entry_for_adapter = m.Entry.model_validate(entry)
+        entry_for_adapter: m.Ldif.Entry
+        entry_for_adapter = m.Ldif.Entry.model_validate(entry)
         metadata = entry_for_adapter.metadata
         current_server_raw = (
             metadata.target_server_type
@@ -493,7 +493,7 @@ class FlextLdapOperations(s):
                     conversion_result.error or "Failed to convert entry for LDAP add",
                 )
             converted_entry = conversion_result.value
-            if not isinstance(converted_entry, m.Entry):
+            if not isinstance(converted_entry, m.Ldif.Entry):
                 return r[m.Ldap.OperationResult].fail(
                     f"Expected converted Entry, got {type(converted_entry).__name__}",
                 )
@@ -505,7 +505,7 @@ class FlextLdapOperations(s):
 
     def batch_upsert(
         self,
-        entries: Sequence[m.Entry],
+        entries: Sequence[m.Ldif.Entry],
         *,
         progress_callback: t.Ldap.LdapProgressCallback | None = None,
         retry_on_errors: t.StrSequence | None = None,
@@ -819,7 +819,7 @@ class FlextLdapOperations(s):
 
     def upsert(
         self,
-        entry: m.Entry,
+        entry: m.Ldif.Entry,
         *,
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
