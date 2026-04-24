@@ -489,11 +489,12 @@ class FlextLdapLdap3Adapter(s[bool]):
             attrs_dict = FlextLdapLdap3Adapter.ResultConverter.extract_attrs_dict(
                 attrs_raw,
             )
-            return m.Ldif.Attributes.model_validate({
+            validated: m.Ldif.Attributes = m.Ldif.Attributes.model_validate({
                 "attributes": attrs_dict,
                 "attribute_metadata": {},
                 "metadata": None,
             })
+            return validated
 
         @staticmethod
         def extract_attrs_dict(
@@ -540,8 +541,8 @@ class FlextLdapLdap3Adapter(s[bool]):
                     return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                         model_attrs,
                     )
-                empty_attrs: t.Ldap.OperationAttributes = {}
-                return empty_attrs
+                empty_attrs_model: t.Ldap.OperationAttributes = {}
+                return empty_attrs_model
             if isinstance(attrs, Mapping):
                 return FlextLdapLdap3Adapter.ResultConverter.normalize_attr_values(
                     attrs,
@@ -664,9 +665,10 @@ class FlextLdapLdap3Adapter(s[bool]):
                 quirk_type_raw = normalized.get("quirk_type")
                 if not isinstance(quirk_type_raw, str):
                     return None
-                return m.Ldif.QuirkMetadata.model_validate({
+                quirk: m.Ldif.QuirkMetadata = m.Ldif.QuirkMetadata.model_validate({
                     "quirk_type": quirk_type_raw,
                 })
+                return quirk
             return None
 
         @staticmethod
@@ -693,7 +695,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             if attr_name == "metadata" and isinstance(obj, m.Ldif.Entry):
                 return obj.metadata
             if attr_name == "entry_dn" and isinstance(obj, p.Ldap.Ldap3Entry):
-                return obj.entry_dn
+                return str(obj.entry_dn)
             return None
 
         @staticmethod

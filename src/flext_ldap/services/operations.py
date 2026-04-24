@@ -498,7 +498,10 @@ class FlextLdapOperations(s):
                     f"Expected converted Entry, got {type(converted_entry).__name__}",
                 )
             entry_for_adapter = converted_entry
-        return self._ensure_adapter().add(entry_for_adapter)
+        add_result: p.Result[m.Ldap.OperationResult] = self._ensure_adapter().add(
+            entry_for_adapter,
+        )
+        return add_result
 
     def batch_upsert(
         self,
@@ -601,13 +604,10 @@ class FlextLdapOperations(s):
                 continue
         if stop_on_error and "_stop_error" in stats_builder:
             error_idx = stats_builder["_stop_error"]
-            match error_idx:
-                case int():
-                    return r[m.Ldap.LdapBatchStats].fail(
-                        f"Batch upsert stopped on error at entry {error_idx}/{total_entries}",
-                    )
-                case _:
-                    pass
+            if isinstance(error_idx, int):
+                return r[m.Ldap.LdapBatchStats].fail(
+                    f"Batch upsert stopped on error at entry {error_idx}/{total_entries}",
+                )
         stats = m.Ldap.LdapBatchStats(
             synced=stats_builder["synced"],
             failed=stats_builder["failed"],
@@ -676,12 +676,13 @@ class FlextLdapOperations(s):
             case _:
                 dn_model = dn
         result = self._ensure_adapter().delete(dn_model)
-        return result.fold(
+        folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
             on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
         )
+        return folded
 
     def execute(
         self,
@@ -756,12 +757,13 @@ class FlextLdapOperations(s):
             case _:
                 dn_model = dn
         result = self._ensure_adapter().modify(dn_model, changes)
-        return result.fold(
+        folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
             on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
         )
+        return folded
 
     def search(
         self,
@@ -807,12 +809,13 @@ class FlextLdapOperations(s):
             normalized_options,
             server_type=effective_server_type,
         )
-        return result.fold(
+        folded: p.Result[m.Ldap.SearchResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.SearchResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
             on_success=lambda v: r[m.Ldap.SearchResult].ok(v),
         )
+        return folded
 
     def upsert(
         self,

@@ -68,7 +68,8 @@ class FlextLdapEntryAdapter(s[bool]):
             value: t.Ldap.Ldap3EntryValue,
         ) -> t.StrSequence:
             """Compatibility shim delegating value normalization to ``u.Ldap``."""
-            return u.Ldap.ldap3_value_to_strings(value)
+            result: t.StrSequence = u.Ldap.ldap3_value_to_strings(value)
+            return result
 
         @staticmethod
         def is_base64_encoded(
@@ -76,14 +77,15 @@ class FlextLdapEntryAdapter(s[bool]):
             threshold: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD,
         ) -> bool:
             """Compatibility shim delegating encoding detection to ``u.Ldap``."""
-            return u.Ldap.is_base64_encoded(value, threshold)
+            return bool(u.Ldap.is_base64_encoded(value, threshold))
 
         @staticmethod
         def normalize_original_attr_value(
             value: t.Ldap.Ldap3EntryValue,
         ) -> t.StrSequence:
             """Compatibility shim delegating normalization to ``u.Ldap``."""
-            return u.Ldap.normalize_original_attr_value(value)
+            result: t.StrSequence = u.Ldap.normalize_original_attr_value(value)
+            return result
 
     _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldif.ServerTypes.RFC)
 

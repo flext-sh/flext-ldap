@@ -13,7 +13,8 @@ class FlextLdapServerDetector(s):
     @staticmethod
     def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
         """Compatibility shim for unit tests and older callers."""
-        return u.Ldap.get_first_attribute_value(attrs, key)
+        value: str | None = u.Ldap.get_first_attribute_value(attrs, key)
+        return value
 
     @staticmethod
     def _detect_from_attributes(
@@ -39,7 +40,8 @@ class FlextLdapServerDetector(s):
         connection: p.Ldap.Ldap3Connection,
     ) -> p.Result[str]:
         """Detect the effective LDAP server type from an active connection."""
-        return u.Ldap.detect_from_connection(connection)
+        detection_result: p.Result[str] = u.Ldap.detect_from_connection(connection)
+        return detection_result
 
     def execute(
         self,

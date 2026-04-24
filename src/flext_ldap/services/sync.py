@@ -34,7 +34,9 @@ class FlextLdapSyncCallbacks:
             signature = inspect.signature(callback)
         except (TypeError, ValueError, AttributeError):
             return False
-        return len(signature.parameters) == c.Ldap.Callback.MULTI_PHASE_PARAM_COUNT
+        return bool(
+            len(signature.parameters) == c.Ldap.Callback.MULTI_PHASE_PARAM_COUNT,
+        )
 
     @staticmethod
     def is_single_phase_callback(
@@ -47,7 +49,9 @@ class FlextLdapSyncCallbacks:
             signature = inspect.signature(callback)
         except (TypeError, ValueError, AttributeError):
             return False
-        return len(signature.parameters) == c.Ldap.Callback.SINGLE_PHASE_PARAM_COUNT
+        return bool(
+            len(signature.parameters) == c.Ldap.Callback.SINGLE_PHASE_PARAM_COUNT,
+        )
 
 
 class FlextLdapSync(FlextLdapOperations):
