@@ -96,7 +96,6 @@ class FlextLdapEntryAdapter(s[bool]):
             server_type: Server type for normalization (defaults to RFC).
 
         """
-        super().__init__()
         resolved_type: str = server_type or c.Ldif.ServerTypes.RFC
         self._server_type = resolved_type
 
