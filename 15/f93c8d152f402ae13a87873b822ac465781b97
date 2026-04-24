@@ -1,0 +1,41 @@
+src/flext_ldap/adapters/ldap3.py
+  9f85f2ec1ecedfdb 492,497,544-545,668,671,698
+src/flext_ldap/adapters/entry.py
+  9f85f2ec1ecedfdb 71-72,80,87-88
+src/flext_ldap/_models/ldap.py
+  9f85f2ec1ecedfdb 339,343,345-346,355,361
+src/flext_ldap/utilities.py
+  9f85f2ec1ecedfdb 157-158
+src/flext_ldap/services/operations.py
+  9f85f2ec1ecedfdb 501-504,607-610,679,685,760,766,812,818
+src/flext_ldap/services/detection.py
+  9f85f2ec1ecedfdb 16-17,43-44
+src/flext_ldap/services/sync.py
+  9f85f2ec1ecedfdb 37-39,52-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "15f93c8d152f402ae13a87873b822ac465781b97",
+  "prompts": {
+    "9f85f2ec1ecedfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "55c96ba6-e7b4-41e4-8a67-ec8c8d953db4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 33,
+      "accepted_lines": 44,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/0d3f781a985576490b7cd81234b28ddea487764330cea3dca3ddf48feb0dc6b2"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
