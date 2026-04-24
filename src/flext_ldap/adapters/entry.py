@@ -158,9 +158,7 @@ class FlextLdapEntryAdapter(s[bool]):
         """
         return r[bool].ok(value=True)
 
-    def ldap3_to_ldif_entry(
-        self, ldap3_entry: p.Ldap.Ldap3Entry
-    ) -> p.Result[m.Ldif.Entry]:
+    def ldap3_to_ldif_entry(self, ldap3_entry: p.Ldap.Ldap3Entry) -> p.Result[m.Entry]:
         """Convert ldap3.Entry to p.Entry.
 
         Business Rules:
@@ -243,7 +241,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 "quirk_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
-            return m.Ldif.Entry.create(
+            return m.Entry.create(
                 dn=dn_str,
                 attributes=ldif_attrs,
                 metadata=metadata_obj,
@@ -261,11 +259,11 @@ class FlextLdapEntryAdapter(s[bool]):
                 error=str(e),
                 error_type=type(e).__name__,
             )
-            return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
+            return r[m.Entry].fail(f"Failed to create Entry: {e!s}")
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        entry: m.Ldif.Entry,
+        entry: m.Entry,
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Convert p.Entry to ldap3 attributes format.
 
@@ -289,7 +287,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns Mapping[str, t.StrSequence] format expected by ldap3
 
         Args:
-            entry: m.Ldif.Entry with attributes to convert.
+            entry: m.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:

@@ -47,14 +47,14 @@ class FlextLdapProtocols(p):
 
         All LDAP domain-specific protocols are organized here at ROOT level
         to enable proper namespace separation. LDIF protocols from parent
-        are accessed via `.Ldif` namespace (e.g., `m.Ldif.Entry`).
+        are accessed via `.Ldif` namespace (e.g., `m.Entry`).
 
         Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
         """
 
         # ── Layer 0: Domain Protocols ────────────────────────────
         # DN, Attributes, Entry → use p.Ldif.DN,
-        # p.Ldif.Attributes, p.Ldif.Entry
+        # p.Ldif.Attributes, p.Entry
         # directly from flext-ldif (SSOT — no redefinition in Ldap namespace)
 
         @runtime_checkable
@@ -137,7 +137,7 @@ class FlextLdapProtocols(p):
         class SearchResult(Protocol):
             """Protocol for LDAP search result (structural type)."""
 
-            entries: Sequence[p.Ldif.Entry]
+            entries: Sequence[p.Entry]
             search_options: FlextLdapProtocols.Ldap.SearchOptions
 
         @runtime_checkable
@@ -174,7 +174,7 @@ class FlextLdapProtocols(p):
 
             def add(
                 self,
-                entry: p.Ldif.Entry,
+                entry: p.Entry,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -298,7 +298,7 @@ class FlextLdapProtocols(p):
 
             def add(
                 self,
-                entry: p.Ldif.Entry,
+                entry: p.Entry,
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 

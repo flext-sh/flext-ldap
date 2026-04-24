@@ -356,7 +356,7 @@ class FlextLdapUtilities(u):
         def search_entry_to_ldif_entry(
             cls,
             entry: Mapping[str, t.Ldap.Ldap3AttributeValue | t.StrSequence],
-        ) -> m.Ldif.Entry:
+        ) -> m.Entry:
             """Convert LDAP search-result mappings into canonical LDIF entries."""
             raw_entry = dict(entry)
             dn_values = cls.ldap3_value_to_strings(raw_entry.get("dn"))
@@ -366,7 +366,7 @@ class FlextLdapUtilities(u):
                 for key, value in raw_entry.items()
                 if key != "dn"
             }
-            return m.Ldif.Entry.create(
+            return m.Entry.create(
                 dn=dn_value,
                 attributes=attributes,
             ).unwrap()
@@ -405,7 +405,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def extract_entry_attributes(
             cls,
-            entry: p.Ldif.Entry,
+            entry: p.Entry,
         ) -> Mapping[str, t.StrSequence]:
             """Normalize entry attributes to the canonical LDAP comparison mapping."""
             attrs = entry.attributes
@@ -477,8 +477,8 @@ class FlextLdapUtilities(u):
         @classmethod
         def compare_entries(
             cls,
-            existing_entry: p.Ldif.Entry,
-            new_entry: p.Ldif.Entry,
+            existing_entry: p.Entry,
+            new_entry: p.Entry,
         ) -> t.Ldap.OperationChanges | None:
             """Compare canonical LDIF entries and return LDAP modify operations."""
             existing_attrs = cls.extract_entry_attributes(existing_entry)
@@ -501,7 +501,7 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def dn_str(
-            dn: str | m.Ldif.DN | m.Ldif.Entry | None,
+            dn: str | m.Ldif.DN | m.Entry | None,
             *,
             default: str = c.Ldap.Defaults.UNKNOWN_CATEGORY,
         ) -> str:
