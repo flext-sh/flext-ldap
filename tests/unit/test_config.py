@@ -14,7 +14,7 @@ from tests import c, u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapSettings:
+class TestsFlextLdapConfig:
     @pytest.fixture(autouse=True)
     def reset_settings_singleton(self) -> None:
         FlextLdapSettings.reset_for_testing()

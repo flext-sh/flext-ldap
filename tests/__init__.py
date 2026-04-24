@@ -23,11 +23,11 @@ if _t.TYPE_CHECKING:
     from tests.typings import TestsFlextLdapTypes, t
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
-    from tests.unit.test_config import TestsFlextLdapSettings
+    from tests.unit.test_config import TestsFlextLdapConfig
     from tests.unit.test_constants import TestsFlextLdapConstantsUnit
     from tests.unit.test_detection import TestsFlextLdapDetection
     from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from tests.unit.test_ldap3_adapter import TestsFlextLdap3Adapter
+    from tests.unit.test_ldap3_adapter import TestsFlextLdapLdap3Adapter
     from tests.unit.test_models import TestsFlextLdapModelsUnit
     from tests.unit.test_models_search import TestsFlextLdapModelsSearch
     from tests.unit.test_models_sync import TestsFlextLdapModelsSync
@@ -62,11 +62,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_api": ("TestsFlextLdapApi",),
             ".unit.test_base": ("TestsFlextLdapBase",),
-            ".unit.test_config": ("TestsFlextLdapSettings",),
+            ".unit.test_config": ("TestsFlextLdapConfig",),
             ".unit.test_constants": ("TestsFlextLdapConstantsUnit",),
             ".unit.test_detection": ("TestsFlextLdapDetection",),
             ".unit.test_entry_adapter": ("TestsFlextLdapEntryAdapter",),
-            ".unit.test_ldap3_adapter": ("TestsFlextLdap3Adapter",),
+            ".unit.test_ldap3_adapter": ("TestsFlextLdapLdap3Adapter",),
             ".unit.test_models": ("TestsFlextLdapModelsUnit",),
             ".unit.test_models_search": ("TestsFlextLdapModelsSearch",),
             ".unit.test_models_sync": ("TestsFlextLdapModelsSync",),
@@ -110,20 +110,20 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "TestsFlextLdap3Adapter",
     "TestsFlextLdapApi",
     "TestsFlextLdapBase",
+    "TestsFlextLdapConfig",
     "TestsFlextLdapConstants",
     "TestsFlextLdapConstantsUnit",
     "TestsFlextLdapDetection",
     "TestsFlextLdapEntryAdapter",
+    "TestsFlextLdapLdap3Adapter",
     "TestsFlextLdapModels",
     "TestsFlextLdapModelsSearch",
     "TestsFlextLdapModelsSync",
     "TestsFlextLdapModelsUnit",
     "TestsFlextLdapOperations",
     "TestsFlextLdapProtocols",
-    "TestsFlextLdapSettings",
     "TestsFlextLdapSmoke",
     "TestsFlextLdapSync",
     "TestsFlextLdapTypes",

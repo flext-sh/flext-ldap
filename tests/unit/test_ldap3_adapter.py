@@ -17,7 +17,7 @@ from tests import c, m, u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdap3Adapter:
+class TestsFlextLdapLdap3Adapter:
     """Comprehensive tests for Ldap3Adapter.
 
     All test data comes from c.Ldap.Tests.* — zero inline constants.
