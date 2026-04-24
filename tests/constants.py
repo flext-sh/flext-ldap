@@ -6,13 +6,11 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from enum import StrEnum
 from types import MappingProxyType
 from typing import Final
 
 from flext_cli import t
 from flext_tests import FlextTestsConstants
-from frozenlist import FrozenList
 
 from flext_ldap import c
 
@@ -22,21 +20,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
     class Ldap(c.Ldap):
         """LDAP test constants."""
-
-        class _FieldName(StrEnum):
-            HOST = "host"
-            PORT = "port"
-            BIND_DN = "bind_dn"
-            BIND_PASSWORD = "bind_password"
-            BASE_DN = "base_dn"
-            SCOPE = "scope"
-            PROPERTIES = "properties"
-            TYPE = "type"
-            SUCCESS_RATE = "success_rate"
-
-        class _SearchScopeValue(StrEnum):
-            BASE = "BASE"
-            SUBTREE_LOWER = "subtree"
 
         class Tests:
             """Direct `c.Ldap.Tests.*` constants with no extra subnamespace."""
@@ -51,21 +34,18 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             RFC_DEFAULT_FILTER: Final[str] = "(objectClass=*)"
             RFC_DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
 
-            API_EXPECTED_METHODS: Final[FrozenList[str]] = FrozenList(
-                [
-                    "connect",
-                    "disconnect",
-                    "search",
-                    "add",
-                    "modify",
-                    "delete",
-                    "upsert",
-                    "batch_upsert",
-                    "sync_phase_entries",
-                    "sync_multiple_phases",
-                ],
+            API_EXPECTED_METHODS: Final[tuple[str, ...]] = (
+                "connect",
+                "disconnect",
+                "search",
+                "add",
+                "modify",
+                "delete",
+                "upsert",
+                "batch_upsert",
+                "sync_phase_entries",
+                "sync_multiple_phases",
             )
-            API_EXPECTED_METHODS.freeze()
 
             BASE_FAIL_ERROR_MESSAGE: Final[str] = "nope"
             BASE_EXPORT_ALIAS: Final[str] = "s"
@@ -79,15 +59,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             CONFIG_PORT_MIN: Final[int] = 1
             CONFIG_PORT_MAX: Final[int] = 65535
             CONFIG_ENV_PREFIX: Final[str] = "FLEXT_LDAP_"
-            CONFIG_SSL_TLS_COMBOS: Final[FrozenList[tuple[bool, bool]]] = FrozenList(
-                [
-                    (False, False),
-                    (True, False),
-                    (False, True),
-                    (True, True),
-                ],
+            CONFIG_SSL_TLS_COMBOS: Final[tuple[tuple[bool, bool], ...]] = (
+                (False, False),
+                (True, False),
+                (False, True),
+                (True, True),
             )
-            CONFIG_SSL_TLS_COMBOS.freeze()
 
             FIELD_HOST: Final[str] = "host"
             FIELD_PORT: Final[str] = "port"
@@ -117,12 +94,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[FrozenList[str]] = FrozenList(
-                ["people", "groups", "services"],
-            )
-            DOCKER_OU_NAMES.freeze()
-            DOCKER_OU_SEARCH_ATTRS: Final[FrozenList[str]] = FrozenList(["ou"])
-            DOCKER_OU_SEARCH_ATTRS.freeze()
+            DOCKER_OU_NAMES: Final[tuple[str, ...]] = ("people", "groups", "services")
+            DOCKER_OU_SEARCH_ATTRS: Final[tuple[str, ...]] = ("ou",)
 
             ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset(
                 {
@@ -245,10 +218,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             STRING_EMPTY: Final[str] = ""
             STRING_DEFAULT_CUSTOM: Final[str] = "default"
 
-            LIST_ABC: Final[FrozenList[str]] = FrozenList(["a", "b", "c"])
-            LIST_ABC.freeze()
-            LIST_ABC_UPPER: Final[FrozenList[str]] = FrozenList(["A", "B", "C"])
-            LIST_ABC_UPPER.freeze()
+            LIST_ABC: Final[tuple[str, ...]] = ("a", "b", "c")
+            LIST_ABC_UPPER: Final[tuple[str, ...]] = ("A", "B", "C")
             LIST_SINGLE: Final[str] = "single"
 
             FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType(
@@ -259,13 +230,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     "d": "value2",
                 },
             )
-            FILTER_TRUTHY_EXPECTED_KEYS: Final[FrozenList[str]] = FrozenList(
-                ["a", "c", "d"],
-            )
-            FILTER_TRUTHY_EXPECTED_KEYS.freeze()
+            FILTER_TRUTHY_EXPECTED_KEYS: Final[tuple[str, ...]] = ("a", "c", "d")
 
-            NORM_JOIN_INPUT: Final[FrozenList[str]] = FrozenList(["A", "B", "C"])
-            NORM_JOIN_INPUT.freeze()
+            NORM_JOIN_INPUT: Final[tuple[str, ...]] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
 
             CALLABLE_HANDLER_FOUND_KEY: Final[str] = "handler1"
@@ -322,8 +289,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
             SEARCH_FILTER_CN: Final[str] = "(cn=*)"
             SEARCH_FILTER_UID: Final[str] = "(uid=*)"
-            SEARCH_ATTRIBUTES: Final[FrozenList[str]] = FrozenList(["cn", "mail"])
-            SEARCH_ATTRIBUTES.freeze()
+            SEARCH_ATTRIBUTES: Final[tuple[str, ...]] = ("cn", "mail")
             SEARCH_SIZE_LIMIT_CUSTOM: Final[int] = 100
             SEARCH_TIME_LIMIT_CUSTOM: Final[int] = 30
             SEARCH_NORMALIZED_SIZE_LIMIT: Final[int] = 50
@@ -391,14 +357,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_UPSERT_BATCH_SUCCESSFUL: Final[int] = 90
             SYNC_UPSERT_BATCH_FAILED: Final[int] = 10
 
-            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[FrozenList[str]] = FrozenList(
-                ["cn", "mail", "telephoneNumber"],
+            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[tuple[str, ...]] = (
+                "cn",
+                "mail",
+                "telephoneNumber",
             )
-            SYNC_METADATA_SOURCE_ATTRIBUTES.freeze()
-            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[FrozenList[str]] = FrozenList(
-                ["userPassword"],
-            )
-            SYNC_METADATA_REMOVED_ATTRIBUTES.freeze()
+            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[tuple[str, ...]] = ("userPassword",)
 
             SYNC_PHASE_TOTAL_ENTRIES: Final[int] = 100
             SYNC_PHASE_SYNCED: Final[int] = 90

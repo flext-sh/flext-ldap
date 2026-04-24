@@ -19,7 +19,7 @@ logger = u.fetch_logger(__name__)
 
 
 @pytest.fixture(autouse=True)
-def _reset_settings_singleton() -> None:
+def reset_settings_singleton() -> None:
     """Reset FlextSettings singleton between tests."""
     FlextSettings.reset_for_testing()
 
