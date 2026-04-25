@@ -36,7 +36,7 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_ldif import FlextLdifConversion, r
+from flext_ldif import FlextLdifConversion, e, r
 
 from flext_ldap import c, m, p, s, t, u
 
@@ -371,7 +371,7 @@ class FlextLdapOperations(s):
             add_op_raw = add_op_result
             add_op: t.StrSequence = [str(item) for item in add_op_raw]
             if not add_op:
-                return r[str].fail("Schema modify entry missing 'add' attribute")
+                return e.fail_validation("add", error="missing in schema modify entry")
             return r[str].ok(add_op[0])
 
         def _extract_schema_attribute_values(
@@ -892,21 +892,21 @@ class FlextLdapOperations(s):
                 skipped=stats["skipped"],
             )
             callback(entry_index, total, entry_dn or "", callback_stats)
-        except (RuntimeError, TypeError, ValueError) as e:
+        except (RuntimeError, TypeError, ValueError) as exc:
             logger = FlextLdapOperations._get_structlog_logger()
             if logger is not None:
                 logger.warning(
                     "Progress callback failed",
                     operation=c.Ldap.LdapOperationNames.SYNC,
                     entry_index=entry_index,
-                    error=str(e),
+                    error=str(exc),
                 )
             else:
                 logging.getLogger(__name__).warning(
                     "Progress callback failed: operation=%s entry=%s error=%s",
                     c.Ldap.LdapOperationNames.SYNC,
                     entry_index,
-                    e,
+                    exc,
                 )
 
     def _update_batch_stats(

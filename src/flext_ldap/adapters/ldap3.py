@@ -40,7 +40,7 @@ from collections.abc import (
 from datetime import datetime
 from typing import ClassVar, override
 
-from flext_ldif import r
+from flext_ldif import e, r
 from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, s, t, u
@@ -306,7 +306,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 return r[bool].ok(value=True)
             try:
                 if not FlextLdapLdap3Wrappers.start_tls(connection):
-                    return r[bool].fail("Failed to start TLS")
+                    return e.fail_operation("start TLS")
                 return r[bool].ok(value=True)
             except (
                 ValueError,
@@ -954,8 +954,8 @@ class FlextLdapLdap3Adapter(s[bool]):
                 OSError,
                 RuntimeError,
                 ImportError,
-            ) as e:
-                error_msg = f"Add failed: {e!s}"
+            ) as exc:
+                error_msg = f"Add failed: {exc!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_delete(
@@ -1009,8 +1009,8 @@ class FlextLdapLdap3Adapter(s[bool]):
                 OSError,
                 RuntimeError,
                 ImportError,
-            ) as e:
-                error_msg = f"Delete failed: {e!s}"
+            ) as exc:
+                error_msg = f"Delete failed: {exc!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
         def execute_modify(
@@ -1066,8 +1066,8 @@ class FlextLdapLdap3Adapter(s[bool]):
                 OSError,
                 RuntimeError,
                 ImportError,
-            ) as e:
-                error_msg = f"Modify failed: {e!s}"
+            ) as exc:
+                error_msg = f"Modify failed: {exc!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
     class SearchExecutor:
@@ -1195,8 +1195,8 @@ class FlextLdapLdap3Adapter(s[bool]):
                 OSError,
                 RuntimeError,
                 ImportError,
-            ) as e:
-                return r[Sequence[m.Ldif.Entry]].fail(f"Search failed: {e!s}")
+            ) as exc:
+                return r[Sequence[m.Ldif.Entry]].fail(f"Search failed: {exc!s}")
 
     _connection: p.Ldap.Ldap3Connection | None
     _server: p.Ldap.Ldap3Server | None
@@ -1339,7 +1339,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 return tls_result
             # Check bound state - connection is guaranteed to be non-None after create_connection
             if not FlextLdapLdap3Wrappers.is_bound(self._connection):
-                return r[bool].fail("Failed to bind to LDAP server")
+                return e.fail_operation("bind to LDAP server")
             return r[bool].ok(value=True)
         except (
             ValueError,
@@ -1349,8 +1349,8 @@ class FlextLdapLdap3Adapter(s[bool]):
             OSError,
             RuntimeError,
             ImportError,
-        ) as e:
-            return r[bool].fail(f"Connection failed: {e!s}")
+        ) as exc:
+            return r[bool].fail(f"Connection failed: {exc!s}")
 
     def delete(
         self,
@@ -1420,8 +1420,8 @@ class FlextLdapLdap3Adapter(s[bool]):
                 OSError,
                 RuntimeError,
                 ImportError,
-            ) as e:
-                self.logger.debug("Error during disconnect", error=str(e))
+            ) as exc:
+                self.logger.debug("Error during disconnect", error=str(exc))
             finally:
                 self._connection = None
                 self._server = None

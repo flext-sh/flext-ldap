@@ -35,7 +35,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from flext_ldif import r
+from flext_ldif import e, r
 
 from flext_ldap import c, m, p, s, t, u
 
@@ -218,11 +218,11 @@ class FlextLdapEntryAdapter(s[bool]):
                     OSError,
                     RuntimeError,
                     ImportError,
-                ) as e:
+                ) as exc:
                     logger.debug(
                         "Failed to convert attribute %s, skipping",
                         key,
-                        exc_info=e,
+                        exc_info=exc,
                     )
                     continue
             conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
@@ -247,7 +247,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 attributes=ldif_attrs,
                 metadata=metadata_obj,
             )
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError) as exc:
             entry_dn_for_log = (
                 str(ldap3_entry.entry_dn)
                 if ldap3_entry.entry_dn
@@ -257,10 +257,10 @@ class FlextLdapEntryAdapter(s[bool]):
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
                 entry_dn=entry_dn_for_log,
-                error=str(e),
-                error_type=type(e).__name__,
+                error=str(exc),
+                error_type=type(exc).__name__,
             )
-            return r[m.Ldif.Entry].fail(f"Failed to create Entry: {e!s}")
+            return e.fail_operation("create Entry", exc)
 
     def ldif_entry_to_ldap3_attributes(
         self,
@@ -297,14 +297,14 @@ class FlextLdapEntryAdapter(s[bool]):
 
         """
         if entry.attributes is None:
-            return r[t.Ldap.OperationAttributes].fail("Entry has no attributes")
+            return e.fail_validation("entry.attributes", error="missing")
         ldif_attrs = entry.attributes
         attrs_dict = ldif_attrs.attributes
         if not attrs_dict:
-            return r[t.Ldap.OperationAttributes].fail("Entry has no attributes")
+            return e.fail_validation("entry.attributes", error="empty")
         try:
             return r[t.Ldap.OperationAttributes].ok(u.Ldap.attr_to_str_list(attrs_dict))
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError) as exc:
             dn_value = (
                 getattr(entry.dn, "value", entry.dn)
                 if entry.dn
@@ -320,11 +320,12 @@ class FlextLdapEntryAdapter(s[bool]):
                 "Failed to convert LDIF entry to ldap3 attributes format",
                 operation=c.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
                 entry_dn=entry_dn_str,
-                error=str(e),
-                error_type=type(e).__name__,
+                error=str(exc),
+                error_type=type(exc).__name__,
             )
-            return r[t.Ldap.OperationAttributes].fail(
-                f"Failed to convert attributes to ldap3 format: {e!s}",
+            return e.fail_operation(
+                "convert attributes to ldap3 format",
+                exc,
             )
 
     def _convert_ldap3_value_to_list(

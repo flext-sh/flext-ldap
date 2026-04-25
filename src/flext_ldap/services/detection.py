@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import r
+from flext_ldif import e, r
 
 from flext_ldap import c, m, p, s, t, u
 
@@ -50,10 +50,12 @@ class FlextLdapServerDetector(s):
         """Detect server type using the provided ``connection`` keyword argument."""
         connection_raw = kwargs.get("connection")
         if connection_raw is None:
-            return r[m.Ldap.Response].fail("connection parameter required")
+            return e.fail_validation("connection", error="parameter required")
         if not isinstance(connection_raw, p.Ldap.Ldap3Connection):
-            return r[m.Ldap.Response].fail(
-                f"connection must be ldap3.Connection, got {type(connection_raw).__name__}",
+            return e.fail_type_mismatch(
+                "ldap3.Connection",
+                type(connection_raw).__name__,
+                service_name="connection",
             )
         return self.detect_from_connection(connection_raw).map(
             lambda detected_type: m.Ldap.OperationResult(

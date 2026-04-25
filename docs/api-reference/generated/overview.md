@@ -7,9 +7,9 @@
 - Description: Enterprise LDAP Operations Library for FLEXT Framework
 - Project class: `domain`
 - Keywords: `adapter`, `clean-architecture`, `ddd`, `enterprise`, `flext`, `integration`, `ldap`, `typed`
-- Main facades: `FlextLdapSyncCallbacks`, `FlextLdap`, `FlextLdapLdap3Adapter`, `FlextLdapSync`, `FlextLdapEntryAdapter`, `FlextLdapOperations`, `FlextLdapModelsLdap`, `FlextLdapServerDetector` (+10 more)
+- Main facades: `FlextLdapProtocols`, `FlextLdapService`, `FlextLdap`, `FlextLdapModelsLdap`, `FlextLdapLdap3Adapter`, `FlextLdapSettings`, `FlextLdapTypes`, `FlextLdapModels` (+10 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdapSyncCallbacks`, `FlextLdap`, `FlextLdapLdap3Adapter`, `FlextLdapSync`, `FlextLdapEntryAdapter`, `FlextLdapOperations`, `FlextLdapModelsLdap`, `FlextLdapServerDetector`, `FlextLdapConstants`, `FlextLdapProtocols` (+9 more)
+- Public symbol exports: `FlextLdapProtocols`, `FlextLdapService`, `FlextLdap`, `FlextLdapModelsLdap`, `FlextLdapLdap3Adapter`, `FlextLdapSettings`, `FlextLdapTypes`, `FlextLdapModels`, `FlextLdapConstants`, `FlextLdapApiRuntime` (+9 more)
 - Exported module shortcuts: _none_
 - Generated module pages: `16`
 
