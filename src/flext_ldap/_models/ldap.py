@@ -11,6 +11,7 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, TypeAlias
 
 from flext_ldif import m, u
@@ -385,7 +386,7 @@ class FlextLdapModelsLdap:
             arbitrary_types_allowed=True,
         )
         phase_results: Mapping[str, m.BaseModel] = u.Field(
-            default_factory=dict,
+            default_factory=lambda: MappingProxyType({}),
             description="Per-phase sync results keyed by phase name",
         )
         total_entries: t.NonNegativeInt = 0
