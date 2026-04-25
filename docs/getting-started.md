@@ -18,7 +18,7 @@
   - [**User Authentication**](#user-authentication)
 - [Universal LDAP Interface](#universal-ldap-interface)
   - [**Server-Specific Operations**](#server-specific-operations)
-  - [**Entry Conversion (ldap3 ↔ ldif)**](#entry-conversion-ldap3-flextldif)
+  - [**Entry Conversion (ldap3 ↔ ldif)**](#entry-conversion-ldap3-ldif)
   - [**Schema Discovery**](#schema-discovery)
   - [**ACL Management**](#acl-management)
   - [**Paged Search**](#paged-search)

@@ -1,7 +1,6 @@
 # Documentation Maintenance System - Troubleshooting Guide
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Quick Diagnosis](#quick-diagnosis)
   - [System Health Check](#system-health-check)
@@ -43,7 +42,6 @@
 - [Advanced Troubleshooting](#advanced-troubleshooting)
   - [Custom Diagnostic Scripts](#custom-diagnostic-scripts)
   - [Automated Health Checks](#automated-health-checks)
-
 <!-- TOC END -->
 
 **Common issues, diagnostics, and solutions for the Documentation Maintenance System**

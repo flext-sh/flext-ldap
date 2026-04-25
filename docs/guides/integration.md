@@ -17,7 +17,7 @@
   - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
 - [Kubernetes Integration](#kubernetes-integration)
   - [Kubernetes Deployment](#kubernetes-deployment)
-- [ldif Integration](#flextldif-integration)
+- [ldif Integration](#ldif-integration)
   - [Entry Format Conversion](#entry-format-conversion)
   - [LDIF File Processing](#ldif-file-processing)
   - [Export to LDIF](#export-to-ldif)

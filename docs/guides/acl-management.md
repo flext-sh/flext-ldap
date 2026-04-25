@@ -26,7 +26,7 @@
 - [Integration with FLEXT OUD Migration](#integration-with-flext-oud-migration)
 - [Best Practices](#best-practices)
 - [API Reference](#api-reference)
-  - [ldap ACL Methods](#flextldap-acl-methods)
+  - [ldap ACL Methods](#ldap-acl-methods)
   - [FlextLdapAclManager Methods](#flextldapaclmanager-methods)
 - [See Also](#see-also)
 <!-- TOC END -->
