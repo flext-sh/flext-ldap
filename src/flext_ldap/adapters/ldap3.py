@@ -581,35 +581,42 @@ class FlextLdapLdap3Adapter(s[bool]):
                 DN instance with extracted or empty value.
 
             """
-            default_metadata = m.Ldif.EntryMetadata()
-            if parsed is None:
-                return m.Ldif.DN(value="", metadata=default_metadata)
-            if isinstance(parsed, m.Ldif.Entry):
-                if parsed.dn is not None:
-                    return m.Ldif.DN(value=parsed.dn.value, metadata=parsed.dn.metadata)
-                return m.Ldif.DN(value="", metadata=default_metadata)
+            empty_dn = m.Ldif.DN(value="", metadata=m.Ldif.EntryMetadata())
             dn_raw: (
                 m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None
             ) = None
-            if isinstance(parsed, p.Ldap.Ldap3Entry):
-                dn_raw = parsed.entry_dn
-            else:
-                dn_raw = FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
-                    parsed,
-                    "dn",
-                )
-            if dn_raw is None:
-                return m.Ldif.DN(value="", metadata=default_metadata)
-            if isinstance(dn_raw, m.Ldif.DN):
-                return dn_raw
-            if isinstance(dn_raw, p.Ldif.DN):
-                return m.Ldif.DN(
-                    value=dn_raw.value or "",
-                    metadata=default_metadata,
-                )
-            dn_str_val = str(dn_raw)
-            dn_value: str = u.Ldif.get_dn_value(dn_str_val)
-            return m.Ldif.DN(value=dn_value, metadata=default_metadata)
+            resolved_dn = empty_dn
+            match parsed:
+                case None:
+                    dn_raw = None
+                case m.Ldif.Entry() if parsed.dn is not None:
+                    resolved_dn = parsed.dn
+                case m.Ldif.Entry():
+                    dn_raw = None
+                case _ if isinstance(parsed, p.Ldap.Ldap3Entry):
+                    dn_raw = parsed.entry_dn
+                case _:
+                    dn_raw = (
+                        FlextLdapLdap3Adapter.ResultConverter.get_dynamic_attribute(
+                            parsed,
+                            "dn",
+                        )
+                    )
+            if resolved_dn is empty_dn:
+                match dn_raw:
+                    case None:
+                        resolved_dn = empty_dn
+                    case m.Ldif.DN():
+                        resolved_dn = dn_raw
+                    case _ if isinstance(dn_raw, p.Ldif.DN):
+                        resolved_dn = empty_dn.model_copy(
+                            update={"value": dn_raw.value or ""},
+                        )
+                    case _:
+                        resolved_dn = empty_dn.model_copy(
+                            update={"value": u.Ldif.get_dn_value(str(dn_raw))},
+                        )
+            return resolved_dn
 
         @staticmethod
         def extract_metadata(

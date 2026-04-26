@@ -20,10 +20,14 @@ from abc import ABC
 from collections.abc import (
     Sequence,
 )
+from typing import TYPE_CHECKING
 
 from flext_core import s
-from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, p, t
+from flext_ldap import FlextLdapSettings, c, p, t
 from flext_ldif import FlextLdif, m, u
+
+if TYPE_CHECKING:
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 
 
 class FlextLdapService[
@@ -55,6 +59,8 @@ class FlextLdapService[
     def _ensure_adapter(self) -> FlextLdapLdap3Adapter:
         """Return the shared ldap3 adapter for this service instance."""
         if self._adapter is None:
+            from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter  # noqa: PLC0415
+
             self._adapter = FlextLdapLdap3Adapter()
         return self._adapter
 
