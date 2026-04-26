@@ -138,11 +138,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     ]
                 ]
             ] = (
-                ({}, True, "connection parameter required"),
+                # Substrings match the centralized flext-core error format —
+                # ``ERR_SERVICE_TYPE_MISMATCH`` and the validate-connection
+                # wrapper. Keep these aligned with the canonical messages.
+                ({}, True, "parameter required"),
                 (
                     {"connection": "invalid"},
                     True,
-                    "connection must be ldap3.Connection",
+                    "ldap3.Connection",
                 ),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
@@ -269,7 +272,10 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     },
                 )
             )
-            ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR: Final[str] = "no attributes"
+            # Substring matches the centralized validation error
+            # ("Failed to validate entry.attributes: empty"). Update with the
+            # canonical message rather than re-introducing custom wording.
+            ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR: Final[str] = "empty"
 
             LDAP3_ADAPTER_INNER_CLASS_CONNECTION_MANAGER: Final[str] = (
                 "ConnectionManager"
