@@ -40,10 +40,10 @@ from collections.abc import (
 from datetime import datetime
 from typing import ClassVar, override
 
-from flext_ldif import e, r
 from ldap3 import Connection, Server
 
 from flext_ldap import FlextLdapEntryAdapter, c, m, p, s, t, u
+from flext_ldif import e, r
 
 
 class FlextLdapLdap3Wrappers:

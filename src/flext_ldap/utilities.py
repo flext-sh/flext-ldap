@@ -20,9 +20,9 @@ from collections.abc import (
 from typing import TypeIs
 
 import ldap3
-from flext_ldif import r, u
 
 from flext_ldap import c, m, p, t
+from flext_ldif import r, u
 
 
 class FlextLdapUtilities(u):

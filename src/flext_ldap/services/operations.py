@@ -36,9 +36,8 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_ldif import FlextLdifConversion, e, r
-
 from flext_ldap import c, m, p, s, t, u
+from flext_ldif import FlextLdifConversion, e, r
 
 
 class FlextLdapOperations(s):

@@ -35,9 +35,8 @@ from collections.abc import (
     MutableSequence,
 )
 
-from flext_ldif import e, r
-
 from flext_ldap import c, m, p, s, t, u
+from flext_ldif import e, r
 
 
 class FlextLdapEntryAdapter(s[bool]):

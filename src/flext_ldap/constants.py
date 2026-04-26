@@ -11,9 +11,8 @@ from collections.abc import (
 from enum import StrEnum, unique
 from typing import ClassVar, Final
 
-from flext_ldif import c
-
 from flext_ldap import t
+from flext_ldif import c
 
 
 class FlextLdapConstants(c):

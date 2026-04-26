@@ -15,9 +15,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeIs
 
-from flext_ldif import r
-
 from flext_ldap import FlextLdapOperations, c, m, p, t
+from flext_ldif import r
 
 
 class FlextLdapSyncCallbacks:

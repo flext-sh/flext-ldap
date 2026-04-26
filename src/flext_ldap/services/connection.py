@@ -11,9 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import r
-
 from flext_ldap import FlextLdapServerDetector, c, m, p, s, u
+from flext_ldif import r
 
 
 class FlextLdapConnection(s):

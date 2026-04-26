@@ -14,9 +14,8 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, TypeAlias
 
-from flext_ldif import m, u
-
 from flext_ldap import c, t
+from flext_ldif import m, u
 
 
 class FlextLdapModelsLdap:

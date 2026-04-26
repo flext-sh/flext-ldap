@@ -22,9 +22,8 @@ from collections.abc import (
 )
 
 from flext_core import s
-from flext_ldif import FlextLdif, m, u
-
 from flext_ldap import FlextLdapLdap3Adapter, FlextLdapSettings, c, p, t
+from flext_ldif import FlextLdif, m, u
 
 
 class FlextLdapService[
