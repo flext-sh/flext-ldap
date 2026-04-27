@@ -181,7 +181,7 @@ class FlextLdapOperations(s):
             entry_dn = (
                 str(entry.dn.value)
                 if entry.dn is not None
-                else c.Ldif.EntryDefaults.UNKNOWN_VALUE
+                else c.Ldif.UNKNOWN_VALUE
             )
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
@@ -287,9 +287,9 @@ class FlextLdapOperations(s):
             entry_model = u.Ldif.as_entry(entry)
             dn_str: str
             if entry_model.dn is not None:
-                dn_str = entry_model.dn.value or c.Ldif.EntryDefaults.UNKNOWN_VALUE
+                dn_str = entry_model.dn.value or c.Ldif.UNKNOWN_VALUE
             else:
-                dn_str = c.Ldif.EntryDefaults.UNKNOWN_VALUE
+                dn_str = c.Ldif.UNKNOWN_VALUE
             schema_additions: list[tuple[str, t.StrSequence]] = []
             for change_operation in entry_model.change_operations:
                 if change_operation.operation != c.Ldif.ChangeOperation.ADD:

@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
 )
-from typing import Literal
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
+from flext_ldap.constants import FlextLdapConstants as _c
 from flext_ldif import t
 
 
@@ -20,9 +20,9 @@ class FlextLdapTypes(t):
 
         LDAPException: type[Exception] = _Ldap3LDAPException
 
-        type Ldap3SearchScope = Literal["BASE", "LEVEL", "SUBTREE"]
-        type Ldap3DerefAliases = Literal["NEVER", "SEARCH", "FINDING_BASE", "ALWAYS"]
-        type Ldap3GetInfo = Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]
+        type Ldap3SearchScope = _c.Ldap.Ldap3SearchScope | str
+        type Ldap3DerefAliases = _c.Ldap.Ldap3DerefAliases | str
+        type Ldap3GetInfo = _c.Ldap.Ldap3GetInfo | str
         type Ldap3AttributeScalar = str | bytes
         type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
         type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]

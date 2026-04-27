@@ -180,6 +180,32 @@ class FlextLdapConstants(c):
             DELETE = 1
             REPLACE = 2
 
+        @unique
+        class Ldap3SearchScope(StrEnum):
+            """ldap3-compatible search scope string values."""
+
+            BASE = "BASE"
+            LEVEL = "LEVEL"
+            SUBTREE = "SUBTREE"
+
+        @unique
+        class Ldap3DerefAliases(StrEnum):
+            """ldap3-compatible dereference aliases string values."""
+
+            NEVER = "NEVER"
+            SEARCH = "SEARCH"
+            FINDING_BASE = "FINDING_BASE"
+            ALWAYS = "ALWAYS"
+
+        @unique
+        class Ldap3GetInfo(StrEnum):
+            """ldap3-compatible get-info option string values."""
+
+            ALL = "ALL"
+            DSA = "DSA"
+            NO_INFO = "NO_INFO"
+            SCHEMA = "SCHEMA"
+
         DEFAULT_TYPE: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
 
         @unique

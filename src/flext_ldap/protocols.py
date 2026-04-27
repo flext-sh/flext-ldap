@@ -19,7 +19,12 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 from flext_ldif import p
 
 if TYPE_CHECKING:
-    from flext_ldap import t
+    from flext_ldap import c
+
+from flext_ldap.constants import FlextLdapConstants as c
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import FlextLdapTypes as t
 
 
 class FlextLdapProtocols(p):
@@ -423,8 +428,8 @@ class FlextLdapProtocols(p):
                 self,
                 search_base: str,
                 search_filter: str,
-                search_scope: t.Ldap.Ldap3SearchScope = "SUBTREE",
-                dereference_aliases: t.Ldap.Ldap3DerefAliases = "ALWAYS",
+                search_scope: t.Ldap.Ldap3SearchScope = c.Ldap.Ldap3SearchScope.SUBTREE.value,
+                dereference_aliases: t.Ldap.Ldap3DerefAliases = c.Ldap.Ldap3DerefAliases.ALWAYS.value,
                 attributes: t.StrSequence | str | None = None,
                 size_limit: int = 0,
                 time_limit: int = 0,

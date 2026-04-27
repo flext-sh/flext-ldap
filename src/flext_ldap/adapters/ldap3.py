@@ -76,7 +76,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def _ldap3_method(
-        connection: p.Ldap.Ldap3Connection,
+        connection: Connection,
         method_name: str,
     ) -> Callable[..., bool]:
         """Get a typed callable for an untyped ldap3 Connection method.
@@ -89,7 +89,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def add(
-        connection: p.Ldap.Ldap3Connection,
+        connection: Connection,
         dn: str,
         object_class: t.StrSequence | str | None,
         attributes: Mapping[str, t.StrSequence],
@@ -102,20 +102,20 @@ class FlextLdapLdap3Wrappers:
         return bool(add_fn(dn, object_class, normalized_attributes))
 
     @staticmethod
-    def delete(connection: p.Ldap.Ldap3Connection, dn: str) -> bool:
+    def delete(connection: Connection, dn: str) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.delete()."""
         delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
         return bool(delete_fn(dn))
 
     @staticmethod
-    def is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
+    def is_bound(connection: Connection) -> bool:
         """Safely read ldap3 bound state from dynamic connection objects."""
         bound_state: bool = getattr(connection, "bound", False)
         return bool(bound_state)
 
     @staticmethod
     def modify(
-        connection: p.Ldap.Ldap3Connection,
+        connection: Connection,
         dn: str,
         changes: t.Ldap.OperationChanges,
     ) -> bool:
@@ -125,7 +125,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def search(
-        connection: p.Ldap.Ldap3Connection,
+        connection: Connection,
         *,
         search_base: str,
         search_filter: str,
@@ -138,18 +138,18 @@ class FlextLdapLdap3Wrappers:
         normalized_scope: t.Ldap.Ldap3SearchScope
         if isinstance(search_scope, int):
             scope_map: Mapping[int, t.Ldap.Ldap3SearchScope] = {
-                c.Ldap.SearchScopeValue.BASE: "BASE",
-                c.Ldap.SearchScopeValue.LEVEL: "LEVEL",
-                c.Ldap.SearchScopeValue.SUBTREE: "SUBTREE",
+                c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE.value,
+                c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL.value,
+                c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE.value,
             }
-            normalized_scope = scope_map.get(search_scope, "SUBTREE")
+            normalized_scope = scope_map.get(search_scope, c.Ldap.Ldap3SearchScope.SUBTREE.value)
         else:
             scope_str_map: Mapping[str, t.Ldap.Ldap3SearchScope] = {
-                "BASE": "BASE",
-                "LEVEL": "LEVEL",
-                "SUBTREE": "SUBTREE",
+                c.Ldap.Ldap3SearchScope.BASE.value: c.Ldap.Ldap3SearchScope.BASE.value,
+                c.Ldap.Ldap3SearchScope.LEVEL.value: c.Ldap.Ldap3SearchScope.LEVEL.value,
+                c.Ldap.Ldap3SearchScope.SUBTREE.value: c.Ldap.Ldap3SearchScope.SUBTREE.value,
             }
-            normalized_scope = scope_str_map.get(search_scope.upper(), "SUBTREE")
+            normalized_scope = scope_str_map.get(search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE.value)
         search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
         return bool(
             search_fn(
@@ -165,13 +165,13 @@ class FlextLdapLdap3Wrappers:
         )
 
     @staticmethod
-    def start_tls(connection: p.Ldap.Ldap3Connection) -> bool:
+    def start_tls(connection: Connection) -> bool:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
         result: bool = getattr(connection, "start_tls", lambda: False)()
         return bool(result)
 
     @staticmethod
-    def unbind(connection: p.Ldap.Ldap3Connection) -> bool:
+    def unbind(connection: Connection) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
         unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
         return bool(unbind_fn())
@@ -188,7 +188,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
     @staticmethod
-    def _is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
+    def _is_bound(connection: Connection) -> bool:
         """Check if ldap3 connection is bound."""
         bound_state: bool = getattr(connection, "bound", False)
         return bool(bound_state)
@@ -200,7 +200,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         def create_connection(
             server: p.Ldap.Ldap3Server,
             settings: m.Ldap.ConnectionConfig,
-        ) -> p.Ldap.Ldap3Connection:
+        ) -> Connection:
             """Create ldap3 Connection t.JsonValue.
 
             Business Rules:
@@ -273,7 +273,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def handle_tls(
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             settings: m.Ldap.ConnectionConfig,
         ) -> p.Result[bool]:
             """Handle STARTTLS if requested.
@@ -325,7 +325,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def convert_ldap3_results(
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
         ) -> Sequence[t.Pair[str, Mapping[str, t.StrSequence]]]:
             """Convert ldap3 connection entries to parser format.
 
@@ -808,7 +808,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def _add_entry_to_ldap(
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             dn_str: str,
             attrs_dict: Mapping[str, t.StrSequence],
         ) -> bool:
@@ -829,7 +829,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def _delete_entry_from_ldap(
-            connection: p.Ldap.Ldap3Connection, dn_str: str
+            connection: Connection, dn_str: str
         ) -> bool:
             """Delete entry from LDAP directory.
 
@@ -847,7 +847,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def _extract_error_result(
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             prefix: str,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Extract error message from connection result.
@@ -888,7 +888,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def _modify_entry_in_ldap(
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             dn_str: str,
             changes: t.Ldap.OperationChanges,
         ) -> bool:
@@ -909,7 +909,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         def execute_add(
             self,
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             dn_str: str,
             ldap_attrs: t.Ldap.OperationAttributes,
         ) -> p.Result[m.Ldap.OperationResult]:
@@ -967,7 +967,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         def execute_delete(
             self,
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             dn: str | m.Ldif.DN,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Execute LDAP delete operation via ldap3 Connection.
@@ -1022,7 +1022,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         def execute_modify(
             self,
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             dn: str | m.Ldif.DN,
             changes: t.Ldap.OperationChanges,
         ) -> p.Result[m.Ldap.OperationResult]:
@@ -1103,7 +1103,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         def execute(
             self,
-            connection: p.Ldap.Ldap3Connection,
+            connection: Connection,
             params: m.Ldap.SearchParams,
             server_type: c.Ldif.ServerTypes | str,
         ) -> p.Result[Sequence[m.Ldif.Entry]]:
@@ -1205,7 +1205,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             ) as exc:
                 return r[Sequence[m.Ldif.Entry]].fail(f"Search failed: {exc!s}")
 
-    _connection: p.Ldap.Ldap3Connection | None
+    _connection: Connection | None
     _server: p.Ldap.Ldap3Server | None
     _entry_adapter: FlextLdapEntryAdapter
 
@@ -1216,7 +1216,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self._entry_adapter = FlextLdapEntryAdapter()
 
     @property
-    def connection(self) -> p.Ldap.Ldap3Connection | None:
+    def connection(self) -> Connection | None:
         """Get underlying ldap3 Connection t.JsonValue."""
         return self._connection
 
@@ -1332,15 +1332,15 @@ class FlextLdapLdap3Adapter(s[bool]):
         """
         try:
             self._server = self.ConnectionManager.create_server(settings)
-            self._connection = self.ConnectionManager.create_connection(
+            connection = self.ConnectionManager.create_connection(
                 self._server,
                 settings,
             )
-            tls_result = self.ConnectionManager.handle_tls(self._connection, settings)
+            self._connection = connection
+            tls_result = self.ConnectionManager.handle_tls(connection, settings)
             if tls_result.failure:
                 return tls_result
-            # Check bound state - connection is guaranteed to be non-None after create_connection
-            if not FlextLdapLdap3Wrappers.is_bound(self._connection):
+            if not FlextLdapLdap3Wrappers.is_bound(connection):
                 return e.fail_operation("bind to LDAP server")
             return r[bool].ok(value=True)
         except (
@@ -1569,11 +1569,11 @@ class FlextLdapLdap3Adapter(s[bool]):
             }),
         )
 
-    def _get_connection(self) -> p.Result[p.Ldap.Ldap3Connection]:
+    def _get_connection(self) -> p.Result[Connection]:
         """Get connection with fast fail if not available."""
         if not self.is_connected or self._connection is None:
-            return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
-        return r[p.Ldap.Ldap3Connection].ok(self._connection)
+            return r[Connection].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
+        return r[Connection].ok(self._connection)
 
     def _unbind_connection(self) -> None:
         """Unbind and close LDAP connection.

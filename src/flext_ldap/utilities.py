@@ -65,7 +65,7 @@ class FlextLdapUtilities(u):
             port: int = c.Ldap.PORT,
             *,
             use_ssl: bool = False,
-            get_info: t.Ldap.Ldap3GetInfo = "ALL",
+            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL.value,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance.
 
@@ -73,7 +73,7 @@ class FlextLdapUtilities(u):
             flext-ldif/src to create an LDAP server object.
             """
             resolved_info: t.Ldap.Ldap3GetInfo = (
-                "NO_INFO" if get_info == "NO_INFO" else get_info
+                c.Ldap.Ldap3GetInfo.NO_INFO.value if get_info == c.Ldap.Ldap3GetInfo.NO_INFO.value else get_info
             )
             scheme = "ldaps" if use_ssl else "ldap"
             server: p.Ldap.Ldap3Server = ldap3.Server(
@@ -86,7 +86,7 @@ class FlextLdapUtilities(u):
         def create_server_from_url(
             server_url: str,
             *,
-            get_info: t.Ldap.Ldap3GetInfo = "ALL",
+            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL.value,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance from a URL string.
 
@@ -106,7 +106,7 @@ class FlextLdapUtilities(u):
             password: str,
             auto_bind: bool = True,
             receive_timeout: int | None = None,
-        ) -> p.Ldap.Ldap3Connection:
+        ) -> ldap3.Connection:
             """Create an ldap3 Connection instance.
 
             The ONLY sanctioned way for test code outside flext-ldap/src and
@@ -139,7 +139,7 @@ class FlextLdapUtilities(u):
             host: str,
             *,
             port: int = c.Ldap.PORT,
-            get_info: t.Ldap.Ldap3GetInfo = "NO_INFO",
+            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO.value,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
             server: p.Ldap.Ldap3Server = ldap3.Server(
@@ -316,7 +316,7 @@ class FlextLdapUtilities(u):
         @staticmethod
         def is_base64_encoded(
             value: str,
-            threshold: int = c.Ldif.EntryDefaults.ASCII_THRESHOLD,
+            threshold: int = c.Ldif.ASCII_THRESHOLD,
         ) -> bool:
             """Return ``True`` when a value requires LDIF base64 encoding."""
             return value.startswith("::") or any(
@@ -354,7 +354,7 @@ class FlextLdapUtilities(u):
             """Convert LDAP search-result mappings into canonical LDIF entries."""
             raw_entry = dict(entry)
             dn_values = cls.ldap3_value_to_strings(raw_entry.get("dn"))
-            dn_value = dn_values[0] if dn_values else c.Ldif.EntryDefaults.UNKNOWN_VALUE
+            dn_value = dn_values[0] if dn_values else c.Ldif.UNKNOWN_VALUE
             attributes: MutableMapping[str, MutableSequence[str] | str] = {
                 key: list(cls.ldap3_value_to_strings(value))
                 for key, value in raw_entry.items()
