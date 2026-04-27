@@ -1,0 +1,24 @@
+src/flext_ldap/typings.py
+  22632355ef1e26ce 23-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "bfd8db03f986c8dbad5605583d2f4d6be1f3a021",
+  "prompts": {
+    "22632355ef1e26ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6ac7df6-1398-4096-87d8-e634aca30e02",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 4,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/893cbe66d102195a1883f25c8c727bf1f4d415a79901bf30ab56ea3e416314c2"
+    }
+  }
+}
