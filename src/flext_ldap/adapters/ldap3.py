@@ -138,21 +138,21 @@ class FlextLdapLdap3Wrappers:
         normalized_scope: t.Ldap.Ldap3SearchScope
         if isinstance(search_scope, int):
             scope_map: Mapping[int, t.Ldap.Ldap3SearchScope] = {
-                c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE.value,
-                c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL.value,
-                c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE.value,
+                c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
+                c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
+                c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
             }
             normalized_scope = scope_map.get(
-                search_scope, c.Ldap.Ldap3SearchScope.SUBTREE.value
+                search_scope, c.Ldap.Ldap3SearchScope.SUBTREE
             )
         else:
             scope_str_map: Mapping[str, t.Ldap.Ldap3SearchScope] = {
-                c.Ldap.Ldap3SearchScope.BASE.value: c.Ldap.Ldap3SearchScope.BASE.value,
-                c.Ldap.Ldap3SearchScope.LEVEL.value: c.Ldap.Ldap3SearchScope.LEVEL.value,
-                c.Ldap.Ldap3SearchScope.SUBTREE.value: c.Ldap.Ldap3SearchScope.SUBTREE.value,
+                c.Ldap.Ldap3SearchScope.BASE: c.Ldap.Ldap3SearchScope.BASE,
+                c.Ldap.Ldap3SearchScope.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
+                c.Ldap.Ldap3SearchScope.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
             }
             normalized_scope = scope_str_map.get(
-                search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE.value
+                search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE
             )
         search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
         return bool(

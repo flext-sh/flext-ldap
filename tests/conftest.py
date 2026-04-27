@@ -109,7 +109,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
             try:
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                    get_info="NO_INFO",
+                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
                 )
                 conn = u.Ldap.create_connection(
                     srv,
@@ -180,7 +180,7 @@ def ldap_container(
             try:
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                    get_info="NO_INFO",
+                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
                 )
                 conn = u.Ldap.create_connection(
                     srv,

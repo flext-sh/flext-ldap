@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ldap3 import Connection
+
 from flext_ldap import c, m, p, s, t, u
 from flext_ldif import e, r
 
@@ -36,7 +38,7 @@ class FlextLdapServerDetector(s):
 
     def detect_from_connection(
         self,
-        connection: p.Ldap.Ldap3Connection,
+        connection: Connection,
     ) -> p.Result[str]:
         """Detect the effective LDAP server type from an active connection."""
         detection_result: p.Result[str] = u.Ldap.detect_from_connection(connection)

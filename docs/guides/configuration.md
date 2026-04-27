@@ -180,7 +180,7 @@ from flext_auth import FlextAuthSettings
 
 settings = FlextAuthSettings(
     secret_key="your-secret-key",
-    algorithm="HS256",
+    algorithm=c.Auth.Algorithms.HS256,
     access_token_expire_minutes=30,
     refresh_token_expire_days=7,
 )

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import ClassVar, overload
 
 from flext_tests import FlextTestsUtilities, tk
+from ldap3 import Connection
 
 from flext_ldap import u
 from tests import c, m, p, t
@@ -79,7 +80,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     str,
                     t.Scalar,
                 ],
-            ) -> p.Ldap.Ldap3Connection:
+            ) -> Connection:
                 """Create an ldap3 connection from container metadata."""
                 return u.Ldap.create_connection(
                     server,
@@ -112,13 +113,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 )
 
             @staticmethod
-            def assert_connection_bound(connection: p.Ldap.Ldap3Connection) -> None:
+            def assert_connection_bound(connection: Connection) -> None:
                 """Assert that an LDAP connection is bound."""
                 assert connection.bound, "LDAP server not responding to bind"
 
             @staticmethod
             def assert_server_info_available(
-                connection: p.Ldap.Ldap3Connection,
+                connection: Connection,
             ) -> None:
                 """Assert that server info is available on the connection."""
                 server = connection.server
@@ -176,7 +177,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     try:
                         server = u.Ldap.create_server_from_url(
                             f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                            get_info="NO_INFO",
+                            get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
                         )
                         connection = u.Ldap.create_connection(
                             server,
@@ -211,7 +212,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 connection = u.Ldap.create_connection(
                     u.Ldap.create_server_from_url(
                         f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                        get_info="NO_INFO",
+                        get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
                     ),
                     user=admin_dn,
                     password=admin_password,

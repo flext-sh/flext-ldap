@@ -17,7 +17,8 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from typing import TypeIs
+from types import MappingProxyType
+from typing import Literal, TypeIs
 
 import ldap3
 
@@ -59,13 +60,23 @@ class FlextLdapUtilities(u):
 
         """
 
+        LDAP3_GET_INFO_LITERAL: Mapping[
+            t.Ldap.Ldap3GetInfo,
+            Literal["ALL", "DSA", "NO_INFO", "SCHEMA"],
+        ] = MappingProxyType({
+            c.Ldap.Ldap3GetInfo.ALL: "ALL",
+            c.Ldap.Ldap3GetInfo.DSA: "DSA",
+            c.Ldap.Ldap3GetInfo.NO_INFO: "NO_INFO",
+            c.Ldap.Ldap3GetInfo.SCHEMA: "SCHEMA",
+        })
+
         @staticmethod
         def create_server(
             host: str,
             port: int = c.Ldap.PORT,
             *,
             use_ssl: bool = False,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL.value,
+            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance.
 
@@ -73,14 +84,14 @@ class FlextLdapUtilities(u):
             flext-ldif/src to create an LDAP server object.
             """
             resolved_info: t.Ldap.Ldap3GetInfo = (
-                c.Ldap.Ldap3GetInfo.NO_INFO.value
-                if get_info == c.Ldap.Ldap3GetInfo.NO_INFO.value
+                c.Ldap.Ldap3GetInfo.NO_INFO
+                if get_info == c.Ldap.Ldap3GetInfo.NO_INFO
                 else get_info
             )
             scheme = "ldaps" if use_ssl else "ldap"
             server: p.Ldap.Ldap3Server = ldap3.Server(
                 f"{scheme}://{host}:{port}",
-                get_info=resolved_info,
+                get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[resolved_info],
             )
             return server
 
@@ -88,7 +99,7 @@ class FlextLdapUtilities(u):
         def create_server_from_url(
             server_url: str,
             *,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL.value,
+            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance from a URL string.
 
@@ -97,7 +108,10 @@ class FlextLdapUtilities(u):
                 get_info: Info level ("ALL", "NONE", "NO_INFO", "DSA", "SCHEMA").
 
             """
-            server: p.Ldap.Ldap3Server = ldap3.Server(server_url, get_info=get_info)
+            server: p.Ldap.Ldap3Server = ldap3.Server(
+                server_url,
+                get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[get_info],
+            )
             return server
 
         @staticmethod
@@ -141,13 +155,13 @@ class FlextLdapUtilities(u):
             host: str,
             *,
             port: int = c.Ldap.PORT,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO.value,
+            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
             server: p.Ldap.Ldap3Server = ldap3.Server(
                 host,
                 port=port,
-                get_info=get_info,
+                get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[get_info],
             )
             return server
 
@@ -639,12 +653,12 @@ class FlextLdapUtilities(u):
             ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
             context_str = cls.norm_join(naming_contexts, case="lower")
             checks: Sequence[t.Pair[str, Callable[[str, str], bool]]] = [
-                ("openldap", lambda ext, _ctx: "openldap" in ext),
+                ("openldap", lambda ext, __: "openldap" in ext),
                 (
                     "oid",
                     lambda ext, ctx: "oracle" in ext or "oid" in ext or "oracle" in ctx,
                 ),
-                ("oud", lambda ext, _ctx: "oud" in ext),
+                ("oud", lambda ext, __: "oud" in ext),
                 (
                     "ad",
                     lambda ext, ctx: (
@@ -654,7 +668,7 @@ class FlextLdapUtilities(u):
                         or "windows" in ctx
                     ),
                 ),
-                ("ds389", lambda ext, _ctx: "389" in ext or "dirsrv" in ext),
+                ("ds389", lambda ext, __: "389" in ext or "dirsrv" in ext),
             ]
             for server_name, predicate in checks:
                 if predicate(ext_str, context_str):
@@ -740,7 +754,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def query_root_dse(
             cls,
-            connection: p.Ldap.Ldap3Connection,
+            connection: ldap3.Connection,
         ) -> p.Result[t.Ldap.OperationAttributes]:
             """Read rootDSE data from a bound ldap3 connection."""
             search_method = getattr(connection, "search", None)
@@ -774,7 +788,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def detect_from_connection(
             cls,
-            connection: p.Ldap.Ldap3Connection,
+            connection: ldap3.Connection,
         ) -> p.Result[str]:
             """Detect LDAP server type from rootDSE on an active connection."""
             root_dse_result = cls.query_root_dse(connection)
