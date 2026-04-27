@@ -73,7 +73,9 @@ class FlextLdapUtilities(u):
             flext-ldif/src to create an LDAP server object.
             """
             resolved_info: t.Ldap.Ldap3GetInfo = (
-                c.Ldap.Ldap3GetInfo.NO_INFO.value if get_info == c.Ldap.Ldap3GetInfo.NO_INFO.value else get_info
+                c.Ldap.Ldap3GetInfo.NO_INFO.value
+                if get_info == c.Ldap.Ldap3GetInfo.NO_INFO.value
+                else get_info
             )
             scheme = "ldaps" if use_ssl else "ldap"
             server: p.Ldap.Ldap3Server = ldap3.Server(

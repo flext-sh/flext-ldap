@@ -179,9 +179,7 @@ class FlextLdapOperations(s):
 
             """
             entry_dn = (
-                str(entry.dn.value)
-                if entry.dn is not None
-                else c.Ldif.UNKNOWN_VALUE
+                str(entry.dn.value) if entry.dn is not None else c.Ldif.UNKNOWN_VALUE
             )
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)

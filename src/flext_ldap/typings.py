@@ -20,9 +20,9 @@ class FlextLdapTypes(t):
 
         LDAPException: type[Exception] = _Ldap3LDAPException
 
-        type Ldap3SearchScope = _c.Ldap.Ldap3SearchScope | str
-        type Ldap3DerefAliases = _c.Ldap.Ldap3DerefAliases | str
-        type Ldap3GetInfo = _c.Ldap.Ldap3GetInfo | str
+        type Ldap3SearchScope = _c.Ldap.Ldap3SearchScope
+        type Ldap3DerefAliases = _c.Ldap.Ldap3DerefAliases
+        type Ldap3GetInfo = _c.Ldap.Ldap3GetInfo
         type Ldap3AttributeScalar = str | bytes
         type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
         type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]

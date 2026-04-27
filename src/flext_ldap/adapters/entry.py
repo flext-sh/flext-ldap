@@ -311,8 +311,7 @@ class FlextLdapEntryAdapter(s[bool]):
             )
             entry_dn_str = (
                 str(dn_value)
-                if dn_value is not None
-                and dn_value != c.Ldif.UNKNOWN_VALUE
+                if dn_value is not None and dn_value != c.Ldif.UNKNOWN_VALUE
                 else c.Ldif.UNKNOWN_VALUE
             )
             self.logger.exception(

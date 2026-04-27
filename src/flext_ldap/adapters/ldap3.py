@@ -142,14 +142,18 @@ class FlextLdapLdap3Wrappers:
                 c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL.value,
                 c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE.value,
             }
-            normalized_scope = scope_map.get(search_scope, c.Ldap.Ldap3SearchScope.SUBTREE.value)
+            normalized_scope = scope_map.get(
+                search_scope, c.Ldap.Ldap3SearchScope.SUBTREE.value
+            )
         else:
             scope_str_map: Mapping[str, t.Ldap.Ldap3SearchScope] = {
                 c.Ldap.Ldap3SearchScope.BASE.value: c.Ldap.Ldap3SearchScope.BASE.value,
                 c.Ldap.Ldap3SearchScope.LEVEL.value: c.Ldap.Ldap3SearchScope.LEVEL.value,
                 c.Ldap.Ldap3SearchScope.SUBTREE.value: c.Ldap.Ldap3SearchScope.SUBTREE.value,
             }
-            normalized_scope = scope_str_map.get(search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE.value)
+            normalized_scope = scope_str_map.get(
+                search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE.value
+            )
         search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
         return bool(
             search_fn(
@@ -828,9 +832,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             return FlextLdapLdap3Wrappers.add(connection, dn_str, None, attrs_dict)
 
         @staticmethod
-        def _delete_entry_from_ldap(
-            connection: Connection, dn_str: str
-        ) -> bool:
+        def _delete_entry_from_ldap(connection: Connection, dn_str: str) -> bool:
             """Delete entry from LDAP directory.
 
             This typed wrapper handles the untyped ldap3 delete() call.
