@@ -28,8 +28,8 @@ class FlextLdapConnection(s):
         connection_config: m.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
-        max_retries: int = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
-        retry_delay: float = c.Ldap.ConnectionDefaults.DEFAULT_RETRY_DELAY,
+        max_retries: int = c.Ldap.DEFAULT_MAX_RETRIES,
+        retry_delay: float = c.Ldap.DEFAULT_RETRY_DELAY,
     ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry."""
         adapter = self._ensure_adapter()
@@ -58,7 +58,7 @@ class FlextLdapConnection(s):
         """Close the active LDAP connection if present."""
         if self._adapter is not None:
             self._adapter.disconnect()
-        self._server_type = c.Ldap.ServerDefaults.DEFAULT_TYPE
+        self._server_type = c.Ldap.DEFAULT_TYPE
 
     def execute(
         self,
@@ -68,7 +68,7 @@ class FlextLdapConnection(s):
             return r[m.Ldap.Response].ok(
                 m.Ldap.SearchResult(entries=[], search_options=None),
             )
-        return r[m.Ldap.Response].fail(str(c.Ldap.ErrorStrings.NOT_CONNECTED))
+        return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
     def _detect_server_type_optional(self) -> None:
         """Attempt automatic server type detection after successful connection."""
@@ -82,12 +82,12 @@ class FlextLdapConnection(s):
             self._server_type = str(detection_result.value)
             self.logger.info(
                 "Server type detected automatically",
-                operation=c.Ldap.LdapOperationNames.CONNECT,
+                operation=c.Ldap.OperationName.CONNECT,
                 detected_server_type=str(detection_result.value),
             )
         else:
             self.logger.debug(
                 "Server type detection failed (non-critical)",
-                operation=c.Ldap.LdapOperationNames.CONNECT,
+                operation=c.Ldap.OperationName.CONNECT,
                 error=str(detection_result.error) if detection_result.error else "",
             )

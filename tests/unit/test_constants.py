@@ -25,13 +25,13 @@ class TestsFlextLdapConstantsUnit:
 
     def test_is_valid_status_with_enum(self) -> None:
         u.Ldap.Tests.that(
-            u.Ldap.Validation.is_valid_status(c.Ldap.LdapCqrs.Status.PENDING), eq=True
+            u.Ldap.Validation.is_valid_status(c.Ldap.Status.PENDING), eq=True
         )
 
     def test_is_valid_status_with_string(self) -> None:
         u.Ldap.Tests.that(
             u.Ldap.Validation.is_valid_status(
-                c.Ldap.LdapCqrs.Status.PENDING.value,
+                c.Ldap.Status.PENDING.value,
             ),
             eq=True,
         )
@@ -59,27 +59,25 @@ class TestsFlextLdapConstantsUnit:
         pass
 
     def test_core_name(self) -> None:
-        u.Ldap.Tests.that(c.Ldap.Core.NAME, eq=c.Ldap.Tests.CONSTANT_EXPECTED_CORE_NAME)
+        u.Ldap.Tests.that(c.Ldap.NAME, eq=c.Ldap.Tests.CONSTANT_EXPECTED_CORE_NAME)
 
     def test_filters_all_entries(self) -> None:
         u.Ldap.Tests.that(
-            c.Ldap.Filters.ALL_ENTRIES_FILTER,
+            c.Ldap.ALL_ENTRIES_FILTER,
             eq=c.Ldap.Tests.CONSTANT_EXPECTED_ALL_ENTRIES_FILTER,
         )
 
     def test_connection_defaults_port_is_valid(self) -> None:
-        u.Ldap.Tests.that(c.Ldap.ConnectionDefaults.PORT, is_=int, none=False)
+        u.Ldap.Tests.that(c.Ldap.PORT, is_=int, none=False)
         u.Ldap.Tests.that(
-            c.Ldap.ConnectionDefaults.PORT,
+            c.Ldap.PORT,
             gte=c.Ldap.Tests.CONFIG_PORT_MIN,
             lte=c.Ldap.Tests.CONFIG_PORT_MAX,
         )
 
     def test_vendor_string_max_tokens(self) -> None:
+        u.Ldap.Tests.that(c.Ldap.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
         u.Ldap.Tests.that(
-            c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS, is_=int, none=False
-        )
-        u.Ldap.Tests.that(
-            c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS,
+            c.Ldap.VENDOR_STRING_MAX_TOKENS,
             eq=c.Ldap.Tests.CONSTANT_EXPECTED_VENDOR_STRING_MAX_TOKENS,
         )

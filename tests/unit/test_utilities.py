@@ -89,7 +89,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_dn_str_with_none(self) -> None:
         result = u.Ldap.dn_str(None)
-        u.Ldap.Tests.that(result, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
+        u.Ldap.Tests.that(result, eq=c.Ldap.UNKNOWN_CATEGORY)
 
     def test_dn_str_with_custom_default(self) -> None:
         result = u.Ldap.dn_str(

@@ -28,7 +28,7 @@ class FlextLdapModelsLdap:
         port: Annotated[
             t.PortNumber,
             u.Field(description="LDAP server port"),
-        ] = c.Ldap.ConnectionDefaults.PORT
+        ] = c.Ldap.PORT
         use_ssl: Annotated[bool, u.Field(description="Enable SSL (LDAPS)")] = False
         use_tls: Annotated[bool, u.Field(description="Enable StartTLS")] = False
         bind_dn: Annotated[
@@ -42,7 +42,7 @@ class FlextLdapModelsLdap:
         timeout: Annotated[
             t.PositiveInt,
             u.Field(description="Connection timeout in seconds"),
-        ] = c.Ldap.ConnectionDefaults.TIMEOUT
+        ] = c.Ldap.TIMEOUT
         auto_bind: Annotated[
             bool,
             u.Field(description="Auto-bind on connection"),
@@ -63,8 +63,8 @@ class FlextLdapModelsLdap:
     class NormalizedConfig(m.BaseModel):
         """Configuration for normalized SearchOptions factory."""
 
-        scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
-        filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
+        scope: str = c.Ldap.DEFAULT_SCOPE
+        filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
         size_limit: t.NonNegativeInt = 0
         time_limit: t.NonNegativeInt = 0
         attributes: t.StrSequence | None = None
@@ -76,8 +76,8 @@ class FlextLdapModelsLdap:
             t.NonEmptyStr,
             u.Field(..., description="Base DN for search (required, non-empty)"),
         ]
-        scope: str = c.Ldap.SearchDefaults.DEFAULT_SCOPE
-        filter_str: str = c.Ldap.Filters.ALL_ENTRIES_FILTER
+        scope: str = c.Ldap.DEFAULT_SCOPE
+        filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
         attributes: t.StrSequence | None = None
         size_limit: t.NonNegativeInt = 0
         time_limit: t.NonNegativeInt = 0
@@ -157,7 +157,7 @@ class FlextLdapModelsLdap:
         batch_size: Annotated[
             t.PositiveInt,
             u.Field(description="Batch size for sync operations"),
-        ] = c.Ldap.SyncDefaults.BATCH_SIZE
+        ] = c.Ldap.BATCH_SIZE
         auto_create_parents: Annotated[
             bool,
             u.Field(description="Auto-create parent entries if missing"),
@@ -247,10 +247,10 @@ class FlextLdapModelsLdap:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             arbitrary_types_allowed=True,
         )
-        server_type: str = c.Ldap.ServerDefaults.DEFAULT_TYPE
+        server_type: str = c.Ldap.DEFAULT_TYPE
         progress_callback: t.Ldap.ProgressCallbackUnion = None
         retry_on_errors: t.StrSequence | None = None
-        max_retries: t.RetryCount = c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES
+        max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
 
     class ConversionMetadata(m.BaseModel):
@@ -336,14 +336,14 @@ class FlextLdapModelsLdap:
         ) -> str:
             """Extract objectclass category from attributes."""
             if not attrs:
-                return str(c.Ldap.Defaults.UNKNOWN_CATEGORY)
+                return str(c.Ldap.UNKNOWN_CATEGORY)
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             if isinstance(oc_list, list):
                 if not oc_list:
-                    return str(c.Ldap.Defaults.UNKNOWN_CATEGORY)
+                    return str(c.Ldap.UNKNOWN_CATEGORY)
                 first_value = oc_list[0]
                 return str(first_value).lower()
-            return str(c.Ldap.Defaults.UNKNOWN_CATEGORY)
+            return str(c.Ldap.UNKNOWN_CATEGORY)
 
         @staticmethod
         def get_entry_category(entry: Mapping[str, t.StrSequence]) -> str:
@@ -352,13 +352,13 @@ class FlextLdapModelsLdap:
                 entry,
             )
             if not attrs:
-                return str(c.Ldap.Defaults.UNKNOWN_CATEGORY)
+                return str(c.Ldap.UNKNOWN_CATEGORY)
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             match oc_list:
                 case list() as oc_values if oc_values:
                     return str(oc_values[0]).lower()
                 case _:
-                    return str(c.Ldap.Defaults.UNKNOWN_CATEGORY)
+                    return str(c.Ldap.UNKNOWN_CATEGORY)
 
     class LdapOperationResult(m.BaseModel):
         """LDAP operation result."""

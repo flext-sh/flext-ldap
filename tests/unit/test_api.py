@@ -87,11 +87,11 @@ class TestsFlextLdapApi:
     def test_callback_param_count_constants(self) -> None:
         u.Ldap.Tests.that(
             len(inspect.signature(u.Ldap.Tests.multi_phase_cb).parameters),
-            eq=c.Ldap.Callback.MULTI_PHASE_PARAM_COUNT,
+            eq=c.Ldap.MULTI_PHASE_PARAM_COUNT,
         )
         u.Ldap.Tests.that(
             len(inspect.signature(u.Ldap.Tests.single_phase_cb).parameters),
-            eq=c.Ldap.Callback.SINGLE_PHASE_PARAM_COUNT,
+            eq=c.Ldap.SINGLE_PHASE_PARAM_COUNT,
         )
 
     # --- API Methods (via MRO) ---
@@ -117,5 +117,5 @@ class TestsFlextLdapApi:
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
             error.lower(),
-            contains=str(c.Ldap.ErrorStrings.NOT_CONNECTED).lower(),
+            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )

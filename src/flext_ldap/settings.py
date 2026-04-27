@@ -30,51 +30,49 @@ class FlextLdapSettings(FlextSettings):
     )
 
     host: Annotated[str, u.Field(description="LDAP server host")] = c.LOCALHOST
-    port: Annotated[t.PortNumber, u.Field(description="LDAP server port")] = (
-        c.Ldap.ConnectionDefaults.PORT
-    )
+    port: Annotated[t.PortNumber, u.Field(description="LDAP server port")] = c.Ldap.PORT
     use_ssl: Annotated[
         bool,
         u.Field(
             description="Enable LDAPS",
         ),
-    ] = c.Ldap.ConnectionDefaults.DEFAULT_USE_SSL
+    ] = c.Ldap.DEFAULT_USE_SSL
     use_tls: Annotated[
         bool,
         u.Field(
             description="Enable STARTTLS",
         ),
-    ] = c.Ldap.ConnectionDefaults.DEFAULT_USE_TLS
+    ] = c.Ldap.DEFAULT_USE_TLS
     bind_dn: Annotated[
         str,
         u.Field(
             description="LDAP bind distinguished name",
         ),
-    ] = c.Ldap.ConnectionDefaults.DEFAULT_BIND_DN
+    ] = c.Ldap.DEFAULT_BIND_DN
     bind_password: Annotated[
         str,
         u.Field(
             description="LDAP bind password",
         ),
-    ] = c.Ldap.ConnectionDefaults.DEFAULT_BIND_PASSWORD
+    ] = c.Ldap.DEFAULT_BIND_PASSWORD
     timeout: Annotated[
         t.PositiveInt,
         u.Field(
             description="LDAP operation timeout in seconds",
         ),
-    ] = c.Ldap.ConnectionDefaults.TIMEOUT
+    ] = c.Ldap.TIMEOUT
     auto_bind: Annotated[
         bool,
         u.Field(
             description="Auto-bind connection after connect",
         ),
-    ] = c.Ldap.ConnectionDefaults.AUTO_BIND
+    ] = c.Ldap.AUTO_BIND
     auto_range: Annotated[
         bool,
         u.Field(
             description="Enable LDAP range retrieval",
         ),
-    ] = c.Ldap.ConnectionDefaults.AUTO_RANGE
+    ] = c.Ldap.AUTO_RANGE
 
 
 __all__: list[str] = ["FlextLdapSettings"]

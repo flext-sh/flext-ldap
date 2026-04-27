@@ -19,8 +19,8 @@ class TestsFlextLdapModelsSearch:
     def test_search_options_default_values(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(options.base_dn, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        u.Ldap.Tests.that(options.scope, eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
-        u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
+        u.Ldap.Tests.that(options.scope, eq=c.Ldap.DEFAULT_SCOPE)
+        u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.ALL_ENTRIES_FILTER)
         u.Ldap.Tests.that(options.attributes, none=True)
         u.Ldap.Tests.that(options.size_limit, eq=c.Ldap.Tests.SEARCH_DEFAULT_LIMIT_ZERO)
         u.Ldap.Tests.that(options.time_limit, eq=c.Ldap.Tests.SEARCH_DEFAULT_LIMIT_ZERO)
@@ -57,7 +57,7 @@ class TestsFlextLdapModelsSearch:
         )
         u.Ldap.Tests.that(
             {
-                c.Ldap.SearchDefaults.DEFAULT_SCOPE,
+                c.Ldap.DEFAULT_SCOPE,
                 c.Ldap.Tests.SEARCH_SCOPE_SUBTREE_LOWER,
             },
             has=options.scope,
@@ -66,8 +66,8 @@ class TestsFlextLdapModelsSearch:
     def test_search_options_normalized_factory(self) -> None:
         options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(options.base_dn, none=False)
-        u.Ldap.Tests.that(options.scope, eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
-        u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.Filters.ALL_ENTRIES_FILTER)
+        u.Ldap.Tests.that(options.scope, eq=c.Ldap.DEFAULT_SCOPE)
+        u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.ALL_ENTRIES_FILTER)
 
     def test_search_options_normalized_with_config(self) -> None:
         settings = m.Ldap.NormalizedConfig(
@@ -148,7 +148,7 @@ class TestsFlextLdapModelsSearch:
 
     def test_search_result_extract_objectclass_category_empty(self) -> None:
         category = m.Ldap.SearchResult.extract_objectclass_category({})
-        u.Ldap.Tests.that(category, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
+        u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 
     def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
         attrs = {
@@ -160,7 +160,7 @@ class TestsFlextLdapModelsSearch:
     def test_search_result_get_entry_category(self) -> None:
         entry: Mapping[str, t.StrSequence] = {}
         category = m.Ldap.SearchResult.get_entry_category(entry)
-        u.Ldap.Tests.that(category, eq=c.Ldap.Defaults.UNKNOWN_CATEGORY)
+        u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 
     def test_sync_phase_config_has_progress_callback(self) -> None:
         """Verify progress_callback field exists on SyncPhaseConfig."""
@@ -180,10 +180,10 @@ class TestsFlextLdapModelsSearch:
     def test_search_options_serialization(self) -> None:
         data = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-            scope=c.Ldap.SearchDefaults.DEFAULT_SCOPE,
+            scope=c.Ldap.DEFAULT_SCOPE,
         ).model_dump()
         u.Ldap.Tests.that(data["base_dn"], eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        u.Ldap.Tests.that(data["scope"], eq=c.Ldap.SearchDefaults.DEFAULT_SCOPE)
+        u.Ldap.Tests.that(data["scope"], eq=c.Ldap.DEFAULT_SCOPE)
 
     def test_sync_stats_serialization(self) -> None:
         data = m.Ldap.SyncStats.from_counters(

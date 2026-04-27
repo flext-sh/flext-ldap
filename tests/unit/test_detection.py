@@ -98,7 +98,7 @@ class TestsFlextLdapDetection:
         result = u.Ldap.detect_server_type(
             vendor_name=vendor_name,
             vendor_version=vendor_version,
-            naming_contexts=[c.Ldap.Defaults.EXAMPLE_BASE_DN],
+            naming_contexts=[c.Ldap.EXAMPLE_BASE_DN],
             supported_extensions=[],
         )
         assert result == expected

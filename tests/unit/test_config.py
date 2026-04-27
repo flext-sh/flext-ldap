@@ -52,7 +52,7 @@ class TestsFlextLdapConfig:
         c.Ldap.Tests.FIELD_PORT,
         [
             c.Ldap.Tests.CONFIG_PORT_MIN,
-            c.Ldap.ConnectionDefaults.PORT,
+            c.Ldap.PORT,
             c.Ldap.Tests.CONFIG_LDAPS_PORT,
             c.Ldap.Tests.CONFIG_PORT_MAX,
         ],
@@ -62,9 +62,9 @@ class TestsFlextLdapConfig:
 
     def test_port_field_constraints(self) -> None:
         field = FlextLdapSettings.model_fields[c.Ldap.Tests.FIELD_PORT]
-        u.Ldap.Tests.that(field.default, eq=c.Ldap.ConnectionDefaults.PORT)
-        settings = FlextLdapSettings(port=c.Ldap.ConnectionDefaults.PORT)
-        u.Ldap.Tests.that(settings.port, eq=c.Ldap.ConnectionDefaults.PORT)
+        u.Ldap.Tests.that(field.default, eq=c.Ldap.PORT)
+        settings = FlextLdapSettings(port=c.Ldap.PORT)
+        u.Ldap.Tests.that(settings.port, eq=c.Ldap.PORT)
 
     # ── Host values ────────────────────────────────────────────────────
 
@@ -146,7 +146,7 @@ class TestsFlextLdapConfig:
     def test_deep_copy(self) -> None:
         original = FlextLdapSettings(
             host=c.Ldap.Tests.CONFIG_ORIGINAL_HOST,
-            port=c.Ldap.ConnectionDefaults.PORT,
+            port=c.Ldap.PORT,
         )
         copied = original.model_copy(deep=True)
         u.Ldap.Tests.that(copied, is_=FlextLdapSettings, none=False)
@@ -160,7 +160,7 @@ class TestsFlextLdapConfig:
     def test_singleton_shares_state(self) -> None:
         c1 = FlextLdapSettings(
             host=c.Ldap.Tests.CONFIG_FIRST_HOST,
-            port=c.Ldap.ConnectionDefaults.PORT,
+            port=c.Ldap.PORT,
         )
         c2 = FlextLdapSettings(
             host=c.Ldap.Tests.CONFIG_SECOND_HOST,

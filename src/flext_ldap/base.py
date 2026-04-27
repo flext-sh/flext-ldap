@@ -42,9 +42,7 @@ class FlextLdapService[
 
     _adapter: FlextLdapLdap3Adapter | None = u.PrivateAttr(default_factory=lambda: None)
     _ldif: FlextLdif = u.PrivateAttr(default_factory=FlextLdif)
-    _server_type: str = u.PrivateAttr(
-        default_factory=lambda: c.Ldap.ServerDefaults.DEFAULT_TYPE
-    )
+    _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldap.DEFAULT_TYPE)
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:

@@ -34,7 +34,7 @@ class FlextLdapSyncCallbacks:
         except (TypeError, ValueError, AttributeError):
             return False
         return bool(
-            len(signature.parameters) == c.Ldap.Callback.MULTI_PHASE_PARAM_COUNT,
+            len(signature.parameters) == c.Ldap.MULTI_PHASE_PARAM_COUNT,
         )
 
     @staticmethod
@@ -49,7 +49,7 @@ class FlextLdapSyncCallbacks:
         except (TypeError, ValueError, AttributeError):
             return False
         return bool(
-            len(signature.parameters) == c.Ldap.Callback.SINGLE_PHASE_PARAM_COUNT,
+            len(signature.parameters) == c.Ldap.SINGLE_PHASE_PARAM_COUNT,
         )
 
 

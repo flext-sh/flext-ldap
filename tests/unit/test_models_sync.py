@@ -11,7 +11,7 @@ class TestsFlextLdapModelsSync:
     # ── Contract: default values don't drift ───────────────────────────
 
     _API_DEFAULTS = [
-        (m.Ldap.SyncOptions, "batch_size", c.Ldap.SyncDefaults.BATCH_SIZE),
+        (m.Ldap.SyncOptions, "batch_size", c.Ldap.BATCH_SIZE),
         (
             m.Ldap.SyncOptions,
             "auto_create_parents",
@@ -20,11 +20,11 @@ class TestsFlextLdapModelsSync:
         (m.Ldap.SyncOptions, "allow_deletes", c.Ldap.Tests.SYNC_DEFAULT_ALLOW_DELETES),
         (m.Ldap.SyncStats, "synced", c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT),
         (m.Ldap.SyncStats, "total", c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT),
-        (m.Ldap.SyncPhaseConfig, "server_type", c.Ldap.ServerDefaults.DEFAULT_TYPE),
+        (m.Ldap.SyncPhaseConfig, "server_type", c.Ldap.DEFAULT_TYPE),
         (
             m.Ldap.SyncPhaseConfig,
             "max_retries",
-            c.Ldap.ConnectionDefaults.DEFAULT_MAX_RETRIES,
+            c.Ldap.DEFAULT_MAX_RETRIES,
         ),
         (
             m.Ldap.SyncPhaseConfig,
@@ -247,9 +247,9 @@ class TestsFlextLdapModelsSync:
     def test_operation_result_carries_enum(self) -> None:
         u.Ldap.Tests.that(
             m.Ldap.LdapOperationResult(
-                operation=c.Ldap.UpsertOperations.ADDED,
+                operation=c.Ldap.UpsertOperation.ADDED,
             ).operation,
-            eq=c.Ldap.UpsertOperations.ADDED,
+            eq=c.Ldap.UpsertOperation.ADDED,
         )
 
     def test_batch_stats_custom(self) -> None:

@@ -27,7 +27,7 @@ class TestsFlextLdapLdap3Adapter:
     def _create_connection_config(cls) -> m.Ldap.ConnectionConfig:
         return m.Ldap.ConnectionConfig(
             host=c.LOCALHOST,
-            port=c.Ldap.ConnectionDefaults.PORT,
+            port=c.Ldap.PORT,
             use_ssl=False,
             use_tls=False,
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
@@ -79,13 +79,13 @@ class TestsFlextLdapLdap3Adapter:
                 c.Ldap.Tests.FIELD_PORT,
                 c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
             ),
-            eq=c.Ldap.ConnectionDefaults.PORT,
+            eq=c.Ldap.PORT,
         )
 
     def test_connection_manager_create_server_with_tls(self) -> None:
         settings = m.Ldap.ConnectionConfig(
             host=c.LOCALHOST,
-            port=c.Ldap.ConnectionDefaults.PORT,
+            port=c.Ldap.PORT,
             use_ssl=False,
             use_tls=True,
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
@@ -102,7 +102,7 @@ class TestsFlextLdapLdap3Adapter:
                 c.Ldap.Tests.FIELD_PORT,
                 c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
             ),
-            eq=c.Ldap.ConnectionDefaults.PORT,
+            eq=c.Ldap.PORT,
         )
 
     def test_connection_manager_create_server_api_is_callable(self) -> None:

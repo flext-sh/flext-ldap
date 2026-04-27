@@ -143,7 +143,7 @@ class FlextLdapOperations(s):
 
             """
             attrs = u.Ldap.extract_entry_attributes(entry)
-            changetype_result = attrs.get(c.Ldap.LdapAttributeNames.CHANGETYPE, [])
+            changetype_result = attrs.get(c.Ldap.AttributeName.CHANGETYPE, [])
             changetype_val: t.StrSequence = [str(item) for item in changetype_result]
             changetype = (
                 u.Ldap.norm_str(changetype_val[0], case="lower")
@@ -188,7 +188,7 @@ class FlextLdapOperations(s):
             if search_result.failure:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperations.SKIPPED,
+                        c.Ldap.UpsertOperation.SKIPPED,
                     ),
                 )
             search_data = search_result.map_or(None)
@@ -200,7 +200,7 @@ class FlextLdapOperations(s):
                 if retry_result.success:
                     return r[m.Ldap.LdapOperationResult].ok(
                         m.Ldap.LdapOperationResult.with_operation(
-                            c.Ldap.UpsertOperations.ADDED,
+                            c.Ldap.UpsertOperation.ADDED,
                         ),
                     )
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -212,7 +212,7 @@ class FlextLdapOperations(s):
             if changes is None or not changes:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperations.SKIPPED,
+                        c.Ldap.UpsertOperation.SKIPPED,
                     ),
                 )
             modify_result = self._ops.modify(entry_dn, changes)
@@ -220,7 +220,7 @@ class FlextLdapOperations(s):
                 on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(u.to_str(e)),
                 on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperations.MODIFIED,
+                        c.Ldap.UpsertOperation.MODIFIED,
                     ),
                 ),
             )
@@ -251,7 +251,7 @@ class FlextLdapOperations(s):
                 .add(entry_for_add)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperations.ADDED,
+                        c.Ldap.UpsertOperation.ADDED,
                     ),
                 )
                 .lash(
@@ -327,19 +327,19 @@ class FlextLdapOperations(s):
                     .modify(dn_str, changes)
                     .map(
                         lambda _: m.Ldap.LdapOperationResult.with_operation(
-                            c.Ldap.UpsertOperations.MODIFIED,
+                            c.Ldap.UpsertOperation.MODIFIED,
                         ),
                     )
                     .lash(
                         lambda e: (
                             r[m.Ldap.LdapOperationResult].ok(
                                 m.Ldap.LdapOperationResult.with_operation(
-                                    c.Ldap.UpsertOperations.SKIPPED,
+                                    c.Ldap.UpsertOperation.SKIPPED,
                                 ),
                             )
                             if self._ops.already_exists_error(u.to_str(e))
                             else r[m.Ldap.LdapOperationResult].fail(
-                                u.to_str(e) or c.Ldap.ErrorStrings.UNKNOWN_ERROR,
+                                u.to_str(e) or c.Ldap.ErrorMessage.UNKNOWN_ERROR,
                             )
                         ),
                     )
@@ -426,13 +426,7 @@ class FlextLdapOperations(s):
             True if error indicates entry exists, False otherwise.
 
         """
-        error_lower = u.Ldap.norm_str(error_message, case="lower")
-        return (
-            str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS) in error_lower
-            or str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_ALT) in error_lower
-            or str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_LDAP) in error_lower
-            or (str(c.Ldap.ErrorStrings.ENTRY_ALREADY_EXISTS_SNAKE) in error_lower)
-        )
+        return bool(c.Ldap.ENTRY_ALREADY_EXISTS_RE.search(error_message))
 
     def add(
         self,
@@ -616,7 +610,7 @@ class FlextLdapOperations(s):
         if logger is not None:
             logger.info(
                 "Batch upsert completed",
-                operation=c.Ldap.LdapOperationNames.BATCH_UPSERT,
+                operation=c.Ldap.OperationName.BATCH_UPSERT,
                 total_entries=total_entries,
                 synced=stats_builder["synced"],
                 failed=stats_builder["failed"],
@@ -703,14 +697,14 @@ class FlextLdapOperations(s):
 
         """
         if not self.is_connected:
-            return r[m.Ldap.Response].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
-        base_dn: str = c.Ldap.Defaults.EXAMPLE_BASE_DN
+            return r[m.Ldap.Response].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
+        base_dn: str = c.Ldap.EXAMPLE_BASE_DN
         return r[m.Ldap.Response].ok(
             m.Ldap.SearchResult(
                 entries=[],
                 search_options=m.Ldap.SearchOptions(
                     base_dn=base_dn,
-                    filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,
+                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
                 ),
             ),
         )
@@ -896,14 +890,14 @@ class FlextLdapOperations(s):
             if logger is not None:
                 logger.warning(
                     "Progress callback failed",
-                    operation=c.Ldap.LdapOperationNames.SYNC,
+                    operation=c.Ldap.OperationName.SYNC,
                     entry_index=entry_index,
                     error=str(exc),
                 )
             else:
                 logging.getLogger(__name__).warning(
                     "Progress callback failed: operation=%s entry=%s error=%s",
-                    c.Ldap.LdapOperationNames.SYNC,
+                    c.Ldap.OperationName.SYNC,
                     entry_index,
                     exc,
                 )
@@ -919,17 +913,17 @@ class FlextLdapOperations(s):
         """Update batch stats from upsert result."""
         if upsert_result.success:
             operation = upsert_result.value.operation
-            if operation == c.Ldap.UpsertOperations.SKIPPED:
+            if operation == c.Ldap.UpsertOperation.SKIPPED:
                 stats["skipped"] += 1
             elif operation in {
-                c.Ldap.UpsertOperations.ADDED,
-                c.Ldap.UpsertOperations.MODIFIED,
+                c.Ldap.UpsertOperation.ADDED,
+                c.Ldap.UpsertOperation.MODIFIED,
             }:
                 stats["synced"] += 1
         else:
             stats["failed"] += 1
             entry_dn_sliced: str = (
-                entry_dn[: c.Ldap.Logging.DN_TRUNCATION_LENGTH] if entry_dn else ""
+                entry_dn[: c.Ldap.DN_TRUNCATION_LENGTH] if entry_dn else ""
             )
             error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
             logger = FlextLdapOperations._get_structlog_logger()

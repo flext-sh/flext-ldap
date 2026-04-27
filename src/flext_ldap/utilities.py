@@ -62,7 +62,7 @@ class FlextLdapUtilities(u):
         @staticmethod
         def create_server(
             host: str,
-            port: int = c.Ldap.ConnectionDefaults.PORT,
+            port: int = c.Ldap.PORT,
             *,
             use_ssl: bool = False,
             get_info: t.Ldap.Ldap3GetInfo = "ALL",
@@ -138,7 +138,7 @@ class FlextLdapUtilities(u):
         def create_bare_server(
             host: str,
             *,
-            port: int = c.Ldap.ConnectionDefaults.PORT,
+            port: int = c.Ldap.PORT,
             get_info: t.Ldap.Ldap3GetInfo = "NO_INFO",
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
@@ -181,15 +181,9 @@ class FlextLdapUtilities(u):
                     TypeIs guard indicating if value is a valid StatusLiteral
 
                 """
-                valid_statuses = {
-                    c.Ldap.LdapCqrs.Status.PENDING,
-                    c.Ldap.LdapCqrs.Status.RUNNING,
-                    c.Ldap.LdapCqrs.Status.COMPLETED,
-                    c.Ldap.LdapCqrs.Status.FAILED,
-                }
-                if isinstance(value, c.Ldap.LdapCqrs.Status):
+                if isinstance(value, c.Ldap.Status):
                     return True
-                return value in valid_statuses
+                return value in c.Ldap.VALID_STATUSES
 
         @classmethod
         def norm_in(
@@ -281,7 +275,7 @@ class FlextLdapUtilities(u):
                         return cls.ldap3_value_to_strings(value)
                     case list() | tuple() | range():
                         return [
-                            item.decode(c.DEFAULT_ENCODING, errors="replace")
+                            item.decode(c.Ldif.Encoding.UTF8, errors="replace")
                             if isinstance(item, bytes)
                             else str(item)
                             for item in value
@@ -308,10 +302,10 @@ class FlextLdapUtilities(u):
                     empty_values: t.StrSequence = []
                     return empty_values
                 case bytes() as value_bytes:
-                    return [value_bytes.decode(c.DEFAULT_ENCODING, errors="replace")]
+                    return [value_bytes.decode(c.Ldif.Encoding.UTF8, errors="replace")]
                 case list() | tuple() as sequence_values:
                     return [
-                        item.decode(c.DEFAULT_ENCODING, errors="replace")
+                        item.decode(c.Ldif.Encoding.UTF8, errors="replace")
                         if isinstance(item, bytes)
                         else str(item)
                         for item in sequence_values
@@ -503,7 +497,7 @@ class FlextLdapUtilities(u):
         def dn_str(
             dn: str | m.Ldif.DN | m.Ldif.Entry | None,
             *,
-            default: str = c.Ldap.Defaults.UNKNOWN_CATEGORY,
+            default: str = c.Ldap.UNKNOWN_CATEGORY,
         ) -> str:
             """Extract DN string (builder: whn().safe().conv().str()).
 
@@ -698,7 +692,7 @@ class FlextLdapUtilities(u):
                             or (
                                 "unified directory" not in value
                                 and len(value.split())
-                                <= c.Ldap.ServerTypeMappings.VENDOR_STRING_MAX_TOKENS
+                                <= c.Ldap.VENDOR_STRING_MAX_TOKENS
                             )
                         )
                     ),
@@ -754,9 +748,9 @@ class FlextLdapUtilities(u):
                 )
             if not search_method(
                 search_base="",
-                search_filter=str(c.Ldap.Filters.ALL_ENTRIES_FILTER),
+                search_filter=str(c.Ldap.ALL_ENTRIES_FILTER),
                 search_scope=c.Ldap.SearchScopeValue.BASE,
-                attributes=str(c.Ldap.LdapAttributeNames.ALL_ATTRIBUTES),
+                attributes=str(c.Ldap.AttributeName.ALL_ATTRIBUTES),
             ):
                 return r[t.Ldap.OperationAttributes].fail(
                     f"rootDSE query failed: {connection.result}",
@@ -789,18 +783,18 @@ class FlextLdapUtilities(u):
                 cls.detect_server_type(
                     vendor_name=cls.get_first_attribute_value(
                         root_dse_attrs,
-                        c.Ldap.RootDseAttributes.VENDOR_NAME,
+                        c.Ldap.RootDseAttribute.VENDOR_NAME,
                     ),
                     vendor_version=cls.get_first_attribute_value(
                         root_dse_attrs,
-                        c.Ldap.RootDseAttributes.VENDOR_VERSION,
+                        c.Ldap.RootDseAttribute.VENDOR_VERSION,
                     ),
                     naming_contexts=root_dse_attrs.get(
-                        c.Ldap.RootDseAttributes.NAMING_CONTEXTS,
+                        c.Ldap.RootDseAttribute.NAMING_CONTEXTS,
                         [],
                     ),
                     supported_extensions=root_dse_attrs.get(
-                        c.Ldap.RootDseAttributes.SUPPORTED_EXTENSIONS,
+                        c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS,
                         [],
                     ),
                 ),

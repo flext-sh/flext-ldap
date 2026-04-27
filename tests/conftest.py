@@ -237,9 +237,9 @@ def connection_config(
 def search_options(
     ldap_container: t.MappingKV[str, t.Scalar],
 ) -> m.Ldap.SearchOptions:
-    base_dn = str(ldap_container.get("base_dn", c.Ldap.Defaults.EXAMPLE_BASE_DN))
+    base_dn = str(ldap_container.get("base_dn", c.Ldap.EXAMPLE_BASE_DN))
     return m.Ldap.SearchOptions(
         base_dn=base_dn,
-        filter_str=c.Ldap.Filters.ALL_ENTRIES_FILTER,
+        filter_str=c.Ldap.ALL_ENTRIES_FILTER,
         scope=c.Ldap.SearchScope.SUBTREE,
     )

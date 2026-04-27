@@ -1149,7 +1149,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 )
                 conn_result = connection.result
                 result_code = conn_result.get("result", -1)
-                if result_code not in c.Ldap.LdapResultCodes.PARTIAL_SUCCESS_CODES:
+                if result_code not in c.Ldap.PARTIAL_SUCCESS_CODES:
                     error_msg = conn_result.get("message", "LDAP search failed")
                     error_desc = conn_result.get("description", "unknown")
                     return r[Sequence[m.Ldif.Entry]].fail(
@@ -1244,14 +1244,9 @@ class FlextLdapLdap3Adapter(s[bool]):
                 scope_enum = c.Ldap.SearchScope(str(scope).upper())
             except ValueError:
                 return r[int].fail(f"Invalid LDAP scope: {scope}")
-        ldap3_scope_mapping: Mapping[c.Ldap.SearchScope, int] = {
-            c.Ldap.SearchScope.BASE: c.Ldap.SearchScopeValue.BASE,
-            c.Ldap.SearchScope.ONELEVEL: c.Ldap.SearchScopeValue.LEVEL,
-            c.Ldap.SearchScope.SUBTREE: c.Ldap.SearchScopeValue.SUBTREE,
-        }
-        if scope_enum in ldap3_scope_mapping:
-            ldap3_value = ldap3_scope_mapping[scope_enum]
-            return r[int].ok(ldap3_value)
+        if scope_enum in c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE:
+            ldap3_value = c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE[scope_enum]
+            return r[int].ok(int(ldap3_value))
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
     def add(
@@ -1456,7 +1451,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         """
         if not self.is_connected:
-            return r[bool].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
+            return r[bool].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         return r[bool].ok(value=True)
 
     def modify(
@@ -1577,7 +1572,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def _get_connection(self) -> p.Result[p.Ldap.Ldap3Connection]:
         """Get connection with fast fail if not available."""
         if not self.is_connected or self._connection is None:
-            return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorStrings.NOT_CONNECTED)
+            return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         return r[p.Ldap.Ldap3Connection].ok(self._connection)
 
     def _unbind_connection(self) -> None:

@@ -101,7 +101,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     if isinstance(port, int)
                     else int(port)
                     if isinstance(port, (str, float))
-                    else c.Ldap.ConnectionDefaults.PORT
+                    else c.Ldap.PORT
                 )
                 return m.Ldap.ConnectionConfig(
                     host=str(ldap_container["host"]),

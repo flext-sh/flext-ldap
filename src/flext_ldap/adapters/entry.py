@@ -254,7 +254,7 @@ class FlextLdapEntryAdapter(s[bool]):
             )
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
-                operation=c.Ldap.LdapOperationNames.LDAP3_TO_LDIF_ENTRY,
+                operation=c.Ldap.OperationName.LDAP3_TO_LDIF_ENTRY,
                 entry_dn=entry_dn_for_log,
                 error=str(exc),
                 error_type=type(exc).__name__,
@@ -317,7 +317,7 @@ class FlextLdapEntryAdapter(s[bool]):
             )
             self.logger.exception(
                 "Failed to convert LDIF entry to ldap3 attributes format",
-                operation=c.Ldap.LdapOperationNames.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
+                operation=c.Ldap.OperationName.LDIF_ENTRY_TO_LDAP3_ATTRIBUTES,
                 entry_dn=entry_dn_str,
                 error=str(exc),
                 error_type=type(exc).__name__,
