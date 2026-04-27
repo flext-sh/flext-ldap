@@ -1,0 +1,37 @@
+src/flext_ldap/services/detection.py
+  22632355ef1e26ce 5-6,41
+src/flext_ldap/utilities.py
+  22632355ef1e26ce 79,87-88,102,111-112,114,158,656,661,671,757,791
+src/flext_ldap/adapters/ldap3.py
+  22632355ef1e26ce 141-143,146,150-152,155
+src/flext_ldap/protocols.py
+  22632355ef1e26ce 431-432
+docs/guides/configuration.md
+  h_9db9d35f50cf33 183
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "81a2b2ad77da758c64891589908b1403d1e63ad8",
+  "prompts": {
+    "22632355ef1e26ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6ac7df6-1398-4096-87d8-e634aca30e02",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 41,
+      "total_deletions": 41,
+      "accepted_lines": 25,
+      "overriden_lines": 8,
+      "messages_url": "https://usegitai.com/cas/15e806247f6f609202884b8f9d375ee8f0354245d935e5b286508d7b940863dc"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
