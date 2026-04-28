@@ -55,7 +55,7 @@ class FlextLdapUtilities(u):
 
         Example:
             from flext_core import u
-            values = u.Ldap.to_str_list(attr_value)
+            values = u.to_str_list(attr_value)
             result = u.Ldap.DN.parse("cn=test,dc=example")  # Access LDIF utilities
 
         """
@@ -164,14 +164,6 @@ class FlextLdapUtilities(u):
                 get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[get_info],
             )
             return server
-
-        @staticmethod
-        def to_str(value: t.Primitives | None, *, default: str = "") -> str:
-            """Convert a value to string, returning default for None or complex types."""
-            if value is None:
-                return default
-            str_val = str(value)
-            return str_val or default
 
         class Validation:
             """LDAP validation utilities namespace.
@@ -683,7 +675,7 @@ class FlextLdapUtilities(u):
         ) -> str | None:
             """Infer server type from vendor metadata when available."""
             vendor_parts = [
-                cls.to_str(value)
+                u.to_str(value)
                 for value in (vendor_name, vendor_version)
                 if value is not None
             ]

@@ -99,19 +99,19 @@ class FlextLdapLdap3Wrappers:
             key: values[0] if values else "" for key, values in attributes.items()
         }
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
-        return bool(add_fn(dn, object_class, normalized_attributes))
+        return add_fn(dn, object_class, normalized_attributes)
 
     @staticmethod
     def delete(connection: Connection, dn: str) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.delete()."""
         delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
-        return bool(delete_fn(dn))
+        return delete_fn(dn)
 
     @staticmethod
     def is_bound(connection: Connection) -> bool:
         """Safely read ldap3 bound state from dynamic connection objects."""
         bound_state: bool = getattr(connection, "bound", False)
-        return bool(bound_state)
+        return bound_state
 
     @staticmethod
     def modify(
@@ -121,7 +121,7 @@ class FlextLdapLdap3Wrappers:
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
         modify_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "modify")
-        return bool(modify_fn(dn, changes))
+        return modify_fn(dn, changes)
 
     @staticmethod
     def search(
@@ -155,17 +155,15 @@ class FlextLdapLdap3Wrappers:
                 search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE
             )
         search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
-        return bool(
-            search_fn(
-                search_base=search_base,
-                search_filter=search_filter,
-                search_scope=normalized_scope,
-                attributes=list(attributes)
-                if not isinstance(attributes, str)
-                else attributes,
-                size_limit=size_limit,
-                time_limit=time_limit,
-            ),
+        return search_fn(
+            search_base=search_base,
+            search_filter=search_filter,
+            search_scope=normalized_scope,
+            attributes=list(attributes)
+            if not isinstance(attributes, str)
+            else attributes,
+            size_limit=size_limit,
+            time_limit=time_limit,
         )
 
     @staticmethod
@@ -376,7 +374,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                     dn = str(entry) if entry else ""
                     results.append((dn, {}))
                     continue
-                dn = str(dn_raw) if dn_raw is not None else ""
+                dn = dn_raw if dn_raw is not None else ""
                 attrs_dict = (
                     FlextLdapLdap3Adapter.ResultConverter.process_entry_attributes(
                         entry,

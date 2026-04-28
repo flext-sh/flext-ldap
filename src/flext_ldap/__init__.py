@@ -10,9 +10,18 @@ from flext_core.lazy import (
     install_lazy_exports,
     merge_lazy_imports,
 )
-from flext_ldap.__version__ import *
 
 if _t.TYPE_CHECKING:
+    from flext_ldap.__version__ import (
+        __author__,
+        __author_email__,
+        __description__,
+        __license__,
+        __title__,
+        __url__,
+        __version__,
+        __version_info__,
+    )
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers

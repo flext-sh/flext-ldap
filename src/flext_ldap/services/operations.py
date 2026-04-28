@@ -202,7 +202,7 @@ class FlextLdapOperations(s):
                         ),
                     )
                 return r[m.Ldap.LdapOperationResult].fail(
-                    u.Ldap.to_str(retry_result.error),
+                    u.to_str(retry_result.error),
                 )
             existing_entry_obj = existing_entries[0]
             existing_entry = u.Ldap.search_entry_to_ldif_entry(existing_entry_obj)
