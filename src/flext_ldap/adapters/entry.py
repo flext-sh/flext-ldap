@@ -29,7 +29,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import (
     Mapping,
     MutableSequence,
@@ -200,7 +199,7 @@ class FlextLdapEntryAdapter(s[bool]):
             removed_attrs: MutableSequence[str] = []
             base64_attrs: MutableSequence[str] = []
             ldif_attrs: t.MutableMappingKV[str, t.MutableSequenceOf[str] | str] = {}
-            logger = logging.getLogger(__name__)
+            logger = u.fetch_logger(__name__)
             for key, raw_value in attrs_dict.items():
                 try:
                     ldif_attrs[key] = list(
