@@ -148,7 +148,7 @@ class TestsFlextLdapConfig:
             host=c.Ldap.Tests.CONFIG_ORIGINAL_HOST,
             port=c.Ldap.PORT,
         )
-        copied = original.model_copy(deep=True)
+        copied = original.clone()
         u.Ldap.Tests.that(copied, is_=FlextLdapSettings, none=False)
         u.Ldap.Tests.that(
             original.model_dump()[c.Ldap.Tests.FIELD_PORT],
