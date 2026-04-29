@@ -57,9 +57,11 @@ class FlextLdapServerDetector(s):
             return e.fail_validation("connection", error="parameter required")
         if not isinstance(connection_raw, p.Ldap.Ldap3Connection):
             return e.fail_type_mismatch(
-                "ldap3.Connection",
-                type(connection_raw).__name__,
-                service_name="connection",
+                m.ServiceLookupParams(
+                    service_name="connection",
+                    expected_type="ldap3.Connection",
+                    actual_type=type(connection_raw).__name__,
+                ),
             )
         return self.detect_from_connection(connection_raw).map(
             lambda detected_type: m.Ldap.OperationResult(
