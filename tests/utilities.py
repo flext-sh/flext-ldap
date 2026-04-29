@@ -143,7 +143,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
             ) -> tk:
                 """Create Docker test infrastructure controller."""
-                return tk(
+                return tk.compose(
+                    compose_file=c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL,
+                    container_name=c.Ldap.Tests.DOCKER_CONTAINER_NAME,
+                    service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
+                    host=c.LOCALHOST,
+                    port=c.Ldap.Tests.DOCKER_PORT,
+                    startup_timeout=c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
                     workspace_root=Path(__file__).resolve().parents[1],
                     worker_id=worker_id,
                 )

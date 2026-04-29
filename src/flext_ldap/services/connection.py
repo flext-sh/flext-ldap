@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_ldap import FlextLdapServerDetector, c, m, p, s, u
 from flext_ldif import r
 
@@ -37,7 +39,7 @@ class FlextLdapConnection(s):
         def connect_once() -> r[bool]:
             connect_result = adapter.connect(connection_config)
             if connect_result.success:
-                return r[bool].ok(value=bool(connect_result.value))
+                return r[bool].ok(value=connect_result.value)
             return r[bool].fail(connect_result.error)
 
         result: p.Result[bool] = (
@@ -60,6 +62,7 @@ class FlextLdapConnection(s):
             self._adapter.disconnect()
         self._server_type = c.Ldap.DEFAULT_TYPE
 
+    @override
     def execute(
         self,
     ) -> p.Result[m.Ldap.Response]:
@@ -79,15 +82,15 @@ class FlextLdapConnection(s):
         detector = FlextLdapServerDetector()
         detection_result: p.Result[str] = detector.detect_from_connection(connection)
         if detection_result.success:
-            self._server_type = str(detection_result.value)
+            self._server_type = detection_result.value
             self.logger.info(
                 "Server type detected automatically",
                 operation=c.Ldap.OperationName.CONNECT,
-                detected_server_type=str(detection_result.value),
+                detected_server_type=detection_result.value,
             )
         else:
             self.logger.debug(
                 "Server type detection failed (non-critical)",
                 operation=c.Ldap.OperationName.CONNECT,
-                error=str(detection_result.error) if detection_result.error else "",
+                error=detection_result.error or "",
             )

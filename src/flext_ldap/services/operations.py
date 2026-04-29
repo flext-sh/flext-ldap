@@ -35,6 +35,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+from typing import override
 
 from flext_ldap import c, m, p, s, t, u
 from flext_ldif import FlextLdifConversion, e, r
@@ -144,7 +145,7 @@ class FlextLdapOperations(s):
             """
             attrs = u.Ldap.extract_entry_attributes(entry)
             changetype_result = attrs.get(c.Ldap.AttributeName.CHANGETYPE, [])
-            changetype_val: t.StrSequence = [str(item) for item in changetype_result]
+            changetype_val: t.StrSequence = list(changetype_result)
             changetype = (
                 u.Ldap.norm_str(changetype_val[0], case="lower")
                 if changetype_val
@@ -178,9 +179,7 @@ class FlextLdapOperations(s):
                 r with MODIFIED, SKIPPED, or ADDED (race condition).
 
             """
-            entry_dn = (
-                str(entry.dn.value) if entry.dn is not None else c.Ldif.UNKNOWN_VALUE
-            )
+            entry_dn = entry.dn.value if entry.dn is not None else c.Ldif.UNKNOWN_VALUE
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
@@ -305,10 +304,10 @@ class FlextLdapOperations(s):
             if not schema_additions:
                 attrs = u.Ldap.extract_entry_attributes(entry_model)
                 add_op_result = attrs.get(c.Ldif.ChangeOperation.ADD, [])
-                add_op: t.StrSequence = [str(item) for item in add_op_result]
+                add_op: t.StrSequence = list(add_op_result)
                 for attr_type in add_op:
                     attr_values_raw = attrs.get(attr_type, [])
-                    filtered_values = [str(item) for item in attr_values_raw if item]
+                    filtered_values = [item for item in attr_values_raw if item]
                     if filtered_values:
                         schema_additions.append((attr_type, filtered_values))
             if not schema_additions:
@@ -366,7 +365,7 @@ class FlextLdapOperations(s):
             """
             add_op_result = attrs.get(c.Ldif.ChangeOperation.ADD, [])
             add_op_raw = add_op_result
-            add_op: t.StrSequence = [str(item) for item in add_op_raw]
+            add_op: t.StrSequence = list(add_op_raw)
             if not add_op:
                 return e.fail_validation("add", error="missing in schema modify entry")
             return r[str].ok(add_op[0])
@@ -388,7 +387,7 @@ class FlextLdapOperations(s):
             """
             attr_values_result = attrs.get(attr_type, [])
             attr_values_raw = attr_values_result
-            attr_values = [str(item) for item in attr_values_raw]
+            attr_values = list(attr_values_raw)
             filtered = [x for x in attr_values if x]
             if not filtered:
                 return r[t.StrSequence].fail(
@@ -675,6 +674,7 @@ class FlextLdapOperations(s):
         )
         return folded
 
+    @override
     def execute(
         self,
     ) -> p.Result[m.Ldap.Response]:
@@ -923,7 +923,7 @@ class FlextLdapOperations(s):
             entry_dn_sliced: str = (
                 entry_dn[: c.Ldap.DN_TRUNCATION_LENGTH] if entry_dn else ""
             )
-            error_msg = (str(upsert_result.error) if upsert_result.error else "")[:200]
+            error_msg = (upsert_result.error or "")[:200]
             logger = FlextLdapOperations._get_structlog_logger()
             if logger is not None:
                 logger.error(

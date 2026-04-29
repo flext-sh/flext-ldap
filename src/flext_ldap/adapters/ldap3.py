@@ -170,13 +170,13 @@ class FlextLdapLdap3Wrappers:
     def start_tls(connection: Connection) -> bool:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
         result: bool = getattr(connection, "start_tls", lambda: False)()
-        return bool(result)
+        return result
 
     @staticmethod
     def unbind(connection: Connection) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.unbind()."""
         unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
-        return bool(unbind_fn())
+        return unbind_fn()
 
 
 class FlextLdapLdap3Adapter(s[bool]):
@@ -193,7 +193,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def _is_bound(connection: Connection) -> bool:
         """Check if ldap3 connection is bound."""
         bound_state: bool = getattr(connection, "bound", False)
-        return bool(bound_state)
+        return bound_state
 
     class ConnectionManager:
         """Connection management logic (SRP)."""
@@ -787,7 +787,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             filtered: MutableMapping[str, t.Scalar | t.ScalarList] = {}
             for key, val in metadata_dict.items():
                 if u.primitive(val):
-                    filtered[str(key)] = val
+                    filtered[key] = val
             return filtered or None
 
         @staticmethod
@@ -1161,7 +1161,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 if isinstance(server_type, c.Ldif.ServerTypes):
                     server_type_str = server_type.value
                 else:
-                    server_type_str = str(server_type)
+                    server_type_str = server_type
                 valid_server_types = {
                     c.Ldif.ServerTypes.RFC,
                     c.Ldif.ServerTypes.OID,
@@ -1241,7 +1241,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             scope_enum = scope
         else:
             try:
-                scope_enum = c.Ldap.SearchScope(str(scope).upper())
+                scope_enum = c.Ldap.SearchScope(scope.upper())
             except ValueError:
                 return r[int].fail(f"Invalid LDAP scope: {scope}")
         if scope_enum in c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE:
@@ -1283,11 +1283,11 @@ class FlextLdapLdap3Adapter(s[bool]):
         connection_result = self._get_connection()
         if connection_result.failure:
             return r[m.Ldap.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else "",
+                connection_result.error or "",
             )
         attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
         if attrs_result.failure:
-            error_msg = str(attrs_result.error) if attrs_result.error else ""
+            error_msg = attrs_result.error or ""
             return r[m.Ldap.OperationResult].fail(
                 f"Failed to convert entry attributes: {error_msg}",
             )
@@ -1387,7 +1387,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         connection_result = self._get_connection()
         if connection_result.failure:
             return r[m.Ldap.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else "",
+                connection_result.error or "",
             )
         return self.OperationExecutor(self).execute_delete(connection_result.value, dn)
 
@@ -1428,6 +1428,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 self._connection = None
                 self._server = None
 
+    @override
     def execute(self) -> p.Result[bool]:
         """Execute service health check.
 
@@ -1489,7 +1490,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         connection_result = self._get_connection()
         if connection_result.failure:
             return r[m.Ldap.OperationResult].fail(
-                str(connection_result.error) if connection_result.error else "",
+                connection_result.error or "",
             )
         return self.OperationExecutor(self).execute_modify(
             connection_result.value,
@@ -1533,13 +1534,13 @@ class FlextLdapLdap3Adapter(s[bool]):
         """
         connection_result = self._get_connection()
         if connection_result.failure:
-            error_msg = str(connection_result.error) if connection_result.error else ""
+            error_msg = connection_result.error or ""
             return r[m.Ldap.SearchResult].fail(error_msg)
         scope_for_mapping: str | c.Ldap.SearchScope = search_options.scope
         scope_result = FlextLdapLdap3Adapter._map_scope(scope_for_mapping)
         if scope_result.failure:
             return r[m.Ldap.SearchResult].fail(
-                str(scope_result.error) if scope_result.error else "",
+                scope_result.error or "",
             )
         search_params = m.Ldap.SearchParams(
             base_dn=search_options.base_dn,
@@ -1556,7 +1557,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         )
         if entries_result.failure:
             return r[m.Ldap.SearchResult].fail(
-                str(entries_result.error) if entries_result.error else "",
+                entries_result.error or "",
             )
         entries_raw = entries_result.value
         entries_dict: Sequence[Mapping[str, t.StrSequence]] = [

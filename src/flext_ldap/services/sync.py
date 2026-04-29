@@ -30,12 +30,12 @@ class FlextLdapSyncCallbacks:
         if callback is None:
             return False
         try:
-            signature = inspect.signature(callback)
+            signature: inspect.Signature = inspect.signature(callback)
         except (TypeError, ValueError, AttributeError):
             return False
-        return bool(
-            len(signature.parameters) == c.Ldap.MULTI_PHASE_PARAM_COUNT,
-        )
+        parameter_count: int = len(signature.parameters)
+        matches_multi_phase: bool = parameter_count == c.Ldap.MULTI_PHASE_PARAM_COUNT
+        return matches_multi_phase
 
     @staticmethod
     def is_single_phase_callback(
@@ -45,12 +45,12 @@ class FlextLdapSyncCallbacks:
         if callback is None:
             return False
         try:
-            signature = inspect.signature(callback)
+            signature: inspect.Signature = inspect.signature(callback)
         except (TypeError, ValueError, AttributeError):
             return False
-        return bool(
-            len(signature.parameters) == c.Ldap.SINGLE_PHASE_PARAM_COUNT,
-        )
+        parameter_count: int = len(signature.parameters)
+        matches_single_phase: bool = parameter_count == c.Ldap.SINGLE_PHASE_PARAM_COUNT
+        return matches_single_phase
 
 
 class FlextLdapSync(FlextLdapOperations):
@@ -159,9 +159,7 @@ class FlextLdapSync(FlextLdapOperations):
             server_type=sync_config.server_type,
         )
         if parse_result.failure:
-            error_msg = (
-                str(parse_result.error) if parse_result.error else "Unknown error"
-            )
+            error_msg = parse_result.error or "Unknown error"
             return r[m.Ldap.PhaseSyncResult].fail(
                 f"Failed to parse LDIF file: {error_msg}",
             )
@@ -188,9 +186,7 @@ class FlextLdapSync(FlextLdapOperations):
             stop_on_error=sync_config.stop_on_error,
         )
         if batch_result.failure:
-            error_msg = (
-                str(batch_result.error) if batch_result.error else "Unknown error"
-            )
+            error_msg = batch_result.error or "Unknown error"
             return r[m.Ldap.PhaseSyncResult].fail(f"Batch sync failed: {error_msg}")
         batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()

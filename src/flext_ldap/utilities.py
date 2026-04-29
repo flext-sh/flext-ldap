@@ -220,8 +220,7 @@ class FlextLdapUtilities(u):
                     collection_list = collection
             normalized_value = cls.norm_str(value, case=case or "lower")
             normalized_collection = [
-                cls.norm_str(str(item), case=case or "lower")
-                for item in collection_list
+                cls.norm_str(item, case=case or "lower") for item in collection_list
             ]
             return normalized_value in normalized_collection
 
@@ -248,7 +247,7 @@ class FlextLdapUtilities(u):
                     values_list = list(values)
                 case _:
                     values_list = values
-            normalized = [cls.norm_str(str(v), case=case) for v in values_list if v]
+            normalized = [cls.norm_str(v, case=case) for v in values_list if v]
             return " ".join(normalized)
 
         @classmethod
@@ -393,9 +392,7 @@ class FlextLdapUtilities(u):
                 for attr_name, original_values in original_attrs_dict.items()
                 if ", ".join(cls.normalize_original_attr_value(original_values))
                 != ", ".join(
-                    str(value)
-                    for value in converted_attrs_dict.get(attr_name, [])
-                    if value
+                    value for value in converted_attrs_dict.get(attr_name, []) if value
                 )
             ]
             if changed_attrs:
@@ -424,14 +421,14 @@ class FlextLdapUtilities(u):
             """Resolve attribute values by case-insensitive LDAP name matching."""
             normalized_target = cls.norm_str(attr_name, case="lower")
             for key, values in existing_attrs.items():
-                if cls.norm_str(str(key), case="lower") == normalized_target:
-                    return [str(item) for item in values]
+                if cls.norm_str(key, case="lower") == normalized_target:
+                    return list(values)
             return None
 
         @staticmethod
         def normalize_value_set(values: t.StrSequence) -> set[str]:
             """Normalize LDAP attribute values for stable comparison."""
-            return {str(value).lower() for value in values if value}
+            return {value.lower() for value in values if value}
 
         @classmethod
         def process_new_attributes(
@@ -449,7 +446,7 @@ class FlextLdapUtilities(u):
                 if normalized_name in ignored:
                     continue
                 processed.add(normalized_name)
-                new_values = [str(value) for value in raw_values if value]
+                new_values = [value for value in raw_values if value]
                 existing_values = cls.find_existing_values(attr_name, existing_attrs)
                 existing_set = cls.normalize_value_set(existing_values or [])
                 new_set = cls.normalize_value_set(new_values)
@@ -741,7 +738,7 @@ class FlextLdapUtilities(u):
             values = attrs.get(key)
             if values is None:
                 return None
-            return next((str(value) for value in values if value), None)
+            return next((value for value in values if value), None)
 
         @classmethod
         def query_root_dse(

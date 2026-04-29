@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_tests import FlextTestsModels
 
 from flext_ldap import m
@@ -78,12 +80,14 @@ class TestsFlextLdapModels(m, FlextTestsModels):
             class SuccessService(s[bool]):
                 """Test service that always succeeds."""
 
+                @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].ok(True)
 
             class FailService(s[bool]):
                 """Test service that always fails."""
 
+                @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].fail(
                         TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,

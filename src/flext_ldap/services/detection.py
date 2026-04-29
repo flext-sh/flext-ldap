@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import override
+
 from ldap3 import Connection
 
 from flext_ldap import c, m, p, s, t, u
@@ -44,6 +46,7 @@ class FlextLdapServerDetector(s):
         detection_result: p.Result[str] = u.Ldap.detect_from_connection(connection)
         return detection_result
 
+    @override
     def execute(
         self,
         **kwargs: str | float | bool | None,

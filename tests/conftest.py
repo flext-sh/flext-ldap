@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import socket
 import time
 from collections.abc import (
     Callable,
@@ -13,7 +12,7 @@ import pytest
 
 from flext_core import FlextSettings
 from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapSettings
-from tests import c, m, p, r, t, u
+from tests import c, m, t, u
 
 logger = u.fetch_logger(__name__)
 
@@ -44,24 +43,10 @@ def _has_workerinput(settings: pytest.Config) -> TypeGuard[WorkerInputConfig]:
 def _get_worker_id(settings: pytest.Config) -> str:
     if not _has_workerinput(settings):
         return c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
-    worker_id_obj = settings.workerinput.get(
+    return settings.workerinput.get(
         "workerid",
         c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
     )
-    return str(worker_id_obj)
-
-
-def _wait_for_port_ready(host: str, port: int, timeout: int) -> p.Result[bool]:
-    """Wait until a TCP port is accepting connections."""
-    waited = 0.0
-    while waited < timeout:
-        try:
-            with socket.create_connection((host, port), timeout=1):
-                return r[bool].ok(value=True)
-        except (ConnectionRefusedError, TimeoutError, OSError):
-            time.sleep(1.0)
-            waited += 1.0
-    return r[bool].fail(f"Port {port} not ready after {timeout}s")
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -69,40 +54,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         return
     worker_id = _get_worker_id(session.config)
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
-    compose_file_rel = str(
-        (
-            Path(__file__).parent.parent.parent.resolve()
-            / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-        ).relative_to(Path(__file__).parent.parent.parent.resolve()),
-    )
-    if docker_control.container_dirty(c.Ldap.Tests.DOCKER_CONTAINER_NAME):
-        logger.info(
-            "Container %s is dirty, recreating",
-            c.Ldap.Tests.DOCKER_CONTAINER_NAME,
-        )
-        docker_control.compose_down(compose_file_rel)
-        result = docker_control.compose_up(
-            compose_file_rel,
-            service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
-            force_recreate=True,
-        )
-        if result.success:
-            docker_control.mark_container_clean(c.Ldap.Tests.DOCKER_CONTAINER_NAME)
-    else:
-        start = docker_control.start_existing_container(
-            c.Ldap.Tests.DOCKER_CONTAINER_NAME,
-        )
-        if start.failure:
-            docker_control.compose_up(
-                compose_file_rel,
-                service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
-            )
-    port_ready = _wait_for_port_ready(
-        c.LOCALHOST,
-        c.Ldap.Tests.DOCKER_PORT,
-        c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
-    )
-    if port_ready.success and port_ready.value:
+    execute_result = docker_control.execute()
+    if execute_result.success:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         waited = 0.0
         while waited < c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT:
@@ -130,6 +83,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                 pass
             time.sleep(1.0)
             waited += 1.0
+    else:
+        logger.warning("LDAP docker startup skipped: %s", execute_result.error)
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
@@ -163,17 +118,13 @@ def ldap_container(
     lock = u.Ldap.Tests.FileLock(
         Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
-    u.Ldap.Tests.get_docker_control(worker_id)
+    docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-        port_result = _wait_for_port_ready(
-            c.LOCALHOST,
-            c.Ldap.Tests.DOCKER_PORT,
-            c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT,
-        )
-        if port_result.failure or not port_result.value:
+        execute_result = docker_control.execute()
+        if execute_result.failure:
             pytest.fail(
-                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} port {c.Ldap.Tests.DOCKER_PORT} not ready within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s",
+                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} startup failed: {execute_result.error}",
             )
         waited: float = 0.0
         while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:

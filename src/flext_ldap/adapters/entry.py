@@ -34,6 +34,7 @@ from collections.abc import (
     Mapping,
     MutableSequence,
 )
+from typing import override
 
 from flext_ldap import c, m, p, s, t, u
 from flext_ldif import e, r
@@ -76,7 +77,7 @@ class FlextLdapEntryAdapter(s[bool]):
             threshold: int = c.Ldif.ASCII_THRESHOLD,
         ) -> bool:
             """Compatibility shim delegating encoding detection to ``u.Ldap``."""
-            return bool(u.Ldap.is_base64_encoded(value, threshold))
+            return u.Ldap.is_base64_encoded(value, threshold)
 
         @staticmethod
         def normalize_original_attr_value(
@@ -130,6 +131,7 @@ class FlextLdapEntryAdapter(s[bool]):
             converted_attrs_dict=converted_attrs_dict,
         )
 
+    @override
     def execute(self) -> p.Result[bool]:
         """Execute method required by s.
 
@@ -247,11 +249,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 metadata=metadata_obj,
             )
         except (ValueError, TypeError, AttributeError) as exc:
-            entry_dn_for_log = (
-                str(ldap3_entry.entry_dn)
-                if ldap3_entry.entry_dn
-                else c.Ldif.UNKNOWN_VALUE
-            )
+            entry_dn_for_log = ldap3_entry.entry_dn or c.Ldif.UNKNOWN_VALUE
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
                 operation=c.Ldap.OperationName.LDAP3_TO_LDIF_ENTRY,
