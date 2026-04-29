@@ -1,0 +1,14 @@
+src/flext_ldap/services/detection.py
+  h_9db9d35f50cf33 60-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c7a0e7071a2e21643b2238bf2ee116aa17451a87",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
