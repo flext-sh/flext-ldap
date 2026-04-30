@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import (
     Callable,
     Mapping,
@@ -245,7 +244,10 @@ class FlextLdapUtilities(u):
         def attr_to_str_list(
             cls,
             attrs: (
-                t.Ldap.Ldap3AttributeDict | t.JsonMapping | Mapping[str, t.StrSequence]
+                t.Ldap.Ldap3AttributeDict
+                | Mapping[str, t.Ldap.Ldap3AttributeValue]
+                | t.JsonMapping
+                | Mapping[str, t.StrSequence]
             ),
             *,
             filter_list_like: bool = False,
@@ -348,11 +350,13 @@ class FlextLdapUtilities(u):
         def search_entry_to_ldif_entry(
             cls,
             entry: Mapping[str, t.Ldap.Ldap3AttributeValue | t.StrSequence],
-        ) -> m.Ldif.Entry:
+        ) -> p.Result[m.Ldif.Entry]:
             """Convert LDAP search-result mappings into canonical LDIF entries."""
             raw_entry = dict(entry)
             dn_values = cls.ldap3_value_to_strings(raw_entry.get("dn"))
-            dn_value = dn_values[0] if dn_values else c.Ldif.UNKNOWN_VALUE
+            if not dn_values:
+                return r[m.Ldif.Entry].fail("Search entry missing DN")
+            dn_value = dn_values[0]
             attributes: MutableMapping[str, MutableSequence[str] | str] = {
                 key: list(cls.ldap3_value_to_strings(value))
                 for key, value in raw_entry.items()
@@ -361,7 +365,7 @@ class FlextLdapUtilities(u):
             return m.Ldif.Entry.create(
                 dn=dn_value,
                 attributes=attributes,
-            ).unwrap()
+            )
 
         @classmethod
         def track_conversion_differences(
@@ -469,25 +473,31 @@ class FlextLdapUtilities(u):
             cls,
             existing_entry: p.Ldif.Entry,
             new_entry: p.Ldif.Entry,
-        ) -> t.Ldap.OperationChanges | None:
+        ) -> p.Result[t.Ldap.OperationChanges]:
             """Compare canonical LDIF entries and return LDAP modify operations."""
             existing_attrs = cls.extract_entry_attributes(existing_entry)
+            if not existing_attrs:
+                return r[t.Ldap.OperationChanges].fail(
+                    "Existing entry has no attributes to compare"
+                )
             new_attrs = cls.extract_entry_attributes(new_entry)
-            if not existing_attrs or not new_attrs:
-                return None
+            if not new_attrs:
+                return r[t.Ldap.OperationChanges].fail(
+                    "New entry has no attributes to compare"
+                )
             changes, processed = cls.process_new_attributes(
                 new_attrs,
                 existing_attrs,
-                frozenset(c.Ldif.OperationalAttributes.IGNORE_SET),
+                c.Ldif.OperationalAttributes.IGNORE_SET,
             )
             changes.update(
                 cls.process_deleted_attributes(
                     existing_attrs,
-                    frozenset(c.Ldif.OperationalAttributes.IGNORE_SET),
+                    c.Ldif.OperationalAttributes.IGNORE_SET,
                     processed,
                 ),
             )
-            return changes or None
+            return r[t.Ldap.OperationChanges].ok(changes)
 
         @staticmethod
         def dn_str(
@@ -532,46 +542,6 @@ class FlextLdapUtilities(u):
             if isinstance(value, Mapping):
                 return {k: v for k, v in value.items() if v}
             return [item for item in value if item]
-
-        @staticmethod
-        def find_callable(
-            callables_dict: Mapping[str, Callable[..., t.JsonPayload]],
-            *args: t.Primitives | None,
-            **kwargs: t.Primitives | None,
-        ) -> str | None:
-            """Find first callable that returns truthy value.
-
-            Args:
-                callables_dict: Dictionary of callables to test
-                *args: Positional arguments to pass to callables
-                **kwargs: Keyword arguments to pass to callables
-
-            Returns:
-                Key of first matching callable or None
-
-            """
-            for key, callable_func in callables_dict.items():
-                try:
-                    result = callable_func(*args, **kwargs)
-                    if result:
-                        return key
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    OSError,
-                    RuntimeError,
-                    ImportError,
-                ) as e:
-                    logger = logging.getLogger(__name__)
-                    logger.debug(
-                        "Callable %s raised exception, continuing",
-                        key,
-                        exc_info=e,
-                    )
-                    continue
-            return None
 
         @staticmethod
         def map_str(
@@ -752,7 +722,15 @@ class FlextLdapUtilities(u):
                     return r[t.Ldap.OperationAttributes].fail(
                         f"rootDSE query failed: {connection.result}",
                     )
-            except Exception as exc:
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                OSError,
+                RuntimeError,
+                ImportError,
+                KeyError,
+            ) as exc:
                 return r[t.Ldap.OperationAttributes].fail(
                     f"rootDSE query failed: {exc}",
                 )

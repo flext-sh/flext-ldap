@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import (
     Mapping,
     Sequence,
 )
+from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
@@ -24,31 +26,31 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
         class Tests:
             """Direct `c.Ldap.Tests.*` constants with no extra subnamespace."""
 
-            RFC_DEFAULT_HOST: Final[str] = "localhost"
-            RFC_DEFAULT_PORT: Final[int] = 3390
-            RFC_DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
-            RFC_DEFAULT_BIND_DN: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-            )
-            RFC_DEFAULT_BIND_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
-            RFC_DEFAULT_FILTER: Final[str] = "(objectClass=*)"
-            RFC_DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
+            @unique
+            class FieldName(StrEnum):
+                HOST = "host"
+                PORT = "port"
+                BIND_DN = "bind_dn"
+                BIND_PASSWORD = "bind_password"
+                BASE_DN = "base_dn"
+                SCOPE = "scope"
+                PROPERTIES = "properties"
+                TYPE = "type"
+                SUCCESS_RATE = "success_rate"
 
-            API_EXPECTED_METHODS: Final[tuple[str, ...]] = (
-                "connect",
-                "disconnect",
-                "search",
-                "add",
-                "modify",
-                "delete",
-                "upsert",
-                "batch_upsert",
-                "sync_phase_entries",
-                "sync_multiple_phases",
-            )
+            @unique
+            class PhaseName(StrEnum):
+                USERS = "users"
+                GROUPS = "groups"
+
+            @unique
+            class FileName(StrEnum):
+                USERS_LDIF = "users.ldif"
+
+            RFC_DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
+            RFC_DEFAULT_FILTER: Final[str] = "(objectClass=*)"
 
             BASE_FAIL_ERROR_MESSAGE: Final[str] = "nope"
-            BASE_EXPORT_ALIAS: Final[str] = "s"
 
             CONFIG_EXAMPLE_HOST: Final[str] = "example.com"
             CONFIG_ORIGINAL_HOST: Final[str] = "original.com"
@@ -58,27 +60,22 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             CONFIG_LDAPS_PORT: Final[int] = 636
             CONFIG_PORT_MIN: Final[int] = 1
             CONFIG_PORT_MAX: Final[int] = 65535
-            CONFIG_ENV_PREFIX: Final[str] = "FLEXT_LDAP_"
-            CONFIG_SSL_TLS_COMBOS: Final[tuple[tuple[bool, bool], ...]] = (
+            CONFIG_SSL_TLS_COMBOS: Final[list[tuple[bool, bool]]] = [
                 (False, False),
                 (True, False),
                 (False, True),
                 (True, True),
-            )
+            ]
 
-            FIELD_HOST: Final[str] = "host"
-            FIELD_PORT: Final[str] = "port"
-            FIELD_BIND_DN: Final[str] = "bind_dn"
-            FIELD_BIND_PASSWORD: Final[str] = "bind_password"
-            FIELD_BASE_DN: Final[str] = "base_dn"
-            FIELD_SCOPE: Final[str] = "scope"
-            FIELD_PROPERTIES: Final[str] = "properties"
-            FIELD_TYPE: Final[str] = "type"
-            FIELD_SUCCESS_RATE: Final[str] = "success_rate"
-
-            API_MODEL_CONFIG_FROZEN: Final[bool] = False
-            API_MODEL_CONFIG_EXTRA: Final[str] = "forbid"
-            API_MODEL_CONFIG_ARBITRARY_TYPES_ALLOWED: Final[bool] = True
+            FIELD_HOST: Final[FieldName] = FieldName.HOST
+            FIELD_PORT: Final[FieldName] = FieldName.PORT
+            FIELD_BIND_DN: Final[FieldName] = FieldName.BIND_DN
+            FIELD_BIND_PASSWORD: Final[FieldName] = FieldName.BIND_PASSWORD
+            FIELD_BASE_DN: Final[FieldName] = FieldName.BASE_DN
+            FIELD_SCOPE: Final[FieldName] = FieldName.SCOPE
+            FIELD_PROPERTIES: Final[FieldName] = FieldName.PROPERTIES
+            FIELD_TYPE: Final[FieldName] = FieldName.TYPE
+            FIELD_SUCCESS_RATE: Final[FieldName] = FieldName.SUCCESS_RATE
 
             DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
@@ -94,8 +91,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[tuple[str, ...]] = ("people", "groups", "services")
-            DOCKER_OU_SEARCH_ATTRS: Final[tuple[str, ...]] = ("ou",)
+            DOCKER_OU_NAMES: Final[list[str]] = ["people", "groups", "services"]
 
             ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset(
                 {
@@ -197,15 +193,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 )
             )
 
-            MODEL_CONFIG_SERVICE_BASE_CONFIG: Final[
-                Sequence[tuple[str, str | bool]]
-            ] = (
-                ("arbitrary_types_allowed", True),
-                ("extra", "forbid"),
-                ("use_enum_values", True),
-                ("validate_assignment", True),
-            )
-
             SEARCH_RESULT_SCENARIO_COUNTS: Final[Mapping[str, tuple[int, int]]] = (
                 MappingProxyType(
                     {
@@ -237,33 +224,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             NORM_JOIN_INPUT: Final[tuple[str, ...]] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
-
-            CALLABLE_HANDLER_FOUND_KEY: Final[str] = "handler1"
-
-            CONSTANT_STATUS_SCENARIOS: Final[Sequence[tuple[str, str]]] = (
-                ("PENDING", "pending"),
-                ("RUNNING", "running"),
-                ("COMPLETED", "completed"),
-                ("FAILED", "failed"),
-            )
-            CONSTANT_SCOPE_SCENARIOS: Final[Sequence[tuple[str, str]]] = (
-                ("BASE", "BASE"),
-                ("ONELEVEL", "ONELEVEL"),
-                ("SUBTREE", "SUBTREE"),
-            )
-            CONSTANT_OPERATION_TYPE_SCENARIOS: Final[Sequence[tuple[str, str]]] = (
-                ("ADD", "add"),
-                ("MODIFY", "modify"),
-                ("DELETE", "delete"),
-                ("SEARCH", "search"),
-            )
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
-            CONSTANT_EXPECTED_CORE_NAME: Final[str] = "FLEXT_LDAP"
-            CONSTANT_EXPECTED_ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
-            CONSTANT_EXPECTED_VENDOR_STRING_MAX_TOKENS: Final[int] = 2
-
-            ENTRY_ADAPTER_BASE64_MARKER_VALUE: Final[str] = "::dGVzdA=="
-            ENTRY_ADAPTER_NON_ASCII_VALUE: Final[str] = "testÿ"
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[Mapping[str, t.StrSequence]] = (
                 MappingProxyType(
                     {
@@ -276,12 +237,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             # ("Failed to validate entry.attributes: empty"). Update with the
             # canonical message rather than re-introducing custom wording.
             ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR: Final[str] = "empty"
-
-            LDAP3_ADAPTER_INNER_CLASS_CONNECTION_MANAGER: Final[str] = (
-                "ConnectionManager"
-            )
-            LDAP3_ADAPTER_INNER_CLASS_RESULT_CONVERTER: Final[str] = "ResultConverter"
-            LDAP3_ADAPTER_CREATE_SERVER_METHOD: Final[str] = "create_server"
             LDAP3_ADAPTER_DEFAULT_TIMEOUT: Final[int] = 5
             LDAP3_ADAPTER_NOT_CONNECTED_ERROR: Final[str] = "Not connected"
 
@@ -313,11 +268,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             SYNC_PHASE_NAME: Final[str] = "01-users"
             SYNC_ENTRY_ALREADY_EXISTS: Final[str] = "Entry already exists"
-            SYNC_DEFAULT_AUTO_CREATE_PARENTS: Final[bool] = True
-            SYNC_DEFAULT_ALLOW_DELETES: Final[bool] = False
             SYNC_DEFAULT_ZERO_COUNT: Final[int] = 0
-            SYNC_DEFAULT_STOP_ON_ERROR: Final[bool] = False
-            SYNC_DEFAULT_DN_CHANGED: Final[bool] = False
             SYNC_DEFAULT_EMPTY_SOURCE_DN: Final[str] = ""
 
             SYNC_FROM_COUNTERS_SYNCED: Final[int] = 50
@@ -330,34 +281,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_SERIALIZATION_SYNCED: Final[int] = 9
             SYNC_SERIALIZATION_SKIPPED: Final[int] = 1
             SYNC_SERIALIZATION_FAILED: Final[int] = 0
-
-            SYNC_SUCCESS_RATE_90_KWARGS: Final[t.IntMapping] = MappingProxyType(
-                {
-                    "synced": 70,
-                    "skipped": 20,
-                    "failed": 10,
-                    "total": 100,
-                },
-            )
-            SYNC_SUCCESS_RATE_90_EXPECTED: Final[float] = 0.9
-
-            SYNC_SUCCESS_RATE_BATCH_85_KWARGS: Final[t.IntMapping] = MappingProxyType(
-                {
-                    "total_processed": 100,
-                    "successful": 85,
-                    "failed": 15,
-                },
-            )
-            SYNC_SUCCESS_RATE_BATCH_85_EXPECTED: Final[float] = 0.85
-
-            SYNC_SUCCESS_RATE_BATCH_ZERO_KWARGS: Final[t.IntMapping] = MappingProxyType(
-                {
-                    "total_processed": 0,
-                    "successful": 0,
-                    "failed": 0,
-                },
-            )
-            SYNC_SUCCESS_RATE_BATCH_ZERO_EXPECTED: Final[float] = 0.0
 
             SYNC_UPSERT_BATCH_TOTAL: Final[int] = 100
             SYNC_UPSERT_BATCH_SUCCESSFUL: Final[int] = 90
@@ -397,8 +320,30 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = (
                 "/tmp/flext-ldap-sync-missing.ldif"
             )
-            SYNC_FACADE_PHASE_NAME_USERS: Final[str] = "users"
-            SYNC_FACADE_ZERO_COUNT: Final[int] = 0
+            SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
+            SYNC_FACADE_PHASE_NAME_GROUPS: Final[PhaseName] = PhaseName.GROUPS
+            SYNC_FACADE_TEST_USER_DN: Final[str] = (
+                "cn=syncuser,ou=people,dc=flext,dc=local"
+            )
+            SYNC_FACADE_INVALID_PASSWORD: Final[str] = "invalid-password"
+            SYNC_FACADE_SINGLE_ENTRY_LDIF: Final[str] = (
+                "version: 1\n\n"
+                "dn: cn=syncuser,ou=people,dc=flext,dc=local\n"
+                "changetype: add\n"
+                "objectClass: inetOrgPerson\n"
+                "objectClass: organizationalPerson\n"
+                "objectClass: person\n"
+                "objectClass: top\n"
+                "cn: syncuser\n"
+                "sn: user\n"
+                "uid: syncuser\n"
+                "mail: syncuser@flext.local\n"
+            )
+            SYNC_FACADE_USERS_LDIF_FILENAME: Final[FileName] = FileName.USERS_LDIF
+            SYNC_PHASE_FAILURE_RE: Final[re.Pattern[str]] = re.compile(
+                r"phase\s+'.+'\s+failed",
+                re.IGNORECASE,
+            )
 
 
 c = TestsFlextLdapConstants

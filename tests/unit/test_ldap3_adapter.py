@@ -33,10 +33,6 @@ class TestsFlextLdapLdap3Adapter:
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
 
-    def test_adapter_initialization(self) -> None:
-        adapter = Ldap3Adapter()
-        u.Ldap.Tests.that(adapter, is_=Ldap3Adapter, none=False)
-
     def test_execute_returns_success(self) -> None:
         adapter = Ldap3Adapter()
         result = adapter.execute()
@@ -104,13 +100,3 @@ class TestsFlextLdapLdap3Adapter:
             ),
             eq=c.Ldap.PORT,
         )
-
-    def test_connection_manager_create_server_api_is_callable(self) -> None:
-        u.Ldap.Tests.that(
-            callable(Ldap3Adapter.ConnectionManager.create_server), eq=True
-        )
-
-    def test_adapter_methods_exist(self) -> None:
-        adapter = Ldap3Adapter()
-        u.Ldap.Tests.that(hasattr(adapter, "execute"), eq=True)
-        u.Ldap.Tests.that(callable(adapter.execute), eq=True)

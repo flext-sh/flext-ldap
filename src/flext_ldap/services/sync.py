@@ -78,7 +78,21 @@ class FlextLdapSync(FlextLdapOperations):
             return progress_callback
         if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
             return callback
-        return None
+        try:
+            sig = inspect.signature(callback)
+            param_count = len(sig.parameters)
+            msg = (
+                f"progress_callback has {param_count} parameters but must have "
+                f"{c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase)"
+            )
+        except (TypeError, ValueError):
+            msg = (
+                f"progress_callback {callback!r} has an incompatible signature: "
+                f"must have {c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase) parameters"
+            )
+        raise TypeError(msg)
 
     def sync_multiple_phases(
         self,
@@ -91,17 +105,11 @@ class FlextLdapSync(FlextLdapOperations):
         start_time = datetime.now(UTC)
         phase_results: MutableMapping[str, m.Ldap.PhaseSyncResult] = {}
         overall_success = True
-        stop_requested = False
         for phase_name, phase_file in phase_files.items():
-            if stop_requested:
-                break
             if not phase_file.exists():
-                self.logger.warning(
-                    "Phase file not found",
-                    phase=phase_name,
-                    file=str(phase_file),
+                return r[m.Ldap.MultiPhaseSyncResult].fail(
+                    f"Phase file not found: {phase_file}",
                 )
-                continue
             phase_result = self._process_single_phase(
                 phase_name,
                 phase_file,
@@ -113,9 +121,11 @@ class FlextLdapSync(FlextLdapOperations):
                     phase=phase_name,
                     error=str(phase_result.error),
                 )
-                overall_success = False
                 if sync_config.stop_on_error:
-                    stop_requested = True
+                    return r[m.Ldap.MultiPhaseSyncResult].fail(
+                        f"Phase '{phase_name}' failed: {phase_result.error}",
+                    )
+                overall_success = False
                 continue
             phase_results[phase_name] = phase_result.value
         phase_values = list(phase_results.values())
@@ -129,20 +139,21 @@ class FlextLdapSync(FlextLdapOperations):
             if total_processed > 0
             else 0.0
         )
-        return r[m.Ldap.MultiPhaseSyncResult].ok(
-            m.Ldap.MultiPhaseSyncResult.model_validate({
-                "phase_results": phase_results,
-                "total_entries": total_entries,
-                "total_synced": total_synced,
-                "total_failed": total_failed,
-                "total_skipped": total_skipped,
-                "overall_success_rate": overall_success_rate,
-                "total_duration_seconds": (
-                    datetime.now(UTC) - start_time
-                ).total_seconds(),
-                "overall_success": overall_success,
-            }),
-        )
+        sync_result = m.Ldap.MultiPhaseSyncResult.model_validate({
+            "phase_results": phase_results,
+            "total_entries": total_entries,
+            "total_synced": total_synced,
+            "total_failed": total_failed,
+            "total_skipped": total_skipped,
+            "overall_success_rate": overall_success_rate,
+            "total_duration_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+            "overall_success": overall_success,
+        })
+        if not overall_success:
+            return r[m.Ldap.MultiPhaseSyncResult].fail(
+                f"Multi-phase sync completed with failures: {total_failed} entries failed"
+            )
+        return r[m.Ldap.MultiPhaseSyncResult].ok(sync_result)
 
     def sync_phase_entries(
         self,
@@ -233,7 +244,21 @@ class FlextLdapSync(FlextLdapOperations):
                 phase_callback(phase_name, current, total, dn, stats)
 
             return wrapped_callback
-        return None
+        try:
+            sig = inspect.signature(phase_callback)
+            param_count = len(sig.parameters)
+            msg = (
+                f"progress_callback has {param_count} parameters but must have "
+                f"{c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase)"
+            )
+        except (TypeError, ValueError):
+            msg = (
+                f"progress_callback {phase_callback!r} has an incompatible signature: "
+                f"must have {c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase) parameters"
+            )
+        raise TypeError(msg)
 
     def _process_single_phase(
         self,

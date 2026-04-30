@@ -142,18 +142,14 @@ class FlextLdapLdap3Wrappers:
                 c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
                 c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
             }
-            normalized_scope = scope_map.get(
-                search_scope, c.Ldap.Ldap3SearchScope.SUBTREE
-            )
+            normalized_scope = scope_map[search_scope]
         else:
             scope_str_map: Mapping[str, t.Ldap.Ldap3SearchScope] = {
                 c.Ldap.Ldap3SearchScope.BASE: c.Ldap.Ldap3SearchScope.BASE,
                 c.Ldap.Ldap3SearchScope.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
                 c.Ldap.Ldap3SearchScope.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
             }
-            normalized_scope = scope_str_map.get(
-                search_scope.upper(), c.Ldap.Ldap3SearchScope.SUBTREE
-            )
+            normalized_scope = scope_str_map[search_scope.upper()]
         search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
         return search_fn(
             search_base=search_base,
@@ -169,7 +165,11 @@ class FlextLdapLdap3Wrappers:
     @staticmethod
     def start_tls(connection: p.Ldap.Ldap3Connection) -> bool:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects."""
-        result: bool = getattr(connection, "start_tls", lambda: False)()
+        start_tls_fn = getattr(connection, "start_tls", None)
+        if start_tls_fn is None:
+            msg = "start_tls method not available on connection object"
+            raise AttributeError(msg)
+        result: bool = start_tls_fn()
         return result
 
     @staticmethod
@@ -365,15 +365,11 @@ class FlextLdapLdap3Adapter(s[bool]):
             entries_raw: Sequence[p.Ldap.Ldap3Entry] = entries_list
             for entry in entries_raw:
                 if not isinstance(entry, p.Ldap.Ldap3Entry):
-                    dn = str(entry) if entry else ""
-                    results.append((dn, {}))
-                    continue
-                try:
-                    dn_raw = entry.entry_dn
-                except AttributeError:
-                    dn = str(entry) if entry else ""
-                    results.append((dn, {}))
-                    continue
+                    error_msg = (
+                        f"Expected Ldap3Entry, got {type(entry).__name__}: {entry!r}"
+                    )
+                    raise TypeError(error_msg)
+                dn_raw = entry.entry_dn
                 dn = dn_raw if dn_raw is not None else ""
                 attrs_dict = (
                     FlextLdapLdap3Adapter.ResultConverter.process_entry_attributes(
@@ -880,12 +876,15 @@ class FlextLdapLdap3Adapter(s[bool]):
             """
             error_msg = f"{prefix}: LDAP operation returned failure status"
             result_dict = connection.result
-            description = result_dict.get("description")
-            match description:
-                case str() as description_str:
-                    error_msg = f"{prefix}: {description_str}"
-                case _:
-                    pass
+            if isinstance(result_dict, dict):
+                description = result_dict.get("description")
+                match description:
+                    case str() as description_str:
+                        error_msg = f"{prefix}: {description_str}"
+                    case None:
+                        pass
+                    case _:
+                        error_msg = f"{prefix}: {description!r}"
             return r[m.Ldap.OperationResult].fail(error_msg)
 
         @staticmethod
@@ -1149,7 +1148,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                     size_limit=params.size_limit,
                     time_limit=params.time_limit,
                 )
-                conn_result = connection.result
+                conn_result = connection.result or {}
                 result_code = conn_result.get("result", -1)
                 if result_code not in c.Ldap.PARTIAL_SUCCESS_CODES:
                     error_msg = conn_result.get("message", "LDAP search failed")
@@ -1416,16 +1415,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         if self._connection is not None:
             try:
                 self._unbind_connection()
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-            ) as exc:
-                self.logger.debug("Error during disconnect", error=str(exc))
             finally:
                 self._connection = None
                 self._server = None
@@ -1582,10 +1571,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Unbind and close LDAP connection.
 
         This typed wrapper handles the untyped ldap3 unbind() call.
-        Errors are suppressed to ensure cleanup always completes.
+        Propagates exceptions to callers for explicit error handling.
         """
         if self._connection is not None:
-            try:
-                _ = FlextLdapLdap3Wrappers.unbind(self._connection)
-            except (AttributeError, RuntimeError):
-                _ = None
+            _ = FlextLdapLdap3Wrappers.unbind(self._connection)

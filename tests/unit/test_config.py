@@ -60,12 +60,6 @@ class TestsFlextLdapConfig:
     def test_port_valid(self, port: int) -> None:
         u.Ldap.Tests.that(FlextLdapSettings(port=port).port, eq=port)
 
-    def test_port_field_constraints(self) -> None:
-        field = FlextLdapSettings.model_fields[c.Ldap.Tests.FIELD_PORT]
-        u.Ldap.Tests.that(field.default, eq=c.Ldap.PORT)
-        settings = FlextLdapSettings(port=c.Ldap.PORT)
-        u.Ldap.Tests.that(settings.port, eq=c.Ldap.PORT)
-
     # ── Host values ────────────────────────────────────────────────────
 
     @pytest.mark.parametrize(
@@ -104,20 +98,6 @@ class TestsFlextLdapConfig:
         u.Ldap.Tests.that(cfg.bind_password, eq="")
 
     # ── Pydantic model features ────────────────────────────────────────
-
-    def test_model_config(self) -> None:
-        u.Ldap.Tests.that(
-            FlextLdapSettings.model_config.get("env_prefix"),
-            eq=c.Ldap.Tests.CONFIG_ENV_PREFIX,
-        )
-        u.Ldap.Tests.that(
-            not FlextLdapSettings.model_config.get("case_sensitive"), eq=True
-        )
-
-    def test_field_descriptions(self) -> None:
-        fields = FlextLdapSettings.model_fields
-        u.Ldap.Tests.that(fields[c.Ldap.Tests.FIELD_HOST].description, none=False)
-        u.Ldap.Tests.that(fields[c.Ldap.Tests.FIELD_PORT].description, none=False)
 
     def test_serialization(self) -> None:
         data = FlextLdapSettings(

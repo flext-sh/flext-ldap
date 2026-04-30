@@ -45,12 +45,6 @@ class TestsFlextLdapDetection:
     Expected reduction: 217 lines → 95 lines (56% reduction).
     """
 
-    def test_detector_initialization(self) -> None:
-        """Test detector initialization."""
-        detector = FlextLdapServerDetector()
-        assert detector is not None
-        assert isinstance(detector, FlextLdapServerDetector)
-
     @pytest.mark.parametrize(
         ("kwargs", "expect_failure", "error_substring"),
         c.Ldap.Tests.DETECTION_EXECUTE_SCENARIOS,

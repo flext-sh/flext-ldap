@@ -162,13 +162,6 @@ class TestsFlextLdapModelsSearch:
         category = m.Ldap.SearchResult.get_entry_category(entry)
         u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 
-    def test_sync_phase_config_has_progress_callback(self) -> None:
-        """Verify progress_callback field exists on SyncPhaseConfig."""
-        u.Ldap.Tests.that(hasattr(m.Ldap.SyncPhaseConfig, "model_fields"), eq=True)
-        u.Ldap.Tests.that(
-            "progress_callback" in m.Ldap.SyncPhaseConfig.model_fields, eq=True
-        )
-
     def test_connection_config_serialization(self) -> None:
         data = m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST,

@@ -43,11 +43,6 @@ class TestsFlextLdapSmoke:
         u.Ldap.Tests.assert_server_info_available(connection)
         connection.unbind()
 
-    def test_flext_ldap_api_imports(self) -> None:
-        """SMOKE TEST: ldap API imports without errors (REGRA 5: REAL code)."""
-        assert ldap is not None, "ldap API instantiation failed"
-        u.Ldap.Tests.assert_models_accessible()
-
     def test_flext_ldap_basic_connection(
         self,
         ldap_container: t.MappingKV[

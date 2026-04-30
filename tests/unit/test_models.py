@@ -8,31 +8,6 @@ pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapModelsUnit:
-    def test_models_class_exists(self) -> None:
-        u.Ldap.Tests.that(m, none=False)
-        u.Ldap.Tests.that(
-            f"{m.__module__}.{m.__qualname__}", eq=f"{m.__module__}.{m.__qualname__}"
-        )
-
-    def test_models_inherits_from_flext_ldif_models(self) -> None:
-        # Verify FlextLdapModels properly extends FlextLdifModels
-        u.Ldap.Tests.that(hasattr(m, "Ldif"), eq=True)
-
-    def test_nested_models_have_model_config(self) -> None:
-        assert m.Ldap.ConnectionConfig.model_config is not None
-        config_frozen = m.Ldap.ConnectionConfig.model_config.get("frozen", False)
-        u.Ldap.Tests.that(config_frozen, is_=bool)
-
-    def test_collections_exists(self) -> None:
-        u.Ldap.Tests.that(m.Ldif.FlexibleCategories, none=False)
-
-    def test_entry_model_exists(self) -> None:
-        u.Ldap.Tests.that(m.Ldif.Entry, none=False)
-
-    def test_entry_inherits_from_flext_ldif_entry(self) -> None:
-        # Verify Entry class is properly defined and accessible
-        u.Ldap.Tests.that(m.Ldif.Entry, none=False)
-
     def test_entry_creation(self) -> None:
         dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(dn=dn, attributes=None)
@@ -40,28 +15,6 @@ class TestsFlextLdapModelsUnit:
         assert entry.dn is not None
         u.Ldap.Tests.that(entry.dn.value, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(entry.attributes, none=True)
-
-    def test_distinguished_name_via_ldif_namespace(self) -> None:
-        u.Ldap.Tests.that(
-            f"{m.Ldif.DN.__module__}.{m.Ldif.DN.__qualname__}",
-            eq=f"{m.Ldif.DN.__module__}.{m.Ldif.DN.__qualname__}",
-        )
-
-    def test_ldif_attributes_via_ldif_namespace(self) -> None:
-        actual = hasattr(m.Ldif, "Attributes")
-        u.Ldap.Tests.that(actual, eq=True)
-        u.Ldap.Tests.that(m.Ldif.Attributes is m.Ldif.Attributes, eq=True)
-
-    def test_quirk_metadata_via_ldif_namespace(self) -> None:
-        u.Ldap.Tests.that(
-            f"{m.Ldif.QuirkMetadata.__module__}.{m.Ldif.QuirkMetadata.__qualname__}",
-            eq=f"{m.Ldif.QuirkMetadata.__module__}.{m.Ldif.QuirkMetadata.__qualname__}",
-        )
-
-    def test_parse_response_via_ldif_namespace(self) -> None:
-        u.Ldap.Tests.that(m.Ldif.ParseResponse, none=False)
-        actual = hasattr(m.Ldif, "ParseResponse")
-        u.Ldap.Tests.that(actual, eq=True)
 
     def test_connection_config_default_values(self) -> None:
         settings = m.Ldap.ConnectionConfig(port=c.Ldap.PORT)

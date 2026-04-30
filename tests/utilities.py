@@ -270,6 +270,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             ) -> None:
                 """Test callback with 5 parameters."""
 
+            @staticmethod
+            def invalid_phase_cb(_a: int, _b: int) -> None:
+                """Invalid callback with unsupported arity for sync callbacks."""
+
 
 u = TestsFlextLdapUtilities
 

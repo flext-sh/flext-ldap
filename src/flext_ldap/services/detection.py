@@ -22,11 +22,11 @@ class FlextLdapServerDetector(s):
         vendor_name: str | None,
         vendor_version: str | None,
         naming_contexts: t.StrSequence,
-        _supported_controls: t.StrSequence,
+        supported_controls: t.StrSequence,
         supported_extensions: t.StrSequence,
     ) -> p.Result[str]:
         """Compatibility shim that delegates heuristic detection to utilities."""
-        _ = _supported_controls
+        _ = supported_controls
         return r[str].ok(
             u.Ldap.detect_server_type(
                 vendor_name=vendor_name,

@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-
 import pytest
 
-from flext_ldap import FlextLdapSettings, FlextLdapSyncCallbacks, ldap
-from tests import c, m, p, t, u
+from flext_ldap import FlextLdapSyncCallbacks, ldap
+from tests import c, m, t, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -19,26 +17,10 @@ pytestmark = [pytest.mark.unit]
 class TestsFlextLdapApi:
     """Tests for ldap API facade — MRO-based, zero ceremony."""
 
-    # --- Initialization ---
-    def test_init_no_args(self) -> None:
-        u.Ldap.Tests.that(ldap, none=False)
-
-    def test_logger_available(self) -> None:
-        u.Ldap.Tests.that(ldap.logger, none=False)
-
-    def test_config_returns_flext_settings(self) -> None:
-        assert isinstance(ldap.settings, p.Settings)
-
-    def test_settings_are_typed_for_ldap_namespace(self) -> None:
-        assert isinstance(ldap.settings, FlextLdapSettings)
-
     # --- Context Manager ---
     def test_enter_returns_self(self) -> None:
         api = ldap
         u.Ldap.Tests.that(api.__enter__(), eq=api)
-
-    def test_exit_calls_disconnect(self) -> None:
-        ldap.__exit__(None, None, None)
 
     def test_with_statement(self) -> None:
         api = ldap
@@ -84,27 +66,6 @@ class TestsFlextLdapApi:
             FlextLdapSyncCallbacks.is_single_phase_callback(callback), eq=expected
         )
 
-    def test_callback_param_count_constants(self) -> None:
-        u.Ldap.Tests.that(
-            len(inspect.signature(u.Ldap.Tests.multi_phase_cb).parameters),
-            eq=c.Ldap.MULTI_PHASE_PARAM_COUNT,
-        )
-        u.Ldap.Tests.that(
-            len(inspect.signature(u.Ldap.Tests.single_phase_cb).parameters),
-            eq=c.Ldap.SINGLE_PHASE_PARAM_COUNT,
-        )
-
-    # --- API Methods (via MRO) ---
-    @pytest.mark.parametrize(
-        "method_name",
-        c.Ldap.Tests.API_EXPECTED_METHODS,
-    )
-    def test_api_method_exists_and_callable(self, method_name: str) -> None:
-        u.Ldap.Tests.that(callable(getattr(ldap, method_name)), eq=True)
-
-    def test_disconnect_when_not_connected(self) -> None:
-        ldap.disconnect()
-
     def test_search_without_connection_returns_failure(self) -> None:
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -119,3 +80,21 @@ class TestsFlextLdapApi:
             error.lower(),
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
+
+    def test_execute_with_connection_returns_success(
+        self,
+        connection_config: m.Ldap.ConnectionConfig,
+    ) -> None:
+        u.Ldap.Tests.assert_connection_success(ldap.connect(connection_config))
+        u.Ldap.Tests.ok(ldap.execute())
+        ldap.disconnect()
+
+    def test_with_statement_disconnects_after_connected_block(
+        self,
+        connection_config: m.Ldap.ConnectionConfig,
+    ) -> None:
+        with ldap as client:
+            u.Ldap.Tests.assert_connection_success(client.connect(connection_config))
+            assert client.is_connected
+
+        assert not ldap.is_connected

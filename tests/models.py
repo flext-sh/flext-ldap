@@ -15,7 +15,7 @@ from typing import override
 from flext_tests import FlextTestsModels
 
 from flext_ldap import m
-from tests import p, r, s, t
+from tests import p, r, s
 
 
 class TestsFlextLdapModels(m, FlextTestsModels):
@@ -27,55 +27,7 @@ class TestsFlextLdapModels(m, FlextTestsModels):
         class Tests:
             """Test fixture models namespace."""
 
-            EMPTY = ""
-            USER_EXAMPLE_DN = "cn=user,dc=example,dc=com"
             FAIL_ERROR_MESSAGE = "nope"
-
-            class MockLdap3Attribute:
-                """Mock ldap3 Attribute satisfying p.Ldap.Ldap3Attribute."""
-
-                def __init__(self, vals: t.StrSequence) -> None:
-                    self.values: t.Ldap.Ldap3AttributeValues = vals
-                    self.raw_values: t.MutableSequenceOf[bytes] = [
-                        v.encode() for v in vals
-                    ]
-                    self.value: t.Ldap.Ldap3AttributeValue = (
-                        vals[0] if vals else TestsFlextLdapModels.Ldap.Tests.EMPTY
-                    )
-
-            class MockLdap3Entry:
-                """Mock ldap3 Entry satisfying p.Ldap.Ldap3Entry."""
-
-                def __init__(
-                    self,
-                    dn: str | None = None,
-                    attrs: t.StrSequenceMapping | None = None,
-                ) -> None:
-                    self.entry_dn: str | None = (
-                        dn
-                        if dn is not None
-                        else TestsFlextLdapModels.Ldap.Tests.USER_EXAMPLE_DN
-                    )
-                    self._attrs: t.StrSequenceMapping = attrs or {}
-
-                @property
-                def entry_attributes_as_dict(
-                    self,
-                ) -> t.StrSequenceMapping:
-                    return self._attrs
-
-                @property
-                def entry_attributes(self) -> t.StrSequence:
-                    return list(self._attrs)
-
-                def __getitem__(
-                    self,
-                    item: str,
-                ) -> TestsFlextLdapModels.Ldap.Tests.MockLdap3Attribute:
-                    """Return mock attribute for the given item name."""
-                    return TestsFlextLdapModels.Ldap.Tests.MockLdap3Attribute(
-                        list(self._attrs.get(item, [])),
-                    )
 
             class SuccessService(s[bool]):
                 """Test service that always succeeds."""

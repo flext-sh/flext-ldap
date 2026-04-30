@@ -6,7 +6,7 @@ inputs, normalized results, and reusable comparison utilities for callers.
 Business Rules:
     - All LDAP operations are delegated to the adapter layer (Ldap3Adapter)
     - DN normalization is applied before all search operations using
-      u.Ldif.norm_or_fallback() to ensure consistent DN format
+      u.Ldif.norm() to ensure consistent DN format
     - Entry comparison ignores operational attributes defined in
       c.Ldif.OperationalAttributes.IGNORE_SET
     - Upsert operations implement add-or-modify pattern:
@@ -50,7 +50,7 @@ class FlextLdapOperations(s):
 
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)
-        - Search operations normalize base_dn using u.Ldif.norm_or_fallback()
+        - Search operations normalize base_dn using u.Ldif.norm()
         - Add/Modify/Delete operations convert string DNs to DN models
         - Upsert implements LDAP idempotent write: add -> exists check -> modify
         - Batch operations track per-entry progress and support stop_on_error
@@ -183,10 +183,8 @@ class FlextLdapOperations(s):
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
-                return r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperation.SKIPPED,
-                    ),
+                return r[m.Ldap.LdapOperationResult].fail(
+                    f"Search for existing entry failed: {search_result.error}"
                 )
             search_data = search_result.map_or(None)
             existing_entries: Sequence[Mapping[str, t.StrSequence]] = []
@@ -204,9 +202,23 @@ class FlextLdapOperations(s):
                     u.to_str(retry_result.error),
                 )
             existing_entry_obj = existing_entries[0]
-            existing_entry = u.Ldap.search_entry_to_ldif_entry(existing_entry_obj)
-            changes = u.Ldap.compare_entries(existing_entry, entry)
-            if changes is None or not changes:
+            entry_result = u.Ldap.search_entry_to_ldif_entry(existing_entry_obj)
+            if entry_result.failure:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    f"Failed to parse existing entry: {entry_result.error}"
+                )
+            existing_entry = entry_result.unwrap_or(None)
+            if existing_entry is None:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    "Existing entry parsed as None"
+                )
+            changes_result = u.Ldap.compare_entries(existing_entry, entry)
+            if changes_result.failure:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    f"Entry comparison failed: {changes_result.error}"
+                )
+            changes = changes_result.unwrap_or({})
+            if not changes:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult.with_operation(
                         c.Ldap.UpsertOperation.SKIPPED,
@@ -464,13 +476,16 @@ class FlextLdapOperations(s):
             if metadata is not None
             else None
         )
-        current_server = (
-            u.try_(
-                lambda: u.Ldif.normalize_server_type(str(current_server_raw)),
-            ).map_or(None)
-            if current_server_raw is not None
-            else None
-        )
+        current_server = None
+        if current_server_raw is not None:
+            try:
+                current_server = u.Ldif.normalize_server_type(
+                    str(current_server_raw),
+                )
+            except ValueError as exc:
+                return r[m.Ldap.OperationResult].fail(
+                    f"Failed to normalize current server type: {exc}",
+                )
         target_server = u.Ldif.normalize_server_type(self._server_type)
         if current_server is not None and current_server != target_server:
             conversion_result = FlextLdifConversion().convert_entry(
@@ -576,22 +591,11 @@ class FlextLdapOperations(s):
                 OSError,
                 RuntimeError,
                 ImportError,
-            ):
+            ) as exc:
                 entry_idx = idx_entry[0]
-                logger = FlextLdapOperations._get_structlog_logger()
-                if logger is not None:
-                    logger.debug(
-                        "Failed to process entry in batch, skipping",
-                        entry_index=entry_idx,
-                        exc_info=True,
-                    )
-                else:
-                    logging.getLogger(__name__).debug(
-                        "Failed to process entry in batch, skipping (entry_index=%s)",
-                        entry_idx,
-                        exc_info=True,
-                    )
-                continue
+                return r[m.Ldap.LdapBatchStats].fail(
+                    f"Batch upsert aborted on unexpected exception at entry {entry_idx}: {exc}",
+                )
         if stop_on_error and "_stop_error" in stats_builder:
             error_idx = stats_builder["_stop_error"]
             if isinstance(error_idx, int):
@@ -764,7 +768,7 @@ class FlextLdapOperations(s):
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
-            - Base DN is normalized using u.Ldif.norm_or_fallback() before search
+            - Base DN is normalized using u.Ldif.norm() before search
             - Normalization ensures consistent DN format across server types
             - Search filter syntax is validated by LDAP server
             - Server type determines parsing quirks for entry attributes
@@ -788,12 +792,13 @@ class FlextLdapOperations(s):
             r containing SearchResult with Entry models
 
         """
+        base_dn_result = u.Ldif.norm(search_options.base_dn)
+        if base_dn_result.failure:
+            return r[m.Ldap.SearchResult].fail(
+                f"Invalid base DN: {base_dn_result.error}",
+            )
         normalized_options = search_options.model_copy(
-            update={
-                "base_dn": u.Ldif.norm_or_fallback(
-                    search_options.base_dn,
-                ),
-            },
+            update={"base_dn": base_dn_result.value},
         )
         effective_server_type = server_type or self._server_type
         result = self._ensure_adapter().search(
@@ -876,29 +881,12 @@ class FlextLdapOperations(s):
         stats: t.IntMapping,
     ) -> None:
         """Invoke progress callback with error handling."""
-        try:
-            callback_stats = m.Ldap.LdapBatchStats(
-                synced=stats["synced"],
-                failed=stats["failed"],
-                skipped=stats["skipped"],
-            )
-            callback(entry_index, total, entry_dn or "", callback_stats)
-        except (RuntimeError, TypeError, ValueError) as exc:
-            logger = FlextLdapOperations._get_structlog_logger()
-            if logger is not None:
-                logger.warning(
-                    "Progress callback failed",
-                    operation=c.Ldap.OperationName.SYNC,
-                    entry_index=entry_index,
-                    error=str(exc),
-                )
-            else:
-                logging.getLogger(__name__).warning(
-                    "Progress callback failed: operation=%s entry=%s error=%s",
-                    c.Ldap.OperationName.SYNC,
-                    entry_index,
-                    exc,
-                )
+        callback_stats = m.Ldap.LdapBatchStats(
+            synced=stats["synced"],
+            failed=stats["failed"],
+            skipped=stats["skipped"],
+        )
+        callback(entry_index, total, entry_dn or "", callback_stats)
 
     def _update_batch_stats(
         self,

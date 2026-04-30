@@ -8,7 +8,7 @@ Business Rules:
     - p.Ldif.Entry → ldap3 attributes uses Mapping[str, t.StrSequence] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
     - Server-specific normalization uses flext-ldif quirks system
-    - DN normalization via u.Ldif.norm_or_fallback() for consistency
+    - DN normalization via u.Ldif.norm() for strict validation
     - Empty attribute values are preserved (important for schema compliance)
 
 Audit Implications:
@@ -199,32 +199,15 @@ class FlextLdapEntryAdapter(s[bool]):
             removed_attrs: MutableSequence[str] = []
             base64_attrs: MutableSequence[str] = []
             ldif_attrs: t.MutableMappingKV[str, t.MutableSequenceOf[str] | str] = {}
-            logger = u.fetch_logger(__name__)
             for key, raw_value in attrs_dict.items():
-                try:
-                    ldif_attrs[key] = list(
-                        self._convert_ldap3_value_to_list(
-                            raw_value,
-                            key,
-                            base64_attrs,
-                            removed_attrs,
-                        ),
-                    )
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    OSError,
-                    RuntimeError,
-                    ImportError,
-                ) as exc:
-                    logger.debug(
-                        "Failed to convert attribute %s, skipping",
+                ldif_attrs[key] = list(
+                    self._convert_ldap3_value_to_list(
+                        raw_value,
                         key,
-                        exc_info=exc,
-                    )
-                    continue
+                        base64_attrs,
+                        removed_attrs,
+                    ),
+                )
             conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
                 removed_attrs,
                 base64_attrs,
@@ -247,7 +230,15 @@ class FlextLdapEntryAdapter(s[bool]):
                 attributes=ldif_attrs,
                 metadata=metadata_obj,
             )
-        except (ValueError, TypeError, AttributeError) as exc:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            KeyError,
+            OSError,
+            RuntimeError,
+            ImportError,
+        ) as exc:
             entry_dn_for_log = ldap3_entry.entry_dn or c.Ldif.UNKNOWN_VALUE
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",

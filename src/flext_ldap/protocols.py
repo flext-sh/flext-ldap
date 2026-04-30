@@ -14,7 +14,17 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import TYPE_CHECKING, Literal, Protocol, override, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Protocol,
+    override,
+    runtime_checkable,
+)
+
+from ldap3 import Connection as _Ldap3Connection, Server as _Ldap3Server
+from ldap3.abstract.attribute import Attribute as _Ldap3Attribute
+from ldap3.abstract.entry import Entry as _Ldap3Entry
+from ldap3.protocol.rfc4512 import BaseServerInfo as _Ldap3ServerInfo
 
 from flext_ldif import p
 
@@ -380,158 +390,16 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
-        # ── ldap3 Library Structural Protocols ───────────────────
+        # ── ldap3 Library Type Aliases ───────────────────────────
+        # Direct aliases to the real ldap3 runtime classes. Avoids structural
+        # Protocols whose stricter parameter annotations are not assignable
+        # from ldap3's untyped (pyrefly-inferred Literal) signatures.
 
-        @runtime_checkable
-        class Ldap3Connection(Protocol):
-            """Protocol for ldap3.Connection objects (structural type).
-
-            Provides the structural interface for LDAP connections so test code
-            outside flext-ldap/src and flext-ldif/src never imports ldap3 directly.
-            """
-
-            bound: bool
-
-            @property
-            def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
-                """Get the server this connection is bound to."""
-                ...
-
-            @property
-            def entries(self) -> Sequence[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """Get entries from last search operation."""
-                ...
-
-            @property
-            def result(self) -> t.JsonMapping:
-                """Get the raw ldap3 operation result payload."""
-                ...
-
-            def bind(self) -> bool:
-                """Bind the connection."""
-                ...
-
-            def start_tls(self) -> bool:
-                """Negotiate STARTTLS for the active connection."""
-                ...
-
-            def unbind(self) -> bool:
-                """Unbind the connection."""
-                ...
-
-            def search(
-                self,
-                search_base: str,
-                search_filter: str,
-                search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
-                dereference_aliases: Literal[
-                    "ALWAYS", "FINDING_BASE", "NEVER", "SEARCH"
-                ] = "ALWAYS",
-                attributes: t.StrSequence | str | None = None,
-                size_limit: int = 0,
-                time_limit: int = 0,
-                types_only: bool = False,
-                get_operational_attributes: bool = False,
-                controls: object | None = None,
-                paged_size: int | None = None,
-                paged_criticality: bool = False,
-                paged_cookie: bytes | str | None = None,
-                auto_escape: bool | None = None,
-            ) -> bool | None:
-                """Perform LDAP search."""
-                ...
-
-            def add(
-                self,
-                dn: str,
-                object_class: t.StrSequence | str | None,
-                attributes: t.Ldap.Ldap3AddAttributes,
-            ) -> bool:
-                """Add an LDAP entry."""
-                ...
-
-            def delete(self, dn: str) -> bool:
-                """Delete an LDAP entry."""
-                ...
-
-            def modify(
-                self,
-                dn: str,
-                changes: t.Ldap.Ldap3ModifyChangesDict,
-                controls: None = None,
-            ) -> bool:
-                """Modify an LDAP entry."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Server(Protocol):
-            """Protocol for ldap3.Server objects (structural type)."""
-
-            @property
-            def info(self) -> FlextLdapProtocols.Ldap.Ldap3ServerInfo | None:
-                """Get server info."""
-                ...
-
-        @runtime_checkable
-        class Ldap3ServerInfo(Protocol):
-            """Protocol for ldap3 server info objects (structural type)."""
-
-            @property
-            def naming_contexts(self) -> t.StrSequence:
-                """Get naming contexts."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Entry(Protocol):
-            """Protocol for ldap3.Entry objects (structural type).
-
-            ldap3.Entry has dynamic attributes accessed via entry_dn,
-            entry_attributes, entry_attributes_as_dict properties,
-            plus attribute-specific objects via __getitem__.
-            """
-
-            @property
-            def entry_attributes_as_dict(
-                self,
-            ) -> t.Ldap.Ldap3AttributeDict:
-                """Get attributes as dict mapping attribute names to value lists."""
-                ...
-
-            @property
-            def entry_attributes(self) -> t.StrSequence:
-                """Get list of attribute names present in this entry."""
-                ...
-
-            @property
-            def entry_dn(self) -> str | None:
-                """Get entry distinguished name."""
-                ...
-
-            def __getitem__(self, item: str) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
-                """Get attribute object by name."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Attribute(Protocol):
-            """Protocol for ldap3.Attribute objects (structural type).
-
-            ldap3.Attribute has values, raw_values and value properties.
-            """
-
-            @property
-            def values(self) -> t.Ldap.Ldap3AttributeValues:
-                """Get processed attribute values."""
-                ...
-
-            @property
-            def raw_values(self) -> Sequence[bytes]:
-                """Get unprocessed attribute values."""
-                ...
-
-            @property
-            def value(self) -> t.Ldap.Ldap3AttributeValue:
-                """Get single value or all values."""
-                ...
+        Ldap3Connection: type[_Ldap3Connection] = _Ldap3Connection
+        Ldap3Server: type[_Ldap3Server] = _Ldap3Server
+        Ldap3ServerInfo: type[_Ldap3ServerInfo] = _Ldap3ServerInfo
+        Ldap3Entry: type[_Ldap3Entry] = _Ldap3Entry
+        Ldap3Attribute: type[_Ldap3Attribute] = _Ldap3Attribute
 
         @runtime_checkable
         class Ldap3ParseResponse(Protocol):

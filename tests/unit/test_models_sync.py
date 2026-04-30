@@ -2,111 +2,18 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, t, u
+from tests import c, m, u
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapModelsSync:
-    # ── Contract: default values don't drift ───────────────────────────
-
-    _API_DEFAULTS = [
-        (m.Ldap.SyncOptions, "batch_size", c.Ldap.BATCH_SIZE),
-        (
-            m.Ldap.SyncOptions,
-            "auto_create_parents",
-            c.Ldap.Tests.SYNC_DEFAULT_AUTO_CREATE_PARENTS,
-        ),
-        (m.Ldap.SyncOptions, "allow_deletes", c.Ldap.Tests.SYNC_DEFAULT_ALLOW_DELETES),
-        (m.Ldap.SyncStats, "synced", c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT),
-        (m.Ldap.SyncStats, "total", c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT),
-        (m.Ldap.SyncPhaseConfig, "server_type", c.Ldap.DEFAULT_TYPE),
-        (
-            m.Ldap.SyncPhaseConfig,
-            "max_retries",
-            c.Ldap.DEFAULT_MAX_RETRIES,
-        ),
-        (
-            m.Ldap.SyncPhaseConfig,
-            "stop_on_error",
-            c.Ldap.Tests.SYNC_DEFAULT_STOP_ON_ERROR,
-        ),
-        (m.Ldap.LdapBatchStats, "synced", c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT),
-        (m.Ldap.LdapBatchStats, "failed", c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT),
-        (
-            m.Ldap.ConversionMetadata,
-            "dn_changed",
-            c.Ldap.Tests.SYNC_DEFAULT_DN_CHANGED,
-        ),
-        (
-            m.Ldap.ConversionMetadata,
-            "source_dn",
-            c.Ldap.Tests.SYNC_DEFAULT_EMPTY_SOURCE_DN,
-        ),
-    ]
-
-    @pytest.mark.parametrize(
-        ("cls", "field", "expected"),
-        _API_DEFAULTS,
-        ids=[f"{c.__name__}.{f}" for c, f, _ in _API_DEFAULTS],
-    )
-    def test_api_default(
-        self,
-        cls: type,
-        field: str,
-        expected: str | float | bool,
-    ) -> None:
-        pass
-
     # ── Validation constraints ─────────────────────────────────────────
 
     def test_sync_options_rejects_zero_batch_size(self) -> None:
         invalid_batch_size: int = 0
         with pytest.raises(c.ValidationError):
             m.Ldap.SyncOptions(batch_size=invalid_batch_size)
-
-    # ── Computed: SyncStats.success_rate ───────────────────────────────
-
-    _SUCCESS_RATES = [
-        (
-            "zero total",
-            m.Ldap.SyncStats,
-            dict[str, int](),
-            c.Ldap.Tests.SYNC_SUCCESS_RATE_BATCH_ZERO_EXPECTED,
-        ),
-        (
-            "90% rate",
-            m.Ldap.SyncStats,
-            dict(c.Ldap.Tests.SYNC_SUCCESS_RATE_90_KWARGS),
-            c.Ldap.Tests.SYNC_SUCCESS_RATE_90_EXPECTED,
-        ),
-        (
-            "batch zero",
-            m.Ldap.BatchUpsertResult,
-            dict(c.Ldap.Tests.SYNC_SUCCESS_RATE_BATCH_ZERO_KWARGS),
-            c.Ldap.Tests.SYNC_SUCCESS_RATE_BATCH_ZERO_EXPECTED,
-        ),
-        (
-            "batch 85%",
-            m.Ldap.BatchUpsertResult,
-            dict(c.Ldap.Tests.SYNC_SUCCESS_RATE_BATCH_85_KWARGS),
-            c.Ldap.Tests.SYNC_SUCCESS_RATE_BATCH_85_EXPECTED,
-        ),
-    ]
-
-    @pytest.mark.parametrize(
-        ("label", "cls", "kwargs", "expected"),
-        _SUCCESS_RATES,
-        ids=[x[0] for x in _SUCCESS_RATES],
-    )
-    def test_success_rate(
-        self,
-        label: str,
-        cls: type,
-        kwargs: t.IntMapping,
-        expected: float,
-    ) -> None:
-        pass
 
     # ── Factory: SyncStats.from_counters ───────────────────────────────
 

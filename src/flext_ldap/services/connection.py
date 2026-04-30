@@ -53,12 +53,17 @@ class FlextLdapConnection(s):
         )
         if result.success:
             try:
-                self._detect_server_type_optional()
-            except Exception as exc:  # pragma: no cover
-                self.logger.debug(
-                    "Server detection raised an exception and will be ignored",
-                    operation=c.Ldap.OperationName.CONNECT,
-                    error=str(exc),
+                self._detect_server_type()
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                OSError,
+                RuntimeError,
+                ImportError,
+            ) as exc:
+                return r[bool].fail(
+                    f"Server detection failed: {exc}",
                 )
             return r[bool].ok(value=True)
         return result
@@ -80,24 +85,22 @@ class FlextLdapConnection(s):
             )
         return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
-    def _detect_server_type_optional(self) -> None:
-        """Attempt automatic server type detection after successful connection."""
+    def _detect_server_type(self) -> None:
+        """Detect LDAP server type after successful connection."""
         adapter = self._ensure_adapter()
         connection = adapter.connection
         if not connection:
-            return
+            error_message = "No active connection available for server detection"
+            raise RuntimeError(error_message)
         detector = FlextLdapServerDetector()
         detection_result: p.Result[str] = detector.detect_from_connection(connection)
-        if detection_result.success:
-            self._server_type = detection_result.value
-            self.logger.info(
-                "Server type detected automatically",
-                operation=c.Ldap.OperationName.CONNECT,
-                detected_server_type=detection_result.value,
+        if detection_result.failure:
+            raise RuntimeError(
+                detection_result.error or "Server detection failed",
             )
-        else:
-            self.logger.debug(
-                "Server type detection failed (non-critical)",
-                operation=c.Ldap.OperationName.CONNECT,
-                error=detection_result.error or "",
-            )
+        self._server_type = detection_result.value
+        self.logger.info(
+            "Server type detected automatically",
+            operation=c.Ldap.OperationName.CONNECT,
+            detected_server_type=detection_result.value,
+        )

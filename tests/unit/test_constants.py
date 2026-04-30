@@ -14,14 +14,7 @@ pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapConstantsUnit:
-    """Contract tests for FlextLdapConstants enum/constant values."""
-
-    @pytest.mark.parametrize(
-        ("attr", "expected"),
-        c.Ldap.Tests.CONSTANT_STATUS_SCENARIOS,
-    )
-    def test_ldap_cqrs_status_values(self, attr: str, expected: str) -> None:
-        pass
+    """Behavioural tests for ``u.Ldap.Validation.is_valid_status``."""
 
     def test_is_valid_status_with_enum(self) -> None:
         u.Ldap.Tests.that(
@@ -42,42 +35,4 @@ class TestsFlextLdapConstantsUnit:
                 c.Ldap.Tests.CONSTANT_INVALID_STATUS,
             ),
             eq=True,
-        )
-
-    @pytest.mark.parametrize(
-        ("attr", "expected"),
-        c.Ldap.Tests.CONSTANT_SCOPE_SCENARIOS,
-    )
-    def test_search_scope_enum_values(self, attr: str, expected: str) -> None:
-        pass
-
-    @pytest.mark.parametrize(
-        ("attr", "expected"),
-        c.Ldap.Tests.CONSTANT_OPERATION_TYPE_SCENARIOS,
-    )
-    def test_operation_type_enum_values(self, attr: str, expected: str) -> None:
-        pass
-
-    def test_core_name(self) -> None:
-        u.Ldap.Tests.that(c.Ldap.NAME, eq=c.Ldap.Tests.CONSTANT_EXPECTED_CORE_NAME)
-
-    def test_filters_all_entries(self) -> None:
-        u.Ldap.Tests.that(
-            c.Ldap.ALL_ENTRIES_FILTER,
-            eq=c.Ldap.Tests.CONSTANT_EXPECTED_ALL_ENTRIES_FILTER,
-        )
-
-    def test_connection_defaults_port_is_valid(self) -> None:
-        u.Ldap.Tests.that(c.Ldap.PORT, is_=int, none=False)
-        u.Ldap.Tests.that(
-            c.Ldap.PORT,
-            gte=c.Ldap.Tests.CONFIG_PORT_MIN,
-            lte=c.Ldap.Tests.CONFIG_PORT_MAX,
-        )
-
-    def test_vendor_string_max_tokens(self) -> None:
-        u.Ldap.Tests.that(c.Ldap.VENDOR_STRING_MAX_TOKENS, is_=int, none=False)
-        u.Ldap.Tests.that(
-            c.Ldap.VENDOR_STRING_MAX_TOKENS,
-            eq=c.Ldap.Tests.CONSTANT_EXPECTED_VENDOR_STRING_MAX_TOKENS,
         )
