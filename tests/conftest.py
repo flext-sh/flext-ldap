@@ -49,42 +49,12 @@ def _get_worker_id(settings: pytest.Config) -> str:
     )
 
 
-def pytest_sessionstart(session: pytest.Session) -> None:
-    if session.config.option.collectonly:
-        return
-    worker_id = _get_worker_id(session.config)
-    docker_control = u.Ldap.Tests.get_docker_control(worker_id)
-    execute_result = docker_control.execute()
-    if execute_result.success:
-        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-        waited = 0.0
-        while waited < c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT:
-            try:
-                srv = u.Ldap.create_server_from_url(
-                    f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                )
-                conn = u.Ldap.create_connection(
-                    srv,
-                    user=admin_dn,
-                    password=admin_password,
-                    auto_bind=True,
-                    receive_timeout=1,
-                )
-                if conn.bound:
-                    FlextLdapLdap3Wrappers.unbind(conn)
-                    logger.info(
-                        "Container %s bind-ready after %.1fs",
-                        c.Ldap.Tests.DOCKER_CONTAINER_NAME,
-                        waited,
-                    )
-                    break
-            except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
-                pass
-            time.sleep(1.0)
-            waited += 1.0
-    else:
-        logger.warning("LDAP docker startup skipped: %s", execute_result.error)
+def _docker_compose_path() -> Path:
+    return Path(__file__).resolve().parents[1] / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
+
+
+def _docker_compose_available() -> bool:
+    return _docker_compose_path().exists()
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
@@ -115,6 +85,10 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 def ldap_container(
     worker_id: str,
 ) -> t.MappingKV[str, t.Scalar]:
+    if not _docker_compose_available():
+        pytest.fail(
+            "LDAP smoke tests require the Docker compose file and cannot run without it.",
+        )
     lock = u.Ldap.Tests.FileLock(
         Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
@@ -170,11 +144,14 @@ def connection_config(
     ldap_container: t.MappingKV[str, t.Scalar],
 ) -> m.Ldap.ConnectionConfig:
     port_value = ldap_container["port"]
-    port_int = (
-        int(port_value)
-        if isinstance(port_value, (int, str))
-        else c.Ldap.Tests.DOCKER_PORT
-    )
+    if isinstance(port_value, int):
+        port_int = port_value
+    elif isinstance(port_value, str):
+        port_int = int(port_value)
+    else:
+        raise TypeError(
+            f"ldap_container port must be int or str, got {type(port_value).__name__}",
+        )
     return m.Ldap.ConnectionConfig(
         host=str(ldap_container["host"]),
         port=port_int,

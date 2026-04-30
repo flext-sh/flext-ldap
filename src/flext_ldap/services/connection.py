@@ -52,7 +52,14 @@ class FlextLdapConnection(s):
             else adapter.connect(connection_config)
         )
         if result.success:
-            self._detect_server_type_optional()
+            try:
+                self._detect_server_type_optional()
+            except Exception as exc:  # pragma: no cover
+                self.logger.debug(
+                    "Server detection raised an exception and will be ignored",
+                    operation=c.Ldap.OperationName.CONNECT,
+                    error=str(exc),
+                )
             return r[bool].ok(value=True)
         return result
 

@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import ClassVar, overload
 
 from flext_tests import FlextTestsUtilities, tk
-from ldap3 import Connection
 
 from flext_ldap import u
 from tests import c, m, p, t
@@ -80,7 +79,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     str,
                     t.Scalar,
                 ],
-            ) -> Connection:
+            ) -> p.Ldap.Ldap3Connection:
                 """Create an ldap3 connection from container metadata."""
                 return u.Ldap.create_connection(
                     server,
@@ -104,6 +103,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     if isinstance(port, (str, float))
                     else c.Ldap.PORT
                 )
+                if isinstance(port, int):
+                    port_value = port
+                elif isinstance(port, (str, float)):
+                    port_value = int(port)
+                else:
+                    raise TypeError(
+                        f"ldap_container port must be int, str or float, got {type(port).__name__}",
+                    )
                 return m.Ldap.ConnectionConfig(
                     host=str(ldap_container["host"]),
                     port=port_value,
@@ -113,13 +120,15 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 )
 
             @staticmethod
-            def assert_connection_bound(connection: Connection) -> None:
+            def assert_connection_bound(
+                connection: p.Ldap.Ldap3Connection,
+            ) -> None:
                 """Assert that an LDAP connection is bound."""
                 assert connection.bound, "LDAP server not responding to bind"
 
             @staticmethod
             def assert_server_info_available(
-                connection: Connection,
+                connection: p.Ldap.Ldap3Connection,
             ) -> None:
                 """Assert that server info is available on the connection."""
                 server = connection.server
@@ -204,12 +213,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                         t.Ldap.LDAPException,
                     ):
                         continue
-                fallback = (
-                    c.Ldap.Tests.DOCKER_ADMIN_DN,
-                    c.Ldap.Tests.DOCKER_ADMIN_PASSWORD,
+                error_message = (
+                    "Failed to resolve a valid LDAP admin credential for test LDAP container. "
+                    "Check that the LDAP container is running and credentials are correct."
                 )
-                cache[0] = fallback
-                return fallback
+                raise RuntimeError(error_message)
 
             @classmethod
             def ensure_basic_ldap_structure(cls) -> None:

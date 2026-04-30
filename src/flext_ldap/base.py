@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABC
 from collections.abc import (
     Sequence,
 )
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
 class FlextLdapService[
     TResult: t.JsonPayload | Sequence[t.JsonPayload] = t.JsonPayload
     | Sequence[t.JsonPayload]
-](s[TResult], ABC):
+](s[TResult]):
     """Base class for all flext-ldap services.
 
     Services default to the centralized ``m.Ldap.Response`` pipeline and may

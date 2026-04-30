@@ -122,7 +122,7 @@ class FlextLdapUtilities(u):
             password: str,
             auto_bind: bool = True,
             receive_timeout: int | None = None,
-        ) -> ldap3.Connection:
+        ) -> p.Ldap.Ldap3Connection:
             """Create an ldap3 Connection instance.
 
             The ONLY sanctioned way for test code outside flext-ldap/src and
@@ -133,22 +133,13 @@ class FlextLdapUtilities(u):
                 ldap3_server = server
             else:
                 ldap3_server = ldap3.Server(str(server))
-            if receive_timeout is not None:
-                conn = ldap3.Connection(
-                    ldap3_server,
-                    user=user,
-                    password=password,
-                    auto_bind=auto_bind,
-                    receive_timeout=receive_timeout,
-                )
-            else:
-                conn = ldap3.Connection(
-                    ldap3_server,
-                    user=user,
-                    password=password,
-                    auto_bind=auto_bind,
-                )
-            return conn
+            return ldap3.Connection(
+                ldap3_server,
+                user=user,
+                password=password,
+                auto_bind=auto_bind,
+                receive_timeout=receive_timeout,
+            )
 
         @staticmethod
         def create_bare_server(
@@ -743,7 +734,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def query_root_dse(
             cls,
-            connection: ldap3.Connection,
+            connection: p.Ldap.Ldap3Connection,
         ) -> p.Result[t.Ldap.OperationAttributes]:
             """Read rootDSE data from a bound ldap3 connection."""
             search_method = getattr(connection, "search", None)
@@ -751,14 +742,19 @@ class FlextLdapUtilities(u):
                 return r[t.Ldap.OperationAttributes].fail(
                     "rootDSE query failed: search unavailable",
                 )
-            if not search_method(
-                search_base="",
-                search_filter=str(c.Ldap.ALL_ENTRIES_FILTER),
-                search_scope=c.Ldap.SearchScopeValue.BASE,
-                attributes=str(c.Ldap.AttributeName.ALL_ATTRIBUTES),
-            ):
+            try:
+                if not search_method(
+                    search_base="",
+                    search_filter=str(c.Ldap.ALL_ENTRIES_FILTER),
+                    search_scope=c.Ldap.SearchScopeValue.BASE,
+                    attributes=str(c.Ldap.AttributeName.ALL_ATTRIBUTES),
+                ):
+                    return r[t.Ldap.OperationAttributes].fail(
+                        f"rootDSE query failed: {connection.result}",
+                    )
+            except Exception as exc:
                 return r[t.Ldap.OperationAttributes].fail(
-                    f"rootDSE query failed: {connection.result}",
+                    f"rootDSE query failed: {exc}",
                 )
             entries = getattr(connection, "entries", [])
             if not entries:
@@ -777,7 +773,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def detect_from_connection(
             cls,
-            connection: ldap3.Connection,
+            connection: p.Ldap.Ldap3Connection,
         ) -> p.Result[str]:
             """Detect LDAP server type from rootDSE on an active connection."""
             root_dse_result = cls.query_root_dse(connection)

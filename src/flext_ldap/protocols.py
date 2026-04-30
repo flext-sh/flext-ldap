@@ -14,14 +14,9 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, override, runtime_checkable
 
 from flext_ldif import p
-
-if TYPE_CHECKING:
-    from flext_ldap import c
-
-from flext_ldap.constants import FlextLdapConstants as c
 
 if TYPE_CHECKING:
     from flext_ldap.typings import FlextLdapTypes as t
@@ -428,20 +423,21 @@ class FlextLdapProtocols(p):
                 self,
                 search_base: str,
                 search_filter: str,
-                search_scope: t.Ldap.Ldap3SearchScope = c.Ldap.Ldap3SearchScope.SUBTREE,
-                dereference_aliases: t.Ldap.Ldap3DerefAliases = c.Ldap.Ldap3DerefAliases.ALWAYS,
+                search_scope: Literal["BASE", "LEVEL", "SUBTREE"] = "SUBTREE",
+                dereference_aliases: Literal[
+                    "ALWAYS", "FINDING_BASE", "NEVER", "SEARCH"
+                ] = "ALWAYS",
                 attributes: t.StrSequence | str | None = None,
                 size_limit: int = 0,
                 time_limit: int = 0,
-                *,
                 types_only: bool = False,
                 get_operational_attributes: bool = False,
-                controls: None = None,
+                controls: object | None = None,
                 paged_size: int | None = None,
                 paged_criticality: bool = False,
-                paged_cookie: str | bytes | None = None,
+                paged_cookie: bytes | str | None = None,
                 auto_escape: bool | None = None,
-            ) -> bool:
+            ) -> bool | None:
                 """Perform LDAP search."""
                 ...
 

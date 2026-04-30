@@ -408,7 +408,6 @@ from typing import List, Optional
 
 # Third-party imports
 import pydantic
-from ldap3 import Connection, Server
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
