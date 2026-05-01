@@ -1,0 +1,20 @@
+tests/unit/test_operations.py
+  h_9db9d35f50cf33 12,18,20-28,46,60-133
+tests/unit/test_connection.py
+  h_9db9d35f50cf33 28-35,49,51
+tests/unit/test_sync.py
+  h_9db9d35f50cf33 192,194-197,203-221,239-243,245-246
+tests/constants.py
+  h_9db9d35f50cf33 102,107,152,155-156,257-258
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "907839fceaebd84bd5bec79a9f09dd97e83866f4",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
