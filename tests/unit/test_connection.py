@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import ldap
-from tests import c, u
+from tests import c, m, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -23,6 +23,31 @@ class TestsFlextLdapConnection:
 
     def test_execute_without_connection_returns_failure(self) -> None:
         """Test execute fails when not connected."""
+        error = u.Ldap.Tests.fail(ldap.execute())
+        u.Ldap.Tests.that(
+            error.lower(),
+            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
+        )
+
+    def test_connect_invalid_host_returns_failure_and_keeps_disconnected(self) -> None:
+        """Test connect fails for an invalid host and leaves the facade disconnected."""
+        connection_config = m.Ldap.ConnectionConfig(
+            host=c.Ldap.Tests.CONFIG_INVALID_HOST,
+            port=c.Ldap.PORT,
+            bind_dn=c.Ldap.Tests.BIND_ADMIN_DN,
+            bind_password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
+        )
+
+        error = u.Ldap.Tests.fail(ldap.connect(connection_config))
+        u.Ldap.Tests.that(error, none=False)
+        u.Ldap.Tests.that(not ldap.is_connected, eq=True)
+
+    def test_disconnect_is_idempotent_when_not_connected(self) -> None:
+        """Test disconnect can be called repeatedly without changing failure semantics."""
+        ldap.disconnect()
+        ldap.disconnect()
+
+        u.Ldap.Tests.that(not ldap.is_connected, eq=True)
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
             error.lower(),
