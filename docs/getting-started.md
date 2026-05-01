@@ -272,7 +272,7 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 ```python
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
 
 
@@ -289,7 +289,7 @@ def server_specific_operations():
 
     # Initialize adapters
     adapter = FlextLdapEntryAdapter()
-    quirks = FlextLdapQuirksAdapter()
+    servers = FlextLdapServersAdapter()
 
     # Search for entries
     connection.search("dc=example,dc=com", "(objectClass=*)", attributes=["*"])
@@ -302,7 +302,7 @@ def server_specific_operations():
             entries.append(result.unwrap())
 
     # Detect server type
-    server_type_result = quirks.detect_server_type_from_entries(entries)
+    server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
         print(f"Detected server: {server_type}")

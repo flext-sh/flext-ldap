@@ -21,7 +21,7 @@
   - [Entry Format Conversion](#entry-format-conversion)
   - [LDIF File Processing](#ldif-file-processing)
   - [Export to LDIF](#export-to-ldif)
-  - [Server Quirks Detection](#server-quirks-detection)
+  - [Server Servers Detection](#server-servers-detection)
   - [Universal LDAP Processor](#universal-ldap-processor)
 - [Monitoring and Observability](#monitoring-and-observability)
   - [Prometheus Metrics](#prometheus-metrics)
@@ -62,7 +62,7 @@
 - Convert search results to ldif
   - LDIF File Processing
   - Export to LDIF
-  - Server Quirks Detection
+  - Server Servers Detection
   - Universal LDAP Processor
 - Usage
   - Monitoring and Observability
@@ -748,7 +748,7 @@ ______________________________________________________________________
 
 ### Entry Format Conversion
 
-FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server quirks detection:
+FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers detection:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
@@ -868,13 +868,13 @@ def export_to_ldif():
 run(export_to_ldif())
 ```
 
-### Server Quirks Detection
+### Server Servers Detection
 
-Use ldif quirks system for automatic server detection:
+Use ldif servers system for automatic server detection:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 import ldap3
 
@@ -889,7 +889,7 @@ def detect_and_configure():
     )
 
     adapter = FlextLdapEntryAdapter()
-    quirks = FlextLdapQuirksAdapter()
+    servers = FlextLdapServersAdapter()
 
     # Get root DSE and schema entries
     connection.search("", "(objectClass=*)", search_scope="BASE", attributes=["*", "+"])
@@ -903,15 +903,15 @@ def detect_and_configure():
             entries.append(result.unwrap())
 
     # Detect server type
-    server_type_result = quirks.detect_server_type_from_entries(entries)
+    server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
         print(f"Detected server: {server_type}")
 
         # Get server-specific configuration
-        acl_attr_result = quirks.get_acl_attribute_name(server_type)
-        schema_dn_result = quirks.get_schema_subentry(server_type)
-        max_page_size_result = quirks.get_max_page_size(server_type)
+        acl_attr_result = servers.get_acl_attribute_name(server_type)
+        schema_dn_result = servers.get_schema_subentry(server_type)
+        max_page_size_result = servers.get_max_page_size(server_type)
 
         if all(
             r.success for r in [acl_attr_result, schema_dn_result, max_page_size_result]
@@ -944,7 +944,7 @@ Complete example combining ldif with server operations:
 
 ```python
 from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import (
     OpenLDAP2Operations,
     OracleOIDOperations,
@@ -963,7 +963,7 @@ class UniversalLdapProcessor:
         self.bind_dn = bind_dn
         self.bind_password = bind_password
         self.adapter = FlextLdapEntryAdapter()
-        self.quirks = FlextLdapQuirksAdapter()
+        self.servers = FlextLdapServersAdapter()
         self.ops = None
         self.connection = None
 
@@ -987,7 +987,7 @@ class UniversalLdapProcessor:
             if result.success:
                 entries.append(result.unwrap())
 
-        server_type_result = self.quirks.detect_server_type_from_entries(entries)
+        server_type_result = self.servers.detect_server_type_from_entries(entries)
         if server_type_result.success:
             server_type = server_type_result.unwrap()
 

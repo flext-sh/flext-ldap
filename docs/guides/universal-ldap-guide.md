@@ -28,7 +28,7 @@
   - [1. Always Detect Server Type](#1-always-detect-server-type)
   - [2. Validate After Conversion](#2-validate-after-conversion)
   - [3. Use Server Capabilities](#3-use-server-capabilities)
-  - [4. Handle Quirks Gracefully](#4-handle-quirks-gracefully)
+  - [4. Handle Servers Gracefully](#4-handle-servers-gracefully)
 - [Troubleshooting](#troubleshooting)
   - [Server Detection Issues](#server-detection-issues)
   - [Conversion Failures](#conversion-failures)
@@ -57,7 +57,7 @@ Active Directory) through a unified interface.
 The universal LDAP system consists of:
 
 1. **Server Operations**: Server-specific implementations (OpenLDAP, Oracle, AD)
-1. **Entry Adapter**: Universal entry conversion with quirks integration
+1. **Entry Adapter**: Universal entry conversion with servers integration
 1. **Factory Pattern**: Dynamic server operations instantiation
 1. **Universal API**: High-level methods exposing universal capabilities
 
@@ -78,7 +78,7 @@ The universal LDAP system consists of:
 - 🔄 **Entry Conversion** - Convert entries between server formats
 - 🔄 **ACL Translation** - Translate ACLs between formats
 - 🔄 **Schema Discovery** - Server-specific schema handling
-- 🔄 **Quirks Integration** - Server-specific behavior handling
+- 🔄 **Servers Integration** - Server-specific behavior handling
 
 ## Server Operations
 
@@ -493,15 +493,15 @@ if caps_result.success:
         api.search_universal(..., use_paging=True)
 ```
 
-### 4. Handle Quirks Gracefully
+### 4. Handle Servers Gracefully
 
 ```python
-# Good: Use quirks system for server-specific behavior
+# Good: Use servers system for server-specific behavior
 from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter(server_type="oud")
 
-# Adapter handles Oracle OUD quirks automatically
+# Adapter handles Oracle OUD servers automatically
 normalized = adapter.normalize_entry_for_server(entry, "oud")
 ```
 
@@ -548,7 +548,7 @@ To add support for additional LDAP servers:
 
 1. Create new server operations class inheriting from `BaseServerOperations`
 1. Implement all required methods (connection, schema, ACL, entry, search)
-1. Add server-specific quirks to ldif quirks system
+1. Add server-specific servers to ldif servers system
 1. Register in `ServerOperationsFactory`
 1. Add tests and documentation
 

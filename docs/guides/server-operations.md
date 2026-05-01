@@ -35,7 +35,7 @@
   - [**Usage**](#usage)
   - [**Limitations**](#limitations)
 - [## 🔄 Entry Adapter Integration](#entry-adapter-integration)
-- [## 🔍 Quirks Detection](#quirks-detection)
+- [## 🔍 Servers Detection](#servers-detection)
 - [## 📊 Server Comparison](#server-comparison)
   - [**Connection Features**](#connection-features)
   - [**Schema Operations**](#schema-operations)
@@ -127,7 +127,7 @@
   - 🔄 Entry Adapter Integration
 - Search and convert to ldif
 - Create ldif entry and convert to ldap3
-  - 🔍 Quirks Detection
+  - 🔍 Servers Detection
 - Detect server type from entries
 - Automatic server operations selection
   - 📊 Server Comparison
@@ -168,7 +168,7 @@ This document provides detailed information about server-specific implementation
 ## 🎯 Overview
 
 FLEXT-LDAP provides complete,
-server-specific implementations for major LDAP servers with automatic quirks handling and ldif integration.
+server-specific implementations for major LDAP servers with automatic servers handling and ldif integration.
 
 ### **Available Implementations**
 
@@ -197,7 +197,7 @@ from flext_ldap import (
 
 # Import supporting components
 from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 from flext_ldif import FlextLdifModels
 ```
 
@@ -619,27 +619,27 @@ if attrs_result.success:
 
 ##
 
-## 🔍 Quirks Detection
+## 🔍 Servers Detection
 
-Server type detection using ldif quirks:
+Server type detection using ldif servers:
 
 ```python
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 
-quirks = FlextLdapQuirksAdapter()
+servers = FlextLdapServersAdapter()
 
 # Detect server type from entries
 entries = [...]  # List of FlextLdifModels.Entry
-server_type_result = quirks.detect_server_type_from_entries(entries)
+server_type_result = servers.detect_server_type_from_entries(entries)
 
 if server_type_result.success:
     server_type = server_type_result.unwrap()
     print(f"Detected server: {server_type}")
 
     # Get server-specific information
-    acl_attr_result = quirks.get_acl_attribute_name(server_type)
-    schema_dn_result = quirks.get_schema_subentry(server_type)
-    acl_format_result = quirks.get_acl_format(server_type)
+    acl_attr_result = servers.get_acl_attribute_name(server_type)
+    schema_dn_result = servers.get_schema_subentry(server_type)
+    acl_format_result = servers.get_acl_format(server_type)
 
     print(f"ACL attribute: {acl_attr_result.unwrap()}")
     print(f"Schema DN: {schema_dn_result.unwrap()}")
@@ -699,8 +699,8 @@ Feature: Max Page Size - OpenLDAP 2.x: 1000 - OpenLDAP 1.x: 1000 - Oracle OID: 5
 Always detect the server type for optimal operations:
 
 ```python
-quirks = FlextLdapQuirksAdapter()
-server_type_result = quirks.detect_server_type_from_entries(entries)
+servers = FlextLdapServersAdapter()
+server_type_result = servers.detect_server_type_from_entries(entries)
 
 if server_type_result.success:
     server_type = server_type_result.unwrap()

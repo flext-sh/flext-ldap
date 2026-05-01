@@ -38,7 +38,7 @@ class TestsFlextLdapApi:
         case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
         callbacks: dict[
-            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion
+            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
         ] = {
             c.Ldap.Tests.CallbackGuardCase.NONE: None,
             c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
@@ -56,7 +56,7 @@ class TestsFlextLdapApi:
         case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
         callbacks: dict[
-            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion
+            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
         ] = {
             c.Ldap.Tests.CallbackGuardCase.NONE: None,
             c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,

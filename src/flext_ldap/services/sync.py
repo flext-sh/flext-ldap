@@ -23,7 +23,7 @@ class FlextLdapSyncCallbacks:
 
     @staticmethod
     def is_multi_phase_callback(
-        callback: t.Ldap.ProgressCallbackUnion,
+        callback: t.Ldap.ProgressCallbackUnion | None,
     ) -> TypeIs[t.Ldap.MultiPhaseProgressCallback]:
         """Return ``True`` when callback expects the multi-phase signature."""
         if callback is None:
@@ -38,7 +38,7 @@ class FlextLdapSyncCallbacks:
 
     @staticmethod
     def is_single_phase_callback(
-        callback: t.Ldap.ProgressCallbackUnion,
+        callback: t.Ldap.ProgressCallbackUnion | None,
     ) -> TypeIs[t.Ldap.LdapProgressCallback]:
         """Return ``True`` when callback expects the single-phase signature."""
         if callback is None:

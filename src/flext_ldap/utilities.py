@@ -14,8 +14,7 @@ from collections.abc import (
     Mapping,
     MutableMapping,
 )
-from types import MappingProxyType
-from typing import Literal, TypeIs
+from typing import Literal
 
 import ldap3
 
@@ -57,15 +56,20 @@ class FlextLdapUtilities(u):
 
         """
 
-        LDAP3_GET_INFO_LITERAL: t.MappingKV[
-            t.Ldap.Ldap3GetInfo,
-            Literal["ALL", "DSA", "NO_INFO", "SCHEMA"],
-        ] = MappingProxyType({
-            c.Ldap.Ldap3GetInfo.ALL: "ALL",
-            c.Ldap.Ldap3GetInfo.DSA: "DSA",
-            c.Ldap.Ldap3GetInfo.NO_INFO: "NO_INFO",
-            c.Ldap.Ldap3GetInfo.SCHEMA: "SCHEMA",
-        })
+        @staticmethod
+        def resolve_get_info(
+            get_info: c.Ldap.Ldap3GetInfo,
+        ) -> Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]:
+            """Resolve Ldap3GetInfo enum to typed literal for ldap3 stubs."""
+            match get_info:
+                case c.Ldap.Ldap3GetInfo.DSA:
+                    return "DSA"
+                case c.Ldap.Ldap3GetInfo.NO_INFO:
+                    return "NO_INFO"
+                case c.Ldap.Ldap3GetInfo.SCHEMA:
+                    return "SCHEMA"
+                case _:
+                    return "ALL"
 
         @staticmethod
         def create_server(
@@ -73,22 +77,17 @@ class FlextLdapUtilities(u):
             port: int = c.Ldap.PORT,
             *,
             use_ssl: bool = False,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance.
 
             The ONLY sanctioned way for test code outside flext-ldap/src and
             flext-ldif/src to create an LDAP server object.
             """
-            resolved_info: t.Ldap.Ldap3GetInfo = (
-                c.Ldap.Ldap3GetInfo.NO_INFO
-                if get_info == c.Ldap.Ldap3GetInfo.NO_INFO
-                else get_info
-            )
             scheme = "ldaps" if use_ssl else "ldap"
             server: p.Ldap.Ldap3Server = ldap3.Server(
                 f"{scheme}://{host}:{port}",
-                get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[resolved_info],
+                get_info=FlextLdapUtilities.Ldap.resolve_get_info(get_info),
             )
             return server
 
@@ -96,7 +95,7 @@ class FlextLdapUtilities(u):
         def create_server_from_url(
             server_url: str,
             *,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server instance from a URL string.
 
@@ -107,7 +106,7 @@ class FlextLdapUtilities(u):
             """
             server: p.Ldap.Ldap3Server = ldap3.Server(
                 server_url,
-                get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[get_info],
+                get_info=FlextLdapUtilities.Ldap.resolve_get_info(get_info),
             )
             return server
 
@@ -143,13 +142,13 @@ class FlextLdapUtilities(u):
             host: str,
             *,
             port: int = c.Ldap.PORT,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
         ) -> p.Ldap.Ldap3Server:
             """Create an ldap3 Server with minimal info retrieval (for connectivity checks)."""
             server: p.Ldap.Ldap3Server = ldap3.Server(
                 host,
                 port=port,
-                get_info=FlextLdapUtilities.Ldap.LDAP3_GET_INFO_LITERAL[get_info],
+                get_info=FlextLdapUtilities.Ldap.resolve_get_info(get_info),
             )
             return server
 
@@ -161,7 +160,7 @@ class FlextLdapUtilities(u):
             """
 
             @staticmethod
-            def is_valid_status(value: str | t.JsonValue) -> TypeIs[str]:
+            def is_valid_status(value: str | t.JsonValue) -> t.TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -292,7 +291,7 @@ class FlextLdapUtilities(u):
 
         @staticmethod
         def ldap3_value_to_strings(
-            value: t.Ldap.Ldap3EntryValue | None,
+            value: t.Ldap.Ldap3EntryValue | t.JsonValue | None,
         ) -> t.StrSequence:
             """Convert an ldap3 attribute payload to canonical string values."""
             match value:
@@ -353,12 +352,15 @@ class FlextLdapUtilities(u):
         ) -> p.Result[m.Ldif.Entry]:
             """Convert LDAP search-result mappings into canonical LDIF entries."""
             raw_entry = dict(entry)
-            dn_values = cls.ldap3_value_to_strings(raw_entry.get("dn"))
+            dn_raw = raw_entry.get("dn")
+            dn_values = cls.ldap3_value_to_strings(dn_raw)
             if not dn_values:
                 return r[m.Ldif.Entry].fail("Search entry missing DN")
             dn_value = dn_values[0]
             attributes: MutableMapping[str, t.MutableSequenceOf[str] | str] = {
-                key: list(cls.ldap3_value_to_strings(value))
+                key: list(
+                    cls.ldap3_value_to_strings(value),
+                )
                 for key, value in raw_entry.items()
                 if key != "dn"
             }

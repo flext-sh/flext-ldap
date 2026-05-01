@@ -94,7 +94,7 @@ callers replace services or adapters for testing and alternative runtimes.
   exchanged across layers.
 - **Railway-oriented results** rely on `r` to surface errors without
   exceptions in the main control flow.
-- **Adapter isolation** ensures protocol quirks and conversions stay localized to
+- **Adapter isolation** ensures protocol servers and conversions stay localized to
   the adapter layer.
 
 ## Related Documentation

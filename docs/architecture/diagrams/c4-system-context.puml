@@ -28,7 +28,7 @@ Rel(developer, flext_ldap, "Integrates LDAP functionality", "Python API")
 Rel(operator, flext_ldap, "Monitors LDAP operations", "Observability APIs")
 
 Rel(flext_ldap, flext_core, "Uses", "r, DI patterns")
-Rel(flext_ldap, flext_ldif, "Integrates with", "Entry models, quirks")
+Rel(flext_ldap, flext_ldif, "Integrates with", "Entry models, servers")
 
 Rel(flext_ldap, openldap, "Connects to", "ldap3 protocol")
 Rel(flext_ldap, oracle_oid, "Connects to", "ldap3 protocol")

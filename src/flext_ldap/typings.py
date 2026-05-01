@@ -8,7 +8,6 @@ from collections.abc import (
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from flext_ldap.constants import FlextLdapConstants as _c
 from flext_ldif import t
 
 
@@ -20,9 +19,6 @@ class FlextLdapTypes(t):
 
         LDAPException: type[Exception] = _Ldap3LDAPException
 
-        type Ldap3SearchScope = _c.Ldap.Ldap3SearchScope
-        type Ldap3DerefAliases = _c.Ldap.Ldap3DerefAliases
-        type Ldap3GetInfo = _c.Ldap.Ldap3GetInfo
         type Ldap3AttributeScalar = str | bytes
         type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
         type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]
@@ -30,7 +26,7 @@ class FlextLdapTypes(t):
         type Ldap3AddAttributeValue = (
             Ldap3AttributeScalar | t.StrSequence | t.SequenceOf[bytes]
         )
-        type Ldap3AddAttributes = t.MappingKV[str, Ldap3AddAttributeValue] | None
+        type Ldap3AddAttributes = t.MappingKV[str, Ldap3AddAttributeValue]
         type Ldap3ModifyChangeValue = t.Pair[
             str,
             t.MutableSequenceOf[str],
@@ -55,13 +51,11 @@ class FlextLdapTypes(t):
             Ldap3AttributeScalar | t.Numeric | bool
         ]
         type Ldap3EntryValue = (
-            Ldap3AttributeScalar | t.Numeric | bool | Ldap3EntrySequenceValue | None
+            Ldap3AttributeScalar | t.Numeric | bool | Ldap3EntrySequenceValue
         )
         type LdapProgressCallback = Callable[..., None]
         type MultiPhaseProgressCallback = Callable[..., None]
-        type ProgressCallbackUnion = (
-            LdapProgressCallback | MultiPhaseProgressCallback | None
-        )
+        type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
         type LdapModifyChangeValue = t.Pair[
             str | int,
             t.StrSequence,

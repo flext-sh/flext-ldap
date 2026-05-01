@@ -31,7 +31,7 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from typing import override
+from typing import cast, override
 
 from flext_ldap import c, m, p, s, t, u
 from flext_ldif import FlextLdifConversion, e, r
@@ -123,7 +123,7 @@ class FlextLdapOperations(s):
             super().__init__()
             self._ops = operations
 
-        def execute(self, entry: m.Ldif.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
+        def execute(self, entry: p.Ldif.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
             Business Rules:
@@ -148,14 +148,14 @@ class FlextLdapOperations(s):
                 else ""
             )
             if not changetype and hasattr(entry, "changetype") and entry.changetype:
-                changetype = str(entry.changetype).lower()
+                changetype = entry.changetype.lower()
             if changetype == c.Ldif.LdifChangeType.MODIFY:
                 return self.handle_schema_modify(entry)
             return self.handle_regular_add(entry)
 
         def handle_existing_entry(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
@@ -183,7 +183,7 @@ class FlextLdapOperations(s):
                     f"Search for existing entry failed: {search_result.error}"
                 )
             search_data = search_result.map_or(None)
-            existing_entries: t.SequenceOf[t.MappingKV[str, t.JsonValue]] = []
+            existing_entries: t.SequenceOf[m.Ldif.Entry] = []
             if search_data is not None and search_data.entries:
                 existing_entries = list(search_data.entries)
             if not existing_entries:
@@ -197,8 +197,9 @@ class FlextLdapOperations(s):
                 return r[m.Ldap.LdapOperationResult].fail(
                     u.to_str(retry_result.error),
                 )
-            existing_entry_obj: t.MappingKV[str, t.JsonValue] = existing_entries[0]
-            entry_result = u.Ldap.search_entry_to_ldif_entry(existing_entry_obj)
+            entry_result = u.Ldap.search_entry_to_ldif_entry(
+                cast("t.MappingKV[str, t.JsonValue]", existing_entries[0]),
+            )
             if entry_result.failure:
                 return r[m.Ldap.LdapOperationResult].fail(
                     f"Failed to parse existing entry: {entry_result.error}"
@@ -232,7 +233,7 @@ class FlextLdapOperations(s):
 
         def handle_regular_add(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
@@ -270,7 +271,7 @@ class FlextLdapOperations(s):
 
         def handle_schema_modify(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             """Apply a schema modification entry (supports multiple add operations).
 
@@ -435,7 +436,7 @@ class FlextLdapOperations(s):
 
     def add(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
@@ -468,7 +469,7 @@ class FlextLdapOperations(s):
         current_server_raw = (
             metadata.target_server_type
             or metadata.original_server_type
-            or metadata.quirk_type
+            or metadata.server_type
             if metadata is not None
             else None
         )
@@ -506,7 +507,7 @@ class FlextLdapOperations(s):
 
     def batch_upsert(
         self,
-        entries: t.SequenceOf[m.Ldif.Entry],
+        entries: t.SequenceOf[p.Ldif.Entry],
         *,
         progress_callback: t.Ldap.LdapProgressCallback | None = None,
         retry_on_errors: t.StrSequence | None = None,
@@ -629,7 +630,7 @@ class FlextLdapOperations(s):
 
     def delete(
         self,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Delete an LDAP entry identified by DN.
 
@@ -664,7 +665,9 @@ class FlextLdapOperations(s):
                     metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
-                dn_model = dn
+                dn_model = (
+                    dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN.model_validate(dn)
+                )
         result = self._ensure_adapter().delete(dn_model)
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
@@ -709,8 +712,8 @@ class FlextLdapOperations(s):
 
     def modify(
         self,
-        dn: str | m.Ldif.DN,
-        changes: t.Ldap.OperationChanges,
+        dn: str | p.Ldif.DN,
+        changes: t.Ldap.LdapModifyChanges,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.
 
@@ -746,8 +749,13 @@ class FlextLdapOperations(s):
                     metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
-                dn_model = dn
-        result = self._ensure_adapter().modify(dn_model, changes)
+                dn_model = (
+                    dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN.model_validate(dn)
+                )
+        concrete_changes: t.Ldap.OperationChanges = {
+            k: [(int(op), list(vals)) for op, vals in v] for k, v in changes.items()
+        }
+        result = self._ensure_adapter().modify(dn_model, concrete_changes)
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -758,8 +766,8 @@ class FlextLdapOperations(s):
 
     def search(
         self,
-        search_options: m.Ldap.SearchOptions,
-        server_type: str | None = None,
+        search_options: p.Ldap.SearchOptions,
+        server_type: str = "rfc",
     ) -> p.Result[m.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
 
@@ -767,7 +775,7 @@ class FlextLdapOperations(s):
             - Base DN is normalized using u.Ldif.norm() before search
             - Normalization ensures consistent DN format across server types
             - Search filter syntax is validated by LDAP server
-            - Server type determines parsing quirks for entry attributes
+            - Server type determines parsing servers for entry attributes
             - Empty result sets return successful SearchResult with empty entries list
 
         Audit Implications:
@@ -782,7 +790,7 @@ class FlextLdapOperations(s):
 
         Args:
             search_options: Search configuration (base_dn, filter_str, scope, attributes)
-            server_type: LDAP server type for parsing quirks (default: RFC)
+            server_type: LDAP server type for parsing servers (default: RFC)
 
         Returns:
             r containing SearchResult with Entry models
@@ -793,7 +801,12 @@ class FlextLdapOperations(s):
             return r[m.Ldap.SearchResult].fail(
                 f"Invalid base DN: {base_dn_result.error}",
             )
-        normalized_options = search_options.model_copy(
+        concrete_options = (
+            search_options
+            if isinstance(search_options, m.Ldap.SearchOptions)
+            else m.Ldap.SearchOptions.model_validate(search_options)
+        )
+        normalized_options = concrete_options.model_copy(
             update={"base_dn": base_dn_result.value},
         )
         effective_server_type = server_type or self._server_type
@@ -811,7 +824,7 @@ class FlextLdapOperations(s):
 
     def upsert(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         *,
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,

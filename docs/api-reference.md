@@ -26,7 +26,7 @@
   - [Chaining Operations](#chaining-operations)
 - [🔄 Universal LDAP Interface](#universal-ldap-interface)
   - [FlextLdapEntryAdapter](#flextldapentryadapter)
-  - [FlextLdapQuirksAdapter](#flextldapquirksadapter)
+  - [FlextLdapServersAdapter](#flextldapserversadapter)
 - [🏗️ Server Operations](#server-operations)
   - [BaseServerOperations](#baseserveroperations)
   - [Server-Specific Implementations](#server-specific-implementations)
@@ -77,7 +77,7 @@
 - Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> p.Result[Mapping[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
 - Create ldif entry
 - Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries, output_path) -> p.Result[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
-  - FlextLdapQuirksAdapter
+  - FlextLdapServersAdapter
     - [`detect_server_type_from_entries(entries) -> p.Result[str]`](#detect_server_type_from_entriesentries---flextresultstr)
 - Detect from entries - [`get_acl_attribute_name(server_type=None) -> p.Result[str]`](#get_acl_attribute_nameserver_typenone---flextresultstr) - [`get_acl_format(server_type=None) -> p.Result[str]`](#get_acl_formatserver_typenone---flextresultstr) - [`get_schema_subentry(server_type=None) -> p.Result[str]`](#get_schema_subentryserver_typenone---flextresultstr) - [`get_max_page_size(server_type=None) -> p.Result[int]`](#get_max_page_sizeserver_typenone---flextresultint) - [`normalize_entry_for_server(entry, server_type=None) -> p.Result[FlextLdifModels.Entry]`](#normalize_entry_for_serverentry-server_typenone---flextresultflextldifmodelsentry)
   - 🏗️ Server Operations
@@ -636,14 +636,14 @@ Write ldif entries to LDIF file.
 
 ______________________________________________________________________
 
-### FlextLdapQuirksAdapter
+### FlextLdapServersAdapter
 
-Server detection and quirks system integration using ldif.
+Server detection and servers system integration using ldif.
 
 **Import:**
 
 ```python
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 ```
 
 #### `detect_server_type_from_entries(entries) -> p.Result[str]`
@@ -668,14 +668,14 @@ Detect LDAP server type from entry analysis.
 **Example:**
 
 ```python
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 
-quirks = FlextLdapQuirksAdapter()
+servers = FlextLdapServersAdapter()
 
 # Detect from entries
 entries = [...]  # ldif entries from search
-result = quirks.detect_server_type_from_entries(entries)
+result = servers.detect_server_type_from_entries(entries)
 
 if result.success:
     server_type = result.unwrap()
@@ -1094,7 +1094,7 @@ ______________________________________________________________________
 ```python
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapQuirksAdapter
+from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 from flext_ldif import FlextLdifModels
 
@@ -1112,7 +1112,7 @@ def universal_ldap_example():
 
     # Initialize adapters
     adapter = FlextLdapEntryAdapter()
-    quirks = FlextLdapQuirksAdapter()
+    servers = FlextLdapServersAdapter()
 
     # Search for entries
     connection.search("dc=example,dc=com", "(objectClass=*)", attributes=["*"])
@@ -1125,7 +1125,7 @@ def universal_ldap_example():
             entries.append(result.unwrap())
 
     # Detect server type
-    server_type_result = quirks.detect_server_type_from_entries(entries)
+    server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
         print(f"Detected server: {server_type}")
@@ -1149,7 +1149,7 @@ def universal_ldap_example():
             print(f"Schema: {len(schema['object_classes'])} object classes")
 
         # Get ACLs
-        acl_attr = quirks.get_acl_attribute_name(server_type).unwrap()
+        acl_attr = servers.get_acl_attribute_name(server_type).unwrap()
         print(f"ACL attribute: {acl_attr}")
 
         # Paged search

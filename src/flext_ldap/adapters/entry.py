@@ -7,14 +7,14 @@ Business Rules:
     - ldap3.Entry → p.Ldif.Entry conversion preserves all attributes
     - p.Ldif.Entry → ldap3 attributes uses t.MappingKV[str, t.StrSequence] format
     - Binary values (non-ASCII) are detected and base64 encoded per RFC 2849
-    - Server-specific normalization uses flext-ldif quirks system
+    - Server-specific normalization uses flext-ldif servers system
     - DN normalization via u.Ldif.norm() for strict validation
     - Empty attribute values are preserved (important for schema compliance)
 
 Audit Implications:
     - Entry conversion maintains attribute fidelity for data integrity
     - Base64 encoding of binary values ensures transport safety
-    - Server-specific quirks enable cross-server migration auditing
+    - Server-specific servers enable cross-server migration auditing
     - Conversion operations are stateless (no side effects)
 
 Architecture Notes:
@@ -41,12 +41,12 @@ class FlextLdapEntryAdapter(s[bool]):
     This adapter provides bidirectional conversion with universal server support:
     - ldap3.Entry → p.Ldif.Entry (for result processing)
     - p.Ldif.Entry → t.Ldap.OperationAttributes (for ldap3 operations)
-    - Server-specific entry normalization using quirks
+    - Server-specific entry normalization using servers
     - Entry validation for target server types
     - Entry format conversion between different servers
 
     All operations are generic and work with any LDAP server by leveraging
-    flext-ldif's quirks system for server-specific handling.
+    flext-ldif's servers system for server-specific handling.
     """
 
     class _ConversionHelpers:
@@ -85,7 +85,7 @@ class FlextLdapEntryAdapter(s[bool]):
     _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldif.ServerTypes.RFC)
 
     def __init__(self, *, server_type: str | None = None) -> None:
-        """Initialize entry adapter with ldif integration and quirks.
+        """Initialize entry adapter with ldif integration and servers.
 
         Args:
             server_type: Server type for normalization (defaults to RFC).
@@ -165,7 +165,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Base64 encoding detection uses ASCII threshold (127) for non-printable chars
             - Removed attributes (None values) are tracked in conversion metadata
             - Conversion metadata includes source DN, removed attrs, base64 attrs
-            - Server type from adapter instance is stored in QuirkMetadata
+            - Server type from adapter instance is stored in ServerMetadata
 
         Audit Implications:
             - Conversion failures are logged with entry DN and error details
@@ -217,8 +217,8 @@ class FlextLdapEntryAdapter(s[bool]):
                 original_attrs_dict,
                 ldif_attrs,
             )
-            metadata_obj = m.Ldif.QuirkMetadata.model_validate({
-                "quirk_type": self._server_type,
+            metadata_obj = m.Ldif.ServerMetadata.model_validate({
+                "server_type": self._server_type,
                 "extensions": conversion_metadata.model_dump(exclude_defaults=False),
             })
             return m.Ldif.Entry.create(

@@ -40,9 +40,6 @@ organized for data-driven testing, maximum reuse, and composition.
 from __future__ import annotations
 
 import math
-from collections.abc import (
-    Mapping,
-)
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
@@ -244,7 +241,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
-                t.SequenceOf[tuple[Mapping[str, t.StrSequence], str, str | None]]
+                t.SequenceOf[tuple[t.MappingKV[str, t.StrSequence], str, str | None]]
             ] = (
                 (
                     MappingProxyType(
@@ -323,7 +320,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             NORM_JOIN_INPUT: Final[tuple[str, ...]] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
-            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[Mapping[str, t.StrSequence]] = (
+            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
                 MappingProxyType(
                     {
                         "cn": ("user",),
@@ -394,10 +391,10 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SEARCH_NORMALIZED_SIZE_LIMIT: Final[int] = 50
             SEARCH_ENTRY_ADDED_MESSAGE: Final[str] = "Entry added successfully"
             SEARCH_DEFAULT_LIMIT_ZERO: Final[int] = 0
-            SEARCH_OBJECTCLASS_PERSON_TOP: Final[Mapping[str, t.StrSequence]] = (
+            SEARCH_OBJECTCLASS_PERSON_TOP: Final[t.MappingKV[str, t.StrSequence]] = (
                 MappingProxyType({"objectClass": ("person", "top")})
             )
-            SEARCH_CATEGORY_EXPECTED: Final[Mapping[SearchCategoryCase, str]] = (
+            SEARCH_CATEGORY_EXPECTED: Final[t.MappingKV[SearchCategoryCase, str]] = (
                 MappingProxyType({
                     SearchCategoryCase.EMPTY: c.Ldap.UNKNOWN_CATEGORY,
                     SearchCategoryCase.PERSON: "person",
@@ -523,7 +520,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 SUBTREE = "subtree"
                 SUBORDINATE = "subordinate"
 
-            ENTRY_DN_SCENARIOS: Final[Mapping[EntryOperationCase, str]] = (
+            ENTRY_DN_SCENARIOS: Final[t.MappingKV[EntryOperationCase, str]] = (
                 MappingProxyType({
                     EntryOperationCase.VALID_DN: "cn=test,ou=people,dc=example,dc=com",
                     EntryOperationCase.EMPTY_DN: "",
@@ -534,22 +531,22 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 })
             )
 
-            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[Mapping[SearchFilterCase, str]] = (
-                MappingProxyType({
-                    SearchFilterCase.PRESENT: "(cn=*)",
-                    SearchFilterCase.EQUALITY: "(uid=john)",
-                    SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
-                    SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
-                    SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
-                    SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
-                    SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
-                    SearchFilterCase.COMPLEX_NESTED: (
-                        "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
-                    ),
-                })
-            )
+            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[
+                t.MappingKV[SearchFilterCase, str]
+            ] = MappingProxyType({
+                SearchFilterCase.PRESENT: "(cn=*)",
+                SearchFilterCase.EQUALITY: "(uid=john)",
+                SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
+                SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
+                SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
+                SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
+                SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
+                SearchFilterCase.COMPLEX_NESTED: (
+                    "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
+                ),
+            })
 
-            SEARCH_SIZE_SCENARIOS: Final[Mapping[SearchSizeCase, int]] = (
+            SEARCH_SIZE_SCENARIOS: Final[t.MappingKV[SearchSizeCase, int]] = (
                 MappingProxyType({
                     SearchSizeCase.SIZE_ZERO: 0,
                     SearchSizeCase.SIZE_ONE: 1,
@@ -559,7 +556,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 })
             )
 
-            SEARCH_SCOPE_SCENARIOS: Final[Mapping[SearchScopeCase, str]] = (
+            SEARCH_SCOPE_SCENARIOS: Final[t.MappingKV[SearchScopeCase, str]] = (
                 MappingProxyType({
                     SearchScopeCase.BASE: "BASE",
                     SearchScopeCase.ONE_LEVEL: "LEVEL(1)",

@@ -168,7 +168,7 @@ class FlextLdapModelsLdap:
             str,
             u.Field(description="Target base DN for sync"),
         ] = ""
-        progress_callback: t.Ldap.ProgressCallbackUnion = None
+        progress_callback: t.Ldap.ProgressCallbackUnion | None = None
 
     class SyncStats(LdapBatchStats):
         """Sync stats - extends LdapBatchStats."""
@@ -240,12 +240,10 @@ class FlextLdapModelsLdap:
     class SyncPhaseConfig(m.BaseModel):
         """Sync phase settings."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            arbitrary_types_allowed=True,
-        )
+        model_config = m.ConfigDict(arbitrary_types_allowed=True)
         server_type: str = c.Ldap.DEFAULT_TYPE
-        progress_callback: t.Ldap.ProgressCallbackUnion = None
-        retry_on_errors: t.StrSequence | None = None
+        progress_callback: t.Ldap.ProgressCallbackUnion | None = None
+        retry_on_errors: t.StrSequence = u.Field(default_factory=list)
         max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
         stop_on_error: bool = False
 

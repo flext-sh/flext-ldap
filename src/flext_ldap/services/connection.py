@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import FlextLdapServerDetector, c, m, p, s, u
+from flext_ldap import FlextLdapServerDetector, c, m, p, s, t, u
 from flext_ldif import r
 
 
@@ -27,17 +27,24 @@ class FlextLdapConnection(s):
 
     def connect(
         self,
-        connection_config: m.Ldap.ConnectionConfig,
+        connection_config: p.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
         max_retries: int = c.Ldap.DEFAULT_MAX_RETRIES,
         retry_delay: float = c.Ldap.DEFAULT_RETRY_DELAY,
+        **kwargs: t.Scalar,
     ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry."""
+        _ = kwargs
         adapter = self._ensure_adapter()
+        concrete_config = (
+            connection_config
+            if isinstance(connection_config, m.Ldap.ConnectionConfig)
+            else m.Ldap.ConnectionConfig.model_validate(connection_config)
+        )
 
         def connect_once() -> r[bool]:
-            connect_result = adapter.connect(connection_config)
+            connect_result = adapter.connect(concrete_config)
             if connect_result.success:
                 return r[bool].ok(value=connect_result.value)
             return r[bool].fail(connect_result.error)
@@ -49,7 +56,7 @@ class FlextLdapConnection(s):
                 delay_seconds=retry_delay,
             )
             if auto_retry
-            else adapter.connect(connection_config)
+            else adapter.connect(concrete_config)
         )
         if result.success:
             try:
@@ -77,8 +84,10 @@ class FlextLdapConnection(s):
     @override
     def execute(
         self,
+        **kwargs: t.Scalar,
     ) -> p.Result[m.Ldap.Response]:
         """Execute service health check."""
+        _ = kwargs
         if self.is_connected:
             return r[m.Ldap.Response].ok(
                 m.Ldap.SearchResult(

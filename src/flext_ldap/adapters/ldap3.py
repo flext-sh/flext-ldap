@@ -133,16 +133,16 @@ class FlextLdapLdap3Wrappers:
         time_limit: int,
     ) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects."""
-        normalized_scope: t.Ldap.Ldap3SearchScope
+        normalized_scope: c.Ldap.Ldap3SearchScope
         if isinstance(search_scope, int):
-            scope_map: t.MappingKV[int, t.Ldap.Ldap3SearchScope] = {
+            scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
                 c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
                 c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
                 c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
             }
             normalized_scope = scope_map[search_scope]
         else:
-            scope_str_map: t.MappingKV[str, t.Ldap.Ldap3SearchScope] = {
+            scope_str_map: t.MappingKV[str, c.Ldap.Ldap3SearchScope] = {
                 c.Ldap.Ldap3SearchScope.BASE: c.Ldap.Ldap3SearchScope.BASE,
                 c.Ldap.Ldap3SearchScope.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
                 c.Ldap.Ldap3SearchScope.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
@@ -467,7 +467,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             """
             attrs_raw: (
-                m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None
+                m.Ldif.DN | m.Ldif.Attributes | m.Ldif.ServerMetadata | str | None
             ) = None
             if isinstance(parsed, m.Ldif.Entry):
                 attrs_raw = parsed.attributes
@@ -581,7 +581,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             """
             empty_dn = m.Ldif.DN(value="", metadata=m.Ldif.EntryMetadata())
             dn_raw: (
-                m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None
+                m.Ldif.DN | m.Ldif.Attributes | m.Ldif.ServerMetadata | str | None
             ) = None
             resolved_dn = empty_dn
             match parsed:
@@ -619,29 +619,29 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def extract_metadata(
             parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
-        ) -> m.Ldif.QuirkMetadata | None:
-            """Extract server-specific quirk metadata from LDAP entry.
+        ) -> m.Ldif.ServerMetadata | None:
+            """Extract server-specific server metadata from LDAP entry.
 
             Business Rules:
-                - Extracts quirk metadata from entry attributes or metadata property
-                - Metadata indicates server-specific behaviors (OpenLDAP, OID, OUD quirks)
+                - Extracts server metadata from entry attributes or metadata property
+                - Metadata indicates server-specific behaviors (OpenLDAP, OID, OUD servers)
                 - Delegates to normalize_metadata() for safe value filtering
                 - None returned when no metadata present (normal, not an error)
                 - Used by flext-ldif to apply server-specific transformations
 
             Audit Implications:
-                - Quirk metadata affects how entries are processed for different LDAP servers
+                - Server metadata affects how entries are processed for different LDAP servers
                 - None returned when no metadata present - this is normal, not an error
                 - Metadata filtering removes invalid/non-string values via normalize_metadata()
-                - Server detection relies on this metadata for proper quirk application
+                - Server detection relies on this metadata for proper server application
 
             Architecture:
                 - Delegates to normalize_metadata() for safe value filtering
-                - Returns m.Ldif.QuirkMetadata (Pydantic model) or None
+                - Returns m.Ldif.ServerMetadata (Pydantic model) or None
                 - No network calls - pure data extraction
 
             Returns:
-                QuirkMetadata instance or None if no metadata available.
+                ServerMetadata instance or None if no metadata available.
 
             """
             metadata_raw: t.MappingKV[str, t.Scalar | None] | None = None
@@ -657,7 +657,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             )
             if dynamic_attr is None:
                 return None
-            if isinstance(dynamic_attr, m.Ldif.QuirkMetadata):
+            if isinstance(dynamic_attr, m.Ldif.ServerMetadata):
                 return dynamic_attr
             if isinstance(dynamic_attr, Mapping):
                 metadata_raw = dynamic_attr
@@ -667,20 +667,20 @@ class FlextLdapLdap3Adapter(s[bool]):
                 metadata_raw,
             )
             if normalized:
-                quirk_type_raw = normalized.get("quirk_type")
-                if not isinstance(quirk_type_raw, str):
+                server_type_raw = normalized.get("server_type")
+                if not isinstance(server_type_raw, str):
                     return None
-                quirk: m.Ldif.QuirkMetadata = m.Ldif.QuirkMetadata.model_validate({
-                    "quirk_type": quirk_type_raw,
+                server: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
+                    "server_type": server_type_raw,
                 })
-                return quirk
+                return server
             return None
 
         @staticmethod
         def get_dynamic_attribute(
             obj: p.Ldap.Ldap3Entry | m.Ldif.Entry | t.JsonValue,
             attr_name: str,
-        ) -> m.Ldif.DN | m.Ldif.Attributes | m.Ldif.QuirkMetadata | str | None:
+        ) -> m.Ldif.DN | m.Ldif.Attributes | m.Ldif.ServerMetadata | str | None:
             """Get dynamic attribute with type safety.
 
             Args:
@@ -746,16 +746,16 @@ class FlextLdapLdap3Adapter(s[bool]):
             """Normalize metadata for Entry model validation.
 
             Business Rules:
-                - Filters to types accepted by QuirkMetadata: t.Primitives | None
+                - Filters to types accepted by ServerMetadata: t.Primitives | None
                 - String keys are required (filters out non-string keys)
                 - Invalid value types are filtered out (preserves valid entries)
                 - Handles dict, Mapping, and Pydantic models with model_dump()
                 - Returns None if metadata is empty or invalid
 
             Audit Implications:
-                - Metadata normalization ensures type safety for QuirkMetadata
+                - Metadata normalization ensures type safety for ServerMetadata
                 - Invalid values are silently filtered (no errors raised)
-                - Preserves valid metadata entries for server quirk tracking
+                - Preserves valid metadata entries for server server tracking
 
             Architecture:
                 - Uses guard-based type filtering
@@ -1120,7 +1120,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             Audit Implications:
                 - Search parameters are logged by connection.search()
                 - Result codes are validated for compliance
-                - Server type normalization enables quirk application
+                - Server type normalization enables server application
                 - Parse failures are logged with error details
 
             Architecture:
@@ -1132,7 +1132,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             Args:
                 connection: Active ldap3.Connection instance (must be bound).
                 params: SearchParams dataclass with all search parameters.
-                server_type: Server type (ServerTypes enum or string) for parsing quirks.
+                server_type: Server type (ServerTypes enum or string) for parsing servers.
 
             Returns:
                 r[t.SequenceOf[Entry]]: Parsed entries or error if search/parse fails.
@@ -1500,7 +1500,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         Business Rules:
             - Connection must be established and bound before search
             - Search scope is mapped from FlextLdapConstants to ldap3 format (ONELEVEL→LEVEL)
-            - Server type determines parsing quirks (OpenLDAP, OUD, OID, RFC)
+            - Server type determines parsing servers (OpenLDAP, OUD, OID, RFC)
             - Search results are parsed using FlextLdifParser.parse_ldap3_results()
             - Empty result sets return successful SearchResult with empty entries list
             - LDAP result codes are validated (partial success codes allowed)
@@ -1509,7 +1509,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             - Search operations are logged with base_dn, filter, and scope
             - Result counts are logged for compliance reporting
             - Failed searches log error messages with search parameters
-            - Server type normalization is logged for quirk tracking
+            - Server type normalization is logged for server tracking
 
         Architecture:
             - Uses SearchExecutor.execute() for protocol-level search
@@ -1518,7 +1518,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Args:
             search_options: Search configuration (base_dn, filter_str, scope, attributes)
-            server_type: LDAP server type for parsing quirks (default: RFC)
+            server_type: LDAP server type for parsing servers (default: RFC)
 
         Returns:
             r containing SearchResult with Entry models

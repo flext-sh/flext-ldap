@@ -246,7 +246,7 @@ ______________________________________________________________________
 - Entry validation for servers (validate_entry_for_server)
 - Server-specific attributes (get_server_specific_attributes)
 
-**Modules**: api.py, servers/, entry_adapter.py, quirks_integration.py, schema.py
+**Modules**: api.py, servers/, entry_adapter.py, servers_integration.py, schema.py
 
 **Run:**
 
@@ -368,7 +368,7 @@ ______________________________________________________________________
 
 ### 09. Schema Operations (`09_schema_operations.py`)
 
-**Purpose**: LDAP schema discovery and server quirks handling
+**Purpose**: LDAP schema discovery and server servers handling
 
 **Demonstrates:**
 
@@ -377,10 +377,10 @@ ______________________________________________________________________
 - Object class and attribute type inspection
 - Server-specific schema handling
 - FlextLdapSchema for schema operations
-- FlextLdapQuirksIntegration for server adaptation
+- FlextLdapServersIntegration for server adaptation
 - Server capabilities discovery
 
-**Modules**: api.py, schema.py, quirks_integration.py
+**Modules**: api.py, schema.py, servers_integration.py
 
 **Run:**
 
@@ -392,7 +392,7 @@ python examples/09_schema_operations.py
 
 - Server type detection results
 - Schema subentry DN for different servers
-- Server quirks detection
+- Server servers detection
 - Schema search operations
 - Server capabilities comprehensive report
 
@@ -723,7 +723,7 @@ ______________________________________________________________________
 | **search.py**             | 02                     | Search operations                                      |
 | **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization     |
 | **servers/**              | 05                     | Server-specific operations                             |
-| **quirks_integration.py** | 05, 09                 | Server quirks handling, ACL/paging/timeout quirks      |
+| **servers_integration.py** | 05, 09                 | Server servers handling, ACL/paging/timeout servers      |
 | **exceptions.py**         | 07                     | Error handling                                         |
 | **schema.py**             | 09                     | Schema discovery, server detection                     |
 | **acl/manager.py**        | 08                     | ACL management                                         |
