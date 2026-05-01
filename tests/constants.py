@@ -705,25 +705,25 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 AttributeTransformCase.MIXED: ("mixed", object, 5),
             })
 
-            SECURITY_SCENARIOS: Final[
-                Mapping[SecurityModeCase, tuple[bool, bool]]
-            ] = MappingProxyType({
-                SecurityModeCase.PLAIN: (False, False),
-                SecurityModeCase.SSL: (True, False),
-                SecurityModeCase.TLS: (False, True),
-                SecurityModeCase.SSL_AND_TLS: (True, True),
-            })
+            SECURITY_SCENARIOS: Final[Mapping[SecurityModeCase, tuple[bool, bool]]] = (
+                MappingProxyType({
+                    SecurityModeCase.PLAIN: (False, False),
+                    SecurityModeCase.SSL: (True, False),
+                    SecurityModeCase.TLS: (False, True),
+                    SecurityModeCase.SSL_AND_TLS: (True, True),
+                })
+            )
 
-            ENTRY_DN_SCENARIOS: Final[
-                Mapping[EntryOperationCase, str]
-            ] = MappingProxyType({
-                EntryOperationCase.VALID_DN: "cn=test,ou=people,dc=example,dc=com",
-                EntryOperationCase.EMPTY_DN: "",
-                EntryOperationCase.INVALID_DN: "not-a-valid-dn",
-                EntryOperationCase.SPECIAL_CHARS_DN: (
-                    "cn=test\\,user,ou=people,dc=example,dc=com"
-                ),
-            })
+            ENTRY_DN_SCENARIOS: Final[Mapping[EntryOperationCase, str]] = (
+                MappingProxyType({
+                    EntryOperationCase.VALID_DN: "cn=test,ou=people,dc=example,dc=com",
+                    EntryOperationCase.EMPTY_DN: "",
+                    EntryOperationCase.INVALID_DN: "not-a-valid-dn",
+                    EntryOperationCase.SPECIAL_CHARS_DN: (
+                        "cn=test\\,user,ou=people,dc=example,dc=com"
+                    ),
+                })
+            )
 
             ADD_OPERATION_SCENARIOS: Final[
                 Mapping[AddOperationVariationCase, Mapping[str, object]]
@@ -880,9 +880,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 }),
             })
 
-            PORT_SCENARIOS: Final[
-                Mapping[PortVariationCase, int]
-            ] = MappingProxyType({
+            PORT_SCENARIOS: Final[Mapping[PortVariationCase, int]] = MappingProxyType({
                 PortVariationCase.STANDARD_389: c.Ldap.PORT,
                 PortVariationCase.LDAPS_636: CONFIG_LDAPS_PORT,
                 PortVariationCase.CUSTOM_VALID: 10389,
@@ -891,9 +889,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 PortVariationCase.PRIVILEGED_PORT: 22,
             })
 
-            HOST_SCENARIOS: Final[
-                Mapping[HostVariationCase, str]
-            ] = MappingProxyType({
+            HOST_SCENARIOS: Final[Mapping[HostVariationCase, str]] = MappingProxyType({
                 HostVariationCase.LOCALHOST: c.LOCALHOST,
                 HostVariationCase.DNS_NAME: "ldap.example.com",
                 HostVariationCase.IPV4_ADDRESS: "192.168.1.1",
@@ -903,25 +899,25 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 HostVariationCase.NUMERIC_HOST: "999.999.999.999",
             })
 
-            TIMEOUT_SCENARIOS: Final[
-                Mapping[ConnectionTimeoutCase, int | float]
-            ] = MappingProxyType({
-                ConnectionTimeoutCase.ZERO_TIMEOUT: 0,
-                ConnectionTimeoutCase.CUSTOM_TIMEOUT: 60,
-                ConnectionTimeoutCase.EXCEED_MAX: 999999,
-                ConnectionTimeoutCase.FRACTIONAL_TIMEOUT: 5,
-            })
+            TIMEOUT_SCENARIOS: Final[Mapping[ConnectionTimeoutCase, int | float]] = (
+                MappingProxyType({
+                    ConnectionTimeoutCase.ZERO_TIMEOUT: 0,
+                    ConnectionTimeoutCase.CUSTOM_TIMEOUT: 60,
+                    ConnectionTimeoutCase.EXCEED_MAX: 999999,
+                    ConnectionTimeoutCase.FRACTIONAL_TIMEOUT: 5,
+                })
+            )
 
-            CONNECTION_STATE_SCENARIOS: Final[
-                Mapping[ConnectionStateCase, bool]
-            ] = MappingProxyType({
-                ConnectionStateCase.NOT_CONNECTED: False,
-                ConnectionStateCase.CONNECTED: True,
-                ConnectionStateCase.BINDING: False,
-                ConnectionStateCase.BOUND: True,
-                ConnectionStateCase.CLOSED: False,
-                ConnectionStateCase.ERROR_STATE: False,
-            })
+            CONNECTION_STATE_SCENARIOS: Final[Mapping[ConnectionStateCase, bool]] = (
+                MappingProxyType({
+                    ConnectionStateCase.NOT_CONNECTED: False,
+                    ConnectionStateCase.CONNECTED: True,
+                    ConnectionStateCase.BINDING: False,
+                    ConnectionStateCase.BOUND: True,
+                    ConnectionStateCase.CLOSED: False,
+                    ConnectionStateCase.ERROR_STATE: False,
+                })
+            )
 
             ATTRIBUTE_TRANSFORM_SCENARIOS: Final[
                 Mapping[AttributeTransformVariationCase, Mapping[str, object]]
@@ -1003,39 +999,39 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 }),
             })
 
-            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[
-                Mapping[SearchFilterCase, str]
-            ] = MappingProxyType({
-                SearchFilterCase.PRESENT: "(cn=*)",
-                SearchFilterCase.EQUALITY: "(uid=john)",
-                SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
-                SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
-                SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
-                SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
-                SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
-                SearchFilterCase.COMPLEX_NESTED: (
-                    "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
-                ),
-            })
+            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[Mapping[SearchFilterCase, str]] = (
+                MappingProxyType({
+                    SearchFilterCase.PRESENT: "(cn=*)",
+                    SearchFilterCase.EQUALITY: "(uid=john)",
+                    SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
+                    SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
+                    SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
+                    SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
+                    SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
+                    SearchFilterCase.COMPLEX_NESTED: (
+                        "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
+                    ),
+                })
+            )
 
-            SEARCH_SIZE_SCENARIOS: Final[
-                Mapping[SearchSizeCase, int]
-            ] = MappingProxyType({
-                SearchSizeCase.SIZE_ZERO: 0,
-                SearchSizeCase.SIZE_ONE: 1,
-                SearchSizeCase.SIZE_SMALL: 10,
-                SearchSizeCase.SIZE_MEDIUM: 100,
-                SearchSizeCase.SIZE_LARGE: 10000,
-            })
+            SEARCH_SIZE_SCENARIOS: Final[Mapping[SearchSizeCase, int]] = (
+                MappingProxyType({
+                    SearchSizeCase.SIZE_ZERO: 0,
+                    SearchSizeCase.SIZE_ONE: 1,
+                    SearchSizeCase.SIZE_SMALL: 10,
+                    SearchSizeCase.SIZE_MEDIUM: 100,
+                    SearchSizeCase.SIZE_LARGE: 10000,
+                })
+            )
 
-            SEARCH_SCOPE_SCENARIOS: Final[
-                Mapping[SearchScopeCase, str]
-            ] = MappingProxyType({
-                SearchScopeCase.BASE: "BASE",
-                SearchScopeCase.ONE_LEVEL: "LEVEL(1)",
-                SearchScopeCase.SUBTREE: "SUBTREE",
-                SearchScopeCase.SUBORDINATE: "SUBORDINATE",
-            })
+            SEARCH_SCOPE_SCENARIOS: Final[Mapping[SearchScopeCase, str]] = (
+                MappingProxyType({
+                    SearchScopeCase.BASE: "BASE",
+                    SearchScopeCase.ONE_LEVEL: "LEVEL(1)",
+                    SearchScopeCase.SUBTREE: "SUBTREE",
+                    SearchScopeCase.SUBORDINATE: "SUBORDINATE",
+                })
+            )
 
             OPERATION_BATCH_SCENARIOS: Final[frozenset[OperationScenarioCase]] = (
                 frozenset({

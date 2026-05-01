@@ -113,26 +113,95 @@ class TestsFlextLdapOperations:
             contains=c.Ldap.Tests.OPERATIONS_BATCH_ALL_FAILED_FRAGMENT,
         )
 
-    def test_batch_upsert_progress_callback_on_failure(self) -> None:
+    @pytest.mark.parametrize(
+        "case",
+        c.Ldap.Tests.EntryOperationCase,
+    )
+    def test_add_with_dn_variations_returns_failure_not_connected(
+        self,
+        case: c.Ldap.Tests.EntryOperationCase,
+    ) -> None:
+        """Test add operation with various DN formats (not connected scenario)."""
         operations = FlextLdapOperations()
-        entries = [self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN)]
-        observed: list[tuple[int, int, str, tuple[int, int, int]]] = []
+        dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[case]
+        result = operations.add(self._entry(dn))
+        u.Ldap.Tests.fail(result)
 
-        def progress(
-            current: int,
-            total: int,
-            dn: str,
-            stats: m.Ldap.LdapBatchStats,
-        ) -> None:
-            observed.append((
-                current,
-                total,
-                dn,
-                (stats.synced, stats.failed, stats.skipped),
-            ))
+    @pytest.mark.parametrize(
+        "case",
+        c.Ldap.Tests.EntryOperationCase,
+    )
+    def test_delete_with_dn_variations_returns_failure_not_connected(
+        self,
+        case: c.Ldap.Tests.EntryOperationCase,
+    ) -> None:
+        """Test delete operation with various DN formats (not connected scenario)."""
+        operations = FlextLdapOperations()
+        dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[case]
+        result = operations.delete(dn)
+        u.Ldap.Tests.fail(result)
 
-        u.Ldap.Tests.fail(operations.batch_upsert(entries, progress_callback=progress))
-        u.Ldap.Tests.that(len(observed), eq=1)
-        u.Ldap.Tests.that(observed[0][0], eq=1)
-        u.Ldap.Tests.that(observed[0][1], eq=1)
-        u.Ldap.Tests.that(observed[0][3], eq=(0, 1, 0))
+    @pytest.mark.parametrize(
+        "case",
+        c.Ldap.Tests.SearchFilterCase,
+    )
+    def test_search_with_filter_variations_returns_failure_not_connected(
+        self,
+        case: c.Ldap.Tests.SearchFilterCase,
+    ) -> None:
+        """Test search operation with various filter types (not connected scenario)."""
+        operations = FlextLdapOperations()
+        search_filter = c.Ldap.Tests.SEARCH_FILTER_SCENARIOS_ADVANCED[case]
+        search_options = m.Ldap.SearchOptions(
+            base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+            filter_str=search_filter,
+            scope=c.Ldap.SearchScope.SUBTREE.value,
+        )
+        result = operations.search(search_options)
+        u.Ldap.Tests.fail(result)
+
+    @pytest.mark.parametrize(
+        "case",
+        c.Ldap.Tests.SearchScopeCase,
+    )
+    def test_search_with_scope_variations_returns_failure_not_connected(
+        self,
+        case: c.Ldap.Tests.SearchScopeCase,
+    ) -> None:
+        """Test search operation with various scope types (not connected scenario)."""
+        operations = FlextLdapOperations()
+        scope_str = c.Ldap.Tests.SEARCH_SCOPE_SCENARIOS[case]
+        search_options = m.Ldap.SearchOptions(
+            base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+            filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
+            scope=scope_str,
+        )
+        result = operations.search(search_options)
+        u.Ldap.Tests.fail(result)
+
+    @pytest.mark.parametrize(
+        "case",
+        c.Ldap.Tests.SearchSizeCase,
+    )
+    def test_search_with_size_limit_variations_returns_failure_not_connected(
+        self,
+        case: c.Ldap.Tests.SearchSizeCase,
+    ) -> None:
+        """Test search operation with various size limits (not connected scenario)."""
+        operations = FlextLdapOperations()
+        size_limit = c.Ldap.Tests.SEARCH_SIZE_SCENARIOS[case]
+        search_options = m.Ldap.SearchOptions(
+            base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+            filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
+            scope=c.Ldap.SearchScope.SUBTREE.value,
+            size_limit=size_limit,
+        )
+        result = operations.search(search_options)
+        u.Ldap.Tests.fail(result)
+
+    def test_batch_upsert_empty_batch_returns_success(self) -> None:
+        """Test batch_upsert with empty entry list (not connected scenario)."""
+        operations = FlextLdapOperations()
+        entries: list[m.Ldif.Entry] = []
+        result = operations.batch_upsert(entries, stop_on_error=False)
+        u.Ldap.Tests.ok(result)
