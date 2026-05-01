@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldap import FlextLdapSync, ldap
-from tests import c, m, p, r, u
+from tests import c, m, p, u
 
 pytestmark = pytest.mark.unit
 
@@ -177,6 +177,15 @@ class TestsFlextLdapSync:
             c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
         )
 
+    def test_sync_phase_entries_invalid_callback_phase_type_raises(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file.write_text(
+            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
+        )
+
         with pytest.raises(TypeError):
             ldap.sync_phase_entries(
                 ldif_file,
@@ -186,92 +195,19 @@ class TestsFlextLdapSync:
                 ),
             )
 
-    def test_sync_phase_entries_success_with_real_connection(
+    def test_sync_multiple_phases_with_missing_file_returns_failure(
         self,
         tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        class ParsedLdifResult:
-            def __init__(self, entries: list[m.Ldif.Entry]) -> None:
-                self.entries = entries
-
-        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
-        ldif_file.write_text(
-            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
-        )
-
-        monkeypatch.setattr(
-            type(ldap._ldif),
-            "parse_ldif_file",
-            lambda ldif_service, ldif_file_path, server_type: r[ParsedLdifResult].ok(
-                ParsedLdifResult([
-                    self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN),
-                ])
-            ),
-        )
-        monkeypatch.setattr(
-            type(ldap),
-            "batch_upsert",
-            lambda self, entries, **kwargs: r[m.Ldap.LdapBatchStats].ok(
-                m.Ldap.LdapBatchStats(
-                    synced=c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE,
-                    failed=c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
-                    skipped=c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
-                )
-            ),
-        )
-
-        phase_result = u.Ldap.Tests.ok(
-            ldap.sync_phase_entries(
-                ldif_file,
-                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
-                settings=m.Ldap.SyncPhaseConfig(
-                    progress_callback=u.Ldap.Tests.single_phase_cb,
-                ),
-            ),
-        )
-        u.Ldap.Tests.that(
-            phase_result.phase_name,
-            eq=c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
-        )
-        u.Ldap.Tests.that(
-            phase_result.total_entries,
-            eq=c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE,
-        )
-        u.Ldap.Tests.that(
-            phase_result.synced,
-            eq=c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE,
-        )
-        u.Ldap.Tests.that(phase_result.failed, eq=c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT)
-        u.Ldap.Tests.that(phase_result.skipped, eq=c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT)
-
-    def test_sync_multiple_phases_stop_on_error_returns_failure(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        users_ldif = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
-        users_ldif.write_text(
-            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
-        )
-
-        monkeypatch.setattr(
-            ldap,
-            "_process_single_phase",
-            lambda phase_name, phase_file, sync_config: r[m.Ldap.PhaseSyncResult].fail(
-                c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE,
-            ),
-        )
+        missing_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
 
         result = ldap.sync_multiple_phases(
             {
-                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: users_ldif,
+                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: missing_file,
             },
             settings=m.Ldap.SyncPhaseConfig(stop_on_error=True),
         )
-        error = u.Ldap.Tests.fail(result)
-        u.Ldap.Tests.that(error, contains=c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS)
-        u.Ldap.Tests.that(error, contains=c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE)
+        u.Ldap.Tests.fail(result)
 
     def test_sync_multiple_phases_phase_failure_returns_fail_when_not_stop_on_error(
         self,

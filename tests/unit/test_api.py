@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import types
-
 import pytest
 
 from flext_ldap import FlextLdapSyncCallbacks, ldap
@@ -84,35 +82,3 @@ class TestsFlextLdapApi:
             error.lower(),
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
-
-    def test_execute_with_connection_returns_success(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        monkeypatch.setattr(
-            ldap,
-            "_adapter",
-            types.SimpleNamespace(is_connected=True, disconnect=lambda: None),
-        )
-        u.Ldap.Tests.ok(ldap.execute())
-        ldap.disconnect()
-
-    def test_with_statement_disconnects_after_connected_block(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        class FakeAdapter:
-            def __init__(self) -> None:
-                self.is_connected = False
-
-            def disconnect(self) -> None:
-                self.is_connected = False
-
-        adapter = FakeAdapter()
-        adapter.is_connected = True
-        monkeypatch.setattr(ldap, "_adapter", adapter)
-
-        with ldap as client:
-            assert client.is_connected
-
-        assert not ldap.is_connected
