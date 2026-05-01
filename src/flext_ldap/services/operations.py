@@ -31,10 +31,6 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from typing import override
 
 from flext_ldap import c, m, p, s, t, u
@@ -187,7 +183,7 @@ class FlextLdapOperations(s):
                     f"Search for existing entry failed: {search_result.error}"
                 )
             search_data = search_result.map_or(None)
-            existing_entries: Sequence[Mapping[str, t.StrSequence]] = []
+            existing_entries: t.SequenceOf[t.MappingKV[str, t.JsonValue]] = []
             if search_data is not None and search_data.entries:
                 existing_entries = list(search_data.entries)
             if not existing_entries:
@@ -201,7 +197,7 @@ class FlextLdapOperations(s):
                 return r[m.Ldap.LdapOperationResult].fail(
                     u.to_str(retry_result.error),
                 )
-            existing_entry_obj = existing_entries[0]
+            existing_entry_obj: t.MappingKV[str, t.JsonValue] = existing_entries[0]
             entry_result = u.Ldap.search_entry_to_ldif_entry(existing_entry_obj)
             if entry_result.failure:
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -364,7 +360,7 @@ class FlextLdapOperations(s):
 
         def _extract_schema_add_operation(
             self,
-            attrs: Mapping[str, t.StrSequence],
+            attrs: t.MappingKV[str, t.StrSequence],
         ) -> p.Result[str]:
             """Extract schema add operation attribute type.
 
@@ -384,7 +380,7 @@ class FlextLdapOperations(s):
 
         def _extract_schema_attribute_values(
             self,
-            attrs: Mapping[str, t.StrSequence],
+            attrs: t.MappingKV[str, t.StrSequence],
             attr_type: str,
         ) -> p.Result[t.StrSequence]:
             """Extract and filter schema attribute values.
@@ -510,7 +506,7 @@ class FlextLdapOperations(s):
 
     def batch_upsert(
         self,
-        entries: Sequence[m.Ldif.Entry],
+        entries: t.SequenceOf[m.Ldif.Entry],
         *,
         progress_callback: t.Ldap.LdapProgressCallback | None = None,
         retry_on_errors: t.StrSequence | None = None,

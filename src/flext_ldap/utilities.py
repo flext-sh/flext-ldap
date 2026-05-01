@@ -13,8 +13,6 @@ from collections.abc import (
     Callable,
     Mapping,
     MutableMapping,
-    MutableSequence,
-    Sequence,
 )
 from types import MappingProxyType
 from typing import Literal, TypeIs
@@ -59,7 +57,7 @@ class FlextLdapUtilities(u):
 
         """
 
-        LDAP3_GET_INFO_LITERAL: Mapping[
+        LDAP3_GET_INFO_LITERAL: t.MappingKV[
             t.Ldap.Ldap3GetInfo,
             Literal["ALL", "DSA", "NO_INFO", "SCHEMA"],
         ] = MappingProxyType({
@@ -245,13 +243,13 @@ class FlextLdapUtilities(u):
             cls,
             attrs: (
                 t.Ldap.Ldap3AttributeDict
-                | Mapping[str, t.Ldap.Ldap3AttributeValue]
+                | t.MappingKV[str, t.Ldap.Ldap3AttributeValue]
                 | t.JsonMapping
-                | Mapping[str, t.StrSequence]
+                | t.MappingKV[str, t.StrSequence]
             ),
             *,
             filter_list_like: bool = False,
-        ) -> Mapping[str, t.StrSequence]:
+        ) -> t.MappingKV[str, t.StrSequence]:
             """Convert attributes to str_list (generalized: map() + ensure).
 
             Uses advanced DSL: map() → ensure() for fluent composition.
@@ -261,7 +259,7 @@ class FlextLdapUtilities(u):
                 filter_list_like: Only convert list-like values
 
             Returns:
-                Mapping[str, t.StrSequence]: Converted attributes
+                t.MappingKV[str, t.StrSequence]: Converted attributes
 
             """
 
@@ -285,7 +283,7 @@ class FlextLdapUtilities(u):
                             return [str(value)]
                         return [str(value)]
 
-            attrs_dict: Mapping[
+            attrs_dict: t.MappingKV[
                 str, t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence
             ] = dict(attrs)
             if not attrs_dict:
@@ -335,7 +333,9 @@ class FlextLdapUtilities(u):
         def build_conversion_metadata(
             removed_attrs: t.StrSequence,
             base64_attrs: t.StrSequence,
-            original_attrs_dict: Mapping[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
+            original_attrs_dict: t.MappingKV[
+                str, t.JsonValue | t.Ldap.Ldap3AttributeValue
+            ],
             original_dn: str,
         ) -> m.Ldap.ConversionMetadata:
             """Create canonical conversion metadata for LDAP entry adaptation."""
@@ -349,7 +349,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def search_entry_to_ldif_entry(
             cls,
-            entry: Mapping[str, t.Ldap.Ldap3AttributeValue | t.StrSequence],
+            entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
         ) -> p.Result[m.Ldif.Entry]:
             """Convert LDAP search-result mappings into canonical LDIF entries."""
             raw_entry = dict(entry)
@@ -357,7 +357,7 @@ class FlextLdapUtilities(u):
             if not dn_values:
                 return r[m.Ldif.Entry].fail("Search entry missing DN")
             dn_value = dn_values[0]
-            attributes: MutableMapping[str, MutableSequence[str] | str] = {
+            attributes: MutableMapping[str, t.MutableSequenceOf[str] | str] = {
                 key: list(cls.ldap3_value_to_strings(value))
                 for key, value in raw_entry.items()
                 if key != "dn"
@@ -375,7 +375,7 @@ class FlextLdapUtilities(u):
             original_dn: str,
             converted_dn: str,
             original_attrs_dict: t.Ldap.Ldap3AttributeDict,
-            converted_attrs_dict: Mapping[str, t.StrSequence],
+            converted_attrs_dict: t.MappingKV[str, t.StrSequence],
         ) -> m.Ldap.ConversionMetadata:
             """Record DN and attribute changes observed during entry conversion."""
             updates: MutableMapping[str, bool | str | t.StrSequence] = {}
@@ -400,7 +400,7 @@ class FlextLdapUtilities(u):
         def extract_entry_attributes(
             cls,
             entry: p.Ldif.Entry,
-        ) -> Mapping[str, t.StrSequence]:
+        ) -> t.MappingKV[str, t.StrSequence]:
             """Normalize entry attributes to the canonical LDAP comparison mapping."""
             attrs = entry.attributes
             if attrs is None:
@@ -411,7 +411,7 @@ class FlextLdapUtilities(u):
         def find_existing_values(
             cls,
             attr_name: str,
-            existing_attrs: Mapping[str, t.StrSequence],
+            existing_attrs: t.MappingKV[str, t.StrSequence],
         ) -> t.StrSequence | None:
             """Resolve attribute values by case-insensitive LDAP name matching."""
             normalized_target = cls.norm_str(attr_name, case="lower")
@@ -428,8 +428,8 @@ class FlextLdapUtilities(u):
         @classmethod
         def process_new_attributes(
             cls,
-            new_attrs: Mapping[str, t.StrSequence],
-            existing_attrs: Mapping[str, t.StrSequence],
+            new_attrs: t.MappingKV[str, t.StrSequence],
+            existing_attrs: t.MappingKV[str, t.StrSequence],
             ignore: frozenset[str],
         ) -> t.Pair[t.Ldap.OperationChanges, set[str]]:
             """Build replacement changes for non-operational attributes."""
@@ -454,7 +454,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def process_deleted_attributes(
             cls,
-            existing_attrs: Mapping[str, t.StrSequence],
+            existing_attrs: t.MappingKV[str, t.StrSequence],
             ignore: frozenset[str],
             processed: set[str],
         ) -> t.Ldap.OperationChanges:
@@ -561,7 +561,7 @@ class FlextLdapUtilities(u):
                 Joined string or list of normalized strings
 
             """
-            normalized: MutableSequence[str] = []
+            normalized: t.MutableSequenceOf[str] = []
             for val in values:
                 normalized_val = val
                 if case == "lower":
@@ -602,7 +602,7 @@ class FlextLdapUtilities(u):
             """Infer server type from rootDSE extensions and naming contexts."""
             ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
             context_str = cls.norm_join(naming_contexts, case="lower")
-            checks: Sequence[t.Pair[str, Callable[[str, str], bool]]] = [
+            checks: t.SequenceOf[t.Pair[str, Callable[[str, str], bool]]] = [
                 ("openldap", lambda ext, __: "openldap" in ext),
                 (
                     "oid",
@@ -642,7 +642,7 @@ class FlextLdapUtilities(u):
             ).lower()
             if not vendor_info:
                 return None
-            checks: Sequence[t.Pair[str, Callable[[str], bool]]] = [
+            checks: t.SequenceOf[t.Pair[str, Callable[[str], bool]]] = [
                 (
                     "oud",
                     lambda value: "oracle" in value and "unified directory" in value,

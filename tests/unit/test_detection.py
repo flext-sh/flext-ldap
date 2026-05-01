@@ -22,10 +22,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-
 import pytest
 
 from flext_ldap import FlextLdapServerDetector
@@ -53,7 +49,7 @@ class TestsFlextLdapDetection:
     )
     def test_execute_error_handling(
         self,
-        kwargs: Mapping[str, bool | float | str | None] | None,
+        kwargs: t.MappingKV[str, bool | float | str | None] | None,
         expect_failure: bool,
         error_substring: str,
     ) -> None:
@@ -69,12 +65,12 @@ class TestsFlextLdapDetection:
     )
     def test_get_first_attribute_value(
         self,
-        attrs: Mapping[str, t.StrSequence],
+        attrs: t.MappingKV[str, t.StrSequence],
         key: str,
         expected: str | None,
     ) -> None:
         """Test public attribute value extraction with various scenarios."""
-        attrs_dict: Mapping[str, t.StrSequence] = dict(attrs)
+        attrs_dict: t.MappingKV[str, t.StrSequence] = dict(attrs)
         value = u.Ldap.get_first_attribute_value(attrs_dict, key)
         assert value == expected
 

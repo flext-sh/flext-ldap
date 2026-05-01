@@ -1,17 +1,25 @@
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-
 import pytest
 
-from tests import c, m, t, u
+from tests import c, m, u
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapModelsSearch:
+    @staticmethod
+    def _entry(
+        dn: str,
+        attributes: dict[str, list[str]] | None = None,
+    ) -> m.Ldif.Entry:
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes.model_validate({
+                "attributes": attributes or {}
+            }),
+        )
+
     def test_search_options_required_base_dn(self) -> None:
         with pytest.raises(c.ValidationError, match="base_dn"):
             m.Ldap.SearchOptions(base_dn="")
@@ -128,7 +136,7 @@ class TestsFlextLdapModelsSearch:
         expected_count: int,
     ) -> None:
         entries = [
-            {"dn": [f"cn=user{i},{c.Ldap.Tests.RFC_DEFAULT_BASE_DN}"]}
+            self._entry(f"cn=user{i},{c.Ldap.Tests.RFC_DEFAULT_BASE_DN}")
             for i in range(num_entries)
         ]
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
@@ -142,7 +150,7 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(categories, none=False)
 
     def test_search_result_extract_attrs_dict_none_attributes(self) -> None:
-        entry: Mapping[str, t.StrSequence] = {}
+        entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         u.Ldap.Tests.that(attrs, eq={})
 
@@ -164,7 +172,7 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 
     def test_search_result_get_entry_category(self) -> None:
-        entry: Mapping[str, t.StrSequence] = {}
+        entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         category = m.Ldap.SearchResult.get_entry_category(entry)
         u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 

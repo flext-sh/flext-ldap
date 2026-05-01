@@ -6,12 +6,11 @@ This module provides constants for LDAP operations, extending c.
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
-from flext_ldif import c
+from flext_ldif import c, t
 
 
 class FlextLdapConstants(c):
@@ -164,13 +163,13 @@ class FlextLdapConstants(c):
             LEVEL = 1
             SUBTREE = 2
 
-        LDAP3_SCOPE_BY_SEARCH_SCOPE: Final[Mapping[SearchScope, SearchScopeValue]] = (
-            MappingProxyType({
-                SearchScope.BASE: SearchScopeValue.BASE,
-                SearchScope.ONELEVEL: SearchScopeValue.LEVEL,
-                SearchScope.SUBTREE: SearchScopeValue.SUBTREE,
-            })
-        )
+        LDAP3_SCOPE_BY_SEARCH_SCOPE: Final[
+            t.MappingKV[SearchScope, SearchScopeValue]
+        ] = MappingProxyType({
+            SearchScope.BASE: SearchScopeValue.BASE,
+            SearchScope.ONELEVEL: SearchScopeValue.LEVEL,
+            SearchScope.SUBTREE: SearchScopeValue.SUBTREE,
+        })
 
         @unique
         class ModifyOperation(IntEnum):

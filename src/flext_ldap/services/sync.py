@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import (
-    Mapping,
     MutableMapping,
 )
 from datetime import UTC, datetime
@@ -96,7 +95,7 @@ class FlextLdapSync(FlextLdapOperations):
 
     def sync_multiple_phases(
         self,
-        phase_files: Mapping[str, Path],
+        phase_files: t.MappingKV[str, Path],
         *,
         settings: m.Ldap.SyncPhaseConfig | None = None,
     ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:

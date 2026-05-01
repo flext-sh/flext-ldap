@@ -34,8 +34,6 @@ from collections.abc import (
     Callable,
     Mapping,
     MutableMapping,
-    MutableSequence,
-    Sequence,
 )
 from datetime import datetime
 from typing import ClassVar, override
@@ -52,10 +50,10 @@ class FlextLdapLdap3Wrappers:
     @staticmethod
     def value_to_str_list(
         value: t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
-    ) -> MutableSequence[str]:
+    ) -> t.MutableSequenceOf[str]:
         """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
 
-        Pyright narrows isinstance(v, list) on v:t.JsonValue to Sequence[Unknown], making
+        Pyright narrows isinstance(v, list) on v:t.JsonValue to t.SequenceOf[Unknown], making
         element access return Unknown. This helper avoids that by using __len__
         and __getitem__ through getattr to maintain type safety.
         """
@@ -67,7 +65,7 @@ class FlextLdapLdap3Wrappers:
         )
         if length_fn is None or getitem_fn is None:
             return []
-        result: MutableSequence[str] = []
+        result: t.MutableSequenceOf[str] = []
         for idx in range(length_fn()):
             el: t.Ldap.Ldap3EntryValue = getitem_fn(idx)
             if el is not None and isinstance(el, (str, int, float, bool, bytes)):
@@ -92,7 +90,7 @@ class FlextLdapLdap3Wrappers:
         connection: p.Ldap.Ldap3Connection,
         dn: str,
         object_class: t.StrSequence | str | None,
-        attributes: Mapping[str, t.StrSequence],
+        attributes: t.MappingKV[str, t.StrSequence],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add()."""
         normalized_attributes = {
@@ -137,14 +135,14 @@ class FlextLdapLdap3Wrappers:
         """Safely invoke ldap3 search on dynamic connection objects."""
         normalized_scope: t.Ldap.Ldap3SearchScope
         if isinstance(search_scope, int):
-            scope_map: Mapping[int, t.Ldap.Ldap3SearchScope] = {
+            scope_map: t.MappingKV[int, t.Ldap.Ldap3SearchScope] = {
                 c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
                 c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
                 c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
             }
             normalized_scope = scope_map[search_scope]
         else:
-            scope_str_map: Mapping[str, t.Ldap.Ldap3SearchScope] = {
+            scope_str_map: t.MappingKV[str, t.Ldap.Ldap3SearchScope] = {
                 c.Ldap.Ldap3SearchScope.BASE: c.Ldap.Ldap3SearchScope.BASE,
                 c.Ldap.Ldap3SearchScope.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
                 c.Ldap.Ldap3SearchScope.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
@@ -328,7 +326,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def convert_ldap3_results(
             connection: p.Ldap.Ldap3Connection,
-        ) -> Sequence[t.Pair[str, Mapping[str, t.StrSequence]]]:
+        ) -> t.SequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]]:
             """Convert ldap3 connection entries to parser format.
 
             Business Rules:
@@ -346,7 +344,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Architecture:
                 - Python 3.13: Uses guard-based sequence handling
-                - Returns Sequence[tuple[str, Mapping[str, t.StrSequence]]] for parser compatibility
+                - Returns t.SequenceOf[tuple[str, t.MappingKV[str, t.StrSequence]]] for parser compatibility
                 - No network calls - processes connection.entries
 
             Args:
@@ -356,13 +354,15 @@ class FlextLdapLdap3Adapter(s[bool]):
                 List of (dn, attributes_dict) tuples in parser format.
 
             """
-            results: MutableSequence[t.Pair[str, Mapping[str, t.StrSequence]]] = []
-            entries_list: Sequence[p.Ldap.Ldap3Entry] = getattr(
+            results: t.MutableSequenceOf[
+                t.Pair[str, t.MappingKV[str, t.StrSequence]]
+            ] = []
+            entries_list: t.SequenceOf[p.Ldap.Ldap3Entry] = getattr(
                 connection,
                 "entries",
                 [],
             )
-            entries_raw: Sequence[p.Ldap.Ldap3Entry] = entries_list
+            entries_raw: t.SequenceOf[p.Ldap.Ldap3Entry] = entries_list
             for entry in entries_raw:
                 if not isinstance(entry, p.Ldap.Ldap3Entry):
                     error_msg = (
@@ -382,7 +382,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def convert_parsed_entries(
             parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
-        ) -> p.Result[Sequence[m.Ldif.Entry]]:
+        ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
             """Convert ParseResponse from FlextLdifParser to list of Entry models.
 
             Business Rules:
@@ -402,7 +402,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Architecture:
                 - Input: m.Ldif.ParseResponse from FlextLdifParser
-                - Output: p.Result[Sequence[m.Ldif.Entry]] (railway pattern)
+                - Output: p.Result[t.SequenceOf[m.Ldif.Entry]] (railway pattern)
                 - Delegates to extract_dn(), extract_attributes(), extract_metadata()
                 - No network calls - processes pre-fetched LDAP results
 
@@ -414,8 +414,8 @@ class FlextLdapLdap3Adapter(s[bool]):
             """
             entries_raw = parse_response.entries
             if not entries_raw:
-                return r[Sequence[m.Ldif.Entry]].ok([])
-            entries: MutableSequence[m.Ldif.Entry] = []
+                return r[t.SequenceOf[m.Ldif.Entry]].ok([])
+            entries: t.MutableSequenceOf[m.Ldif.Entry] = []
             for entry_raw in entries_raw:
                 if isinstance(entry_raw, m.Ldif.Entry):
                     entries.append(entry_raw)
@@ -439,7 +439,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 )
                 entries.append(entry)
                 continue
-            return r[Sequence[m.Ldif.Entry]].ok(entries)
+            return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 
         @staticmethod
         def extract_attributes(
@@ -497,7 +497,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def extract_attrs_dict(
             attrs: p.Ldap.HasAttributesProperty
-            | Mapping[str, t.JsonValue | t.StrSequence]
+            | t.MappingKV[str, t.JsonValue | t.StrSequence]
             | p.Ldap.HasItemsMethod
             | m.Ldif.Attributes
             | m.BaseModel
@@ -521,7 +521,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             Architecture:
                 - Handless with 'attributes' property, Pydantic BaseModel, Mapping
-                - Returns t.Ldap.OperationAttributes (Mapping[str, t.StrSequence])
+                - Returns t.Ldap.OperationAttributes (t.MappingKV[str, t.StrSequence])
                 - No network calls - pure data transformation
 
             """
@@ -530,7 +530,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                     attrs.attributes,
                 )
             if isinstance(attrs, m.BaseModel):
-                model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
+                model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
                     attrs,
                     "attributes",
                     None,
@@ -644,7 +644,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 QuirkMetadata instance or None if no metadata available.
 
             """
-            metadata_raw: Mapping[str, t.Scalar | None] | None = None
+            metadata_raw: t.MappingKV[str, t.Scalar | None] | None = None
             if parsed is None:
                 return None
             if isinstance(parsed, m.Ldif.Entry):
@@ -705,7 +705,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_attr_values(
-            attrs_dict: Mapping[
+            attrs_dict: t.MappingKV[
                 str,
                 t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
             ]
@@ -717,7 +717,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 attrs_dict: Dictionary or Mapping with attribute values (or None)
 
             Returns:
-                Normalized Mapping[str, t.StrSequence]
+                Normalized t.MappingKV[str, t.StrSequence]
 
             """
             if attrs_dict is None:
@@ -741,8 +741,8 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         @staticmethod
         def normalize_metadata(
-            metadata: Mapping[str, t.Scalar | None] | None,
-        ) -> Mapping[str, t.Scalar | t.ScalarList] | None:
+            metadata: t.MappingKV[str, t.Scalar | None] | None,
+        ) -> t.MappingKV[str, t.Scalar | t.ScalarList] | None:
             """Normalize metadata for Entry model validation.
 
             Business Rules:
@@ -760,7 +760,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             Architecture:
                 - Uses guard-based type filtering
                 - Uses Pydantic model_dump() for model serialization
-                - Returns Mapping[str, t.Primitives] or None
+                - Returns t.MappingKV[str, t.Primitives] or None
 
             Args:
                 metadata: Raw metadata from entry (dict, Mapping, Pydantic model, or None).
@@ -789,7 +789,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         @staticmethod
         def process_entry_attributes(
             entry: p.Ldap.Ldap3Entry,
-        ) -> Mapping[str, t.StrSequence]:
+        ) -> t.MappingKV[str, t.StrSequence]:
             """Convert LDAP entry attributes to string-list mapping."""
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr, attr_values in entry.entry_attributes_as_dict.items():
@@ -808,7 +808,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         def _add_entry_to_ldap(
             connection: p.Ldap.Ldap3Connection,
             dn_str: str,
-            attrs_dict: Mapping[str, t.StrSequence],
+            attrs_dict: t.MappingKV[str, t.StrSequence],
         ) -> bool:
             """Add entry to LDAP directory.
 
@@ -941,7 +941,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
             """
             try:
-                attrs_dict: Mapping[str, t.StrSequence] = {
+                attrs_dict: t.MappingKV[str, t.StrSequence] = {
                     k: list(v) for k, v in ldap_attrs.items()
                 }
                 if self._add_entry_to_ldap(connection, dn_str, attrs_dict):
@@ -1107,14 +1107,14 @@ class FlextLdapLdap3Adapter(s[bool]):
             connection: p.Ldap.Ldap3Connection,
             params: m.Ldap.SearchParams,
             server_type: c.Ldif.ServerTypes | str,
-        ) -> p.Result[Sequence[m.Ldif.Entry]]:
+        ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
             """Execute LDAP search and convert results.
 
             Business Rules:
                 - Performs ldap3 Connection.search() with provided parameters
                 - Validates LDAP result codes (allows partial success codes)
                 - Parses results using FlextLdifParser.parse_ldap3_results()
-                - Converts ParseResponse to Sequence[Entry] via ResultConverter
+                - Converts ParseResponse to t.SequenceOf[Entry] via ResultConverter
                 - LDAPException is caught and converted to r.fail()
 
             Audit Implications:
@@ -1135,7 +1135,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 server_type: Server type (ServerTypes enum or string) for parsing quirks.
 
             Returns:
-                r[Sequence[Entry]]: Parsed entries or error if search/parse fails.
+                r[t.SequenceOf[Entry]]: Parsed entries or error if search/parse fails.
 
             """
             try:
@@ -1153,7 +1153,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 if result_code not in c.Ldap.PARTIAL_SUCCESS_CODES:
                     error_msg = conn_result.get("message", "LDAP search failed")
                     error_desc = conn_result.get("description", "unknown")
-                    return r[Sequence[m.Ldif.Entry]].fail(
+                    return r[t.SequenceOf[m.Ldif.Entry]].fail(
                         f"LDAP search failed: {error_desc} - {error_msg}",
                     )
                 ldap3_results = self._adapter.ResultConverter.convert_ldap3_results(
@@ -1177,10 +1177,10 @@ class FlextLdapLdap3Adapter(s[bool]):
                     c.Ldif.ServerTypes.RELAXED,
                 }
                 if server_type_str not in valid_server_types:
-                    return r[Sequence[m.Ldif.Entry]].fail(
+                    return r[t.SequenceOf[m.Ldif.Entry]].fail(
                         f"Unsupported server type: {server_type_str}",
                     )
-                entries: MutableSequence[m.Ldif.Entry] = []
+                entries: t.MutableSequenceOf[m.Ldif.Entry] = []
                 for dn, attrs in ldap3_results:
                     str_attrs: t.MutableMappingKV[
                         str, t.MutableSequenceOf[str] | str
@@ -1190,11 +1190,11 @@ class FlextLdapLdap3Adapter(s[bool]):
                         attributes=str_attrs,
                     )
                     if entry_result.failure:
-                        return r[Sequence[m.Ldif.Entry]].fail(
+                        return r[t.SequenceOf[m.Ldif.Entry]].fail(
                             entry_result.error or "Failed to create LDAP search entry",
                         )
                     entries.append(entry_result.value)
-                return r[Sequence[m.Ldif.Entry]].ok(entries)
+                return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
             except (
                 ValueError,
                 TypeError,
@@ -1204,7 +1204,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 RuntimeError,
                 ImportError,
             ) as exc:
-                return r[Sequence[m.Ldif.Entry]].fail(f"Search failed: {exc!s}")
+                return r[t.SequenceOf[m.Ldif.Entry]].fail(f"Search failed: {exc!s}")
 
     _connection: p.Ldap.Ldap3Connection | None
     _server: p.Ldap.Ldap3Server | None
@@ -1352,6 +1352,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             OSError,
             RuntimeError,
             ImportError,
+            t.Ldap.LDAPException,
         ) as exc:
             return r[bool].fail(f"Connection failed: {exc!s}")
 
@@ -1550,13 +1551,9 @@ class FlextLdapLdap3Adapter(s[bool]):
             return r[m.Ldap.SearchResult].fail(
                 entries_result.error or "",
             )
-        entries_raw = entries_result.value
-        entries_dict: Sequence[Mapping[str, t.StrSequence]] = [
-            entry.model_dump() for entry in entries_raw
-        ]
         return r[m.Ldap.SearchResult].ok(
             m.Ldap.SearchResult.model_validate({
-                "entries": entries_dict,
+                "entries": entries_result.value,
                 "search_options": search_options,
             }),
         )

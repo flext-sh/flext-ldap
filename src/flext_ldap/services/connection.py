@@ -81,7 +81,13 @@ class FlextLdapConnection(s):
         """Execute service health check."""
         if self.is_connected:
             return r[m.Ldap.Response].ok(
-                m.Ldap.SearchResult(entries=[], search_options=None),
+                m.Ldap.SearchResult(
+                    entries=[],
+                    search_options=m.Ldap.SearchOptions(
+                        base_dn=c.Ldap.EXAMPLE_BASE_DN,
+                        filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+                    ),
+                ),
             )
         return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 

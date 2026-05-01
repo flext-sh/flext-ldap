@@ -5,17 +5,11 @@ LDAP operation models with validation logic.
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, TypeAlias
 
 from flext_ldap import c, t
-from flext_ldif import m, u
+from flext_ldif import m, p, u
 
 
 class FlextLdapModelsLdap:
@@ -231,7 +225,9 @@ class FlextLdapModelsLdap:
         total_processed: t.NonNegativeInt = 0
         successful: t.NonNegativeInt = 0
         failed: t.NonNegativeInt = 0
-        results: Sequence[Mapping[str, t.Primitives]] = []
+        results: Annotated[
+            t.SequenceOf[t.MappingKV[str, t.Primitives]], u.Field(default_factory=list)
+        ]
 
         @u.computed_field()
         @property
@@ -299,21 +295,16 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: Sequence[Mapping[str, t.StrSequence]] = []
-        search_options: FlextLdapModelsLdap.SearchOptions | None = None
+        entries: Annotated[t.SequenceOf[m.Ldif.Entry], u.Field(default_factory=list)]
+        search_options: FlextLdapModelsLdap.SearchOptions
 
         @u.computed_field()
         @property
-        def by_objectclass(self) -> Mapping[str, Sequence[Mapping[str, t.StrSequence]]]:
+        def by_objectclass(self) -> m.Ldif.FlexibleCategories:
             """Group entries by objectclass."""
-            result: MutableMapping[
-                str,
-                MutableSequence[Mapping[str, t.StrSequence]],
-            ] = {}
+            result = m.Ldif.FlexibleCategories()
             for entry in self.entries:
                 category = self.get_entry_category(entry)
-                if category not in result:
-                    result[category] = []
                 result[category].append(entry)
             return result
 
@@ -325,10 +316,13 @@ class FlextLdapModelsLdap:
 
         @staticmethod
         def extract_attrs_dict_from_entry(
-            entry: Mapping[str, t.StrSequence],
-        ) -> Mapping[str, t.StrSequence]:
+            entry: p.Ldif.Entry,
+        ) -> t.MappingKV[str, t.StrSequence]:
             """Extract attributes dict from entry."""
-            return {key: list(values) for key, values in entry.items()}
+            attributes = entry.attributes
+            if attributes is None:
+                return {}
+            return attributes.attributes
 
         @staticmethod
         def extract_objectclass_category(
@@ -346,7 +340,7 @@ class FlextLdapModelsLdap:
             return c.Ldap.UNKNOWN_CATEGORY
 
         @staticmethod
-        def get_entry_category(entry: Mapping[str, t.StrSequence]) -> str:
+        def get_entry_category(entry: p.Ldif.Entry) -> str:
             """Get category (objectclass) of an entry."""
             attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
                 entry,
@@ -384,7 +378,7 @@ class FlextLdapModelsLdap:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             arbitrary_types_allowed=True,
         )
-        phase_results: Mapping[str, m.BaseModel] = u.Field(
+        phase_results: t.MappingKV[str, m.BaseModel] = u.Field(
             default_factory=lambda: MappingProxyType({}),
             description="Per-phase sync results keyed by phase name",
         )

@@ -794,7 +794,7 @@ def process(data: dict) -> ProcessedData:
 
    ```python
    # ✅ GOOD
-   def process(items: Sequence[Item]) -> p.Result[Sequence[ProcessedItem]]:
+   def process(items: t.SequenceOf[Item]) -> p.Result[Sequence[ProcessedItem]]:
        pass
 
 

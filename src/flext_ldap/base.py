@@ -16,9 +16,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from typing import TYPE_CHECKING
 
 from flext_core import s
@@ -30,8 +27,8 @@ if TYPE_CHECKING:
 
 
 class FlextLdapService[
-    TResult: t.JsonPayload | Sequence[t.JsonPayload] = t.JsonPayload
-    | Sequence[t.JsonPayload]
+    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
+    | t.SequenceOf[t.JsonPayload]
 ](s[TResult]):
     """Base class for all flext-ldap services.
 

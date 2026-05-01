@@ -10,13 +10,11 @@ This allows protocols to remain independent of model implementations.
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
+import types
 from typing import (
     TYPE_CHECKING,
     Protocol,
+    Self,
     override,
     runtime_checkable,
 )
@@ -147,7 +145,7 @@ class FlextLdapProtocols(p):
         class SearchResult(Protocol):
             """Protocol for LDAP search result (structural type)."""
 
-            entries: Sequence[p.Ldif.Entry]
+            entries: t.SequenceOf[p.Ldif.Entry]
             search_options: FlextLdapProtocols.Ldap.SearchOptions
 
         @runtime_checkable
@@ -197,6 +195,18 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            def batch_upsert(
+                self,
+                entries: t.SequenceOf[p.Ldif.Entry],
+                *,
+                progress_callback: t.Ldap.LdapProgressCallback | None = None,
+                retry_on_errors: t.StrSequence | None = None,
+                max_retries: int = 1,
+                stop_on_error: bool = False,
+            ) -> p.Result[FlextLdapProtocols.Ldap.LdapBatchStats]:
+                """Upsert multiple entries and report canonical batch statistics."""
+                ...
+
             def connect(
                 self,
                 settings: FlextLdapProtocols.Ldap.ConnectionConfig,
@@ -214,6 +224,23 @@ class FlextLdapProtocols(p):
                     Result[bool] indicating connection success or failure
 
                 """
+                ...
+
+            def __enter__(self) -> Self:
+                """Enter the LDAP client context manager."""
+                ...
+
+            def __exit__(
+                self,
+                exc_type: type[BaseException] | None,
+                exc_val: BaseException | None,
+                exc_tb: types.TracebackType | None,
+            ) -> None:
+                """Exit the LDAP client context manager and release resources."""
+                ...
+
+            def disconnect(self) -> None:
+                """Disconnect from LDAP server and release resources."""
                 ...
 
             def delete(
@@ -362,16 +389,6 @@ class FlextLdapProtocols(p):
             """
 
             @property
-            def adapter(self) -> FlextLdapProtocols.Ldap.LdapAdapter:
-                """Get LDAP adapter instance.
-
-                Returns:
-                    LDAP adapter (Ldap3Adapter) instance
-
-                """
-                ...
-
-            @property
             def is_connected(self) -> bool:
                 """Check if connection is active.
 
@@ -381,6 +398,17 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            def connect(
+                self,
+                connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,
+                *,
+                auto_retry: bool = False,
+                max_retries: int = 3,
+                retry_delay: float = 1.0,
+            ) -> p.Result[bool]:
+                """Connect using the public LDAP connection service contract."""
+                ...
+
             def disconnect(self) -> None:
                 """Disconnect from LDAP server.
 
@@ -388,6 +416,12 @@ class FlextLdapProtocols(p):
                 Safe to call multiple times.
 
                 """
+                ...
+
+            def execute(
+                self,
+            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+                """Run the connection service health check/default operation."""
                 ...
 
         # ── ldap3 Library Type Aliases ───────────────────────────
@@ -409,7 +443,7 @@ class FlextLdapProtocols(p):
             """
 
             @property
-            def entries(self) -> Sequence[FlextLdapProtocols.Ldap.Ldap3Entry]:
+            def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
                 """Get list of entries."""
                 ...
 
@@ -419,7 +453,7 @@ class FlextLdapProtocols(p):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> Sequence[t.Pair[str, t.JsonValue]]:
+            def items(self) -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
                 """Return items as sequence of tuples."""
                 ...
 
@@ -451,7 +485,7 @@ class FlextLdapProtocols(p):
             @property
             def attributes(
                 self,
-            ) -> Mapping[str, t.Ldap.Ldap3EntryValue]:
+            ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
                 """Get attributes property - covariant Mapping for structural compatibility."""
                 ...
 
@@ -467,7 +501,7 @@ class FlextLdapProtocols(p):
                 """
 
                 dn: str
-                attributes: Mapping[str, t.StrSequence]
+                attributes: t.MappingKV[str, t.StrSequence]
 
             @runtime_checkable
             class SearchOptionsContract(Protocol):

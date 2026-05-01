@@ -127,7 +127,7 @@ def detect_and_create():
 # Method 3: Detect from entries
 from flext_ldif import FlextLdifModels
 
-entries: Sequence[FlextLdifModels.Entry] = [...]  # Your entries
+entries: t.SequenceOf[FlextLdifModels.Entry] = [...]  # Your entries
 ops_result = factory.create_from_entries(entries)
 ```
 

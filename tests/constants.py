@@ -42,7 +42,6 @@ from __future__ import annotations
 import math
 from collections.abc import (
     Mapping,
-    Sequence,
 )
 from enum import StrEnum, unique
 from types import MappingProxyType
@@ -156,7 +155,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 "",
             )
             CALLBACK_GUARD_EXPECTED: Final[
-                Mapping[CallbackGuardCase, tuple[bool, bool]]
+                t.MappingKV[CallbackGuardCase, tuple[bool, bool]]
             ] = MappingProxyType({
                 CallbackGuardCase.NONE: (False, False),
                 CallbackGuardCase.MULTI: (True, False),
@@ -226,9 +225,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             BIND_ADMIN_PASSWORD: Final[str] = "secret"
 
             DETECTION_EXECUTE_SCENARIOS: Final[
-                Sequence[
+                t.SequenceOf[
                     tuple[
-                        Mapping[str, bool | float | str | None] | None,
+                        t.MappingKV[str, bool | float | str | None] | None,
                         bool,
                         str,
                     ]
@@ -245,7 +244,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
-                Sequence[tuple[Mapping[str, t.StrSequence], str, str | None]]
+                t.SequenceOf[tuple[Mapping[str, t.StrSequence], str, str | None]]
             ] = (
                 (
                     MappingProxyType(
@@ -263,7 +262,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 (MappingProxyType({"vendorName": ()}), "vendorName", None),
             )
             DETECTION_FROM_ATTRIBUTES_SCENARIOS: Final[
-                Sequence[tuple[str | None, str | None, t.StrSequence, str]]
+                t.SequenceOf[tuple[str | None, str | None, t.StrSequence, str]]
             ] = (
                 ("Oracle Corporation", "12.2.1.4.0", (), "oid"),
                 ("Oracle Unified Directory", "12.2.1.4.0", (), "oud"),
@@ -339,14 +338,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             LDAP3_ADAPTER_DEFAULT_TIMEOUT: Final[int] = 5
             LDAP3_ADAPTER_NOT_CONNECTED_ERROR: Final[str] = "Not connected"
             LDAP3_SERVER_SCENARIOS: Final[
-                Mapping[Ldap3ServerCase, tuple[int, bool, bool]]
+                t.MappingKV[Ldap3ServerCase, tuple[int, bool, bool]]
             ] = MappingProxyType({
                 Ldap3ServerCase.PLAIN: (c.Ldap.PORT, False, False),
                 Ldap3ServerCase.SSL: (CONFIG_LDAPS_PORT, True, False),
                 Ldap3ServerCase.TLS: (c.Ldap.PORT, False, True),
             })
             ATTR_TO_STR_LIST_SCENARIOS: Final[
-                Mapping[AttrToStrListCase, Mapping[str, tuple[str, ...]]]
+                t.MappingKV[AttrToStrListCase, t.MappingKV[str, tuple[str, ...]]]
             ] = MappingProxyType({
                 AttrToStrListCase.EMPTY: MappingProxyType({}),
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
@@ -357,10 +356,10 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })
             LDAP3_VALUE_TO_STRINGS_SCENARIOS: Final[
-                Mapping[
+                t.MappingKV[
                     LdapValueCase,
                     tuple[
-                        bytes | int | float | str | Sequence[bytes | str],
+                        bytes | int | float | str | t.SequenceOf[bytes | str],
                         tuple[str, ...],
                     ],
                 ]
@@ -378,7 +377,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             MODELS_CUSTOM_TIMEOUT: Final[int] = 60
             MODELS_INVALID_DN_FORMAT: Final[str] = "invalid-dn-format"
             MODELS_ALLOWED_SECURITY_COMBOS: Final[
-                Mapping[ConnectionSecurityCase, tuple[bool, bool]]
+                t.MappingKV[ConnectionSecurityCase, tuple[bool, bool]]
             ] = MappingProxyType({
                 ConnectionSecurityCase.SSL_ONLY: (True, False),
                 ConnectionSecurityCase.TLS_ONLY: (False, True),
