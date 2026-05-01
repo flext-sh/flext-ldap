@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-import re
 from collections.abc import (
     Mapping,
     Sequence,
@@ -100,12 +99,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             CONFIG_LDAPS_PORT: Final[int] = 636
             CONFIG_PORT_MIN: Final[int] = 1
             CONFIG_PORT_MAX: Final[int] = 65535
-            CONFIG_SSL_TLS_COMBOS: Final[list[tuple[bool, bool]]] = [
+            CONFIG_SSL_TLS_COMBOS: Final[tuple[tuple[bool, bool], ...]] = (
                 (False, False),
                 (True, False),
                 (False, True),
                 (True, True),
-            ]
+            )
             CONFIG_VALID_PORTS: Final[tuple[int, ...]] = (
                 CONFIG_PORT_MIN,
                 c.Ldap.PORT,
@@ -150,7 +149,11 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[list[str]] = ["people", "groups", "services"]
+            DOCKER_OU_NAMES: Final[tuple[str, ...]] = (
+                "people",
+                "groups",
+                "services",
+            )
 
             ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset(
                 {
@@ -251,6 +254,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     },
                 )
             )
+            OPERATIONS_BATCH_STOP_FRAGMENT: Final[str] = "stopped on error"
+            OPERATIONS_BATCH_ALL_FAILED_FRAGMENT: Final[str] = "entries failed"
 
             SEARCH_RESULT_TOTAL_COUNT_CASES: Final[tuple[tuple[int, int], ...]] = (
                 (0, 0),
@@ -422,7 +427,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 "/tmp/flext-ldap-sync-missing.ldif"
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
-            SYNC_FACADE_PHASE_NAME_GROUPS: Final[PhaseName] = PhaseName.GROUPS
             SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
                 PhaseName.USERS,
                 PhaseName.GROUPS,
@@ -448,10 +452,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 "mail: syncuser@flext.local\n"
             )
             SYNC_FACADE_USERS_LDIF_FILENAME: Final[FileName] = FileName.USERS_LDIF
-            SYNC_PHASE_FAILURE_RE: Final[re.Pattern[str]] = re.compile(
-                r"phase\s+'.+'\s+failed",
-                re.IGNORECASE,
-            )
 
 
 c = TestsFlextLdapConstants
