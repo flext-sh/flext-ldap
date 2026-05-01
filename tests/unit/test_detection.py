@@ -35,7 +35,8 @@ pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapDetection:
-    """Comprehensive tests for FlextLdapServerDetector using factories and DRY principles.
+    """Comprehensive tests for FlextLdapServerDetector using factories
+    and DRY principles.
 
     Architecture: Single class per module following FLEXT patterns.
     Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.

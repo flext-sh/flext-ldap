@@ -87,7 +87,8 @@ def ldap_container(
 ) -> t.MappingKV[str, t.Scalar]:
     if not _docker_compose_available():
         pytest.fail(
-            "LDAP smoke tests require the Docker compose file and cannot run without it.",
+            "LDAP smoke tests require the Docker compose file and cannot "
+            "run without it.",
         )
     lock = u.Ldap.Tests.FileLock(
         Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
@@ -97,9 +98,11 @@ def ldap_container(
         admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
         execute_result = docker_control.execute()
         if execute_result.failure:
-            pytest.fail(
-                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} startup failed: {execute_result.error}",
+            msg = (
+                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} startup "
+                f"failed: {execute_result.error}"
             )
+            pytest.fail(msg)
         waited: float = 0.0
         while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:
             try:
@@ -122,9 +125,11 @@ def ldap_container(
             time.sleep(1.0)
             waited += 1.0
         else:
-            pytest.fail(
-                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} LDAP not ready within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s",
+            msg = (
+                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} LDAP not ready "
+                f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s"
             )
+            pytest.fail(msg)
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()
     return {

@@ -10,8 +10,9 @@ from flext_ldap import t
 class TestsFlextLdapTypes(FlextTestsTypes, t):
     """Type system foundation for flext-ldap tests - extends TestsFlextTypes and t.
 
-    Architecture: Extends both TestsFlextTypes and t with flext-ldap-specific type definitions.
-    All generic types from TestsFlextTypes and production types from t are available through inheritance.
+    Architecture: Extends both TestsFlextTypes and t with flext-ldap-specific
+    type definitions. All generic types from TestsFlextTypes and production
+    types from t are available through inheritance.
 
     Hierarchy:
     - t.Ldap.Tests.* (generic test types from flext_tests)

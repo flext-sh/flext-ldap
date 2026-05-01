@@ -109,7 +109,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     port_value = int(port)
                 else:
                     raise TypeError(
-                        f"ldap_container port must be int, str or float, got {type(port).__name__}",
+                        f"ldap_container port must be int, str or float, "
+                        f"got {type(port).__name__}",
                     )
                 return m.Ldap.ConnectionConfig(
                     host=str(ldap_container["host"]),
@@ -214,8 +215,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     ):
                         continue
                 error_message = (
-                    "Failed to resolve a valid LDAP admin credential for test LDAP container. "
-                    "Check that the LDAP container is running and credentials are correct."
+                    "Failed to resolve a valid LDAP admin credential for test "
+                    "LDAP container. Check that the LDAP container is running "
+                    "and credentials are correct."
                 )
                 raise RuntimeError(error_message)
 
