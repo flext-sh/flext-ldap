@@ -490,6 +490,580 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             SYNC_FACADE_USERS_LDIF_FILENAME: Final[FileName] = FileName.USERS_LDIF
 
+            @unique
+            class OperationScenarioCase(StrEnum):
+                ADD_SUCCESS = "add_success"
+                ADD_EXISTS = "add_exists"
+                DELETE_SUCCESS = "delete_success"
+                DELETE_MISSING = "delete_missing"
+                MODIFY_SUCCESS = "modify_success"
+                MODIFY_MISSING = "modify_missing"
+                SEARCH_FOUND = "search_found"
+                SEARCH_EMPTY = "search_empty"
+                BATCH_ALL_PASS = "batch_all_pass"
+                BATCH_MIXED = "batch_mixed"
+                BATCH_ALL_FAIL = "batch_all_fail"
+
+            @unique
+            class AttributeTransformCase(StrEnum):
+                BYTES_SINGLE = "bytes_single"
+                STR_SINGLE = "str_single"
+                STR_LIST = "str_list"
+                BYTES_LIST = "bytes_list"
+                NUMERIC = "numeric"
+                EMPTY = "empty"
+                MIXED = "mixed"
+
+            @unique
+            class SecurityModeCase(StrEnum):
+                PLAIN = "plain"
+                SSL = "ssl"
+                TLS = "tls"
+                SSL_AND_TLS = "ssl_and_tls"
+
+            @unique
+            class EntryOperationCase(StrEnum):
+                VALID_DN = "valid_dn"
+                EMPTY_DN = "empty_dn"
+                INVALID_DN = "invalid_dn"
+                SPECIAL_CHARS_DN = "special_chars_dn"
+
+            @unique
+            class AddOperationVariationCase(StrEnum):
+                SIMPLE_ENTRY = "simple_entry"
+                MISSING_DN = "missing_dn"
+                DUPLICATE_DN = "duplicate_dn"
+                INVALID_SCHEMA = "invalid_schema"
+                PERMISSION_DENIED = "permission_denied"
+                EMPTY_ATTRIBUTES = "empty_attributes"
+
+            @unique
+            class DeleteOperationVariationCase(StrEnum):
+                EXISTING_ENTRY = "existing_entry"
+                MISSING_ENTRY = "missing_entry"
+                WITH_CHILDREN = "with_children"
+                NO_PERMISSION = "no_permission"
+                INVALID_DN_FORMAT = "invalid_dn_format"
+                LAST_ENTRY = "last_entry"
+
+            @unique
+            class ModifyOperationVariationCase(StrEnum):
+                REPLACE_ATTR = "replace_attr"
+                ADD_ATTR = "add_attr"
+                DELETE_ATTR = "delete_attr"
+                MISSING_ENTRY = "missing_entry"
+                SCHEMA_VIOLATION = "schema_violation"
+                INVALID_MODIFICATION = "invalid_modification"
+                MULTI_ATTRIBUTE = "multi_attribute"
+
+            @unique
+            class BatchUpsertVariationCase(StrEnum):
+                ALL_SUCCESS = "all_success"
+                MIXED_SUCCESS = "mixed_success"
+                ALL_FAIL = "all_fail"
+                STOP_ON_ERROR = "stop_on_error"
+                PARTIAL_SUCCESS = "partial_success"
+                EMPTY_BATCH = "empty_batch"
+
+            @unique
+            class PortVariationCase(StrEnum):
+                STANDARD_389 = "standard_389"
+                LDAPS_636 = "ldaps_636"
+                CUSTOM_VALID = "custom_valid"
+                ZERO_PORT = "zero_port"
+                EXCEED_RANGE = "exceed_range"
+                PRIVILEGED_PORT = "privileged_port"
+
+            @unique
+            class HostVariationCase(StrEnum):
+                LOCALHOST = "localhost"
+                DNS_NAME = "dns_name"
+                IPV4_ADDRESS = "ipv4_address"
+                FQDN = "fqdn"
+                INVALID_HOST = "invalid_host"
+                EMPTY_HOST = "empty_host"
+                NUMERIC_HOST = "numeric_host"
+
+            @unique
+            class ConnectionTimeoutCase(StrEnum):
+                ZERO_TIMEOUT = "zero_timeout"
+                CUSTOM_TIMEOUT = "custom_timeout"
+                EXCEED_MAX = "exceed_max"
+                FRACTIONAL_TIMEOUT = "fractional_timeout"
+
+            @unique
+            class ConnectionStateCase(StrEnum):
+                NOT_CONNECTED = "not_connected"
+                CONNECTED = "connected"
+                BINDING = "binding"
+                BOUND = "bound"
+                CLOSED = "closed"
+                ERROR_STATE = "error_state"
+
+            @unique
+            class AttributeTransformVariationCase(StrEnum):
+                BYTES_VALUE = "bytes_value"
+                STRING_VALUE = "string_value"
+                INTEGER_VALUE = "integer_value"
+                FLOAT_VALUE = "float_value"
+                LIST_BYTES = "list_bytes"
+                LIST_STRINGS = "list_strings"
+                MIXED_LIST = "mixed_list"
+                EMPTY_VALUE = "empty_value"
+                NULL_BYTES_IN_VALUE = "null_bytes_in_value"
+                SPECIAL_CHARS = "special_chars"
+
+            @unique
+            class EntryConversionCase(StrEnum):
+                SIMPLE_ENTRY = "simple_entry"
+                NESTED_OBJECTCLASS = "nested_objectclass"
+                COMPLEX_ATTRIBUTES = "complex_attributes"
+                SCHEMA_ATTRIBUTES = "schema_attributes"
+                OPERATIONAL_ATTRS = "operational_attrs"
+                BINARY_DATA = "binary_data"
+
+            @unique
+            class SearchFilterCase(StrEnum):
+                PRESENT = "present"
+                EQUALITY = "equality"
+                SUBSTRING = "substring"
+                GREATER_EQUAL = "greater_equal"
+                LESS_EQUAL = "less_equal"
+                OR_COMPOUND = "or_compound"
+                AND_COMPOUND = "and_compound"
+                COMPLEX_NESTED = "complex_nested"
+
+            @unique
+            class SearchSizeCase(StrEnum):
+                SIZE_ZERO = "size_zero"
+                SIZE_ONE = "size_one"
+                SIZE_SMALL = "size_small"
+                SIZE_MEDIUM = "size_medium"
+                SIZE_LARGE = "size_large"
+
+            @unique
+            class SearchScopeCase(StrEnum):
+                BASE = "base"
+                ONE_LEVEL = "one_level"
+                SUBTREE = "subtree"
+                SUBORDINATE = "subordinate"
+
+            OPERATION_SCENARIOS: Final[
+                Mapping[OperationScenarioCase, Mapping[str, t.StrSequence | str]]
+            ] = MappingProxyType({
+                OperationScenarioCase.ADD_SUCCESS: MappingProxyType({
+                    "action": ("add",),
+                    "state": ("success",),
+                    "expected": ("dn created",),
+                }),
+                OperationScenarioCase.ADD_EXISTS: MappingProxyType({
+                    "action": ("add",),
+                    "state": ("exists",),
+                    "expected": ("already exists",),
+                }),
+                OperationScenarioCase.DELETE_SUCCESS: MappingProxyType({
+                    "action": ("delete",),
+                    "state": ("success",),
+                    "expected": ("deleted",),
+                }),
+                OperationScenarioCase.DELETE_MISSING: MappingProxyType({
+                    "action": ("delete",),
+                    "state": ("missing",),
+                    "expected": ("not found",),
+                }),
+                OperationScenarioCase.MODIFY_SUCCESS: MappingProxyType({
+                    "action": ("modify",),
+                    "state": ("success",),
+                    "expected": ("modified",),
+                }),
+                OperationScenarioCase.MODIFY_MISSING: MappingProxyType({
+                    "action": ("modify",),
+                    "state": ("missing",),
+                    "expected": ("not found",),
+                }),
+                OperationScenarioCase.SEARCH_FOUND: MappingProxyType({
+                    "action": ("search",),
+                    "state": ("found",),
+                    "expected": ("entries",),
+                }),
+                OperationScenarioCase.SEARCH_EMPTY: MappingProxyType({
+                    "action": ("search",),
+                    "state": ("empty",),
+                    "expected": ("no results",),
+                }),
+            })
+
+            ATTRIBUTE_TRANSFORMS: Final[
+                Mapping[AttributeTransformCase, tuple[str, type, int]]
+            ] = MappingProxyType({
+                AttributeTransformCase.BYTES_SINGLE: ("bytes", bytes, 1),
+                AttributeTransformCase.STR_SINGLE: ("string", str, 1),
+                AttributeTransformCase.STR_LIST: ("list", list, 3),
+                AttributeTransformCase.BYTES_LIST: ("bytes_list", bytes, 3),
+                AttributeTransformCase.NUMERIC: ("num", int, 1),
+                AttributeTransformCase.EMPTY: ("empty", str, 0),
+                AttributeTransformCase.MIXED: ("mixed", object, 5),
+            })
+
+            SECURITY_SCENARIOS: Final[
+                Mapping[SecurityModeCase, tuple[bool, bool]]
+            ] = MappingProxyType({
+                SecurityModeCase.PLAIN: (False, False),
+                SecurityModeCase.SSL: (True, False),
+                SecurityModeCase.TLS: (False, True),
+                SecurityModeCase.SSL_AND_TLS: (True, True),
+            })
+
+            ENTRY_DN_SCENARIOS: Final[
+                Mapping[EntryOperationCase, str]
+            ] = MappingProxyType({
+                EntryOperationCase.VALID_DN: "cn=test,ou=people,dc=example,dc=com",
+                EntryOperationCase.EMPTY_DN: "",
+                EntryOperationCase.INVALID_DN: "not-a-valid-dn",
+                EntryOperationCase.SPECIAL_CHARS_DN: (
+                    "cn=test\\,user,ou=people,dc=example,dc=com"
+                ),
+            })
+
+            ADD_OPERATION_SCENARIOS: Final[
+                Mapping[AddOperationVariationCase, Mapping[str, object]]
+            ] = MappingProxyType({
+                AddOperationVariationCase.SIMPLE_ENTRY: MappingProxyType({
+                    "dn": ("cn=newuser,ou=people,dc=example,dc=com",),
+                    "attributes": ("cn", "sn", "objectClass"),
+                    "should_succeed": (True,),
+                }),
+                AddOperationVariationCase.MISSING_DN: MappingProxyType({
+                    "dn": ("",),
+                    "attributes": ("cn", "sn"),
+                    "should_succeed": (False,),
+                }),
+                AddOperationVariationCase.DUPLICATE_DN: MappingProxyType({
+                    "dn": ("cn=existing,ou=people,dc=example,dc=com",),
+                    "attributes": ("cn", "sn"),
+                    "should_succeed": (False,),
+                    "error": ("Entry already exists",),
+                }),
+                AddOperationVariationCase.INVALID_SCHEMA: MappingProxyType({
+                    "dn": ("cn=test,ou=people,dc=example,dc=com",),
+                    "attributes": ("invalidAttr",),
+                    "should_succeed": (False,),
+                    "error": ("Schema violation",),
+                }),
+                AddOperationVariationCase.PERMISSION_DENIED: MappingProxyType({
+                    "dn": ("cn=test,ou=people,dc=example,dc=com",),
+                    "attributes": ("cn", "sn"),
+                    "should_succeed": (False,),
+                    "error": ("Permission denied",),
+                }),
+                AddOperationVariationCase.EMPTY_ATTRIBUTES: MappingProxyType({
+                    "dn": ("cn=test,ou=people,dc=example,dc=com",),
+                    "attributes": (),
+                    "should_succeed": (False,),
+                }),
+            })
+
+            DELETE_OPERATION_SCENARIOS: Final[
+                Mapping[DeleteOperationVariationCase, Mapping[str, object]]
+            ] = MappingProxyType({
+                DeleteOperationVariationCase.EXISTING_ENTRY: MappingProxyType({
+                    "dn": ("cn=existinguser,ou=people,dc=example,dc=com",),
+                    "should_succeed": (True,),
+                }),
+                DeleteOperationVariationCase.MISSING_ENTRY: MappingProxyType({
+                    "dn": ("cn=nonexistent,ou=people,dc=example,dc=com",),
+                    "should_succeed": (False,),
+                    "error": ("Not found",),
+                }),
+                DeleteOperationVariationCase.WITH_CHILDREN: MappingProxyType({
+                    "dn": ("ou=people,dc=example,dc=com",),
+                    "should_succeed": (False,),
+                    "error": ("Has children",),
+                }),
+                DeleteOperationVariationCase.NO_PERMISSION: MappingProxyType({
+                    "dn": ("cn=restricted,ou=people,dc=example,dc=com",),
+                    "should_succeed": (False,),
+                    "error": ("Permission denied",),
+                }),
+                DeleteOperationVariationCase.INVALID_DN_FORMAT: MappingProxyType({
+                    "dn": ("not-a-valid-dn",),
+                    "should_succeed": (False,),
+                    "error": ("Invalid DN",),
+                }),
+                DeleteOperationVariationCase.LAST_ENTRY: MappingProxyType({
+                    "dn": ("cn=lastuser,ou=people,dc=example,dc=com",),
+                    "should_succeed": (True,),
+                }),
+            })
+
+            MODIFY_OPERATION_SCENARIOS: Final[
+                Mapping[ModifyOperationVariationCase, Mapping[str, object]]
+            ] = MappingProxyType({
+                ModifyOperationVariationCase.REPLACE_ATTR: MappingProxyType({
+                    "dn": ("cn=user,ou=people,dc=example,dc=com",),
+                    "operation": ("replace",),
+                    "should_succeed": (True,),
+                }),
+                ModifyOperationVariationCase.ADD_ATTR: MappingProxyType({
+                    "dn": ("cn=user,ou=people,dc=example,dc=com",),
+                    "operation": ("add",),
+                    "should_succeed": (True,),
+                }),
+                ModifyOperationVariationCase.DELETE_ATTR: MappingProxyType({
+                    "dn": ("cn=user,ou=people,dc=example,dc=com",),
+                    "operation": ("delete",),
+                    "should_succeed": (True,),
+                }),
+                ModifyOperationVariationCase.MISSING_ENTRY: MappingProxyType({
+                    "dn": ("cn=nonexistent,ou=people,dc=example,dc=com",),
+                    "operation": ("replace",),
+                    "should_succeed": (False,),
+                }),
+                ModifyOperationVariationCase.SCHEMA_VIOLATION: MappingProxyType({
+                    "dn": ("cn=user,ou=people,dc=example,dc=com",),
+                    "operation": ("replace",),
+                    "attribute": ("invalidAttr",),
+                    "should_succeed": (False,),
+                }),
+                ModifyOperationVariationCase.INVALID_MODIFICATION: MappingProxyType({
+                    "dn": ("cn=user,ou=people,dc=example,dc=com",),
+                    "operation": ("invalid",),
+                    "should_succeed": (False,),
+                }),
+                ModifyOperationVariationCase.MULTI_ATTRIBUTE: MappingProxyType({
+                    "dn": ("cn=user,ou=people,dc=example,dc=com",),
+                    "operation": ("replace",),
+                    "attributes": ("cn", "mail", "telephoneNumber"),
+                    "should_succeed": (True,),
+                }),
+            })
+
+            BATCH_UPSERT_SCENARIOS: Final[
+                Mapping[BatchUpsertVariationCase, Mapping[str, object]]
+            ] = MappingProxyType({
+                BatchUpsertVariationCase.ALL_SUCCESS: MappingProxyType({
+                    "count": (10,),
+                    "success_count": (10,),
+                    "fail_count": (0,),
+                    "should_succeed": (True,),
+                }),
+                BatchUpsertVariationCase.MIXED_SUCCESS: MappingProxyType({
+                    "count": (10,),
+                    "success_count": (7,),
+                    "fail_count": (3,),
+                    "should_succeed": (True,),
+                }),
+                BatchUpsertVariationCase.ALL_FAIL: MappingProxyType({
+                    "count": (10,),
+                    "success_count": (0,),
+                    "fail_count": (10,),
+                    "should_succeed": (False,),
+                }),
+                BatchUpsertVariationCase.STOP_ON_ERROR: MappingProxyType({
+                    "count": (10,),
+                    "success_count": (3,),
+                    "fail_count": (1,),
+                    "stop_on_error": (True,),
+                    "should_succeed": (False,),
+                }),
+                BatchUpsertVariationCase.PARTIAL_SUCCESS: MappingProxyType({
+                    "count": (20,),
+                    "success_count": (15,),
+                    "fail_count": (5,),
+                    "should_succeed": (True,),
+                }),
+                BatchUpsertVariationCase.EMPTY_BATCH: MappingProxyType({
+                    "count": (0,),
+                    "success_count": (0,),
+                    "fail_count": (0,),
+                    "should_succeed": (True,),
+                }),
+            })
+
+            PORT_SCENARIOS: Final[
+                Mapping[PortVariationCase, int]
+            ] = MappingProxyType({
+                PortVariationCase.STANDARD_389: c.Ldap.PORT,
+                PortVariationCase.LDAPS_636: CONFIG_LDAPS_PORT,
+                PortVariationCase.CUSTOM_VALID: 10389,
+                PortVariationCase.ZERO_PORT: 0,
+                PortVariationCase.EXCEED_RANGE: 99999,
+                PortVariationCase.PRIVILEGED_PORT: 22,
+            })
+
+            HOST_SCENARIOS: Final[
+                Mapping[HostVariationCase, str]
+            ] = MappingProxyType({
+                HostVariationCase.LOCALHOST: c.LOCALHOST,
+                HostVariationCase.DNS_NAME: "ldap.example.com",
+                HostVariationCase.IPV4_ADDRESS: "192.168.1.1",
+                HostVariationCase.FQDN: "ldap.company.internal.example.com",
+                HostVariationCase.INVALID_HOST: "invalid..host..",
+                HostVariationCase.EMPTY_HOST: "",
+                HostVariationCase.NUMERIC_HOST: "999.999.999.999",
+            })
+
+            TIMEOUT_SCENARIOS: Final[
+                Mapping[ConnectionTimeoutCase, int | float]
+            ] = MappingProxyType({
+                ConnectionTimeoutCase.ZERO_TIMEOUT: 0,
+                ConnectionTimeoutCase.CUSTOM_TIMEOUT: 60,
+                ConnectionTimeoutCase.EXCEED_MAX: 999999,
+                ConnectionTimeoutCase.FRACTIONAL_TIMEOUT: 5,
+            })
+
+            CONNECTION_STATE_SCENARIOS: Final[
+                Mapping[ConnectionStateCase, bool]
+            ] = MappingProxyType({
+                ConnectionStateCase.NOT_CONNECTED: False,
+                ConnectionStateCase.CONNECTED: True,
+                ConnectionStateCase.BINDING: False,
+                ConnectionStateCase.BOUND: True,
+                ConnectionStateCase.CLOSED: False,
+                ConnectionStateCase.ERROR_STATE: False,
+            })
+
+            ATTRIBUTE_TRANSFORM_SCENARIOS: Final[
+                Mapping[AttributeTransformVariationCase, Mapping[str, object]]
+            ] = MappingProxyType({
+                AttributeTransformVariationCase.BYTES_VALUE: MappingProxyType({
+                    "value": (b"hello",),
+                    "expected_type": (str,),
+                }),
+                AttributeTransformVariationCase.STRING_VALUE: MappingProxyType({
+                    "value": ("hello",),
+                    "expected_type": (str,),
+                }),
+                AttributeTransformVariationCase.INTEGER_VALUE: MappingProxyType({
+                    "value": (42,),
+                    "expected_type": (str,),
+                }),
+                AttributeTransformVariationCase.FLOAT_VALUE: MappingProxyType({
+                    "value": (math.pi,),
+                    "expected_type": (str,),
+                }),
+                AttributeTransformVariationCase.LIST_BYTES: MappingProxyType({
+                    "value": ((b"hello", b"world"),),
+                    "expected_type": (tuple,),
+                }),
+                AttributeTransformVariationCase.LIST_STRINGS: MappingProxyType({
+                    "value": (("hello", "world"),),
+                    "expected_type": (tuple,),
+                }),
+                AttributeTransformVariationCase.MIXED_LIST: MappingProxyType({
+                    "value": ((b"hello", "world", 42),),
+                    "expected_type": (tuple,),
+                }),
+                AttributeTransformVariationCase.EMPTY_VALUE: MappingProxyType({
+                    "value": ((),),
+                    "expected_type": (tuple,),
+                }),
+                AttributeTransformVariationCase.NULL_BYTES_IN_VALUE: MappingProxyType({
+                    "value": (b"hello\x00world",),
+                    "expected_type": (str,),
+                }),
+                AttributeTransformVariationCase.SPECIAL_CHARS: MappingProxyType({
+                    "value": ("hello\\nworld\\t!@#$%",),
+                    "expected_type": (str,),
+                }),
+            })
+
+            ENTRY_CONVERSION_SCENARIOS: Final[
+                Mapping[EntryConversionCase, Mapping[str, object]]
+            ] = MappingProxyType({
+                EntryConversionCase.SIMPLE_ENTRY: MappingProxyType({
+                    "cn": ("John",),
+                    "sn": ("Doe",),
+                    "mail": ("john@example.com",),
+                }),
+                EntryConversionCase.NESTED_OBJECTCLASS: MappingProxyType({
+                    "objectClass": ("top", "person", "inetOrgPerson"),
+                    "cn": ("John",),
+                    "sn": ("Doe",),
+                }),
+                EntryConversionCase.COMPLEX_ATTRIBUTES: MappingProxyType({
+                    "cn": ("John", "Johnny"),
+                    "mail": ("john@example.com", "john.doe@example.com"),
+                    "telephoneNumber": ("+1234567890", "+0987654321"),
+                }),
+                EntryConversionCase.SCHEMA_ATTRIBUTES: MappingProxyType({
+                    "cn": ("User",),
+                    "uid": ("user123",),
+                    "uidNumber": ("1001",),
+                    "gidNumber": ("100",),
+                }),
+                EntryConversionCase.OPERATIONAL_ATTRS: MappingProxyType({
+                    "modifyTimestamp": ("20240101120000Z",),
+                    "createTimestamp": ("20240101100000Z",),
+                    "modifiersName": ("cn=admin,dc=example,dc=com",),
+                }),
+                EntryConversionCase.BINARY_DATA: MappingProxyType({
+                    "jpegPhoto": (b"\xff\xd8\xff\xe0",),
+                    "cn": ("User",),
+                }),
+            })
+
+            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[
+                Mapping[SearchFilterCase, str]
+            ] = MappingProxyType({
+                SearchFilterCase.PRESENT: "(cn=*)",
+                SearchFilterCase.EQUALITY: "(uid=john)",
+                SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
+                SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
+                SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
+                SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
+                SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
+                SearchFilterCase.COMPLEX_NESTED: (
+                    "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
+                ),
+            })
+
+            SEARCH_SIZE_SCENARIOS: Final[
+                Mapping[SearchSizeCase, int]
+            ] = MappingProxyType({
+                SearchSizeCase.SIZE_ZERO: 0,
+                SearchSizeCase.SIZE_ONE: 1,
+                SearchSizeCase.SIZE_SMALL: 10,
+                SearchSizeCase.SIZE_MEDIUM: 100,
+                SearchSizeCase.SIZE_LARGE: 10000,
+            })
+
+            SEARCH_SCOPE_SCENARIOS: Final[
+                Mapping[SearchScopeCase, str]
+            ] = MappingProxyType({
+                SearchScopeCase.BASE: "BASE",
+                SearchScopeCase.ONE_LEVEL: "LEVEL(1)",
+                SearchScopeCase.SUBTREE: "SUBTREE",
+                SearchScopeCase.SUBORDINATE: "SUBORDINATE",
+            })
+
+            OPERATION_BATCH_SCENARIOS: Final[frozenset[OperationScenarioCase]] = (
+                frozenset({
+                    OperationScenarioCase.BATCH_ALL_PASS,
+                    OperationScenarioCase.BATCH_MIXED,
+                    OperationScenarioCase.BATCH_ALL_FAIL,
+                })
+            )
+
+            SEARCH_FILTER_SCENARIOS: Final[frozenset[str]] = frozenset({
+                "(objectClass=*)",
+                "(cn=*)",
+                "(uid=*)",
+                "(mail=user@*)",
+                "(|(cn=*)(uid=*))",
+                "(&(objectClass=person)(cn=test))",
+            })
+
+            ATTRIBUTE_NAMES_STANDARD: Final[frozenset[str]] = frozenset({
+                "cn",
+                "mail",
+                "uid",
+                "objectClass",
+                "sn",
+                "givenName",
+                "telephoneNumber",
+            })
+
 
 c = TestsFlextLdapConstants
 
