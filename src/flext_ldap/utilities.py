@@ -730,6 +730,7 @@ class FlextLdapUtilities(u):
                 RuntimeError,
                 ImportError,
                 KeyError,
+                t.Ldap.LDAPException,
             ) as exc:
                 return r[t.Ldap.OperationAttributes].fail(
                     f"rootDSE query failed: {exc}",

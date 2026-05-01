@@ -45,19 +45,17 @@ class TestsFlextLdapModelsUnit:
         with pytest.raises(c.ValidationError, match="mutually exclusive"):
             m.Ldap.ConnectionConfig(port=c.Ldap.PORT, use_ssl=True, use_tls=True)
 
-    def test_connection_config_ssl_only_allowed(self) -> None:
+    @pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
+    def test_connection_config_allowed_security_modes(
+        self,
+        case: c.Ldap.Tests.ConnectionSecurityCase,
+    ) -> None:
+        use_ssl, use_tls = c.Ldap.Tests.MODELS_ALLOWED_SECURITY_COMBOS[case]
         settings = m.Ldap.ConnectionConfig(
-            port=c.Ldap.PORT, use_ssl=True, use_tls=False
+            port=c.Ldap.PORT, use_ssl=use_ssl, use_tls=use_tls
         )
-        u.Ldap.Tests.that(settings.use_ssl, eq=True)
-        u.Ldap.Tests.that(not settings.use_tls, eq=True)
-
-    def test_connection_config_tls_only_allowed(self) -> None:
-        settings = m.Ldap.ConnectionConfig(
-            port=c.Ldap.PORT, use_ssl=False, use_tls=True
-        )
-        u.Ldap.Tests.that(not settings.use_ssl, eq=True)
-        u.Ldap.Tests.that(settings.use_tls, eq=True)
+        u.Ldap.Tests.that(settings.use_ssl, eq=use_ssl)
+        u.Ldap.Tests.that(settings.use_tls, eq=use_tls)
 
     def test_connection_config_port_constraints(self) -> None:
         config_min = m.Ldap.ConnectionConfig(port=c.Ldap.Tests.CONFIG_PORT_MIN)
@@ -65,13 +63,11 @@ class TestsFlextLdapModelsUnit:
         config_max = m.Ldap.ConnectionConfig(port=c.Ldap.Tests.CONFIG_PORT_MAX)
         u.Ldap.Tests.that(config_max.port, eq=c.Ldap.Tests.CONFIG_PORT_MAX)
 
-    def test_connection_config_port_constraint_violation_min(self) -> None:
-        invalid_port: int = c.Ldap.Tests.MODELS_INVALID_PORT_BELOW_MIN
-        with pytest.raises(c.ValidationError):
-            m.Ldap.ConnectionConfig(port=invalid_port)
-
-    def test_connection_config_port_constraint_violation_max(self) -> None:
-        invalid_port: int = c.Ldap.Tests.MODELS_INVALID_PORT_ABOVE_MAX
+    @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
+    def test_connection_config_port_constraint_violations(
+        self,
+        invalid_port: int,
+    ) -> None:
         with pytest.raises(c.ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 

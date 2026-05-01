@@ -23,27 +23,22 @@ class TestsFlextLdapLdap3Adapter:
     All test data comes from c.Ldap.Tests.* — zero inline constants.
     """
 
-    @classmethod
-    def _create_connection_config(cls) -> m.Ldap.ConnectionConfig:
-        return m.Ldap.ConnectionConfig(
-            host=c.LOCALHOST,
-            port=c.Ldap.PORT,
-            use_ssl=False,
-            use_tls=False,
-            timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
-        )
-
     def test_execute_returns_success(self) -> None:
         adapter = Ldap3Adapter()
         result = adapter.execute()
         u.Ldap.Tests.fail(result, has=c.Ldap.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR)
 
-    def test_connection_manager_create_server_with_ssl(self) -> None:
+    @pytest.mark.parametrize("case", c.Ldap.Tests.Ldap3ServerCase)
+    def test_connection_manager_create_server_modes(
+        self,
+        case: c.Ldap.Tests.Ldap3ServerCase,
+    ) -> None:
+        port, use_ssl, use_tls = c.Ldap.Tests.LDAP3_SERVER_SCENARIOS[case]
         settings = m.Ldap.ConnectionConfig(
             host=c.LOCALHOST,
-            port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
-            use_ssl=True,
-            use_tls=False,
+            port=port,
+            use_ssl=use_ssl,
+            use_tls=use_tls,
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
         server = Ldap3Adapter.ConnectionManager.create_server(settings)
@@ -58,45 +53,5 @@ class TestsFlextLdapLdap3Adapter:
                 c.Ldap.Tests.FIELD_PORT,
                 c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
             ),
-            eq=c.Ldap.Tests.CONFIG_LDAPS_PORT,
-        )
-
-    def test_connection_manager_create_server_without_ssl(self) -> None:
-        settings = self._create_connection_config()
-        server = Ldap3Adapter.ConnectionManager.create_server(settings)
-        assert server is not None
-        u.Ldap.Tests.that(
-            getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
-            eq=c.LOCALHOST,
-        )
-        u.Ldap.Tests.that(
-            getattr(
-                server,
-                c.Ldap.Tests.FIELD_PORT,
-                c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
-            ),
-            eq=c.Ldap.PORT,
-        )
-
-    def test_connection_manager_create_server_with_tls(self) -> None:
-        settings = m.Ldap.ConnectionConfig(
-            host=c.LOCALHOST,
-            port=c.Ldap.PORT,
-            use_ssl=False,
-            use_tls=True,
-            timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
-        )
-        server = Ldap3Adapter.ConnectionManager.create_server(settings)
-        assert server is not None
-        u.Ldap.Tests.that(
-            getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
-            eq=c.LOCALHOST,
-        )
-        u.Ldap.Tests.that(
-            getattr(
-                server,
-                c.Ldap.Tests.FIELD_PORT,
-                c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
-            ),
-            eq=c.Ldap.PORT,
+            eq=port,
         )

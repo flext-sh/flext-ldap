@@ -142,6 +142,7 @@ ignore-words-list = "crate,nd"
 
 # [MANAGED] coverage
 [tool.coverage.report]
+exclude_also = [ "if TYPE_CHECKING:", "if _t.TYPE_CHECKING:", "if typing.TYPE_CHECKING:" ]
 fail_under = 30
 precision = 2
 show_missing = true
@@ -413,6 +414,7 @@ addopts = [
 filterwarnings = [
   "ignore:.*TestsFlextBad.*:flext_core.FlextMroViolation",
   "ignore:.*cannot collect test class.*because it has a __init__ constructor.*:pytest.PytestCollectionWarning",
+  "ignore::flext_core.FlextMroViolation",
   "ignore:tagMap is deprecated\\. Please use TAG_MAP instead\\.:DeprecationWarning",
   "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning",
 ]

@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import math
-
 import pytest
 from ldap3 import MOCK_SYNC, Connection, Server
 
@@ -81,31 +79,36 @@ class TestsFlextLdapUtilitiesUnit:
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
 
     # --- create_server ---
-    def test_create_server_no_ssl(self) -> None:
-        server = u.Ldap.create_server("localhost", 389, use_ssl=False)
-        assert server is not None
-
-    def test_create_server_with_ssl(self) -> None:
-        server = u.Ldap.create_server(
-            "localhost", c.Ldap.Tests.CONFIG_LDAPS_PORT, use_ssl=True
-        )
+    @pytest.mark.parametrize(
+        "case",
+        [
+            c.Ldap.Tests.Ldap3ServerCase.PLAIN,
+            c.Ldap.Tests.Ldap3ServerCase.SSL,
+        ],
+    )
+    def test_create_server_modes(self, case: c.Ldap.Tests.Ldap3ServerCase) -> None:
+        port, use_ssl, _use_tls = c.Ldap.Tests.LDAP3_SERVER_SCENARIOS[case]
+        server = u.Ldap.create_server(c.LOCALHOST, port, use_ssl=use_ssl)
         assert server is not None
 
     # --- create_server_from_url ---
     def test_create_server_from_url(self) -> None:
-        server = u.Ldap.create_server_from_url("ldap://localhost:389")
+        server = u.Ldap.create_server_from_url(f"ldap://{c.LOCALHOST}:{c.Ldap.PORT}")
         assert server is not None
 
     # --- create_bare_server ---
     def test_create_bare_server(self) -> None:
-        server = u.Ldap.create_bare_server("localhost")
+        server = u.Ldap.create_bare_server(c.LOCALHOST)
         assert server is not None
 
     # --- create_connection ---
     def test_create_connection(self) -> None:
-        server = u.Ldap.create_server("localhost", 389, use_ssl=False)
+        server = u.Ldap.create_server(c.LOCALHOST, c.Ldap.PORT, use_ssl=False)
         conn = u.Ldap.create_connection(
-            server, user="cn=admin", password="admin", auto_bind=False
+            server,
+            user=c.Ldap.Tests.BIND_ADMIN_DN,
+            password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
+            auto_bind=False,
         )
         assert conn is not None
 
@@ -118,55 +121,35 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.norm_in("X", ["a", "b", "c"], case="lower")
         u.Ldap.Tests.that(result, eq=False)
 
-    # --- attr_to_str_list with empty dict ---
-    def test_attr_to_str_list_empty(self) -> None:
-        result = u.Ldap.attr_to_str_list({})
-        u.Ldap.Tests.that(dict(result), eq={})
-
-    def test_attr_to_str_list_with_bytes(self) -> None:
-        result = u.Ldap.attr_to_str_list({"key": b"hello"})
-        assert "key" in result
-
-    def test_attr_to_str_list_with_list(self) -> None:
-        result = u.Ldap.attr_to_str_list({"cn": ["alice", "bob"]})
-        assert list(result["cn"]) == ["alice", "bob"]
-
-    def test_attr_to_str_list_with_list_bytes(self) -> None:
-        result = u.Ldap.attr_to_str_list({"key": [b"bytes", "str"]})
-        assert "key" in result
-
-    def test_attr_to_str_list_with_int(self) -> None:
-        result = u.Ldap.attr_to_str_list({"num": 42})
-        assert "num" in result
+    @pytest.mark.parametrize("case", c.Ldap.Tests.AttrToStrListCase)
+    def test_attr_to_str_list_scenarios(
+        self,
+        case: c.Ldap.Tests.AttrToStrListCase,
+    ) -> None:
+        expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
+        match case:
+            case c.Ldap.Tests.AttrToStrListCase.EMPTY:
+                result = u.Ldap.attr_to_str_list({})
+            case c.Ldap.Tests.AttrToStrListCase.BYTES:
+                result = u.Ldap.attr_to_str_list({"key": b"hello"})
+            case c.Ldap.Tests.AttrToStrListCase.LIST:
+                result = u.Ldap.attr_to_str_list({"cn": list(c.Ldap.Tests.LIST_ABC)})
+            case c.Ldap.Tests.AttrToStrListCase.LIST_BYTES:
+                result = u.Ldap.attr_to_str_list({"key": [b"bytes", "str"]})
+            case c.Ldap.Tests.AttrToStrListCase.INT:
+                result = u.Ldap.attr_to_str_list({"num": 42})
+        normalized = {key: tuple(value) for key, value in result.items()}
+        u.Ldap.Tests.that(normalized, eq=dict(expected))
 
     # --- ldap3_value_to_strings ---
-    def test_ldap3_value_to_strings_bytes(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings(b"hello")
-        u.Ldap.Tests.that(result, eq=["hello"])
-
-    def test_ldap3_value_to_strings_list(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings(["a", "b"])
-        u.Ldap.Tests.that(list(result), eq=["a", "b"])
-
-    def test_ldap3_value_to_strings_list_with_bytes(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings([b"hello", "world"])
-        u.Ldap.Tests.that(list(result), eq=["hello", "world"])
-
-    def test_ldap3_value_to_strings_tuple(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings(("a", "b"))
-        u.Ldap.Tests.that(list(result), eq=["a", "b"])
-
-    def test_ldap3_value_to_strings_str(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings("hello")
-        u.Ldap.Tests.that(list(result), eq=["hello"])
-
-    def test_ldap3_value_to_strings_int(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings(42)
-        u.Ldap.Tests.that(list(result), eq=["42"])
-
-    def test_ldap3_value_to_strings_float(self) -> None:
-        result = u.Ldap.ldap3_value_to_strings(math.pi)
-        assert len(list(result)) == 1
+    @pytest.mark.parametrize("case", c.Ldap.Tests.LdapValueCase)
+    def test_ldap3_value_to_strings_scenarios(
+        self,
+        case: c.Ldap.Tests.LdapValueCase,
+    ) -> None:
+        value, expected = c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS[case]
+        result = u.Ldap.ldap3_value_to_strings(value)
+        u.Ldap.Tests.that(tuple(result), eq=expected)
 
     # --- search_entry_to_ldif_entry ---
     def test_search_entry_to_ldif_entry_success(self) -> None:
@@ -434,7 +417,7 @@ class TestsFlextLdapUtilitiesUnit:
         server = Server("mock")
         conn = Connection(server, client_strategy=MOCK_SYNC)
         conn.strategy.add_entry(
-            "",
+            c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             {
                 "objectClass": ["top"],
                 "namingContexts": ["dc=example,dc=com"],
@@ -442,12 +425,6 @@ class TestsFlextLdapUtilitiesUnit:
             },
         )
         conn.bind()
-        conn.search(
-            search_base="",
-            search_filter="(objectClass=*)",
-            search_scope="BASE",
-            attributes=["*"],
-        )
         result = u.Ldap.query_root_dse(conn)
         # Either success or failure is acceptable depending on entry format
         assert result is not None

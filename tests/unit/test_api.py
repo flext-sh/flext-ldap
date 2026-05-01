@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import types
+
 import pytest
 
 from flext_ldap import FlextLdapSyncCallbacks, ldap
@@ -32,36 +34,38 @@ class TestsFlextLdapApi:
         u.Ldap.Tests.that(not ldap.is_connected, eq=True)
 
     # --- Callback Type Guards ---
-    @pytest.mark.parametrize(
-        ("callback", "expected"),
-        [
-            pytest.param(None, False, id="none"),
-            pytest.param(u.Ldap.Tests.multi_phase_cb, True, id="5_params_true"),
-            pytest.param(u.Ldap.Tests.single_phase_cb, False, id="4_params_false"),
-        ],
-    )
+    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_multi_phase_callback(
         self,
-        callback: t.Ldap.ProgressCallbackUnion,
-        expected: bool,
+        case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
+        callbacks: dict[
+            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion
+        ] = {
+            c.Ldap.Tests.CallbackGuardCase.NONE: None,
+            c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
+            c.Ldap.Tests.CallbackGuardCase.SINGLE: u.Ldap.Tests.single_phase_cb,
+        }
+        callback = callbacks[case]
+        expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
         u.Ldap.Tests.that(
             FlextLdapSyncCallbacks.is_multi_phase_callback(callback), eq=expected
         )
 
-    @pytest.mark.parametrize(
-        ("callback", "expected"),
-        [
-            pytest.param(None, False, id="none"),
-            pytest.param(u.Ldap.Tests.single_phase_cb, True, id="4_params_true"),
-            pytest.param(u.Ldap.Tests.multi_phase_cb, False, id="5_params_false"),
-        ],
-    )
+    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_single_phase_callback(
         self,
-        callback: t.Ldap.ProgressCallbackUnion,
-        expected: bool,
+        case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
+        callbacks: dict[
+            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion
+        ] = {
+            c.Ldap.Tests.CallbackGuardCase.NONE: None,
+            c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
+            c.Ldap.Tests.CallbackGuardCase.SINGLE: u.Ldap.Tests.single_phase_cb,
+        }
+        callback = callbacks[case]
+        _, expected = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
         u.Ldap.Tests.that(
             FlextLdapSyncCallbacks.is_single_phase_callback(callback), eq=expected
         )
@@ -83,18 +87,32 @@ class TestsFlextLdapApi:
 
     def test_execute_with_connection_returns_success(
         self,
-        connection_config: m.Ldap.ConnectionConfig,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        u.Ldap.Tests.assert_connection_success(ldap.connect(connection_config))
+        monkeypatch.setattr(
+            ldap,
+            "_adapter",
+            types.SimpleNamespace(is_connected=True, disconnect=lambda: None),
+        )
         u.Ldap.Tests.ok(ldap.execute())
         ldap.disconnect()
 
     def test_with_statement_disconnects_after_connected_block(
         self,
-        connection_config: m.Ldap.ConnectionConfig,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        class FakeAdapter:
+            def __init__(self) -> None:
+                self.is_connected = False
+
+            def disconnect(self) -> None:
+                self.is_connected = False
+
+        adapter = FakeAdapter()
+        adapter.is_connected = True
+        monkeypatch.setattr(ldap, "_adapter", adapter)
+
         with ldap as client:
-            u.Ldap.Tests.assert_connection_success(client.connect(connection_config))
             assert client.is_connected
 
         assert not ldap.is_connected

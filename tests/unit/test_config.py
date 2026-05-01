@@ -50,12 +50,7 @@ class TestsFlextLdapConfig:
 
     @pytest.mark.parametrize(
         c.Ldap.Tests.FIELD_PORT,
-        [
-            c.Ldap.Tests.CONFIG_PORT_MIN,
-            c.Ldap.PORT,
-            c.Ldap.Tests.CONFIG_LDAPS_PORT,
-            c.Ldap.Tests.CONFIG_PORT_MAX,
-        ],
+        c.Ldap.Tests.CONFIG_VALID_PORTS,
     )
     def test_port_valid(self, port: int) -> None:
         u.Ldap.Tests.that(FlextLdapSettings(port=port).port, eq=port)
@@ -64,12 +59,7 @@ class TestsFlextLdapConfig:
 
     @pytest.mark.parametrize(
         c.Ldap.Tests.FIELD_HOST,
-        [
-            c.LOCALHOST,
-            c.Ldap.Tests.CONFIG_EXAMPLE_HOST,
-            c.Ldap.Tests.CONFIG_IP_HOST,
-            "",
-        ],
+        c.Ldap.Tests.CONFIG_HOST_CASES,
     )
     def test_host(self, host: str) -> None:
         u.Ldap.Tests.that(FlextLdapSettings(host=host).host, eq=host)

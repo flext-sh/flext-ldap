@@ -120,7 +120,7 @@ class TestsFlextLdapModelsSearch:
 
     @pytest.mark.parametrize(
         ("num_entries", "expected_count"),
-        [*c.Ldap.Tests.SEARCH_RESULT_SCENARIO_COUNTS.values(), (10, 10)],
+        c.Ldap.Tests.SEARCH_RESULT_TOTAL_COUNT_CASES,
     )
     def test_search_result_total_count(
         self,
@@ -146,16 +146,22 @@ class TestsFlextLdapModelsSearch:
         attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
         u.Ldap.Tests.that(attrs, eq={})
 
-    def test_search_result_extract_objectclass_category_empty(self) -> None:
-        category = m.Ldap.SearchResult.extract_objectclass_category({})
-        u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
-
-    def test_search_result_extract_objectclass_category_with_objectclass(self) -> None:
-        attrs = {
-            k: list(v) for k, v in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
-        }
+    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchCategoryCase)
+    def test_search_result_extract_objectclass_category_cases(
+        self,
+        case: c.Ldap.Tests.SearchCategoryCase,
+    ) -> None:
+        attrs: dict[str, list[str] | str]
+        match case:
+            case c.Ldap.Tests.SearchCategoryCase.EMPTY:
+                attrs = {}
+            case c.Ldap.Tests.SearchCategoryCase.PERSON:
+                attrs = {
+                    key: list(value)
+                    for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
+                }
         category = m.Ldap.SearchResult.extract_objectclass_category(attrs)
-        u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_EXPECTED_CATEGORY_PERSON)
+        u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 
     def test_search_result_get_entry_category(self) -> None:
         entry: Mapping[str, t.StrSequence] = {}

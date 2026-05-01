@@ -34,13 +34,18 @@ class TestsFlextLdapConnection:
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
 
+    @pytest.mark.parametrize(
+        "invalid_password",
+        c.Ldap.Tests.CONNECTION_INVALID_PASSWORDS,
+    )
     def test_connect_with_invalid_password_fails(
         self,
         connection_config: m.Ldap.ConnectionConfig,
+        invalid_password: str,
     ) -> None:
         bad_config = connection_config.model_copy(
             update={
-                c.Ldap.Tests.FIELD_BIND_PASSWORD: c.Ldap.Tests.SYNC_FACADE_INVALID_PASSWORD,
+                c.Ldap.Tests.FIELD_BIND_PASSWORD: invalid_password,
             },
         )
 

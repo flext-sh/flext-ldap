@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import (
     Mapping,
@@ -47,6 +48,46 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             class FileName(StrEnum):
                 USERS_LDIF = "users.ldif"
 
+            @unique
+            class CallbackGuardCase(StrEnum):
+                NONE = "none"
+                MULTI = "multi"
+                SINGLE = "single"
+
+            @unique
+            class ConnectionSecurityCase(StrEnum):
+                SSL_ONLY = "ssl_only"
+                TLS_ONLY = "tls_only"
+
+            @unique
+            class Ldap3ServerCase(StrEnum):
+                PLAIN = "plain"
+                SSL = "ssl"
+                TLS = "tls"
+
+            @unique
+            class AttrToStrListCase(StrEnum):
+                EMPTY = "empty"
+                BYTES = "bytes"
+                LIST = "list"
+                LIST_BYTES = "list_bytes"
+                INT = "int"
+
+            @unique
+            class LdapValueCase(StrEnum):
+                BYTES = "bytes"
+                LIST = "list"
+                LIST_BYTES = "list_bytes"
+                TUPLE = "tuple"
+                STR = "str"
+                INT = "int"
+                FLOAT = "float"
+
+            @unique
+            class SearchCategoryCase(StrEnum):
+                EMPTY = "empty"
+                PERSON = "person"
+
             RFC_DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
             RFC_DEFAULT_FILTER: Final[str] = "(objectClass=*)"
 
@@ -56,7 +97,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             CONFIG_ORIGINAL_HOST: Final[str] = "original.com"
             CONFIG_FIRST_HOST: Final[str] = "first.com"
             CONFIG_SECOND_HOST: Final[str] = "second.com"
-            CONFIG_IP_HOST: Final[str] = "192.168.1.1"
             CONFIG_LDAPS_PORT: Final[int] = 636
             CONFIG_PORT_MIN: Final[int] = 1
             CONFIG_PORT_MAX: Final[int] = 65535
@@ -66,6 +106,25 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 (False, True),
                 (True, True),
             ]
+            CONFIG_VALID_PORTS: Final[tuple[int, ...]] = (
+                CONFIG_PORT_MIN,
+                c.Ldap.PORT,
+                CONFIG_LDAPS_PORT,
+                CONFIG_PORT_MAX,
+            )
+            CONFIG_HOST_CASES: Final[tuple[str, ...]] = (
+                c.LOCALHOST,
+                CONFIG_EXAMPLE_HOST,
+                "192.168.1.1",
+                "",
+            )
+            CALLBACK_GUARD_EXPECTED: Final[
+                Mapping[CallbackGuardCase, tuple[bool, bool]]
+            ] = MappingProxyType({
+                CallbackGuardCase.NONE: (False, False),
+                CallbackGuardCase.MULTI: (True, False),
+                CallbackGuardCase.SINGLE: (False, True),
+            })
 
             FIELD_HOST: Final[FieldName] = FieldName.HOST
             FIELD_PORT: Final[FieldName] = FieldName.PORT
@@ -193,14 +252,11 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 )
             )
 
-            SEARCH_RESULT_SCENARIO_COUNTS: Final[Mapping[str, tuple[int, int]]] = (
-                MappingProxyType(
-                    {
-                        "empty": (0, 0),
-                        "single": (1, 1),
-                        "multiple": (5, 5),
-                    },
-                )
+            SEARCH_RESULT_TOTAL_COUNT_CASES: Final[tuple[tuple[int, int], ...]] = (
+                (0, 0),
+                (1, 1),
+                (5, 5),
+                (10, 10),
             )
 
             STRING_SIMPLE: Final[str] = "test"
@@ -239,12 +295,52 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR: Final[str] = "empty"
             LDAP3_ADAPTER_DEFAULT_TIMEOUT: Final[int] = 5
             LDAP3_ADAPTER_NOT_CONNECTED_ERROR: Final[str] = "Not connected"
+            LDAP3_SERVER_SCENARIOS: Final[
+                Mapping[Ldap3ServerCase, tuple[int, bool, bool]]
+            ] = MappingProxyType({
+                Ldap3ServerCase.PLAIN: (c.Ldap.PORT, False, False),
+                Ldap3ServerCase.SSL: (CONFIG_LDAPS_PORT, True, False),
+                Ldap3ServerCase.TLS: (c.Ldap.PORT, False, True),
+            })
+            ATTR_TO_STR_LIST_SCENARIOS: Final[
+                Mapping[AttrToStrListCase, Mapping[str, tuple[str, ...]]]
+            ] = MappingProxyType({
+                AttrToStrListCase.EMPTY: MappingProxyType({}),
+                AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
+                AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
+                AttrToStrListCase.LIST_BYTES: MappingProxyType({
+                    "key": ("bytes", "str")
+                }),
+                AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
+            })
+            LDAP3_VALUE_TO_STRINGS_SCENARIOS: Final[
+                Mapping[
+                    LdapValueCase,
+                    tuple[
+                        bytes | int | float | str | Sequence[bytes | str],
+                        tuple[str, ...],
+                    ],
+                ]
+            ] = MappingProxyType({
+                LdapValueCase.BYTES: (b"hello", ("hello",)),
+                LdapValueCase.LIST: (list(LIST_ABC), LIST_ABC),
+                LdapValueCase.LIST_BYTES: ((b"hello", "world"), ("hello", "world")),
+                LdapValueCase.TUPLE: (LIST_ABC, LIST_ABC),
+                LdapValueCase.STR: ("hello", ("hello",)),
+                LdapValueCase.INT: (42, ("42",)),
+                LdapValueCase.FLOAT: (math.pi, (str(math.pi),)),
+            })
 
             MODELS_LDAP_EXAMPLE_HOST: Final[str] = "ldap.example.com"
             MODELS_CUSTOM_TIMEOUT: Final[int] = 60
-            MODELS_INVALID_PORT_BELOW_MIN: Final[int] = 0
-            MODELS_INVALID_PORT_ABOVE_MAX: Final[int] = 65536
             MODELS_INVALID_DN_FORMAT: Final[str] = "invalid-dn-format"
+            MODELS_ALLOWED_SECURITY_COMBOS: Final[
+                Mapping[ConnectionSecurityCase, tuple[bool, bool]]
+            ] = MappingProxyType({
+                ConnectionSecurityCase.SSL_ONLY: (True, False),
+                ConnectionSecurityCase.TLS_ONLY: (False, True),
+            })
+            MODELS_INVALID_PORTS: Final[tuple[int, ...]] = (0, 65536)
 
             SEARCH_SCOPE_BASE: Final[str] = "BASE"
             SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
@@ -259,7 +355,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SEARCH_OBJECTCLASS_PERSON_TOP: Final[Mapping[str, t.StrSequence]] = (
                 MappingProxyType({"objectClass": ("person", "top")})
             )
-            SEARCH_EXPECTED_CATEGORY_PERSON: Final[str] = "person"
+            SEARCH_CATEGORY_EXPECTED: Final[Mapping[SearchCategoryCase, str]] = (
+                MappingProxyType({
+                    SearchCategoryCase.EMPTY: c.Ldap.UNKNOWN_CATEGORY,
+                    SearchCategoryCase.PERSON: "person",
+                })
+            )
             SEARCH_ENTRIES_AFFECTED_ONE: Final[int] = 1
             SEARCH_SYNC_COUNTERS_SYNCED: Final[int] = 80
             SEARCH_SYNC_COUNTERS_SKIPPED: Final[int] = 10
@@ -322,10 +423,17 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
             SYNC_FACADE_PHASE_NAME_GROUPS: Final[PhaseName] = PhaseName.GROUPS
+            SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
+                PhaseName.USERS,
+                PhaseName.GROUPS,
+            )
             SYNC_FACADE_TEST_USER_DN: Final[str] = (
                 "cn=syncuser,ou=people,dc=flext,dc=local"
             )
-            SYNC_FACADE_INVALID_PASSWORD: Final[str] = "invalid-password"
+            CONNECTION_INVALID_PASSWORDS: Final[tuple[str, ...]] = (
+                "invalid-password",
+                "wrong-password",
+            )
             SYNC_FACADE_SINGLE_ENTRY_LDIF: Final[str] = (
                 "version: 1\n\n"
                 "dn: cn=syncuser,ou=people,dc=flext,dc=local\n"
