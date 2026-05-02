@@ -6,9 +6,10 @@ This module provides constants for LDAP operations, extending c.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
-from typing import Final
+from typing import ClassVar, Final
 
 from flext_ldif import c, t
 
@@ -134,6 +135,26 @@ class FlextLdapConstants(c):
             MODIFY = "modify"
             DELETE = "delete"
             SEARCH = "search"
+
+        OPERATION_SUCCESS_MESSAGES: ClassVar[
+            Mapping[FlextLdapConstants.Ldap.OperationType, str]
+        ] = MappingProxyType({
+            OperationType.ADD: "Entry added successfully",
+            OperationType.MODIFY: "Entry modified successfully",
+            OperationType.DELETE: "Entry deleted successfully",
+            OperationType.SEARCH: "Search completed successfully",
+        })
+        "Per-operation success messages used by ``OperationExecutor``."
+
+        OPERATION_FAILURE_PREFIXES: ClassVar[
+            Mapping[FlextLdapConstants.Ldap.OperationType, str]
+        ] = MappingProxyType({
+            OperationType.ADD: "Add failed",
+            OperationType.MODIFY: "Modify failed",
+            OperationType.DELETE: "Delete failed",
+            OperationType.SEARCH: "Search failed",
+        })
+        "Per-operation error message prefixes used by ``OperationExecutor``."
 
         @unique
         class UpsertOperation(StrEnum):
