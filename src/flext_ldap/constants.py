@@ -44,7 +44,7 @@ class FlextLdapConstants(c):
         DEFAULT_MAX_RETRIES: Final[int] = 5
         DEFAULT_RETRY_DELAY: Final[float] = 1.0
         PORT: Final[int] = 389
-        TIMEOUT: Final[int] = 30
+        TIMEOUT: Final[int] = c.DEFAULT_TIMEOUT_SECONDS
         AUTO_BIND: Final[bool] = True
         AUTO_RANGE: Final[bool] = True
         POOL_SIZE: Final[int] = 10
