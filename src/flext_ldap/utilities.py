@@ -14,7 +14,7 @@ from collections.abc import (
     Mapping,
     MutableMapping,
 )
-from typing import Literal
+from typing import Literal, TypeIs
 
 import ldap3
 
@@ -160,7 +160,7 @@ class FlextLdapUtilities(u):
             """
 
             @staticmethod
-            def is_valid_status(value: str | t.JsonValue) -> t.TypeIs[str]:
+            def is_valid_status(value: str | t.JsonValue) -> TypeIs[str]:
                 """TypeIs narrowing - works in both if/else branches.
 
                 Since StatusLiteral is a subtype of str, after checking enum type,
@@ -721,8 +721,8 @@ class FlextLdapUtilities(u):
                     search_scope=c.Ldap.SearchScopeValue.BASE,
                     attributes=str(c.Ldap.AttributeName.ALL_ATTRIBUTES),
                 ):
-                    return r[t.Ldap.OperationAttributes].fail(
-                        f"rootDSE query failed: {connection.result}",
+                    return r[t.Ldap.OperationAttributes].fail_op(
+                        "rootDSE query", connection.result
                     )
             except (
                 ValueError,
@@ -734,9 +734,7 @@ class FlextLdapUtilities(u):
                 KeyError,
                 t.Ldap.LDAPException,
             ) as exc:
-                return r[t.Ldap.OperationAttributes].fail(
-                    f"rootDSE query failed: {exc}",
-                )
+                return r[t.Ldap.OperationAttributes].fail_op("rootDSE query", exc)
             entries = getattr(connection, "entries", [])
             if not entries:
                 return r[t.Ldap.OperationAttributes].fail(

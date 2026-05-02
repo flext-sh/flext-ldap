@@ -69,9 +69,7 @@ class FlextLdapConnection(s):
                 RuntimeError,
                 ImportError,
             ) as exc:
-                return r[bool].fail(
-                    f"Server detection failed: {exc}",
-                )
+                return r[bool].fail_op("Server detection", exc)
             return r[bool].ok(value=True)
         return result
 

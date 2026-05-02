@@ -179,9 +179,7 @@ class FlextLdapOperations(s):
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    f"Search for existing entry failed: {search_result.error}"
-                )
+                return r[m.Ldap.LdapOperationResult].fail_op("Search for existing entry", search_result.error)
             search_data = search_result.map_or(None)
             existing_entries: t.SequenceOf[m.Ldif.Entry] = []
             if search_data is not None and search_data.entries:
@@ -200,9 +198,7 @@ class FlextLdapOperations(s):
             existing_entry = existing_entries[0]
             changes_result = u.Ldap.compare_entries(existing_entry, entry)
             if changes_result.failure:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    f"Entry comparison failed: {changes_result.error}"
-                )
+                return r[m.Ldap.LdapOperationResult].fail_op("Entry comparison", changes_result.error)
             changes = changes_result.unwrap_or({})
             if not changes:
                 return r[m.Ldap.LdapOperationResult].ok(

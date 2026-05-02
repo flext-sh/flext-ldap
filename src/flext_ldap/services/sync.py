@@ -197,7 +197,7 @@ class FlextLdapSync(FlextLdapOperations):
         )
         if batch_result.failure:
             error_msg = batch_result.error or "Unknown error"
-            return r[m.Ldap.PhaseSyncResult].fail(f"Batch sync failed: {error_msg}")
+            return r[m.Ldap.PhaseSyncResult].fail_op("Batch sync", error_msg)
         batch_stats = batch_result.value
         duration = (datetime.now(UTC) - start_time).total_seconds()
         total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped

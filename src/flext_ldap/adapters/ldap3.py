@@ -1204,7 +1204,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 RuntimeError,
                 ImportError,
             ) as exc:
-                return r[t.SequenceOf[m.Ldif.Entry]].fail(f"Search failed: {exc!s}")
+                return r[t.SequenceOf[m.Ldif.Entry]].fail_op("Search", exc)
 
     _connection: p.Ldap.Ldap3Connection | None
     _server: p.Ldap.Ldap3Server | None
@@ -1354,7 +1354,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             ImportError,
             t.Ldap.LDAPException,
         ) as exc:
-            return r[bool].fail(f"Connection failed: {exc!s}")
+            return r[bool].fail_op("Connection", exc)
 
     def delete(
         self,
