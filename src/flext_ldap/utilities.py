@@ -238,6 +238,26 @@ class FlextLdapUtilities(u):
             return " ".join(normalized)
 
         @classmethod
+        def _convert_attr_value(
+            cls,
+            value: t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence,
+        ) -> t.StrSequence:
+            match value:
+                case None:
+                    return []
+                case bytes() | str() | bool() | int() | float():
+                    return cls.ldap3_value_to_strings(value)
+                case list() | tuple() | range():
+                    return [
+                        item.decode(c.Ldif.Encoding.UTF8, errors="replace")
+                        if isinstance(item, bytes)
+                        else str(item)
+                        for item in value
+                    ]
+                case _:
+                    return [str(value)]
+
+        @classmethod
         def attr_to_str_list(
             cls,
             attrs: (
@@ -258,31 +278,7 @@ class FlextLdapUtilities(u):
                 t.MappingKV[str, t.StrSequence]: Converted attributes
 
             """
-
-            def convert_value(
-                value: t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence,
-            ) -> t.StrSequence:
-                match value:
-                    case None:
-                        return []
-                    case bytes() | str() | bool() | int() | float():
-                        return cls.ldap3_value_to_strings(value)
-                    case list() | tuple() | range():
-                        return [
-                            item.decode(c.Ldif.Encoding.UTF8, errors="replace")
-                            if isinstance(item, bytes)
-                            else str(item)
-                            for item in value
-                        ]
-                    case _:
-                        return [str(value)]
-
-            attrs_dict: t.MappingKV[
-                str, t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence
-            ] = dict(attrs)
-            if not attrs_dict:
-                return {}
-            return {k: convert_value(v) for k, v in attrs_dict.items()}
+            return {k: cls._convert_attr_value(v) for k, v in (attrs or {}).items()}
 
         @staticmethod
         def ldap3_value_to_strings(
