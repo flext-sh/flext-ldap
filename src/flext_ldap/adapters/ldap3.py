@@ -308,15 +308,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 if not FlextLdapLdap3Wrappers.start_tls(connection):
                     return e.fail_operation("start TLS")
                 return r[bool].ok(value=True)
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-            ) as tls_error:
+            except c.EXC_BROAD_IO_TYPE as tls_error:
                 error_msg = f"Failed to start TLS: {tls_error}"
                 return r[bool].fail(error_msg)
 

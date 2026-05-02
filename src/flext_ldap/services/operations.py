@@ -565,15 +565,7 @@ class FlextLdapOperations(s):
                         entry_dn,
                         stats_builder,
                     )
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-            ) as exc:
+            except c.EXC_BROAD_IO_TYPE as exc:
                 entry_idx = idx_entry[0]
                 return r[m.Ldap.LdapBatchStats].fail(
                     f"Batch upsert aborted on unexpected exception at entry {entry_idx}: {exc}",

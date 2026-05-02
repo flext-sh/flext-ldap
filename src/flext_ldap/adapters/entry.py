@@ -185,7 +185,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Returns:
             r[p.Ldif.Entry]: Converted entry with metadata
-            or error if conversion fails (ValueError, TypeError, AttributeError).
+            or error if conversion fails c.EXC_BASIC_TYPE.
 
         """
         try:
@@ -226,15 +226,7 @@ class FlextLdapEntryAdapter(s[bool]):
                 attributes=ldif_attrs,
                 metadata=metadata_obj,
             )
-        except (
-            ValueError,
-            TypeError,
-            AttributeError,
-            KeyError,
-            OSError,
-            RuntimeError,
-            ImportError,
-        ) as exc:
+        except c.EXC_BROAD_IO_TYPE as exc:
             entry_dn_for_log = ldap3_entry.entry_dn or c.Ldif.UNKNOWN_VALUE
             self.logger.exception(
                 "Failed to convert ldap3 entry to LDIF entry",
