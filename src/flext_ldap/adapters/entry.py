@@ -279,7 +279,7 @@ class FlextLdapEntryAdapter(s[bool]):
             return e.fail_validation("entry.attributes", error="empty")
         try:
             return r[t.Ldap.OperationAttributes].ok(u.Ldap.attr_to_str_list(attrs_dict))
-        except (ValueError, TypeError, AttributeError) as exc:
+        except c.EXC_BASIC_TYPE as exc:
             dn_value = (
                 getattr(entry.dn, "value", entry.dn)
                 if entry.dn

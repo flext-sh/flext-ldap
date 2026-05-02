@@ -45,7 +45,7 @@ class FlextLdapSyncCallbacks:
             return False
         try:
             signature: inspect.Signature = inspect.signature(callback)
-        except (TypeError, ValueError, AttributeError):
+        except c.EXC_BASIC_TYPE:
             return False
         parameter_count: int = len(signature.parameters)
         matches_single_phase: bool = parameter_count == c.Ldap.SINGLE_PHASE_PARAM_COUNT
@@ -251,7 +251,7 @@ class FlextLdapSync(FlextLdapOperations):
                 f"{c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
                 f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase)"
             )
-        except (TypeError, ValueError):
+        except c.EXC_TYPE_VALIDATION:
             msg = (
                 f"progress_callback {phase_callback!r} has an incompatible signature: "
                 f"must have {c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
