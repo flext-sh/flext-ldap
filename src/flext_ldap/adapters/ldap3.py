@@ -1,28 +1,7 @@
-"""LDAP3 adapter service - Infrastructure wrapper for ldap3 library.
+"""LDAP3 adapter — sole owner of ldap3 imports for flext-ldap.
 
-This module encapsulates all ldap3 library interactions, providing a clean
-interface for the flext-ldap service layer. Only this adapter imports ldap3
-directly; all other modules work with protocol abstractions.
-
-Business Rules:
-    - ldap3 library is ONLY imported here (zero tolerance for direct imports elsewhere)
-    - Connection binding uses ldap3.Connection with auto_bind and auto_range options
-    - STARTTLS is handled separately from SSL (mutual exclusion enforced in settings)
-    - Search results are converted to m.Ldif.Entry via FlextLdifParser
-    - CRUD operations (add, modify, delete) return r for consistency
-    - LDAPException is caught and converted to r.fail() (no exceptions leak)
-
-Audit Implications:
-    - All LDAP operations are traceable via ldap3 connection logging
-    - Connection failures are logged with host/port (credentials excluded)
-    - Search operations log result counts for compliance reporting
-    - CRUD operations log affected entry DNs for audit trail
-
-Architecture Notes:
-    - Implements Adapter pattern between ldap3 and flext-ldap service layer
-    - Uses SRP via inner classes: ConnectionManager, ResultConverter, AttributeNormalizer
-    - Extends s[bool] for health check capability
-    - Pydantic frozen=False allows mutable connection state
+Per AGENTS.md §2.7 (library abstraction): only this directory may import
+``ldap3`` directly; consumers depend on the ``p.Ldap`` protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -97,10 +76,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def _map_scope(
         scope: c.Ldap.SearchScope | str,
     ) -> p.Result[int]:
-        """Map scope string to ldap3 scope constant.
-
-        Uses direct StrEnum value mapping for type-safe conversion.
-        """
+        """Map scope string to ldap3 scope constant."""
         scope_enum: c.Ldap.SearchScope
         if isinstance(scope, c.Ldap.SearchScope):
             scope_enum = scope
@@ -137,34 +113,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         settings: m.Ldap.ConnectionConfig,
     ) -> p.Result[bool]:
-        """Establish LDAP connection using ldap3 library.
-
-        Business Rules:
-            - Creates ldap3 Server t.JsonValue based on SSL/TLS configuration
-            - Creates ldap3 Connection t.JsonValue with bind credentials
-            - STARTTLS is handled if use_tls=True and use_ssl=False
-            - Connection must be bound (authenticated) to succeed
-            - Connection state is tracked internally for subsequent operations
-
-        Audit Implications:
-            - Connection attempts are logged (host/port, credentials excluded)
-            - TLS/SSL configuration is logged for security audit
-            - Failed connections log error messages for forensic analysis
-            - Connection state changes trigger audit events
-
-        Architecture:
-            - Uses ConnectionManager.create_server() for Server t.JsonValue
-            - Uses ConnectionManager.create_connection() for Connection t.JsonValue
-            - Uses ConnectionManager.handle_tls() for STARTTLS if needed
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            settings: Connection configuration (host, port, bind_dn, bind_password, SSL/TLS)
-
-        Returns:
-            r[bool] indicating connection success
-
-        """
+        """Establish ldap3 server+connection, run STARTTLS, verify bind."""
         try:
             self._server = self.ConnectionManager.create_server(settings)
             connection = self.ConnectionManager.create_connection(
@@ -191,25 +140,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         )
 
     def disconnect(self) -> None:
-        """Close LDAP connection.
-
-        Business Rules:
-            - Gracefully closes LDAP connection and releases resources
-            - No-op if already disconnected (idempotent operation)
-            - Connection state is cleared after disconnection
-            - Errors during unbind are logged but not propagated
-
-        Audit Implications:
-            - Disconnection errors are logged at DEBUG level
-            - Connection state is cleared regardless of unbind success
-            - Resource cleanup is guaranteed
-
-        Architecture:
-            - Uses ldap3 Connection.unbind() for protocol-level disconnection
-            - Handles LDAPException and OSError gracefully
-            - Always clears connection state (finally block)
-
-        """
+        """Idempotent unbind that always clears connection state."""
         if self._connection is not None:
             try:
                 self._unbind_connection()
@@ -219,27 +150,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Execute service health check.
-
-        Business Rules:
-            - Returns failure if connection is not bound (NOT_CONNECTED error)
-            - Returns success if connection is active and bound
-            - Does not perform network round-trip (cached state check)
-            - Implements s.execute() contract
-
-        Audit Implications:
-            - Can be called by service orchestrators for health checks
-            - Health status reflects connection state
-            - No logging performed (lightweight check)
-
-        Architecture:
-            - Uses is_connected property for state check
-            - Returns r pattern - no exceptions raised
-
-        Returns:
-            r[bool]: Success if connected, failure with NOT_CONNECTED if not.
-
-        """
+        """Service health check — succeeds when the connection is bound."""
         if not self.is_connected:
             return r[bool].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         return r[bool].ok(value=True)
@@ -293,10 +204,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         return r[p.Ldap.Ldap3Connection].ok(self._connection)
 
     def _unbind_connection(self) -> None:
-        """Unbind and close LDAP connection.
-
-        This typed wrapper handles the untyped ldap3 unbind() call.
-        Propagates exceptions to callers for explicit error handling.
-        """
+        """Unbind and close LDAP connection."""
         if self._connection is not None:
             _ = FlextLdapLdap3Wrappers.unbind(self._connection)
