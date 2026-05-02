@@ -107,7 +107,7 @@ from flext_core import u
 from flext_core import s
 from flext_core import t
 from flext_core import u
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 class UserService:
@@ -115,7 +115,7 @@ class UserService:
 
     def __init__(self) -> None:
         self.logger = u.fetch_logger(__name__)
-        self._ldap_api = get_flext_ldap_api()
+        self._ldap_api = ldap
         self._container = FlextContainer.get_global()
 
     def process_user_authentication(
@@ -191,7 +191,8 @@ ______________________________________________________________________
 ```python
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -225,7 +226,7 @@ def authenticate_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 @app.post("/auth/login")
 def login(username: str, password: str) -> t.JsonMapping:
     """User login endpoint with LDAP authentication."""
-    ldap_api = get_flext_ldap_api()
+    ldap_api = ldap
 
     auth_result = ldap_api.authenticate_user(username, password)
     if auth_result.failure:
@@ -247,7 +248,7 @@ def search_users(
     token: str = Depends(authenticate_token),
 ) -> t.JsonMapping:
     """Search users endpoint with LDAP integration."""
-    ldap_api = get_flext_ldap_api()
+    ldap_api = ldap
 
     search_request = FlextLdapEntities.SearchRequest(
         base_dn="ou=users,dc=example,dc=com",
@@ -281,7 +282,7 @@ def create_user(
     user_data: dict, token: str = Depends(authenticate_token)
 ) -> t.JsonMapping:
     """Create user endpoint with LDAP integration."""
-    ldap_api = get_flext_ldap_api()
+    ldap_api = ldap
 
     create_request = FlextLdapEntities.CreateUserRequest(
         dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
@@ -312,7 +313,7 @@ ______________________________________________________________________
 ```python
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 class FlextLdapBackend(BaseBackend):
@@ -325,7 +326,7 @@ class FlextLdapBackend(BaseBackend):
 
         # Run LDAP authentication
         try:
-            ldap_api = get_flext_ldap_api()
+            ldap_api = ldap
             auth_result = run(ldap_api.authenticate_user(username, password))
 
             if auth_result.failure:
@@ -384,7 +385,8 @@ AUTHENTICATION_BACKENDS = [
 ```python
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 
 class Command(BaseCommand):
@@ -405,7 +407,7 @@ class Command(BaseCommand):
 
     def _sync_users(self, dry_run: bool):
         """Perform user synchronization."""
-        ldap_api = get_flext_ldap_api()
+        ldap_api = ldap
 
         # Search for all users
         search_request = FlextLdapEntities.SearchRequest(
@@ -485,7 +487,8 @@ ______________________________________________________________________
 ```python
 from flask import Flask, request, jsonify, g
 from functools import wraps
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 app = Flask(__name__)
 
@@ -520,7 +523,7 @@ def require_auth(f):
 
 def check_auth(username: str, password: str) -> bool:
     """Check username/password against LDAP."""
-    ldap_api = get_flext_ldap_api()
+    ldap_api = ldap
 
     loop = new_event_loop()
     set_event_loop(loop)
@@ -541,7 +544,7 @@ def search_users():
     filter_str = request.args.get("filter", "(objectClass=person)")
     limit = int(request.args.get("limit", 100))
 
-    ldap_api = get_flext_ldap_api()
+    ldap_api = ldap
 
     search_request = FlextLdapEntities.SearchRequest(
         base_dn="ou=users,dc=example,dc=com",
@@ -645,7 +648,7 @@ COPY . .
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "from flext_ldap import get_flext_ldap_api; import  run(get_flext_ldap_api().test_connection())"
+    CMD python -c "from flext_ldap.api import ldap; import  run(ldap.test_connection())"
 
 EXPOSE 8000
 
@@ -1085,7 +1088,7 @@ ______________________________________________________________________
 
 ```python
 from prometheus_client import Counter, Histogram, start_http_server
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 import time
 
 # Metrics
@@ -1102,7 +1105,7 @@ class MetricsWrapper:
     """Wrapper to add metrics to LDAP operations."""
 
     def __init__(self):
-        self._ldap_api = get_flext_ldap_api()
+        self._ldap_api = ldap
 
     def authenticate_user_with_metrics(self, username: str, password: str):
         """Authenticate user with metrics collection."""
@@ -1128,7 +1131,7 @@ start_http_server(8001)
 
 ```python
 from fastapi import FastAPI
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 app = FastAPI()
 
@@ -1142,7 +1145,7 @@ def health_check():
 @app.get("/ready")
 def readiness_check():
     """Readiness check with LDAP connectivity."""
-    ldap_api = get_flext_ldap_api()
+    ldap_api = ldap
 
     connection_result = ldap_api.test_connection()
 

@@ -137,7 +137,7 @@ make val   # Run quality checks to verify installation
 Test your installation:
 
 ```bash
-python -c "from flext_ldap import get_flext_ldap_api; print('Installation successful')"
+python -c "from flext_ldap.api import ldap; print('Installation successful')"
 ```
 
 ______________________________________________________________________
@@ -190,12 +190,12 @@ ______________________________________________________________________
 ### **Basic Connection Test**
 
 ```python
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 def test_connection():
     """Test basic LDAP connectivity."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     result = api.test_connection()
     if result.success:
@@ -210,12 +210,13 @@ run(test_connection())
 ### **Simple Directory Search**
 
 ```python
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 
 def basic_search():
     """Perform a basic directory search."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     search_request = FlextLdapEntities.SearchRequest(
         base_dn="dc=example,dc=com",
@@ -240,12 +241,12 @@ run(basic_search())
 ### **User Authentication**
 
 ```python
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 def authenticate_user():
     """Authenticate a user against LDAP."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     username = "john.doe"
     password = "user-password"

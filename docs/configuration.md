@@ -311,12 +311,12 @@ ______________________________________________________________________
 ### Validating Configuration
 
 ```python
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 def validate_config():
     """Validate LDAP configuration."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     result = api.test_connection()
     if result.success:

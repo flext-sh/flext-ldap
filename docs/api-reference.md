@@ -3,7 +3,7 @@
 <!-- TOC START -->
 - [Table of Contents](#table-of-contents)
 - [🚀 Main API](#main-api)
-  - [`get_flext_ldap_api(settings=None)`](#getflextldapapisettingsnone)
+  - [`flext_ldap.api.ldap`](#flextldapapildap)
 - [🏗️ FlextLdapClients](#flextldapclients)
   - [`search_entries(request: SearchRequest) -> p.Result[List[LdapEntry]]`](#searchentriesrequest-searchrequest-presultlistldapentry)
   - [`authenticate_user(username: str, password: str) -> p.Result[FlextLdapUser]`](#authenticateuserusername-str-password-str-presultflextldapuser)
@@ -39,7 +39,7 @@
 
 - API Reference
   - 🚀 Main API
-    - `get_flext_ldap_api(settings=None)`
+    - `flext_ldap.api.ldap`
   - 🏗️ FlextLdapClients - [`search_entries(request: SearchRequest) -> p.Result[List[LdapEntry]]`](#search_entriesrequest-searchrequest---flextresultlistldapentry) - [`authenticate_user(username: str, password: str) -> p.Result[FlextLdapUser]`](#authenticate_userusername-str-password-str---flextresultflextldapuser) - [`create_user(request: CreateUserRequest) -> p.Result[FlextLdapUser]`](#create_userrequest-createuserrequest---flextresultflextldapuser) - [`test_connection() -> p.Result[str]`](#test_connection---flextresultstr)
   - 📊 Domain Entities
     - FlextLdapEntities
@@ -115,22 +115,16 @@ ______________________________________________________________________
 
 ## 🚀 Main API
 
-### `get_flext_ldap_api(settings=None)`
+### `flext_ldap.api.ldap`
 
-Factory function to get the main LDAP API instance.
-
-**Parameters:**
-
-- `settings` (FlextLdapSettings, optional): Configuration t.JsonValue. If None, uses default settings.
-
-**Returns:** FlextLdapClients instance
+Default LDAP API instance (FlextLdapClients).
 
 **Example:**
 
 ```python
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
-api = get_flext_ldap_api()
+api = ldap
 ```
 
 ______________________________________________________________________

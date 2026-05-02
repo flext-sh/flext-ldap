@@ -163,7 +163,7 @@ pre-commit install
 poetry install --with dev,test,docs
 
 # Verify development setup
-python -c "from flext_ldap import get_flext_ldap_api; print('✅ Development setup complete')"
+python -c "from flext_ldap.api import ldap; print('✅ Development setup complete')"
 ```
 
 ______________________________________________________________________
@@ -489,7 +489,8 @@ class TestFlextLdapUser:
 
 ```python
 import pytest
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 
 @pytest.mark.integration
@@ -499,7 +500,7 @@ class TestLdapOperations:
 
     def test_user_authentication_success(self, ldap_server):
         """Test successful user authentication."""
-        api = get_flext_ldap_api()
+        api = ldap
 
         # Create test user first
         create_request = FlextLdapEntities.CreateUserRequest(
@@ -523,7 +524,7 @@ class TestLdapOperations:
 
     def test_user_search(self, ldap_server):
         """Test user search functionality."""
-        api = get_flext_ldap_api()
+        api = ldap
 
         search_request = FlextLdapEntities.SearchRequest(
             base_dn="dc=flext,dc=local",
@@ -618,7 +619,7 @@ def ldap_server():
 @pytest.fixture
 def authenticated_user():
     """Fixture for authenticated user tests."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     # Create test user
     create_request = FlextLdapEntities.CreateUserRequest(
@@ -653,7 +654,7 @@ class FlextLdapClients:
 
     Examples:
         Basic usage:
-        >>> api = get_flext_ldap_api()
+        >>> api = ldap
         >>> result = api.test_connection()
         >>> if result.success:
         ...     print("Connected to LDAP server")

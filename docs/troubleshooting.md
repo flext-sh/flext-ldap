@@ -169,11 +169,11 @@ AuthenticationError: Authentication failed: Invalid credentials
 **Diagnosis:**
 
 ```python
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 def diagnose_auth():
-    api = get_flext_ldap_api()
+    api = ldap
 
     # Test connection without authentication
     connection_result = api.test_connection()
@@ -324,11 +324,12 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 **Diagnosis:**
 
 ```python
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 
 def diagnose_base_dn():
-    api = get_flext_ldap_api()
+    api = ldap
 
     # Search from root to find available bases
     search_request = FlextLdapEntities.SearchRequest(
@@ -366,11 +367,12 @@ ______________________________________________________________________
 
 ```python
 import time
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 
 def diagnose_performance():
-    api = get_flext_ldap_api()
+    api = ldap
 
     # Test different search scopes and filters
     test_cases = [
@@ -497,7 +499,7 @@ settings = FlextLdapSettings(
 ```python
 class LDAPService:
     def __init__(self):
-        self._api = get_flext_ldap_api()  # Reuse single instance
+        self._api = ldap  # Reuse single instance
 
     def multiple_operations(self, users: list):
         """Perform multiple operations with same connection."""
@@ -614,9 +616,9 @@ except pkg_resources.DistributionNotFound:
 
 # Check available imports
 try:
-    from flext_ldap import get_flext_ldap_api
+    from flext_ldap.api import ldap
 
-    print("✅ get_flext_ldap_api available")
+    print("✅ flext_ldap.api.ldap available")
 except ImportError as e:
     print(f"❌ Import error: {e}")
 
@@ -672,12 +674,12 @@ ______________________________________________________________________
 ### r Error Handling
 
 ```python
-from flext_ldap import get_flext_ldap_api
+from flext_ldap.api import ldap
 
 
 def handle_errors_properly():
     """Demonstrate proper error handling with r."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     # Always check result status
     result = api.authenticate_user("test", "wrong-password")
@@ -756,12 +758,13 @@ ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=exam
 ```python
 import cProfile
 import pstats
-from flext_ldap import get_flext_ldap_api, FlextLdapEntities
+from flext_ldap import FlextLdapEntities
+from flext_ldap.api import ldap
 
 
 def profile_ldap_operations():
     """Profile LDAP operations for performance analysis."""
-    api = get_flext_ldap_api()
+    api = ldap
 
     # Create multiple search requests
     search_request = FlextLdapEntities.SearchRequest(

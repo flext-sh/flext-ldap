@@ -1042,15 +1042,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                         ),
                     )
                 return self._extract_error_result(connection, "Modify failed")
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-            ) as exc:
+            except c.EXC_BROAD_IO_TYPE as exc:
                 error_msg = f"Modify failed: {exc!s}"
                 return r[m.Ldap.OperationResult].fail(error_msg)
 
