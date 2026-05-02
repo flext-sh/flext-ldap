@@ -23,8 +23,13 @@ if _t.TYPE_CHECKING:
         __version_info__,
     )
     from flext_ldap._models.ldap import FlextLdapModelsLdap
+    from flext_ldap.adapters._ldap3.connection_manager import ConnectionManager
+    from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
+    from flext_ldap.adapters._ldap3.result_converter import ResultConverter
+    from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
+    from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter, FlextLdapLdap3Wrappers
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
     from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapService, s
     from flext_ldap.constants import FlextLdapConstants, c
@@ -58,11 +63,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "__version_info__",
             ),
             "._models.ldap": ("FlextLdapModelsLdap",),
+            ".adapters._ldap3.connection_manager": ("ConnectionManager",),
+            ".adapters._ldap3.operation_executor": ("OperationExecutor",),
+            ".adapters._ldap3.result_converter": ("ResultConverter",),
+            ".adapters._ldap3.search_executor": ("SearchExecutor",),
+            ".adapters._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
             ".adapters.entry": ("FlextLdapEntryAdapter",),
-            ".adapters.ldap3": (
-                "FlextLdapLdap3Adapter",
-                "FlextLdapLdap3Wrappers",
-            ),
+            ".adapters.ldap3": ("FlextLdapLdap3Adapter",),
             ".api": (
                 "FlextLdap",
                 "ldap",
@@ -135,6 +142,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
+    "ConnectionManager",
     "FlextLdap",
     "FlextLdapApiRuntime",
     "FlextLdapConnection",
@@ -153,6 +161,9 @@ __all__: list[str] = [
     "FlextLdapSyncCallbacks",
     "FlextLdapTypes",
     "FlextLdapUtilities",
+    "OperationExecutor",
+    "ResultConverter",
+    "SearchExecutor",
     "__author__",
     "__author_email__",
     "__description__",
