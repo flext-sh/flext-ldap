@@ -700,45 +700,51 @@ class FlextLdapUtilities(u):
             connection: p.Ldap.Ldap3Connection,
         ) -> p.Result[t.Ldap.OperationAttributes]:
             """Read rootDSE data from a bound ldap3 connection."""
+            result: p.Result[t.Ldap.OperationAttributes]
             search_method = getattr(connection, "search", None)
             if not callable(search_method):
-                return r[t.Ldap.OperationAttributes].fail(
+                result = r[t.Ldap.OperationAttributes].fail(
                     "rootDSE query failed: search unavailable",
                 )
-            try:
-                if not search_method(
-                    search_base="",
-                    search_filter=str(c.Ldap.ALL_ENTRIES_FILTER),
-                    search_scope=c.Ldap.SearchScopeValue.BASE,
-                    attributes=str(c.Ldap.AttributeName.ALL_ATTRIBUTES),
-                ):
-                    return r[t.Ldap.OperationAttributes].fail_op(
-                        "rootDSE query", connection.result
+            else:
+                try:
+                    search_ok = search_method(
+                        search_base="",
+                        search_filter=str(c.Ldap.ALL_ENTRIES_FILTER),
+                        search_scope=c.Ldap.SearchScopeValue.BASE,
+                        attributes=str(c.Ldap.AttributeName.ALL_ATTRIBUTES),
                     )
-            except (
-                ValueError,
-                TypeError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-                KeyError,
-                t.Ldap.LDAPException,
-            ) as exc:
-                return r[t.Ldap.OperationAttributes].fail_op("rootDSE query", exc)
-            entries = getattr(connection, "entries", [])
-            if not entries:
-                return r[t.Ldap.OperationAttributes].fail(
-                    "rootDSE query returned no entries",
-                )
-            root_dse_entry = entries[0]
-            if not isinstance(root_dse_entry, p.Ldap.Ldap3Entry):
-                return r[t.Ldap.OperationAttributes].fail(
-                    "rootDSE query returned invalid entry payload",
-                )
-            return r[t.Ldap.OperationAttributes].ok(
-                cls.attr_to_str_list(root_dse_entry.entry_attributes_as_dict),
-            )
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    OSError,
+                    RuntimeError,
+                    ImportError,
+                    KeyError,
+                    t.Ldap.LDAPException,
+                ) as exc:
+                    result = r[t.Ldap.OperationAttributes].fail_op("rootDSE query", exc)
+                else:
+                    if not search_ok:
+                        result = r[t.Ldap.OperationAttributes].fail_op(
+                            "rootDSE query", connection.result
+                        )
+                    elif not getattr(connection, "entries", []):
+                        result = r[t.Ldap.OperationAttributes].fail(
+                            "rootDSE query returned no entries",
+                        )
+                    elif not isinstance(connection.entries[0], p.Ldap.Ldap3Entry):
+                        result = r[t.Ldap.OperationAttributes].fail(
+                            "rootDSE query returned invalid entry payload",
+                        )
+                    else:
+                        result = r[t.Ldap.OperationAttributes].ok(
+                            cls.attr_to_str_list(
+                                connection.entries[0].entry_attributes_as_dict
+                            ),
+                        )
+            return result
 
         @classmethod
         def detect_from_connection(
