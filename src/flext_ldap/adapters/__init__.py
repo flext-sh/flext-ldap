@@ -16,6 +16,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._ldap3.connection_manager": ("ConnectionManager",),
             "._ldap3.operation_executor": ("OperationExecutor",),
             "._ldap3.result_converter": ("ResultConverter",),
+            "._ldap3.result_extract": ("ResultConverterExtractMixin",),
             "._ldap3.search_executor": ("SearchExecutor",),
             "._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
             ".entry": ("FlextLdapEntryAdapter",),

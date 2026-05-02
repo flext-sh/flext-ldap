@@ -10,6 +10,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".connection_manager": ("ConnectionManager",),
         ".operation_executor": ("OperationExecutor",),
         ".result_converter": ("ResultConverter",),
+        ".result_extract": ("ResultConverterExtractMixin",),
         ".search_executor": ("SearchExecutor",),
         ".wrappers": ("FlextLdapLdap3Wrappers",),
     },

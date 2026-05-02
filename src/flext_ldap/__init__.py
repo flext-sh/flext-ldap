@@ -26,6 +26,7 @@ if _t.TYPE_CHECKING:
     from flext_ldap.adapters._ldap3.connection_manager import ConnectionManager
     from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
     from flext_ldap.adapters._ldap3.result_converter import ResultConverter
+    from flext_ldap.adapters._ldap3.result_extract import ResultConverterExtractMixin
     from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
     from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter
@@ -66,6 +67,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".adapters._ldap3.connection_manager": ("ConnectionManager",),
             ".adapters._ldap3.operation_executor": ("OperationExecutor",),
             ".adapters._ldap3.result_converter": ("ResultConverter",),
+            ".adapters._ldap3.result_extract": ("ResultConverterExtractMixin",),
             ".adapters._ldap3.search_executor": ("SearchExecutor",),
             ".adapters._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
             ".adapters.entry": ("FlextLdapEntryAdapter",),
@@ -163,6 +165,7 @@ __all__: list[str] = [
     "FlextLdapUtilities",
     "OperationExecutor",
     "ResultConverter",
+    "ResultConverterExtractMixin",
     "SearchExecutor",
     "__author__",
     "__author_email__",
