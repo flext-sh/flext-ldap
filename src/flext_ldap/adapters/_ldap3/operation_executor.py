@@ -58,8 +58,8 @@ class OperationExecutor:
                 error_msg = f"{prefix}: {description!r}"
         return r[m.Ldap.OperationResult].fail(error_msg)
 
+    @staticmethod
     def execute_add(
-        self,
         connection: p.Ldap.Ldap3Connection,
         dn_str: str,
         ldap_attrs: t.Ldap.OperationAttributes,
@@ -76,8 +76,8 @@ class OperationExecutor:
             ),
         )
 
+    @staticmethod
     def execute_delete(
-        self,
         connection: p.Ldap.Ldap3Connection,
         dn: str | m.Ldif.DN,
     ) -> p.Result[m.Ldap.OperationResult]:
@@ -89,8 +89,8 @@ class OperationExecutor:
             lambda: FlextLdapLdap3Wrappers.delete(connection, dn_str),
         )
 
+    @staticmethod
     def execute_modify(
-        self,
         connection: p.Ldap.Ldap3Connection,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,

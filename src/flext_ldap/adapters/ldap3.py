@@ -118,49 +118,19 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         entry: m.Ldif.Entry,
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Add LDAP entry using Entry model.
-
-        Business Rules:
-            - Entry attributes are converted from m.Ldif.Entry to ldap3 format
-            - DN is extracted using u.Ldif.get_dn_value()
-            - Entry must be unique (LDAP error 68 if entry already exists)
-            - Entry must conform to LDAP schema constraints
-            - Connection must be established and bound before add operation
-
-        Audit Implications:
-            - Add operations are logged with entry DN
-            - Successful adds log affected count (always 1)
-            - Failed adds log error messages with DN for forensic analysis
-            - Attribute conversion failures are logged before LDAP operation
-
-        Architecture:
-            - Uses FlextLdapEntryAdapter.ldif_entry_to_ldap3_attributes() for conversion
-            - Uses OperationExecutor.execute_add() for protocol-level operation
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            entry: Entry model to add (must include DN and required attributes)
-
-        Returns:
-            r containing OperationResult with success status and entries_affected=1
-
-        """
-        connection_result = self._get_connection()
-        if connection_result.failure:
-            return r[m.Ldap.OperationResult].fail(
-                connection_result.error or "",
+        """Add LDAP entry via railway: connection → attrs conversion → execute_add."""
+        return self._get_connection().flat_map(
+            lambda conn: self._entry_adapter.ldif_entry_to_ldap3_attributes(
+                entry,
             )
-        attrs_result = self._entry_adapter.ldif_entry_to_ldap3_attributes(entry)
-        if attrs_result.failure:
-            error_msg = attrs_result.error or ""
-            return r[m.Ldap.OperationResult].fail(
-                f"Failed to convert entry attributes: {error_msg}",
-            )
-        dn_str = u.Ldif.get_dn_value(entry.dn) if entry.dn is not None else "unknown"
-        return self.OperationExecutor().execute_add(
-            connection_result.value,
-            dn_str,
-            attrs_result.value,
+            .map_error(lambda err: f"Failed to convert entry attributes: {err}")
+            .flat_map(
+                lambda attrs: self.OperationExecutor.execute_add(
+                    conn,
+                    u.Ldif.get_dn_value(entry.dn) if entry.dn is not None else "unknown",
+                    attrs,
+                ),
+            ),
         )
 
     def connect(
@@ -208,54 +178,17 @@ class FlextLdapLdap3Adapter(s[bool]):
             if not FlextLdapLdap3Wrappers.is_bound(connection):
                 return e.fail_operation("bind to LDAP server")
             return r[bool].ok(value=True)
-        except (
-            ValueError,
-            TypeError,
-            KeyError,
-            AttributeError,
-            OSError,
-            RuntimeError,
-            ImportError,
-            t.Ldap.LDAPException,
-        ) as exc:
+        except c.Ldap.EXC_CONNECTION as exc:
             return r[bool].fail_op("Connection", exc)
 
     def delete(
         self,
         dn: str | m.Ldif.DN,
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Delete LDAP entry.
-
-        Business Rules:
-            - Entry must exist before deletion (LDAP error 32 if not found)
-            - Entry must not have children (LDAP error 66 if has children)
-            - DN normalization is applied using u.Ldif.get_dn_value()
-            - String DNs are converted to DN models for type safety
-            - Connection must be established and bound before delete operation
-
-        Audit Implications:
-            - Delete operations are logged with DN for critical audit trail
-            - Successful deletes log affected count (always 1)
-            - Failed deletes log error messages with DN for forensic analysis
-
-        Architecture:
-            - Uses OperationExecutor.execute_delete() for protocol-level operation
-            - DN conversion handled by u.Ldif
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            dn: Distinguished name of entry to delete (string or DN model)
-
-        Returns:
-            r containing OperationResult with success status and entries_affected=1
-
-        """
-        connection_result = self._get_connection()
-        if connection_result.failure:
-            return r[m.Ldap.OperationResult].fail(
-                connection_result.error or "",
-            )
-        return self.OperationExecutor().execute_delete(connection_result.value, dn)
+        """Delete LDAP entry via railway: connection → execute_delete."""
+        return self._get_connection().flat_map(
+            lambda conn: self.OperationExecutor.execute_delete(conn, dn),
+        )
 
     def disconnect(self) -> None:
         """Close LDAP connection.
@@ -316,42 +249,9 @@ class FlextLdapLdap3Adapter(s[bool]):
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Modify LDAP entry.
-
-        Business Rules:
-            - Entry must exist before modification (LDAP error 32 if not found)
-            - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
-            - DN normalization is applied using u.Ldif.get_dn_value()
-            - String DNs are converted to DN models for type safety
-            - Connection must be established and bound before modify operation
-
-        Audit Implications:
-            - Modify operations are logged with DN and change summary
-            - Successful modifies log affected count (always 1)
-            - Failed modifies log error messages with DN for forensic analysis
-
-        Architecture:
-            - Uses OperationExecutor.execute_modify() for protocol-level operation
-            - DN conversion handled by u.Ldif
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            dn: Distinguished name of entry to modify (string or DN model)
-            changes: Modification changes dict in ldap3 format
-
-        Returns:
-            r containing OperationResult with success status and entries_affected=1
-
-        """
-        connection_result = self._get_connection()
-        if connection_result.failure:
-            return r[m.Ldap.OperationResult].fail(
-                connection_result.error or "",
-            )
-        return self.OperationExecutor().execute_modify(
-            connection_result.value,
-            dn,
-            changes,
+        """Modify LDAP entry via railway: connection → execute_modify."""
+        return self._get_connection().flat_map(
+            lambda conn: self.OperationExecutor.execute_modify(conn, dn, changes),
         )
 
     def search(
@@ -359,67 +259,31 @@ class FlextLdapLdap3Adapter(s[bool]):
         search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
     ) -> p.Result[m.Ldap.SearchResult]:
-        """Perform LDAP search operation and convert to Entry models.
-
-        Business Rules:
-            - Connection must be established and bound before search
-            - Search scope is mapped from FlextLdapConstants to ldap3 format (ONELEVEL→LEVEL)
-            - Server type determines parsing servers (OpenLDAP, OUD, OID, RFC)
-            - Search results are parsed using FlextLdifParser.parse_ldap3_results()
-            - Empty result sets return successful SearchResult with empty entries list
-            - LDAP result codes are validated (partial success codes allowed)
-
-        Audit Implications:
-            - Search operations are logged with base_dn, filter, and scope
-            - Result counts are logged for compliance reporting
-            - Failed searches log error messages with search parameters
-            - Server type normalization is logged for server tracking
-
-        Architecture:
-            - Uses SearchExecutor.execute() for protocol-level search
-            - Uses FlextLdifParser for server-specific entry parsing
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            search_options: Search configuration (base_dn, filter_str, scope, attributes)
-            server_type: LDAP server type for parsing servers (default: RFC)
-
-        Returns:
-            r containing SearchResult with Entry models
-
-        """
-        connection_result = self._get_connection()
-        if connection_result.failure:
-            error_msg = connection_result.error or ""
-            return r[m.Ldap.SearchResult].fail(error_msg)
-        scope_for_mapping: str | c.Ldap.SearchScope = search_options.scope
-        scope_result = FlextLdapLdap3Adapter._map_scope(scope_for_mapping)
-        if scope_result.failure:
-            return r[m.Ldap.SearchResult].fail(
-                scope_result.error or "",
+        """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``."""
+        return (
+            self._get_connection()
+            .flat_map(
+                lambda conn: FlextLdapLdap3Adapter._map_scope(search_options.scope).flat_map(
+                    lambda scope: self.SearchExecutor.execute(
+                        conn,
+                        m.Ldap.SearchParams(
+                            base_dn=search_options.base_dn,
+                            filter_str=search_options.filter_str,
+                            ldap_scope=scope,
+                            search_attributes=search_options.attributes or [],
+                            size_limit=search_options.size_limit,
+                            time_limit=search_options.time_limit,
+                        ),
+                        server_type,
+                    ),
+                ),
             )
-        search_params = m.Ldap.SearchParams(
-            base_dn=search_options.base_dn,
-            filter_str=search_options.filter_str,
-            ldap_scope=scope_result.value,
-            search_attributes=search_options.attributes or [],
-            size_limit=search_options.size_limit,
-            time_limit=search_options.time_limit,
-        )
-        entries_result = self.SearchExecutor().execute(
-            connection_result.value,
-            search_params,
-            server_type,
-        )
-        if entries_result.failure:
-            return r[m.Ldap.SearchResult].fail(
-                entries_result.error or "",
+            .map(
+                lambda entries: m.Ldap.SearchResult.model_validate({
+                    "entries": entries,
+                    "search_options": search_options,
+                }),
             )
-        return r[m.Ldap.SearchResult].ok(
-            m.Ldap.SearchResult.model_validate({
-                "entries": entries_result.value,
-                "search_options": search_options,
-            }),
         )
 
     def _get_connection(self) -> p.Result[p.Ldap.Ldap3Connection]:

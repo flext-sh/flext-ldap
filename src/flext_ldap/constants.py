@@ -9,9 +9,14 @@ import re
 from collections.abc import Mapping
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
 
-from flext_ldif import c, t
+from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
+
+from flext_ldif import c
+
+if TYPE_CHECKING:
+    from flext_ldap import t
 
 
 class FlextLdapConstants(c):
@@ -155,6 +160,12 @@ class FlextLdapConstants(c):
             OperationType.SEARCH: "Search failed",
         })
         "Per-operation error message prefixes used by ``OperationExecutor``."
+
+        EXC_CONNECTION: Final[tuple[type[Exception], ...]] = (
+            *c.EXC_BROAD_IO_TYPE,
+            _Ldap3LDAPException,
+        )
+        "Boundary catch for ldap3 connect/bind: c.EXC_BROAD_IO_TYPE plus LDAPException."
 
         @unique
         class UpsertOperation(StrEnum):
