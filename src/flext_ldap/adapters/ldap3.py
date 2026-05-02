@@ -1163,15 +1163,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                         )
                     entries.append(entry_result.value)
                 return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                RuntimeError,
-                ImportError,
-            ) as exc:
+            except c.EXC_BROAD_IO_TYPE as exc:
                 return r[t.SequenceOf[m.Ldif.Entry]].fail_op("Search", exc)
 
     _connection: p.Ldap.Ldap3Connection | None
