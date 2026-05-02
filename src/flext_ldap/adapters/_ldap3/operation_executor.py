@@ -71,9 +71,7 @@ class OperationExecutor:
         return OperationExecutor._execute(
             connection,
             c.Ldap.OperationType.ADD,
-            lambda: FlextLdapLdap3Wrappers.add(
-                connection, dn_str, None, attrs_dict
-            ),
+            lambda: FlextLdapLdap3Wrappers.add(connection, dn_str, None, attrs_dict),
         )
 
     @staticmethod

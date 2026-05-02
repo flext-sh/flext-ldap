@@ -96,16 +96,21 @@ class FlextLdapLdap3Adapter(s[bool]):
     ) -> p.Result[m.Ldap.OperationResult]:
         """Add LDAP entry via railway: connection → attrs conversion → execute_add."""
         return self._get_connection().flat_map(
-            lambda conn: self._entry_adapter.ldif_entry_to_ldap3_attributes(
-                entry,
-            )
-            .map_error(lambda err: f"Failed to convert entry attributes: {err}")
-            .flat_map(
-                lambda attrs: self.OperationExecutor.execute_add(
-                    conn,
-                    u.Ldif.get_dn_value(entry.dn) if entry.dn is not None else "unknown",
-                    attrs,
-                ),
+            lambda conn: (
+                self._entry_adapter
+                .ldif_entry_to_ldap3_attributes(
+                    entry,
+                )
+                .map_error(lambda err: f"Failed to convert entry attributes: {err}")
+                .flat_map(
+                    lambda attrs: self.OperationExecutor.execute_add(
+                        conn,
+                        u.Ldif.get_dn_value(entry.dn)
+                        if entry.dn is not None
+                        else "unknown",
+                        attrs,
+                    ),
+                )
             ),
         )
 
@@ -172,9 +177,12 @@ class FlextLdapLdap3Adapter(s[bool]):
     ) -> p.Result[m.Ldap.SearchResult]:
         """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``."""
         return (
-            self._get_connection()
+            self
+            ._get_connection()
             .flat_map(
-                lambda conn: FlextLdapLdap3Adapter._map_scope(search_options.scope).flat_map(
+                lambda conn: FlextLdapLdap3Adapter._map_scope(
+                    search_options.scope
+                ).flat_map(
                     lambda scope: self.SearchExecutor.execute(
                         conn,
                         m.Ldap.SearchParams(
