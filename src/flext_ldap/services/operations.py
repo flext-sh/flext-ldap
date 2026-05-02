@@ -31,10 +31,10 @@ Architecture Notes:
 from __future__ import annotations
 
 import logging
-from typing import cast, override
+from typing import override
 
 from flext_ldap import c, m, p, s, t, u
-from flext_ldif import FlextLdifConversion, e, r
+from flext_ldif import e, ldif, r
 
 
 class FlextLdapOperations(s):
@@ -197,18 +197,7 @@ class FlextLdapOperations(s):
                 return r[m.Ldap.LdapOperationResult].fail(
                     u.to_str(retry_result.error),
                 )
-            entry_result = u.Ldap.search_entry_to_ldif_entry(
-                cast("t.MappingKV[str, t.JsonValue]", existing_entries[0]),
-            )
-            if entry_result.failure:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    f"Failed to parse existing entry: {entry_result.error}"
-                )
-            existing_entry = entry_result.unwrap_or(None)
-            if existing_entry is None:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    "Existing entry parsed as None"
-                )
+            existing_entry = existing_entries[0]
             changes_result = u.Ldap.compare_entries(existing_entry, entry)
             if changes_result.failure:
                 return r[m.Ldap.LdapOperationResult].fail(
@@ -485,7 +474,7 @@ class FlextLdapOperations(s):
                 )
         target_server = u.Ldif.normalize_server_type(self._server_type)
         if current_server is not None and current_server != target_server:
-            conversion_result = FlextLdifConversion().convert_entry(
+            conversion_result = ldif.convert_model(
                 current_server,
                 target_server,
                 entry_for_adapter,
