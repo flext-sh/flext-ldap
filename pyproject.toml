@@ -17,7 +17,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
-  "Typing :: Typed"
+  "Typing :: Typed",
 ]
 dependencies = [
   "cryptography>=47.0.0",
@@ -27,7 +27,7 @@ dependencies = [
   "pydantic-core>=2.46.3",
   "pydantic-settings>=2.14.0",
   "pydantic>=2.13.3",
-  "structlog>=25.5.0"
+  "structlog>=25.5.0",
 ]
 description = "Enterprise LDAP Operations Library for FLEXT Framework"
 keywords = [
@@ -38,7 +38,7 @@ keywords = [
   "flext",
   "integration",
   "ldap",
-  "typed"
+  "typed",
 ]
 license = "MIT"
 name = "flext-ldap"
@@ -127,7 +127,7 @@ dev = [
   "types-setuptools>=80.9",
   "types-tabulate>=0.10",
   "types-toml>=0.10.8.20240310",
-  "vulture>=2.13"
+  "vulture>=2.13",
 ]
 
 [project.urls]
@@ -169,7 +169,7 @@ disable_error_code = [
   "misc",
   "name-defined",
   "prop-decorator",
-  "valid-type"
+  "valid-type",
 ]
 exclude = "^tests/fixtures(?:/|$)"
 explicit_package_bases = true
@@ -216,7 +216,7 @@ project-excludes = [
   ".flext-deps/**",
   ".venv/**",
   "typings/**",
-  "vendor/**"
+  "vendor/**",
 ]
 project-includes = [ "src/**/*.py*", "tests/**/*.py*" ]
 python-version = "3.13"
@@ -232,7 +232,7 @@ search-path = [
   "../flext-ldif/examples",
   "../flext-ldif/src",
   "../flext-tests/src",
-  "src"
+  "src",
 ]
 use-ignore-files = false
 
@@ -343,7 +343,7 @@ exclude = [
   "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
-  ".venv"
+  ".venv",
 ]
 extraPaths = [ ".", "../typings", "src" ]
 ignore = [ "**/*.pyi", "../typings" ]
@@ -411,12 +411,12 @@ addopts = [
   "--ignore-glob=*/tests/typings.py",
   "--ignore-glob=*/tests/utilities.py",
   "--markdown-docs",
-  "--strict-markers"
+  "--strict-markers",
 ]
 filterwarnings = [
   "ignore:.*cannot collect test class.*because it has a __init__ constructor.*:pytest.PytestCollectionWarning",
   "ignore:tagMap is deprecated\\. Please use TAG_MAP instead\\.:DeprecationWarning",
-  "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning"
+  "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning",
 ]
 markers = [
   "docker: tests requiring Docker",
@@ -428,7 +428,7 @@ markers = [
   "slow: slow-running tests",
   "smoke: smoke tests",
   "stress: stress tests",
-  "unit: unit tests"
+  "unit: unit tests",
 ]
 minversion = "8.0"
 python_classes = [ "Test*" ]
@@ -454,7 +454,7 @@ exclude = [
   "tests/fixtures/**",
   "typings",
   "vendor",
-  "venv"
+  "venv",
 ]
 fix = true
 line-length = 88
@@ -523,7 +523,7 @@ ignore = [
   "TRY300",
   "TRY301",
   "UP040",
-  "W293"
+  "W293",
 ]
 select = [ "ALL" ]
 
@@ -555,7 +555,7 @@ split-on-trailing-comma = true
   "S404",
   "S603",
   "T201",
-  "TID252"
+  "TID252",
 ]
 "**/*exceptions*" = [ "A001", "S105", "SLF001" ]
 "**/*handlers*" = [  ]
@@ -580,7 +580,7 @@ split-on-trailing-comma = true
   "S404",
   "S603",
   "T201",
-  "TID252"
+  "TID252",
 ]
 "**/*service*" = [ "N815", "PLC2801", "S404", "S603", "SLF001" ]
 "**/*subprocess_utils*" = [ "S404", "S603" ]
@@ -657,7 +657,7 @@ split-on-trailing-comma = true
   "TD003",
   "TID252",
   "TRY003",
-  "TRY004"
+  "TRY004",
 ]
 "**/*typings*" = [ "ANN401" ]
 "**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
@@ -673,7 +673,7 @@ split-on-trailing-comma = true
   "N999",
   "PLC2701",
   "RUF067",
-  "TC004"
+  "TC004",
 ]
 "**/_constants/*.py" = [ "S105" ]
 "**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
