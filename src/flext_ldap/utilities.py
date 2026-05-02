@@ -246,8 +246,6 @@ class FlextLdapUtilities(u):
                 | t.JsonMapping
                 | t.MappingKV[str, t.StrSequence]
             ),
-            *,
-            filter_list_like: bool = False,
         ) -> t.MappingKV[str, t.StrSequence]:
             """Convert attributes to str_list (generalized: map() + ensure).
 
@@ -255,7 +253,6 @@ class FlextLdapUtilities(u):
 
             Args:
                 attrs: Attributes to convert
-                filter_list_like: Only convert list-like values
 
             Returns:
                 t.MappingKV[str, t.StrSequence]: Converted attributes
@@ -278,8 +275,6 @@ class FlextLdapUtilities(u):
                             for item in value
                         ]
                     case _:
-                        if filter_list_like:
-                            return [str(value)]
                         return [str(value)]
 
             attrs_dict: t.MappingKV[

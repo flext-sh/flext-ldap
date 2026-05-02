@@ -43,7 +43,7 @@ class FlextLdapConnection(s):
             else m.Ldap.ConnectionConfig.model_validate(connection_config)
         )
 
-        def connect_once() -> r[bool]:
+        def connect_once() -> p.Result[bool]:
             connect_result = adapter.connect(concrete_config)
             if connect_result.success:
                 return r[bool].ok(value=connect_result.value)
