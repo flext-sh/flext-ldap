@@ -7,18 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import (
-    Callable,
-    Mapping,
-)
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, TypeGuard
 
 import pytest
 
 from flext_core import FlextSettings
-from flext_ldap import FlextLdapLdap3Wrappers, FlextLdapSettings
-from tests import c, m, t, u
+from flext_ldap import FlextLdapLdap3Wrappers
+from tests import c, t, u
 
 logger = u.fetch_logger(__name__)
 
@@ -27,14 +24,6 @@ logger = u.fetch_logger(__name__)
 def reset_settings_singleton() -> None:
     """Reset FlextSettings singleton between tests."""
     FlextSettings.reset_for_testing()
-
-
-@pytest.fixture
-def ldap_settings(
-    settings_factory: Callable[..., FlextLdapSettings],
-) -> FlextLdapSettings:
-    """Provide clean FlextLdapSettings for tests."""
-    return settings_factory(FlextLdapSettings)
 
 
 class WorkerInputConfig(Protocol):
@@ -148,37 +137,3 @@ def ldap_container(
         "use_ssl": False,
         "worker_id": worker_id,
     }
-
-
-@pytest.fixture(scope="module")
-def connection_config(
-    ldap_container: t.MappingKV[str, t.Scalar],
-) -> m.Ldap.ConnectionConfig:
-    port_value = ldap_container["port"]
-    if isinstance(port_value, int):
-        port_int = port_value
-    elif isinstance(port_value, str):
-        port_int = int(port_value)
-    else:
-        raise TypeError(
-            f"ldap_container port must be int or str, got {type(port_value).__name__}",
-        )
-    return m.Ldap.ConnectionConfig(
-        host=str(ldap_container["host"]),
-        port=port_int,
-        use_ssl=False,
-        bind_dn=str(ldap_container["bind_dn"]),
-        bind_password=str(ldap_container["password"]),
-    )
-
-
-@pytest.fixture
-def search_options(
-    ldap_container: t.MappingKV[str, t.Scalar],
-) -> m.Ldap.SearchOptions:
-    base_dn = str(ldap_container.get("base_dn", c.Ldap.EXAMPLE_BASE_DN))
-    return m.Ldap.SearchOptions(
-        base_dn=base_dn,
-        filter_str=c.Ldap.ALL_ENTRIES_FILTER,
-        scope=c.Ldap.SearchScope.SUBTREE,
-    )
