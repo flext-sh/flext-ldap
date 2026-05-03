@@ -1,4 +1,8 @@
-"""Type system foundation for flext-ldap tests."""
+"""Type system foundation for flext-ldap tests.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -8,23 +12,7 @@ from flext_ldap import t
 
 
 class TestsFlextLdapTypes(FlextTestsTypes, t):
-    """Type system foundation for flext-ldap tests - extends TestsFlextTypes and t.
-
-    Architecture: Extends both TestsFlextTypes and t with flext-ldap-specific
-    type definitions. All generic types from TestsFlextTypes and production
-    types from t are available through inheritance.
-
-    Hierarchy:
-    - t.Ldap.Tests.* (generic test types from flext_tests)
-    - t.Ldap.* (source types from flext_ldap)
-    - TestsFlextLdapTypes.Tests.* (flext-ldap-specific test types)
-
-    Rules:
-    - NEVER redeclare types from TestsFlextTypes or t
-    - Only flext-ldap-specific types allowed (not generic for other projects)
-    - All generic types come from TestsFlextTypes
-    - All production types come from t
-    """
+    """Type system foundation for flext-ldap tests - extends TestsFlextTypes and t."""
 
     class Ldap(t.Ldap):
         """LDAP test types."""

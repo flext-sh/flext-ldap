@@ -3,38 +3,8 @@
 This module provides a single flat namespace of typed constants (c.Ldap.Tests.*),
 organized for data-driven testing, maximum reuse, and composition.
 
-**Design Patterns:**
-
-1. **Enums for Closed Sets**: Use StrEnum/unique for scenarios and case tags that
-   are complete, fixed domains (e.g., CallbackGuardCase, Ldap3ServerCase,
-   PhaseName, AttrToStrListCase).
-
-2. **Composable Mappings**: MappingProxyType + Final ensure immutability and type
-   clarity. Keyed by enum values for composable, well-named test parameters.
-   Example: CALLBACK_GUARD_EXPECTED[case] -> (multi_bool, single_bool)
-
-3. **Flat & Reusable**: All constants live at c.Ldap.Tests.* — no sub-namespaces.
-   Tests @parametrize directly over Enums or iterate tuples/mappings.
-
-4. **Sequence & Set Constants**: Tuple and frozenset for ordered/unordered collections
-   that are fixed. Support pytest.mark.parametrize and data-driven assertions.
-
-**Usage Examples:**
-
-    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
-    def test_callback_guard(case):
-        expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        assert check_multi_phase(callback[case]) == expected
-
-    @pytest.mark.parametrize(
-        "attrs,str_list",
-        c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS.items()
-    )
-    def test_ldap_value_to_strings(attrs, str_list):
-        assert ldap_value_to_strings(attrs) == str_list
-
-    for count, affected in c.Ldap.Tests.SEARCH_RESULT_TOTAL_COUNT_CASES:
-        assert process_result(count) == affected
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

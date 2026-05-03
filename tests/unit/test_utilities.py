@@ -12,8 +12,7 @@ from __future__ import annotations
 import pytest
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from flext_ldap import m
-from tests import c, u
+from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -380,41 +379,65 @@ class TestsFlextLdapUtilitiesUnit:
     # --- query_root_dse ---
     def test_query_root_dse_no_search_method(self) -> None:
         class NoSearch:
-            pass
+            search: None = None
 
-        result = u.Ldap.query_root_dse(NoSearch())  # type: ignore[arg-type]
+            @property
+            def result(self) -> t.JsonValue:
+                return {}
+
+            @property
+            def entries(self) -> t.SequenceOf[str]:
+                return []
+
+        result = u.Ldap.query_root_dse(NoSearch())
         u.Ldap.Tests.fail(result)
 
     def test_query_root_dse_search_returns_false(self) -> None:
         class FalseSearch:
-            result: dict[str, object] = {}
-
-            def search(self, **kwargs: object) -> bool:
+            def search(self, **kwargs: str | int | bool | None) -> bool:
                 return False
 
-        result = u.Ldap.query_root_dse(FalseSearch())  # type: ignore[arg-type]
+            @property
+            def result(self) -> t.JsonValue:
+                return {}
+
+            @property
+            def entries(self) -> t.SequenceOf[str]:
+                return []
+
+        result = u.Ldap.query_root_dse(FalseSearch())
         u.Ldap.Tests.fail(result)
 
     def test_query_root_dse_no_entries(self) -> None:
         class EmptySearch:
-            result = {"result": 0}
-            entries: list[object] = []
-
-            def search(self, **kwargs: object) -> bool:
+            def search(self, **kwargs: str | int | bool | None) -> bool:
                 return True
 
-        result = u.Ldap.query_root_dse(EmptySearch())  # type: ignore[arg-type]
+            @property
+            def result(self) -> t.JsonValue:
+                return {"result": 0}
+
+            @property
+            def entries(self) -> t.SequenceOf[str]:
+                return []
+
+        result = u.Ldap.query_root_dse(EmptySearch())
         u.Ldap.Tests.fail(result)
 
     def test_query_root_dse_invalid_entry_type(self) -> None:
         class BadEntry:
-            result = {"result": 0}
-            entries = ["not_ldap3_entry"]
-
-            def search(self, **kwargs: object) -> bool:
+            def search(self, **kwargs: str | int | bool | None) -> bool:
                 return True
 
-        result = u.Ldap.query_root_dse(BadEntry())  # type: ignore[arg-type]
+            @property
+            def result(self) -> t.JsonValue:
+                return {"result": 0}
+
+            @property
+            def entries(self) -> t.SequenceOf[str]:
+                return ["not_ldap3_entry"]
+
+        result = u.Ldap.query_root_dse(BadEntry())
         u.Ldap.Tests.fail(result)
 
     def test_query_root_dse_with_real_mock(self) -> None:
@@ -436,12 +459,18 @@ class TestsFlextLdapUtilitiesUnit:
     # --- detect_from_connection ---
     def test_detect_from_connection_failure(self) -> None:
         class FailSearch:
-            result: dict[str, object] = {}
-
-            def search(self, **kwargs: object) -> bool:
+            def search(self, **kwargs: str | int | bool | None) -> bool:
                 return False
 
-        result = u.Ldap.detect_from_connection(FailSearch())  # type: ignore[arg-type]
+            @property
+            def result(self) -> t.JsonValue:
+                return {}
+
+            @property
+            def entries(self) -> t.SequenceOf[str]:
+                return []
+
+        result = u.Ldap.detect_from_connection(FailSearch())
         u.Ldap.Tests.fail(result)
 
     def test_detect_from_connection_with_mock(self) -> None:

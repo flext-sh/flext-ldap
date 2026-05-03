@@ -1,4 +1,4 @@
-"""Unit tests for flext_ldap.adapters.ldap3.Ldap3Adapter.
+"""Unit tests for flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter.
 
 Architecture: Single class per module following FLEXT patterns.
 Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.
@@ -11,20 +11,20 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapLdap3Adapter as Ldap3Adapter
+from flext_ldap import FlextLdapLdap3Adapter
 from tests import c, m, u
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapLdap3Adapter:
-    """Comprehensive tests for Ldap3Adapter.
+    """Comprehensive tests for FlextLdapLdap3Adapter.
 
     All test data comes from c.Ldap.Tests.* — zero inline constants.
     """
 
     def test_execute_returns_success(self) -> None:
-        adapter = Ldap3Adapter()
+        adapter = FlextLdapLdap3Adapter()
         result = adapter.execute()
         u.Ldap.Tests.fail(result, has=c.Ldap.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR)
 
@@ -41,7 +41,7 @@ class TestsFlextLdapLdap3Adapter:
             use_tls=use_tls,
             timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
-        server = Ldap3Adapter.ConnectionManager.create_server(settings)
+        server = FlextLdapLdap3Adapter.ConnectionManager.create_server(settings)
         assert server is not None
         u.Ldap.Tests.that(
             getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),

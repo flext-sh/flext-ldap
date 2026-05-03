@@ -11,6 +11,7 @@ This allows protocols to remain independent of model implementations.
 from __future__ import annotations
 
 import types
+from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
     Protocol,
@@ -165,11 +166,7 @@ class FlextLdapProtocols(p):
 
         @runtime_checkable
         class LdapClient(Protocol):
-            """Protocol for LDAP clients that support CRUD operations.
-
-            This protocol defines the interface for LDAP clients used in test helpers.
-            Uses structural types for type safety without importing models.
-            """
+            """Protocol for LDAP clients that support CRUD operations."""
 
             @property
             def is_connected(self) -> bool:
@@ -450,6 +447,42 @@ class FlextLdapProtocols(p):
             @property
             def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
                 """Get list of entries."""
+                ...
+
+        @runtime_checkable
+        class RootDseEntry(Protocol):
+            """Structural protocol for entries exposing rootDSE attributes."""
+
+            @property
+            def entry_attributes_as_dict(
+                self,
+            ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
+                """Return raw ldap3-style attribute payloads."""
+                ...
+
+        @runtime_checkable
+        class RootDseConnection(Protocol):
+            """Structural protocol for connections that can query rootDSE."""
+
+            @property
+            def search(
+                self,
+            ) -> Callable[..., bool | t.JsonValue | None] | None:
+                """Return the ldap3-compatible search callable when available."""
+                ...
+
+            @property
+            def result(self) -> t.MappingKV[str, t.JsonValue] | t.JsonValue | None:
+                """Return the raw ldap3 result payload for the last operation."""
+                ...
+
+            @property
+            def entries(
+                self,
+            ) -> t.SequenceOf[
+                FlextLdapProtocols.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue
+            ]:
+                """Return the entry payloads produced by the last search."""
                 ...
 
         # ── Structural Duck-Typing Protocols ─────────────────────

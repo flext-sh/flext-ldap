@@ -239,7 +239,12 @@ class FlextLdapUtilities(u):
         @classmethod
         def _convert_attr_value(
             cls,
-            value: t.JsonValue | t.Ldap.Ldap3AttributeValue | t.StrSequence,
+            value: (
+                t.JsonValue
+                | t.Ldap.Ldap3AttributeValue
+                | t.Ldap.Ldap3EntryValue
+                | t.StrSequence
+            ),
         ) -> t.StrSequence:
             match value:
                 case None:
@@ -262,6 +267,7 @@ class FlextLdapUtilities(u):
             attrs: (
                 t.Ldap.Ldap3AttributeDict
                 | t.MappingKV[str, t.Ldap.Ldap3AttributeValue]
+                | t.MappingKV[str, t.Ldap.Ldap3EntryValue]
                 | t.JsonMapping
                 | t.MappingKV[str, t.StrSequence]
             ),
@@ -697,9 +703,9 @@ class FlextLdapUtilities(u):
         @classmethod
         def query_root_dse(
             cls,
-            connection: p.Ldap.Ldap3Connection,
+            connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection,
         ) -> p.Result[t.Ldap.OperationAttributes]:
-            """Read rootDSE data from a bound ldap3 connection."""
+            """Read rootDSE data from a bound ldap3-compatible connection."""
             result: p.Result[t.Ldap.OperationAttributes]
             search_method = getattr(connection, "search", None)
             if not callable(search_method):
@@ -728,13 +734,13 @@ class FlextLdapUtilities(u):
                 else:
                     if not search_ok:
                         result = r[t.Ldap.OperationAttributes].fail_op(
-                            "rootDSE query", connection.result
+                            "rootDSE query", str(connection.result)
                         )
                     elif not getattr(connection, "entries", []):
                         result = r[t.Ldap.OperationAttributes].fail(
                             "rootDSE query returned no entries",
                         )
-                    elif not isinstance(connection.entries[0], p.Ldap.Ldap3Entry):
+                    elif not isinstance(connection.entries[0], p.Ldap.RootDseEntry):
                         result = r[t.Ldap.OperationAttributes].fail(
                             "rootDSE query returned invalid entry payload",
                         )
@@ -749,7 +755,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def detect_from_connection(
             cls,
-            connection: p.Ldap.Ldap3Connection,
+            connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection,
         ) -> p.Result[str]:
             """Detect LDAP server type from rootDSE on an active connection."""
             root_dse_result = cls.query_root_dse(connection)
