@@ -203,7 +203,8 @@ class FlextLdapOperations(s):
                 return r[m.Ldap.LdapOperationResult].fail_op(
                     "Entry comparison", changes_result.error
                 )
-            changes = changes_result.unwrap_or({})
+            empty_changes: t.Ldap.OperationChanges = {}
+            changes = changes_result.unwrap_or(empty_changes)
             if not changes:
                 return r[m.Ldap.LdapOperationResult].ok(
                     m.Ldap.LdapOperationResult.with_operation(
