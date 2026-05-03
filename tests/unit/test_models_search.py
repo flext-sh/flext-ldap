@@ -192,18 +192,6 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(data["base_dn"], eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(data["scope"], eq=c.Ldap.DEFAULT_SCOPE)
 
-    def test_sync_stats_serialization(self) -> None:
-        data = m.Ldap.SyncStats.from_counters(
-            synced=c.Ldap.Tests.SEARCH_SYNC_COUNTERS_SYNCED,
-            skipped=c.Ldap.Tests.SEARCH_SYNC_COUNTERS_SKIPPED,
-            failed=c.Ldap.Tests.SEARCH_SYNC_COUNTERS_FAILED,
-        ).model_dump()
-        u.Ldap.Tests.that(data, keys=[c.Ldap.Tests.FIELD_SUCCESS_RATE])
-        u.Ldap.Tests.that(
-            data[c.Ldap.Tests.FIELD_SUCCESS_RATE],
-            eq=c.Ldap.Tests.SEARCH_EXPECTED_SUCCESS_RATE_90,
-        )
-
     def test_connection_config_json_schema(self) -> None:
         u.Ldap.Tests.that(
             m.Ldap.ConnectionConfig.model_json_schema()["properties"],

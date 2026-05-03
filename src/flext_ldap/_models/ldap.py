@@ -142,67 +142,6 @@ class FlextLdapModelsLdap:
             u.Field(description="Entries skipped"),
         ] = 0
 
-    class SyncOptions(m.BaseModel):
-        """Configuration for LDAP sync operations."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            arbitrary_types_allowed=True,
-        )
-        batch_size: Annotated[
-            t.PositiveInt,
-            u.Field(description="Batch size for sync operations"),
-        ] = c.Ldap.BATCH_SIZE
-        auto_create_parents: Annotated[
-            bool,
-            u.Field(description="Auto-create parent entries if missing"),
-        ] = True
-        allow_deletes: Annotated[
-            bool,
-            u.Field(description="Allow deletion of entries during sync"),
-        ] = False
-        source_basedn: Annotated[
-            str,
-            u.Field(description="Source base DN for sync"),
-        ] = ""
-        target_basedn: Annotated[
-            str,
-            u.Field(description="Target base DN for sync"),
-        ] = ""
-        progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-
-    class SyncStats(LdapBatchStats):
-        """Sync stats - extends LdapBatchStats."""
-
-        total: t.NonNegativeInt = 0
-        duration_seconds: t.NonNegativeFloat = 0.0
-
-        @u.computed_field()
-        @property
-        def success_rate(self) -> float:
-            """Calculate success rate (synced + skipped) / total."""
-            if self.total == 0:
-                return 0.0
-            return (self.synced + self.skipped) / self.total
-
-        @classmethod
-        def from_counters(
-            cls,
-            synced: int = 0,
-            skipped: int = 0,
-            failed: int = 0,
-            duration_seconds: float = 0.0,
-            **kwargs: t.Primitives | None,
-        ) -> Self:
-            """Factory method with auto-calculated total from counters."""
-            return cls.model_validate({
-                "synced": synced,
-                "skipped": skipped,
-                "failed": failed,
-                "total": synced + skipped + failed,
-                "duration_seconds": duration_seconds,
-                **kwargs,
-            })
-
     class UpsertResult(m.BaseModel):
         """Result of a single upsert operation."""
 

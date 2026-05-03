@@ -8,40 +8,6 @@ pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapModelsSync:
-    # ── Validation constraints ─────────────────────────────────────────
-
-    def test_sync_options_rejects_zero_batch_size(self) -> None:
-        invalid_batch_size: int = 0
-        with pytest.raises(c.ValidationError):
-            m.Ldap.SyncOptions(batch_size=invalid_batch_size)
-
-    # ── Factory: SyncStats.from_counters ───────────────────────────────
-
-    def test_from_counters_computes_total(self) -> None:
-        s = m.Ldap.SyncStats.from_counters(
-            synced=c.Ldap.Tests.SYNC_FROM_COUNTERS_SYNCED,
-            skipped=c.Ldap.Tests.SYNC_FROM_COUNTERS_SKIPPED,
-            failed=c.Ldap.Tests.SYNC_FROM_COUNTERS_FAILED,
-            duration_seconds=c.Ldap.Tests.SYNC_FROM_COUNTERS_DURATION,
-        )
-        u.Ldap.Tests.that(s.total, eq=c.Ldap.Tests.SYNC_FROM_COUNTERS_TOTAL)
-        u.Ldap.Tests.that(
-            s.duration_seconds, eq=c.Ldap.Tests.SYNC_FROM_COUNTERS_DURATION
-        )
-        u.Ldap.Tests.that(
-            s.success_rate, eq=c.Ldap.Tests.SYNC_FROM_COUNTERS_SUCCESS_RATE
-        )
-
-    def test_from_counters_serialization_includes_computed(self) -> None:
-        u.Ldap.Tests.that(
-            m.Ldap.SyncStats.from_counters(
-                synced=c.Ldap.Tests.SYNC_SERIALIZATION_SYNCED,
-                skipped=c.Ldap.Tests.SYNC_SERIALIZATION_SKIPPED,
-                failed=c.Ldap.Tests.SYNC_SERIALIZATION_FAILED,
-            ).model_dump(),
-            has=c.Ldap.Tests.FIELD_SUCCESS_RATE,
-        )
-
     # ── UpsertResult: success vs error ─────────────────────────────────
 
     def test_upsert_success(self) -> None:

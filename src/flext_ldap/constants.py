@@ -220,15 +220,6 @@ class FlextLdapConstants(c):
             SUBTREE = "SUBTREE"
 
         @unique
-        class Ldap3DerefAliases(StrEnum):
-            """ldap3-compatible dereference aliases string values."""
-
-            NEVER = "NEVER"
-            SEARCH = "SEARCH"
-            FINDING_BASE = "FINDING_BASE"
-            ALWAYS = "ALWAYS"
-
-        @unique
         class Ldap3GetInfo(StrEnum):
             """ldap3-compatible get-info option string values."""
 
