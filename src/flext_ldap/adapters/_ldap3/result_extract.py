@@ -89,24 +89,33 @@ class ResultConverterExtractMixin:
         parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.ServerMetadata | None:
         """Extract server metadata from LDAP entry, returning ``None`` when absent."""
-        if parsed is None:
-            return None
-        if isinstance(parsed, m.Ldif.Entry):
-            return parsed.metadata
-        metadata_attr = getattr(parsed, "metadata", None)
-        if metadata_attr is None:
-            return None
-        if isinstance(metadata_attr, m.Ldif.ServerMetadata):
-            return metadata_attr
-        if not isinstance(metadata_attr, Mapping):
-            return None
-        normalized = ResultConverterExtractMixin._normalize_metadata(metadata_attr)
-        if not normalized:
-            return None
-        server_type_raw = normalized.get("server_type")
-        if not isinstance(server_type_raw, str):
-            return None
-        return m.Ldif.ServerMetadata.model_validate({"server_type": server_type_raw})
+        match parsed:
+            case None:
+                result = None
+            case m.Ldif.Entry():
+                result = parsed.metadata
+            case _:
+                metadata_attr = getattr(parsed, "metadata", None)
+                match metadata_attr:
+                    case None:
+                        result = None
+                    case m.Ldif.ServerMetadata():
+                        result = metadata_attr
+                    case Mapping():
+                        normalized = ResultConverterExtractMixin._normalize_metadata(
+                            metadata_attr
+                        )
+                        if normalized and isinstance(
+                            normalized.get("server_type"), str
+                        ):
+                            result = m.Ldif.ServerMetadata.model_validate({
+                                "server_type": normalized["server_type"]
+                            })
+                        else:
+                            result = None
+                    case _:
+                        result = None
+        return result
 
     @staticmethod
     def _normalize_attr_values(
