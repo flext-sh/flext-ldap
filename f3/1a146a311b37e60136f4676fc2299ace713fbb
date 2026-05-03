@@ -1,0 +1,24 @@
+tests/conftest.py
+  26f224f147ec0d09 10,17-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f31a146a311b37e60136f4676fc2299ace713fbb",
+  "prompts": {
+    "26f224f147ec0d09": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af795733-b18d-4c66-a653-6ff9466111c6",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 48,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/374829e29dd14bf51c67650ed7643a6bfbfccbd71b42e8d80315a45b15a4b3d4"
+    }
+  }
+}
