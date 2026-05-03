@@ -34,7 +34,7 @@ import logging
 from typing import override
 
 from flext_ldap import c, m, p, s, t, u
-from flext_ldif import e, ldif, r
+from flext_ldif import ldif, r
 
 
 class FlextLdapOperations(s):
@@ -349,51 +349,6 @@ class FlextLdapOperations(s):
                 )
             return last_result
 
-        def _extract_schema_add_operation(
-            self,
-            attrs: t.MappingKV[str, t.StrSequence],
-        ) -> p.Result[str]:
-            """Extract schema add operation attribute type.
-
-            Args:
-                attrs: Attributes dictionary.
-
-            Returns:
-                r with attribute type or error.
-
-            """
-            add_op_result = attrs.get(c.Ldif.ChangeOperation.ADD, [])
-            add_op_raw = add_op_result
-            add_op: t.StrSequence = list(add_op_raw)
-            if not add_op:
-                return e.fail_validation("add", error="missing in schema modify entry")
-            return r[str].ok(add_op[0])
-
-        def _extract_schema_attribute_values(
-            self,
-            attrs: t.MappingKV[str, t.StrSequence],
-            attr_type: str,
-        ) -> p.Result[t.StrSequence]:
-            """Extract and filter schema attribute values.
-
-            Args:
-                attrs: Attributes dictionary.
-                attr_type: Attribute type to extract.
-
-            Returns:
-                r with filtered values or error.
-
-            """
-            attr_values_result = attrs.get(attr_type, [])
-            attr_values_raw = attr_values_result
-            attr_values = list(attr_values_raw)
-            filtered = [x for x in attr_values if x]
-            if not filtered:
-                return r[t.StrSequence].fail(
-                    f"Schema modify entry has only empty values for '{attr_type}'",
-                )
-            return r[t.StrSequence].ok(filtered)
-
     @property
     def _upsert_handler(self) -> FlextLdapOperations._UpsertHandler:
         """Lazy-init upsert handler."""
@@ -537,6 +492,12 @@ class FlextLdapOperations(s):
             r containing LdapBatchStats with synced/failed/skipped counts
 
         """
+        sync_options = m.Ldap.SyncPhaseConfig.model_validate({
+            "progress_callback": progress_callback,
+            "retry_on_errors": list(retry_on_errors or []),
+            "max_retries": max_retries,
+            "stop_on_error": stop_on_error,
+        })
         stats = m.Ldap.LdapBatchStats()
         stop_error_index: int | None = None
         total_entries = len(entries)
@@ -546,8 +507,8 @@ class FlextLdapOperations(s):
                 entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
                 upsert_result = self.upsert(
                     entry,
-                    retry_on_errors=retry_on_errors,
-                    max_retries=max_retries,
+                    retry_on_errors=sync_options.retry_on_errors,
+                    max_retries=sync_options.max_retries,
                 )
                 self._update_batch_stats(
                     upsert_result,
@@ -556,12 +517,12 @@ class FlextLdapOperations(s):
                     entry_dn,
                     total_entries,
                 )
-                if stop_on_error and upsert_result.failure:
+                if sync_options.stop_on_error and upsert_result.failure:
                     stop_error_index = i
                     break
-                if progress_callback:
+                if sync_options.progress_callback:
                     self._invoke_batch_progress_callback(
-                        progress_callback,
+                        sync_options.progress_callback,
                         i,
                         total_entries,
                         entry_dn,
@@ -572,7 +533,7 @@ class FlextLdapOperations(s):
                 return r[m.Ldap.LdapBatchStats].fail(
                     f"Batch upsert aborted on unexpected exception at entry {entry_idx}: {exc}",
                 )
-        if stop_on_error and stop_error_index is not None:
+        if sync_options.stop_on_error and stop_error_index is not None:
             return r[m.Ldap.LdapBatchStats].fail(
                 f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
             )
