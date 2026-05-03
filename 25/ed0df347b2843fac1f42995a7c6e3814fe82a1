@@ -1,0 +1,30 @@
+tests/constants.py
+  h_9db9d35f50cf33 6-7
+tests/typings.py
+  h_9db9d35f50cf33 1-5,15
+tests/unit/test_ldap3_adapter.py
+  h_9db9d35f50cf33 1,14,21,27,44
+tests/unit/test_utilities.py
+  h_9db9d35f50cf33 15,382,384-391,397,400-407,413,416-418,420-423,429,432-434,436-439,462,465-471
+tests/utilities.py
+  h_9db9d35f50cf33 1-6
+src/flext_ldap/services/detection.py
+  h_9db9d35f50cf33 41
+tests/conftest.py
+  h_9db9d35f50cf33 1,3-6
+src/flext_ldap/protocols.py
+  h_9db9d35f50cf33 14,169,452-486
+src/flext_ldap/utilities.py
+  h_9db9d35f50cf33 242,245-247,270,706,708,737,743,758
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "25ed0df347b2843fac1f42995a7c6e3814fe82a1",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
