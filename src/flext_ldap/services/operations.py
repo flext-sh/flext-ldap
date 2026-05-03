@@ -218,7 +218,9 @@ class FlextLdapOperations(s):
                         else:
                             modify_result = self._ops.modify(entry_dn, changes)
                             result = modify_result.fold(
-                                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(u.to_str(e)),
+                                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(
+                                    u.to_str(e)
+                                ),
                                 on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
                                     m.Ldap.LdapOperationResult.with_operation(
                                         c.Ldap.UpsertOperation.MODIFIED,
@@ -845,10 +847,7 @@ class FlextLdapOperations(s):
             match upsert_result.value.operation:
                 case c.Ldap.UpsertOperation.SKIPPED:
                     stats.skipped += 1
-                case (
-                    c.Ldap.UpsertOperation.ADDED
-                    | c.Ldap.UpsertOperation.MODIFIED
-                ):
+                case c.Ldap.UpsertOperation.ADDED | c.Ldap.UpsertOperation.MODIFIED:
                     stats.synced += 1
         else:
             stats.failed += 1

@@ -603,7 +603,9 @@ class FlextLdapUtilities(u):
                     server_name,
                     frozenset(),
                 )
-                if cls._contains_marker(ext_str, extension_markers) or cls._contains_marker(
+                if cls._contains_marker(
+                    ext_str, extension_markers
+                ) or cls._contains_marker(
                     context_str,
                     context_markers,
                 ):
