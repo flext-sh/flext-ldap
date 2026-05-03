@@ -537,11 +537,8 @@ class FlextLdapOperations(s):
             r containing LdapBatchStats with synced/failed/skipped counts
 
         """
-        stats_builder: t.MutableIntMapping = {
-            "synced": 0,
-            "failed": 0,
-            "skipped": 0,
-        }
+        stats = m.Ldap.LdapBatchStats()
+        stop_error_index: int | None = None
         total_entries = len(entries)
         for idx_entry in enumerate(entries, 1):
             try:
@@ -554,13 +551,13 @@ class FlextLdapOperations(s):
                 )
                 self._update_batch_stats(
                     upsert_result,
-                    stats_builder,
+                    stats,
                     i,
                     entry_dn,
                     total_entries,
                 )
                 if stop_on_error and upsert_result.failure:
-                    stats_builder["_stop_error"] = i
+                    stop_error_index = i
                     break
                 if progress_callback:
                     self._invoke_batch_progress_callback(
@@ -568,45 +565,38 @@ class FlextLdapOperations(s):
                         i,
                         total_entries,
                         entry_dn,
-                        stats_builder,
+                        stats,
                     )
             except c.EXC_BROAD_IO_TYPE as exc:
                 entry_idx = idx_entry[0]
                 return r[m.Ldap.LdapBatchStats].fail(
                     f"Batch upsert aborted on unexpected exception at entry {entry_idx}: {exc}",
                 )
-        if stop_on_error and "_stop_error" in stats_builder:
-            error_idx = stats_builder["_stop_error"]
-            if isinstance(error_idx, int):
-                return r[m.Ldap.LdapBatchStats].fail(
-                    f"Batch upsert stopped on error at entry {error_idx}/{total_entries}",
-                )
-        stats = m.Ldap.LdapBatchStats(
-            synced=stats_builder["synced"],
-            failed=stats_builder["failed"],
-            skipped=stats_builder["skipped"],
-        )
+        if stop_on_error and stop_error_index is not None:
+            return r[m.Ldap.LdapBatchStats].fail(
+                f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
+            )
         logger = FlextLdapOperations._get_structlog_logger()
         if logger is not None:
             logger.info(
                 "Batch upsert completed",
                 operation=c.Ldap.OperationName.BATCH_UPSERT,
                 total_entries=total_entries,
-                synced=stats_builder["synced"],
-                failed=stats_builder["failed"],
-                skipped=stats_builder["skipped"],
+                synced=stats.synced,
+                failed=stats.failed,
+                skipped=stats.skipped,
             )
         else:
             logging.getLogger(__name__).info(
                 "Batch upsert completed: total=%s synced=%s failed=%s skipped=%s",
                 total_entries,
-                stats_builder["synced"],
-                stats_builder["failed"],
-                stats_builder["skipped"],
+                stats.synced,
+                stats.failed,
+                stats.skipped,
             )
-        if stats_builder["synced"] == 0 and stats_builder["failed"] > 0:
+        if stats.synced == 0 and stats.failed > 0:
             return r[m.Ldap.LdapBatchStats].fail(
-                f"Batch upsert failed: all {stats_builder['failed']} entries failed, 0 synced",
+                f"Batch upsert failed: all {stats.failed} entries failed, 0 synced",
             )
         return r[m.Ldap.LdapBatchStats].ok(stats)
 
@@ -869,36 +859,32 @@ class FlextLdapOperations(s):
         entry_index: int,
         total: int,
         entry_dn: str | None,
-        stats: t.IntMapping,
+        stats: m.Ldap.LdapBatchStats,
     ) -> None:
         """Invoke progress callback with error handling."""
-        callback_stats = m.Ldap.LdapBatchStats(
-            synced=stats["synced"],
-            failed=stats["failed"],
-            skipped=stats["skipped"],
-        )
+        callback_stats = stats.model_copy()
         callback(entry_index, total, entry_dn or "", callback_stats)
 
     def _update_batch_stats(
         self,
         upsert_result: p.Result[m.Ldap.LdapOperationResult],
-        stats: t.MutableIntMapping,
+        stats: m.Ldap.LdapBatchStats,
         entry_index: int,
         entry_dn: str | None,
         total_entries: int,
     ) -> None:
         """Update batch stats from upsert result."""
         if upsert_result.success:
-            operation = upsert_result.value.operation
-            if operation == c.Ldap.UpsertOperation.SKIPPED:
-                stats["skipped"] += 1
-            elif operation in {
-                c.Ldap.UpsertOperation.ADDED,
-                c.Ldap.UpsertOperation.MODIFIED,
-            }:
-                stats["synced"] += 1
+            match upsert_result.value.operation:
+                case c.Ldap.UpsertOperation.SKIPPED:
+                    stats.skipped += 1
+                case (
+                    c.Ldap.UpsertOperation.ADDED
+                    | c.Ldap.UpsertOperation.MODIFIED
+                ):
+                    stats.synced += 1
         else:
-            stats["failed"] += 1
+            stats.failed += 1
             entry_dn_sliced: str = (
                 entry_dn[: c.Ldap.DN_TRUNCATION_LENGTH] if entry_dn else ""
             )

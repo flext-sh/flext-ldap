@@ -360,6 +360,10 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.detect_from_extensions(["microsoft"], ["dc=example,dc=com"])
         assert "ad" in result.lower()
 
+    def test_detect_from_extensions_oid_from_context(self) -> None:
+        result = u.Ldap.detect_from_extensions([], ["dc=oracle,dc=example"])
+        assert result == c.Ldif.ServerTypes.OID.value
+
     # --- detect_from_vendor ---
     def test_detect_from_vendor_none(self) -> None:
         result = u.Ldap.detect_from_vendor(None, None)

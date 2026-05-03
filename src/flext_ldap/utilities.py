@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     Mapping,
     MutableMapping,
 )
@@ -595,28 +594,55 @@ class FlextLdapUtilities(u):
             """Infer server type from rootDSE extensions and naming contexts."""
             ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
             context_str = cls.norm_join(naming_contexts, case="lower")
-            checks: t.SequenceOf[t.Pair[str, Callable[[str, str], bool]]] = [
-                ("openldap", lambda ext, __: "openldap" in ext),
-                (
-                    "oid",
-                    lambda ext, ctx: "oracle" in ext or "oid" in ext or "oracle" in ctx,
-                ),
-                ("oud", lambda ext, __: "oud" in ext),
-                (
-                    "ad",
-                    lambda ext, ctx: (
-                        "microsoft" in ext
-                        or "windows" in ext
-                        or "microsoft" in ctx
-                        or "windows" in ctx
-                    ),
-                ),
-                ("ds389", lambda ext, __: "389" in ext or "dirsrv" in ext),
-            ]
-            for server_name, predicate in checks:
-                if predicate(ext_str, context_str):
+            for server_name in c.Ldap.ROOT_DSE_DETECTION_ORDER:
+                extension_markers = c.Ldap.ROOT_DSE_EXTENSION_MARKERS.get(
+                    server_name,
+                    frozenset(),
+                )
+                context_markers = c.Ldap.ROOT_DSE_CONTEXT_MARKERS.get(
+                    server_name,
+                    frozenset(),
+                )
+                if cls._contains_marker(ext_str, extension_markers) or cls._contains_marker(
+                    context_str,
+                    context_markers,
+                ):
                     return server_name
-            return c.Ldif.ServerTypes.RFC.value
+            return c.Ldap.DEFAULT_TYPE.value
+
+        @staticmethod
+        def _contains_marker(
+            haystack: str,
+            markers: t.StrSequence | frozenset[str],
+        ) -> bool:
+            """Return True when any configured marker is present in the input text."""
+            return any(marker in haystack for marker in markers)
+
+        @classmethod
+        def _matches_vendor_rule(cls, vendor_info: str, server_name: str) -> bool:
+            """Evaluate declarative vendor-detection markers for one server type."""
+            required_markers = c.Ldap.ROOT_DSE_VENDOR_REQUIRED_MARKERS.get(
+                server_name,
+                frozenset(),
+            )
+            if any(marker not in vendor_info for marker in required_markers):
+                return False
+            excluded_markers = c.Ldap.ROOT_DSE_VENDOR_EXCLUDED_MARKERS.get(
+                server_name,
+                frozenset(),
+            )
+            if cls._contains_marker(vendor_info, excluded_markers):
+                return False
+            any_markers = c.Ldap.ROOT_DSE_VENDOR_ANY_MARKERS.get(
+                server_name,
+                frozenset(),
+            )
+            if any_markers and cls._contains_marker(vendor_info, any_markers):
+                return True
+            max_tokens = c.Ldap.ROOT_DSE_VENDOR_MAX_TOKENS.get(server_name)
+            if max_tokens is not None and len(vendor_info.split()) <= max_tokens:
+                return True
+            return not any_markers and max_tokens is None
 
         @classmethod
         def detect_from_vendor(
@@ -635,36 +661,8 @@ class FlextLdapUtilities(u):
             ).lower()
             if not vendor_info:
                 return None
-            checks: t.SequenceOf[t.Pair[str, Callable[[str], bool]]] = [
-                (
-                    "oud",
-                    lambda value: "oracle" in value and "unified directory" in value,
-                ),
-                (
-                    "oid",
-                    lambda value: (
-                        "oracle" in value
-                        and (
-                            "internet directory" in value
-                            or "oid" in value
-                            or "corporation" in value
-                            or (
-                                "unified directory" not in value
-                                and len(value.split())
-                                <= c.Ldap.VENDOR_STRING_MAX_TOKENS
-                            )
-                        )
-                    ),
-                ),
-                ("openldap", lambda value: "openldap" in value),
-                (
-                    "ad",
-                    lambda value: "microsoft" in value or "active directory" in value,
-                ),
-                ("ds389", lambda value: "389" in value or "dirsrv" in value),
-            ]
-            for detected_type, predicate in checks:
-                if predicate(vendor_info):
+            for detected_type in c.Ldap.ROOT_DSE_DETECTION_ORDER:
+                if cls._matches_vendor_rule(vendor_info, detected_type):
                     return detected_type
             return None
 

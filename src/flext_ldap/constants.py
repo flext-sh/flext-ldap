@@ -249,6 +249,70 @@ class FlextLdapConstants(c):
             SUPPORTED_CONTROLS = "supportedControl"
             SUPPORTED_EXTENSIONS = "supportedExtension"
 
+        ROOT_DSE_DETECTION_ORDER: Final[tuple[str, ...]] = (
+            c.Ldif.ServerTypes.OPENLDAP.value,
+            c.Ldif.ServerTypes.OID.value,
+            c.Ldif.ServerTypes.OUD.value,
+            c.Ldif.ServerTypes.AD.value,
+            c.Ldif.ServerTypes.DS389.value,
+        )
+
+        ROOT_DSE_EXTENSION_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType({
+                c.Ldif.ServerTypes.OPENLDAP.value: frozenset({"openldap"}),
+                c.Ldif.ServerTypes.OID.value: frozenset({"oracle", "oid"}),
+                c.Ldif.ServerTypes.OUD.value: frozenset({"oud"}),
+                c.Ldif.ServerTypes.AD.value: frozenset({"microsoft", "windows"}),
+                c.Ldif.ServerTypes.DS389.value: frozenset({"389", "dirsrv"}),
+            })
+        )
+
+        ROOT_DSE_CONTEXT_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType({
+                c.Ldif.ServerTypes.OID.value: frozenset({"oracle"}),
+                c.Ldif.ServerTypes.AD.value: frozenset({"microsoft", "windows"}),
+            })
+        )
+
+        ROOT_DSE_VENDOR_REQUIRED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType({
+                c.Ldif.ServerTypes.OUD.value: frozenset({
+                    "oracle",
+                    "unified directory",
+                }),
+                c.Ldif.ServerTypes.OID.value: frozenset({"oracle"}),
+                c.Ldif.ServerTypes.OPENLDAP.value: frozenset(),
+                c.Ldif.ServerTypes.AD.value: frozenset(),
+                c.Ldif.ServerTypes.DS389.value: frozenset(),
+            })
+        )
+
+        ROOT_DSE_VENDOR_ANY_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType({
+                c.Ldif.ServerTypes.OID.value: frozenset({
+                    "internet directory",
+                    "oid",
+                    "corporation",
+                }),
+                c.Ldif.ServerTypes.OPENLDAP.value: frozenset({"openldap"}),
+                c.Ldif.ServerTypes.AD.value: frozenset({
+                    "microsoft",
+                    "active directory",
+                }),
+                c.Ldif.ServerTypes.DS389.value: frozenset({"389", "dirsrv"}),
+            })
+        )
+
+        ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType({
+                c.Ldif.ServerTypes.OID.value: frozenset({"unified directory"}),
+            })
+        )
+
+        ROOT_DSE_VENDOR_MAX_TOKENS: Final[t.MappingKV[str, int]] = MappingProxyType({
+            c.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
+        })
+
         RETRY_ERROR_PATTERNS: Final[frozenset[str]] = frozenset({
             "session terminated",
             "not connected",
