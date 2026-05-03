@@ -47,8 +47,6 @@ class FlextLdapConstants(c):
         TIMEOUT: Final[int] = c.DEFAULT_TIMEOUT_SECONDS
         AUTO_BIND: Final[bool] = True
         AUTO_RANGE: Final[bool] = True
-        POOL_SIZE: Final[int] = 10
-        POOL_LIFETIME: Final[int] = 3600
         DEFAULT_BIND_DN: Final[str] = ""
         DEFAULT_BIND_PASSWORD: Final[str] = ""
         DEFAULT_USE_SSL: Final[bool] = False
@@ -84,7 +82,6 @@ class FlextLdapConstants(c):
             CONNECT = "connect"
             DETECT_FROM_CONNECTION = "detect_from_connection"
             LDAP3_TO_LDIF_ENTRY = "ldap3_to_ldif_entry"
-            LDIF_ENTRY_TO_LDAP3 = "ldif_entry_to_ldap3"
             LDIF_ENTRY_TO_LDAP3_ATTRIBUTES = "ldif_entry_to_ldap3_attributes"
             BIND = "bind"
             UNBIND = "unbind"
@@ -112,9 +109,6 @@ class FlextLdapConstants(c):
 
             NOT_CONNECTED = "Not connected to LDAP server"
             CONNECTION_FAILED = "Connection failed"
-            AUTHENTICATION_FAILED = "Authentication failed"
-            SEARCH_FAILED = "Search failed"
-            OPERATION_FAILED = "Operation failed"
             UNKNOWN_ERROR = "unknown error"
 
         ENTRY_ALREADY_EXISTS_RE: Final[re.Pattern[str]] = re.compile(
@@ -237,7 +231,6 @@ class FlextLdapConstants(c):
             VENDOR_NAME = "vendorName"
             VENDOR_VERSION = "vendorVersion"
             NAMING_CONTEXTS = "namingContexts"
-            SUPPORTED_CONTROLS = "supportedControl"
             SUPPORTED_EXTENSIONS = "supportedExtension"
 
         ROOT_DSE_DETECTION_ORDER: Final[tuple[str, ...]] = (
@@ -302,13 +295,6 @@ class FlextLdapConstants(c):
 
         ROOT_DSE_VENDOR_MAX_TOKENS: Final[t.MappingKV[str, int]] = MappingProxyType({
             c.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
-        })
-
-        RETRY_ERROR_PATTERNS: Final[frozenset[str]] = frozenset({
-            "session terminated",
-            "not connected",
-            "invalid messageid",
-            "socket",
         })
 
 

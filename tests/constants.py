@@ -137,7 +137,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             FIELD_SCOPE: Final[FieldName] = FieldName.SCOPE
             FIELD_PROPERTIES: Final[FieldName] = FieldName.PROPERTIES
             FIELD_TYPE: Final[FieldName] = FieldName.TYPE
-            FIELD_SUCCESS_RATE: Final[FieldName] = FieldName.SUCCESS_RATE
 
             DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
@@ -371,26 +370,11 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 })
             )
             SEARCH_ENTRIES_AFFECTED_ONE: Final[int] = 1
-            SEARCH_SYNC_COUNTERS_SYNCED: Final[int] = 80
-            SEARCH_SYNC_COUNTERS_SKIPPED: Final[int] = 10
-            SEARCH_SYNC_COUNTERS_FAILED: Final[int] = 10
-            SEARCH_EXPECTED_SUCCESS_RATE_90: Final[float] = 0.9
 
             SYNC_PHASE_NAME: Final[str] = "01-users"
             SYNC_ENTRY_ALREADY_EXISTS: Final[str] = "Entry already exists"
             SYNC_DEFAULT_ZERO_COUNT: Final[int] = 0
             SYNC_DEFAULT_EMPTY_SOURCE_DN: Final[str] = ""
-
-            SYNC_FROM_COUNTERS_SYNCED: Final[int] = 50
-            SYNC_FROM_COUNTERS_SKIPPED: Final[int] = 30
-            SYNC_FROM_COUNTERS_FAILED: Final[int] = 20
-            SYNC_FROM_COUNTERS_TOTAL: Final[int] = 100
-            SYNC_FROM_COUNTERS_DURATION: Final[float] = 10.5
-            SYNC_FROM_COUNTERS_SUCCESS_RATE: Final[float] = 0.8
-
-            SYNC_SERIALIZATION_SYNCED: Final[int] = 9
-            SYNC_SERIALIZATION_SKIPPED: Final[int] = 1
-            SYNC_SERIALIZATION_FAILED: Final[int] = 0
 
             SYNC_UPSERT_BATCH_TOTAL: Final[int] = 100
             SYNC_UPSERT_BATCH_SUCCESSFUL: Final[int] = 90
@@ -437,10 +421,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             SYNC_FACADE_TEST_USER_DN: Final[str] = (
                 "cn=syncuser,ou=people,dc=flext,dc=local"
-            )
-            CONNECTION_INVALID_PASSWORDS: Final[tuple[str, ...]] = (
-                "invalid-password",
-                "wrong-password",
             )
             SYNC_FACADE_SINGLE_ENTRY_LDIF: Final[str] = (
                 "version: 1\n\n"
