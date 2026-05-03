@@ -179,47 +179,53 @@ class FlextLdapOperations(s):
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
-                return r[m.Ldap.LdapOperationResult].fail_op(
+                result = r[m.Ldap.LdapOperationResult].fail_op(
                     "Search for existing entry", search_result.error
                 )
-            search_data = search_result.map_or(None)
-            existing_entries: t.SequenceOf[m.Ldif.Entry] = []
-            if search_data is not None and search_data.entries:
-                existing_entries = list(search_data.entries)
-            if not existing_entries:
-                retry_result = self._ops.add(entry)
-                if retry_result.success:
-                    return r[m.Ldap.LdapOperationResult].ok(
-                        m.Ldap.LdapOperationResult.with_operation(
-                            c.Ldap.UpsertOperation.ADDED,
-                        ),
-                    )
-                return r[m.Ldap.LdapOperationResult].fail(
-                    u.to_str(retry_result.error),
-                )
-            existing_entry = existing_entries[0]
-            changes_result = u.Ldap.compare_entries(existing_entry, entry)
-            if changes_result.failure:
-                return r[m.Ldap.LdapOperationResult].fail_op(
-                    "Entry comparison", changes_result.error
-                )
-            empty_changes: t.Ldap.OperationChanges = {}
-            changes = changes_result.unwrap_or(empty_changes)
-            if not changes:
-                return r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperation.SKIPPED,
-                    ),
-                )
-            modify_result = self._ops.modify(entry_dn, changes)
-            return modify_result.fold(
-                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(u.to_str(e)),
-                on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
-                    m.Ldap.LdapOperationResult.with_operation(
-                        c.Ldap.UpsertOperation.MODIFIED,
-                    ),
-                ),
-            )
+            else:
+                search_data = search_result.map_or(None)
+                existing_entries: t.SequenceOf[m.Ldif.Entry] = []
+                if search_data is not None and search_data.entries:
+                    existing_entries = list(search_data.entries)
+                if not existing_entries:
+                    retry_result = self._ops.add(entry)
+                    if retry_result.success:
+                        result = r[m.Ldap.LdapOperationResult].ok(
+                            m.Ldap.LdapOperationResult.with_operation(
+                                c.Ldap.UpsertOperation.ADDED,
+                            ),
+                        )
+                    else:
+                        result = r[m.Ldap.LdapOperationResult].fail(
+                            u.to_str(retry_result.error),
+                        )
+                else:
+                    existing_entry = existing_entries[0]
+                    changes_result = u.Ldap.compare_entries(existing_entry, entry)
+                    if changes_result.failure:
+                        result = r[m.Ldap.LdapOperationResult].fail_op(
+                            "Entry comparison", changes_result.error
+                        )
+                    else:
+                        empty_changes: t.Ldap.OperationChanges = {}
+                        changes = changes_result.unwrap_or(empty_changes)
+                        if not changes:
+                            result = r[m.Ldap.LdapOperationResult].ok(
+                                m.Ldap.LdapOperationResult.with_operation(
+                                    c.Ldap.UpsertOperation.SKIPPED,
+                                ),
+                            )
+                        else:
+                            modify_result = self._ops.modify(entry_dn, changes)
+                            result = modify_result.fold(
+                                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(u.to_str(e)),
+                                on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
+                                    m.Ldap.LdapOperationResult.with_operation(
+                                        c.Ldap.UpsertOperation.MODIFIED,
+                                    ),
+                                ),
+                            )
+            return result
 
         def handle_regular_add(
             self,
