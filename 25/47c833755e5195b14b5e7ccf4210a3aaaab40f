@@ -1,0 +1,30 @@
+src/flext_ldap/_models/ldap.py
+  31ee9137f8909d3e 269,271,275,277-279,284,289,293-294,296
+src/flext_ldap/adapters/entry.py
+  31ee9137f8909d3e 75-76
+src/flext_ldap/utilities.py
+  31ee9137f8909d3e 618-621,676-677
+src/flext_ldap/adapters/_ldap3/result_extract.py
+  31ee9137f8909d3e 36-39,60,65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "2547c833755e5195b14b5e7ccf4210a3aaaab40f",
+  "prompts": {
+    "31ee9137f8909d3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cbeb61c6-cd2e-4000-9bed-dcd82a916aec",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 13,
+      "accepted_lines": 42,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/63db8dc4f4d8ab12f22c79048886ed4473fe9fdc316407f9bed3ab9d0f75345f"
+    }
+  }
+}
