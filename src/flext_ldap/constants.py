@@ -111,7 +111,7 @@ class FlextLdapConstants(c):
             CONNECTION_FAILED = "Connection failed"
             UNKNOWN_ERROR = "unknown error"
 
-        ENTRY_ALREADY_EXISTS_RE: Final[re.Pattern[str]] = re.compile(
+        ENTRY_ALREADY_EXISTS_RE: Final[t.RegexPattern] = re.compile(
             r"entry already exists|already exists|entryalreadyexists|ldap_already_exists",
             re.IGNORECASE,
         )
