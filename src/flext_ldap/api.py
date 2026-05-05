@@ -16,7 +16,7 @@ class FlextLdap(FlextLdapConnection, FlextLdapSync, FlextLdapApiRuntime):
     pass
 
 
-ldap = FlextLdap()
+ldap = FlextLdap.fetch_global()
 
 
 __all__: list[str] = ["FlextLdap", "ldap"]
