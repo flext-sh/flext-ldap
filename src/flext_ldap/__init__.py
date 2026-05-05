@@ -10,18 +10,18 @@ from flext_core.lazy import (
     install_lazy_exports,
     merge_lazy_imports,
 )
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 
 if _t.TYPE_CHECKING:
-    from flext_ldap.__version__ import (
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
     from flext_ldap._models.ldap import FlextLdapModelsLdap
     from flext_ldap.adapters._ldap3.connection_manager import ConnectionManager
     from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
@@ -53,16 +53,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            ".__version__": (
-                "__author__",
-                "__author_email__",
-                "__description__",
-                "__license__",
-                "__title__",
-                "__url__",
-                "__version__",
-                "__version_info__",
-            ),
             "._models.ldap": ("FlextLdapModelsLdap",),
             ".adapters._ldap3.connection_manager": ("ConnectionManager",),
             ".adapters._ldap3.operation_executor": ("OperationExecutor",),
@@ -141,7 +131,21 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    [
+        "__author__",
+        "__author_email__",
+        "__description__",
+        "__license__",
+        "__title__",
+        "__url__",
+        "__version__",
+        "__version_info__",
+    ],
+)
 
 __all__: list[str] = [
     "ConnectionManager",
