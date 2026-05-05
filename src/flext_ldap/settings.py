@@ -21,7 +21,6 @@ from flext_ldap import c, t
 from flext_ldif import m
 
 
-@FlextSettings.auto_register("ldap")
 class FlextLdapSettings(FlextSettings):
     """LDAP runtime settings."""
 

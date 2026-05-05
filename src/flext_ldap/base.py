@@ -3,12 +3,9 @@
 Defines the canonical LDAP service root used by service mixins and the API facade:
 - FlextLdapService provides typed settings access via self.settings
 - All services MUST inherit from this base through cooperative MRO
-- All settings access MUST use self.settings.ldap / self.settings.ldif
 
-The settings namespace access uses FlextSettings.auto_register pattern:
-- FlextLdapSettings is registered via @FlextSettings.auto_register("ldap")
-- FlextLdifSettings is registered via @FlextSettings.auto_register("ldif")
-- Access via self.settings.ldap / self.settings.ldif from x.settings
+Settings access goes through ``FlextLdapSettings.fetch_global()`` (rule 1
+shared singleton, propagating via ``update_global``).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
