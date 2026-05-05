@@ -1,0 +1,26 @@
+tests/unit/test_base.py
+  b34517541da1f7b4 33-39,42-43
+src/flext_ldap/settings.py
+  b34517541da1f7b4 19-21,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8ae69f9d5786bb080d7b1d44b3fa485cf5aad240",
+  "prompts": {
+    "b34517541da1f7b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "79ce5f45-26cd-493f-b92b-4bcc166f6a35",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 5,
+      "accepted_lines": 13,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/6e9f9d74b287f61873a4068af12bb77a0bce43da6a6fa3afb9c97eb1d855b419"
+    }
+  }
+}
