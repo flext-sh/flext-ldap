@@ -266,30 +266,34 @@ class FlextLdapModelsLdap:
             attrs: t.AttributeMapping,
         ) -> str:
             """Extract objectclass category from attributes."""
+            unknown: str = c.Ldap.UNKNOWN_CATEGORY
             if not attrs:
-                return c.Ldap.UNKNOWN_CATEGORY
+                return unknown
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             if isinstance(oc_list, list):
                 if not oc_list:
-                    return c.Ldap.UNKNOWN_CATEGORY
+                    return unknown
                 first_value = oc_list[0]
-                return first_value.lower()
-            return c.Ldap.UNKNOWN_CATEGORY
+                lowered: str = first_value.lower()
+                return lowered
+            return unknown
 
         @staticmethod
         def get_entry_category(entry: p.Ldif.Entry) -> str:
             """Get category (objectclass) of an entry."""
+            unknown: str = c.Ldap.UNKNOWN_CATEGORY
             attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
                 entry,
             )
             if not attrs:
-                return c.Ldap.UNKNOWN_CATEGORY
+                return unknown
             oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
             match oc_list:
                 case list() as oc_values if oc_values:
-                    return oc_values[0].lower()
+                    lowered: str = oc_values[0].lower()
+                    return lowered
                 case _:
-                    return c.Ldap.UNKNOWN_CATEGORY
+                    return unknown
 
     class LdapOperationResult(m.BaseModel):
         """LDAP operation result."""

@@ -33,7 +33,10 @@ class ResultConverterExtractMixin:
             entry_dn = parsed.entry_dn
             if entry_dn is None:
                 return m.Ldif.DN.empty()
-            return m.Ldif.DN.empty().model_copy(update={"value": str(entry_dn)})
+            dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
+                update={"value": str(entry_dn)},
+            )
+            return dn_with_value
         return m.Ldif.DN.empty()
 
     @staticmethod
@@ -54,11 +57,12 @@ class ResultConverterExtractMixin:
             attrs_dict = ResultConverterExtractMixin.extract_attrs_dict(
                 parsed.entry_attributes_as_dict,
             )
-            return m.Ldif.Attributes.model_validate({
+            attributes: m.Ldif.Attributes = m.Ldif.Attributes.model_validate({
                 "attributes": attrs_dict,
                 "attribute_metadata": {},
                 "metadata": None,
             })
+            return attributes
         return empty
 
     @staticmethod

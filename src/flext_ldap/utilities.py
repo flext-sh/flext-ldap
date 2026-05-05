@@ -615,8 +615,10 @@ class FlextLdapUtilities(u):
                     context_str,
                     context_markers,
                 ):
-                    return server_name
-            return c.Ldap.DEFAULT_TYPE.value
+                    detected: str = server_name
+                    return detected
+            default: str = c.Ldap.DEFAULT_TYPE.value
+            return default
 
         @staticmethod
         def _contains_marker(
@@ -671,7 +673,8 @@ class FlextLdapUtilities(u):
                 return None
             for detected_type in c.Ldap.ROOT_DSE_DETECTION_ORDER:
                 if cls._matches_vendor_rule(vendor_info, detected_type):
-                    return detected_type
+                    matched: str = detected_type
+                    return matched
             return None
 
         @classmethod

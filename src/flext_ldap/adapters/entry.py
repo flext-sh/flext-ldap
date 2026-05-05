@@ -72,7 +72,8 @@ class FlextLdapEntryAdapter(s[bool]):
             threshold: int = c.Ldif.ASCII_THRESHOLD,
         ) -> bool:
             """Compatibility shim delegating encoding detection to ``u.Ldap``."""
-            return u.Ldap.is_base64_encoded(value, threshold)
+            encoded: bool = u.Ldap.is_base64_encoded(value, threshold)
+            return encoded
 
         @staticmethod
         def normalize_original_attr_value(
