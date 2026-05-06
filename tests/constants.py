@@ -14,9 +14,9 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
-from flext_cli import t
 from flext_tests import FlextTestsConstants
 
+from flext_cli import t
 from flext_ldap import c
 
 
@@ -115,7 +115,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 CONFIG_LDAPS_PORT,
                 CONFIG_PORT_MAX,
             )
-            CONFIG_HOST_CASES: Final[tuple[str, ...]] = (
+            CONFIG_HOST_CASES: Final[t.StrSequence] = (
                 c.LOCALHOST,
                 CONFIG_EXAMPLE_HOST,
                 "192.168.1.1",
@@ -152,7 +152,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[tuple[str, ...]] = (
+            DOCKER_OU_NAMES: Final[t.StrSequence] = (
                 "people",
                 "groups",
                 "services",
@@ -272,8 +272,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             STRING_EMPTY: Final[str] = ""
             STRING_DEFAULT_CUSTOM: Final[str] = "default"
 
-            LIST_ABC: Final[tuple[str, ...]] = ("a", "b", "c")
-            LIST_ABC_UPPER: Final[tuple[str, ...]] = ("A", "B", "C")
+            LIST_ABC: Final[t.StrSequence] = ("a", "b", "c")
+            LIST_ABC_UPPER: Final[t.StrSequence] = ("A", "B", "C")
             LIST_SINGLE: Final[str] = "single"
 
             FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType(
@@ -284,9 +284,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     "d": "value2",
                 },
             )
-            FILTER_TRUTHY_EXPECTED_KEYS: Final[tuple[str, ...]] = ("a", "c", "d")
+            FILTER_TRUTHY_EXPECTED_KEYS: Final[t.StrSequence] = ("a", "c", "d")
 
-            NORM_JOIN_INPUT: Final[tuple[str, ...]] = ("A", "B", "C")
+            NORM_JOIN_INPUT: Final[t.StrSequence] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
@@ -311,7 +311,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 Ldap3ServerCase.TLS: (c.Ldap.PORT, False, True),
             })
             ATTR_TO_STR_LIST_SCENARIOS: Final[
-                t.MappingKV[AttrToStrListCase, t.MappingKV[str, tuple[str, ...]]]
+                t.MappingKV[AttrToStrListCase, t.MappingKV[str, t.StrSequence]]
             ] = MappingProxyType({
                 AttrToStrListCase.EMPTY: MappingProxyType({}),
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
@@ -326,7 +326,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                     LdapValueCase,
                     tuple[
                         bytes | int | float | str | t.SequenceOf[bytes | str],
-                        tuple[str, ...],
+                        t.StrSequence,
                     ],
                 ]
             ] = MappingProxyType({
@@ -354,7 +354,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
             SEARCH_FILTER_CN: Final[str] = "(cn=*)"
             SEARCH_FILTER_UID: Final[str] = "(uid=*)"
-            SEARCH_ATTRIBUTES: Final[tuple[str, ...]] = ("cn", "mail")
+            SEARCH_ATTRIBUTES: Final[t.StrSequence] = ("cn", "mail")
             SEARCH_SIZE_LIMIT_CUSTOM: Final[int] = 100
             SEARCH_TIME_LIMIT_CUSTOM: Final[int] = 30
             SEARCH_NORMALIZED_SIZE_LIMIT: Final[int] = 50
@@ -380,12 +380,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_UPSERT_BATCH_SUCCESSFUL: Final[int] = 90
             SYNC_UPSERT_BATCH_FAILED: Final[int] = 10
 
-            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[tuple[str, ...]] = (
+            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[t.StrSequence] = (
                 "cn",
                 "mail",
                 "telephoneNumber",
             )
-            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[tuple[str, ...]] = ("userPassword",)
+            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[t.StrSequence] = ("userPassword",)
 
             SYNC_PHASE_TOTAL_ENTRIES: Final[int] = 100
             SYNC_PHASE_SYNCED: Final[int] = 90

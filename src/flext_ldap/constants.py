@@ -233,7 +233,7 @@ class FlextLdapConstants(c):
             NAMING_CONTEXTS = "namingContexts"
             SUPPORTED_EXTENSIONS = "supportedExtension"
 
-        ROOT_DSE_DETECTION_ORDER: Final[tuple[str, ...]] = (
+        ROOT_DSE_DETECTION_ORDER: Final[t.StrSequence] = (
             c.Ldif.ServerTypes.OPENLDAP.value,
             c.Ldif.ServerTypes.OID.value,
             c.Ldif.ServerTypes.OUD.value,
