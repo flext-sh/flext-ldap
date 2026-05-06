@@ -1,0 +1,27 @@
+tests/constants.py
+  s_0290f35b98ef0c::t_cfa3393f5aeaf7 19
+  h_5cf852cc46bf92 118,155,275-276,287,289,314,329,357,383,388
+src/flext_ldap/constants.py
+  h_5cf852cc46bf92 236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "33f087b57a278c63ccdbb5e4a86fe8d51b41d31b",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
