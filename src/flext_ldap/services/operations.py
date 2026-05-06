@@ -849,6 +849,8 @@ class FlextLdapOperations(s):
                     stats.skipped += 1
                 case c.Ldap.UpsertOperation.ADDED | c.Ldap.UpsertOperation.MODIFIED:
                     stats.synced += 1
+                case _:
+                    pass
         else:
             stats.failed += 1
             entry_dn_sliced: str = (

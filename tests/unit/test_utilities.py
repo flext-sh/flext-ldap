@@ -137,6 +137,8 @@ class TestsFlextLdapUtilitiesUnit:
                 result = u.Ldap.attr_to_str_list({"key": [b"bytes", "str"]})
             case c.Ldap.Tests.AttrToStrListCase.INT:
                 result = u.Ldap.attr_to_str_list({"num": 42})
+            case _:
+                raise AssertionError(f"Unhandled attr_to_str_list case: {case}")
         normalized = {key: tuple(value) for key, value in result.items()}
         u.Ldap.Tests.that(normalized, eq=dict(expected))
 

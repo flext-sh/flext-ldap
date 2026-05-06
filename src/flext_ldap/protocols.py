@@ -472,7 +472,7 @@ class FlextLdapProtocols(p):
                 ...
 
             @property
-            def result(self) -> t.MappingKV[str, t.JsonValue] | t.JsonValue | None:
+            def result(self) -> t.JsonMapping | t.JsonValue | None:
                 """Return the raw ldap3 result payload for the last operation."""
                 ...
 

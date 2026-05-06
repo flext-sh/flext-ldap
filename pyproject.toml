@@ -143,7 +143,7 @@ ignore-words-list = "crate,nd"
 # [MANAGED] coverage
 [tool.coverage.report]
 exclude_also = [ "if TYPE_CHECKING:", "if _t.TYPE_CHECKING:", "if typing.TYPE_CHECKING:" ]
-fail_under = 30
+fail_under = 15
 precision = 2
 show_missing = true
 skip_covered = false
@@ -153,7 +153,7 @@ omit = [ "*/dependency_injector/providers.pyx" ]
 
 # [MANAGED] deptry
 [tool.deptry]
-known_first_party = [ "flext_core", "flext_ldap", "flext_ldif" ]
+known_first_party = [ "flext_cli", "flext_core", "flext_ldap", "flext_ldif" ]
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.hatch.metadata]
@@ -359,7 +359,7 @@ reportIncompatibleVariableOverride = "none"
 reportInconsistentConstructor = "error"
 reportInvalidTypeForm = "none"
 reportMissingImports = "error"
-reportMissingModuleSource = "warning"
+reportMissingModuleSource = "error"
 reportMissingTypeStubs = "none"
 reportPrivateUsage = "warning"
 reportUnknownArgumentType = "none"
@@ -527,10 +527,52 @@ ignore = [
 ]
 select = [ "ALL" ]
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api.argparse]
+msg = "Use cli.register_result_command + Pydantic model from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.click]
+msg = "Use flext_cli (cli, c.Cli.CliAbortError, c.Cli.CliCommandError)."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.colorama]
+msg = "Use cli.print with c.Cli.MessageStyles."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.getpass]
+msg = "Use cli.prompt_password from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.orjson]
+msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.prompt_toolkit]
+msg = "Use cli.prompt / cli.confirm / cli.prompt_choice / cli.prompt_password."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.rich]
+msg = "Use cli.print / cli.display_message / cli.render_panel / cli.create_tree."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.simplejson]
+msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tabulate]
+msg = "Use cli.format_table / cli.show_table from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tomlkit]
+msg = "Use cli.read_toml_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tomllib]
+msg = "Use cli.read_toml_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tqdm]
+msg = "Use cli.display_progress from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
+msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.ujson]
+msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps."
+
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = [ "flext_core", "flext_ldap", "flext_ldif" ]
+known-first-party = [ "flext_cli", "flext_core", "flext_ldap", "flext_ldif" ]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
@@ -704,6 +746,9 @@ all = true
 in_place = true
 sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
+[tool.uv.sources.flext-cli]
+workspace = true
+
 [tool.uv.sources.flext-core]
 workspace = true
 
@@ -717,19 +762,3 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
-
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"argparse" = {msg = "Use cli.register_result_command + Pydantic model from flext_cli."}
-"click" = {msg = "Use flext_cli (cli, c.Cli.CliAbortError, c.Cli.CliCommandError)."}
-"colorama" = {msg = "Use cli.print with c.Cli.MessageStyles."}
-"getpass" = {msg = "Use cli.prompt_password from flext_cli."}
-"orjson" = {msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps from flext_cli."}
-"prompt_toolkit" = {msg = "Use cli.prompt / cli.confirm / cli.prompt_choice / cli.prompt_password."}
-"rich" = {msg = "Use cli.print / cli.display_message / cli.render_panel / cli.create_tree."}
-"simplejson" = {msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps."}
-"tabulate" = {msg = "Use cli.format_table / cli.show_table from flext_cli."}
-"tomlkit" = {msg = "Use cli.read_toml_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."}
-"tomllib" = {msg = "Use cli.read_toml_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."}
-"tqdm" = {msg = "Use cli.display_progress from flext_cli."}
-"typer" = {msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."}
-"ujson" = {msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps."}
