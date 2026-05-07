@@ -252,7 +252,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_process_new_attributes_ignored(self) -> None:
         new_attrs = {"cn": ["val"]}
-        existing_attrs = {}
+        existing_attrs: dict[str, list[str]] = {}
         changes, _processed = u.Ldap.process_new_attributes(
             new_attrs, existing_attrs, frozenset(["cn"])
         )

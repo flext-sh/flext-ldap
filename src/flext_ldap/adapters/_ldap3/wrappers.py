@@ -35,7 +35,7 @@ class FlextLdapLdap3Wrappers:
         result: t.MutableSequenceOf[str] = []
         for idx in range(length_fn()):
             el: t.Ldap.Ldap3EntryValue = getitem_fn(idx)
-            if el is not None and isinstance(el, (str, int, float, bool, bytes)):
+            if isinstance(el, (*t.PRIMITIVES_TYPES, bytes)):
                 result.append(str(el))
         return result
 

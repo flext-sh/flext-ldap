@@ -36,16 +36,19 @@ def _has_workerinput(settings: pytest.Config) -> TypeGuard[WorkerInputConfig]:
 
 
 def _get_worker_id(settings: pytest.Config) -> str:
+    default_worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
     if not _has_workerinput(settings):
-        return c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
-    return settings.workerinput.get(
+        return default_worker_id
+    worker_id: str = settings.workerinput.get(
         "workerid",
-        c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
+        default_worker_id,
     )
+    return worker_id
 
 
 def _docker_compose_path() -> Path:
-    return Path(__file__).resolve().parents[1] / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
+    compose_file_rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
+    return Path(__file__).resolve().parents[1] / compose_file_rel
 
 
 def _docker_compose_available() -> bool:
