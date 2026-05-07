@@ -1,0 +1,40 @@
+tests/unit/test_utilities.py
+  s_0290f35b98ef0c::t_b68fcecce1d838 255
+src/flext_ldap/adapters/_ldap3/result_extract.py
+  s_b15aa8dbf80823::t_39772eccf6c0ad 158
+tests/conftest.py
+  h_5cf852cc46bf92 39,41,44
+  s_0290f35b98ef0c::t_b68fcecce1d838 42,46
+  s_0290f35b98ef0c::t_7c63e169752653 50-51
+src/flext_ldap/adapters/_ldap3/wrappers.py
+  s_b15aa8dbf80823::t_f0f69a9122002b 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "eece1bdb62c58ab8ce14954b0f66e5cb4ff8c625",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_b15aa8dbf80823": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d896ab0f-dd16-4dca-9ad4-b3d924a501e7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
