@@ -43,11 +43,11 @@ class ConnectionManager:
             ldap3 p.Ldap.Ldap3Connection t.JsonValue (bound if auto_bind=True).
 
         """
-        ldap3_server: Server = (
-            server if isinstance(server, Server) else Server(str(server))
-        )
+        if not isinstance(server, Server):
+            msg = f"Expected ldap3.Server, got {type(server).__name__}"
+            raise TypeError(msg)
         return Connection(
-            server=ldap3_server,
+            server=server,
             user=settings.bind_dn,
             password=settings.bind_password,
             auto_bind=settings.auto_bind,

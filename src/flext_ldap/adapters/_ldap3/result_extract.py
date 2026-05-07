@@ -34,7 +34,7 @@ class ResultConverterExtractMixin:
             if entry_dn is None:
                 return m.Ldif.DN.empty()
             dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
-                update={"value": str(entry_dn)},
+                update={"value": entry_dn},
             )
             return dn_with_value
         return m.Ldif.DN.empty()
@@ -68,7 +68,7 @@ class ResultConverterExtractMixin:
     @staticmethod
     def extract_attrs_dict(
         attrs: p.Ldap.HasAttributesProperty
-        | t.MappingKV[str, t.JsonValue | t.StrSequence]
+        | t.MappingKV[str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence]
         | p.Ldap.HasItemsMethod
         | m.Ldif.Attributes
         | m.BaseModel

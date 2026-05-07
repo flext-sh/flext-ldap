@@ -31,7 +31,7 @@ class FlextLdapSettings(FlextLdifSettings):
         env_prefix="FLEXT_LDAP_", extra="ignore"
     )
 
-    class LdapSettings(m.Value):
+    class LdapSettings(m.SettingsValue):
         """Namespaced LDAP runtime settings."""
 
         host: Annotated[str, u.Field(description="LDAP server host")] = c.LOCALHOST

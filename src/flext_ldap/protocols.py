@@ -20,11 +20,6 @@ from typing import (
     runtime_checkable,
 )
 
-from ldap3 import Connection as _Ldap3Connection, Server as _Ldap3Server
-from ldap3.abstract.attribute import Attribute as _Ldap3Attribute
-from ldap3.abstract.entry import Entry as _Ldap3Entry
-from ldap3.protocol.rfc4512 import BaseServerInfo as _Ldap3ServerInfo
-
 from flext_ldif import p
 
 if TYPE_CHECKING:
@@ -447,16 +442,132 @@ class FlextLdapProtocols(p):
                 """Run the connection service health check/default operation."""
                 ...
 
-        # ── ldap3 Library Type Aliases ───────────────────────────
-        # Direct aliases to the real ldap3 runtime classes. Avoids structural
-        # Protocols whose stricter parameter annotations are not assignable
-        # from ldap3's untyped (pyrefly-inferred Literal) signatures.
+        # ── LDAP runtime object contracts ────────────────────────
+        # These names are intentionally structural so downstream projects type
+        # against stable protocol-owned contracts rather than ldap3 classes.
 
-        Ldap3Connection: type[_Ldap3Connection] = _Ldap3Connection
-        Ldap3Server: type[_Ldap3Server] = _Ldap3Server
-        Ldap3ServerInfo: type[_Ldap3ServerInfo] = _Ldap3ServerInfo
-        Ldap3Entry: type[_Ldap3Entry] = _Ldap3Entry
-        Ldap3Attribute: type[_Ldap3Attribute] = _Ldap3Attribute
+        @runtime_checkable
+        class Ldap3Connection(Protocol):
+            """Structural contract for ldap3-compatible connection objects."""
+
+            @property
+            def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
+                """Return the ldap3 server bound to this connection."""
+                ...
+
+            @property
+            def bound(self) -> bool:
+                """Return whether the connection is currently bound."""
+                ...
+
+            def bind(self) -> bool:
+                """Bind the connection using the configured credentials."""
+                ...
+
+            @property
+            def result(self) -> t.JsonMapping | None:
+                """Return the last LDAP operation result payload."""
+                ...
+
+            @property
+            def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
+                """Return the entries produced by the last LDAP operation."""
+                ...
+
+            @property
+            def add(self) -> Callable[..., bool]:
+                """Return the callable implementing the add operation."""
+                ...
+
+            @property
+            def delete(self) -> Callable[..., bool]:
+                """Return the callable implementing the delete operation."""
+                ...
+
+            @property
+            def modify(self) -> Callable[..., bool]:
+                """Return the callable implementing the modify operation."""
+                ...
+
+            @property
+            def search(self) -> Callable[..., bool | t.JsonValue | None]:
+                """Return the callable implementing the search operation."""
+                ...
+
+            @property
+            def start_tls(self) -> Callable[..., bool]:
+                """Return the callable implementing STARTTLS negotiation."""
+                ...
+
+            @property
+            def unbind(self) -> Callable[..., bool]:
+                """Return the callable implementing connection teardown."""
+                ...
+
+        class Ldap3ServerInfo(Protocol):
+            """Structural marker for ldap3-compatible server info payloads."""
+
+            @property
+            def naming_contexts(self) -> t.StrSequence | None:
+                """Return the advertised naming contexts when available."""
+                ...
+
+            @property
+            def other(self) -> t.MappingKV[str, t.JsonValue]:
+                """Return auxiliary ldap3 server info fields."""
+                ...
+
+        class Ldap3Server(Protocol):
+            """Structural contract for ldap3-compatible server objects."""
+
+            @property
+            def info(self) -> FlextLdapProtocols.Ldap.Ldap3ServerInfo | None:
+                """Return the ldap3 server-info payload when populated."""
+                ...
+
+            @override
+            def __str__(self) -> str:
+                """Return the server URL-style representation."""
+                ...
+
+        @runtime_checkable
+        class Ldap3Entry(Protocol):
+            """Structural contract for ldap3-compatible entry objects."""
+
+            @property
+            def entry_dn(self) -> str | None:
+                """Return the entry distinguished name."""
+                ...
+
+            @property
+            def entry_attributes(self) -> t.StrSequence:
+                """Return the attribute names present in this entry."""
+                ...
+
+            @property
+            def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
+                """Return the entry attributes as an LDAP attribute mapping."""
+                ...
+
+            def __getitem__(
+                self,
+                attribute_name: str,
+            ) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
+                """Return one ldap3 attribute object by attribute name."""
+                ...
+
+        class Ldap3Attribute(Protocol):
+            """Structural contract for ldap3-compatible attribute objects."""
+
+            @property
+            def values(self) -> t.Ldap.Ldap3AttributeValues:
+                """Return the raw LDAP values for this attribute."""
+                ...
+
+            @property
+            def value(self) -> t.Ldap.Ldap3EntryValue:
+                """Return the resolved attribute value."""
+                ...
 
         @runtime_checkable
         class Ldap3ParseResponse(Protocol):
@@ -493,7 +604,7 @@ class FlextLdapProtocols(p):
                 ...
 
             @property
-            def result(self) -> t.JsonMapping | t.JsonValue | None:
+            def result(self) -> t.JsonMapping | None:
                 """Return the raw ldap3 result payload for the last operation."""
                 ...
 

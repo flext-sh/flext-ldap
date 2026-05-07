@@ -384,7 +384,7 @@ class TestsFlextLdapUtilitiesUnit:
             search: None = None
 
             @property
-            def result(self) -> t.JsonValue:
+            def result(self) -> t.JsonMapping:
                 return {}
 
             @property
@@ -400,7 +400,7 @@ class TestsFlextLdapUtilitiesUnit:
                 return False
 
             @property
-            def result(self) -> t.JsonValue:
+            def result(self) -> t.JsonMapping:
                 return {}
 
             @property
@@ -416,7 +416,7 @@ class TestsFlextLdapUtilitiesUnit:
                 return True
 
             @property
-            def result(self) -> t.JsonValue:
+            def result(self) -> t.JsonMapping:
                 return {"result": 0}
 
             @property
@@ -432,7 +432,7 @@ class TestsFlextLdapUtilitiesUnit:
                 return True
 
             @property
-            def result(self) -> t.JsonValue:
+            def result(self) -> t.JsonMapping:
                 return {"result": 0}
 
             @property
@@ -465,7 +465,7 @@ class TestsFlextLdapUtilitiesUnit:
                 return False
 
             @property
-            def result(self) -> t.JsonValue:
+            def result(self) -> t.JsonMapping:
                 return {}
 
             @property

@@ -251,7 +251,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                         )
                         if created:
                             continue
-                        description = str(connection.result.get("description", ""))
+                        result_payload = connection.result
+                        description = (
+                            ""
+                            if result_payload is None
+                            else str(result_payload.get("description", ""))
+                        )
                         if description != "entryAlreadyExists":
                             raise RuntimeError(
                                 f"Failed to create {dn}: {description}",

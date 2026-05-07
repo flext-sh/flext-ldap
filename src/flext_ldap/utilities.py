@@ -123,13 +123,11 @@ class FlextLdapUtilities(u):
             The ONLY sanctioned way for test code outside flext-ldap/src and
             flext-ldif/src to create an LDAP connection object.
             """
-            ldap3_server: ldap3.Server
-            if isinstance(server, ldap3.Server):
-                ldap3_server = server
-            else:
-                ldap3_server = ldap3.Server(str(server))
+            if not isinstance(server, ldap3.Server):
+                msg = f"Expected ldap3.Server, got {type(server).__name__}"
+                raise TypeError(msg)
             return ldap3.Connection(
-                ldap3_server,
+                server,
                 user=user,
                 password=password,
                 auto_bind=auto_bind,
@@ -706,7 +704,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def query_root_dse(
             cls,
-            connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection,
+            connection: p.Ldap.RootDseConnection,
         ) -> p.Result[t.Ldap.OperationAttributes]:
             """Read rootDSE data from a bound ldap3-compatible connection."""
             result: p.Result[t.Ldap.OperationAttributes]
@@ -758,7 +756,7 @@ class FlextLdapUtilities(u):
         @classmethod
         def detect_from_connection(
             cls,
-            connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection,
+            connection: p.Ldap.RootDseConnection,
         ) -> p.Result[str]:
             """Detect LDAP server type from rootDSE on an active connection."""
             root_dse_result = cls.query_root_dse(connection)
