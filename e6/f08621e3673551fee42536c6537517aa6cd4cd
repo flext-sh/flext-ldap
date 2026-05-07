@@ -1,0 +1,49 @@
+src/flext_ldap/adapters/_ldap3/result_extract.py
+  h_5cf852cc46bf92 37,71
+src/flext_ldap/adapters/_ldap3/connection_manager.py
+  h_5cf852cc46bf92 46-48
+  s_0290f35b98ef0c::t_2d07b441c303ee 50
+src/flext_ldap/settings.py
+  s_0290f35b98ef0c::t_c7478bce2822a7 34
+src/flext_ldap/utilities.py
+  h_5cf852cc46bf92 126-128
+  s_1aca2b1c94e9fc::t_a6bf55813e2a3d 707
+  s_1aca2b1c94e9fc::t_88136f1ee16518 759
+  s_0290f35b98ef0c::t_2d07b441c303ee 130
+src/flext_ldap/protocols.py
+  s_0290f35b98ef0c::t_dc0cfbe87a1803 445-453,459-460,465-467,469-505,507-508,519-522,529-539,545-549,559-560,567-570
+  h_5cf852cc46bf92 454-458,461-464,468,509-518,523-528,540-544,550-556,561-565,607
+tests/unit/test_utilities.py
+  s_1aca2b1c94e9fc::t_f1a9bdde482ac3 387,403,419,435,468
+tests/utilities.py
+  h_5cf852cc46bf92 254-258
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "e6f08621e3673551fee42536c6537517aa6cd4cd",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_1aca2b1c94e9fc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ce2bbb45-e9bf-4d0e-b1f1-79cea59375ea",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
