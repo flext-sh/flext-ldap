@@ -62,6 +62,27 @@ class FlextLdapProtocols(p):
         Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
         """
 
+        @runtime_checkable
+        class LdapSettings(p.Model, Protocol):
+            """Namespaced LDAP runtime settings branch."""
+
+            host: str
+            port: int
+            use_ssl: bool
+            use_tls: bool
+            bind_dn: str
+            bind_password: str
+            timeout: int
+            auto_bind: bool
+            auto_range: bool
+
+        @runtime_checkable
+        class Settings(p.Ldif.Settings, Protocol):
+            """MRO-composed settings contract with the LDAP namespace."""
+
+            Ldap: FlextLdapProtocols.Ldap.LdapSettings
+            """Namespaced LDAP settings branch."""
+
         # ── Layer 0: Domain Protocols ────────────────────────────
         # DN, Attributes, Entry → use p.Ldif.DN,
         # p.Ldif.Attributes, p.Ldif.Entry

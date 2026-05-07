@@ -33,8 +33,8 @@ class TestsFlextLdapBase:
     def test_settings_is_isolated_from_root(self) -> None:
         """Project settings must be isolated from root FlextSettings (rule 3).
 
-        FlextLdapSettings inherits ``(FlextSettingsBase, BaseSettings)`` and
-        owns its own per-class singleton — it does NOT mix root concrete
+        FlextLdapSettings inherits ``FlextSettingsBase`` and owns its own
+        per-class singleton — it does NOT mix root concrete
         fields like ``app_name`` / ``version``.
         """
         cfg = m.Ldap.Tests.SuccessService().settings

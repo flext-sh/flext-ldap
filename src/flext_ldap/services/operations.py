@@ -30,7 +30,6 @@ Architecture Notes:
 
 from __future__ import annotations
 
-import logging
 from typing import override
 
 from flext_ldap import c, m, p, s, t, u
@@ -77,11 +76,6 @@ class FlextLdapOperations(s):
     _upsert_handler_instance: FlextLdapOperations._UpsertHandler | None = u.PrivateAttr(
         default_factory=lambda: None,
     )
-
-    @staticmethod
-    def _get_structlog_logger() -> p.Logger | None:
-        """Return structlog logger when runtime logger satisfies the protocol."""
-        return u.fetch_logger(__name__)
 
     class _UpsertHandler:
         """Handle add-or-modify flows for upsert calls.
@@ -545,24 +539,14 @@ class FlextLdapOperations(s):
             return r[m.Ldap.LdapBatchStats].fail(
                 f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
             )
-        logger = FlextLdapOperations._get_structlog_logger()
-        if logger is not None:
-            logger.info(
-                "Batch upsert completed",
-                operation=c.Ldap.OperationName.BATCH_UPSERT,
-                total_entries=total_entries,
-                synced=stats.synced,
-                failed=stats.failed,
-                skipped=stats.skipped,
-            )
-        else:
-            logging.getLogger(__name__).info(
-                "Batch upsert completed: total=%s synced=%s failed=%s skipped=%s",
-                total_entries,
-                stats.synced,
-                stats.failed,
-                stats.skipped,
-            )
+        self.logger.info(
+            "Batch upsert completed",
+            operation=c.Ldap.OperationName.BATCH_UPSERT,
+            total_entries=total_entries,
+            synced=stats.synced,
+            failed=stats.failed,
+            skipped=stats.skipped,
+        )
         if stats.synced == 0 and stats.failed > 0:
             return r[m.Ldap.LdapBatchStats].fail(
                 f"Batch upsert failed: all {stats.failed} entries failed, 0 synced",
@@ -857,20 +841,10 @@ class FlextLdapOperations(s):
                 entry_dn[: c.Ldap.DN_TRUNCATION_LENGTH] if entry_dn else ""
             )
             error_msg = (upsert_result.error or "")[:200]
-            logger = FlextLdapOperations._get_structlog_logger()
-            if logger is not None:
-                logger.error(
-                    "Batch upsert entry failed",
-                    entry_index=entry_index,
-                    total_entries=total_entries,
-                    entry_dn=entry_dn_sliced,
-                    error=error_msg,
-                )
-            else:
-                logging.getLogger(__name__).error(
-                    "Batch upsert entry failed: entry=%s total=%s dn=%s error=%s",
-                    entry_index,
-                    total_entries,
-                    entry_dn_sliced,
-                    error_msg,
-                )
+            self.logger.error(
+                "Batch upsert entry failed",
+                entry_index=entry_index,
+                total_entries=total_entries,
+                entry_dn=entry_dn_sliced,
+                error=error_msg,
+            )

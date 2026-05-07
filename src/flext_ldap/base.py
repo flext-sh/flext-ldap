@@ -4,8 +4,7 @@ Defines the canonical LDAP service root used by service mixins and the API facad
 - FlextLdapService provides typed settings access via self.settings
 - All services MUST inherit from this base through cooperative MRO
 
-Settings access goes through ``FlextLdapSettings.fetch_global()`` (rule 1
-shared singleton, propagating via ``update_global``).
+Settings access goes through ``self.settings`` from the service runtime.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -41,11 +40,6 @@ class FlextLdapService[
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdapSettings)
-
-    @classmethod
-    def _get_service_config_type(cls) -> type[FlextLdapSettings]:
-        """Expose the canonical LDAP settings model for legacy callers."""
-        return FlextLdapSettings
 
     def _ensure_adapter(self) -> FlextLdapLdap3Adapter:
         """Return the shared ldap3 adapter for this service instance."""
