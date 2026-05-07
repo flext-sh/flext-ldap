@@ -1,0 +1,33 @@
+src/flext_ldap/settings.py
+  h_5cf852cc46bf92 17,21,23-24,27,34-72
+src/flext_ldap/base.py
+  s_2914457c55fb6e::t_0a78e1042d0de3 7
+src/flext_ldap/protocols.py
+  s_2914457c55fb6e::t_0a78e1042d0de3 67-79,81-82,85
+  h_5cf852cc46bf92 65-66,80,83-84
+src/flext_ldap/services/operations.py
+  s_2914457c55fb6e::t_0a78e1042d0de3 542-549,844-850
+tests/unit/test_base.py
+  h_5cf852cc46bf92 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "20dc475ae90c969a0d67575e26fd1c446cd93366",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_2914457c55fb6e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "028a9615-de04-439a-812a-011714b27791",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
