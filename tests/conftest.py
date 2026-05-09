@@ -12,18 +12,20 @@ from pathlib import Path
 from typing import Protocol, TypeGuard
 
 import pytest
+from flext_tests import (
+    reset_settings as _shared_reset_settings,
+    settings as _shared_settings,
+    settings_factory as _shared_settings_factory,
+)
 
-from flext_core import FlextSettings
 from flext_ldap import FlextLdapLdap3Wrappers
 from tests import c, t, u
 
+reset_settings = _shared_reset_settings
+settings = _shared_settings
+settings_factory = _shared_settings_factory
+
 logger = u.fetch_logger(__name__)
-
-
-@pytest.fixture(autouse=True)
-def reset_settings_singleton() -> None:
-    """Reset FlextSettings singleton between tests."""
-    FlextSettings.reset_for_testing()
 
 
 class WorkerInputConfig(Protocol):

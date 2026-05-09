@@ -76,7 +76,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             ) -> p.Ldap.Ldap3Server:
                 """Create an ldap3 server from container metadata."""
                 server_url = ldap_container["server_url"]
-                return u.Ldap.create_server_from_url(str(server_url))
+                server: p.Ldap.Ldap3Server = u.Ldap.create_server_from_url(
+                    str(server_url),
+                )
+                return server
 
             @staticmethod
             def create_ldap3_connection(
@@ -87,11 +90,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 ],
             ) -> p.Ldap.Ldap3Connection:
                 """Create an ldap3 connection from container metadata."""
-                return u.Ldap.create_connection(
+                connection: p.Ldap.Ldap3Connection = u.Ldap.create_connection(
                     server,
                     user=str(ldap_container["bind_dn"]),
                     password=str(ldap_container["password"]),
                 )
+                return connection
 
             @staticmethod
             def create_connection_config(

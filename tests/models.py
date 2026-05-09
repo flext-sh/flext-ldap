@@ -15,7 +15,8 @@ from typing import override
 from flext_tests import FlextTestsModels
 
 from flext_ldap import m
-from tests import p, r, s
+from tests import p, r
+from tests.base import s
 
 
 class TestsFlextLdapModels(m, FlextTestsModels):

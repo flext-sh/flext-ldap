@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests.settings import FlextTestsSettings
 
 from flext_core import FlextSettings
 from tests import c, m
@@ -41,6 +42,16 @@ class TestsFlextLdapBase:
         glob = FlextSettings.fetch_global()
         assert cfg is not glob
         assert isinstance(glob, FlextSettings)
+        assert isinstance(cfg, FlextTestsSettings)
+        assert isinstance(cfg.Tests, m.SettingsValue)
+
+    def test_fetch_settings_exposes_full_mro_namespaces(self) -> None:
+        settings = m.Ldap.Tests.SuccessService.fetch_settings()
+
+        assert isinstance(settings.Cli, m.SettingsValue)
+        assert isinstance(settings.Ldif, m.SettingsValue)
+        assert isinstance(settings.Ldap, m.SettingsValue)
+        assert isinstance(settings.Tests, m.SettingsValue)
 
     # ── Independence ───────────────────────────────────────────────────
 

@@ -14,12 +14,14 @@ from flext_core.lazy import (
 if _t.TYPE_CHECKING:
     from flext_tests import td, tf, tk, tm, tv
 
-    from flext_ldap import d, e, h, r, s, x
+    from flext_ldap import d, e, h, r, x
+    from tests.base import TestsFlextLdapServiceBase, s
     from tests.conftest import WorkerInputConfig
     from tests.constants import TestsFlextLdapConstants, c
     from tests.integration.test_smoke import TestsFlextLdapSmoke
     from tests.models import TestsFlextLdapModels, m
     from tests.protocols import TestsFlextLdapProtocols, p
+    from tests.settings import TestsFlextLdapSettings
     from tests.typings import TestsFlextLdapTypes, t
     from tests.unit.test_api import TestsFlextLdapApi
     from tests.unit.test_base import TestsFlextLdapBase
@@ -43,6 +45,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            ".base": (
+                "TestsFlextLdapServiceBase",
+                "s",
+            ),
             ".conftest": ("WorkerInputConfig",),
             ".constants": (
                 "TestsFlextLdapConstants",
@@ -57,6 +63,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdapProtocols",
                 "p",
             ),
+            ".settings": ("TestsFlextLdapSettings",),
             ".typings": (
                 "TestsFlextLdapTypes",
                 "t",
@@ -84,7 +91,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "e",
                 "h",
                 "r",
-                "s",
                 "x",
             ),
             "flext_tests": (
@@ -137,6 +143,8 @@ __all__: list[str] = [
     "TestsFlextLdapModelsUnit",
     "TestsFlextLdapOperations",
     "TestsFlextLdapProtocols",
+    "TestsFlextLdapServiceBase",
+    "TestsFlextLdapSettings",
     "TestsFlextLdapSmoke",
     "TestsFlextLdapSync",
     "TestsFlextLdapTypes",
