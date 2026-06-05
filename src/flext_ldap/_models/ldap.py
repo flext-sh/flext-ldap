@@ -106,10 +106,16 @@ class FlextLdapModelsLdap:
 
         @classmethod
         def base_scope(cls, base_dn: str) -> Self:
-            """Build base-scope search options using model defaults everywhere else."""
+            """Build base-scope search options requesting all user attributes.
+
+            Base-scope lookups target a single known DN to read that entry (e.g.
+            the upsert existence check), so the entry's user attributes must be
+            returned for a meaningful comparison — ldap3 omits them unless asked.
+            """
             return cls(
                 base_dn=base_dn,
                 scope=c.Ldap.SearchScope.BASE,
+                attributes=[c.Ldap.ALL_ATTRIBUTES],
             )
 
     class SearchParams(m.BaseModel):
