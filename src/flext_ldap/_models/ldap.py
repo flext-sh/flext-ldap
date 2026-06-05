@@ -115,7 +115,7 @@ class FlextLdapModelsLdap:
             return cls(
                 base_dn=base_dn,
                 scope=c.Ldap.SearchScope.BASE,
-                attributes=[c.Ldap.ALL_ATTRIBUTES],
+                attributes=[c.Ldap.AttributeName.ALL_ATTRIBUTES],
             )
 
     class SearchParams(m.BaseModel):
