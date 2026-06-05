@@ -1,0 +1,19 @@
+src/flext_ldap/_models/ldap.py
+  s_b9e4e6f7313291::t_e24926cb0337ac 118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e9fbde1a94df0ff149a980f556cd238d1454d7c5",
+  "prompts": {},
+  "sessions": {
+    "s_b9e4e6f7313291": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7b55c594-4e23-46d8-bfb0-8a42510096d3",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
