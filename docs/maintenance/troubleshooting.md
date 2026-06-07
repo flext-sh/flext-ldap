@@ -321,13 +321,12 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 **Solutions:**
 
-````python notest
+````text
 # Manually specify language
-```python
+```python notest
 def example():
     pass
-````
-
+```
 ````
 
 ### Content Optimization Issues
