@@ -1,0 +1,20 @@
+docs/maintenance/troubleshooting.md
+  s_73cbfc60e45e37::t_3dd5bf9d60a591 324,329
+  s_73cbfc60e45e37::t_8ac77ed356e2ae 326
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "b666928324a134f5a3ca45ef5461be22d6dab1bb",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
