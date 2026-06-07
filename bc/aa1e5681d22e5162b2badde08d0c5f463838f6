@@ -1,0 +1,45 @@
+docs/development/README.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 189
+docs/development.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 276,285,292
+docs/guides/acl-management.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 175,188
+docs/api-reference.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 124,530
+docs/maintenance/README.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 580
+docs/guides/universal-ldap-guide.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 323-324,405
+docs/testing.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 330-331,367
+docs/maintenance/troubleshooting.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 326,657,681,696
+docs/guides/configuration.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 144,164
+docs/maintenance/user-guide.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 404
+docs/guides/testing.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 176-177,220-221,294-295,336-337,592-593,616-617,644
+docs/troubleshooting.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 211,227-228,268,442,500
+docs/guides/integration.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 1089-1090,1133
+docs/guides/troubleshooting.md
+  s_73cbfc60e45e37::t_8c9f7134eb1e57 118,196-197,316,358,398,409-410,432,560-561,622-623,812
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "bcaa1e5681d22e5162b2badde08d0c5f463838f6",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
