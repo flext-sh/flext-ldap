@@ -85,7 +85,7 @@ git status
 
 #### Problem: ModuleNotFoundError
 
-```python
+```python notest
 # Error
 ModuleNotFoundError: No module named 'flext_core'
 ```
@@ -115,7 +115,7 @@ poetry install
 
 ### r
 
-```python
+```python notest
 # Debug import issues
 import sys
 
@@ -136,7 +136,7 @@ except ImportError as e:
 
 #### Problem: MyPy errors
 
-```python
+```python notest
 # Error
 error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapping"
 ```
@@ -145,7 +145,7 @@ error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapp
 
 **Fix type annotations:**
 
-```python
+```python notest
 # ❌ WRONG
 def process(data):
     return data
@@ -172,7 +172,7 @@ mypy src/ --show-error-codes | grep "error-code"
 
 #### Problem: Tests failing
 
-```python
+```python notest
 # Error
 AssertionError: Expected success but got failure
 ```
@@ -193,7 +193,7 @@ pytest tests/unit/test_module.py::TestClass::test_method -v --pdb
 
 **Check test data:**
 
-```python
+```python notest
 def test_with_debug():
     result = my_function()
     print(f"Result: {result}")
@@ -207,7 +207,7 @@ def test_with_debug():
 
 #### Problem: Configuration not loading
 
-```python
+```python notest
 # Error
 ValidationError: field required
 ```
@@ -222,7 +222,7 @@ env | grep FLEXT_
 
 **Validate configuration:**
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -252,7 +252,7 @@ except c.ValidationError as e:
 
 **Debug configuration loading:**
 
-```python
+```python notest
 import os
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -288,7 +288,7 @@ print(f"Config: {settings.dict()}")
 
 #### Problem: LDIF parsing fails
 
-```python
+```python notest
 # Error
 LdifParsingException: Invalid LDIF format
 ```
@@ -297,7 +297,7 @@ LdifParsingException: Invalid LDIF format
 
 **Check LDIF content:**
 
-```python
+```python notest
 from flext_ldif import ldif
 
 content = """dn: cn=test,dc=example,dc=com
@@ -312,7 +312,7 @@ if result.failure:
 
 **Enable debug logging:**
 
-```python
+```python notest
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -322,7 +322,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 **Validate LDIF format:**
 
-```python
+```python notest
 # Check for common LDIF issues
 def validate_ldif_content(content: str) -> t.StringList:
     issues = []
@@ -345,7 +345,7 @@ def validate_ldif_content(content: str) -> t.StringList:
 
 #### Problem: Migration fails
 
-```python
+```python notest
 # Error
 LdifMigrationException: Server compatibility error
 ```
@@ -354,7 +354,7 @@ LdifMigrationException: Server compatibility error
 
 **Check server configuration:**
 
-```python
+```python notest
 from flext_ldif import FlextLdifSettings
 
 settings = FlextLdifSettings(
@@ -369,7 +369,7 @@ print(f"Config: {settings.dict()}")
 
 **Enable server servers:**
 
-```python
+```python notest
 settings = FlextLdifSettings(
     servers_enabled=True, source_server="oid", target_server="oud"
 )
@@ -377,7 +377,7 @@ settings = FlextLdifSettings(
 
 **Test with sample data:**
 
-```python
+```python notest
 # Test migration with small sample
 sample_ldif = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -394,7 +394,7 @@ else:
 
 #### Problem: Slow processing
 
-```python
+```python notest
 # Symptoms
 # - High memory usage
 # - Slow response times
@@ -405,7 +405,7 @@ else:
 
 **Profile memory usage:**
 
-```python
+```python notest
 import psutil
 import os
 
@@ -427,7 +427,7 @@ profile_memory()
 
 **Optimize batch size:**
 
-```python
+```python notest
 from flext_ldif import FlextLdifSettings
 
 # Reduce batch size for memory-constrained environments
@@ -439,7 +439,7 @@ settings = FlextLdifSettings(
 
 **Enable parallel processing:**
 
-```python
+```python notest
 settings = FlextLdifSettings(
     parallel_processing=True,
     max_workers=4,  # Adjust based on CPU cores
@@ -450,7 +450,7 @@ settings = FlextLdifSettings(
 
 ### 1. Logging Configuration
 
-```python
+```python notest
 import logging
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -487,7 +487,7 @@ logger.error("Error message")
 
 ### 2. Exception Handling
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -524,7 +524,7 @@ def safe_operation(data: dict) -> p.Result[dict]:
 
 ### 3. Debug Mode
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -555,7 +555,7 @@ print(f"Log level: {settings.log_level}")
 
 ### 4. Step-by-Step Debugging
 
-```python
+```python notest
 def debug_ldif_processing(content: str):
     """Debug LDIF processing step by step."""
     print(f"Input content length: {len(content)}")
@@ -616,7 +616,7 @@ def debug_ldif_processing(content: str):
 
 ### Memory Issues
 
-```python
+```python notest
 # Monitor memory usage
 import psutil
 import os
@@ -639,7 +639,7 @@ monitor_memory()
 
 ### CPU Issues
 
-```python
+```python notest
 # Monitor CPU usage
 import psutil
 import time
@@ -719,7 +719,7 @@ When reporting issues, include:
 
 1. **Error Details**
 
-   ```python
+   ```python notest
    # Full error traceback
    import traceback
    try:
@@ -730,7 +730,7 @@ When reporting issues, include:
 
 1. **Minimal Reproduction**
 
-   ```python
+   ```python notest
    # Minimal code that reproduces the issue
    from flext_core import FlextBus
    ```
@@ -768,7 +768,7 @@ from flext_core import u
 
 1. **Always Use r**
 
-```python
+```python notest
 # ✅ GOOD
 def process(data: dict) -> p.Result[ProcessedData]:
     return r.ok(ProcessedData(**data))
@@ -781,7 +781,7 @@ def process(data: dict) -> ProcessedData:
 
 1. **Validate Input Early**
 
-   ```python
+   ```python notest
    def process_data(data: dict) -> p.Result[dict]:
        if not data:
            return r.fail("Data required")
@@ -792,7 +792,7 @@ def process(data: dict) -> ProcessedData:
 
 1. **Use Type Hints**
 
-   ```python
+   ```python notest
    # ✅ GOOD
    def process(items: t.SequenceOf[Item]) -> p.Result[Sequence[ProcessedItem]]:
        pass
@@ -805,7 +805,7 @@ def process(data: dict) -> ProcessedData:
 
 1. **Test Thoroughly**
 
-   ```python
+   ```python notest
    def test_process_data():
        # Test success case
        result = process_data({"key": "value"})

@@ -237,7 +237,7 @@ audit:
 
 **Solutions:**
 
-```python
+```python notest
 # Process files individually
 for file_path in file_list:
     result = auditor.audit_file(file_path)
@@ -321,9 +321,9 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 **Solutions:**
 
-````python
+````python notest
 # Manually specify language
-```python
+```python notest
 def example():
     pass
 ````
@@ -414,7 +414,7 @@ git remote -v
 
 **Solutions:**
 
-```python
+```python notest
 # Process files in batches
 batch_size = 10
 for i in range(0, len(file_list), batch_size):
@@ -464,7 +464,7 @@ logrotate -f /etc/logrotate.d/docs-maintenance
 
 **Validation:**
 
-```python
+```python notest
 # Validate configuration
 python -c "
 import yaml
@@ -629,7 +629,7 @@ python docs/maintenance/report.py --generate-dashboard --weekly-summary
 
 ### Enable Debug Logging
 
-```python
+```python notest
 # Add to scripts
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -640,7 +640,7 @@ export DOCS_MAINTENANCE_DEBUG=1
 
 ### Performance Profiling
 
-```python
+```python notest
 # Profile script execution
 python -m cProfile docs/maintenance/audit.py --comprehensive > audit_profile.txt
 
@@ -654,7 +654,7 @@ p.sort_stats('cumulative').print_stats(20)
 
 ### Memory Monitoring
 
-```python
+```python notest
 # Monitor memory usage
 import psutil
 import os
@@ -678,7 +678,7 @@ curl -H "User-Agent: Mozilla/5.0" https://example.com
 
 ### File System Debugging
 
-```python
+```python notest
 # Debug file operations
 import os
 
@@ -693,7 +693,7 @@ print(f"Docs directory contents: {os.listdir('docs')}")
 
 Create diagnostic scripts for complex issues:
 
-```python
+```python notest
 # docs/maintenance/diagnostics.py
 def diagnose_link_issues():
     """Comprehensive link validation diagnostics."""

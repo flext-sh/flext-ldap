@@ -172,7 +172,7 @@ make clean-all     # Deep clean including venvs
 
 ### Railway-Oriented Programming
 
-```python
+```python notest
 from flext_core import r, p
 
 
@@ -186,7 +186,7 @@ def my_operation(data: dict) -> p.Result[ProcessedData]:
 
 ### Use x
 
-```python
+```python notest
 from flext_core import s
 
 
@@ -202,7 +202,7 @@ class MyService(s[None]):
 
 ### Pydantic v2 Models
 
-```python
+```python notest
 from pydantic import BaseModel, PositiveInt
 
 

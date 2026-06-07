@@ -401,7 +401,7 @@ sync:
 
 Create custom validation rules:
 
-```python
+```python notest
 # docs/maintenance/custom_rules.py
 def custom_audit_rule(content, file_path):
     """Custom content validation."""

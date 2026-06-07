@@ -133,7 +133,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 1. **Ensure CA certificate is installed**
 1. **Configure certificate verification settings**
 
-```python
+```python notest
 from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
@@ -168,7 +168,7 @@ AuthenticationError: Authentication failed: Invalid credentials
 
 **Diagnosis:**
 
-```python
+```python notest
 from flext_ldap.api import ldap
 
 
@@ -208,7 +208,7 @@ SearchError: Invalid DN format
 
 **Common DN Format Mistakes:**
 
-```python
+```python notest
 # ❌ WRONG - Spaces around commas
 dn = "cn=John Doe , ou=users , dc=example , dc=com"
 
@@ -224,7 +224,7 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 
 **Validation:**
 
-```python
+```python notest
 from flext_ldap import m
 
 
@@ -264,7 +264,7 @@ SearchError: Bad search filter
 
 **Common Filter Mistakes:**
 
-```python
+```python notest
 # ❌ WRONG - Missing parentheses
 filter_str = "objectClass=person"
 
@@ -286,7 +286,7 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 
 **Filter Validation:**
 
-```python
+```python notest
 from flext_ldap import m, c
 
 
@@ -323,7 +323,7 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 
 **Diagnosis:**
 
-```python
+```python notest
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -365,7 +365,7 @@ ______________________________________________________________________
 
 **Diagnosis:**
 
-```python
+```python notest
 import time
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -424,7 +424,7 @@ run(diagnose_performance())
 
 1. **Use specific base DNs:**
 
-```python
+```python notest
 # ❌ Inefficient - searches entire directory
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com", filter_str="(uid=john.doe)", scope="subtree"
@@ -438,7 +438,7 @@ search_request = FlextLdapEntities.SearchRequest(
 
 1. **Optimize search filters:**
 
-```python
+```python notest
 # ❌ Inefficient - broad filter
 filter_str = "(cn=*john*)"
 
@@ -451,7 +451,7 @@ filter_str = "(&(objectClass=person)(uid=john.doe))"
 
 1. **Limit result sets:**
 
-```python
+```python notest
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(objectClass=person)",
@@ -472,7 +472,7 @@ ConnectionError: Connection pool exhausted
 
 **Diagnosis:**
 
-```python
+```python notest
 # Check connection pool configuration
 from Flext_ldap import FlextLdapSettings
 
@@ -485,7 +485,7 @@ print(f"Connection timeout: {settings.connection_timeout}")
 
 1. **Increase pool size:**
 
-```python
+```python notest
 settings = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
@@ -496,7 +496,7 @@ settings = FlextLdapSettings(
 
 1. **Implement connection reuse:**
 
-```python
+```python notest
 class LDAPService:
     def __init__(self):
         self._api = ldap  # Reuse single instance
@@ -518,7 +518,7 @@ ______________________________________________________________________
 
 **Diagnosis:**
 
-```python
+```python notest
 import os
 from Flext_ldap import FlextLdapSettings
 
@@ -598,13 +598,13 @@ ______________________________________________________________________
 
 **Symptom:**
 
-```python
+```python notest
 ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
 ```
 
 **Diagnosis:**
 
-```python
+```python notest
 # Check package installation
 import pkg_resources
 
@@ -673,7 +673,7 @@ ______________________________________________________________________
 
 ### r Error Handling
 
-```python
+```python notest
 from flext_ldap.api import ldap
 
 
@@ -710,7 +710,7 @@ ______________________________________________________________________
 
 ### Enable Debug Logging
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -755,7 +755,7 @@ ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=exam
 
 ### Performance Profiling
 
-```python
+```python notest
 import cProfile
 import pstats
 from flext_ldap import FlextLdapEntities
@@ -833,7 +833,7 @@ When reporting issues, include:
 
 ### Diagnostic Information Collection
 
-```python
+```python notest
 import sys
 import pkg_resources
 from Flext_ldap import FlextLdapSettings

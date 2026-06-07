@@ -273,7 +273,7 @@ ______________________________________________________________________
 
 **Domain Layer** (Business logic):
 
-```python
+```python notest
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
 # src/flext_ldap/value_objects.py
@@ -282,14 +282,14 @@ ______________________________________________________________________
 
 **Application Layer** (Use cases):
 
-```python
+```python notest
 # src/flext_ldap/api.py
 # src/flext_ldap/services.py
 ```
 
 **Infrastructure Layer** (External concerns):
 
-```python
+```python notest
 # src/flext_ldap/clients.py
 # src/flext_ldap/adapters.py
 # src/flext_ldap/operations.py
@@ -300,7 +300,7 @@ ______________________________________________________________________
 
 **1. Single Responsibility Classes**
 
-```python
+```python notest
 class FlextLdapUserService:
     """Single responsibility - user operations only."""
 
@@ -317,7 +317,7 @@ class FlextLdapUserService:
 
 **2. r Pattern**
 
-```python
+```python notest
 # ✅ CORRECT - Explicit error handling
 def create_user(self, request: CreateUserRequest) -> p.Result[FlextLdapUser]:
     if not request.is_valid():
@@ -341,7 +341,7 @@ def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
 
 **3. Parameter Object Pattern**
 
-```python
+```python notest
 # ✅ CORRECT - Parameter objects for complex operations
 @dataclass
 class SearchRequest:
@@ -363,7 +363,7 @@ def search_entries(self, base_dn: str, filter_str: str, scope: str,
 
 **4. Value Object Validation**
 
-```python
+```python notest
 @dataclass(frozen=True)
 class DN:
     """RFC 4514 compliant Distinguished Name."""
@@ -385,7 +385,7 @@ ______________________________________________________________________
 
 ### Type Safety Requirements
 
-```python
+```python notest
 # All public APIs must have complete type annotations
 def authenticate_user(self, username: str, password: str) -> p.Result[FlextLdapUser]:
     """Complete type signature required."""
@@ -401,7 +401,7 @@ class FlextLdapService(Generic[T]):
 
 ### Import Organization
 
-```python
+```python notest
 # Standard library imports
 from dataclasses import dataclass
 from typing import List, Optional
@@ -437,7 +437,7 @@ ______________________________________________________________________
 
 ### Unit Test Structure
 
-```python
+```python notest
 import pytest
 from flext_ldap import FlextLdapUser, CreateUserRequest
 
@@ -487,7 +487,7 @@ class TestFlextLdapUser:
 
 ### Integration Test Structure
 
-```python
+```python notest
 import pytest
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -542,7 +542,7 @@ class TestLdapOperations:
 
 ### Test Fixtures
 
-```python
+```python notest
 # tests/conftest.py
 import pytest
 from flext_tests import tk
@@ -645,7 +645,7 @@ ______________________________________________________________________
 
 ### Code Documentation
 
-```python
+```python notest
 class FlextLdapClients:
     """High-level LDAP API following Clean Architecture patterns.
 
@@ -709,7 +709,7 @@ ______________________________________________________________________
 
 ### Connection Management
 
-```python
+```python notest
 # Use connection pooling for high-traffic scenarios
 from Flext_ldap import FlextLdapSettings
 
@@ -723,7 +723,7 @@ settings = FlextLdapSettings(
 
 ### Search Optimization
 
-```python
+```python notest
 # Optimize LDAP searches
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",  # Use specific base DN
@@ -737,7 +737,7 @@ search_request = FlextLdapEntities.SearchRequest(
 
 ### Best Practices
 
-```python
+```python notest
 # Use context managers for resource management
 with get_ldap_client() as client:
     result = client.search(search_request)

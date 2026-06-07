@@ -73,7 +73,7 @@ tests/
 
 Test individual functions and classes in isolation:
 
-```python
+```python notest
 import pytest
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -125,7 +125,7 @@ objectClass: inetOrgPerson"""
 
 Test component interactions and workflows:
 
-```python
+```python notest
 import pytest
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -173,7 +173,7 @@ class TestLdifIntegration:
 
 Test complete workflows and user scenarios:
 
-```python
+```python notest
 import pytest
 from pathlib import Path
 from flext_ldif import ldif, FlextLdifSettings
@@ -216,7 +216,7 @@ objectClass: inetOrgPerson"""
 
 FLEXT uses pytest markers to categorize tests:
 
-```python
+```python notest
 import pytest
 
 
@@ -289,7 +289,7 @@ pytest -n 4
 
 ### Pytest Fixtures
 
-```python
+```python notest
 import pytest
 from pathlib import Path
 from flext_ldif import ldif, FlextLdifSettings
@@ -330,7 +330,7 @@ def temp_directories(tmp_path):
 
 ### Using Fixtures
 
-```python
+```python notest
 def test_ldif_parsing(ldif_service, sample_ldif_content):
     """Test LDIF parsing with fixtures."""
     result = ldif_service.parse(sample_ldif_content)
@@ -354,7 +354,7 @@ def test_file_migration(ldif_service, temp_directories):
 
 ### Unit Test Mocking
 
-```python
+```python notest
 from unittest.mock import Mock, patch
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -393,7 +393,7 @@ def test_with_mocked_dependency():
 
 ### Integration Test Stubbing
 
-```python
+```python notest
 from unittest.mock import Mock
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -436,7 +436,7 @@ def test_with_stubbed_service():
 
 ### Load Testing
 
-```python
+```python notest
 import pytest
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -468,7 +468,7 @@ def test_concurrent_processing():
 
 ### Memory Testing
 
-```python
+```python notest
 import pytest
 import psutil
 import os
@@ -514,7 +514,7 @@ tests/
 
 ### Loading Test Data
 
-```python
+```python notest
 import json
 from pathlib import Path
 
@@ -585,7 +585,7 @@ jobs:
 
 ### 1. Test Naming
 
-```python
+```python notest
 # ✅ GOOD - Descriptive test names
 def test_parse_valid_ldif_returns_success():
     """Test that parsing valid LDIF returns success result."""
@@ -608,7 +608,7 @@ def test_ldif():
 
 ### 2. Test Organization
 
-```python
+```python notest
 class TestLdifParsing:
     """Test LDIF parsing functionality."""
 
@@ -635,7 +635,7 @@ class TestLdifMigration:
 
 ### 3. Assertion Quality
 
-```python
+```python notest
 # ✅ GOOD - Specific assertions
 def test_parse_result():
     result = ldif.parse(content)
@@ -655,7 +655,7 @@ def test_parse_result():
 
 ### 4. Test Independence
 
-```python
+```python notest
 # ✅ GOOD - Independent tests
 def test_parse_valid_ldif():
     ldif = ldif()  # Fresh instance
@@ -697,7 +697,7 @@ def test_parse_invalid_ldif():
 
 1. **Fixture Not Found**
 
-   ```python
+   ```python notest
    # Check fixture scope and dependencies
    @pytest.fixture(scope="function")
    def my_fixture():

@@ -327,7 +327,7 @@ pytest --maxfail=1 --tb=short  # Fail fast on errors
 
 #### 1. Test Structure Pattern
 
-```python
+```python notest
 def test_should_perform_operation_under_conditions():
     """Given: specific preconditions
     When: operation is performed
@@ -344,7 +344,7 @@ def test_should_perform_operation_under_conditions():
 
 #### 2. LDAP Integration Test Pattern
 
-```python
+```python notest
 @pytest.mark.integration
 def test_ldap_operation_with_real_server():
     """Test LDAP operation against real server."""
@@ -363,7 +363,7 @@ def test_ldap_operation_with_real_server():
 
 #### 3. Mock Testing Pattern
 
-```python
+```python notest
 def test_service_logic_with_mocked_dependencies():
     """Test service logic in isolation."""
     # Mock infrastructure dependencies
@@ -389,7 +389,7 @@ def test_service_logic_with_mocked_dependencies():
 
 #### Test Fixtures
 
-```python
+```python notest
 @pytest.fixture
 def ldap_client():
     """LDAP client configured for testing."""

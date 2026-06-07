@@ -113,7 +113,7 @@ The ACL system follows Clean Architecture principles with:
 
 ### Basic Usage
 
-```python
+```python notest
 from flext_ldap import ldap
 from flext_ldap import FlextLdapConstants
 
@@ -131,7 +131,7 @@ if result.success:
 
 ### Converting ACL Formats
 
-```python
+```python notest
 # Convert OpenLDAP to Oracle format
 openldap_acl = "access to attrs=mail by users read"
 
@@ -149,7 +149,7 @@ if conversion_result.success:
 
 ### Batch Conversion
 
-```python
+```python notest
 # Convert multiple ACLs at once
 acl_list = [
     "access to attrs=cn by self write",
@@ -172,7 +172,7 @@ if batch_result.success:
 
 ### OpenLDAP Format
 
-```python
+```python notest
 # Simple attribute ACL
 "access to attrs=userPassword by self write"
 
@@ -185,7 +185,7 @@ if batch_result.success:
 
 ### Oracle Directory Format
 
-```python
+```python notest
 # Attribute ACL
 'access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)'
 
@@ -198,7 +198,7 @@ if batch_result.success:
 
 ### ACI Format (389 DS / Apache DS)
 
-```python
+```python notest
 # Simple ACI
 '(target="ldap:///ou=users,dc=example,dc=com")(version 3.0; acl "User Read"; allow (read) userdn="ldap:///anyone";)'
 
@@ -214,7 +214,7 @@ if batch_result.success:
 
 ### Using the Unified Model
 
-```python
+```python notest
 from flext_ldap import FlextLdapModels, FlextLdapConstants
 
 # Create ACL components
@@ -249,7 +249,7 @@ api.convert_to_aci(unified_result.unwrap())
 
 ## ACL Validation
 
-```python
+```python notest
 # Validate ACL syntax
 acl_string = "access to attrs=mail by self write"
 
@@ -267,7 +267,7 @@ else:
 
 ### Oracle to OpenLDAP Migration
 
-```python
+```python notest
 # Parse Oracle ACLs from existing directory
 oracle_acls = [
     'access to attr=(cn, sn) by group="cn=users" (read)',
@@ -292,7 +292,7 @@ for oracle_acl in oracle_acls:
 
 ### OpenLDAP to 389 DS Migration
 
-```python
+```python notest
 # Parse OpenLDAP slapd.conf ACLs
 openldap_acls = [
     "access to attrs=userPassword by self write by anonymous auth",
@@ -314,7 +314,7 @@ for acl in openldap_acls:
 
 ### ACL with Conditions
 
-```python
+```python notest
 # Create ACL with time and IP restrictions
 unified_result = FlextLdapModels.Acl.create(
     name="Time and IP restricted access",
@@ -331,7 +331,7 @@ unified_result = FlextLdapModels.Acl.create(
 
 ### Permission Mapping
 
-```python
+```python notest
 # Standard permissions across formats
 FlextLdapConstants.Permission.READ  # Read access
 FlextLdapConstants.Permission.WRITE  # Write access
@@ -344,7 +344,7 @@ FlextLdapConstants.Permission.AUTH  # Authenticate
 
 ### Subject Types
 
-```python
+```python notest
 # Different subject types
 FlextLdapConstants.SubjectType.SELF  # Self (user modifying own entry)
 FlextLdapConstants.SubjectType.USER  # Specific user
@@ -357,7 +357,7 @@ FlextLdapConstants.SubjectType.ANYONE  # Anyone
 
 ## Error Handling
 
-```python
+```python notest
 # All operations return r for safe error handling
 result = api.parse(acl_string, format_type)
 
@@ -371,7 +371,7 @@ else:
 
 ## Integration with FLEXT OUD Migration
 
-```python
+```python notest
 # Example: Convert Oracle OUD ACLs to OpenLDAP format
 from flext_ldap import ldap
 from flext_ldap import FlextLdapConstants

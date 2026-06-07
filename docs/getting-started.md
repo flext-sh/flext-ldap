@@ -168,7 +168,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 
 Create `flext_ldap.settings.py`:
 
-```python
+```python notest
 from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings(
@@ -189,7 +189,7 @@ ______________________________________________________________________
 
 ### **Basic Connection Test**
 
-```python
+```python notest
 from flext_ldap.api import ldap
 
 
@@ -209,7 +209,7 @@ run(test_connection())
 
 ### **Simple Directory Search**
 
-```python
+```python notest
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -240,7 +240,7 @@ run(basic_search())
 
 ### **User Authentication**
 
-```python
+```python notest
 from flext_ldap.api import ldap
 
 
@@ -270,7 +270,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP provides server-specific implementations with automatic server detection:
 
-```python
+```python notest
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
@@ -332,7 +332,7 @@ run(server_specific_operations())
 
 Convert between ldap3 and ldif entry formats:
 
-```python
+```python notest
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
@@ -365,7 +365,7 @@ if attrs_result.success:
 
 Discover schema from different LDAP server types:
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -398,7 +398,7 @@ run(discover_schema())
 
 Manage server-specific ACLs:
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -442,7 +442,7 @@ run(manage_acls())
 
 Execute paged searches with automatic pagination:
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 

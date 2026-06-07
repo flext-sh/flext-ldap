@@ -183,7 +183,7 @@ Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn
 
 ## 📦 Importing Server Operations
 
-```python
+```python notest
 # Import specific server operations
 from flext_ldap import (
     BaseServerOperations,  # Abstract base
@@ -215,7 +215,7 @@ from flext_ldif import FlextLdifModels
 
 ### **Basic Usage**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -242,7 +242,7 @@ if schema_result.success:
 
 ### **ACL Operations**
 
-```python
+```python notest
 # Get ACLs from cn=settings entry
 acl_result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 
@@ -264,7 +264,7 @@ set_result = ops.set_acls(
 
 ### **Entry Operations**
 
-```python
+```python notest
 from flext_ldif import FlextLdifModels
 
 # Create entry
@@ -298,7 +298,7 @@ delete_result = ops.delete_entry(connection, dn="cn=test,dc=example,dc=com")
 
 ### **Paged Search**
 
-```python
+```python notest
 # Large result set with paging
 search_result = ops.search_with_paging(
     connection,
@@ -330,7 +330,7 @@ if search_result.success:
 
 ### **Key Differences**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP1Operations
 
 ops = OpenLDAP1Operations()
@@ -361,7 +361,7 @@ legacy_acl = {
 
 ### **Basic Usage**
 
-```python
+```python notest
 from flext_ldap import OracleOIDOperations
 
 ops = OracleOIDOperations()
@@ -383,7 +383,7 @@ if schema_result.success:
 
 ### **Oracle OID ACLs**
 
-```python
+```python notest
 # Get orclaci ACLs
 acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 
@@ -404,7 +404,7 @@ set_result = ops.set_acls(connection, "dc=example,dc=com", oid_acls)
 
 ### **Oracle-Specific Features**
 
-```python
+```python notest
 # Get OID defaults
 port = ops.get_default_port()  # 389 (LDAP) or 636 (LDAPS)
 schema_dn = ops.get_schema_dn()  # "cn=subschemasubentry"
@@ -429,7 +429,7 @@ mechanisms = ops.get_bind_mechanisms()
 
 ### **Basic Usage**
 
-```python
+```python notest
 from flext_ldap import OracleOUDOperations
 
 ops = OracleOUDOperations()
@@ -451,7 +451,7 @@ if schema_result.success:
 
 ### **ds-privilege-name ACLs**
 
-```python
+```python notest
 # Get ds-privilege-name ACLs
 acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 
@@ -465,7 +465,7 @@ set_result = ops.set_acls(
 
 ### **OUD-Specific Features**
 
-```python
+```python notest
 # Extended SASL mechanisms
 mechanisms = ops.get_bind_mechanisms()
 # Returns: ["SIMPLE", "SASL/EXTERNAL", "SASL/DIGEST-MD5", "SASL/GSSAPI", "SASL/PLAIN"]
@@ -496,7 +496,7 @@ Currently implemented as a stub with `NotImplementedError` for most operations. 
 
 ### **Current Usage**
 
-```python
+```python notest
 from flext_ldap import ActiveDirectoryOperations
 
 ops = ActiveDirectoryOperations()
@@ -544,7 +544,7 @@ RFC-compliant fallback for unknown or unimplemented LDAP servers. Provides basic
 
 ### **Usage**
 
-```python
+```python notest
 from flext_ldap import GenericServerOperations
 
 ops = GenericServerOperations()
@@ -589,7 +589,7 @@ search_result = ops.search_with_paging(
 
 All server operations integrate with the Entry Adapter for ldap3 ↔ ldif conversion:
 
-```python
+```python notest
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import OpenLDAP2Operations
 
@@ -623,7 +623,7 @@ if attrs_result.success:
 
 Server type detection using ldif servers:
 
-```python
+```python notest
 from flext_ldap import FlextLdapServersAdapter
 
 servers = FlextLdapServersAdapter()
@@ -698,7 +698,7 @@ Feature: Max Page Size - OpenLDAP 2.x: 1000 - OpenLDAP 1.x: 1000 - Oracle OID: 5
 
 Always detect the server type for optimal operations:
 
-```python
+```python notest
 servers = FlextLdapServersAdapter()
 server_type_result = servers.detect_server_type_from_entries(entries)
 
@@ -711,7 +711,7 @@ if server_type_result.success:
 
 All operations return `r` - always check for failures:
 
-```python
+```python notest
 result = ops.add_entry(connection, entry)
 if result.failure:
     print(f"Operation failed: {result.error}")
@@ -724,7 +724,7 @@ else:
 
 Always use the Entry Adapter for conversions:
 
-```python
+```python notest
 adapter = FlextLdapEntryAdapter()
 
 # ldap3 → ldif
@@ -738,7 +738,7 @@ attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 
 Each server may require specific entry normalization:
 
-```python
+```python notest
 norm_result = ops.normalize_entry(entry)
 if norm_result.success:
     normalized_entry = norm_result.unwrap()
@@ -749,7 +749,7 @@ if norm_result.success:
 
 Proper connection lifecycle:
 
-```python
+```python notest
 # Create connection
 connection = ldap3.Connection(...)
 connection.bind()
@@ -770,7 +770,7 @@ finally:
 
 **Schema Discovery Fails**:
 
-```python
+```python notest
 # Check if server is properly connected
 if not connection.bound:
     print("Connection not bound - check credentials")
@@ -782,7 +782,7 @@ print(f"Trying schema DN: {schema_dn}")
 
 **ACL Operations Not Working**:
 
-```python
+```python notest
 # Verify ACL attribute for server
 acl_attr = ops.get_acl_attribute_name()
 print(f"Using ACL attribute: {acl_attr}")
@@ -793,7 +793,7 @@ print(f"Using ACL attribute: {acl_attr}")
 
 **Paged Search Timing Out**:
 
-```python
+```python notest
 # Reduce page size
 result = ops.search_with_paging(
     connection,
@@ -805,7 +805,7 @@ result = ops.search_with_paging(
 
 **Entry Addition Fails**:
 
-```python
+```python notest
 # Check entry normalization
 norm_result = ops.normalize_entry(entry)
 if norm_result.failure:

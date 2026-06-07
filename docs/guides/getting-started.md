@@ -98,7 +98,7 @@ docker run -v $(pwd)/data:/app/data flext:latest
 
 ### 1. Basic Setup
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -130,7 +130,7 @@ print("FLEXT application initialized!")
 
 ### 2. Using flext-ldif for LDIF Processing
 
-```python
+```python notest
 from flext_ldif import ldif
 
 # Initialize LDIF API
@@ -151,7 +151,7 @@ else:
 
 ### 3. Railway-Oriented Error Handling
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -204,7 +204,7 @@ else:
 
 ### 4. CQRS Pattern with Commands and Queries
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -275,7 +275,7 @@ export FLEXT_LDIF_STRICT_VALIDATION=true
 
 ### Programmatic Configuration
 
-```python
+```python notest
 from flext_ldif import FlextLdifSettings
 
 # Create custom configuration

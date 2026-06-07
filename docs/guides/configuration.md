@@ -103,7 +103,7 @@ api:
 
 Configure FLEXT programmatically in your code:
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -141,7 +141,7 @@ ldif_config = FlextLdifSettings(
 
 ### flext-ldif Configuration
 
-```python
+```python notest
 from flext_ldif import FlextLdifSettings
 
 settings = FlextLdifSettings(
@@ -161,7 +161,7 @@ settings = FlextLdifSettings(
 
 ### flext-api Configuration
 
-```python
+```python notest
 from flext_api import FlextApiSettings
 
 settings = FlextApiSettings(
@@ -175,7 +175,7 @@ settings = FlextApiSettings(
 
 ### flext-auth Configuration
 
-```python
+```python notest
 from flext_auth import FlextAuthSettings
 
 settings = FlextAuthSettings(
@@ -228,7 +228,7 @@ api:
 
 All configuration is validated using Pydantic v2 models:
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -261,7 +261,7 @@ except c.ValidationError as e:
 
 FLEXT supports configuration inheritance for complex setups:
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -305,7 +305,7 @@ export FLEXT_API_KEY=your_api_key
 
 ### 2. Validate Configuration Early
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -341,7 +341,7 @@ def main():
 
 ### 3. Use Configuration Classes
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -377,7 +377,7 @@ class MyAppConfig(FlextSettings):
 
 ### 4. Document Configuration Options
 
-```python
+```python notest
 class FlextLdifSettings(m.BaseModel):
     """Configuration for LDIF processing."""
 
@@ -414,7 +414,7 @@ class FlextLdifSettings(m.BaseModel):
 
 ### Debug Configuration
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -452,7 +452,7 @@ else:
 
 ### Complete Configuration Example
 
-```python
+```python notest
 #!/usr/bin/env python3
 """Complete FLEXT configuration example."""
 

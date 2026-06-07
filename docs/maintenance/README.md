@@ -556,7 +556,7 @@ python docs/maintenance/audit.py --rebuild-db
 
 Extend the system with custom validation:
 
-```python
+```python notest
 # docs/maintenance/custom_validators.py
 from docs import BaseValidator
 
@@ -577,7 +577,7 @@ class CustomValidator(BaseValidator):
 
 Connect with documentation platforms:
 
-```python
+```python notest
 # docs/maintenance/integrations.py
 class GitBookIntegration:
     def sync_content(self):

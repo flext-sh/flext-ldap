@@ -121,7 +121,7 @@ Default LDAP API instance (FlextLdapClients).
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap.api import ldap
 
 api = ldap
@@ -145,7 +145,7 @@ Search LDAP directory entries.
 
 **Example:**
 
-```python
+```python notest
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com",
     filter_str="(objectClass=person)",
@@ -171,7 +171,7 @@ Authenticate user credentials against LDAP directory.
 
 **Example:**
 
-```python
+```python notest
 result = api.authenticate_user("john.doe", "password123")
 if result.success:
     user = result.unwrap()
@@ -190,7 +190,7 @@ Create a new user in LDAP directory.
 
 **Example:**
 
-```python
+```python notest
 user_request = FlextLdapEntities.CreateUserRequest(
     dn="cn=jane.doe,ou=users,dc=example,dc=com",
     uid="jane.doe",
@@ -210,7 +210,7 @@ Test LDAP server connectivity.
 
 **Example:**
 
-```python
+```python notest
 result = api.test_connection()
 if result.success:
     print("Connection successful")
@@ -308,7 +308,7 @@ RFC 4514 compliant distinguished name.
 
 **Example:**
 
-```python
+```python notest
 dn = FlextLdapModels.Values.DN("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)  # "cn=user"
 print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
@@ -331,7 +331,7 @@ LDAP search filter with validation.
 
 **Example:**
 
-```python
+```python notest
 # Create filters
 user_filter = FlextLdapModels.Values.LdapFilter.equals("uid", "john.doe")
 person_filter = FlextLdapModels.Values.LdapFilter.object_class("person")
@@ -371,7 +371,7 @@ LDAP connection configuration.
 
 **Example:**
 
-```python
+```python notest
 from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
 
 settings = FlextLdapSettings(
@@ -400,7 +400,7 @@ Check if string is a valid distinguished name.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import FlextLdapTypeGuards
 
 if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
@@ -461,7 +461,7 @@ Search operation errors.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import e
 
 try:
@@ -481,7 +481,7 @@ All API methods return `r[T]` for consistent error handling.
 
 ### Success Handling
 
-```python
+```python notest
 result = api.search_entries(request)
 
 # Check success
@@ -497,7 +497,7 @@ except rError:
 
 ### Error Handling
 
-```python
+```python notest
 result = api.authenticate_user(username, password)
 
 if result.failure:
@@ -507,7 +507,7 @@ if result.failure:
 
 ### Chaining Operations
 
-```python
+```python notest
 search_result = api.search_entries(request)
 if search_result.success:
     entries = search_result.unwrap()
@@ -527,7 +527,7 @@ Bidirectional converter between ldap3 entries and ldif entries.
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import FlextLdapEntryAdapter
 ```
 
@@ -543,7 +543,7 @@ Convert ldap3.Entry to ldif entry.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import FlextLdapEntryAdapter
 import ldap3
 
@@ -582,7 +582,7 @@ Convert ldif entry to ldap3 attributes dictionary.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldif import FlextLdifModels
 from flext_ldap import FlextLdapEntryAdapter
 
@@ -636,7 +636,7 @@ Server detection and servers system integration using ldif.
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import FlextLdapServersAdapter
 ```
 
@@ -661,7 +661,7 @@ Detect LDAP server type from entry analysis.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 
@@ -735,7 +735,7 @@ Abstract base class defining complete server operations interface.
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import BaseServerOperations
 ```
 
@@ -786,7 +786,7 @@ Discover schema from server.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -830,7 +830,7 @@ Retrieve ACLs from entry.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
@@ -850,7 +850,7 @@ Set ACLs on entry.
 
 **Example:**
 
-```python
+```python notest
 new_acls = [
     {"raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'},
     {"raw": "{1}to * by self write by anonymous auth"},
@@ -875,7 +875,7 @@ Add ldif entry to directory.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldif import FlextLdifModels
 from flext_ldap import OpenLDAP2Operations
 
@@ -904,7 +904,7 @@ Modify entry attributes.
 
 **Example:**
 
-```python
+```python notest
 modifications = {"mail": ["newemail@example.com"], "telephoneNumber": ["+1-555-0100"]}
 
 result = ops.modify_entry(
@@ -940,7 +940,7 @@ Execute paged search with automatic pagination.
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
@@ -970,7 +970,7 @@ Complete implementation for OpenLDAP 2.x (cn=settings style).
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 ```
 
@@ -984,7 +984,7 @@ from flext_ldap import OpenLDAP2Operations
 
 **Example:**
 
-```python
+```python notest
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -1010,7 +1010,7 @@ Complete implementation for Oracle Internet Directory.
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import OracleOIDOperations
 ```
 
@@ -1028,7 +1028,7 @@ Complete implementation for Oracle Unified Directory.
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import OracleOUDOperations
 ```
 
@@ -1046,7 +1046,7 @@ RFC-compliant fallback for unknown servers.
 
 **Import:**
 
-```python
+```python notest
 from flext_ldap import GenericServerOperations
 ```
 
@@ -1063,7 +1063,7 @@ ______________________________________________________________________
 
 All public APIs include comprehensive type annotations for IDE support and static analysis:
 
-```python
+```python notest
 def search_entries(
     self, request: FlextLdapEntities.SearchRequest
 ) -> p.Result[List[FlextLdapEntities.LdapEntry]]:
@@ -1085,7 +1085,7 @@ ______________________________________________________________________
 
 ## 🔗 Complete Usage Example
 
-```python
+```python notest
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
