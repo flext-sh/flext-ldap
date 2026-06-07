@@ -1,0 +1,20 @@
+src/flext_ldap/services/sync.py
+  s_9942ef7a89ba9a::t_ac4abe33ff1607 16
+  s_9942ef7a89ba9a::t_8400da5edae5a1 103,147,165,201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "04e823a0bd2f9c878623e56c3ea969c677932066",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
