@@ -1,0 +1,60 @@
+docs/guides/configuration.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 106,144,164,178,231,264,308,344,380,417,455
+docs/configuration.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 91,183,213,292,313,357,370,388,400
+docs/guides/testing.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 76,128,176,219,292,333,357,396,439,471,517,588,611,638,658,700
+docs/maintenance/README.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 559,580
+docs/api-reference.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 124,148,174,193,213,311,334,374,403,464,484,500,510,530,546,585,639,664,738,789,833,853,878,907,943,973,987,1013,1031,1049,1066,1088
+docs/development.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 276,285,292,303,320,344,366,388,404,440,490,545,648,712,726,740
+docs/api/README.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 33,82,105,115,122,146
+docs/guides/universal-ldap-guide.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 87,136,155,171,192,210,227,247,260,273,286,323,356,404,461,471,485,498,514,526,537
+docs/guides/acl-management.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 116,134,152,175,188,201,217,252,270,295,317,334,347,360,374
+docs/development/README.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 175,189,205
+docs/guides/development.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 152,169,189,228,313,404,432
+docs/troubleshooting.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 136,171,211,227,267,289,326,368,427,441,454,475,488,499,521,601,607,676,713,758,836
+docs/testing.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 330,347,366,392
+docs/guides/getting-started.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 101,133,154,207,278
+docs/guides/integration.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 89,147,191,313,385,487,756,788,831,878,948,1089,1132
+docs/maintenance/troubleshooting.md
+  s_73cbfc60e45e37::t_f691dc810f71bd 326
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 240,324,417,467,632,643,657,681,696
+examples/README.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 746,773,797,819
+docs/guides/troubleshooting.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 88,118,139,148,175,196,210,225,255,291,300,315,325,348,357,372,380,397,408,430,442,453,490,527,558,619,642,722,733,771,784,795,808
+docs/guides/server-operations.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 186,218,245,267,301,333,364,386,407,432,454,468,499,547,592,626,701,714,727,741,752,773,785,796,808
+docs/getting-started.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 171,192,212,243,273,335,368,401,445
+docs/maintenance/user-guide.md
+  s_73cbfc60e45e37::t_e49b1c8f9dc85b 404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "11dff8e214245d4936cf417e022cd66b4f223f25",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
