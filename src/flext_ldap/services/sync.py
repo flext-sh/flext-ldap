@@ -10,11 +10,10 @@ import inspect
 from collections.abc import (
     MutableMapping,
 )
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeIs
 
-from flext_ldap import FlextLdapOperations, c, m, p, t
+from flext_ldap import FlextLdapOperations, c, m, p, t, u
 from flext_ldif import r
 
 
@@ -101,7 +100,7 @@ class FlextLdapSync(FlextLdapOperations):
     ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
-        start_time = datetime.now(UTC)
+        start_time = u.now()
         phase_results: MutableMapping[str, m.Ldap.PhaseSyncResult] = {}
         overall_success = True
         for phase_name, phase_file in phase_files.items():
@@ -145,7 +144,7 @@ class FlextLdapSync(FlextLdapOperations):
             "total_failed": total_failed,
             "total_skipped": total_skipped,
             "overall_success_rate": overall_success_rate,
-            "total_duration_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+            "total_duration_seconds": (u.now() - start_time).total_seconds(),
             "overall_success": overall_success,
         })
         if not overall_success:
@@ -163,7 +162,7 @@ class FlextLdapSync(FlextLdapOperations):
     ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Synchronize a single phase file into LDAP."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
-        start_time = datetime.now(UTC)
+        start_time = u.now()
         parse_result = self._ldif.parse_ldif_file(
             ldif_file_path,
             server_type=sync_config.server_type,
@@ -199,7 +198,7 @@ class FlextLdapSync(FlextLdapOperations):
             error_msg = batch_result.error or "Unknown error"
             return r[m.Ldap.PhaseSyncResult].fail_op("Batch sync", error_msg)
         batch_stats = batch_result.value
-        duration = (datetime.now(UTC) - start_time).total_seconds()
+        duration = (u.now() - start_time).total_seconds()
         total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped
         success_rate = (
             (batch_stats.synced + batch_stats.skipped) / total_processed * 100
