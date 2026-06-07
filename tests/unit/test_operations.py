@@ -115,17 +115,35 @@ class TestsFlextLdapOperations:
 
     @pytest.mark.parametrize(
         "case",
-        c.Ldap.Tests.EntryOperationCase,
+        [
+            case
+            for case in c.Ldap.Tests.EntryOperationCase
+            if case is not c.Ldap.Tests.EntryOperationCase.INVALID_DN
+        ],
     )
     def test_add_with_dn_variations_returns_failure_not_connected(
         self,
         case: c.Ldap.Tests.EntryOperationCase,
     ) -> None:
-        """Test add operation with various DN formats (not connected scenario)."""
+        """Test add operation with constructible DN formats (not connected scenario).
+
+        INVALID_DN is excluded: an Entry cannot be constructed with an RFC 4514
+        invalid DN (the DN model correctly rejects it at construction time), so
+        the invalid-DN case is a model-validation concern, not an add-not-connected
+        concern. ``test_invalid_dn_rejected_by_model`` covers that contract.
+        """
         operations = FlextLdapOperations()
         dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[case]
         result = operations.add(self._entry(dn))
         u.Ldap.Tests.fail(result)
+
+    def test_invalid_dn_rejected_by_model(self) -> None:
+        """An RFC 4514 invalid DN is rejected at model-construction time."""
+        invalid_dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[
+            c.Ldap.Tests.EntryOperationCase.INVALID_DN
+        ]
+        with pytest.raises(c.ValidationError):
+            m.Ldif.DN(value=invalid_dn)
 
     @pytest.mark.parametrize(
         "case",

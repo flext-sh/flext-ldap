@@ -585,14 +585,27 @@ class FlextLdapOperations(s):
         """
         match dn:
             case str():
-                dn_model: m.Ldif.DN = m.Ldif.DN(
-                    value=u.Ldif.get_dn_value(dn),
-                    metadata=m.Ldif.EntryMetadata(),
+                dn_value = dn
+                dn_build = u.try_(
+                    lambda: m.Ldif.DN(
+                        value=u.Ldif.get_dn_value(dn_value),
+                        metadata=m.Ldif.EntryMetadata(),
+                    ),
+                    op_name="validate delete DN",
                 )
             case _:
-                dn_model = (
-                    dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN.model_validate(dn)
+                dn_model_in = dn
+                dn_build = u.try_(
+                    lambda: dn_model_in
+                    if isinstance(dn_model_in, m.Ldif.DN)
+                    else m.Ldif.DN.model_validate(dn_model_in),
+                    op_name="validate delete DN",
                 )
+        if dn_build.failure:
+            return r[m.Ldap.OperationResult].fail(
+                dn_build.error or "Invalid DN",
+            )
+        dn_model: m.Ldif.DN = dn_build.unwrap()
         result = self._ensure_adapter().delete(dn_model)
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
