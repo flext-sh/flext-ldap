@@ -172,7 +172,7 @@ if batch_result.success:
 
 ### OpenLDAP Format
 
-```python notest
+```python
 # Simple attribute ACL
 "access to attrs=userPassword by self write"
 
@@ -185,7 +185,7 @@ if batch_result.success:
 
 ### Oracle Directory Format
 
-```python notest
+```python
 # Attribute ACL
 'access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)'
 

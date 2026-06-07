@@ -273,7 +273,7 @@ ______________________________________________________________________
 
 **Domain Layer** (Business logic):
 
-```python notest
+```python
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
 # src/flext_ldap/value_objects.py
@@ -282,14 +282,14 @@ ______________________________________________________________________
 
 **Application Layer** (Use cases):
 
-```python notest
+```python
 # src/flext_ldap/api.py
 # src/flext_ldap/services.py
 ```
 
 **Infrastructure Layer** (External concerns):
 
-```python notest
+```python
 # src/flext_ldap/clients.py
 # src/flext_ldap/adapters.py
 # src/flext_ldap/operations.py

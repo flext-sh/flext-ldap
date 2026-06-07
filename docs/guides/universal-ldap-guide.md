@@ -320,7 +320,8 @@ def migrate_openldap1_to_openldap2():
 
 ### Oracle OID → Oracle OUD Migration
 
-```python notest
+```python
+from __future__ import annotations
 def migrate_oid_to_oud():
     api = ldap()
     
@@ -401,7 +402,8 @@ def sync_across_servers():
 
 ### Scenario 2: Progressive Migration
 
-```python notest
+```python
+from __future__ import annotations
 def progressive_migration():
     """Gradually migrate from old to new LDAP server."""
 

@@ -121,7 +121,7 @@ Default LDAP API instance (FlextLdapClients).
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap.api import ldap
 
 api = ldap
@@ -527,7 +527,7 @@ Bidirectional converter between ldap3 entries and ldif entries.
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 ```
 

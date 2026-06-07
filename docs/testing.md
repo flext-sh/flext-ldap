@@ -327,7 +327,8 @@ pytest --maxfail=1 --tb=short  # Fail fast on errors
 
 #### 1. Test Structure Pattern
 
-```python notest
+```python
+from __future__ import annotations
 def test_should_perform_operation_under_conditions():
     """Given: specific preconditions
     When: operation is performed
@@ -363,7 +364,8 @@ def test_ldap_operation_with_real_server():
 
 #### 3. Mock Testing Pattern
 
-```python notest
+```python
+from __future__ import annotations
 def test_service_logic_with_mocked_dependencies():
     """Test service logic in isolation."""
     # Mock infrastructure dependencies

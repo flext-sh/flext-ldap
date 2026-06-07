@@ -186,7 +186,8 @@ def my_operation(data: dict) -> p.Result[ProcessedData]:
 
 ### Use x
 
-```python notest
+```python
+from __future__ import annotations
 from flext_core import s
 
 

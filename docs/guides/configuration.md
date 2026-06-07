@@ -141,7 +141,7 @@ ldif_config = FlextLdifSettings(
 
 ### flext-ldif Configuration
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 settings = FlextLdifSettings(
@@ -161,7 +161,7 @@ settings = FlextLdifSettings(
 
 ### flext-api Configuration
 
-```python notest
+```python
 from flext_api import FlextApiSettings
 
 settings = FlextApiSettings(

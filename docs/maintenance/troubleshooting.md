@@ -323,7 +323,7 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 ````python notest
 # Manually specify language
-```python notest
+```python
 def example():
     pass
 ````
@@ -654,7 +654,7 @@ p.sort_stats('cumulative').print_stats(20)
 
 ### Memory Monitoring
 
-```python notest
+```python
 # Monitor memory usage
 import psutil
 import os
@@ -678,7 +678,7 @@ curl -H "User-Agent: Mozilla/5.0" https://example.com
 
 ### File System Debugging
 
-```python notest
+```python
 # Debug file operations
 import os
 
@@ -693,7 +693,8 @@ print(f"Docs directory contents: {os.listdir('docs')}")
 
 Create diagnostic scripts for complex issues:
 
-```python notest
+```python
+from __future__ import annotations
 # docs/maintenance/diagnostics.py
 def diagnose_link_issues():
     """Comprehensive link validation diagnostics."""

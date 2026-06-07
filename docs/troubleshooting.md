@@ -208,7 +208,7 @@ SearchError: Invalid DN format
 
 **Common DN Format Mistakes:**
 
-```python notest
+```python
 # ❌ WRONG - Spaces around commas
 dn = "cn=John Doe , ou=users , dc=example , dc=com"
 
@@ -224,7 +224,8 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 
 **Validation:**
 
-```python notest
+```python
+from __future__ import annotations
 from flext_ldap import m
 
 
@@ -264,7 +265,7 @@ SearchError: Bad search filter
 
 **Common Filter Mistakes:**
 
-```python notest
+```python
 # ❌ WRONG - Missing parentheses
 filter_str = "objectClass=person"
 
@@ -438,7 +439,7 @@ search_request = FlextLdapEntities.SearchRequest(
 
 1. **Optimize search filters:**
 
-```python notest
+```python
 # ❌ Inefficient - broad filter
 filter_str = "(cn=*john*)"
 
@@ -496,7 +497,8 @@ settings = FlextLdapSettings(
 
 1. **Implement connection reuse:**
 
-```python notest
+```python
+from __future__ import annotations
 class LDAPService:
     def __init__(self):
         self._api = ldap  # Reuse single instance

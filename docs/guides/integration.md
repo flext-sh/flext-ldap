@@ -1086,7 +1086,8 @@ ______________________________________________________________________
 
 ### Prometheus Metrics
 
-```python notest
+```python
+from __future__ import annotations
 from prometheus_client import Counter, Histogram, start_http_server
 from flext_ldap.api import ldap
 import time
@@ -1129,7 +1130,8 @@ start_http_server(8001)
 
 ### Health Check Endpoints
 
-```python notest
+```python
+from __future__ import annotations
 from fastapi import FastAPI
 from flext_ldap.api import ldap
 
