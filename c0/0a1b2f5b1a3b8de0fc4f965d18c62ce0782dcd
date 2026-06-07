@@ -1,0 +1,27 @@
+tests/unit/test_operations.py
+  s_73cbfc60e45e37::t_39c0f0017190d8 118-122,128-134,140-144,146
+  s_73cbfc60e45e37::t_dfdc44a3ce396d 145
+tests/conftest.py
+  s_73cbfc60e45e37::t_85e1134ca0dd64 89-91
+  s_73cbfc60e45e37::t_a63fca5cf2a70c 103,105
+  s_73cbfc60e45e37::t_da3c4b5f4e54fd 130-131,133
+src/flext_ldap/services/operations.py
+  s_73cbfc60e45e37::t_25dd901660874b 588-594,597-602,605-608
+  s_73cbfc60e45e37::t_b72af69024221e 604
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c00a1b2f5b1a3b8de0fc4f965d18c62ce0782dcd",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
