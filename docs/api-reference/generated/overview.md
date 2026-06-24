@@ -9,7 +9,7 @@
 - Keywords: `adapter`, `clean-architecture`, `ddd`, `enterprise`, `flext`, `integration`, `ldap`, `typed`
 - Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdapLdap3Adapter`, `SearchExecutor`, `FlextLdapSync`, `FlextLdapSyncCallbacks`, `FlextLdapProtocols`, `FlextLdapModelsLdap`, `FlextLdapService`, `ResultConverter`, `FlextLdap`, `FlextLdapApiRuntime` (+14 more)
+- Public symbol exports: `FlextLdapConnection`, `FlextLdapLdap3Adapter`, `FlextLdapService`, `FlextLdapEntryAdapter`, `FlextLdap`, `FlextLdapLdap3Wrappers`, `ConnectionManager`, `ResultConverterExtractMixin`, `OperationExecutor`, `FlextLdapServerDetector` (+14 more)
 - Exported module shortcuts: _none_
 - Generated module pages: `15`
 
