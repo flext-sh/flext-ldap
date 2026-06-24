@@ -2,7 +2,7 @@
 
 # flext-ldap Documentation
 
-- Version: `unknown`
+- Version: `0.12.0-dev`
 - Project class: `domain`
 - Package: `flext_ldap`
 - Description: Enterprise LDAP Operations Library for FLEXT Framework

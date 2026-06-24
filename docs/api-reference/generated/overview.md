@@ -3,15 +3,15 @@
 # flext-ldap API Overview
 
 - Package: `flext_ldap`
-- Version: ``
+- Version: `0.12.0-dev`
 - Description: Enterprise LDAP Operations Library for FLEXT Framework
 - Project class: `domain`
 - Keywords: `adapter`, `clean-architecture`, `ddd`, `enterprise`, `flext`, `integration`, `ldap`, `typed`
-- Main facades: `FlextLdapConstants`, `FlextLdapLdap3Wrappers`, `FlextLdapSettings`, `FlextLdapTypes`, `FlextLdapModels`, `FlextLdapLdap3Adapter`, `FlextLdapApiRuntime`, `FlextLdapOperations` (+10 more)
+- Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdapConstants`, `FlextLdapLdap3Wrappers`, `FlextLdapSettings`, `FlextLdapTypes`, `FlextLdapModels`, `FlextLdapLdap3Adapter`, `FlextLdapApiRuntime`, `FlextLdapOperations`, `FlextLdapConnection`, `FlextLdapProtocols` (+9 more)
+- Public symbol exports: `FlextLdapLdap3Adapter`, `SearchExecutor`, `FlextLdapSync`, `FlextLdapSyncCallbacks`, `FlextLdapProtocols`, `FlextLdapModelsLdap`, `FlextLdapService`, `ResultConverter`, `FlextLdap`, `FlextLdapApiRuntime` (+14 more)
 - Exported module shortcuts: _none_
-- Generated module pages: `16`
+- Generated module pages: `15`
 
 ## Next Pages
 
