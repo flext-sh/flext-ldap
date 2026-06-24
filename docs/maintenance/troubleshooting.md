@@ -1,49 +1,5 @@
 # Documentation Maintenance System - Troubleshooting Guide
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Quick Diagnosis](#quick-diagnosis)
-  - [System Health Check](#system-health-check)
-  - [Configuration Validation](#configuration-validation)
-  - [Dependency Check](#dependency-check)
-- [Common Issues](#common-issues)
-  - [Import Errors](#import-errors)
-  - [Permission Errors](#permission-errors)
-  - [Configuration File Errors](#configuration-file-errors)
-  - [Path Resolution Issues](#path-resolution-issues)
-- [Component-Specific Problems](#component-specific-problems)
-  - [Content Audit Issues](#content-audit-issues)
-  - [Link Validation Problems](#link-validation-problems)
-  - [Style Validation Errors](#style-validation-errors)
-  - [Content Optimization Issues](#content-optimization-issues)
-  - [Reporting System Problems](#reporting-system-problems)
-  - [Synchronization Issues](#synchronization-issues)
-- [Performance Issues](#performance-issues)
-  - [Memory Usage](#memory-usage)
-  - [Slow Execution](#slow-execution)
-  - [Disk Space Issues](#disk-space-issues)
-- [Configuration Problems](#configuration-problems)
-  - [Invalid Configuration Values](#invalid-configuration-values)
-  - [Environment-Specific Settings](#environment-specific-settings)
-- [Integration Issues](#integration-issues)
-  - [CI/CD Pipeline Failures](#cicd-pipeline-failures)
-  - [IDE Integration Problems](#ide-integration-problems)
-  - [Version Control Conflicts](#version-control-conflicts)
-- [Recovery Procedures](#recovery-procedures)
-  - [Complete System Reset](#complete-system-reset)
-  - [Component-Specific Recovery](#component-specific-recovery)
-  - [Data Recovery](#data-recovery)
-- [Debug Tools](#debug-tools)
-  - [Enable Debug Logging](#enable-debug-logging)
-  - [Performance Profiling](#performance-profiling)
-  - [Memory Monitoring](#memory-monitoring)
-  - [Network Debugging](#network-debugging)
-  - [File System Debugging](#file-system-debugging)
-- [Advanced Troubleshooting](#advanced-troubleshooting)
-  - [Custom Diagnostic Scripts](#custom-diagnostic-scripts)
-  - [Automated Health Checks](#automated-health-checks)
-<!-- TOC END -->
-
 **Common issues, diagnostics, and solutions for the Documentation Maintenance System**
 
 ## Table of Contents
@@ -237,7 +193,7 @@ audit:
 
 **Solutions:**
 
-```python notest
+```python
 # Process files individually
 for file_path in file_list:
     result = auditor.audit_file(file_path)
@@ -323,7 +279,7 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 ````text
 # Manually specify language
-```python notest
+```python
 def example():
     pass
 ```
@@ -414,7 +370,7 @@ git remote -v
 
 **Solutions:**
 
-```python notest
+```python
 # Process files in batches
 batch_size = 10
 for i in range(0, len(file_list), batch_size):
@@ -464,7 +420,7 @@ logrotate -f /etc/logrotate.d/docs-maintenance
 
 **Validation:**
 
-```python notest
+```python
 # Validate configuration
 python -c "
 import yaml
@@ -629,7 +585,7 @@ python docs/maintenance/report.py --generate-dashboard --weekly-summary
 
 ### Enable Debug Logging
 
-```python notest
+```python
 # Add to scripts
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -640,7 +596,7 @@ export DOCS_MAINTENANCE_DEBUG=1
 
 ### Performance Profiling
 
-```python notest
+```python
 # Profile script execution
 python -m cProfile docs/maintenance/audit.py --comprehensive > audit_profile.txt
 

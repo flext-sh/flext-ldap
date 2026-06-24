@@ -1,41 +1,5 @@
 # Universal LDAP Operations Guide
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Overview](#overview)
-- [Key Features](#key-features)
-  - [Supported LDAP Servers](#supported-ldap-servers)
-  - [Universal Capabilities](#universal-capabilities)
-- [Server Operations](#server-operations)
-  - [Creating Server Operations](#creating-server-operations)
-  - [Server-Specific Operations](#server-specific-operations)
-- [Universal API Methods](#universal-api-methods)
-  - [1. Get Detected Server Type](#1-get-detected-server-type)
-  - [2. Get Server Capabilities](#2-get-server-capabilities)
-  - [3. Universal Search with Optimization](#3-universal-search-with-optimization)
-  - [4. Entry Normalization](#4-entry-normalization)
-  - [5. Entry Conversion Between Servers](#5-entry-conversion-between-servers)
-  - [6. Server Type Detection](#6-server-type-detection)
-  - [7. Entry Validation](#7-entry-validation)
-  - [8. Server-Specific Attributes](#8-server-specific-attributes)
-- [Entry Conversion Examples](#entry-conversion-examples)
-  - [OpenLDAP 1.x → OpenLDAP 2.x Migration](#openldap-1x-openldap-2x-migration)
-  - [Oracle OID → Oracle OUD Migration](#oracle-oid-oracle-oud-migration)
-- [Migration Scenarios](#migration-scenarios)
-  - [Scenario 1: Multi-Server Environment](#scenario-1-multi-server-environment)
-  - [Scenario 2: Progressive Migration](#scenario-2-progressive-migration)
-- [Best Practices](#best-practices)
-  - [1. Always Detect Server Type](#1-always-detect-server-type)
-  - [2. Validate After Conversion](#2-validate-after-conversion)
-  - [3. Use Server Capabilities](#3-use-server-capabilities)
-  - [4. Handle Servers Gracefully](#4-handle-servers-gracefully)
-- [Troubleshooting](#troubleshooting)
-  - [Server Detection Issues](#server-detection-issues)
-  - [Conversion Failures](#conversion-failures)
-  - [ACL Translation Issues](#acl-translation-issues)
-- [Contributing](#contributing)
-<!-- TOC END -->
-
 **flext-ldap** now provides complete universal LDAP support,
 allowing you to work with any LDAP server type (OpenLDAP 1.x, OpenLDAP 2.x, Oracle OID, Oracle OUD,
 Active Directory) through a unified interface.
@@ -84,7 +48,7 @@ The universal LDAP system consists of:
 
 ### Creating Server Operations
 
-```python notest
+```python
 from flext_ldap import ServerOperationsFactory
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -133,7 +97,7 @@ ops_result = factory.create_from_entries(entries)
 
 ### Server-Specific Operations
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations, OracleOUDOperations
 
 # OpenLDAP 2.x operations
@@ -152,7 +116,7 @@ print(f"Replication: {oud.get_replication_mechanism()}")
 
 ### 1. Get Detected Server Type
 
-```python notest
+```python
 from flext_ldap import ldap
 
 api = ldap()
@@ -168,7 +132,7 @@ if server_type_result.success:
 
 ### 2. Get Server Capabilities
 
-```python notest
+```python
 # Get comprehensive server capabilities
 caps_result = api.get_server_capabilities()
 if caps_result.success:
@@ -189,7 +153,7 @@ if caps_result.success:
 
 ### 3. Universal Search with Optimization
 
-```python notest
+```python
 # Universal search with automatic server-specific optimization
 result = api.search_universal(
     base_dn="ou=users,dc=example,dc=com",
@@ -207,7 +171,7 @@ if result.success:
 
 ### 4. Entry Normalization
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels
 
 # Normalize entry for current server
@@ -224,7 +188,7 @@ normalized_result = api.normalize_entry_for_server(entry, target_server_type="ou
 
 ### 5. Entry Conversion Between Servers
 
-```python notest
+```python
 # Convert entry from OpenLDAP 1.x to OpenLDAP 2.x
 openldap1_entry: FlextLdifModels.Entry = ...  # Entry from OpenLDAP 1.x
 
@@ -244,7 +208,7 @@ if convert_result.success:
 
 ### 6. Server Type Detection
 
-```python notest
+```python
 # Detect server type from entry attributes
 unknown_entry: FlextLdifModels.Entry = ...  # Entry from unknown source
 
@@ -257,7 +221,7 @@ if detection_result.success:
 
 ### 7. Entry Validation
 
-```python notest
+```python
 # Validate entry for target server
 entry: FlextLdifModels.Entry = ...
 
@@ -270,7 +234,7 @@ else:
 
 ### 8. Server-Specific Attributes
 
-```python notest
+```python
 # Get server-specific attribute information
 attrs_result = api.get_server_specific_attributes("oid")
 if attrs_result.success:
@@ -283,7 +247,7 @@ if attrs_result.success:
 
 ### OpenLDAP 1.x → OpenLDAP 2.x Migration
 
-```python notest
+```python
 from flext_ldap import ldap
 from flext_ldif import ldif
 
@@ -356,7 +320,7 @@ def migrate_oid_to_oud():
 
 ### Scenario 1: Multi-Server Environment
 
-```python notest
+```python
 from flext_ldap import ldap, ServerOperationsFactory
 
 
@@ -464,7 +428,7 @@ def progressive_migration():
 
 ### 1. Always Detect Server Type
 
-```python notest
+```python
 # Good: Detect before operations
 server_type_result = api.get_detected_server_type()
 if server_type_result.success:
@@ -474,7 +438,7 @@ if server_type_result.success:
 
 ### 2. Validate After Conversion
 
-```python notest
+```python
 # Good: Validate converted entries
 convert_result = api.convert_entry_between_servers(...)
 if convert_result.success:
@@ -488,7 +452,7 @@ if convert_result.success:
 
 ### 3. Use Server Capabilities
 
-```python notest
+```python
 # Good: Check capabilities before operations
 caps_result = api.get_server_capabilities()
 if caps_result.success:
@@ -501,7 +465,7 @@ if caps_result.success:
 
 ### 4. Handle Servers Gracefully
 
-```python notest
+```python
 # Good: Use servers system for server-specific behavior
 from flext_ldap import FlextLdapEntryAdapter
 
@@ -517,7 +481,7 @@ normalized = adapter.normalize_entry_for_server(entry, "oud")
 
 If server type is not detected:
 
-```python notest
+```python
 # Manual server type specification
 from flext_ldap import ServerOperationsFactory
 
@@ -529,7 +493,7 @@ ops_result = factory.create_from_server_type("openldap2")
 
 If conversion fails, check entry compatibility:
 
-```python notest
+```python
 # Validate source entry
 validation_result = api.validate_entry_for_server(entry, source_type)
 if validation_result.failure:
@@ -540,7 +504,7 @@ if validation_result.failure:
 
 Different servers have different ACL formats. Check server capabilities:
 
-```python notest
+```python
 caps_result = api.get_server_capabilities()
 if caps_result.success:
     caps = caps_result.unwrap()

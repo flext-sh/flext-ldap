@@ -1,33 +1,5 @@
 # Configuration Guide
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Configuration Overview](#configuration-overview)
-  - [Configuration Hierarchy](#configuration-hierarchy)
-- [Environment Variables](#environment-variables)
-  - [LDAP Server Configuration](#ldap-server-configuration)
-  - [Security Configuration](#security-configuration)
-  - [Connection Pool Settings](#connection-pool-settings)
-- [Configuration File](#configuration-file)
-  - [Python Configuration](#python-configuration)
-  - [Environment-Specific Configuration](#environment-specific-configuration)
-- [Docker Configuration](#docker-configuration)
-  - [Environment File](#environment-file)
-  - [Docker Compose](#docker-compose)
-- [Testing Configuration](#testing-configuration)
-  - [Test LDAP Server](#test-ldap-server)
-  - [Test Configuration](#test-configuration)
-- [Configuration Validation](#configuration-validation)
-  - [Validating Configuration](#validating-configuration)
-  - [Common Configuration Issues](#common-configuration-issues)
-- [Security Best Practices](#security-best-practices)
-  - [Credential Management](#credential-management)
-  - [SSL/TLS Configuration](#ssltls-configuration)
-- [Performance Tuning](#performance-tuning)
-  - [Connection Pool Optimization](#connection-pool-optimization)
-  - [Search Optimization](#search-optimization)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Configuration Guide
@@ -88,7 +60,7 @@ FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic Bas
 
 ### Configuration Hierarchy
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -180,7 +152,7 @@ ______________________________________________________________________
 
 Create `ldap_config.py`:
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings
 
 # Production configuration
@@ -210,7 +182,7 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
 
 ### Environment-Specific Configuration
 
-```python notest
+```python
 import os
 from Flext_ldap import FlextLdapSettings
 
@@ -289,7 +261,7 @@ docker run -d \
 
 ### Test Configuration
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings
 
 TEST_CONFIG = FlextLdapSettings(
@@ -310,7 +282,7 @@ ______________________________________________________________________
 
 ### Validating Configuration
 
-```python notest
+```python
 from flext_ldap.api import ldap
 
 
@@ -354,7 +326,7 @@ ______________________________________________________________________
 
 ### Credential Management
 
-```python notest
+```python
 # Use environment variables for secrets
 import os
 
@@ -367,7 +339,7 @@ settings = FlextLdapSettings(
 
 ### SSL/TLS Configuration
 
-```python notest
+```python
 from ssl import create_default_context
 
 settings = FlextLdapSettings(
@@ -385,7 +357,7 @@ ______________________________________________________________________
 
 ### Connection Pool Optimization
 
-```python notest
+```python
 # High-traffic configuration
 settings = FlextLdapSettings(
     pool_size=20,  # Adjust based on concurrent users
@@ -397,7 +369,7 @@ settings = FlextLdapSettings(
 
 ### Search Optimization
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntities
 
 # Optimized search request

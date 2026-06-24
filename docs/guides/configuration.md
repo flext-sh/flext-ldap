@@ -6,35 +6,6 @@
 
 > Project profile: `flext-ldap`
 
-<!-- TOC START -->
-- [Overview](#overview)
-- [Configuration Sources](#configuration-sources)
-- [Basic Configuration](#basic-configuration)
-  - [Environment Variables](#environment-variables)
-  - [Configuration Files](#configuration-files)
-  - [Programmatic Configuration](#programmatic-configuration)
-- [Project-Specific Configuration](#project-specific-configuration)
-  - [flext-ldif Configuration](#flext-ldif-configuration)
-  - [flext-api Configuration](#flext-api-configuration)
-  - [flext-auth Configuration](#flext-auth-configuration)
-- [Environment-Specific Configuration](#environment-specific-configuration)
-  - [Development Environment](#development-environment)
-  - [Production Environment](#production-environment)
-- [Configuration Validation](#configuration-validation)
-- [Configuration Inheritance](#configuration-inheritance)
-- [Best Practices](#best-practices)
-  - [1. Use Environment Variables for Secrets](#1-use-environment-variables-for-secrets)
-  - [2. Validate Configuration Early](#2-validate-configuration-early)
-  - [3. Use Configuration Classes](#3-use-configuration-classes)
-  - [4. Document Configuration Options](#4-document-configuration-options)
-- [Troubleshooting](#troubleshooting)
-  - [Common Configuration Issues](#common-configuration-issues)
-  - [Debug Configuration](#debug-configuration)
-- [Examples](#examples)
-  - [Complete Configuration Example](#complete-configuration-example)
-- [Reference](#reference)
-<!-- TOC END -->
-
 This guide covers how to configure FLEXT for your specific environment and requirements.
 
 ## Overview
@@ -103,7 +74,7 @@ api:
 
 Configure FLEXT programmatically in your code:
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -175,7 +146,7 @@ settings = FlextApiSettings(
 
 ### flext-auth Configuration
 
-```python notest
+```python
 from flext_auth import FlextAuthSettings
 
 settings = FlextAuthSettings(
@@ -228,7 +199,7 @@ api:
 
 All configuration is validated using Pydantic v2 models:
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -261,7 +232,7 @@ except c.ValidationError as e:
 
 FLEXT supports configuration inheritance for complex setups:
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -305,7 +276,7 @@ export FLEXT_API_KEY=your_api_key
 
 ### 2. Validate Configuration Early
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -341,7 +312,7 @@ def main():
 
 ### 3. Use Configuration Classes
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -377,7 +348,7 @@ class MyAppConfig(FlextSettings):
 
 ### 4. Document Configuration Options
 
-```python notest
+```python
 class FlextLdifSettings(m.BaseModel):
     """Configuration for LDIF processing."""
 
@@ -414,7 +385,7 @@ class FlextLdifSettings(m.BaseModel):
 
 ### Debug Configuration
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -452,7 +423,7 @@ else:
 
 ### Complete Configuration Example
 
-```python notest
+```python
 #!/usr/bin/env python3
 """Complete FLEXT configuration example."""
 

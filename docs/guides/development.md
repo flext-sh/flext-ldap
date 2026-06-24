@@ -6,48 +6,6 @@
 
 > Project profile: `flext-ldap`
 
-<!-- TOC START -->
-- [Prerequisites](#prerequisites)
-- [Development Environment Setup](#development-environment-setup)
-  - [1. Clone the Repository](#1-clone-the-repository)
-  - [2. Install Dependencies](#2-install-dependencies)
-  - [3. Verify Installation](#3-verify-installation)
-- [Project Structure](#project-structure)
-- [Development Workflow](#development-workflow)
-  - [1. Create a Feature Branch](#1-create-a-feature-branch)
-  - [2. Make Changes](#2-make-changes)
-  - [3. Run Quality Gates](#3-run-quality-gates)
-  - [4. Commit Changes](#4-commit-changes)
-- [Code Standards](#code-standards)
-  - [Type Safety (ZERO TOLERANCE)](#type-safety-zero-tolerance)
-  - [Railway-Oriented Programming](#railway-oriented-programming)
-  - [Unified Models Pattern](#unified-models-pattern)
-- [Testing](#testing)
-  - [Running Tests](#running-tests)
-  - [Writing Tests](#writing-tests)
-- [Quality Gates](#quality-gates)
-  - [Pre-commit Hooks](#pre-commit-hooks)
-  - [Quality Checks](#quality-checks)
-- [Adding New Projects](#adding-new-projects)
-  - [1. Create Project Structure](#1-create-project-structure)
-  - [2. Implement Core Patterns](#2-implement-core-patterns)
-  - [3. Add to Workspace](#3-add-to-workspace)
-- [Debugging](#debugging)
-  - [Type Errors](#type-errors)
-  - [Test Failures](#test-failures)
-  - [Import Issues](#import-issues)
-- [Documentation](#documentation)
-  - [Code Documentation](#code-documentation)
-  - [README Updates](#readme-updates)
-- [Contributing](#contributing)
-  - [Pull Request Process](#pull-request-process)
-  - [Code Review Guidelines](#code-review-guidelines)
-- [Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-- [Resources](#resources)
-- [Support](#support)
-<!-- TOC END -->
-
 This guide covers setting up a development environment for FLEXT contributions and understanding the development workflow.
 
 ## Prerequisites
@@ -149,7 +107,7 @@ git push origin feature/amazing-feature
 
 ### Type Safety (ZERO TOLERANCE)
 
-```python notest
+```python
 # ✅ CORRECT - Complete type annotations
 def process_data(data: t.JsonMapping) -> p.Result[ProcessedData]:
     """Process data with type safety."""
@@ -166,7 +124,7 @@ def process_data(data):
 
 ### Railway-Oriented Programming
 
-```python notest
+```python
 # ✅ CORRECT - Use r for all operations
 def validate_and_process(data: dict) -> p.Result[ProcessedData]:
     return (
@@ -186,7 +144,7 @@ def validate_and_process(data: dict) -> ProcessedData:
 
 ### Unified Models Pattern
 
-```python notest
+```python
 # ✅ CORRECT - Use [Project]Models pattern
 class FlextApiModels:
     class Request(m.BaseModel):
@@ -225,7 +183,7 @@ pytest --cov=src --cov-report=html
 
 ### Writing Tests
 
-```python notest
+```python
 import pytest
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -310,7 +268,7 @@ cd flext-newlib
 
 ### 2. Implement Core Patterns
 
-```python notest
+```python
 # src/flext_newlib/__init__.py
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -401,7 +359,7 @@ poetry env info
 
 ### Code Documentation
 
-```python notest
+```python
 def process_data(data: t.JsonMapping) -> p.Result[ProcessedData]:
     """
     Process data using the FLEXT pipeline.
@@ -429,7 +387,7 @@ Update project README.md files when adding new features:
 
 - Add a "New Feature" section with usage and configuration examples.
 
-```python notest
+```python
 from flext_newlib import FlextNewlib
 from flext_newlib import FlextNewlibSettings
 

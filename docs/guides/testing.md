@@ -6,42 +6,6 @@
 
 > Project profile: `flext-ldap`
 
-<!-- TOC START -->
-- [Overview](#overview)
-- [Test Structure](#test-structure)
-- [Test Categories](#test-categories)
-  - [Unit Tests](#unit-tests)
-  - [Integration Tests](#integration-tests)
-  - [End-to-End Tests](#end-to-end-tests)
-- [Test Markers](#test-markers)
-- [Running Tests](#running-tests)
-  - [Basic Test Execution](#basic-test-execution)
-  - [Coverage Analysis](#coverage-analysis)
-  - [Parallel Test Execution](#parallel-test-execution)
-- [Test Fixtures](#test-fixtures)
-  - [Pytest Fixtures](#pytest-fixtures)
-  - [Using Fixtures](#using-fixtures)
-- [Mocking and Stubbing](#mocking-and-stubbing)
-  - [Unit Test Mocking](#unit-test-mocking)
-  - [Integration Test Stubbing](#integration-test-stubbing)
-- [Performance Testing](#performance-testing)
-  - [Load Testing](#load-testing)
-  - [Memory Testing](#memory-testing)
-- [Test Data Management](#test-data-management)
-  - [Test Fixtures Directory](#test-fixtures-directory)
-  - [Loading Test Data](#loading-test-data)
-- [Continuous Integration](#continuous-integration)
-  - [GitHub Actions Workflow](#github-actions-workflow)
-- [Best Practices](#best-practices)
-  - [1. Test Naming](#1-test-naming)
-  - [2. Test Organization](#2-test-organization)
-  - [3. Assertion Quality](#3-assertion-quality)
-  - [4. Test Independence](#4-test-independence)
-- [Troubleshooting](#troubleshooting)
-  - [Common Test Issues](#common-test-issues)
-- [Resources](#resources)
-<!-- TOC END -->
-
 This guide covers testing strategies, best practices, and procedures for FLEXT applications and libraries.
 
 ## Overview
@@ -73,7 +37,7 @@ tests/
 
 Test individual functions and classes in isolation:
 
-```python notest
+```python
 import pytest
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -125,7 +89,7 @@ objectClass: inetOrgPerson"""
 
 Test component interactions and workflows:
 
-```python notest
+```python
 import pytest
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -360,7 +324,7 @@ def test_file_migration(ldif_service, temp_directories):
 
 ### Unit Test Mocking
 
-```python notest
+```python
 from unittest.mock import Mock, patch
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -399,7 +363,7 @@ def test_with_mocked_dependency():
 
 ### Integration Test Stubbing
 
-```python notest
+```python
 from unittest.mock import Mock
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -442,7 +406,7 @@ def test_with_stubbed_service():
 
 ### Load Testing
 
-```python notest
+```python
 import pytest
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -474,7 +438,7 @@ def test_concurrent_processing():
 
 ### Memory Testing
 
-```python notest
+```python
 import pytest
 import psutil
 import os
@@ -520,7 +484,7 @@ tests/
 
 ### Loading Test Data
 
-```python notest
+```python
 import json
 from pathlib import Path
 
@@ -670,7 +634,7 @@ def test_parse_result():
 
 ### 4. Test Independence
 
-```python notest
+```python
 # ✅ GOOD - Independent tests
 def test_parse_valid_ldif():
     ldif = ldif()  # Fresh instance

@@ -1,55 +1,5 @@
 # Documentation Maintenance System
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [📋 System Overview](#system-overview)
-- [🏗️ Architecture](#architecture)
-- [🚀 Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Basic Usage](#basic-usage)
-- [📊 Maintenance Categories](#maintenance-categories)
-  - [1. Content Quality Audit (`audit.py`)](#1-content-quality-audit-auditpy)
-  - [2. Link & Reference Validation (`validate_links.py`)](#2-link-reference-validation-validatelinkspy)
-  - [3. Style & Consistency (`validate_style.py`)](#3-style-consistency-validatestylepy)
-  - [4. Content Optimization (`optimize.py`)](#4-content-optimization-optimizepy)
-  - [5. Synchronization (`sync.py`)](#5-synchronization-syncpy)
-  - [6. Quality Reporting (`report.py`)](#6-quality-reporting-reportpy)
-- [🔧 Configuration](#configuration)
-  - [Main Configuration File](#main-configuration-file)
-  - [Custom Style Rules](#custom-style-rules)
-- [📈 Quality Metrics](#quality-metrics)
-  - [Content Quality Metrics](#content-quality-metrics)
-  - [Maintenance Performance](#maintenance-performance)
-- [🔄 Automated Workflows](#automated-workflows)
-  - [CI/CD Integration](#cicd-integration)
-  - [Git Hooks Integration](#git-hooks-integration)
-- [📊 Reporting & Analytics](#reporting-analytics)
-  - [Quality Dashboard](#quality-dashboard)
-  - [Automated Notifications](#automated-notifications)
-- [🛠️ Maintenance Procedures](#maintenance-procedures)
-  - [Daily Maintenance](#daily-maintenance)
-  - [Weekly Maintenance](#weekly-maintenance)
-  - [Monthly Maintenance](#monthly-maintenance)
-- [🔍 Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-  - [Recovery Procedures](#recovery-procedures)
-- [📚 Advanced Usage](#advanced-usage)
-  - [Custom Validation Rules](#custom-validation-rules)
-  - [Integration with External Tools](#integration-with-external-tools)
-- [🤝 Contributing](#contributing)
-  - [Adding New Validators](#adding-new-validators)
-  - [Improving Performance](#improving-performance)
-  - [Extending Reporting](#extending-reporting)
-- [📋 Maintenance Checklist](#maintenance-checklist)
-  - [Pre-Maintenance](#pre-maintenance)
-  - [During Maintenance](#during-maintenance)
-  - [Post-Maintenance](#post-maintenance)
-- [📞 Support & Resources](#support-resources)
-  - [Documentation](#documentation)
-  - [Community](#community)
-  - [Professional Services](#professional-services)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Documentation Maintenance System
@@ -556,7 +506,7 @@ python docs/maintenance/audit.py --rebuild-db
 
 Extend the system with custom validation:
 
-```python notest
+```python
 # docs/maintenance/custom_validators.py
 from docs import BaseValidator
 

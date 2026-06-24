@@ -1,9 +1,5 @@
 # 01-introduction: Introduction and Goals
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Arc42 Section 01-introduction**
 
 [Content for Introduction and Goals would go here]

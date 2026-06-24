@@ -1,37 +1,5 @@
 # Getting Started with FLEXT-LDAP
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Prerequisites](#prerequisites)
-  - [**System Requirements**](#system-requirements)
-  - [**LDAP Server Requirements**](#ldap-server-requirements)
-- [Installation](#installation)
-  - [**Production Installation**](#production-installation)
-  - [**Development Installation**](#development-installation)
-  - [**Verify Installation**](#verify-installation)
-- [Configuration](#configuration)
-  - [**Environment Variables**](#environment-variables)
-  - [**Configuration File**](#configuration-file)
-- [First Steps](#first-steps)
-  - [**Basic Connection Test**](#basic-connection-test)
-  - [**Simple Directory Search**](#simple-directory-search)
-  - [**User Authentication**](#user-authentication)
-- [Universal LDAP Interface](#universal-ldap-interface)
-  - [**Server-Specific Operations**](#server-specific-operations)
-  - [**Entry Conversion (ldap3 ↔ ldif)**](#entry-conversion-ldap3-ldif)
-  - [**Schema Discovery**](#schema-discovery)
-  - [**ACL Management**](#acl-management)
-  - [**Paged Search**](#paged-search)
-- [Development Environment](#development-environment)
-  - [**Test LDAP Server Setup**](#test-ldap-server-setup)
-  - [**Run Tests**](#run-tests)
-  - [**Development Workflow**](#development-workflow)
-- [Next Steps](#next-steps)
-- [Troubleshooting](#troubleshooting)
-  - [**Common Issues**](#common-issues)
-- [Related Documentation](#related-documentation)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Getting Started with FLEXT-LDAP
@@ -168,7 +136,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 
 Create `flext_ldap.settings.py`:
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings(
@@ -189,7 +157,7 @@ ______________________________________________________________________
 
 ### **Basic Connection Test**
 
-```python notest
+```python
 from flext_ldap.api import ldap
 
 
@@ -209,7 +177,7 @@ run(test_connection())
 
 ### **Simple Directory Search**
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -240,7 +208,7 @@ run(basic_search())
 
 ### **User Authentication**
 
-```python notest
+```python
 from flext_ldap.api import ldap
 
 
@@ -270,7 +238,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP provides server-specific implementations with automatic server detection:
 
-```python notest
+```python
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
@@ -332,7 +300,7 @@ run(server_specific_operations())
 
 Convert between ldap3 and ldif entry formats:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
@@ -365,7 +333,7 @@ if attrs_result.success:
 
 Discover schema from different LDAP server types:
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -398,7 +366,7 @@ run(discover_schema())
 
 Manage server-specific ACLs:
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -442,7 +410,7 @@ run(manage_acls())
 
 Execute paged searches with automatic pagination:
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 

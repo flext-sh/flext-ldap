@@ -1,9 +1,5 @@
 # 07-deployment: Deployment View
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Arc42 Section 07-deployment**
 
 [Content for Deployment View would go here]

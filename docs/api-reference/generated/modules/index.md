@@ -4,7 +4,6 @@
 
 These pages are generated from public modules and their docstrings.
 
-- [flext_ldap](flext_ldap.md)
 - [flext_ldap.adapters.entry](adapters/entry.md)
 - [flext_ldap.adapters.ldap3](adapters/ldap3.md)
 - [flext_ldap.api](api.md)

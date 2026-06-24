@@ -1,14 +1,5 @@
 # Service Layer
 
-<!-- TOC START -->
-- [Services](#services)
-  - [Connection](#connection)
-  - [Operations](#operations)
-  - [Synchronization](#synchronization)
-  - [Server Detection](#server-detection)
-- [Collaboration Pattern](#collaboration-pattern)
-<!-- TOC END -->
-
 The service layer contains the composable building blocks that power the
 `ldap` facade. Each service is focused on a single responsibility and uses
 `r` to make success and failure explicit.

@@ -1,33 +1,5 @@
 # Integration Guide
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
-  - [Core FLEXT Dependencies](#core-flext-dependencies)
-  - [Configuration Management](#configuration-management)
-- [FastAPI Integration](#fastapi-integration)
-  - [API Endpoints with LDAP Authentication](#api-endpoints-with-ldap-authentication)
-- [Django Integration](#django-integration)
-  - [Django Authentication Backend](#django-authentication-backend)
-  - [Django User Sync Management Command](#django-user-sync-management-command)
-- [Flask Integration](#flask-integration)
-  - [Flask Application with LDAP Authentication](#flask-application-with-ldap-authentication)
-- [Docker Integration](#docker-integration)
-  - [Docker Compose Setup](#docker-compose-setup)
-  - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
-- [Kubernetes Integration](#kubernetes-integration)
-  - [Kubernetes Deployment](#kubernetes-deployment)
-- [ldif Integration](#ldif-integration)
-  - [Entry Format Conversion](#entry-format-conversion)
-  - [LDIF File Processing](#ldif-file-processing)
-  - [Export to LDIF](#export-to-ldif)
-  - [Server Servers Detection](#server-servers-detection)
-  - [Universal LDAP Processor](#universal-ldap-processor)
-- [Monitoring and Observability](#monitoring-and-observability)
-  - [Prometheus Metrics](#prometheus-metrics)
-  - [Health Check Endpoints](#health-check-endpoints)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Integration Guide
@@ -86,7 +58,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP builds on established FLEXT foundation patterns:
 
-```python notest
+```python
 # FLEXT-Core integration
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -144,7 +116,7 @@ class UserService:
 
 ### Configuration Management
 
-```python notest
+```python
 # Environment-based configuration following FLEXT patterns
 from Flext_ldap import FlextLdapSettings
 from pydantic import BaseSettings
@@ -188,7 +160,7 @@ ______________________________________________________________________
 
 ### API Endpoints with LDAP Authentication
 
-```python notest
+```python
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from flext_ldap import FlextLdapEntities
@@ -310,7 +282,7 @@ ______________________________________________________________________
 
 ### Django Authentication Backend
 
-```python notest
+```python
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 from flext_ldap.api import ldap
@@ -382,7 +354,7 @@ AUTHENTICATION_BACKENDS = [
 
 ### Django User Sync Management Command
 
-```python notest
+```python
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from flext_ldap import FlextLdapEntities
@@ -484,7 +456,7 @@ ______________________________________________________________________
 
 ### Flask Application with LDAP Authentication
 
-```python notest
+```python
 from flask import Flask, request, jsonify, g
 from functools import wraps
 from flext_ldap import FlextLdapEntities
@@ -753,7 +725,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers detection:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
@@ -785,7 +757,7 @@ for ldap3_entry in connection.entries:
 
 Process LDIF files with ldif integration:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import OpenLDAP2Operations
 
@@ -828,7 +800,7 @@ run(process_ldif_file())
 
 Export LDAP entries to LDIF format:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import OpenLDAP2Operations
 import ldap3
@@ -875,7 +847,7 @@ run(export_to_ldif())
 
 Use ldif servers system for automatic server detection:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
@@ -945,7 +917,7 @@ run(detect_and_configure())
 
 Complete example combining ldif with server operations:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import (

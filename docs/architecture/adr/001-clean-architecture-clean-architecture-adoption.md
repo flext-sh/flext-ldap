@@ -1,17 +1,5 @@
 # Architecture Decision Record (ADR) 001-clean-architecture: Clean Architecture Adoption
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Status](#status)
-- [Context](#context)
-- [Decision](#decision)
-- [Alternatives Considered](#alternatives-considered)
-- [Implementation Plan](#implementation-plan)
-- [Validation](#validation)
-- [Consequences](#consequences)
-- [References](#references)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Architecture Decision Record (ADR) 001-clean-architecture: Clean Architecture Adoption

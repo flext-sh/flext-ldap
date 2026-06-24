@@ -1,41 +1,5 @@
 # Development Guide
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Development Environment Setup](#development-environment-setup)
-  - [Prerequisites](#prerequisites)
-  - [Initial Setup](#initial-setup)
-  - [Development Tools Installation](#development-tools-installation)
-- [Development Workflow](#development-workflow)
-  - [Daily Development Commands](#daily-development-commands)
-  - [Code Formatting](#code-formatting)
-  - [Type Checking](#type-checking)
-- [Testing Strategy](#testing-strategy)
-  - [Test Categories](#test-categories)
-  - [Docker LDAP Test Server](#docker-ldap-test-server)
-  - [Coverage Analysis](#coverage-analysis)
-- [Architecture Guidelines](#architecture-guidelines)
-  - [Clean Architecture Layers](#clean-architecture-layers)
-  - [Coding Standards](#coding-standards)
-- [Code Quality Standards](#code-quality-standards)
-  - [Type Safety Requirements](#type-safety-requirements)
-  - [Import Organization](#import-organization)
-- [Testing Guidelines](#testing-guidelines)
-  - [Unit Test Structure](#unit-test-structure)
-  - [Integration Test Structure](#integration-test-structure)
-  - [Test Fixtures](#test-fixtures)
-- [Documentation Standards](#documentation-standards)
-  - [Code Documentation](#code-documentation)
-  - [API Documentation](#api-documentation)
-- [Performance Guidelines](#performance-guidelines)
-  - [Connection Management](#connection-management)
-  - [Search Optimization](#search-optimization)
-  - [Best Practices](#best-practices)
-- [Contribution Guidelines](#contribution-guidelines)
-  - [Pull Request Process](#pull-request-process)
-  - [Code Review Checklist](#code-review-checklist)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Development Guide
@@ -300,7 +264,7 @@ ______________________________________________________________________
 
 **1. Single Responsibility Classes**
 
-```python notest
+```python
 class FlextLdapUserService:
     """Single responsibility - user operations only."""
 
@@ -317,7 +281,7 @@ class FlextLdapUserService:
 
 **2. r Pattern**
 
-```python notest
+```python
 # ✅ CORRECT - Explicit error handling
 def create_user(self, request: CreateUserRequest) -> p.Result[FlextLdapUser]:
     if not request.is_valid():
@@ -341,7 +305,7 @@ def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
 
 **3. Parameter Object Pattern**
 
-```python notest
+```python
 # ✅ CORRECT - Parameter objects for complex operations
 @dataclass
 class SearchRequest:
@@ -363,7 +327,7 @@ def search_entries(self, base_dn: str, filter_str: str, scope: str,
 
 **4. Value Object Validation**
 
-```python notest
+```python
 @dataclass(frozen=True)
 class DN:
     """RFC 4514 compliant Distinguished Name."""
@@ -385,7 +349,7 @@ ______________________________________________________________________
 
 ### Type Safety Requirements
 
-```python notest
+```python
 # All public APIs must have complete type annotations
 def authenticate_user(self, username: str, password: str) -> p.Result[FlextLdapUser]:
     """Complete type signature required."""
@@ -401,7 +365,7 @@ class FlextLdapService(Generic[T]):
 
 ### Import Organization
 
-```python notest
+```python
 # Standard library imports
 from dataclasses import dataclass
 from typing import List, Optional
@@ -437,7 +401,7 @@ ______________________________________________________________________
 
 ### Unit Test Structure
 
-```python notest
+```python
 import pytest
 from flext_ldap import FlextLdapUser, CreateUserRequest
 
@@ -487,7 +451,7 @@ class TestFlextLdapUser:
 
 ### Integration Test Structure
 
-```python notest
+```python
 import pytest
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -542,7 +506,7 @@ class TestLdapOperations:
 
 ### Test Fixtures
 
-```python notest
+```python
 # tests/conftest.py
 import pytest
 from flext_tests import tk
@@ -645,7 +609,7 @@ ______________________________________________________________________
 
 ### Code Documentation
 
-```python notest
+```python
 class FlextLdapClients:
     """High-level LDAP API following Clean Architecture patterns.
 
@@ -709,7 +673,7 @@ ______________________________________________________________________
 
 ### Connection Management
 
-```python notest
+```python
 # Use connection pooling for high-traffic scenarios
 from Flext_ldap import FlextLdapSettings
 
@@ -723,7 +687,7 @@ settings = FlextLdapSettings(
 
 ### Search Optimization
 
-```python notest
+```python
 # Optimize LDAP searches
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",  # Use specific base DN
@@ -737,7 +701,7 @@ search_request = FlextLdapEntities.SearchRequest(
 
 ### Best Practices
 
-```python notest
+```python
 # Use context managers for resource management
 with get_ldap_client() as client:
     result = client.search(search_request)

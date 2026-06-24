@@ -6,41 +6,6 @@
 
 > Project profile: `flext-ldap`
 
-<!-- TOC START -->
-- [Quick Diagnosis](#quick-diagnosis)
-  - [Health Check Commands](#health-check-commands)
-  - [System Status](#system-status)
-- [Common Issues](#common-issues)
-  - [1. Import Errors](#1-import-errors)
-  - [r](#r)
-  - [2. Type Checking Errors](#2-type-checking-errors)
-  - [3. Test Failures](#3-test-failures)
-  - [4. Configuration Issues](#4-configuration-issues)
-  - [5. LDIF Processing Issues](#5-ldif-processing-issues)
-  - [6. Migration Issues](#6-migration-issues)
-  - [7. Performance Issues](#7-performance-issues)
-- [Debugging Techniques](#debugging-techniques)
-  - [1. Logging Configuration](#1-logging-configuration)
-  - [2. Exception Handling](#2-exception-handling)
-  - [3. Debug Mode](#3-debug-mode)
-  - [4. Step-by-Step Debugging](#4-step-by-step-debugging)
-- [Error Codes Reference](#error-codes-reference)
-  - [FLEXT Core Errors](#flext-core-errors)
-  - [LDIF Processing Errors](#ldif-processing-errors)
-  - [API Errors](#api-errors)
-- [Performance Troubleshooting](#performance-troubleshooting)
-  - [Memory Issues](#memory-issues)
-  - [CPU Issues](#cpu-issues)
-- [Getting Help](#getting-help)
-  - [Self-Service Resources](#self-service-resources)
-  - [Community Support](#community-support)
-  - [Reporting Issues](#reporting-issues)
-  - [Your minimal example here](#your-minimal-example-here)
-- [Prevention](#prevention)
-  - [Best Practices](#best-practices)
-- [Resources](#resources)
-<!-- TOC END -->
-
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
 
 ## Quick Diagnosis
@@ -85,7 +50,7 @@ git status
 
 #### Problem: ModuleNotFoundError
 
-```python notest
+```python
 # Error
 ModuleNotFoundError: No module named 'flext_core'
 ```
@@ -136,7 +101,7 @@ except ImportError as e:
 
 #### Problem: MyPy errors
 
-```python notest
+```python
 # Error
 error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapping"
 ```
@@ -145,7 +110,7 @@ error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapp
 
 **Fix type annotations:**
 
-```python notest
+```python
 # ❌ WRONG
 def process(data):
     return data
@@ -172,7 +137,7 @@ mypy src/ --show-error-codes | grep "error-code"
 
 #### Problem: Tests failing
 
-```python notest
+```python
 # Error
 AssertionError: Expected success but got failure
 ```
@@ -210,7 +175,7 @@ def test_with_debug():
 
 #### Problem: Configuration not loading
 
-```python notest
+```python
 # Error
 ValidationError: field required
 ```
@@ -225,7 +190,7 @@ env | grep FLEXT_
 
 **Validate configuration:**
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -255,7 +220,7 @@ except c.ValidationError as e:
 
 **Debug configuration loading:**
 
-```python notest
+```python
 import os
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -291,7 +256,7 @@ print(f"Config: {settings.dict()}")
 
 #### Problem: LDIF parsing fails
 
-```python notest
+```python
 # Error
 LdifParsingException: Invalid LDIF format
 ```
@@ -300,7 +265,7 @@ LdifParsingException: Invalid LDIF format
 
 **Check LDIF content:**
 
-```python notest
+```python
 from flext_ldif import ldif
 
 content = """dn: cn=test,dc=example,dc=com
@@ -325,7 +290,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 **Validate LDIF format:**
 
-```python notest
+```python
 # Check for common LDIF issues
 def validate_ldif_content(content: str) -> t.StringList:
     issues = []
@@ -348,7 +313,7 @@ def validate_ldif_content(content: str) -> t.StringList:
 
 #### Problem: Migration fails
 
-```python notest
+```python
 # Error
 LdifMigrationException: Server compatibility error
 ```
@@ -372,7 +337,7 @@ print(f"Config: {settings.dict()}")
 
 **Enable server servers:**
 
-```python notest
+```python
 settings = FlextLdifSettings(
     servers_enabled=True, source_server="oid", target_server="oud"
 )
@@ -380,7 +345,7 @@ settings = FlextLdifSettings(
 
 **Test with sample data:**
 
-```python notest
+```python
 # Test migration with small sample
 sample_ldif = """dn: cn=test,dc=example,dc=com
 cn: test
@@ -443,7 +408,7 @@ settings = FlextLdifSettings(
 
 **Enable parallel processing:**
 
-```python notest
+```python
 settings = FlextLdifSettings(
     parallel_processing=True,
     max_workers=4,  # Adjust based on CPU cores
@@ -454,7 +419,7 @@ settings = FlextLdifSettings(
 
 ### 1. Logging Configuration
 
-```python notest
+```python
 import logging
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -491,7 +456,7 @@ logger.error("Error message")
 
 ### 2. Exception Handling
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -528,7 +493,7 @@ def safe_operation(data: dict) -> p.Result[dict]:
 
 ### 3. Debug Mode
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -648,7 +613,7 @@ monitor_memory()
 
 ### CPU Issues
 
-```python notest
+```python
 # Monitor CPU usage
 import psutil
 import time
@@ -777,7 +742,7 @@ from flext_core import u
 
 1. **Always Use r**
 
-```python notest
+```python
 # ✅ GOOD
 def process(data: dict) -> p.Result[ProcessedData]:
     return r.ok(ProcessedData(**data))

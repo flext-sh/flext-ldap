@@ -1,38 +1,5 @@
 # Development Guide
 
-<!-- TOC START -->
-- [Overview](#overview)
-- [Table of Contents](#table-of-contents)
-  - [Getting Started](#getting-started)
-  - [Development Practices](#development-practices)
-  - [Contributing](#contributing)
-- [Quick Start](#quick-start)
-  - [Initial Setup](#initial-setup)
-  - [Development Cycle](#development-cycle)
-- [Quality Standards](#quality-standards)
-  - [ZERO TOLERANCE](#zero-tolerance)
-  - [Code Quality Rules](#code-quality-rules)
-- [Testing](#testing)
-  - [Test Categories](#test-categories)
-  - [Docker Test Server](#docker-test-server)
-- [Essential Commands](#essential-commands)
-- [FLEXT Patterns](#flext-patterns)
-  - [Railway-Oriented Programming](#railway-oriented-programming)
-  - [Use x](#use-x)
-  - [Pydantic v2 Models](#pydantic-v2-models)
-- [Git Workflow](#git-workflow)
-  - [Branch Naming](#branch-naming)
-  - [Commit Messages](#commit-messages)
-- [Pull Request Checklist](#pull-request-checklist)
-- [Getting Help](#getting-help)
-  - [Resources](#resources)
-  - [Communication](#communication)
-- [Best Practices](#best-practices)
-  - [DO ✅](#do)
-  - [DON'T ❌](#dont)
-- [Related Documentation](#related-documentation)
-<!-- TOC END -->
-
 **Version**: 1.0
 **Date**: 2025-01-24
 **Target**: v0.12.0-dev+
@@ -172,7 +139,7 @@ make clean-all     # Deep clean including venvs
 
 ### Railway-Oriented Programming
 
-```python notest
+```python
 from flext_core import r, p
 
 
@@ -203,7 +170,7 @@ class MyService(s[None]):
 
 ### Pydantic v2 Models
 
-```python notest
+```python
 from pydantic import BaseModel, PositiveInt
 
 

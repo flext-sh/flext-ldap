@@ -1,37 +1,5 @@
 # Troubleshooting Guide
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Connection Issues](#connection-issues)
-  - [Connection Refused Errors](#connection-refused-errors)
-  - [SSL/TLS Connection Errors](#ssltls-connection-errors)
-- [Authentication Issues](#authentication-issues)
-  - [Invalid Credentials](#invalid-credentials)
-  - [DN Format Issues](#dn-format-issues)
-- [Search and Query Issues](#search-and-query-issues)
-  - [Search Filter Syntax Errors](#search-filter-syntax-errors)
-  - [Search Base DN Not Found](#search-base-dn-not-found)
-- [Performance Issues](#performance-issues)
-  - [Slow Search Operations](#slow-search-operations)
-  - [Connection Pool Exhaustion](#connection-pool-exhaustion)
-- [Configuration Issues](#configuration-issues)
-  - [Environment Variable Problems](#environment-variable-problems)
-  - [Docker Environment Issues](#docker-environment-issues)
-- [Development and Testing Issues](#development-and-testing-issues)
-  - [Import Errors](#import-errors)
-  - [Test Environment Setup](#test-environment-setup)
-- [Error Message Reference](#error-message-reference)
-  - [Common Error Patterns](#common-error-patterns)
-  - [r Error Handling](#r-error-handling)
-- [Debugging Tools and Techniques](#debugging-tools-and-techniques)
-  - [Enable Debug Logging](#enable-debug-logging)
-  - [Network Debugging](#network-debugging)
-  - [Performance Profiling](#performance-profiling)
-- [Getting Help](#getting-help)
-  - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
-  - [Diagnostic Information Collection](#diagnostic-information-collection)
-<!-- TOC END -->
-
 ## Table of Contents
 
 - Troubleshooting Guide
@@ -133,7 +101,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 1. **Ensure CA certificate is installed**
 1. **Configure certificate verification settings**
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
@@ -168,7 +136,7 @@ AuthenticationError: Authentication failed: Invalid credentials
 
 **Diagnosis:**
 
-```python notest
+```python
 from flext_ldap.api import ldap
 
 
@@ -287,7 +255,7 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 
 **Filter Validation:**
 
-```python notest
+```python
 from flext_ldap import m, c
 
 
@@ -324,7 +292,7 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 
 **Diagnosis:**
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -366,7 +334,7 @@ ______________________________________________________________________
 
 **Diagnosis:**
 
-```python notest
+```python
 import time
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -425,7 +393,7 @@ run(diagnose_performance())
 
 1. **Use specific base DNs:**
 
-```python notest
+```python
 # ❌ Inefficient - searches entire directory
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com", filter_str="(uid=john.doe)", scope="subtree"
@@ -452,7 +420,7 @@ filter_str = "(&(objectClass=person)(uid=john.doe))"
 
 1. **Limit result sets:**
 
-```python notest
+```python
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(objectClass=person)",
@@ -473,7 +441,7 @@ ConnectionError: Connection pool exhausted
 
 **Diagnosis:**
 
-```python notest
+```python
 # Check connection pool configuration
 from Flext_ldap import FlextLdapSettings
 
@@ -486,7 +454,7 @@ print(f"Connection timeout: {settings.connection_timeout}")
 
 1. **Increase pool size:**
 
-```python notest
+```python
 settings = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
@@ -522,7 +490,7 @@ ______________________________________________________________________
 
 **Diagnosis:**
 
-```python notest
+```python
 import os
 from Flext_ldap import FlextLdapSettings
 
@@ -602,13 +570,13 @@ ______________________________________________________________________
 
 **Symptom:**
 
-```python notest
+```python
 ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
 ```
 
 **Diagnosis:**
 
-```python notest
+```python
 # Check package installation
 import pkg_resources
 
@@ -677,7 +645,7 @@ ______________________________________________________________________
 
 ### r Error Handling
 
-```python notest
+```python
 from flext_ldap.api import ldap
 
 
@@ -714,7 +682,7 @@ ______________________________________________________________________
 
 ### Enable Debug Logging
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -759,7 +727,7 @@ ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=exam
 
 ### Performance Profiling
 
-```python notest
+```python
 import cProfile
 import pstats
 from flext_ldap import FlextLdapEntities
@@ -837,7 +805,7 @@ When reporting issues, include:
 
 ### Diagnostic Information Collection
 
-```python notest
+```python
 import sys
 import pkg_resources
 from Flext_ldap import FlextLdapSettings
