@@ -82,12 +82,9 @@ types at the source; depend on declared contracts, not loosely-typed escape hatc
 - **DI / DIP** — depend on abstractions (protocols/interfaces); inject collaborators; no hidden globals or
   hard-wired construction inside business logic.
 
-### 10. User Manages Git
+### 10. Land Scoped Work Immediately
 
-Do not run `git add`/`commit`/`push`/`tag` unless the user explicitly requests it, and do not suggest
-committing. Read-only inspection (`status`/`log`/`diff`) is fine. When a commit is authorized, write it as the
-user with no agent/bot attribution — no `Co-Authored-By`, no "Generated with …" trailer, and never override
-author/committer identity.
+After scoped green validation, run `git add`/`commit`/fast-forward `push` for the active bead lane using explicit pathspecs. The operator grants durable authorization for normal scoped landing; never leave verified work only in the working tree. Write commits as the user with no agent/bot attribution — no `Co-Authored-By`, no "Generated with …" trailer, and never override author/committer identity. Escalate only destructive, non-fast-forward, history-rewrite, rollback, tag, or cross-lane ambiguity.
 
 ### 11. Multi-Agent Coordination
 
@@ -100,14 +97,11 @@ on a divergent approach, stop and escalate to the user.
 ### 12. When Unsure — Ask
 
 If a task is unclear, ambiguous, or would expand scope → ask one focused question. If an action is hard to
-reverse, affects shared state, or could surprise the user → confirm first. Authorization is scope-specific:
-approval for one action once does not authorize it in future contexts.
+reverse, affects shared state, or could surprise the user → confirm first. Normal scoped Git landing has durable operator authorization after validation. Confirm only destructive, non-fast-forward, cross-lane, or ambiguous actions.
 
 ### 13. Destructive Commands — Archive, Don't Destroy
 
-Prefer non-destructive moves: archive a file as `<file>.bak` instead of deleting it. Do not escalate
-privileges (`sudo`/`su`), change ownership/permissions, perform remote operations, or fetch over the network
-without explicit user confirmation. Use the agent's structured file/search/edit tools over raw destructive
+Prefer non-destructive moves: archive a file as `<file>.bak` instead of deleting it. Do not escalate privileges (`sudo`/`su`), change ownership/permissions, force-push, rewrite history, tag releases, or fetch arbitrary network resources without explicit user confirmation. Normal scoped fast-forward push after validation is required by Rule 10. Use the agent's structured file/search/edit tools over raw destructive
 shell commands.
 <!-- END UNIVERSAL AGENT LAW -->
 
