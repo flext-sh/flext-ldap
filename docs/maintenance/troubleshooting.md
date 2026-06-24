@@ -336,6 +336,7 @@ def example():
 **Symptom:** Optimization makes incorrect changes
 
 **Recovery:**
+
 ```bash
 # Check what changed
 git diff docs/
@@ -694,6 +695,8 @@ Create diagnostic scripts for complex issues:
 
 ```python
 from __future__ import annotations
+
+
 # docs/maintenance/diagnostics.py
 def diagnose_link_issues():
     """Comprehensive link validation diagnostics."""

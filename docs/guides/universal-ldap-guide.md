@@ -322,9 +322,11 @@ def migrate_openldap1_to_openldap2():
 
 ```python
 from __future__ import annotations
+
+
 def migrate_oid_to_oud():
     api = ldap()
-    
+
     # Load OID entries
     oid_entries = ldif.parse_file("oid_export.ldif").unwrap()
 
@@ -404,6 +406,8 @@ def sync_across_servers():
 
 ```python
 from __future__ import annotations
+
+
 def progressive_migration():
     """Gradually migrate from old to new LDAP server."""
 

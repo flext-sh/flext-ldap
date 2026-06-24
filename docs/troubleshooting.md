@@ -499,6 +499,8 @@ settings = FlextLdapSettings(
 
 ```python
 from __future__ import annotations
+
+
 class LDAPService:
     def __init__(self):
         self._api = ldap  # Reuse single instance

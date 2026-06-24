@@ -10,6 +10,7 @@ instructions override this block; nothing else does. These rules apply to every 
 session, and may not be relaxed, reinterpreted, or scoped-out for convenience, speed, or perceived triviality.
 
 ### 1. Zero-Tolerance / Strict-Total
+
 - **Always** fix the root cause — generically, cleanly, via reuse of existing canonical code — and validate it
   in the same turn with the actual command, its exit code, and the relevant output line.
 - **Always** remove superseded code in the same cycle the replacement lands. No dead code "for later".
@@ -21,6 +22,7 @@ session, and may not be relaxed, reinterpreted, or scoped-out for convenience, s
   "acceptable legacy". If it appears in your flow, you own it.
 
 ### 2. Fix-Forward-Only
+
 Multiple agents may share one working tree. Reverting to a past state silently destroys another agent's
 in-flight work. **Accept the current state and fix forward.** Discarding changes via `git checkout -- <path>`,
 `git restore`, `git reset --hard`, `git reset <path>`, `git stash` (hiding others' work), `git clean`, or
@@ -28,22 +30,26 @@ in-flight work. **Accept the current state and fix forward.** Discarding changes
 never unilaterally revert shared work.
 
 ### 3. Root Cause Only — No Workarounds
+
 No TODOs, stubs, fakes, fallbacks, compat wrappers, or "temporary" workarounds. No suppression directives
 (`# type: ignore`, blanket `# noqa`, `@ts-ignore`, `eslint-disable`, etc.) and no escape-hatch typing
 (`Any`, bare `object`, unchecked casts) unless carrying a one-line documented justification. A bypass that
 hides a symptom is a defect even when the gate turns green.
 
 ### 4. Stay In Scope
+
 Do exactly what the user asked — nothing more. No unrequested refactors, renames, cleanups, "obvious
 improvements", or adjacent fixes. Found something unrelated? Mention it in one sentence; do not touch it.
 
 ### 5. Evidence Before Done — Report Honesty Is 100% Mandatory
+
 "Done" means the **complete chain validated** with objective evidence (command + exit code + output), not
 conclusion-by-sample. **Never** present partial, assumed, speculative, or unverified results as verified.
 State explicitly when a step was skipped, when a check failed (paste the output), and when a result is
 unverified. If something only worked via a workaround, say so — it is not "done".
 
 ### 6. Execute As Planned, Else Stop And Ask
+
 Execute the agreed plan exactly. On anything that cannot be done cleanly — a blocked tool, a missing source of
 truth, a real ambiguity, or a step that would require a bad practice — **STOP and ask**, presenting concrete
 options. **Every option must be a clean, root-cause solution.** Fallback, hack, hardcode, suppression, skip,
@@ -51,6 +57,7 @@ or stub are **forbidden as suggestions** — never offer one, even labelled "qui
 mid-execution deviation from the plan requires explicit user confirmation **before** applying.
 
 ### 7. Blocked-Operation Protocol
+
 When a tool, command, or edit is blocked (deny rule, security hook, sandbox, missing permission, unavailable
 integration): (1) **Stop** — do not retry a variation or seek a bypass; (2) **diagnose in one sentence** what
 was blocked and why; (3) **hand the exact command or edit to the user** to run on their side; (4) **wait for
@@ -60,10 +67,12 @@ still a violation. Forbidden bypass techniques include `bash -c`/`sh -c` subshel
 blocked command, and invoking it via a `subprocess` call.
 
 ### 8. Strict, Most-Restrictive Typing
+
 Use the most restrictive type that compiles. No `Any`, no bare `object`, no suppression of type errors. Fix
 types at the source; depend on declared contracts, not loosely-typed escape hatches.
 
 ### 9. Universal Engineering Principles (always, no exception)
+
 - **SSOT** — one authoritative source per fact; reference it, never duplicate or restate it; fail loud when
   absent.
 - **SOLID** — SRP / OCP / LSP / ISP / DIP respected. Type-switching where polymorphism applies, fat
@@ -74,12 +83,14 @@ types at the source; depend on declared contracts, not loosely-typed escape hatc
   hard-wired construction inside business logic.
 
 ### 10. User Manages Git
+
 Do not run `git add`/`commit`/`push`/`tag` unless the user explicitly requests it, and do not suggest
 committing. Read-only inspection (`status`/`log`/`diff`) is fine. When a commit is authorized, write it as the
 user with no agent/bot attribution — no `Co-Authored-By`, no "Generated with …" trailer, and never override
 author/committer identity.
 
 ### 11. Multi-Agent Coordination
+
 Agents may share one working tree. Coordinate through a committed task board (e.g.
 `<repo>/.agents/coordination/tasks.md`): claim a task with an ownership + lease entry before editing, heartbeat
 the lease, set `done`/`blocked` on finish, and recover stale tasks from git history. Commit small and often so
@@ -87,11 +98,13 @@ a fresh agent rebuilds state from `git log`. **Never overwrite or discard anothe
 on a divergent approach, stop and escalate to the user.
 
 ### 12. When Unsure — Ask
+
 If a task is unclear, ambiguous, or would expand scope → ask one focused question. If an action is hard to
 reverse, affects shared state, or could surprise the user → confirm first. Authorization is scope-specific:
 approval for one action once does not authorize it in future contexts.
 
 ### 13. Destructive Commands — Archive, Don't Destroy
+
 Prefer non-destructive moves: archive a file as `<file>.bak` instead of deleting it. Do not escalate
 privileges (`sudo`/`su`), change ownership/permissions, perform remote operations, or fetch over the network
 without explicit user confirmation. Use the agent's structured file/search/edit tools over raw destructive

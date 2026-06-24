@@ -579,6 +579,8 @@ Connect with documentation platforms:
 
 ```python
 from __future__ import annotations
+
+
 # docs/maintenance/integrations.py
 class GitBookIntegration:
     def sync_content(self):

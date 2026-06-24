@@ -596,9 +596,11 @@ class FlextLdapOperations(s):
             case _:
                 dn_model_in = dn
                 dn_build = u.try_(
-                    lambda: dn_model_in
-                    if isinstance(dn_model_in, m.Ldif.DN)
-                    else m.Ldif.DN.model_validate(dn_model_in),
+                    lambda: (
+                        dn_model_in
+                        if isinstance(dn_model_in, m.Ldif.DN)
+                        else m.Ldif.DN.model_validate(dn_model_in)
+                    ),
                     op_name="validate delete DN",
                 )
         if dn_build.failure:
