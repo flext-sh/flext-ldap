@@ -93,6 +93,15 @@ class TestsFlextLdapModelsSearch:
             options.size_limit, eq=c.Ldap.Tests.SEARCH_NORMALIZED_SIZE_LIMIT
         )
 
+    def test_search_options_base_scope_requests_all_attributes(self) -> None:
+        # Regression (mro-uqji.4.1.2): upsert existence check read base-scope
+        # without attributes, so the compare saw an empty entry ("Existing entry
+        # has no attributes to compare"). base_scope must request all user attrs.
+        options = m.Ldap.SearchOptions.base_scope(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
+        u.Ldap.Tests.that(options.base_dn, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
+        u.Ldap.Tests.that(options.scope, eq=c.Ldap.Tests.SEARCH_SCOPE_BASE)
+        u.Ldap.Tests.that(options.attributes, eq=[c.Ldap.AttributeName.ALL_ATTRIBUTES])
+
     def test_operation_result_creation(self) -> None:
         result = m.Ldap.OperationResult(
             success=True,
