@@ -50,6 +50,9 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_ldap3_adapter import (
         TestsFlextLdapLdap3Adapter as TestsFlextLdapLdap3Adapter,
     )
+    from tests.unit.test_ldap3_adapter_helpers import (
+        TestsFlextLdapLdap3AdapterHelpers as TestsFlextLdapLdap3AdapterHelpers,
+    )
     from tests.unit.test_models import (
         TestsFlextLdapModelsUnit as TestsFlextLdapModelsUnit,
     )
@@ -111,6 +114,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_detection": ("TestsFlextLdapDetection",),
             ".unit.test_entry_adapter": ("TestsFlextLdapEntryAdapter",),
             ".unit.test_ldap3_adapter": ("TestsFlextLdapLdap3Adapter",),
+            ".unit.test_ldap3_adapter_helpers": ("TestsFlextLdapLdap3AdapterHelpers",),
             ".unit.test_models": ("TestsFlextLdapModelsUnit",),
             ".unit.test_models_search": ("TestsFlextLdapModelsSearch",),
             ".unit.test_models_sync": ("TestsFlextLdapModelsSync",),
@@ -173,6 +177,7 @@ __all__: list[str] = [
     "TestsFlextLdapDetection",
     "TestsFlextLdapEntryAdapter",
     "TestsFlextLdapLdap3Adapter",
+    "TestsFlextLdapLdap3AdapterHelpers",
     "TestsFlextLdapModels",
     "TestsFlextLdapModelsSearch",
     "TestsFlextLdapModelsSync",

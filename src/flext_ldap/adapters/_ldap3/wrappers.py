@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_ldap import c, p, t
+from flext_ldap import c, p, t, u
 
 
 class FlextLdapLdap3Wrappers:
@@ -18,26 +18,8 @@ class FlextLdapLdap3Wrappers:
     def value_to_str_list(
         value: t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
     ) -> t.MutableSequenceOf[str]:
-        """Convert a list/tuple/sequence value to t.StrSequence without isinstance narrowing.
-
-        Pyright narrows isinstance(v, list) on v:t.JsonValue to t.SequenceOf[Unknown], making
-        element access return Unknown. This helper avoids that by using __len__
-        and __getitem__ through getattr to maintain type safety.
-        """
-        length_fn: Callable[[], int] | None = getattr(value, "__len__", None)
-        getitem_fn: Callable[[int], t.Ldap.Ldap3EntryValue] | None = getattr(
-            value,
-            "__getitem__",
-            None,
-        )
-        if length_fn is None or getitem_fn is None:
-            return []
-        result: t.MutableSequenceOf[str] = []
-        for idx in range(length_fn()):
-            el: t.Ldap.Ldap3EntryValue = getitem_fn(idx)
-            if isinstance(el, (*t.PRIMITIVES_TYPES, bytes)):
-                result.append(str(el))
-        return result
+        """Convert an ldap3 attribute payload through the canonical utility."""
+        return list(u.Ldap.ldap3_value_to_strings(value))
 
     @staticmethod
     def _ldap3_method(
