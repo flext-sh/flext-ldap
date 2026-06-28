@@ -36,7 +36,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     conversion of LDAP results to Entry models.
     """
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+    model_config = m.ConfigDict(frozen=False)
 
     @staticmethod
     def _is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
@@ -120,20 +120,15 @@ class FlextLdapLdap3Adapter(s[bool]):
     ) -> p.Result[bool]:
         """Establish ldap3 server+connection, run STARTTLS, verify bind."""
         try:
-            self._server = self.ConnectionManager.create_server(settings)
-            connection = self.ConnectionManager.create_connection(
-                self._server,
-                settings,
-            )
-            self._connection = connection
-            tls_result = self.ConnectionManager.handle_tls(connection, settings)
-            if tls_result.failure:
-                return tls_result
-            if not FlextLdapLdap3Wrappers.is_bound(connection):
-                return e.fail_operation("bind to LDAP server")
-            return r[bool].ok(value=True)
+            connection = self._create_connection(settings)
         except c.Ldap.EXC_CONNECTION as exc:
             return r[bool].fail_op("Connection", exc)
+        tls_result = self.ConnectionManager.handle_tls(connection, settings)
+        if tls_result.failure:
+            return tls_result
+        if not FlextLdapLdap3Wrappers.is_bound(connection):
+            return e.fail_operation("bind to LDAP server")
+        return r[bool].ok(value=True)
 
     def delete(
         self,
@@ -185,14 +180,14 @@ class FlextLdapLdap3Adapter(s[bool]):
                 ).flat_map(
                     lambda scope: self.SearchExecutor.execute(
                         conn,
-                        m.Ldap.SearchParams(
-                            base_dn=search_options.base_dn,
-                            filter_str=search_options.filter_str,
-                            ldap_scope=scope,
-                            search_attributes=search_options.attributes or [],
-                            size_limit=search_options.size_limit,
-                            time_limit=search_options.time_limit,
-                        ),
+                        m.Ldap.SearchParams.model_validate({
+                            "base_dn": search_options.base_dn,
+                            "filter_str": search_options.filter_str,
+                            "ldap_scope": scope,
+                            "search_attributes": search_options.attributes or [],
+                            "size_limit": search_options.size_limit,
+                            "time_limit": search_options.time_limit,
+                        }),
                         server_type,
                     ),
                 ),
@@ -210,6 +205,19 @@ class FlextLdapLdap3Adapter(s[bool]):
         if not self.is_connected or self._connection is None:
             return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         return r[p.Ldap.Ldap3Connection].ok(self._connection)
+
+    def _create_connection(
+        self,
+        settings: m.Ldap.ConnectionConfig,
+    ) -> p.Ldap.Ldap3Connection:
+        """Create and store the ldap3 server and connection pair."""
+        self._server = self.ConnectionManager.create_server(settings)
+        connection = self.ConnectionManager.create_connection(
+            self._server,
+            settings,
+        )
+        self._connection = connection
+        return connection
 
     def _unbind_connection(self) -> None:
         """Unbind and close LDAP connection."""

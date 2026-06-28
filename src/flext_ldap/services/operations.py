@@ -496,7 +496,7 @@ class FlextLdapOperations(s):
             "max_retries": max_retries,
             "stop_on_error": stop_on_error,
         })
-        stats = m.Ldap.LdapBatchStats()
+        stats = m.Ldap.LdapBatchStats.model_validate({})
         stop_error_index: int | None = None
         total_entries = len(entries)
         for i, entry in enumerate(entries, 1):
@@ -629,13 +629,13 @@ class FlextLdapOperations(s):
             return r[m.Ldap.Response].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         base_dn: str = c.Ldap.EXAMPLE_BASE_DN
         return r[m.Ldap.Response].ok(
-            m.Ldap.SearchResult(
-                entries=[],
-                search_options=m.Ldap.SearchOptions(
-                    base_dn=base_dn,
-                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
-                ),
-            ),
+            m.Ldap.SearchResult.model_validate({
+                "entries": [],
+                "search_options": m.Ldap.SearchOptions.model_validate({
+                    "base_dn": base_dn,
+                    "filter_str": c.Ldap.ALL_ENTRIES_FILTER,
+                }),
+            }),
         )
 
     def modify(

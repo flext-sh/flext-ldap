@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated
 
 from flext_core import u
 from flext_ldap import c, t
@@ -27,9 +27,7 @@ if TYPE_CHECKING:
 class FlextLdapSettings(FlextLdifSettings):
     """LDAP runtime settings."""
 
-    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
-        env_prefix="FLEXT_LDAP_", extra="ignore"
-    )
+    model_config = m.SettingsConfigDict(env_prefix="FLEXT_LDAP_", extra="ignore")
 
     class LdapSettings(m.SettingsValue):
         """Namespaced LDAP runtime settings."""

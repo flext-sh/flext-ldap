@@ -6,7 +6,7 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self, TypeAlias
+from typing import Annotated, Self, TypeAlias
 
 from flext_ldap import c, t
 from flext_ldif import m, p, u
@@ -93,7 +93,9 @@ class FlextLdapModelsLdap:
 
             """
             norm_config = (
-                FlextLdapModelsLdap.NormalizedConfig() if settings is None else settings
+                FlextLdapModelsLdap.NormalizedConfig.model_validate({})
+                if settings is None
+                else settings
             )
             return cls.model_validate({
                 "base_dn": base_dn,
@@ -112,16 +114,16 @@ class FlextLdapModelsLdap:
             the upsert existence check), so the entry's user attributes must be
             returned for a meaningful comparison — ldap3 omits them unless asked.
             """
-            return cls(
-                base_dn=base_dn,
-                scope=c.Ldap.SearchScope.BASE,
-                attributes=[c.Ldap.AttributeName.ALL_ATTRIBUTES],
-            )
+            return cls.model_validate({
+                "base_dn": base_dn,
+                "scope": c.Ldap.SearchScope.BASE,
+                "attributes": [c.Ldap.AttributeName.ALL_ATTRIBUTES],
+            })
 
     class SearchParams(m.BaseModel):
         """Typed LDAP search parameters passed to ldap3 search calls."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config = m.ConfigDict(
             frozen=True,
             extra="forbid",
         )
@@ -171,7 +173,11 @@ class FlextLdapModelsLdap:
         successful: t.NonNegativeInt = 0
         failed: t.NonNegativeInt = 0
         results: Annotated[
-            t.SequenceOf[t.MappingKV[str, t.Primitives]], u.Field(default_factory=list)
+            t.SequenceOf[FlextLdapModelsLdap.UpsertResult],
+            u.Field(
+                default_factory=list,
+                description="Validated per-entry upsert results",
+            ),
         ]
 
         @u.computed_field()
@@ -185,7 +191,11 @@ class FlextLdapModelsLdap:
     class SyncPhaseConfig(m.BaseModel):
         """Sync phase settings."""
 
-        model_config = m.ConfigDict(arbitrary_types_allowed=True)
+        model_config = m.ConfigDict(
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            validate_assignment=True,
+        )
         server_type: str = c.Ldap.DEFAULT_TYPE
         progress_callback: t.Ldap.ProgressCallbackUnion | None = None
         retry_on_errors: t.StrSequence = u.Field(default_factory=list)
@@ -214,7 +224,7 @@ class FlextLdapModelsLdap:
     class OperationResult(m.BaseModel):
         """Immutable result of an LDAP operation (add/modify/delete/search)."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config = m.ConfigDict(frozen=True)
         success: Annotated[
             bool, u.Field(description="Whether the operation succeeded")
         ] = False
@@ -309,7 +319,7 @@ class FlextLdapModelsLdap:
         @classmethod
         def with_operation(cls, operation: str) -> Self:
             """Build a minimal LDAP operation result."""
-            return cls(operation=operation)
+            return cls.model_validate({"operation": operation})
 
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
@@ -322,10 +332,10 @@ class FlextLdapModelsLdap:
     class MultiPhaseSyncResult(m.BaseModel):
         """Multi-phase sync result."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config = m.ConfigDict(
             arbitrary_types_allowed=True,
         )
-        phase_results: t.MappingKV[str, m.BaseModel] = u.Field(
+        phase_results: t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult] = u.Field(
             default_factory=lambda: MappingProxyType({}),
             description="Per-phase sync results keyed by phase name",
         )

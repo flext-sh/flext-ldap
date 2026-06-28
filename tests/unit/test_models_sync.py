@@ -39,6 +39,20 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(r.successful, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_SUCCESSFUL)
         u.Ldap.Tests.that(r.failed, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_FAILED)
 
+    def test_batch_upsert_results_validate_to_upsert_models(self) -> None:
+        r = m.Ldap.BatchUpsertResult.model_validate({
+            "results": [
+                {
+                    "success": True,
+                    "dn": c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+                    "operation": c.Ldap.OperationType.ADD,
+                },
+            ],
+        })
+
+        assert isinstance(r.results[0], m.Ldap.UpsertResult)
+        u.Ldap.Tests.that(r.results[0].operation, eq=c.Ldap.OperationType.ADD)
+
     # ── ConversionMetadata: tracks attribute changes ───────────────────
 
     def test_conversion_metadata_tracks_changes(self) -> None:
@@ -110,6 +124,28 @@ class TestsFlextLdapModelsSync:
         phase_result = m.Ldap.PhaseSyncResult.model_validate(
             r.phase_results[c.Ldap.Tests.SYNC_PHASE_NAME],
         )
+        u.Ldap.Tests.that(
+            phase_result.synced,
+            eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED,
+        )
+
+    def test_multi_phase_dict_payloads_validate_to_phase_models(self) -> None:
+        r = m.Ldap.MultiPhaseSyncResult.model_validate({
+            "phase_results": {
+                c.Ldap.Tests.SYNC_PHASE_NAME: {
+                    "phase_name": c.Ldap.Tests.SYNC_PHASE_NAME,
+                    "total_entries": c.Ldap.Tests.SYNC_PHASE_TOTAL_ENTRIES,
+                    "synced": c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED,
+                    "failed": c.Ldap.Tests.SYNC_PHASE_RESULTS_FAILED,
+                    "skipped": c.Ldap.Tests.SYNC_PHASE_RESULTS_SKIPPED,
+                    "duration_seconds": c.Ldap.Tests.SYNC_PHASE_RESULTS_DURATION,
+                    "success_rate": c.Ldap.Tests.SYNC_PHASE_RESULTS_SUCCESS_RATE,
+                },
+            },
+        })
+
+        phase_result = r.phase_results[c.Ldap.Tests.SYNC_PHASE_NAME]
+        assert isinstance(phase_result, m.Ldap.PhaseSyncResult)
         u.Ldap.Tests.that(
             phase_result.synced,
             eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED,

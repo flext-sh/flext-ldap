@@ -88,13 +88,13 @@ class FlextLdapConnection(s):
         _ = kwargs
         if self.is_connected:
             return r[m.Ldap.Response].ok(
-                m.Ldap.SearchResult(
-                    entries=[],
-                    search_options=m.Ldap.SearchOptions(
-                        base_dn=c.Ldap.EXAMPLE_BASE_DN,
-                        filter_str=c.Ldap.ALL_ENTRIES_FILTER,
-                    ),
-                ),
+                m.Ldap.SearchResult.model_validate({
+                    "entries": [],
+                    "search_options": m.Ldap.SearchOptions.model_validate({
+                        "base_dn": c.Ldap.EXAMPLE_BASE_DN,
+                        "filter_str": c.Ldap.ALL_ENTRIES_FILTER,
+                    }),
+                }),
             )
         return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
