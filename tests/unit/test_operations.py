@@ -6,16 +6,48 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 import pytest
 
 from flext_ldap import FlextLdapOperations
-from tests import c, m, t, u
+from flext_ldif import r
+from tests import c, m, p, t, u
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapOperations:
-    """Public behavior tests for FlextLdapOperations without test doubles."""
+    """Public behavior tests for FlextLdapOperations."""
+
+    class BatchPathOperations(FlextLdapOperations):
+        """Deterministic operations service for exercising public batch flow."""
+
+        _queued_results: list[p.Result[m.Ldap.LdapOperationResult]] = u.PrivateAttr(
+            default_factory=list,
+        )
+
+        def __init__(
+            self,
+            results: t.SequenceOf[p.Result[m.Ldap.LdapOperationResult]],
+        ) -> None:
+            super().__init__()
+            self._queued_results = list(results)
+
+        @override
+        def upsert(
+            self,
+            entry: p.Ldif.Entry,
+            *,
+            retry_on_errors: t.StrSequence | None = None,
+            max_retries: int = 1,
+        ) -> p.Result[m.Ldap.LdapOperationResult]:
+            _ = entry, retry_on_errors, max_retries
+            if not self._queued_results:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    "No queued upsert result",
+                )
+            return self._queued_results.pop(0)
 
     @staticmethod
     def _entry(dn: str) -> m.Ldif.Entry:
@@ -112,6 +144,73 @@ class TestsFlextLdapOperations:
             error,
             contains=c.Ldap.Tests.OPERATIONS_BATCH_ALL_FAILED_FRAGMENT,
         )
+
+    def test_batch_upsert_partial_failure_returns_failure(self) -> None:
+        operations = self.BatchPathOperations((
+            r[m.Ldap.LdapOperationResult].ok(
+                m.Ldap.LdapOperationResult.with_operation(
+                    c.Ldap.UpsertOperation.ADDED,
+                ),
+            ),
+            r[m.Ldap.LdapOperationResult].fail("planned batch failure"),
+            r[m.Ldap.LdapOperationResult].ok(
+                m.Ldap.LdapOperationResult.with_operation(
+                    c.Ldap.UpsertOperation.SKIPPED,
+                ),
+            ),
+        ))
+        entries = [
+            self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN),
+            self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
+            self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
+        ]
+
+        error = u.Ldap.Tests.fail(operations.batch_upsert(entries))
+
+        u.Ldap.Tests.that(error, contains="1 entries failed")
+        u.Ldap.Tests.that(error, contains="1 synced")
+        u.Ldap.Tests.that(error, contains="1 skipped")
+
+    def test_update_batch_stats_unknown_operation_counts_failure(self) -> None:
+        operations = FlextLdapOperations()
+        stats = m.Ldap.LdapBatchStats()
+        upsert_result = r[m.Ldap.LdapOperationResult].ok(
+            m.Ldap.LdapOperationResult.with_operation(c.Ldap.Tests.STRING_SIMPLE),
+        )
+
+        operations._update_batch_stats(
+            upsert_result,
+            stats,
+            1,
+            c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            1,
+        )
+
+        u.Ldap.Tests.that(stats.failed, eq=1)
+        u.Ldap.Tests.that(stats.synced, eq=0)
+        u.Ldap.Tests.that(stats.skipped, eq=0)
+
+    def test_upsert_schema_modify_missing_dn_returns_failure(self) -> None:
+        operations = FlextLdapOperations()
+        entry = m.Ldif.Entry(
+            dn=None,
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    c.Ldap.AttributeName.CHANGETYPE: [
+                        c.Ldif.LdifChangeType.MODIFY.value,
+                    ],
+                    c.Ldif.ChangeOperation.ADD: [c.Ldap.AttributeName.COMMON_NAME],
+                    c.Ldap.AttributeName.COMMON_NAME: [
+                        c.Ldap.Tests.STRING_SIMPLE,
+                    ],
+                },
+                attribute_metadata={},
+            ),
+        )
+
+        error = u.Ldap.Tests.fail(operations.upsert(entry))
+
+        u.Ldap.Tests.that(error, contains="Schema modify entry missing DN")
 
     @pytest.mark.parametrize(
         "case",

@@ -22,29 +22,52 @@ from flext_ldap.__version__ import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_ldap._models.ldap import FlextLdapModelsLdap
-    from flext_ldap.adapters._ldap3.connection_manager import ConnectionManager
-    from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
-    from flext_ldap.adapters._ldap3.result_converter import ResultConverter
-    from flext_ldap.adapters._ldap3.result_extract import ResultConverterExtractMixin
-    from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
-    from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
-    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
-    from flext_ldap.api import FlextLdap, ldap
-    from flext_ldap.base import FlextLdapService, s
-    from flext_ldap.constants import FlextLdapConstants, c
-    from flext_ldap.models import FlextLdapModels, m
-    from flext_ldap.protocols import FlextLdapProtocols, p
-    from flext_ldap.services.api_runtime import FlextLdapApiRuntime
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.services.sync import FlextLdapSync, FlextLdapSyncCallbacks
-    from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, t
-    from flext_ldap.utilities import FlextLdapUtilities, u
-    from flext_ldif import d, e, h, r, x
+    from flext_ldap._models.ldap import FlextLdapModelsLdap as FlextLdapModelsLdap
+    from flext_ldap.adapters._ldap3.connection_manager import (
+        ConnectionManager as ConnectionManager,
+    )
+    from flext_ldap.adapters._ldap3.operation_executor import (
+        OperationExecutor as OperationExecutor,
+    )
+    from flext_ldap.adapters._ldap3.result_converter import (
+        ResultConverter as ResultConverter,
+    )
+    from flext_ldap.adapters._ldap3.result_extract import (
+        ResultConverterExtractMixin as ResultConverterExtractMixin,
+    )
+    from flext_ldap.adapters._ldap3.search_executor import (
+        SearchExecutor as SearchExecutor,
+    )
+    from flext_ldap.adapters._ldap3.wrappers import (
+        FlextLdapLdap3Wrappers as FlextLdapLdap3Wrappers,
+    )
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter as FlextLdapLdap3Adapter
+    from flext_ldap.api import FlextLdap as FlextLdap, ldap as ldap
+    from flext_ldap.base import FlextLdapService as FlextLdapService, s as s
+    from flext_ldap.constants import FlextLdapConstants as FlextLdapConstants, c as c
+    from flext_ldap.models import FlextLdapModels as FlextLdapModels, m as m
+    from flext_ldap.protocols import FlextLdapProtocols as FlextLdapProtocols, p as p
+    from flext_ldap.services.api_runtime import (
+        FlextLdapApiRuntime as FlextLdapApiRuntime,
+    )
+    from flext_ldap.services.connection import (
+        FlextLdapConnection as FlextLdapConnection,
+    )
+    from flext_ldap.services.detection import (
+        FlextLdapServerDetector as FlextLdapServerDetector,
+    )
+    from flext_ldap.services.operations import (
+        FlextLdapOperations as FlextLdapOperations,
+    )
+    from flext_ldap.services.sync import (
+        FlextLdapSync as FlextLdapSync,
+        FlextLdapSyncCallbacks as FlextLdapSyncCallbacks,
+    )
+    from flext_ldap.settings import FlextLdapSettings as FlextLdapSettings
+    from flext_ldap.typings import FlextLdapTypes as FlextLdapTypes, t as t
+    from flext_ldap.utilities import FlextLdapUtilities as FlextLdapUtilities, u as u
+    from flext_ldif import d as d, e as e, h as h, r as r, x as x
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "._models",

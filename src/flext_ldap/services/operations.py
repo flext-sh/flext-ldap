@@ -155,7 +155,7 @@ class FlextLdapOperations(s):
 
             Business Rules:
                 - Searches for existing entry using BASE scope on entry DN
-                - If search fails, returns SKIPPED (entry may have been deleted)
+                - If search fails, returns failure with the search context
                 - If search returns empty (race condition), retries ADD
                 - Compares existing vs new entry to compute MODIFY changes
                 - If no differences, returns SKIPPED (idempotent)
@@ -169,7 +169,11 @@ class FlextLdapOperations(s):
                 r with MODIFIED, SKIPPED, or ADDED (race condition).
 
             """
-            entry_dn = entry.dn.value if entry.dn is not None else c.Ldif.UNKNOWN_VALUE
+            if entry.dn is None or not entry.dn.value:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    "Upsert entry missing DN",
+                )
+            entry_dn = entry.dn.value
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
@@ -271,23 +275,23 @@ class FlextLdapOperations(s):
                 - Entry must have 'add' attribute specifying schema attribute(s) to add
                 - Loops ALL add operations (supports both split and interleaved entries)
                 - Uses MODIFY_ADD operation (not REPLACE) for additive schema changes
-                - "Entry already exists" is interpreted as schema element exists -> SKIPPED
+                - LDAP modify failures are returned as failures with original context
                 - Empty values are filtered out before modification
 
             Audit Implication:
-                Schema modifications are critical; returns MODIFIED, SKIPPED, or error.
+                Schema modifications are critical; returns MODIFIED or error.
                 Preserves LDAP error context for schema validation failures.
 
             Returns:
-                r with operation type (MODIFIED or SKIPPED).
+                r with operation type MODIFIED.
 
             """
             entry_model = u.Ldif.as_entry(entry)
-            dn_str: str
-            if entry_model.dn is not None:
-                dn_str = entry_model.dn.value or c.Ldif.UNKNOWN_VALUE
-            else:
-                dn_str = c.Ldif.UNKNOWN_VALUE
+            if entry_model.dn is None or not entry_model.dn.value:
+                return r[m.Ldap.LdapOperationResult].fail(
+                    "Schema modify entry missing DN",
+                )
+            dn_str = entry_model.dn.value
             schema_additions: list[tuple[str, t.StrSequence]] = []
             for change_operation in entry_model.change_operations:
                 if change_operation.operation != c.Ldif.ChangeOperation.ADD:
@@ -329,16 +333,8 @@ class FlextLdapOperations(s):
                         ),
                     )
                     .lash(
-                        lambda e: (
-                            r[m.Ldap.LdapOperationResult].ok(
-                                m.Ldap.LdapOperationResult.with_operation(
-                                    c.Ldap.UpsertOperation.SKIPPED,
-                                ),
-                            )
-                            if self._ops.already_exists_error(u.to_str(e))
-                            else r[m.Ldap.LdapOperationResult].fail(
-                                u.to_str(e) or c.Ldap.ErrorMessage.UNKNOWN_ERROR,
-                            )
+                        lambda e: r[m.Ldap.LdapOperationResult].fail(
+                            u.to_str(e) or c.Ldap.ErrorMessage.UNKNOWN_ERROR,
                         ),
                     )
                 )
@@ -469,7 +465,7 @@ class FlextLdapOperations(s):
             - Progress callback is invoked after each entry (current, total, dn, stats)
             - stop_on_error=True aborts batch on first failure
             - stop_on_error=False continues processing remaining entries
-            - Batch fails only if ALL entries fail (synced=0 and failed>0)
+            - Batch fails when any entry fails; mixed success is not reported as success
             - Statistics track synced (added+modified), failed, and skipped counts
 
         Audit Implications:
@@ -503,38 +499,22 @@ class FlextLdapOperations(s):
         stats = m.Ldap.LdapBatchStats()
         stop_error_index: int | None = None
         total_entries = len(entries)
-        for idx_entry in enumerate(entries, 1):
+        for i, entry in enumerate(entries, 1):
             try:
-                i, entry = idx_entry
-                entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
-                upsert_result = self.upsert(
+                stop_requested = self._process_batch_entry(
                     entry,
-                    retry_on_errors=sync_options.retry_on_errors,
-                    max_retries=sync_options.max_retries,
-                )
-                self._update_batch_stats(
-                    upsert_result,
+                    sync_options,
                     stats,
                     i,
-                    entry_dn,
                     total_entries,
                 )
-                if sync_options.stop_on_error and upsert_result.failure:
-                    stop_error_index = i
-                    break
-                if sync_options.progress_callback:
-                    self._invoke_batch_progress_callback(
-                        sync_options.progress_callback,
-                        i,
-                        total_entries,
-                        entry_dn,
-                        stats,
-                    )
             except c.EXC_BROAD_IO_TYPE as exc:
-                entry_idx = idx_entry[0]
                 return r[m.Ldap.LdapBatchStats].fail(
-                    f"Batch upsert aborted on unexpected exception at entry {entry_idx}: {exc}",
+                    f"Batch upsert aborted on unexpected exception at entry {i}: {exc}",
                 )
+            if stop_requested:
+                stop_error_index = i
+                break
         if sync_options.stop_on_error and stop_error_index is not None:
             return r[m.Ldap.LdapBatchStats].fail(
                 f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
@@ -547,9 +527,17 @@ class FlextLdapOperations(s):
             failed=stats.failed,
             skipped=stats.skipped,
         )
-        if stats.synced == 0 and stats.failed > 0:
+        return self._finish_batch_upsert(stats)
+
+    @staticmethod
+    def _finish_batch_upsert(
+        stats: m.Ldap.LdapBatchStats,
+    ) -> p.Result[m.Ldap.LdapBatchStats]:
+        """Return final batch result; any failed entry fails the batch."""
+        if stats.failed > 0:
             return r[m.Ldap.LdapBatchStats].fail(
-                f"Batch upsert failed: all {stats.failed} entries failed, 0 synced",
+                f"Batch upsert failed: {stats.failed} entries failed, "
+                f"{stats.synced} synced, {stats.skipped} skipped",
             )
         return r[m.Ldap.LdapBatchStats].ok(stats)
 
@@ -815,11 +803,12 @@ class FlextLdapOperations(s):
         def wrapped_execute() -> p.Result[m.Ldap.LdapOperationResult]:
             return self._upsert_handler.execute(entry)
 
-        return u.retry(
+        retry_result: p.Result[m.Ldap.LdapOperationResult] = u.retry(
             operation=wrapped_execute,
             max_attempts=max_retries,
             delay_seconds=1.0,
         )
+        return retry_result
 
     def _invoke_batch_progress_callback(
         self,
@@ -832,6 +821,38 @@ class FlextLdapOperations(s):
         """Invoke progress callback with error handling."""
         callback_stats = stats.model_copy()
         callback(entry_index, total, entry_dn or "", callback_stats)
+
+    def _process_batch_entry(
+        self,
+        entry: p.Ldif.Entry,
+        sync_options: m.Ldap.SyncPhaseConfig,
+        stats: m.Ldap.LdapBatchStats,
+        entry_index: int,
+        total_entries: int,
+    ) -> bool:
+        """Process one batch entry and report whether stop-on-error should halt."""
+        entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
+        upsert_result = self.upsert(
+            entry,
+            retry_on_errors=sync_options.retry_on_errors,
+            max_retries=sync_options.max_retries,
+        )
+        self._update_batch_stats(
+            upsert_result,
+            stats,
+            entry_index,
+            entry_dn,
+            total_entries,
+        )
+        if sync_options.progress_callback:
+            self._invoke_batch_progress_callback(
+                sync_options.progress_callback,
+                entry_index,
+                total_entries,
+                entry_dn,
+                stats,
+            )
+        return sync_options.stop_on_error and upsert_result.failure
 
     def _update_batch_stats(
         self,
@@ -849,7 +870,14 @@ class FlextLdapOperations(s):
                 case c.Ldap.UpsertOperation.ADDED | c.Ldap.UpsertOperation.MODIFIED:
                     stats.synced += 1
                 case _:
-                    pass
+                    stats.failed += 1
+                    self.logger.error(
+                        "Batch upsert returned unknown operation",
+                        entry_index=entry_index,
+                        total_entries=total_entries,
+                        entry_dn=entry_dn or "",
+                        operation=upsert_result.value.operation,
+                    )
         else:
             stats.failed += 1
             entry_dn_sliced: str = (

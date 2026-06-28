@@ -12,32 +12,67 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_tests import td, tf, tk, tm, tv
+    from flext_tests import td as td, tf as tf, tk as tk, tv as tv
 
-    from flext_ldap import d, e, h, r, x
-    from tests.base import TestsFlextLdapServiceBase, s
-    from tests.conftest import WorkerInputConfig
-    from tests.constants import TestsFlextLdapConstants, c
-    from tests.integration.test_smoke import TestsFlextLdapSmoke
-    from tests.models import TestsFlextLdapModels, m
-    from tests.protocols import TestsFlextLdapProtocols, p
-    from tests.settings import TestsFlextLdapSettings
-    from tests.typings import TestsFlextLdapTypes, t
-    from tests.unit.test_api import TestsFlextLdapApi
-    from tests.unit.test_base import TestsFlextLdapBase
-    from tests.unit.test_config import TestsFlextLdapConfig
-    from tests.unit.test_connection import TestsFlextLdapConnection
-    from tests.unit.test_constants import TestsFlextLdapConstantsUnit
-    from tests.unit.test_detection import TestsFlextLdapDetection
-    from tests.unit.test_entry_adapter import TestsFlextLdapEntryAdapter
-    from tests.unit.test_ldap3_adapter import TestsFlextLdapLdap3Adapter
-    from tests.unit.test_models import TestsFlextLdapModelsUnit
-    from tests.unit.test_models_search import TestsFlextLdapModelsSearch
-    from tests.unit.test_models_sync import TestsFlextLdapModelsSync
-    from tests.unit.test_operations import TestsFlextLdapOperations
-    from tests.unit.test_sync import TestsFlextLdapSync
-    from tests.unit.test_utilities import TestsFlextLdapUtilitiesUnit
-    from tests.utilities import TestsFlextLdapUtilities, u
+    from flext_ldap import d as d, e as e, h as h, r as r, x as x
+    from tests.base import (
+        TestsFlextLdapServiceBase as TestsFlextLdapServiceBase,
+        s as s,
+    )
+    from tests.conftest import WorkerInputConfig as WorkerInputConfig
+    from tests.constants import (
+        TestsFlextLdapConstants as TestsFlextLdapConstants,
+        c as c,
+    )
+    from tests.integration.test_smoke import TestsFlextLdapSmoke as TestsFlextLdapSmoke
+    from tests.models import TestsFlextLdapModels as TestsFlextLdapModels, m as m
+    from tests.protocols import (
+        TestsFlextLdapProtocols as TestsFlextLdapProtocols,
+        p as p,
+    )
+    from tests.settings import TestsFlextLdapSettings as TestsFlextLdapSettings
+    from tests.typings import TestsFlextLdapTypes as TestsFlextLdapTypes, t as t
+    from tests.unit.test_api import TestsFlextLdapApi as TestsFlextLdapApi
+    from tests.unit.test_base import TestsFlextLdapBase as TestsFlextLdapBase
+    from tests.unit.test_config import TestsFlextLdapConfig as TestsFlextLdapConfig
+    from tests.unit.test_connection import (
+        TestsFlextLdapConnection as TestsFlextLdapConnection,
+    )
+    from tests.unit.test_constants import (
+        TestsFlextLdapConstantsUnit as TestsFlextLdapConstantsUnit,
+    )
+    from tests.unit.test_detection import (
+        TestsFlextLdapDetection as TestsFlextLdapDetection,
+    )
+    from tests.unit.test_entry_adapter import (
+        TestsFlextLdapEntryAdapter as TestsFlextLdapEntryAdapter,
+    )
+    from tests.unit.test_ldap3_adapter import (
+        TestsFlextLdapLdap3Adapter as TestsFlextLdapLdap3Adapter,
+    )
+    from tests.unit.test_models import (
+        TestsFlextLdapModelsUnit as TestsFlextLdapModelsUnit,
+    )
+    from tests.unit.test_models_search import (
+        TestsFlextLdapModelsSearch as TestsFlextLdapModelsSearch,
+    )
+    from tests.unit.test_models_sync import (
+        TestsFlextLdapModelsSync as TestsFlextLdapModelsSync,
+    )
+    from tests.unit.test_operations import (
+        TestsFlextLdapOperations as TestsFlextLdapOperations,
+    )
+    from tests.unit.test_public_api_contract import (
+        TestsFlextLdapPublicApiContract as TestsFlextLdapPublicApiContract,
+    )
+    from tests.unit.test_sync import TestsFlextLdapSync as TestsFlextLdapSync
+    from tests.unit.test_utilities import (
+        TestsFlextLdapUtilitiesUnit as TestsFlextLdapUtilitiesUnit,
+    )
+    from tests.utilities import (
+        TestsFlextLdapUtilities as TestsFlextLdapUtilities,
+        u as u,
+    )
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         ".integration",
@@ -80,6 +115,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_models_search": ("TestsFlextLdapModelsSearch",),
             ".unit.test_models_sync": ("TestsFlextLdapModelsSync",),
             ".unit.test_operations": ("TestsFlextLdapOperations",),
+            ".unit.test_public_api_contract": ("TestsFlextLdapPublicApiContract",),
             ".unit.test_sync": ("TestsFlextLdapSync",),
             ".unit.test_utilities": ("TestsFlextLdapUtilitiesUnit",),
             ".utilities": (
@@ -97,7 +133,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "td",
                 "tf",
                 "tk",
-                "tm",
                 "tv",
             ),
         },
@@ -143,6 +178,7 @@ __all__: list[str] = [
     "TestsFlextLdapModelsUnit",
     "TestsFlextLdapOperations",
     "TestsFlextLdapProtocols",
+    "TestsFlextLdapPublicApiContract",
     "TestsFlextLdapServiceBase",
     "TestsFlextLdapSettings",
     "TestsFlextLdapSmoke",
@@ -163,7 +199,6 @@ __all__: list[str] = [
     "td",
     "tf",
     "tk",
-    "tm",
     "tv",
     "u",
     "x",
