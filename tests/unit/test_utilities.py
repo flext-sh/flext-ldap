@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 import pytest
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from tests import c, m, t, u
+from tests import c, m, p, r, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -22,6 +24,101 @@ class TestsFlextLdapUtilitiesUnit:
 
     All test data comes from c.Ldap.Tests.* — zero inline constants.
     """
+
+    class ComparisonOverrideUtilities(u):
+        """Utility facade proving comparison methods dispatch through MRO."""
+
+        class Ldap(u.Ldap):
+            """LDAP namespace with comparison override."""
+
+            @classmethod
+            @override
+            def find_existing_values(
+                cls,
+                attr_name: str,
+                existing_attrs: t.MappingKV[str, t.StrSequence],
+            ) -> t.StrSequence | None:
+                """Force a match through the MRO override."""
+                return [c.Ldap.Tests.STRING_SIMPLE]
+
+    class ConversionOverrideUtilities(u):
+        """Utility facade proving conversion methods dispatch through MRO."""
+
+        class Ldap(u.Ldap):
+            """LDAP namespace with conversion override."""
+
+            @staticmethod
+            @override
+            def ldap3_value_to_strings(
+                value: t.Ldap.Ldap3EntryValue | t.JsonValue | None,
+            ) -> t.StrSequence:
+                """Force converted DN through the MRO override."""
+                return [c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE]
+
+    class DetectionOverrideUtilities(u):
+        """Utility facade proving detection methods dispatch through MRO."""
+
+        class Ldap(u.Ldap):
+            """LDAP namespace with detection override."""
+
+            @classmethod
+            @override
+            def detect_from_vendor(
+                cls,
+                vendor_name: str | None,
+                vendor_version: str | None,
+            ) -> str | None:
+                """Force vendor detection through the MRO override."""
+                return c.Ldif.ServerTypes.OID.value
+
+    class RootDseConnection:
+        """Structural rootDSE connection for MRO dispatch tests."""
+
+        def search(self, **kwargs: str | int) -> bool:
+            """Return failure when the override is not used."""
+            return False
+
+        @property
+        def result(self) -> t.JsonMapping:
+            return {}
+
+        @property
+        def entries(self) -> t.SequenceOf[p.Ldap.RootDseEntry]:
+            return ()
+
+    class RootDseOverrideUtilities(u):
+        """Utility facade proving rootDSE methods dispatch through MRO."""
+
+        class Ldap(u.Ldap):
+            """LDAP namespace with rootDSE override."""
+
+            @classmethod
+            @override
+            def query_root_dse(
+                cls,
+                connection: p.Ldap.RootDseConnection,
+            ) -> p.Result[t.Ldap.OperationAttributes]:
+                """Force rootDSE query through the MRO override."""
+                attrs: t.Ldap.OperationAttributes = {
+                    c.Ldap.RootDseAttribute.NAMING_CONTEXTS: [
+                        c.Ldap.Tests.RFC_DEFAULT_BASE_DN
+                    ],
+                    c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS: [],
+                }
+                return r[t.Ldap.OperationAttributes].ok(attrs)
+
+            @classmethod
+            @override
+            def detect_server_type(
+                cls,
+                *,
+                vendor_name: str | None,
+                vendor_version: str | None,
+                naming_contexts: t.StrSequence,
+                supported_extensions: t.StrSequence,
+            ) -> str:
+                """Force rootDSE detection through the MRO override."""
+                return c.Ldif.ServerTypes.OID.value
 
     def test_to_str_simple(self) -> None:
         result = u.to_str(c.Ldap.Tests.STRING_SIMPLE)
@@ -527,6 +624,51 @@ class TestsFlextLdapUtilitiesUnit:
     def test_is_base64_encoded_normal(self) -> None:
         result = u.Ldap.is_base64_encoded("normalvalue")
         assert result is False
+
+    def test_comparison_methods_dispatch_through_mro(self) -> None:
+        changes, _processed = (
+            self.ComparisonOverrideUtilities.Ldap.process_new_attributes(
+                {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE]},
+                {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE_UPPER]},
+                frozenset(),
+            )
+        )
+
+        u.Ldap.Tests.that(
+            c.Ldap.AttributeName.COMMON_NAME in changes,
+            eq=False,
+        )
+
+    def test_conversion_methods_dispatch_through_mro(self) -> None:
+        result = self.ConversionOverrideUtilities.Ldap.search_entry_to_ldif_entry({
+            "dn": c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+        })
+        entry = u.Ldap.Tests.ok(result)
+
+        u.Ldap.Tests.that(
+            entry.dn.value if entry.dn else c.Ldap.Tests.STRING_EMPTY,
+            eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+        )
+
+    def test_detection_methods_dispatch_through_mro(self) -> None:
+        detected = self.DetectionOverrideUtilities.Ldap.detect_server_type(
+            vendor_name=None,
+            vendor_version=None,
+            naming_contexts=(),
+            supported_extensions=(),
+        )
+
+        u.Ldap.Tests.that(detected, eq=c.Ldif.ServerTypes.OID.value)
+
+    def test_root_dse_methods_dispatch_through_mro(self) -> None:
+        result = self.RootDseOverrideUtilities.Ldap.detect_from_connection(
+            self.RootDseConnection(),
+        )
+
+        u.Ldap.Tests.that(
+            u.Ldap.Tests.ok(result),
+            eq=c.Ldif.ServerTypes.OID.value,
+        )
 
 
 __all__: list[str] = ["TestsFlextLdapUtilitiesUnit"]
