@@ -10,8 +10,9 @@ import os
 from pathlib import Path
 from typing import ClassVar, overload
 
-from flext_tests import FlextTestsUtilities, tk
+from flext_tests import FlextTestsUtilities, tk, tm
 
+from flext_core import p as core_p
 from flext_ldap import u
 from tests import c, m, p, t
 
@@ -32,40 +33,41 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 value: t.Tests.Testobject,
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> None:
-                FlextTestsUtilities.Tests.Matchers.that(value, **kwargs)
+                tm.that(value, **kwargs)
 
             @staticmethod
-            def fail[TResult](
-                result: p.Result[TResult],
+            def fail[TResult: t.Tests.TestResultValue](
+                result: core_p.Result[TResult],
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> str:
-                return FlextTestsUtilities.Tests.Matchers.fail(result, **kwargs)
+                failure_message: str = tm.fail(result, **kwargs)
+                return failure_message
 
             @staticmethod
             @overload
-            def ok[TResult](
-                result: p.Result[TResult],
+            def ok[TResult: t.Tests.TestResultValue](
+                result: core_p.Result[TResult],
             ) -> TResult: ...
 
             @staticmethod
             @overload
-            def ok[TResult](
-                result: p.Result[TResult],
+            def ok[TResult: t.Tests.TestResultValue](
+                result: core_p.Result[TResult],
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> TResult | t.Tests.TestobjectSerializable: ...
 
             @staticmethod
-            def ok[TResult](
-                result: p.Result[TResult],
+            def ok[TResult: t.Tests.TestResultValue](
+                result: core_p.Result[TResult],
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> TResult | t.Tests.TestobjectSerializable:
-                return FlextTestsUtilities.Tests.Matchers.ok(result, **kwargs)
+                return tm.ok(result, **kwargs)
 
             @staticmethod
-            def check[TResult](
-                result: p.Result[TResult],
+            def check[TResult: t.Tests.TestResultValue](
+                result: core_p.Result[TResult],
             ) -> m.Tests.Chain[TResult]:
-                return FlextTestsUtilities.Tests.Matchers.check(result)
+                return tm.check(result)
 
             @staticmethod
             def create_ldap3_server(
@@ -176,6 +178,35 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             FileLock = FlextTestsUtilities.Tests.FileLock
 
+            @staticmethod
+            def _admin_credentials_from_candidate(
+                candidate_dn: str,
+                candidate_password: str,
+            ) -> tuple[str, str] | None:
+                try:
+                    server = u.Ldap.create_server_from_url(
+                        f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
+                        get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
+                    )
+                    connection = u.Ldap.create_connection(
+                        server,
+                        user=candidate_dn,
+                        password=candidate_password,
+                        auto_bind=True,
+                        receive_timeout=1,
+                    )
+                    if not connection.bound:
+                        return None
+                    connection.unbind()
+                    return candidate_dn, candidate_password
+                except (
+                    ConnectionError,
+                    OSError,
+                    ValueError,
+                    t.Ldap.LDAPException,
+                ):
+                    return None
+
             @classmethod
             def get_admin_credentials(cls) -> tuple[str, str]:
                 """Resolve working LDAP admin credentials."""
@@ -200,30 +231,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     ],
                 )
                 for candidate_dn, candidate_password in candidates:
-                    try:
-                        server = u.Ldap.create_server_from_url(
-                            f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                            get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                        )
-                        connection = u.Ldap.create_connection(
-                            server,
-                            user=candidate_dn,
-                            password=candidate_password,
-                            auto_bind=True,
-                            receive_timeout=1,
-                        )
-                        if connection.bound:
-                            connection.unbind()
-                            resolved = (candidate_dn, candidate_password)
-                            cache[0] = resolved
-                            return resolved
-                    except (
-                        ConnectionError,
-                        OSError,
-                        ValueError,
-                        t.Ldap.LDAPException,
-                    ):
+                    resolved = cls._admin_credentials_from_candidate(
+                        candidate_dn,
+                        candidate_password,
+                    )
+                    if resolved is None:
                         continue
+                    cache[0] = resolved
+                    return resolved
                 error_message = (
                     "Failed to resolve a valid LDAP admin credential for test "
                     "LDAP container. Check that the LDAP container is running "
