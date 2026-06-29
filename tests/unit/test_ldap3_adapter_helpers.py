@@ -7,12 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from types import MappingProxyType
 from typing import override
 
 import pytest
 
 from flext_ldap import (
     FlextLdapLdap3Wrappers,
+    OperationExecutor,
     ResultConverter,
     ResultConverterExtractMixin,
     SearchExecutor,
@@ -98,7 +100,8 @@ class TestsFlextLdapLdap3AdapterHelpers:
         @override
         def __str__(self) -> str:
             """Return the server host marker."""
-            return c.LOCALHOST
+            host: str = c.LOCALHOST
+            return host
 
     class RecordingConnection:
         """Structural ldap3 connection that records wrapper calls."""
@@ -231,18 +234,28 @@ class TestsFlextLdapLdap3AdapterHelpers:
             message = "start_tls"
             raise AttributeError(message)
 
+    class FailingOperationConnection(RecordingConnection):
+        """Connection that reports LDAP operation failure."""
+
+        @override
+        def _delete(self, dn: str) -> bool:
+            self.last_deleted_dn = dn
+            return False
+
     @staticmethod
     def _entry(dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {
-                    c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
-                    c.Ldap.Tests.SEARCH_ATTRIBUTES[1]: [
-                        c.Ldap.Tests.CONFIG_EXAMPLE_HOST
-                    ],
+            attributes=m.Ldif.Attributes.model_validate(
+                {
+                    "attributes": {
+                        c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
+                        c.Ldap.Tests.SEARCH_ATTRIBUTES[1]: [
+                            c.Ldap.Tests.CONFIG_EXAMPLE_HOST
+                        ],
+                    },
                 },
-            }),
+            ),
         )
 
     @staticmethod
@@ -414,15 +427,19 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(attrs_dict[c.Ldap.AttributeName.ALL_ATTRIBUTES], eq=[])
 
     def test_result_extract_metadata_from_entry_and_mapping(self) -> None:
-        metadata = m.Ldif.ServerMetadata.model_validate({
-            "server_type": c.Ldif.ServerTypes.RFC,
-        })
+        metadata = m.Ldif.ServerMetadata.model_validate(
+            {
+                "server_type": c.Ldif.ServerTypes.RFC,
+            },
+        )
         entry = self._entry().model_copy(update={"metadata": metadata})
 
         entry_metadata = ResultConverterExtractMixin.extract_metadata(entry)
-        normalized_metadata = ResultConverterExtractMixin._normalize_metadata({
-            "server_type": c.Ldif.ServerTypes.RFC.value,
-        })
+        normalized_metadata = ResultConverterExtractMixin._normalize_metadata(
+            {
+                "server_type": c.Ldif.ServerTypes.RFC.value,
+            },
+        )
         assert normalized_metadata is not None
         mapped_metadata = m.Ldif.ServerMetadata.model_validate(normalized_metadata)
 
@@ -522,6 +539,38 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
         u.Ldap.Tests.that(error, contains="Search")
+
+    def test_operation_executor_validates_mapping_result_payload(self) -> None:
+        payload = MappingProxyType(self._failure_result())
+        connection = self.FailingOperationConnection(result=payload)
+
+        error = u.Ldap.Tests.fail(
+            OperationExecutor.execute_delete(
+                connection,
+                c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            ),
+        )
+
+        u.Ldap.Tests.that(error, contains=c.Ldap.ResultCode.NO_SUCH_OBJECT.name)
+
+    def test_operation_executor_normalizes_json_description_payload(self) -> None:
+        description = c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE
+        payload = MappingProxyType(
+            {
+                "result": c.Ldap.ResultCode.NO_SUCH_OBJECT.value,
+                "description": description,
+            },
+        )
+        connection = self.FailingOperationConnection(result=payload)
+
+        error = u.Ldap.Tests.fail(
+            OperationExecutor.execute_delete(
+                connection,
+                c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            ),
+        )
+
+        u.Ldap.Tests.that(error, contains=repr(description))
 
 
 __all__: list[str] = ["TestsFlextLdapLdap3AdapterHelpers"]

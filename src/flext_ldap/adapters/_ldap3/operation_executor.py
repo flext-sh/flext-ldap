@@ -21,6 +21,25 @@ class OperationExecutor:
     ``c.Ldap.OPERATION_SUCCESS_MESSAGES`` / ``OPERATION_FAILURE_PREFIXES``.
     """
 
+    class ResultPayload(m.BaseModel):
+        """Validated ldap3 operation result payload."""
+
+        model_config = m.ConfigDict(frozen=True, extra="ignore")
+        description: str | None = None
+
+        @u.field_validator("description", mode="before")
+        @classmethod
+        def normalize_description(
+            cls,
+            value: t.Scalar | t.JsonList | t.JsonMapping | None,
+        ) -> str | None:
+            """Normalize ldap3 JSON descriptions into the operation message text."""
+            if value is None:
+                return None
+            if isinstance(value, str):
+                return value
+            return repr(value)
+
     @staticmethod
     def _execute(
         connection: p.Ldap.Ldap3Connection,
@@ -31,12 +50,16 @@ class OperationExecutor:
         try:
             if wrapper_call():
                 return r[m.Ldap.OperationResult].ok(
-                    m.Ldap.OperationResult.model_validate({
-                        "success": True,
-                        "operation_type": operation_type,
-                        "message": c.Ldap.OPERATION_SUCCESS_MESSAGES[operation_type],
-                        "entries_affected": 1,
-                    }),
+                    m.Ldap.OperationResult.model_validate(
+                        {
+                            "success": True,
+                            "operation_type": operation_type,
+                            "message": c.Ldap.OPERATION_SUCCESS_MESSAGES[
+                                operation_type
+                            ],
+                            "entries_affected": 1,
+                        },
+                    ),
                 )
         except c.EXC_BROAD_IO_TYPE as exc:
             return r[m.Ldap.OperationResult].fail_op(failure_prefix, exc)
@@ -49,13 +72,12 @@ class OperationExecutor:
     ) -> p.Result[m.Ldap.OperationResult]:
         """Build ``r.fail`` from ``connection.result.description`` when present."""
         error_msg = f"{prefix}: LDAP operation returned failure status"
-        result_dict = connection.result
-        if isinstance(result_dict, dict):
-            description = result_dict.get("description")
-            if isinstance(description, str):
+        result_payload = connection.result
+        if result_payload is not None:
+            payload = OperationExecutor.ResultPayload.model_validate(result_payload)
+            description = payload.description
+            if description is not None:
                 error_msg = f"{prefix}: {description}"
-            elif description is not None:
-                error_msg = f"{prefix}: {description!r}"
         return r[m.Ldap.OperationResult].fail(error_msg)
 
     @staticmethod
