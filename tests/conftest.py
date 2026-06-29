@@ -18,8 +18,10 @@ from flext_tests import (
     settings_factory as _shared_settings_factory,
 )
 
-from flext_ldap import FlextLdapLdap3Wrappers
-from tests import c, t, u
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
+from tests.constants import c
+from tests.typings import t
+from tests.utilities import u
 
 reset_settings = _shared_reset_settings
 settings = _shared_settings

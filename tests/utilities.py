@@ -14,7 +14,10 @@ from flext_tests import FlextTestsUtilities, tk, tm
 
 from flext_core import p as core_p
 from flext_ldap import u
-from tests import c, m, p, t
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, u):

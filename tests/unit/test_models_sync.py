@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, u
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 

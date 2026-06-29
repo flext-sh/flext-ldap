@@ -13,7 +13,8 @@ from collections.abc import (
 from pathlib import Path
 from typing import TypeIs
 
-from flext_ldap import FlextLdapOperations, c, m, p, t, u
+from flext_ldap import c, m, p, t, u
+from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import r
 
 

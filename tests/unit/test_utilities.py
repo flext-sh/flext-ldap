@@ -12,9 +12,14 @@ from __future__ import annotations
 from typing import override
 
 import pytest
+from flext_tests import r
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from tests import c, m, p, r, t, u
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 

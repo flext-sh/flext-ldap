@@ -10,9 +10,13 @@ from typing import override
 
 import pytest
 
-from flext_ldap import FlextLdapOperations
+from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import r
-from tests import c, m, p, t, u
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 

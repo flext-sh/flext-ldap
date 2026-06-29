@@ -10,7 +10,8 @@ import pytest
 from flext_tests.settings import FlextTestsSettings
 
 from flext_core import FlextSettings
-from tests import c, m
+from tests.constants import c
+from tests.models import m
 
 pytestmark = pytest.mark.unit
 

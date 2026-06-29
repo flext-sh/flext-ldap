@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, u
+from tests.constants import c
 from tests.settings import TestsFlextLdapSettings
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 

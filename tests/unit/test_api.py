@@ -8,8 +8,12 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapSyncCallbacks, ldap
-from tests import c, m, t, u
+from flext_ldap import ldap
+from flext_ldap.services.sync import FlextLdapSyncCallbacks
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = [pytest.mark.unit]
 

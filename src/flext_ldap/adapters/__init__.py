@@ -13,6 +13,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ("._ldap3",),
     build_lazy_import_map(
         {
+            "._ldap3": ("_ldap3",),
             "._ldap3.connection_manager": ("ConnectionManager",),
             "._ldap3.operation_executor": ("OperationExecutor",),
             "._ldap3.result_converter": ("ResultConverter",),
@@ -46,4 +47,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

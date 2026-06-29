@@ -24,8 +24,10 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapServerDetector
-from tests import c, t, u
+from flext_ldap.services.detection import FlextLdapServerDetector
+from tests.constants import c
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 

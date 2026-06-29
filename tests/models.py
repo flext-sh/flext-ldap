@@ -12,11 +12,11 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import FlextTestsModels
+from flext_tests import FlextTestsModels, r
 
 from flext_ldap import m
-from tests import p, r
 from tests.base import s
+from tests.protocols import p
 
 
 class TestsFlextLdapModels(m, FlextTestsModels):

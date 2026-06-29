@@ -15,7 +15,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import ldap
-from tests import t, u
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = pytest.mark.smoke
 

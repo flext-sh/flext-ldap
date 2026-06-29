@@ -11,8 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import FlextLdapConnection, FlextLdapSync
 from flext_ldap.services.api_runtime import FlextLdapApiRuntime
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.sync import FlextLdapSync
 
 
 class FlextLdap(FlextLdapConnection, FlextLdapSync, FlextLdapApiRuntime):

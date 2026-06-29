@@ -15,17 +15,17 @@ import pytest
 import flext_ldap
 from flext_ldap import (
     FlextLdap,
-    FlextLdapApiRuntime,
-    FlextLdapConnection,
     FlextLdapConstants,
     FlextLdapModels,
-    FlextLdapOperations,
     FlextLdapProtocols,
     FlextLdapService,
-    FlextLdapSync,
     FlextLdapTypes,
     FlextLdapUtilities,
 )
+from flext_ldap.services.api_runtime import FlextLdapApiRuntime
+from flext_ldap.services.connection import FlextLdapConnection
+from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.services.sync import FlextLdapSync
 
 pytestmark = pytest.mark.unit
 
@@ -39,29 +39,14 @@ FlextLdapFacadeType: TypeAlias = (
 )
 
 _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
-    "ConnectionManager",
     "FlextLdap",
-    "FlextLdapApiRuntime",
-    "FlextLdapConnection",
     "FlextLdapConstants",
-    "FlextLdapEntryAdapter",
-    "FlextLdapLdap3Adapter",
-    "FlextLdapLdap3Wrappers",
     "FlextLdapModels",
-    "FlextLdapModelsLdap",
-    "FlextLdapOperations",
     "FlextLdapProtocols",
-    "FlextLdapServerDetector",
     "FlextLdapService",
     "FlextLdapSettings",
-    "FlextLdapSync",
-    "FlextLdapSyncCallbacks",
     "FlextLdapTypes",
     "FlextLdapUtilities",
-    "OperationExecutor",
-    "ResultConverter",
-    "ResultConverterExtractMixin",
-    "SearchExecutor",
     "__author__",
     "__author_email__",
     "__description__",
@@ -93,16 +78,6 @@ _ALIAS_TO_FACADE: Mapping[str, FlextLdapFacadeType] = MappingProxyType({
     "u": FlextLdapUtilities,
 })
 
-_ADAPTER_SUPPORT_EXPORTS: frozenset[str] = frozenset({
-    "ConnectionManager",
-    "FlextLdapLdap3Wrappers",
-    "FlextLdapModelsLdap",
-    "OperationExecutor",
-    "ResultConverter",
-    "ResultConverterExtractMixin",
-    "SearchExecutor",
-})
-
 
 class TestsFlextLdapPublicApiContract:
     """Lock flext-ldap root exports and canonical alias identities."""
@@ -131,13 +106,6 @@ class TestsFlextLdapPublicApiContract:
             FlextLdapOperations,
         )
         assert issubclass(FlextLdap, FlextLdapApiRuntime)
-
-    def test_adapter_support_exports_are_frozen(self) -> None:
-        root_exports = set(flext_ldap.__all__)
-        missing = sorted(_ADAPTER_SUPPORT_EXPORTS - root_exports)
-        assert not missing, (
-            f"Adapter support exports removed from flext_ldap root API: {missing}"
-        )
 
     def test_global_ldap_is_public_facade_instance(self) -> None:
         assert isinstance(flext_ldap.ldap, FlextLdap)

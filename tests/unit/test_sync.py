@@ -11,8 +11,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldap import FlextLdapSync, ldap
-from tests import c, m, p, u
+from flext_ldap import ldap
+from flext_ldap.services.sync import FlextLdapSync
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 
