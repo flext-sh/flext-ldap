@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from flext_core import d, e, h, r, x
 from flext_core.lazy import install_lazy_exports
 from flext_ldap.__version__ import (
     __author__,
@@ -18,7 +19,6 @@ from flext_ldap._exports import (
     FLEXT_LDAP_LAZY_IMPORTS,
     FLEXT_LDAP_PUBLIC_EXPORTS,
 )
-from flext_ldif import d, e, h, r, x
 
 _LAZY_IMPORTS = {
     name: target

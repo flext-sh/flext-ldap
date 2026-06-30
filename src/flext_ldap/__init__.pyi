@@ -1,4 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
+from flext_core import d as d, e as e, h as h, r as r, x as x
 from flext_ldap.__version__ import (
     __author__ as __author__,
     __author_email__ as __author_email__,
@@ -17,7 +18,6 @@ from flext_ldap.protocols import FlextLdapProtocols as FlextLdapProtocols, p as 
 from flext_ldap.settings import FlextLdapSettings as FlextLdapSettings
 from flext_ldap.typings import FlextLdapTypes as FlextLdapTypes, t as t
 from flext_ldap.utilities import FlextLdapUtilities as FlextLdapUtilities, u as u
-from flext_ldif import d as d, e as e, h as h, r as r, x as x
 
 __all__ = (
     "FlextLdap",
