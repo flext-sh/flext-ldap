@@ -16,9 +16,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
-from flext_core import u
 from flext_ldap import c, t
-from flext_ldif import FlextLdifSettings, m
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.utilities import FlextLdapUtilities as u
+from flext_ldif import FlextLdifSettings
 
 if TYPE_CHECKING:
     from flext_ldap import p

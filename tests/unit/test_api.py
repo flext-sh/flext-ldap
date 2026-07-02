@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldap import ldap
-from flext_ldap.services.sync import FlextLdapSyncCallbacks
+from flext_ldap.services.sync import FlextLdapSync
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
@@ -51,7 +51,7 @@ class TestsFlextLdapApi:
         callback = callbacks[case]
         expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
         u.Ldap.Tests.that(
-            FlextLdapSyncCallbacks.is_multi_phase_callback(callback), eq=expected
+            FlextLdapSync.multi_phase_callback(callback), eq=expected
         )
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
@@ -69,7 +69,7 @@ class TestsFlextLdapApi:
         callback = callbacks[case]
         _, expected = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
         u.Ldap.Tests.that(
-            FlextLdapSyncCallbacks.is_single_phase_callback(callback), eq=expected
+            FlextLdapSync.single_phase_callback(callback), eq=expected
         )
 
     def test_search_without_connection_returns_failure(self) -> None:

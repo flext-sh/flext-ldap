@@ -1,4 +1,4 @@
-"""LDIF-to-LDAP synchronization mixins for the public LDAP facade.
+"""LDIF-to-LDAP synchronization mixin for the public LDAP facade.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,11 +18,11 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import r
 
 
-class FlextLdapSyncCallbacks:
-    """Helpers and type guards for LDAP sync callbacks."""
+class FlextLdapSync(FlextLdapOperations):
+    """MRO mixin that syncs parsed LDIF phases into LDAP."""
 
     @staticmethod
-    def is_multi_phase_callback(
+    def multi_phase_callback(
         callback: t.Ldap.ProgressCallbackUnion | None,
     ) -> TypeIs[t.Ldap.MultiPhaseProgressCallback]:
         """Return ``True`` when callback expects the multi-phase signature."""
@@ -30,14 +30,15 @@ class FlextLdapSyncCallbacks:
             return False
         try:
             signature: inspect.Signature = inspect.signature(callback)
-        except c.EXC_BASIC_TYPE:
-            return False
+        except c.EXC_BASIC_TYPE as exc:
+            msg = f"progress_callback {callback!r} has an uninspectable signature"
+            raise TypeError(msg) from exc
         parameter_count: int = len(signature.parameters)
         matches_multi_phase: bool = parameter_count == c.Ldap.MULTI_PHASE_PARAM_COUNT
         return matches_multi_phase
 
     @staticmethod
-    def is_single_phase_callback(
+    def single_phase_callback(
         callback: t.Ldap.ProgressCallbackUnion | None,
     ) -> TypeIs[t.Ldap.LdapProgressCallback]:
         """Return ``True`` when callback expects the single-phase signature."""
@@ -45,15 +46,12 @@ class FlextLdapSyncCallbacks:
             return False
         try:
             signature: inspect.Signature = inspect.signature(callback)
-        except c.EXC_BASIC_TYPE:
-            return False
+        except c.EXC_BASIC_TYPE as exc:
+            msg = f"progress_callback {callback!r} has an uninspectable signature"
+            raise TypeError(msg) from exc
         parameter_count: int = len(signature.parameters)
         matches_single_phase: bool = parameter_count == c.Ldap.SINGLE_PHASE_PARAM_COUNT
         return matches_single_phase
-
-
-class FlextLdapSync(FlextLdapOperations):
-    """MRO mixin that syncs parsed LDIF phases into LDAP."""
 
     @staticmethod
     def _make_phase_progress_callback(
@@ -64,7 +62,7 @@ class FlextLdapSync(FlextLdapOperations):
         callback = settings.progress_callback
         if callback is None:
             return None
-        if FlextLdapSyncCallbacks.is_multi_phase_callback(callback):
+        if FlextLdapSync.multi_phase_callback(callback):
 
             def progress_callback(
                 current: int,
@@ -75,7 +73,7 @@ class FlextLdapSync(FlextLdapOperations):
                 callback(phase, current, total, dn, stats)
 
             return progress_callback
-        if FlextLdapSyncCallbacks.is_single_phase_callback(callback):
+        if FlextLdapSync.single_phase_callback(callback):
             return callback
         try:
             sig = inspect.signature(callback)
@@ -230,9 +228,9 @@ class FlextLdapSync(FlextLdapOperations):
         )
         if phase_callback is None:
             return None
-        if FlextLdapSyncCallbacks.is_single_phase_callback(phase_callback):
+        if FlextLdapSync.single_phase_callback(phase_callback):
             return phase_callback
-        if FlextLdapSyncCallbacks.is_multi_phase_callback(phase_callback):
+        if FlextLdapSync.multi_phase_callback(phase_callback):
 
             def wrapped_callback(
                 current: int,
@@ -280,4 +278,4 @@ class FlextLdapSync(FlextLdapOperations):
         )
 
 
-__all__: list[str] = ["FlextLdapSync", "FlextLdapSyncCallbacks"]
+__all__: list[str] = ["FlextLdapSync"]

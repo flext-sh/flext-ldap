@@ -14,7 +14,9 @@ from __future__ import annotations
 
 from flext_core import s
 from flext_ldap import FlextLdapSettings, c, p, t
-from flext_ldif import FlextLdif, m, u
+from flext_ldap.models import FlextLdapModels as m
+from flext_ldap.utilities import FlextLdapUtilities as u
+from flext_ldif import FlextLdif
 
 
 class FlextLdapService[

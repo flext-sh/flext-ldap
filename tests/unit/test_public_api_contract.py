@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import TypeAlias
 
 import pytest
 
@@ -28,15 +27,6 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSync
 
 pytestmark = pytest.mark.unit
-
-FlextLdapFacadeType: TypeAlias = (
-    type[FlextLdapConstants]
-    | type[FlextLdapModels]
-    | type[FlextLdapProtocols]
-    | type[FlextLdapService]
-    | type[FlextLdapTypes]
-    | type[FlextLdapUtilities]
-)
 
 _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "FlextLdap",
@@ -69,7 +59,17 @@ _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "x",
 })
 
-_ALIAS_TO_FACADE: Mapping[str, FlextLdapFacadeType] = MappingProxyType({
+_ALIAS_TO_FACADE: Mapping[
+    str,
+    type[
+        FlextLdapConstants
+        | FlextLdapModels
+        | FlextLdapProtocols
+        | FlextLdapService
+        | FlextLdapTypes
+        | FlextLdapUtilities
+    ],
+] = MappingProxyType({
     "c": FlextLdapConstants,
     "m": FlextLdapModels,
     "p": FlextLdapProtocols,

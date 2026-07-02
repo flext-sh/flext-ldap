@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     )
     from flext_ldap.services.sync import (
         FlextLdapSync as FlextLdapSync,
-        FlextLdapSyncCallbacks as FlextLdapSyncCallbacks,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
@@ -30,10 +29,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".connection": ("FlextLdapConnection",),
         ".detection": ("FlextLdapServerDetector",),
         ".operations": ("FlextLdapOperations",),
-        ".sync": (
-            "FlextLdapSync",
-            "FlextLdapSyncCallbacks",
-        ),
+        ".sync": ("FlextLdapSync",),
     },
 )
 

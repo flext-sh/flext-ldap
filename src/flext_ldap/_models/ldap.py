@@ -9,7 +9,8 @@ from types import MappingProxyType
 from typing import Annotated, Self, TypeAlias
 
 from flext_ldap import c, t
-from flext_ldif import m, p, u
+from flext_ldap.protocols import FlextLdapProtocols as p
+from flext_ldif import m, u
 
 
 class FlextLdapModelsLdap:
