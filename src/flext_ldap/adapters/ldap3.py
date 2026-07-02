@@ -66,7 +66,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         return self._connection
 
     @property
-    @override
     def is_connected(self) -> bool:
         """Check if adapter has an active connection."""
         if self._connection is None:
@@ -224,3 +223,28 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Unbind and close LDAP connection."""
         if self._connection is not None:
             _ = FlextLdapLdap3Wrappers.unbind(self._connection)
+
+
+class FlextLdapAdapterHost(s):
+    """Own the shared ldap3 adapter behind the ``p.Ldap.LdapAdapter`` contract.
+
+    Service mixins inherit this host to obtain the lazily constructed adapter
+    via DIP: callers depend on the protocol while this module (the sole ldap3
+    owner per AGENTS.md §2.7) constructs the concrete implementation.
+    """
+
+    _adapter: p.Ldap.LdapAdapter | None = u.PrivateAttr(default_factory=lambda: None)
+
+    def _ensure_adapter(self) -> p.Ldap.LdapAdapter:
+        """Return the shared ldap3 adapter for this service instance."""
+        if self._adapter is None:
+            self._adapter = FlextLdapLdap3Adapter()
+        return self._adapter
+
+    @property
+    def is_connected(self) -> bool:
+        """Return ``True`` when the shared adapter has an active bind."""
+        adapter = self._adapter
+        if adapter is None:
+            return False
+        return adapter.is_connected

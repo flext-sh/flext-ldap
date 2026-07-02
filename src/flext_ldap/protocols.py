@@ -330,11 +330,9 @@ class FlextLdapProtocols(p):
         class LdapAdapter(Protocol):
             """Protocol for LDAP adapters.
 
-            This protocol defines the interface for LDAP adapters used
-            by connection services.
-            Uses structural types for type safety. Return types are Models
-            (SearchResult, OperationResult) but are not imported to keep
-            Protocols independent of Models.
+            Contract consumed by adapter hosts (DIP): signatures mirror the
+            concrete ldap3 adapter so services depend on this protocol while
+            the adapters package remains the sole owner of ldap3 imports.
             """
 
             @property
@@ -347,54 +345,45 @@ class FlextLdapProtocols(p):
                 """Return the active ldap3 connection when one exists."""
                 ...
 
+            def connect(
+                self,
+                settings: lm.Ldap.ConnectionConfig,
+            ) -> p.Result[bool]:
+                """Establish the ldap3 server/connection pair and verify bind."""
+                ...
+
             def disconnect(self) -> None:
                 """Close any active adapter connection."""
                 ...
 
             def add(
                 self,
-                entry: p.Ldif.Entry,
+                entry: lm.Ldif.Entry,
             ) -> p.Result[lm.Ldap.OperationResult]:
-                """Add LDAP entry.
-
-                Returns Result containing OperationResult model.
-                Models are structurally compatible with OperationResult.
-                """
+                """Add LDAP entry, returning the operation result."""
                 ...
 
             def delete(
                 self,
-                dn: p.Ldif.DN | str,
+                dn: str | lm.Ldif.DN,
             ) -> p.Result[lm.Ldap.OperationResult]:
-                """Delete LDAP entry.
-
-                Returns Result containing OperationResult model.
-                Models are structurally compatible with OperationResult.
-                """
+                """Delete LDAP entry, returning the operation result."""
                 ...
 
             def modify(
                 self,
-                dn: p.Ldif.DN | str,
-                changes: t.Ldap.LdapModifyChanges,
+                dn: str | lm.Ldif.DN,
+                changes: t.Ldap.OperationChanges,
             ) -> p.Result[lm.Ldap.OperationResult]:
-                """Modify LDAP entry.
-
-                Returns Result containing OperationResult model.
-                Models are structurally compatible with OperationResult.
-                """
+                """Modify LDAP entry, returning the operation result."""
                 ...
 
             def search(
                 self,
-                search_options: FlextLdapProtocols.Ldap.SearchOptions,
+                search_options: lm.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
-                """Perform LDAP search operation.
-
-                Returns Result containing SearchResult model.
-                Models are structurally compatible with SearchResult.
-                """
+            ) -> p.Result[lm.Ldap.SearchResult]:
+                """Perform LDAP search, returning the search result."""
                 ...
 
         @runtime_checkable

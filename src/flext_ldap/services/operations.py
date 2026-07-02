@@ -32,11 +32,12 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, m, p, s, t, u
+from flext_ldap import c, m, p, t, u
+from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
 from flext_ldif import ldif, r
 
 
-class FlextLdapOperations(s):
+class FlextLdapOperations(FlextLdapAdapterHost):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
