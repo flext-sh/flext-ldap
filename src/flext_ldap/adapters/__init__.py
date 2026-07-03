@@ -31,7 +31,10 @@ if TYPE_CHECKING:
         FlextLdapLdap3Wrappers as FlextLdapLdap3Wrappers,
     )
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter as FlextLdapLdap3Adapter
+    from flext_ldap.adapters.ldap3 import (
+        FlextLdapAdapterHost as FlextLdapAdapterHost,
+        FlextLdapLdap3Adapter as FlextLdapLdap3Adapter,
+    )
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._ldap3",),
     build_lazy_import_map(
@@ -44,7 +47,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._ldap3.search_executor": ("SearchExecutor",),
             "._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
             ".entry": ("FlextLdapEntryAdapter",),
-            ".ldap3": ("FlextLdapLdap3Adapter",),
+            ".ldap3": (
+                "FlextLdapAdapterHost",
+                "FlextLdapLdap3Adapter",
+            ),
         },
     ),
     exclude_names=(

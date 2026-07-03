@@ -50,9 +50,7 @@ class TestsFlextLdapApi:
         }
         callback = callbacks[case]
         expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        u.Ldap.Tests.that(
-            FlextLdapSync.multi_phase_callback(callback), eq=expected
-        )
+        u.Ldap.Tests.that(FlextLdapSync.multi_phase_callback(callback), eq=expected)
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_single_phase_callback(
@@ -68,9 +66,7 @@ class TestsFlextLdapApi:
         }
         callback = callbacks[case]
         _, expected = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        u.Ldap.Tests.that(
-            FlextLdapSync.single_phase_callback(callback), eq=expected
-        )
+        u.Ldap.Tests.that(FlextLdapSync.single_phase_callback(callback), eq=expected)
 
     def test_search_without_connection_returns_failure(self) -> None:
         search_options = m.Ldap.SearchOptions(

@@ -20,9 +20,7 @@ if TYPE_CHECKING:
     from flext_ldap.services.operations import (
         FlextLdapOperations as FlextLdapOperations,
     )
-    from flext_ldap.services.sync import (
-        FlextLdapSync as FlextLdapSync,
-    )
+    from flext_ldap.services.sync import FlextLdapSync as FlextLdapSync
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".api_runtime": ("FlextLdapApiRuntime",),
