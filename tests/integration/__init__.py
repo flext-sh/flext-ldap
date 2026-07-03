@@ -3,17 +3,29 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if TYPE_CHECKING:
-    from flext_ldap.tests.integration.test_smoke import (
-        TestsFlextLdapSmoke as TestsFlextLdapSmoke,
-    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".test_smoke": ("TestsFlextLdapSmoke",),
+        "flext_tests": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "td",
+            "tf",
+            "tk",
+            "tm",
+            "tv",
+            "u",
+            "x",
+        ),
     },
 )
 

@@ -25,76 +25,64 @@ if TYPE_CHECKING:
         x as x,
     )
 
-    from flext_ldap.tests.base import (
+    from tests.base import (
         TestsFlextLdapServiceBase as TestsFlextLdapServiceBase,
         s as s,
     )
-    from flext_ldap.tests.conftest import WorkerInputConfig as WorkerInputConfig
-    from flext_ldap.tests.constants import (
+    from tests.conftest import WorkerInputConfig as WorkerInputConfig
+    from tests.constants import (
         TestsFlextLdapConstants as TestsFlextLdapConstants,
         c as c,
     )
-    from flext_ldap.tests.integration.test_smoke import (
-        TestsFlextLdapSmoke as TestsFlextLdapSmoke,
-    )
-    from flext_ldap.tests.models import (
-        TestsFlextLdapModels as TestsFlextLdapModels,
-        m as m,
-    )
-    from flext_ldap.tests.protocols import (
+    from tests.integration.test_smoke import TestsFlextLdapSmoke as TestsFlextLdapSmoke
+    from tests.models import TestsFlextLdapModels as TestsFlextLdapModels, m as m
+    from tests.protocols import (
         TestsFlextLdapProtocols as TestsFlextLdapProtocols,
         p as p,
     )
-    from flext_ldap.tests.settings import (
-        TestsFlextLdapSettings as TestsFlextLdapSettings,
-    )
-    from flext_ldap.tests.typings import (
-        TestsFlextLdapTypes as TestsFlextLdapTypes,
-        t as t,
-    )
-    from flext_ldap.tests.unit.test_api import TestsFlextLdapApi as TestsFlextLdapApi
-    from flext_ldap.tests.unit.test_base import TestsFlextLdapBase as TestsFlextLdapBase
-    from flext_ldap.tests.unit.test_config import (
-        TestsFlextLdapConfig as TestsFlextLdapConfig,
-    )
-    from flext_ldap.tests.unit.test_connection import (
+    from tests.settings import TestsFlextLdapSettings as TestsFlextLdapSettings
+    from tests.typings import TestsFlextLdapTypes as TestsFlextLdapTypes, t as t
+    from tests.unit.test_api import TestsFlextLdapApi as TestsFlextLdapApi
+    from tests.unit.test_base import TestsFlextLdapBase as TestsFlextLdapBase
+    from tests.unit.test_config import TestsFlextLdapConfig as TestsFlextLdapConfig
+    from tests.unit.test_connection import (
         TestsFlextLdapConnection as TestsFlextLdapConnection,
     )
-    from flext_ldap.tests.unit.test_constants import (
+    from tests.unit.test_constants import (
         TestsFlextLdapConstantsUnit as TestsFlextLdapConstantsUnit,
     )
-    from flext_ldap.tests.unit.test_detection import (
+    from tests.unit.test_detection import (
         TestsFlextLdapDetection as TestsFlextLdapDetection,
     )
-    from flext_ldap.tests.unit.test_entry_adapter import (
+    from tests.unit.test_entry_adapter import (
         TestsFlextLdapEntryAdapter as TestsFlextLdapEntryAdapter,
     )
-    from flext_ldap.tests.unit.test_ldap3_adapter import (
+    from tests.unit.test_ldap3_adapter import (
         TestsFlextLdapLdap3Adapter as TestsFlextLdapLdap3Adapter,
     )
-    from flext_ldap.tests.unit.test_ldap3_adapter_helpers import (
+    from tests.unit.test_ldap3_adapter_helpers import (
         TestsFlextLdapLdap3AdapterHelpers as TestsFlextLdapLdap3AdapterHelpers,
     )
-    from flext_ldap.tests.unit.test_models import (
+    from tests.unit.test_models import (
         TestsFlextLdapModelsUnit as TestsFlextLdapModelsUnit,
     )
-    from flext_ldap.tests.unit.test_models_search import (
+    from tests.unit.test_models_search import (
         TestsFlextLdapModelsSearch as TestsFlextLdapModelsSearch,
     )
-    from flext_ldap.tests.unit.test_models_sync import (
+    from tests.unit.test_models_sync import (
         TestsFlextLdapModelsSync as TestsFlextLdapModelsSync,
     )
-    from flext_ldap.tests.unit.test_operations import (
+    from tests.unit.test_operations import (
         TestsFlextLdapOperations as TestsFlextLdapOperations,
     )
-    from flext_ldap.tests.unit.test_public_api_contract import (
+    from tests.unit.test_public_api_contract import (
         TestsFlextLdapPublicApiContract as TestsFlextLdapPublicApiContract,
     )
-    from flext_ldap.tests.unit.test_sync import TestsFlextLdapSync as TestsFlextLdapSync
-    from flext_ldap.tests.unit.test_utilities import (
+    from tests.unit.test_sync import TestsFlextLdapSync as TestsFlextLdapSync
+    from tests.unit.test_utilities import (
         TestsFlextLdapUtilitiesUnit as TestsFlextLdapUtilitiesUnit,
     )
-    from flext_ldap.tests.utilities import (
+    from tests.utilities import (
         TestsFlextLdapUtilities as TestsFlextLdapUtilities,
         u as u,
     )
