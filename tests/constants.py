@@ -1,11 +1,7 @@
-"""Constants for flext-ldap tests.
+"""Canonical test constants for flext-ldap.
 
-Provides TestsLdapConstants, extending FlextTestsConstants with flext-ldap-specific
-constants. All generic test constants come from flext_tests.
-
-Architecture:
-- FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
-- TestsLdapConstants (tests/) = flext-ldap-specific constants extending FlextTestsConstants
+This module provides a single flat namespace of typed constants (c.Ldap.Tests.*),
+organized for data-driven testing, maximum reuse, and composition.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,254 +9,513 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Final
+import math
+from enum import StrEnum, unique
+from types import MappingProxyType
+from typing import Final
 
-from flext_ldif import FlextLdifConstants
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import FlextLdapConstants
+from flext_cli import t
+from flext_ldap import c
 
 
-class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
-    """Constants for flext-ldap tests - extends FlextTestsConstants and FlextLdapConstants.
+class TestsFlextLdapConstants(FlextTestsConstants, c):
+    """Flat test constants for flext-ldap."""
 
-    Architecture: Extends both FlextTestsConstants and FlextLdapConstants with flext-ldap-specific constants.
-    All generic constants from FlextTestsConstants and production constants from FlextLdapConstants are available through inheritance.
+    class Ldap(c.Ldap):
+        """LDAP test constants."""
 
-    Rules:
-    - NEVER duplicate constants from FlextTestsConstants or FlextLdapConstants
-    - Only flext-ldap-specific constants allowed (not generic for other projects)
-    - All generic constants come from FlextTestsConstants
-    - All production constants come from FlextLdapConstants
-    """
+        class Tests:
+            """Direct `c.Ldap.Tests.*` constants with no extra subnamespace."""
 
-    class Fixtures:
-        """Fixture-related test constants.
+            @unique
+            class FieldName(StrEnum):
+                HOST = "host"
+                PORT = "port"
+                BIND_DN = "bind_dn"
+                BIND_PASSWORD = "bind_password"
+                BASE_DN = "base_dn"
+                SCOPE = "scope"
+                PROPERTIES = "properties"
+                TYPE = "type"
+                SUCCESS_RATE = "success_rate"
 
-        Test-specific fixture constants that complement production constants.
-        """
+            @unique
+            class PhaseName(StrEnum):
+                USERS = "users"
+                GROUPS = "groups"
 
-        SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
-        SAMPLE_UID: Final[str] = "testuser"
-        DEFAULT_STATUS: Final[str] = "completed"
+            @unique
+            class FileName(StrEnum):
+                USERS_LDIF = "users.ldif"
 
-    class Mocks:
-        """Mock-related test constants.
+            @unique
+            class CallbackGuardCase(StrEnum):
+                NONE = "none"
+                MULTI = "multi"
+                SINGLE = "single"
 
-        Test-specific mock constants for test fixtures and mocks.
-        """
+            @unique
+            class ConnectionSecurityCase(StrEnum):
+                SSL_ONLY = "ssl_only"
+                TLS_ONLY = "tls_only"
 
-        MOCK_SERVER_RESPONSE: Final[dict[str, str]] = {"status": "ok", "code": "200"}
+            @unique
+            class Ldap3ServerCase(StrEnum):
+                PLAIN = "plain"
+                SSL = "ssl"
+                TLS = "tls"
 
-    class Servers:
-        """Server-specific test constants (para quirks).
+            @unique
+            class AttrToStrListCase(StrEnum):
+                EMPTY = "empty"
+                BYTES = "bytes"
+                LIST = "list"
+                LIST_BYTES = "list_bytes"
+                INT = "int"
 
-        Test-specific server constants for quirks testing.
-        """
+            @unique
+            class LdapValueCase(StrEnum):
+                BYTES = "bytes"
+                LIST = "list"
+                LIST_BYTES = "list_bytes"
+                TUPLE = "tuple"
+                STR = "str"
+                INT = "int"
+                FLOAT = "float"
 
-        class OUD:
-            """OUD server test constants."""
+            @unique
+            class SearchCategoryCase(StrEnum):
+                EMPTY = "empty"
+                PERSON = "person"
 
-            SAMPLE_ACL: Final[str] = "access to * by * read"
+            RFC_DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
+            RFC_DEFAULT_FILTER: Final[str] = "(objectClass=*)"
 
-        class OID:
-            """OID server test constants."""
+            BASE_FAIL_ERROR_MESSAGE: Final[str] = "nope"
 
-            SAMPLE_ACL: Final[str] = "aci: (target=*)"
+            CONFIG_EXAMPLE_HOST: Final[str] = "example.com"
+            CONFIG_ORIGINAL_HOST: Final[str] = "original.com"
+            CONFIG_FIRST_HOST: Final[str] = "first.com"
+            CONFIG_SECOND_HOST: Final[str] = "second.com"
+            CONFIG_INVALID_HOST: Final[str] = "invalid..host.."
+            CONFIG_LDAPS_PORT: Final[int] = 636
+            CONFIG_PORT_MIN: Final[int] = 1
+            CONFIG_PORT_MAX: Final[int] = 65535
+            CONFIG_SSL_TLS_COMBOS: Final[tuple[tuple[bool, bool], ...]] = (
+                (False, False),
+                (True, False),
+                (False, True),
+                (True, True),
+            )
+            CONFIG_VALID_PORTS: Final[tuple[int, ...]] = (
+                CONFIG_PORT_MIN,
+                c.Ldap.PORT,
+                CONFIG_LDAPS_PORT,
+                CONFIG_PORT_MAX,
+            )
+            CONFIG_HOST_CASES: Final[t.StrSequence] = (
+                c.LOCALHOST,
+                CONFIG_EXAMPLE_HOST,
+                "192.168.1.1",
+                "",
+            )
+            CALLBACK_GUARD_EXPECTED: Final[
+                t.MappingKV[CallbackGuardCase, tuple[bool, bool]]
+            ] = MappingProxyType({
+                CallbackGuardCase.NONE: (False, False),
+                CallbackGuardCase.MULTI: (True, False),
+                CallbackGuardCase.SINGLE: (False, True),
+            })
 
-    class RFC:
-        """RFC server test constants - flat namespace for backward compatibility."""
+            FIELD_HOST: Final[FieldName] = FieldName.HOST
+            FIELD_PORT: Final[FieldName] = FieldName.PORT
+            FIELD_BIND_DN: Final[FieldName] = FieldName.BIND_DN
+            FIELD_BIND_PASSWORD: Final[FieldName] = FieldName.BIND_PASSWORD
+            FIELD_BASE_DN: Final[FieldName] = FieldName.BASE_DN
+            FIELD_SCOPE: Final[FieldName] = FieldName.SCOPE
+            FIELD_PROPERTIES: Final[FieldName] = FieldName.PROPERTIES
+            FIELD_TYPE: Final[FieldName] = FieldName.TYPE
 
-        DEFAULT_HOST: Final[str] = "localhost"
-        DEFAULT_PORT: Final[int] = 3390
-        DEFAULT_BASE_DN: Final[str] = "dc=flext,dc=local"
-        DEFAULT_BIND_DN: Final[str] = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-        DEFAULT_BIND_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
-        DEFAULT_FILTER: Final[str] = "(objectClass=*)"
-        DEFAULT_ATTRIBUTES: Final[tuple[str, ...]] = ("objectClass", "cn")
-        TEST_USER_CN: Final[str] = "testuser"
-        TEST_USER_DN: Final[str] = f"uid={TEST_USER_CN},ou=people,{DEFAULT_BASE_DN}"
-        TEST_GROUP_CN: Final[str] = "testgroup"
-        TEST_GROUP_DN: Final[str] = f"cn={TEST_GROUP_CN},ou=groups,{DEFAULT_BASE_DN}"
-        OU_PEOPLE: Final[str] = "ou=people"
-        OU_GROUPS: Final[str] = "ou=groups"
-        OU_SYSTEM: Final[str] = "ou=system"
-        OU_PEOPLE_DN: Final[str] = f"{OU_PEOPLE},{DEFAULT_BASE_DN}"
-        OU_GROUPS_DN: Final[str] = f"{OU_GROUPS},{DEFAULT_BASE_DN}"
-        OU_SYSTEM_DN: Final[str] = f"{OU_SYSTEM},{DEFAULT_BASE_DN}"
+            DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
+            DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
+            DOCKER_SERVICE_NAME: Final[str] = "openldap"
+            DOCKER_PORT: Final[int] = 3390
+            DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
+            DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+            DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
+            DOCKER_LEGACY_ADMIN_DN: Final[str] = (
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+            )
+            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+            DOCKER_STARTUP_TIMEOUT: Final[int] = 90
+            DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
+            DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
+            DOCKER_OU_NAMES: Final[t.StrSequence] = (
+                "people",
+                "groups",
+                "services",
+            )
 
-    class General:
-        """General test constants - flat namespace for backward compatibility."""
+            ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset(
+                {
+                    "ldapsessionterminatedbyservererror",
+                    "ldapserverdownerror",
+                    "ldap server is not responding",
+                    "broken pipe",
+                    "session terminated by server",
+                    "ldapoperationresult",
+                },
+            )
+            ERROR_TRANSIENT_PATTERNS: Final[frozenset[str]] = frozenset(
+                {
+                    "connection refused",
+                    "connection reset by peer",
+                    "cannot connect to ldap",
+                    "ldapsocketopenerror",
+                    "ldapcommunicationerror",
+                    "ldap bind failed",
+                    "timeout",
+                },
+            )
 
-        OID_CN: Final[str] = "2.5.4.3"
-        OID_SN: Final[str] = "2.5.4.4"
-        OID_OBJECTCLASS: Final[str] = "2.5.4.0"
-        OID_PERSON: Final[str] = "2.5.6.6"
-        NAME_CN: Final[str] = "cn"
-        NAME_SN: Final[str] = "sn"
-        NAME_OBJECTCLASS: Final[str] = "objectClass"
-        NAME_PERSON: Final[str] = "person"
-        DN_TEST: Final[str] = "cn=test,dc=example,dc=com"
-        DN_EXAMPLE: Final[str] = "dc=example,dc=com"
-        DN_SCHEMA: Final[str] = "cn=schema"
-        SYNTAX_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.115.121.1.15"
-        SYNTAX_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-        SYNTAX_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
-        VALUE_TEST: Final[str] = "test"
-        VALUE_USER: Final[str] = "user"
-        VALUE_USER1: Final[str] = "user1"
-        VALUE_USER2: Final[str] = "user2"
-        ERROR_MISSING_OID: Final[str] = "Missing OID"
-        ERROR_INVALID_FORMAT: Final[str] = "Invalid format"
-        ERROR_PARSE_FAILED: Final[str] = "Parse failed"
-        VERSION_MIN_LENGTH: Final[int] = 5
-        VERSION_MAX_LENGTH: Final[int] = 50
-        VERSION_MIN_PARTS: Final[int] = 2
-        VERSION_MAX_PARTS: Final[int] = 3
-        VERSION_MIN_COMPONENTS: Final[int] = 2
+            ENTRY_DN_USER_EXAMPLE: Final[str] = "cn=user,dc=example,dc=com"
+            ENTRY_DN_TEST_EXAMPLE: Final[str] = "cn=test,dc=example,dc=com"
+            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = (
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            )
+            ENTRY_DN_USER_NEW: Final[str] = "cn=user,dc=new,dc=com"
 
-    class TestConstants:
-        """Hierarchical test constants for flext-ldap tests with domain-based organization."""
+            BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
+            BIND_ADMIN_PASSWORD: Final[str] = "secret"
 
-        DEFAULT_BASE_DN: ClassVar[str] = "dc=flext,dc=local"
-        DEFAULT_HOST: ClassVar[str] = "localhost"
-        DEFAULT_PORT: ClassVar[int] = 3390
-        DEFAULT_BIND_DN: ClassVar[str] = (
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-        )
-        DEFAULT_BIND_PASSWORD: ClassVar[str] = "REDACTED_LDAP_BIND_PASSWORD123"
-        DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
-        DEFAULT_ATTRIBUTES: ClassVar[tuple[str, ...]] = ("objectClass", "cn")
-        TEST_USER_CN: ClassVar[str] = "testuser"
-        TEST_USER_DN: ClassVar[str] = "uid=testuser,ou=people,dc=flext,dc=local"
-        TEST_GROUP_CN: ClassVar[str] = "testgroup"
-        TEST_GROUP_DN: ClassVar[str] = "cn=testgroup,ou=groups,dc=flext,dc=local"
+            DETECTION_EXECUTE_SCENARIOS: Final[
+                t.SequenceOf[
+                    tuple[
+                        t.MappingKV[str, bool | float | str | None] | None,
+                        bool,
+                        str,
+                    ]
+                ]
+            ] = (
+                # Substrings match the centralized flext-core error format —
+                # ``ERR_SERVICE_TYPE_MISMATCH`` and the validate-connection
+                # wrapper. Keep these aligned with the canonical messages.
+                ({}, True, "parameter required"),
+                (
+                    {"connection": "invalid"},
+                    True,
+                    "ldap3.Connection",
+                ),
+            )
+            DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
+                t.SequenceOf[tuple[t.MappingKV[str, t.StrSequence], str, str | None]]
+            ] = (
+                (
+                    MappingProxyType(
+                        {"vendorName": ("Oracle Corporation", "Version 2")},
+                    ),
+                    "vendorName",
+                    "Oracle Corporation",
+                ),
+                (
+                    MappingProxyType({"vendorName": ("OpenLDAP",)}),
+                    "vendorName",
+                    "OpenLDAP",
+                ),
+                (MappingProxyType({"otherKey": ("value",)}), "vendorName", None),
+                (MappingProxyType({"vendorName": ()}), "vendorName", None),
+            )
+            DETECTION_FROM_ATTRIBUTES_SCENARIOS: Final[
+                t.SequenceOf[tuple[str | None, str | None, t.StrSequence, str]]
+            ] = (
+                ("Oracle Corporation", "12.2.1.4.0", (), "oid"),
+                ("Oracle Unified Directory", "12.2.1.4.0", (), "oud"),
+                ("OpenLDAP", "2.4.57", (), "openldap"),
+                (
+                    "Microsoft Corporation",
+                    None,
+                    ("1.2.840.113556.1.4.319",),
+                    "ad",
+                ),
+                ("389 Project", "2.0.0", (), "ds389"),
+                (None, None, (), "rfc"),
+                ("oracle corporation", "12.2.1.4.0", (), "oid"),
+                ("Oracle", None, (), "oid"),
+            )
 
-        class ServerTypes:
-            """Server type constants for LDAP server variants.
+            OPERATIONS_ERROR_DETECTION_SCENARIOS: Final[t.BoolMapping] = (
+                MappingProxyType(
+                    {
+                        "Entry already exists": True,
+                        "already exists": True,
+                        "ALREADY EXISTS": True,
+                        "entryAlreadyExists": True,
+                        "Connection failed": False,
+                        "": False,
+                    },
+                )
+            )
+            OPERATIONS_BATCH_STOP_FRAGMENT: Final[str] = "stopped on error"
+            OPERATIONS_BATCH_ALL_FAILED_FRAGMENT: Final[str] = "entries failed"
 
-            Reuses production StrEnum values from FlextLdifConstants.ServerTypes.
-            """
+            SEARCH_RESULT_TOTAL_COUNT_CASES: Final[tuple[tuple[int, int], ...]] = (
+                (0, 0),
+                (1, 1),
+                (5, 5),
+                (10, 10),
+            )
 
-            VALID = (FlextLdifConstants.Ldif.ServerTypes.RFC.value,)
+            STRING_SIMPLE: Final[str] = "test"
+            STRING_SIMPLE_UPPER: Final[str] = "TEST"
+            STRING_EMPTY: Final[str] = ""
+            STRING_DEFAULT_CUSTOM: Final[str] = "default"
 
-        class Connection:
-            """LDAP connection-related constants."""
+            LIST_ABC: Final[t.StrSequence] = ("a", "b", "c")
+            LIST_ABC_UPPER: Final[t.StrSequence] = ("A", "B", "C")
+            LIST_SINGLE: Final[str] = "single"
 
-            DEFAULT_HOST = "localhost"
-            DEFAULT_PORT = 3390
-            DEFAULT_BIND_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-            DEFAULT_BIND_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
-            SSL_ENABLED: Final[bool] = True
-            SSL_DISABLED: Final[bool] = False
-            TLS_ENABLED: Final[bool] = True
-            TLS_DISABLED: Final[bool] = False
-            FAST_TIMEOUT = 5
-            NORMAL_TIMEOUT = 30
-            SLOW_TIMEOUT = 300
-            INVALID_HOST: ClassVar[str] = "invalid.host"
-            TEST_BIND_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
+            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType(
+                {
+                    "a": "value",
+                    "b": "",
+                    "c": "none_str",
+                    "d": "value2",
+                },
+            )
+            FILTER_TRUTHY_EXPECTED_KEYS: Final[t.StrSequence] = ("a", "c", "d")
 
-        class Directory:
-            """Directory structure and DN constants."""
+            NORM_JOIN_INPUT: Final[t.StrSequence] = ("A", "B", "C")
+            NORM_JOIN_EXPECTED: Final[str] = "a b c"
+            CONSTANT_INVALID_STATUS: Final[str] = "invalid"
+            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
+                MappingProxyType(
+                    {
+                        "cn": ("user",),
+                        "sn": ("Doe",),
+                    },
+                )
+            )
+            # Substring matches the centralized validation error
+            # ("Failed to validate entry.attributes: empty"). Update with the
+            # canonical message rather than re-introducing custom wording.
+            ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR: Final[str] = "empty"
+            LDAP3_ADAPTER_DEFAULT_TIMEOUT: Final[int] = 5
+            LDAP3_ADAPTER_NOT_CONNECTED_ERROR: Final[str] = "Not connected"
+            LDAP3_SERVER_SCENARIOS: Final[
+                t.MappingKV[Ldap3ServerCase, tuple[int, bool, bool]]
+            ] = MappingProxyType({
+                Ldap3ServerCase.PLAIN: (c.Ldap.PORT, False, False),
+                Ldap3ServerCase.SSL: (CONFIG_LDAPS_PORT, True, False),
+                Ldap3ServerCase.TLS: (c.Ldap.PORT, False, True),
+            })
+            ATTR_TO_STR_LIST_SCENARIOS: Final[
+                t.MappingKV[AttrToStrListCase, t.MappingKV[str, t.StrSequence]]
+            ] = MappingProxyType({
+                AttrToStrListCase.EMPTY: MappingProxyType({}),
+                AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
+                AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
+                AttrToStrListCase.LIST_BYTES: MappingProxyType({
+                    "key": ("bytes", "str")
+                }),
+                AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
+            })
+            LDAP3_VALUE_TO_STRINGS_SCENARIOS: Final[
+                t.MappingKV[
+                    LdapValueCase,
+                    tuple[
+                        bytes | int | float | str | t.SequenceOf[bytes | str],
+                        t.StrSequence,
+                    ],
+                ]
+            ] = MappingProxyType({
+                LdapValueCase.BYTES: (b"hello", ("hello",)),
+                LdapValueCase.LIST: (list(LIST_ABC), LIST_ABC),
+                LdapValueCase.LIST_BYTES: ((b"hello", "world"), ("hello", "world")),
+                LdapValueCase.TUPLE: (LIST_ABC, LIST_ABC),
+                LdapValueCase.STR: ("hello", ("hello",)),
+                LdapValueCase.INT: (42, ("42",)),
+                LdapValueCase.FLOAT: (math.pi, (str(math.pi),)),
+            })
 
-            BASE_DN = "dc=flext,dc=local"
-            FILTER_ALL = "(objectClass=*)"
+            MODELS_LDAP_EXAMPLE_HOST: Final[str] = "ldap.example.com"
+            MODELS_CUSTOM_TIMEOUT: Final[int] = 60
+            MODELS_INVALID_DN_FORMAT: Final[str] = "invalid-dn-format"
+            MODELS_ALLOWED_SECURITY_COMBOS: Final[
+                t.MappingKV[ConnectionSecurityCase, tuple[bool, bool]]
+            ] = MappingProxyType({
+                ConnectionSecurityCase.SSL_ONLY: (True, False),
+                ConnectionSecurityCase.TLS_ONLY: (False, True),
+            })
+            MODELS_INVALID_PORTS: Final[tuple[int, ...]] = (0, 65536)
 
-            class OrganizationalUnits:
-                """Organizational unit constants."""
+            SEARCH_SCOPE_BASE: Final[str] = "BASE"
+            SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
+            SEARCH_FILTER_CN: Final[str] = "(cn=*)"
+            SEARCH_FILTER_UID: Final[str] = "(uid=*)"
+            SEARCH_ATTRIBUTES: Final[t.StrSequence] = ("cn", "mail")
+            SEARCH_SIZE_LIMIT_CUSTOM: Final[int] = 100
+            SEARCH_TIME_LIMIT_CUSTOM: Final[int] = 30
+            SEARCH_NORMALIZED_SIZE_LIMIT: Final[int] = 50
+            SEARCH_ENTRY_ADDED_MESSAGE: Final[str] = "Entry added successfully"
+            SEARCH_DEFAULT_LIMIT_ZERO: Final[int] = 0
+            SEARCH_OBJECTCLASS_PERSON_TOP: Final[t.MappingKV[str, t.StrSequence]] = (
+                MappingProxyType({"objectClass": ("person", "top")})
+            )
+            SEARCH_CATEGORY_EXPECTED: Final[t.MappingKV[SearchCategoryCase, str]] = (
+                MappingProxyType({
+                    SearchCategoryCase.EMPTY: c.Ldap.UNKNOWN_CATEGORY,
+                    SearchCategoryCase.PERSON: "person",
+                })
+            )
+            SEARCH_ENTRIES_AFFECTED_ONE: Final[int] = 1
 
-                PEOPLE = "ou=people"
-                GROUPS = "ou=groups"
-                SYSTEM = "ou=system"
-                PEOPLE_DN = "ou=people,dc=flext,dc=local"
-                GROUPS_DN = "ou=groups,dc=flext,dc=local"
-                SYSTEM_DN = "ou=system,dc=flext,dc=local"
+            SYNC_PHASE_NAME: Final[str] = "01-users"
+            SYNC_ENTRY_ALREADY_EXISTS: Final[str] = "Entry already exists"
+            SYNC_DEFAULT_ZERO_COUNT: Final[int] = 0
+            SYNC_DEFAULT_EMPTY_SOURCE_DN: Final[str] = ""
 
-            class TestEntries:
-                """Test entry constants."""
+            SYNC_UPSERT_BATCH_TOTAL: Final[int] = 100
+            SYNC_UPSERT_BATCH_SUCCESSFUL: Final[int] = 90
+            SYNC_UPSERT_BATCH_FAILED: Final[int] = 10
 
-                USER_CN = "testuser"
-                USER_DN = "uid=testuser,ou=people,dc=flext,dc=local"
-                GROUP_CN = "testgroup"
-                GROUP_DN = "cn=testgroup,ou=groups,dc=flext,dc=local"
-
-        class Attributes:
-            """LDAP attribute constants."""
-
-            COMMON: ClassVar[list[str]] = ["objectClass", "cn"]
-            USER_ATTRIBUTES: ClassVar[list[str]] = [
+            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[t.StrSequence] = (
                 "cn",
-                "sn",
-                "givenName",
-                "uid",
                 "mail",
-                "userPassword",
-            ]
-            GROUP_ATTRIBUTES: ClassVar[list[str]] = ["cn", "member", "description"]
-            SYSTEM_ATTRIBUTES: ClassVar[list[str]] = [
-                "cn",
-                "description",
-                "objectClass",
-            ]
-
-        class Operations:
-            """LDAP operation constants."""
-
-            ADD = "add"
-            MODIFY = "modify"
-            DELETE = "delete"
-            SEARCH = "search"
-            BIND = "bind"
-            UNBIND = "unbind"
-            SUCCESS = 0
-            FAILURE = 1
-            PARTIAL_SUCCESS = 2
-            TEST_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
-            TEST_DN_1: ClassVar[str] = "cn=test1,dc=example,dc=com"
-            TEST_DN_2: ClassVar[str] = "cn=test2,dc=example,dc=com"
-            BASE_DN: ClassVar[str] = "dc=example,dc=com"
-            DEFAULT_FILTER: ClassVar[str] = "(objectClass=*)"
-
-        class Adapter:
-            """Entry adapter test constants."""
-
-            TEST_DN: ClassVar[str] = "cn=test,dc=example,dc=com"
-            STANDARD_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {
-                "cn": ["test"],
-                "objectClass": ["top", "person"],
-            }
-            EMPTY_ATTRIBUTES: ClassVar[dict[str, list[str]]] = {}
-            SERVER_TYPE_OPENLDAP: ClassVar[str] = (
-                FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value
+                "telephoneNumber",
             )
-            SERVER_TYPE_OPENLDAP2: ClassVar[str] = (
-                FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value
+            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[t.StrSequence] = ("userPassword",)
+
+            SYNC_PHASE_TOTAL_ENTRIES: Final[int] = 100
+            SYNC_PHASE_SYNCED: Final[int] = 90
+            SYNC_PHASE_FAILED: Final[int] = 5
+            SYNC_PHASE_SKIPPED: Final[int] = 5
+            SYNC_PHASE_DURATION: Final[float] = 30.0
+            SYNC_PHASE_SUCCESS_RATE: Final[float] = 95.0
+
+            SYNC_MULTI_PHASE_TOTAL_ENTRIES: Final[int] = 500
+            SYNC_MULTI_PHASE_TOTAL_SYNCED: Final[int] = 450
+            SYNC_MULTI_PHASE_TOTAL_FAILED: Final[int] = 25
+            SYNC_MULTI_PHASE_TOTAL_SKIPPED: Final[int] = 25
+            SYNC_MULTI_PHASE_OVERALL_SUCCESS_RATE: Final[float] = 95.0
+            SYNC_MULTI_PHASE_TOTAL_DURATION: Final[float] = 120.0
+
+            SYNC_PHASE_RESULTS_SYNCED: Final[int] = 95
+            SYNC_PHASE_RESULTS_FAILED: Final[int] = 5
+            SYNC_PHASE_RESULTS_SKIPPED: Final[int] = 0
+            SYNC_PHASE_RESULTS_DURATION: Final[float] = 10.0
+            SYNC_PHASE_RESULTS_SUCCESS_RATE: Final[float] = 95.0
+
+            SYNC_BATCH_STATS_SYNCED: Final[int] = 80
+            SYNC_BATCH_STATS_FAILED: Final[int] = 10
+            SYNC_BATCH_STATS_SKIPPED: Final[int] = 10
+
+            SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = (
+                "/tmp/flext-ldap-sync-missing.ldif"
             )
-            ERROR_NO_ATTRIBUTES: ClassVar[str] = "no attributes"
-
-        class Singleton:
-            """Singleton pattern test constants."""
-
-            DIFFERENT_HOST: ClassVar[str] = "different.example.com"
-            TEST_HOST: ClassVar[str] = "test.example.com"
-            TEST_PORT: ClassVar[int] = 389
-
-        class Base:
-            """Base service test constants."""
-
-            CONFIG_NAMESPACES: ClassVar[tuple[str, ...]] = ("ldap", "ldif")
-
-        class Ldap3Adapter:
-            """Ldap3Adapter test constants."""
-
-            INVALID_HOSTS: ClassVar[tuple[str, ...]] = (
-                "192.0.2.1",
-                "invalid-host-that-does-not-exist",
+            SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
+            SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
+                PhaseName.USERS,
+                PhaseName.GROUPS,
             )
-            INVALID_BASE_DN: ClassVar[str] = "invalid=base,dn=invalid"
-            FAST_TIMEOUT: ClassVar[int] = 1
+            SYNC_FACADE_TEST_USER_DN: Final[str] = (
+                "cn=syncuser,ou=people,dc=flext,dc=local"
+            )
+            SYNC_FACADE_SINGLE_ENTRY_LDIF: Final[str] = (
+                "version: 1\n\n"
+                "dn: cn=syncuser,ou=people,dc=flext,dc=local\n"
+                "changetype: add\n"
+                "objectClass: inetOrgPerson\n"
+                "objectClass: organizationalPerson\n"
+                "objectClass: person\n"
+                "objectClass: top\n"
+                "cn: syncuser\n"
+                "sn: user\n"
+                "uid: syncuser\n"
+                "mail: syncuser@flext.local\n"
+            )
+            SYNC_FACADE_USERS_LDIF_FILENAME: Final[FileName] = FileName.USERS_LDIF
+
+            @unique
+            class EntryOperationCase(StrEnum):
+                VALID_DN = "valid_dn"
+                EMPTY_DN = "empty_dn"
+                INVALID_DN = "invalid_dn"
+                SPECIAL_CHARS_DN = "special_chars_dn"
+
+            @unique
+            class SearchFilterCase(StrEnum):
+                PRESENT = "present"
+                EQUALITY = "equality"
+                SUBSTRING = "substring"
+                GREATER_EQUAL = "greater_equal"
+                LESS_EQUAL = "less_equal"
+                OR_COMPOUND = "or_compound"
+                AND_COMPOUND = "and_compound"
+                COMPLEX_NESTED = "complex_nested"
+
+            @unique
+            class SearchSizeCase(StrEnum):
+                SIZE_ZERO = "size_zero"
+                SIZE_ONE = "size_one"
+                SIZE_SMALL = "size_small"
+                SIZE_MEDIUM = "size_medium"
+                SIZE_LARGE = "size_large"
+
+            @unique
+            class SearchScopeCase(StrEnum):
+                BASE = "base"
+                ONE_LEVEL = "one_level"
+                SUBTREE = "subtree"
+                SUBORDINATE = "subordinate"
+
+            ENTRY_DN_SCENARIOS: Final[t.MappingKV[EntryOperationCase, str]] = (
+                MappingProxyType({
+                    EntryOperationCase.VALID_DN: "cn=test,ou=people,dc=example,dc=com",
+                    EntryOperationCase.EMPTY_DN: "",
+                    EntryOperationCase.INVALID_DN: "not-a-valid-dn",
+                    EntryOperationCase.SPECIAL_CHARS_DN: (
+                        "cn=test\\,user,ou=people,dc=example,dc=com"
+                    ),
+                })
+            )
+
+            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[
+                t.MappingKV[SearchFilterCase, str]
+            ] = MappingProxyType({
+                SearchFilterCase.PRESENT: "(cn=*)",
+                SearchFilterCase.EQUALITY: "(uid=john)",
+                SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
+                SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
+                SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
+                SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
+                SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
+                SearchFilterCase.COMPLEX_NESTED: (
+                    "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
+                ),
+            })
+
+            SEARCH_SIZE_SCENARIOS: Final[t.MappingKV[SearchSizeCase, int]] = (
+                MappingProxyType({
+                    SearchSizeCase.SIZE_ZERO: 0,
+                    SearchSizeCase.SIZE_ONE: 1,
+                    SearchSizeCase.SIZE_SMALL: 10,
+                    SearchSizeCase.SIZE_MEDIUM: 100,
+                    SearchSizeCase.SIZE_LARGE: 10000,
+                })
+            )
+
+            SEARCH_SCOPE_SCENARIOS: Final[t.MappingKV[SearchScopeCase, str]] = (
+                MappingProxyType({
+                    SearchScopeCase.BASE: "BASE",
+                    SearchScopeCase.ONE_LEVEL: "LEVEL(1)",
+                    SearchScopeCase.SUBTREE: "SUBTREE",
+                    SearchScopeCase.SUBORDINATE: "SUBORDINATE",
+                })
+            )
 
 
 c = TestsFlextLdapConstants
-__all__ = ["TestsFlextLdapConstants", "c"]
+
+__all__: list[str] = ["TestsFlextLdapConstants", "c"]

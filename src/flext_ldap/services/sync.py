@@ -1,472 +1,281 @@
-"""Synchronize LDIF content into LDAP through the operations service.
+"""LDIF-to-LDAP synchronization mixin for the public LDAP facade.
 
-This module provides LDIF-to-LDAP synchronization capabilities, enabling bulk
-import of directory entries from LDIF files into live LDAP servers. It handles
-parsing, base DN translation, and batch processing with progress tracking.
-
-Business Rules:
-    - All LDAP mutations delegate to :class:`FlextLdapOperations` (no direct ldap3)
-    - LDIF parsing uses FlextLdif.parse() with "rfc" server type for standards compliance
-    - Base DN transformation is case-insensitive for cross-domain migrations
-    - Add operations are idempotent: existing entries are counted as "skipped"
-    - Progress callbacks receive per-entry statistics for real-time monitoring
-    - Duration tracking uses u.generate_datetime_utc()
-
-Audit Implications:
-    - Sync operations return detailed SyncStats for compliance reporting
-    - Per-entry progress callbacks enable audit trail generation
-    - Failed entries are counted but do not halt the batch
-    - File not found errors return structured failure (no exceptions)
-
-Architecture Notes:
-    - Uses composition over inheritance (operations service injection)
-    - Inner classes (BatchSync, BaseDNTransformer) encapsulate specific concerns
-    - Pydantic v2 frozen=False for mutable service state
-    - Railway-Oriented Programming (r) for error handling
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-import logging
-import re
-from collections.abc import Callable
-from datetime import datetime
+import inspect
+from collections.abc import (
+    MutableMapping,
+)
 from pathlib import Path
-from typing import override
-
-from flext_core import FlextService, r
-from flext_ldif import FlextLdif
-from pydantic import ConfigDict, PrivateAttr
-
-from flext_ldap import FlextLdapOperations, m, u
-from flext_ldap._models.ldap import FlextLdapModelsLdap
-
-
-class FlextLdapSyncService(FlextService[m.Ldap.SyncStats]):
-    """Stream LDIF entries into LDAP while tracking progress and totals.
-
-    All LDAP mutations are delegated to :class:`FlextLdapOperations`, keeping
-    this service focused on batching, optional base-DN translation, and runtime
-    statistics. Syncs rely on ``add`` operations with idempotent handling for
-    existing entries, mirroring the current runtime behaviour in code.
-
-    Business Rules:
-        - Operations service is REQUIRED (constructor raises TypeError if None)
-        - FlextLdif singleton is used for LDIF parsing (consistent ecosystem behavior)
-        - Datetime generation uses u for UTC consistency
-        - Base DN transformation is applied BEFORE batch processing
-        - Sync statistics track added/skipped/failed counts independently
-        - Duration is measured from start of parsing to end of batch processing
-
-    Audit Implications:
-        - Returns ``m.Ldap.SyncStats`` with complete sync metrics
-        - Progress callbacks enable real-time audit trail during large imports
-        - Each entry's status (synced/skipped/failed) is tracked individually
-        - Service readiness via ``execute()`` returns empty stats (zero counters)
-
-    Architecture Notes:
-        - Implements FlextService pattern via ``FlextLdapServiceBase[SyncStats]``
-        - Uses PrivateAttr for service dependencies (Pydantic compatibility)
-        - Inner classes avoid polluting module namespace
-        - Callable injection for datetime generation enables test determinism
-
-    Example:
-        >>> from flext_ldap import FlextLdapOperations
-        >>> operations = FlextLdapOperations(connection=connected_connection)
-        >>> sync_service = FlextLdapSyncService(operations=operations)
-        >>> result = sync_service.sync_ldif_file(
-        ...     ldif_file=Path("users.ldif"),
-        ...     options=m.Ldap.SyncOptions(
-        ...         source_basedn="dc=old,dc=com",
-        ...         target_basedn="dc=new,dc=com",
-        ...     ),
-        ... )
-        >>> if result.is_success:
-        ...     stats = result.value
-        ...     print(f"Synced: {stats.synced}, Skipped: {stats.skipped}")
-
-    """
-
-    model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
-    _operations: FlextLdapOperations = PrivateAttr()
-    _ldif: FlextLdif = PrivateAttr()
-    _generate_datetime_utc: Callable[[], datetime] = PrivateAttr()
-
-    class BatchSync:
-        """Batch synchronization helper for processing multiple LDIF entries.
-
-        Encapsulates the iteration logic over entries, delegating each add
-        operation to the operations service and aggregating results into
-        sync statistics.
-
-        Business Rules:
-            - Processes entries sequentially (not parallel) for predictable order
-            - Each entry is added via ``FlextLdapOperations.add()``
-            - Existing entries (LDAP error 68) are counted as "skipped"
-            - Other failures are counted as "failed" but do not halt batch
-            - Progress callback is invoked after EACH entry with running stats
-
-        Audit Implications:
-            - Progress callbacks provide per-entry audit trail
-            - Entry DN is included in callback for identification
-            - Index (1-based) enables correlation with source file line numbers
-
-        """
-
-        def __init__(self, operations: FlextLdapOperations) -> None:
-            """Initialize batch sync handler with operations service.
-
-            Business Rules:
-                - Operations service is REQUIRED (no default, fail-fast pattern)
-                - Handler stores reference for delegation to parent service
-                - No connection validation at init (validated during sync)
-
-            Audit Implications:
-                - Handler initialization is not logged (no side effects)
-                - Connection validation occurs during sync() execution
-
-            Architecture:
-                - Inner class encapsulates batch processing logic
-                - Delegates all LDAP operations to parent FlextLdapOperations
-                - Enables testability through dependency injection
-
-            Args:
-                operations: FlextLdapOperations instance for LDAP operations.
-                    Must have active connection for sync() to succeed.
-
-            """
-            super().__init__()
-            self._ops = operations
-
-        def sync(
-            self,
-            entries: list[m.Ldif.Entry],
-            _options: FlextLdapModelsLdap.SyncOptions,
-        ) -> r[m.Ldap.SyncStats]:
-            """Sync entries in batch mode with progress tracking.
-
-            Business Rules:
-                - Iterates entries in list order (preserves LDIF file order)
-                - Uses ``FlextLdapOperations.is_already_exists_error()`` for
-                  idempotent detection (LDAP error 68 / entryAlreadyExists)
-                - Duration is set to 0.0 (caller computes actual duration)
-                - Progress callback receives 1-based index for user-friendly display
-
-            Audit Implications:
-                - Returns detailed counts: added, skipped (existing), failed
-                - Progress callback enables real-time audit logging
-                - Entry DN extraction uses u.Ldif.DN.get_dn_value()
-
-            Args:
-                entries: List of LDIF entries to add to the directory.
-                _options: Sync options including progress_callback for monitoring.
-
-            Returns:
-                r[SyncStats]: Statistics with added/skipped/failed
-                counts and zero duration (caller updates).
-
-            """
-            stats_builder: dict[str, int] = {"added": 0, "skipped": 0, "failed": 0}
-
-            def process_entry(
-                idx_entry: tuple[int, m.Ldif.Entry],
-            ) -> m.Ldap.LdapBatchStats:
-                """Process single entry and update accumulator."""
-                _idx, entry = idx_entry
-                add_result = self._ops.add(entry)
-                if add_result.is_success:
-                    stats_builder["added"] += 1
-                    entry_stats = m.Ldap.LdapBatchStats(synced=1, skipped=0, failed=0)
-                else:
-                    error_str = str(add_result.error) if add_result.error else ""
-                    is_skipped = FlextLdapOperations.is_already_exists_error(error_str)
-                    if is_skipped:
-                        stats_builder["skipped"] += 1
-                        entry_stats = m.Ldap.LdapBatchStats(
-                            synced=0, skipped=1, failed=0
-                        )
-                    else:
-                        stats_builder["failed"] += 1
-                        entry_stats = m.Ldap.LdapBatchStats(
-                            synced=0, skipped=0, failed=1
-                        )
-                return entry_stats
-
-            logger = logging.getLogger(__name__)
-            for idx_entry in enumerate(entries, 1):
-                try:
-                    _ = process_entry(idx_entry)
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    OSError,
-                    RuntimeError,
-                    ImportError,
-                ):
-                    logger.debug(
-                        "Failed to process entry in sync batch, skipping (entry_index=%s)",
-                        idx_entry[0],
-                        exc_info=True,
-                    )
-                    continue
-            return r[m.Ldap.SyncStats].ok(
-                m.Ldap.SyncStats.from_counters(
-                    synced=stats_builder["added"],
-                    skipped=stats_builder["skipped"],
-                    failed=stats_builder["failed"],
-                    duration_seconds=0.0,
-                )
-            )
-
-    class BaseDNTransformer:
-        """Transform entry base DNs when source and target differ.
-
-        Handles DN translation for cross-domain migrations where LDIF entries
-        from one directory (e.g., ``dc=old,dc=com``) need to be imported into
-        another (e.g., ``dc=new,dc=com``).
-
-        Business Rules:
-            - Transformation is case-INSENSITIVE for DN matching (RFC 4514)
-            - Returns original list unchanged if source == target (no-op optimization)
-            - Uses ``model_copy(update=...)`` for immutable Pydantic entry updates
-            - Only the DN suffix is replaced; RDN components are preserved
-            - Entries not matching source_basedn are passed through unchanged
-
-        Audit Implications:
-            - DN transformation is a pure function (no side effects)
-            - Original entries are NOT modified (immutable pattern)
-            - Enables audit trail correlation between source and target DNs
-
-        """
-
-        @classmethod
-        def _convert_to_entry(cls, entry: m.Ldif.Entry) -> m.Ldif.Entry:
-            """Return entry using m.Ldif.Entry protocol.
-
-            Entries implement m.Ldif.Entry protocol (service layer interface).
-
-            Args:
-                entry: Entry conforming to m.Ldif.Entry protocol.
-
-            Returns:
-                m.Ldif.Entry: Entry instance.
-
-            """
-            return entry
-
-        @classmethod
-        def transform(
-            cls, entries: list[m.Ldif.Entry], source_basedn: str, target_basedn: str
-        ) -> list[m.Ldif.Entry]:
-            """Rewrite entry DNs from ``source_basedn`` to ``target_basedn``.
-
-            Business Rules:
-                - Case-insensitive matching via ``lower()`` comparison (RFC 4514)
-                - No transformation if source equals target (returns input list)
-                - Creates new Entry instances via ``model_copy()`` (immutable)
-                - DN replacement uses simple string replace (efficient)
-                - Non-matching entries are included unchanged in result
-
-            Audit Implications:
-                - Returns new list; original entries are unchanged
-                - Can be used for dry-run validation before actual sync
-
-            Args:
-                entries: Source LDIF entries with DNs containing source_basedn.
-                source_basedn: The base DN suffix to replace (e.g., "dc=old,dc=com").
-                target_basedn: The replacement base DN (e.g., "dc=new,dc=com").
-
-            Returns:
-                list[Entry]: New list with transformed DNs. Original entries
-                unchanged if source_basedn == target_basedn.
-
-            """
-            if source_basedn == target_basedn:
-                return entries
-
-            def transform_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
-                """Transform entry DN if source_basedn matches."""
-                if entry.dn is None:
-                    return entry
-                dn_str = u.Ldif.DN.get_dn_value(entry.dn)
-                if source_basedn.lower() in dn_str.lower():
-                    new_dn_value = re.sub(
-                        re.escape(source_basedn),
-                        target_basedn,
-                        dn_str,
-                        flags=re.IGNORECASE,
-                    )
-                    return m.Ldif.Entry(
-                        dn=m.Ldif.DN(value=new_dn_value), attributes=entry.attributes
-                    )
-                return entry
-
-            return [transform_entry(entry) for entry in entries]
-
-    def __init__(self, operations: FlextLdapOperations | None = None) -> None:
-        """Initialize the sync service with a required operations instance.
-
-        Business Rules:
-            - Operations parameter is REQUIRED (raises TypeError if None)
-            - FlextLdif singleton is resolved at construction for LDIF parsing
-            - Datetime generator uses u for test injection
-            - Type validation ensures operations is FlextLdapOperations instance
-
-        Audit Implications:
-            - Service instantiation is deterministic (no async initialization)
-            - Type errors surface immediately at construction time
-
-        Args:
-            operations: Required FlextLdapOperations instance with active
-                connection. Raises TypeError if None or wrong type.
-
-        Raises:
-            TypeError: If operations is None or not FlextLdapOperations.
-
-        """
-        super().__init__()
-        if operations is None:
-            error_msg = "operations parameter is required"
-            raise TypeError(error_msg)
-        self._operations = operations
-        self._ldif = FlextLdif()
-        self._generate_datetime_utc = u.generate_datetime_utc
-
-    @override
-    def execute(self) -> r[m.Ldap.SyncStats]:
-        """Return an empty stats payload to indicate service readiness.
-
-        Implements the ``FlextService.execute()`` contract for service health
-        checks. Returns zero-counter stats to indicate the sync service is
-        ready to accept sync requests.
-
-        Business Rules:
-            - Always returns success with empty/zero SyncStats
-            - Does NOT check operations service connectivity
-            - ``noqa: PLR6301`` allows self-reference for potential future use
-            - ``_kwargs`` absorbs extra arguments for interface compatibility
-
-        Audit Implications:
-            - Can be called by service orchestrators for readiness checks
-            - Does not perform actual sync operations (lightweight)
-            - Zero counters indicate no sync work performed
-
-        Returns:
-            r[SyncStats]: Always ok with ``from_counters()`` defaults
-            (synced=0, skipped=0, failed=0, duration_seconds=0.0).
-
-        """
-        return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
-
-    def sync_ldif_file(
-        self, ldif_file: Path, options: FlextLdapModelsLdap.SyncOptions
-    ) -> r[m.Ldap.SyncStats]:
-        """Parse and sync an LDIF file into the directory.
-
-        Main entry point for file-based LDIF synchronization. Validates file
-        existence, parses entries using FlextLdif, and delegates to the sync
-        pipeline for base DN transformation and batch processing.
-
-        Business Rules:
-            - File existence is validated BEFORE parsing (fail-fast pattern)
-            - Parsing uses FlextLdif.parse() with "rfc" server type (RFC 2849)
-            - Duration timing starts at method entry (includes parse time)
-            - Empty files or parse failures return structured failures
-            - Processing delegates to ``_process_entries()`` for testability
-
-        Audit Implications:
-            - File path is included in error messages for troubleshooting
-            - Parse errors include FlextLdif error details
-            - Duration captures full sync time including parsing
-            - Returns SyncStats for compliance reporting
-
-        Args:
-            ldif_file: Path to the LDIF file to parse and sync.
-            options: Sync options including base DN transformation and
-                progress callback settings.
-
-        Returns:
-            r[SyncStats]: Success with sync statistics or failure
-            with error message (file not found or parse error).
-
-        """
-        if not ldif_file.exists():
-            return r[m.Ldap.SyncStats].fail(f"LDIF file not found: {ldif_file}")
-        start_time = self._generate_datetime_utc()
+from typing import TypeIs
+
+from flext_ldap import c, m, p, t, u
+from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldif import r
+
+
+class FlextLdapSync(FlextLdapOperations):
+    """MRO mixin that syncs parsed LDIF phases into LDAP."""
+
+    @staticmethod
+    def multi_phase_callback(
+        callback: t.Ldap.ProgressCallbackUnion | None,
+    ) -> TypeIs[t.Ldap.MultiPhaseProgressCallback]:
+        """Return ``True`` when callback expects the multi-phase signature."""
+        if callback is None:
+            return False
         try:
-            ldif_content = ldif_file.read_text(encoding="utf-8")
-        except (
-            ValueError,
-            TypeError,
-            KeyError,
-            AttributeError,
-            OSError,
-            RuntimeError,
-            ImportError,
-        ) as e:
-            return r[m.Ldap.SyncStats].fail(f"Failed to read LDIF file: {e!s}")
-        parse_result = self._ldif.parse(ldif_content)
-        if parse_result.is_failure:
-            error_msg = (
-                str(parse_result.error) if parse_result.error else "Unknown error"
-            )
-            return r[m.Ldap.SyncStats].fail(f"Failed to parse LDIF file: {error_msg}")
-        entries_raw = parse_result.value
-        entries: list[m.Ldif.Entry] = list(entries_raw)
-        return self._process_entries(entries, options, start_time)
+            signature: inspect.Signature = inspect.signature(callback)
+        except c.EXC_BASIC_TYPE as exc:
+            msg = f"progress_callback {callback!r} has an uninspectable signature"
+            raise TypeError(msg) from exc
+        parameter_count: int = len(signature.parameters)
+        matches_multi_phase: bool = parameter_count == c.Ldap.MULTI_PHASE_PARAM_COUNT
+        return matches_multi_phase
 
-    def _process_entries(
+    @staticmethod
+    def single_phase_callback(
+        callback: t.Ldap.ProgressCallbackUnion | None,
+    ) -> TypeIs[t.Ldap.LdapProgressCallback]:
+        """Return ``True`` when callback expects the single-phase signature."""
+        if callback is None:
+            return False
+        try:
+            signature: inspect.Signature = inspect.signature(callback)
+        except c.EXC_BASIC_TYPE as exc:
+            msg = f"progress_callback {callback!r} has an uninspectable signature"
+            raise TypeError(msg) from exc
+        parameter_count: int = len(signature.parameters)
+        matches_single_phase: bool = parameter_count == c.Ldap.SINGLE_PHASE_PARAM_COUNT
+        return matches_single_phase
+
+    @staticmethod
+    def _make_phase_progress_callback(
+        phase: str,
+        settings: m.Ldap.SyncPhaseConfig,
+    ) -> t.Ldap.LdapProgressCallback | None:
+        """Normalize configured callbacks to the single-phase protocol."""
+        callback = settings.progress_callback
+        if callback is None:
+            return None
+        if FlextLdapSync.multi_phase_callback(callback):
+
+            def progress_callback(
+                current: int,
+                total: int,
+                dn: str,
+                stats: p.Ldap.LdapBatchStats,
+            ) -> None:
+                callback(phase, current, total, dn, stats)
+
+            return progress_callback
+        if FlextLdapSync.single_phase_callback(callback):
+            return callback
+        try:
+            sig = inspect.signature(callback)
+            param_count = len(sig.parameters)
+            msg = (
+                f"progress_callback has {param_count} parameters but must have "
+                f"{c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase)"
+            )
+        except c.EXC_TYPE_VALIDATION:
+            msg = (
+                f"progress_callback {callback!r} has an incompatible signature: "
+                f"must have {c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase) parameters"
+            )
+        raise TypeError(msg)
+
+    def sync_multiple_phases(
         self,
-        entries: list[m.Ldif.Entry],
-        options: FlextLdapModelsLdap.SyncOptions,
-        start_time: datetime,
-    ) -> r[m.Ldap.SyncStats]:
-        """Process parsed entries through the sync pipeline.
-
-        Internal method that handles the post-parsing workflow: base DN
-        transformation, batch synchronization, and duration calculation.
-        Separated from ``sync_ldif_file`` for testability.
-
-        Business Rules:
-            - Empty entry list returns zero-counter stats (no error)
-            - Base DN transformation applied ONLY if both source and target set
-            - BatchSync instance is created per-call (stateless helper)
-            - Duration is computed as delta from start_time to completion
-            - Stats are updated via ``model_copy()`` for immutable pattern
-
-        Audit Implications:
-            - Empty results are valid (return ok with zero counters)
-            - Duration accuracy depends on provided start_time
-            - Stats include transformed entries (post-DN-transformation)
-
-        Args:
-            entries: Parsed LDIF entries (may be empty).
-            options: Sync options with base DN settings and progress callback.
-            start_time: UTC timestamp from caller for duration calculation.
-
-        Returns:
-            r[SyncStats]: Success with sync statistics including
-            duration. Failure propagated from BatchSync if any.
-
-        Note:
-            This is an internal method (prefixed with ``_``). External callers
-            should use ``sync_ldif_file()`` instead.
-
-        """
-        if not entries:
-            return r[m.Ldap.SyncStats].ok(m.Ldap.SyncStats.from_counters())
-        if options.source_basedn and options.target_basedn:
-            entries_transformed = self.BaseDNTransformer.transform(
-                entries, options.source_basedn, options.target_basedn
+        phase_files: t.MappingKV[str, Path],
+        *,
+        settings: m.Ldap.SyncPhaseConfig | None = None,
+    ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:
+        """Synchronize multiple LDIF phase files sequentially."""
+        sync_config = settings or m.Ldap.SyncPhaseConfig.model_validate({})
+        start_time = u.now()
+        phase_results: MutableMapping[str, m.Ldap.PhaseSyncResult] = {}
+        overall_success = True
+        for phase_name, phase_file in phase_files.items():
+            if not phase_file.exists():
+                return r[m.Ldap.MultiPhaseSyncResult].fail(
+                    f"Phase file not found: {phase_file}",
+                )
+            phase_result = self._process_single_phase(
+                phase_name,
+                phase_file,
+                sync_config,
             )
-            entries = entries_transformed
-        batch_result = self.BatchSync(self._operations).sync(entries, options)
-        if batch_result.is_failure:
-            return batch_result
-        stats = batch_result.value
-        duration = (self._generate_datetime_utc() - start_time).total_seconds()
-        return r[m.Ldap.SyncStats].ok(
-            stats.model_copy(update={"duration_seconds": duration})
+            if phase_result.failure:
+                self.logger.error(
+                    "Phase sync failed",
+                    phase=phase_name,
+                    error=str(phase_result.error),
+                )
+                if sync_config.stop_on_error:
+                    return r[m.Ldap.MultiPhaseSyncResult].fail(
+                        f"Phase '{phase_name}' failed: {phase_result.error}",
+                    )
+                overall_success = False
+                continue
+            phase_results[phase_name] = phase_result.value
+        phase_values = list(phase_results.values())
+        total_entries = sum(phase_result.total_entries for phase_result in phase_values)
+        total_synced = sum(phase_result.synced for phase_result in phase_values)
+        total_failed = sum(phase_result.failed for phase_result in phase_values)
+        total_skipped = sum(phase_result.skipped for phase_result in phase_values)
+        total_processed = total_synced + total_failed + total_skipped
+        overall_success_rate = (
+            (total_synced + total_skipped) / total_processed * 100
+            if total_processed > 0
+            else 0.0
         )
+        sync_result = m.Ldap.MultiPhaseSyncResult.model_validate({
+            "phase_results": phase_results,
+            "total_entries": total_entries,
+            "total_synced": total_synced,
+            "total_failed": total_failed,
+            "total_skipped": total_skipped,
+            "overall_success_rate": overall_success_rate,
+            "total_duration_seconds": (u.now() - start_time).total_seconds(),
+            "overall_success": overall_success,
+        })
+        if not overall_success:
+            return r[m.Ldap.MultiPhaseSyncResult].fail(
+                f"Multi-phase sync completed with failures: {total_failed} entries failed"
+            )
+        return r[m.Ldap.MultiPhaseSyncResult].ok(sync_result)
+
+    def sync_phase_entries(
+        self,
+        ldif_file_path: Path,
+        phase_name: str,
+        *,
+        settings: m.Ldap.SyncPhaseConfig | None = None,
+    ) -> p.Result[m.Ldap.PhaseSyncResult]:
+        """Synchronize a single phase file into LDAP."""
+        sync_config = settings or m.Ldap.SyncPhaseConfig.model_validate({})
+        start_time = u.now()
+        parse_result = self._ldif.parse_ldif_file(
+            ldif_file_path,
+            server_type=sync_config.server_type,
+        )
+        if parse_result.failure:
+            error_msg = parse_result.error or "Unknown error"
+            return r[m.Ldap.PhaseSyncResult].fail(
+                f"Failed to parse LDIF file: {error_msg}",
+            )
+        entries = list(parse_result.value.entries)
+        if not entries:
+            return r[m.Ldap.PhaseSyncResult].ok(
+                m.Ldap.PhaseSyncResult.model_validate({
+                    "phase_name": phase_name,
+                    "total_entries": 0,
+                    "synced": 0,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_seconds": 0.0,
+                    "success_rate": 100.0,
+                }),
+            )
+        single_phase_callback = self._prepare_phase_callback(phase_name, sync_config)
+        batch_result = self.batch_upsert(
+            list(entries),
+            progress_callback=single_phase_callback,
+            retry_on_errors=sync_config.retry_on_errors
+            or ["session terminated", "not connected", "invalid messageid", "socket"],
+            max_retries=sync_config.max_retries,
+            stop_on_error=sync_config.stop_on_error,
+        )
+        if batch_result.failure:
+            error_msg = batch_result.error or "Unknown error"
+            return r[m.Ldap.PhaseSyncResult].fail_op("Batch sync", error_msg)
+        batch_stats = batch_result.value
+        duration = (u.now() - start_time).total_seconds()
+        total_processed = batch_stats.synced + batch_stats.failed + batch_stats.skipped
+        success_rate = (
+            (batch_stats.synced + batch_stats.skipped) / total_processed * 100
+            if total_processed > 0
+            else 0.0
+        )
+        return r[m.Ldap.PhaseSyncResult].ok(
+            m.Ldap.PhaseSyncResult.model_validate({
+                "phase_name": phase_name,
+                "total_entries": len(entries),
+                "synced": batch_stats.synced,
+                "failed": batch_stats.failed,
+                "skipped": batch_stats.skipped,
+                "duration_seconds": duration,
+                "success_rate": success_rate,
+            }),
+        )
+
+    def _prepare_phase_callback(
+        self,
+        phase_name: str,
+        settings: m.Ldap.SyncPhaseConfig,
+    ) -> t.Ldap.LdapProgressCallback | None:
+        """Prepare a phase-aware callback from the configured sync callback."""
+        phase_callback = (
+            FlextLdapSync._make_phase_progress_callback(phase_name, settings)
+            or settings.progress_callback
+        )
+        if phase_callback is None:
+            return None
+        if FlextLdapSync.single_phase_callback(phase_callback):
+            return phase_callback
+        if FlextLdapSync.multi_phase_callback(phase_callback):
+
+            def wrapped_callback(
+                current: int,
+                total: int,
+                dn: str,
+                stats: p.Ldap.LdapBatchStats,
+            ) -> None:
+                phase_callback(phase_name, current, total, dn, stats)
+
+            return wrapped_callback
+        try:
+            sig = inspect.signature(phase_callback)
+            param_count = len(sig.parameters)
+            msg = (
+                f"progress_callback has {param_count} parameters but must have "
+                f"{c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase)"
+            )
+        except c.EXC_TYPE_VALIDATION:
+            msg = (
+                f"progress_callback {phase_callback!r} has an incompatible signature: "
+                f"must have {c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
+                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase) parameters"
+            )
+        raise TypeError(msg)
+
+    def _process_single_phase(
+        self,
+        phase_name: str,
+        ldif_path: Path,
+        settings: m.Ldap.SyncPhaseConfig,
+    ) -> p.Result[m.Ldap.PhaseSyncResult]:
+        """Process one phase file with a callback normalized for that phase."""
+        phase_callback = self._prepare_phase_callback(phase_name, settings)
+        return self.sync_phase_entries(
+            ldif_path,
+            phase_name,
+            settings=m.Ldap.SyncPhaseConfig.model_validate({
+                "server_type": settings.server_type,
+                "progress_callback": phase_callback,
+                "retry_on_errors": settings.retry_on_errors,
+                "max_retries": settings.max_retries,
+                "stop_on_error": settings.stop_on_error,
+            }),
+        )
+
+
+__all__: list[str] = ["FlextLdapSync"]

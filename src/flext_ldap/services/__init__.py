@@ -1,56 +1,40 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
-"""LDAP services package.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Services package."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations, LaxStr
-    from flext_ldap.services.sync import FlextLdapSyncService, FlextLdapSyncService as s
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdapConnection": ("flext_ldap.services.connection", "FlextLdapConnection"),
-    "FlextLdapOperations": ("flext_ldap.services.operations", "FlextLdapOperations"),
-    "FlextLdapServerDetector": (
-        "flext_ldap.services.detection",
-        "FlextLdapServerDetector",
-    ),
-    "FlextLdapSyncService": ("flext_ldap.services.sync", "FlextLdapSyncService"),
-    "LaxStr": ("flext_ldap.services.operations", "LaxStr"),
-    "s": ("flext_ldap.services.sync", "FlextLdapSyncService"),
-}
-
-__all__ = [
-    "FlextLdapConnection",
-    "FlextLdapOperations",
-    "FlextLdapServerDetector",
-    "FlextLdapSyncService",
-    "LaxStr",
-    "s",
-]
+    from flext_ldap.services.api_runtime import (
+        FlextLdapApiRuntime as FlextLdapApiRuntime,
+    )
+    from flext_ldap.services.connection import (
+        FlextLdapConnection as FlextLdapConnection,
+    )
+    from flext_ldap.services.detection import (
+        FlextLdapServerDetector as FlextLdapServerDetector,
+    )
+    from flext_ldap.services.operations import (
+        FlextLdapOperations as FlextLdapOperations,
+    )
+    from flext_ldap.services.sync import FlextLdapSync as FlextLdapSync
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".api_runtime": ("FlextLdapApiRuntime",),
+        ".connection": ("FlextLdapConnection",),
+        ".detection": ("FlextLdapServerDetector",),
+        ".operations": ("FlextLdapOperations",),
+        ".sync": ("FlextLdapSync",),
+    },
+)
 
 
-def __getattr__(name: str) -> Any:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

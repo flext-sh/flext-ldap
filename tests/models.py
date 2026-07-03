@@ -10,66 +10,47 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsModels
+from typing import override
 
-from flext_ldap import FlextLdapModels
+from flext_tests import FlextTestsModels, r
+
+from flext_ldap import m
+from tests.base import s
+from tests.protocols import p
 
 
-class TestsFlextLdapModels(FlextTestsModels, FlextLdapModels):
-    """Test models - composição de FlextTestsModels + FlextLdapModels.
+class TestsFlextLdapModels(m, FlextTestsModels):
+    """Test models - composição de TestsFlextModels + m."""
 
-    Hierarquia:
-    - FlextTestsModels: Utilitários de teste genéricos
-    - FlextLdapModels: Models de domínio do projeto
-    - TestsFlextLdapModels: Composição + namespace .Tests
+    class Ldap(m.Ldap):
+        """LDAP test models."""
 
-    Access patterns:
-    - tm.Tests.* - Test fixtures (ConnectionConfig, SearchOptions, etc.)
-    - m.Ldap.* - Production domain models
-    """
+        class Tests:
+            """Test fixture models namespace."""
 
-    class Tests(FlextTestsModels.Tests):
-        """Test fixture models namespace.
+            FAIL_ERROR_MESSAGE = "nope"
 
-        Convenience aliases for test-only shortcuts.
-        Production code should use m.Ldap.* pattern.
-        """
+            class SuccessService(s[bool]):
+                """Test service that always succeeds."""
 
-        # Connection models for testing
-        ConnectionConfig = FlextLdapModels.Ldap.ConnectionConfig
-        SearchOptions = FlextLdapModels.Ldap.SearchOptions
+                @override
+                def execute(self) -> p.Result[bool]:
+                    return r[bool].ok(True)
 
-        # Sync models for testing
-        SyncOptions = FlextLdapModels.Ldap.SyncOptions
-        SyncStats = FlextLdapModels.Ldap.SyncStats
-        SyncPhaseConfig = FlextLdapModels.Ldap.SyncPhaseConfig
-        LdapBatchStats = FlextLdapModels.Ldap.LdapBatchStats
+            class FailService(s[bool]):
+                """Test service that always fails."""
 
-        # Result models for testing
-        UpsertResult = FlextLdapModels.Ldap.UpsertResult
-        BatchUpsertResult = FlextLdapModels.Ldap.BatchUpsertResult
-        OperationResult = FlextLdapModels.Ldap.OperationResult
-        SearchResult = FlextLdapModels.Ldap.SearchResult
-        LdapOperationResult = FlextLdapModels.Ldap.LdapOperationResult
-        PhaseSyncResult = FlextLdapModels.Ldap.PhaseSyncResult
-        MultiPhaseSyncResult = FlextLdapModels.Ldap.MultiPhaseSyncResult
-
-        # Metadata models for testing
-        ConversionMetadata = FlextLdapModels.Ldap.ConversionMetadata
-
-        # Collection models for testing
-        CollectionsConfig = FlextLdapModels.Collections.Config
-        CollectionsOptions = FlextLdapModels.Collections.Options
-        CollectionsResults = FlextLdapModels.Collections.Results
-        CollectionsStatistics = FlextLdapModels.Collections.Statistics
+                @override
+                def execute(self) -> p.Result[bool]:
+                    return r[bool].fail(
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
+                    )
 
 
 # Short aliases for tests
-tm = TestsFlextLdapModels
 m = TestsFlextLdapModels
 
-__all__ = [
+__all__: list[str] = [
     "TestsFlextLdapModels",
     "m",
-    "tm",
 ]

@@ -1,29 +1,37 @@
-"""Version and package metadata using importlib.metadata.
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Package version and metadata for flext-ldap.
 
-Single source of truth pattern following flext-core standards.
-All metadata comes from pyproject.toml via importlib.metadata.
+Subclass of ``FlextVersion`` — overrides only ``_metadata``.
+All derived attributes (``__version__``, ``__title__``, etc.) are
+computed automatically via ``FlextVersion.__init_subclass__``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from importlib.metadata import metadata
+from importlib.metadata import PackageMetadata, metadata
 
-_metadata = metadata("flext-ldap")
-__version__: str = _metadata.get("Version", "0.12.0-dev")
-__version_info__: tuple[int | str, ...] = tuple(
-    int(part) if part.isdigit() else part for part in __version__.split(".")
-)
-__title__: str = _metadata.get("Name", "flext-ldap")
-__description__: str = _metadata.get("Summary", "FLEXT LDAP Client Library")
-__author__: str = _metadata.get("Author", "FLEXT Team")
-__author_email__: str = _metadata.get("Author-Email", "")
-__license__: str = _metadata.get("License", "MIT")
-__url__: str = _metadata.get("Homepage", "https://github.com/flext-sh/flext")
-__all__ = [
+from flext_core.__version__ import FlextVersion
+
+
+class FlextLdapVersion(FlextVersion):
+    """flext-ldap version — MRO-derived from FlextVersion."""
+
+    _metadata: PackageMetadata = metadata("flext-ldap")
+
+
+__version__ = FlextLdapVersion.__version__
+__version_info__ = FlextLdapVersion.__version_info__
+__title__ = FlextLdapVersion.__title__
+__description__ = FlextLdapVersion.__description__
+__author__ = FlextLdapVersion.__author__
+__author_email__ = FlextLdapVersion.__author_email__
+__license__ = FlextLdapVersion.__license__
+__url__ = FlextLdapVersion.__url__
+__all__: list[str] = [
+    "FlextLdapVersion",
     "__author__",
     "__author_email__",
     "__description__",

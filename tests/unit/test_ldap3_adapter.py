@@ -1,21 +1,7 @@
-"""Unit tests for flext_ldap.adapters.ldap3.Ldap3Adapter.
-
-**Modules Tested:**
-- `flext_ldap.adapters.ldap3.Ldap3Adapter` - LDAP3 adapter service
-
-**Test Scope:**
-- Adapter initialization
-- Execute method (health check)
-- ConnectionManager static methods
-- ResultConverter static methods
-- AttributeNormalizer static methods
-- Method existence validation
-
-All tests use real functionality without mocks, leveraging flext-core test utilities
-and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
+"""Unit tests for flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter.
 
 Architecture: Single class per module following FLEXT patterns.
-Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,84 +10,50 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
-from flext_ldap import m
-from flext_ldap.adapters.ldap3 import Ldap3Adapter
+from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdap3Adapter:
-    """Comprehensive tests for Ldap3Adapter using factories and DRY principles.
+class TestsFlextLdapLdap3Adapter:
+    """Comprehensive tests for FlextLdapLdap3Adapter.
 
-    Architecture: Single class per module following FLEXT patterns.
-    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
-
-    Uses parametrized tests and constants for maximum code reuse.
-    All helper logic is nested within this single class following FLEXT patterns.
+    All test data comes from c.Ldap.Tests.* — zero inline constants.
     """
 
-    @classmethod
-    def _create_connection_config(cls) -> m.Ldap.ConnectionConfig:
-        """Factory method for creating connection config instances."""
-        return m.Ldap.ConnectionConfig(
-            host="localhost", port=389, use_ssl=False, use_tls=False, timeout=5
-        )
-
-    def test_adapter_initialization(self) -> None:
-        """Test adapter initialization."""
-        adapter = Ldap3Adapter()
-        tm.that(adapter, is_=Ldap3Adapter, none=False)
-
     def test_execute_returns_success(self) -> None:
-        """Test execute() returns failure when not connected."""
-        adapter = Ldap3Adapter()
+        adapter = FlextLdapLdap3Adapter()
         result = adapter.execute()
-        tm.fail(result, has="Not connected")
+        u.Ldap.Tests.fail(result, has=c.Ldap.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR)
 
-    def test_connection_manager_create_server_with_ssl(self) -> None:
-        """Test ConnectionManager.create_server with SSL."""
-        config = m.Ldap.ConnectionConfig(
-            host="localhost", port=636, use_ssl=True, use_tls=False, timeout=5
+    @pytest.mark.parametrize("case", c.Ldap.Tests.Ldap3ServerCase)
+    def test_connection_manager_create_server_modes(
+        self,
+        case: c.Ldap.Tests.Ldap3ServerCase,
+    ) -> None:
+        port, use_ssl, use_tls = c.Ldap.Tests.LDAP3_SERVER_SCENARIOS[case]
+        settings = m.Ldap.ConnectionConfig(
+            host=c.LOCALHOST,
+            port=port,
+            use_ssl=use_ssl,
+            use_tls=use_tls,
+            timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
-        server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.that(server, none=False)
-        tm.that(getattr(server, "host", ""), eq="localhost")
-        tm.that(getattr(server, "port", 0), eq=636)
-
-    def test_connection_manager_create_server_without_ssl(self) -> None:
-        """Test ConnectionManager.create_server without SSL."""
-        config = self._create_connection_config()
-        server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.that(server, none=False)
-        tm.that(getattr(server, "host", ""), eq="localhost")
-        tm.that(getattr(server, "port", 0), eq=389)
-
-    def test_connection_manager_create_server_with_tls(self) -> None:
-        """Test ConnectionManager.create_server with TLS."""
-        config = m.Ldap.ConnectionConfig(
-            host="localhost", port=389, use_ssl=False, use_tls=True, timeout=5
+        server = FlextLdapLdap3Adapter.ConnectionManager.create_server(settings)
+        assert server is not None
+        u.Ldap.Tests.that(
+            getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
+            eq=c.LOCALHOST,
         )
-        server = Ldap3Adapter.ConnectionManager.create_server(config)
-        tm.that(server, none=False)
-        tm.that(getattr(server, "host", ""), eq="localhost")
-        tm.that(getattr(server, "port", 0), eq=389)
-
-    def test_adapter_inner_classes_exist(self) -> None:
-        """Test that inner classes exist."""
-        assert "ConnectionManager" in Ldap3Adapter.__dict__
-        assert "ResultConverter" in Ldap3Adapter.__dict__
-        assert isinstance(Ldap3Adapter.ConnectionManager, type)
-        assert isinstance(Ldap3Adapter.ResultConverter, type)
-
-    def test_connection_manager_static_methods_exist(self) -> None:
-        """Test that static methods exist on ConnectionManager."""
-        assert "create_server" in Ldap3Adapter.ConnectionManager.__dict__
-        tm.that(callable(Ldap3Adapter.ConnectionManager.create_server), eq=True)
-
-    def test_adapter_methods_exist(self) -> None:
-        """Test that all expected methods exist on adapter."""
-        adapter = Ldap3Adapter()
-        tm.that(hasattr(adapter, "execute"), eq=True)
-        tm.that(callable(adapter.execute), eq=True)
+        u.Ldap.Tests.that(
+            getattr(
+                server,
+                c.Ldap.Tests.FIELD_PORT,
+                c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
+            ),
+            eq=port,
+        )

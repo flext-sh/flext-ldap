@@ -28,7 +28,7 @@
   - [Validation Best Practices](#validation-best-practices)
 - [🎯 Module Coverage Matrix](#-module-coverage-matrix)
 - [🔧 Common Patterns](#-common-patterns)
-  - [Pattern 1: Basic FlextLdap Usage](#pattern-1-basic-flextldap-usage)
+  - [Pattern 1: Basic ldap Usage](#pattern-1-basic-flextldap-usage)
   - [Pattern 2: Context Manager](#pattern-2-context-manager)
   - [Pattern 3: r Error Handling](#pattern-3-flextresult-error-handling)
   - [Pattern 4: Validation Before Operations](#pattern-4-validation-before-operations)
@@ -43,7 +43,7 @@
 
 <!-- TOC END -->
 
-**12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **FlextLdap API** (api.py) as the primary interface.
+**12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **ldap API** (api.py) as the primary interface.
 
 ## 📚 Overview
 
@@ -51,7 +51,7 @@ These examples showcase enterprise-grade LDAP operations using clean, maintainab
 
 **Key Principles:**
 
-- ✅ **ALWAYS use api.py (FlextLdap)** as the primary interface
+- ✅ **ALWAYS use api.py (ldap)** as the primary interface
 - ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
 - ✅ **r patterns** for explicit error handling (NO try/except fallbacks)
 - ✅ **Type-safe** with Python 3.13+ patterns
@@ -102,7 +102,7 @@ python examples/02_search_operations.py
 
 ### 01. Basic Operations (`01_basic_operations.py`)
 
-**Purpose**: Fundamental LDAP CRUD operations using FlextLdap API
+**Purpose**: Fundamental LDAP CRUD operations using ldap API
 
 **Demonstrates:**
 
@@ -114,7 +114,7 @@ python examples/02_search_operations.py
 - Configuration setup (FlextLdapSettings)
 - Constants usage (FlextLdapConstants)
 
-**Modules**: api.py, models.py, config.py, constants.py
+**Modules**: api.py, models.py, settings.py, constants.py
 
 **Run:**
 
@@ -200,13 +200,13 @@ ______________________________________________________________________
 
 ### 04. LDIF Operations (`04_ldif_operations.py`)
 
-**Purpose**: LDIF file import/export with FlextLdif integration
+**Purpose**: LDIF file import/export with ldif integration
 
 **Demonstrates:**
 
 - Import entries from LDIF files (import_from_ldif)
 - Export entries to LDIF files (export_to_ldif)
-- FlextLdif integration and availability checking
+- ldif integration and availability checking
 - Entry model usage (m.Entry)
 - LDIF round-trip operations (import → modify → export)
 
@@ -222,7 +222,7 @@ python examples/04_ldif_operations.py
 
 **Expected Output:**
 
-- FlextLdif availability check
+- ldif availability check
 - Sample LDIF file creation
 - LDIF import with entry parsing
 - LDIF export with file creation
@@ -246,7 +246,7 @@ ______________________________________________________________________
 - Entry validation for servers (validate_entry_for_server)
 - Server-specific attributes (get_server_specific_attributes)
 
-**Modules**: api.py, servers/, entry_adapter.py, quirks_integration.py, schema.py
+**Modules**: api.py, servers/, entry_adapter.py, servers_integration.py, schema.py
 
 **Run:**
 
@@ -309,7 +309,7 @@ ______________________________________________________________________
 - Retry patterns with exponential backoff
 - Bulk operations with batching
 - Complete r error handling patterns
-- Exception handling with FlextExceptions
+- Exception handling with e
 - Performance optimization techniques
   - Attribute filtering
   - Scope limitation
@@ -368,7 +368,7 @@ ______________________________________________________________________
 
 ### 09. Schema Operations (`09_schema_operations.py`)
 
-**Purpose**: LDAP schema discovery and server quirks handling
+**Purpose**: LDAP schema discovery and server servers handling
 
 **Demonstrates:**
 
@@ -377,10 +377,10 @@ ______________________________________________________________________
 - Object class and attribute type inspection
 - Server-specific schema handling
 - FlextLdapSchema for schema operations
-- FlextLdapQuirksIntegration for server adaptation
+- FlextLdapServersIntegration for server adaptation
 - Server capabilities discovery
 
-**Modules**: api.py, schema.py, quirks_integration.py
+**Modules**: api.py, schema.py, servers_integration.py
 
 **Run:**
 
@@ -392,7 +392,7 @@ python examples/09_schema_operations.py
 
 - Server type detection results
 - Schema subentry DN for different servers
-- Server quirks detection
+- Server servers detection
 - Schema search operations
 - Server capabilities comprehensive report
 
@@ -413,7 +413,7 @@ ______________________________________________________________________
 - Retry patterns with exponential backoff
 - Multiple connection management
 
-**Modules**: api.py, connection_manager.py (conceptual), config.py
+**Modules**: api.py, connection_manager.py (conceptual), settings.py
 
 **Run:**
 
@@ -558,7 +558,7 @@ ______________________________________________________________________
 
    - Direct method calls
    - Context manager pattern
-   - Parameter object pattern
+   - Parameter t.JsonValue pattern
    - Convenience methods
    - Batch operations
 
@@ -713,17 +713,17 @@ ______________________________________________________________________
 
 | Module                    | Examples               | Functionality Demonstrated                             |
 | ------------------------- | ---------------------- | ------------------------------------------------------ |
-| **api.py (FlextLdap)**    | ALL                    | Primary facade - all operations                        |
+| **api.py (ldap)**         | ALL                    | Primary facade - all operations                        |
 | **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
 | **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
-| **config.py**             | 01, 10                 | FlextLdapSettings configuration, connection management |
+| **settings.py**           | 01, 10                 | FlextLdapSettings configuration, connection management |
 | **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                             |
 | **validations.py**        | 02, 06                 | DN, filter validation                                  |
 | **authentication.py**     | 03                     | User authentication flows                              |
 | **search.py**             | 02                     | Search operations                                      |
 | **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization     |
 | **servers/**              | 05                     | Server-specific operations                             |
-| **quirks_integration.py** | 05, 09                 | Server quirks handling, ACL/paging/timeout quirks      |
+| **servers_integration.py** | 05, 09                 | Server servers handling, ACL/paging/timeout servers      |
 | **exceptions.py**         | 07                     | Error handling                                         |
 | **schema.py**             | 09                     | Schema discovery, server detection                     |
 | **acl/manager.py**        | 08                     | ACL management                                         |
@@ -741,19 +741,19 @@ ______________________________________________________________________
 
 ## 🔧 Common Patterns
 
-### Pattern 1: Basic FlextLdap Usage
+### Pattern 1: Basic ldap Usage
 
-```python
-from flext_ldap import FlextLdap
+```python notest
+from flext_ldap import ldap
 from flext_ldap import FlextLdapSettings
 
 # Create and configure
-config = FlextLdapSettings(
+settings = FlextLdapSettings(
     ldap_server_uri="ldap://localhost:389",
     ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
 )
-api = FlextLdap()
+api = ldap()
 
 # Connect
 result = api.connect()
@@ -770,14 +770,14 @@ api.unbind()
 
 ### Pattern 2: Context Manager
 
-```python
+```python notest
 from contextlib import contextmanager
-from flext_ldap import FlextLdap
+from flext_ldap import ldap
 
 
 @contextmanager
 def ldap_connection():
-    api = FlextLdap(config=...)
+    api = ldap(settings=...)
     connect_result = api.connect()
     if connect_result.is_failure:
         raise ConnectionError(connect_result.error)
@@ -794,7 +794,7 @@ with ldap_connection() as api:
 
 ### Pattern 3: r Error Handling
 
-```python
+```python notest
 # Pattern 1: Check before unwrap
 result = api.search(...)
 if result.is_failure:
@@ -816,7 +816,7 @@ def process():
 
 ### Pattern 4: Validation Before Operations
 
-```python
+```python notest
 from flext_ldap import FlextLdapValidations
 
 # Validate DN
@@ -880,7 +880,7 @@ pip install flext-ldif
 
 ## ✅ Best Practices
 
-1. **Always use api.py (FlextLdap)** as the primary interface
+1. **Always use api.py (ldap)** as the primary interface
 1. **Validate inputs** before LDAP operations (DN, filters)
 1. **Handle r** explicitly - check is_success before unwrap
 1. **Use context managers** for automatic resource cleanup

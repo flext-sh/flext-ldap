@@ -1,21 +1,4 @@
-"""Unit tests for flext_ldap.services.sync.FlextLdapSyncService.
-
-**Modules Tested:**
-- `flext_ldap.services.sync.FlextLdapSyncService` - LDIF to LDAP synchronization service
-
-**Test Scope:**
-- Service initialization and dependency injection
-- Execute method (health check)
-- SyncStats model creation
-- BaseDNTransformer functionality
-- BatchSync inner class
-- Method existence validation
-
-All tests use real functionality without mocks, leveraging flext-core test utilities
-and domain-specific helpers to reduce code duplication while maintaining 100% coverage.
-
-Architecture: Single class per module following FLEXT patterns.
-Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
+"""Unit tests for LDAP sync mixins exposed through the public facade.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,160 +6,224 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-from flext_tests import tm
+import tempfile
+from pathlib import Path
 
-from flext_ldap import (
-    FlextLdapConnection,
-    FlextLdapOperations,
-    FlextLdapSettings,
-    FlextLdapSyncService,
-    m,
-)
+import pytest
+
+from flext_ldap import ldap
+from flext_ldap.services.sync import FlextLdapSync
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapSync:
-    """Comprehensive tests for FlextLdapSyncService using factories and DRY principles.
+    """Validate LDAP sync behavior without leaving the public facade pattern."""
 
-    Architecture: Single class per module following FLEXT patterns.
-    Uses t, c, p, m, u, s for test support and e, r, d, x from flext-core.
-
-    Uses parametrized tests and constants for maximum code reuse.
-    All helper logic is nested within this single class following FLEXT patterns.
-    """
-
-    @classmethod
-    def _create_operations(cls) -> FlextLdapOperations:
-        """Factory method for creating operations instances."""
-        connection = FlextLdapConnection(config=FlextLdapSettings())
-        return FlextLdapOperations(connection=connection)
-
-    def test_sync_service_initialization(self) -> None:
-        """Test sync service initialization with operations."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, none=False)
-        tm.that(sync_service, is_=FlextLdapSyncService, none=False)
-
-    def test_sync_service_initialization_with_ldif(self) -> None:
-        """Test sync service initialization with custom ldif."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, none=False)
-        tm.that(sync_service, is_=FlextLdapSyncService, none=False)
-
-    def test_sync_service_initialization_with_datetime_generator(self) -> None:
-        """Test sync service initialization with datetime generator."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, none=False)
-        tm.that(sync_service, is_=FlextLdapSyncService, none=False)
-        tm.that(hasattr(sync_service, "_generate_datetime_utc"), eq=True)
-
-    def test_execute_returns_empty_stats(self) -> None:
-        """Test execute() returns empty sync stats for health check."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        result = sync_service.execute()
-        stats = tm.ok(result)
-        assert isinstance(stats, m.Ldap.SyncStats), "expected SyncStats"
-        tm.that(stats.synced, eq=0)
-        tm.that(stats.skipped, eq=0)
-        tm.that(stats.failed, eq=0)
-        tm.that(stats.total, eq=0)
-
-    def test_sync_stats_creation(self) -> None:
-        """Test SyncStats model creation."""
-        stats = m.Ldap.SyncStats(
-            synced=10, skipped=2, failed=1, total=13, duration_seconds=100.5
+    @staticmethod
+    def _entry(dn: str) -> m.Ldif.Entry:
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes(
+                attributes={},
+                attribute_metadata={},
+            ),
         )
-        tm.that(stats.synced, eq=10)
-        tm.that(stats.skipped, eq=2)
-        tm.that(stats.failed, eq=1)
-        tm.that(stats.total, eq=13)
-        tm.that(stats.duration_seconds, eq=100.5)
 
-    def test_sync_options_creation(self) -> None:
-        """Test SyncOptions model creation."""
-        options = m.Ldap.SyncOptions(
-            source_basedn="dc=old,dc=com", target_basedn="dc=new,dc=com"
+    def test_sync_mixin_execute_is_placeholder(self) -> None:
+        u.Ldap.Tests.fail(FlextLdapSync().execute())
+
+    def test_make_phase_progress_callback_none_when_callback_missing(self) -> None:
+        callback = FlextLdapSync._make_phase_progress_callback(
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            m.Ldap.SyncPhaseConfig(progress_callback=None),
         )
-        tm.that(options.source_basedn, eq="dc=old,dc=com")
-        tm.that(options.target_basedn, eq="dc=new,dc=com")
+        u.Ldap.Tests.that(callback, none=True)
 
-    def test_sync_options_without_transformation(self) -> None:
-        """Test SyncOptions without base DN transformation."""
-        options = m.Ldap.SyncOptions()
-        tm.that(options.source_basedn, eq="")
-        tm.that(options.target_basedn, eq="")
+    def test_make_phase_progress_callback_keeps_single_phase_signature(self) -> None:
+        callback = FlextLdapSync._make_phase_progress_callback(
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            m.Ldap.SyncPhaseConfig(progress_callback=u.Ldap.Tests.single_phase_cb),
+        )
+        u.Ldap.Tests.that(callback, eq=u.Ldap.Tests.single_phase_cb)
 
-    def test_base_dn_transformer_no_transformation(self) -> None:
-        """Test BaseDNTransformer with no transformation needed."""
-        entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=user,dc=example,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={}),
+    def test_make_phase_progress_callback_wraps_multi_phase_signature(self) -> None:
+        observed: list[tuple[str, int, int, str]] = []
+
+        def multi_cb(
+            phase: str,
+            current: int,
+            total: int,
+            dn: str,
+            _stats: p.Ldap.LdapBatchStats,
+        ) -> None:
+            observed.append((phase, current, total, dn))
+
+        callback = FlextLdapSync._make_phase_progress_callback(
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            m.Ldap.SyncPhaseConfig(progress_callback=multi_cb),
+        )
+        stats = m.Ldap.LdapBatchStats(synced=1, failed=0, skipped=0)
+        if callback is not None:
+            callback(1, 2, c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN, stats)
+        u.Ldap.Tests.that(
+            observed,
+            eq=[
+                (
+                    c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                    1,
+                    2,
+                    c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN,
+                )
+            ],
+        )
+
+    def test_make_phase_progress_callback_rejects_invalid_signature(self) -> None:
+        with pytest.raises(TypeError):
+            FlextLdapSync._make_phase_progress_callback(
+                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                m.Ldap.SyncPhaseConfig(
+                    progress_callback=u.Ldap.Tests.invalid_phase_cb,
+                ),
             )
-        ]
-        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
-            entries, source_basedn="", target_basedn=""
-        )
-        tm.that(transformed, len=1)
-        tm.that(transformed[0].dn, none=False)
-        assert transformed[0].dn is not None
-        tm.that(transformed[0].dn.value, eq="cn=user,dc=example,dc=com")
 
-    def test_base_dn_transformer_with_transformation(self) -> None:
-        """Test BaseDNTransformer with base DN transformation."""
-        entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=user,dc=old,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={}),
+    def test_prepare_phase_callback_none_when_callback_missing(self) -> None:
+        callback = FlextLdapSync()._prepare_phase_callback(
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            m.Ldap.SyncPhaseConfig(progress_callback=None),
+        )
+        u.Ldap.Tests.that(callback, none=True)
+
+    def test_prepare_phase_callback_keeps_single_phase_signature(self) -> None:
+        callback = FlextLdapSync()._prepare_phase_callback(
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            m.Ldap.SyncPhaseConfig(progress_callback=u.Ldap.Tests.single_phase_cb),
+        )
+        u.Ldap.Tests.that(callback, eq=u.Ldap.Tests.single_phase_cb)
+
+    def test_prepare_phase_callback_wraps_multi_phase_signature(self) -> None:
+        observed: list[tuple[str, int, int, str]] = []
+
+        def multi_cb(
+            phase: str,
+            current: int,
+            total: int,
+            dn: str,
+            _stats: p.Ldap.LdapBatchStats,
+        ) -> None:
+            observed.append((phase, current, total, dn))
+
+        callback = FlextLdapSync()._prepare_phase_callback(
+            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            m.Ldap.SyncPhaseConfig(progress_callback=multi_cb),
+        )
+        stats = m.Ldap.LdapBatchStats(synced=1, failed=0, skipped=0)
+        if callback is not None:
+            callback(1, 2, c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN, stats)
+        u.Ldap.Tests.that(
+            observed,
+            eq=[
+                (
+                    c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                    1,
+                    2,
+                    c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN,
+                )
+            ],
+        )
+
+    def test_prepare_phase_callback_rejects_invalid_signature(self) -> None:
+        with pytest.raises(TypeError):
+            FlextLdapSync()._prepare_phase_callback(
+                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                m.Ldap.SyncPhaseConfig(
+                    progress_callback=u.Ldap.Tests.invalid_phase_cb,
+                ),
             )
-        ]
-        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
-            entries, source_basedn="dc=old,dc=com", target_basedn="dc=new,dc=com"
-        )
-        assert len(transformed) == 1
-        assert transformed[0].dn is not None
-        assert transformed[0].dn.value == "cn=user,dc=new,dc=com"
 
-    def test_base_dn_transformer_case_insensitive(self) -> None:
-        """Test BaseDNTransformer with case-insensitive matching."""
-        entries = [
-            m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=user,dc=old,dc=com"),
-                attributes=m.Ldif.Attributes(attributes={}),
+    @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    def test_process_single_phase_missing_path_returns_failure(
+        self, phase: str
+    ) -> None:
+        result = FlextLdapSync()._process_single_phase(
+            phase,
+            Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
+            m.Ldap.SyncPhaseConfig(progress_callback=None),
+        )
+        error = u.Ldap.Tests.fail(result)
+        u.Ldap.Tests.that(error, contains="Failed to parse LDIF file")
+
+    @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    def test_sync_phase_entries_missing_path_returns_failure(self, phase: str) -> None:
+        result = ldap.sync_phase_entries(
+            Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
+            phase,
+        )
+        u.Ldap.Tests.fail(result)
+
+    @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    def test_sync_multiple_phases_missing_files_fails(self, phase: str) -> None:
+        result = ldap.sync_multiple_phases({
+            phase: Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
+        })
+        u.Ldap.Tests.fail(result)
+
+    def test_sync_phase_entries_invalid_callback_signature_raises(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file.write_text(
+            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
+        )
+
+    def test_sync_phase_entries_invalid_callback_phase_type_raises(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file.write_text(
+            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
+        )
+
+        with pytest.raises(TypeError):
+            ldap.sync_phase_entries(
+                ldif_file,
+                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                settings=m.Ldap.SyncPhaseConfig(
+                    progress_callback=u.Ldap.Tests.invalid_phase_cb,
+                ),
             )
-        ]
-        transformed = FlextLdapSyncService.BaseDNTransformer.transform(
-            entries, source_basedn="DC=OLD,DC=COM", target_basedn="dc=new,dc=com"
+
+    def test_sync_multiple_phases_with_missing_file_returns_failure(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        missing_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+
+        result = ldap.sync_multiple_phases(
+            {
+                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: missing_file,
+            },
+            settings=m.Ldap.SyncPhaseConfig(stop_on_error=True),
         )
-        tm.that(transformed, len=1)
-        tm.that(transformed[0].dn, none=False)
-        assert transformed[0].dn is not None
-        tm.that(transformed[0].dn.value, eq="cn=user,dc=new,dc=com")
+        u.Ldap.Tests.fail(result)
 
-    def test_batch_sync_initialization(self) -> None:
-        """Test BatchSync inner class initialization."""
-        operations = self._create_operations()
-        batch_sync = FlextLdapSyncService.BatchSync(operations=operations)
-        tm.that(batch_sync, none=False)
-        assert isinstance(batch_sync, FlextLdapSyncService.BatchSync)
+    def test_sync_multiple_phases_phase_failure_returns_fail_when_not_stop_on_error(
+        self,
+    ) -> None:
+        with tempfile.NamedTemporaryFile(suffix=".ldif", delete=False) as tmp:
+            tmp.write(b"not valid ldif content\x00\xff")
+            bad_ldif = Path(tmp.name)
+        result = ldap.sync_multiple_phases(
+            {c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: bad_ldif},
+            settings=m.Ldap.SyncPhaseConfig(stop_on_error=False),
+        )
+        u.Ldap.Tests.fail(result)
 
-    def test_sync_service_methods_exist(self) -> None:
-        """Test that all expected methods exist on sync service."""
-        operations = self._create_operations()
-        sync_service = FlextLdapSyncService(operations=operations)
-        tm.that(sync_service, attrs=["execute", "sync_ldif_file"])
-        tm.that(callable(sync_service.execute), eq=True)
-        tm.that(callable(sync_service.sync_ldif_file), eq=True)
 
-    def test_sync_service_inner_classes_exist(self) -> None:
-        """Test that inner classes exist."""
-        tm.that(hasattr(FlextLdapSyncService, "BatchSync"), eq=True)
-        tm.that(hasattr(FlextLdapSyncService, "BaseDNTransformer"), eq=True)
-        assert isinstance(FlextLdapSyncService.BatchSync, type)
-        assert isinstance(FlextLdapSyncService.BaseDNTransformer, type)
+__all__: list[str] = ["TestsFlextLdapSync"]

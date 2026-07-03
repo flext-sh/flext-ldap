@@ -34,7 +34,7 @@
 !.tool-versions
 !.gitignore
 !.gitattributes
-!.pre-commit-config.yaml
+!.pre-commit-settings.yaml
 
 # Environment templates (NOT .env - keep secrets out!)
 !.env.example
@@ -368,9 +368,9 @@ build/
 # ============================================================================
 # Docker volumes are used instead of bind mounts to avoid permission issues
 docker/ldap-data/
-docker/ldap-config/
+docker/ldap-settings/
 docker/ldap-data/**
-docker/ldap-config/**
+docker/ldap-settings/**
 
 # ============================================================================
 # SAFETY: Keep .gitkeep files
@@ -416,7 +416,14 @@ staging/
 .claude/
 .github/*.rej
 
+
+
+
+!base.mk
+
 # --- workspace-sync: required ignores (auto-managed) ---
+.direnv/
 .reports/
 .venv/
 __pycache__/
+base.mk

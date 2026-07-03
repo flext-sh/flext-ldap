@@ -2,80 +2,73 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import ParamSpec, Protocol, TypeVar
+from collections.abc import (
+    Callable,
+)
 
-from flext_core import r, t as _core_t
-from flext_ldif import FlextLdifTypes
+from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-
-class LdapEntryContract(Protocol):
-    """Structural LDAP entry contract for service boundaries."""
-
-    dn: str
-    attributes: Mapping[str, Sequence[str]]
+from flext_ldif import t
 
 
-class SearchOptionsContract(Protocol):
-    """Structural LDAP search options contract."""
-
-    scope: str
-    filter_str: str
-    attributes: Sequence[str]
-
-
-class FlextLdapTypes(FlextLdifTypes):
+class FlextLdapTypes(t):
     """LDAP-specific type namespace."""
 
     class Ldap:
         """LDAP type aliases."""
 
-        class Connection:
-            """Connection type aliases."""
+        LDAPException: type[Exception] = _Ldap3LDAPException
 
-            type Config = Mapping[str, str | int | bool]
-            type Options = Mapping[str, _core_t.Scalar | None]
-
-        class Operation:
-            """Operation type aliases."""
-
-            type Result[T] = r[T]
-            type Changes = dict[str, list[tuple[int, list[str]]]]
-            type Attributes = Mapping[str, Sequence[str]]
-            type AttributeDict = dict[str, list[str]]
-            type Ldap3EntryValue = (
-                str
-                | bytes
-                | int
-                | float
-                | bool
-                | Sequence[str | bytes | int | float | bool]
-                | None
-            )
-
-        class Entry:
-            """Entry type aliases."""
-
-            type Instance = LdapEntryContract
-            type Collection = Sequence[LdapEntryContract]
-
-        class Search:
-            """Search type aliases."""
-
-            type Options = SearchOptionsContract
-            type Filter = str
-            type Scope = str
-
-    FlextLdapEntryT = TypeVar("FlextLdapEntryT", bound=LdapEntryContract)
-    FlextLdapDomainResultT = TypeVar("FlextLdapDomainResultT")
-    TDomainResult = TypeVar("TDomainResult", bound=_core_t.Container)
-    P = ParamSpec("P")
+        type Ldap3AttributeScalar = str | bytes
+        type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
+        type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]
+        type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
+        type Ldap3AddAttributeValue = (
+            Ldap3AttributeScalar | t.StrSequence | t.SequenceOf[bytes]
+        )
+        type Ldap3AddAttributes = t.MappingKV[str, Ldap3AddAttributeValue]
+        type Ldap3ModifyChangeValue = t.Pair[
+            str,
+            t.MutableSequenceOf[str],
+        ]
+        type Ldap3ModifyChangesDict = t.MutableMappingKV[
+            str,
+            t.MutableSequenceOf[Ldap3ModifyChangeValue],
+        ]
+        type OperationChangeValue = t.Pair[
+            int,
+            t.StrSequence,
+        ]
+        type OperationChanges = t.MutableMappingKV[
+            str,
+            t.SequenceOf[OperationChangeValue],
+        ]
+        type OperationAttributes = t.MappingKV[
+            str,
+            t.StrSequence,
+        ]
+        type Ldap3EntrySequenceValue = t.SequenceOf[
+            Ldap3AttributeScalar | t.Numeric | bool
+        ]
+        type Ldap3EntryValue = (
+            Ldap3AttributeScalar | t.Numeric | bool | Ldap3EntrySequenceValue
+        )
+        type LdapProgressCallback = Callable[..., None]
+        type MultiPhaseProgressCallback = Callable[..., None]
+        type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
+        type LdapModifyChangeValue = t.Pair[
+            str | int,
+            t.StrSequence,
+        ]
+        type LdapModifyChanges = t.MappingKV[
+            str,
+            t.SequenceOf[LdapModifyChangeValue],
+        ]
 
 
 t = FlextLdapTypes
-__all__ = [
+
+__all__: list[str] = [
     "FlextLdapTypes",
-    "LdapEntryContract",
-    "SearchOptionsContract",
     "t",
 ]
