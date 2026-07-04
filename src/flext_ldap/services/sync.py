@@ -7,15 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import (
-    MutableMapping,
-)
-from pathlib import Path
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_ldap import c, m, p, t, u
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import r
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
+    from pathlib import Path
 
 
 class FlextLdapSync(FlextLdapOperations):
@@ -148,7 +150,7 @@ class FlextLdapSync(FlextLdapOperations):
         })
         if not overall_success:
             return r[m.Ldap.MultiPhaseSyncResult].fail(
-                f"Multi-phase sync completed with failures: {total_failed} entries failed"
+                f"Multi-phase sync completed with failures: {total_failed} entries failed",
             )
         return r[m.Ldap.MultiPhaseSyncResult].ok(sync_result)
 

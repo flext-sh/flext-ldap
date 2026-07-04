@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -15,8 +16,10 @@ from flext_ldap import ldap
 from flext_ldap.services.sync import FlextLdapSync
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 pytestmark = pytest.mark.unit
 
@@ -78,7 +81,7 @@ class TestsFlextLdapSync:
                     1,
                     2,
                     c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN,
-                )
+                ),
             ],
         )
 
@@ -132,7 +135,7 @@ class TestsFlextLdapSync:
                     1,
                     2,
                     c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN,
-                )
+                ),
             ],
         )
 
@@ -147,7 +150,8 @@ class TestsFlextLdapSync:
 
     @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
     def test_process_single_phase_missing_path_returns_failure(
-        self, phase: str
+        self,
+        phase: str,
     ) -> None:
         result = FlextLdapSync()._process_single_phase(
             phase,
@@ -178,7 +182,8 @@ class TestsFlextLdapSync:
     ) -> None:
         ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text(
-            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
+            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
+            encoding="utf-8",
         )
 
     def test_sync_phase_entries_invalid_callback_phase_type_raises(
@@ -187,7 +192,8 @@ class TestsFlextLdapSync:
     ) -> None:
         ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text(
-            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
+            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
+            encoding="utf-8",
         )
 
         with pytest.raises(TypeError):

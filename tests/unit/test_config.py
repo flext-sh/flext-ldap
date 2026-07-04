@@ -39,7 +39,7 @@ class TestsFlextLdapConfig:
                 "use_ssl": True,
                 c.Ldap.Tests.FIELD_BIND_DN.value: c.Ldap.Tests.BIND_ADMIN_DN,
                 c.Ldap.Tests.FIELD_BIND_PASSWORD.value: c.Ldap.Tests.BIND_ADMIN_PASSWORD,
-            }
+            },
         )
         u.Ldap.Tests.that(cfg.Ldap.host, eq=c.Ldap.Tests.CONFIG_EXAMPLE_HOST)
         u.Ldap.Tests.that(cfg.Ldap.port, eq=c.Ldap.Tests.CONFIG_LDAPS_PORT)
@@ -93,7 +93,7 @@ class TestsFlextLdapConfig:
             Ldap={
                 c.Ldap.Tests.FIELD_BIND_DN.value: c.Ldap.Tests.BIND_ADMIN_DN,
                 c.Ldap.Tests.FIELD_BIND_PASSWORD.value: c.Ldap.Tests.BIND_ADMIN_PASSWORD,
-            }
+            },
         )
         u.Ldap.Tests.that(cfg.Ldap.bind_dn, eq=c.Ldap.Tests.BIND_ADMIN_DN)
         u.Ldap.Tests.that(
@@ -106,7 +106,7 @@ class TestsFlextLdapConfig:
             Ldap={
                 c.Ldap.Tests.FIELD_BIND_DN.value: "",
                 c.Ldap.Tests.FIELD_BIND_PASSWORD.value: "",
-            }
+            },
         )
         u.Ldap.Tests.that(cfg.Ldap.bind_dn, eq="")
         u.Ldap.Tests.that(cfg.Ldap.bind_password, eq="")
@@ -119,7 +119,7 @@ class TestsFlextLdapConfig:
                 c.Ldap.Tests.FIELD_HOST.value: c.Ldap.Tests.CONFIG_EXAMPLE_HOST,
                 c.Ldap.Tests.FIELD_PORT.value: c.Ldap.Tests.CONFIG_LDAPS_PORT,
                 "use_ssl": True,
-            }
+            },
         ).model_dump()
         ldap_dump = data["Ldap"]
         u.Ldap.Tests.that(
@@ -135,7 +135,8 @@ class TestsFlextLdapConfig:
     def test_json_schema(self) -> None:
         schema = TestsFlextLdapSettings.model_json_schema()
         u.Ldap.Tests.that(
-            schema, keys=[c.Ldap.Tests.FIELD_PROPERTIES, c.Ldap.Tests.FIELD_TYPE]
+            schema,
+            keys=[c.Ldap.Tests.FIELD_PROPERTIES, c.Ldap.Tests.FIELD_TYPE],
         )
         ldap_schema = schema[c.Ldap.Tests.FIELD_PROPERTIES]["Ldap"]
         ldap_definition = schema["$defs"][ldap_schema["$ref"].split("/")[-1]]
@@ -149,7 +150,7 @@ class TestsFlextLdapConfig:
             Ldap={
                 c.Ldap.Tests.FIELD_HOST.value: c.Ldap.Tests.CONFIG_ORIGINAL_HOST,
                 c.Ldap.Tests.FIELD_PORT.value: c.Ldap.PORT,
-            }
+            },
         )
         copied = original.clone()
         u.Ldap.Tests.that(copied, is_=TestsFlextLdapSettings, none=False)
@@ -165,13 +166,13 @@ class TestsFlextLdapConfig:
             Ldap={
                 c.Ldap.Tests.FIELD_HOST.value: c.Ldap.Tests.CONFIG_FIRST_HOST,
                 c.Ldap.Tests.FIELD_PORT.value: c.Ldap.PORT,
-            }
+            },
         )
         c2 = TestsFlextLdapSettings(
             Ldap={
                 c.Ldap.Tests.FIELD_HOST.value: c.Ldap.Tests.CONFIG_SECOND_HOST,
                 c.Ldap.Tests.FIELD_PORT.value: c.Ldap.Tests.CONFIG_LDAPS_PORT,
-            }
+            },
         )
         u.Ldap.Tests.that(c1, eq=c2)
         u.Ldap.Tests.that(c1.Ldap.host, eq=c2.Ldap.host)

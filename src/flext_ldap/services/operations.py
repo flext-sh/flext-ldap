@@ -179,7 +179,8 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             search_result = self._ops.search(search_options)
             if search_result.failure:
                 result = r[m.Ldap.LdapOperationResult].fail_op(
-                    "Search for existing entry", search_result.error
+                    "Search for existing entry",
+                    search_result.error,
                 )
             else:
                 search_data = search_result.map_or(None)
@@ -203,7 +204,8 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     changes_result = u.Ldap.compare_entries(existing_entry, entry)
                     if changes_result.failure:
                         result = r[m.Ldap.LdapOperationResult].fail_op(
-                            "Entry comparison", changes_result.error
+                            "Entry comparison",
+                            changes_result.error,
                         )
                     else:
                         empty_changes: t.Ldap.OperationChanges = {}
@@ -218,7 +220,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                             modify_result = self._ops.modify(entry_dn, changes)
                             result = modify_result.fold(
                                 on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(
-                                    u.to_str(e)
+                                    u.to_str(e),
                                 ),
                                 on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
                                     m.Ldap.LdapOperationResult.with_operation(
@@ -602,7 +604,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
+            on_success=r[m.Ldap.OperationResult].ok,
         )
         return folded
 
@@ -689,7 +691,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: r[m.Ldap.OperationResult].ok(v),
+            on_success=r[m.Ldap.OperationResult].ok,
         )
         return folded
 
@@ -747,7 +749,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             on_failure=lambda e: r[m.Ldap.SearchResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=lambda v: r[m.Ldap.SearchResult].ok(v),
+            on_success=r[m.Ldap.SearchResult].ok,
         )
         return folded
 

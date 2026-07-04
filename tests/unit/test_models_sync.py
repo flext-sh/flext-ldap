@@ -66,7 +66,8 @@ class TestsFlextLdapModelsSync:
             converted_dn=c.Ldap.Tests.ENTRY_DN_USER_NEW,
         )
         u.Ldap.Tests.that(
-            md.source_attributes, len=len(c.Ldap.Tests.SYNC_METADATA_SOURCE_ATTRIBUTES)
+            md.source_attributes,
+            len=len(c.Ldap.Tests.SYNC_METADATA_SOURCE_ATTRIBUTES),
         )
         u.Ldap.Tests.that(
             md.removed_attributes,

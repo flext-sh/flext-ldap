@@ -18,7 +18,7 @@ class TestsFlextLdapModelsSearch:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": attributes or {}
+                "attributes": attributes or {},
             }),
         )
 
@@ -92,7 +92,8 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(options.scope, eq=c.Ldap.Tests.SEARCH_SCOPE_BASE)
         u.Ldap.Tests.that(options.filter_str, eq=c.Ldap.Tests.SEARCH_FILTER_UID)
         u.Ldap.Tests.that(
-            options.size_limit, eq=c.Ldap.Tests.SEARCH_NORMALIZED_SIZE_LIMIT
+            options.size_limit,
+            eq=c.Ldap.Tests.SEARCH_NORMALIZED_SIZE_LIMIT,
         )
 
     def test_search_options_base_scope_requests_all_attributes(self) -> None:
@@ -115,7 +116,8 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(result.operation_type, eq=c.Ldap.OperationType.ADD)
         u.Ldap.Tests.that(result.message, eq=c.Ldap.Tests.SEARCH_ENTRY_ADDED_MESSAGE)
         u.Ldap.Tests.that(
-            result.entries_affected, eq=c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE
+            result.entries_affected,
+            eq=c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE,
         )
 
     def test_operation_result_default_message(self) -> None:
@@ -125,7 +127,8 @@ class TestsFlextLdapModelsSearch:
         )
         u.Ldap.Tests.that(result.message, eq=c.Ldap.Tests.SYNC_DEFAULT_EMPTY_SOURCE_DN)
         u.Ldap.Tests.that(
-            result.entries_affected, eq=c.Ldap.Tests.SEARCH_DEFAULT_LIMIT_ZERO
+            result.entries_affected,
+            eq=c.Ldap.Tests.SEARCH_DEFAULT_LIMIT_ZERO,
         )
 
     def test_operation_result_frozen(self) -> None:

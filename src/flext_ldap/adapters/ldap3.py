@@ -176,7 +176,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             ._get_connection()
             .flat_map(
                 lambda conn: FlextLdapLdap3Adapter._map_scope(
-                    search_options.scope
+                    search_options.scope,
                 ).flat_map(
                     lambda scope: self.SearchExecutor.execute(
                         conn,

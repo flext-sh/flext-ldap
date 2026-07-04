@@ -12,12 +12,14 @@ from __future__ import annotations
 import math
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_cli import t
 from flext_ldap import c
+
+if TYPE_CHECKING:
+    from flext_cli import t
 
 
 class TestsFlextLdapConstants(FlextTestsConstants, c):
@@ -317,7 +319,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
                 AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
                 AttrToStrListCase.LIST_BYTES: MappingProxyType({
-                    "key": ("bytes", "str")
+                    "key": ("bytes", "str"),
                 }),
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })

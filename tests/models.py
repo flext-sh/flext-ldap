@@ -10,13 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_tests import FlextTestsModels, r
 
 from flext_ldap import m
 from tests.base import s
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextLdapModels(m, FlextTestsModels):

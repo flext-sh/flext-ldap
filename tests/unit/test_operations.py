@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 
@@ -14,9 +14,11 @@ from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import r
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 pytestmark = pytest.mark.unit
 
@@ -122,8 +124,8 @@ class TestsFlextLdapOperations:
                 (
                     int(c.Ldap.ModifyOperation.REPLACE),
                     [c.Ldap.Tests.STRING_SIMPLE],
-                )
-            ]
+                ),
+            ],
         }
 
         result = operations.modify(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, changes)

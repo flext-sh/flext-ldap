@@ -79,7 +79,9 @@ class ResultConverterExtractMixin:
             return ResultConverterExtractMixin._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
             model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
-                attrs, "attributes", None
+                attrs,
+                "attributes",
+                None,
             )
             if model_attrs is not None:
                 return ResultConverterExtractMixin._normalize_attr_values(model_attrs)
@@ -107,13 +109,14 @@ class ResultConverterExtractMixin:
                         result = metadata_attr
                     case Mapping():
                         normalized = ResultConverterExtractMixin._normalize_metadata(
-                            metadata_attr
+                            metadata_attr,
                         )
                         if normalized and isinstance(
-                            normalized.get("server_type"), str
+                            normalized.get("server_type"),
+                            str,
                         ):
                             result = m.Ldif.ServerMetadata.model_validate({
-                                "server_type": normalized["server_type"]
+                                "server_type": normalized["server_type"],
                             })
                         else:
                             result = None
@@ -124,7 +127,8 @@ class ResultConverterExtractMixin:
     @staticmethod
     def _normalize_attr_values(
         attrs_dict: t.MappingKV[
-            str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence
+            str,
+            t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
         ]
         | None,
     ) -> t.Ldap.OperationAttributes:

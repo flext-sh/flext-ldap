@@ -54,7 +54,9 @@ class TestsFlextLdapModelsUnit:
     ) -> None:
         use_ssl, use_tls = c.Ldap.Tests.MODELS_ALLOWED_SECURITY_COMBOS[case]
         settings = m.Ldap.ConnectionConfig(
-            port=c.Ldap.PORT, use_ssl=use_ssl, use_tls=use_tls
+            port=c.Ldap.PORT,
+            use_ssl=use_ssl,
+            use_tls=use_tls,
         )
         u.Ldap.Tests.that(settings.use_ssl, eq=use_ssl)
         u.Ldap.Tests.that(settings.use_tls, eq=use_tls)

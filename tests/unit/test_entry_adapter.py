@@ -61,10 +61,12 @@ class TestsFlextLdapEntryAdapter:
         )
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
         err = u.Ldap.Tests.fail(
-            result, has=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR
+            result,
+            has=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
         )
         u.Ldap.Tests.that(
-            err.lower(), contains=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR
+            err.lower(),
+            contains=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
         )
 
 

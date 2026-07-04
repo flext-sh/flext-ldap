@@ -19,7 +19,8 @@ class TestsFlextLdapConstantsUnit:
 
     def test_is_valid_status_with_enum(self) -> None:
         u.Ldap.Tests.that(
-            u.Ldap.Validation.is_valid_status(c.Ldap.Status.PENDING), eq=True
+            u.Ldap.Validation.is_valid_status(c.Ldap.Status.PENDING),
+            eq=True,
         )
 
     def test_is_valid_status_with_string(self) -> None:

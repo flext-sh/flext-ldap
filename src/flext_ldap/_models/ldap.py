@@ -6,11 +6,13 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated, Self, TypeAlias
+from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_ldap import c, t
-from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldif import m, u
+
+if TYPE_CHECKING:
+    from flext_ldap.protocols import FlextLdapProtocols as p
 
 
 class FlextLdapModelsLdap:
@@ -155,7 +157,8 @@ class FlextLdapModelsLdap:
         """Result of a single upsert operation."""
 
         success: Annotated[
-            bool, u.Field(description="Whether the upsert succeeded")
+            bool,
+            u.Field(description="Whether the upsert succeeded"),
         ] = False
         dn: Annotated[str, u.Field(description="Distinguished name of the entry")] = ""
         operation: Annotated[
@@ -207,19 +210,23 @@ class FlextLdapModelsLdap:
         """Conversion metadata."""
 
         source_attributes: t.StrSequence = u.Field(
-            default_factory=list, description="Source attribute names"
+            default_factory=list,
+            description="Source attribute names",
         )
         source_dn: str = ""
         removed_attributes: t.StrSequence = u.Field(
-            default_factory=list, description="Attributes removed during conversion"
+            default_factory=list,
+            description="Attributes removed during conversion",
         )
         base64_encoded_attributes: t.StrSequence = u.Field(
-            default_factory=list, description="Attributes that were base64-encoded"
+            default_factory=list,
+            description="Attributes that were base64-encoded",
         )
         dn_changed: bool = False
         converted_dn: str = ""
         attribute_changes: t.StrSequence = u.Field(
-            default_factory=list, description="Tracked attribute change descriptions"
+            default_factory=list,
+            description="Tracked attribute change descriptions",
         )
 
     class OperationResult(m.BaseModel):
@@ -227,7 +234,8 @@ class FlextLdapModelsLdap:
 
         model_config = m.ConfigDict(frozen=True)
         success: Annotated[
-            bool, u.Field(description="Whether the operation succeeded")
+            bool,
+            u.Field(description="Whether the operation succeeded"),
         ] = False
         operation_type: Annotated[
             str,
@@ -348,7 +356,7 @@ class FlextLdapModelsLdap:
         total_duration_seconds: t.NonNegativeFloat = 0.0
         overall_success: bool = True
 
-    Response: TypeAlias = (
+    type Response = (
         OperationResult
         | SearchResult
         | LdapOperationResult

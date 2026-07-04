@@ -155,7 +155,8 @@ class FlextLdapEntryAdapter(s[bool]):
         return r[bool].ok(value=True)
 
     def ldap3_to_ldif_entry(
-        self, ldap3_entry: p.Ldap.Ldap3Entry
+        self,
+        ldap3_entry: p.Ldap.Ldap3Entry,
     ) -> p.Result[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Ldif.Entry.
 

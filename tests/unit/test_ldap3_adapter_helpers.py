@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import MappingProxyType
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 
@@ -21,9 +20,13 @@ from flext_ldap.adapters import (
 )
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.protocols import p
 
 pytestmark = pytest.mark.unit
 
@@ -255,7 +258,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
                     "attributes": {
                         c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
                         c.Ldap.Tests.SEARCH_ATTRIBUTES[1]: [
-                            c.Ldap.Tests.CONFIG_EXAMPLE_HOST
+                            c.Ldap.Tests.CONFIG_EXAMPLE_HOST,
                         ],
                     },
                 },

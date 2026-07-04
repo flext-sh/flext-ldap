@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 from flext_tests import r
@@ -17,9 +17,11 @@ from ldap3 import MOCK_SYNC, Connection, Server
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 pytestmark = pytest.mark.unit
 
@@ -106,7 +108,7 @@ class TestsFlextLdapUtilitiesUnit:
                 """Force rootDSE query through the MRO override."""
                 attrs: t.Ldap.OperationAttributes = {
                     c.Ldap.RootDseAttribute.NAMING_CONTEXTS: [
-                        c.Ldap.Tests.RFC_DEFAULT_BASE_DN
+                        c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
                     ],
                     c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS: [],
                 }
@@ -157,7 +159,8 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.filter_truthy(dict(c.Ldap.Tests.FILTER_TRUTHY_INPUT))
         assert isinstance(result, dict)
         u.Ldap.Tests.that(
-            sorted(result.keys()), eq=list(c.Ldap.Tests.FILTER_TRUTHY_EXPECTED_KEYS)
+            sorted(result.keys()),
+            eq=list(c.Ldap.Tests.FILTER_TRUTHY_EXPECTED_KEYS),
         )
 
     def test_map_str(self) -> None:
@@ -312,7 +315,8 @@ class TestsFlextLdapUtilitiesUnit:
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["test"]}, attribute_metadata={}
+                attributes={"cn": ["test"]},
+                attribute_metadata={},
             ),
         )
         result = u.Ldap.extract_entry_attributes(entry)
@@ -340,7 +344,9 @@ class TestsFlextLdapUtilitiesUnit:
         new_attrs = {"cn": ["newval"]}
         existing_attrs = {"cn": ["oldval"]}
         changes, _processed = u.Ldap.process_new_attributes(
-            new_attrs, existing_attrs, frozenset()
+            new_attrs,
+            existing_attrs,
+            frozenset(),
         )
         assert "cn" in changes
 
@@ -348,7 +354,9 @@ class TestsFlextLdapUtilitiesUnit:
         new_attrs = {"cn": ["same"]}
         existing_attrs = {"cn": ["same"]}
         changes, _processed = u.Ldap.process_new_attributes(
-            new_attrs, existing_attrs, frozenset()
+            new_attrs,
+            existing_attrs,
+            frozenset(),
         )
         assert "cn" not in changes
 
@@ -356,7 +364,9 @@ class TestsFlextLdapUtilitiesUnit:
         new_attrs = {"cn": ["val"]}
         existing_attrs: dict[str, list[str]] = {}
         changes, _processed = u.Ldap.process_new_attributes(
-            new_attrs, existing_attrs, frozenset(["cn"])
+            new_attrs,
+            existing_attrs,
+            frozenset(["cn"]),
         )
         assert "cn" not in changes
 
@@ -372,13 +382,15 @@ class TestsFlextLdapUtilitiesUnit:
         existing = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["old"]}, attribute_metadata={}
+                attributes={"cn": ["old"]},
+                attribute_metadata={},
             ),
         )
         new_entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["new"]}, attribute_metadata={}
+                attributes={"cn": ["new"]},
+                attribute_metadata={},
             ),
         )
         result = u.Ldap.compare_entries(existing, new_entry)
@@ -393,7 +405,8 @@ class TestsFlextLdapUtilitiesUnit:
         new_entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["new"]}, attribute_metadata={}
+                attributes={"cn": ["new"]},
+                attribute_metadata={},
             ),
         )
         result = u.Ldap.compare_entries(existing, new_entry)
@@ -403,7 +416,8 @@ class TestsFlextLdapUtilitiesUnit:
         existing = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["old"]}, attribute_metadata={}
+                attributes={"cn": ["old"]},
+                attribute_metadata={},
             ),
         )
         new_entry = m.Ldif.Entry(
@@ -595,13 +609,19 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_when_safe_safe_then_true_with_none(self) -> None:
         result = u.Ldap.when_safe(
-            condition=True, then_value=None, else_value="fallback", safe_then=True
+            condition=True,
+            then_value=None,
+            else_value="fallback",
+            safe_then=True,
         )
         u.Ldap.Tests.that(result, eq="fallback")
 
     def test_when_safe_safe_then_true_non_none(self) -> None:
         result = u.Ldap.when_safe(
-            condition=True, then_value="value", else_value="fallback", safe_then=True
+            condition=True,
+            then_value="value",
+            else_value="fallback",
+            safe_then=True,
         )
         u.Ldap.Tests.that(result, eq="value")
 

@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -25,6 +25,9 @@ from flext_ldap.services.api_runtime import FlextLdapApiRuntime
 from flext_ldap.services.connection import FlextLdapConnection
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldap.services.sync import FlextLdapSync
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 pytestmark = pytest.mark.unit
 

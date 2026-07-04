@@ -6,14 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from flext_ldap import ldap
 from flext_ldap.services.sync import FlextLdapSync
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 pytestmark = [pytest.mark.unit]
 
@@ -42,7 +46,8 @@ class TestsFlextLdapApi:
         case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
         callbacks: dict[
-            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
+            c.Ldap.Tests.CallbackGuardCase,
+            t.Ldap.ProgressCallbackUnion | None,
         ] = {
             c.Ldap.Tests.CallbackGuardCase.NONE: None,
             c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
@@ -58,7 +63,8 @@ class TestsFlextLdapApi:
         case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
         callbacks: dict[
-            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
+            c.Ldap.Tests.CallbackGuardCase,
+            t.Ldap.ProgressCallbackUnion | None,
         ] = {
             c.Ldap.Tests.CallbackGuardCase.NONE: None,
             c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,

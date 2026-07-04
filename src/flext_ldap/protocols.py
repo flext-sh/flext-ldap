@@ -10,8 +10,6 @@ This allows protocols to remain independent of model implementations.
 
 from __future__ import annotations
 
-import types
-from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
     Protocol,
@@ -23,6 +21,9 @@ from typing import (
 from flext_ldif import p
 
 if TYPE_CHECKING:
+    import types
+    from collections.abc import Callable
+
     from flext_ldap import m as lm
     from flext_ldap.typings import FlextLdapTypes as t
 
