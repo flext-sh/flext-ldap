@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core.lazy import install_lazy_exports
 from flext_ldap.__version__ import (
     __author__,
@@ -18,6 +20,18 @@ from flext_ldap._exports import (
     FLEXT_LDAP_LAZY_IMPORTS,
     FLEXT_LDAP_PUBLIC_EXPORTS,
 )
+
+if TYPE_CHECKING:
+    from flext_core import d as d, e as e, h as h, r as r, x as x
+    from flext_ldap.api import FlextLdap as FlextLdap, ldap as ldap
+    from flext_ldap.base import FlextLdapService as FlextLdapService, s as s
+    from flext_ldap.constants import FlextLdapConstants as FlextLdapConstants, c as c
+    from flext_ldap.models import FlextLdapModels as FlextLdapModels, m as m
+    from flext_ldap.protocols import FlextLdapProtocols as FlextLdapProtocols, p as p
+    from flext_ldap.settings import FlextLdapSettings as FlextLdapSettings
+    from flext_ldap.typings import FlextLdapTypes as FlextLdapTypes, t as t
+    from flext_ldap.utilities import FlextLdapUtilities as FlextLdapUtilities, u as u
+
 
 _LAZY_IMPORTS = {
     name: target

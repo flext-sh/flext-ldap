@@ -14,6 +14,7 @@ FLEXT_LDAP_LAZY_IMPORTS = build_lazy_import_map(
         ".settings": ("FlextLdapSettings",),
         ".typings": ("FlextLdapTypes", "t"),
         ".utilities": ("FlextLdapUtilities", "u"),
+        "flext_core": ("d", "e", "h", "r", "x"),
     },
 )
 
