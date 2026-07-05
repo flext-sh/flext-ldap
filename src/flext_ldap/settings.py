@@ -14,15 +14,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from flext_ldap import c, t
 from flext_ldap.models import FlextLdapModels as m
 from flext_ldap.utilities import FlextLdapUtilities as u
 from flext_ldif import FlextLdifSettings
-
-if TYPE_CHECKING:
-    from flext_ldap import p
 
 
 class FlextLdapSettings(FlextLdifSettings):
@@ -62,13 +59,10 @@ class FlextLdapSettings(FlextLdifSettings):
             u.Field(description="Enable LDAP range retrieval"),
         ] = c.Ldap.AUTO_RANGE
 
-    if TYPE_CHECKING:
-        Ldap: p.Ldap.LdapSettings
-    else:
-        Ldap: LdapSettings = m.Field(
-            default_factory=LdapSettings,
-            description="Namespaced LDAP settings branch.",
-        )
+    Ldap: LdapSettings = m.Field(
+        default_factory=LdapSettings,
+        description="Namespaced LDAP settings branch.",
+    )
 
 
 __all__: list[str] = ["FlextLdapSettings"]

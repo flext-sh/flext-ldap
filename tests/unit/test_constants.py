@@ -19,7 +19,7 @@ from tests.utilities import u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapConstants:
+class TestsFlextLdapConstantsUnit:
     """Behavioural tests for the ``FlextLdapConstants`` public contract."""
 
     # ------------------------------------------------------------------ #

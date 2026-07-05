@@ -64,7 +64,7 @@ class TestsFlextLdapSmoke:
         try:
             assert result.success, f"Connection failed: {result.error}"
             assert result.value is True
-            assert ldap.is_connected
+            assert bool(ldap.is_connected)
         finally:
             ldap.disconnect()
 

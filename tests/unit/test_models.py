@@ -9,7 +9,7 @@ from tests.utilities import u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapModels:
+class TestsFlextLdapModelsUnit:
     """Behavioral contract for FlextLdapModels public model surface."""
 
     def test_entry_exposes_dn_value_and_null_attributes(self) -> None:
@@ -21,7 +21,10 @@ class TestsFlextLdapModels:
 
     def test_entry_exposes_attributes_through_public_accessor(self) -> None:
         dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        entry = m.Ldif.Entry(dn=dn, attributes={"cn": ["alice"], "sn": ["smith"]})
+        entry = m.Ldif.Entry(
+            dn=dn,
+            attributes=m.Ldif.Attributes(attributes={"cn": ["alice"], "sn": ["smith"]}),
+        )
 
         u.Ldap.Tests.that(
             entry.attributes_dict,
@@ -123,4 +126,4 @@ class TestsFlextLdapModels:
         u.Ldap.Tests.that(restored, eq=original)
 
 
-__all__: list[str] = ["TestsFlextLdapModels"]
+__all__: list[str] = ["TestsFlextLdapModelsUnit"]

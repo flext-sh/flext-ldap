@@ -23,7 +23,7 @@ from tests.utilities import u
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapUtilities:
+class TestsFlextLdapUtilitiesUnit:
     """Behavioral tests for the public FlextLdapUtilities facade.
 
     All test data comes from c.Ldap.Tests.* — zero inline constants.
@@ -594,4 +594,4 @@ class TestsFlextLdapUtilities:
         assert result is False
 
 
-__all__: list[str] = ["TestsFlextLdapUtilities"]
+__all__: list[str] = ["TestsFlextLdapUtilitiesUnit"]
