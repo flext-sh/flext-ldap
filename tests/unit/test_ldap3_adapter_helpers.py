@@ -55,9 +55,15 @@ class TestsFlextLdapLdap3AdapterHelpers:
             self,
             dn: str | None,
             attributes: t.Ldap.Ldap3AttributeDict,
+            metadata: t.MappingKV[str, t.Scalar | None] | None = None,
         ) -> None:
             self._dn = dn
             self._attributes = attributes
+            self._metadata = metadata
+
+        @property
+        def metadata(self) -> t.MappingKV[str, t.Scalar | None] | None:
+            return self._metadata
 
         @property
         def entry_dn(self) -> str | None:
@@ -433,7 +439,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
         u.Ldap.Tests.that(attrs_dict[c.Ldap.AttributeName.ALL_ATTRIBUTES], eq=[])
 
-    def test_result_extract_metadata_from_entry_and_mapping(self) -> None:
+    def test_extract_metadata_returns_server_metadata_from_ldif_entry(self) -> None:
         metadata = m.Ldif.ServerMetadata.model_validate(
             {
                 "server_type": c.Ldif.ServerTypes.RFC,
@@ -441,18 +447,42 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
         entry = self._entry().model_copy(update={"metadata": metadata})
 
-        entry_metadata = ResultConverterExtractMixin.extract_metadata(entry)
-        normalized_metadata = ResultConverterExtractMixin._normalize_metadata(
-            {
-                "server_type": c.Ldif.ServerTypes.RFC.value,
-            },
-        )
-        assert normalized_metadata is not None
-        mapped_metadata = m.Ldif.ServerMetadata.model_validate(normalized_metadata)
+        extracted = ResultConverterExtractMixin.extract_metadata(entry)
 
-        assert entry_metadata is not None
-        u.Ldap.Tests.that(entry_metadata.server_type, eq=c.Ldif.ServerTypes.RFC)
-        u.Ldap.Tests.that(mapped_metadata.server_type, eq=c.Ldif.ServerTypes.RFC)
+        assert extracted is not None
+        u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
+
+    def test_extract_metadata_normalizes_raw_mapping_metadata(self) -> None:
+        carrier = self.Entry(
+            c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            {},
+            {"server_type": c.Ldif.ServerTypes.RFC.value},
+        )
+
+        extracted = ResultConverterExtractMixin.extract_metadata(carrier)
+
+        assert extracted is not None
+        u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
+
+    def test_extract_metadata_returns_none_without_server_type(self) -> None:
+        carrier = self.Entry(
+            c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            {},
+            {"unrelated_field": c.Ldap.Tests.STRING_SIMPLE},
+        )
+
+        u.Ldap.Tests.that(
+            ResultConverterExtractMixin.extract_metadata(carrier) is None,
+            eq=True,
+        )
+
+    def test_extract_metadata_returns_none_when_absent(self) -> None:
+        carrier = self.Entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, {})
+
+        u.Ldap.Tests.that(
+            ResultConverterExtractMixin.extract_metadata(carrier) is None,
+            eq=True,
+        )
 
     def test_result_converter_converts_connection_and_parse_response(self) -> None:
         ldap3_entry = self._ldap3_entry()

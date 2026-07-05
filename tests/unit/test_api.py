@@ -25,19 +25,28 @@ pytestmark = [pytest.mark.unit]
 class TestsFlextLdapApi:
     """Tests for ldap API facade — MRO-based, zero ceremony."""
 
-    # --- Context Manager ---
-    def test_enter_returns_self(self) -> None:
-        api = ldap
-        u.Ldap.Tests.that(api.__enter__(), eq=api)
+    # --- Context Manager contract ---
+    def test_with_statement_yields_same_facade(self) -> None:
+        with ldap as ctx:
+            u.Ldap.Tests.that(ctx, eq=ldap)
 
-    def test_with_statement(self) -> None:
-        api = ldap
-        with api as ctx:
-            u.Ldap.Tests.that(ctx, eq=api)
+    def test_context_manager_exit_leaves_facade_disconnected(self) -> None:
+        with ldap:
+            pass
+        u.Ldap.Tests.that(ldap.is_connected, eq=False)
 
-    # --- MRO Method Inheritance ---
+    def test_context_manager_does_not_suppress_exceptions(self) -> None:
+        with pytest.raises(RuntimeError), ldap:
+            raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)
+
+    # --- Connection state invariant ---
     def test_is_connected_default_false(self) -> None:
-        u.Ldap.Tests.that(not ldap.is_connected, eq=True)
+        u.Ldap.Tests.that(ldap.is_connected, eq=False)
+
+    def test_is_connected_is_idempotent_read(self) -> None:
+        first = ldap.is_connected
+        second = ldap.is_connected
+        u.Ldap.Tests.that(first, eq=second)
 
     # --- Callback Type Guards ---
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)

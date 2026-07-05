@@ -1,9 +1,11 @@
-"""Smoke tests for LDAP container connectivity (REGRA 5: 100% REAL, NO MOCKS).
+"""Behavioral smoke tests for the ``flext_ldap.ldap`` public API.
 
-Tests verify:
-1. LDAP container is running and responsive
-2. ldap API imports correctly
-3. Basic connection works
+These tests exercise the observable public contract of :class:`FlextLdap`
+against a real LDAP container (REGRA 5: 100% REAL, NO MOCKS):
+
+1. The external LDAP container is reachable through the ldap3 boundary.
+2. ``ldap.connect`` returns a successful ``r[bool]`` and the public
+   ``is_connected`` state reflects the connection lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,40 +28,60 @@ pytestmark = pytest.mark.smoke
 
 
 class TestsFlextLdapSmoke:
-    """Smoke tests for flext-ldap using single class architecture.
+    """Smoke tests asserting the public behaviour of ``flext_ldap.ldap``."""
 
-    All helpers use the direct `u.Ldap.Tests.*` surface.
-    """
-
-    def test_ldap_container_health(
+    def test_container_reachable_through_ldap3_boundary(
         self,
-        ldap_container: t.MappingKV[
-            str,
-            t.Scalar,
-        ],
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
-        """SMOKE TEST: LDAP container is responsive (REGRA 5: REAL connection)."""
+        """The real LDAP container binds and exposes server info (precondition)."""
+        # Arrange
         server = u.Ldap.Tests.create_ldap3_server(ldap_container)
-        connection = u.Ldap.Tests.create_ldap3_connection(
-            server,
-            ldap_container,
-        )
-        u.Ldap.Tests.assert_connection_bound(connection)
-        u.Ldap.Tests.assert_server_info_available(connection)
-        connection.unbind()
 
-    def test_flext_ldap_basic_connection(
+        # Act
+        connection = u.Ldap.Tests.create_ldap3_connection(server, ldap_container)
+
+        # Assert - external boundary is healthy before exercising the unit
+        try:
+            u.Ldap.Tests.assert_connection_bound(connection)
+            u.Ldap.Tests.assert_server_info_available(connection)
+        finally:
+            connection.unbind()
+
+    def test_connect_succeeds_and_toggles_public_connected_state(
         self,
-        ldap_container: t.MappingKV[
-            str,
-            t.Scalar,
-        ],
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
-        """SMOKE TEST: ldap can connect to container (REGRA 5: REAL operations)."""
-        client = ldap
-        conn_config = u.Ldap.Tests.create_connection_config(
-            ldap_container,
-        )
-        result = client.connect(conn_config)
-        u.Ldap.Tests.assert_connection_success(result)
-        client.disconnect()
+        """``connect`` yields a successful result and drives ``is_connected``."""
+        # Arrange
+        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        assert not ldap.is_connected
+
+        # Act
+        result = ldap.connect(conn_config)
+
+        # Assert - public r[bool] contract and observable connected state
+        try:
+            assert result.success, f"Connection failed: {result.error}"
+            assert result.value is True
+            assert ldap.is_connected
+        finally:
+            ldap.disconnect()
+
+        # Assert - disconnect is observable through the public API
+        assert not ldap.is_connected
+
+    def test_disconnect_is_idempotent_when_not_connected(
+        self,
+        ldap_container: t.MappingKV[str, t.Scalar],
+    ) -> None:
+        """Disconnecting an unconnected client leaves ``is_connected`` False."""
+        # Arrange - ensure a clean, disconnected client
+        ldap.disconnect()
+        assert not ldap.is_connected
+
+        # Act - a second disconnect must not raise and must not connect
+        ldap.disconnect()
+
+        # Assert - idempotent, observable public state unchanged
+        assert not ldap.is_connected

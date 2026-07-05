@@ -1,5 +1,8 @@
 """Unit tests for flext_ldap.utilities.FlextLdapUtilities.
 
+Behavioral contract tests: assert observable public return values,
+r[T] outcomes, and raised model state via the public utility facade.
+
 Architecture: Single class per module following FLEXT patterns.
 Uses t, c, p, m, u, s for test support and e, r, p, d, x from flext-core.
 
@@ -9,10 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
-
 import pytest
-from flext_tests import r
 from ldap3 import MOCK_SYNC, Connection, Server
 
 from tests.constants import c
@@ -20,112 +20,14 @@ from tests.models import m
 from tests.typings import t
 from tests.utilities import u
 
-if TYPE_CHECKING:
-    from tests.protocols import p
-
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapUtilitiesUnit:
-    """Comprehensive tests for FlextLdapUtilities.
+class TestsFlextLdapUtilities:
+    """Behavioral tests for the public FlextLdapUtilities facade.
 
     All test data comes from c.Ldap.Tests.* — zero inline constants.
     """
-
-    class ComparisonOverrideUtilities(u):
-        """Utility facade proving comparison methods dispatch through MRO."""
-
-        class Ldap(u.Ldap):
-            """LDAP namespace with comparison override."""
-
-            @classmethod
-            @override
-            def find_existing_values(
-                cls,
-                attr_name: str,
-                existing_attrs: t.MappingKV[str, t.StrSequence],
-            ) -> t.StrSequence | None:
-                """Force a match through the MRO override."""
-                return [c.Ldap.Tests.STRING_SIMPLE]
-
-    class ConversionOverrideUtilities(u):
-        """Utility facade proving conversion methods dispatch through MRO."""
-
-        class Ldap(u.Ldap):
-            """LDAP namespace with conversion override."""
-
-            @staticmethod
-            @override
-            def ldap3_value_to_strings(
-                value: t.Ldap.Ldap3EntryValue | t.JsonValue | None,
-            ) -> t.StrSequence:
-                """Force converted DN through the MRO override."""
-                return [c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE]
-
-    class DetectionOverrideUtilities(u):
-        """Utility facade proving detection methods dispatch through MRO."""
-
-        class Ldap(u.Ldap):
-            """LDAP namespace with detection override."""
-
-            @classmethod
-            @override
-            def detect_from_vendor(
-                cls,
-                vendor_name: str | None,
-                vendor_version: str | None,
-            ) -> str | None:
-                """Force vendor detection through the MRO override."""
-                return c.Ldif.ServerTypes.OID.value
-
-    class RootDseConnection:
-        """Structural rootDSE connection for MRO dispatch tests."""
-
-        def search(self, **kwargs: str | int) -> bool:
-            """Return failure when the override is not used."""
-            return False
-
-        @property
-        def result(self) -> t.JsonMapping:
-            return {}
-
-        @property
-        def entries(self) -> t.SequenceOf[p.Ldap.RootDseEntry]:
-            return ()
-
-    class RootDseOverrideUtilities(u):
-        """Utility facade proving rootDSE methods dispatch through MRO."""
-
-        class Ldap(u.Ldap):
-            """LDAP namespace with rootDSE override."""
-
-            @classmethod
-            @override
-            def query_root_dse(
-                cls,
-                connection: p.Ldap.RootDseConnection,
-            ) -> p.Result[t.Ldap.OperationAttributes]:
-                """Force rootDSE query through the MRO override."""
-                attrs: t.Ldap.OperationAttributes = {
-                    c.Ldap.RootDseAttribute.NAMING_CONTEXTS: [
-                        c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-                    ],
-                    c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS: [],
-                }
-                return r[t.Ldap.OperationAttributes].ok(attrs)
-
-            @classmethod
-            @override
-            def detect_server_type(
-                cls,
-                *,
-                vendor_name: str | None,
-                vendor_version: str | None,
-                naming_contexts: t.StrSequence,
-                supported_extensions: t.StrSequence,
-            ) -> str:
-                """Force rootDSE detection through the MRO override."""
-                return c.Ldif.ServerTypes.OID.value
 
     def test_to_str_simple(self) -> None:
         result = u.to_str(c.Ldap.Tests.STRING_SIMPLE)
@@ -261,7 +163,12 @@ class TestsFlextLdapUtilitiesUnit:
     def test_search_entry_to_ldif_entry_success(self) -> None:
         entry = {"dn": c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, "cn": ["test"]}
         result = u.Ldap.search_entry_to_ldif_entry(entry)
-        u.Ldap.Tests.ok(result)
+        converted = u.Ldap.Tests.ok(result)
+        assert converted.dn is not None
+        u.Ldap.Tests.that(
+            converted.dn.value,
+            eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+        )
 
     def test_search_entry_to_ldif_entry_missing_dn(self) -> None:
         entry = {"cn": ["test"]}
@@ -278,7 +185,8 @@ class TestsFlextLdapUtilitiesUnit:
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        assert result is not None
+        assert result.dn_changed is False
+        assert "cn" not in result.attribute_changes
 
     def test_track_conversion_differences_dn_change(self) -> None:
         meta = m.Ldap.ConversionMetadata(source_dn=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
@@ -323,7 +231,7 @@ class TestsFlextLdapUtilitiesUnit:
         assert "cn" in result
 
     # --- find_existing_values ---
-    def test_find_existing_values_found(self) -> None:
+    def test_find_existing_values_found_case_insensitive(self) -> None:
         existing = {"cn": ["test"], "sn": ["user"]}
         result = u.Ldap.find_existing_values("CN", existing)
         assert result is not None
@@ -335,36 +243,39 @@ class TestsFlextLdapUtilitiesUnit:
         assert result is None
 
     # --- normalize_value_set ---
-    def test_normalize_value_set(self) -> None:
+    def test_normalize_value_set_lowercases_and_drops_empty(self) -> None:
         result = u.Ldap.normalize_value_set(["Alice", "BOB", ""])
         assert result == {"alice", "bob"}
 
     # --- process_new_attributes ---
     def test_process_new_attributes_with_change(self) -> None:
-        new_attrs = {"cn": ["newval"]}
-        existing_attrs = {"cn": ["oldval"]}
         changes, _processed = u.Ldap.process_new_attributes(
-            new_attrs,
-            existing_attrs,
+            {"cn": ["newval"]},
+            {"cn": ["oldval"]},
             frozenset(),
         )
         assert "cn" in changes
 
     def test_process_new_attributes_no_change(self) -> None:
-        new_attrs = {"cn": ["same"]}
-        existing_attrs = {"cn": ["same"]}
         changes, _processed = u.Ldap.process_new_attributes(
-            new_attrs,
-            existing_attrs,
+            {"cn": ["same"]},
+            {"cn": ["same"]},
             frozenset(),
         )
         assert "cn" not in changes
 
+    def test_process_new_attributes_value_comparison_is_case_insensitive(self) -> None:
+        changes, _processed = u.Ldap.process_new_attributes(
+            {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE]},
+            {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE_UPPER]},
+            frozenset(),
+        )
+        assert c.Ldap.AttributeName.COMMON_NAME not in changes
+
     def test_process_new_attributes_ignored(self) -> None:
-        new_attrs = {"cn": ["val"]}
         existing_attrs: dict[str, list[str]] = {}
         changes, _processed = u.Ldap.process_new_attributes(
-            new_attrs,
+            {"cn": ["val"]},
             existing_attrs,
             frozenset(["cn"]),
         )
@@ -444,7 +355,7 @@ class TestsFlextLdapUtilitiesUnit:
             attributes=m.Ldif.Attributes(attributes={}, attribute_metadata={}),
         )
         result = u.Ldap.dn_str(entry)
-        assert result is not None
+        u.Ldap.Tests.that(result, eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
 
     # --- map_str with join ---
     def test_map_str_with_join(self) -> None:
@@ -493,6 +404,38 @@ class TestsFlextLdapUtilitiesUnit:
     def test_detect_from_vendor_openldap(self) -> None:
         result = u.Ldap.detect_from_vendor("OpenLDAP", "2.6")
         assert result is not None
+        assert "openldap" in result.lower()
+
+    # --- detect_server_type (composed public contract) ---
+    def test_detect_server_type_prefers_vendor_over_extensions(self) -> None:
+        vendor_type = u.Ldap.detect_from_vendor("OpenLDAP", "2.6")
+        assert vendor_type is not None
+        result = u.Ldap.detect_server_type(
+            vendor_name="OpenLDAP",
+            vendor_version="2.6",
+            naming_contexts=["dc=oracle,dc=example"],
+            supported_extensions=[],
+        )
+        # Vendor metadata wins even though the context alone would infer OID.
+        u.Ldap.Tests.that(result, eq=vendor_type)
+
+    def test_detect_server_type_falls_back_to_extensions(self) -> None:
+        result = u.Ldap.detect_server_type(
+            vendor_name=None,
+            vendor_version=None,
+            naming_contexts=["dc=oracle,dc=example"],
+            supported_extensions=[],
+        )
+        u.Ldap.Tests.that(result, eq=c.Ldif.ServerTypes.OID.value)
+
+    def test_detect_server_type_defaults_to_rfc(self) -> None:
+        result = u.Ldap.detect_server_type(
+            vendor_name=None,
+            vendor_version=None,
+            naming_contexts=(),
+            supported_extensions=(),
+        )
+        u.Ldap.Tests.that(result, eq=c.Ldif.ServerTypes.RFC.value)
 
     # --- query_root_dse ---
     def test_query_root_dse_no_search_method(self) -> None:
@@ -571,7 +514,7 @@ class TestsFlextLdapUtilitiesUnit:
         )
         conn.bind()
         result = u.Ldap.query_root_dse(conn)
-        # Either success or failure is acceptable depending on entry format
+        # Either success or failure is acceptable depending on entry format.
         assert result is not None
 
     # --- detect_from_connection ---
@@ -650,50 +593,5 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.is_base64_encoded("normalvalue")
         assert result is False
 
-    def test_comparison_methods_dispatch_through_mro(self) -> None:
-        changes, _processed = (
-            self.ComparisonOverrideUtilities.Ldap.process_new_attributes(
-                {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE]},
-                {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE_UPPER]},
-                frozenset(),
-            )
-        )
 
-        u.Ldap.Tests.that(
-            c.Ldap.AttributeName.COMMON_NAME in changes,
-            eq=False,
-        )
-
-    def test_conversion_methods_dispatch_through_mro(self) -> None:
-        result = self.ConversionOverrideUtilities.Ldap.search_entry_to_ldif_entry({
-            "dn": c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-        })
-        entry = u.Ldap.Tests.ok(result)
-
-        u.Ldap.Tests.that(
-            entry.dn.value if entry.dn else c.Ldap.Tests.STRING_EMPTY,
-            eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
-        )
-
-    def test_detection_methods_dispatch_through_mro(self) -> None:
-        detected = self.DetectionOverrideUtilities.Ldap.detect_server_type(
-            vendor_name=None,
-            vendor_version=None,
-            naming_contexts=(),
-            supported_extensions=(),
-        )
-
-        u.Ldap.Tests.that(detected, eq=c.Ldif.ServerTypes.OID.value)
-
-    def test_root_dse_methods_dispatch_through_mro(self) -> None:
-        result = self.RootDseOverrideUtilities.Ldap.detect_from_connection(
-            self.RootDseConnection(),
-        )
-
-        u.Ldap.Tests.that(
-            u.Ldap.Tests.ok(result),
-            eq=c.Ldif.ServerTypes.OID.value,
-        )
-
-
-__all__: list[str] = ["TestsFlextLdapUtilitiesUnit"]
+__all__: list[str] = ["TestsFlextLdapUtilities"]

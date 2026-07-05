@@ -177,24 +177,26 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.that(error, contains="1 synced")
         u.Ldap.Tests.that(error, contains="1 skipped")
 
-    def test_update_batch_stats_unknown_operation_counts_failure(self) -> None:
-        operations = FlextLdapOperations()
-        stats = m.Ldap.LdapBatchStats()
-        upsert_result = r[m.Ldap.LdapOperationResult].ok(
-            m.Ldap.LdapOperationResult.with_operation(c.Ldap.Tests.STRING_SIMPLE),
-        )
+    def test_batch_upsert_unknown_operation_counts_as_failure(self) -> None:
+        """An upsert that reports an unrecognized operation fails the batch.
 
-        operations._update_batch_stats(
-            upsert_result,
-            stats,
-            1,
-            c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-            1,
-        )
+        Exercised through the public ``batch_upsert`` contract: a successful
+        upsert whose operation is neither ADDED/MODIFIED nor SKIPPED must be
+        counted as failed, so the batch result is a failure reporting one
+        failed and zero synced/skipped entries.
+        """
+        operations = self.BatchPathOperations((
+            r[m.Ldap.LdapOperationResult].ok(
+                m.Ldap.LdapOperationResult.with_operation(c.Ldap.Tests.STRING_SIMPLE),
+            ),
+        ))
+        entries = [self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)]
 
-        u.Ldap.Tests.that(stats.failed, eq=1)
-        u.Ldap.Tests.that(stats.synced, eq=0)
-        u.Ldap.Tests.that(stats.skipped, eq=0)
+        error = u.Ldap.Tests.fail(operations.batch_upsert(entries))
+
+        u.Ldap.Tests.that(error, contains="1 entries failed")
+        u.Ldap.Tests.that(error, contains="0 synced")
+        u.Ldap.Tests.that(error, contains="0 skipped")
 
     def test_upsert_schema_modify_missing_dn_returns_failure(self) -> None:
         operations = FlextLdapOperations()
