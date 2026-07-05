@@ -101,7 +101,9 @@ class TestsFlextLdapPublicApiContract:
 
     @pytest.mark.parametrize("name", sorted(_FROZEN_ROOT_EXPORTS))
     def test_every_declared_export_is_importable(self, name: str) -> None:
-        assert hasattr(flext_ldap, name), f"declared in __all__ but not importable: {name}"
+        assert hasattr(flext_ldap, name), (
+            f"declared in __all__ but not importable: {name}"
+        )
 
     def test_declared_exports_are_unique(self) -> None:
         names: tuple[str, ...] = flext_ldap.__all__
