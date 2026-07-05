@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
 from tests.constants import c
 from tests.utilities import u
@@ -204,8 +205,9 @@ class TestsFlextLdapConstantsUnit:
     # ------------------------------------------------------------------ #
 
     def test_exc_connection_is_a_tuple_of_exception_types(self) -> None:
+        expected_exceptions = {_Ldap3LDAPException, *c.EXC_BROAD_IO_TYPE}
         u.Ldap.Tests.that(
-            all(issubclass(exc, BaseException) for exc in c.Ldap.EXC_CONNECTION),
+            set(c.Ldap.EXC_CONNECTION) == expected_exceptions,
             eq=True,
         )
 
