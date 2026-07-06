@@ -22,7 +22,13 @@ from flext_ldap._exports import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._root_typing_parts import d as d, e as e, h as h, r as r, x as x
+    from flext_core._root_typing_parts.facades import (
+        d as d,
+        e as e,
+        h as h,
+        r as r,
+        x as x,
+    )
     from flext_ldap.api import FlextLdap as FlextLdap, ldap as ldap
     from flext_ldap.base import FlextLdapService as FlextLdapService, s as s
     from flext_ldap.constants import FlextLdapConstants as FlextLdapConstants, c as c
