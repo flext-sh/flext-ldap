@@ -22,22 +22,33 @@ from flext_ldap.__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
-    from flext_ldap.api import FlextLdap, ldap
-    from flext_ldap.base import FlextLdapService, s
-    from flext_ldap.constants import FlextLdapConstants, c
-    from flext_ldap.models import FlextLdapModels, m
-    from flext_ldap.protocols import FlextLdapProtocols, p
-    from flext_ldap.services.api_runtime import FlextLdapApiRuntime
-    from flext_ldap.services.connection import FlextLdapConnection
-    from flext_ldap.services.detection import FlextLdapServerDetector
-    from flext_ldap.services.operations import FlextLdapOperations
-    from flext_ldap.services.sync import FlextLdapSync
-    from flext_ldap.settings import FlextLdapSettings
-    from flext_ldap.typings import FlextLdapTypes, t
-    from flext_ldap.utilities import FlextLdapUtilities, u
-    from flext_ldif import d, e, h, r, x
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import (
+        FlextLdapAdapterHost as FlextLdapAdapterHost,
+        FlextLdapLdap3Adapter as FlextLdapLdap3Adapter,
+    )
+    from flext_ldap.api import FlextLdap as FlextLdap, ldap as ldap
+    from flext_ldap.base import FlextLdapService as FlextLdapService, s as s
+    from flext_ldap.constants import FlextLdapConstants as FlextLdapConstants, c as c
+    from flext_ldap.models import FlextLdapModels as FlextLdapModels, m as m
+    from flext_ldap.protocols import FlextLdapProtocols as FlextLdapProtocols, p as p
+    from flext_ldap.services.api_runtime import (
+        FlextLdapApiRuntime as FlextLdapApiRuntime,
+    )
+    from flext_ldap.services.connection import (
+        FlextLdapConnection as FlextLdapConnection,
+    )
+    from flext_ldap.services.detection import (
+        FlextLdapServerDetector as FlextLdapServerDetector,
+    )
+    from flext_ldap.services.operations import (
+        FlextLdapOperations as FlextLdapOperations,
+    )
+    from flext_ldap.services.sync import FlextLdapSync as FlextLdapSync
+    from flext_ldap.settings import FlextLdapSettings as FlextLdapSettings
+    from flext_ldap.typings import FlextLdapTypes as FlextLdapTypes, t as t
+    from flext_ldap.utilities import FlextLdapUtilities as FlextLdapUtilities, u as u
+    from flext_ldif import d as d, e as e, h as h, r as r, x as x
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         ".adapters",

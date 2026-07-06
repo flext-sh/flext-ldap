@@ -12,14 +12,29 @@ from flext_core.lazy import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldap.adapters._ldap3.connection_manager import ConnectionManager
-    from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
-    from flext_ldap.adapters._ldap3.result_converter import ResultConverter
-    from flext_ldap.adapters._ldap3.result_extract import ResultConverterExtractMixin
-    from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
-    from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
-    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-    from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
+    from flext_ldap.adapters._ldap3.connection_manager import (
+        ConnectionManager as ConnectionManager,
+    )
+    from flext_ldap.adapters._ldap3.operation_executor import (
+        OperationExecutor as OperationExecutor,
+    )
+    from flext_ldap.adapters._ldap3.result_converter import (
+        ResultConverter as ResultConverter,
+    )
+    from flext_ldap.adapters._ldap3.result_extract import (
+        ResultConverterExtractMixin as ResultConverterExtractMixin,
+    )
+    from flext_ldap.adapters._ldap3.search_executor import (
+        SearchExecutor as SearchExecutor,
+    )
+    from flext_ldap.adapters._ldap3.wrappers import (
+        FlextLdapLdap3Wrappers as FlextLdapLdap3Wrappers,
+    )
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import (
+        FlextLdapAdapterHost as FlextLdapAdapterHost,
+        FlextLdapLdap3Adapter as FlextLdapLdap3Adapter,
+    )
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._ldap3",),
     build_lazy_import_map(
