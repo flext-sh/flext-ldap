@@ -22,7 +22,9 @@ from flext_ldap.__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldap.api import FlextLdap
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+    from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
+    from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapService, s
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
@@ -37,9 +39,23 @@ if TYPE_CHECKING:
     from flext_ldap.utilities import FlextLdapUtilities, u
     from flext_ldif import d, e, h, r, x
 _LAZY_IMPORTS = merge_lazy_imports(
-    (".services",),
+    (
+        ".adapters",
+        ".services",
+    ),
     build_lazy_import_map(
         {
+            ".adapters._ldap3.connection_manager": ("ConnectionManager",),
+            ".adapters._ldap3.operation_executor": ("OperationExecutor",),
+            ".adapters._ldap3.result_converter": ("ResultConverter",),
+            ".adapters._ldap3.result_extract": ("ResultConverterExtractMixin",),
+            ".adapters._ldap3.search_executor": ("SearchExecutor",),
+            ".adapters._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
+            ".adapters.entry": ("FlextLdapEntryAdapter",),
+            ".adapters.ldap3": (
+                "FlextLdapAdapterHost",
+                "FlextLdapLdap3Adapter",
+            ),
             ".api": (
                 "FlextLdap",
                 "ldap",
@@ -84,6 +100,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         },
     ),
     exclude_names=(
+        "_ldap3",
         "cleanup_submodule_namespace",
         "install_lazy_exports",
         "lazy_getattr",
@@ -108,9 +125,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
 
 __all__: tuple[str, ...] = (
     "FlextLdap",
+    "FlextLdapAdapterHost",
     "FlextLdapApiRuntime",
     "FlextLdapConnection",
     "FlextLdapConstants",
+    "FlextLdapEntryAdapter",
+    "FlextLdapLdap3Adapter",
     "FlextLdapModels",
     "FlextLdapOperations",
     "FlextLdapProtocols",
