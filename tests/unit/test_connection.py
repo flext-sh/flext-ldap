@@ -26,7 +26,7 @@ pytestmark = [pytest.mark.unit]
 class TestsFlextLdapConnection:
     """Connection lifecycle contract, asserted through the public API only."""
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def _isolated_disconnected_facade(self) -> Iterator[None]:
         """Guarantee each test starts and ends from a disconnected facade."""
         ldap.disconnect()
