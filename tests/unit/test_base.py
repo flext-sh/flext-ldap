@@ -92,7 +92,6 @@ class TestsFlextLdapBase:
 
     def test_settings_isolated_from_root_global(self) -> None:
         cfg = m.Ldap.Tests.SuccessService().settings
-        glob = FlextSettings.fetch_global()
 
         assert cfg is not glob
         assert isinstance(glob, FlextSettings)

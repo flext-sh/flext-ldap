@@ -45,7 +45,6 @@ if TYPE_CHECKING:
         FlextLdapOperations as FlextLdapOperations,
     )
     from flext_ldap.services.sync import FlextLdapSync as FlextLdapSync
-    from flext_ldap.settings import FlextLdapSettings as FlextLdapSettings
     from flext_ldap.typings import FlextLdapTypes as FlextLdapTypes, t as t
     from flext_ldap.utilities import FlextLdapUtilities as FlextLdapUtilities, u as u
     from flext_ldif import d as d, e as e, h as h, r as r, x as x
@@ -56,6 +55,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            "._settings": ("FlextLdapSettings", "settings"),
             ".adapters._ldap3.connection_manager": ("ConnectionManager",),
             ".adapters._ldap3.operation_executor": ("OperationExecutor",),
             ".adapters._ldap3.result_converter": ("ResultConverter",),
@@ -92,7 +92,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.detection": ("FlextLdapServerDetector",),
             ".services.operations": ("FlextLdapOperations",),
             ".services.sync": ("FlextLdapSync",),
-            ".settings": ("FlextLdapSettings",),
             ".typings": (
                 "FlextLdapTypes",
                 "t",
@@ -135,6 +134,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdapSettings",
+    "settings",
     "FlextLdap",
     "FlextLdapAdapterHost",
     "FlextLdapApiRuntime",
@@ -147,7 +148,6 @@ __all__: tuple[str, ...] = (
     "FlextLdapProtocols",
     "FlextLdapServerDetector",
     "FlextLdapService",
-    "FlextLdapSettings",
     "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",

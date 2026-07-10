@@ -20,7 +20,6 @@ class TestsFlextLdapServiceBase[
     @override
     def fetch_settings(cls) -> TestsFlextLdapSettings:
         """Return the typed LDAP+LDIF+CLI+Tests settings singleton."""
-        return TestsFlextLdapSettings.fetch_global()
 
     @classmethod
     @override
