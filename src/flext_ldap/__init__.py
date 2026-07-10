@@ -22,6 +22,10 @@ from flext_ldap.__version__ import (
 )
 
 if TYPE_CHECKING:
+    from flext_ldap._settings import (
+        FlextLdapSettings as FlextLdapSettings,
+        settings as settings,
+    )
     from flext_ldap.adapters.entry import FlextLdapEntryAdapter as FlextLdapEntryAdapter
     from flext_ldap.adapters.ldap3 import (
         FlextLdapAdapterHost as FlextLdapAdapterHost,
