@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests.settings import FlextTestsSettings
+from flext_tests import FlextTestsSettings
 
 from flext_core import FlextSettings
 from tests.constants import c
