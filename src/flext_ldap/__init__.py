@@ -134,8 +134,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 
 
 __all__: tuple[str, ...] = (
-    "FlextLdapSettings",
-    "settings",
     "FlextLdap",
     "FlextLdapAdapterHost",
     "FlextLdapApiRuntime",
@@ -148,6 +146,7 @@ __all__: tuple[str, ...] = (
     "FlextLdapProtocols",
     "FlextLdapServerDetector",
     "FlextLdapService",
+    "FlextLdapSettings",
     "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
@@ -168,6 +167,7 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
+    "settings",
     "t",
     "u",
     "x",

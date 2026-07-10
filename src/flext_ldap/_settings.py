@@ -64,7 +64,6 @@ class FlextLdapSettings(FlextLdifSettings):
     )
 
 
-
 settings: FlextLdapSettings = FlextLdapSettings.fetch_global()
 """Pre-instantiated project settings singleton — ``from flext_ldap import settings``."""
 
