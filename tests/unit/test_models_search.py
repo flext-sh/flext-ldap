@@ -220,7 +220,7 @@ class TestsFlextLdapModelsSearch:
         ]
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=entries, search_options=options)
-        u.Ldap.Tests.that(result.total_count, eq=expected_count)
+        u.Ldap.Tests.that(len(result.entries), eq=expected_count)
 
     def test_search_result_groups_entries_by_objectclass(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
@@ -234,18 +234,19 @@ class TestsFlextLdapModelsSearch:
             self._entry(f"cn=x,{c.Ldap.Tests.RFC_DEFAULT_BASE_DN}"),
         ]
         result = m.Ldap.SearchResult(entries=entries, search_options=options)
-        categories = result.by_objectclass
+        categories = u.Ldap.group_entries_by_objectclass(result.entries)
         u.Ldap.Tests.that(len(categories["person"]), eq=2)
         u.Ldap.Tests.that(len(categories[c.Ldap.UNKNOWN_CATEGORY]), eq=1)
 
     def test_search_result_by_objectclass_empty_when_no_entries(self) -> None:
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=[], search_options=options)
-        u.Ldap.Tests.that(dict(result.by_objectclass), eq={})
+        categories = u.Ldap.group_entries_by_objectclass(result.entries)
+        u.Ldap.Tests.that(dict(categories), eq={})
 
     def test_extract_attrs_dict_empty_for_entry_without_attributes(self) -> None:
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        attrs = m.Ldap.SearchResult.extract_attrs_dict_from_entry(entry)
+        attrs = u.Ldap.extract_attrs_dict_from_entry(entry)
         u.Ldap.Tests.that(attrs, eq={})
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.SearchCategoryCase)
@@ -264,12 +265,12 @@ class TestsFlextLdapModelsSearch:
                 }
             case _:
                 raise AssertionError(f"Unhandled search category case: {case}")
-        category = m.Ldap.SearchResult.extract_objectclass_category(attrs)
+        category = u.Ldap.extract_objectclass_category(attrs)
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 
     def test_get_entry_category_unknown_without_objectclass(self) -> None:
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        category = m.Ldap.SearchResult.get_entry_category(entry)
+        category = u.Ldap.get_entry_category(entry)
         u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 
     def test_get_entry_category_lowercases_first_objectclass(self) -> None:
@@ -278,7 +279,7 @@ class TestsFlextLdapModelsSearch:
             for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
         }
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN, person_top)
-        category = m.Ldap.SearchResult.get_entry_category(entry)
+        category = u.Ldap.get_entry_category(entry)
         u.Ldap.Tests.that(
             category,
             eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[

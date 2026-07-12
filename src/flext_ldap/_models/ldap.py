@@ -6,13 +6,10 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
 
 from flext_ldap import c, t
 from flext_ldif import m, u
-
-if TYPE_CHECKING:
-    from flext_ldap.protocols import FlextLdapProtocols as p
 
 
 class FlextLdapModelsLdap:
@@ -259,66 +256,6 @@ class FlextLdapModelsLdap:
 
         entries: Annotated[t.SequenceOf[m.Ldif.Entry], u.Field(default_factory=list)]
         search_options: FlextLdapModelsLdap.SearchOptions
-
-        @u.computed_field()
-        @property
-        def by_objectclass(self) -> m.Ldif.FlexibleCategories:
-            """Group entries by objectclass."""
-            result = m.Ldif.FlexibleCategories()
-            for entry in self.entries:
-                category = self.get_entry_category(entry)
-                result[category].append(entry)
-            return result
-
-        @u.computed_field()
-        @property
-        def total_count(self) -> int:
-            """Total count of entries in result."""
-            return len(self.entries)
-
-        @staticmethod
-        def extract_attrs_dict_from_entry(
-            entry: p.Ldif.Entry,
-        ) -> t.MappingKV[str, t.StrSequence]:
-            """Extract attributes dict from entry."""
-            attributes = entry.attributes
-            if attributes is None:
-                return {}
-            return attributes.attributes
-
-        @staticmethod
-        def extract_objectclass_category(
-            attrs: t.AttributeMapping,
-        ) -> str:
-            """Extract objectclass category from attributes."""
-            unknown: str = c.Ldap.UNKNOWN_CATEGORY
-            if not attrs:
-                return unknown
-            oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            if isinstance(oc_list, list):
-                if not oc_list:
-                    return unknown
-                first_value = oc_list[0]
-                lowered: str = first_value.lower()
-                return lowered
-            return unknown
-
-        @staticmethod
-        def get_entry_category(entry: p.Ldif.Entry) -> str:
-            """Get category (objectclass) of an entry."""
-            unknown: str = c.Ldap.UNKNOWN_CATEGORY
-            attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
-                entry,
-            )
-            if not attrs:
-                return unknown
-            oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            match oc_list:
-                case list() as oc_values if oc_values:
-                    lowered: str = oc_values[0].lower()
-                    return lowered
-                case _:
-                    return unknown
 
     class LdapOperationResult(m.BaseModel):
         """LDAP operation result."""

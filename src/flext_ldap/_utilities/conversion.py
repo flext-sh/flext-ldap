@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldap import m, p, t
+from flext_ldap import c, m, p, t
 from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 from flext_ldif import r
 
@@ -80,6 +80,53 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         if not updates:
             return conversion_metadata
         return conversion_metadata.model_copy(update=updates)
+
+    # NOTE (multi-agent): mro-wgwh.2 — entry attribute/category behavior moved here
+    # from m.Ldap.SearchResult (models facet is declaration-only); get_entry_category
+    # composes the two extractions, killing the duplicated objectClass logic.
+    @staticmethod
+    def extract_attrs_dict_from_entry(
+        entry: p.Ldif.Entry,
+    ) -> t.MutableStrSequenceMapping:
+        """Extract the plain attributes mapping from an LDIF entry."""
+        attributes = entry.attributes
+        if attributes is None:
+            return {}
+        return attributes.attributes
+
+    @staticmethod
+    def extract_objectclass_category(
+        attrs: t.AttributeMapping,
+    ) -> str:
+        """Extract the lowercase objectclass category from an attribute mapping."""
+        unknown: str = c.Ldap.UNKNOWN_CATEGORY
+        if not attrs:
+            return unknown
+        oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
+        if isinstance(oc_list, list) and oc_list:
+            return oc_list[0].lower()
+        return unknown
+
+    @classmethod
+    def get_entry_category(
+        cls,
+        entry: p.Ldif.Entry,
+    ) -> str:
+        """Get the category (first objectclass, lowercased) of an LDIF entry."""
+        return cls.extract_objectclass_category(
+            cls.extract_attrs_dict_from_entry(entry),
+        )
+
+    @classmethod
+    def group_entries_by_objectclass(
+        cls,
+        entries: t.SequenceOf[m.Ldif.Entry],
+    ) -> m.Ldif.FlexibleCategories:
+        """Group LDIF entries by their objectclass category."""
+        result = m.Ldif.FlexibleCategories()
+        for entry in entries:
+            result[cls.get_entry_category(entry)].append(entry)
+        return result
 
 
 __all__: list[str] = ["FlextLdapUtilitiesConversion"]
