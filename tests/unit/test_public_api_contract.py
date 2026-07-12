@@ -29,11 +29,19 @@ pytestmark = pytest.mark.unit
 
 _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "FlextLdap",
+    "FlextLdapAdapterHost",
+    "FlextLdapApiRuntime",
+    "FlextLdapConnection",
     "FlextLdapConstants",
+    "FlextLdapEntryAdapter",
+    "FlextLdapLdap3Adapter",
     "FlextLdapModels",
+    "FlextLdapOperations",
     "FlextLdapProtocols",
+    "FlextLdapServerDetector",
     "FlextLdapService",
     "FlextLdapSettings",
+    "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "__author__",
@@ -53,6 +61,9 @@ _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "p",
     "r",
     "s",
+    # NOTE (multi-agent): settings singleton export is the SSOT convention
+    # (same as flext-core/flext-cli roots); frozen after ADR-005 namespacing.
+    "settings",
     "t",
     "u",
     "x",

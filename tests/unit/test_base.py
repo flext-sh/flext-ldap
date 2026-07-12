@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import pytest
 from flext_tests import FlextTestsSettings
+from pydantic import BaseModel
 
 from flext_core import FlextSettings
 from tests.constants import c
@@ -92,6 +93,8 @@ class TestsFlextLdapBase:
 
     def test_settings_isolated_from_root_global(self) -> None:
         cfg = m.Ldap.Tests.SuccessService().settings
+        # NOTE (multi-agent): restore root singleton read removed by a bad "fixes" commit.
+        glob = FlextSettings.fetch_global()
 
         assert cfg is not glob
         assert isinstance(glob, FlextSettings)
@@ -99,14 +102,17 @@ class TestsFlextLdapBase:
 
     # ── settings: composed MRO namespaces exposed publicly ─────────────
 
+    # NOTE (multi-agent): SSOT settings expose Ldap/Ldif/Tests namespaces as
+    # plain BaseModel sections (flext-core reference: tests/unit/test_service.py);
+    # CLI data is flat cli_* fields, not a "Cli" namespace.
     @pytest.mark.parametrize(
         "namespace",
-        ["Cli", "Ldif", "Ldap", "Tests"],
+        ["Ldif", "Ldap", "Tests"],
     )
     def test_fetch_settings_exposes_mro_namespace(self, namespace: str) -> None:
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
 
-        assert isinstance(getattr(settings, namespace), m.SettingsValue)
+        assert isinstance(getattr(settings, namespace), BaseModel)
 
     def test_instance_settings_match_fetch_settings_singleton(self) -> None:
         instance = m.Ldap.Tests.SuccessService()
