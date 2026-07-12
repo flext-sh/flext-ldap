@@ -12,21 +12,13 @@ from pathlib import Path
 from typing import Protocol, TypeGuard
 
 import pytest
-from flext_tests import (
-    reset_settings as _shared_reset_settings,
-    settings as _shared_settings,
-    settings_factory as _shared_settings_factory,
-)
 
 from flext_ldap.adapters import FlextLdapLdap3Wrappers
 from tests.constants import c
 from tests.typings import t
 from tests.utilities import u
 
-reset_settings = _shared_reset_settings
-settings = _shared_settings
-settings_factory = _shared_settings_factory
-
+# NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
 logger = u.fetch_logger(__name__)
 
 

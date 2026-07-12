@@ -23,12 +23,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
         """Create canonical conversion metadata for LDAP entry adaptation."""
-        return m.Ldap.ConversionMetadata.model_validate({
-            "source_attributes": list(dict(original_attrs_dict).keys()),
-            "source_dn": original_dn,
-            "removed_attributes": list(removed_attrs),
-            "base64_encoded_attributes": list(set(base64_attrs)),
-        })
+        return m.Ldap.ConversionMetadata(
+            source_attributes=list(dict(original_attrs_dict).keys()),
+            source_dn=original_dn,
+            removed_attributes=list(removed_attrs),
+            base64_encoded_attributes=list(set(base64_attrs)),
+        )
 
     @classmethod
     def search_entry_to_ldif_entry(
