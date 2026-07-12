@@ -44,7 +44,7 @@ class TestsFlextLdapLdap3Adapter:
 
     @pytest.fixture
     def adapter(self) -> FlextLdapLdap3Adapter:
-        """A freshly constructed, never-connected adapter."""
+        """Return a freshly constructed, never-connected adapter."""
         return FlextLdapLdap3Adapter()
 
     def test_fresh_adapter_reports_not_connected(
