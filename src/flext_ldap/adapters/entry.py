@@ -236,10 +236,10 @@ class FlextLdapEntryAdapter(s[bool]):
             original_attrs_dict,
             ldif_attrs,
         )
-        metadata_obj = m.Ldif.ServerMetadata.model_validate({
-            "server_type": self._server_type,
-            "extensions": conversion_metadata.model_dump(exclude_defaults=False),
-        })
+        metadata_obj = m.Ldif.ServerMetadata(
+            server_type=self._server_type,
+            extensions=conversion_metadata.model_dump(exclude_defaults=False),
+        )
         return m.Ldif.Entry.create(
             dn=dn_str,
             attributes=ldif_attrs,

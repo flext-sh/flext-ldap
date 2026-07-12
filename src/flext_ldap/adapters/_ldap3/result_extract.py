@@ -57,12 +57,11 @@ class ResultConverterExtractMixin:
             attrs_dict = ResultConverterExtractMixin.extract_attrs_dict(
                 parsed.entry_attributes_as_dict,
             )
-            attributes: m.Ldif.Attributes = m.Ldif.Attributes.model_validate({
-                "attributes": attrs_dict,
-                "attribute_metadata": {},
-                "metadata": None,
-            })
-            return attributes
+            return m.Ldif.Attributes(
+                attributes=attrs_dict,
+                attribute_metadata={},
+                metadata=None,
+            )
         return empty
 
     @staticmethod
@@ -115,9 +114,9 @@ class ResultConverterExtractMixin:
                             normalized.get("server_type"),
                             str,
                         ):
-                            result = m.Ldif.ServerMetadata.model_validate({
-                                "server_type": normalized["server_type"],
-                            })
+                            result = m.Ldif.ServerMetadata(
+                                server_type=normalized["server_type"],
+                            )
                         else:
                             result = None
                     case _:

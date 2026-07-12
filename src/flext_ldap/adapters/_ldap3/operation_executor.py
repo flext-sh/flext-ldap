@@ -53,15 +53,11 @@ class OperationExecutor:
         try:
             if wrapper_call():
                 return r[m.Ldap.OperationResult].ok(
-                    m.Ldap.OperationResult.model_validate(
-                        {
-                            "success": True,
-                            "operation_type": operation_type,
-                            "message": c.Ldap.OPERATION_SUCCESS_MESSAGES[
-                                operation_type
-                            ],
-                            "entries_affected": 1,
-                        },
+                    m.Ldap.OperationResult(
+                        success=True,
+                        operation_type=operation_type,
+                        message=c.Ldap.OPERATION_SUCCESS_MESSAGES[operation_type],
+                        entries_affected=1,
                     ),
                 )
         except c.EXC_BROAD_IO_TYPE as exc:
