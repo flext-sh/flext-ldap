@@ -493,13 +493,13 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             r containing LdapBatchStats with synced/failed/skipped counts
 
         """
-        sync_options = m.Ldap.SyncPhaseConfig.model_validate({
-            "progress_callback": progress_callback,
-            "retry_on_errors": list(retry_on_errors or []),
-            "max_retries": max_retries,
-            "stop_on_error": stop_on_error,
-        })
-        stats = m.Ldap.LdapBatchStats.model_validate({})
+        sync_options = m.Ldap.SyncPhaseConfig(
+            progress_callback=progress_callback,
+            retry_on_errors=list(retry_on_errors or []),
+            max_retries=max_retries,
+            stop_on_error=stop_on_error,
+        )
+        stats = m.Ldap.LdapBatchStats()
         stop_error_index: int | None = None
         total_entries = len(entries)
         for i, entry in enumerate(entries, 1):
@@ -632,13 +632,13 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             return r[m.Ldap.Response].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         base_dn: str = c.Ldap.EXAMPLE_BASE_DN
         return r[m.Ldap.Response].ok(
-            m.Ldap.SearchResult.model_validate({
-                "entries": [],
-                "search_options": m.Ldap.SearchOptions.model_validate({
-                    "base_dn": base_dn,
-                    "filter_str": c.Ldap.ALL_ENTRIES_FILTER,
-                }),
-            }),
+            m.Ldap.SearchResult(
+                entries=[],
+                search_options=m.Ldap.SearchOptions(
+                    base_dn=base_dn,
+                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+                ),
+            ),
         )
 
     def modify(

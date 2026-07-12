@@ -180,23 +180,23 @@ class FlextLdapLdap3Adapter(s[bool]):
                 ).flat_map(
                     lambda scope: self.SearchExecutor.execute(
                         conn,
-                        m.Ldap.SearchParams.model_validate({
-                            "base_dn": search_options.base_dn,
-                            "filter_str": search_options.filter_str,
-                            "ldap_scope": scope,
-                            "search_attributes": search_options.attributes or [],
-                            "size_limit": search_options.size_limit,
-                            "time_limit": search_options.time_limit,
-                        }),
+                        m.Ldap.SearchParams(
+                            base_dn=search_options.base_dn,
+                            filter_str=search_options.filter_str,
+                            ldap_scope=scope,
+                            search_attributes=search_options.attributes or [],
+                            size_limit=search_options.size_limit,
+                            time_limit=search_options.time_limit,
+                        ),
                         server_type,
                     ),
                 ),
             )
             .map(
-                lambda entries: m.Ldap.SearchResult.model_validate({
-                    "entries": entries,
-                    "search_options": search_options,
-                }),
+                lambda entries: m.Ldap.SearchResult(
+                    entries=entries,
+                    search_options=search_options,
+                ),
             )
         )
 

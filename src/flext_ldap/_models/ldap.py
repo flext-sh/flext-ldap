@@ -93,18 +93,16 @@ class FlextLdapModelsLdap:
 
             """
             norm_config = (
-                FlextLdapModelsLdap.NormalizedConfig.model_validate({})
-                if settings is None
-                else settings
+                FlextLdapModelsLdap.NormalizedConfig() if settings is None else settings
             )
-            return cls.model_validate({
-                "base_dn": base_dn,
-                "scope": norm_config.scope,
-                "filter_str": norm_config.filter_str,
-                "size_limit": norm_config.size_limit,
-                "time_limit": norm_config.time_limit,
-                "attributes": norm_config.attributes,
-            })
+            return cls(
+                base_dn=base_dn,
+                scope=norm_config.scope,
+                filter_str=norm_config.filter_str,
+                size_limit=norm_config.size_limit,
+                time_limit=norm_config.time_limit,
+                attributes=norm_config.attributes,
+            )
 
         @classmethod
         def base_scope(cls, base_dn: str) -> Self:
@@ -114,11 +112,11 @@ class FlextLdapModelsLdap:
             the upsert existence check), so the entry's user attributes must be
             returned for a meaningful comparison — ldap3 omits them unless asked.
             """
-            return cls.model_validate({
-                "base_dn": base_dn,
-                "scope": c.Ldap.SearchScope.BASE,
-                "attributes": [c.Ldap.AttributeName.ALL_ATTRIBUTES],
-            })
+            return cls(
+                base_dn=base_dn,
+                scope=c.Ldap.SearchScope.BASE,
+                attributes=[c.Ldap.AttributeName.ALL_ATTRIBUTES],
+            )
 
     class SearchParams(m.BaseModel):
         """Typed LDAP search parameters passed to ldap3 search calls."""
@@ -265,7 +263,7 @@ class FlextLdapModelsLdap:
         @classmethod
         def with_operation(cls, operation: str) -> Self:
             """Build a minimal LDAP operation result."""
-            return cls.model_validate({"operation": operation})
+            return cls(operation=operation)
 
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
