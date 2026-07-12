@@ -234,10 +234,14 @@ class FlextLdapProtocols(_ldif_p):
                 """Connect to LDAP server.
 
                 Args:
-                    settings: Connection configuration (may be named 'settings' or
-                        'connection_config' in implementations)
-                    **kwargs: Additional keyword arguments (e.g., auto_retry: bool,
-                        max_retries: int, retry_delay: float)
+                    connection_config: Validated connection configuration
+                        (host, port, bind DN, TLS options) for this server.
+                    auto_retry: Reconnect automatically when the bind fails
+                        transiently.
+                    max_retries: Maximum bind attempts when ``auto_retry`` is
+                        enabled.
+                    retry_delay: Delay in seconds between bind attempts.
+                    **kwargs: Additional implementation-specific options.
 
                 Returns:
                     Result[bool] indicating connection success or failure

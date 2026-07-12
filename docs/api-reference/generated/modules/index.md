@@ -16,6 +16,5 @@ These pages are generated from public modules and their docstrings.
 - [flext_ldap.services.detection](services/detection.md)
 - [flext_ldap.services.operations](services/operations.md)
 - [flext_ldap.services.sync](services/sync.md)
-- [flext_ldap.settings](settings.md)
 - [flext_ldap.typings](typings.md)
 - [flext_ldap.utilities](utilities.md)

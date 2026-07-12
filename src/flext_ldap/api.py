@@ -21,6 +21,7 @@ class FlextLdap(FlextLdapConnection, FlextLdapSync, FlextLdapApiRuntime):
 
 
 ldap = FlextLdap.fetch_global()
+"""Process-wide FlextLdap facade singleton resolved from the global container."""
 
 
 __all__: list[str] = ["FlextLdap", "ldap"]
