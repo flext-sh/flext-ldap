@@ -157,6 +157,9 @@ omit = [ "*/dependency_injector/providers.pyx" ]
 known_first_party = [ "flext_cli", "flext_core", "flext_ldap", "flext_ldif" ]
 pep621_dev_dependency_groups = [ "dev" ]
 
+[tool.hatch.build.targets.wheel]
+packages = [ "src/flext_ldap" ]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
