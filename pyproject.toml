@@ -10,7 +10,7 @@ requires = [ "hatchling" ]
 # [CUSTOM] project metadata
 [project]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
@@ -45,7 +45,7 @@ license = "MIT"
 name = "flext-ldap"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-version = "0.12.0-dev"
+version = "0.12.0"
 
 [[project.authors]]
 email = "team@flext.sh"
@@ -156,6 +156,9 @@ omit = [ "*/dependency_injector/providers.pyx" ]
 [tool.deptry]
 known_first_party = [ "flext_cli", "flext_core", "flext_ldap", "flext_ldif" ]
 pep621_dev_dependency_groups = [ "dev" ]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/flext_ldap" ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
