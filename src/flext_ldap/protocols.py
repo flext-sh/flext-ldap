@@ -24,8 +24,7 @@ if TYPE_CHECKING:
     import types
     from collections.abc import Callable
 
-    from flext_ldap import m as lm
-    from flext_ldap.typings import FlextLdapTypes as t
+    from flext_ldap import FlextLdapTypes as t, m as lm
 
 
 class FlextLdapProtocols(_ldif_p):
