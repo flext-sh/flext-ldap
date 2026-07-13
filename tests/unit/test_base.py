@@ -14,12 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import FlextTestsSettings
+from flext_tests import FlextTestsSettings, tm
 from pydantic import BaseModel
 
 from flext_core import FlextSettings
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 pytestmark = pytest.mark.unit
 
@@ -32,47 +31,47 @@ class TestsFlextLdapBase:
     def test_execute_success_reports_success(self) -> None:
         result = m.Ldap.Tests.SuccessService().execute()
 
-        assert result.success
+        tm.ok(result)
         assert not result.failure
 
     def test_execute_success_carries_true_value(self) -> None:
         result = m.Ldap.Tests.SuccessService().execute()
 
-        assert result.unwrap() is True
-        assert result.error is None
+        tm.that(result.unwrap(), eq=True)
+        tm.that(result.error, none=True)
 
     # ── execute(): failure outcome ─────────────────────────────────────
 
     def test_execute_failure_reports_failure(self) -> None:
         result = m.Ldap.Tests.FailService().execute()
 
-        assert result.failure
-        assert not result.success
+        tm.fail(result)
+        tm.fail(result)
 
     def test_execute_failure_exposes_declared_error_message(self) -> None:
         result = m.Ldap.Tests.FailService().execute()
 
-        assert result.error == c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE
+        tm.that(result.error, eq=c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE)
 
     # ── r[T] combinator laws on the returned result ────────────────────
 
     def test_map_transforms_success_value_only(self) -> None:
         mapped = m.Ldap.Tests.SuccessService().execute().map(lambda ok: not ok)
 
-        assert mapped.success
-        assert mapped.unwrap() is False
+        tm.ok(mapped)
+        tm.that(mapped.unwrap(), eq=False)
 
     def test_map_does_not_run_on_failure(self) -> None:
         mapped = m.Ldap.Tests.FailService().execute().map(lambda ok: not ok)
 
-        assert mapped.failure
-        assert mapped.error == c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE
+        tm.fail(mapped)
+        tm.that(mapped.error, eq=c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE)
 
     def test_recover_replaces_failure_with_fallback_value(self) -> None:
         recovered = m.Ldap.Tests.FailService().execute().recover(lambda _err: True)
 
-        assert recovered.success
-        assert recovered.unwrap() is True
+        tm.ok(recovered)
+        tm.that(recovered.unwrap(), eq=True)
 
     @pytest.mark.parametrize(
         ("service_factory", "fallback", "expected"),
@@ -97,8 +96,8 @@ class TestsFlextLdapBase:
         glob = FlextSettings.fetch_global()
 
         assert cfg is not glob
-        assert isinstance(glob, FlextSettings)
-        assert isinstance(cfg, FlextTestsSettings)
+        tm.that(glob, is_=FlextSettings)
+        tm.that(cfg, is_=FlextTestsSettings)
 
     # ── settings: composed MRO namespaces exposed publicly ─────────────
 
@@ -112,7 +111,7 @@ class TestsFlextLdapBase:
     def test_fetch_settings_exposes_mro_namespace(self, namespace: str) -> None:
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
 
-        assert isinstance(getattr(settings, namespace), BaseModel)
+        tm.that(getattr(settings, namespace), is_=BaseModel)
 
     def test_instance_settings_match_fetch_settings_singleton(self) -> None:
         instance = m.Ldap.Tests.SuccessService()
@@ -124,5 +123,5 @@ class TestsFlextLdapBase:
     def test_distinct_services_resolve_independently(self) -> None:
         ok, bad = m.Ldap.Tests.SuccessService(), m.Ldap.Tests.FailService()
 
-        assert ok.execute().success
-        assert bad.execute().failure
+        tm.ok(ok.execute())
+        tm.fail(bad.execute())

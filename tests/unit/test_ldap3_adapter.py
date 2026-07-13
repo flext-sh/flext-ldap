@@ -14,12 +14,11 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap import c as core_c
 from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 pytestmark = pytest.mark.unit
 
@@ -121,7 +120,7 @@ class TestsFlextLdapLdap3Adapter:
 
         server = FlextLdapLdap3Adapter.ConnectionManager.create_server(settings)
 
-        assert server is not None
+        tm.that(server, none=False)
         u.Ldap.Tests.that(
             getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
             eq=c.LOCALHOST,

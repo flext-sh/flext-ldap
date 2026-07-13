@@ -13,12 +13,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -59,7 +57,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_filter_truthy(self) -> None:
         result = u.Ldap.filter_truthy(dict(c.Ldap.Tests.FILTER_TRUTHY_INPUT))
-        assert isinstance(result, dict)
+        tm.that(result, is_=dict)
         u.Ldap.Tests.that(
             sorted(result.keys()),
             eq=list(c.Ldap.Tests.FILTER_TRUTHY_EXPECTED_KEYS),
@@ -95,17 +93,17 @@ class TestsFlextLdapUtilitiesUnit:
     def test_create_server_modes(self, case: c.Ldap.Tests.Ldap3ServerCase) -> None:
         port, use_ssl, _use_tls = c.Ldap.Tests.LDAP3_SERVER_SCENARIOS[case]
         server = u.Ldap.create_server(c.LOCALHOST, port, use_ssl=use_ssl)
-        assert server is not None
+        tm.that(server, none=False)
 
     # --- create_server_from_url ---
     def test_create_server_from_url(self) -> None:
         server = u.Ldap.create_server_from_url(f"ldap://{c.LOCALHOST}:{c.Ldap.PORT}")
-        assert server is not None
+        tm.that(server, none=False)
 
     # --- create_bare_server ---
     def test_create_bare_server(self) -> None:
         server = u.Ldap.create_bare_server(c.LOCALHOST)
-        assert server is not None
+        tm.that(server, none=False)
 
     # --- create_connection ---
     def test_create_connection(self) -> None:
@@ -116,7 +114,7 @@ class TestsFlextLdapUtilitiesUnit:
             password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
             auto_bind=False,
         )
-        assert conn is not None
+        tm.that(conn, none=False)
 
     # --- norm_in with tuple ---
     def test_norm_in_with_tuple(self) -> None:
@@ -164,7 +162,7 @@ class TestsFlextLdapUtilitiesUnit:
         entry = {"dn": c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, "cn": ["test"]}
         result = u.Ldap.search_entry_to_ldif_entry(entry)
         converted = u.Ldap.Tests.ok(result)
-        assert converted.dn is not None
+        tm.that(converted.dn, none=False)
         u.Ldap.Tests.that(
             converted.dn.value,
             eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
@@ -185,8 +183,8 @@ class TestsFlextLdapUtilitiesUnit:
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        assert result.dn_changed is False
-        assert "cn" not in result.attribute_changes
+        tm.that(result.dn_changed, eq=False)
+        tm.that(result.attribute_changes, lacks="cn")
 
     def test_track_conversion_differences_dn_change(self) -> None:
         meta = m.Ldap.ConversionMetadata(source_dn=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
@@ -197,7 +195,7 @@ class TestsFlextLdapUtilitiesUnit:
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        assert result.dn_changed is True
+        tm.that(result.dn_changed, eq=True)
 
     def test_track_conversion_differences_attr_change(self) -> None:
         meta = m.Ldap.ConversionMetadata(source_dn=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
@@ -208,7 +206,7 @@ class TestsFlextLdapUtilitiesUnit:
             original_attrs_dict={"cn": ["old"]},
             converted_attrs_dict={"cn": ["new"]},
         )
-        assert "cn" in result.attribute_changes
+        tm.that(result.attribute_changes, has="cn")
 
     # --- extract_entry_attributes ---
     def test_extract_entry_attributes_with_none_attrs(self) -> None:
@@ -228,24 +226,24 @@ class TestsFlextLdapUtilitiesUnit:
             ),
         )
         result = u.Ldap.extract_entry_attributes(entry)
-        assert "cn" in result
+        tm.that(result, has="cn")
 
     # --- find_existing_values ---
     def test_find_existing_values_found_case_insensitive(self) -> None:
         existing = {"cn": ["test"], "sn": ["user"]}
         result = u.Ldap.find_existing_values("CN", existing)
-        assert result is not None
-        assert list(result) == ["test"]
+        tm.that(result, none=False)
+        tm.that(list(result), eq=["test"])
 
     def test_find_existing_values_not_found(self) -> None:
         existing = {"cn": ["test"]}
         result = u.Ldap.find_existing_values("mail", existing)
-        assert result is None
+        tm.that(result, none=True)
 
     # --- normalize_value_set ---
     def test_normalize_value_set_lowercases_and_drops_empty(self) -> None:
         result = u.Ldap.normalize_value_set(["Alice", "BOB", ""])
-        assert result == {"alice", "bob"}
+        tm.that(result, eq={"alice", "bob"})
 
     # --- process_new_attributes ---
     def test_process_new_attributes_with_change(self) -> None:
@@ -254,7 +252,7 @@ class TestsFlextLdapUtilitiesUnit:
             {"cn": ["oldval"]},
             frozenset(),
         )
-        assert "cn" in changes
+        tm.that(changes, has="cn")
 
     def test_process_new_attributes_no_change(self) -> None:
         changes, _processed = u.Ldap.process_new_attributes(
@@ -262,7 +260,7 @@ class TestsFlextLdapUtilitiesUnit:
             {"cn": ["same"]},
             frozenset(),
         )
-        assert "cn" not in changes
+        tm.that(changes, lacks="cn")
 
     def test_process_new_attributes_value_comparison_is_case_insensitive(self) -> None:
         changes, _processed = u.Ldap.process_new_attributes(
@@ -270,7 +268,7 @@ class TestsFlextLdapUtilitiesUnit:
             {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE_UPPER]},
             frozenset(),
         )
-        assert c.Ldap.AttributeName.COMMON_NAME not in changes
+        tm.that(changes, lacks=c.Ldap.AttributeName.COMMON_NAME)
 
     def test_process_new_attributes_ignored(self) -> None:
         existing_attrs: dict[str, list[str]] = {}
@@ -279,14 +277,14 @@ class TestsFlextLdapUtilitiesUnit:
             existing_attrs,
             frozenset(["cn"]),
         )
-        assert "cn" not in changes
+        tm.that(changes, lacks="cn")
 
     # --- process_deleted_attributes ---
     def test_process_deleted_attributes(self) -> None:
         existing_attrs = {"cn": ["test"], "sn": ["user"]}
         changes = u.Ldap.process_deleted_attributes(existing_attrs, frozenset(), {"cn"})
-        assert "sn" in changes
-        assert "cn" not in changes
+        tm.that(changes, has="sn")
+        tm.that(changes, lacks="cn")
 
     # --- compare_entries ---
     def test_compare_entries_success(self) -> None:
@@ -306,7 +304,7 @@ class TestsFlextLdapUtilitiesUnit:
         )
         result = u.Ldap.compare_entries(existing, new_entry)
         changes = u.Ldap.Tests.ok(result)
-        assert "cn" in changes
+        tm.that(changes, has="cn")
 
     def test_compare_entries_no_existing_attrs(self) -> None:
         existing = m.Ldif.Entry(
@@ -378,38 +376,38 @@ class TestsFlextLdapUtilitiesUnit:
     # --- detect_from_extensions ---
     def test_detect_from_extensions_openldap(self) -> None:
         result = u.Ldap.detect_from_extensions(["openldap"], [])
-        assert "openldap" in result.lower()
+        tm.that(result.lower(), has="openldap")
 
     def test_detect_from_extensions_fallback_rfc(self) -> None:
         result = u.Ldap.detect_from_extensions([], [])
-        assert result == c.Ldif.ServerTypes.RFC.value
+        tm.that(result, eq=c.Ldif.ServerTypes.RFC.value)
 
     def test_detect_from_extensions_ad(self) -> None:
         result = u.Ldap.detect_from_extensions(["microsoft"], ["dc=example,dc=com"])
-        assert "ad" in result.lower()
+        tm.that(result.lower(), has="ad")
 
     def test_detect_from_extensions_oid_from_context(self) -> None:
         result = u.Ldap.detect_from_extensions([], ["dc=oracle,dc=example"])
-        assert result == c.Ldif.ServerTypes.OID.value
+        tm.that(result, eq=c.Ldif.ServerTypes.OID.value)
 
     # --- detect_from_vendor ---
     def test_detect_from_vendor_none(self) -> None:
         result = u.Ldap.detect_from_vendor(None, None)
-        assert result is None
+        tm.that(result, none=True)
 
     def test_detect_from_vendor_empty(self) -> None:
         result = u.Ldap.detect_from_vendor("", "")
-        assert result is None
+        tm.that(result, none=True)
 
     def test_detect_from_vendor_openldap(self) -> None:
         result = u.Ldap.detect_from_vendor("OpenLDAP", "2.6")
-        assert result is not None
-        assert "openldap" in result.lower()
+        tm.that(result, none=False)
+        tm.that(result.lower(), has="openldap")
 
     # --- detect_server_type (composed public contract) ---
     def test_detect_server_type_prefers_vendor_over_extensions(self) -> None:
         vendor_type = u.Ldap.detect_from_vendor("OpenLDAP", "2.6")
-        assert vendor_type is not None
+        tm.that(vendor_type, none=False)
         result = u.Ldap.detect_server_type(
             vendor_name="OpenLDAP",
             vendor_version="2.6",
@@ -515,7 +513,7 @@ class TestsFlextLdapUtilitiesUnit:
         conn.bind()
         result = u.Ldap.query_root_dse(conn)
         # Either success or failure is acceptable depending on entry format.
-        assert result is not None
+        tm.that(result, none=False)
 
     # --- detect_from_connection ---
     def test_detect_from_connection_failure(self) -> None:
@@ -539,7 +537,7 @@ class TestsFlextLdapUtilitiesUnit:
         conn = Connection(server, client_strategy=MOCK_SYNC)
         conn.bind()
         result = u.Ldap.detect_from_connection(conn)
-        assert result is not None
+        tm.that(result, none=False)
 
     # --- when_safe ---
     def test_when_safe_condition_true(self) -> None:
@@ -576,22 +574,22 @@ class TestsFlextLdapUtilitiesUnit:
             {"cn": ["test"]},
             c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
         )
-        assert meta.source_dn == c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE
-        assert "removed_attr" in meta.removed_attributes
-        assert "b64_attr" in meta.base64_encoded_attributes
+        tm.that(meta.source_dn, eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
+        tm.that(meta.removed_attributes, has="removed_attr")
+        tm.that(meta.base64_encoded_attributes, has="b64_attr")
 
     # --- is_base64_encoded ---
     def test_is_base64_encoded_with_prefix(self) -> None:
         result = u.Ldap.is_base64_encoded(":: dGVzdA==")
-        assert result is True
+        tm.that(result, eq=True)
 
     def test_is_base64_encoded_high_ascii(self) -> None:
         result = u.Ldap.is_base64_encoded("test\x80value")
-        assert result is True
+        tm.that(result, eq=True)
 
     def test_is_base64_encoded_normal(self) -> None:
         result = u.Ldap.is_base64_encoded("normalvalue")
-        assert result is False
+        tm.that(result, eq=False)
 
 
 __all__: list[str] = ["TestsFlextLdapUtilitiesUnit"]

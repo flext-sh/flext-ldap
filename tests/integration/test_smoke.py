@@ -17,12 +17,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap import ldap
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 pytestmark = pytest.mark.smoke
 
@@ -62,8 +63,8 @@ class TestsFlextLdapSmoke:
 
         # Assert - public r[bool] contract and observable connected state
         try:
-            assert result.success, f"Connection failed: {result.error}"
-            assert result.value is True
+            tm.ok(result)
+            tm.that(result.value, eq=True)
             assert bool(ldap.is_connected)
         finally:
             ldap.disconnect()

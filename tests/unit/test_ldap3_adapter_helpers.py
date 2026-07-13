@@ -10,6 +10,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, override
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.adapters import (
     FlextLdapLdap3Wrappers,
@@ -18,15 +19,12 @@ from flext_ldap.adapters import (
     ResultConverterExtractMixin,
     SearchExecutor,
 )
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
+    from tests import p
 
 pytestmark = pytest.mark.unit
 
@@ -449,7 +447,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         extracted = ResultConverterExtractMixin.extract_metadata(entry)
 
-        assert extracted is not None
+        tm.that(extracted, none=False)
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_normalizes_raw_mapping_metadata(self) -> None:
@@ -461,7 +459,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         extracted = ResultConverterExtractMixin.extract_metadata(carrier)
 
-        assert extracted is not None
+        tm.that(extracted, none=False)
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_returns_none_without_server_type(self) -> None:

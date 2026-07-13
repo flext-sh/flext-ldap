@@ -11,9 +11,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldap import ldap, t
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 pytestmark = pytest.mark.unit
 

@@ -13,13 +13,11 @@ from typing import TYPE_CHECKING, ClassVar, overload
 from flext_tests import FlextTestsUtilities, tk, tm
 
 from flext_ldap import u
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 if TYPE_CHECKING:
     from flext_core import p as core_p
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, u):
@@ -150,20 +148,18 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             ) -> None:
                 """Assert that server info is available on the connection."""
                 server = connection.server
-                assert server.info is not None, "LDAP server info not available"
-                assert server.info.naming_contexts is not None, (
-                    "LDAP naming contexts not available"
-                )
+                tm.that(server.info, none=False)
+                tm.that(server.info.naming_contexts, none=False)
 
             @staticmethod
             def assert_models_accessible() -> None:
                 """Assert that the project models facade is available."""
-                assert m is not None, "m (m) not accessible"
+                tm.that(m, none=False)
 
             @staticmethod
             def assert_connection_success(result: p.Result[bool]) -> None:
                 """Assert that a connection result succeeded."""
-                assert result.success, f"Connection failed: {result.error}"
+                tm.ok(result)
 
             @staticmethod
             def get_docker_control(

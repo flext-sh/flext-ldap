@@ -17,12 +17,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -99,7 +97,7 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.execute()
 
-        assert u.Ldap.Tests.ok(result) is True
+        tm.that(u.Ldap.Tests.ok(result), eq=True)
 
     # ------------------------------------------------------------------
     # ldif_entry_to_ldap3_attributes() — LDIF -> ldap3 attributes
@@ -158,10 +156,10 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        assert entry.dn is not None
-        assert entry.dn.value == c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE
-        assert entry.attributes is not None
-        assert entry.attributes.attributes == {"cn": ["user"], "sn": ["Doe"]}
+        tm.that(entry.dn, none=False)
+        tm.that(entry.dn.value, eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE)
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes, eq={"cn": ["user"], "sn": ["Doe"]})
 
     def test_ldap3_to_ldif_tracks_base64_attributes_for_non_ascii(self) -> None:
         adapter = FlextLdapEntryAdapter()
@@ -173,8 +171,8 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        assert entry.metadata is not None
-        assert entry.metadata.extensions["base64_encoded_attributes"] == ["cn"]
+        tm.that(entry.metadata, none=False)
+        tm.that(entry.metadata.extensions["base64_encoded_attributes"], eq=["cn"])
 
     @pytest.mark.parametrize(
         "server_type",
@@ -197,8 +195,8 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        assert entry.metadata is not None
-        assert entry.metadata.server_type == server_type
+        tm.that(entry.metadata, none=False)
+        tm.that(entry.metadata.server_type, eq=server_type)
 
     def test_default_server_type_is_rfc(self) -> None:
         adapter = FlextLdapEntryAdapter()
@@ -210,8 +208,8 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        assert entry.metadata is not None
-        assert entry.metadata.server_type == c.Ldif.ServerTypes.RFC
+        tm.that(entry.metadata, none=False)
+        tm.that(entry.metadata.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_conversion_round_trip_preserves_attributes(self) -> None:
         adapter = FlextLdapEntryAdapter()

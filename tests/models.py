@@ -18,7 +18,7 @@ from flext_ldap import m
 from tests.base import s
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextLdapModels(m, FlextTestsModels):

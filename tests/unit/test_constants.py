@@ -14,8 +14,7 @@ from __future__ import annotations
 import pytest
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from tests.constants import c
-from tests.utilities import u
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 

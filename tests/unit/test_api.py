@@ -12,12 +12,10 @@ import pytest
 
 from flext_ldap import ldap
 from flext_ldap.services.sync import FlextLdapSync
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 pytestmark = [pytest.mark.unit]
 

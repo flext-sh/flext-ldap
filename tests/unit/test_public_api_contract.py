@@ -16,6 +16,7 @@ import pytest
 
 import flext_ldap
 from flext_ldap import (
+from flext_tests import tm
     FlextLdap,
     FlextLdapConstants,
     FlextLdapModels,
@@ -104,11 +105,7 @@ class TestsFlextLdapPublicApiContract:
 
     def test_root_all_equals_frozen_export_set(self) -> None:
         actual: frozenset[str] = frozenset(flext_ldap.__all__)
-        assert actual == _FROZEN_ROOT_EXPORTS, (
-            "flext_ldap.__all__ drift detected.\n"
-            f"  extra: {sorted(actual - _FROZEN_ROOT_EXPORTS)}\n"
-            f"  missing: {sorted(_FROZEN_ROOT_EXPORTS - actual)}"
-        )
+        tm.that(actual, eq=_FROZEN_ROOT_EXPORTS)
 
     @pytest.mark.parametrize("name", sorted(_FROZEN_ROOT_EXPORTS))
     def test_every_declared_export_is_importable(self, name: str) -> None:
@@ -118,7 +115,7 @@ class TestsFlextLdapPublicApiContract:
 
     def test_declared_exports_are_unique(self) -> None:
         names: tuple[str, ...] = flext_ldap.__all__
-        assert len(names) == len(set(names)), "duplicate names in flext_ldap.__all__"
+        tm.that(len(names), eq=len(set(names)))
 
     @pytest.mark.parametrize(("alias", "facade"), _ALIAS_FACADE_CASES)
     def test_canonical_alias_resolves_to_domain_facade(
@@ -134,11 +131,11 @@ class TestsFlextLdapPublicApiContract:
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
     def test_facade_exposes_documented_operation(self, operation: str) -> None:
         member = getattr(FlextLdap, operation, None)
-        assert member is not None, f"public facade is missing operation: {operation}"
+        tm.that(member, none=False)
         assert callable(member), f"facade operation is not callable: {operation}"
 
     def test_global_ldap_is_public_facade_instance(self) -> None:
-        assert isinstance(flext_ldap.ldap, FlextLdap)
+        tm.that(flext_ldap.ldap, is_=FlextLdap)
 
     def test_fetch_global_returns_shared_singleton(self) -> None:
         # The module-level ``ldap`` is produced by ``FlextLdap.fetch_global()``;

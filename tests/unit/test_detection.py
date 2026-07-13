@@ -30,16 +30,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.services.detection import FlextLdapServerDetector
-from tests.constants import c
-from tests.protocols import p
-from tests.utilities import u
+from tests import c, p, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
+    from tests import t
 
 pytestmark = pytest.mark.unit
 
@@ -124,7 +123,7 @@ class TestsFlextLdapDetection:
 
         assert result.failure is expect_failure
         assert result.success is not expect_failure
-        assert error_substring in str(result.error)
+        tm.that(str(result.error), has=error_substring)
 
     @pytest.mark.parametrize(
         ("attrs", "key", "expected"),
@@ -139,7 +138,7 @@ class TestsFlextLdapDetection:
         """The rootDSE helper returns the first non-empty value, else ``None``."""
         value = u.Ldap.get_first_attribute_value(dict(attrs), key)
 
-        assert value == expected
+        tm.that(value, eq=expected)
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
@@ -162,7 +161,7 @@ class TestsFlextLdapDetection:
             supported_extensions=[],
         )
 
-        assert result == expected
+        tm.that(result, eq=expected)
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "expected"),
@@ -186,8 +185,8 @@ class TestsFlextLdapDetection:
 
         result = detector.detect_from_connection(connection)
 
-        assert result.success is True
-        assert result.unwrap() == expected
+        tm.that(result.success, eq=True)
+        tm.that(result.unwrap(), eq=expected)
 
     def test_detect_from_connection_is_idempotent(self) -> None:
         """Detecting twice on the same connection yields the same server type."""
@@ -197,8 +196,8 @@ class TestsFlextLdapDetection:
         first = detector.detect_from_connection(connection)
         second = detector.detect_from_connection(connection)
 
-        assert first.success is True
-        assert first.unwrap() == second.unwrap() == "oud"
+        tm.that(first.success, eq=True)
+        tm.that(first.unwrap(), eq=second.unwrap())
 
     @pytest.mark.parametrize(
         ("searchable", "search_succeeds", "entries", "error_substring"),
@@ -226,5 +225,5 @@ class TestsFlextLdapDetection:
 
         result = detector.detect_from_connection(connection)
 
-        assert result.failure is True
-        assert error_substring in str(result.error)
+        tm.that(result.failure, eq=True)
+        tm.that(str(result.error), has=error_substring)

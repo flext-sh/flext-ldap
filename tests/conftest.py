@@ -14,9 +14,7 @@ from typing import Protocol, TypeGuard
 import pytest
 
 from flext_ldap.adapters import FlextLdapLdap3Wrappers
-from tests.constants import c
-from tests.typings import t
-from tests.utilities import u
+from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
 logger = u.fetch_logger(__name__)
