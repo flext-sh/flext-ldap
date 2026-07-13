@@ -580,7 +580,6 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                 dn_build = u.try_(
                     lambda: m.Ldif.DN(
                         value=u.Ldif.get_dn_value(dn_value),
-                        metadata=m.Ldif.EntryMetadata(),
                     ),
                     op_name="validate delete DN",
                 )
@@ -677,7 +676,6 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             case str():
                 dn_model: m.Ldif.DN = m.Ldif.DN(
                     value=u.Ldif.get_dn_value(dn),
-                    metadata=m.Ldif.EntryMetadata(),
                 )
             case _:
                 dn_model = (
