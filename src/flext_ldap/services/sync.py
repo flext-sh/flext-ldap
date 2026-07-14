@@ -15,7 +15,6 @@ from typing import TypeIs
 
 from flext_ldap import c, m, p, r, t, u
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import r
 
 
 class FlextLdapSync(FlextLdapOperations):
