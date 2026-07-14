@@ -16,7 +16,7 @@ from flext_ldap import u
 from tests import c, m, t
 
 if TYPE_CHECKING:
-    from flext_core import p as core_p
+    from flext_core import p
     from tests import p
 
 
@@ -40,7 +40,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
-                result: core_p.Result[TResult],
+                result: p.Result[TResult],
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> str:
                 failure_message: str = tm.fail(result, **kwargs)
@@ -49,26 +49,26 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             @overload
             def ok[TResult: t.Tests.TestResultValue](
-                result: core_p.Result[TResult],
+                result: p.Result[TResult],
             ) -> TResult: ...
 
             @staticmethod
             @overload
             def ok[TResult: t.Tests.TestResultValue](
-                result: core_p.Result[TResult],
+                result: p.Result[TResult],
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> TResult | t.Tests.TestobjectSerializable: ...
 
             @staticmethod
             def ok[TResult: t.Tests.TestResultValue](
-                result: core_p.Result[TResult],
+                result: p.Result[TResult],
                 **kwargs: t.Tests.MatcherKwargValue,
             ) -> TResult | t.Tests.TestobjectSerializable:
                 return tm.ok(result, **kwargs)
 
             @staticmethod
             def check[TResult: t.Tests.TestResultValue](
-                result: core_p.Result[TResult],
+                result: p.Result[TResult],
             ) -> m.Tests.Chain[TResult]:
                 return tm.check(result)
 

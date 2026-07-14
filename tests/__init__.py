@@ -19,12 +19,12 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextLdapModels as TestsFlextLdapModels, m as m
     from tests.protocols import (
         TestsFlextLdapProtocols as TestsFlextLdapProtocols,
-        p as p,
+        p,
     )
     from tests.typings import TestsFlextLdapTypes as TestsFlextLdapTypes, t as t
     from tests.utilities import (
         TestsFlextLdapUtilities as TestsFlextLdapUtilities,
-        u as u,
+        u,
     )
 
 _LAZY_IMPORTS = build_lazy_import_map(
