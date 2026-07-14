@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from types import MappingProxyType
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 from flext_tests import tm
@@ -17,12 +18,7 @@ from flext_ldap.adapters._ldap3.result_converter import ResultConverter
 from flext_ldap.adapters._ldap3.result_extract import ResultConverterExtractMixin
 from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
-from tests import c, m, t, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from tests import p
+from tests import c, m, p, t, u
 
 pytestmark = pytest.mark.unit
 

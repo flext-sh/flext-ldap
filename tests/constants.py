@@ -12,14 +12,12 @@ from __future__ import annotations
 import math
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from flext_tests import FlextTestsConstants
 
+from flext_cli import t
 from flext_ldap import c
-
-if TYPE_CHECKING:
-    from flext_cli import t
 
 
 class TestsFlextLdapConstants(FlextTestsConstants, c):

@@ -3,6 +3,4 @@
 
 from __future__ import annotations
 
-from .ldap import FlextLdapModelsLdap as FlextLdapModelsLdap
-
-__all__: tuple[str, ...] = ("FlextLdapModelsLdap",)
+__all__: tuple[str, ...] = ()

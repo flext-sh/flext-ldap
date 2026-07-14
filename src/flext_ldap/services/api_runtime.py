@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
-
-if TYPE_CHECKING:
-    import types
+import types
+from typing import Self
 
 
 class FlextLdapApiRuntime:

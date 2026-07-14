@@ -27,18 +27,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 import pytest
 from flext_tests import tm
 
 from flext_ldap.services.detection import FlextLdapServerDetector
-from tests import c, p, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from tests import t
+from tests import c, p, t, u
 
 pytestmark = pytest.mark.unit
 

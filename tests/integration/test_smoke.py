@@ -14,16 +14,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
 from flext_ldap import ldap
-from tests import u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import t, u
 
 pytestmark = pytest.mark.smoke
 

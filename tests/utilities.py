@@ -8,16 +8,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, overload
+from typing import ClassVar, overload
 
 from flext_tests import FlextTestsUtilities, tk, tm
 
+from flext_core import p
 from flext_ldap import u
-from tests import c, m, t
-
-if TYPE_CHECKING:
-    from flext_core import p
-    from tests import p
+from tests import c, m, p, t
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, u):
