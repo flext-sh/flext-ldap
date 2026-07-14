@@ -12,13 +12,11 @@ from typing import TYPE_CHECKING, override
 import pytest
 from flext_tests import tm
 
-from flext_ldap.adapters import (
-    FlextLdapLdap3Wrappers,
-    OperationExecutor,
-    ResultConverter,
-    ResultConverterExtractMixin,
-    SearchExecutor,
-)
+from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
+from flext_ldap.adapters._ldap3.result_converter import ResultConverter
+from flext_ldap.adapters._ldap3.result_extract import ResultConverterExtractMixin
+from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from tests import c, m, t, u
 
 if TYPE_CHECKING:

@@ -16,7 +16,7 @@ from enum import StrEnum, unique
 import pytest
 from flext_tests import tm
 
-from flext_ldap import c as core_c
+from flext_ldap import c
 from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
 from tests import c, m, u
 
@@ -86,7 +86,7 @@ class TestsFlextLdapLdap3Adapter:
                 options = m.Ldap.SearchOptions(
                     base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
                     filter_str=c.Ldap.Tests.SEARCH_FILTER_CN,
-                    scope=core_c.Ldap.SearchScope.SUBTREE,
+                    scope=c.Ldap.SearchScope.SUBTREE,
                 )
                 u.Ldap.Tests.fail(adapter.search(options), has=needle)
 

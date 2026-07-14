@@ -13,7 +13,7 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_ldap.adapters import FlextLdapLdap3Wrappers
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
