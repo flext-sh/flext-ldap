@@ -348,7 +348,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def connection(self) -> FlextLdapProtocols.Ldap.Ldap3Connection | None:
-                """Return the active ldap3 connection when one exists."""
+                """The active ldap3 connection when one exists."""
                 ...
 
             def connect(
@@ -447,12 +447,12 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
-                """Return the ldap3 server bound to this connection."""
+                """The ldap3 server bound to this connection."""
                 ...
 
             @property
             def bound(self) -> bool:
-                """Return whether the connection is currently bound."""
+                """Whether the connection is currently bound."""
                 ...
 
             def bind(self) -> bool:
@@ -461,42 +461,42 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def result(self) -> t.JsonMapping | None:
-                """Return the last LDAP operation result payload."""
+                """The last LDAP operation result payload."""
                 ...
 
             @property
             def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """Return the entries produced by the last LDAP operation."""
+                """The entries produced by the last LDAP operation."""
                 ...
 
             @property
             def add(self) -> Callable[..., bool]:
-                """Return the callable implementing the add operation."""
+                """The callable implementing the add operation."""
                 ...
 
             @property
             def delete(self) -> Callable[..., bool]:
-                """Return the callable implementing the delete operation."""
+                """The callable implementing the delete operation."""
                 ...
 
             @property
             def modify(self) -> Callable[..., bool]:
-                """Return the callable implementing the modify operation."""
+                """The callable implementing the modify operation."""
                 ...
 
             @property
             def search(self) -> Callable[..., bool | t.JsonValue | None]:
-                """Return the callable implementing the search operation."""
+                """The callable implementing the search operation."""
                 ...
 
             @property
             def start_tls(self) -> Callable[..., bool]:
-                """Return the callable implementing STARTTLS negotiation."""
+                """The callable implementing STARTTLS negotiation."""
                 ...
 
             @property
             def unbind(self) -> Callable[..., bool]:
-                """Return the callable implementing connection teardown."""
+                """The callable implementing connection teardown."""
                 ...
 
         class Ldap3ServerInfo(Protocol):
@@ -504,12 +504,12 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def naming_contexts(self) -> t.StrSequence | None:
-                """Return the advertised naming contexts when available."""
+                """The advertised naming contexts when available."""
                 ...
 
             @property
             def other(self) -> t.MappingKV[str, t.JsonValue]:
-                """Return auxiliary ldap3 server info fields."""
+                """The auxiliary ldap3 server info fields."""
                 ...
 
         class Ldap3Server(Protocol):
@@ -517,7 +517,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def info(self) -> FlextLdapProtocols.Ldap.Ldap3ServerInfo | None:
-                """Return the ldap3 server-info payload when populated."""
+                """The ldap3 server-info payload when populated."""
                 ...
 
             @override
@@ -531,17 +531,17 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def entry_dn(self) -> str | None:
-                """Return the entry distinguished name."""
+                """The entry distinguished name."""
                 ...
 
             @property
             def entry_attributes(self) -> t.StrSequence:
-                """Return the attribute names present in this entry."""
+                """The attribute names present in this entry."""
                 ...
 
             @property
             def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
-                """Return the entry attributes as an LDAP attribute mapping."""
+                """The entry attributes as an LDAP attribute mapping."""
                 ...
 
             def __getitem__(
@@ -556,12 +556,12 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def values(self) -> t.Ldap.Ldap3AttributeValues:
-                """Return the raw LDAP values for this attribute."""
+                """The raw LDAP values for this attribute."""
                 ...
 
             @property
             def value(self) -> t.Ldap.Ldap3EntryValue:
-                """Return the resolved attribute value."""
+                """The resolved attribute value."""
                 ...
 
         @runtime_checkable
@@ -573,7 +573,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """Get list of entries."""
+                """The list of entries."""
                 ...
 
         @runtime_checkable
@@ -584,7 +584,7 @@ class FlextLdapProtocols(_ldif_p):
             def entry_attributes_as_dict(
                 self,
             ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """Return raw ldap3-style attribute payloads."""
+                """The raw ldap3-style attribute payloads."""
                 ...
 
         @runtime_checkable
@@ -595,12 +595,12 @@ class FlextLdapProtocols(_ldif_p):
             def search(
                 self,
             ) -> Callable[..., bool | t.JsonValue | None] | None:
-                """Return the ldap3-compatible search callable when available."""
+                """The ldap3-compatible search callable when available."""
                 ...
 
             @property
             def result(self) -> t.JsonMapping | None:
-                """Return the raw ldap3 result payload for the last operation."""
+                """The raw ldap3 result payload for the last operation."""
                 ...
 
             @property
@@ -609,7 +609,7 @@ class FlextLdapProtocols(_ldif_p):
             ) -> t.SequenceOf[
                 FlextLdapProtocols.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue
             ]:
-                """Return the entry payloads produced by the last search."""
+                """The entry payloads produced by the last search."""
                 ...
 
         # ── Structural Duck-Typing Protocols ─────────────────────
@@ -628,7 +628,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def settings(self) -> None:
-                """Return resolved configuration t.JsonValue."""
+                """The resolved configuration t.JsonValue."""
                 ...
 
         @runtime_checkable
@@ -651,7 +651,7 @@ class FlextLdapProtocols(_ldif_p):
             def attributes(
                 self,
             ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """Get attributes property - covariant Mapping for structural compatibility."""
+                """The attributes property - covariant Mapping for structural compatibility."""
                 ...
 
         class ServiceContracts:
