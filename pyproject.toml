@@ -732,6 +732,7 @@ split-on-trailing-comma = true
 "**/output.py" = [ "FBT001" ]
 "**/plugins/*.py" = [ "FBT001", "FBT002", "S404", "S603", "S607", "TID252" ]
 "**/protocol_impls/*.py" = [ "SLF001" ]
+"**/protocols.py" = [ "N802" ]
 "**/providers/*.py" = [ "S106", "S107" ]
 "**/services/prompts.py" = [ "D102", "D107" ]
 "**/settings.py" = [ "ANN401", "FBT001", "SLF001" ]
