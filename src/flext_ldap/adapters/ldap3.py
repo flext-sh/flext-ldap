@@ -62,7 +62,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @property
     def connection(self) -> p.Ldap.Ldap3Connection | None:
-        """Get underlying ldap3 Connection t.JsonValue."""
+        """The underlying ldap3 Connection t.JsonValue."""
         return self._connection
 
     @property
@@ -243,7 +243,7 @@ class FlextLdapAdapterHost(s):
 
     @property
     def is_connected(self) -> bool:
-        """Return ``True`` when the shared adapter has an active bind."""
+        """The ``True`` when the shared adapter has an active bind."""
         adapter = self._adapter
         if adapter is None:
             return False
