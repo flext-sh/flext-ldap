@@ -75,8 +75,10 @@ class FlextLdapProtocols(_ldif_p):
         class Settings(_ldif_p.Ldif.Settings, Protocol):
             """MRO-composed settings contract with the LDAP namespace."""
 
-            Ldap: FlextLdapProtocols.Ldap.LdapSettings
-            """Namespaced LDAP settings branch."""
+            @property
+            def Ldap(self) -> FlextLdapProtocols.Ldap.LdapSettings:
+                """Namespaced LDAP settings branch (read-only for covariance)."""
+                ...
 
         # ── Layer 0: Domain Protocols ────────────────────────────
         # DN, Attributes, Entry → use _ldif_p.Ldif.DN,
