@@ -16,7 +16,6 @@ from enum import StrEnum, unique
 import pytest
 from flext_tests import tm
 
-from flext_ldap import c
 from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
 from tests import c, m, u
 

@@ -12,7 +12,6 @@ from typing import ClassVar, overload
 
 from flext_tests import FlextTestsUtilities, tk, tm
 
-from flext_core import p
 from flext_ldap import u
 from tests import c, m, p, t
 
