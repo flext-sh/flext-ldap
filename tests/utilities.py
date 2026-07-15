@@ -16,7 +16,6 @@ from flext_ldap import u
 from tests import c, m, t
 
 if TYPE_CHECKING:
-    from flext_core import p
     from tests import p
 
 

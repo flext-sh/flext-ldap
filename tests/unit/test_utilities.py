@@ -513,7 +513,8 @@ class TestsFlextLdapUtilitiesUnit:
         conn.bind()
         result = u.Ldap.query_root_dse(conn)
         # Either success or failure is acceptable depending on entry format.
-        tm.that(result, none=False)
+        # Either success or failure is acceptable depending on entry format.
+        assert result is not None
 
     # --- detect_from_connection ---
     def test_detect_from_connection_failure(self) -> None:
@@ -537,7 +538,7 @@ class TestsFlextLdapUtilitiesUnit:
         conn = Connection(server, client_strategy=MOCK_SYNC)
         conn.bind()
         result = u.Ldap.detect_from_connection(conn)
-        tm.that(result, none=False)
+        assert result is not None
 
     # --- when_safe ---
     def test_when_safe_condition_true(self) -> None:
