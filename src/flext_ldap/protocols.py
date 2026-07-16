@@ -54,7 +54,7 @@ class FlextLdapProtocols(p):
         """
 
         @runtime_checkable
-        class LdapSettings(p.Model, Protocol):
+        class LdapSettings(p.BaseModel, Protocol):
             """Namespaced LDAP runtime settings branch."""
 
             host: str
