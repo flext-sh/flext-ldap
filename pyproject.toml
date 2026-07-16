@@ -20,15 +20,15 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "cryptography>=47.0.0",
-  "flext-cli",
-  "flext-core",
-  "flext-ldif",
-  "ldap3>=2.9.1",
-  "pydantic-core>=2.46.3",
-  "pydantic-settings>=2.14.0",
-  "pydantic>=2.13.3",
-  "structlog>=25.5.0",
+    "cryptography>=47.0.0",
+    "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
+    "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
+    "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
+    "ldap3>=2.9.1",
+    "pydantic-core>=2.46.3",
+    "pydantic-settings>=2.14.0",
+    "pydantic>=2.13.3",
+    "structlog>=25.5.0",
 ]
 description = "Enterprise LDAP Operations Library for FLEXT Framework"
 keywords = [
@@ -748,16 +748,6 @@ all = true
 in_place = true
 sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
-[tool.uv.sources.flext-cli]
-workspace = true
-
-[tool.uv.sources.flext-core]
-workspace = true
-
-[tool.uv.sources.flext-ldif]
-workspace = true
-
-# [MANAGED] yamlfix
 [tool.yamlfix]
 explicit_start = false
 line_length = 88
