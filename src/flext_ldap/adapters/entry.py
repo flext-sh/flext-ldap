@@ -101,7 +101,7 @@ class FlextLdapEntryAdapter(s[bool]):
         base64_attrs: t.StrSequence,
         original_attrs_dict: t.MappingKV[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
-    ) -> m.Ldap.ConversionMetadata:
+    ) -> p.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation."""
         return u.Ldap.build_conversion_metadata(
             removed_attrs,
@@ -117,7 +117,7 @@ class FlextLdapEntryAdapter(s[bool]):
         converted_dn: str,
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: t.MappingKV[str, t.StrSequence],
-    ) -> m.Ldap.ConversionMetadata:
+    ) -> p.Ldap.ConversionMetadata:
         """Track DN and attribute differences in conversion metadata."""
         return u.Ldap.track_conversion_differences(
             conversion_metadata,
@@ -157,7 +157,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldap3_to_ldif_entry(
         self,
         ldap3_entry: p.Ldap.Ldap3Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Convert ldap3.Entry to p.Ldif.Entry.
 
         Business Rules:
@@ -206,7 +206,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_ldif_entry_from_ldap3(
         self,
         ldap3_entry: p.Ldap.Ldap3Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Build an LDIF entry from an ldap3 entry without exception handling."""
         dn_str = str(ldap3_entry.entry_dn)
         attrs_dict: t.Ldap.Ldap3AttributeDict = ldap3_entry.entry_attributes_as_dict
@@ -248,7 +248,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Convert p.Ldif.Entry to ldap3 attributes format.
 
@@ -272,7 +272,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns t.MappingKV[str, t.StrSequence] format expected by ldap3
 
         Args:
-            entry: m.Ldif.Entry with attributes to convert.
+            entry: p.Ldif.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:

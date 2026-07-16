@@ -48,7 +48,7 @@ class FlextLdapServerDetector(s):
     def execute(
         self,
         **kwargs: str | float | bool | None,
-    ) -> p.Result[m.Ldap.Response]:
+    ) -> p.Result[p.Ldap.Response]:
         """Detect server type using the provided ``connection`` keyword argument."""
         connection_raw = kwargs.get("connection")
         if connection_raw is None:

@@ -21,7 +21,7 @@ class ResultConverter(ResultConverterExtractMixin):
         - ``convert_ldap3_results`` — translate ``connection.entries`` to parser
           ``(dn, attrs)`` tuples.
         - ``convert_parsed_entries`` — translate ``ParseResponse`` from
-          ``FlextLdifParser`` into ``r[t.SequenceOf[m.Ldif.Entry]]``.
+          ``FlextLdifParser`` into ``r[t.SequenceOf[p.Ldif.Entry]]``.
 
     Internal helpers (DN/attribute/metadata extraction + value normalization)
     are inherited via ``ResultConverterExtractMixin`` per AGENTS.md §2.3
@@ -50,7 +50,7 @@ class ResultConverter(ResultConverterExtractMixin):
     @staticmethod
     def convert_parsed_entries(
         parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
-    ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
         """Translate ``ParseResponse`` from ``FlextLdifParser`` into typed entries.
 
         Pre-validated ``m.Ldif.Entry`` instances pass through unchanged;
@@ -59,8 +59,8 @@ class ResultConverter(ResultConverterExtractMixin):
         """
         entries_raw = parse_response.entries
         if not entries_raw:
-            return r[t.SequenceOf[m.Ldif.Entry]].ok([])
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+            return r[t.SequenceOf[p.Ldif.Entry]].ok([])
+        entries: t.MutableSequenceOf[p.Ldif.Entry] = []
         for entry_raw in entries_raw:
             if isinstance(entry_raw, m.Ldif.Entry):
                 entries.append(entry_raw)
@@ -74,7 +74,7 @@ class ResultConverter(ResultConverterExtractMixin):
                     validation_metadata=None,
                 ),
             )
-        return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
+        return r[t.SequenceOf[p.Ldif.Entry]].ok(entries)
 
 
 __all__: list[str] = ["ResultConverter"]

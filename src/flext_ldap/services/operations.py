@@ -118,7 +118,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             super().__init__()
             self._ops = operations
 
-        def execute(self, entry: p.Ldif.Entry) -> p.Result[m.Ldap.LdapOperationResult]:
+        def execute(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.LdapOperationResult]:
             """Execute an upsert operation for the provided entry.
 
             Business Rules:
@@ -151,7 +151,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         def handle_existing_entry(
             self,
             entry: p.Ldif.Entry,
-        ) -> p.Result[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[p.Ldap.LdapOperationResult]:
             """Handle an upsert when the entry already exists in LDAP.
 
             Business Rules:
@@ -171,39 +171,39 @@ class FlextLdapOperations(FlextLdapAdapterHost):
 
             """
             if entry.dn is None or not entry.dn.value:
-                return r[m.Ldap.LdapOperationResult].fail(
+                return r[p.Ldap.LdapOperationResult].fail(
                     "Upsert entry missing DN",
                 )
             entry_dn = entry.dn.value
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
-                result = r[m.Ldap.LdapOperationResult].fail_op(
+                result = r[p.Ldap.LdapOperationResult].fail_op(
                     "Search for existing entry",
                     search_result.error,
                 )
             else:
                 search_data = search_result.map_or(None)
-                existing_entries: t.SequenceOf[m.Ldif.Entry] = []
+                existing_entries: t.SequenceOf[p.Ldif.Entry] = []
                 if search_data is not None and search_data.entries:
                     existing_entries = list(search_data.entries)
                 if not existing_entries:
                     retry_result = self._ops.add(entry)
                     if retry_result.success:
-                        result = r[m.Ldap.LdapOperationResult].ok(
+                        result = r[p.Ldap.LdapOperationResult].ok(
                             m.Ldap.LdapOperationResult.with_operation(
                                 c.Ldap.UpsertOperation.ADDED,
                             ),
                         )
                     else:
-                        result = r[m.Ldap.LdapOperationResult].fail(
+                        result = r[p.Ldap.LdapOperationResult].fail(
                             u.to_str(retry_result.error),
                         )
                 else:
                     existing_entry = existing_entries[0]
                     changes_result = u.Ldap.compare_entries(existing_entry, entry)
                     if changes_result.failure:
-                        result = r[m.Ldap.LdapOperationResult].fail_op(
+                        result = r[p.Ldap.LdapOperationResult].fail_op(
                             "Entry comparison",
                             changes_result.error,
                         )
@@ -211,7 +211,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                         empty_changes: t.Ldap.OperationChanges = {}
                         changes = changes_result.unwrap_or(empty_changes)
                         if not changes:
-                            result = r[m.Ldap.LdapOperationResult].ok(
+                            result = r[p.Ldap.LdapOperationResult].ok(
                                 m.Ldap.LdapOperationResult.with_operation(
                                     c.Ldap.UpsertOperation.SKIPPED,
                                 ),
@@ -219,10 +219,10 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                         else:
                             modify_result = self._ops.modify(entry_dn, changes)
                             result = modify_result.fold(
-                                on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(
+                                on_failure=lambda e: r[p.Ldap.LdapOperationResult].fail(
                                     u.to_str(e),
                                 ),
-                                on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
+                                on_success=lambda _: r[p.Ldap.LdapOperationResult].ok(
                                     m.Ldap.LdapOperationResult.with_operation(
                                         c.Ldap.UpsertOperation.MODIFIED,
                                     ),
@@ -233,7 +233,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         def handle_regular_add(
             self,
             entry: p.Ldif.Entry,
-        ) -> p.Result[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[p.Ldap.LdapOperationResult]:
             """Add a standard entry or fall back to existing-entry handling.
 
             Business Rules:
@@ -263,7 +263,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     lambda e: (
                         self.handle_existing_entry(entry)
                         if self._ops.already_exists_error(u.to_str(e))
-                        else r[m.Ldap.LdapOperationResult].fail(u.to_str(e))
+                        else r[p.Ldap.LdapOperationResult].fail(u.to_str(e))
                     ),
                 )
             )
@@ -271,7 +271,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         def handle_schema_modify(
             self,
             entry: p.Ldif.Entry,
-        ) -> p.Result[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[p.Ldap.LdapOperationResult]:
             """Apply a schema modification entry (supports multiple add operations).
 
             Business Rules:
@@ -291,7 +291,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             """
             entry_model = u.Ldif.as_entry(entry)
             if entry_model.dn is None or not entry_model.dn.value:
-                return r[m.Ldap.LdapOperationResult].fail(
+                return r[p.Ldap.LdapOperationResult].fail(
                     "Schema modify entry missing DN",
                 )
             dn_str = entry_model.dn.value
@@ -319,15 +319,15 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     if filtered_values:
                         schema_additions.append((attr_type, filtered_values))
             if not schema_additions:
-                return r[m.Ldap.LdapOperationResult].fail(
+                return r[p.Ldap.LdapOperationResult].fail(
                     "Schema modify entry missing add operations",
                 )
-            last_result: p.Result[m.Ldap.LdapOperationResult] | None = None
+            last_result: p.Result[p.Ldap.LdapOperationResult] | None = None
             for attr_type, filtered in schema_additions:
                 changes: t.Ldap.OperationChanges = {
                     attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
                 }
-                current_result: p.Result[m.Ldap.LdapOperationResult] = (
+                current_result: p.Result[p.Ldap.LdapOperationResult] = (
                     self._ops
                     .modify(dn_str, changes)
                     .map(
@@ -336,7 +336,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                         ),
                     )
                     .lash(
-                        lambda e: r[m.Ldap.LdapOperationResult].fail(
+                        lambda e: r[p.Ldap.LdapOperationResult].fail(
                             u.to_str(e) or c.Ldap.ErrorMessage.UNKNOWN_ERROR,
                         ),
                     )
@@ -345,7 +345,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                 if current_result.failure:
                     return current_result
             if last_result is None:
-                return r[m.Ldap.LdapOperationResult].fail(
+                return r[p.Ldap.LdapOperationResult].fail(
                     "Schema modify entry has only empty values",
                 )
             return last_result
@@ -383,7 +383,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
     def add(
         self,
         entry: p.Ldif.Entry,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
         Business Rules:
@@ -409,7 +409,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             r containing OperationResult with success status and entries_affected=1
 
         """
-        entry_for_adapter: m.Ldif.Entry
+        entry_for_adapter: p.Ldif.Entry
         entry_for_adapter = m.Ldif.Entry.model_validate(entry)
         metadata = entry_for_adapter.metadata
         current_server_raw = (
@@ -426,7 +426,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     str(current_server_raw),
                 )
             except ValueError as exc:
-                return r[m.Ldap.OperationResult].fail(
+                return r[p.Ldap.OperationResult].fail(
                     f"Failed to normalize current server type: {exc}",
                 )
         target_server = u.Ldif.normalize_server_type(self._server_type)
@@ -437,16 +437,16 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                 entry_for_adapter,
             )
             if conversion_result.failure:
-                return r[m.Ldap.OperationResult].fail(
+                return r[p.Ldap.OperationResult].fail(
                     conversion_result.error or "Failed to convert entry for LDAP add",
                 )
             converted_entry = conversion_result.value
             if not isinstance(converted_entry, m.Ldif.Entry):
-                return r[m.Ldap.OperationResult].fail(
+                return r[p.Ldap.OperationResult].fail(
                     f"Expected converted Entry, got {type(converted_entry).__name__}",
                 )
             entry_for_adapter = converted_entry
-        add_result: p.Result[m.Ldap.OperationResult] = self._ensure_adapter().add(
+        add_result: p.Result[p.Ldap.OperationResult] = self._ensure_adapter().add(
             entry_for_adapter,
         )
         return add_result
@@ -459,7 +459,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
-    ) -> p.Result[m.Ldap.LdapBatchStats]:
+    ) -> p.Result[p.Ldap.LdapBatchStats]:
         """Upsert multiple entries and track per-item progress.
 
         Business Rules:
@@ -512,14 +512,14 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     total_entries,
                 )
             except c.EXC_BROAD_IO_TYPE as exc:
-                return r[m.Ldap.LdapBatchStats].fail(
+                return r[p.Ldap.LdapBatchStats].fail(
                     f"Batch upsert aborted on unexpected exception at entry {i}: {exc}",
                 )
             if stop_requested:
                 stop_error_index = i
                 break
         if sync_options.stop_on_error and stop_error_index is not None:
-            return r[m.Ldap.LdapBatchStats].fail(
+            return r[p.Ldap.LdapBatchStats].fail(
                 f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
             )
         self.logger.info(
@@ -535,19 +535,19 @@ class FlextLdapOperations(FlextLdapAdapterHost):
     @staticmethod
     def _finish_batch_upsert(
         stats: m.Ldap.LdapBatchStats,
-    ) -> p.Result[m.Ldap.LdapBatchStats]:
+    ) -> p.Result[p.Ldap.LdapBatchStats]:
         """Return final batch result; any failed entry fails the batch."""
         if stats.failed > 0:
-            return r[m.Ldap.LdapBatchStats].fail(
+            return r[p.Ldap.LdapBatchStats].fail(
                 f"Batch upsert failed: {stats.failed} entries failed, "
                 f"{stats.synced} synced, {stats.skipped} skipped",
             )
-        return r[m.Ldap.LdapBatchStats].ok(stats)
+        return r[p.Ldap.LdapBatchStats].ok(stats)
 
     def delete(
         self,
         dn: str | p.Ldif.DN,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Delete an LDAP entry identified by DN.
 
         Business Rules:
@@ -594,23 +594,23 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     op_name="validate delete DN",
                 )
         if dn_build.failure:
-            return r[m.Ldap.OperationResult].fail(
+            return r[p.Ldap.OperationResult].fail(
                 dn_build.error or "Invalid DN",
             )
         dn_model: m.Ldif.DN = dn_build.unwrap()
         result = self._ensure_adapter().delete(dn_model)
-        folded: p.Result[m.Ldap.OperationResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
+        folded: p.Result[p.Ldap.OperationResult] = result.fold(
+            on_failure=lambda e: r[p.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=r[m.Ldap.OperationResult].ok,
+            on_success=r[p.Ldap.OperationResult].ok,
         )
         return folded
 
     @override
     def execute(
         self,
-    ) -> p.Result[m.Ldap.Response]:
+    ) -> p.Result[p.Ldap.Response]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:
@@ -628,9 +628,9 @@ class FlextLdapOperations(FlextLdapAdapterHost):
 
         """
         if not self.is_connected:
-            return r[m.Ldap.Response].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
+            return r[p.Ldap.Response].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         base_dn: str = c.Ldap.EXAMPLE_BASE_DN
-        return r[m.Ldap.Response].ok(
+        return r[p.Ldap.Response].ok(
             m.Ldap.SearchResult(
                 entries=[],
                 search_options=m.Ldap.SearchOptions(
@@ -644,7 +644,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         self,
         dn: str | p.Ldif.DN,
         changes: t.Ldap.LdapModifyChanges,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.
 
         Business Rules:
@@ -685,11 +685,11 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             k: [(int(op), list(vals)) for op, vals in v] for k, v in changes.items()
         }
         result = self._ensure_adapter().modify(dn_model, concrete_changes)
-        folded: p.Result[m.Ldap.OperationResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
+        folded: p.Result[p.Ldap.OperationResult] = result.fold(
+            on_failure=lambda e: r[p.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=r[m.Ldap.OperationResult].ok,
+            on_success=r[p.Ldap.OperationResult].ok,
         )
         return folded
 
@@ -697,7 +697,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         self,
         search_options: p.Ldap.SearchOptions,
         server_type: str = "rfc",
-    ) -> p.Result[m.Ldap.SearchResult]:
+    ) -> p.Result[p.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
@@ -727,7 +727,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         """
         base_dn_result = u.Ldif.norm(search_options.base_dn)
         if base_dn_result.failure:
-            return r[m.Ldap.SearchResult].fail(
+            return r[p.Ldap.SearchResult].fail(
                 f"Invalid base DN: {base_dn_result.error}",
             )
         concrete_options = (
@@ -743,11 +743,11 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             normalized_options,
             server_type=effective_server_type,
         )
-        folded: p.Result[m.Ldap.SearchResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.SearchResult].fail(
+        folded: p.Result[p.Ldap.SearchResult] = result.fold(
+            on_failure=lambda e: r[p.Ldap.SearchResult].fail(
                 u.to_str(e, default="Unknown error"),
             ),
-            on_success=r[m.Ldap.SearchResult].ok,
+            on_success=r[p.Ldap.SearchResult].ok,
         )
         return folded
 
@@ -757,7 +757,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         *,
         retry_on_errors: t.StrSequence | None = None,
         max_retries: int = 1,
-    ) -> p.Result[m.Ldap.LdapOperationResult]:
+    ) -> p.Result[p.Ldap.LdapOperationResult]:
         """Upsert an entry, optionally retrying for configured error patterns.
 
         Business Rules:
@@ -801,10 +801,10 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         ):
             return result
 
-        def wrapped_execute() -> p.Result[m.Ldap.LdapOperationResult]:
+        def wrapped_execute() -> p.Result[p.Ldap.LdapOperationResult]:
             return self._upsert_handler.execute(entry)
 
-        retry_result: p.Result[m.Ldap.LdapOperationResult] = u.retry(
+        retry_result: p.Result[p.Ldap.LdapOperationResult] = u.retry(
             operation=wrapped_execute,
             max_attempts=max_retries,
             delay_seconds=1.0,
@@ -857,7 +857,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
 
     def _update_batch_stats(
         self,
-        upsert_result: p.Result[m.Ldap.LdapOperationResult],
+        upsert_result: p.Result[p.Ldap.LdapOperationResult],
         stats: m.Ldap.LdapBatchStats,
         entry_index: int,
         entry_dn: str | None,

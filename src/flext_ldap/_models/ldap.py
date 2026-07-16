@@ -252,7 +252,7 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: Annotated[t.SequenceOf[m.Ldif.Entry], u.Field(default_factory=list)]
+        entries: Annotated[t.SequenceOf[p.Ldif.Entry], u.Field(default_factory=list)]
         search_options: FlextLdapModelsLdap.SearchOptions
 
     class LdapOperationResult(m.BaseModel):

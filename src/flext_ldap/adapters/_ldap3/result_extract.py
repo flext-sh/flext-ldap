@@ -18,8 +18,8 @@ class ResultConverterExtractMixin:
 
     @staticmethod
     def extract_dn(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.DN:
+        parsed: p.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.get_dn_value()`` for normalization. Returns
@@ -41,8 +41,8 @@ class ResultConverterExtractMixin:
 
     @staticmethod
     def extract_attributes(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.Attributes:
+        parsed: p.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model."""
         empty = m.Ldif.Attributes(
             attributes={},
@@ -91,8 +91,8 @@ class ResultConverterExtractMixin:
 
     @staticmethod
     def extract_metadata(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.ServerMetadata | None:
+        parsed: p.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.ServerMetadata | None:
         """Extract server metadata from LDAP entry, returning ``None`` when absent."""
         match parsed:
             case None:

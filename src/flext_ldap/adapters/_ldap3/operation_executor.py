@@ -17,7 +17,7 @@ class OperationExecutor:
     """LDAP add/modify/delete dispatcher (SRP).
 
     Single ``_execute`` boundary translates ldap3 wrapper return values into
-    ``r[m.Ldap.OperationResult]`` and centralises message generation through
+    ``r[p.Ldap.OperationResult]`` and centralises message generation through
     ``c.Ldap.OPERATION_SUCCESS_MESSAGES`` / ``OPERATION_FAILURE_PREFIXES``.
     """
 
@@ -45,11 +45,11 @@ class OperationExecutor:
         connection: p.Ldap.Ldap3Connection,
         operation_type: c.Ldap.OperationType,
         wrapper_call: Callable[[], bool],
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         failure_prefix = c.Ldap.OPERATION_FAILURE_PREFIXES[operation_type]
         try:
             if wrapper_call():
-                return r[m.Ldap.OperationResult].ok(
+                return r[p.Ldap.OperationResult].ok(
                     m.Ldap.OperationResult(
                         success=True,
                         operation_type=operation_type,
@@ -58,14 +58,14 @@ class OperationExecutor:
                     ),
                 )
         except c.EXC_BROAD_IO_TYPE as exc:
-            return r[m.Ldap.OperationResult].fail_op(failure_prefix, exc)
+            return r[p.Ldap.OperationResult].fail_op(failure_prefix, exc)
         return OperationExecutor._extract_error_result(connection, failure_prefix)
 
     @staticmethod
     def _extract_error_result(
         connection: p.Ldap.Ldap3Connection,
         prefix: str,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Build ``r.fail`` from ``connection.result.description`` when present."""
         error_msg = f"{prefix}: LDAP operation returned failure status"
         result_payload = connection.result
@@ -74,14 +74,14 @@ class OperationExecutor:
             description = payload.description
             if description is not None:
                 error_msg = f"{prefix}: {description}"
-        return r[m.Ldap.OperationResult].fail(error_msg)
+        return r[p.Ldap.OperationResult].fail(error_msg)
 
     @staticmethod
     def execute_add(
         connection: p.Ldap.Ldap3Connection,
         dn_str: str,
         ldap_attrs: t.Ldap.OperationAttributes,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Execute LDAP add via ``Connection.add`` and return ``r``."""
         attrs_dict: t.MappingKV[str, t.StrSequence] = {
             k: list(v) for k, v in ldap_attrs.items()
@@ -96,7 +96,7 @@ class OperationExecutor:
     def execute_delete(
         connection: p.Ldap.Ldap3Connection,
         dn: str | m.Ldif.DN,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Execute LDAP delete via ``Connection.delete`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)
         return OperationExecutor._execute(
@@ -110,7 +110,7 @@ class OperationExecutor:
         connection: p.Ldap.Ldap3Connection,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Execute LDAP modify via ``Connection.modify`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)
         return OperationExecutor._execute(

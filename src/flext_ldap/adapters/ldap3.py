@@ -92,8 +92,8 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def add(
         self,
-        entry: m.Ldif.Entry,
-    ) -> p.Result[m.Ldap.OperationResult]:
+        entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Add LDAP entry via railway: connection → attrs conversion → execute_add."""
         return self._get_connection().flat_map(
             lambda conn: (
@@ -133,7 +133,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     def delete(
         self,
         dn: str | m.Ldif.DN,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Delete LDAP entry via railway: connection → execute_delete."""
         return self._get_connection().flat_map(
             lambda conn: self.OperationExecutor.execute_delete(conn, dn),
@@ -159,7 +159,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         dn: str | m.Ldif.DN,
         changes: t.Ldap.OperationChanges,
-    ) -> p.Result[m.Ldap.OperationResult]:
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Modify LDAP entry via railway: connection → execute_modify."""
         return self._get_connection().flat_map(
             lambda conn: self.OperationExecutor.execute_modify(conn, dn, changes),
@@ -169,7 +169,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         self,
         search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
-    ) -> p.Result[m.Ldap.SearchResult]:
+    ) -> p.Result[p.Ldap.SearchResult]:
         """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``."""
         return (
             self

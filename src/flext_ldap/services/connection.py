@@ -85,11 +85,11 @@ class FlextLdapConnection(FlextLdapAdapterHost):
     def execute(
         self,
         **kwargs: t.Scalar,
-    ) -> p.Result[m.Ldap.Response]:
+    ) -> p.Result[p.Ldap.Response]:
         """Execute service health check."""
         _ = kwargs
         if self.is_connected:
-            return r[m.Ldap.Response].ok(
+            return r[p.Ldap.Response].ok(
                 m.Ldap.SearchResult(
                     entries=[],
                     search_options=m.Ldap.SearchOptions(
@@ -98,7 +98,7 @@ class FlextLdapConnection(FlextLdapAdapterHost):
                     ),
                 ),
             )
-        return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
+        return r[p.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
     def _detect_server_type(self) -> None:
         """Detect LDAP server type after successful connection."""

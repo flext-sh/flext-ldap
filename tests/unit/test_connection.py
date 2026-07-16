@@ -31,7 +31,7 @@ class TestsFlextLdapConnection:
         yield
         ldap.disconnect()
 
-    def _invalid_config(self) -> m.Ldap.ConnectionConfig:
+    def _invalid_config(self) -> p.Ldap.ConnectionConfig:
         """Build a typed config pointing at an unreachable host."""
         return m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.CONFIG_INVALID_HOST,

@@ -19,7 +19,7 @@ class TestsFlextLdapModelsSearch:
     def _entry(
         dn: str,
         attributes: dict[str, list[str]] | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({

@@ -82,7 +82,7 @@ class TestsFlextLdapBase:
     )
     def test_unwrap_or_returns_value_or_fallback(
         self,
-        service_factory: type[m.Ldap.Tests.SuccessService | m.Ldap.Tests.FailService],
+        service_factory: type[p.Ldap.Tests.SuccessService | m.Ldap.Tests.FailService],
         fallback: bool,
         expected: bool,
     ) -> None:

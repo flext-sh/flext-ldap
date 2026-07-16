@@ -65,7 +65,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def check[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-            ) -> m.Tests.Chain[TResult]:
+            ) -> p.Tests.Chain[TResult]:
                 return tm.check(result)
 
             @staticmethod
@@ -104,7 +104,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     str,
                     t.Scalar,
                 ],
-            ) -> m.Ldap.ConnectionConfig:
+            ) -> p.Ldap.ConnectionConfig:
                 """Build a typed connection settings from container metadata."""
                 port = ldap_container["port"]
                 port_value = (

@@ -248,7 +248,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
             return False
 
     @staticmethod
-    def _entry(dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE) -> m.Ldif.Entry:
+    def _entry(dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE) -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate(
@@ -294,7 +294,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         }
 
     @staticmethod
-    def _search_params() -> m.Ldap.SearchParams:
+    def _search_params() -> p.Ldap.SearchParams:
         return m.Ldap.SearchParams(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
