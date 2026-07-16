@@ -55,7 +55,7 @@ class FlextLdapSync(FlextLdapOperations):
     @staticmethod
     def _make_phase_progress_callback(
         phase: str,
-        settings: m.Ldap.SyncPhaseConfig,
+        settings: p.Ldap.SyncPhaseConfig,
     ) -> t.Ldap.LdapProgressCallback | None:
         """Normalize configured callbacks to the single-phase protocol."""
         callback = settings.progress_callback
@@ -94,7 +94,7 @@ class FlextLdapSync(FlextLdapOperations):
         self,
         phase_files: t.MappingKV[str, Path],
         *,
-        settings: m.Ldap.SyncPhaseConfig | None = None,
+        settings: p.Ldap.SyncPhaseConfig | None = None,
     ) -> p.Result[p.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
@@ -156,7 +156,7 @@ class FlextLdapSync(FlextLdapOperations):
         ldif_file_path: Path,
         phase_name: str,
         *,
-        settings: m.Ldap.SyncPhaseConfig | None = None,
+        settings: p.Ldap.SyncPhaseConfig | None = None,
     ) -> p.Result[p.Ldap.PhaseSyncResult]:
         """Synchronize a single phase file into LDAP."""
         sync_config = settings or m.Ldap.SyncPhaseConfig()
@@ -218,7 +218,7 @@ class FlextLdapSync(FlextLdapOperations):
     def _prepare_phase_callback(
         self,
         phase_name: str,
-        settings: m.Ldap.SyncPhaseConfig,
+        settings: p.Ldap.SyncPhaseConfig,
     ) -> t.Ldap.LdapProgressCallback | None:
         """Prepare a phase-aware callback from the configured sync callback."""
         phase_callback = (
@@ -260,7 +260,7 @@ class FlextLdapSync(FlextLdapOperations):
         self,
         phase_name: str,
         ldif_path: Path,
-        settings: m.Ldap.SyncPhaseConfig,
+        settings: p.Ldap.SyncPhaseConfig,
     ) -> p.Result[p.Ldap.PhaseSyncResult]:
         """Process one phase file with a callback normalized for that phase."""
         phase_callback = self._prepare_phase_callback(phase_name, settings)

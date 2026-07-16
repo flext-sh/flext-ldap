@@ -23,7 +23,7 @@ class SearchExecutor:
     @staticmethod
     def execute(
         connection: p.Ldap.Ldap3Connection,
-        params: m.Ldap.SearchParams,
+        params: p.Ldap.SearchParams,
         server_type: c.Ldif.ServerTypes | str,
     ) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
         """Execute LDAP search and return parsed entries via ``ResultConverter``."""

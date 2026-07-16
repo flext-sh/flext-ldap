@@ -16,7 +16,7 @@ from collections.abc import Iterator
 import pytest
 
 from flext_ldap import ldap
-from tests import c, m, u
+from tests import c, m, p, u
 
 pytestmark = [pytest.mark.unit]
 

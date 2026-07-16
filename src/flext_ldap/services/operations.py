@@ -255,7 +255,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                 self._ops
                 .add(entry_for_add)
                 .map(
-                    lambda _: m.Ldap.LdapOperationResult.with_operation(
+                    lambda _: p.Ldap.LdapOperationResult.with_operation(
                         c.Ldap.UpsertOperation.ADDED,
                     ),
                 )
@@ -331,7 +331,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
                     self._ops
                     .modify(dn_str, changes)
                     .map(
-                        lambda _: m.Ldap.LdapOperationResult.with_operation(
+                        lambda _: p.Ldap.LdapOperationResult.with_operation(
                             c.Ldap.UpsertOperation.MODIFIED,
                         ),
                     )
@@ -534,7 +534,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
 
     @staticmethod
     def _finish_batch_upsert(
-        stats: m.Ldap.LdapBatchStats,
+        stats: p.Ldap.LdapBatchStats,
     ) -> p.Result[p.Ldap.LdapBatchStats]:
         """Return final batch result; any failed entry fails the batch."""
         if stats.failed > 0:
@@ -578,7 +578,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             case str():
                 dn_value = dn
                 dn_build = u.try_(
-                    lambda: m.Ldif.DN(
+                    lambda: p.Ldif.DN(
                         value=u.Ldif.get_dn_value(dn_value),
                     ),
                     op_name="validate delete DN",
@@ -597,7 +597,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             return r[p.Ldap.OperationResult].fail(
                 dn_build.error or "Invalid DN",
             )
-        dn_model: m.Ldif.DN = dn_build.unwrap()
+        dn_model: p.Ldif.DN = dn_build.unwrap()
         result = self._ensure_adapter().delete(dn_model)
         folded: p.Result[p.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[p.Ldap.OperationResult].fail(
@@ -674,7 +674,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         """
         match dn:
             case str():
-                dn_model: m.Ldif.DN = m.Ldif.DN(
+                dn_model: p.Ldif.DN = m.Ldif.DN(
                     value=u.Ldif.get_dn_value(dn),
                 )
             case _:
@@ -817,7 +817,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
         entry_index: int,
         total: int,
         entry_dn: str | None,
-        stats: m.Ldap.LdapBatchStats,
+        stats: p.Ldap.LdapBatchStats,
     ) -> None:
         """Invoke progress callback with error handling."""
         callback_stats = stats.model_copy()
@@ -826,8 +826,8 @@ class FlextLdapOperations(FlextLdapAdapterHost):
     def _process_batch_entry(
         self,
         entry: p.Ldif.Entry,
-        sync_options: m.Ldap.SyncPhaseConfig,
-        stats: m.Ldap.LdapBatchStats,
+        sync_options: p.Ldap.SyncPhaseConfig,
+        stats: p.Ldap.LdapBatchStats,
         entry_index: int,
         total_entries: int,
     ) -> bool:
@@ -858,7 +858,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
     def _update_batch_stats(
         self,
         upsert_result: p.Result[p.Ldap.LdapOperationResult],
-        stats: m.Ldap.LdapBatchStats,
+        stats: p.Ldap.LdapBatchStats,
         entry_index: int,
         entry_dn: str | None,
         total_entries: int,

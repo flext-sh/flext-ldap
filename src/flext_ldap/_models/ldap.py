@@ -8,8 +8,8 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_ldap import c, t
-from flext_ldif import m, u
+from flext_ldap import c, p, t
+from flext_ldif import m, p, u
 
 
 class FlextLdapModelsLdap:

@@ -33,7 +33,7 @@ class ResultConverterExtractMixin:
             entry_dn = parsed.entry_dn
             if entry_dn is None:
                 return m.Ldif.DN.empty()
-            dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
+            dn_with_value: p.Ldif.DN = m.Ldif.DN.empty().model_copy(
                 update={"value": entry_dn},
             )
             return dn_with_value

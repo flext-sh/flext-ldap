@@ -52,7 +52,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     @classmethod
     def track_conversion_differences(
         cls,
-        conversion_metadata: m.Ldap.ConversionMetadata,
+        conversion_metadata: p.Ldap.ConversionMetadata,
         *,
         original_dn: str,
         converted_dn: str,

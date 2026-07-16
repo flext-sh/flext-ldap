@@ -49,7 +49,7 @@ class ResultConverter(ResultConverterExtractMixin):
 
     @staticmethod
     def convert_parsed_entries(
-        parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
+        parse_response: p.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
     ) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
         """Translate ``ParseResponse`` from ``FlextLdifParser`` into typed entries.
 

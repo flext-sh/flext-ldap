@@ -116,7 +116,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def connect(
         self,
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Result[bool]:
         """Establish ldap3 server+connection, run STARTTLS, verify bind."""
         try:
@@ -167,7 +167,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def search(
         self,
-        search_options: m.Ldap.SearchOptions,
+        search_options: p.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
     ) -> p.Result[p.Ldap.SearchResult]:
         """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``."""
@@ -193,7 +193,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 ),
             )
             .map(
-                lambda entries: m.Ldap.SearchResult(
+                lambda entries: p.Ldap.SearchResult(
                     entries=entries,
                     search_options=search_options,
                 ),
@@ -208,7 +208,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def _create_connection(
         self,
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create and store the ldap3 server and connection pair."""
         self._server = self.ConnectionManager.create_server(settings)

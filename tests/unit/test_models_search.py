@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, u
+from tests import c, m, p, u
 
 pytestmark = pytest.mark.unit
 

@@ -20,7 +20,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from tests import c, m, t, u
+from tests import c, m, p, t, u
 
 pytestmark = pytest.mark.unit
 

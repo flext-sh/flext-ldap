@@ -112,7 +112,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     @staticmethod
     def _track_conversion_differences(
-        conversion_metadata: m.Ldap.ConversionMetadata,
+        conversion_metadata: p.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
