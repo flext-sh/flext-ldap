@@ -530,7 +530,7 @@ select = [ "ALL" ]
 msg = "Use cli.register_result_command + Pydantic model from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.click]
-msg = "Use flext_cli (cli, c.Cli.CliAbortError, c.Cli.CliCommandError)."
+msg = "Use flext_cli (cli, c.Cli.AbortError, c.Cli.CommandError)."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.colorama]
 msg = "Use cli.print with c.Cli.MessageStyles."
@@ -539,7 +539,7 @@ msg = "Use cli.print with c.Cli.MessageStyles."
 msg = "Use cli.prompt_password from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.orjson]
-msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps from flext_cli."
+msg = "Use cli.json_read_file / cli.json_write_file / u.Cli.json_dumps from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.prompt_toolkit]
 msg = "Use cli.prompt / cli.confirm / cli.prompt_choice / cli.prompt_password."
@@ -548,16 +548,16 @@ msg = "Use cli.prompt / cli.confirm / cli.prompt_choice / cli.prompt_password."
 msg = "Use cli.print / cli.display_message / cli.render_panel / cli.create_tree."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.simplejson]
-msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps."
+msg = "Use cli.json_read_file / cli.json_write_file / u.Cli.json_dumps."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.tabulate]
 msg = "Use cli.format_table / cli.show_table from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.tomlkit]
-msg = "Use cli.read_toml_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."
+msg = "Use cli.toml_read_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.tomllib]
-msg = "Use cli.read_toml_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."
+msg = "Use cli.toml_read_file / u.Cli.toml_load (flext-infra workspace orchestration is exempt)."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.tqdm]
 msg = "Use cli.display_progress from flext_cli."
@@ -566,7 +566,7 @@ msg = "Use cli.display_progress from flext_cli."
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.ujson]
-msg = "Use cli.read_json_file / cli.write_json_file / u.Cli.json_dumps."
+msg = "Use cli.json_read_file / cli.json_write_file / u.Cli.json_dumps."
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
