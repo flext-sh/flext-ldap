@@ -67,7 +67,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @property
     def is_connected(self) -> bool:
-        """Check if adapter has an active connection."""
+        """Whether adapter has an active connection."""
         if self._connection is None:
             return False
         return FlextLdapLdap3Adapter._is_bound(self._connection)
