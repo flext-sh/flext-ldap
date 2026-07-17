@@ -57,7 +57,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_filter_truthy(self) -> None:
         result = u.Ldap.filter_truthy(dict(c.Ldap.Tests.FILTER_TRUTHY_INPUT))
-        tm.that(result, is_=dict)
+        assert isinstance(result, dict)
         u.Ldap.Tests.that(
             sorted(result.keys()),
             eq=list(c.Ldap.Tests.FILTER_TRUTHY_EXPECTED_KEYS),
@@ -162,7 +162,7 @@ class TestsFlextLdapUtilitiesUnit:
         entry = {"dn": c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, "cn": ["test"]}
         result = u.Ldap.search_entry_to_ldif_entry(entry)
         converted = u.Ldap.Tests.ok(result)
-        tm.that(converted.dn, none=False)
+        assert converted.dn is not None
         u.Ldap.Tests.that(
             converted.dn.value,
             eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
@@ -232,7 +232,7 @@ class TestsFlextLdapUtilitiesUnit:
     def test_find_existing_values_found_case_insensitive(self) -> None:
         existing = {"cn": ["test"], "sn": ["user"]}
         result = u.Ldap.find_existing_values("CN", existing)
-        tm.that(result, none=False)
+        assert result is not None
         tm.that(list(result), eq=["test"])
 
     def test_find_existing_values_not_found(self) -> None:
@@ -243,7 +243,7 @@ class TestsFlextLdapUtilitiesUnit:
     # --- normalize_value_set ---
     def test_normalize_value_set_lowercases_and_drops_empty(self) -> None:
         result = u.Ldap.normalize_value_set(["Alice", "BOB", ""])
-        tm.that(result, eq={"alice", "bob"})
+        tm.that(result, eq=frozenset({"alice", "bob"}))
 
     # --- process_new_attributes ---
     def test_process_new_attributes_with_change(self) -> None:
@@ -401,7 +401,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_detect_from_vendor_openldap(self) -> None:
         result = u.Ldap.detect_from_vendor("OpenLDAP", "2.6")
-        tm.that(result, none=False)
+        assert result is not None
         tm.that(result.lower(), has="openldap")
 
     # --- detect_server_type (composed public contract) ---

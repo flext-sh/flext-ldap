@@ -33,7 +33,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def that(
                 value: t.Tests.Testobject,
-                **kwargs: t.Tests.MatcherKwargValue,
+                **kwargs: t.Tests.MatcherCallKwargValue,
             ) -> None:
                 tm.that(value, **kwargs)
 
@@ -147,8 +147,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             ) -> None:
                 """Assert that server info is available on the connection."""
                 server = connection.server
-                tm.that(server.info, none=False)
-                tm.that(server.info.naming_contexts, none=False)
+                info = server.info
+                assert info is not None
+                tm.that(info.naming_contexts, none=False)
 
             @staticmethod
             def assert_models_accessible() -> None:

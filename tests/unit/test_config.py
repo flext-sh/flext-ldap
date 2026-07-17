@@ -197,7 +197,7 @@ class TestsFlextLdapConfig:
             ),
         )
 
-        u.Ldap.Tests.that(first, eq=second)
+        u.Ldap.Tests.that(first.model_dump(), eq=second.model_dump())
         u.Ldap.Tests.that(first.Ldap.host, eq=second.Ldap.host)
 
     # ── Clone semantics ────────────────────────────────────────────────

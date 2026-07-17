@@ -10,7 +10,6 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, override
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap.adapters._ldap3.operation_executor import OperationExecutor
 from flext_ldap.adapters._ldap3.result_converter import ResultConverter
@@ -445,7 +444,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         extracted = ResultConverterExtractMixin.extract_metadata(entry)
 
-        tm.that(extracted, none=False)
+        assert extracted is not None
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_normalizes_raw_mapping_metadata(self) -> None:
@@ -457,7 +456,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         extracted = ResultConverterExtractMixin.extract_metadata(carrier)
 
-        tm.that(extracted, none=False)
+        assert extracted is not None
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_returns_none_without_server_type(self) -> None:

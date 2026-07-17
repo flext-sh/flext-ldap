@@ -156,10 +156,12 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        tm.that(entry.dn, none=False)
-        tm.that(entry.dn.value, eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE)
-        tm.that(entry.attributes, none=False)
-        tm.that(entry.attributes.attributes, eq={"cn": ["user"], "sn": ["Doe"]})
+        dn = entry.dn
+        attributes = entry.attributes
+        assert dn is not None
+        assert attributes is not None
+        tm.that(dn.value, eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE)
+        tm.that(attributes.attributes, eq={"cn": ["user"], "sn": ["Doe"]})
 
     def test_ldap3_to_ldif_tracks_base64_attributes_for_non_ascii(self) -> None:
         adapter = FlextLdapEntryAdapter()
@@ -171,8 +173,9 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        tm.that(entry.metadata, none=False)
-        tm.that(entry.metadata.extensions["base64_encoded_attributes"], eq=["cn"])
+        metadata = entry.metadata
+        assert metadata is not None
+        tm.that(metadata.extensions["base64_encoded_attributes"], eq=["cn"])
 
     @pytest.mark.parametrize(
         "server_type",
@@ -195,8 +198,9 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        tm.that(entry.metadata, none=False)
-        tm.that(entry.metadata.server_type, eq=server_type)
+        metadata = entry.metadata
+        assert metadata is not None
+        tm.that(metadata.server_type, eq=server_type)
 
     def test_default_server_type_is_rfc(self) -> None:
         adapter = FlextLdapEntryAdapter()
@@ -208,8 +212,9 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldap3_to_ldif_entry(source)
 
         entry = u.Ldap.Tests.ok(result)
-        tm.that(entry.metadata, none=False)
-        tm.that(entry.metadata.server_type, eq=c.Ldif.ServerTypes.RFC)
+        metadata = entry.metadata
+        assert metadata is not None
+        tm.that(metadata.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_conversion_round_trip_preserves_attributes(self) -> None:
         adapter = FlextLdapEntryAdapter()
