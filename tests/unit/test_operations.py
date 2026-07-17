@@ -34,6 +34,7 @@ class TestsFlextLdapOperations:
             self,
             results: t.SequenceOf[p.Result[m.Ldap.LdapOperationResult]],
         ) -> None:
+            """Initialize the test double."""
             super().__init__()
             self._queued_results = list(results)
 
@@ -63,6 +64,7 @@ class TestsFlextLdapOperations:
         )
 
     def test_is_connected_not_connected(self) -> None:
+        """Verify is connected not connected."""
         operations = FlextLdapOperations()
         u.Ldap.Tests.that(not operations.is_connected, eq=True)
 
@@ -73,17 +75,21 @@ class TestsFlextLdapOperations:
     def test_already_exists_error_detection(
         self,
         error_message: str,
+        *,
         expected: bool,
     ) -> None:
+        """Verify already exists error detection."""
         result = FlextLdapOperations.already_exists_error(error_message)
         u.Ldap.Tests.that(result, eq=expected)
 
     def test_execute_method_returns_failure_when_not_connected(self) -> None:
+        """Verify execute method returns failure when not connected."""
         operations = FlextLdapOperations()
         result = operations.execute()
         u.Ldap.Tests.fail(result)
 
     def test_search_without_connection_returns_failure(self) -> None:
+        """Verify search without connection returns failure."""
         operations = FlextLdapOperations()
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -94,6 +100,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.fail(result)
 
     def test_search_invalid_base_dn_returns_failure(self) -> None:
+        """Verify search invalid base dn returns failure."""
         operations = FlextLdapOperations()
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.MODELS_INVALID_DN_FORMAT,
@@ -105,16 +112,19 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.that(error, contains="Invalid base DN")
 
     def test_add_without_connection_returns_failure(self) -> None:
+        """Verify add without connection returns failure."""
         operations = FlextLdapOperations()
         result = operations.add(self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE))
         u.Ldap.Tests.fail(result)
 
     def test_delete_without_connection_returns_failure(self) -> None:
+        """Verify delete without connection returns failure."""
         operations = FlextLdapOperations()
         result = operations.delete(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
         u.Ldap.Tests.fail(result)
 
     def test_modify_without_connection_returns_failure(self) -> None:
+        """Verify modify without connection returns failure."""
         operations = FlextLdapOperations()
         changes: t.Ldap.OperationChanges = {
             "cn": [
@@ -129,6 +139,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.fail(result)
 
     def test_batch_upsert_stop_on_error_returns_failure(self) -> None:
+        """Verify batch upsert stop on error returns failure."""
         operations = FlextLdapOperations()
         entries = [
             self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN),
@@ -139,6 +150,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.that(error, contains=c.Ldap.Tests.OPERATIONS_BATCH_STOP_FRAGMENT)
 
     def test_batch_upsert_all_failed_returns_failure(self) -> None:
+        """Verify batch upsert all failed returns failure."""
         operations = FlextLdapOperations()
         entries = [self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN)]
 
@@ -149,6 +161,7 @@ class TestsFlextLdapOperations:
         )
 
     def test_batch_upsert_partial_failure_returns_failure(self) -> None:
+        """Verify batch upsert partial failure returns failure."""
         operations = self.BatchPathOperations((
             r[m.Ldap.LdapOperationResult].ok(
                 m.Ldap.LdapOperationResult.with_operation(
@@ -196,6 +209,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.that(error, contains="0 skipped")
 
     def test_upsert_schema_modify_missing_dn_returns_failure(self) -> None:
+        """Verify upsert schema modify missing dn returns failure."""
         operations = FlextLdapOperations()
         entry = m.Ldif.Entry(
             dn=None,

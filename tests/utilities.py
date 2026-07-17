@@ -23,7 +23,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
     """Utilities for flext-ldap tests."""
 
     class Ldap(u.Ldap):
-        class Tests:
+        """Provide the test double for ldap."""
+
+        class Tests(FlextTestsUtilities.Tests):
             """Direct test utility surface for flext-ldap."""
 
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [
@@ -35,13 +37,15 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 value: t.Tests.Testobject,
                 **kwargs: t.Tests.MatcherCallKwargValue,
             ) -> None:
+                """Provide that."""
                 tm.that(value, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-                **kwargs: t.Tests.MatcherKwargValue,
+                **kwargs: t.Tests.MatcherCallKwargValue,
             ) -> str:
+                """Provide fail."""
                 failure_message: str = tm.fail(result, **kwargs)
                 return failure_message
 
@@ -55,20 +59,22 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @overload
             def ok[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-                **kwargs: t.Tests.MatcherKwargValue,
+                **kwargs: t.Tests.MatcherCallKwargValue,
             ) -> TResult | t.Tests.TestobjectSerializable: ...
 
             @staticmethod
             def ok[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-                **kwargs: t.Tests.MatcherKwargValue,
+                **kwargs: t.Tests.MatcherCallKwargValue,
             ) -> TResult | t.Tests.TestobjectSerializable:
+                """Provide ok."""
                 return tm.ok(result, **kwargs)
 
             @staticmethod
             def check[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
             ) -> m.Tests.Chain[TResult]:
+                """Provide check."""
                 return tm.check(result)
 
             @staticmethod
@@ -122,10 +128,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 elif isinstance(port, (str, float)):
                     port_value = int(port)
                 else:
-                    raise TypeError(
-                        f"ldap_container port must be int, str or float, "
-                        f"got {type(port).__name__}",
+                    message = (
+                        "ldap_container port must be int, str or float, "
+                        f"got {type(port).__name__}"
                     )
+                    raise TypeError(message)
                 return m.Ldap.ConnectionConfig(
                     host=str(ldap_container["host"]),
                     port=port_value,
@@ -139,7 +146,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 connection: p.Ldap.Ldap3Connection,
             ) -> None:
                 """Assert that an LDAP connection is bound."""
-                assert connection.bound, "LDAP server not responding to bind"
+                tm.that(
+                    connection.bound,
+                    eq=True,
+                    msg="LDAP server not responding to bind",
+                )
 
             @staticmethod
             def assert_server_info_available(
@@ -147,8 +158,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             ) -> None:
                 """Assert that server info is available on the connection."""
                 server = connection.server
-                info = server.info
-                assert info is not None
+                info = tm.not_none(server.info)
                 tm.that(info.naming_contexts, none=False)
 
             @staticmethod
@@ -163,7 +173,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def get_docker_control(
-                worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
+                _worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
             ) -> tk:
                 """Create Docker test infrastructure controller."""
                 return tk.compose(
@@ -279,9 +289,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                             else str(result_payload.get("description", ""))
                         )
                         if description != "entryAlreadyExists":
-                            raise RuntimeError(
-                                f"Failed to create {dn}: {description}",
-                            )
+                            message = f"Failed to create {dn}: {description}"
+                            raise RuntimeError(message)
                 finally:
                     connection.unbind()
 

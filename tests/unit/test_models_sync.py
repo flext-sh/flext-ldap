@@ -1,3 +1,5 @@
+"""Tests for models sync."""
+
 from __future__ import annotations
 
 import pytest
@@ -18,6 +20,7 @@ class TestsFlextLdapModelsSync:
     # ── UpsertResult: success / failure contract ───────────────────────
 
     def test_upsert_success_has_no_error(self) -> None:
+        """Verify upsert success has no error."""
         result = m.Ldap.UpsertResult(
             success=True,
             dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -28,6 +31,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.dn, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
 
     def test_upsert_failure_carries_error_message(self) -> None:
+        """Verify upsert failure carries error message."""
         result = m.Ldap.UpsertResult(
             success=False,
             dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -38,6 +42,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.error, eq=c.Ldap.Tests.SYNC_ENTRY_ALREADY_EXISTS)
 
     def test_upsert_defaults_are_empty_and_unsuccessful(self) -> None:
+        """Verify upsert defaults are empty and unsuccessful."""
         result = m.Ldap.UpsertResult()
         u.Ldap.Tests.that(result.success, eq=False)
         u.Ldap.Tests.that(result.dn, eq="")
@@ -45,6 +50,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.error, none=True)
 
     def test_upsert_survives_dump_and_revalidate(self) -> None:
+        """Verify upsert survives dump and revalidate."""
         original = m.Ldap.UpsertResult(
             success=True,
             dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -56,6 +62,7 @@ class TestsFlextLdapModelsSync:
     # ── BatchUpsertResult: counts + success_rate computed field ────────
 
     def test_batch_upsert_tracks_all_counts(self) -> None:
+        """Verify batch upsert tracks all counts."""
         result = m.Ldap.BatchUpsertResult(
             total_processed=c.Ldap.Tests.SYNC_UPSERT_BATCH_TOTAL,
             successful=c.Ldap.Tests.SYNC_UPSERT_BATCH_SUCCESSFUL,
@@ -86,6 +93,7 @@ class TestsFlextLdapModelsSync:
         successful: int,
         expected_rate: float,
     ) -> None:
+        """Verify batch upsert success rate is successful over total."""
         result = m.Ldap.BatchUpsertResult(
             total_processed=total,
             successful=successful,
@@ -93,10 +101,12 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.success_rate, eq=expected_rate)
 
     def test_batch_upsert_success_rate_appears_in_dump(self) -> None:
+        """Verify batch upsert success rate appears in dump."""
         result = m.Ldap.BatchUpsertResult(total_processed=100, successful=90)
         u.Ldap.Tests.that(result.model_dump(), kv={"success_rate": 0.9})
 
     def test_batch_upsert_results_validate_to_upsert_models(self) -> None:
+        """Verify batch upsert results validate to upsert models."""
         result = m.Ldap.BatchUpsertResult.model_validate({
             "results": [
                 {
@@ -110,6 +120,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.results[0].operation, eq=c.Ldap.OperationType.ADD)
 
     def test_batch_upsert_defaults_to_empty_results(self) -> None:
+        """Verify batch upsert defaults to empty results."""
         result = m.Ldap.BatchUpsertResult()
         u.Ldap.Tests.that(result.results, empty=True)
         u.Ldap.Tests.that(result.success_rate, eq=0.0)
@@ -117,6 +128,7 @@ class TestsFlextLdapModelsSync:
     # ── ConversionMetadata: tracked change contract ────────────────────
 
     def test_conversion_metadata_tracks_changes(self) -> None:
+        """Verify conversion metadata tracks changes."""
         metadata = m.Ldap.ConversionMetadata(
             source_attributes=list(c.Ldap.Tests.SYNC_METADATA_SOURCE_ATTRIBUTES),
             source_dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
@@ -136,6 +148,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(metadata.converted_dn, eq=c.Ldap.Tests.ENTRY_DN_USER_NEW)
 
     def test_conversion_metadata_defaults_report_no_changes(self) -> None:
+        """Verify conversion metadata defaults report no changes."""
         metadata = m.Ldap.ConversionMetadata()
         u.Ldap.Tests.that(metadata.source_attributes, empty=True)
         u.Ldap.Tests.that(metadata.removed_attributes, empty=True)
@@ -145,6 +158,7 @@ class TestsFlextLdapModelsSync:
     # ── PhaseSyncResult: stats + LdapBatchStats inheritance ────────────
 
     def test_phase_sync_result_captures_phase_stats(self) -> None:
+        """Verify phase sync result captures phase stats."""
         result = m.Ldap.PhaseSyncResult(
             phase_name=c.Ldap.Tests.SYNC_PHASE_NAME,
             total_entries=c.Ldap.Tests.SYNC_PHASE_TOTAL_ENTRIES,
@@ -159,6 +173,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.success_rate, eq=c.Ldap.Tests.SYNC_PHASE_SUCCESS_RATE)
 
     def test_phase_sync_result_exposes_inherited_batch_counters(self) -> None:
+        """Verify phase sync result exposes inherited batch counters."""
         result = m.Ldap.PhaseSyncResult(
             phase_name=c.Ldap.Tests.SYNC_PHASE_NAME,
             synced=c.Ldap.Tests.SYNC_PHASE_SYNCED,
@@ -175,6 +190,7 @@ class TestsFlextLdapModelsSync:
         )
 
     def test_phase_sync_result_defaults_to_zero_counters(self) -> None:
+        """Verify phase sync result defaults to zero counters."""
         result = m.Ldap.PhaseSyncResult()
         u.Ldap.Tests.that(
             result,
@@ -190,6 +206,7 @@ class TestsFlextLdapModelsSync:
     # ── MultiPhaseSyncResult: aggregation + nested validation ──────────
 
     def test_multi_phase_aggregates_overall_totals(self) -> None:
+        """Verify multi phase aggregates overall totals."""
         result = m.Ldap.MultiPhaseSyncResult(
             total_entries=c.Ldap.Tests.SYNC_MULTI_PHASE_TOTAL_ENTRIES,
             total_synced=c.Ldap.Tests.SYNC_MULTI_PHASE_TOTAL_SYNCED,
@@ -206,12 +223,14 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(result.overall_success, eq=True)
 
     def test_multi_phase_defaults_report_empty_success(self) -> None:
+        """Verify multi phase defaults report empty success."""
         result = m.Ldap.MultiPhaseSyncResult()
         u.Ldap.Tests.that(result.phase_results, empty=True)
         u.Ldap.Tests.that(result.overall_success, eq=True)
         u.Ldap.Tests.that(result.total_synced, eq=c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT)
 
     def test_multi_phase_retains_typed_phase_result(self) -> None:
+        """Verify multi phase retains typed phase result."""
         phase = m.Ldap.PhaseSyncResult(
             phase_name=c.Ldap.Tests.SYNC_PHASE_NAME,
             total_entries=c.Ldap.Tests.SYNC_PHASE_TOTAL_ENTRIES,
@@ -230,6 +249,7 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(stored.synced, eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED)
 
     def test_multi_phase_coerces_dict_payloads_to_phase_models(self) -> None:
+        """Verify multi phase coerces dict payloads to phase models."""
         result = m.Ldap.MultiPhaseSyncResult.model_validate({
             "phase_results": {
                 c.Ldap.Tests.SYNC_PHASE_NAME: {
@@ -253,12 +273,14 @@ class TestsFlextLdapModelsSync:
     # ── LdapOperationResult: field + factory contract ──────────────────
 
     def test_operation_result_carries_enum(self) -> None:
+        """Verify operation result carries enum."""
         result = m.Ldap.LdapOperationResult(
             operation=c.Ldap.UpsertOperation.ADDED,
         )
         u.Ldap.Tests.that(result.operation, eq=c.Ldap.UpsertOperation.ADDED)
 
     def test_operation_result_factory_builds_from_operation(self) -> None:
+        """Verify operation result factory builds from operation."""
         result = m.Ldap.LdapOperationResult.with_operation(
             c.Ldap.UpsertOperation.ADDED,
         )
@@ -268,6 +290,7 @@ class TestsFlextLdapModelsSync:
     # ── LdapBatchStats: counters + validation invariants ───────────────
 
     def test_batch_stats_custom_counts(self) -> None:
+        """Verify batch stats custom counts."""
         stats = m.Ldap.LdapBatchStats(
             synced=c.Ldap.Tests.SYNC_BATCH_STATS_SYNCED,
             failed=c.Ldap.Tests.SYNC_BATCH_STATS_FAILED,
@@ -283,6 +306,7 @@ class TestsFlextLdapModelsSync:
         )
 
     def test_batch_stats_defaults_to_zero(self) -> None:
+        """Verify batch stats defaults to zero."""
         stats = m.Ldap.LdapBatchStats()
         u.Ldap.Tests.that(
             stats,
@@ -295,5 +319,6 @@ class TestsFlextLdapModelsSync:
 
     @pytest.mark.parametrize("field", ["synced", "failed", "skipped"])
     def test_batch_stats_rejects_negative_counters(self, field: str) -> None:
+        """Verify batch stats rejects negative counters."""
         with pytest.raises(c.ValidationError):
             m.Ldap.LdapBatchStats(**{field: -1})

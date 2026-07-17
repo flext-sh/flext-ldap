@@ -20,6 +20,7 @@ class TestsFlextLdapSync:
     """Assert observable sync contract through the public LDAP facade."""
 
     def test_execute_reports_not_connected_failure(self) -> None:
+        """Verify execute reports not connected failure."""
         # Arrange / Act
         result = ldap.execute()
         # Assert: placeholder mixin surfaces a failure, never a silent success
@@ -31,6 +32,7 @@ class TestsFlextLdapSync:
         self,
         phase: str,
     ) -> None:
+        """Verify sync phase entries missing file fails with parse error."""
         # Arrange / Act
         result = ldap.sync_phase_entries(
             Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
@@ -45,6 +47,7 @@ class TestsFlextLdapSync:
         self,
         phase: str,
     ) -> None:
+        """Verify sync multiple phases missing file fails with not found."""
         # Arrange / Act
         result = ldap.sync_multiple_phases({
             phase: Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
@@ -57,6 +60,7 @@ class TestsFlextLdapSync:
         self,
         tmp_path: Path,
     ) -> None:
+        """Verify sync multiple phases missing file fails when stop on error."""
         # Arrange
         missing_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         # Act
@@ -71,6 +75,7 @@ class TestsFlextLdapSync:
         self,
         tmp_path: Path,
     ) -> None:
+        """Verify sync phase entries empty ldif succeeds with zeroed result."""
         # Arrange
         ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text("", encoding="utf-8")
@@ -96,6 +101,7 @@ class TestsFlextLdapSync:
         self,
         tmp_path: Path,
     ) -> None:
+        """Verify sync multiple phases empty ldif succeeds with aggregate."""
         # Arrange
         ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text("", encoding="utf-8")
@@ -127,6 +133,7 @@ class TestsFlextLdapSync:
         tmp_path: Path,
         callback: t.Ldap.ProgressCallbackUnion | None,
     ) -> None:
+        """Verify sync phase entries accepts valid callback arities."""
         # Arrange: a real entry forces callback normalization + batch upsert
         ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text(
@@ -147,6 +154,7 @@ class TestsFlextLdapSync:
         self,
         tmp_path: Path,
     ) -> None:
+        """Verify sync phase entries rejects invalid callback arity."""
         # Arrange
         ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text(
@@ -167,6 +175,7 @@ class TestsFlextLdapSync:
         self,
         tmp_path: Path,
     ) -> None:
+        """Verify sync multiple phases unparsable file fails without stop on."""
         # Arrange
         bad_ldif = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         bad_ldif.write_bytes(b"not valid ldif content\x00\xff")

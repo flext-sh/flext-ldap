@@ -49,6 +49,7 @@ class TestsFlextLdapLdap3Adapter:
         self,
         adapter: FlextLdapLdap3Adapter,
     ) -> None:
+        """Verify fresh adapter reports not connected."""
         # Arrange / Act / Assert — public property contract on a new adapter.
         u.Ldap.Tests.that(adapter.is_connected, eq=False)
         u.Ldap.Tests.that(adapter.connection, eq=None)
@@ -59,6 +60,7 @@ class TestsFlextLdapLdap3Adapter:
         adapter: FlextLdapLdap3Adapter,
         op: DisconnectedOp,
     ) -> None:
+        """Verify operations fail when not connected."""
         # Every public fallible operation returns a failed r[T] carrying the
         # "Not connected" contract message while the adapter is unbound.
         needle = c.Ldap.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR
@@ -93,6 +95,7 @@ class TestsFlextLdapLdap3Adapter:
         self,
         adapter: FlextLdapLdap3Adapter,
     ) -> None:
+        """Verify disconnect is idempotent and keeps state unbound."""
         # Disconnecting a never-connected adapter is a no-op that raises
         # nothing and leaves the observable state unbound; repeat is safe.
         adapter.disconnect()
@@ -105,6 +108,7 @@ class TestsFlextLdapLdap3Adapter:
         self,
         case: c.Ldap.Tests.Ldap3ServerCase,
     ) -> None:
+        """Verify create server configures host and port."""
         # create_server is public via the ConnectionManager ClassVar; its
         # contract is a Server object addressing the requested host/port
         # across plain / SSL / TLS transport modes.
@@ -134,6 +138,7 @@ class TestsFlextLdapLdap3Adapter:
         )
 
     def test_adapter_host_reports_unbound_before_use(self) -> None:
+        """Verify adapter host reports unbound before use."""
         # FlextLdapAdapterHost exposes is_connected without eagerly building
         # an adapter; before any use it must observe an unbound state.
         host = FlextLdapAdapterHost()

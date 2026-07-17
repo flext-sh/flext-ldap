@@ -93,7 +93,7 @@ class TestsFlextLdapConnection:
     def test_context_manager_yields_same_facade(self) -> None:
         """The context manager binds the facade itself as the ``as`` target."""
         with ldap as client:
-            assert client is ldap
+            u.Ldap.Tests.that(client is ldap, eq=True)
 
     def test_context_manager_exit_leaves_facade_disconnected(self) -> None:
         """Leaving the context disconnects and keeps NOT_CONNECTED semantics."""

@@ -56,7 +56,7 @@ class TestsFlextLdapSmoke:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
-        assert not ldap.is_connected
+        tm.that(ldap.is_connected, eq=False)
 
         # Act
         result = ldap.connect(conn_config)
@@ -65,24 +65,21 @@ class TestsFlextLdapSmoke:
         try:
             tm.ok(result)
             tm.that(result.value, eq=True)
-            assert bool(ldap.is_connected)
+            tm.that(ldap.is_connected, eq=True)
         finally:
             ldap.disconnect()
 
         # Assert - disconnect is observable through the public API
-        assert not ldap.is_connected
+        tm.that(ldap.is_connected, eq=False)
 
-    def test_disconnect_is_idempotent_when_not_connected(
-        self,
-        ldap_container: t.MappingKV[str, t.Scalar],
-    ) -> None:
+    def test_disconnect_is_idempotent_when_not_connected(self) -> None:
         """Disconnecting an unconnected client leaves ``is_connected`` False."""
         # Arrange - ensure a clean, disconnected client
         ldap.disconnect()
-        assert not ldap.is_connected
+        tm.that(ldap.is_connected, eq=False)
 
         # Act - a second disconnect must not raise and must not connect
         ldap.disconnect()
 
         # Assert - idempotent, observable public state unchanged
-        assert not ldap.is_connected
+        tm.that(ldap.is_connected, eq=False)

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import math
 from enum import StrEnum, unique
+from pathlib import Path
+from tempfile import gettempdir
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
@@ -33,6 +35,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class FieldName(StrEnum):
+                """Provide the test double for field name."""
+
                 HOST = "host"
                 PORT = "port"
                 BIND_DN = "bind_dn"
@@ -45,32 +49,44 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class PhaseName(StrEnum):
+                """Provide the test double for phase name."""
+
                 USERS = "users"
                 GROUPS = "groups"
 
             @unique
             class FileName(StrEnum):
+                """Provide the test double for file name."""
+
                 USERS_LDIF = "users.ldif"
 
             @unique
             class CallbackGuardCase(StrEnum):
+                """Provide the test double for callback guard case."""
+
                 NONE = "none"
                 MULTI = "multi"
                 SINGLE = "single"
 
             @unique
             class ConnectionSecurityCase(StrEnum):
+                """Provide the test double for connection security case."""
+
                 SSL_ONLY = "ssl_only"
                 TLS_ONLY = "tls_only"
 
             @unique
             class Ldap3ServerCase(StrEnum):
+                """Provide the test double for ldap3 server case."""
+
                 PLAIN = "plain"
                 SSL = "ssl"
                 TLS = "tls"
 
             @unique
             class AttrToStrListCase(StrEnum):
+                """Provide the test double for attr to str list case."""
+
                 EMPTY = "empty"
                 BYTES = "bytes"
                 LIST = "list"
@@ -79,6 +95,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class LdapValueCase(StrEnum):
+                """Provide the test double for ldap value case."""
+
                 BYTES = "bytes"
                 LIST = "list"
                 LIST_BYTES = "list_bytes"
@@ -89,6 +107,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchCategoryCase(StrEnum):
+                """Provide the test double for search category case."""
+
                 EMPTY = "empty"
                 PERSON = "person"
 
@@ -413,8 +433,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_BATCH_STATS_FAILED: Final[int] = 10
             SYNC_BATCH_STATS_SKIPPED: Final[int] = 10
 
-            SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = (
-                "/tmp/flext-ldap-sync-missing.ldif"
+            SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = str(
+                Path(gettempdir()) / "flext-ldap-sync-missing.ldif"
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
             SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
@@ -441,6 +461,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class EntryOperationCase(StrEnum):
+                """Provide the test double for entry operation case."""
+
                 VALID_DN = "valid_dn"
                 EMPTY_DN = "empty_dn"
                 INVALID_DN = "invalid_dn"
@@ -448,6 +470,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchFilterCase(StrEnum):
+                """Provide the test double for search filter case."""
+
                 PRESENT = "present"
                 EQUALITY = "equality"
                 SUBSTRING = "substring"
@@ -459,6 +483,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchSizeCase(StrEnum):
+                """Provide the test double for search size case."""
+
                 SIZE_ZERO = "size_zero"
                 SIZE_ONE = "size_one"
                 SIZE_SMALL = "size_small"
@@ -467,6 +493,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchScopeCase(StrEnum):
+                """Provide the test double for search scope case."""
+
                 BASE = "base"
                 ONE_LEVEL = "one_level"
                 SUBTREE = "subtree"

@@ -1,3 +1,5 @@
+"""Tests for models."""
+
 from __future__ import annotations
 
 import pytest
@@ -11,6 +13,7 @@ class TestsFlextLdapModelsUnit:
     """Behavioral contract for FlextLdapModels public model surface."""
 
     def test_entry_exposes_dn_value_and_null_attributes(self) -> None:
+        """Verify entry exposes dn value and null attributes."""
         dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(dn=dn, attributes=None)
 
@@ -18,6 +21,7 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(entry.attributes, none=True)
 
     def test_entry_exposes_attributes_through_public_accessor(self) -> None:
+        """Verify entry exposes attributes through public accessor."""
         dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(
             dn=dn,
@@ -30,6 +34,7 @@ class TestsFlextLdapModelsUnit:
         )
 
     def test_connection_config_default_values(self) -> None:
+        """Verify connection config default values."""
         settings = m.Ldap.ConnectionConfig(port=c.Ldap.PORT)
 
         u.Ldap.Tests.that(settings.host, eq=c.LOCALHOST)
@@ -43,6 +48,7 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(settings.auto_range, eq=True)
 
     def test_connection_config_custom_values(self) -> None:
+        """Verify connection config custom values."""
         settings = m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST,
             port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
@@ -63,6 +69,7 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(settings.timeout, eq=c.Ldap.Tests.MODELS_CUSTOM_TIMEOUT)
 
     def test_connection_config_rejects_ssl_and_tls_together(self) -> None:
+        """Verify connection config rejects ssl and tls together."""
         with pytest.raises(c.ValidationError, match="mutually exclusive"):
             m.Ldap.ConnectionConfig(port=c.Ldap.PORT, use_ssl=True, use_tls=True)
 
@@ -71,6 +78,7 @@ class TestsFlextLdapModelsUnit:
         self,
         case: c.Ldap.Tests.ConnectionSecurityCase,
     ) -> None:
+        """Verify connection config accepts single security mode."""
         use_ssl, use_tls = c.Ldap.Tests.MODELS_ALLOWED_SECURITY_COMBOS[case]
 
         settings = m.Ldap.ConnectionConfig(
@@ -87,6 +95,7 @@ class TestsFlextLdapModelsUnit:
         [c.Ldap.Tests.CONFIG_PORT_MIN, c.Ldap.Tests.CONFIG_PORT_MAX],
     )
     def test_connection_config_accepts_boundary_ports(self, port: int) -> None:
+        """Verify connection config accepts boundary ports."""
         settings = m.Ldap.ConnectionConfig(port=port)
 
         u.Ldap.Tests.that(settings.port, eq=port)
@@ -96,10 +105,12 @@ class TestsFlextLdapModelsUnit:
         self,
         invalid_port: int,
     ) -> None:
+        """Verify connection config rejects out of range ports."""
         with pytest.raises(c.ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     def test_connection_config_model_dump_exposes_public_fields(self) -> None:
+        """Verify connection config model dump exposes public fields."""
         settings = m.Ldap.ConnectionConfig(port=c.Ldap.PORT)
 
         dump = settings.model_dump()
@@ -112,6 +123,7 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(dump[c.Ldap.Tests.FIELD_PORT], eq=c.Ldap.PORT)
 
     def test_connection_config_survives_dump_validate_roundtrip(self) -> None:
+        """Verify connection config survives dump validate roundtrip."""
         original = m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST,
             port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
