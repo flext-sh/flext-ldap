@@ -1,0 +1,18 @@
+Ldap:
+  identity:
+    name: flext-ldap
+    version: "0.20.0-dev"
+  connection:
+    port: 389
+    timeout_seconds: 30
+    max_retries: 5
+    retry_delay_seconds: 1.0
+    auto_bind: true
+    auto_range: true
+    default_batch_size: 100
+  validation:
+    vendor_string_max_tokens: 2
+    dn_truncation_length: 100
+    multi_phase_param_count: 5
+    single_phase_param_count: 4
+    example_base_dn: "dc=example,dc=com"

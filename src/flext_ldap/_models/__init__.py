@@ -1,6 +1,12 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Models package."""
+"""flext-ldap models package."""
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from .config import FlextLdapConfigModels
+from .ldap import FlextLdapModels
+
+__all__: tuple[str, ...] = (
+    "FlextLdapConfigModels",
+    "FlextLdapModels",
+)
