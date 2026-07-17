@@ -34,7 +34,7 @@ class FlextLdapService[
     specialize only when bridging adapter-level protocols.
     """
 
-    _ldif: p.Ldif.LdifClient = u.PrivateAttr(default_factory=FlextLdif)
+    _ldif: p.Ldif.Client = u.PrivateAttr(default_factory=FlextLdif)
     _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldap.DEFAULT_TYPE)
 
     @classmethod

@@ -62,7 +62,7 @@ class FlextLdapServerDetector(s):
                 ),
             )
         return self.detect_from_connection(connection_raw).map(
-            lambda detected_type: p.Ldap.OperationResult(
+            lambda detected_type: m.Ldap.OperationResult(
                 success=True,
                 operation_type=c.Ldap.OperationName.DETECT_FROM_CONNECTION,
                 message=detected_type,

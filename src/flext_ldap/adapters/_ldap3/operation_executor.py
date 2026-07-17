@@ -95,7 +95,7 @@ class OperationExecutor:
     @staticmethod
     def execute_delete(
         connection: p.Ldap.Ldap3Connection,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
     ) -> p.Result[p.Ldap.OperationResult]:
         """Execute LDAP delete via ``Connection.delete`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)
@@ -108,7 +108,7 @@ class OperationExecutor:
     @staticmethod
     def execute_modify(
         connection: p.Ldap.Ldap3Connection,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
         changes: t.Ldap.OperationChanges,
     ) -> p.Result[p.Ldap.OperationResult]:
         """Execute LDAP modify via ``Connection.modify`` and return ``r``."""

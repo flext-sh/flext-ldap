@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import MappingProxyType
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 from flext_tests import tm
@@ -18,7 +17,12 @@ from flext_ldap.adapters._ldap3.result_converter import ResultConverter
 from flext_ldap.adapters._ldap3.result_extract import ResultConverterExtractMixin
 from flext_ldap.adapters._ldap3.search_executor import SearchExecutor
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
-from tests import c, m, p, t, u
+from tests import c, m, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests import p
 
 pytestmark = pytest.mark.unit
 
@@ -30,14 +34,17 @@ class TestsFlextLdapLdap3AdapterHelpers:
         """Structural ldap3 attribute used by helper tests."""
 
         def __init__(self, values: t.Ldap.Ldap3AttributeValues) -> None:
+            """Initialize the test double."""
             self._values = values
 
         @property
         def values(self) -> t.Ldap.Ldap3AttributeValues:
+            """Provide values."""
             return self._values
 
         @property
         def value(self) -> t.Ldap.Ldap3EntryValue:
+            """Provide value."""
             return self._values[0] if self._values else c.Ldap.Tests.STRING_EMPTY
 
     class Entry:
@@ -49,24 +56,29 @@ class TestsFlextLdapLdap3AdapterHelpers:
             attributes: t.Ldap.Ldap3AttributeDict,
             metadata: t.MappingKV[str, t.Scalar | None] | None = None,
         ) -> None:
+            """Initialize the test double."""
             self._dn = dn
             self._attributes = attributes
             self._metadata = metadata
 
         @property
         def metadata(self) -> t.MappingKV[str, t.Scalar | None] | None:
+            """Provide metadata."""
             return self._metadata
 
         @property
         def entry_dn(self) -> str | None:
+            """Provide entry dn."""
             return self._dn
 
         @property
         def entry_attributes(self) -> t.StrSequence:
+            """Provide entry attributes."""
             return tuple(self._attributes)
 
         @property
         def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
+            """Provide entry attributes as dict."""
             return self._attributes
 
         def __getitem__(self, attribute_name: str) -> p.Ldap.Ldap3Attribute:
@@ -78,10 +90,12 @@ class TestsFlextLdapLdap3AdapterHelpers:
         """Structural ldap3 parse response used by converter tests."""
 
         def __init__(self, entries: t.SequenceOf[p.Ldap.Ldap3Entry]) -> None:
+            """Initialize the test double."""
             self._entries = entries
 
         @property
         def entries(self) -> t.SequenceOf[p.Ldap.Ldap3Entry]:
+            """Provide entries."""
             return self._entries
 
     class ServerInfo:
@@ -89,10 +103,12 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         @property
         def naming_contexts(self) -> t.StrSequence | None:
+            """Provide naming contexts."""
             return (c.Ldap.Tests.RFC_DEFAULT_BASE_DN,)
 
         @property
         def other(self) -> t.MappingKV[str, t.JsonValue]:
+            """Provide other."""
             return {}
 
     class Server:
@@ -100,6 +116,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         @property
         def info(self) -> p.Ldap.Ldap3ServerInfo | None:
+            """Provide info."""
             return TestsFlextLdapLdap3AdapterHelpers.ServerInfo()
 
         @override
@@ -118,6 +135,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
             entries: t.SequenceOf[p.Ldap.Ldap3Entry] = (),
             search_error: OSError | None = None,
         ) -> None:
+            """Initialize the test double."""
             self._bound = False
             self._entries = entries
             self._result = result
@@ -141,46 +159,57 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         @property
         def server(self) -> p.Ldap.Ldap3Server:
+            """Provide server."""
             return self._server
 
         @property
         def bound(self) -> bool:
+            """Provide bound."""
             return self._bound
 
         def bind(self) -> bool:
+            """Provide bind."""
             self._bound = True
             return self._bound
 
         @property
         def result(self) -> t.JsonMapping | None:
+            """Provide result."""
             return self._result
 
         @property
         def entries(self) -> t.SequenceOf[p.Ldap.Ldap3Entry]:
+            """Provide entries."""
             return self._entries
 
         @property
         def add(self) -> Callable[..., bool]:
+            """Provide add."""
             return self._add
 
         @property
         def delete(self) -> Callable[..., bool]:
+            """Provide delete."""
             return self._delete
 
         @property
         def modify(self) -> Callable[..., bool]:
+            """Provide modify."""
             return self._modify
 
         @property
         def search(self) -> Callable[..., bool | t.JsonValue | None]:
+            """Provide search."""
             return self._search
 
         @property
         def start_tls(self) -> Callable[..., bool]:
+            """Provide start tls."""
             return self._start_tls
 
         @property
         def unbind(self) -> Callable[..., bool]:
+            """Provide unbind."""
             return self._unbind
 
         def _add(
@@ -309,6 +338,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         self,
         case: c.Ldap.Tests.LdapValueCase,
     ) -> None:
+        """Verify value to str list uses canonical conversion."""
         value, expected = c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS[case]
 
         converted = FlextLdapLdap3Wrappers.value_to_str_list(value)
@@ -316,6 +346,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(converted, eq=list(expected))
 
     def test_wrappers_delegate_and_normalize_arguments(self) -> None:
+        """Verify wrappers delegate and normalize arguments."""
         connection = self.RecordingConnection()
         changes: t.Ldap.OperationChanges = {
             c.Ldap.AttributeName.COMMON_NAME: (
@@ -366,6 +397,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(unbind_result, eq=True)
 
     def test_search_wrapper_normalizes_scope_and_attributes(self) -> None:
+        """Verify search wrapper normalizes scope and attributes."""
         connection = self.RecordingConnection()
 
         search_result = FlextLdapLdap3Wrappers.search(
@@ -393,10 +425,12 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
     def test_start_tls_missing_method_raises(self) -> None:
+        """Verify start tls missing method raises."""
         with pytest.raises(AttributeError, match="start_tls method"):
             FlextLdapLdap3Wrappers.start_tls(self.MissingTlsConnection())
 
     def test_result_extract_handles_ldif_and_ldap3_entries(self) -> None:
+        """Verify result extract handles ldif and ldap3 entries."""
         ldif_entry = self._entry()
         ldap3_entry = self._ldap3_entry()
 
@@ -432,6 +466,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(attrs_dict[c.Ldap.AttributeName.ALL_ATTRIBUTES], eq=[])
 
     def test_extract_metadata_returns_server_metadata_from_ldif_entry(self) -> None:
+        """Verify extract metadata returns server metadata from ldif entry."""
         metadata = m.Ldif.ServerMetadata.model_validate(
             {
                 "server_type": c.Ldif.ServerTypes.RFC,
@@ -439,24 +474,26 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
         entry = self._entry().model_copy(update={"metadata": metadata})
 
-        extracted = ResultConverterExtractMixin.extract_metadata(entry)
-
-        tm.that(extracted, none=False)
+        extracted = tm.not_none(
+            ResultConverterExtractMixin.extract_metadata(entry),
+        )
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_normalizes_raw_mapping_metadata(self) -> None:
+        """Verify extract metadata normalizes raw mapping metadata."""
         carrier = self.Entry(
             c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
             {},
             {"server_type": c.Ldif.ServerTypes.RFC.value},
         )
 
-        extracted = ResultConverterExtractMixin.extract_metadata(carrier)
-
-        tm.that(extracted, none=False)
+        extracted = tm.not_none(
+            ResultConverterExtractMixin.extract_metadata(carrier),
+        )
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_returns_none_without_server_type(self) -> None:
+        """Verify extract metadata returns none without server type."""
         carrier = self.Entry(
             c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
             {},
@@ -469,6 +506,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
     def test_extract_metadata_returns_none_when_absent(self) -> None:
+        """Verify extract metadata returns none when absent."""
         carrier = self.Entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, {})
 
         u.Ldap.Tests.that(
@@ -477,6 +515,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
     def test_result_converter_converts_connection_and_parse_response(self) -> None:
+        """Verify result converter converts connection and parse response."""
         ldap3_entry = self._ldap3_entry()
         connection = self.RecordingConnection(entries=(ldap3_entry,))
         parsed_response = self.ParseResponse((ldap3_entry,))
@@ -501,6 +540,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
     def test_search_executor_returns_entries_for_success(self) -> None:
+        """Verify search executor returns entries for success."""
         connection = self.RecordingConnection(
             result=self._success_result(),
             entries=(self._ldap3_entry(),),
@@ -529,6 +569,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
     def test_search_executor_reports_ldap_failure(self) -> None:
+        """Verify search executor reports ldap failure."""
         connection = self.RecordingConnection(result=self._failure_result())
 
         error = u.Ldap.Tests.fail(
@@ -542,6 +583,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(error, contains=c.Ldap.ResultCode.NO_SUCH_OBJECT.name)
 
     def test_search_executor_reports_invalid_server_type(self) -> None:
+        """Verify search executor reports invalid server type."""
         connection = self.RecordingConnection(result=self._success_result())
 
         error = u.Ldap.Tests.fail(
@@ -555,6 +597,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(error, contains="Unsupported server type")
 
     def test_search_executor_reports_wrapper_exception(self) -> None:
+        """Verify search executor reports wrapper exception."""
         connection = self.RecordingConnection(
             search_error=OSError(c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE),
         )
@@ -570,6 +613,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(error, contains="Search")
 
     def test_operation_executor_validates_mapping_result_payload(self) -> None:
+        """Verify operation executor validates mapping result payload."""
         payload = MappingProxyType(self._failure_result())
         connection = self.FailingOperationConnection(result=payload)
 
@@ -583,6 +627,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         u.Ldap.Tests.that(error, contains=c.Ldap.ResultCode.NO_SUCH_OBJECT.name)
 
     def test_operation_executor_normalizes_json_description_payload(self) -> None:
+        """Verify operation executor normalizes json description payload."""
         description = c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE
         payload = MappingProxyType(
             {

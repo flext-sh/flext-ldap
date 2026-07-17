@@ -1,3 +1,5 @@
+"""Tests for models search."""
+
 from __future__ import annotations
 
 import pytest
@@ -32,10 +34,12 @@ class TestsFlextLdapModelsSearch:
     # ------------------------------------------------------------------ #
 
     def test_search_options_rejects_empty_base_dn(self) -> None:
+        """Verify search options rejects empty base dn."""
         with pytest.raises(c.ValidationError, match="base_dn"):
             m.Ldap.SearchOptions(base_dn="")
 
     def test_search_options_applies_documented_defaults(self) -> None:
+        """Verify search options applies documented defaults."""
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(options.base_dn, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(options.scope, eq=c.Ldap.DEFAULT_SCOPE)
@@ -45,6 +49,7 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(options.time_limit, eq=c.Ldap.Tests.SEARCH_DEFAULT_LIMIT_ZERO)
 
     def test_search_options_preserves_custom_values(self) -> None:
+        """Verify search options preserves custom values."""
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             scope=c.Ldap.Tests.SEARCH_SCOPE_BASE,
@@ -60,11 +65,13 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(options.time_limit, eq=c.Ldap.Tests.SEARCH_TIME_LIMIT_CUSTOM)
 
     def test_search_options_accepts_non_rfc_base_dn_string(self) -> None:
+        """Verify search options accepts non rfc base dn string."""
         # Contract: base_dn only requires non-empty; format is not validated.
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.MODELS_INVALID_DN_FORMAT)
         u.Ldap.Tests.that(options.base_dn, eq=c.Ldap.Tests.MODELS_INVALID_DN_FORMAT)
 
     def test_search_options_accepts_scope_enum_member(self) -> None:
+        """Verify search options accepts scope enum member."""
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             scope=c.Ldap.SearchScope.BASE,
@@ -76,6 +83,7 @@ class TestsFlextLdapModelsSearch:
         self,
         size_case: c.Ldap.Tests.SearchSizeCase,
     ) -> None:
+        """Verify search options accepts valid size limits."""
         size_limit = c.Ldap.Tests.SEARCH_SIZE_SCENARIOS[size_case]
         options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -84,6 +92,7 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(options.size_limit, eq=size_limit)
 
     def test_search_options_rejects_negative_size_limit(self) -> None:
+        """Verify search options rejects negative size limit."""
         with pytest.raises(c.ValidationError, match="size_limit"):
             m.Ldap.SearchOptions(
                 base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -95,11 +104,13 @@ class TestsFlextLdapModelsSearch:
     # ------------------------------------------------------------------ #
 
     def test_normalized_factory_matches_plain_defaults(self) -> None:
+        """Verify normalized factory matches plain defaults."""
         options = m.Ldap.SearchOptions.normalized(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         plain = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(options.model_dump(), eq=plain.model_dump())
 
     def test_normalized_factory_applies_config(self) -> None:
+        """Verify normalized factory applies config."""
         settings = m.Ldap.NormalizedConfig(
             scope=c.Ldap.Tests.SEARCH_SCOPE_BASE,
             filter_str=c.Ldap.Tests.SEARCH_FILTER_UID,
@@ -117,6 +128,7 @@ class TestsFlextLdapModelsSearch:
         )
 
     def test_base_scope_requests_all_user_attributes(self) -> None:
+        """Verify base scope requests all user attributes."""
         # Regression (mro-uqji.4.1.2): base-scope existence checks must request
         # all user attributes, else the compared entry looks empty.
         options = m.Ldap.SearchOptions.base_scope(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
@@ -129,6 +141,7 @@ class TestsFlextLdapModelsSearch:
     # ------------------------------------------------------------------ #
 
     def test_connection_config_defaults(self) -> None:
+        """Verify connection config defaults."""
         config = m.Ldap.ConnectionConfig()
         u.Ldap.Tests.that(config.host, eq=c.LOCALHOST)
         u.Ldap.Tests.that(config.port, eq=c.Ldap.PORT)
@@ -143,12 +156,14 @@ class TestsFlextLdapModelsSearch:
         self,
         security_case: c.Ldap.Tests.ConnectionSecurityCase,
     ) -> None:
+        """Verify connection config allows single security channel."""
         use_ssl, use_tls = c.Ldap.Tests.MODELS_ALLOWED_SECURITY_COMBOS[security_case]
         config = m.Ldap.ConnectionConfig(use_ssl=use_ssl, use_tls=use_tls)
         u.Ldap.Tests.that(config.use_ssl, eq=use_ssl)
         u.Ldap.Tests.that(config.use_tls, eq=use_tls)
 
     def test_connection_config_rejects_ssl_and_tls_together(self) -> None:
+        """Verify connection config rejects ssl and tls together."""
         with pytest.raises(c.ValidationError, match="mutually exclusive"):
             m.Ldap.ConnectionConfig(use_ssl=True, use_tls=True)
 
@@ -157,6 +172,7 @@ class TestsFlextLdapModelsSearch:
         self,
         invalid_port: int,
     ) -> None:
+        """Verify connection config rejects out of range port."""
         with pytest.raises(c.ValidationError, match="port"):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
@@ -165,6 +181,7 @@ class TestsFlextLdapModelsSearch:
     # ------------------------------------------------------------------ #
 
     def test_operation_result_exposes_provided_values(self) -> None:
+        """Verify operation result exposes provided values."""
         result = m.Ldap.OperationResult(
             success=True,
             operation_type=c.Ldap.OperationType.ADD,
@@ -180,6 +197,7 @@ class TestsFlextLdapModelsSearch:
         )
 
     def test_operation_result_defaults_message_and_count(self) -> None:
+        """Verify operation result defaults message and count."""
         result = m.Ldap.OperationResult(
             success=True,
             operation_type=c.Ldap.OperationType.SEARCH,
@@ -191,6 +209,7 @@ class TestsFlextLdapModelsSearch:
         )
 
     def test_operation_result_is_immutable(self) -> None:
+        """Verify operation result is immutable."""
         result = m.Ldap.OperationResult(
             success=True,
             operation_type=c.Ldap.OperationType.ADD,
@@ -212,6 +231,7 @@ class TestsFlextLdapModelsSearch:
         num_entries: int,
         expected_count: int,
     ) -> None:
+        """Verify search result total count reflects entries."""
         entries = [
             self._entry(f"cn=user{i},{c.Ldap.Tests.RFC_DEFAULT_BASE_DN}")
             for i in range(num_entries)
@@ -221,6 +241,7 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(len(result.entries), eq=expected_count)
 
     def test_search_result_groups_entries_by_objectclass(self) -> None:
+        """Verify search result groups entries by objectclass."""
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         person_top = {
             key: list(value)
@@ -237,12 +258,14 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(len(categories[c.Ldap.UNKNOWN_CATEGORY]), eq=1)
 
     def test_search_result_by_objectclass_empty_when_no_entries(self) -> None:
+        """Verify search result by objectclass empty when no entries."""
         options = m.Ldap.SearchOptions(base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         result = m.Ldap.SearchResult(entries=[], search_options=options)
         categories = u.Ldap.group_entries_by_objectclass(result.entries)
         u.Ldap.Tests.that(dict(categories), eq={})
 
     def test_extract_attrs_dict_empty_for_entry_without_attributes(self) -> None:
+        """Verify extract attrs dict empty for entry without attributes."""
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         attrs = u.Ldap.extract_attrs_dict_from_entry(entry)
         u.Ldap.Tests.that(attrs, eq={})
@@ -252,6 +275,7 @@ class TestsFlextLdapModelsSearch:
         self,
         case: c.Ldap.Tests.SearchCategoryCase,
     ) -> None:
+        """Verify extract objectclass category maps expected."""
         attrs: dict[str, list[str] | str]
         match case:
             case c.Ldap.Tests.SearchCategoryCase.EMPTY:
@@ -262,16 +286,19 @@ class TestsFlextLdapModelsSearch:
                     for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
                 }
             case _:
-                raise AssertionError(f"Unhandled search category case: {case}")
+                message = f"Unhandled search category case: {case}"
+                raise AssertionError(message)
         category = u.Ldap.extract_objectclass_category(attrs)
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 
     def test_get_entry_category_unknown_without_objectclass(self) -> None:
+        """Verify get entry category unknown without objectclass."""
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         category = u.Ldap.get_entry_category(entry)
         u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 
     def test_get_entry_category_lowercases_first_objectclass(self) -> None:
+        """Verify get entry category lowercases first objectclass."""
         person_top = {
             key: list(value)
             for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
@@ -290,6 +317,7 @@ class TestsFlextLdapModelsSearch:
     # ------------------------------------------------------------------ #
 
     def test_connection_config_round_trips_through_model_dump(self) -> None:
+        """Verify connection config round trips through model dump."""
         data = m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST,
             port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
@@ -298,6 +326,7 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(data["port"], eq=c.Ldap.Tests.CONFIG_LDAPS_PORT)
 
     def test_search_options_round_trips_through_model_dump(self) -> None:
+        """Verify search options round trips through model dump."""
         data = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             scope=c.Ldap.DEFAULT_SCOPE,
@@ -306,12 +335,14 @@ class TestsFlextLdapModelsSearch:
         u.Ldap.Tests.that(data["scope"], eq=c.Ldap.DEFAULT_SCOPE)
 
     def test_connection_config_json_schema_exposes_fields(self) -> None:
+        """Verify connection config json schema exposes fields."""
         u.Ldap.Tests.that(
             m.Ldap.ConnectionConfig.model_json_schema()["properties"],
             keys=[c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.FIELD_PORT],
         )
 
     def test_search_options_json_schema_exposes_fields(self) -> None:
+        """Verify search options json schema exposes fields."""
         u.Ldap.Tests.that(
             m.Ldap.SearchOptions.model_json_schema()["properties"],
             keys=[c.Ldap.Tests.FIELD_BASE_DN, c.Ldap.Tests.FIELD_SCOPE],

@@ -126,7 +126,7 @@ class FlextLdapUtilitiesNormalization:
 
     @staticmethod
     def dn_str(
-        dn: str | m.Ldif.DN | m.Ldif.Entry | None,
+        dn: str | p.Ldif.DN | p.Ldif.Entry | None,
         *,
         default: str = c.Ldap.UNKNOWN_CATEGORY,
     ) -> str:

@@ -132,7 +132,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def delete(
         self,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
     ) -> p.Result[p.Ldap.OperationResult]:
         """Delete LDAP entry via railway: connection → execute_delete."""
         return self._get_connection().flat_map(
@@ -157,7 +157,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def modify(
         self,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
         changes: t.Ldap.OperationChanges,
     ) -> p.Result[p.Ldap.OperationResult]:
         """Modify LDAP entry via railway: connection → execute_modify."""
@@ -193,7 +193,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 ),
             )
             .map(
-                lambda entries: p.Ldap.SearchResult(
+                lambda entries: m.Ldap.SearchResult(
                     entries=entries,
                     search_options=search_options,
                 ),

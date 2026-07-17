@@ -8,8 +8,8 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_ldap import c, p, t
-from flext_ldif import m, p, u
+from flext_ldap import c, t
+from flext_ldif import m, u
 
 
 class FlextLdapModelsLdap:
@@ -252,7 +252,7 @@ class FlextLdapModelsLdap:
         holds a list of directory entries returned from the search.
         """
 
-        entries: Annotated[t.SequenceOf[p.Ldif.Entry], u.Field(default_factory=list)]
+        entries: Annotated[t.SequenceOf[m.Ldif.Entry], u.Field(default_factory=list)]
         search_options: FlextLdapModelsLdap.SearchOptions
 
     class LdapOperationResult(m.BaseModel):

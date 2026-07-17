@@ -69,8 +69,8 @@ class ResultConverterExtractMixin:
         attrs: p.Ldap.HasAttributesProperty
         | t.MappingKV[str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence]
         | p.Ldap.HasItemsMethod
-        | m.Ldif.Attributes
-        | m.BaseModel
+        | p.Ldif.Attributes
+        | p.BaseModel
         | t.JsonValue,
     ) -> t.Ldap.OperationAttributes:
         """Normalize input formats to ``t.Ldap.OperationAttributes``."""

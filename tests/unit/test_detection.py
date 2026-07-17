@@ -108,6 +108,7 @@ class TestsFlextLdapDetection:
     def test_execute_reports_failure_for_invalid_connection_argument(
         self,
         kwargs: t.MappingKV[str, bool | float | str | None] | None,
+        *,
         expect_failure: bool,
         error_substring: str,
     ) -> None:
@@ -116,8 +117,8 @@ class TestsFlextLdapDetection:
 
         result = detector.execute() if kwargs is None else detector.execute(**kwargs)
 
-        assert result.failure is expect_failure
-        assert result.success is not expect_failure
+        tm.that(result.failure, eq=expect_failure)
+        tm.that(result.success, eq=not expect_failure)
         tm.that(str(result.error), has=error_substring)
 
     @pytest.mark.parametrize(

@@ -144,7 +144,7 @@ class FlextLdapOperations(FlextLdapAdapterHost):
             )
             if not changetype and hasattr(entry, "changetype") and entry.changetype:
                 changetype = entry.changetype.lower()
-            if changetype == c.Ldif.LdifChangeType.MODIFY:
+            if changetype == c.Ldif.ChangeType.MODIFY:
                 return self.handle_schema_modify(entry)
             return self.handle_regular_add(entry)
 

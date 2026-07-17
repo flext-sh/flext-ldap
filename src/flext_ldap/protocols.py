@@ -19,7 +19,7 @@ from typing import (
     runtime_checkable,
 )
 
-from flext_ldap import FlextLdapTypes as t, m as lm
+from flext_ldap import FlextLdapTypes as t
 from flext_ldif import p
 
 
@@ -48,9 +48,10 @@ class FlextLdapProtocols(p):
 
         All LDAP domain-specific protocols are organized here at ROOT level
         to enable proper namespace separation. LDIF protocols from parent
-        are accessed via `.Ldif` namespace (e.g., `m.Ldif.Entry`).
+        are accessed via `.Ldif` namespace (e.g., `p.Ldif.Entry`).
 
-        Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with flext-ldif, flext-cli)
+        Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with
+        flext-ldif and flext-cli).
         """
 
         @runtime_checkable
@@ -82,7 +83,7 @@ class FlextLdapProtocols(p):
         # directly from flext-ldif (SSOT — no redefinition in Ldap namespace)
 
         @runtime_checkable
-        class LdapBatchStats(Protocol):
+        class LdapBatchStats(p.BaseModel, Protocol):
             """Protocol for LDAP batch statistics (structural type)."""
 
             synced: int
@@ -90,7 +91,7 @@ class FlextLdapProtocols(p):
             skipped: int
 
         @runtime_checkable
-        class ConnectionConfig(Protocol):
+        class ConnectionConfig(p.BaseModel, Protocol):
             """Protocol for LDAP connection configuration (structural type)."""
 
             host: str
@@ -129,7 +130,7 @@ class FlextLdapProtocols(p):
                 "Parsed value or result t.JsonValue."
 
         @runtime_checkable
-        class SearchOptions(Protocol):
+        class SearchOptions(p.BaseModel, Protocol):
             """Protocol for LDAP search options (structural type).
 
             Accepts both simple types and complex types (StrEnum, models).
@@ -145,7 +146,7 @@ class FlextLdapProtocols(p):
             time_limit: int
 
         @runtime_checkable
-        class OperationResult(Protocol):
+        class OperationResult(p.BaseModel, Protocol):
             """Protocol for LDAP operation result (structural type).
 
             Accepts both simple types and complex types (StrEnum).
@@ -158,11 +159,15 @@ class FlextLdapProtocols(p):
             entries_affected: int
 
         @runtime_checkable
-        class SearchResult(Protocol):
+        class SearchResult(p.BaseModel, Protocol):
             """Protocol for LDAP search result (structural type)."""
 
             entries: t.SequenceOf[p.Ldif.Entry]
             search_options: FlextLdapProtocols.Ldap.SearchOptions
+
+        @runtime_checkable
+        class Response(p.BaseModel, Protocol):
+            """Base contract for heterogeneous LDAP service responses."""
 
         @runtime_checkable
         class PhaseSyncResult(Protocol):
@@ -195,7 +200,7 @@ class FlextLdapProtocols(p):
             def add(
                 self,
                 entry: p.Ldif.Entry,
-            ) -> p.Result[lm.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Args:
@@ -215,7 +220,7 @@ class FlextLdapProtocols(p):
                 retry_on_errors: t.StrSequence | None = None,
                 max_retries: int = 1,
                 stop_on_error: bool = False,
-            ) -> p.Result[lm.Ldap.LdapBatchStats]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.LdapBatchStats]:
                 """Upsert multiple entries and report canonical batch statistics."""
                 ...
 
@@ -266,7 +271,7 @@ class FlextLdapProtocols(p):
             def delete(
                 self,
                 dn: str | p.Ldif.DN,
-            ) -> p.Result[lm.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Args:
@@ -281,7 +286,7 @@ class FlextLdapProtocols(p):
             def execute(
                 self,
                 **kwargs: t.Scalar,
-            ) -> p.Result[lm.Ldap.Response]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.Response]:
                 """Execute health check or default operation.
 
                 Args:
@@ -298,7 +303,7 @@ class FlextLdapProtocols(p):
                 self,
                 dn: str | p.Ldif.DN,
                 changes: t.Ldap.LdapModifyChanges,
-            ) -> p.Result[lm.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Args:
@@ -315,7 +320,7 @@ class FlextLdapProtocols(p):
                 self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> p.Result[lm.Ldap.SearchResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -349,7 +354,7 @@ class FlextLdapProtocols(p):
 
             def connect(
                 self,
-                settings: lm.Ldap.ConnectionConfig,
+                settings: FlextLdapProtocols.Ldap.ConnectionConfig,
             ) -> p.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
@@ -360,31 +365,31 @@ class FlextLdapProtocols(p):
 
             def add(
                 self,
-                entry: lm.Ldif.Entry,
-            ) -> p.Result[lm.Ldap.OperationResult]:
+                entry: p.Ldif.Entry,
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry, returning the operation result."""
                 ...
 
             def delete(
                 self,
-                dn: str | lm.Ldif.DN,
-            ) -> p.Result[lm.Ldap.OperationResult]:
+                dn: str | p.Ldif.DN,
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry, returning the operation result."""
                 ...
 
             def modify(
                 self,
-                dn: str | lm.Ldif.DN,
+                dn: str | p.Ldif.DN,
                 changes: t.Ldap.OperationChanges,
-            ) -> p.Result[lm.Ldap.OperationResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry, returning the operation result."""
                 ...
 
             def search(
                 self,
-                search_options: lm.Ldap.SearchOptions,
+                search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> p.Result[lm.Ldap.SearchResult]:
+            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Perform LDAP search, returning the search result."""
                 ...
 
@@ -620,7 +625,7 @@ class FlextLdapProtocols(p):
 
         @runtime_checkable
         class HasConfigAttribute(Protocol):
-            """Protocol for objects exposing configuration (duck typing for settings)."""
+            """Protocol for objects exposing duck-typed configuration."""
 
             @property
             def settings(self) -> None:
@@ -629,7 +634,7 @@ class FlextLdapProtocols(p):
 
         @runtime_checkable
         class HasDynamicAttribute(Protocol):
-            """Protocol for objects with dynamic attributes accessible via __getattr__."""
+            """Protocol for objects exposing dynamic attributes via __getattr__."""
 
             def __getattr__(self, name: str) -> None:
                 """Get dynamic attribute."""
@@ -647,11 +652,11 @@ class FlextLdapProtocols(p):
             def attributes(
                 self,
             ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """The attributes property - covariant Mapping for structural compatibility."""
+                """Expose covariant attributes for structural compatibility."""
                 ...
 
         class ServiceContracts:
-            """Service boundary contracts - stricter contracts for service interfaces."""
+            """Stricter contracts for service interfaces."""
 
             @runtime_checkable
             class EntryContract(Protocol):

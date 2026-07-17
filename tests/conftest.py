@@ -13,7 +13,7 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
+from flext_ldap import FlextLdapLdap3Wrappers
 from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
@@ -21,6 +21,8 @@ logger = u.fetch_logger(__name__)
 
 
 class WorkerInputConfig(Protocol):
+    """Provide the test double for worker input config."""
+
     workerinput: t.StrMapping
 
 
@@ -50,6 +52,7 @@ def _docker_compose_available() -> bool:
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
+    """Provide pytest runtest makereport."""
     if call.excinfo is None:
         return
     exc_msg = str(call.excinfo.value).lower()
@@ -70,6 +73,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
+    """Provide worker id."""
     return _get_worker_id(request.config)
 
 
@@ -77,6 +81,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 def ldap_container(
     worker_id: str,
 ) -> t.MappingKV[str, t.Scalar]:
+    """Provide ldap container."""
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "
