@@ -6,15 +6,18 @@ This module provides constants for LDAP operations, extending c.
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
 
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from flext_ldap import t
 from flext_ldif import c
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from flext_ldap import t
 
 
 class FlextLdapConstants(c):

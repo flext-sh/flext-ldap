@@ -11,12 +11,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldap import ldap
 from tests import c, m, p, u
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 pytestmark = [pytest.mark.unit]
 

@@ -7,14 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import (
-    MutableMapping,
-)
-from pathlib import Path
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_ldap import c, m, p, r, t, u
 from flext_ldap.services.operations import FlextLdapOperations
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
+    from pathlib import Path
 
 
 class FlextLdapSync(FlextLdapOperations):
