@@ -576,7 +576,7 @@ Canonical source: [../AGENTS.md](../AGENTS.md).
 <!-- AIHUB-WORKSPACE-PROVIDERS-BEGIN -->
 ## Workspace providers
 
-These routes are generated from typed tool-provider declarations.
+These routes are generated from provider-owned manifests.
 
-- flext: read `.agents/skills/flext-law/SKILL.md` first.
+- flext: read `.agents/skills/flext-context-routing/SKILL.md` first.
 <!-- AIHUB-WORKSPACE-PROVIDERS-END -->
