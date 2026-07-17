@@ -19,7 +19,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: _none_
+- Primary facades: `FlextLdap`, `FlextLdapAdapterHost`, `FlextLdapApiRuntime`, `FlextLdapConnection`, `FlextLdapConstants`, `FlextLdapEntryAdapter` (+10 more)
 - Generated module pages: `14`
 
 - [Back to project docs](../index.md)
