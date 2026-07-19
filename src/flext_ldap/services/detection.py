@@ -8,7 +8,7 @@ from flext_ldap import c, m, p, s, t, u
 from flext_ldif import e, r
 
 
-class FlextLdapServerDetector(s):
+class FlextLdapServerDetector(s[m.Ldap.Response]):
     """High-level detector that delegates rootDSE parsing to ``u.Ldap``."""
 
     @staticmethod

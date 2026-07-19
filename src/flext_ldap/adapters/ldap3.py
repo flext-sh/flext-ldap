@@ -225,7 +225,10 @@ class FlextLdapLdap3Adapter(s[bool]):
             _ = FlextLdapLdap3Wrappers.unbind(self._connection)
 
 
-class FlextLdapAdapterHost(s):
+class FlextLdapAdapterHost[
+    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
+    | t.SequenceOf[t.JsonPayload],
+](s[TResult]):
     """Own the shared ldap3 adapter behind the ``p.Ldap.LdapAdapter`` contract.
 
     Service mixins inherit this host to obtain the lazily constructed adapter

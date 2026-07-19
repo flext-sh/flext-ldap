@@ -19,7 +19,7 @@ from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldif import r
 
 
-class FlextLdapConnection(FlextLdapAdapterHost):
+class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
     """Manage the LDAP connection lifecycle as an MRO mixin.
 
     Wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally

@@ -237,7 +237,7 @@ class FlextLdapEntryAdapter(s[bool]):
             ldif_attrs,
         )
         metadata_obj = m.Ldif.ServerMetadata(
-            server_type=self._server_type,
+            server_type=c.Ldif.ServerTypes(self._server_type),
             extensions=conversion_metadata.model_dump(exclude_defaults=False),
         )
         return m.Ldif.Entry.create(

@@ -20,7 +20,7 @@ class FlextLdap(FlextLdapConnection, FlextLdapSync, FlextLdapApiRuntime):
     """Public LDAP facade composed through cooperative MRO."""
 
 
-ldap = FlextLdap.fetch_global()
+ldap: FlextLdap = FlextLdap.fetch_global()
 """Process-wide FlextLdap facade singleton resolved from the global container."""
 
 

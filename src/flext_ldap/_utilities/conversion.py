@@ -104,7 +104,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
             return unknown
         oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
         if isinstance(oc_list, list) and oc_list:
-            return oc_list[0].lower()
+            return str(oc_list[0]).lower()
         return unknown
 
     @classmethod
