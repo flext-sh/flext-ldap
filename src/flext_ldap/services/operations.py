@@ -37,7 +37,7 @@ from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
 from flext_ldif import ldif, r
 
 
-class FlextLdapOperations(FlextLdapAdapterHost):
+class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
