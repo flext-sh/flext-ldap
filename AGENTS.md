@@ -308,17 +308,30 @@ These rules are inviolable for every FLEXT project and MUST always be followed.
 
 **Facade layering (strict order `c -> t -> p -> m -> u`):**
 
-- Forward direction (a higher layer importing a lower one) MAY use a direct runtime
-  import: `u` may import `m,p,t,c`; `m` may import `p,t,c`; `p` may import `t,c`;
-  `t` may import `c`; `c` imports nothing from the others at runtime.
-- Reverse direction (a lower layer needing a higher layer's type) is FORBIDDEN at
-  runtime and MUST be done only under `if TYPE_CHECKING:`.
-- `m` (models) imports `c` (constants) only via a lazy import.
-- `c` (constants) NEVER imports `m` (models) at runtime — only under `TYPE_CHECKING`.
-- `t` (typings) imports `p` and `m` only under `TYPE_CHECKING` (to improve typing).
-- `p` (protocols) imports `m` only under `TYPE_CHECKING` (to improve typing).
-- `c` may compose from the project's own leaf base modules (`_constants/base`, …)
-  following this same rule.
+- Forward direction (a higher-index layer importing a lower one) uses a direct
+  RUNTIME import: `u` may import `m,p,t,c`; `m` may import `p,t,c`; `p` may import
+  `t,c`; `t` may import `c`; `c` imports nothing from the others at runtime.
+- Reverse direction (a lower-index layer importing a higher one) is FORBIDDEN
+  entirely — not at runtime and NOT under `if TYPE_CHECKING:` (ADR-011,
+  Runtime-Forward Annotation Law). A reverse edge is a mis-placed artifact: move
+  it to the layer of its highest-index referent.
+- Every name in a runtime-evaluated annotation (Pydantic field, PEP 526 annotated
+  assignment, beartype-decorated signature, PEP 695 `type` alias RHS) MUST be a
+  top-level RUNTIME import. No `TYPE_CHECKING` gating of an annotation name; no
+  `from __future__ import annotations` used to evade runtime resolution.
+- `m` (models) imports `c`, `t`, and `p` at RUNTIME (all forward). Data/payload
+  and nested/composed fields are concrete `m.*`; collaborator/DI fields are `p.*`
+  (base sets `arbitrary_types_allowed=True`). No `model_rebuild()`; no ad-hoc
+  lazy imports (only the root PEP 562 facade map is sanctioned).
+- `c` (constants) NEVER imports `m`/`t`/`p` (reverse, forbidden); it composes only
+  from its own leaf base modules (`_constants/base`, …) and the standard library.
+- `t` (typings) is pure vocabulary: imports only `c`, the standard library, and
+  `t`. It NEVER imports `p` or `m`. A composite alias that names a `p.*` lives in
+  `p`; one that names an `m.*` lives in `m`.
+- `p` (protocols) NEVER imports `m` (reverse, forbidden); it bounds generics and
+  members with `p.BaseModel` and other `p.*`, and imports `t,c` at runtime.
+- `u`/`services`/`api` signatures type models by `p.*` protocols (imported at
+  runtime, `u → p` forward) and pass the concrete `m.*` instance through unchanged.
 - Internal leaf modules may, in SPECIAL cases and with EXTREME care, import directly
   from one another to break a cyclic import — escape hatch, never the default.
 
