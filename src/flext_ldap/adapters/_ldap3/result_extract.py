@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from flext_ldap import m, p, t
+from flext_ldap import c, m, p, t
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
@@ -115,7 +115,9 @@ class ResultConverterExtractMixin:
                             str,
                         ):
                             result = m.Ldif.ServerMetadata(
-                                server_type=normalized["server_type"],
+                                server_type=c.Ldif.ServerTypes(
+                                    str(normalized["server_type"])
+                                ),
                             )
                         else:
                             result = None
