@@ -97,8 +97,6 @@ class ResultConverterExtractMixin:
         match parsed:
             case None:
                 result = None
-            case m.Ldif.Entry():
-                result = parsed.metadata
             case _:
                 metadata_attr = getattr(parsed, "metadata", None)
                 match metadata_attr:
