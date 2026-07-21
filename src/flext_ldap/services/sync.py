@@ -13,9 +13,7 @@ from flext_ldap import c, m, p, r, t, u
 from flext_ldap.services.operations import FlextLdapOperations
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping,
-    )
+    from collections.abc import MutableMapping
     from pathlib import Path
 
 

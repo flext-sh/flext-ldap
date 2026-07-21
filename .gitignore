@@ -218,7 +218,6 @@ site/
 .cursorignore
 .aider*
 .serena/
-.claude/
 .copilot/
 .github/copilot-instructions.md
 *_REPORT*.md
@@ -343,11 +342,7 @@ Desktop.ini
 # ============================================================================
 # COMMON PATTERNS: Artifacts inside allowed directories
 # ============================================================================
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
 .hypothesis/
-.coverage
 htmlcov/
 dist/
 build/
@@ -393,7 +388,6 @@ docker/ldap-settings/**
 *.temp
 temp/
 staging/
-.cache/
 
 # IDE and editor files
 .vscode/
@@ -403,7 +397,6 @@ staging/
 *~
 
 # Claude AI files
-.claude/
 .github/*.rej
 
 
@@ -412,10 +405,39 @@ staging/
 !base.mk
 
 # --- workspace-sync: required ignores (auto-managed) ---
+.agents/
+.beads/
+.benchmarks/
+.cache/
+.claude/
+.code-review-graph/
+.codegraph/
+.coverage
+.debug-journal.md
 .direnv/
+.dolt/
+.dolt_dropped_databases/
+.doltcfg/
+.mcp.json
+.mypy_cache/
+.omo/
+.pytest_cache/
 .reports/
+.ropeproject/
+.ruff_cache/
+.scope/
+.sisyphus/
+.state/
+.superpowers/
+.trash/
+.turbo/
+.venv.bak/
+.venv.uv3/
 .venv/
+CLAUDE.local.md
+__pycache__/
 base.mk
+skill-create-output/
 !/config/
 !/config/**
 !/tests/

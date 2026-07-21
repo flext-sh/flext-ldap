@@ -21,9 +21,7 @@ from flext_ldap.adapters._ldap3.operation_executor import (
 from flext_ldap.adapters._ldap3.result_converter import (
     ResultConverter as _ResultConverter,
 )
-from flext_ldap.adapters._ldap3.search_executor import (
-    SearchExecutor as _SearchExecutor,
-)
+from flext_ldap.adapters._ldap3.search_executor import SearchExecutor as _SearchExecutor
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_ldif import e, r

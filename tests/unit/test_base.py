@@ -20,7 +20,7 @@ from flext_tests import FlextTestsSettings, tm
 from pydantic import BaseModel
 
 from flext_core import FlextSettings
-from tests import c, m
+from tests import c, m, p
 
 pytestmark = pytest.mark.unit
 
