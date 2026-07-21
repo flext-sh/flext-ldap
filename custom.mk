@@ -1,32 +1,21 @@
-.PHONY: ldap-start ldap-stop ldap-restart ldap-health ldap-reset
-.PHONY: ldap-search ldap-search-users ldap-search-groups ldap-shell ldap-logs
-.PHONY: test-unit test-integration build shell
-# Docker LDAP server management
-ldap-start: ## Start Docker LDAP server
+# Private project handlers for flext-ldap.
+# Strict extension: only `_custom_<verb>_<what>` handlers and `(pre|post)-<verb>[-<what>]`
+# hooks. Public targets, toolchain vars, .DEFAULT_GOAL, includes, and help are
+# invalid (base.mk owns those). Each handler maps to `make <verb> WHAT=<what>`.
+.PHONY: _custom_run_ldap-start _custom_run_ldap-stop _custom_run_ldap-restart _custom_run_ldap-health _custom_run_ldap-reset _custom_run_ldap-logs _custom_run_ldap-shell
+_custom_run_ldap-start: ## make run WHAT=ldap-start — start Docker LDAP server
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml up -d
-ldap-stop: ## Stop Docker LDAP server
+_custom_run_ldap-stop: ## make run WHAT=ldap-stop — stop Docker LDAP server
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml down
-ldap-restart: ldap-stop ldap-start ## Restart LDAP server
-ldap-health: ## Check LDAP server health
+_custom_run_ldap-restart: ## make run WHAT=ldap-restart — restart Docker LDAP server
+	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml down
+	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml up -d
+_custom_run_ldap-health: ## make run WHAT=ldap-health — Docker LDAP server status
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml ps
-ldap-reset: ## Reset LDAP server (clean data)
+_custom_run_ldap-reset: ## make run WHAT=ldap-reset — reset Docker LDAP server (clean data)
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml down -v
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml up -d
-ldap-search: ## Search LDAP directory
-	$(Q)docker exec ldap-server ldapsearch -x -H ldap://localhost -b "dc=example,dc=com"
-ldap-search-users: ## Search LDAP users
-	$(Q)docker exec ldap-server ldapsearch -x -H ldap://localhost -b "ou=users,dc=example,dc=com"
-ldap-search-groups: ## Search LDAP groups
-	$(Q)docker exec ldap-server ldapsearch -x -H ldap://localhost -b "ou=groups,dc=example,dc=com"
-ldap-shell: ## Open LDAP container shell
-	$(Q)docker exec -it ldap-server /bin/bash
-ldap-logs: ## View LDAP server logs
+_custom_run_ldap-logs: ## make run WHAT=ldap-logs — tail Docker LDAP server logs
 	$(Q)docker-compose -f ../docker/docker-compose.openldap.yml logs -f
-
-# Default to the unit-test marker so that environment-dependent integration
-# smoke tests are opt-in and do not produce skipped counters in the strict
-# test gate.
-ifeq ($(PYTEST_ARGS),)
-PYTEST_ARGS := -m unit
-endif
-.DEFAULT_GOAL := help
+_custom_run_ldap-shell: ## make run WHAT=ldap-shell — open LDAP container shell
+	$(Q)docker exec -it ldap-server /bin/bash
