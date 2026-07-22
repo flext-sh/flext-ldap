@@ -1,4 +1,0 @@
-from flext_ldap import m
-
-def f() -> int:
-    return m.Ldap.LdapOperationResult
