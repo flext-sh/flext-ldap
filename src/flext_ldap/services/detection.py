@@ -33,22 +33,18 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                 vendor_version=vendor_version,
                 naming_contexts=naming_contexts,
                 supported_extensions=supported_extensions,
-            ),
+            )
         )
 
     def detect_from_connection(
-        self,
-        connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection,
+        self, connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection
     ) -> p.Result[str]:
         """Detect the effective LDAP server type from an active connection."""
         detection_result: p.Result[str] = u.Ldap.detect_from_connection(connection)
         return detection_result
 
     @override
-    def execute(
-        self,
-        **kwargs: str | float | bool | None,
-    ) -> p.Result[m.Ldap.Response]:
+    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
         """Detect server type using the provided ``connection`` keyword argument."""
         connection_raw = kwargs.get("connection")
         if connection_raw is None:
@@ -59,7 +55,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                     service_name="connection",
                     expected_type="ldap3.Connection",
                     actual_type=type(connection_raw).__name__,
-                ),
+                )
             )
         return self.detect_from_connection(connection_raw).map(
             lambda detected_type: m.Ldap.OperationResult(
@@ -67,5 +63,5 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                 operation_type=c.Ldap.OperationName.DETECT_FROM_CONNECTION,
                 message=detected_type,
                 entries_affected=0,
-            ),
+            )
         )

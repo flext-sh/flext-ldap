@@ -89,10 +89,7 @@ from flext_ldap import (
 )
 
 # Server operations
-from flext_ldap import (
-    OpenLDAP2Operations,
-    OracleOIDOperations,
-)
+from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
 
 # Entry adapter
 from flext_ldap import FlextLdapEntryAdapter

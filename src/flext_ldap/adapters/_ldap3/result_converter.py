@@ -42,7 +42,7 @@ class ResultConverter(ResultConverterExtractMixin):
         for entry in entries:
             dn = entry.entry_dn or ""
             attrs_dict = ResultConverter.extract_attrs_dict(
-                entry.entry_attributes_as_dict,
+                entry.entry_attributes_as_dict
             )
             results.append((dn, attrs_dict))
         return results
@@ -72,7 +72,7 @@ class ResultConverter(ResultConverterExtractMixin):
                     changetype=None,
                     metadata=ResultConverter.extract_metadata(entry_raw),
                     validation_metadata=None,
-                ),
+                )
             )
         return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 

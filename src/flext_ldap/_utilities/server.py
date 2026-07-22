@@ -45,14 +45,11 @@ class FlextLdapUtilitiesServer:
 
     @staticmethod
     def create_server_from_url(
-        server_url: str,
-        *,
-        get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+        server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL
     ) -> p.Ldap.Ldap3Server:
         """Create an ldap3 Server instance from a URL string."""
         server: p.Ldap.Ldap3Server = ldap3.Server(
-            server_url,
-            get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info),
+            server_url, get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info)
         )
         return server
 

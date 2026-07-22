@@ -17,9 +17,7 @@ class ResultConverterExtractMixin:
     """Extraction helpers for DN, attributes, and metadata from LDAP entries."""
 
     @staticmethod
-    def extract_dn(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.DN:
+    def extract_dn(parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.get_dn_value()`` for normalization. Returns
@@ -34,7 +32,7 @@ class ResultConverterExtractMixin:
             if entry_dn is None:
                 return m.Ldif.DN.empty()
             dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
-                update={"value": entry_dn},
+                update={"value": entry_dn}
             )
             return dn_with_value
         return m.Ldif.DN.empty()
@@ -44,23 +42,17 @@ class ResultConverterExtractMixin:
         parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model."""
-        empty = m.Ldif.Attributes(
-            attributes={},
-            attribute_metadata={},
-            metadata=None,
-        )
+        empty = m.Ldif.Attributes(attributes={}, attribute_metadata={}, metadata=None)
         if parsed is None:
             return empty
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.attributes if parsed.attributes is not None else empty
         if isinstance(parsed, p.Ldap.Ldap3Entry):
             attrs_dict = ResultConverterExtractMixin.extract_attrs_dict(
-                parsed.entry_attributes_as_dict,
+                parsed.entry_attributes_as_dict
             )
             return m.Ldif.Attributes(
-                attributes=attrs_dict,
-                attribute_metadata={},
-                metadata=None,
+                attributes=attrs_dict, attribute_metadata={}, metadata=None
             )
         return empty
 
@@ -78,9 +70,7 @@ class ResultConverterExtractMixin:
             return ResultConverterExtractMixin._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
             model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
-                attrs,
-                "attributes",
-                None,
+                attrs, "attributes", None
             )
             if model_attrs is not None:
                 return ResultConverterExtractMixin._normalize_attr_values(model_attrs)
@@ -108,16 +98,15 @@ class ResultConverterExtractMixin:
                         result = metadata_attr
                     case Mapping():
                         normalized = ResultConverterExtractMixin._normalize_metadata(
-                            metadata_attr,
+                            metadata_attr
                         )
                         if normalized and isinstance(
-                            normalized.get("server_type"),
-                            str,
+                            normalized.get("server_type"), str
                         ):
                             result = m.Ldif.ServerMetadata(
                                 server_type=c.Ldif.ServerTypes(
                                     str(normalized["server_type"])
-                                ),
+                                )
                             )
                         else:
                             result = None
@@ -128,8 +117,7 @@ class ResultConverterExtractMixin:
     @staticmethod
     def _normalize_attr_values(
         attrs_dict: t.MappingKV[
-            str,
-            t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
+            str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence
         ]
         | None,
     ) -> t.Ldap.OperationAttributes:

@@ -16,9 +16,8 @@ from tempfile import gettempdir
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
-from flext_tests import FlextTestsConstants
-
 from flext_ldap import c
+from flext_tests import FlextTestsConstants
 
 if TYPE_CHECKING:
     from flext_cli import t
@@ -174,33 +173,25 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[t.StrSequence] = (
-                "people",
-                "groups",
-                "services",
-            )
+            DOCKER_OU_NAMES: Final[t.StrSequence] = ("people", "groups", "services")
 
-            ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset(
-                {
-                    "ldapsessionterminatedbyservererror",
-                    "ldapserverdownerror",
-                    "ldap server is not responding",
-                    "broken pipe",
-                    "session terminated by server",
-                    "ldapoperationresult",
-                },
-            )
-            ERROR_TRANSIENT_PATTERNS: Final[frozenset[str]] = frozenset(
-                {
-                    "connection refused",
-                    "connection reset by peer",
-                    "cannot connect to ldap",
-                    "ldapsocketopenerror",
-                    "ldapcommunicationerror",
-                    "ldap bind failed",
-                    "timeout",
-                },
-            )
+            ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset({
+                "ldapsessionterminatedbyservererror",
+                "ldapserverdownerror",
+                "ldap server is not responding",
+                "broken pipe",
+                "session terminated by server",
+                "ldapoperationresult",
+            })
+            ERROR_TRANSIENT_PATTERNS: Final[frozenset[str]] = frozenset({
+                "connection refused",
+                "connection reset by peer",
+                "cannot connect to ldap",
+                "ldapsocketopenerror",
+                "ldapcommunicationerror",
+                "ldap bind failed",
+                "timeout",
+            })
 
             ENTRY_DN_USER_EXAMPLE: Final[str] = "cn=user,dc=example,dc=com"
             ENTRY_DN_TEST_EXAMPLE: Final[str] = "cn=test,dc=example,dc=com"
@@ -214,30 +205,22 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             DETECTION_EXECUTE_SCENARIOS: Final[
                 t.SequenceOf[
-                    tuple[
-                        t.MappingKV[str, bool | float | str | None] | None,
-                        bool,
-                        str,
-                    ]
+                    tuple[t.MappingKV[str, bool | float | str | None] | None, bool, str]
                 ]
             ] = (
                 # Substrings match the centralized flext-core error format —
                 # ``ERR_SERVICE_TYPE_MISMATCH`` and the validate-connection
                 # wrapper. Keep these aligned with the canonical messages.
                 ({}, True, "parameter required"),
-                (
-                    {"connection": "invalid"},
-                    True,
-                    "ldap3.Connection",
-                ),
+                ({"connection": "invalid"}, True, "ldap3.Connection"),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
                 t.SequenceOf[tuple[t.MappingKV[str, t.StrSequence], str, str | None]]
             ] = (
                 (
-                    MappingProxyType(
-                        {"vendorName": ("Oracle Corporation", "Version 2")},
-                    ),
+                    MappingProxyType({
+                        "vendorName": ("Oracle Corporation", "Version 2")
+                    }),
                     "vendorName",
                     "Oracle Corporation",
                 ),
@@ -255,12 +238,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ("Oracle Corporation", "12.2.1.4.0", (), "oid"),
                 ("Oracle Unified Directory", "12.2.1.4.0", (), "oud"),
                 ("OpenLDAP", "2.4.57", (), "openldap"),
-                (
-                    "Microsoft Corporation",
-                    None,
-                    ("1.2.840.113556.1.4.319",),
-                    "ad",
-                ),
+                ("Microsoft Corporation", None, ("1.2.840.113556.1.4.319",), "ad"),
                 ("389 Project", "2.0.0", (), "ds389"),
                 (None, None, (), "rfc"),
                 ("oracle corporation", "12.2.1.4.0", (), "oid"),
@@ -268,16 +246,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
 
             OPERATIONS_ERROR_DETECTION_SCENARIOS: Final[t.BoolMapping] = (
-                MappingProxyType(
-                    {
-                        "Entry already exists": True,
-                        "already exists": True,
-                        "ALREADY EXISTS": True,
-                        "entryAlreadyExists": True,
-                        "Connection failed": False,
-                        "": False,
-                    },
-                )
+                MappingProxyType({
+                    "Entry already exists": True,
+                    "already exists": True,
+                    "ALREADY EXISTS": True,
+                    "entryAlreadyExists": True,
+                    "Connection failed": False,
+                    "": False,
+                })
             )
             OPERATIONS_BATCH_STOP_FRAGMENT: Final[str] = "stopped on error"
             OPERATIONS_BATCH_ALL_FAILED_FRAGMENT: Final[str] = "entries failed"
@@ -298,26 +274,19 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             LIST_ABC_UPPER: Final[t.StrSequence] = ("A", "B", "C")
             LIST_SINGLE: Final[str] = "single"
 
-            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType(
-                {
-                    "a": "value",
-                    "b": "",
-                    "c": "none_str",
-                    "d": "value2",
-                },
-            )
+            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType({
+                "a": "value",
+                "b": "",
+                "c": "none_str",
+                "d": "value2",
+            })
             FILTER_TRUTHY_EXPECTED_KEYS: Final[t.StrSequence] = ("a", "c", "d")
 
             NORM_JOIN_INPUT: Final[t.StrSequence] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
-                MappingProxyType(
-                    {
-                        "cn": ("user",),
-                        "sn": ("Doe",),
-                    },
-                )
+                MappingProxyType({"cn": ("user",), "sn": ("Doe",)})
             )
             # Substring matches the centralized validation error
             # ("Failed to validate entry.attributes: empty"). Update with the
@@ -339,7 +308,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
                 AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
                 AttrToStrListCase.LIST_BYTES: MappingProxyType({
-                    "key": ("bytes", "str"),
+                    "key": ("bytes", "str")
                 }),
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })

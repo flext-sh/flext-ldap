@@ -13,9 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 from ldap3 import MOCK_SYNC, Connection, Server
 
+from flext_tests import tm
 from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
@@ -92,19 +92,12 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_dn_str_with_custom_default(self) -> None:
         """Verify dn str with custom default."""
-        result = u.Ldap.dn_str(
-            None,
-            default=c.Ldap.Tests.STRING_DEFAULT_CUSTOM,
-        )
+        result = u.Ldap.dn_str(None, default=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_DEFAULT_CUSTOM)
 
     # --- create_server ---
     @pytest.mark.parametrize(
-        "case",
-        [
-            c.Ldap.Tests.Ldap3ServerCase.PLAIN,
-            c.Ldap.Tests.Ldap3ServerCase.SSL,
-        ],
+        "case", [c.Ldap.Tests.Ldap3ServerCase.PLAIN, c.Ldap.Tests.Ldap3ServerCase.SSL]
     )
     def test_create_server_modes(self, case: c.Ldap.Tests.Ldap3ServerCase) -> None:
         """Verify create server modes."""
@@ -149,8 +142,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.AttrToStrListCase)
     def test_attr_to_str_list_scenarios(
-        self,
-        case: c.Ldap.Tests.AttrToStrListCase,
+        self, case: c.Ldap.Tests.AttrToStrListCase
     ) -> None:
         """Verify attr to str list scenarios."""
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
@@ -174,8 +166,7 @@ class TestsFlextLdapUtilitiesUnit:
     # --- ldap3_value_to_strings ---
     @pytest.mark.parametrize("case", c.Ldap.Tests.LdapValueCase)
     def test_ldap3_value_to_strings_scenarios(
-        self,
-        case: c.Ldap.Tests.LdapValueCase,
+        self, case: c.Ldap.Tests.LdapValueCase
     ) -> None:
         """Verify ldap3 value to strings scenarios."""
         value, expected = c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS[case]
@@ -189,10 +180,7 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.search_entry_to_ldif_entry(entry)
         converted = u.Ldap.Tests.ok(result)
         dn = tm.not_none(converted.dn)
-        u.Ldap.Tests.that(
-            dn.value,
-            eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-        )
+        u.Ldap.Tests.that(dn.value, eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
 
     def test_search_entry_to_ldif_entry_missing_dn(self) -> None:
         """Verify search entry to ldif entry missing dn."""
@@ -242,8 +230,7 @@ class TestsFlextLdapUtilitiesUnit:
     def test_extract_entry_attributes_with_none_attrs(self) -> None:
         """Verify extract entry attributes with none attrs."""
         entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=None,
+            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE), attributes=None
         )
         result = u.Ldap.extract_entry_attributes(entry)
         u.Ldap.Tests.that(dict(result), eq={})
@@ -253,8 +240,7 @@ class TestsFlextLdapUtilitiesUnit:
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["test"]},
-                attribute_metadata={},
+                attributes={"cn": ["test"]}, attribute_metadata={}
             ),
         )
         result = u.Ldap.extract_entry_attributes(entry)
@@ -283,18 +269,14 @@ class TestsFlextLdapUtilitiesUnit:
     def test_process_new_attributes_with_change(self) -> None:
         """Verify process new attributes with change."""
         changes, _processed = u.Ldap.process_new_attributes(
-            {"cn": ["newval"]},
-            {"cn": ["oldval"]},
-            frozenset(),
+            {"cn": ["newval"]}, {"cn": ["oldval"]}, frozenset()
         )
         tm.that(changes, has="cn")
 
     def test_process_new_attributes_no_change(self) -> None:
         """Verify process new attributes no change."""
         changes, _processed = u.Ldap.process_new_attributes(
-            {"cn": ["same"]},
-            {"cn": ["same"]},
-            frozenset(),
+            {"cn": ["same"]}, {"cn": ["same"]}, frozenset()
         )
         tm.that(changes, lacks="cn")
 
@@ -311,9 +293,7 @@ class TestsFlextLdapUtilitiesUnit:
         """Verify process new attributes ignored."""
         existing_attrs: dict[str, list[str]] = {}
         changes, _processed = u.Ldap.process_new_attributes(
-            {"cn": ["val"]},
-            existing_attrs,
-            frozenset(["cn"]),
+            {"cn": ["val"]}, existing_attrs, frozenset(["cn"])
         )
         tm.that(changes, lacks="cn")
 
@@ -331,15 +311,13 @@ class TestsFlextLdapUtilitiesUnit:
         existing = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["old"]},
-                attribute_metadata={},
+                attributes={"cn": ["old"]}, attribute_metadata={}
             ),
         )
         new_entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["new"]},
-                attribute_metadata={},
+                attributes={"cn": ["new"]}, attribute_metadata={}
             ),
         )
         result = u.Ldap.compare_entries(existing, new_entry)
@@ -349,14 +327,12 @@ class TestsFlextLdapUtilitiesUnit:
     def test_compare_entries_no_existing_attrs(self) -> None:
         """Verify compare entries no existing attrs."""
         existing = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=None,
+            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE), attributes=None
         )
         new_entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["new"]},
-                attribute_metadata={},
+                attributes={"cn": ["new"]}, attribute_metadata={}
             ),
         )
         result = u.Ldap.compare_entries(existing, new_entry)
@@ -367,13 +343,11 @@ class TestsFlextLdapUtilitiesUnit:
         existing = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["old"]},
-                attribute_metadata={},
+                attributes={"cn": ["old"]}, attribute_metadata={}
             ),
         )
         new_entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=None,
+            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE), attributes=None
         )
         result = u.Ldap.compare_entries(existing, new_entry)
         u.Ldap.Tests.fail(result)
@@ -623,20 +597,14 @@ class TestsFlextLdapUtilitiesUnit:
     def test_when_safe_safe_then_true_with_none(self) -> None:
         """Verify when safe safe then true with none."""
         result = u.Ldap.when_safe(
-            condition=True,
-            then_value=None,
-            else_value="fallback",
-            safe_then=True,
+            condition=True, then_value=None, else_value="fallback", safe_then=True
         )
         u.Ldap.Tests.that(result, eq="fallback")
 
     def test_when_safe_safe_then_true_non_none(self) -> None:
         """Verify when safe safe then true non none."""
         result = u.Ldap.when_safe(
-            condition=True,
-            then_value="value",
-            else_value="fallback",
-            safe_then=True,
+            condition=True, then_value="value", else_value="fallback", safe_then=True
         )
         u.Ldap.Tests.that(result, eq="value")
 

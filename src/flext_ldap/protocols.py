@@ -10,13 +10,7 @@ This allows protocols to remain independent of model implementations.
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Protocol,
-    Self,
-    override,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
 from flext_ldif import p as _ldif_p
 
@@ -197,8 +191,7 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def add(
-                self,
-                entry: _ldif_p.Ldif.Entry,
+                self, entry: _ldif_p.Ldif.Entry
             ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -268,8 +261,7 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def delete(
-                self,
-                dn: str | _ldif_p.Ldif.DN,
+                self, dn: str | _ldif_p.Ldif.DN
             ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -282,10 +274,7 @@ class FlextLdapProtocols(_ldif_p):
                 """
                 ...
 
-            def execute(
-                self,
-                **kwargs: t.Scalar,
-            ) -> _ldif_p.Result[lm.Ldap.Response]:
+            def execute(self, **kwargs: t.Scalar) -> _ldif_p.Result[lm.Ldap.Response]:
                 """Execute health check or default operation.
 
                 Args:
@@ -299,9 +288,7 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def modify(
-                self,
-                dn: str | _ldif_p.Ldif.DN,
-                changes: t.Ldap.LdapModifyChanges,
+                self, dn: str | _ldif_p.Ldif.DN, changes: t.Ldap.LdapModifyChanges
             ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
@@ -352,8 +339,7 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def connect(
-                self,
-                settings: lm.Ldap.ConnectionConfig,
+                self, settings: lm.Ldap.ConnectionConfig
             ) -> _ldif_p.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
@@ -363,31 +349,25 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def add(
-                self,
-                entry: lm.Ldif.Entry,
+                self, entry: lm.Ldif.Entry
             ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry, returning the operation result."""
                 ...
 
             def delete(
-                self,
-                dn: str | lm.Ldif.DN,
+                self, dn: str | lm.Ldif.DN
             ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry, returning the operation result."""
                 ...
 
             def modify(
-                self,
-                dn: str | lm.Ldif.DN,
-                changes: t.Ldap.OperationChanges,
+                self, dn: str | lm.Ldif.DN, changes: t.Ldap.OperationChanges
             ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry, returning the operation result."""
                 ...
 
             def search(
-                self,
-                search_options: lm.Ldap.SearchOptions,
-                server_type: str = "rfc",
+                self, search_options: lm.Ldap.SearchOptions, server_type: str = "rfc"
             ) -> _ldif_p.Result[lm.Ldap.SearchResult]:
                 """Perform LDAP search, returning the search result."""
                 ...
@@ -431,9 +411,7 @@ class FlextLdapProtocols(_ldif_p):
                 """
                 ...
 
-            def execute(
-                self,
-            ) -> _ldif_p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+            def execute(self) -> _ldif_p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Run the connection service health check/default operation."""
                 ...
 
@@ -545,8 +523,7 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def __getitem__(
-                self,
-                attribute_name: str,
+                self, attribute_name: str
             ) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
                 """Return one ldap3 attribute object by attribute name."""
                 ...
@@ -592,9 +569,7 @@ class FlextLdapProtocols(_ldif_p):
             """Structural protocol for connections that can query rootDSE."""
 
             @property
-            def search(
-                self,
-            ) -> Callable[..., bool | t.JsonValue | None] | None:
+            def search(self) -> Callable[..., bool | t.JsonValue | None] | None:
                 """The ldap3-compatible search callable when available."""
                 ...
 
@@ -648,9 +623,7 @@ class FlextLdapProtocols(_ldif_p):
             """
 
             @property
-            def attributes(
-                self,
-            ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
+            def attributes(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
                 """The attributes property - covariant Mapping for structural compatibility."""
                 ...
 

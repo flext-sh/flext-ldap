@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsTypes
-
 from flext_ldap import t
+from flext_tests import FlextTestsTypes
 
 
 class TestsFlextLdapTypes(FlextTestsTypes, t):
@@ -24,10 +23,7 @@ class TestsFlextLdapTypes(FlextTestsTypes, t):
             Use t.Ldap.Tests.* for all flext-ldap test types.
             """
 
-            type LdapContainerDict = t.MappingKV[
-                str,
-                t.Scalar,
-            ]
+            type LdapContainerDict = t.MappingKV[str, t.Scalar]
 
 
 t = TestsFlextLdapTypes

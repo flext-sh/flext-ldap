@@ -4,15 +4,14 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import s as tests_s
-
 from flext_ldap import m, t
+from flext_tests import s as tests_s
 from tests.settings import TestsFlextLdapSettings
 
 
 class TestsFlextLdapServiceBase[
     TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload],
+    | t.SequenceOf[t.JsonPayload]
 ](tests_s[TResult]):
     """LDAP test service base with source and test settings namespaces."""
 

@@ -35,16 +35,13 @@ def _get_worker_id(settings: pytest.Config) -> str:
     default_worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
     if not _has_workerinput(settings):
         return default_worker_id
-    worker_id: str = settings.workerinput.get(
-        "workerid",
-        default_worker_id,
-    )
+    worker_id: str = settings.workerinput.get("workerid", default_worker_id)
     return worker_id
 
 
 def _docker_compose_path() -> Path:
     compose_file_rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-    return Path(__file__).resolve().parents[1] / compose_file_rel
+    return u.Ldap.Tests.workspace_root() / compose_file_rel
 
 
 def _docker_compose_available() -> bool:
@@ -78,17 +75,15 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture(scope="session")
-def ldap_container(
-    worker_id: str,
-) -> t.MappingKV[str, t.Scalar]:
+def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     """Provide ldap container."""
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "
-            "it is unavailable in this environment.",
+            "it is unavailable in this environment."
         )
     lock = u.Ldap.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
+        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock"
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:

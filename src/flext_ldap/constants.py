@@ -290,12 +290,12 @@ class FlextLdapConstants(c):
 
         ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
             MappingProxyType({
-                c.Ldif.ServerTypes.OID.value: frozenset({"unified directory"}),
+                c.Ldif.ServerTypes.OID.value: frozenset({"unified directory"})
             })
         )
 
         ROOT_DSE_VENDOR_MAX_TOKENS: Final[t.MappingKV[str, int]] = MappingProxyType({
-            c.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
+            c.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS
         })
 
 

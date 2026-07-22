@@ -27,12 +27,11 @@ class TestsFlextLdapOperations:
         """Deterministic operations service for exercising public batch flow."""
 
         _queued_results: list[p.Result[m.Ldap.LdapOperationResult]] = u.PrivateAttr(
-            default_factory=list,
+            default_factory=list
         )
 
         def __init__(
-            self,
-            results: t.SequenceOf[p.Result[m.Ldap.LdapOperationResult]],
+            self, results: t.SequenceOf[p.Result[m.Ldap.LdapOperationResult]]
         ) -> None:
             """Initialize the test double."""
             super().__init__()
@@ -48,19 +47,14 @@ class TestsFlextLdapOperations:
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             _ = entry, retry_on_errors, max_retries
             if not self._queued_results:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    "No queued upsert result",
-                )
+                return r[m.Ldap.LdapOperationResult].fail("No queued upsert result")
             return self._queued_results.pop(0)
 
     @staticmethod
     def _entry(dn: str) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes(
-                attributes={},
-                attribute_metadata={},
-            ),
+            attributes=m.Ldif.Attributes(attributes={}, attribute_metadata={}),
         )
 
     def test_is_connected_not_connected(self) -> None:
@@ -73,10 +67,7 @@ class TestsFlextLdapOperations:
         list(c.Ldap.Tests.OPERATIONS_ERROR_DETECTION_SCENARIOS.items()),
     )
     def test_already_exists_error_detection(
-        self,
-        error_message: str,
-        *,
-        expected: bool,
+        self, error_message: str, *, expected: bool
     ) -> None:
         """Verify already exists error detection."""
         result = FlextLdapOperations.already_exists_error(error_message)
@@ -127,12 +118,7 @@ class TestsFlextLdapOperations:
         """Verify modify without connection returns failure."""
         operations = FlextLdapOperations()
         changes: t.Ldap.OperationChanges = {
-            "cn": [
-                (
-                    int(c.Ldap.ModifyOperation.REPLACE),
-                    [c.Ldap.Tests.STRING_SIMPLE],
-                ),
-            ],
+            "cn": [(int(c.Ldap.ModifyOperation.REPLACE), [c.Ldap.Tests.STRING_SIMPLE])]
         }
 
         result = operations.modify(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, changes)
@@ -156,23 +142,20 @@ class TestsFlextLdapOperations:
 
         error = u.Ldap.Tests.fail(operations.batch_upsert(entries, stop_on_error=False))
         u.Ldap.Tests.that(
-            error,
-            contains=c.Ldap.Tests.OPERATIONS_BATCH_ALL_FAILED_FRAGMENT,
+            error, contains=c.Ldap.Tests.OPERATIONS_BATCH_ALL_FAILED_FRAGMENT
         )
 
     def test_batch_upsert_partial_failure_returns_failure(self) -> None:
         """Verify batch upsert partial failure returns failure."""
         operations = self.BatchPathOperations((
             r[m.Ldap.LdapOperationResult].ok(
-                m.Ldap.LdapOperationResult.with_operation(
-                    c.Ldap.UpsertOperation.ADDED,
-                ),
+                m.Ldap.LdapOperationResult.with_operation(c.Ldap.UpsertOperation.ADDED)
             ),
             r[m.Ldap.LdapOperationResult].fail("planned batch failure"),
             r[m.Ldap.LdapOperationResult].ok(
                 m.Ldap.LdapOperationResult.with_operation(
-                    c.Ldap.UpsertOperation.SKIPPED,
-                ),
+                    c.Ldap.UpsertOperation.SKIPPED
+                )
             ),
         ))
         entries = [
@@ -197,7 +180,7 @@ class TestsFlextLdapOperations:
         """
         operations = self.BatchPathOperations((
             r[m.Ldap.LdapOperationResult].ok(
-                m.Ldap.LdapOperationResult.with_operation(c.Ldap.Tests.STRING_SIMPLE),
+                m.Ldap.LdapOperationResult.with_operation(c.Ldap.Tests.STRING_SIMPLE)
             ),
         ))
         entries = [self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)]
@@ -216,12 +199,10 @@ class TestsFlextLdapOperations:
             attributes=m.Ldif.Attributes(
                 attributes={
                     c.Ldap.AttributeName.CHANGETYPE: [
-                        c.Ldif.LdifChangeType.MODIFY.value,
+                        c.Ldif.LdifChangeType.MODIFY.value
                     ],
                     c.Ldif.ChangeOperation.ADD: [c.Ldap.AttributeName.COMMON_NAME],
-                    c.Ldap.AttributeName.COMMON_NAME: [
-                        c.Ldap.Tests.STRING_SIMPLE,
-                    ],
+                    c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
                 },
                 attribute_metadata={},
             ),
@@ -240,8 +221,7 @@ class TestsFlextLdapOperations:
         ],
     )
     def test_add_with_dn_variations_returns_failure_not_connected(
-        self,
-        case: c.Ldap.Tests.EntryOperationCase,
+        self, case: c.Ldap.Tests.EntryOperationCase
     ) -> None:
         """Test add operation with constructible DN formats (not connected scenario).
 
@@ -263,13 +243,9 @@ class TestsFlextLdapOperations:
         with pytest.raises(c.ValidationError):
             m.Ldif.DN(value=invalid_dn)
 
-    @pytest.mark.parametrize(
-        "case",
-        c.Ldap.Tests.EntryOperationCase,
-    )
+    @pytest.mark.parametrize("case", c.Ldap.Tests.EntryOperationCase)
     def test_delete_with_dn_variations_returns_failure_not_connected(
-        self,
-        case: c.Ldap.Tests.EntryOperationCase,
+        self, case: c.Ldap.Tests.EntryOperationCase
     ) -> None:
         """Test delete operation with various DN formats (not connected scenario)."""
         operations = FlextLdapOperations()
@@ -277,13 +253,9 @@ class TestsFlextLdapOperations:
         result = operations.delete(dn)
         u.Ldap.Tests.fail(result)
 
-    @pytest.mark.parametrize(
-        "case",
-        c.Ldap.Tests.SearchFilterCase,
-    )
+    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchFilterCase)
     def test_search_with_filter_variations_returns_failure_not_connected(
-        self,
-        case: c.Ldap.Tests.SearchFilterCase,
+        self, case: c.Ldap.Tests.SearchFilterCase
     ) -> None:
         """Test search operation with various filter types (not connected scenario)."""
         operations = FlextLdapOperations()
@@ -296,13 +268,9 @@ class TestsFlextLdapOperations:
         result = operations.search(search_options)
         u.Ldap.Tests.fail(result)
 
-    @pytest.mark.parametrize(
-        "case",
-        c.Ldap.Tests.SearchScopeCase,
-    )
+    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchScopeCase)
     def test_search_with_scope_variations_returns_failure_not_connected(
-        self,
-        case: c.Ldap.Tests.SearchScopeCase,
+        self, case: c.Ldap.Tests.SearchScopeCase
     ) -> None:
         """Test search operation with various scope types (not connected scenario)."""
         operations = FlextLdapOperations()
@@ -315,13 +283,9 @@ class TestsFlextLdapOperations:
         result = operations.search(search_options)
         u.Ldap.Tests.fail(result)
 
-    @pytest.mark.parametrize(
-        "case",
-        c.Ldap.Tests.SearchSizeCase,
-    )
+    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchSizeCase)
     def test_search_with_size_limit_variations_returns_failure_not_connected(
-        self,
-        case: c.Ldap.Tests.SearchSizeCase,
+        self, case: c.Ldap.Tests.SearchSizeCase
     ) -> None:
         """Test search operation with various size limits (not connected scenario)."""
         operations = FlextLdapOperations()

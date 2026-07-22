@@ -12,9 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_tests import FlextTestsModels, r
-
 from flext_ldap import m
+from flext_tests import FlextTestsModels, r
 from tests.base import s
 
 if TYPE_CHECKING:
@@ -45,14 +44,11 @@ class TestsFlextLdapModels(m, FlextTestsModels):
                 @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
                     )
 
 
 # Short aliases for tests
 m = TestsFlextLdapModels
 
-__all__: list[str] = [
-    "TestsFlextLdapModels",
-    "m",
-]
+__all__: list[str] = ["TestsFlextLdapModels", "m"]

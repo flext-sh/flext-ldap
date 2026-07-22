@@ -49,15 +49,12 @@ class TestsFlextLdapConnection:
         error = u.Ldap.Tests.fail(ldap.execute())
 
         u.Ldap.Tests.that(
-            error.lower(),
-            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
+            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
         )
 
     @pytest.mark.parametrize("auto_retry", [False, True])
     def test_connect_invalid_host_fails_and_stays_disconnected(
-        self,
-        *,
-        auto_retry: bool,
+        self, *, auto_retry: bool
     ) -> None:
         """connect() to an unreachable host fails without binding the facade.
 
@@ -76,9 +73,7 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(error, none=False)
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
 
-    def test_disconnect_is_idempotent_and_preserves_failure_semantics(
-        self,
-    ) -> None:
+    def test_disconnect_is_idempotent_and_preserves_failure_semantics(self) -> None:
         """Repeated disconnect() calls are safe and keep execute() failing."""
         ldap.disconnect()
         ldap.disconnect()
@@ -86,8 +81,7 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            error.lower(),
-            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
+            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
         )
 
     def test_context_manager_yields_same_facade(self) -> None:
@@ -103,8 +97,7 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            error.lower(),
-            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
+            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
         )
 
 

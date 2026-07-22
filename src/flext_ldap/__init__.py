@@ -101,15 +101,9 @@ if TYPE_CHECKING:
 
 
 _LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._config": (
-        "FlextLdapConfig",
-        "config",
-    ),
+    "._config": ("FlextLdapConfig", "config"),
     "._models.ldap": ("FlextLdapModelsLdap",),
-    "._settings": (
-        "FlextLdapSettings",
-        "settings",
-    ),
+    "._settings": ("FlextLdapSettings", "settings"),
     "._utilities.comparison": ("FlextLdapUtilitiesComparison",),
     "._utilities.conversion": ("FlextLdapUtilitiesConversion",),
     "._utilities.detection": ("FlextLdapUtilitiesDetection",),
@@ -124,50 +118,20 @@ _LAZY_MODULES: dict[str, tuple[str, ...]] = {
     ".adapters._ldap3.search_executor": ("SearchExecutor",),
     ".adapters._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
     ".adapters.entry": ("FlextLdapEntryAdapter",),
-    ".adapters.ldap3": (
-        "FlextLdapAdapterHost",
-        "FlextLdapLdap3Adapter",
-    ),
-    ".api": (
-        "FlextLdap",
-        "ldap",
-    ),
-    ".base": (
-        "FlextLdapService",
-        "s",
-    ),
-    ".constants": (
-        "FlextLdapConstants",
-        "c",
-    ),
-    ".models": (
-        "FlextLdapModels",
-        "m",
-    ),
-    ".protocols": (
-        "FlextLdapProtocols",
-        "p",
-    ),
+    ".adapters.ldap3": ("FlextLdapAdapterHost", "FlextLdapLdap3Adapter"),
+    ".api": ("FlextLdap", "ldap"),
+    ".base": ("FlextLdapService", "s"),
+    ".constants": ("FlextLdapConstants", "c"),
+    ".models": ("FlextLdapModels", "m"),
+    ".protocols": ("FlextLdapProtocols", "p"),
     ".services.api_runtime": ("FlextLdapApiRuntime",),
     ".services.connection": ("FlextLdapConnection",),
     ".services.detection": ("FlextLdapServerDetector",),
     ".services.operations": ("FlextLdapOperations",),
     ".services.sync": ("FlextLdapSync",),
-    ".typings": (
-        "FlextLdapTypes",
-        "t",
-    ),
-    ".utilities": (
-        "FlextLdapUtilities",
-        "u",
-    ),
-    "flext_ldif": (
-        "d",
-        "e",
-        "h",
-        "r",
-        "x",
-    ),
+    ".typings": ("FlextLdapTypes", "t"),
+    ".utilities": ("FlextLdapUtilities", "u"),
+    "flext_ldif": ("d", "e", "h", "r", "x"),
 }
 
 
@@ -175,9 +139,7 @@ _LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
 
 
 _LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES,
-    alias_groups=_LAZY_ALIAS_GROUPS,
-    sort_keys=False,
+    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
 )
 
 _DIRECT_IMPORTS: tuple[str, ...] = (
@@ -279,9 +241,4 @@ __all__: tuple[str, ...] = (
 )
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    public_exports=__all__,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
