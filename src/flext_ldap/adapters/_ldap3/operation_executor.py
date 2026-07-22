@@ -6,11 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_ldap import c, m, p, t, u
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldif import r
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class OperationExecutor:
@@ -30,8 +33,7 @@ class OperationExecutor:
         @u.field_validator("description", mode="before")
         @classmethod
         def normalize_description(
-            cls,
-            value: t.Scalar | t.JsonList | t.JsonMapping | None,
+            cls, value: t.Scalar | t.JsonList | t.JsonMapping | None
         ) -> str | None:
             """Normalize ldap3 JSON descriptions into the operation message text."""
             if value is None:
@@ -50,16 +52,12 @@ class OperationExecutor:
         try:
             if wrapper_call():
                 return r[m.Ldap.OperationResult].ok(
-                    m.Ldap.OperationResult.model_validate(
-                        {
-                            "success": True,
-                            "operation_type": operation_type,
-                            "message": c.Ldap.OPERATION_SUCCESS_MESSAGES[
-                                operation_type
-                            ],
-                            "entries_affected": 1,
-                        },
-                    ),
+                    m.Ldap.OperationResult(
+                        success=True,
+                        operation_type=operation_type,
+                        message=c.Ldap.OPERATION_SUCCESS_MESSAGES[operation_type],
+                        entries_affected=1,
+                    )
                 )
         except c.EXC_BROAD_IO_TYPE as exc:
             return r[m.Ldap.OperationResult].fail_op(failure_prefix, exc)
@@ -67,8 +65,7 @@ class OperationExecutor:
 
     @staticmethod
     def _extract_error_result(
-        connection: p.Ldap.Ldap3Connection,
-        prefix: str,
+        connection: p.Ldap.Ldap3Connection, prefix: str
     ) -> p.Result[m.Ldap.OperationResult]:
         """Build ``r.fail`` from ``connection.result.description`` when present."""
         error_msg = f"{prefix}: LDAP operation returned failure status"
@@ -98,8 +95,7 @@ class OperationExecutor:
 
     @staticmethod
     def execute_delete(
-        connection: p.Ldap.Ldap3Connection,
-        dn: str | m.Ldif.DN,
+        connection: p.Ldap.Ldap3Connection, dn: str | m.Ldif.DN
     ) -> p.Result[m.Ldap.OperationResult]:
         """Execute LDAP delete via ``Connection.delete`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)

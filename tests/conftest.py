@@ -12,25 +12,17 @@ from pathlib import Path
 from typing import Protocol, TypeGuard
 
 import pytest
-from flext_tests import (
-    reset_settings as _shared_reset_settings,
-    settings as _shared_settings,
-    settings_factory as _shared_settings_factory,
-)
 
-from flext_ldap.adapters import FlextLdapLdap3Wrappers
-from tests.constants import c
-from tests.typings import t
-from tests.utilities import u
+from flext_ldap import FlextLdapLdap3Wrappers
+from tests import c, t, u
 
-reset_settings = _shared_reset_settings
-settings = _shared_settings
-settings_factory = _shared_settings_factory
-
+# NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
 logger = u.fetch_logger(__name__)
 
 
 class WorkerInputConfig(Protocol):
+    """Provide the test double for worker input config."""
+
     workerinput: t.StrMapping
 
 
@@ -43,16 +35,13 @@ def _get_worker_id(settings: pytest.Config) -> str:
     default_worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
     if not _has_workerinput(settings):
         return default_worker_id
-    worker_id: str = settings.workerinput.get(
-        "workerid",
-        default_worker_id,
-    )
+    worker_id: str = settings.workerinput.get("workerid", default_worker_id)
     return worker_id
 
 
 def _docker_compose_path() -> Path:
     compose_file_rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-    return Path(__file__).resolve().parents[1] / compose_file_rel
+    return u.Ldap.Tests.workspace_root() / compose_file_rel
 
 
 def _docker_compose_available() -> bool:
@@ -60,6 +49,7 @@ def _docker_compose_available() -> bool:
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
+    """Provide pytest runtest makereport."""
     if call.excinfo is None:
         return
     exc_msg = str(call.excinfo.value).lower()
@@ -80,20 +70,20 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
+    """Provide worker id."""
     return _get_worker_id(request.config)
 
 
 @pytest.fixture(scope="session")
-def ldap_container(
-    worker_id: str,
-) -> t.MappingKV[str, t.Scalar]:
+def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
+    """Provide ldap container."""
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "
-            "it is unavailable in this environment.",
+            "it is unavailable in this environment."
         )
     lock = u.Ldap.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
+        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock"
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:

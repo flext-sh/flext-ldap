@@ -6,7 +6,6 @@ This module provides constants for LDAP operations, extending c.
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
@@ -16,6 +15,8 @@ from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 from flext_ldif import c
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from flext_ldap import t
 
 
@@ -289,12 +290,12 @@ class FlextLdapConstants(c):
 
         ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
             MappingProxyType({
-                c.Ldif.ServerTypes.OID.value: frozenset({"unified directory"}),
+                c.Ldif.ServerTypes.OID.value: frozenset({"unified directory"})
             })
         )
 
         ROOT_DSE_VENDOR_MAX_TOKENS: Final[t.MappingKV[str, int]] = MappingProxyType({
-            c.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
+            c.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS
         })
 
 

@@ -1,113 +1,124 @@
-# AGENTS.md — Project Pointer
+# AGENTS.md — flext-ldap
 
-<!-- BEGIN UNIVERSAL AGENT LAW (portable; regenerable; do not edit inside) -->
-## Universal Agent Law (portable core)
+<!-- BEGIN AI-HUB MANAGED UNIVERSAL CORE -->
+<!-- UNIVERSAL-GOVERNANCE v4 -->
 
-**This block is the inviolable, agent-agnostic core of engineering conduct for this repository.** It is
-self-contained: it binds any AI agent — Claude, Codex, Gemini, Cursor, Cline, GitHub Copilot, or any other —
-and any user, with or without access to the author's personal configuration. The live user's explicit
-instructions override this block; nothing else does. These rules apply to every project type and every
-session, and may not be relaxed, reinterpreted, or scoped-out for convenience, speed, or perceived triviality.
+## Universal Agent Engineering Core
 
-### 1. Zero-Tolerance / Strict-Total
+`~/.agents` is the sole universal authority. AI Hub distributes and configures
+it but never competes with it. Project law may be stricter; the newest explicit
+operator instruction prevails and lower authority must be reconciled.
 
-- **Always** fix the root cause — generically, cleanly, via reuse of existing canonical code — and validate it
-  in the same turn with the actual command, its exit code, and the relevant output line.
-- **Always** remove superseded code in the same cycle the replacement lands. No dead code "for later".
-- **Always** fail loud when the single source of truth (identity, config, contract, version) is absent — never
-  substitute a guess, a local copy, or an alternative path.
-- **Never** use a fallback, compatibility wrapper, legacy branch, allowlist/carve-out, skip, suppression,
-  hardcode, stub, fake, `TODO`/`FIXME`, or a side-script to make a gate pass.
-- **Never** classify a failure surfaced by the current task as "pre-existing", "cosmetic", "unrelated", or
-  "acceptable legacy". If it appears in your flow, you own it.
+1. **Truth with evidence.** Claims require the exact command, working directory,
+   exit status, decisive output, and bounded scope.
+2. **Research before mutation.** Read current authority, intent, owner Bead,
+   implementation owner, consumers, generated projections, concurrent WIP, and
+   validation route. Never invent behavior or results.
+3. **One active intent.** Preserve the goal, target, Bead, exclusions, phase,
+   required gates, and stop condition through delegation and continuation.
+4. **Root cause and one owner.** Change the canonical owner and complete the
+   cutover. No bypass, fallback, shim, suppression, hardcode, fake, duplicate
+   route, silent default, or old-and-new coexistence.
+5. **Fix forward.** Preserve shared work; never destructively discard unknown
+   changes. Re-read mutable files and classify relevant paths and hunks.
+6. **Typed and generated boundaries.** Parse untrusted input once into canonical
+   types. Change sources, not projections; regenerate and prove idempotence.
+7. **Continuous green.** No completion while the project or environment is
+   broken, partially migrated, dirty from task WIP, ahead of remote, missing
+   real-use QA, or carrying stale generated output or docs. Run native global
+   and changed-scope gates; Python requires Ruff, Pyrefly, Pyright, Mypy, and
+   Pytest coverage plus applicable build and integrated validation.
+8. **Beads is execution truth.** Beads owns work, plans, memory, dependencies,
+   status, evidence, and closure. GitHub is its continuous external coordination,
+   PR, review, and CI mirror after the orchestrator organizes Beads completely.
+9. **Separated roles.** The orchestrator coordinates, owns semantic Beads state,
+   validates, approves or rejects merges, rolls out, and closes; it does not
+   implement. Workers directly implement one Bead in one branch and worktree but
+   never merge or close. The standing documenter continuously audits, updates,
+   validates, and removes stale canonical skills, ADRs, docs, Python docstrings,
+   examples, and executable snippets under the same validated PR flow; the
+   governance/CI helper also remains active.
+10. **No stall by reporting.** Five-minute status reports include the agent table
+    and epic evolution and never pause execution. Compaction, continuation, and
+    status transfer context only.
+11. **Historical material is evidence only.** Archives, generated or tool homes,
+    backups, sessions, caches, and legacy trees are never live authority.
+12. **Stop only for a real blocker.** Ask one precise question only when authority
+   conflicts or an action would be destructive; otherwise continue to the
+   observable stop condition.
+13. **Short validated slices.** Deliver in small, independently validated
+   units that merge to the integration branch quickly — one Bead, one
+   reviewable PR, hours not days. Mega-lanes and long-lived WIP are defects;
+   the orchestrator splits any unit that cannot merge green within a session.
+14. **Living documentation.** Project knowledge is durable, never rebuilt
+   per session. On entering a project, read its docs first and validate key
+   claims quickly against live reality. Every change that produces new
+   understanding or behavior updates the affected docs in the SAME change;
+   stale docs are defects filed as beads, never worked around.
+15. **Tests reflect canonical reality.** Tests are executable checks of current
+    behavior, never a source of truth; a test that violates canonical policy is
+    corrected to match the policy, not accommodated. Performance optimization is
+    evidence-first: profile with cProfile to find the hot path before changing
+    anything, then optimize with the project's typed OO/MRO/lazy-import patterns;
+    accelerate test selection with impact analysis (e.g. pytest-testmon) and
+    parallelism (pytest-xdist) rather than deleting or weakening coverage.
+16. **Parametrized config, generators, and managed binaries.** config, settings,
+    and templates are the sole source of configuration and business rules; the
+    correct generator produces every derived surface (never hand-edit a
+    projection). ai-hub owns the installation of binaries and the provisioning of
+    environments; no manual, machine-specific path or binary hardcode. There is
+    no product-, agent-, or daemon-specific hardcoded code anywhere — every such
+    value is parametrized through config/settings/templates.
 
-### 2. Fix-Forward-Only
+<!-- /UNIVERSAL-GOVERNANCE -->
+<!-- END AI-HUB MANAGED UNIVERSAL CORE -->
 
-Multiple agents may share one working tree. Reverting to a past state silently destroys another agent's
-in-flight work. **Accept the current state and fix forward.** Discarding changes via `git checkout -- <path>`,
-`git restore`, `git reset --hard`, `git reset <path>`, `git stash` (hiding others' work), `git clean`, or
-`git revert` of another's commit is **forbidden**. If you think you must revert → **STOP and ask the user**;
-never unilaterally revert shared work.
+> **General FLEXT law & workspace conventions live in the root [`../AGENTS.md`](../AGENTS.md) — read it first.** SSOT for facade layering, config/settings, `make`-only workflow, testing law, git discipline. This file adds ONLY `flext-ldap`-specific knowledge.
+>
+> **Standalone / independent mode:** if this package is checked out on its own (imported as a dependency, vendored, or cloned solo) there is no parent workspace, so `../AGENTS.md` does not resolve. Then read the root law from the raw file on the SAME branch/release the project is on: <https://raw.githubusercontent.com/flext-sh/flext/0.12.0-dev/AGENTS.md> (pin the branch/tag to your working line, never `main`).
 
-### 3. Root Cause Only — No Workarounds
+**Package:** `flext_ldap` · deps: `flext-cli`, `flext-core`, `flext-ldif`
 
-No TODOs, stubs, fakes, fallbacks, compat wrappers, or "temporary" workarounds. No suppression directives
-(`# type: ignore`, blanket `# noqa`, `@ts-ignore`, `eslint-disable`, etc.) and no escape-hatch typing
-(`Any`, bare `object`, unchecked casts) unless carrying a one-line documented justification. A bypass that
-hides a symptom is a defect even when the gate turns green.
+## Overview
 
-### 4. Stay In Scope
+Enterprise LDAP operations library. Base for the LDAP Singer connectors (`flext-tap-ldap`, `flext-target-ldap`, `flext-dbt-ldap`).
 
-Do exactly what the user asked — nothing more. No unrequested refactors, renames, cleanups, "obvious
-improvements", or adjacent fixes. Found something unrelated? Mention it in one sentence; do not touch it.
+## Structure
 
-### 5. Evidence Before Done — Report Honesty Is 100% Mandatory
+```
+src/flext_ldap/
+├── api.py            # FlextLdap facade, composed from FlextLdapConnection + FlextLdapSync + FlextLdapApiRuntime
+├── base.py
+├── adapters/         # LDAP adapter implementations
+├── services/         # connection / runtime / synchronization services
+├── constants.py typings.py protocols.py models.py utilities.py   # AUTO-GENERATED facets
+└── _constants? _models/ _utilities/                              # private impl
+```
 
-"Done" means the **complete chain validated** with objective evidence (command + exit code + output), not
-conclusion-by-sample. **Never** present partial, assumed, speculative, or unverified results as verified.
-State explicitly when a step was skipped, when a check failed (paste the output), and when a result is
-unverified. If something only worked via a workaround, say so — it is not "done".
+## Code Map
 
-### 6. Execute As Planned, Else Stop And Ask
+| Symbol | Kind | Location | Role |
+|--------|------|----------|------|
+| `FlextLdap` | class | `api.py` | facade (connection + sync + runtime) |
+| `FlextLdapConnection` | class | adapters/services | connection lifecycle |
+| `FlextLdapSync` | class | services | directory synchronization |
 
-Execute the agreed plan exactly. On anything that cannot be done cleanly — a blocked tool, a missing source of
-truth, a real ambiguity, or a step that would require a bad practice — **STOP and ask**, presenting concrete
-options. **Every option must be a clean, root-cause solution.** Fallback, hack, hardcode, suppression, skip,
-or stub are **forbidden as suggestions** — never offer one, even labelled "quick" or "temporary". Any
-mid-execution deviation from the plan requires explicit user confirmation **before** applying.
+## Anti-Patterns / Gotchas
 
-### 7. Blocked-Operation Protocol
+- **Use the `FlextLdap` facade** — do not reach into `adapters/` or `services/` internals directly.
+- LDIF parsing/serialization is delegated to `flext-ldif` (registry-selected dialects), not reimplemented here.
 
-When a tool, command, or edit is blocked (deny rule, security hook, sandbox, missing permission, unavailable
-integration): (1) **Stop** — do not retry a variation or seek a bypass; (2) **diagnose in one sentence** what
-was blocked and why; (3) **hand the exact command or edit to the user** to run on their side; (4) **wait for
-their output** before continuing; (5) **never claim done because a substitute ran** — a successful bypass is
-still a violation. Forbidden bypass techniques include `bash -c`/`sh -c` subshell wrapping, `eval`/`exec`,
-`env <blocked>`, `xargs <blocked>`, absolute-path swaps to dodge prefix deny rules, pipes/command-chains into a
-blocked command, and invoking it via a `subprocess` call.
+## Commands
 
-### 8. Strict, Most-Restrictive Typing
+```bash
+make check PROJECT=flext-ldap
+make test  PROJECT=flext-ldap       # tests/{unit,integration,fixtures}
+```
 
-Use the most restrictive type that compiles. No `Any`, no bare `object`, no suppression of type errors. Fix
-types at the source; depend on declared contracts, not loosely-typed escape hatches.
+<!-- AIHUB-WORKSPACE-PROVIDERS-BEGIN -->
+## Workspace providers
 
-### 9. Universal Engineering Principles (always, no exception)
+These routes are generated from provider-owned manifests.
 
-- **SSOT** — one authoritative source per fact; reference it, never duplicate or restate it; fail loud when
-  absent.
-- **SOLID** — SRP / OCP / LSP / ISP / DIP respected. Type-switching where polymorphism applies, fat
-  interfaces, and god-objects are defects.
-- **YAGNI** — no speculative params, dead branches, future-hooks, or single-implementation abstractions.
-  Build only what the task needs now; delete the rest.
-- **DI / DIP** — depend on abstractions (protocols/interfaces); inject collaborators; no hidden globals or
-  hard-wired construction inside business logic.
-
-### 10. Land Scoped Work Immediately
-
-After scoped green validation, run `git add`/`commit`/fast-forward `push` for the active bead lane using explicit pathspecs. The operator grants durable authorization for normal scoped landing; never leave verified work only in the working tree. Write commits as the user with no agent/bot attribution — no `Co-Authored-By`, no "Generated with …" trailer, and never override author/committer identity. Escalate only destructive, non-fast-forward, history-rewrite, rollback, tag, or cross-lane ambiguity.
-
-### 11. Multi-Agent Coordination
-
-Agents may share one working tree. Coordinate through a committed task board (e.g.
-`<repo>/.agents/coordination/tasks.md`): claim a task with an ownership + lease entry before editing, heartbeat
-the lease, set `done`/`blocked` on finish, and recover stale tasks from git history. Commit small and often so
-a fresh agent rebuilds state from `git log`. **Never overwrite or discard another agent's work** (see Rule 2);
-on a divergent approach, stop and escalate to the user.
-
-### 12. When Unsure — Ask
-
-If a task is unclear, ambiguous, or would expand scope → ask one focused question. If an action is hard to
-reverse, affects shared state, or could surprise the user → confirm first. Normal scoped Git landing has durable operator authorization after validation. Confirm only destructive, non-fast-forward, cross-lane, or ambiguous actions.
-
-### 13. Destructive Commands — Archive, Don't Destroy
-
-Prefer non-destructive moves: archive a file as `<file>.bak` instead of deleting it. Do not escalate privileges (`sudo`/`su`), change ownership/permissions, force-push, rewrite history, tag releases, or fetch arbitrary network resources without explicit user confirmation. Normal scoped fast-forward push after validation is required by Rule 10. Use the agent's structured file/search/edit tools over raw destructive
-shell commands.
-<!-- END UNIVERSAL AGENT LAW -->
-
-Canonical source: [../AGENTS.md](../AGENTS.md).
-
-- Read and follow [../AGENTS.md](../AGENTS.md) first.
-- Load scoped rules only from [../.agents/skills/](../.agents/skills/).
-- Never use fallback instruction paths.
-- Keep this file pointer-only and concise.
+- flext: read `.agents/skills/flext-context-routing/SKILL.md` first.
+<!-- AIHUB-WORKSPACE-PROVIDERS-END -->

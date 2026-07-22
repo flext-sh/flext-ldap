@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from flext_ldap import m, p, t
+from flext_ldap import c, m, p, t
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
@@ -17,9 +17,7 @@ class ResultConverterExtractMixin:
     """Extraction helpers for DN, attributes, and metadata from LDAP entries."""
 
     @staticmethod
-    def extract_dn(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.DN:
+    def extract_dn(parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.get_dn_value()`` for normalization. Returns
@@ -34,7 +32,7 @@ class ResultConverterExtractMixin:
             if entry_dn is None:
                 return m.Ldif.DN.empty()
             dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
-                update={"value": entry_dn},
+                update={"value": entry_dn}
             )
             return dn_with_value
         return m.Ldif.DN.empty()
@@ -44,25 +42,18 @@ class ResultConverterExtractMixin:
         parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model."""
-        empty = m.Ldif.Attributes(
-            attributes={},
-            attribute_metadata={},
-            metadata=None,
-        )
+        empty = m.Ldif.Attributes(attributes={}, attribute_metadata={}, metadata=None)
         if parsed is None:
             return empty
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.attributes if parsed.attributes is not None else empty
         if isinstance(parsed, p.Ldap.Ldap3Entry):
             attrs_dict = ResultConverterExtractMixin.extract_attrs_dict(
-                parsed.entry_attributes_as_dict,
+                parsed.entry_attributes_as_dict
             )
-            attributes: m.Ldif.Attributes = m.Ldif.Attributes.model_validate({
-                "attributes": attrs_dict,
-                "attribute_metadata": {},
-                "metadata": None,
-            })
-            return attributes
+            return m.Ldif.Attributes(
+                attributes=attrs_dict, attribute_metadata={}, metadata=None
+            )
         return empty
 
     @staticmethod
@@ -112,9 +103,11 @@ class ResultConverterExtractMixin:
                         if normalized and isinstance(
                             normalized.get("server_type"), str
                         ):
-                            result = m.Ldif.ServerMetadata.model_validate({
-                                "server_type": normalized["server_type"]
-                            })
+                            result = m.Ldif.ServerMetadata(
+                                server_type=c.Ldif.ServerTypes(
+                                    str(normalized["server_type"])
+                                )
+                            )
                         else:
                             result = None
                     case _:

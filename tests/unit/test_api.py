@@ -6,14 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from flext_ldap import ldap
 from flext_ldap.services.sync import FlextLdapSync
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 pytestmark = [pytest.mark.unit]
 
@@ -21,26 +23,40 @@ pytestmark = [pytest.mark.unit]
 class TestsFlextLdapApi:
     """Tests for ldap API facade — MRO-based, zero ceremony."""
 
-    # --- Context Manager ---
-    def test_enter_returns_self(self) -> None:
-        api = ldap
-        u.Ldap.Tests.that(api.__enter__(), eq=api)
+    # --- Context Manager contract ---
+    def test_with_statement_yields_same_facade(self) -> None:
+        """Verify with statement yields same facade."""
+        with ldap as ctx:
+            u.Ldap.Tests.that(ctx, eq=ldap)
 
-    def test_with_statement(self) -> None:
-        api = ldap
-        with api as ctx:
-            u.Ldap.Tests.that(ctx, eq=api)
+    def test_context_manager_exit_leaves_facade_disconnected(self) -> None:
+        """Verify context manager exit leaves facade disconnected."""
+        with ldap:
+            pass
+        u.Ldap.Tests.that(ldap.is_connected, eq=False)
 
-    # --- MRO Method Inheritance ---
+    def test_context_manager_does_not_suppress_exceptions(self) -> None:
+        """Verify context manager does not suppress exceptions."""
+        with pytest.raises(RuntimeError), ldap:
+            raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)
+
+    # --- Connection state invariant ---
     def test_is_connected_default_false(self) -> None:
-        u.Ldap.Tests.that(not ldap.is_connected, eq=True)
+        """Verify is connected default false."""
+        u.Ldap.Tests.that(ldap.is_connected, eq=False)
+
+    def test_is_connected_is_idempotent_read(self) -> None:
+        """Verify is connected is idempotent read."""
+        first = ldap.is_connected
+        second = ldap.is_connected
+        u.Ldap.Tests.that(first, eq=second)
 
     # --- Callback Type Guards ---
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_multi_phase_callback(
-        self,
-        case: c.Ldap.Tests.CallbackGuardCase,
+        self, case: c.Ldap.Tests.CallbackGuardCase
     ) -> None:
+        """Verify is multi phase callback."""
         callbacks: dict[
             c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
         ] = {
@@ -54,9 +70,9 @@ class TestsFlextLdapApi:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_single_phase_callback(
-        self,
-        case: c.Ldap.Tests.CallbackGuardCase,
+        self, case: c.Ldap.Tests.CallbackGuardCase
     ) -> None:
+        """Verify is single phase callback."""
         callbacks: dict[
             c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
         ] = {
@@ -69,6 +85,7 @@ class TestsFlextLdapApi:
         u.Ldap.Tests.that(FlextLdapSync.single_phase_callback(callback), eq=expected)
 
     def test_search_without_connection_returns_failure(self) -> None:
+        """Verify search without connection returns failure."""
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
@@ -77,8 +94,8 @@ class TestsFlextLdapApi:
         u.Ldap.Tests.fail(ldap.search(search_options))
 
     def test_execute_without_connection_reports_not_connected(self) -> None:
+        """Verify execute without connection reports not connected."""
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            error.lower(),
-            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
+            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
         )

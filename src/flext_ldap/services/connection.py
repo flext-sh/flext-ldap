@@ -19,7 +19,7 @@ from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldif import r
 
 
-class FlextLdapConnection(FlextLdapAdapterHost):
+class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
     """Manage the LDAP connection lifecycle as an MRO mixin.
 
     Wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally
@@ -82,21 +82,18 @@ class FlextLdapConnection(FlextLdapAdapterHost):
         self._server_type = c.Ldap.DEFAULT_TYPE
 
     @override
-    def execute(
-        self,
-        **kwargs: t.Scalar,
-    ) -> p.Result[m.Ldap.Response]:
+    def execute(self, **kwargs: t.Scalar) -> p.Result[m.Ldap.Response]:
         """Execute service health check."""
         _ = kwargs
         if self.is_connected:
             return r[m.Ldap.Response].ok(
-                m.Ldap.SearchResult.model_validate({
-                    "entries": [],
-                    "search_options": m.Ldap.SearchOptions.model_validate({
-                        "base_dn": c.Ldap.EXAMPLE_BASE_DN,
-                        "filter_str": c.Ldap.ALL_ENTRIES_FILTER,
-                    }),
-                }),
+                m.Ldap.SearchResult(
+                    entries=[],
+                    search_options=m.Ldap.SearchOptions(
+                        base_dn=c.Ldap.EXAMPLE_BASE_DN,
+                        filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+                    ),
+                )
             )
         return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
@@ -110,9 +107,7 @@ class FlextLdapConnection(FlextLdapAdapterHost):
         detector = FlextLdapServerDetector()
         detection_result: p.Result[str] = detector.detect_from_connection(connection)
         if detection_result.failure:
-            raise RuntimeError(
-                detection_result.error or "Server detection failed",
-            )
+            raise RuntimeError(detection_result.error or "Server detection failed")
         self._server_type = detection_result.value
         self.logger.info(
             "Server type detected automatically",

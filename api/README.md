@@ -1,0 +1,164 @@
+# API Reference Documentation
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Public API](#public-api)
+  - [Primary Entry Point](#primary-entry-point)
+  - [Core Modules](#core-modules)
+  - [Server Operations](#server-operations)
+- [Quick Reference](#quick-reference)
+  - [Import Patterns](#import-patterns)
+  - [Common Operations](#common-operations)
+- [API Stability](#api-stability)
+  - [Stable (Public API)](#stable-public-api)
+  - [Internal (Subject to Change)](#internal-subject-to-change)
+- [Return Types](#return-types)
+- [Related Documentation](#related-documentation)
+<!-- TOC END -->
+
+**Version**: 1.0 (v0.12.0-dev)
+**Date**: 2025-01-24
+**Python**: 3.13+
+
+## Overview
+
+Complete API reference for flext-ldap v0.12.0-dev, covering all public interfaces, classes, and methods.
+
+## Public API
+
+### Primary Entry Point
+
+**ldap** - Main API facade
+
+```python notest
+from flext_ldap import ldap
+
+api = ldap()
+result = api.search_entries(search_request)
+```
+
+### Core Modules
+
+1. **FlextLdapModels** - Domain models and entities
+
+   - SearchRequest, Connection, Entry models
+   - Domain logic and validations
+
+1. **FlextLdapClients** - LDAP client operations
+
+   - Authentication - Bind operations
+   - Search - Search operations
+
+1. **FlextLdapAcl** - ACL management
+
+   - Manager - ACL operations
+   - Parsers - ACL parsing
+   - Converters - Format conversion
+
+1. **FlextLdapSchema** - Schema operations
+
+   - Discover - Schema discovery
+   - Sync - Schema synchronization
+
+1. **FlextLdapEntryAdapter** - Entry conversion
+
+   - ldap3 → flext-ldif
+   - flext-ldif → ldap3
+
+### Server Operations
+
+1. **Server Operations** - Server-specific implementations
+   - OpenLDAP2Operations
+   - OpenLDAP1Operations
+   - OracleOIDOperations
+   - OracleOUDOperations
+   - ActiveDirectoryOperations
+   - GenericServerOperations
+
+## Quick Reference
+
+### Import Patterns
+
+```python notest
+# Public API (recommended)
+from flext_ldap import (
+    ldap,  # Main API
+    FlextLdapModels,  # Models
+    FlextLdapClients,  # Client operations
+    FlextLdapAcl,  # ACL management
+)
+
+# Server operations
+from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
+
+# Entry adapter
+from flext_ldap import FlextLdapEntryAdapter
+```
+
+### Common Operations
+
+**Search**:
+
+```python notest
+api = ldap()
+search_request = FlextLdapModels.SearchRequest(
+    base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
+)
+result = api.search_entries(search_request)
+```
+
+**Authentication**:
+
+```python notest
+auth = FlextLdapClients.Authentication()
+result = auth.bind(connection, dn, password)
+```
+
+**ACL Management**:
+
+```python notest
+acl_manager = FlextLdapAcl.Manager()
+result = acl_manager.get_acls(connection, dn, server_type)
+```
+
+## API Stability
+
+### Stable (Public API)
+
+- ✅ ldap - Main API facade
+- ✅ FlextLdapModels - Domain models
+- ✅ FlextLdapClients - Client operations
+- ✅ FlextLdapAcl - ACL management
+
+### Internal (Subject to Change)
+
+- ⚠️ FlextLdapServices - Internal business logic
+- ⚠️ FlextLdapHandlers - Internal handlers
+- ⚠️ Server operations - May evolve with new features
+
+## Return Types
+
+All operations return `r[T]` from flext-core:
+
+```python notest
+result = api.search_entries(request)
+
+# Success path
+if result.success:
+    entries = result.unwrap()
+
+# Failure path
+if result.failure:
+    error = result.error
+```
+
+## Related Documentation
+
+- Architecture - Architecture patterns
+- Development - Contributing guidelines
+- Migration Guide - v0.9.0 → v0.12.0-dev
+
+______________________________________________________________________
+
+**Last Updated**: 2025-01-24
+**API Version**: v0.12.0-dev

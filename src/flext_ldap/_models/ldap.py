@@ -6,10 +6,9 @@ LDAP operation models with validation logic.
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated, Self, TypeAlias
+from typing import Annotated, Self
 
 from flext_ldap import c, t
-from flext_ldap.protocols import FlextLdapProtocols as p
 from flext_ldif import m, u
 
 
@@ -20,31 +19,25 @@ class FlextLdapModelsLdap:
         """Connection configuration for LDAP server."""
 
         host: Annotated[str, u.Field(description="LDAP server hostname")] = c.LOCALHOST
-        port: Annotated[
-            t.PortNumber,
-            u.Field(description="LDAP server port"),
-        ] = c.Ldap.PORT
+        port: Annotated[t.PortNumber, u.Field(description="LDAP server port")] = (
+            c.Ldap.PORT
+        )
         use_ssl: Annotated[bool, u.Field(description="Enable SSL (LDAPS)")] = False
         use_tls: Annotated[bool, u.Field(description="Enable StartTLS")] = False
         bind_dn: Annotated[
-            str | None,
-            u.Field(description="Bind DN for authentication"),
+            str | None, u.Field(description="Bind DN for authentication")
         ] = None
         bind_password: Annotated[
-            str | None,
-            u.Field(description="Bind password for authentication"),
+            str | None, u.Field(description="Bind password for authentication")
         ] = None
         timeout: Annotated[
-            t.PositiveInt,
-            u.Field(description="Connection timeout in seconds"),
+            t.PositiveInt, u.Field(description="Connection timeout in seconds")
         ] = c.Ldap.TIMEOUT
-        auto_bind: Annotated[
-            bool,
-            u.Field(description="Auto-bind on connection"),
-        ] = True
+        auto_bind: Annotated[bool, u.Field(description="Auto-bind on connection")] = (
+            True
+        )
         auto_range: Annotated[
-            bool,
-            u.Field(description="Enable auto-range for paged results"),
+            bool, u.Field(description="Enable auto-range for paged results")
         ] = True
 
         @u.model_validator(mode="after")
@@ -94,18 +87,16 @@ class FlextLdapModelsLdap:
 
             """
             norm_config = (
-                FlextLdapModelsLdap.NormalizedConfig.model_validate({})
-                if settings is None
-                else settings
+                FlextLdapModelsLdap.NormalizedConfig() if settings is None else settings
             )
-            return cls.model_validate({
-                "base_dn": base_dn,
-                "scope": norm_config.scope,
-                "filter_str": norm_config.filter_str,
-                "size_limit": norm_config.size_limit,
-                "time_limit": norm_config.time_limit,
-                "attributes": norm_config.attributes,
-            })
+            return cls(
+                base_dn=base_dn,
+                scope=norm_config.scope,
+                filter_str=norm_config.filter_str,
+                size_limit=norm_config.size_limit,
+                time_limit=norm_config.time_limit,
+                attributes=norm_config.attributes,
+            )
 
         @classmethod
         def base_scope(cls, base_dn: str) -> Self:
@@ -115,19 +106,16 @@ class FlextLdapModelsLdap:
             the upsert existence check), so the entry's user attributes must be
             returned for a meaningful comparison — ldap3 omits them unless asked.
             """
-            return cls.model_validate({
-                "base_dn": base_dn,
-                "scope": c.Ldap.SearchScope.BASE,
-                "attributes": [c.Ldap.AttributeName.ALL_ATTRIBUTES],
-            })
+            return cls(
+                base_dn=base_dn,
+                scope=c.Ldap.SearchScope.BASE,
+                attributes=[c.Ldap.AttributeName.ALL_ATTRIBUTES],
+            )
 
     class SearchParams(m.BaseModel):
         """Typed LDAP search parameters passed to ldap3 search calls."""
 
-        model_config = m.ConfigDict(
-            frozen=True,
-            extra="forbid",
-        )
+        model_config = m.ConfigDict(frozen=True, extra="forbid")
         base_dn: str
         filter_str: str
         ldap_scope: t.NonNegativeInt
@@ -139,17 +127,12 @@ class FlextLdapModelsLdap:
         """Base counters for batch LDAP operations (reused via MRO)."""
 
         synced: Annotated[
-            t.NonNegativeInt,
-            u.Field(description="Entries synced successfully"),
+            t.NonNegativeInt, u.Field(description="Entries synced successfully")
         ] = 0
         failed: Annotated[
-            t.NonNegativeInt,
-            u.Field(description="Entries that failed"),
+            t.NonNegativeInt, u.Field(description="Entries that failed")
         ] = 0
-        skipped: Annotated[
-            t.NonNegativeInt,
-            u.Field(description="Entries skipped"),
-        ] = 0
+        skipped: Annotated[t.NonNegativeInt, u.Field(description="Entries skipped")] = 0
 
     class UpsertResult(m.BaseModel):
         """Result of a single upsert operation."""
@@ -159,12 +142,10 @@ class FlextLdapModelsLdap:
         ] = False
         dn: Annotated[str, u.Field(description="Distinguished name of the entry")] = ""
         operation: Annotated[
-            str,
-            u.Field(description="Operation performed (ADD/MODIFY/SKIP)"),
+            str, u.Field(description="Operation performed (ADD/MODIFY/SKIP)")
         ] = ""
         error: Annotated[
-            str | None,
-            u.Field(description="Error message if operation failed"),
+            str | None, u.Field(description="Error message if operation failed")
         ] = None
 
     class BatchUpsertResult(m.BaseModel):
@@ -176,8 +157,7 @@ class FlextLdapModelsLdap:
         results: Annotated[
             t.SequenceOf[FlextLdapModelsLdap.UpsertResult],
             u.Field(
-                default_factory=list,
-                description="Validated per-entry upsert results",
+                default_factory=list, description="Validated per-entry upsert results"
             ),
         ]
 
@@ -193,9 +173,7 @@ class FlextLdapModelsLdap:
         """Sync phase settings."""
 
         model_config = m.ConfigDict(
-            arbitrary_types_allowed=True,
-            extra="forbid",
-            validate_assignment=True,
+            arbitrary_types_allowed=True, extra="forbid", validate_assignment=True
         )
         server_type: str = c.Ldap.DEFAULT_TYPE
         progress_callback: t.Ldap.ProgressCallbackUnion | None = None
@@ -230,16 +208,11 @@ class FlextLdapModelsLdap:
             bool, u.Field(description="Whether the operation succeeded")
         ] = False
         operation_type: Annotated[
-            str,
-            u.Field(description="Type of operation performed"),
+            str, u.Field(description="Type of operation performed")
         ] = ""
-        message: Annotated[
-            str,
-            u.Field(description="Result or error message"),
-        ] = ""
+        message: Annotated[str, u.Field(description="Result or error message")] = ""
         entries_affected: Annotated[
-            t.NonNegativeInt,
-            u.Field(description="Number of entries affected"),
+            t.NonNegativeInt, u.Field(description="Number of entries affected")
         ] = 0
 
     class SearchResult(m.BaseModel):
@@ -252,66 +225,6 @@ class FlextLdapModelsLdap:
         entries: Annotated[t.SequenceOf[m.Ldif.Entry], u.Field(default_factory=list)]
         search_options: FlextLdapModelsLdap.SearchOptions
 
-        @u.computed_field()
-        @property
-        def by_objectclass(self) -> m.Ldif.FlexibleCategories:
-            """Group entries by objectclass."""
-            result = m.Ldif.FlexibleCategories()
-            for entry in self.entries:
-                category = self.get_entry_category(entry)
-                result[category].append(entry)
-            return result
-
-        @u.computed_field()
-        @property
-        def total_count(self) -> int:
-            """Total count of entries in result."""
-            return len(self.entries)
-
-        @staticmethod
-        def extract_attrs_dict_from_entry(
-            entry: p.Ldif.Entry,
-        ) -> t.MappingKV[str, t.StrSequence]:
-            """Extract attributes dict from entry."""
-            attributes = entry.attributes
-            if attributes is None:
-                return {}
-            return attributes.attributes
-
-        @staticmethod
-        def extract_objectclass_category(
-            attrs: t.AttributeMapping,
-        ) -> str:
-            """Extract objectclass category from attributes."""
-            unknown: str = c.Ldap.UNKNOWN_CATEGORY
-            if not attrs:
-                return unknown
-            oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            if isinstance(oc_list, list):
-                if not oc_list:
-                    return unknown
-                first_value = oc_list[0]
-                lowered: str = first_value.lower()
-                return lowered
-            return unknown
-
-        @staticmethod
-        def get_entry_category(entry: p.Ldif.Entry) -> str:
-            """Get category (objectclass) of an entry."""
-            unknown: str = c.Ldap.UNKNOWN_CATEGORY
-            attrs = FlextLdapModelsLdap.SearchResult.extract_attrs_dict_from_entry(
-                entry,
-            )
-            if not attrs:
-                return unknown
-            oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
-            match oc_list:
-                case list() as oc_values if oc_values:
-                    lowered: str = oc_values[0].lower()
-                    return lowered
-                case _:
-                    return unknown
-
     class LdapOperationResult(m.BaseModel):
         """LDAP operation result."""
 
@@ -320,7 +233,7 @@ class FlextLdapModelsLdap:
         @classmethod
         def with_operation(cls, operation: str) -> Self:
             """Build a minimal LDAP operation result."""
-            return cls.model_validate({"operation": operation})
+            return cls(operation=operation)
 
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
@@ -333,9 +246,7 @@ class FlextLdapModelsLdap:
     class MultiPhaseSyncResult(m.BaseModel):
         """Multi-phase sync result."""
 
-        model_config = m.ConfigDict(
-            arbitrary_types_allowed=True,
-        )
+        model_config = m.ConfigDict(arbitrary_types_allowed=True)
         phase_results: t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult] = u.Field(
             default_factory=lambda: MappingProxyType({}),
             description="Per-phase sync results keyed by phase name",
@@ -348,7 +259,7 @@ class FlextLdapModelsLdap:
         total_duration_seconds: t.NonNegativeFloat = 0.0
         overall_success: bool = True
 
-    Response: TypeAlias = (
+    type Response = (
         OperationResult
         | SearchResult
         | LdapOperationResult

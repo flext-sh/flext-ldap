@@ -6,9 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_ldap import c, p, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdapLdap3Wrappers:
@@ -23,8 +26,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def _ldap3_method(
-        connection: p.Ldap.Ldap3Connection,
-        method_name: str,
+        connection: p.Ldap.Ldap3Connection, method_name: str
     ) -> Callable[..., bool]:
         """Get a typed callable for an untyped ldap3 Connection method.
 
@@ -62,9 +64,7 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def modify(
-        connection: p.Ldap.Ldap3Connection,
-        dn: str,
-        changes: t.Ldap.OperationChanges,
+        connection: p.Ldap.Ldap3Connection, dn: str, changes: t.Ldap.OperationChanges
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.modify()."""
         modify_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "modify")
