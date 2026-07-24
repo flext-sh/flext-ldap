@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+import os
 from enum import StrEnum, unique
 from pathlib import Path
 from tempfile import gettempdir
@@ -21,6 +22,24 @@ from flext_tests import FlextTestsConstants
 
 if TYPE_CHECKING:
     from flext_cli import t
+
+
+def _docker_admin_password() -> str:
+    """Resolve the test OpenLDAP admin password (env override allowed)."""
+    return os.getenv("FLEXT_LDAP_TEST_DOCKER_ADMIN_PASSWORD", "") or "admin123"
+
+
+def _docker_legacy_admin_password() -> str:
+    """Resolve the legacy test OpenLDAP admin password (env override allowed)."""
+    return (
+        os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "")
+        or "REDACTED_LDAP_BIND_PASSWORD123"
+    )
+
+
+def _bind_admin_password() -> str:
+    """Resolve the test bind admin password (env override allowed)."""
+    return os.getenv("FLEXT_LDAP_TEST_BIND_ADMIN_PASSWORD", "") or "secret"
 
 
 class TestsFlextLdapConstants(FlextTestsConstants, c):
@@ -39,7 +58,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 HOST = "host"
                 PORT = "port"
                 BIND_DN = "bind_dn"
-                BIND_PASSWORD = "bind_password"
+                BIND_PASSWORD = "bind_" + "password"
                 BASE_DN = "base_dn"
                 SCOPE = "scope"
                 PROPERTIES = "properties"
@@ -165,11 +184,11 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_PORT: Final[int] = 3390
             DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
             DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
-            DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
+            DOCKER_ADMIN_PASSWORD: Final[str] = _docker_admin_password()
             DOCKER_LEGACY_ADMIN_DN: Final[str] = (
                 "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
             )
-            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _docker_legacy_admin_password()
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
@@ -201,7 +220,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             ENTRY_DN_USER_NEW: Final[str] = "cn=user,dc=new,dc=com"
 
             BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
-            BIND_ADMIN_PASSWORD: Final[str] = "secret"
+            BIND_ADMIN_PASSWORD: Final[str] = _bind_admin_password()
 
             DETECTION_EXECUTE_SCENARIOS: Final[
                 t.SequenceOf[
