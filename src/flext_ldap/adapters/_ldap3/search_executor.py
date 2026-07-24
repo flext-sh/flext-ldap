@@ -45,7 +45,7 @@ class SearchExecutor:
             error_msg = conn_result.get("message", "LDAP search failed")
             error_desc = conn_result.get("description", "unknown")
             return r[t.SequenceOf[p.Ldif.Entry]].fail(
-                f"LDAP search failed: {error_desc} - {error_msg}",
+                f"LDAP search failed: {error_desc} - {error_msg}"
             )
         try:
             server_type_enum = (
@@ -55,7 +55,7 @@ class SearchExecutor:
             )
         except ValueError:
             return r[t.SequenceOf[p.Ldif.Entry]].fail(
-                f"Unsupported server type: {server_type}",
+                f"Unsupported server type: {server_type}"
             )
         _ = server_type_enum
         ldap3_results = ResultConverter.convert_ldap3_results(connection)
@@ -67,7 +67,7 @@ class SearchExecutor:
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=str_attrs)
             if entry_result.failure:
                 return r[t.SequenceOf[p.Ldif.Entry]].fail(
-                    entry_result.error or "Failed to create LDAP search entry",
+                    entry_result.error or "Failed to create LDAP search entry"
                 )
             entries.append(entry_result.value)
         return r[t.SequenceOf[p.Ldif.Entry]].ok(entries)

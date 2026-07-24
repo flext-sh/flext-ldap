@@ -25,26 +25,15 @@ class FlextLdapTypes(t):
             Ldap3AttributeScalar | t.StrSequence | t.SequenceOf[bytes]
         )
         type Ldap3AddAttributes = t.MappingKV[str, Ldap3AddAttributeValue]
-        type Ldap3ModifyChangeValue = t.Pair[
-            str,
-            t.MutableSequenceOf[str],
-        ]
+        type Ldap3ModifyChangeValue = t.Pair[str, t.MutableSequenceOf[str]]
         type Ldap3ModifyChangesDict = t.MutableMappingKV[
-            str,
-            t.MutableSequenceOf[Ldap3ModifyChangeValue],
+            str, t.MutableSequenceOf[Ldap3ModifyChangeValue]
         ]
-        type OperationChangeValue = t.Pair[
-            int,
-            t.StrSequence,
-        ]
+        type OperationChangeValue = t.Pair[int, t.StrSequence]
         type OperationChanges = t.MutableMappingKV[
-            str,
-            t.SequenceOf[OperationChangeValue],
+            str, t.SequenceOf[OperationChangeValue]
         ]
-        type OperationAttributes = t.MappingKV[
-            str,
-            t.StrSequence,
-        ]
+        type OperationAttributes = t.MappingKV[str, t.StrSequence]
         type Ldap3EntrySequenceValue = t.SequenceOf[
             Ldap3AttributeScalar | t.Numeric | bool
         ]
@@ -54,19 +43,10 @@ class FlextLdapTypes(t):
         type LdapProgressCallback = Callable[..., None]
         type MultiPhaseProgressCallback = Callable[..., None]
         type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
-        type LdapModifyChangeValue = t.Pair[
-            str | int,
-            t.StrSequence,
-        ]
-        type LdapModifyChanges = t.MappingKV[
-            str,
-            t.SequenceOf[LdapModifyChangeValue],
-        ]
+        type LdapModifyChangeValue = t.Pair[str | int, t.StrSequence]
+        type LdapModifyChanges = t.MappingKV[str, t.SequenceOf[LdapModifyChangeValue]]
 
 
 t = FlextLdapTypes
 
-__all__: list[str] = [
-    "FlextLdapTypes",
-    "t",
-]
+__all__: list[str] = ["FlextLdapTypes", "t"]

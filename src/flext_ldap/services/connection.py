@@ -82,10 +82,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         self._server_type = c.Ldap.DEFAULT_TYPE
 
     @override
-    def execute(
-        self,
-        **kwargs: t.Scalar,
-    ) -> p.Result[p.Ldap.Response]:
+    def execute(self, **kwargs: t.Scalar) -> p.Result[p.Ldap.Response]:
         """Execute service health check."""
         _ = kwargs
         if self.is_connected:
@@ -96,7 +93,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
                         base_dn=c.Ldap.EXAMPLE_BASE_DN,
                         filter_str=c.Ldap.ALL_ENTRIES_FILTER,
                     ),
-                ),
+                )
             )
         return r[p.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
@@ -110,9 +107,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         detector = FlextLdapServerDetector()
         detection_result: p.Result[str] = detector.detect_from_connection(connection)
         if detection_result.failure:
-            raise RuntimeError(
-                detection_result.error or "Server detection failed",
-            )
+            raise RuntimeError(detection_result.error or "Server detection failed")
         self._server_type = detection_result.value
         self.logger.info(
             "Server type detected automatically",

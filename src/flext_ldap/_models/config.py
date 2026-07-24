@@ -29,32 +29,18 @@ class FlextLdapConfigModels:
 
         model_config = ConfigDict(frozen=True, extra="forbid")
 
-        port: int = Field(
-            ge=1,
-            le=65535,
-            description="Default LDAP server port.",
-        )
+        port: int = Field(ge=1, le=65535, description="Default LDAP server port.")
         timeout_seconds: int = Field(
-            ge=1,
-            description="Default LDAP operation timeout in seconds.",
+            ge=1, description="Default LDAP operation timeout in seconds."
         )
-        max_retries: int = Field(
-            ge=0,
-            description="Maximum connection retry attempts.",
-        )
+        max_retries: int = Field(ge=0, description="Maximum connection retry attempts.")
         retry_delay_seconds: float = Field(
-            ge=0,
-            description="Delay between retry attempts in seconds.",
+            ge=0, description="Delay between retry attempts in seconds."
         )
-        auto_bind: bool = Field(
-            description="Auto-bind connection after connect.",
-        )
-        auto_range: bool = Field(
-            description="Enable LDAP range retrieval.",
-        )
+        auto_bind: bool = Field(description="Auto-bind connection after connect.")
+        auto_range: bool = Field(description="Enable LDAP range retrieval.")
         default_batch_size: int = Field(
-            ge=1,
-            description="Default LDAP search batch size.",
+            ge=1, description="Default LDAP search batch size."
         )
 
     class Validation(BaseModel):
@@ -63,23 +49,19 @@ class FlextLdapConfigModels:
         model_config = ConfigDict(frozen=True, extra="forbid")
 
         vendor_string_max_tokens: int = Field(
-            ge=1,
-            description="Maximum tokens in a vendor string.",
+            ge=1, description="Maximum tokens in a vendor string."
         )
         dn_truncation_length: int = Field(
-            ge=1,
-            description="Maximum displayed length of a DN.",
+            ge=1, description="Maximum displayed length of a DN."
         )
         multi_phase_param_count: int = Field(
-            ge=1,
-            description="Parameter count for multi-phase operations.",
+            ge=1, description="Parameter count for multi-phase operations."
         )
         single_phase_param_count: int = Field(
-            ge=1,
-            description="Parameter count for single-phase operations.",
+            ge=1, description="Parameter count for single-phase operations."
         )
         example_base_dn: str = Field(
-            description="Example base DN used in fixtures and docs.",
+            description="Example base DN used in fixtures and docs."
         )
 
     class Ldap(BaseModel):
@@ -88,13 +70,13 @@ class FlextLdapConfigModels:
         model_config = ConfigDict(frozen=True, extra="forbid")
 
         identity: FlextLdapConfigModels.Identity = Field(
-            description="LDAP identity metadata.",
+            description="LDAP identity metadata."
         )
         connection: FlextLdapConfigModels.Connection = Field(
-            description="LDAP connection defaults and thresholds.",
+            description="LDAP connection defaults and thresholds."
         )
         validation: FlextLdapConfigModels.Validation = Field(
-            description="LDAP validation and example defaults.",
+            description="LDAP validation and example defaults."
         )
 
     class Root(BaseModel):
@@ -103,7 +85,7 @@ class FlextLdapConfigModels:
         model_config = ConfigDict(frozen=True, extra="ignore")
 
         Ldap: FlextLdapConfigModels.Ldap = Field(
-            description="LDAP business-rule config namespace.",
+            description="LDAP business-rule config namespace."
         )
 
 

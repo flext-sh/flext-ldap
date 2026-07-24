@@ -27,20 +27,13 @@ if TYPE_CHECKING:
         u as u,
     )
 
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".constants": ("TestsFlextLdapConstants", "c"),
-        ".typings": ("TestsFlextLdapTypes", "t"),
-        ".protocols": ("TestsFlextLdapProtocols", "p"),
-        ".models": ("TestsFlextLdapModels", "m"),
-        ".utilities": ("TestsFlextLdapUtilities", "u"),
-        ".base": ("TestsFlextLdapServiceBase", "s"),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".constants": ("TestsFlextLdapConstants", "c"),
+    ".typings": ("TestsFlextLdapTypes", "t"),
+    ".protocols": ("TestsFlextLdapProtocols", "p"),
+    ".models": ("TestsFlextLdapModels", "m"),
+    ".utilities": ("TestsFlextLdapUtilities", "u"),
+    ".base": ("TestsFlextLdapServiceBase", "s"),
+})
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

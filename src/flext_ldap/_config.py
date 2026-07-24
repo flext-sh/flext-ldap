@@ -23,16 +23,12 @@ from flext_ldap._models.config import FlextLdapConfigModels
 class FlextLdapConfig(FlextCliConfig):
     """Ldap config auto-loaded from ``config/*.yaml`` and validated via models."""
 
-    CONFIG_DIR: ClassVar[str] = str(
-        Path(__file__).resolve().parents[2] / "config",
-    )
+    CONFIG_DIR: ClassVar[str] = str(Path(__file__).resolve().parents[2] / "config")
 
     @cached_property
     def Ldap(self) -> FlextLdapConfigModels.Ldap:
         """Validated ``Ldap`` business-rule config namespace."""
-        root = FlextLdapConfigModels.Root.model_validate(
-            dict(self.model_extra or {}),
-        )
+        root = FlextLdapConfigModels.Root.model_validate(dict(self.model_extra or {}))
         return root.Ldap
 
 

@@ -116,10 +116,7 @@ class TestsFlextLdapBase:
     # NOTE (multi-agent): SSOT settings expose Ldap/Ldif/Tests namespaces as
     # plain BaseModel sections (flext-core reference: tests/unit/test_service.py);
     # CLI data is flat cli_* fields, not a "Cli" namespace.
-    @pytest.mark.parametrize(
-        "namespace",
-        ["Ldif", "Ldap", "Tests"],
-    )
+    @pytest.mark.parametrize("namespace", ["Ldif", "Ldap", "Tests"])
     def test_fetch_settings_exposes_mro_namespace(self, namespace: str) -> None:
         """Verify fetch settings exposes mro namespace."""
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
@@ -131,8 +128,7 @@ class TestsFlextLdapBase:
         instance = m.Ldap.Tests.SuccessService()
 
         tm.that(
-            instance.settings is m.Ldap.Tests.SuccessService.fetch_settings(),
-            eq=True,
+            instance.settings is m.Ldap.Tests.SuccessService.fetch_settings(), eq=True
         )
 
     # ── independence across instances ──────────────────────────────────

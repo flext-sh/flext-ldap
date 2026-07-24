@@ -12,7 +12,7 @@ from tests.settings import TestsFlextLdapSettings
 
 class TestsFlextLdapServiceBase[
     TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload],
+    | t.SequenceOf[t.JsonPayload]
 ](tests_s[TResult]):
     """LDAP test service base with source and test settings namespaces."""
 

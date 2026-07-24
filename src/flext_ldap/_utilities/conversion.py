@@ -32,8 +32,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def search_entry_to_ldif_entry(
-        cls,
-        entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
+        cls, entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue]
     ) -> p.Result[p.Ldif.Entry]:
         """Convert LDAP search-result mappings into canonical LDIF entries."""
         raw_entry = dict(entry)
@@ -47,10 +46,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
             for key, value in raw_entry.items()
             if key != "dn"
         }
-        return m.Ldif.Entry.create(
-            dn=dn_value,
-            attributes=attributes,
-        )
+        return m.Ldif.Entry.create(dn=dn_value, attributes=attributes)
 
     @classmethod
     def track_conversion_differences(
@@ -95,9 +91,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         return attributes.attributes
 
     @staticmethod
-    def extract_objectclass_category(
-        attrs: t.AttributeMapping,
-    ) -> str:
+    def extract_objectclass_category(attrs: t.AttributeMapping) -> str:
         """Extract the lowercase objectclass category from an attribute mapping."""
         unknown: str = c.Ldap.UNKNOWN_CATEGORY
         if not attrs:
@@ -108,19 +102,15 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         return unknown
 
     @classmethod
-    def get_entry_category(
-        cls,
-        entry: p.Ldif.Entry,
-    ) -> str:
+    def get_entry_category(cls, entry: p.Ldif.Entry) -> str:
         """Get the category (first objectclass, lowercased) of an LDIF entry."""
         return cls.extract_objectclass_category(
-            cls.extract_attrs_dict_from_entry(entry),
+            cls.extract_attrs_dict_from_entry(entry)
         )
 
     @classmethod
     def group_entries_by_objectclass(
-        cls,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        cls, entries: t.SequenceOf[p.Ldif.Entry]
     ) -> p.Ldif.FlexibleCategories:
         """Group LDIF entries by their objectclass category."""
         result = m.Ldif.FlexibleCategories()

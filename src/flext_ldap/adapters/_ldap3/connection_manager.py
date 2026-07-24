@@ -18,8 +18,7 @@ class ConnectionManager:
 
     @staticmethod
     def create_connection(
-        server: p.Ldap.Ldap3Server,
-        settings: p.Ldap.ConnectionConfig,
+        server: p.Ldap.Ldap3Server, settings: p.Ldap.ConnectionConfig
     ) -> p.Ldap.Ldap3Connection:
         """Create ldap3 p.Ldap.Ldap3Connection t.JsonValue.
 
@@ -86,15 +85,12 @@ class ConnectionManager:
                 connect_timeout=settings.timeout,
             )
         return Server(
-            host=settings.host,
-            port=settings.port,
-            connect_timeout=settings.timeout,
+            host=settings.host, port=settings.port, connect_timeout=settings.timeout
         )
 
     @staticmethod
     def handle_tls(
-        connection: p.Ldap.Ldap3Connection,
-        settings: p.Ldap.ConnectionConfig,
+        connection: p.Ldap.Ldap3Connection, settings: p.Ldap.ConnectionConfig
     ) -> p.Result[bool]:
         """Handle STARTTLS if requested.
 

@@ -45,14 +45,11 @@ class TestsFlextLdapModels(m, FlextTestsModels):
                 @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
                     )
 
 
 # Short aliases for tests
 m = TestsFlextLdapModels
 
-__all__: list[str] = [
-    "TestsFlextLdapModels",
-    "m",
-]
+__all__: list[str] = ["TestsFlextLdapModels", "m"]

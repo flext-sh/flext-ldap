@@ -33,10 +33,7 @@ class FlextLdapUtilitiesNormalization:
 
     @classmethod
     def norm_join(
-        cls,
-        values: t.StrSequence | t.VariadicTuple[str],
-        *,
-        case: str | None = None,
+        cls, values: t.StrSequence | t.VariadicTuple[str], *, case: str | None = None
     ) -> str:
         """Normalize and join string values."""
         values_list: t.StrSequence
@@ -109,17 +106,13 @@ class FlextLdapUtilitiesNormalization:
                 return [str(value)]
 
     @staticmethod
-    def is_base64_encoded(
-        value: str,
-        threshold: int = c.Ldif.ASCII_THRESHOLD,
-    ) -> bool:
+    def is_base64_encoded(value: str, threshold: int = c.Ldif.ASCII_THRESHOLD) -> bool:
         """Return True when a value requires LDIF base64 encoding."""
         return value.startswith("::") or any(ord(char) > threshold for char in value)
 
     @classmethod
     def normalize_original_attr_value(
-        cls,
-        value: t.Ldap.Ldap3EntryValue | None,
+        cls, value: t.Ldap.Ldap3EntryValue | None
     ) -> t.StrSequence:
         """Normalize original ldap3 values while preserving list semantics."""
         return cls.ldap3_value_to_strings(value)
@@ -141,9 +134,7 @@ class FlextLdapUtilitiesNormalization:
         return str(dn.dn) if dn.dn else default
 
     @staticmethod
-    def filter_truthy(
-        value: t.JsonList | t.JsonMapping,
-    ) -> t.JsonList | t.JsonMapping:
+    def filter_truthy(value: t.JsonList | t.JsonMapping) -> t.JsonList | t.JsonMapping:
         """Filter truthy values from a list or mapping."""
         if isinstance(value, Mapping):
             return {k: v for k, v in value.items() if v}

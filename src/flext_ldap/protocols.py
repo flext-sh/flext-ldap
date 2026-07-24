@@ -196,8 +196,7 @@ class FlextLdapProtocols(p):
                 ...
 
             def add(
-                self,
-                entry: p.Ldif.Entry,
+                self, entry: p.Ldif.Entry
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -267,8 +266,7 @@ class FlextLdapProtocols(p):
                 ...
 
             def delete(
-                self,
-                dn: str | p.Ldif.DN,
+                self, dn: str | p.Ldif.DN
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -282,8 +280,7 @@ class FlextLdapProtocols(p):
                 ...
 
             def execute(
-                self,
-                **kwargs: t.Scalar,
+                self, **kwargs: t.Scalar
             ) -> p.Result[FlextLdapProtocols.Ldap.Response]:
                 """Execute health check or default operation.
 
@@ -298,9 +295,7 @@ class FlextLdapProtocols(p):
                 ...
 
             def modify(
-                self,
-                dn: str | p.Ldif.DN,
-                changes: t.Ldap.LdapModifyChanges,
+                self, dn: str | p.Ldif.DN, changes: t.Ldap.LdapModifyChanges
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
@@ -351,8 +346,7 @@ class FlextLdapProtocols(p):
                 ...
 
             def connect(
-                self,
-                settings: FlextLdapProtocols.Ldap.ConnectionConfig,
+                self, settings: FlextLdapProtocols.Ldap.ConnectionConfig
             ) -> p.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
@@ -362,23 +356,19 @@ class FlextLdapProtocols(p):
                 ...
 
             def add(
-                self,
-                entry: p.Ldif.Entry,
+                self, entry: p.Ldif.Entry
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Add LDAP entry, returning the operation result."""
                 ...
 
             def delete(
-                self,
-                dn: str | p.Ldif.DN,
+                self, dn: str | p.Ldif.DN
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Delete LDAP entry, returning the operation result."""
                 ...
 
             def modify(
-                self,
-                dn: str | p.Ldif.DN,
-                changes: t.Ldap.OperationChanges,
+                self, dn: str | p.Ldif.DN, changes: t.Ldap.OperationChanges
             ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
                 """Modify LDAP entry, returning the operation result."""
                 ...
@@ -430,9 +420,7 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
-            def execute(
-                self,
-            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+            def execute(self) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Run the connection service health check/default operation."""
                 ...
 
@@ -544,8 +532,7 @@ class FlextLdapProtocols(p):
                 ...
 
             def __getitem__(
-                self,
-                attribute_name: str,
+                self, attribute_name: str
             ) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
                 """Return one ldap3 attribute object by attribute name."""
                 ...
@@ -591,9 +578,7 @@ class FlextLdapProtocols(p):
             """Structural protocol for connections that can query rootDSE."""
 
             @property
-            def search(
-                self,
-            ) -> Callable[..., bool | t.JsonValue | None] | None:
+            def search(self) -> Callable[..., bool | t.JsonValue | None] | None:
                 """The ldap3-compatible search callable when available."""
                 ...
 
@@ -647,9 +632,7 @@ class FlextLdapProtocols(p):
             """
 
             @property
-            def attributes(
-                self,
-            ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
+            def attributes(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
                 """Expose covariant attributes for structural compatibility."""
                 ...
 

@@ -58,49 +58,16 @@ if TYPE_CHECKING:
 
 
 _LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._config": (
-        "FlextLdapConfig",
-        "config",
-    ),
-    "._settings": (
-        "FlextLdapSettings",
-        "settings",
-    ),
-    ".api": (
-        "FlextLdap",
-        "ldap",
-    ),
-    ".base": (
-        "FlextLdapService",
-        "s",
-    ),
-    ".constants": (
-        "FlextLdapConstants",
-        "c",
-    ),
-    ".models": (
-        "FlextLdapModels",
-        "m",
-    ),
-    ".protocols": (
-        "FlextLdapProtocols",
-        "p",
-    ),
-    ".typings": (
-        "FlextLdapTypes",
-        "t",
-    ),
-    ".utilities": (
-        "FlextLdapUtilities",
-        "u",
-    ),
-    "flext_ldif": (
-        "d",
-        "e",
-        "h",
-        "r",
-        "x",
-    ),
+    "._config": ("FlextLdapConfig", "config"),
+    "._settings": ("FlextLdapSettings", "settings"),
+    ".api": ("FlextLdap", "ldap"),
+    ".base": ("FlextLdapService", "s"),
+    ".constants": ("FlextLdapConstants", "c"),
+    ".models": ("FlextLdapModels", "m"),
+    ".protocols": ("FlextLdapProtocols", "p"),
+    ".typings": ("FlextLdapTypes", "t"),
+    ".utilities": ("FlextLdapUtilities", "u"),
+    "flext_ldif": ("d", "e", "h", "r", "x"),
 }
 
 
@@ -108,9 +75,7 @@ _LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
 
 
 _LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES,
-    alias_groups=_LAZY_ALIAS_GROUPS,
-    sort_keys=False,
+    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
 )
 
 _DIRECT_IMPORTS: tuple[str, ...] = (
@@ -184,9 +149,4 @@ __all__: tuple[str, ...] = (
 )
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    public_exports=__all__,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

@@ -147,8 +147,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
             self.last_deleted_dn = c.Ldap.Tests.STRING_EMPTY
             self.last_modified_dn = c.Ldap.Tests.STRING_EMPTY
             self.last_modify_changes: t.Ldap.OperationChanges = dict[
-                str,
-                t.SequenceOf[t.Ldap.OperationChangeValue],
+                str, t.SequenceOf[t.Ldap.OperationChangeValue]
             ]()
             self.last_search_base = c.Ldap.Tests.STRING_EMPTY
             self.last_search_filter = c.Ldap.Tests.STRING_EMPTY
@@ -280,16 +279,14 @@ class TestsFlextLdapLdap3AdapterHelpers:
     def _entry(dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE) -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes.model_validate(
-                {
-                    "attributes": {
-                        c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
-                        c.Ldap.Tests.SEARCH_ATTRIBUTES[1]: [
-                            c.Ldap.Tests.CONFIG_EXAMPLE_HOST,
-                        ],
-                    },
-                },
-            ),
+            attributes=m.Ldif.Attributes.model_validate({
+                "attributes": {
+                    c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
+                    c.Ldap.Tests.SEARCH_ATTRIBUTES[1]: [
+                        c.Ldap.Tests.CONFIG_EXAMPLE_HOST
+                    ],
+                }
+            }),
         )
 
     @staticmethod
@@ -335,8 +332,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.LdapValueCase)
     def test_value_to_str_list_uses_canonical_conversion(
-        self,
-        case: c.Ldap.Tests.LdapValueCase,
+        self, case: c.Ldap.Tests.LdapValueCase
     ) -> None:
         """Verify value to str list uses canonical conversion."""
         value, expected = c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS[case]
@@ -350,11 +346,8 @@ class TestsFlextLdapLdap3AdapterHelpers:
         connection = self.RecordingConnection()
         changes: t.Ldap.OperationChanges = {
             c.Ldap.AttributeName.COMMON_NAME: (
-                (
-                    c.Ldap.ModifyOperation.REPLACE,
-                    (c.Ldap.Tests.STRING_SIMPLE_UPPER,),
-                ),
-            ),
+                (c.Ldap.ModifyOperation.REPLACE, (c.Ldap.Tests.STRING_SIMPLE_UPPER,)),
+            )
         }
 
         add_result = FlextLdapLdap3Wrappers.add(
@@ -367,13 +360,10 @@ class TestsFlextLdapLdap3AdapterHelpers:
             },
         )
         delete_result = FlextLdapLdap3Wrappers.delete(
-            connection,
-            c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            connection, c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE
         )
         modify_result = FlextLdapLdap3Wrappers.modify(
-            connection,
-            c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-            changes,
+            connection, c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, changes
         )
         unbind_result = FlextLdapLdap3Wrappers.unbind(connection)
 
@@ -389,8 +379,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
         u.Ldap.Tests.that(delete_result, eq=True)
         u.Ldap.Tests.that(
-            connection.last_deleted_dn,
-            eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+            connection.last_deleted_dn, eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE
         )
         u.Ldap.Tests.that(modify_result, eq=True)
         u.Ldap.Tests.that(connection.last_modify_changes, eq=changes)
@@ -411,17 +400,12 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
         u.Ldap.Tests.that(search_result, eq=True)
+        u.Ldap.Tests.that(connection.last_search_scope, eq=c.Ldap.Ldap3SearchScope.BASE)
         u.Ldap.Tests.that(
-            connection.last_search_scope,
-            eq=c.Ldap.Ldap3SearchScope.BASE,
+            connection.last_search_attributes, eq=list(c.Ldap.Tests.SEARCH_ATTRIBUTES)
         )
         u.Ldap.Tests.that(
-            connection.last_search_attributes,
-            eq=list(c.Ldap.Tests.SEARCH_ATTRIBUTES),
-        )
-        u.Ldap.Tests.that(
-            connection.last_size_limit,
-            eq=c.Ldap.Tests.SEARCH_SIZE_LIMIT_CUSTOM,
+            connection.last_size_limit, eq=c.Ldap.Tests.SEARCH_SIZE_LIMIT_CUSTOM
         )
 
     def test_start_tls_missing_method_raises(self) -> None:
@@ -438,8 +422,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         ldap3_dn = ResultConverterExtractMixin.extract_dn(ldap3_entry)
         ldap3_attrs = ResultConverterExtractMixin.extract_attributes(ldap3_entry)
         attrs_input: t.MappingKV[
-            str,
-            t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
+            str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence
         ] = {
             c.Ldap.AttributeName.COMMON_NAME.value: c.Ldap.Tests.STRING_SIMPLE,
             c.Ldap.AttributeName.OBJECT_CLASS.value: (
@@ -467,16 +450,12 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
     def test_extract_metadata_returns_server_metadata_from_ldif_entry(self) -> None:
         """Verify extract metadata returns server metadata from ldif entry."""
-        metadata = m.Ldif.ServerMetadata.model_validate(
-            {
-                "server_type": c.Ldif.ServerTypes.RFC,
-            },
-        )
+        metadata = m.Ldif.ServerMetadata.model_validate({
+            "server_type": c.Ldif.ServerTypes.RFC
+        })
         entry = self._entry().model_copy(update={"metadata": metadata})
 
-        extracted = tm.not_none(
-            ResultConverterExtractMixin.extract_metadata(entry),
-        )
+        extracted = tm.not_none(ResultConverterExtractMixin.extract_metadata(entry))
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_normalizes_raw_mapping_metadata(self) -> None:
@@ -487,9 +466,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
             {"server_type": c.Ldif.ServerTypes.RFC.value},
         )
 
-        extracted = tm.not_none(
-            ResultConverterExtractMixin.extract_metadata(carrier),
-        )
+        extracted = tm.not_none(ResultConverterExtractMixin.extract_metadata(carrier))
         u.Ldap.Tests.that(extracted.server_type, eq=c.Ldif.ServerTypes.RFC)
 
     def test_extract_metadata_returns_none_without_server_type(self) -> None:
@@ -501,8 +478,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         )
 
         u.Ldap.Tests.that(
-            ResultConverterExtractMixin.extract_metadata(carrier) is None,
-            eq=True,
+            ResultConverterExtractMixin.extract_metadata(carrier) is None, eq=True
         )
 
     def test_extract_metadata_returns_none_when_absent(self) -> None:
@@ -510,8 +486,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
         carrier = self.Entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE, {})
 
         u.Ldap.Tests.that(
-            ResultConverterExtractMixin.extract_metadata(carrier) is None,
-            eq=True,
+            ResultConverterExtractMixin.extract_metadata(carrier) is None, eq=True
         )
 
     def test_result_converter_converts_connection_and_parse_response(self) -> None:
@@ -522,7 +497,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         converted = ResultConverter.convert_ldap3_results(connection)
         converted_entries = u.Ldap.Tests.ok(
-            ResultConverter.convert_parsed_entries(parsed_response),
+            ResultConverter.convert_parsed_entries(parsed_response)
         )
 
         u.Ldap.Tests.that(converted[0][0], eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
@@ -530,10 +505,7 @@ class TestsFlextLdapLdap3AdapterHelpers:
             converted[0][1][c.Ldap.AttributeName.COMMON_NAME],
             eq=[c.Ldap.Tests.STRING_SIMPLE],
         )
-        u.Ldap.Tests.that(
-            converted_entries[0].dn is not None,
-            eq=True,
-        )
+        u.Ldap.Tests.that(converted_entries[0].dn is not None, eq=True)
         u.Ldap.Tests.that(
             converted_entries[0].dn.value if converted_entries[0].dn else "",
             eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
@@ -542,30 +514,23 @@ class TestsFlextLdapLdap3AdapterHelpers:
     def test_search_executor_returns_entries_for_success(self) -> None:
         """Verify search executor returns entries for success."""
         connection = self.RecordingConnection(
-            result=self._success_result(),
-            entries=(self._ldap3_entry(),),
+            result=self._success_result(), entries=(self._ldap3_entry(),)
         )
 
         entries = u.Ldap.Tests.ok(
             SearchExecutor.execute(
-                connection,
-                self._search_params(),
-                c.Ldif.ServerTypes.RFC,
-            ),
+                connection, self._search_params(), c.Ldif.ServerTypes.RFC
+            )
         )
 
         u.Ldap.Tests.that(len(entries), eq=c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE)
-        u.Ldap.Tests.that(
-            entries[0].dn is not None,
-            eq=True,
-        )
+        u.Ldap.Tests.that(entries[0].dn is not None, eq=True)
         u.Ldap.Tests.that(
             entries[0].dn.value if entries[0].dn else "",
             eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
         )
         u.Ldap.Tests.that(
-            connection.last_search_scope,
-            eq=c.Ldap.Ldap3SearchScope.SUBTREE,
+            connection.last_search_scope, eq=c.Ldap.Ldap3SearchScope.SUBTREE
         )
 
     def test_search_executor_reports_ldap_failure(self) -> None:
@@ -574,10 +539,8 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         error = u.Ldap.Tests.fail(
             SearchExecutor.execute(
-                connection,
-                self._search_params(),
-                c.Ldif.ServerTypes.RFC,
-            ),
+                connection, self._search_params(), c.Ldif.ServerTypes.RFC
+            )
         )
 
         u.Ldap.Tests.that(error, contains=c.Ldap.ResultCode.NO_SUCH_OBJECT.name)
@@ -588,10 +551,8 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         error = u.Ldap.Tests.fail(
             SearchExecutor.execute(
-                connection,
-                self._search_params(),
-                c.Ldap.Tests.CONSTANT_INVALID_STATUS,
-            ),
+                connection, self._search_params(), c.Ldap.Tests.CONSTANT_INVALID_STATUS
+            )
         )
 
         u.Ldap.Tests.that(error, contains="Unsupported server type")
@@ -599,15 +560,13 @@ class TestsFlextLdapLdap3AdapterHelpers:
     def test_search_executor_reports_wrapper_exception(self) -> None:
         """Verify search executor reports wrapper exception."""
         connection = self.RecordingConnection(
-            search_error=OSError(c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE),
+            search_error=OSError(c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE)
         )
 
         error = u.Ldap.Tests.fail(
             SearchExecutor.execute(
-                connection,
-                self._search_params(),
-                c.Ldif.ServerTypes.RFC,
-            ),
+                connection, self._search_params(), c.Ldif.ServerTypes.RFC
+            )
         )
 
         u.Ldap.Tests.that(error, contains="Search")
@@ -619,9 +578,8 @@ class TestsFlextLdapLdap3AdapterHelpers:
 
         error = u.Ldap.Tests.fail(
             OperationExecutor.execute_delete(
-                connection,
-                c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-            ),
+                connection, c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE
+            )
         )
 
         u.Ldap.Tests.that(error, contains=c.Ldap.ResultCode.NO_SUCH_OBJECT.name)
@@ -629,19 +587,16 @@ class TestsFlextLdapLdap3AdapterHelpers:
     def test_operation_executor_normalizes_json_description_payload(self) -> None:
         """Verify operation executor normalizes json description payload."""
         description = c.Ldap.Tests.SEARCH_ENTRIES_AFFECTED_ONE
-        payload = MappingProxyType(
-            {
-                "result": c.Ldap.ResultCode.NO_SUCH_OBJECT.value,
-                "description": description,
-            },
-        )
+        payload = MappingProxyType({
+            "result": c.Ldap.ResultCode.NO_SUCH_OBJECT.value,
+            "description": description,
+        })
         connection = self.FailingOperationConnection(result=payload)
 
         error = u.Ldap.Tests.fail(
             OperationExecutor.execute_delete(
-                connection,
-                c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-            ),
+                connection, c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE
+            )
         )
 
         u.Ldap.Tests.that(error, contains=repr(description))

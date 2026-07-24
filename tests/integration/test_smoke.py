@@ -27,8 +27,7 @@ class TestsFlextLdapSmoke:
     """Smoke tests asserting the public behaviour of ``flext_ldap.ldap``."""
 
     def test_container_reachable_through_ldap3_boundary(
-        self,
-        ldap_container: t.MappingKV[str, t.Scalar],
+        self, ldap_container: t.MappingKV[str, t.Scalar]
     ) -> None:
         """The real LDAP container binds and exposes server info (precondition)."""
         # Arrange
@@ -45,8 +44,7 @@ class TestsFlextLdapSmoke:
             connection.unbind()
 
     def test_connect_succeeds_and_toggles_public_connected_state(
-        self,
-        ldap_container: t.MappingKV[str, t.Scalar],
+        self, ldap_container: t.MappingKV[str, t.Scalar]
     ) -> None:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
