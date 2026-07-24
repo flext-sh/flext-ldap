@@ -234,10 +234,10 @@ connection = ldap3.Connection(
 schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
-    print(f"Object classes: {len(schema['object_classes'])}")
-    print(f"Attribute types: {len(schema['attribute_types'])}")
-    print(f"Syntaxes: {len(schema['syntaxes'])}")
-    print(f"Matching rules: {len(schema['matching_rules'])}")
+    u.Cli.print(f"Object classes: {len(schema['object_classes'])}")
+    u.Cli.print(f"Attribute types: {len(schema['attribute_types'])}")
+    u.Cli.print(f"Syntaxes: {len(schema['syntaxes'])}")
+    u.Cli.print(f"Matching rules: {len(schema['matching_rules'])}")
 ```
 
 ### **ACL Operations**
@@ -249,7 +249,7 @@ acl_result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 if acl_result.success:
     acls = acl_result.unwrap()
     for acl in acls:
-        print(f"ACL: {acl}")
+        u.Cli.print(f"ACL: {acl}")
 
 # Set ACLs
 new_acls = [
@@ -283,7 +283,7 @@ entry = FlextLdifModels.Entry(
 # Add entry
 add_result = ops.add_entry(connection, entry)
 if add_result.success:
-    print("Entry added successfully")
+    u.Cli.print("Entry added successfully")
 
 # Modify entry
 modify_result = ops.modify_entry(
@@ -310,11 +310,11 @@ search_result = ops.search_with_paging(
 
 if search_result.success:
     entries = search_result.unwrap()
-    print(f"Found {len(entries)} entries")
+    u.Cli.print(f"Found {len(entries)} entries")
 
     for entry in entries:
-        print(f"DN: {entry.dn}")
-        print(f"Attributes: {entry.attributes}")
+        u.Cli.print(f"DN: {entry.dn}")
+        u.Cli.print(f"Attributes: {entry.attributes}")
 ```
 
 ##
@@ -378,7 +378,7 @@ connection = ldap3.Connection(
 schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
-    print(f"Server type: {schema['server_type']}")  # "oid"
+    u.Cli.print(f"Server type: {schema['server_type']}")  # "oid"
 ```
 
 ### **Oracle OID ACLs**
@@ -390,7 +390,7 @@ acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 if acl_result.success:
     acls = acl_result.unwrap()
     for acl in acls:
-        print(f"OID ACL: {acl['raw']}")
+        u.Cli.print(f"OID ACL: {acl['raw']}")
 
 # Set orclaci ACLs
 oid_acls = [
@@ -446,7 +446,7 @@ connection = ldap3.Connection(
 schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
-    print(f"Server type: {schema['server_type']}")  # "oud"
+    u.Cli.print(f"Server type: {schema['server_type']}")  # "oud"
 ```
 
 ### **ds-privilege-name ACLs**
@@ -505,7 +505,7 @@ ops = ActiveDirectoryOperations()
 try:
     schema_result = ops.discover_schema(connection)
 except Exception as e:
-    print(f"AD not implemented: {e}")
+    u.Cli.print(f"AD not implemented: {e}")
     # Output: "Active Directory schema discovery not yet implemented..."
 
 # Basic info available
@@ -561,7 +561,7 @@ connection = ldap3.Connection(
 schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
-    print(f"Server type: {schema['server_type']}")  # "generic"
+    u.Cli.print(f"Server type: {schema['server_type']}")  # "generic"
 
 # Basic entry operations (should work on any server)
 entry = FlextLdifModels.Entry(...)
@@ -605,8 +605,8 @@ for ldap3_entry in connection.entries:
         ldif_entry = ldif_result.unwrap()
 
         # Process with ldif models
-        print(f"DN: {ldif_entry.dn.value}")
-        print(f"Attributes: {ldif_entry.attributes.attributes}")
+        u.Cli.print(f"DN: {ldif_entry.dn.value}")
+        u.Cli.print(f"Attributes: {ldif_entry.attributes.attributes}")
 
 # Create ldif entry and convert to ldap3
 ldif_entry = FlextLdifModels.Entry(...)
@@ -634,16 +634,16 @@ server_type_result = servers.detect_server_type_from_entries(entries)
 
 if server_type_result.success:
     server_type = server_type_result.unwrap()
-    print(f"Detected server: {server_type}")
+    u.Cli.print(f"Detected server: {server_type}")
 
     # Get server-specific information
     acl_attr_result = servers.get_acl_attribute_name(server_type)
     schema_dn_result = servers.get_schema_subentry(server_type)
     acl_format_result = servers.get_acl_format(server_type)
 
-    print(f"ACL attribute: {acl_attr_result.unwrap()}")
-    print(f"Schema DN: {schema_dn_result.unwrap()}")
-    print(f"ACL format: {acl_format_result.unwrap()}")
+    u.Cli.print(f"ACL attribute: {acl_attr_result.unwrap()}")
+    u.Cli.print(f"Schema DN: {schema_dn_result.unwrap()}")
+    u.Cli.print(f"ACL format: {acl_format_result.unwrap()}")
 
 # Automatic server operations selection
 if server_type == "openldap2":
@@ -714,10 +714,10 @@ All operations return `r` - always check for failures:
 ```python notest
 result = ops.add_entry(connection, entry)
 if result.failure:
-    print(f"Operation failed: {result.error}")
+    u.Cli.print(f"Operation failed: {result.error}")
     # Handle error appropriately
 else:
-    print("Operation succeeded")
+    u.Cli.print("Operation succeeded")
 ```
 
 ### **3. Use Entry Adapter**
@@ -773,11 +773,11 @@ finally:
 ```python notest
 # Check if server is properly connected
 if not connection.bound:
-    print("Connection not bound - check credentials")
+    u.Cli.print("Connection not bound - check credentials")
 
 # Check schema DN
 schema_dn = ops.get_schema_dn()
-print(f"Trying schema DN: {schema_dn}")
+u.Cli.print(f"Trying schema DN: {schema_dn}")
 ```
 
 **ACL Operations Not Working**:
@@ -785,7 +785,7 @@ print(f"Trying schema DN: {schema_dn}")
 ```python notest
 # Verify ACL attribute for server
 acl_attr = ops.get_acl_attribute_name()
-print(f"Using ACL attribute: {acl_attr}")
+u.Cli.print(f"Using ACL attribute: {acl_attr}")
 
 # Check permissions
 # ACL operations typically require REDACTED_LDAP_BIND_PASSWORD privileges
@@ -809,7 +809,7 @@ result = ops.search_with_paging(
 # Check entry normalization
 norm_result = ops.normalize_entry(entry)
 if norm_result.failure:
-    print(f"Normalization failed: {norm_result.error}")
+    u.Cli.print(f"Normalization failed: {norm_result.error}")
 
 # Verify required object classes and attributes
 ```

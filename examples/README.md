@@ -758,7 +758,7 @@ api = ldap()
 # Connect
 result = api.connect()
 if result.is_failure:
-    print(f"Connection failed: {result.error}")
+    u.Cli.print(f"Connection failed: {result.error}")
     return
 
 # Use API

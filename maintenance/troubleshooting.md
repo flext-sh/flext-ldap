@@ -81,8 +81,8 @@ python -c "
 import yaml
 with open('docs/maintenance/settings.yaml') as f:
     settings = yaml.safe_load(f)
-    print('✅ Configuration file is valid')
-    print(f'Found {len(settings)} top-level sections')
+    u.Cli.print('✅ Configuration file is valid')
+    u.Cli.print(f'Found {len(settings)} top-level sections')
 "
 ```
 
@@ -93,9 +93,9 @@ with open('docs/maintenance/settings.yaml') as f:
 python -c "
 try:
     import yaml, requests, bs4, lxml, markdown
-    print('✅ Core dependencies available')
+    u.Cli.print('✅ Core dependencies available')
 except ImportError as e:
-    print(f'❌ Missing dependency: {e}')
+    u.Cli.print(f'❌ Missing dependency: {e}')
 "
 ```
 
@@ -170,9 +170,9 @@ import yaml
 try:
     with open('docs/maintenance/settings.yaml') as f:
         yaml.safe_load(f)
-    print('✅ YAML syntax is valid')
+    u.Cli.print('✅ YAML syntax is valid')
 except yaml.YAMLError as e:
-    print(f'❌ YAML error: {e}')
+    u.Cli.print(f'❌ YAML error: {e}')
 "
 ```
 
@@ -201,7 +201,7 @@ pwd
 ls -la docs/
 
 # Check relative paths
-python -c "import os; print(os.path.abspath('docs'))"
+python -c "import os; u.Cli.print(os.path.abspath('docs'))"
 ```
 
 **Solutions:**
@@ -370,7 +370,7 @@ optimization:
 
 ```bash
 # Check matplotlib/seaborn installation
-python -c "import matplotlib, seaborn; print('✅ Chart libraries available')"
+python -c "import matplotlib, seaborn; u.Cli.print('✅ Chart libraries available')"
 
 # Check data availability
 ls -la docs/maintenance/reports/
@@ -484,9 +484,9 @@ with open('docs/maintenance/settings.yaml') as f:
 
 v = Validator(schema)
 if v.validate(settings):
-    print('✅ Configuration is valid')
+    u.Cli.print('✅ Configuration is valid')
 else:
-    print('❌ Configuration errors:', v.errors)
+    u.Cli.print('❌ Configuration errors:', v.errors)
 "
 ```
 
@@ -660,7 +660,7 @@ import psutil
 import os
 
 process = psutil.Process(os.getpid())
-print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")
+u.Cli.print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")
 ```
 
 ### Network Debugging
@@ -682,9 +682,9 @@ curl -H "User-Agent: Mozilla/5.0" https://example.com
 # Debug file operations
 import os
 
-print(f"Current directory: {os.getcwd()}")
-print(f"Docs directory exists: {os.path.exists('docs')}")
-print(f"Docs directory contents: {os.listdir('docs')}")
+u.Cli.print(f"Current directory: {os.getcwd()}")
+u.Cli.print(f"Docs directory exists: {os.path.exists('docs')}")
+u.Cli.print(f"Docs directory contents: {os.listdir('docs')}")
 ```
 
 ## Advanced Troubleshooting
@@ -726,11 +726,11 @@ echo "=== Documentation Maintenance System Health Check ==="
 
 # Check dependencies
 echo "Checking dependencies..."
-python -c "import yaml, requests, bs4; print('✅ Dependencies OK')" 2>/dev/null || echo "❌ Dependencies missing"
+python -c "import yaml, requests, bs4; u.Cli.print('✅ Dependencies OK')" 2>/dev/null || echo "❌ Dependencies missing"
 
 # Check configuration
 echo "Checking configuration..."
-python -c "import yaml; yaml.safe_load(open('docs/maintenance/settings.yaml')); print('✅ Config OK')" 2>/dev/null || echo "❌ Config invalid"
+python -c "import yaml; yaml.safe_load(open('docs/maintenance/settings.yaml')); u.Cli.print('✅ Config OK')" 2>/dev/null || echo "❌ Config invalid"
 
 # Check file permissions
 echo "Checking permissions..."

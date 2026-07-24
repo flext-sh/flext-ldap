@@ -391,7 +391,7 @@ pytest tests/unit/test_module.py --pdb
 ```bash
 # Verify PYTHONPATH
 export PYTHONPATH=src
-python -c "import flext_core; print(flext_core.__file__)"
+python -c "import flext_core; u.Cli.print(flext_core.__file__)"
 
 # Check poetry environment
 poetry env info

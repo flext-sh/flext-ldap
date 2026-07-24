@@ -111,8 +111,8 @@ factory = ServerOperationsFactory()
 ops_result = factory.create_from_server_type("openldap2")
 if ops_result.success:
     ops = ops_result.unwrap()
-    print(f"ACL format: {ops.get_acl_format()}")
-    print(f"Schema DN: {ops.get_schema_dn()}")
+    u.Cli.print(f"ACL format: {ops.get_acl_format()}")
+    u.Cli.print(f"Schema DN: {ops.get_schema_dn()}")
 
 
 # Method 2: Auto-detect from connection
@@ -121,7 +121,7 @@ def detect_and_create():
     ops_result = factory.create_from_connection(connection)
     if ops_result.success:
         ops = ops_result.unwrap()
-        print(f"Detected: {ops.server_type}")
+        u.Cli.print(f"Detected: {ops.server_type}")
 
 
 # Method 3: Detect from entries
@@ -138,14 +138,14 @@ from flext_ldap import OpenLDAP2Operations, OracleOUDOperations
 
 # OpenLDAP 2.x operations
 openldap = OpenLDAP2Operations()
-print(f"Port: {openldap.get_default_port()}")
-print(f"Supports TLS: {openldap.supports_start_tls()}")
-print(f"ACL attribute: {openldap.get_acl_attribute_name()}")
+u.Cli.print(f"Port: {openldap.get_default_port()}")
+u.Cli.print(f"Supports TLS: {openldap.supports_start_tls()}")
+u.Cli.print(f"ACL attribute: {openldap.get_acl_attribute_name()}")
 
 # Oracle OUD operations
 oud = OracleOUDOperations()
-print(f"Privileges: {oud.get_oud_privileges()}")
-print(f"Replication: {oud.get_replication_mechanism()}")
+u.Cli.print(f"Privileges: {oud.get_oud_privileges()}")
+u.Cli.print(f"Replication: {oud.get_replication_mechanism()}")
 ```
 
 ## Universal API Methods
@@ -162,7 +162,7 @@ api.connect()
 server_type_result = api.get_detected_server_type()
 if server_type_result.success:
     server_type = server_type_result.unwrap()
-    print(f"Connected to: {server_type}")
+    u.Cli.print(f"Connected to: {server_type}")
     # Output: "Connected to: openldap2" or "oud", "oid", etc.
 ```
 
@@ -174,17 +174,17 @@ caps_result = api.get_server_capabilities()
 if caps_result.success:
     caps = caps_result.unwrap()
 
-    print(f"Server type: {caps['server_type']}")
-    print(f"ACL format: {caps['acl_format']}")
-    print(f"ACL attribute: {caps['acl_attribute']}")
-    print(f"Schema DN: {caps['schema_dn']}")
-    print(f"Default port: {caps['default_port']}")
-    print(f"SSL port: {caps['default_ssl_port']}")
-    print(f"Supports START_TLS: {caps['supports_start_tls']}")
-    print(f"BIND mechanisms: {caps['bind_mechanisms']}")
-    print(f"Max page size: {caps['max_page_size']}")
-    print(f"Paged results: {caps['supports_paged_results']}")
-    print(f"VLV support: {caps['supports_vlv']}")
+    u.Cli.print(f"Server type: {caps['server_type']}")
+    u.Cli.print(f"ACL format: {caps['acl_format']}")
+    u.Cli.print(f"ACL attribute: {caps['acl_attribute']}")
+    u.Cli.print(f"Schema DN: {caps['schema_dn']}")
+    u.Cli.print(f"Default port: {caps['default_port']}")
+    u.Cli.print(f"SSL port: {caps['default_ssl_port']}")
+    u.Cli.print(f"Supports START_TLS: {caps['supports_start_tls']}")
+    u.Cli.print(f"BIND mechanisms: {caps['bind_mechanisms']}")
+    u.Cli.print(f"Max page size: {caps['max_page_size']}")
+    u.Cli.print(f"Paged results: {caps['supports_paged_results']}")
+    u.Cli.print(f"VLV support: {caps['supports_vlv']}")
 ```
 
 ### 3. Universal Search with Optimization
@@ -200,9 +200,9 @@ result = api.search_universal(
 
 if result.success:
     entries = result.unwrap()
-    print(f"Found {len(entries)} entries")
+    u.Cli.print(f"Found {len(entries)} entries")
     for entry in entries:
-        print(f"DN: {entry.dn}")
+        u.Cli.print(f"DN: {entry.dn}")
 ```
 
 ### 4. Entry Normalization
@@ -216,7 +216,7 @@ normalized_result = api.normalize_entry_for_server(entry)
 
 if normalized_result.success:
     normalized_entry = normalized_result.unwrap()
-    print("Entry normalized for current server")
+    u.Cli.print("Entry normalized for current server")
 
 # Normalize for specific target server
 normalized_result = api.normalize_entry_for_server(entry, target_server_type="oud")
@@ -251,7 +251,7 @@ unknown_entry: FlextLdifModels.Entry = ...  # Entry from unknown source
 detection_result = api.detect_entry_server_type(unknown_entry)
 if detection_result.success:
     detected_type = detection_result.unwrap()
-    print(f"Entry originated from: {detected_type}")
+    u.Cli.print(f"Entry originated from: {detected_type}")
     # Output: "openldap2", "oud", "oid", etc.
 ```
 
@@ -263,9 +263,9 @@ entry: FlextLdifModels.Entry = ...
 
 validation_result = api.validate_entry_for_server(entry, "oud")
 if validation_result.success and validation_result.unwrap():
-    print("Entry is compatible with Oracle OUD")
+    u.Cli.print("Entry is compatible with Oracle OUD")
 else:
-    print(f"Validation failed: {validation_result.error}")
+    u.Cli.print(f"Validation failed: {validation_result.error}")
 ```
 
 ### 8. Server-Specific Attributes
@@ -275,8 +275,8 @@ else:
 attrs_result = api.get_server_specific_attributes("oid")
 if attrs_result.success:
     attrs = attrs_result.unwrap()
-    print(f"Required attributes: {attrs.get('required_attributes', [])}")
-    print(f"Optional attributes: {attrs.get('optional_attributes', [])}")
+    u.Cli.print(f"Required attributes: {attrs.get('required_attributes', [])}")
+    u.Cli.print(f"Optional attributes: {attrs.get('optional_attributes', [])}")
 ```
 
 ## Entry Conversion Examples
@@ -293,7 +293,7 @@ def migrate_openldap1_to_openldap2():
         parse_result = ldif.parse_file("openldap1_backup.ldif")
 
     if parse_result.failure:
-        print(f"Parse failed: {parse_result.error}")
+        u.Cli.print(f"Parse failed: {parse_result.error}")
         return
 
     openldap1_entries = parse_result.unwrap()
@@ -310,12 +310,12 @@ def migrate_openldap1_to_openldap2():
         if convert_result.success:
             openldap2_entries.append(convert_result.unwrap())
         else:
-            print(f"Conversion failed for {entry.dn}: {convert_result.error}")
+            u.Cli.print(f"Conversion failed for {entry.dn}: {convert_result.error}")
 
     # Write converted entries to new LDIF
     write_result = ldif.write_file(openldap2_entries, "openldap2_converted.ldif")
     if write_result.success:
-        print(f"Successfully converted {len(openldap2_entries)} entries")
+        u.Cli.print(f"Successfully converted {len(openldap2_entries)} entries")
 ```
 
 ### Oracle OID → Oracle OUD Migration
@@ -346,7 +346,7 @@ def migrate_oid_to_oud():
             if validation_result.success and validation_result.unwrap():
                 oud_entries.append(oud_entry)
             else:
-                print(f"Validation failed: {validation_result.error}")
+                u.Cli.print(f"Validation failed: {validation_result.error}")
 
     # Export to OUD-compatible LDIF
     ldif.write_file(oud_entries, "oud_import.ldif")
@@ -423,7 +423,7 @@ def progressive_migration():
             detected_type = detection_result.unwrap()
             server_types[detected_type] = server_types.get(detected_type, 0) + 1
 
-    print(f"Entry distribution: {server_types}")
+    u.Cli.print(f"Entry distribution: {server_types}")
 
     # Phase 2: Convert in batches
     target_type = "oud"
@@ -450,14 +450,14 @@ def progressive_migration():
                 converted_batch.append(entry)
 
         converted_batches.append(converted_batch)
-        print(f"Converted batch {i // batch_size + 1}")
+        u.Cli.print(f"Converted batch {i // batch_size + 1}")
 
     # Phase 3: Validate all entries
     for batch in converted_batches:
         for entry in batch:
             validation_result = api.validate_entry_for_server(entry, target_type)
             if validation_result.failure or not validation_result.unwrap():
-                print(f"Validation failed for {entry.dn}")
+                u.Cli.print(f"Validation failed for {entry.dn}")
 ```
 
 ## Best Practices
@@ -533,7 +533,7 @@ If conversion fails, check entry compatibility:
 # Validate source entry
 validation_result = api.validate_entry_for_server(entry, source_type)
 if validation_result.failure:
-    print(f"Source entry invalid: {validation_result.error}")
+    u.Cli.print(f"Source entry invalid: {validation_result.error}")
 ```
 
 ### ACL Translation Issues
@@ -544,8 +544,8 @@ Different servers have different ACL formats. Check server capabilities:
 caps_result = api.get_server_capabilities()
 if caps_result.success:
     caps = caps_result.unwrap()
-    print(f"ACL format: {caps['acl_format']}")
-    print(f"ACL attribute: {caps['acl_attribute']}")
+    u.Cli.print(f"ACL format: {caps['acl_format']}")
+    u.Cli.print(f"ACL attribute: {caps['acl_attribute']}")
 ```
 
 ## Contributing

@@ -777,8 +777,8 @@ for ldap3_entry in connection.entries:
     if result.success:
         ldif_entry = result.unwrap()
         flextldif_entries.append(ldif_entry)
-        print(f"DN: {ldif_entry.dn}")
-        print(f"Attributes: {ldif_entry.attributes.attributes}")
+        u.Cli.print(f"DN: {ldif_entry.dn}")
+        u.Cli.print(f"Attributes: {ldif_entry.attributes.attributes}")
 ```
 
 ### LDIF File Processing
@@ -798,11 +798,11 @@ def process_ldif_file():
     # Load LDIF file
     result = adapter.convert_ldif_file_to_entries("users.ldif")
     if result.failure:
-        print(f"Failed to load LDIF: {result.error}")
+        u.Cli.print(f"Failed to load LDIF: {result.error}")
         return
 
     entries = result.unwrap()
-    print(f"Loaded {len(entries)} entries from LDIF")
+    u.Cli.print(f"Loaded {len(entries)} entries from LDIF")
 
     # Connect to LDAP server
     connection = ldap3.Connection(
@@ -816,9 +816,9 @@ def process_ldif_file():
     for entry in entries:
         add_result = ops.add_entry(connection, entry)
         if add_result.success:
-            print(f"Added: {entry.dn}")
+            u.Cli.print(f"Added: {entry.dn}")
         else:
-            print(f"Failed to add {entry.dn}: {add_result.error}")
+            u.Cli.print(f"Failed to add {entry.dn}: {add_result.error}")
 
 
 run(process_ldif_file())
@@ -857,15 +857,15 @@ def export_to_ldif():
 
     if search_result.success:
         entries = search_result.unwrap()
-        print(f"Found {len(entries)} entries")
+        u.Cli.print(f"Found {len(entries)} entries")
 
         # Write to LDIF file
         write_result = adapter.write_entries_to_ldif_file(entries, "export.ldif")
 
         if write_result.success:
-            print("Export completed successfully")
+            u.Cli.print("Export completed successfully")
         else:
-            print(f"Export failed: {write_result.error}")
+            u.Cli.print(f"Export failed: {write_result.error}")
 
 
 run(export_to_ldif())
@@ -909,7 +909,7 @@ def detect_and_configure():
     server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
-        print(f"Detected server: {server_type}")
+        u.Cli.print(f"Detected server: {server_type}")
 
         # Get server-specific configuration
         acl_attr_result = servers.get_acl_attribute_name(server_type)
@@ -919,9 +919,9 @@ def detect_and_configure():
         if all(
             r.success for r in [acl_attr_result, schema_dn_result, max_page_size_result]
         ):
-            print(f"ACL attribute: {acl_attr_result.unwrap()}")
-            print(f"Schema DN: {schema_dn_result.unwrap()}")
-            print(f"Max page size: {max_page_size_result.unwrap()}")
+            u.Cli.print(f"ACL attribute: {acl_attr_result.unwrap()}")
+            u.Cli.print(f"Schema DN: {schema_dn_result.unwrap()}")
+            u.Cli.print(f"Max page size: {max_page_size_result.unwrap()}")
 
         # Select appropriate operations
         if server_type == "openldap2":
@@ -1060,7 +1060,7 @@ def main():
     )
 
     server_type = processor.connect()
-    print(f"Connected to {server_type} server")
+    u.Cli.print(f"Connected to {server_type} server")
 
     # Export to LDIF
     count = processor.search_and_export(
@@ -1068,13 +1068,13 @@ def main():
         filter_str="(objectClass=person)",
         output_file="users_export.ldif",
     )
-    print(f"Exported {count} entries")
+    u.Cli.print(f"Exported {count} entries")
 
     # Import from LDIF
     imported = processor.import_ldif(
         ldif_file="users_import.ldif", base_dn="ou=users,dc=example,dc=com"
     )
-    print(f"Imported {imported} entries")
+    u.Cli.print(f"Imported {imported} entries")
 
 
 run(main())

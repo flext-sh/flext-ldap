@@ -126,7 +126,7 @@ result = api.parse(openldap_acl, FlextLdapConstants.AclFormat.OPENLDAP)
 
 if result.success:
     unified_acl = result.unwrap()
-    print(f"Parsed ACL: {unified_acl.name}")
+    u.Cli.print(f"Parsed ACL: {unified_acl.name}")
 ```
 
 ### Converting ACL Formats
@@ -143,7 +143,7 @@ conversion_result = api.convert_acl(
 
 if conversion_result.success:
     conv = conversion_result.unwrap()
-    print(f"Oracle ACL: {conv.converted_acl}")
+    u.Cli.print(f"Oracle ACL: {conv.converted_acl}")
     # Output: access to attr=(mail) by group="*" (read)
 ```
 
@@ -165,7 +165,7 @@ batch_result = api.batch_convert_acls(
 
 if batch_result.success:
     for conv in batch_result.unwrap():
-        print(f"Converted: {conv.converted_acl}")
+        u.Cli.print(f"Converted: {conv.converted_acl}")
 ```
 
 ## ACL Format Examples
@@ -258,9 +258,9 @@ validation_result = api.validate_acl_syntax(
 )
 
 if validation_result.success:
-    print("ACL syntax is valid")
+    u.Cli.print("ACL syntax is valid")
 else:
-    print(f"Invalid ACL: {validation_result.error}")
+    u.Cli.print(f"Invalid ACL: {validation_result.error}")
 ```
 
 ## Migration Scenarios
@@ -285,9 +285,9 @@ for oracle_acl in oracle_acls:
 
     if result.success:
         conv = result.unwrap()
-        print(f"OpenLDAP ACL: {conv.converted_acl}")
+        u.Cli.print(f"OpenLDAP ACL: {conv.converted_acl}")
         if conv.warnings:
-            print(f"Warnings: {conv.warnings}")
+            u.Cli.print(f"Warnings: {conv.warnings}")
 ```
 
 ### OpenLDAP to 389 DS Migration
@@ -307,7 +307,7 @@ for acl in openldap_acls:
 
     if result.success:
         conv = result.unwrap()
-        print(f"389 DS ACI: {conv.converted_acl}")
+        u.Cli.print(f"389 DS ACI: {conv.converted_acl}")
 ```
 
 ## Advanced Features
@@ -362,7 +362,7 @@ FlextLdapConstants.SubjectType.ANYONE  # Anyone
 result = api.parse(acl_string, format_type)
 
 if result.failure:
-    print(f"Error: {result.error}")
+    u.Cli.print(f"Error: {result.error}")
     # Handle error appropriately
 else:
     unified_acl = result.unwrap()
@@ -391,7 +391,7 @@ for acl in oracle_acls:
     if result.success:
         converted_acls.append(result.unwrap().converted_acl)
     else:
-        print(f"Conversion failed for: {acl} - {result.error}")
+        u.Cli.print(f"Conversion failed for: {acl} - {result.error}")
 
 # Write to OpenLDAP configuration
 write_openldap_acls(converted_acls)

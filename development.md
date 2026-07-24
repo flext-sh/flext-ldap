@@ -163,7 +163,7 @@ pre-commit install
 poetry install --with dev,test,docs
 
 # Verify development setup
-python -c "from flext_ldap.api import ldap; print('✅ Development setup complete')"
+python -c "from flext_ldap.api import ldap; u.Cli.print('✅ Development setup complete')"
 ```
 
 ______________________________________________________________________
@@ -657,13 +657,13 @@ class FlextLdapClients:
         >>> api = ldap
         >>> result = api.test_connection()
         >>> if result.success:
-        ...     print("Connected to LDAP server")
+        ...     u.Cli.print("Connected to LDAP server")
 
         User authentication:
         >>> auth_result = api.authenticate_user("john.doe", "password")
         >>> if auth_result.success:
         ...     user = auth_result.unwrap()
-        ...     print(f"Welcome, {user.cn}")
+        ...     u.Cli.print(f"Welcome, {user.cn}")
     """
 
     def authenticate_user(
@@ -686,9 +686,9 @@ class FlextLdapClients:
             >>> result = api.authenticate_user("john.doe", "secret123")
             >>> if result.success:
             ...     user = result.unwrap()
-            ...     print(f"Authenticated: {user.cn}")
+            ...     u.Cli.print(f"Authenticated: {user.cn}")
             >>> else:
-            ...     print(f"Authentication failed: {result.error}")
+            ...     u.Cli.print(f"Authentication failed: {result.error}")
         """
 ```
 

@@ -175,7 +175,7 @@ Authenticate user credentials against LDAP directory.
 result = api.authenticate_user("john.doe", "password123")
 if result.success:
     user = result.unwrap()
-    print(f"Authenticated: {user.cn}")
+    u.Cli.print(f"Authenticated: {user.cn}")
 ```
 
 ### `create_user(request: CreateUserRequest) -> p.Result[FlextLdapUser]`
@@ -213,7 +213,7 @@ Test LDAP server connectivity.
 ```python notest
 result = api.test_connection()
 if result.success:
-    print("Connection successful")
+    u.Cli.print("Connection successful")
 ```
 
 ______________________________________________________________________
@@ -310,8 +310,8 @@ RFC 4514 compliant distinguished name.
 
 ```python notest
 dn = FlextLdapModels.Values.DN("cn=user,ou=people,dc=example,dc=com")
-print(dn.rdn)  # "cn=user"
-print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
+u.Cli.print(dn.rdn)  # "cn=user"
+u.Cli.print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
 ```
 
 #### LdapFilter
@@ -404,7 +404,7 @@ Check if string is a valid distinguished name.
 from flext_ldap import FlextLdapTypeGuards
 
 if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
-    print("Valid DN")
+    u.Cli.print("Valid DN")
 ```
 
 #### `is_ldap_entry(obj) -> bool`
@@ -468,9 +468,9 @@ try:
     result = api.search_entries(request)
     if result.failure:
         # Handle r error
-        print(f"Search failed: {result.error}")
+        u.Cli.print(f"Search failed: {result.error}")
 except e.ConnectionError as e:
-    print(f"Connection error: {e.message}")
+    u.Cli.print(f"Connection error: {e.message}")
 ```
 
 ______________________________________________________________________
@@ -492,7 +492,7 @@ if result.success:
 try:
     data = result.unwrap()
 except rError:
-    print("Operation failed")
+    u.Cli.print("Operation failed")
 ```
 
 ### Error Handling
@@ -502,7 +502,7 @@ result = api.authenticate_user(username, password)
 
 if result.failure:
     error_message = result.error
-    print(f"Authentication failed: {error_message}")
+    u.Cli.print(f"Authentication failed: {error_message}")
 ```
 
 ### Chaining Operations
@@ -557,7 +557,7 @@ for ldap3_entry in connection.entries:
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if result.success:
         ldif_entry = result.unwrap()
-        print(f"DN: {ldif_entry.dn}")
+        u.Cli.print(f"DN: {ldif_entry.dn}")
 ```
 
 #### `ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`
@@ -802,8 +802,8 @@ connection = ldap3.Connection(
 schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
-    print(f"Object classes: {len(schema['object_classes'])}")
-    print(f"Attribute types: {len(schema['attribute_types'])}")
+    u.Cli.print(f"Object classes: {len(schema['object_classes'])}")
+    u.Cli.print(f"Attribute types: {len(schema['attribute_types'])}")
 ```
 
 ##### `parse_object_class(object_class_def) -> p.Result[m.Dict]`
@@ -841,7 +841,7 @@ result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 if result.success:
     acls = result.unwrap()
     for acl in acls:
-        print(f"ACL: {acl.get('raw')}")
+        u.Cli.print(f"ACL: {acl.get('raw')}")
 ```
 
 ##### `set_acls(connection, dn, acls) -> p.Result[bool]`
@@ -895,7 +895,7 @@ entry = FlextLdifModels.Entry(
 
 result = ops.add_entry(connection, entry)
 if result.success:
-    print("Entry added successfully")
+    u.Cli.print("Entry added successfully")
 ```
 
 ##### `modify_entry(connection, dn, modifications) -> p.Result[bool]`
@@ -955,9 +955,9 @@ result = ops.search_with_paging(
 
 if result.success:
     entries = result.unwrap()
-    print(f"Found {len(entries)} entries")
+    u.Cli.print(f"Found {len(entries)} entries")
     for entry in entries:
-        print(f"DN: {entry.dn}")
+        u.Cli.print(f"DN: {entry.dn}")
 ```
 
 ______________________________________________________________________
@@ -1122,7 +1122,7 @@ def universal_ldap_example():
     server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
-        print(f"Detected server: {server_type}")
+        u.Cli.print(f"Detected server: {server_type}")
 
         # Select appropriate operations
         if server_type == "openldap2":
@@ -1140,11 +1140,11 @@ def universal_ldap_example():
         schema_result = ops.discover_schema(connection)
         if schema_result.success:
             schema = schema_result.unwrap()
-            print(f"Schema: {len(schema['object_classes'])} object classes")
+            u.Cli.print(f"Schema: {len(schema['object_classes'])} object classes")
 
         # Get ACLs
         acl_attr = servers.get_acl_attribute_name(server_type).unwrap()
-        print(f"ACL attribute: {acl_attr}")
+        u.Cli.print(f"ACL attribute: {acl_attr}")
 
         # Paged search
         paged_result = ops.search_with_paging(
@@ -1155,7 +1155,7 @@ def universal_ldap_example():
         )
         if paged_result.success:
             paged_entries = paged_result.unwrap()
-            print(f"Paged search: {len(paged_entries)} entries")
+            u.Cli.print(f"Paged search: {len(paged_entries)} entries")
 
 
 run(universal_ldap_example())

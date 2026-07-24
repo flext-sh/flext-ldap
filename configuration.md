@@ -320,9 +320,9 @@ def validate_config():
 
     result = api.test_connection()
     if result.success:
-        print("✅ Configuration valid - LDAP connection successful")
+        u.Cli.print("✅ Configuration valid - LDAP connection successful")
     else:
-        print(f"❌ Configuration invalid: {result.error}")
+        u.Cli.print(f"❌ Configuration invalid: {result.error}")
 
 
 run(validate_config())

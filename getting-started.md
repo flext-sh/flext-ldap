@@ -137,7 +137,7 @@ make val   # Run quality checks to verify installation
 Test your installation:
 
 ```bash
-python -c "from flext_ldap.api import ldap; print('Installation successful')"
+python -c "from flext_ldap.api import ldap; u.Cli.print('Installation successful')"
 ```
 
 ______________________________________________________________________
@@ -199,9 +199,9 @@ def test_connection():
 
     result = api.test_connection()
     if result.success:
-        print("✅ LDAP connection successful")
+        u.Cli.print("✅ LDAP connection successful")
     else:
-        print(f"❌ Connection failed: {result.error}")
+        u.Cli.print(f"❌ Connection failed: {result.error}")
 
 
 run(test_connection())
@@ -228,11 +228,11 @@ def basic_search():
     result = api.search_entries(search_request)
     if result.success:
         entries = result.unwrap()
-        print(f"Found {len(entries)} organizational units:")
+        u.Cli.print(f"Found {len(entries)} organizational units:")
         for entry in entries:
-            print(f"  - {entry.ou}: {entry.description}")
+            u.Cli.print(f"  - {entry.ou}: {entry.description}")
     else:
-        print(f"Search failed: {result.error}")
+        u.Cli.print(f"Search failed: {result.error}")
 
 
 run(basic_search())
@@ -254,9 +254,9 @@ def authenticate_user():
     result = api.authenticate_user(username, password)
     if result.success:
         user = result.unwrap()
-        print(f"✅ Authentication successful for {user.uid}")
+        u.Cli.print(f"✅ Authentication successful for {user.uid}")
     else:
-        print(f"❌ Authentication failed: {result.error}")
+        u.Cli.print(f"❌ Authentication failed: {result.error}")
 
 
 run(authenticate_user())
@@ -306,7 +306,7 @@ def server_specific_operations():
     server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
-        print(f"Detected server: {server_type}")
+        u.Cli.print(f"Detected server: {server_type}")
 
         # Select appropriate operations
         if server_type == "openldap2":
@@ -322,7 +322,7 @@ def server_specific_operations():
         schema_result = ops.discover_schema(connection)
         if schema_result.success:
             schema = schema_result.unwrap()
-            print(f"Object classes: {len(schema['object_classes'])}")
+            u.Cli.print(f"Object classes: {len(schema['object_classes'])}")
 
 
 run(server_specific_operations())
@@ -345,7 +345,7 @@ for ldap3_entry in connection.entries:
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if ldif_result.success:
         ldif_entry = ldif_result.unwrap()
-        print(f"DN: {ldif_entry.dn}")
+        u.Cli.print(f"DN: {ldif_entry.dn}")
 
 # ldif → ldap3
 ldif_entry = FlextLdifModels.Entry(
@@ -385,10 +385,10 @@ def discover_schema():
     if schema_result.success:
         schema = schema_result.unwrap()
 
-        print(f"Object Classes: {len(schema['object_classes'])}")
-        print(f"Attribute Types: {len(schema['attribute_types'])}")
-        print(f"Syntaxes: {len(schema['syntaxes'])}")
-        print(f"Server Type: {schema['server_type']}")
+        u.Cli.print(f"Object Classes: {len(schema['object_classes'])}")
+        u.Cli.print(f"Attribute Types: {len(schema['attribute_types'])}")
+        u.Cli.print(f"Syntaxes: {len(schema['syntaxes'])}")
+        u.Cli.print(f"Server Type: {schema['server_type']}")
 
 
 run(discover_schema())
@@ -420,7 +420,7 @@ def manage_acls():
 
     if acl_result.success:
         acls = acl_result.unwrap()
-        print(f"Found {len(acls)} ACLs")
+        u.Cli.print(f"Found {len(acls)} ACLs")
 
         # Set new ACLs
         new_acls = [
@@ -432,7 +432,7 @@ def manage_acls():
 
         set_result = ops.set_acls(connection, dn, new_acls)
         if set_result.success:
-            print("ACLs updated successfully")
+            u.Cli.print("ACLs updated successfully")
 
 
 run(manage_acls())
@@ -468,9 +468,9 @@ def paged_search():
 
     if result.success:
         entries = result.unwrap()
-        print(f"Found {len(entries)} entries")
+        u.Cli.print(f"Found {len(entries)} entries")
         for entry in entries:
-            print(f"  DN: {entry.dn}")
+            u.Cli.print(f"  DN: {entry.dn}")
 
 
 run(paged_search())
