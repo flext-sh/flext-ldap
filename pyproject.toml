@@ -546,8 +546,16 @@ root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
-addopts = ["--durations=10", "--strict-markers", "--timeout=10"]
-filterwarnings = ["error"]
+addopts = [
+  "--durations=10",
+  "--markdown-docs",
+  "--strict-markers",
+  "--timeout=10",
+]
+filterwarnings = [
+  "error",
+  "module::flext_core._constants.enforcement.FlextMroViolation",
+]
 markers = [
   "docker: tests requiring Docker",
   "e2e: end-to-end integration tests",
@@ -564,7 +572,7 @@ markers = [
 minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
-testpaths = ["tests"]
+testpaths = [".", "docs", "examples", "scripts", "src", "tests"]
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -738,6 +746,9 @@ split-on-trailing-comma = false
 ]
 "**/tests/**" = [
   "assert",
+  "compare-to-empty-string",
+  "magic-value-comparison",
+  "undocumented-public-class",
   "undocumented-public-function",
   "undocumented-public-method",
 ]
