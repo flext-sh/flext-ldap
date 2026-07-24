@@ -88,25 +88,8 @@ FLEXT-LDAP builds on established FLEXT foundation patterns:
 
 ```python notest
 # FLEXT-Core integration
-from flext_core import FlextBus
+from flext_cli import u
 from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
 from flext_ldap.api import ldap
 
 
@@ -193,25 +176,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
-from flext_core import FlextBus
+from flext_cli import u
 from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
 
 app = FastAPI(title="FLEXT LDAP API")
 security = HTTPBearer()

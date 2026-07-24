@@ -99,25 +99,8 @@ docker run -v $(pwd)/data:/app/data flext:latest
 ### 1. Basic Setup
 
 ```python notest
-from flext_core import FlextBus
+from flext_cli import u
 from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
 
 # Create dependency injection container
 container = FlextContainer()
@@ -152,25 +135,8 @@ else:
 ### 3. Railway-Oriented Error Handling
 
 ```python notest
-from flext_core import FlextBus
+from flext_cli import u
 from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
 
 
 def process_ldif_data(content: str) -> p.Result[str, Exception]:
@@ -205,25 +171,8 @@ else:
 ### 4. CQRS Pattern with Commands and Queries
 
 ```python notest
-from flext_core import FlextBus
+from flext_cli import u
 from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import d
-from flext_core import FlextDispatcher
-from flext_core import e
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
 from dataclasses import dataclass
 
 
