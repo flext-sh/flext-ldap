@@ -168,7 +168,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 
 Create `flext_ldap.settings.py`:
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings(
@@ -189,7 +189,9 @@ ______________________________________________________________________
 
 ### **Basic Connection Test**
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap.api import ldap
 
 
@@ -199,9 +201,9 @@ def test_connection():
 
     result = api.test_connection()
     if result.success:
-        u.Cli.print("✅ LDAP connection successful")
+        print("✅ LDAP connection successful")
     else:
-        u.Cli.print(f"❌ Connection failed: {result.error}")
+        print(f"❌ Connection failed: {result.error}")
 
 
 run(test_connection())
@@ -209,7 +211,9 @@ run(test_connection())
 
 ### **Simple Directory Search**
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -228,11 +232,11 @@ def basic_search():
     result = api.search_entries(search_request)
     if result.success:
         entries = result.unwrap()
-        u.Cli.print(f"Found {len(entries)} organizational units:")
+        print(f"Found {len(entries)} organizational units:")
         for entry in entries:
-            u.Cli.print(f"  - {entry.ou}: {entry.description}")
+            print(f"  - {entry.ou}: {entry.description}")
     else:
-        u.Cli.print(f"Search failed: {result.error}")
+        print(f"Search failed: {result.error}")
 
 
 run(basic_search())
@@ -240,7 +244,9 @@ run(basic_search())
 
 ### **User Authentication**
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap.api import ldap
 
 
@@ -254,9 +260,9 @@ def authenticate_user():
     result = api.authenticate_user(username, password)
     if result.success:
         user = result.unwrap()
-        u.Cli.print(f"✅ Authentication successful for {user.uid}")
+        print(f"✅ Authentication successful for {user.uid}")
     else:
-        u.Cli.print(f"❌ Authentication failed: {result.error}")
+        print(f"❌ Authentication failed: {result.error}")
 
 
 run(authenticate_user())
@@ -270,7 +276,9 @@ ______________________________________________________________________
 
 FLEXT-LDAP provides server-specific implementations with automatic server detection:
 
-```python notest
+```python
+from __future__ import annotations
+
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
@@ -306,7 +314,7 @@ def server_specific_operations():
     server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
-        u.Cli.print(f"Detected server: {server_type}")
+        print(f"Detected server: {server_type}")
 
         # Select appropriate operations
         if server_type == "openldap2":
@@ -322,7 +330,7 @@ def server_specific_operations():
         schema_result = ops.discover_schema(connection)
         if schema_result.success:
             schema = schema_result.unwrap()
-            u.Cli.print(f"Object classes: {len(schema['object_classes'])}")
+            print(f"Object classes: {len(schema['object_classes'])}")
 
 
 run(server_specific_operations())
@@ -332,7 +340,7 @@ run(server_specific_operations())
 
 Convert between ldap3 and ldif entry formats:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
@@ -345,7 +353,7 @@ for ldap3_entry in connection.entries:
     ldif_result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if ldif_result.success:
         ldif_entry = ldif_result.unwrap()
-        u.Cli.print(f"DN: {ldif_entry.dn}")
+        print(f"DN: {ldif_entry.dn}")
 
 # ldif → ldap3
 ldif_entry = FlextLdifModels.Entry(
@@ -365,7 +373,9 @@ if attrs_result.success:
 
 Discover schema from different LDAP server types:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -385,10 +395,10 @@ def discover_schema():
     if schema_result.success:
         schema = schema_result.unwrap()
 
-        u.Cli.print(f"Object Classes: {len(schema['object_classes'])}")
-        u.Cli.print(f"Attribute Types: {len(schema['attribute_types'])}")
-        u.Cli.print(f"Syntaxes: {len(schema['syntaxes'])}")
-        u.Cli.print(f"Server Type: {schema['server_type']}")
+        print(f"Object Classes: {len(schema['object_classes'])}")
+        print(f"Attribute Types: {len(schema['attribute_types'])}")
+        print(f"Syntaxes: {len(schema['syntaxes'])}")
+        print(f"Server Type: {schema['server_type']}")
 
 
 run(discover_schema())
@@ -398,7 +408,9 @@ run(discover_schema())
 
 Manage server-specific ACLs:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -420,7 +432,7 @@ def manage_acls():
 
     if acl_result.success:
         acls = acl_result.unwrap()
-        u.Cli.print(f"Found {len(acls)} ACLs")
+        print(f"Found {len(acls)} ACLs")
 
         # Set new ACLs
         new_acls = [
@@ -432,7 +444,7 @@ def manage_acls():
 
         set_result = ops.set_acls(connection, dn, new_acls)
         if set_result.success:
-            u.Cli.print("ACLs updated successfully")
+            print("ACLs updated successfully")
 
 
 run(manage_acls())
@@ -442,7 +454,9 @@ run(manage_acls())
 
 Execute paged searches with automatic pagination:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -468,9 +482,9 @@ def paged_search():
 
     if result.success:
         entries = result.unwrap()
-        u.Cli.print(f"Found {len(entries)} entries")
+        print(f"Found {len(entries)} entries")
         for entry in entries:
-            u.Cli.print(f"  DN: {entry.dn}")
+            print(f"  DN: {entry.dn}")
 
 
 run(paged_search())

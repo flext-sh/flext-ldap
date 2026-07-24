@@ -145,7 +145,7 @@ Search LDAP directory entries.
 
 **Example:**
 
-```python notest
+```python
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com",
     filter_str="(objectClass=person)",
@@ -171,11 +171,11 @@ Authenticate user credentials against LDAP directory.
 
 **Example:**
 
-```python notest
+```python
 result = api.authenticate_user("john.doe", "password123")
 if result.success:
     user = result.unwrap()
-    u.Cli.print(f"Authenticated: {user.cn}")
+    print(f"Authenticated: {user.cn}")
 ```
 
 ### `create_user(request: CreateUserRequest) -> p.Result[FlextLdapUser]`
@@ -190,7 +190,7 @@ Create a new user in LDAP directory.
 
 **Example:**
 
-```python notest
+```python
 user_request = FlextLdapEntities.CreateUserRequest(
     dn="cn=jane.doe,ou=users,dc=example,dc=com",
     uid="jane.doe",
@@ -210,10 +210,10 @@ Test LDAP server connectivity.
 
 **Example:**
 
-```python notest
+```python
 result = api.test_connection()
 if result.success:
-    u.Cli.print("Connection successful")
+    print("Connection successful")
 ```
 
 ______________________________________________________________________
@@ -308,10 +308,10 @@ RFC 4514 compliant distinguished name.
 
 **Example:**
 
-```python notest
+```python
 dn = FlextLdapModels.Values.DN("cn=user,ou=people,dc=example,dc=com")
-u.Cli.print(dn.rdn)  # "cn=user"
-u.Cli.print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
+print(dn.rdn)  # "cn=user"
+print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
 ```
 
 #### LdapFilter
@@ -331,7 +331,7 @@ LDAP search filter with validation.
 
 **Example:**
 
-```python notest
+```python
 # Create filters
 user_filter = FlextLdapModels.Values.LdapFilter.equals("uid", "john.doe")
 person_filter = FlextLdapModels.Values.LdapFilter.object_class("person")
@@ -371,7 +371,7 @@ LDAP connection configuration.
 
 **Example:**
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
 
 settings = FlextLdapSettings(
@@ -400,11 +400,11 @@ Check if string is a valid distinguished name.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import FlextLdapTypeGuards
 
 if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
-    u.Cli.print("Valid DN")
+    print("Valid DN")
 ```
 
 #### `is_ldap_entry(obj) -> bool`
@@ -461,16 +461,16 @@ Search operation errors.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import e
 
 try:
     result = api.search_entries(request)
     if result.failure:
         # Handle r error
-        u.Cli.print(f"Search failed: {result.error}")
+        print(f"Search failed: {result.error}")
 except e.ConnectionError as e:
-    u.Cli.print(f"Connection error: {e.message}")
+    print(f"Connection error: {e.message}")
 ```
 
 ______________________________________________________________________
@@ -481,7 +481,7 @@ All API methods return `r[T]` for consistent error handling.
 
 ### Success Handling
 
-```python notest
+```python
 result = api.search_entries(request)
 
 # Check success
@@ -492,22 +492,22 @@ if result.success:
 try:
     data = result.unwrap()
 except rError:
-    u.Cli.print("Operation failed")
+    print("Operation failed")
 ```
 
 ### Error Handling
 
-```python notest
+```python
 result = api.authenticate_user(username, password)
 
 if result.failure:
     error_message = result.error
-    u.Cli.print(f"Authentication failed: {error_message}")
+    print(f"Authentication failed: {error_message}")
 ```
 
 ### Chaining Operations
 
-```python notest
+```python
 search_result = api.search_entries(request)
 if search_result.success:
     entries = search_result.unwrap()
@@ -543,7 +543,7 @@ Convert ldap3.Entry to ldif entry.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 import ldap3
 
@@ -557,7 +557,7 @@ for ldap3_entry in connection.entries:
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if result.success:
         ldif_entry = result.unwrap()
-        u.Cli.print(f"DN: {ldif_entry.dn}")
+        print(f"DN: {ldif_entry.dn}")
 ```
 
 #### `ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`
@@ -582,7 +582,7 @@ Convert ldif entry to ldap3 attributes dictionary.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels
 from flext_ldap import FlextLdapEntryAdapter
 
@@ -636,7 +636,7 @@ Server detection and servers system integration using ldif.
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import FlextLdapServersAdapter
 ```
 
@@ -661,7 +661,7 @@ Detect LDAP server type from entry analysis.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 
@@ -735,7 +735,7 @@ Abstract base class defining complete server operations interface.
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import BaseServerOperations
 ```
 
@@ -786,7 +786,7 @@ Discover schema from server.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -802,8 +802,8 @@ connection = ldap3.Connection(
 schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
-    u.Cli.print(f"Object classes: {len(schema['object_classes'])}")
-    u.Cli.print(f"Attribute types: {len(schema['attribute_types'])}")
+    print(f"Object classes: {len(schema['object_classes'])}")
+    print(f"Attribute types: {len(schema['attribute_types'])}")
 ```
 
 ##### `parse_object_class(object_class_def) -> p.Result[m.Dict]`
@@ -830,7 +830,7 @@ Retrieve ACLs from entry.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
@@ -841,7 +841,7 @@ result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 if result.success:
     acls = result.unwrap()
     for acl in acls:
-        u.Cli.print(f"ACL: {acl.get('raw')}")
+        print(f"ACL: {acl.get('raw')}")
 ```
 
 ##### `set_acls(connection, dn, acls) -> p.Result[bool]`
@@ -850,7 +850,7 @@ Set ACLs on entry.
 
 **Example:**
 
-```python notest
+```python
 new_acls = [
     {"raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'},
     {"raw": "{1}to * by self write by anonymous auth"},
@@ -875,7 +875,7 @@ Add ldif entry to directory.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels
 from flext_ldap import OpenLDAP2Operations
 
@@ -895,7 +895,7 @@ entry = FlextLdifModels.Entry(
 
 result = ops.add_entry(connection, entry)
 if result.success:
-    u.Cli.print("Entry added successfully")
+    print("Entry added successfully")
 ```
 
 ##### `modify_entry(connection, dn, modifications) -> p.Result[bool]`
@@ -904,7 +904,7 @@ Modify entry attributes.
 
 **Example:**
 
-```python notest
+```python
 modifications = {"mail": ["newemail@example.com"], "telephoneNumber": ["+1-555-0100"]}
 
 result = ops.modify_entry(
@@ -940,7 +940,7 @@ Execute paged search with automatic pagination.
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
@@ -955,9 +955,9 @@ result = ops.search_with_paging(
 
 if result.success:
     entries = result.unwrap()
-    u.Cli.print(f"Found {len(entries)} entries")
+    print(f"Found {len(entries)} entries")
     for entry in entries:
-        u.Cli.print(f"DN: {entry.dn}")
+        print(f"DN: {entry.dn}")
 ```
 
 ______________________________________________________________________
@@ -970,7 +970,7 @@ Complete implementation for OpenLDAP 2.x (cn=settings style).
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 ```
 
@@ -984,7 +984,7 @@ from flext_ldap import OpenLDAP2Operations
 
 **Example:**
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations
 import ldap3
 
@@ -1010,7 +1010,7 @@ Complete implementation for Oracle Internet Directory.
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import OracleOIDOperations
 ```
 
@@ -1028,7 +1028,7 @@ Complete implementation for Oracle Unified Directory.
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import OracleOUDOperations
 ```
 
@@ -1046,7 +1046,7 @@ RFC-compliant fallback for unknown servers.
 
 **Import:**
 
-```python notest
+```python
 from flext_ldap import GenericServerOperations
 ```
 
@@ -1063,7 +1063,10 @@ ______________________________________________________________________
 
 All public APIs include comprehensive type annotations for IDE support and static analysis:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def search_entries(
     self, request: FlextLdapEntities.SearchRequest
 ) -> p.Result[List[FlextLdapEntities.LdapEntry]]:
@@ -1085,7 +1088,9 @@ ______________________________________________________________________
 
 ## 🔗 Complete Usage Example
 
-```python notest
+```python
+from __future__ import annotations
+
 import ldap3
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
@@ -1122,7 +1127,7 @@ def universal_ldap_example():
     server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
-        u.Cli.print(f"Detected server: {server_type}")
+        print(f"Detected server: {server_type}")
 
         # Select appropriate operations
         if server_type == "openldap2":
@@ -1140,11 +1145,11 @@ def universal_ldap_example():
         schema_result = ops.discover_schema(connection)
         if schema_result.success:
             schema = schema_result.unwrap()
-            u.Cli.print(f"Schema: {len(schema['object_classes'])} object classes")
+            print(f"Schema: {len(schema['object_classes'])} object classes")
 
         # Get ACLs
         acl_attr = servers.get_acl_attribute_name(server_type).unwrap()
-        u.Cli.print(f"ACL attribute: {acl_attr}")
+        print(f"ACL attribute: {acl_attr}")
 
         # Paged search
         paged_result = ops.search_with_paging(
@@ -1155,7 +1160,7 @@ def universal_ldap_example():
         )
         if paged_result.success:
             paged_entries = paged_result.unwrap()
-            u.Cli.print(f"Paged search: {len(paged_entries)} entries")
+            print(f"Paged search: {len(paged_entries)} entries")
 
 
 run(universal_ldap_example())

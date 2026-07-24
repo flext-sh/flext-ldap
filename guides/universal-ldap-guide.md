@@ -84,7 +84,9 @@ The universal LDAP system consists of:
 
 ### Creating Server Operations
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import ServerOperationsFactory
 from flext_cli import u
 from flext_core import FlextSettings
@@ -94,8 +96,8 @@ factory = ServerOperationsFactory()
 ops_result = factory.create_from_server_type("openldap2")
 if ops_result.success:
     ops = ops_result.unwrap()
-    u.Cli.print(f"ACL format: {ops.get_acl_format()}")
-    u.Cli.print(f"Schema DN: {ops.get_schema_dn()}")
+    print(f"ACL format: {ops.get_acl_format()}")
+    print(f"Schema DN: {ops.get_schema_dn()}")
 
 
 # Method 2: Auto-detect from connection
@@ -104,7 +106,7 @@ def detect_and_create():
     ops_result = factory.create_from_connection(connection)
     if ops_result.success:
         ops = ops_result.unwrap()
-        u.Cli.print(f"Detected: {ops.server_type}")
+        print(f"Detected: {ops.server_type}")
 
 
 # Method 3: Detect from entries
@@ -116,26 +118,26 @@ ops_result = factory.create_from_entries(entries)
 
 ### Server-Specific Operations
 
-```python notest
+```python
 from flext_ldap import OpenLDAP2Operations, OracleOUDOperations
 
 # OpenLDAP 2.x operations
 openldap = OpenLDAP2Operations()
-u.Cli.print(f"Port: {openldap.get_default_port()}")
-u.Cli.print(f"Supports TLS: {openldap.supports_start_tls()}")
-u.Cli.print(f"ACL attribute: {openldap.get_acl_attribute_name()}")
+print(f"Port: {openldap.get_default_port()}")
+print(f"Supports TLS: {openldap.supports_start_tls()}")
+print(f"ACL attribute: {openldap.get_acl_attribute_name()}")
 
 # Oracle OUD operations
 oud = OracleOUDOperations()
-u.Cli.print(f"Privileges: {oud.get_oud_privileges()}")
-u.Cli.print(f"Replication: {oud.get_replication_mechanism()}")
+print(f"Privileges: {oud.get_oud_privileges()}")
+print(f"Replication: {oud.get_replication_mechanism()}")
 ```
 
 ## Universal API Methods
 
 ### 1. Get Detected Server Type
 
-```python notest
+```python
 from flext_ldap import ldap
 
 api = ldap()
@@ -145,34 +147,34 @@ api.connect()
 server_type_result = api.get_detected_server_type()
 if server_type_result.success:
     server_type = server_type_result.unwrap()
-    u.Cli.print(f"Connected to: {server_type}")
+    print(f"Connected to: {server_type}")
     # Output: "Connected to: openldap2" or "oud", "oid", etc.
 ```
 
 ### 2. Get Server Capabilities
 
-```python notest
+```python
 # Get comprehensive server capabilities
 caps_result = api.get_server_capabilities()
 if caps_result.success:
     caps = caps_result.unwrap()
 
-    u.Cli.print(f"Server type: {caps['server_type']}")
-    u.Cli.print(f"ACL format: {caps['acl_format']}")
-    u.Cli.print(f"ACL attribute: {caps['acl_attribute']}")
-    u.Cli.print(f"Schema DN: {caps['schema_dn']}")
-    u.Cli.print(f"Default port: {caps['default_port']}")
-    u.Cli.print(f"SSL port: {caps['default_ssl_port']}")
-    u.Cli.print(f"Supports START_TLS: {caps['supports_start_tls']}")
-    u.Cli.print(f"BIND mechanisms: {caps['bind_mechanisms']}")
-    u.Cli.print(f"Max page size: {caps['max_page_size']}")
-    u.Cli.print(f"Paged results: {caps['supports_paged_results']}")
-    u.Cli.print(f"VLV support: {caps['supports_vlv']}")
+    print(f"Server type: {caps['server_type']}")
+    print(f"ACL format: {caps['acl_format']}")
+    print(f"ACL attribute: {caps['acl_attribute']}")
+    print(f"Schema DN: {caps['schema_dn']}")
+    print(f"Default port: {caps['default_port']}")
+    print(f"SSL port: {caps['default_ssl_port']}")
+    print(f"Supports START_TLS: {caps['supports_start_tls']}")
+    print(f"BIND mechanisms: {caps['bind_mechanisms']}")
+    print(f"Max page size: {caps['max_page_size']}")
+    print(f"Paged results: {caps['supports_paged_results']}")
+    print(f"VLV support: {caps['supports_vlv']}")
 ```
 
 ### 3. Universal Search with Optimization
 
-```python notest
+```python
 # Universal search with automatic server-specific optimization
 result = api.search_universal(
     base_dn="ou=users,dc=example,dc=com",
@@ -183,14 +185,16 @@ result = api.search_universal(
 
 if result.success:
     entries = result.unwrap()
-    u.Cli.print(f"Found {len(entries)} entries")
+    print(f"Found {len(entries)} entries")
     for entry in entries:
-        u.Cli.print(f"DN: {entry.dn}")
+        print(f"DN: {entry.dn}")
 ```
 
 ### 4. Entry Normalization
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import FlextLdifModels
 
 # Normalize entry for current server
@@ -199,7 +203,7 @@ normalized_result = api.normalize_entry_for_server(entry)
 
 if normalized_result.success:
     normalized_entry = normalized_result.unwrap()
-    u.Cli.print("Entry normalized for current server")
+    print("Entry normalized for current server")
 
 # Normalize for specific target server
 normalized_result = api.normalize_entry_for_server(entry, target_server_type="oud")
@@ -207,7 +211,9 @@ normalized_result = api.normalize_entry_for_server(entry, target_server_type="ou
 
 ### 5. Entry Conversion Between Servers
 
-```python notest
+```python
+from __future__ import annotations
+
 # Convert entry from OpenLDAP 1.x to OpenLDAP 2.x
 openldap1_entry: FlextLdifModels.Entry = ...  # Entry from OpenLDAP 1.x
 
@@ -227,46 +233,52 @@ if convert_result.success:
 
 ### 6. Server Type Detection
 
-```python notest
+```python
+from __future__ import annotations
+
 # Detect server type from entry attributes
 unknown_entry: FlextLdifModels.Entry = ...  # Entry from unknown source
 
 detection_result = api.detect_entry_server_type(unknown_entry)
 if detection_result.success:
     detected_type = detection_result.unwrap()
-    u.Cli.print(f"Entry originated from: {detected_type}")
+    print(f"Entry originated from: {detected_type}")
     # Output: "openldap2", "oud", "oid", etc.
 ```
 
 ### 7. Entry Validation
 
-```python notest
+```python
+from __future__ import annotations
+
 # Validate entry for target server
 entry: FlextLdifModels.Entry = ...
 
 validation_result = api.validate_entry_for_server(entry, "oud")
 if validation_result.success and validation_result.unwrap():
-    u.Cli.print("Entry is compatible with Oracle OUD")
+    print("Entry is compatible with Oracle OUD")
 else:
-    u.Cli.print(f"Validation failed: {validation_result.error}")
+    print(f"Validation failed: {validation_result.error}")
 ```
 
 ### 8. Server-Specific Attributes
 
-```python notest
+```python
 # Get server-specific attribute information
 attrs_result = api.get_server_specific_attributes("oid")
 if attrs_result.success:
     attrs = attrs_result.unwrap()
-    u.Cli.print(f"Required attributes: {attrs.get('required_attributes', [])}")
-    u.Cli.print(f"Optional attributes: {attrs.get('optional_attributes', [])}")
+    print(f"Required attributes: {attrs.get('required_attributes', [])}")
+    print(f"Optional attributes: {attrs.get('optional_attributes', [])}")
 ```
 
 ## Entry Conversion Examples
 
 ### OpenLDAP 1.x → OpenLDAP 2.x Migration
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import ldap
 from flext_ldif import ldif
 
@@ -276,7 +288,7 @@ def migrate_openldap1_to_openldap2():
         parse_result = ldif.parse_file("openldap1_backup.ldif")
 
     if parse_result.failure:
-        u.Cli.print(f"Parse failed: {parse_result.error}")
+        print(f"Parse failed: {parse_result.error}")
         return
 
     openldap1_entries = parse_result.unwrap()
@@ -293,12 +305,12 @@ def migrate_openldap1_to_openldap2():
         if convert_result.success:
             openldap2_entries.append(convert_result.unwrap())
         else:
-            u.Cli.print(f"Conversion failed for {entry.dn}: {convert_result.error}")
+            print(f"Conversion failed for {entry.dn}: {convert_result.error}")
 
     # Write converted entries to new LDIF
     write_result = ldif.write_file(openldap2_entries, "openldap2_converted.ldif")
     if write_result.success:
-        u.Cli.print(f"Successfully converted {len(openldap2_entries)} entries")
+        print(f"Successfully converted {len(openldap2_entries)} entries")
 ```
 
 ### Oracle OID → Oracle OUD Migration
@@ -329,7 +341,7 @@ def migrate_oid_to_oud():
             if validation_result.success and validation_result.unwrap():
                 oud_entries.append(oud_entry)
             else:
-                u.Cli.print(f"Validation failed: {validation_result.error}")
+                print(f"Validation failed: {validation_result.error}")
 
     # Export to OUD-compatible LDIF
     ldif.write_file(oud_entries, "oud_import.ldif")
@@ -339,7 +351,9 @@ def migrate_oid_to_oud():
 
 ### Scenario 1: Multi-Server Environment
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import ldap, ServerOperationsFactory
 
 
@@ -406,7 +420,7 @@ def progressive_migration():
             detected_type = detection_result.unwrap()
             server_types[detected_type] = server_types.get(detected_type, 0) + 1
 
-    u.Cli.print(f"Entry distribution: {server_types}")
+    print(f"Entry distribution: {server_types}")
 
     # Phase 2: Convert in batches
     target_type = "oud"
@@ -433,21 +447,21 @@ def progressive_migration():
                 converted_batch.append(entry)
 
         converted_batches.append(converted_batch)
-        u.Cli.print(f"Converted batch {i // batch_size + 1}")
+        print(f"Converted batch {i // batch_size + 1}")
 
     # Phase 3: Validate all entries
     for batch in converted_batches:
         for entry in batch:
             validation_result = api.validate_entry_for_server(entry, target_type)
             if validation_result.failure or not validation_result.unwrap():
-                u.Cli.print(f"Validation failed for {entry.dn}")
+                print(f"Validation failed for {entry.dn}")
 ```
 
 ## Best Practices
 
 ### 1. Always Detect Server Type
 
-```python notest
+```python
 # Good: Detect before operations
 server_type_result = api.get_detected_server_type()
 if server_type_result.success:
@@ -457,7 +471,7 @@ if server_type_result.success:
 
 ### 2. Validate After Conversion
 
-```python notest
+```python
 # Good: Validate converted entries
 convert_result = api.convert_entry_between_servers(...)
 if convert_result.success:
@@ -471,7 +485,7 @@ if convert_result.success:
 
 ### 3. Use Server Capabilities
 
-```python notest
+```python
 # Good: Check capabilities before operations
 caps_result = api.get_server_capabilities()
 if caps_result.success:
@@ -484,7 +498,7 @@ if caps_result.success:
 
 ### 4. Handle Servers Gracefully
 
-```python notest
+```python
 # Good: Use servers system for server-specific behavior
 from flext_ldap import FlextLdapEntryAdapter
 
@@ -500,7 +514,7 @@ normalized = adapter.normalize_entry_for_server(entry, "oud")
 
 If server type is not detected:
 
-```python notest
+```python
 # Manual server type specification
 from flext_ldap import ServerOperationsFactory
 
@@ -512,23 +526,23 @@ ops_result = factory.create_from_server_type("openldap2")
 
 If conversion fails, check entry compatibility:
 
-```python notest
+```python
 # Validate source entry
 validation_result = api.validate_entry_for_server(entry, source_type)
 if validation_result.failure:
-    u.Cli.print(f"Source entry invalid: {validation_result.error}")
+    print(f"Source entry invalid: {validation_result.error}")
 ```
 
 ### ACL Translation Issues
 
 Different servers have different ACL formats. Check server capabilities:
 
-```python notest
+```python
 caps_result = api.get_server_capabilities()
 if caps_result.success:
     caps = caps_result.unwrap()
-    u.Cli.print(f"ACL format: {caps['acl_format']}")
-    u.Cli.print(f"ACL attribute: {caps['acl_attribute']}")
+    print(f"ACL format: {caps['acl_format']}")
+    print(f"ACL attribute: {caps['acl_attribute']}")
 ```
 
 ## Contributing

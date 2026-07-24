@@ -133,7 +133,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 1. **Ensure CA certificate is installed**
 1. **Configure certificate verification settings**
 
-```python notest
+```python
 from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
@@ -168,7 +168,9 @@ AuthenticationError: Authentication failed: Invalid credentials
 
 **Diagnosis:**
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap.api import ldap
 
 
@@ -177,15 +179,15 @@ def diagnose_auth():
 
     # Test connection without authentication
     connection_result = api.test_connection()
-    u.Cli.print(f"Connection: {connection_result.success}")
+    print(f"Connection: {connection_result.success}")
 
     # Test with known REDACTED_LDAP_BIND_PASSWORD credentials
     auth_result = api.authenticate_user(
         "REDACTED_LDAP_BIND_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD-password"
     )
-    u.Cli.print(f"Auth result: {auth_result.success}")
+    print(f"Auth result: {auth_result.success}")
     if auth_result.failure:
-        u.Cli.print(f"Error: {auth_result.error}")
+        print(f"Error: {auth_result.error}")
 
 
 run(diagnose_auth())
@@ -235,7 +237,7 @@ def validate_dn(dn_string: str) -> bool:
         dn = m.Ldif.DN(value=dn_string)
         return True
     except ValueError as e:
-        u.Cli.print(f"Invalid DN: {e}")
+        print(f"Invalid DN: {e}")
         return False
 
 
@@ -248,7 +250,7 @@ test_dns = [
 
 for test_dn in test_dns:
     result = validate_dn(test_dn)
-    u.Cli.print(f"{test_dn}: {'✅' if result else '❌'}")
+    print(f"{test_dn}: {'✅' if result else '❌'}")
 ```
 
 ______________________________________________________________________
@@ -287,7 +289,9 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 
 **Filter Validation:**
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import m, c
 
 
@@ -297,7 +301,7 @@ def validate_filter(filter_string: str) -> bool:
         ldap_filter = FlextLdapModels.Values.Filter(expression=filter_string)
         return True
     except ValueError as e:
-        u.Cli.print(f"Invalid filter: {e}")
+        print(f"Invalid filter: {e}")
         return False
 
 
@@ -311,7 +315,7 @@ test_filters = [
 
 for test_filter in test_filters:
     result = validate_filter(test_filter)
-    u.Cli.print(f"{test_filter}: {'✅' if result else '❌'}")
+    print(f"{test_filter}: {'✅' if result else '❌'}")
 ```
 
 ### Search Base DN Not Found
@@ -324,7 +328,9 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 
 **Diagnosis:**
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -343,11 +349,11 @@ def diagnose_base_dn():
     result = api.search_entries(search_request)
     if result.success:
         entries = result.unwrap()
-        u.Cli.print("Available organizational units:")
+        print("Available organizational units:")
         for entry in entries:
-            u.Cli.print(f"  {entry.dn}")
+            print(f"  {entry.dn}")
     else:
-        u.Cli.print(f"Root search failed: {result.error}")
+        print(f"Root search failed: {result.error}")
 
 
 run(diagnose_base_dn())
@@ -366,7 +372,9 @@ ______________________________________________________________________
 
 **Diagnosis:**
 
-```python notest
+```python
+from __future__ import annotations
+
 import time
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -413,9 +421,9 @@ def diagnose_performance():
 
         if result.success:
             count = len(result.unwrap())
-            u.Cli.print(f"{test_case['name']}: {count} results in {duration:.2f}s")
+            print(f"{test_case['name']}: {count} results in {duration:.2f}s")
         else:
-            u.Cli.print(f"{test_case['name']}: Failed - {result.error}")
+            print(f"{test_case['name']}: Failed - {result.error}")
 
 
 run(diagnose_performance())
@@ -425,7 +433,7 @@ run(diagnose_performance())
 
 1. **Use specific base DNs:**
 
-```python notest
+```python
 # ❌ Inefficient - searches entire directory
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="dc=example,dc=com", filter_str="(uid=john.doe)", scope="subtree"
@@ -452,7 +460,7 @@ filter_str = "(&(objectClass=person)(uid=john.doe))"
 
 1. **Limit result sets:**
 
-```python notest
+```python
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com",
     filter_str="(objectClass=person)",
@@ -473,20 +481,20 @@ ConnectionError: Connection pool exhausted
 
 **Diagnosis:**
 
-```python notest
+```python
 # Check connection pool configuration
 from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings.from_env()
-u.Cli.print(f"Pool size: {settings.pool_size}")
-u.Cli.print(f"Connection timeout: {settings.connection_timeout}")
+print(f"Pool size: {settings.pool_size}")
+print(f"Connection timeout: {settings.connection_timeout}")
 ```
 
 **Solutions:**
 
 1. **Increase pool size:**
 
-```python notest
+```python
 settings = FlextLdapSettings(
     host="ldap.example.com",
     pool_size=20,  # Increase from default 5
@@ -522,7 +530,9 @@ ______________________________________________________________________
 
 **Diagnosis:**
 
-```python notest
+```python
+from __future__ import annotations
+
 import os
 from Flext_ldap import FlextLdapSettings
 
@@ -531,12 +541,12 @@ def diagnose_config():
     """Check configuration values."""
     settings = FlextLdapSettings.from_env()
 
-    u.Cli.print("LDAP Configuration:")
-    u.Cli.print(f"  Host: {settings.host}")
-    u.Cli.print(f"  Port: {settings.port}")
-    u.Cli.print(f"  Use SSL: {settings.use_ssl}")
-    u.Cli.print(f"  Bind DN: {settings.bind_dn}")
-    u.Cli.print(f"  Base DN: {settings.base_dn}")
+    print("LDAP Configuration:")
+    print(f"  Host: {settings.host}")
+    print(f"  Port: {settings.port}")
+    print(f"  Use SSL: {settings.use_ssl}")
+    print(f"  Bind DN: {settings.bind_dn}")
+    print(f"  Base DN: {settings.base_dn}")
 
     # Check environment variables
     env_vars = [
@@ -547,12 +557,12 @@ def diagnose_config():
         "FLEXT_LDAP_BASE_DN",
     ]
 
-    u.Cli.print("\nEnvironment Variables:")
+    print("\nEnvironment Variables:")
     for var in env_vars:
         value = os.getenv(var)
         if var == "FLEXT_LDAP_BIND_PASSWORD":
             value = "***" if value else None
-        u.Cli.print(f"  {var}: {value}")
+        print(f"  {var}: {value}")
 
 
 diagnose_config()
@@ -602,36 +612,36 @@ ______________________________________________________________________
 
 **Symptom:**
 
-```python notest
+```python
 ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
 ```
 
 **Diagnosis:**
 
-```python notest
+```python
 # Check package installation
 import pkg_resources
 
 try:
     version = pkg_resources.get_distribution("flext-ldap").version
-    u.Cli.print(f"flext-ldap version: {version}")
+    print(f"flext-ldap version: {version}")
 except pkg_resources.DistributionNotFound:
-    u.Cli.print("flext-ldap not installed")
+    print("flext-ldap not installed")
 
 # Check available imports
 try:
     from flext_ldap.api import ldap
 
-    u.Cli.print("✅ flext_ldap.api.ldap available")
+    print("✅ flext_ldap.api.ldap available")
 except ImportError as e:
-    u.Cli.print(f"❌ Import error: {e}")
+    print(f"❌ Import error: {e}")
 
 try:
     from flext_ldap import FlextLdapEntities
 
-    u.Cli.print("✅ FlextLdapEntities available")
+    print("✅ FlextLdapEntities available")
 except ImportError as e:
-    u.Cli.print(f"❌ Import error: {e}")
+    print(f"❌ Import error: {e}")
 ```
 
 ### Test Environment Setup
@@ -677,7 +687,9 @@ ______________________________________________________________________
 
 ### r Error Handling
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap.api import ldap
 
 
@@ -690,19 +702,19 @@ def handle_errors_properly():
 
     if result.success:
         user = result.unwrap()
-        u.Cli.print(f"Success: {user.cn}")
+        print(f"Success: {user.cn}")
     else:
         # Extract error message
         error_msg = result.error
-        u.Cli.print(f"Error: {error_msg}")
+        print(f"Error: {error_msg}")
 
         # Handle specific error types
         if "Invalid credentials" in error_msg:
-            u.Cli.print("Suggestion: Check username and password")
+            print("Suggestion: Check username and password")
         elif "Connection refused" in error_msg:
-            u.Cli.print("Suggestion: Check LDAP server status")
+            print("Suggestion: Check LDAP server status")
         elif "No such t.JsonValue" in error_msg:
-            u.Cli.print("Suggestion: Verify user exists in directory")
+            print("Suggestion: Verify user exists in directory")
 
 
 run(handle_errors_properly())
@@ -714,7 +726,7 @@ ______________________________________________________________________
 
 ### Enable Debug Logging
 
-```python notest
+```python
 from flext_cli import u
 from flext_core import FlextSettings
 
@@ -742,7 +754,9 @@ ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=exam
 
 ### Performance Profiling
 
-```python notest
+```python
+from __future__ import annotations
+
 import cProfile
 import pstats
 from flext_ldap import FlextLdapEntities
@@ -766,7 +780,7 @@ def profile_ldap_operations():
     for _ in range(10):
         result = api.search_entries(search_request)
         if result.failure:
-            u.Cli.print(f"Search failed: {result.error}")
+            print(f"Search failed: {result.error}")
 
 
 def run_profiling():
@@ -820,7 +834,9 @@ When reporting issues, include:
 
 ### Diagnostic Information Collection
 
-```python notest
+```python
+from __future__ import annotations
+
 import sys
 import pkg_resources
 from Flext_ldap import FlextLdapSettings
@@ -828,31 +844,31 @@ from Flext_ldap import FlextLdapSettings
 
 def collect_diagnostic_info():
     """Collect diagnostic information for bug reports."""
-    u.Cli.print("=== FLEXT-LDAP Diagnostic Information ===")
+    print("=== FLEXT-LDAP Diagnostic Information ===")
 
     # System information
-    u.Cli.print(f"Python version: {sys.version}")
-    u.Cli.print(f"Platform: {sys.platform}")
+    print(f"Python version: {sys.version}")
+    print(f"Platform: {sys.platform}")
 
     # Package versions
     packages = ["flext-ldap", "flext-core", "ldap3", "pydantic"]
     for package in packages:
         try:
             version = pkg_resources.get_distribution(package).version
-            u.Cli.print(f"{package}: {version}")
+            print(f"{package}: {version}")
         except pkg_resources.DistributionNotFound:
-            u.Cli.print(f"{package}: Not installed")
+            print(f"{package}: Not installed")
 
     # Configuration (sanitized)
     try:
         settings = FlextLdapSettings.from_env()
-        u.Cli.print(f"LDAP Host: {settings.host}")
-        u.Cli.print(f"LDAP Port: {settings.port}")
-        u.Cli.print(f"Use SSL: {settings.use_ssl}")
-        u.Cli.print(f"Base DN: {settings.base_dn}")
-        u.Cli.print("Bind credentials: [CONFIGURED]")
+        print(f"LDAP Host: {settings.host}")
+        print(f"LDAP Port: {settings.port}")
+        print(f"Use SSL: {settings.use_ssl}")
+        print(f"Base DN: {settings.base_dn}")
+        print("Bind credentials: [CONFIGURED]")
     except Exception as e:
-        u.Cli.print(f"Configuration error: {e}")
+        print(f"Configuration error: {e}")
 
 
 collect_diagnostic_info()

@@ -86,7 +86,9 @@ ______________________________________________________________________
 
 FLEXT-LDAP builds on established FLEXT foundation patterns:
 
-```python notest
+```python
+from __future__ import annotations
+
 # FLEXT-Core integration
 from flext_cli import u
 from flext_core import FlextSettings
@@ -127,7 +129,9 @@ class UserService:
 
 ### Configuration Management
 
-```python notest
+```python
+from __future__ import annotations
+
 # Environment-based configuration following FLEXT patterns
 from Flext_ldap import FlextLdapSettings
 from pydantic import BaseSettings
@@ -171,7 +175,9 @@ ______________________________________________________________________
 
 ### API Endpoints with LDAP Authentication
 
-```python notest
+```python
+from __future__ import annotations
+
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from flext_ldap import FlextLdapEntities
@@ -276,7 +282,9 @@ ______________________________________________________________________
 
 ### Django Authentication Backend
 
-```python notest
+```python
+from __future__ import annotations
+
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 from flext_ldap.api import ldap
@@ -348,7 +356,9 @@ AUTHENTICATION_BACKENDS = [
 
 ### Django User Sync Management Command
 
-```python notest
+```python
+from __future__ import annotations
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from flext_ldap import FlextLdapEntities
@@ -450,7 +460,9 @@ ______________________________________________________________________
 
 ### Flask Application with LDAP Authentication
 
-```python notest
+```python
+from __future__ import annotations
+
 from flask import Flask, request, jsonify, g
 from functools import wraps
 from flext_ldap import FlextLdapEntities
@@ -719,7 +731,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers detection:
 
-```python notest
+```python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 import ldap3
@@ -743,15 +755,17 @@ for ldap3_entry in connection.entries:
     if result.success:
         ldif_entry = result.unwrap()
         flextldif_entries.append(ldif_entry)
-        u.Cli.print(f"DN: {ldif_entry.dn}")
-        u.Cli.print(f"Attributes: {ldif_entry.attributes.attributes}")
+        print(f"DN: {ldif_entry.dn}")
+        print(f"Attributes: {ldif_entry.attributes.attributes}")
 ```
 
 ### LDIF File Processing
 
 Process LDIF files with ldif integration:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import OpenLDAP2Operations
 
@@ -764,11 +778,11 @@ def process_ldif_file():
     # Load LDIF file
     result = adapter.convert_ldif_file_to_entries("users.ldif")
     if result.failure:
-        u.Cli.print(f"Failed to load LDIF: {result.error}")
+        print(f"Failed to load LDIF: {result.error}")
         return
 
     entries = result.unwrap()
-    u.Cli.print(f"Loaded {len(entries)} entries from LDIF")
+    print(f"Loaded {len(entries)} entries from LDIF")
 
     # Connect to LDAP server
     connection = ldap3.Connection(
@@ -782,9 +796,9 @@ def process_ldif_file():
     for entry in entries:
         add_result = ops.add_entry(connection, entry)
         if add_result.success:
-            u.Cli.print(f"Added: {entry.dn}")
+            print(f"Added: {entry.dn}")
         else:
-            u.Cli.print(f"Failed to add {entry.dn}: {add_result.error}")
+            print(f"Failed to add {entry.dn}: {add_result.error}")
 
 
 run(process_ldif_file())
@@ -794,7 +808,9 @@ run(process_ldif_file())
 
 Export LDAP entries to LDIF format:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import OpenLDAP2Operations
 import ldap3
@@ -823,15 +839,15 @@ def export_to_ldif():
 
     if search_result.success:
         entries = search_result.unwrap()
-        u.Cli.print(f"Found {len(entries)} entries")
+        print(f"Found {len(entries)} entries")
 
         # Write to LDIF file
         write_result = adapter.write_entries_to_ldif_file(entries, "export.ldif")
 
         if write_result.success:
-            u.Cli.print("Export completed successfully")
+            print("Export completed successfully")
         else:
-            u.Cli.print(f"Export failed: {write_result.error}")
+            print(f"Export failed: {write_result.error}")
 
 
 run(export_to_ldif())
@@ -841,7 +857,9 @@ run(export_to_ldif())
 
 Use ldif servers system for automatic server detection:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
@@ -875,7 +893,7 @@ def detect_and_configure():
     server_type_result = servers.detect_server_type_from_entries(entries)
     if server_type_result.success:
         server_type = server_type_result.unwrap()
-        u.Cli.print(f"Detected server: {server_type}")
+        print(f"Detected server: {server_type}")
 
         # Get server-specific configuration
         acl_attr_result = servers.get_acl_attribute_name(server_type)
@@ -885,9 +903,9 @@ def detect_and_configure():
         if all(
             r.success for r in [acl_attr_result, schema_dn_result, max_page_size_result]
         ):
-            u.Cli.print(f"ACL attribute: {acl_attr_result.unwrap()}")
-            u.Cli.print(f"Schema DN: {schema_dn_result.unwrap()}")
-            u.Cli.print(f"Max page size: {max_page_size_result.unwrap()}")
+            print(f"ACL attribute: {acl_attr_result.unwrap()}")
+            print(f"Schema DN: {schema_dn_result.unwrap()}")
+            print(f"Max page size: {max_page_size_result.unwrap()}")
 
         # Select appropriate operations
         if server_type == "openldap2":
@@ -911,7 +929,9 @@ run(detect_and_configure())
 
 Complete example combining ldif with server operations:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldap import FlextLdapServersAdapter
 from flext_ldap import (
@@ -1026,7 +1046,7 @@ def main():
     )
 
     server_type = processor.connect()
-    u.Cli.print(f"Connected to {server_type} server")
+    print(f"Connected to {server_type} server")
 
     # Export to LDIF
     count = processor.search_and_export(
@@ -1034,13 +1054,13 @@ def main():
         filter_str="(objectClass=person)",
         output_file="users_export.ldif",
     )
-    u.Cli.print(f"Exported {count} entries")
+    print(f"Exported {count} entries")
 
     # Import from LDIF
     imported = processor.import_ldif(
         ldif_file="users_import.ldif", base_dn="ou=users,dc=example,dc=com"
     )
-    u.Cli.print(f"Imported {imported} entries")
+    print(f"Imported {imported} entries")
 
 
 run(main())

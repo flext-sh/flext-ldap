@@ -172,7 +172,9 @@ make clean-all     # Deep clean including venvs
 
 ### Railway-Oriented Programming
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_core import r, p
 
 
@@ -203,7 +205,9 @@ class MyService(s[None]):
 
 ### Pydantic v2 Models
 
-```python notest
+```python
+from __future__ import annotations
+
 from pydantic import BaseModel, PositiveInt
 
 

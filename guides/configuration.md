@@ -103,7 +103,7 @@ api:
 
 Configure FLEXT programmatically in your code:
 
-```python notest
+```python
 from flext_cli import u
 from flext_core import FlextSettings
 from flext_ldif import FlextLdifSettings
@@ -158,7 +158,7 @@ settings = FlextApiSettings(
 
 ### flext-auth Configuration
 
-```python notest
+```python
 from flext_auth import FlextAuthSettings
 
 settings = FlextAuthSettings(
@@ -211,7 +211,7 @@ api:
 
 All configuration is validated using Pydantic v2 models:
 
-```python notest
+```python
 from flext_cli import u
 from flext_core import FlextSettings
 
@@ -220,14 +220,14 @@ try:
         log_level="INVALID_LEVEL"  # This will raise ValidationError
     )
 except c.ValidationError as e:
-    u.Cli.print(f"Configuration error: {e}")
+    print(f"Configuration error: {e}")
 ```
 
 ## Configuration Inheritance
 
 FLEXT supports configuration inheritance for complex setups:
 
-```python notest
+```python
 from flext_cli import u
 from flext_core import FlextSettings
 
@@ -236,7 +236,7 @@ base_config = FlextSettings(log_level="INFO", environment="production")
 
 # Extended configuration
 extended_config = FlextSettings(
-    **base_config.dict(),
+    **base_config.model_dump(),
     debug=True,  # Override for development
     custom_setting="value",
 )
@@ -254,7 +254,9 @@ export FLEXT_API_KEY=your_api_key
 
 ### 2. Validate Configuration Early
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_cli import u
 from flext_core import FlextSettings
 
@@ -264,7 +266,7 @@ def main():
     settings = FlextSettings()
 
     if not settings.is_valid():
-        u.Cli.print("Invalid configuration")
+        print("Invalid configuration")
         return 1
 
     # Continue with application logic
@@ -273,7 +275,9 @@ def main():
 
 ### 3. Use Configuration Classes
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_cli import u
 from flext_core import FlextSettings
 
@@ -292,7 +296,10 @@ class MyAppConfig(FlextSettings):
 
 ### 4. Document Configuration Options
 
-```python notest
+```python
+from __future__ import annotations
+
+
 class FlextLdifSettings(m.BaseModel):
     """Configuration for LDIF processing."""
 
@@ -329,7 +336,7 @@ class FlextLdifSettings(m.BaseModel):
 
 ### Debug Configuration
 
-```python notest
+```python
 from flext_cli import u
 from flext_core import FlextSettings
 
@@ -337,20 +344,22 @@ from flext_core import FlextSettings
 settings = FlextSettings(debug=True)
 
 # Print configuration
-u.Cli.print(settings.dict())
+print(settings.model_dump())
 
 # Validate configuration
 if settings.is_valid():
-    u.Cli.print("Configuration is valid")
+    print("Configuration is valid")
 else:
-    u.Cli.print("Configuration has errors")
+    print("Configuration has errors")
 ```
 
 ## Examples
 
 ### Complete Configuration Example
 
-```python notest
+```python
+from __future__ import annotations
+
 #!/usr/bin/env python3
 """Complete FLEXT configuration example."""
 
@@ -378,10 +387,10 @@ def main():
         timeout=int(os.getenv("FLEXT_API_TIMEOUT", "30")),
     )
 
-    u.Cli.print("Configuration loaded successfully")
-    u.Cli.print(f"Log level: {settings.log_level}")
-    u.Cli.print(f"LDIF batch size: {ldif_config.batch_size}")
-    u.Cli.print(f"API base URL: {api_config.base_url}")
+    print("Configuration loaded successfully")
+    print(f"Log level: {settings.log_level}")
+    print(f"LDIF batch size: {ldif_config.batch_size}")
+    print(f"API base URL: {api_config.base_url}")
 
 
 if __name__ == "__main__":

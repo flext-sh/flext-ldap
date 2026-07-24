@@ -30,7 +30,7 @@ Complete API reference for flext-ldap v0.12.0-dev, covering all public interface
 
 **ldap** - Main API facade
 
-```python notest
+```python
 from flext_ldap import ldap
 
 api = ldap()
@@ -79,7 +79,7 @@ result = api.search_entries(search_request)
 
 ### Import Patterns
 
-```python notest
+```python
 # Public API (recommended)
 from flext_ldap import (
     ldap,  # Main API
@@ -99,7 +99,7 @@ from flext_ldap import FlextLdapEntryAdapter
 
 **Search**:
 
-```python notest
+```python
 api = ldap()
 search_request = FlextLdapModels.SearchRequest(
     base_dn="dc=example,dc=com", filter_str="(objectClass=person)"
@@ -109,14 +109,14 @@ result = api.search_entries(search_request)
 
 **Authentication**:
 
-```python notest
+```python
 auth = FlextLdapClients.Authentication()
 result = auth.bind(connection, dn, password)
 ```
 
 **ACL Management**:
 
-```python notest
+```python
 acl_manager = FlextLdapAcl.Manager()
 result = acl_manager.get_acls(connection, dn, server_type)
 ```
@@ -140,7 +140,7 @@ result = acl_manager.get_acls(connection, dn, server_type)
 
 All operations return `r[T]` from flext-core:
 
-```python notest
+```python
 result = api.search_entries(request)
 
 # Success path

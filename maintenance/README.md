@@ -556,7 +556,9 @@ python docs/maintenance/audit.py --rebuild-db
 
 Extend the system with custom validation:
 
-```python notest
+```python
+from __future__ import annotations
+
 # docs/maintenance/custom_validators.py
 from docs import BaseValidator
 

@@ -743,7 +743,7 @@ ______________________________________________________________________
 
 ### Pattern 1: Basic ldap Usage
 
-```python notest
+```python
 from flext_ldap import ldap
 from flext_ldap import FlextLdapSettings
 
@@ -758,7 +758,7 @@ api = ldap()
 # Connect
 result = api.connect()
 if result.is_failure:
-    u.Cli.print(f"Connection failed: {result.error}")
+    print(f"Connection failed: {result.error}")
     return
 
 # Use API
@@ -770,7 +770,9 @@ api.unbind()
 
 ### Pattern 2: Context Manager
 
-```python notest
+```python
+from __future__ import annotations
+
 from contextlib import contextmanager
 from flext_ldap import ldap
 
@@ -794,7 +796,9 @@ with ldap_connection() as api:
 
 ### Pattern 3: r Error Handling
 
-```python notest
+```python
+from __future__ import annotations
+
 # Pattern 1: Check before unwrap
 result = api.search(...)
 if result.is_failure:
@@ -816,7 +820,7 @@ def process():
 
 ### Pattern 4: Validation Before Operations
 
-```python notest
+```python
 from flext_ldap import FlextLdapValidations
 
 # Validate DN

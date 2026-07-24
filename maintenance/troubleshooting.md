@@ -237,7 +237,7 @@ audit:
 
 **Solutions:**
 
-```python notest
+```python
 # Process files individually
 for file_path in file_list:
     result = auditor.audit_file(file_path)
@@ -323,7 +323,9 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 ````text
 # Manually specify language
-```python notest
+```python
+from __future__ import annotations
+
 def example():
     pass
 ```
@@ -414,7 +416,7 @@ git remote -v
 
 **Solutions:**
 
-```python notest
+```python
 # Process files in batches
 batch_size = 10
 for i in range(0, len(file_list), batch_size):
@@ -464,7 +466,9 @@ logrotate -f /etc/logrotate.d/docs-maintenance
 
 **Validation:**
 
-```python notest
+```python
+from __future__ import annotations
+
 # Validate configuration
 python -c "
 import yaml
@@ -484,9 +488,9 @@ with open('docs/maintenance/settings.yaml') as f:
 
 v = Validator(schema)
 if v.validate(settings):
-    u.Cli.print('✅ Configuration is valid')
+    print('✅ Configuration is valid')
 else:
-    u.Cli.print('❌ Configuration errors:', v.errors)
+    print('❌ Configuration errors:', v.errors)
 "
 ```
 
@@ -629,7 +633,7 @@ python docs/maintenance/report.py --generate-dashboard --weekly-summary
 
 ### Enable Debug Logging
 
-```python notest
+```python
 # Add to scripts
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -640,7 +644,7 @@ export DOCS_MAINTENANCE_DEBUG=1
 
 ### Performance Profiling
 
-```python notest
+```python
 # Profile script execution
 python -m cProfile docs/maintenance/audit.py --comprehensive > audit_profile.txt
 
@@ -660,7 +664,7 @@ import psutil
 import os
 
 process = psutil.Process(os.getpid())
-u.Cli.print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")
+print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")
 ```
 
 ### Network Debugging
@@ -682,9 +686,9 @@ curl -H "User-Agent: Mozilla/5.0" https://example.com
 # Debug file operations
 import os
 
-u.Cli.print(f"Current directory: {os.getcwd()}")
-u.Cli.print(f"Docs directory exists: {os.path.exists('docs')}")
-u.Cli.print(f"Docs directory contents: {os.listdir('docs')}")
+print(f"Current directory: {os.getcwd()}")
+print(f"Docs directory exists: {os.path.exists('docs')}")
+print(f"Docs directory contents: {os.listdir('docs')}")
 ```
 
 ## Advanced Troubleshooting
