@@ -168,6 +168,30 @@ never allowed to hardcode, freeze, or implicitly assume the values that exist to
     works from the fact that you wrote it: a config edit that requires a reload/
     restart is NOT active until proven live, and effect is confirmed only by an
     independent run/session showing the new behavior (rule 1).
+25. **Short green checkpoints land immediately.** Complete one bounded stage at
+    a time, run every canonical gate for that stage with zero lint errors, then
+    commit explicit owned paths and fast-forward push immediately. Never
+    accumulate prolonged hypothesis loops, validated local WIP, red/partial
+    commits, or red/partial pushes. Workers push their branch but never merge,
+    release, deploy, or promote `main`; the orchestrator reviews and promotes.
+26. **Beads stays continuously current.** After every state-changing stage,
+    update the active Bead with current status, orientation, ownership metadata,
+    exact command evidence, commit SHA, push state, blocker, and next action.
+    Beads updates are part of the stage, not deferred handoff bookkeeping.
+27. **Heartbeat without interruption.** At least every five minutes, the
+    orchestrator publishes progress including agent table, epic evolution, live
+    Bead/lane, current gate, cleanliness, sync, blockers, and next action while
+    execution continues.
+28. **Critical decisions require confirmation.** Before destructive or
+    irreversible action, competing public-contract or architecture outcomes,
+    security/privacy choices, production/release/`main` promotion, authority
+    conflict, or material scope/acceptance change: stop, record the pending
+    decision, options, and consequences in the Bead, then ask the operator one
+    precise question. Never infer critical intent.
+29. **Ordinary uncertainty is evidence-resolved.** Do not interrupt execution
+    for routine implementation uncertainty. Inspect the canonical authority and
+    real consumer, choose the evidence-supported path, record it in the Bead,
+    and continue to the next green checkpoint.
 
 <!-- /UNIVERSAL-GOVERNANCE -->
 <!-- END AI-HUB MANAGED UNIVERSAL CORE -->
