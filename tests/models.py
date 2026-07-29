@@ -10,13 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
-from flext_tests import FlextTestsModels, r
+from typing import TYPE_CHECKING, override
 
 from flext_ldap import m
+from flext_tests import FlextTestsModels, r
 from tests.base import s
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests import p
 
 
 class TestsFlextLdapModels(m, FlextTestsModels):
@@ -43,14 +44,11 @@ class TestsFlextLdapModels(m, FlextTestsModels):
                 @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
                     )
 
 
 # Short aliases for tests
 m = TestsFlextLdapModels
 
-__all__: list[str] = [
-    "TestsFlextLdapModels",
-    "m",
-]
+__all__: list[str] = ["TestsFlextLdapModels", "m"]

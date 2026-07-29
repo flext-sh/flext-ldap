@@ -7,15 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import (
-    MutableMapping,
-)
-from pathlib import Path
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_ldap import c, m, p, t, u
 from flext_ldap.services.operations import FlextLdapOperations
 from flext_ldif import r
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+    from pathlib import Path
 
 
 class FlextLdapSync(FlextLdapOperations):
@@ -55,8 +55,7 @@ class FlextLdapSync(FlextLdapOperations):
 
     @staticmethod
     def _make_phase_progress_callback(
-        phase: str,
-        settings: m.Ldap.SyncPhaseConfig,
+        phase: str, settings: m.Ldap.SyncPhaseConfig
     ) -> t.Ldap.LdapProgressCallback | None:
         """Normalize configured callbacks to the single-phase protocol."""
         callback = settings.progress_callback
@@ -65,10 +64,7 @@ class FlextLdapSync(FlextLdapOperations):
         if FlextLdapSync.multi_phase_callback(callback):
 
             def progress_callback(
-                current: int,
-                total: int,
-                dn: str,
-                stats: p.Ldap.LdapBatchStats,
+                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats
             ) -> None:
                 callback(phase, current, total, dn, stats)
 
@@ -98,29 +94,25 @@ class FlextLdapSync(FlextLdapOperations):
         settings: m.Ldap.SyncPhaseConfig | None = None,
     ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially."""
-        sync_config = settings or m.Ldap.SyncPhaseConfig.model_validate({})
+        sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = u.now()
         phase_results: MutableMapping[str, m.Ldap.PhaseSyncResult] = {}
         overall_success = True
         for phase_name, phase_file in phase_files.items():
             if not phase_file.exists():
                 return r[m.Ldap.MultiPhaseSyncResult].fail(
-                    f"Phase file not found: {phase_file}",
+                    f"Phase file not found: {phase_file}"
                 )
             phase_result = self._process_single_phase(
-                phase_name,
-                phase_file,
-                sync_config,
+                phase_name, phase_file, sync_config
             )
             if phase_result.failure:
                 self.logger.error(
-                    "Phase sync failed",
-                    phase=phase_name,
-                    error=str(phase_result.error),
+                    "Phase sync failed", phase=phase_name, error=str(phase_result.error)
                 )
                 if sync_config.stop_on_error:
                     return r[m.Ldap.MultiPhaseSyncResult].fail(
-                        f"Phase '{phase_name}' failed: {phase_result.error}",
+                        f"Phase '{phase_name}' failed: {phase_result.error}"
                     )
                 overall_success = False
                 continue
@@ -136,16 +128,16 @@ class FlextLdapSync(FlextLdapOperations):
             if total_processed > 0
             else 0.0
         )
-        sync_result = m.Ldap.MultiPhaseSyncResult.model_validate({
-            "phase_results": phase_results,
-            "total_entries": total_entries,
-            "total_synced": total_synced,
-            "total_failed": total_failed,
-            "total_skipped": total_skipped,
-            "overall_success_rate": overall_success_rate,
-            "total_duration_seconds": (u.now() - start_time).total_seconds(),
-            "overall_success": overall_success,
-        })
+        sync_result = m.Ldap.MultiPhaseSyncResult(
+            phase_results=phase_results,
+            total_entries=total_entries,
+            total_synced=total_synced,
+            total_failed=total_failed,
+            total_skipped=total_skipped,
+            overall_success_rate=overall_success_rate,
+            total_duration_seconds=(u.now() - start_time).total_seconds(),
+            overall_success=overall_success,
+        )
         if not overall_success:
             return r[m.Ldap.MultiPhaseSyncResult].fail(
                 f"Multi-phase sync completed with failures: {total_failed} entries failed"
@@ -160,29 +152,28 @@ class FlextLdapSync(FlextLdapOperations):
         settings: m.Ldap.SyncPhaseConfig | None = None,
     ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Synchronize a single phase file into LDAP."""
-        sync_config = settings or m.Ldap.SyncPhaseConfig.model_validate({})
+        sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = u.now()
         parse_result = self._ldif.parse_ldif_file(
-            ldif_file_path,
-            server_type=sync_config.server_type,
+            ldif_file_path, server_type=sync_config.server_type
         )
         if parse_result.failure:
             error_msg = parse_result.error or "Unknown error"
             return r[m.Ldap.PhaseSyncResult].fail(
-                f"Failed to parse LDIF file: {error_msg}",
+                f"Failed to parse LDIF file: {error_msg}"
             )
         entries = list(parse_result.value.entries)
         if not entries:
             return r[m.Ldap.PhaseSyncResult].ok(
-                m.Ldap.PhaseSyncResult.model_validate({
-                    "phase_name": phase_name,
-                    "total_entries": 0,
-                    "synced": 0,
-                    "failed": 0,
-                    "skipped": 0,
-                    "duration_seconds": 0.0,
-                    "success_rate": 100.0,
-                }),
+                m.Ldap.PhaseSyncResult(
+                    phase_name=phase_name,
+                    total_entries=0,
+                    synced=0,
+                    failed=0,
+                    skipped=0,
+                    duration_seconds=0.0,
+                    success_rate=100.0,
+                )
             )
         single_phase_callback = self._prepare_phase_callback(phase_name, sync_config)
         batch_result = self.batch_upsert(
@@ -205,21 +196,19 @@ class FlextLdapSync(FlextLdapOperations):
             else 0.0
         )
         return r[m.Ldap.PhaseSyncResult].ok(
-            m.Ldap.PhaseSyncResult.model_validate({
-                "phase_name": phase_name,
-                "total_entries": len(entries),
-                "synced": batch_stats.synced,
-                "failed": batch_stats.failed,
-                "skipped": batch_stats.skipped,
-                "duration_seconds": duration,
-                "success_rate": success_rate,
-            }),
+            m.Ldap.PhaseSyncResult(
+                phase_name=phase_name,
+                total_entries=len(entries),
+                synced=batch_stats.synced,
+                failed=batch_stats.failed,
+                skipped=batch_stats.skipped,
+                duration_seconds=duration,
+                success_rate=success_rate,
+            )
         )
 
     def _prepare_phase_callback(
-        self,
-        phase_name: str,
-        settings: m.Ldap.SyncPhaseConfig,
+        self, phase_name: str, settings: m.Ldap.SyncPhaseConfig
     ) -> t.Ldap.LdapProgressCallback | None:
         """Prepare a phase-aware callback from the configured sync callback."""
         phase_callback = (
@@ -233,10 +222,7 @@ class FlextLdapSync(FlextLdapOperations):
         if FlextLdapSync.multi_phase_callback(phase_callback):
 
             def wrapped_callback(
-                current: int,
-                total: int,
-                dn: str,
-                stats: p.Ldap.LdapBatchStats,
+                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats
             ) -> None:
                 phase_callback(phase_name, current, total, dn, stats)
 
@@ -258,23 +244,20 @@ class FlextLdapSync(FlextLdapOperations):
         raise TypeError(msg)
 
     def _process_single_phase(
-        self,
-        phase_name: str,
-        ldif_path: Path,
-        settings: m.Ldap.SyncPhaseConfig,
+        self, phase_name: str, ldif_path: Path, settings: m.Ldap.SyncPhaseConfig
     ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Process one phase file with a callback normalized for that phase."""
         phase_callback = self._prepare_phase_callback(phase_name, settings)
         return self.sync_phase_entries(
             ldif_path,
             phase_name,
-            settings=m.Ldap.SyncPhaseConfig.model_validate({
-                "server_type": settings.server_type,
-                "progress_callback": phase_callback,
-                "retry_on_errors": settings.retry_on_errors,
-                "max_retries": settings.max_retries,
-                "stop_on_error": settings.stop_on_error,
-            }),
+            settings=m.Ldap.SyncPhaseConfig(
+                server_type=settings.server_type,
+                progress_callback=phase_callback,
+                retry_on_errors=settings.retry_on_errors,
+                max_retries=settings.max_retries,
+                stop_on_error=settings.stop_on_error,
+            ),
         )
 
 

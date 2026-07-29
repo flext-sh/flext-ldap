@@ -12,8 +12,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def extract_entry_attributes(
-        cls,
-        entry: p.Ldif.Entry,
+        cls, entry: p.Ldif.Entry
     ) -> t.MappingKV[str, t.StrSequence]:
         """Normalize entry attributes to the canonical LDAP comparison mapping."""
         attrs = entry.attributes
@@ -23,9 +22,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def find_existing_values(
-        cls,
-        attr_name: str,
-        existing_attrs: t.MappingKV[str, t.StrSequence],
+        cls, attr_name: str, existing_attrs: t.MappingKV[str, t.StrSequence]
     ) -> t.StrSequence | None:
         """Resolve attribute values by case-insensitive LDAP name matching."""
         normalized_target = cls.norm_str(attr_name, case="lower")
@@ -56,18 +53,11 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
                 continue
             processed.add(normalized_name)
             new_values = [value for value in raw_values if value]
-            existing_values = cls.find_existing_values(
-                attr_name,
-                existing_attrs,
-            )
-            existing_set = cls.normalize_value_set(
-                existing_values or [],
-            )
+            existing_values = cls.find_existing_values(attr_name, existing_attrs)
+            existing_set = cls.normalize_value_set(existing_values or [])
             new_set = cls.normalize_value_set(new_values)
             if existing_set != new_set:
-                changes[attr_name] = [
-                    (c.Ldap.ModifyOperation.REPLACE, new_values),
-                ]
+                changes[attr_name] = [(c.Ldap.ModifyOperation.REPLACE, new_values)]
         return changes, processed
 
     @classmethod
@@ -89,34 +79,26 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def compare_entries(
-        cls,
-        existing_entry: p.Ldif.Entry,
-        new_entry: p.Ldif.Entry,
+        cls, existing_entry: p.Ldif.Entry, new_entry: p.Ldif.Entry
     ) -> p.Result[t.Ldap.OperationChanges]:
         """Compare canonical LDIF entries and return LDAP modify operations."""
-        existing_attrs = cls.extract_entry_attributes(
-            existing_entry,
-        )
+        existing_attrs = cls.extract_entry_attributes(existing_entry)
         if not existing_attrs:
             return r[t.Ldap.OperationChanges].fail(
-                "Existing entry has no attributes to compare",
+                "Existing entry has no attributes to compare"
             )
         new_attrs = cls.extract_entry_attributes(new_entry)
         if not new_attrs:
             return r[t.Ldap.OperationChanges].fail(
-                "New entry has no attributes to compare",
+                "New entry has no attributes to compare"
             )
         changes, processed = cls.process_new_attributes(
-            new_attrs,
-            existing_attrs,
-            c.Ldif.OperationalAttributes.IGNORE_SET,
+            new_attrs, existing_attrs, c.Ldif.OperationalAttributes.IGNORE_SET
         )
         changes.update(
             cls.process_deleted_attributes(
-                existing_attrs,
-                c.Ldif.OperationalAttributes.IGNORE_SET,
-                processed,
-            ),
+                existing_attrs, c.Ldif.OperationalAttributes.IGNORE_SET, processed
+            )
         )
         return r[t.Ldap.OperationChanges].ok(changes)
 

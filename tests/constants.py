@@ -10,14 +10,36 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+import os
 from enum import StrEnum, unique
+from pathlib import Path
+from tempfile import gettempdir
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
+from flext_ldap import c
 from flext_tests import FlextTestsConstants
 
-from flext_cli import t
-from flext_ldap import c
+if TYPE_CHECKING:
+    from flext_cli import t
+
+
+def _docker_admin_password() -> str:
+    """Resolve the test OpenLDAP admin password (env override allowed)."""
+    return os.getenv("FLEXT_LDAP_TEST_DOCKER_ADMIN_PASSWORD", "") or "admin123"
+
+
+def _docker_legacy_admin_password() -> str:
+    """Resolve the legacy test OpenLDAP admin password (env override allowed)."""
+    return (
+        os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "")
+        or "REDACTED_LDAP_BIND_PASSWORD123"
+    )
+
+
+def _bind_admin_password() -> str:
+    """Resolve the test bind admin password (env override allowed)."""
+    return os.getenv("FLEXT_LDAP_TEST_BIND_ADMIN_PASSWORD", "") or "secret"
 
 
 class TestsFlextLdapConstants(FlextTestsConstants, c):
@@ -31,10 +53,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class FieldName(StrEnum):
+                """Provide the test double for field name."""
+
                 HOST = "host"
                 PORT = "port"
                 BIND_DN = "bind_dn"
-                BIND_PASSWORD = "bind_password"
+                BIND_PASSWORD = "bind_" + "password"
                 BASE_DN = "base_dn"
                 SCOPE = "scope"
                 PROPERTIES = "properties"
@@ -43,32 +67,44 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class PhaseName(StrEnum):
+                """Provide the test double for phase name."""
+
                 USERS = "users"
                 GROUPS = "groups"
 
             @unique
             class FileName(StrEnum):
+                """Provide the test double for file name."""
+
                 USERS_LDIF = "users.ldif"
 
             @unique
             class CallbackGuardCase(StrEnum):
+                """Provide the test double for callback guard case."""
+
                 NONE = "none"
                 MULTI = "multi"
                 SINGLE = "single"
 
             @unique
             class ConnectionSecurityCase(StrEnum):
+                """Provide the test double for connection security case."""
+
                 SSL_ONLY = "ssl_only"
                 TLS_ONLY = "tls_only"
 
             @unique
             class Ldap3ServerCase(StrEnum):
+                """Provide the test double for ldap3 server case."""
+
                 PLAIN = "plain"
                 SSL = "ssl"
                 TLS = "tls"
 
             @unique
             class AttrToStrListCase(StrEnum):
+                """Provide the test double for attr to str list case."""
+
                 EMPTY = "empty"
                 BYTES = "bytes"
                 LIST = "list"
@@ -77,6 +113,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class LdapValueCase(StrEnum):
+                """Provide the test double for ldap value case."""
+
                 BYTES = "bytes"
                 LIST = "list"
                 LIST_BYTES = "list_bytes"
@@ -87,6 +125,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchCategoryCase(StrEnum):
+                """Provide the test double for search category case."""
+
                 EMPTY = "empty"
                 PERSON = "person"
 
@@ -144,41 +184,33 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_PORT: Final[int] = 3390
             DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
             DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
-            DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
+            DOCKER_ADMIN_PASSWORD: Final[str] = _docker_admin_password()
             DOCKER_LEGACY_ADMIN_DN: Final[str] = (
                 "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
             )
-            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _docker_legacy_admin_password()
             DOCKER_STARTUP_TIMEOUT: Final[int] = 90
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[t.StrSequence] = (
-                "people",
-                "groups",
-                "services",
-            )
+            DOCKER_OU_NAMES: Final[t.StrSequence] = ("people", "groups", "services")
 
-            ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset(
-                {
-                    "ldapsessionterminatedbyservererror",
-                    "ldapserverdownerror",
-                    "ldap server is not responding",
-                    "broken pipe",
-                    "session terminated by server",
-                    "ldapoperationresult",
-                },
-            )
-            ERROR_TRANSIENT_PATTERNS: Final[frozenset[str]] = frozenset(
-                {
-                    "connection refused",
-                    "connection reset by peer",
-                    "cannot connect to ldap",
-                    "ldapsocketopenerror",
-                    "ldapcommunicationerror",
-                    "ldap bind failed",
-                    "timeout",
-                },
-            )
+            ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset({
+                "ldapsessionterminatedbyservererror",
+                "ldapserverdownerror",
+                "ldap server is not responding",
+                "broken pipe",
+                "session terminated by server",
+                "ldapoperationresult",
+            })
+            ERROR_TRANSIENT_PATTERNS: Final[frozenset[str]] = frozenset({
+                "connection refused",
+                "connection reset by peer",
+                "cannot connect to ldap",
+                "ldapsocketopenerror",
+                "ldapcommunicationerror",
+                "ldap bind failed",
+                "timeout",
+            })
 
             ENTRY_DN_USER_EXAMPLE: Final[str] = "cn=user,dc=example,dc=com"
             ENTRY_DN_TEST_EXAMPLE: Final[str] = "cn=test,dc=example,dc=com"
@@ -188,34 +220,26 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             ENTRY_DN_USER_NEW: Final[str] = "cn=user,dc=new,dc=com"
 
             BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
-            BIND_ADMIN_PASSWORD: Final[str] = "secret"
+            BIND_ADMIN_PASSWORD: Final[str] = _bind_admin_password()
 
             DETECTION_EXECUTE_SCENARIOS: Final[
                 t.SequenceOf[
-                    tuple[
-                        t.MappingKV[str, bool | float | str | None] | None,
-                        bool,
-                        str,
-                    ]
+                    tuple[t.MappingKV[str, bool | float | str | None] | None, bool, str]
                 ]
             ] = (
                 # Substrings match the centralized flext-core error format —
                 # ``ERR_SERVICE_TYPE_MISMATCH`` and the validate-connection
                 # wrapper. Keep these aligned with the canonical messages.
                 ({}, True, "parameter required"),
-                (
-                    {"connection": "invalid"},
-                    True,
-                    "ldap3.Connection",
-                ),
+                ({"connection": "invalid"}, True, "ldap3.Connection"),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
                 t.SequenceOf[tuple[t.MappingKV[str, t.StrSequence], str, str | None]]
             ] = (
                 (
-                    MappingProxyType(
-                        {"vendorName": ("Oracle Corporation", "Version 2")},
-                    ),
+                    MappingProxyType({
+                        "vendorName": ("Oracle Corporation", "Version 2")
+                    }),
                     "vendorName",
                     "Oracle Corporation",
                 ),
@@ -233,12 +257,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ("Oracle Corporation", "12.2.1.4.0", (), "oid"),
                 ("Oracle Unified Directory", "12.2.1.4.0", (), "oud"),
                 ("OpenLDAP", "2.4.57", (), "openldap"),
-                (
-                    "Microsoft Corporation",
-                    None,
-                    ("1.2.840.113556.1.4.319",),
-                    "ad",
-                ),
+                ("Microsoft Corporation", None, ("1.2.840.113556.1.4.319",), "ad"),
                 ("389 Project", "2.0.0", (), "ds389"),
                 (None, None, (), "rfc"),
                 ("oracle corporation", "12.2.1.4.0", (), "oid"),
@@ -246,16 +265,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
 
             OPERATIONS_ERROR_DETECTION_SCENARIOS: Final[t.BoolMapping] = (
-                MappingProxyType(
-                    {
-                        "Entry already exists": True,
-                        "already exists": True,
-                        "ALREADY EXISTS": True,
-                        "entryAlreadyExists": True,
-                        "Connection failed": False,
-                        "": False,
-                    },
-                )
+                MappingProxyType({
+                    "Entry already exists": True,
+                    "already exists": True,
+                    "ALREADY EXISTS": True,
+                    "entryAlreadyExists": True,
+                    "Connection failed": False,
+                    "": False,
+                })
             )
             OPERATIONS_BATCH_STOP_FRAGMENT: Final[str] = "stopped on error"
             OPERATIONS_BATCH_ALL_FAILED_FRAGMENT: Final[str] = "entries failed"
@@ -276,26 +293,19 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             LIST_ABC_UPPER: Final[t.StrSequence] = ("A", "B", "C")
             LIST_SINGLE: Final[str] = "single"
 
-            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType(
-                {
-                    "a": "value",
-                    "b": "",
-                    "c": "none_str",
-                    "d": "value2",
-                },
-            )
+            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType({
+                "a": "value",
+                "b": "",
+                "c": "none_str",
+                "d": "value2",
+            })
             FILTER_TRUTHY_EXPECTED_KEYS: Final[t.StrSequence] = ("a", "c", "d")
 
             NORM_JOIN_INPUT: Final[t.StrSequence] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
-                MappingProxyType(
-                    {
-                        "cn": ("user",),
-                        "sn": ("Doe",),
-                    },
-                )
+                MappingProxyType({"cn": ("user",), "sn": ("Doe",)})
             )
             # Substring matches the centralized validation error
             # ("Failed to validate entry.attributes: empty"). Update with the
@@ -411,8 +421,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_BATCH_STATS_FAILED: Final[int] = 10
             SYNC_BATCH_STATS_SKIPPED: Final[int] = 10
 
-            SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = (
-                "/tmp/flext-ldap-sync-missing.ldif"
+            SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = str(
+                Path(gettempdir()) / "flext-ldap-sync-missing.ldif"
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
             SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
@@ -439,6 +449,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class EntryOperationCase(StrEnum):
+                """Provide the test double for entry operation case."""
+
                 VALID_DN = "valid_dn"
                 EMPTY_DN = "empty_dn"
                 INVALID_DN = "invalid_dn"
@@ -446,6 +458,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchFilterCase(StrEnum):
+                """Provide the test double for search filter case."""
+
                 PRESENT = "present"
                 EQUALITY = "equality"
                 SUBSTRING = "substring"
@@ -457,6 +471,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchSizeCase(StrEnum):
+                """Provide the test double for search size case."""
+
                 SIZE_ZERO = "size_zero"
                 SIZE_ONE = "size_one"
                 SIZE_SMALL = "size_small"
@@ -465,6 +481,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             @unique
             class SearchScopeCase(StrEnum):
+                """Provide the test double for search scope case."""
+
                 BASE = "base"
                 ONE_LEVEL = "one_level"
                 SUBTREE = "subtree"

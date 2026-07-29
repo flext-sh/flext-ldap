@@ -1,10 +1,10 @@
 """Base service patterns for flext-ldap services.
 
 Defines the canonical LDAP service root used by service mixins and the API facade:
-- FlextLdapService provides typed settings access via self.settings
+- FlextLdapService provides typed settings access via settings
 - All services MUST inherit from this base through cooperative MRO
 
-Settings access goes through ``self.settings`` from the service runtime.
+Settings access goes through ``settings`` from the service runtime.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,9 +13,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import s
-from flext_ldap import FlextLdapSettings, c, p, t
-from flext_ldap.models import FlextLdapModels as m
-from flext_ldap.utilities import FlextLdapUtilities as u
+from flext_ldap import (
+    FlextLdapModels as m,
+    FlextLdapSettings,
+    FlextLdapUtilities as u,
+    c,
+    p,
+    t,
+)
 from flext_ldif import FlextLdif
 
 
@@ -33,7 +38,7 @@ class FlextLdapService[
     _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldap.DEFAULT_TYPE)
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdapSettings)
 
