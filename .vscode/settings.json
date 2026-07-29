@@ -50,7 +50,8 @@
     "**/dist": true,
     "**/node_modules": true,
     "**/site": true,
-    "**/target": true
+    "**/target": true,
+    "**/.worktrees": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -88,7 +89,8 @@
     "**/build/**": true,
     "**/dist/**": true,
     "**/node_modules/**": true,
-    "**/target/**": true
+    "**/target/**": true,
+    "**/.worktrees/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -125,7 +127,8 @@
     "**/dist": true,
     "**/node_modules": true,
     "**/site": true,
-    "**/target": true
+    "**/target": true,
+    "**/.worktrees": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"
