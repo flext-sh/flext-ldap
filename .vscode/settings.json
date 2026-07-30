@@ -51,7 +51,10 @@
     "**/node_modules": true,
     "**/site": true,
     "**/target": true,
-    "**/.worktrees": true
+    "**/.worktrees": true,
+    "**/.archive": true,
+    "**/.bin": true,
+    "**/.tools": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -90,7 +93,10 @@
     "**/dist/**": true,
     "**/node_modules/**": true,
     "**/target/**": true,
-    "**/.worktrees/**": true
+    "**/.worktrees/**": true,
+    "**/.archive/**": true,
+    "**/.bin/**": true,
+    "**/.tools/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -128,7 +134,10 @@
     "**/node_modules": true,
     "**/site": true,
     "**/target": true,
-    "**/.worktrees": true
+    "**/.worktrees": true,
+    "**/.archive": true,
+    "**/.bin": true,
+    "**/.tools": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"

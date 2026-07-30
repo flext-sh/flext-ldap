@@ -9,11 +9,13 @@ SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
 PROJECT_NAME := flext-ldap
-MAKE_PROFILE := standalone
-WORKSPACE_ROOT_REL := .
-WORKSPACE_MEMBERS := flext-api flext-auth flext-cli flext-core flext-db-oracle flext-dbt-ldap flext-dbt-ldif flext-dbt-oracle flext-dbt-oracle-wms flext-grpc flext-infra flext-ldap flext-ldif flext-meltano flext-observability flext-oracle-oic flext-oracle-wms flext-plugin flext-quality flext-tap-ldap flext-tap-ldif flext-tap-oracle flext-tap-oracle-oic flext-tap-oracle-wms flext-target-ldap flext-target-ldif flext-target-oracle flext-target-oracle-oic flext-target-oracle-wms flext-tests flext-web
+MAKE_PROFILE := workspace-member
+WORKSPACE_ROOT_REL := ..
+WORKSPACE_MEMBERS :=
 WORKSPACE_EDITABLES := $(PROJECT_NAME):.
 UV_LINK_MODE := copy
+UV_VERSION := 0.11.32
+MISE_VERSION := 2026.7.16
 
 APPLY ?= N
 ARGS ?=
@@ -43,18 +45,15 @@ WORKSPACE ?= $(PROJECT_ROOT)
 PUBLIC_VERBS := help setup deps build check test fmt run status docs clean release codegen worktree
 CHECK_GATES_ALLOWED := lint format pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint format pyrefly mypy pyright security markdown smells
-DOCS_PHASES := generate fix audit build validate
+DOCS_ACTIONS := generate fix audit build validate
 SERIALIZED_VERBS := check test codegen
 SERIALIZED_TARGETS := _serialized_check _serialized_test _serialized_codegen
 RUFF_PATHS := $(PROJECT_ROOT)/src $(PROJECT_ROOT)/tests
 MYPY_PATHS := $(PROJECT_ROOT)/src $(PROJECT_ROOT)/tests
-UV ?= uv
-UV_REQUESTED := $(UV)
 CALLER_PATH := $(PATH)
 CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 FLEXT_INFRA_BOOTSTRAP_REQUIREMENT := flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev
-FLEXT_INFRA_BOOTSTRAP_TOOL_ARGS := --with "pyrefly>=1.1.1" --with "ruff>=0.15.12"
-FLEXT_INFRA_SOURCE_ROOT_REL := flext-infra
+FLEXT_INFRA_SOURCE_ROOT_REL := 
 
 # === MYPY RESOURCE LIMIT ===
 # mro-0ftd.3.11: every Mypy process inherits validated memory and time caps.
@@ -74,7 +73,7 @@ _DEFAULT_test := all
 _DEFAULT_fmt := check
 _DEFAULT_run := default
 _DEFAULT_status := diagnostics
-_DEFAULT_docs := check
+_DEFAULT_docs := all
 _DEFAULT_clean := generated
 _DEFAULT_release := status
 _DEFAULT_codegen := check
@@ -102,8 +101,17 @@ RUNTIME_ROOT := $(PROJECT_ROOT)
 endif
 
 RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
+ifeq ($(MAKE_PROFILE),standalone)
+TOOLS_BIN := $(PROJECT_ROOT)/.bin
+MISE_DATA_DIR := $(PROJECT_ROOT)/.tools
+else
+TOOLS_BIN := $(RUNTIME_ROOT)/.bin
+MISE_DATA_DIR := $(RUNTIME_ROOT)/.tools
+endif
+MISE_SHIMS := $(MISE_DATA_DIR)/shims
 FLEXT_INFRA_RUNTIME_ROOT := $(if $(filter $(MAKEFILE_ROOT),$(PROJECT_ROOT)),$(RUNTIME_ROOT),$(MAKEFILE_ROOT))
 ifeq ($(OS),Windows_NT)
+MISE ?= $(TOOLS_BIN)/mise.exe
 RUNTIME_BIN := $(RUNTIME_VENV)/Scripts
 RUNTIME_PYTHON := $(RUNTIME_BIN)/python.exe
 FLEXT_INFRA_RUNTIME_PYTHON := $(FLEXT_INFRA_RUNTIME_ROOT)/.venv/Scripts/python.exe
@@ -111,6 +119,7 @@ NORMALIZED_CALLER_PATH := $(shell cygpath --path "$(CALLER_PATH)" 2>/dev/null)
 NORMALIZED_CALLER_VIRTUAL_ENV := $(shell cygpath --unix "$(CALLER_VIRTUAL_ENV)" 2>/dev/null)
 CALLER_VIRTUAL_ENV_BIN := $(NORMALIZED_CALLER_VIRTUAL_ENV)/Scripts
 else
+MISE ?= $(TOOLS_BIN)/mise
 RUNTIME_BIN := $(RUNTIME_VENV)/bin
 RUNTIME_PYTHON := $(RUNTIME_BIN)/python
 FLEXT_INFRA_RUNTIME_PYTHON := $(FLEXT_INFRA_RUNTIME_ROOT)/.venv/bin/python
@@ -126,24 +135,20 @@ ifeq ($(SANITIZED_CALLER_PATH),$(CALLER_VIRTUAL_ENV_BIN))
 SANITIZED_CALLER_PATH :=
 endif
 endif
-RESOLVED_UV := $(shell PATH="$(SANITIZED_CALLER_PATH)" command -v "$(UV_REQUESTED)" 2>/dev/null)
-ifeq ($(strip $(RESOLVED_UV)),)
-$(error Required uv executable not found: $(UV_REQUESTED))
-endif
-override UV := $(RESOLVED_UV)
+override UV := $(MISE_SHIMS)/uv
 override FLEXT_INFRA_PYTHON := $(FLEXT_INFRA_RUNTIME_PYTHON)
 override UV_PROJECT := $(RUNTIME_ROOT)
 override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
-override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
-export FLEXT_INFRA_PYTHON UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
+override PATH := $(RUNTIME_BIN):$(TOOLS_BIN):$(MISE_SHIMS):$(SANITIZED_CALLER_PATH)
+export FLEXT_INFRA_PYTHON MISE_DATA_DIR UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
 ifneq ($(strip $(FLEXT_INFRA_SOURCE_ROOT_REL)),)
 FLEXT_INFRA_SOURCE_ROOT := $(abspath $(PROJECT_ROOT)/$(FLEXT_INFRA_SOURCE_ROOT_REL))
-FLEXT_INFRA_BOOTSTRAP := env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(SANITIZED_CALLER_PATH)" $(UV) run --no-project --with-editable "$(FLEXT_INFRA_SOURCE_ROOT)" $(FLEXT_INFRA_BOOTSTRAP_TOOL_ARGS) python -m flext_infra
+FLEXT_INFRA_BOOTSTRAP := env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(TOOLS_BIN):$(MISE_SHIMS):$(SANITIZED_CALLER_PATH)" $(UV) run --no-project --with-editable "$(FLEXT_INFRA_SOURCE_ROOT)" python -m flext_infra
 else
 FLEXT_INFRA_SOURCE_ROOT :=
-FLEXT_INFRA_BOOTSTRAP := env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(SANITIZED_CALLER_PATH)" $(UV) run --no-project --with "$(FLEXT_INFRA_BOOTSTRAP_REQUIREMENT)" $(FLEXT_INFRA_BOOTSTRAP_TOOL_ARGS) python -m flext_infra
+FLEXT_INFRA_BOOTSTRAP := env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(TOOLS_BIN):$(MISE_SHIMS):$(SANITIZED_CALLER_PATH)" $(UV) run --no-project --with "$(FLEXT_INFRA_BOOTSTRAP_REQUIREMENT)" python -m flext_infra
 endif
 
 ifeq ($(MAKE_PROFILE),workspace-root)
@@ -173,7 +178,7 @@ ORCHESTRATED_VERBS := build check clean docs scan test val
 
 UV_RUN := env -u PYTHONPATH -u MYPYPATH $(UV) run --project "$(RUNTIME_ROOT)" --no-sync
 PROJECT_INFRA_PYTHONPATH ?= $(MAKEFILE_ROOT)/src
-PROJECT_FLEXT_INFRA := test -x "$(FLEXT_INFRA_PYTHON)" || { printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; }; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(dir $(FLEXT_INFRA_PYTHON)):$(SANITIZED_CALLER_PATH)" PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON) -m flext_infra
+PROJECT_FLEXT_INFRA := test -x "$(FLEXT_INFRA_PYTHON)" || { printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; }; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(dir $(FLEXT_INFRA_PYTHON)):$(MISE_SHIMS):$(SANITIZED_CALLER_PATH)" PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON) -m flext_infra
 # mro-j47u (codex): scaffold dev tools live in the validated optional dev
 # profile; a fresh project must create its lock before later check-mode locks.
 UV_SYNC_FLAGS := --all-extras --all-groups
@@ -199,7 +204,6 @@ _BUILTIN_HANDLERS := \
 	_builtin_fmt_apply \
 	_builtin_run_default \
 	_builtin_status_diagnostics \
-	_builtin_docs_check \
 	_builtin_docs_all \
 _builtin_docs_generate \
 _builtin_docs_fix \
@@ -210,7 +214,6 @@ _builtin_clean_generated \
 	_builtin_release_status \
 	_builtin_codegen_check \
 	_builtin_codegen_apply \
-	_builtin_codegen_init \
 	_builtin_worktree_list \
 	_builtin_worktree_add \
 	_builtin_worktree_update \
@@ -293,7 +296,7 @@ setup:
 	@$(SELF_MAKE) _builtin_setup_environment
 
 _builtin_help_usage:
-	@printf '%s\n' 'flext-ldap [standalone]' '';
+	@printf '%s\n' 'flext-ldap [workspace-member]' '';
 
 
 	@printf '  %-10s WHAT=%s\n' 'help' 'usage';
@@ -332,7 +335,7 @@ _builtin_help_usage:
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'docs' 'check';
+	@printf '  %-10s WHAT=%s\n' 'docs' 'all|generate|fix|audit|build|validate';
 
 
 
@@ -369,12 +372,62 @@ _builtin_help_usage:
 # reconciler validates every initialized checkout before mutation, initializes
 # only missing modules, and preserves declared branches that fix forward beyond
 # the recorded gitlink.
+.PHONY: _builtin_setup_tools
+
+_builtin_setup_tools:
+	@set -eu; \
+	tools_bin="$(TOOLS_BIN)"; \
+	mise="$(MISE)"; \
+	mise_data_dir="$(MISE_DATA_DIR)"; \
+	mise_version="$(MISE_VERSION)"; \
+	uv_version="$(UV_VERSION)"; \
+	current=""; \
+	if [ -x "$$mise" ]; then \
+		current=$$("$$mise" --version 2>/dev/null | cut -d ' ' -f 1 || true); \
+	fi; \
+	if [ "$$current" != "$$mise_version" ]; then \
+		command -v curl >/dev/null 2>&1 || { \
+			printf 'ERROR: make setup requires curl to bootstrap project binaries\n' >&2; \
+			exit 2; \
+		}; \
+		case "$$(uname -s)" in \
+			Linux*) os=linux ;; \
+			Darwin*) os=macos ;; \
+			MINGW*|MSYS*|CYGWIN*|Windows_NT) os=windows ;; \
+			*) printf 'ERROR: unsupported bootstrap OS: %s\n' "$$(uname -s)" >&2; exit 2 ;; \
+		esac; \
+		case "$$(uname -m)" in \
+			x86_64|amd64) arch=x64 ;; \
+			aarch64|arm64) arch=arm64 ;; \
+			*) printf 'ERROR: unsupported bootstrap architecture: %s\n' "$$(uname -m)" >&2; exit 2 ;; \
+		esac; \
+		suffix="$$os-$$arch"; extension=""; \
+		if [ "$$os" = linux ] && ldd --version 2>&1 | grep -qi musl; then \
+			suffix="$$suffix-musl"; \
+		fi; \
+		if [ "$$os" = windows ]; then extension=.exe; fi; \
+		asset="mise-v$$mise_version-$$suffix$$extension"; \
+		url="https://github.com/jdx/mise/releases/download/v$$mise_version/$$asset"; \
+		mkdir -p "$$tools_bin" "$$mise_data_dir"; \
+		tmp="$$mise.download"; \
+		if ! curl -fsSL "$$url" -o "$$tmp"; then rm -f "$$tmp"; exit 2; fi; \
+		chmod +x "$$tmp"; \
+		mv "$$tmp" "$$mise"; \
+		current=$$("$$mise" --version | cut -d ' ' -f 1); \
+		[ "$$current" = "$$mise_version" ] || { \
+			printf 'ERROR: mise bootstrap version mismatch: expected %s, got %s\n' \
+				"$$mise_version" "$$current" >&2; \
+			exit 2; \
+		}; \
+	fi; \
+	$(MISE) install --yes "uv@$$uv_version"
+
 .PHONY: _builtin_setup_submodules
 
 _builtin_setup_submodules:
 	@set -eu; \
 	root="$(PROJECT_ROOT)"; \
-	selected="$(REQUESTED_PROJECTS)"; \
+	selected=""; \
 	if [ ! -f "$$root/.gitmodules" ]; then exit 0; fi; \
 	setup_selected() { \
 		candidate="$$1"; \
@@ -448,7 +501,7 @@ _builtin_setup_submodules:
 			git -C "$$superproject" submodule sync --quiet -- "$$child_path"; \
 			state=$$(git -C "$$superproject" submodule status -- "$$child_path"); \
 			case "$$state" in \
-				-*) git -C "$$superproject" submodule update --init -- "$$child_path" ;; \
+				-*) git -C "$$superproject" submodule update --init --recursive -- "$$child_path" ;; \
 			esac; \
 			initialize_declared_submodules "$$superproject/$$child_path"; \
 		done; \
@@ -506,26 +559,34 @@ _builtin_require_environment:
 		exit 2; \
 	fi
 
-_builtin_setup_conform: _builtin_setup_submodules
+ifeq ($(MAKE_PROFILE),workspace-root)
+_builtin_setup_topology: _builtin_setup_tools
+	@$(FLEXT_INFRA_BOOTSTRAP) codegen conform --root "$(PROJECT_ROOT)" --scope "self" --mode apply
+
+_builtin_setup_conform: _builtin_setup_topology _builtin_setup_submodules
 	@$(FLEXT_INFRA_BOOTSTRAP) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
+else
+_builtin_setup_conform: _builtin_setup_tools _builtin_setup_submodules
+	@$(FLEXT_INFRA_BOOTSTRAP) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
+endif
+
+_builtin_setup_mise: _builtin_setup_conform
+	@$(MISE) install --yes
 
 ifeq ($(MAKE_PROFILE),workspace-root)
-_builtin_setup_environment: _builtin_setup_conform
-	@$(UV) venv --clear "$(RUNTIME_VENV)"
+_builtin_setup_environment: _builtin_setup_mise
 	@$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
 else ifeq ($(MAKE_PROFILE),workspace-member)
 ifeq ($(ATTACHED_MEMBER),Y)
-_builtin_setup_environment: _builtin_setup_conform
+_builtin_setup_environment: _builtin_setup_mise
 	@$(SELF_MAKE) -C "$(RUNTIME_ROOT)" _builtin_setup_environment
 else
-_builtin_setup_environment: _builtin_setup_conform
-	@$(UV) venv --clear "$(RUNTIME_VENV)"
+_builtin_setup_environment: _builtin_setup_mise
 	@$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"
 endif
 else
-_builtin_setup_environment: _builtin_setup_conform
-	@$(UV) venv --clear "$(RUNTIME_VENV)"
+_builtin_setup_environment: _builtin_setup_mise
 	@$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"
 endif
 
@@ -707,37 +768,34 @@ _builtin_status_diagnostics: _builtin_require_environment
 	fi
 	@git -C "$(PROJECT_ROOT)" status --short
 
-_builtin_docs_check:
+_builtin_docs_all:
 	@set -eu; \
-	for phase in $(DOCS_PHASES); do \
-		case "$$phase" in generate|fix) mode=--check ;; *) mode= ;; esac; \
-		$(PROJECT_FLEXT_INFRA) docs "$$phase" --workspace "$(PROJECT_ROOT)" $$mode $(DOCS_PROJECT_ARGS); \
+	for action in $(DOCS_ACTIONS); do \
+		case "$$action" in generate|fix) mode=$(if $(filter Y,$(APPLY)),--apply,--check) ;; *) mode= ;; esac; \
+		$(PROJECT_FLEXT_INFRA) docs "$$action" --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
 	done
 
-_builtin_docs_all:
-	$(call _require_apply)
-	@set -eu; \
-	for phase in $(DOCS_PHASES); do \
-		case "$$phase" in generate|fix) mode=--apply ;; *) mode= ;; esac; \
-		$(PROJECT_FLEXT_INFRA) docs "$$phase" --workspace "$(PROJECT_ROOT)" $$mode $(DOCS_PROJECT_ARGS); \
-	done
 
 _builtin_docs_generate:
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) docs generate --workspace "$(PROJECT_ROOT)" --apply $(DOCS_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) docs generate --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(if $(filter Y,$(APPLY)),--apply,--check) $(DOCS_PROJECT_ARGS)
+
 
 _builtin_docs_fix:
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) docs fix --workspace "$(PROJECT_ROOT)" --apply $(DOCS_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) docs fix --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(if $(filter Y,$(APPLY)),--apply,--check) $(DOCS_PROJECT_ARGS)
+
 
 _builtin_docs_audit:
-	@$(PROJECT_FLEXT_INFRA) docs audit --workspace "$(PROJECT_ROOT)" $(DOCS_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) docs audit --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(DOCS_PROJECT_ARGS)
+
 
 _builtin_docs_build:
-	@$(PROJECT_FLEXT_INFRA) docs build --workspace "$(PROJECT_ROOT)" $(DOCS_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) docs build --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(DOCS_PROJECT_ARGS)
+
 
 _builtin_docs_validate:
-	@$(PROJECT_FLEXT_INFRA) docs validate --workspace "$(PROJECT_ROOT)" $(DOCS_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) docs validate --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(DOCS_PROJECT_ARGS)
+
+
 
 _builtin_clean_generated:
 	$(call _require_apply)
@@ -758,10 +816,6 @@ _builtin_codegen_check: _builtin_require_environment
 _builtin_codegen_apply: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
-
-_builtin_codegen_init: _builtin_require_environment
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) codegen init --workspace "$(PROJECT_ROOT)" --apply
 
 _builtin_worktree_list:
 	@$(PROJECT_FLEXT_INFRA) workspace worktree --workspace "$(WORKSPACE)" --operation list
