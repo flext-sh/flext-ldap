@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldap import m, t
-from flext_tests import s as tests_s
+from flext_tests import s
 from tests.settings import TestsFlextLdapSettings
 
 
 class TestsFlextLdapServiceBase[
     TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
     | t.SequenceOf[t.JsonPayload]
-](tests_s[TResult]):
+](s):
     """LDAP test service base with source and test settings namespaces."""
 
     # NOTE (multi-agent): flext-tests owns fetch_settings; this project
