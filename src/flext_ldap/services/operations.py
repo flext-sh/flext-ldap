@@ -175,9 +175,9 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
             search_result = self._ops.search(search_options)
             if search_result.failure:
-                result = r[m.Ldap.LdapOperationResult].fail_op(
-                    "Search for existing entry", search_result.error
-                )
+                result: p.Result[m.Ldap.LdapOperationResult] = r[
+                    m.Ldap.LdapOperationResult
+                ].fail_op("Search for existing entry", search_result.error)
             else:
                 search_data = search_result.map_or(None)
                 existing_entries: t.SequenceOf[m.Ldif.Entry] = []
@@ -812,7 +812,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 entry_dn,
                 stats,
             )
-        return sync_options.stop_on_error and upsert_result.failure
+        should_stop: bool = sync_options.stop_on_error and upsert_result.failure
+        return should_stop
 
     def _update_batch_stats(
         self,

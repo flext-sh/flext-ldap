@@ -228,4 +228,5 @@ class FlextLdapAdapterHost[
         adapter = self._adapter
         if adapter is None:
             return False
-        return adapter.is_connected
+        connected: bool = adapter.is_connected
+        return connected

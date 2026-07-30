@@ -13,7 +13,6 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_ldap import FlextLdapLdap3Wrappers
 from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
@@ -41,7 +40,7 @@ def _get_worker_id(settings: pytest.Config) -> str:
 
 def _docker_compose_path() -> Path:
     compose_file_rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-    return u.Ldap.Tests.workspace_root() / compose_file_rel
+    return Path(__file__).resolve().parents[2] / compose_file_rel
 
 
 def _docker_compose_available() -> bool:
@@ -110,7 +109,7 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                     receive_timeout=1,
                 )
                 if conn.bound:
-                    FlextLdapLdap3Wrappers.unbind(conn)
+                    conn.unbind()
                     break
             except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
                 pass

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, override
 
 from flext_ldap import m
 from flext_tests import FlextTestsModels, r
-from tests.base import s
+from tests.base import TestsFlextLdapServiceBase
 
 if TYPE_CHECKING:
     from tests import p
@@ -31,14 +31,14 @@ class TestsFlextLdapModels(m, FlextTestsModels):
 
             FAIL_ERROR_MESSAGE = "nope"
 
-            class SuccessService(s[bool]):
+            class SuccessService(TestsFlextLdapServiceBase):
                 """Test service that always succeeds."""
 
                 @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].ok(True)
 
-            class FailService(s[bool]):
+            class FailService(TestsFlextLdapServiceBase):
                 """Test service that always fails."""
 
                 @override

@@ -54,7 +54,8 @@
     "**/.worktrees": true,
     "**/.archive": true,
     "**/.bin": true,
-    "**/.tools": true
+    "**/.tools": true,
+    "**/.bkp": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -96,7 +97,8 @@
     "**/.worktrees/**": true,
     "**/.archive/**": true,
     "**/.bin/**": true,
-    "**/.tools/**": true
+    "**/.tools/**": true,
+    "**/.bkp/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -137,7 +139,8 @@
     "**/.worktrees": true,
     "**/.archive": true,
     "**/.bin": true,
-    "**/.tools": true
+    "**/.tools": true,
+    "**/.bkp": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"

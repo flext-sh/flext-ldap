@@ -75,7 +75,10 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
             updates["attribute_changes"] = changed_attrs
         if not updates:
             return conversion_metadata
-        return conversion_metadata.model_copy(update=updates)
+        updated: m.Ldap.ConversionMetadata = conversion_metadata.model_copy(
+            update=updates
+        )
+        return updated
 
     # NOTE (multi-agent): mro-wgwh.2 — entry attribute/category behavior moved here
     # from m.Ldap.SearchResult (models facet is declaration-only); get_entry_category
@@ -98,7 +101,8 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
             return unknown
         oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
         if isinstance(oc_list, list) and oc_list:
-            return str(oc_list[0]).lower()
+            first_oc: str = oc_list[0]
+            return first_oc.lower()
         return unknown
 
     @classmethod
