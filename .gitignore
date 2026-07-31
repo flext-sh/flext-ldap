@@ -210,6 +210,7 @@ legado/
 .direnv/
 .reports/
 .venv/
+.venv
 .bin/
 .tools/
 __pycache__/
