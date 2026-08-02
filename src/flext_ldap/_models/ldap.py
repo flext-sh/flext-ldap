@@ -161,7 +161,7 @@ class FlextLdapModelsLdap:
             ),
         ]
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (successful / total_processed)."""
