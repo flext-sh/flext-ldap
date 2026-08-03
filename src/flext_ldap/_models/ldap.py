@@ -161,13 +161,13 @@ class FlextLdapModelsLdap:
             ),
         ]
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def success_rate(self) -> float:
             """Calculate success rate (successful / total_processed)."""
             if self.total_processed == 0:
                 return 0.0
-            return self.successful / self.total_processed
+            return float(self.successful) / float(self.total_processed)
 
     class SyncPhaseConfig(m.BaseModel):
         """Sync phase settings."""

@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, overload
+from typing import ClassVar, TypeVar, overload
 
 from flext_ldap import u
 from flext_tests import FlextTestsUtilities, tk, tm
-from tests import c, m, t
+from tests import c, m, p, t
 
-if TYPE_CHECKING:
-    from tests import p
+
+TResult = TypeVar("TResult", bound=t.Tests.TestResultValue)
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, u):
@@ -31,14 +31,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def that(
-                value: t.Tests.Testobject, **kwargs: t.Tests.MatcherCallKwargValue
+                value: t.Tests.Testobject, **kwargs: t.Tests.MatcherKwargValue
             ) -> None:
                 """Provide that."""
                 tm.that(value, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherCallKwargValue
+                result: p.Result[TResult], **kwargs: t.Tests.MatcherKwargValue
             ) -> str:
                 """Provide fail."""
                 failure_message: str = tm.fail(result, **kwargs)
@@ -47,18 +47,18 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             @overload
             def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
+                result: p.Result[TResult], *, _unused: TResult | None = None
             ) -> TResult: ...
 
             @staticmethod
             @overload
             def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherCallKwargValue
+                result: p.Result[TResult], **kwargs: t.Tests.MatcherKwargValue
             ) -> TResult | t.Tests.TestobjectSerializable: ...
 
             @staticmethod
             def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherCallKwargValue
+                result: p.Result[TResult], **kwargs: t.Tests.MatcherKwargValue
             ) -> TResult | t.Tests.TestobjectSerializable:
                 """Provide ok."""
                 return tm.ok(result, **kwargs)

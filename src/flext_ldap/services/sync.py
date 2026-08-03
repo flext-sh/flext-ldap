@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, TypeIs
+from typing import TYPE_CHECKING
 
 from flext_ldap import c, m, p, t, u
 from flext_ldap.services.operations import FlextLdapOperations
@@ -22,9 +22,7 @@ class FlextLdapSync(FlextLdapOperations):
     """MRO mixin that syncs parsed LDIF phases into LDAP."""
 
     @staticmethod
-    def multi_phase_callback(
-        callback: t.Ldap.ProgressCallbackUnion | None,
-    ) -> TypeIs[t.Ldap.MultiPhaseProgressCallback]:
+    def multi_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
         """Return ``True`` when callback expects the multi-phase signature."""
         if callback is None:
             return False
@@ -38,9 +36,7 @@ class FlextLdapSync(FlextLdapOperations):
         return matches_multi_phase
 
     @staticmethod
-    def single_phase_callback(
-        callback: t.Ldap.ProgressCallbackUnion | None,
-    ) -> TypeIs[t.Ldap.LdapProgressCallback]:
+    def single_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
         """Return ``True`` when callback expects the single-phase signature."""
         if callback is None:
             return False
