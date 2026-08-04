@@ -133,7 +133,7 @@ _ALLOWED_WHATS_fix := check all apply $(shell sed -n 's/^_custom_fix_\([a-z0-9_-
 _ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_status := diagnostics $(shell sed -n 's/^_custom_status_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_docs := all generate fix audit build validate $(shell sed -n 's/^_custom_docs_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_clean := generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_clean := status generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_release := status $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_gen := check all apply $(shell sed -n 's/^_custom_gen_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_work := start status land finish $(shell sed -n 's/^_custom_work_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -188,7 +188,7 @@ _DEFAULT_fix := check
 _DEFAULT_run := default
 _DEFAULT_status := diagnostics
 _DEFAULT_docs := all
-_DEFAULT_clean := generated
+_DEFAULT_clean := status
 _DEFAULT_release := status
 _DEFAULT_gen := check
 _DEFAULT_work := status
@@ -221,6 +221,7 @@ endif
 # End SECTION: profile routing
 
 RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
+PROJECT_VENV := $(PROJECT_ROOT)/.venv
 FLEXT_INFRA_RUNTIME_ROOT := $(if $(filter $(MAKEFILE_ROOT),$(PROJECT_ROOT)),$(RUNTIME_ROOT),$(MAKEFILE_ROOT))
 ifeq ($(OS),Windows_NT)
 RUNTIME_BIN := $(RUNTIME_VENV)/Scripts
@@ -282,12 +283,31 @@ endif
 # reports drift without touching the tree; only a non-zero exit escalates to a
 # real `uv sync`. Creating a missing venv is provisioning, so it is allowed;
 # clearing a present one is destruction, so it never happens.
+# A symlinked RUNTIME_VENV is a BORROWED environment: a linked worktree (a
+# `make work` lane) shares the primary checkout's environment so the two never
+# diverge. Syncing it would rewrite the editable pointers the owner and every
+# sibling lane resolve through, so the borrower provisions nothing and the owner
+# stays the only writer.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
-	if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-		$(UV) venv "$(RUNTIME_VENV)"; \
-	fi; \
-	if ! $(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)" --check >/dev/null 2>&1; then \
-		$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
+	if [ -L "$(RUNTIME_VENV)" ]; then \
+		printf 'setup: borrowed environment %s is owned by another checkout\n' "$(RUNTIME_VENV)"; \
+	else \
+		if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
+			$(UV) venv "$(RUNTIME_VENV)"; \
+		fi; \
+		if ! $(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)" --check >/dev/null 2>&1; then \
+			$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
+		fi; \
+	fi
+
+# A delegated runtime lives in another checkout, so this project has no local
+# environment of its own. Generated tooling still addresses the environment by
+# its project-local name (`$${workspaceFolder}/.venv`), which must never be
+# rewritten into a cross-project relative hop: the link makes that name resolve.
+# Linking is provisioning, so a real local environment is never replaced.
+BORROW_RUNTIME_VENV_RECIPE = set -eu; \
+	if [ ! -e "$(PROJECT_VENV)" ] || [ -L "$(PROJECT_VENV)" ]; then \
+		ln -sfn "$(RUNTIME_VENV)" "$(PROJECT_VENV)"; \
 	fi
 
 WORKSPACE_ORCHESTRATE = $(UV_RUN) python -m flext_infra workspace orchestrate
@@ -305,7 +325,11 @@ WORKSPACE_TEST_ARGS := $(if $(strip $(FLEXT_PYTEST_FILE_RAW)),--file "$${FLEXT_P
 DOCS_PROJECT_ARGS := $(foreach project,$(REQUESTED_PROJECTS),--projects $(project))
 ORCHESTRATED_VERBS := build check clean docs fmt fix scan test val
 
-UV_RUN := env -u PYTHONPATH -u MYPYPATH $(UV) run --project "$(RUNTIME_ROOT)" --no-sync
+# A borrowed RUNTIME_VENV keeps the primary editable install. Clearing
+# PYTHONPATH would make `make test` in a linked worktree execute that primary
+# tree instead of this checkout. Prefer PROJECT_ROOT/src so the Makefile owner
+# always wins over the shared editable (terminus T4 / path-purity).
+UV_RUN := env -u MYPYPATH PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --project "$(RUNTIME_ROOT)" --no-sync
 PROJECT_INFRA_PYTHONPATH ?= $(MAKEFILE_ROOT)/src
 PROJECT_FLEXT_INFRA := test -x "$(FLEXT_INFRA_PYTHON)" || { printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; }; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(dir $(FLEXT_INFRA_PYTHON)):$(SANITIZED_CALLER_PATH)" PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON) -m flext_infra
 # mro-j47u (codex): scaffold dev tools live in the validated optional dev
@@ -392,7 +416,7 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish
+.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish
 
 $(filter-out setup $(SERIALIZED_VERBS),$(PUBLIC_VERBS)):
 	$(call _dispatch,$@)
@@ -761,6 +785,7 @@ _builtin_setup_environment: _builtin_setup_submodules
 		$(SETUP_ENVIRONMENT_RECIPE); \
 	else \
 		$(MAKE) -C "$(RUNTIME_ROOT)" _builtin_setup_environment; \
+		$(BORROW_RUNTIME_VENV_RECIPE); \
 	fi
 else ifeq ($(MAKE_PROFILE),workspace-root)
 _builtin_setup_environment: _builtin_setup_submodules
@@ -807,16 +832,35 @@ _builtin_build_artifacts:
 # by `make fix APPLY=Y` and formatting by `make fmt APPLY=Y`, both run BEFORE
 # check. APPLY here made the same tools run twice with conflicting intents,
 # so it is rejected instead of silently honoured; FIX=1 became the `fix` verb.
+# CI=Y omits make.ci.check_gates_skip (ruff + pyrefly).
 _builtin_check_all: _builtin_require_environment
 	@set -eu; \
 	gates="$(strip $(CHECK_GATES))"; \
 	if [ -z "$$gates" ]; then gates="$$(printf '%s' '$(CHECK_GATES_DEFAULT)' | tr ' ' ',')"; fi; \
 	gates="$$(printf '%s' "$$gates" | tr -d '[:space:]')"; \
+	if [ "$(strip $(CI))" = "Y" ]; then \
+		filtered=""; \
+		for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
+			skip=0; \
+			if [ "$$gate" = "lint" ]; then skip=1; fi; \
+			if [ "$$gate" = "format" ]; then skip=1; fi; \
+			if [ "$$gate" = "pyrefly" ]; then skip=1; fi; \
+			if [ "$$skip" -eq 0 ]; then \
+				if [ -n "$$filtered" ]; then filtered="$$filtered,$$gate"; else filtered="$$gate"; fi; \
+			fi; \
+		done; \
+		gates="$$filtered"; \
+		printf 'INFO: CI=Y omits check gates: lint format pyrefly\n'; \
+	fi; \
 	for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
 		case " $(CHECK_GATES_ALLOWED) " in *" $$gate "*) ;; \
 			*) printf 'ERROR: unknown CHECK_GATES value: %s (allowed: %s)\n' "$$gate" "$(CHECK_GATES_ALLOWED)" >&2; exit 2 ;; \
 		esac; \
 	done; \
+	if [ -z "$$gates" ]; then \
+		printf 'ERROR: no check gates remain after CI=Y filtering\n' >&2; \
+		exit 2; \
+	fi; \
 	$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
 _builtin_test_all: _builtin_require_environment
@@ -849,8 +893,8 @@ _builtin_fmt_all: _builtin_require_environment
 
 _builtin_fmt_apply: _builtin_fmt_all
 
-_builtin_fix_check:
-	@printf 'ERROR: make fix requires APPLY=Y\n' >&2; exit 2
+_builtin_fix_check: _builtin_require_environment
+	@$(UV_RUN) ruff check $(RUFF_PATHS)
 
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
