@@ -25,7 +25,7 @@ from tests import u
 if TYPE_CHECKING:
     from tests import t
 
-pytestmark = pytest.mark.smoke
+pytestmark = [pytest.mark.smoke, pytest.mark.docker]
 
 
 class TestsFlextLdapSmoke:

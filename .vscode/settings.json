@@ -55,7 +55,10 @@
     "**/.archive": true,
     "**/.bin": true,
     "**/.tools": true,
-    "**/.bkp": true
+    "**/.bkp": true,
+    "**/.testmondata": true,
+    "**/.testmondata-wal": true,
+    "**/.testmondata-shm": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -98,7 +101,10 @@
     "**/.archive/**": true,
     "**/.bin/**": true,
     "**/.tools/**": true,
-    "**/.bkp/**": true
+    "**/.bkp/**": true,
+    "**/.testmondata/**": true,
+    "**/.testmondata-wal/**": true,
+    "**/.testmondata-shm/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -140,7 +146,10 @@
     "**/.archive": true,
     "**/.bin": true,
     "**/.tools": true,
-    "**/.bkp": true
+    "**/.bkp": true,
+    "**/.testmondata": true,
+    "**/.testmondata-wal": true,
+    "**/.testmondata-shm": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"

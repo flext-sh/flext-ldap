@@ -86,7 +86,8 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
-        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
+        # Start the container before probing credentials — bind probes require
+        # a listening LDAP server (get_admin_credentials fails closed otherwise).
         execute_result = docker_control.execute()
         if execute_result.failure:
             msg = (
@@ -95,8 +96,11 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
             )
             pytest.skip(msg)
         waited: float = 0.0
+        admin_dn = ""
+        admin_password = ""
         while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:
             try:
+                admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
                     get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
@@ -111,7 +115,13 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                 if conn.bound:
                     conn.unbind()
                     break
-            except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
+            except (
+                RuntimeError,
+                t.Ldap.LDAPException,
+                ConnectionError,
+                TimeoutError,
+                OSError,
+            ):
                 pass
             time.sleep(1.0)
             waited += 1.0

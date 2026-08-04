@@ -189,8 +189,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
             )
             DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _docker_legacy_admin_password()
-            DOCKER_STARTUP_TIMEOUT: Final[int] = 90
-            DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
+            DOCKER_STARTUP_TIMEOUT: Final[int] = 8
+            DOCKER_BIND_READY_TIMEOUT: Final[int] = 8
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
             DOCKER_OU_NAMES: Final[t.StrSequence] = ("people", "groups", "services")
 
