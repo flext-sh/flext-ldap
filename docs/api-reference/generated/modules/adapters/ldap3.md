@@ -2,6 +2,10 @@
 
 # flext_ldap.adapters.ldap3
 
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 ::: flext_ldap.adapters.ldap3
     options:
       show_root_heading: true

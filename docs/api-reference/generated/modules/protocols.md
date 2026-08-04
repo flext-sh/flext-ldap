@@ -2,6 +2,10 @@
 
 # flext_ldap.protocols
 
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 ::: flext_ldap.protocols
     options:
       show_root_heading: true
