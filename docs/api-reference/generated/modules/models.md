@@ -2,6 +2,10 @@
 
 # flext_ldap.models
 
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 ::: flext_ldap.models
     options:
       show_root_heading: true

@@ -2,6 +2,10 @@
 
 # flext_ldap.services.connection
 
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 ::: flext_ldap.services.connection
     options:
       show_root_heading: true
