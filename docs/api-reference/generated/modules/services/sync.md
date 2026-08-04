@@ -2,6 +2,10 @@
 
 # flext_ldap.services.sync
 
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 ::: flext_ldap.services.sync
     options:
       show_root_heading: true
