@@ -33,12 +33,14 @@ class FlextLdapSettings(FlextLdifSettings):
         """Namespaced LDAP runtime settings."""
 
         host: Annotated[str, m.Field(description="LDAP server host")] = "localhost"
-        port: Annotated[int, m.Field(ge=1, le=65535, description="LDAP server port")] = (
-            389
-        )
+        port: Annotated[
+            int, m.Field(ge=1, le=65535, description="LDAP server port")
+        ] = 389
         use_ssl: Annotated[bool, m.Field(description="Enable LDAPS")] = False
         use_tls: Annotated[bool, m.Field(description="Enable STARTTLS")] = False
-        bind_dn: Annotated[str, m.Field(description="LDAP bind distinguished name")] = ""
+        bind_dn: Annotated[str, m.Field(description="LDAP bind distinguished name")] = (
+            ""
+        )
         bind_password: Annotated[str, m.Field(description="LDAP bind password")] = ""
         timeout: Annotated[
             int, m.Field(ge=1, description="LDAP operation timeout in seconds")
