@@ -614,6 +614,7 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+exclude-newer = "7 days"
 link-mode = "copy"
 
 [tool.vulture]
@@ -673,7 +674,7 @@ dev = [
   "pylint>=3.3",
   "pyrefly>=1.1.1",
   "pyright>=1.1.411",
-  "pytest>=8.4",
+  "pytest>=9.0.3",
   "pytest-benchmark>=5.1",
   "pytest-clarity>=1.0.1",
   "pytest-codeblocks>=0.17.0",
@@ -689,8 +690,8 @@ dev = [
   "pytest-xdist>=3.8",
   "pyupgrade>=3.19",
   "radon>=6.0.1",
-  "ruff>=0.12.3",
-  "rumdl>=0.2.46",
+  "ruff>=0.15.12",
+  "rumdl>=0.2.45",
   "types-cachetools>=6.2",
   "types-cffi>=2.0",
   "types-click>=7.1",
@@ -713,6 +714,6 @@ dev = [
   "types-setuptools>=80.9",
   "types-tabulate>=0.10",
   "types-toml>=0.10.8.20240310",
-  "vulture>=2.13",
+  "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]
