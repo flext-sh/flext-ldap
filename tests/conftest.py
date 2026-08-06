@@ -115,9 +115,6 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                     auto_bind=True,
                     receive_timeout=1,
                 )
-                if conn.bound:
-                    conn.unbind()
-                    break
             except (
                 RuntimeError,
                 t.Ldap.LDAPException,
@@ -126,6 +123,19 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                 OSError,
             ):
                 pass
+            else:
+                try:
+                    if conn.bound:
+                        conn.unbind()
+                        break
+                except (
+                    RuntimeError,
+                    t.Ldap.LDAPException,
+                    ConnectionError,
+                    TimeoutError,
+                    OSError,
+                ):
+                    pass
             time.sleep(1.0)
             waited += 1.0
         else:
