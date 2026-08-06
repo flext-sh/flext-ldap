@@ -37,6 +37,11 @@ src/flext_ldap/
 - **Use the `FlextLdap` facade** — do not reach into `adapters/` or `services/` internals directly.
 - LDIF parsing/serialization is delegated to `flext-ldif` (registry-selected dialects), not reimplemented here.
 
+## Conventions (specific to this package)
+
+- Config/settings canonical pattern: ADR-012.
+- Codemod governance (ast-grep + make mod): ADR-014.
+
 ## Commands
 
 ```bash
