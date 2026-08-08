@@ -223,9 +223,7 @@ pytest tests/integration/ # Integration tests
 pytest tests/e2e/         # End-to-end tests
 
 # Run with coverage
-pytest --cov=src --cov-report=html
-```
-
+pytest --cov=src --cov-report=html```
 ### Writing Tests
 
 ```python
@@ -258,9 +256,7 @@ FLEXT uses pre-commit hooks to enforce quality standards:
 pre-commit install
 
 # Run hooks manually
-pre-commit run --all-files
-```
-
+pre-commit run --all-files```
 ### Quality Checks
 
 ```bash
@@ -274,9 +270,7 @@ make type-check
 make security
 
 # All quality checks
-make val
-```
-
+make val```
 ## Adding New Projects
 
 ### 1. Create Project Structure
@@ -324,9 +318,7 @@ class FlextNewlibModels:
 ```bash
 # Add to workspace pyproject.toml
 # Add to workspace Makefile
-# Update documentation
-```
-
+# Update documentation```
 ## Debugging
 
 ### Type Errors
@@ -336,9 +328,7 @@ class FlextNewlibModels:
 mypy src/module.py --show-error-codes --show-traceback
 
 # Check specific error
-mypy src/ --show-error-codes | grep "error-code"
-```
-
+mypy src/ --show-error-codes | grep "error-code"```
 ### Test Failures
 
 ```bash

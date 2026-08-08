@@ -123,9 +123,7 @@ export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 export FLEXT_LDAP_PORT=${FlextConstants.LDAPS_DEFAULT_PORT}
 export FLEXT_LDAP_USE_SSL=true
 export FLEXT_LDAP_TIMEOUT=${FlextLdapConstants.DEFAULT_TIMEOUT}
-export FLEXT_LDAP_POOL_SIZE=5
-```
-
+export FLEXT_LDAP_POOL_SIZE=5```
 ### Security Configuration
 
 ```bash
@@ -137,9 +135,7 @@ export FLEXT_LDAP_CA_CERT_FILE="/path/to/ca.pem"
 
 # Authentication
 export FLEXT_LDAP_AUTH_METHOD="simple"  # simple, sasl
-export FLEXT_LDAP_SASL_MECHANISM="GSSAPI"  # For SASL auth
-```
-
+export FLEXT_LDAP_SASL_MECHANISM="GSSAPI"  # For SASL auth```
 ### Connection Pool Settings
 
 ```bash
@@ -226,9 +222,7 @@ FLEXT_LDAP_BASE_DN=dc=example,dc=com
 
 # Connection settings
 FLEXT_LDAP_TIMEOUT=30
-FLEXT_LDAP_POOL_SIZE=5
-```
-
+FLEXT_LDAP_POOL_SIZE=5```
 ### Docker Compose
 
 ```yaml
@@ -241,9 +235,7 @@ services:
     environment:
       - FLEXT_ENV=production
     depends_on:
-      - ldap-server
-```
-
+      - ldap-server```
 ______________________________________________________________________
 
 ## Testing Configuration

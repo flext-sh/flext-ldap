@@ -582,9 +582,7 @@ services:
 
 volumes:
   ldap_data:
-  ldap_config:
-```
-
+  ldap_config:```
 ### Dockerfile with FLEXT-LDAP
 
 ```dockerfile
@@ -615,9 +613,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 EXPOSE 8000
 
-CMD ["python", "-m", "myapp"]
-```
-
+CMD ["python", "-m", "myapp"]```
 ______________________________________________________________________
 
 ## Kubernetes Integration

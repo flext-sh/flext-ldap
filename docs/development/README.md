@@ -224,16 +224,12 @@ class Config(m.BaseModel):
 
 ### Commit Messages
 
-Follow Conventional Commits:
-
-```
+Follow Conventional Commits:```
 feat: add new LDAP operation
 fix: resolve connection timeout issue
 refactor: simplify authentication logic
 docs: update API documentation
-test: add integration tests for OID
-```
-
+test: add integration tests for OID```
 ## Pull Request Checklist
 
 - [ ] Code follows FLEXT patterns

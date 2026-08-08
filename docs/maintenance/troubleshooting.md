@@ -256,9 +256,7 @@ for file_path in file_list:
 python maintenance/validate_links.py --debug-link "https://example.com"
 
 # Check network connectivity
-curl -I https://example.com
-```
-
+curl -I https://example.com```
 **Solutions:**
 
 - Add domains to skip list in settings
@@ -276,9 +274,7 @@ curl -I https://example.com
 validation:
   timeout: 15
   retries: 2
-  max_workers: 2
-```
-
+  max_workers: 2```
 #### SSL Certificate Issues
 
 **Symptom:** SSL verification errors
@@ -357,9 +353,7 @@ python maintenance/sync.py --rollback docs/example.md
 optimization:
   auto_fix: false # Manual review required
   fix_common_typos: true
-  enhance_code_blocks: false # Skip complex changes
-```
-
+  enhance_code_blocks: false # Skip complex changes```
 ### Reporting System Problems
 
 #### Missing Charts/Data
@@ -373,9 +367,7 @@ optimization:
 python -c "import matplotlib, seaborn; u.Cli.print('✅ Chart libraries available')"
 
 # Check data availability
-ls -la docs/maintenance/reports/
-```
-
+ls -la docs/maintenance/reports/```
 **Solutions:**
 
 - Install visualization dependencies
@@ -423,9 +415,7 @@ for i in range(0, len(file_list), batch_size):
 ```yaml
 # settings.yaml - Limit concurrent operations
 validation:
-  max_workers: 2
-```
-
+  max_workers: 2```
 ### Slow Execution
 
 **Symptom:** Operations take too long to complete
@@ -451,9 +441,7 @@ find docs/maintenance/backups/ -type f -mtime +30 -delete
 gzip docs/maintenance/reports/*.json
 
 # Limit log file size
-logrotate -f /etc/logrotate.d/docs-maintenance
-```
-
+logrotate -f /etc/logrotate.d/docs-maintenance```
 ## Configuration Problems
 
 ### Invalid Configuration Values
@@ -503,9 +491,7 @@ else:
 extends: settings.yaml
 sync:
   auto_commit: true
-  push_after_commit: true
-```
-
+  push_after_commit: true```
 ## Integration Issues
 
 ### CI/CD Pipeline Failures
@@ -518,9 +504,7 @@ sync:
 # Test in isolated environment
 docker run --rm -v $(pwd):/workspace \
   python:3.9-slim \
-  bash -c "cd /workspace && pip install -r docs/maintenance/requirements.txt && python docs/maintenance/audit.py --quick"
-```
-
+  bash -c "cd /workspace && pip install -r docs/maintenance/requirements.txt && python docs/maintenance/audit.py --quick"```
 **Solutions:**
 
 - Use specific Python versions in pipelines
@@ -665,9 +649,7 @@ curl -v https://example.com
 nslookup example.com
 
 # Test with different user agents
-curl -H "User-Agent: Mozilla/5.0" https://example.com
-```
-
+curl -H "User-Agent: Mozilla/5.0" https://example.com```
 ### File System Debugging
 
 ```python
@@ -733,9 +715,7 @@ df -h docs/ | tail -1
 echo "Health check complete."
 EOF
 
-chmod +x docs/maintenance/health_check.sh
-```
-
+chmod +x docs/maintenance/health_check.sh```
 ______________________________________________________________________
 
 **Documentation Maintenance System Troubleshooting Guide**

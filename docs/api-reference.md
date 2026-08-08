@@ -518,8 +518,7 @@ Bidirectional converter between ldap3 entries and ldif entries.
 
 **Import:**
 
-```python
-```
+```python```
 #### `ldap3_to_ldif_entry(ldap3_entry) -> p.Result[FlextLdifModels.Entry]`
 
 Convert ldap3.Entry to ldif entry.
@@ -620,8 +619,7 @@ Server detection and servers system integration using ldif.
 
 **Import:**
 
-```python
-```
+```python```
 #### `detect_server_type_from_entries(entries) -> p.Result[str]`
 
 Detect LDAP server type from entry analysis.
@@ -715,8 +713,7 @@ Abstract base class defining complete server operations interface.
 
 **Import:**
 
-```python
-```
+```python```
 **Server Implementations:**
 
 - `OpenLDAP2Operations` - OpenLDAP 2.x (cn=settings, olcAccess ACLs)
@@ -936,8 +933,7 @@ Complete implementation for OpenLDAP 2.x (cn=settings style).
 
 **Import:**
 
-```python
-```
+```python```
 **Features:**
 
 - olcAccess ACL format
@@ -972,8 +968,7 @@ Complete implementation for Oracle Internet Directory.
 
 **Import:**
 
-```python
-```
+```python```
 **Features:**
 
 - orclaci ACL format
@@ -988,8 +983,7 @@ Complete implementation for Oracle Unified Directory.
 
 **Import:**
 
-```python
-```
+```python```
 **Features:**
 
 - ds-privilege-name ACL format
@@ -1035,9 +1029,7 @@ def add_entry(self, connection, entry: FlextLdifModels.Entry) -> p.Result[bool]:
 Use mypy or similar tools for static type checking:
 
 ```bash
-mypy --strict your_code.py
-```
-
+mypy --strict your_code.py```
 ______________________________________________________________________
 
 ## 🔗 Complete Usage Example

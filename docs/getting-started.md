@@ -486,9 +486,7 @@ make ldap-test-server
 docker ps | grep flext-ldap-test-server
 
 # Stop test server
-make ldap-test-server-stop
-```
-
+make ldap-test-server-stop```
 ### **Run Tests**
 
 ```bash
@@ -501,9 +499,7 @@ pytest tests/integration/   # Integration tests (requires LDAP server)
 pytest tests/e2e/          # End-to-end tests
 
 # Run with coverage
-pytest --cov=src/flext_ldap
-```
-
+pytest --cov=src/flext_ldap```
 ### **Development Workflow**
 
 ```bash

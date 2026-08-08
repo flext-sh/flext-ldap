@@ -207,9 +207,7 @@ FLEXT uses environment variables for configuration:
 # Set configuration
 export FLEXT_LOG_LEVEL=INFO
 export FLEXT_LDIF_DEFAULT_ENCODING=utf-8
-export FLEXT_LDIF_STRICT_VALIDATION=true
-```
-
+export FLEXT_LDIF_STRICT_VALIDATION=true```
 ### Programmatic Configuration
 
 ```python
