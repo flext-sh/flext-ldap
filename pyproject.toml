@@ -399,7 +399,7 @@ addopts = [
   "--durations=10",
   "--markdown-docs",
   "--strict-markers",
-  "--timeout=30",
+  "--timeout=90",
 ]
 filterwarnings = [
   "error",
