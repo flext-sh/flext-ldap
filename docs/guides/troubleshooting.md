@@ -94,16 +94,12 @@ ModuleNotFoundError: No module named 'flext_core'```
 
 ```bash
 export PYTHONPATH=src
-python -c "import flext_core; u.Cli.print(flext_core.__file__)"
-```
-
+python -c "import flext_core; u.Cli.print(flext_core.__file__)"```
 **Reinstall dependencies:**
 
 ```bash
 make clean
-make setup
-```
-
+make setup```
 **Check Poetry environment:**
 
 ```bash
@@ -154,15 +150,11 @@ def process(data: t.JsonMapping) -> p.Result[ProcessedData]:
 **Run MyPy with details:**
 
 ```bash
-mypy src/module.py --show-error-codes --show-traceback
-```
-
+mypy src/module.py --show-error-codes --show-traceback```
 **Check specific error:**
 
 ```bash
-mypy src/ --show-error-codes | grep "error-code"
-```
-
+mypy src/ --show-error-codes | grep "error-code"```
 ### 3. Test Failures
 
 #### Problem: Tests failing
@@ -175,15 +167,11 @@ AssertionError: Expected success but got failure```
 **Run with verbose output:**
 
 ```bash
-pytest tests/unit/test_module.py -vv --tb=long
-```
-
+pytest tests/unit/test_module.py -vv --tb=long```
 **Debug specific test:**
 
 ```bash
-pytest tests/unit/test_module.py::TestClass::test_method -v --pdb
-```
-
+pytest tests/unit/test_module.py::TestClass::test_method -v --pdb```
 **Check test data:**
 
 ```python
@@ -209,9 +197,7 @@ ValidationError: field required```
 **Check environment variables:**
 
 ```bash
-env | grep FLEXT_
-```
-
+env | grep FLEXT_```
 **Validate configuration:**
 
 ```python

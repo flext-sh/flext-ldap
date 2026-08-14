@@ -161,9 +161,7 @@ ______________________________________________________________________
 **Symptom:**
 
 ```yaml
-AuthenticationError: Authentication failed: Invalid credentials
-```
-
+AuthenticationError: Authentication failed: Invalid credentials```
 **Diagnosis:**
 
 ```python
@@ -201,9 +199,7 @@ run(diagnose_auth())```
 **Symptom:**
 
 ```yaml
-SearchError: Invalid DN format
-```
-
+SearchError: Invalid DN format```
 **Common DN Format Mistakes:**
 
 ```python
@@ -254,9 +250,7 @@ ______________________________________________________________________
 **Symptom:**
 
 ```yaml
-SearchError: Bad search filter
-```
-
+SearchError: Bad search filter```
 **Common Filter Mistakes:**
 
 ```python
@@ -309,9 +303,7 @@ for test_filter in test_filters:
 **Symptom:**
 
 ```yaml
-SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
-```
-
+SearchError: No such t.JsonValue: ou=users,dc=example,dc=com```
 **Diagnosis:**
 
 ```python
@@ -452,9 +444,7 @@ search_request = FlextLdapEntities.SearchRequest(
 **Symptoms:**
 
 ```yaml
-ConnectionError: Connection pool exhausted
-```
-
+ConnectionError: Connection pool exhausted```
 **Diagnosis:**
 
 ```python
@@ -550,17 +540,13 @@ services:
       - FLEXT_LDAP_HOST=ldap-server # Use service name, not localhost
 
   ldap-server:
-    image: osixia/openldap:1.5.0
-```
-
+    image: osixia/openldap:1.5.0```
 1. **Network connectivity:**
 
 ```bash
 # Test from within container
 docker exec -it app-container ping ldap-server
-docker exec -it app-container telnet ldap-server 389
-```
-
+docker exec -it app-container telnet ldap-server 389```
 1. **Volume persistence:**
 
 ```yaml
@@ -629,9 +615,7 @@ docker exec -it flext-ldap-test-server ldapsearch \
 # Restart test server
 docker stop flext-ldap-test-server
 docker rm flext-ldap-test-server
-make ldap-test-server
-```
-
+make ldap-test-server```
 ______________________________________________________________________
 
 ## Error Message Reference
@@ -708,9 +692,7 @@ wireshark ldap.pcap
 
 # Test with different LDAP tools
 ldapsearch -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
-ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
-```
-
+ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password```
 ### Performance Profiling
 
 ```python

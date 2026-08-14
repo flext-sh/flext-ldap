@@ -429,9 +429,7 @@ def custom_audit_rule(content, file_path):
 pip install -r docs/maintenance/requirements.txt
 
 # Check Python path
-export PYTHONPATH=/path/to/project:$PYTHONPATH
-```
-
+export PYTHONPATH=/path/to/project:$PYTHONPATH```
 #### Permission Errors
 
 ```bash
@@ -439,9 +437,7 @@ export PYTHONPATH=/path/to/project:$PYTHONPATH
 chmod +x docs/maintenance/*.py
 
 # Run with sudo if needed for system paths
-sudo python maintenance/audit.py
-```
-
+sudo python maintenance/audit.py```
 #### Cache Issues
 
 ```bash
