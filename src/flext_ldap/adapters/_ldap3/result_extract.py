@@ -132,8 +132,6 @@ class ResultConverterExtractMixin:
                 result[k] = [str(v)]
             elif hasattr(v, "__len__") and hasattr(v, "__getitem__"):
                 result[k] = FlextLdapLdap3Wrappers.value_to_str_list(v)
-            elif v is not None:
-                result[k] = [str(v)]
             else:
                 empty_values: t.MutableSequenceOf[str] = []
                 result[k] = empty_values
