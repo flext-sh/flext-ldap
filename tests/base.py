@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from tests import p
 
 
-class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](
-    tests_s[TDomainResult]
-):
+class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](tests_s[TDomainResult]):
     """LDAP test service base with source and test settings namespaces."""
 
     # NOTE (multi-agent): flext-tests owns fetch_settings; this project
