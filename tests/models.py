@@ -31,14 +31,14 @@ class TestsFlextLdapModels(m, FlextTestsModels):
 
             FAIL_ERROR_MESSAGE = "nope"
 
-            class SuccessService(TestsFlextLdapServiceBase):
+            class SuccessService(TestsFlextLdapServiceBase[bool]):
                 """Test service that always succeeds."""
 
                 @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].ok(True)
 
-            class FailService(TestsFlextLdapServiceBase):
+            class FailService(TestsFlextLdapServiceBase[bool]):
                 """Test service that always fails."""
 
                 @override
