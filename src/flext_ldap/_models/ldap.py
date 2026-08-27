@@ -12,6 +12,13 @@ from flext_ldap import c, t
 from flext_ldif import m, u
 
 
+def _empty_phase_results() -> t.MappingKV[
+    str, "FlextLdapModelsLdap.PhaseSyncResult"
+]:
+    """Build an immutable, precisely typed empty phase result mapping."""
+    return MappingProxyType({})
+
+
 class FlextLdapModelsLdap:
     """LDAP-specific models namespace."""
 
@@ -248,7 +255,7 @@ class FlextLdapModelsLdap:
 
         model_config = m.ConfigDict(arbitrary_types_allowed=True)
         phase_results: t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult] = u.Field(
-            default_factory=lambda: MappingProxyType({}),
+            default_factory=_empty_phase_results,
             description="Per-phase sync results keyed by phase name",
         )
         total_entries: t.NonNegativeInt = 0

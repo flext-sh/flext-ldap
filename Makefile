@@ -93,17 +93,15 @@ MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
-# `make` targets a member checkout when PROJECT names a workspace member and
-# WORKSPACE was not overridden on the command line. PROJECT alone used to keep
-# WORKSPACE at the workspace root, so finish looked up lanes in the wrong git
-# primary and failed with "worktree branch is not registered".
-ifeq ($(filter command line override,$(origin WORKSPACE)),)
-ifneq ($(strip $(PROJECT)),)
-ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
-override WORKSPACE := $(PROJECT_ROOT)/$(PROJECT)
-endif
-endif
-endif
+# The member-selection block used to appear TWICE: once here against
+# PROJECT_ROOT and again below against WORKSPACE_ROOT. Both guarded on the same
+# `origin WORKSPACE` condition, so the second `override` always won and the
+# first was dead -- while still contributing its `endif`s, which is how the
+# generated Makefile ended up with one more `endif` than it had conditionals
+# ("extraneous 'endif'"). The surviving block is the correct one:
+# WORKSPACE_ROOT is derived from the superproject below, whereas PROJECT_ROOT
+# is this checkout, so only the former resolves a member of the governing
+# workspace.
 # === SECTION: WORKSPACE_ROOT isolation (managed) ===
 # Source: computed (rule: derive from current checkout unless caller overrides)
 # Rule: WORKSPACE_ROOT is always derived from the current checkout unless the
@@ -138,8 +136,8 @@ _ALLOWED_WHATS_help := usage $(shell sed -n 's/^_custom_help_\([a-z0-9_-]*\):.*/
 _ALLOWED_WHATS_setup := environment $(shell sed -n 's/^_custom_setup_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_deps := check lock upgrade $(shell sed -n 's/^_custom_deps_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_build := artifacts $(shell sed -n 's/^_custom_build_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_check := all $(shell sed -n 's/^_custom_check_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_test := all full profile cache-status cache-clear cache-checkpoint $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_check := all lint pyrefly mypy pyright security markdown smells $(shell sed -n 's/^_custom_check_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_test := all cache-status cache-clear cache-checkpoint $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_fmt := check all apply $(shell sed -n 's/^_custom_fmt_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_fix := check all apply $(shell sed -n 's/^_custom_fix_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -177,7 +175,6 @@ FLEXT_INFRA_BOOTSTRAP_REQUIREMENT := flext-infra @ git+https://github.com/flext-
 FLEXT_INFRA_SOURCE_ROOT_REL := 
 UV_BOOTSTRAP_FLAGS := --isolated --all-groups --all-extras
 # End SECTION: infra bootstrap
-
 
 
 _DEFAULT_help := usage
@@ -418,7 +415,7 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_full _builtin_test_profile _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_mod_check _builtin_mod_all _builtin_mod_apply
+.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_mod_check _builtin_mod_all _builtin_mod_apply
 
 $(filter-out setup,$(PUBLIC_VERBS)):
 	$(call _dispatch,$@)
@@ -506,8 +503,9 @@ _builtin_help_usage:
 	@printf '  %-10s WHAT=%s APPLY=Y\n' 'mod' "$$(printf '%s' '$(_ALLOWED_WHATS_mod)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
-	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
 	@printf '  %-10s %s\n' 'PROJECT' 'member checkout when WORKSPACE unset';
+	@printf '  %-10s %s\n' 'BEAD' 'lane-root bead id for lane tracking';
+	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
 	@printf '\n%s\n' 'Custom hooks (custom.mk):';
 	@printf '  %s\n' 'Define pre-<verb>, post-<verb>, pre-<verb>-<what>, post-<verb>-<what>';
 	@printf '  %s\n' 'in custom.mk to wrap one declared handler.';
@@ -772,7 +770,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
 	$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" \
-		--apply --rewrite-constraints --skip-check "$$@"
+		--apply $(if $(strip $(DEPENDENCY)),,--rewrite-constraints) --skip-check "$$@"
 	$(call _run_for_selected_projects,)
 
 
@@ -783,19 +781,29 @@ _builtin_build_artifacts:
 # by `make fix APPLY=Y` and formatting by `make fmt APPLY=Y`, both run BEFORE
 # check. APPLY here made the same tools run twice with conflicting intents,
 # so it is rejected instead of silently honoured; FIX=1 became the `fix` verb.
-# CI=Y runs make.ci.check_gates and CI=N runs its strict
-# complement, make.ci.local_check_gates (RULING 2: rules not skip-list).
+# Under CI=Y the run is narrowed to make.ci.check_gates --
+# the strict complement of make.ci.local_check_gates, derived at the config
+# owner so the two contexts can never overlap nor leave a gate unowned.
 _builtin_check_all: _builtin_require_environment
 	@set -eu; \
 	gates="$(strip $(CHECK_GATES))"; \
 	if [ -z "$$gates" ]; then gates="$$(printf '%s' '$(CHECK_GATES_DEFAULT)' | tr ' ' ',')"; fi; \
 	gates="$$(printf '%s' "$$gates" | tr -d '[:space:]')"; \
 	if [ "$(strip $(CI))" = "Y" ]; then \
-		gates="lint,pyright,security,markdown,smells"; \
+		filtered=""; \
+		for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
+			owned=0; \
+			if [ "$$gate" = "lint" ]; then owned=1; fi; \
+			if [ "$$gate" = "pyright" ]; then owned=1; fi; \
+			if [ "$$gate" = "security" ]; then owned=1; fi; \
+			if [ "$$gate" = "markdown" ]; then owned=1; fi; \
+			if [ "$$gate" = "smells" ]; then owned=1; fi; \
+			if [ "$$owned" -eq 1 ]; then \
+				if [ -n "$$filtered" ]; then filtered="$$filtered,$$gate"; else filtered="$$gate"; fi; \
+			fi; \
+		done; \
+		gates="$$filtered"; \
 		printf 'INFO: CI=Y runs check gates: lint pyright security markdown smells\n'; \
-	elif [ "$(strip $(CI))" = "N" ]; then \
-		gates="pyrefly,mypy"; \
-		printf 'INFO: CI=N runs check gates: pyrefly mypy\n'; \
 	fi; \
 	for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
 		case " $(CHECK_GATES_ALLOWED) " in *" $$gate "*) ;; \
@@ -808,18 +816,33 @@ _builtin_check_all: _builtin_require_environment
 	fi; \
 	$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
+
+_builtin_check_lint: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "lint" --projects .
+
+_builtin_check_pyrefly: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "pyrefly" --projects .
+
+_builtin_check_mypy: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "mypy" --projects .
+
+_builtin_check_pyright: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "pyright" --projects .
+
+_builtin_check_security: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "security" --projects .
+
+_builtin_check_markdown: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "markdown" --projects .
+
+_builtin_check_smells: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "smells" --projects .
+
+
 _builtin_test_all: _builtin_require_environment
 
 	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
-
-_builtin_test_full: _builtin_require_environment
-
-	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
-
-_builtin_test_profile: _builtin_require_environment
-
-	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
 _builtin_test_cache-status: _builtin_require_environment
 
@@ -916,25 +939,16 @@ _builtin_release_status: _builtin_require_environment
 	@git -C "$(PROJECT_ROOT)" diff --quiet
 	@git -C "$(PROJECT_ROOT)" diff --cached --quiet
 
-# Every command here writes to the SAME root, derived from the invocation
-# point. `deps modernize`/`extra-paths` used to receive WORKSPACE_ROOT while
-# `conform` received PROJECT_ROOT, so a gen run inside one member rewrote the
-# pyproject of ~30 siblings and left each dirty. Because gen runs inside check
-# and check runs in the pre-commit hook, one commit in any lane dirtied every
-# sibling -- the "workspace changed during Make check" abort. It
-# also kept the fixed point out of reach: each run rewrote the siblings, so
-# the next run found a difference again. At the workspace root PROJECT_ROOT is
-# already the workspace, so fan-out survives exactly where it belongs.
+# Generation has one owner. Conform preserves the caller's scope and applies
+# the complete dependency/tooling projection before it verifies its fixed point.
+# Dependency upgrades remain a separate explicit verb because they rewrite lock
+# floors; gen must never run a second pyproject writer over conform's result.
 _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --check
-	@$(PROJECT_FLEXT_INFRA) deps extra-paths --workspace "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --apply
-	@$(PROJECT_FLEXT_INFRA) deps extra-paths --workspace "$(PROJECT_ROOT)" --apply
 
 _builtin_gen_apply: _builtin_gen_all
 

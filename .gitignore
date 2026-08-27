@@ -210,6 +210,7 @@ secrets.yml
 .beads/.*
 !.beads/config.yaml
 .beads/proxieddb/
+.beads.gate.lock
 .dolt/
 *.db
 .beads-credential-key
@@ -243,6 +244,7 @@ __pyrefly_virtual__/
 .omo/
 .pylance_cache/
 .pytest_cache/
+.test-tmp/
 .testmondata
 .testmondata-wal
 .testmondata-shm
