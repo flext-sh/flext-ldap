@@ -77,7 +77,11 @@ class TestsFlextLdapDetection:
             if not self._searchable:
                 return None
             succeeds = self._search_succeeds
-            return lambda **_kwargs: succeeds
+
+            def search_result(**_kwargs: t.JsonValue) -> bool:
+                return succeeds
+
+            return search_result
 
         @property
         def result(self) -> t.JsonMapping | None:
