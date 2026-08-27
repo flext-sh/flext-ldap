@@ -154,7 +154,10 @@ class TestsFlextLdapUtilitiesUnit:
             case c.Ldap.Tests.AttrToStrListCase.LIST:
                 result = u.Ldap.attr_to_str_list({"cn": list(c.Ldap.Tests.LIST_ABC)})
             case c.Ldap.Tests.AttrToStrListCase.LIST_BYTES:
-                result = u.Ldap.attr_to_str_list({"key": [b"bytes", "str"]})
+                list_bytes: t.MappingKV[str, t.Ldap.Ldap3AttributeValue] = {
+                    "key": [b"bytes", "str"]
+                }
+                result = u.Ldap.attr_to_str_list(list_bytes)
             case c.Ldap.Tests.AttrToStrListCase.INT:
                 result = u.Ldap.attr_to_str_list({"num": 42})
             case _:

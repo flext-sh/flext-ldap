@@ -1,6 +1,10 @@
-<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
-
 # flext-ldap Public API
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 ::: flext_ldap
     options:

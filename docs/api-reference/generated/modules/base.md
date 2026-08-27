@@ -1,6 +1,10 @@
-<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
-
 # flext_ldap.base
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 ::: flext_ldap.base
     options:

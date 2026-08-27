@@ -206,9 +206,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     if not connection.bound:
                         return None
                     connection.unbind()
-                    return candidate_dn, candidate_password
                 except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
                     return None
+                else:
+                    return candidate_dn, candidate_password
 
             @classmethod
             def get_admin_credentials(cls) -> tuple[str, str]:

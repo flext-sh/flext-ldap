@@ -13,6 +13,7 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
+from flext_tests import tk
 from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
@@ -76,6 +77,8 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     """Provide ldap container."""
+    if tk.ci_disables_docker():
+        pytest.skip(c.Tests.DOCKER_CI_SKIP_REASON)
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "
@@ -86,7 +89,8 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
-        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
+        # Start the container before probing credentials — bind probes require
+        # a listening LDAP server (get_admin_credentials fails closed otherwise).
         execute_result = docker_control.execute()
         if execute_result.failure:
             msg = (
@@ -95,8 +99,11 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
             )
             pytest.skip(msg)
         waited: float = 0.0
+        admin_dn = ""
+        admin_password = ""
         while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:
             try:
+                admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
                     get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
@@ -108,11 +115,27 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                     auto_bind=True,
                     receive_timeout=1,
                 )
-                if conn.bound:
-                    conn.unbind()
-                    break
-            except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
+            except (
+                RuntimeError,
+                t.Ldap.LDAPException,
+                ConnectionError,
+                TimeoutError,
+                OSError,
+            ):
                 pass
+            else:
+                try:
+                    if conn.bound:
+                        conn.unbind()
+                        break
+                except (
+                    RuntimeError,
+                    t.Ldap.LDAPException,
+                    ConnectionError,
+                    TimeoutError,
+                    OSError,
+                ):
+                    pass
             time.sleep(1.0)
             waited += 1.0
         else:

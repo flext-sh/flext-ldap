@@ -10,15 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
-
-from flext_cli import FlextCliConfig
+from flext_cli import FlextCliConfig, m
 
 
-class _LdapNamespace(BaseModel):
+class _LdapNamespace(m.BaseModel):
     """Open, frozen namespace exposing every ``config/*.yaml`` domain model-less."""
 
-    model_config = ConfigDict(extra="allow", frozen=True)
+    model_config = m.ConfigDict(extra="allow", frozen=True)
 
 
 class FlextLdapConfig(FlextCliConfig):
