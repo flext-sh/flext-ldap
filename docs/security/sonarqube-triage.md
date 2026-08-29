@@ -44,7 +44,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       155  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 2 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldap/services/operations.py:265` · **Effort**: 9min
@@ -63,7 +63,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       269  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 3 · 🟠 CRITICAL · CODE_SMELL · `python:S1192`
 **Local**: `src/flext_ldap/services/operations.py:579` · **Effort**: 6min
@@ -82,7 +82,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       583          return folded
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 4 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8264`
 **Local**: `.github/workflows/docs.yml:18` · **Effort**: 5min
@@ -101,7 +101,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        22  concurrency:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 5 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8233`
 **Local**: `.github/workflows/docs.yml:19` · **Effort**: 5min
@@ -120,7 +120,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        23    group: pages
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 6 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8233`
 **Local**: `.github/workflows/docs.yml:20` · **Effort**: 5min
@@ -139,7 +139,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        24    cancel-in-progress: false
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 7 · 🟡 MAJOR · VULNERABILITY · `text:S8565`
 **Local**: `pyproject.toml:-` · **Effort**: 5min
@@ -147,7 +147,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 > Dependency versions are not predictable if the lock file (uv.lock, poetry.lock, pdm.lock or pylock.toml) is missing.
 
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 8 · 🟡 MAJOR · CODE_SMELL · `python:S5778`
 **Local**: `tests/unit/test_config.py:77` · **Effort**: 5min
@@ -166,7 +166,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        81  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 9 · 🟡 MAJOR · CODE_SMELL · `python:S5778`
 **Local**: `tests/unit/test_sync.py:147` · **Effort**: 5min
@@ -185,7 +185,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       151                  settings=m.Ldap.SyncPhaseConfig(
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 10 · ⚪ MINOR · CODE_SMELL · `python:S7504`
 **Local**: `conftest.py:20` · **Effort**: 5min
@@ -204,7 +204,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        24                  sys.modules.pop(module_name, None)
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 11 · ⚪ MINOR · CODE_SMELL · `python:S116`
 **Local**: `src/flext_ldap/typings.py:18` · **Effort**: 2min
@@ -223,5 +223,4 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        22          type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]
 ```
 
-**Decisão**: 
-
+**Decisão**: pendente
