@@ -12,9 +12,7 @@ from flext_ldap import c, t
 from flext_ldif import m, u
 
 
-def _empty_phase_results() -> t.MappingKV[
-    str, "FlextLdapModelsLdap.PhaseSyncResult"
-]:
+def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]:
     """Build an immutable, precisely typed empty phase result mapping."""
     return MappingProxyType({})
 
