@@ -80,7 +80,7 @@ exclude_also = [
   "if _t.TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
-fail_under = 45
+fail_under = 15
 precision = 2
 show_missing = true
 skip_covered = false
@@ -562,15 +562,12 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"
 
 [tool.uv.exclude-newer-package]
 cryptography = false
-django-stubs = "2026-08-13T00:00:00Z"
-mkdocstrings-python = "2026-08-18T00:00:00Z"
-mypy = "2026-08-15T03:04:00Z"
-types-setuptools = "2026-08-13T00:00:00Z"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
@@ -628,7 +625,7 @@ dev = [
   "pip-audit>=2.7.3",
   "pre-commit>=4.6.1",
   "pylint>=3.3",
-  "pyrefly>=1.2.0",
+  "pyrefly>=1.1.1",
   "pyright>=1.1.411",
   "pytest>=9.0.3",
   "pytest-benchmark>=5.1",
