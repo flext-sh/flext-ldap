@@ -263,9 +263,6 @@ class TestsFlextLdapModelsSearch:
                     key: list(value)
                     for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
                 }
-            case _:
-                message = f"Unhandled search category case: {case}"
-                raise AssertionError(message)
         category = u.Ldap.extract_objectclass_category(attrs)
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 

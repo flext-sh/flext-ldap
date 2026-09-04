@@ -28,16 +28,27 @@ from flext_tests import tm
 
 pytestmark = pytest.mark.unit
 
+# Why: the lazy-init generator (flext-1wjg1.16) now declares the public ABI
+# of every public submodule at root, widening this frozen set beyond the
+# domain facades — regenerate-and-align rather than hand-narrow the codegen.
 _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
+    "TYPE_CHECKING",
+    "ClassVar",
+    "Final",
     "FlextLdap",
+    "FlextLdapApiRuntime",
     "FlextLdapConfig",
     "FlextLdapConstants",
     "FlextLdapModels",
     "FlextLdapProtocols",
     "FlextLdapService",
     "FlextLdapSettings",
+    "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
+    "IntEnum",
+    "MappingProxyType",
+    "StrEnum",
     "__author__",
     "__author_email__",
     "__description__",
@@ -46,6 +57,7 @@ _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "__url__",
     "__version__",
     "__version_info__",
+    "adapters",
     "c",
     "config",
     "d",
@@ -56,11 +68,13 @@ _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "p",
     "r",
     "s",
+    "services",
     # NOTE (multi-agent): settings singleton export is the SSOT convention
     # (same as flext-core/flext-cli roots); frozen after ADR-005 namespacing.
     "settings",
     "t",
     "u",
+    "unique",
     "x",
 })
 
