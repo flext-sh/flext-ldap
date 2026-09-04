@@ -199,6 +199,11 @@ fix-report.json
 .env.development
 **/.env
 
+# Legacy env samples superseded by codegen-owned .env.example (flext-1wjg1.16):
+# untracked so the release build's staged-source sensitivity gate stays green.
+.env.examples
+.env.minimal
+
 # Credentials and keys
 *.key
 *.pem
