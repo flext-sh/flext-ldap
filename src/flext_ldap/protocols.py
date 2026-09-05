@@ -182,11 +182,11 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def is_connected(self) -> bool:
-                """Check if client is connected.
-
+                """Whether client is connected.
+                
                 Returns:
                     True if connected, False otherwise
-
+                
                 """
                 ...
 
@@ -330,7 +330,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def is_connected(self) -> bool:
-                """Check if adapter is connected."""
+                """Whether adapter is connected."""
                 ...
 
             @property
@@ -383,11 +383,11 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def is_connected(self) -> bool:
-                """Check if connection is active.
-
+                """Whether connection is active.
+                
                 Returns:
                     True if connected, False otherwise
-
+                
                 """
                 ...
 

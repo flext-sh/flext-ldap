@@ -3,21 +3,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import integration as integration
-    from . import unit as unit
     from enum import StrEnum, unique
-    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
     from pathlib import Path
     from tempfile import gettempdir
-    from typing import Final, TYPE_CHECKING
+    from typing import TYPE_CHECKING, Final
 
+    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
+
+    from . import integration as integration, unit as unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
     from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from .models import TestsFlextLdapModels, TestsFlextLdapModels as m

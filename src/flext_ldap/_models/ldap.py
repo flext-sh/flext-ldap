@@ -169,7 +169,7 @@ class FlextLdapModelsLdap:
         @u.computed_field
         @property
         def success_rate(self) -> float:
-            """Calculate success rate (successful / total_processed)."""
+            """Success rate (successful / total_processed)."""
             if self.total_processed == 0:
                 return 0.0
             return float(self.successful) / float(self.total_processed)
