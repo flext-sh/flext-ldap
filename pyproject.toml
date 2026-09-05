@@ -80,7 +80,7 @@ exclude_also = [
   "if _t.TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
-fail_under = 15
+fail_under = 45
 precision = 2
 show_missing = true
 skip_covered = false
@@ -552,7 +552,6 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
-"scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 
 # [MANAGED] tomlsort
