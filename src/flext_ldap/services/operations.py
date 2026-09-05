@@ -414,18 +414,14 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             try:
                 current_server = u.Ldif.normalize_server_type(str(current_server_raw))
             except ValueError as exc:
-                return r[m.Ldap.OperationResult].fail(
-                    f"Failed to normalize current server type: {exc}"
-                )
+                return r[m.Ldap.OperationResult].fail(f"Failed to normalize current server type: {exc}", exception=exc)
         target_server = u.Ldif.normalize_server_type(self._server_type)
         if current_server is not None and current_server != target_server:
             conversion_result = ldif.convert_model(
                 current_server, target_server, entry_for_adapter
             )
             if conversion_result.failure:
-                return r[m.Ldap.OperationResult].fail(
-                    conversion_result.error or "Failed to convert entry for LDAP add"
-                )
+                return r[m.Ldap.OperationResult].from_failure(conversion_result)
             converted_entry = conversion_result.value
             if not isinstance(converted_entry, m.Ldif.Entry):
                 return r[m.Ldap.OperationResult].fail(
@@ -571,7 +567,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                     op_name="validate delete DN",
                 )
         if dn_build.failure:
-            return r[m.Ldap.OperationResult].fail(dn_build.error or "Invalid DN")
+            return r[m.Ldap.OperationResult].from_failure(dn_build)
         dn_model: m.Ldif.DN = dn_build.unwrap()
         result = self._ensure_adapter().delete(dn_model)
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
