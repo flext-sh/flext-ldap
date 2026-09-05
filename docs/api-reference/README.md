@@ -25,8 +25,8 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextLdap`, `FlextLdapConfig`, `FlextLdapConstants`,
-  `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService` (+3 more)
-- Generated module pages: `0`
+- Primary facades: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
+  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols` (+5 more)
+- Generated module pages: `11`
 
 Back to [project docs](../index.md).
