@@ -36,14 +36,21 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      - name: Install mise toolchain
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
+
       - name: Sync workspace toolchain
-        run: make setup APPLY=Y
+        run: make setup
 
       - name: Generation drift (blocking)
-        run: make conform APPLY=Y
+        run: make gen WHAT=check
 
-      - name: Docs lifecycle (blocking)
-        run: make docs APPLY=Y
+      - name: Docs audit (blocking)
+        run: make docs WHAT=audit
+
+      - name: Docs validate (blocking)
+        run: make docs WHAT=validate
 
       # Failure diagnostics execute only after the original Make step has
       # already propagated its exact status to Actions.
@@ -82,7 +89,7 @@ jobs:
             apps/*/.reports/**/audit-report.md
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 7
 
   build:
@@ -99,11 +106,15 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      - name: Install mise toolchain
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
+
       - name: Sync workspace toolchain
-        run: make setup APPLY=Y
+        run: make setup
 
       - name: Build site
-        run: make docs APPLY=Y
+        run: make docs WHAT=build
 
       - name: Verify byte-identical repository
         run: |

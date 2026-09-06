@@ -3,21 +3,28 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
+
+from types import MappingProxyType
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from . import integration as integration
+    from . import unit as unit
     from enum import StrEnum, unique
+    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
     from pathlib import Path
     from tempfile import gettempdir
-    from typing import TYPE_CHECKING, Final
+    from typing import Final, TYPE_CHECKING
 
-    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
-
-    from . import integration as integration, unit as unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
+    from .conftest import (
+        WorkerInputConfig,
+        ldap_container,
+        pytest_runtest_makereport,
+        worker_id,
+    )
     from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
@@ -38,14 +45,17 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdapSettings",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "WorkerInputConfig",
     "c",
     "d",
     "e",
     "gettempdir",
     "h",
     "integration",
+    "ldap_container",
     "m",
     "p",
+    "pytest_runtest_makereport",
     "r",
     "s",
     "t",
@@ -57,6 +67,7 @@ __all__: tuple[str, ...] = (
     "u",
     "unique",
     "unit",
+    "worker_id",
     "x",
 )
 
@@ -64,6 +75,12 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".base": ("TestsFlextLdapServiceBase", "s"),
+            ".conftest": (
+                "WorkerInputConfig",
+                "ldap_container",
+                "pytest_runtest_makereport",
+                "worker_id",
+            ),
             ".constants": ("TestsFlextLdapConstants", "c"),
             ".integration": ("integration",),
             ".models": ("TestsFlextLdapModels", "m"),
