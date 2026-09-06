@@ -414,7 +414,9 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             try:
                 current_server = u.Ldif.normalize_server_type(str(current_server_raw))
             except ValueError as exc:
-                return r[m.Ldap.OperationResult].fail(f"Failed to normalize current server type: {exc}", exception=exc)
+                return r[m.Ldap.OperationResult].fail(
+                    f"Failed to normalize current server type: {exc}", exception=exc
+                )
         target_server = u.Ldif.normalize_server_type(self._server_type)
         if current_server is not None and current_server != target_server:
             conversion_result = ldif.convert_model(

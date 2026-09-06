@@ -183,10 +183,10 @@ class FlextLdapProtocols(_ldif_p):
             @property
             def is_connected(self) -> bool:
                 """Whether client is connected.
-                
+
                 Returns:
                     True if connected, False otherwise
-                
+
                 """
                 ...
 
@@ -384,10 +384,10 @@ class FlextLdapProtocols(_ldif_p):
             @property
             def is_connected(self) -> bool:
                 """Whether connection is active.
-                
+
                 Returns:
                     True if connected, False otherwise
-                
+
                 """
                 ...
 
