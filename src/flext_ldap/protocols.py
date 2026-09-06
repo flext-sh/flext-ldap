@@ -473,8 +473,17 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             @property
-            def unbind(self) -> Callable[..., bool]:
-                """The callable implementing connection teardown."""
+            def unbind(
+                self,
+            ) -> Callable[..., bool | tuple[bool, t.JsonValue, t.JsonValue, t.JsonValue]]:
+                """The callable implementing connection teardown.
+
+                Thread-safe ldap3 strategies return a
+                ``(status, result, response, request)`` tuple instead of a bare
+                bool; the wrapper only ever consumes truthiness (see
+                ``FlextLdapLdap3Wrappers.unbind``), so both real shapes must be
+                declared here for structural conformance with ``ldap3.Connection``.
+                """
                 ...
 
         class Ldap3ServerInfo(Protocol):

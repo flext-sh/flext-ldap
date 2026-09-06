@@ -7,7 +7,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Package: `flext_ldap`
-- Version: `0.12.0rc0`
+- Version: `0.12.0`
 - Description: Enterprise LDAP Operations Library for FLEXT Framework
 - Doc summary: Flext Ldap package.
 - Classifiers: `Development Status :: 3 - Alpha`, `Intended Audience ::
@@ -17,16 +17,16 @@
 - Project class: `domain`
 - Keywords: `adapter`, `clean-architecture`, `ddd`, `enterprise`, `flext`,
   `integration`, `ldap`, `typed`
-- Main facades: `FlextLdap`, `FlextLdapConfig`, `FlextLdapConstants`,
-  `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
-  `FlextLdapSettings`, `FlextLdapTypes` (+1 more)
+- Main facades: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
+  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`,
+  `FlextLdapService`, `FlextLdapSettings` (+3 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdap`, `FlextLdapConfig`, `FlextLdapConstants`,
-  `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
-  `FlextLdapSettings`, `FlextLdapTypes`, `FlextLdapUtilities`, `config` (+2
+- Public symbol exports: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
+  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`,
+  `FlextLdapService`, `FlextLdapSettings`, `FlextLdapSync`, `FlextLdapTypes` (+4
   more)
-- Exported module shortcuts: _none_
-- Generated module pages: `7`
+- Exported module shortcuts: `adapters`, `services`
+- Generated module pages: `11`
 
 ## Next Pages
 

@@ -45,7 +45,7 @@ license = "MIT"
 name = "flext-ldap"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-version = "0.12.0rc0"
+version = "0.12.0"
 
 [[project.authors]]
 email = "team@flext.sh"
@@ -80,7 +80,7 @@ exclude_also = [
   "if _t.TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
-fail_under = 15
+fail_under = 45
 precision = 2
 show_missing = true
 skip_covered = false
@@ -116,13 +116,13 @@ allow-direct-references = true
 
 # [MANAGED] mypy
 [tool.mypy]
-# FLEXT mypy suppression rationale (validated at the facade-MRO boundary):
-# FLEXT mypy[assignment]: Dependency-injector descriptors lose their MRO-bound type only in Mypy.
-# FLEXT mypy[attr-defined]: PEP 562 facade members inherited through MRO are invisible to Mypy.
-# FLEXT mypy[call-arg]: Pydantic v2 init signatures behind facade MRO are incomplete in Mypy.
+# FLEXT mypy suppression rationale (validated at the facade-FLEXT boundary):
+# FLEXT mypy[assignment]: Dependency-injector descriptors lose their FLEXT-bound type only in Mypy.
+# FLEXT mypy[attr-defined]: PEP 562 facade members installed by FLEXT composition are invisible to Mypy.
+# FLEXT mypy[call-arg]: Pydantic v2 init signatures behind facade FLEXT are incomplete in Mypy.
 # FLEXT mypy[misc]: Valid PEP 695 nested facade aliases are rejected under Mypy's misc bucket.
 # FLEXT mypy[name-defined]: Generated PEP 562 exports are installed at runtime but absent to Mypy.
-# FLEXT mypy[prop-decorator]: Mypy loses Pydantic computed-field descriptors across composed MRO.
+# FLEXT mypy[prop-decorator]: Mypy loses Pydantic computed-field descriptors across composed FLEXT.
 # FLEXT mypy[valid-type]: Mypy rejects facade namespaces used as owners in valid PEP 695 aliases.
 check_untyped_defs = true
 disable_error_code = [
@@ -139,7 +139,7 @@ extra_checks = true
 follow_imports = "normal"
 ignore_missing_imports = true
 local_partial_types = true
-mypy_path = ["src", "."]
+mypy_path = ["src"]
 namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
@@ -150,10 +150,6 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-disable_error_code = ["arg-type"]
-module = ["*.cli"]
 
 [[tool.mypy.overrides]]
 disable_error_code = ["unreachable"]
@@ -169,7 +165,6 @@ warn_untyped_fields = true
 # [MANAGED] pyrefly
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
-ignore-errors-in-generated-code = true
 project-excludes = [
   "**/*_pb2*.py",
   "**/*_pb2_grpc*.py",
@@ -185,13 +180,12 @@ project-excludes = [
   "typings/**",
   "vendor/**",
 ]
-project-includes = ["examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*"]
+project-includes = ["src/**/*.py*", "tests/**/*.py*"]
 python-version = "3.13"
 search-path = ["src", "."]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
-abstract-method-call = false
 bad-argument-count = "error"
 bad-argument-type = "error"
 bad-assignment = "error"
@@ -203,7 +197,6 @@ bad-index = "error"
 bad-instantiation = "error"
 bad-keyword-argument = "error"
 bad-match = "error"
-bad-override = false
 bad-param-name-override = "error"
 bad-raise = "error"
 bad-return = "error"
@@ -243,8 +236,6 @@ missing-source = "error"
 missing-source-for-stubs = "error"
 no-access = "error"
 no-matching-overload = "error"
-non-convergent-recursion = false
-non-exhaustive-match = false
 not-a-type = "error"
 not-async = "error"
 not-callable = "error"
@@ -278,9 +269,9 @@ variance-mismatch = "error"
 
 # [MANAGED] pyright
 [tool.pyright]
-# FLEXT Pyright suppression rationale (validated at the facade-MRO boundary):
-# FLEXT pyright[reportAssignmentType]: Pyright rejects the canonical class-alias rebind after MRO facade composition although runtime and the other analyzers resolve it.
-# FLEXT pyright[reportGeneralTypeIssues]: Pyright groups the same valid MRO facade alias rebind under its broad general diagnostic in every execution environment.
+# FLEXT Pyright suppression rationale (validated at the facade-FLEXT boundary):
+# FLEXT pyright[reportAssignmentType]: Pyright rejects the canonical class-alias rebind after FLEXT facade composition although runtime and the other analyzers resolve it.
+# FLEXT pyright[reportGeneralTypeIssues]: Pyright groups the same valid FLEXT facade alias rebind under its broad general diagnostic in every execution environment.
 exclude = [
   "**/.*",
   "**/.mypy_cache",
@@ -305,7 +296,7 @@ exclude = [
   "vendor",
 ]
 extraPaths = ["src", "."]
-include = ["examples", "src", "tests"]
+include = ["src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportArgumentType = "none"
@@ -372,24 +363,6 @@ reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
 root = "tests"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -579,7 +552,6 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
-"scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 
 # [MANAGED] tomlsort
@@ -589,15 +561,12 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"
 
 [tool.uv.exclude-newer-package]
 cryptography = false
-django-stubs = "2026-08-13T00:00:00Z"
-mkdocstrings-python = "2026-08-18T00:00:00Z"
-mypy = "2026-08-15T03:04:00Z"
-types-setuptools = "2026-08-13T00:00:00Z"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
@@ -620,7 +589,7 @@ codegen = [
 dev = [
   "actionlint-py>=1.7.12.24",
   "autoflake>=2.3.1",
-  "bandit>=1.8",
+  "bandit>=1.9.4",
   "black>=25.1",
   "blacken-docs>=1.19",
   "codespell>=2.3",
@@ -632,31 +601,32 @@ dev = [
   "hypothesis>=6.125",
   "isort>=6.0.1",
   "matplotlib-stubs>=0.3",
-  "mkdocs>=1.6",
+  "mkdocs>=1.6.1",
+  "mkdocs-autorefs>=1.4.4",
   "mkdocs-awesome-pages-plugin>=2.9",
   "mkdocs-encryptcontent-plugin>=2",
   "mkdocs-exclude>=1.0.2",
   "mkdocs-get-deps>=0.2",
-  "mkdocs-git-revision-date-localized-plugin>=1.2",
+  "mkdocs-git-revision-date-localized-plugin>=1.5.3",
   "mkdocs-literate-nav>=0.6",
   "mkdocs-macros-plugin>=1",
-  "mkdocs-material>=9.5",
+  "mkdocs-material>=9.7.7",
   "mkdocs-material-extensions>=1.3.1",
-  "mkdocs-mermaid2-plugin>=1.1",
-  "mkdocs-minify-plugin>=0.7",
+  "mkdocs-mermaid2-plugin>=1.2.3",
+  "mkdocs-minify-plugin>=0.8.0",
   "mkdocs-print-site-plugin>=0.8",
-  "mkdocs-redirects>=1.2",
+  "mkdocs-redirects>=1.2.3",
   "mkdocs-section-index>=0.3.12",
   "mkdocs-versioning>=0.2",
-  "mkdocstrings>=0.24",
-  "mkdocstrings-python>=1.7",
-  "mypy>=2.3.0",
+  "mkdocstrings>=1.0.6",
+  "mkdocstrings-python>=2.0.5",
+  "mypy>=2.3.1",
   "pip-audit>=2.7.3",
   "pre-commit>=4.6.1",
   "pylint>=3.3",
-  "pyrefly>=1.1.1",
+  "pyrefly>=1.2.0",
   "pyright>=1.1.411",
-  "pytest>=9.0.3",
+  "pytest>=9.1.1",
   "pytest-benchmark>=5.1",
   "pytest-clarity>=1.0.1",
   "pytest-codeblocks>=0.17.0",
@@ -672,7 +642,7 @@ dev = [
   "pytest-xdist>=3.8",
   "pyupgrade>=3.19",
   "radon>=6.0.1",
-  "ruff>=0.15.12",
+  "ruff>=0.16.0",
   "rumdl>=0.2.45",
   "types-cachetools>=6.2",
   "types-cffi>=2.0",
