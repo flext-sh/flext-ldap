@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from typing import TYPE_CHECKING, ClassVar, Final
 
     from flext_ldif import d, e, h, r, x
+    from typing import ClassVar, Final, TYPE_CHECKING
 
     from . import adapters as adapters, services as services
     from ._config import FlextLdapConfig, config
