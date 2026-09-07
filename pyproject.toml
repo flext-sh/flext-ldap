@@ -604,7 +604,7 @@ dev = [
   "faker>=40.37.0",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-  "hypothesis>=6.165.10",
+  "hypothesis>=6.167.1",
   "isort>=9.0.1",
   "matplotlib-stubs>=0.3.11",
   "mkdocs>=1.6.1",
