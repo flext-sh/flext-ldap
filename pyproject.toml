@@ -1,8 +1,8 @@
-# @flext-managed: continuous
-# @flext-regenerate: make deps WHAT=upgrade APPLY=Y
-# @flext-ssot: flext-infra/src/flext_infra/_constants/deps.py
-# @flext-ssot-dependencies: flext-infra/config/codegen.yaml (project_defaults.dev, dependency_profiles)
-# @flext-maintenance: do not edit managed sections; edit the SSOT
+# @flext-generated: continuous
+# @flext-owner: flext-infra/src/flext_infra/_constants/deps.py
+# @flext-adjust: edit the dependency owner; never this projection
+# @flext-regenerate: make deps APPLY=Y
+# @flext-owner-dependencies: flext-infra/config/codegen.yaml (scaffold.project.dev, scaffold.project.external_runtime_packages, dependency_profiles, runtime_dependency_overlays)
 # [MANAGED] FLEXT pyproject standardization
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
 # Sections with [CUSTOM] are project-specific extension points.
@@ -20,14 +20,14 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "cryptography>=47.0.0",
+  "cryptography>=50.0.1",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
   "ldap3>=2.10.2rc4",
-  "pydantic>=2.13.3",
-  "pydantic-core>=2.46.3",
-  "pydantic-settings>=2.14.0",
+  "pydantic>=2.14.0b1",
+  "pydantic-core>=2.48.0",
+  "pydantic-settings>=2.15.0",
   "structlog>=25.5.0",
 ]
 description = "Enterprise LDAP Operations Library for FLEXT Framework"
@@ -402,9 +402,12 @@ testpaths = ["tests"]
 exclude = [
   "**/.archive/**",
   "**/__pyrefly_virtual__/**",
+  "**/aihub-hooks/**",
   ".archive",
   ".archive/**",
   ".git",
+  ".github/hooks",
+  ".github/hooks/**",
   ".mypy_cache",
   ".pytest_cache",
   ".ruff_cache",
@@ -439,7 +442,7 @@ skip-magic-trailing-comma = true
 [tool.ruff.lint]
 # FLEXT Ruff suppression rationale (validated against semantic facet order):
 # FLEXT ruff[import-outside-top-level]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
-# FLEXT ruff[unsorted-imports]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
+# FLEXT ruff[relative-imports]: The codemod rule ban-private-import requires the opposite form. Same-owner implementation modules use relative sibling imports and every other consumer uses a public facade, because an absolute private import couples a consumer to an owner layout. Selecting both gates makes every internal import fail one of them. Converting the 304 findings produced 301 ban-private-import errors and took the suite from 1717 to 3135, so the architectural rule decides.
 ignore = [
   "ambiguous-unicode-character-comment",
   "ambiguous-unicode-character-docstring",
@@ -459,6 +462,8 @@ ignore = [
   "multi-line-summary-second-line",
   "no-self-use",
   "non-imperative-mood",
+  "pytest-fixture-autouse",
+  "relative-imports",
   "too-many-arguments",
   "too-many-branches",
   "too-many-locals",
@@ -470,7 +475,6 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
-  "unsorted-imports",
 ]
 select = ["ALL"]
 
@@ -561,6 +565,7 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"
@@ -588,84 +593,85 @@ codegen = [
 ]
 dev = [
   "actionlint-py>=1.7.12.24",
-  "autoflake>=2.3.1",
+  "autoflake>=2.4.0",
   "bandit>=1.9.4",
-  "black>=25.1",
-  "blacken-docs>=1.19",
-  "codespell>=2.3",
-  "deptry>=0.23",
-  "django-stubs>=5.2.2",
-  "factory-boy>=3.3.1",
-  "faker>=37.4",
+  "black>=26.5.1",
+  "blacken-docs>=1.20.0",
+  "codespell>=2.4.3",
+  "deptry>=0.25.1",
+  "django-stubs>=6.1.0",
+  "factory-boy>=3.3.3",
+  "faker>=40.37.0",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-  "hypothesis>=6.125",
-  "isort>=6.0.1",
-  "matplotlib-stubs>=0.3",
+  "hypothesis>=6.167.1",
+  "isort>=9.0.1",
+  "matplotlib-stubs>=0.3.11",
   "mkdocs>=1.6.1",
   "mkdocs-autorefs>=1.4.4",
-  "mkdocs-awesome-pages-plugin>=2.9",
-  "mkdocs-encryptcontent-plugin>=2",
+  "mkdocs-awesome-pages-plugin>=2.10.1",
+  "mkdocs-encryptcontent-plugin>=3.1.0",
   "mkdocs-exclude>=1.0.2",
-  "mkdocs-get-deps>=0.2",
-  "mkdocs-git-revision-date-localized-plugin>=1.5.3",
-  "mkdocs-literate-nav>=0.6",
-  "mkdocs-macros-plugin>=1",
+  "mkdocs-get-deps>=0.2.2",
+  "mkdocs-git-revision-date-localized-plugin>=1.5.4",
+  "mkdocs-literate-nav>=0.6.3",
+  "mkdocs-macros-plugin>=1.5.0",
   "mkdocs-material>=9.7.7",
   "mkdocs-material-extensions>=1.3.1",
   "mkdocs-mermaid2-plugin>=1.2.3",
   "mkdocs-minify-plugin>=0.8.0",
-  "mkdocs-print-site-plugin>=0.8",
+  "mkdocs-print-site-plugin>=2.8",
   "mkdocs-redirects>=1.2.3",
   "mkdocs-section-index>=0.3.12",
-  "mkdocs-versioning>=0.2",
+  "mkdocs-versioning>=0.4.0",
   "mkdocstrings>=1.0.6",
-  "mkdocstrings-python>=2.0.5",
+  "mkdocstrings-python>=2.0.7",
   "mypy>=2.3.1",
-  "pip-audit>=2.7.3",
-  "pre-commit>=4.6.1",
-  "pylint>=3.3",
+  "pip-audit>=2.10.1",
+  "pre-commit>=4.6.2",
+  "pylint>=4.0.8",
   "pyrefly>=1.2.0",
   "pyright>=1.1.411",
   "pytest>=9.1.1",
-  "pytest-benchmark>=5.1",
+  "pytest-benchmark>=5.3.0",
   "pytest-clarity>=1.0.1",
-  "pytest-codeblocks>=0.17.0",
-  "pytest-cov>=6.2",
-  "pytest-deadfixtures>=2.2.1",
-  "pytest-env>=1.1.5",
+  "pytest-codeblocks>=0.18.0",
+  "pytest-cov>=7.1.0",
+  "pytest-deadfixtures>=3.1.0",
+  "pytest-env>=1.7.0",
   "pytest-markdown-docs>=0.9.2",
-  "pytest-mock>=3.14",
-  "pytest-randomly>=3.16",
-  "pytest-sugar>=1",
+  "pytest-mock>=3.15.1",
+  "pytest-randomly>=4.1.0",
+  "pytest-sugar>=1.1.1",
   "pytest-testmon>=2.2.0",
-  "pytest-timeout>=2.4",
-  "pytest-xdist>=3.8",
-  "pyupgrade>=3.19",
+  "pytest-timeout>=2.4.0",
+  "pytest-xdist>=3.8.0",
+  "pyupgrade>=3.21.2",
   "radon>=6.0.1",
-  "ruff>=0.16.0",
-  "rumdl>=0.2.45",
-  "types-cachetools>=6.2",
-  "types-cffi>=2.0",
-  "types-click>=7.1",
-  "types-defusedxml>=0.7",
-  "types-docker>=7.1",
+  "ruff>=0.16.5",
+  "rumdl>=0.2.62",
+  "types-cachetools>=7.0.0.20260713",
+  "types-cffi>=2.1.0.20260827",
+  "types-click>=7.1.8",
+  "types-defusedxml>=0.7.0.20260504",
+  "types-docker>=7.2.0.20260827",
   "types-flask>=1.1.6",
-  "types-jsonschema>=4.26",
-  "types-ldap3>=2.9.13.20250622",
-  "types-openpyxl>=3.1.5.20260518",
-  "types-paramiko>=4.0",
-  "types-protobuf>=6.30.2.20250703",
-  "types-psutil>=7",
-  "types-psycopg2>=2.9.21.20250718",
-  "types-pyasn1>=0.6",
-  "types-pyopenssl>=24.1",
-  "types-python-dateutil>=2.9",
-  "types-pyyaml>=6.0.12.20260518",
-  "types-redis>=4.6",
-  "types-requests>=2.32.4",
-  "types-setuptools>=80.9",
-  "types-tabulate>=0.10",
-  "types-toml>=0.10.8.20240310",
+  "types-jsonschema>=4.26.0.20260518",
+  "types-ldap3>=2.9.13.20260827",
+  "types-openpyxl>=3.1.5.20260827",
+  "types-paramiko>=5.0.0.20260724",
+  "types-protobuf>=7.35.1.20260827",
+  "types-psutil>=7.2.2.20260827",
+  "types-psycopg2>=2.9.21.20260724",
+  "types-pyasn1>=0.6.0.20260724",
+  "types-pyopenssl>=24.1.0.20240722",
+  "types-python-dateutil>=2.9.0.20260807",
+  "types-pyyaml>=6.0.12.20260815",
+  "types-redis>=4.6.0.20241004",
+  "types-requests>=2.33.0.20260712",
+  "types-setuptools>=84.0.0.20260812",
+  "types-tabulate>=0.10.0.20260508",
+  "types-toml>=0.10.8.20260518",
   "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]

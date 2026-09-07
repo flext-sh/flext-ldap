@@ -4,10 +4,9 @@ name: Docs
 "on":
   push:
     branches:
-      - dev
-      - develop
-      - 0.12.0-dev
       - main
+      - 0.12.0-dev
+      - 0.20.0-dev
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -36,21 +35,14 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
-
       - name: Sync workspace toolchain
         run: make setup
 
       - name: Generation drift (blocking)
-        run: make gen WHAT=check
+        run: make conform APPLY=Y
 
-      - name: Docs audit (blocking)
-        run: make docs WHAT=audit
-
-      - name: Docs validate (blocking)
-        run: make docs WHAT=validate
+      - name: Docs lifecycle (blocking)
+        run: make docs APPLY=Y
 
       # Failure diagnostics execute only after the original Make step has
       # already propagated its exact status to Actions.
@@ -89,7 +81,7 @@ jobs:
             apps/*/.reports/**/audit-report.md
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
   build:
@@ -106,15 +98,11 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
-
       - name: Sync workspace toolchain
         run: make setup
 
       - name: Build site
-        run: make docs WHAT=build
+        run: make docs APPLY=Y
 
       - name: Verify byte-identical repository
         run: |
@@ -149,4 +137,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128  # v5.0.0
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346  # v5.0.1

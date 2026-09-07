@@ -23,9 +23,14 @@ RUN apk add --no-cache \
 # End SECTION: base packages
 
 # === SECTION: managed tool bootstrap (managed) ===
-# Source: generated bin/mise + .mise.toml + mise.lock
+# Source: generated bin/mise + .mise.toml
 # The canonical make setup verb below owns the official newest-Mise bootstrap
-# and every locked tool installation as the same unprivileged runtime user.
+# and every latest tool installation as the same unprivileged runtime user.
+# GITHUB_TOKEN (passed by ci-matrix as a build-arg) authenticates Mise's
+# GitHub API reads so provisioning never trips anonymous rate limits; mise
+# consumes it through MISE_GITHUB_TOKEN natively.
+ARG GITHUB_TOKEN
+ENV MISE_GITHUB_TOKEN=${GITHUB_TOKEN}
 ENV HOME=/home/runner \
     XDG_DATA_HOME=/home/runner/.local/share \
     XDG_CACHE_HOME=/home/runner/.cache \
