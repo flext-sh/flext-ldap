@@ -18,7 +18,7 @@ from typing import Annotated, ClassVar
 
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import m
+from flext_ldap import m
 from flext_ldif import FlextLdifSettings
 
 
