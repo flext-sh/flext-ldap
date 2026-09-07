@@ -475,7 +475,9 @@ class FlextLdapProtocols(_ldif_p):
             @property
             def unbind(
                 self,
-            ) -> Callable[..., bool | tuple[bool, t.JsonValue, t.JsonValue, t.JsonValue]]:
+            ) -> Callable[
+                ..., bool | tuple[bool, t.JsonValue, t.JsonValue, t.JsonValue]
+            ]:
                 """The callable implementing connection teardown.
 
                 Thread-safe ldap3 strategies return a
