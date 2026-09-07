@@ -150,7 +150,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 tm.ok(result)
 
             @staticmethod
-            def workspace_root() -> Path:
+            def repository_root() -> Path:
                 """Resolve the workspace root that owns the shared LDAP compose.
 
                 Walks ancestors for the shared ``docker/`` compose asset so the
@@ -181,7 +181,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                         port=c.Ldap.Tests.DOCKER_PORT,
                         startup_timeout=c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
                     ),
-                    workspace_root=TestsFlextLdapUtilities.Ldap.Tests.workspace_root(),
+                    repository_root=TestsFlextLdapUtilities.Ldap.Tests.repository_root(),
                 )
 
             FileLock = FlextTestsUtilities.Tests.FileLock
