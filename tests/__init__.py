@@ -9,14 +9,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from enum import StrEnum, unique
-    from pathlib import Path
-    from tempfile import gettempdir
-    from typing import TYPE_CHECKING, Final
-
     from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
 
-    from . import integration as integration, unit as unit
+    from . import integration, unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
     from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
@@ -25,12 +20,7 @@ if TYPE_CHECKING:
     from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
     from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 __all__: tuple[str, ...] = (
-    "TYPE_CHECKING",
-    "Final",
     "FlextTestsConstants",
-    "MappingProxyType",
-    "Path",
-    "StrEnum",
     "TestsFlextLdapConstants",
     "TestsFlextLdapModels",
     "TestsFlextLdapProtocols",
@@ -41,7 +31,6 @@ __all__: tuple[str, ...] = (
     "c",
     "d",
     "e",
-    "gettempdir",
     "h",
     "integration",
     "m",
@@ -55,7 +44,6 @@ __all__: tuple[str, ...] = (
     "tm",
     "tv",
     "u",
-    "unique",
     "unit",
     "x",
 )
@@ -72,7 +60,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextLdapTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextLdapUtilities", "u"),
-            "enum": ("StrEnum", "unique"),
             "flext_tests": (
                 "FlextTestsConstants",
                 "d",
@@ -86,10 +73,6 @@ _LAZY_IMPORTS = MappingProxyType(
                 "tv",
                 "x",
             ),
-            "pathlib": ("Path",),
-            "tempfile": ("gettempdir",),
-            "types": ("MappingProxyType",),
-            "typing": ("Final", "TYPE_CHECKING"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

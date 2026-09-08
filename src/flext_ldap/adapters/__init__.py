@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _ldap3 as _ldap3
+    from . import _ldap3
     from ._ldap3.connection_manager import ConnectionManager
     from ._ldap3.operation_executor import OperationExecutor
     from ._ldap3.result_converter import ResultConverter

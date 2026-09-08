@@ -20,12 +20,9 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from enum import IntEnum, StrEnum, unique
-    from typing import TYPE_CHECKING, ClassVar, Final
-
     from flext_ldif import d, e, h, r, x
 
-    from . import adapters as adapters, services as services
+    from . import adapters, services
     from ._config import FlextLdapConfig, config
     from ._settings import FlextLdapSettings, settings
     from .api import FlextLdap, ldap
@@ -38,9 +35,6 @@ if TYPE_CHECKING:
     from .typings import FlextLdapTypes, FlextLdapTypes as t
     from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
 __all__: tuple[str, ...] = (
-    "TYPE_CHECKING",
-    "ClassVar",
-    "Final",
     "FlextLdap",
     "FlextLdapApiRuntime",
     "FlextLdapConfig",
@@ -52,9 +46,6 @@ __all__: tuple[str, ...] = (
     "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
-    "IntEnum",
-    "MappingProxyType",
-    "StrEnum",
     "__author__",
     "__author_email__",
     "__description__",
@@ -78,7 +69,6 @@ __all__: tuple[str, ...] = (
     "settings",
     "t",
     "u",
-    "unique",
     "x",
 )
 
@@ -98,10 +88,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".services.sync": ("FlextLdapSync",),
             ".typings": ("FlextLdapTypes", "t"),
             ".utilities": ("FlextLdapUtilities", "u"),
-            "enum": ("IntEnum", "StrEnum", "unique"),
             "flext_ldif": ("d", "e", "h", "r", "x"),
-            "types": ("MappingProxyType",),
-            "typing": ("ClassVar", "Final", "TYPE_CHECKING"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
