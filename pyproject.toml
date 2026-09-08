@@ -2,6 +2,62 @@
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
+[project]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
+  "Typing :: Typed",
+]
+dependencies = [
+  "annotated-types>=0.8.0",
+  "beartype>=0.22.9",
+  "dependency-injector>=4.49.1",
+  "flext-core",
+  "packaging>=26.3",
+  "pydantic>=2.13.4",
+  "pydantic-settings>=2.15.0",
+  "pyyaml>=6.0.3",
+  "structlog>=26.1.0",
+  "typing-extensions>=4.16.0",
+]
+description = "Enterprise LDAP Operations Library for FLEXT Framework"
+keywords = [
+  "adapter",
+  "clean-architecture",
+  "ddd",
+  "enterprise",
+  "flext",
+  "integration",
+  "ldap",
+  "typed",
+]
+license = "MIT"
+name = "flext-ldap"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+version = "0.12.0"
+
+[[project.authors]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
+[[project.maintainers]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
+[project.scripts]
+flext-ldap = "flext_ldap.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
+Homepage = "https://github.com/flext-sh/flext"
+Repository = "https://github.com/flext-sh/flext"
+
 [dependency-groups]
 codegen = ["flext-infra"]
 dev = [
@@ -40,51 +96,6 @@ dev = [
   "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]
-
-[project]
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
-  "Typing :: Typed",
-]
-dependencies = ["flext-core", "pydantic>=2.13.4", "pydantic-settings>=2.15.0"]
-description = "Enterprise LDAP Operations Library for FLEXT Framework"
-keywords = [
-  "adapter",
-  "clean-architecture",
-  "ddd",
-  "enterprise",
-  "flext",
-  "integration",
-  "ldap",
-  "typed",
-]
-license = "MIT"
-name = "flext-ldap"
-readme = "README.md"
-requires-python = ">=3.13,<3.14"
-version = "0.12.0"
-
-[[project.authors]]
-email = "team@flext.sh"
-name = "FLEXT Team"
-
-[[project.maintainers]]
-email = "team@flext.sh"
-name = "FLEXT Team"
-
-[project.scripts]
-flext-ldap = "flext_ldap.cli:main"
-
-[project.urls]
-Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
-Homepage = "https://github.com/flext-sh/flext"
-Repository = "https://github.com/flext-sh/flext"
 
 [tool.codespell]
 check-filenames = true
@@ -531,12 +542,5 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-exclude-newer = "7 days"
+exclude-newer = "0 days"
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
-
-[tool.uv.exclude-newer-package]
-cryptography = false
-torch = false
-ruff = false
-faker = false
-pytest-randomly = false
