@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_ldap import c, m, p, t
-from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 from flext_ldif import r
+
+from .normalization import FlextLdapUtilitiesNormalization
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping

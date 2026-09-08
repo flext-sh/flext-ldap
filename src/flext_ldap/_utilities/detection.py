@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from flext_ldap import c, t
-from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 from flext_ldif import u
+
+from .normalization import FlextLdapUtilitiesNormalization
 
 
 class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):

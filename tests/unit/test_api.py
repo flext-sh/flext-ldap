@@ -52,11 +52,11 @@ class TestsFlextLdapApi:
         u.Ldap.Tests.that(first, eq=second)
 
     # --- Callback Type Guards ---
-    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
-    def test_is_multi_phase_callback(
-        self, case: c.Ldap.Tests.CallbackGuardCase
-    ) -> None:
-        """Verify is multi phase callback."""
+    @staticmethod
+    def _callback_for_case(
+        case: c.Ldap.Tests.CallbackGuardCase,
+    ) -> t.Ldap.ProgressCallbackUnion | None:
+        """Return the callback payload for one callback-guard case."""
         callbacks: dict[
             c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
         ] = {
@@ -64,7 +64,14 @@ class TestsFlextLdapApi:
             c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
             c.Ldap.Tests.CallbackGuardCase.SINGLE: u.Ldap.Tests.single_phase_cb,
         }
-        callback = callbacks[case]
+        return callbacks[case]
+
+    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
+    def test_is_multi_phase_callback(
+        self, case: c.Ldap.Tests.CallbackGuardCase
+    ) -> None:
+        """Verify is multi phase callback."""
+        callback = self._callback_for_case(case)
         expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
         u.Ldap.Tests.that(FlextLdapSync.multi_phase_callback(callback), eq=expected)
 
@@ -73,14 +80,7 @@ class TestsFlextLdapApi:
         self, case: c.Ldap.Tests.CallbackGuardCase
     ) -> None:
         """Verify is single phase callback."""
-        callbacks: dict[
-            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
-        ] = {
-            c.Ldap.Tests.CallbackGuardCase.NONE: None,
-            c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
-            c.Ldap.Tests.CallbackGuardCase.SINGLE: u.Ldap.Tests.single_phase_cb,
-        }
-        callback = callbacks[case]
+        callback = self._callback_for_case(case)
         _, expected = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
         u.Ldap.Tests.that(FlextLdapSync.single_phase_callback(callback), eq=expected)
 

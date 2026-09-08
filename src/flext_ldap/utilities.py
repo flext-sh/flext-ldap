@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from flext_ldap._utilities.comparison import FlextLdapUtilitiesComparison
-from flext_ldap._utilities.conversion import FlextLdapUtilitiesConversion
-from flext_ldap._utilities.root_dse import FlextLdapUtilitiesRootDse
-from flext_ldap._utilities.server import FlextLdapUtilitiesServer
-from flext_ldap._utilities.validation import FlextLdapUtilitiesValidation
 from flext_ldif import u
+
+from ._utilities.comparison import FlextLdapUtilitiesComparison
+from ._utilities.conversion import FlextLdapUtilitiesConversion
+from ._utilities.root_dse import FlextLdapUtilitiesRootDse
+from ._utilities.server import FlextLdapUtilitiesServer
+from ._utilities.validation import FlextLdapUtilitiesValidation
 
 
 class FlextLdapUtilities(u):
