@@ -121,8 +121,8 @@ DOCS_ACTIONS := generate fix audit build validate
 
 # === SECTION: lint/type paths (managed) ===
 # Source: template + computed (script_dispatch conditional)
-RUFF_PATHS := $(strip $(foreach d,src tests,$(if $(wildcard $(PROJECT_ROOT)/$(d)/.),$(PROJECT_ROOT)/$(d),)))
-MYPY_PATHS := $(strip $(foreach d,src tests,$(if $(wildcard $(PROJECT_ROOT)/$(d)/.),$(PROJECT_ROOT)/$(d),)))
+RUFF_PATHS := $(strip $(foreach d,src tests examples,$(if $(wildcard $(PROJECT_ROOT)/$(d)/.),$(PROJECT_ROOT)/$(d),)))
+MYPY_PATHS := $(strip $(foreach d,src tests examples,$(if $(wildcard $(PROJECT_ROOT)/$(d)/.),$(PROJECT_ROOT)/$(d),)))
 # End SECTION: lint/type paths
 
 # === SECTION: project tool owner (managed) ===
@@ -293,6 +293,7 @@ mise_exec() { \
 'LC_ALL=C' \
 'MISE_SAFE=1' \
 'MISE_PARANOID=true' \
+'MISE_QUIET=1' \
 'MISE_NO_ENV=1' \
 'MISE_NO_HOOKS=1' \
 'MISE_AUTO_ENV=false' \
@@ -462,7 +463,6 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		fi; \
 		$(UV) sync --frozen --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	fi; \
-	$(BORROW_RUNTIME_VENV_RECIPE); \
 	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" allow "$(PROJECT_ROOT)"
 
