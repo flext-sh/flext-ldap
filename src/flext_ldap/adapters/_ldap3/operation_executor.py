@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, m, p, t, u
 from flext_ldif import r
+
+from flext_ldap import c, m, p, t, u
 
 from .wrappers import FlextLdapLdap3Wrappers
 

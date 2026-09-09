@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_ldap import m
 from flext_tests import FlextTestsModels, r
+
+from flext_ldap import m
 from tests.base import TestsFlextLdapServiceBase
 
 if TYPE_CHECKING:

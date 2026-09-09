@@ -32,9 +32,10 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_ldif import ldif, r
+
 from flext_ldap import c, m, p, t, u
 from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
-from flext_ldif import ldif, r
 
 from ._upsert_handler import FlextLdapUpsertHandler
 

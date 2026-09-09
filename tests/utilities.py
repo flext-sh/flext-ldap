@@ -10,8 +10,9 @@ import os
 from pathlib import Path
 from typing import ClassVar, TypeVar, overload
 
-from flext_ldap import u
 from flext_tests import FlextTestsUtilities, tk, tm
+
+from flext_ldap import u
 from tests import c, m, p, t
 
 TResult = TypeVar("TResult", bound=t.Tests.TestResultValue)

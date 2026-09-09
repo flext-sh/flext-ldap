@@ -15,9 +15,9 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from flext_tests import tm
 from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit

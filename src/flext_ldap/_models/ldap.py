@@ -8,8 +8,9 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_ldap import c, t
 from flext_ldif import m, u
+
+from flext_ldap import c, t
 
 
 def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]:

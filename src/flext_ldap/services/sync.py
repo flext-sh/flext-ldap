@@ -9,9 +9,10 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING
 
+from flext_ldif import r
+
 from flext_ldap import c, m, p, t, u
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import r
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
