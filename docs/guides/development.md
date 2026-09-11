@@ -40,14 +40,14 @@ changed-only, fix, or phase selectors to narrow a standard verb.
 
 ```bash
 make gen
-make mod APPLY=Y
+make mod
 make gen
 make gen
 make fix
 make fmt
 make check
 make test
-make conform APPLY=Y
+make conform
 ```
 
 The final generation run proves the fixed point. The test verb always retains

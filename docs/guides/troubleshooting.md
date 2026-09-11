@@ -42,14 +42,14 @@ After correcting the source, use only the applicable canonical verbs:
 
 ```bash
 make gen
-make mod APPLY=Y
+make mod
 make gen
 make gen
 make fix
 make fmt
 make check
 make test
-make conform APPLY=Y
+make conform
 ```
 
 Test diagnosis still runs through `make test`, with the retained Testmon

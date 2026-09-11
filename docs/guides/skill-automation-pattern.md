@@ -52,18 +52,18 @@ Run only from the workspace root:
 make setup
 make help
 make gen
-make mod APPLY=Y
+make mod
 make gen
 make gen
 make fix
 make fmt
 make check
 make test
-make conform APPLY=Y
-make waza APPLY=Y
+make conform
+make waza
 ```
 
-The final generation run proves the fixed point. `make mod APPLY=Y` owns
+The final generation run proves the fixed point. `make mod` owns
 structural transformations; no direct script or tool invocation is valid.
 `make test` always retains Testmon.
 

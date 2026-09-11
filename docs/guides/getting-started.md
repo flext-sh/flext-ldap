@@ -38,14 +38,14 @@ parallel command surface.
 
 ```bash
 make gen
-make mod APPLY=Y
+make mod
 make gen
 make gen
 make fix
 make fmt
 make check
 make test
-make conform APPLY=Y
+make conform
 ```
 
 The final generation pass proves the fixed point. Test execution remains inside

@@ -48,7 +48,7 @@ make fix
 make fmt
 make check
 make test
-make conform APPLY=Y
+make conform
 ```
 
 Tests run only through the retained Testmon cache. Warnings, skips, empty
@@ -72,7 +72,7 @@ Change the source owner, then regenerate and prove the fixed point:
 
 ```bash
 make gen
-make mod APPLY=Y
+make mod
 make gen
 make gen
 ```
