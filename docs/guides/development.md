@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
 <!-- Source of truth: `docs/guides/development.md`; adjust that source, never this projection. -->
 
 # flext-ldap - Development
@@ -39,14 +39,14 @@ changed-only, fix, or phase selectors to narrow a standard verb.
 5. Run the native gates without bypassing their orchestration.
 
 ```bash
-make gen APPLY=Y
+make gen
 make mod APPLY=Y
-make gen APPLY=Y
-make gen APPLY=Y
-make fix APPLY=Y
-make fmt APPLY=Y
-make check APPLY=Y
-make test APPLY=Y
+make gen
+make gen
+make fix
+make fmt
+make check
+make test
 make conform APPLY=Y
 ```
 
@@ -67,7 +67,7 @@ and uses Testmon; a direct test-runner invocation is invalid evidence.
 ## Documentation ownership
 
 Root guides are the writable source for generated member guides. Update the
-root source, then use `make gen APPLY=Y`; never hand-edit generated copies.
+root source, then use `make gen`; never hand-edit generated copies.
 
 ## Related guides
 
