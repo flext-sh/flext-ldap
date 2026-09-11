@@ -182,7 +182,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def is_connected(self) -> bool:
-                """Check if client is connected.
+                """Whether client is connected.
 
                 Returns:
                     True if connected, False otherwise
@@ -330,7 +330,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def is_connected(self) -> bool:
-                """Check if adapter is connected."""
+                """Whether adapter is connected."""
                 ...
 
             @property
@@ -383,7 +383,7 @@ class FlextLdapProtocols(_ldif_p):
 
             @property
             def is_connected(self) -> bool:
-                """Check if connection is active.
+                """Whether connection is active.
 
                 Returns:
                     True if connected, False otherwise
@@ -475,7 +475,9 @@ class FlextLdapProtocols(_ldif_p):
             @property
             def unbind(
                 self,
-            ) -> Callable[..., bool | tuple[bool, t.JsonValue, t.JsonValue, t.JsonValue]]:
+            ) -> Callable[
+                ..., bool | tuple[bool, t.JsonValue, t.JsonValue, t.JsonValue]
+            ]:
                 """The callable implementing connection teardown.
 
                 Thread-safe ldap3 strategies return a

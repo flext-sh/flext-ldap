@@ -12,13 +12,47 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
+from flext_tests import tm
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from flext_tests import tm
 from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
+
+
+def _entry(attributes: t.MappingKV[str, t.StrSequence] | None) -> m.Ldif.Entry:
+    """Build an LDIF entry on the canonical test DN with ``attributes``."""
+    return m.Ldif.Entry(
+        dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
+        attributes=(
+            None
+            if attributes is None
+            else m.Ldif.Attributes(
+                attributes={key: list(values) for key, values in attributes.items()},
+                attribute_metadata={},
+            )
+        ),
+    )
+
+
+class _RootDseProbePayload:
+    """Shared ldap3-shaped ``result``/``entries`` payload for root-DSE probes."""
+
+    result_payload: ClassVar[t.JsonMapping] = {}
+    entry_payloads: ClassVar[t.SequenceOf[str]] = ()
+
+    @property
+    def result(self) -> t.JsonMapping:
+        """The ldap3 raw result payload."""
+        return self.result_payload
+
+    @property
+    def entries(self) -> t.SequenceOf[str]:
+        """The ldap3 raw entries."""
+        return self.entry_payloads
 
 
 class TestsFlextLdapUtilitiesUnit:
@@ -229,20 +263,13 @@ class TestsFlextLdapUtilitiesUnit:
     # --- extract_entry_attributes ---
     def test_extract_entry_attributes_with_none_attrs(self) -> None:
         """Verify extract entry attributes with none attrs."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE), attributes=None
-        )
+        entry = _entry(None)
         result = u.Ldap.extract_entry_attributes(entry)
         u.Ldap.Tests.that(dict(result), eq={})
 
     def test_extract_entry_attributes_with_attrs(self) -> None:
         """Verify extract entry attributes with attrs."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": ["test"]}, attribute_metadata={}
-            ),
-        )
+        entry = _entry({"cn": ["test"]})
         result = u.Ldap.extract_entry_attributes(entry)
         tm.that(result, has="cn")
 
@@ -308,47 +335,23 @@ class TestsFlextLdapUtilitiesUnit:
     # --- compare_entries ---
     def test_compare_entries_success(self) -> None:
         """Verify compare entries success."""
-        existing = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": ["old"]}, attribute_metadata={}
-            ),
-        )
-        new_entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": ["new"]}, attribute_metadata={}
-            ),
-        )
+        existing = _entry({"cn": ["old"]})
+        new_entry = _entry({"cn": ["new"]})
         result = u.Ldap.compare_entries(existing, new_entry)
         changes = u.Ldap.Tests.ok(result)
         tm.that(changes, has="cn")
 
     def test_compare_entries_no_existing_attrs(self) -> None:
         """Verify compare entries no existing attrs."""
-        existing = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE), attributes=None
-        )
-        new_entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": ["new"]}, attribute_metadata={}
-            ),
-        )
+        existing = _entry(None)
+        new_entry = _entry({"cn": ["new"]})
         result = u.Ldap.compare_entries(existing, new_entry)
         u.Ldap.Tests.fail(result)
 
     def test_compare_entries_no_new_attrs(self) -> None:
         """Verify compare entries no new attrs."""
-        existing = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": ["old"]}, attribute_metadata={}
-            ),
-        )
-        new_entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE), attributes=None
-        )
+        existing = _entry({"cn": ["old"]})
+        new_entry = _entry(None)
         result = u.Ldap.compare_entries(existing, new_entry)
         u.Ldap.Tests.fail(result)
 
@@ -367,10 +370,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     def test_dn_str_with_entry(self) -> None:
         """Verify dn str with entry."""
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
-            attributes=m.Ldif.Attributes(attributes={}, attribute_metadata={}),
-        )
+        entry = _entry({})
         result = u.Ldap.dn_str(entry)
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
 
@@ -471,16 +471,8 @@ class TestsFlextLdapUtilitiesUnit:
     def test_query_root_dse_no_search_method(self) -> None:
         """Verify query root dse no search method."""
 
-        class NoSearch:
+        class NoSearch(_RootDseProbePayload):
             search: None = None
-
-            @property
-            def result(self) -> t.JsonMapping:
-                return {}
-
-            @property
-            def entries(self) -> t.SequenceOf[str]:
-                return []
 
         result = u.Ldap.query_root_dse(NoSearch())
         u.Ldap.Tests.fail(result)
@@ -488,17 +480,9 @@ class TestsFlextLdapUtilitiesUnit:
     def test_query_root_dse_search_returns_false(self) -> None:
         """Verify query root dse search returns false."""
 
-        class FalseSearch:
+        class FalseSearch(_RootDseProbePayload):
             def search(self, **_kwargs: str | int | bool | None) -> bool:
                 return False
-
-            @property
-            def result(self) -> t.JsonMapping:
-                return {}
-
-            @property
-            def entries(self) -> t.SequenceOf[str]:
-                return []
 
         result = u.Ldap.query_root_dse(FalseSearch())
         u.Ldap.Tests.fail(result)
@@ -506,17 +490,11 @@ class TestsFlextLdapUtilitiesUnit:
     def test_query_root_dse_no_entries(self) -> None:
         """Verify query root dse no entries."""
 
-        class EmptySearch:
+        class EmptySearch(_RootDseProbePayload):
+            result_payload: ClassVar[t.JsonMapping] = {"result": 0}
+
             def search(self, **_kwargs: str | int | bool | None) -> bool:
                 return True
-
-            @property
-            def result(self) -> t.JsonMapping:
-                return {"result": 0}
-
-            @property
-            def entries(self) -> t.SequenceOf[str]:
-                return []
 
         result = u.Ldap.query_root_dse(EmptySearch())
         u.Ldap.Tests.fail(result)
@@ -524,17 +502,12 @@ class TestsFlextLdapUtilitiesUnit:
     def test_query_root_dse_invalid_entry_type(self) -> None:
         """Verify query root dse invalid entry type."""
 
-        class BadEntry:
+        class BadEntry(_RootDseProbePayload):
+            result_payload: ClassVar[t.JsonMapping] = {"result": 0}
+            entry_payloads: ClassVar[t.SequenceOf[str]] = ["not_ldap3_entry"]
+
             def search(self, **_kwargs: str | int | bool | None) -> bool:
                 return True
-
-            @property
-            def result(self) -> t.JsonMapping:
-                return {"result": 0}
-
-            @property
-            def entries(self) -> t.SequenceOf[str]:
-                return ["not_ldap3_entry"]
 
         result = u.Ldap.query_root_dse(BadEntry())
         u.Ldap.Tests.fail(result)
@@ -560,17 +533,9 @@ class TestsFlextLdapUtilitiesUnit:
     def test_detect_from_connection_failure(self) -> None:
         """Verify detect from connection failure."""
 
-        class FailSearch:
+        class FailSearch(_RootDseProbePayload):
             def search(self, **_kwargs: str | int | bool | None) -> bool:
                 return False
-
-            @property
-            def result(self) -> t.JsonMapping:
-                return {}
-
-            @property
-            def entries(self) -> t.SequenceOf[str]:
-                return []
 
         result = u.Ldap.detect_from_connection(FailSearch())
         u.Ldap.Tests.fail(result)

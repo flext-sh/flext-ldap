@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_ldap import m
 from flext_tests import s as tests_s
+
+from flext_ldap import m
 from tests.settings import TestsFlextLdapSettings
 
 if TYPE_CHECKING:

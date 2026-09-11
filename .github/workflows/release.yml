@@ -2,11 +2,11 @@
 #
 # Release protocol projection. The workflow selects which protocol phase to
 # run; every decision (next version, guard, tag identity, receipt, upload set)
-# is made by `make release`, never here.
+# is made by the direct `make release-*` and `make publication` verbs, never here.
 #
 # - A push to the integration branch whose head is NOT the protocol's release
-#   commit opens or updates the release pull request (`make release
-#   WHAT=version APPLY=Y`); when nothing is releasable the run is a no-op.
+#   commit opens or updates the release pull request (`make release-version
+#   APPLY=Y`); when nothing is releasable the run is a no-op.
 # - A push whose head IS the release commit (the merged release pull request)
 #   tags it, builds the receipt and publishes exactly what the receipt attests.
 # - `workflow_dispatch` re-runs build and publication for an existing tag.
@@ -41,7 +41,7 @@ jobs:
       ref: ${{ steps.head.outputs.ref }}
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -77,16 +77,18 @@ jobs:
       pull-requests: write # Open or update the release pull request.
     env:
       CI: Y
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # GitHub standard: the built-in GITHUB_TOKEN with the declared job
+      # permissions (contents: write, pull-requests: write) opens and updates
+      # the release pull request. The integration lane CI runs on push events,
+      # so the release PR carries no PR-triggered CI by design.
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
+          token: ${{ github.token }}
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
@@ -94,7 +96,7 @@ jobs:
       - name: Boot
         run: make setup
       - name: Release pull request
-        run: make release WHAT=version APPLY=Y
+        run: make release-version APPLY=Y
 
   publish:
     name: Tag, build and publish the release commit
@@ -104,19 +106,18 @@ jobs:
     timeout-minutes: 180
     permissions:
       contents: write # Push the release tag and create the GitHub release.
+      id-token: write # Trusted publishing to the package index.
+    environment: pypi
     env:
       CI: Y
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout release commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ needs.identity.outputs.ref }}
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
@@ -124,8 +125,8 @@ jobs:
       - name: Boot
         run: make setup
       - name: Tag
-        run: make release WHAT=tag APPLY=Y
+        run: make release-tag APPLY=Y
       - name: Build receipt
-        run: make release WHAT=build
+        run: make release-build APPLY=Y
       - name: Publish
-        run: make release WHAT=publish APPLY=Y
+        run: make publication APPLY=Y INDEX=Y

@@ -14,9 +14,9 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
-from flext_tests import tm
 from tests import c, m, u
 
 pytestmark = pytest.mark.unit

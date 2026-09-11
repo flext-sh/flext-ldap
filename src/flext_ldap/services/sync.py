@@ -9,9 +9,10 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING
 
+from flext_ldif import r
+
 from flext_ldap import c, m, p, t, u
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import r
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -22,8 +23,10 @@ class FlextLdapSync(FlextLdapOperations):
     """MRO mixin that syncs parsed LDIF phases into LDAP."""
 
     @staticmethod
-    def multi_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
-        """Return ``True`` when callback expects the multi-phase signature."""
+    def _callback_expects_parameters(
+        callback: t.Ldap.ProgressCallbackUnion | None, expected_count: int
+    ) -> bool:
+        """Return ``True`` when the callback declares ``expected_count`` parameters."""
         if callback is None:
             return False
         try:
@@ -32,22 +35,21 @@ class FlextLdapSync(FlextLdapOperations):
             msg = f"progress_callback {callback!r} has an uninspectable signature"
             raise TypeError(msg) from exc
         parameter_count: int = len(signature.parameters)
-        matches_multi_phase: bool = parameter_count == c.Ldap.MULTI_PHASE_PARAM_COUNT
-        return matches_multi_phase
+        return parameter_count == expected_count
+
+    @staticmethod
+    def multi_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
+        """Return ``True`` when callback expects the multi-phase signature."""
+        return FlextLdapSync._callback_expects_parameters(
+            callback, c.Ldap.MULTI_PHASE_PARAM_COUNT
+        )
 
     @staticmethod
     def single_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
         """Return ``True`` when callback expects the single-phase signature."""
-        if callback is None:
-            return False
-        try:
-            signature: inspect.Signature = inspect.signature(callback)
-        except c.EXC_BASIC_TYPE as exc:
-            msg = f"progress_callback {callback!r} has an uninspectable signature"
-            raise TypeError(msg) from exc
-        parameter_count: int = len(signature.parameters)
-        matches_single_phase: bool = parameter_count == c.Ldap.SINGLE_PHASE_PARAM_COUNT
-        return matches_single_phase
+        return FlextLdapSync._callback_expects_parameters(
+            callback, c.Ldap.SINGLE_PHASE_PARAM_COUNT
+        )
 
     @staticmethod
     def _make_phase_progress_callback(

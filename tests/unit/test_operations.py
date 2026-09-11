@@ -9,9 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import pytest
+from flext_ldif import r
 
 from flext_ldap.services.operations import FlextLdapOperations
-from flext_ldif import r
 from tests import c, m, u
 
 if TYPE_CHECKING:

@@ -30,9 +30,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.services.detection import FlextLdapServerDetector
-from flext_tests import tm
 from tests import c, p, u
 
 if TYPE_CHECKING:

@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, m, p, t, u
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldif import r
+
+from flext_ldap import c, m, p, t, u
+
+from .wrappers import FlextLdapLdap3Wrappers
 
 if TYPE_CHECKING:
     from collections.abc import Callable

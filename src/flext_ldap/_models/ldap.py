@@ -8,8 +8,9 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_ldap import c, t
 from flext_ldif import m, u
+
+from flext_ldap import c, t
 
 
 def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]:
@@ -169,7 +170,7 @@ class FlextLdapModelsLdap:
         @u.computed_field
         @property
         def success_rate(self) -> float:
-            """Calculate success rate (successful / total_processed)."""
+            """Success rate (successful / total_processed)."""
             if self.total_processed == 0:
                 return 0.0
             return float(self.successful) / float(self.total_processed)

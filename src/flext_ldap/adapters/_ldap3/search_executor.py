@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import c, m, p, t
-from flext_ldap.adapters._ldap3.result_converter import ResultConverter
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldif import r
+
+from flext_ldap import c, m, p, t
+
+from .result_converter import ResultConverter
+from .wrappers import FlextLdapLdap3Wrappers
 
 
 class SearchExecutor:
@@ -66,9 +68,7 @@ class SearchExecutor:
             }
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=str_attrs)
             if entry_result.failure:
-                return r[t.SequenceOf[m.Ldif.Entry]].fail(
-                    entry_result.error or "Failed to create LDAP search entry"
-                )
+                return r[t.SequenceOf[m.Ldif.Entry]].from_failure(entry_result)
             entries.append(entry_result.value)
         return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 
