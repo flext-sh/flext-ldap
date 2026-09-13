@@ -32,9 +32,6 @@ pytestmark = pytest.mark.unit
 # of every public submodule at root, widening this frozen set beyond the
 # domain facades — regenerate-and-align rather than hand-narrow the codegen.
 _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
-    "TYPE_CHECKING",
-    "ClassVar",
-    "Final",
     "FlextLdap",
     "FlextLdapApiRuntime",
     "FlextLdapConfig",
@@ -46,9 +43,6 @@ _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
-    "IntEnum",
-    "MappingProxyType",
-    "StrEnum",
     "__author__",
     "__author_email__",
     "__description__",
@@ -74,7 +68,6 @@ _FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
     "settings",
     "t",
     "u",
-    "unique",
     "x",
 })
 
