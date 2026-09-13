@@ -182,6 +182,7 @@ fix-report.json
 
 # Backup files inside allowed directories
 **/*.bak
+**/*.bak.*
 **/*.bkp
 **/*.bkp?
 **/*.backup
@@ -190,6 +191,10 @@ fix-report.json
 **/*_backup_*
 **/*.md.backup
 **/archived/
+
+# Banned residue (never source, any profile)
+*aihub-prior*
+config/build-constraints.txt
 
 # Autofix rejection artifacts (run_skill_autofix.sh rollback output)
 **/*.rej-*.bak
