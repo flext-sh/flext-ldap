@@ -14,9 +14,9 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
-from flext_tests import tm
 from tests import c, m, u
 
 pytestmark = pytest.mark.unit
@@ -66,7 +66,7 @@ class TestsFlextLdapLdap3Adapter:
                 u.Ldap.Tests.fail(adapter.execute(), has=needle)
             case self.DisconnectedOp.ADD:
                 entry = m.Ldif.Entry(
-                    dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+                    dn=m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
                     attributes=m.Ldif.Attributes(attributes={}),
                 )
                 u.Ldap.Tests.fail(adapter.add(entry), has=needle)

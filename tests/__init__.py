@@ -1,39 +1,82 @@
-# AUTO-GENERATED FILE — canonical lazy tests facade. Regenerate with: make gen
-"""Test package facade exposing the project test aliases lazily."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Tests package."""
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.base import (
-        TestsFlextLdapServiceBase as TestsFlextLdapServiceBase,
-        s as s,
-    )
-    from tests.constants import (
-        TestsFlextLdapConstants as TestsFlextLdapConstants,
-        c as c,
-    )
-    from tests.models import TestsFlextLdapModels as TestsFlextLdapModels, m as m
-    from tests.protocols import (
-        TestsFlextLdapProtocols as TestsFlextLdapProtocols,
-        p as p,
-    )
-    from tests.typings import TestsFlextLdapTypes as TestsFlextLdapTypes, t as t
-    from tests.utilities import (
-        TestsFlextLdapUtilities as TestsFlextLdapUtilities,
-        u as u,
-    )
+    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
 
-_LAZY_IMPORTS = build_lazy_import_map({
-    ".constants": ("TestsFlextLdapConstants", "c"),
-    ".typings": ("TestsFlextLdapTypes", "t"),
-    ".protocols": ("TestsFlextLdapProtocols", "p"),
-    ".models": ("TestsFlextLdapModels", "m"),
-    ".utilities": ("TestsFlextLdapUtilities", "u"),
-    ".base": ("TestsFlextLdapServiceBase", "s"),
-})
+    from . import integration, unit
+    from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
+    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
+    from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
+    from .settings import TestsFlextLdapSettings
+    from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
+    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
+__all__: tuple[str, ...] = (
+    "FlextTestsConstants",
+    "TestsFlextLdapConstants",
+    "TestsFlextLdapModels",
+    "TestsFlextLdapProtocols",
+    "TestsFlextLdapServiceBase",
+    "TestsFlextLdapSettings",
+    "TestsFlextLdapTypes",
+    "TestsFlextLdapUtilities",
+    "c",
+    "d",
+    "e",
+    "h",
+    "integration",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "td",
+    "tf",
+    "tk",
+    "tm",
+    "tv",
+    "u",
+    "unit",
+    "x",
+)
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".base": ("TestsFlextLdapServiceBase", "s"),
+            ".constants": ("TestsFlextLdapConstants", "c"),
+            ".integration": ("integration",),
+            ".models": ("TestsFlextLdapModels", "m"),
+            ".protocols": ("TestsFlextLdapProtocols", "p"),
+            ".settings": ("TestsFlextLdapSettings",),
+            ".typings": ("TestsFlextLdapTypes", "t"),
+            ".unit": ("unit",),
+            ".utilities": ("TestsFlextLdapUtilities", "u"),
+            "flext_tests": (
+                "FlextTestsConstants",
+                "d",
+                "e",
+                "h",
+                "r",
+                "td",
+                "tf",
+                "tk",
+                "tm",
+                "tv",
+                "x",
+            ),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
+)
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

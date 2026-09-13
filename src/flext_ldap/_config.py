@@ -10,7 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import FlextCliConfig, m
+from flext_ldif import m
+
+from flext_core import FlextConfig
 
 
 class _LdapNamespace(m.BaseModel):
@@ -19,7 +21,7 @@ class _LdapNamespace(m.BaseModel):
     model_config = m.ConfigDict(extra="allow", frozen=True)
 
 
-class FlextLdapConfig(FlextCliConfig):
+class FlextLdapConfig(FlextConfig):
     """Ldap config auto-loaded model-less from ``config/*.yaml``."""
 
     Ldap: _LdapNamespace = _LdapNamespace()

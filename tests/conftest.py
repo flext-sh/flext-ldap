@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Protocol, TypeGuard
 
 import pytest
-
 from flext_tests import tk
+
 from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.

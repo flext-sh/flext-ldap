@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
-
 from flext_ldif import t
+from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
 
 class FlextLdapTypes(t):

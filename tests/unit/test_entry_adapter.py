@@ -17,9 +17,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from flext_tests import tm
 from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
@@ -170,6 +170,13 @@ class TestsFlextLdapEntryAdapter:
         metadata = tm.not_none(entry.metadata)
         tm.that(metadata.extensions["base64_encoded_attributes"], eq=["cn"])
 
+    @staticmethod
+    def _source_entry() -> TestsFlextLdapEntryAdapter._Ldap3Entry:
+        """Return the canonical ldap3 source entry for conversion tests."""
+        return TestsFlextLdapEntryAdapter._Ldap3Entry(
+            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE, attributes={"cn": ["user"]}
+        )
+
     @pytest.mark.parametrize(
         "server_type",
         [c.Ldif.ServerTypes.RFC, c.Ldif.ServerTypes.OPENLDAP, c.Ldif.ServerTypes.OUD],
@@ -179,9 +186,7 @@ class TestsFlextLdapEntryAdapter:
     ) -> None:
         """Verify ldap3 to ldif records configured server type."""
         adapter = FlextLdapEntryAdapter(server_type=server_type)
-        source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE, attributes={"cn": ["user"]}
-        )
+        source = self._source_entry()
 
         result = adapter.ldap3_to_ldif_entry(source)
 
@@ -192,9 +197,7 @@ class TestsFlextLdapEntryAdapter:
     def test_default_server_type_is_rfc(self) -> None:
         """Verify default server type is rfc."""
         adapter = FlextLdapEntryAdapter()
-        source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE, attributes={"cn": ["user"]}
-        )
+        source = self._source_entry()
 
         result = adapter.ldap3_to_ldif_entry(source)
 

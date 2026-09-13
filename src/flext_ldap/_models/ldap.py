@@ -8,8 +8,14 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_ldap import c, t
 from flext_ldif import m, u
+
+from flext_ldap import c, t
+
+
+def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]:
+    """Build an immutable, precisely typed empty phase result mapping."""
+    return MappingProxyType({})
 
 
 class FlextLdapModelsLdap:
@@ -164,7 +170,7 @@ class FlextLdapModelsLdap:
         @u.computed_field
         @property
         def success_rate(self) -> float:
-            """Calculate success rate (successful / total_processed)."""
+            """Success rate (successful / total_processed)."""
             if self.total_processed == 0:
                 return 0.0
             return float(self.successful) / float(self.total_processed)
@@ -248,7 +254,7 @@ class FlextLdapModelsLdap:
 
         model_config = m.ConfigDict(arbitrary_types_allowed=True)
         phase_results: t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult] = u.Field(
-            default_factory=lambda: MappingProxyType({}),
+            default_factory=_empty_phase_results,
             description="Per-phase sync results keyed by phase name",
         )
         total_entries: t.NonNegativeInt = 0

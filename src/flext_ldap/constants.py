@@ -10,9 +10,8 @@ from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
-from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
-
 from flext_ldif import c
+from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

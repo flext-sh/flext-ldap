@@ -16,10 +16,10 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
+from flext_ldif import FlextLdifSettings
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import m
-from flext_ldif import FlextLdifSettings
+from flext_ldap import m
 
 
 class FlextLdapSettings(FlextLdifSettings):
