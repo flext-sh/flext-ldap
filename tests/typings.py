@@ -17,7 +17,7 @@ class TestsFlextLdapTypes(FlextTestsTypes, t):
     class Ldap(t.Ldap):
         """LDAP test types."""
 
-        class Tests:
+        class Tests(FlextTestsTypes.Tests):
             """flext-ldap-specific test type definitions namespace.
 
             Consolidates all test types from helpers/typings.py and inline locations.
