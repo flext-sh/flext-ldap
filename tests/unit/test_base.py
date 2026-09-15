@@ -17,7 +17,6 @@ from operator import not_
 
 import pytest
 from flext_tests import FlextTestsSettings, tm
-from pydantic import BaseModel
 
 from flext_core import FlextSettings
 from tests import c, m
