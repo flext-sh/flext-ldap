@@ -120,7 +120,7 @@ class TestsFlextLdapBase:
         """Verify fetch settings exposes mro namespace."""
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
 
-        tm.that(getattr(settings, namespace), is_=BaseModel)
+        tm.that(getattr(settings, namespace), is_=m.BaseModel)
 
     def test_instance_settings_match_fetch_settings_singleton(self) -> None:
         """Verify instance settings match fetch settings singleton."""
