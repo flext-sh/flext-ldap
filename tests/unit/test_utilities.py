@@ -539,9 +539,7 @@ class TestsFlextLdapUtilitiesUnit:
             result.value.get(c.Ldap.RootDseAttribute.NAMING_CONTEXTS),
             has="dc=example,dc=com",
         )
-        tm.that(
-            result.value.get(c.Ldap.RootDseAttribute.VENDOR_NAME), has="OpenLDAP"
-        )
+        tm.that(result.value.get(c.Ldap.RootDseAttribute.VENDOR_NAME), has="OpenLDAP")
 
     # --- detect_from_connection ---
     def test_detect_from_connection_failure(self) -> None:
