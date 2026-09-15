@@ -235,6 +235,7 @@ class FlextLdapModelsLdap:
         """LDAP operation result."""
 
         operation: str = ""
+
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
 
