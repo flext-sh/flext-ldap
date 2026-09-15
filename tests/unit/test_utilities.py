@@ -512,22 +512,36 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.query_root_dse(BadEntry())
         u.Ldap.Tests.fail(result)
 
-    def test_query_root_dse_with_real_mock(self) -> None:
-        """Verify query root dse with real mock."""
+    def test_query_root_dse_with_ldap3_offline_strategy(self) -> None:
+        """query_root_dse reads rootDSE attributes through a real ldap3 connection.
+
+        ldap3's ``MOCK_SYNC`` is the library's own offline runtime: connection,
+        strategy, DIT and entries are real ldap3 objects, so the exercised path
+        is the production path against the real external boundary. The rootDSE
+        is published in the offline DIT under its empty DN (the DN form of the
+        real rootDSE); attribute values are raw BER strings (``bytes``) exactly
+        as the offline strategy decodes them. The outcome is asserted
+        deterministically, never as ``success or failure``.
+        """
         server = Server("mock")
         conn = Connection(server, client_strategy=MOCK_SYNC)
-        conn.strategy.add_entry(
-            c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-            {
-                "objectClass": ["top"],
-                "namingContexts": ["dc=example,dc=com"],
-                "supportedExtension": [],
-            },
-        )
+        conn.server.dit[""] = {
+            "objectClass": [b"top"],
+            "namingContexts": [b"dc=example,dc=com"],
+            "vendorName": [b"OpenLDAP"],
+            "vendorVersion": [b"2.4.57"],
+        }
         conn.bind()
         result = u.Ldap.query_root_dse(conn)
-        # Either success or failure is acceptable depending on entry format.
-        tm.that(result.success or bool(result.error), eq=True)
+
+        tm.that(result.success, eq=True)
+        tm.that(
+            result.value.get(c.Ldap.RootDseAttribute.NAMING_CONTEXTS),
+            has="dc=example,dc=com",
+        )
+        tm.that(
+            result.value.get(c.Ldap.RootDseAttribute.VENDOR_NAME), has="OpenLDAP"
+        )
 
     # --- detect_from_connection ---
     def test_detect_from_connection_failure(self) -> None:
@@ -540,13 +554,21 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.detect_from_connection(FailSearch())
         u.Ldap.Tests.fail(result)
 
-    def test_detect_from_connection_with_mock(self) -> None:
-        """Verify detect from connection with mock."""
+    def test_detect_from_connection_with_ldap3_offline_strategy(self) -> None:
+        """detect_from_connection classifies the vendor from real rootDSE data."""
         server = Server("mock")
         conn = Connection(server, client_strategy=MOCK_SYNC)
+        conn.server.dit[""] = {
+            "objectClass": [b"top"],
+            "namingContexts": [b"dc=example,dc=com"],
+            "vendorName": [b"OpenLDAP"],
+            "vendorVersion": [b"2.4.57"],
+        }
         conn.bind()
         result = u.Ldap.detect_from_connection(conn)
-        tm.that(result.success or bool(result.error), eq=True)
+
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq="openldap")
 
     # --- when_safe ---
     def test_when_safe_condition_true(self) -> None:
