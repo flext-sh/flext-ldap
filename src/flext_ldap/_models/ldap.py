@@ -235,12 +235,6 @@ class FlextLdapModelsLdap:
         """LDAP operation result."""
 
         operation: str = ""
-
-        @classmethod
-        def with_operation(cls, operation: str) -> Self:
-            """Build a minimal LDAP operation result."""
-            return cls(operation=operation)
-
     class PhaseSyncResult(LdapBatchStats):
         """Phase sync result - extends LdapBatchStats."""
 

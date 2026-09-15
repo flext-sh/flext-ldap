@@ -149,13 +149,11 @@ class TestsFlextLdapOperations:
         """Verify batch upsert partial failure returns failure."""
         operations = self.BatchPathOperations((
             r[m.Ldap.LdapOperationResult].ok(
-                m.Ldap.LdapOperationResult.with_operation(c.Ldap.UpsertOperation.ADDED)
+                m.Ldap.LdapOperationResult(c.Ldap.UpsertOperation.ADDED)
             ),
             r[m.Ldap.LdapOperationResult].fail("planned batch failure"),
             r[m.Ldap.LdapOperationResult].ok(
-                m.Ldap.LdapOperationResult.with_operation(
-                    c.Ldap.UpsertOperation.SKIPPED
-                )
+                m.Ldap.LdapOperationResult(c.Ldap.UpsertOperation.SKIPPED)
             ),
         ))
         entries = [
@@ -180,7 +178,7 @@ class TestsFlextLdapOperations:
         """
         operations = self.BatchPathOperations((
             r[m.Ldap.LdapOperationResult].ok(
-                m.Ldap.LdapOperationResult.with_operation(c.Ldap.Tests.STRING_SIMPLE)
+                m.Ldap.LdapOperationResult(c.Ldap.Tests.STRING_SIMPLE)
             ),
         ))
         entries = [self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)]
