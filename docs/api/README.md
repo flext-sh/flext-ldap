@@ -1,6 +1,7 @@
 # API Reference Documentation
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Public API](#public-api)
   - [Primary Entry Point](#primary-entry-point)
@@ -30,7 +31,7 @@ Complete API reference for flext-ldap v0.12.0-dev, covering all public interface
 
 **ldap** - Main API facade
 
-```python
+````python
 from flext_ldap import ldap
 
 api = ldap()
@@ -142,3 +143,4 @@ ______________________________________________________________________
 
 **Last Updated**: 2025-01-24
 **API Version**: v0.12.0-dev
+````

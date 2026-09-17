@@ -1,6 +1,7 @@
 # Development Guide
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Table of Contents](#table-of-contents)
   - [Getting Started](#getting-started)
@@ -172,7 +173,7 @@ make clean-all     # Deep clean including venvs
 
 ### Railway-Oriented Programming
 
-```python
+````python
 from __future__ import annotations
 
 from flext_core import r, p
@@ -285,3 +286,4 @@ ______________________________________________________________________
 
 **Last Updated**: 2025-01-24
 **Maintainer**: FLEXT Team
+````

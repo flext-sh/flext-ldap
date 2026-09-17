@@ -1,6 +1,7 @@
 # Universal LDAP Operations Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Key Features](#key-features)
@@ -84,7 +85,7 @@ The universal LDAP system consists of:
 
 ### Creating Server Operations
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldap import ServerOperationsFactory
@@ -515,3 +516,4 @@ ______________________________________________________________________
 
 **Copyright (c) 2025 FLEXT Team. All rights reserved.**
 **SPDX-License-Identifier: MIT**
+````

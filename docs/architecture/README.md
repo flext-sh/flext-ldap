@@ -1,6 +1,7 @@
 # Architecture Documentation
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Table of Contents](#table-of-contents)
   - [Core Architecture](#core-architecture)
@@ -79,6 +80,6 @@ API Facade → Service Layer → Adapter Layer → Protocol + Models
 - Development Guides
 - Maintenance
 
-______________________________________________________________________
+---
 
 **Last Updated**: 2025-03-15

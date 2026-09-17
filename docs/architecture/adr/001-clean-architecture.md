@@ -1,6 +1,7 @@
 # Architecture Decision Record (ADR) 001: Clean Architecture Adoption
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Status](#status)
 - [Context](#context)
@@ -269,7 +270,7 @@ Plugin-based architecture with core and extensions.
 - ADR 002: Railway Pattern Implementation - Error handling strategy
 - ADR 003: Universal LDAP Interface - Server abstraction design
 
-______________________________________________________________________
+---
 
 ## ADR Maintenance
 

@@ -129,7 +129,7 @@ python examples/01_basic_operations.py
 - User entry created, read, updated, and deleted
 - Connection closed gracefully
 
-______________________________________________________________________
+---
 
 ### 02. Search Operations (`02_search_operations.py`)
 
@@ -165,7 +165,7 @@ python examples/02_search_operations.py
 - Different scope demonstrations
 - Attribute filtering examples
 
-______________________________________________________________________
+---
 
 ### 03. Authentication Operations (`03_authentication.py`)
 
@@ -196,7 +196,7 @@ python examples/03_authentication.py
 - Complete authentication workflow (authenticate → search → validate)
 - Security testing (injection attempts handled)
 
-______________________________________________________________________
+---
 
 ### 04. LDIF Operations (`04_ldif_operations.py`)
 
@@ -228,7 +228,7 @@ python examples/04_ldif_operations.py
 - LDIF export with file creation
 - Round-trip demonstration
 
-______________________________________________________________________
+---
 
 ### 05. Universal Operations (`05_universal_operations.py`)
 
@@ -263,7 +263,7 @@ python examples/05_universal_operations.py
 - Entry format conversion between server types
 - Server detection from entry attributes
 
-______________________________________________________________________
+---
 
 ### 06. Validation Patterns (`06_validation_patterns.py`)
 
@@ -297,7 +297,7 @@ python examples/06_validation_patterns.py
 
 **Note**: No LDAP connection required for most validations
 
-______________________________________________________________________
+---
 
 ### 07. Advanced Patterns (`07_advanced_patterns.py`)
 
@@ -332,7 +332,7 @@ python examples/07_advanced_patterns.py
 - Exception handling demonstrations
 - Performance optimization results
 
-______________________________________________________________________
+---
 
 ### 08. ACL Operations (`08_acl_operations.py`)
 
@@ -364,7 +364,7 @@ python examples/08_acl_operations.py
 - Server detection for ACL format selection
 - Complete migration workflow example
 
-______________________________________________________________________
+---
 
 ### 09. Schema Operations (`09_schema_operations.py`)
 
@@ -396,7 +396,7 @@ python examples/09_schema_operations.py
 - Schema search operations
 - Server capabilities comprehensive report
 
-______________________________________________________________________
+---
 
 ### 10. Connection Management (`10_connection_management.py`)
 
@@ -430,7 +430,7 @@ python examples/10_connection_management.py
 - Retry pattern with backoff
 - Multiple connection management
 
-______________________________________________________________________
+---
 
 ### 11. Repository Patterns (`11_repository_patterns.py`)
 
@@ -461,7 +461,7 @@ python examples/11_repository_patterns.py
 - Clean Architecture layer separation
 - Testing benefits explanation
 
-______________________________________________________________________
+---
 
 ### 12. Services (`12_domain_services.py`)
 
@@ -494,7 +494,7 @@ python examples/12_domain_services.py
 - Domain service operations
 - Specification Pattern benefits
 
-______________________________________________________________________
+---
 
 ## 🧪 Comprehensive Validation Examples
 
@@ -528,7 +528,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 - 200 computer accounts
 - 150 additional containers
 
-______________________________________________________________________
+---
 
 ### Validation Helpers (`validation_helpers.py`)
 
@@ -546,7 +546,7 @@ ______________________________________________________________________
 
 **Usage:** Imported by comprehensive validation examples
 
-______________________________________________________________________
+---
 
 ### 99. Comprehensive OpenLDAP Validation (`99_comprehensive_openldap_validation.py`)
 
@@ -624,7 +624,7 @@ python examples/99_comprehensive_openldap_validation.py
 - All 4 requirements pass
 - > 90% overall success rate
 
-______________________________________________________________________
+---
 
 ### 99. Comprehensive OUD Validation (`99_comprehensive_oud_validation.py`)
 
@@ -681,7 +681,7 @@ python examples/99_comprehensive_oud_validation.py
 - > 90% overall success rate
 - OUD-specific features validated
 
-______________________________________________________________________
+---
 
 ### Validation Best Practices
 
@@ -707,31 +707,31 @@ ______________________________________________________________________
 1. **Low Success Rate**: May indicate breaking changes or server issues
 1. **Timeout Errors**: Increase time limits for large datasets
 
-______________________________________________________________________
+---
 
 ## 🎯 Module Coverage Matrix
 
-| Module                    | Examples               | Functionality Demonstrated                             |
-| ------------------------- | ---------------------- | ------------------------------------------------------ |
-| **api.py (ldap)**         | ALL                    | Primary facade - all operations                        |
-| **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
-| **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
-| **settings.py**           | 01, 10                 | FlextLdapSettings configuration, connection management |
-| **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                             |
-| **validations.py**        | 02, 06                 | DN, filter validation                                  |
-| **authentication.py**     | 03                     | User authentication flows                              |
-| **search.py**             | 02                     | Search operations                                      |
-| **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization     |
-| **servers/**              | 05                     | Server-specific operations                             |
-| **servers_integration.py** | 05, 09                 | Server servers handling, ACL/paging/timeout servers      |
-| **exceptions.py**         | 07                     | Error handling                                         |
-| **schema.py**             | 09                     | Schema discovery, server detection                     |
-| **acl/manager.py**        | 08                     | ACL management                                         |
-| **acl/converters.py**     | 08                     | ACL format conversion                                  |
-| **acl/parsers.py**        | 08                     | Multi-format ACL parsing                               |
-| **repositories.py**       | 11                     | Repository pattern, DDD                                |
-| **domain.py**             | 12                     | Domain services, Specification Pattern                 |
-| **connection_manager.py** | 10                     | Connection lifecycle (conceptual)                      |
+| Module                     | Examples               | Functionality Demonstrated                             |
+| -------------------------- | ---------------------- | ------------------------------------------------------ |
+| **api.py (ldap)**          | ALL                    | Primary facade - all operations                        |
+| **models.py**              | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
+| **clients.py**             | 07, 11                 | Advanced direct client usage, repositories             |
+| **settings.py**            | 01, 10                 | FlextLdapSettings configuration, connection management |
+| **constants.py**           | 01, 02                 | Scopes, timeouts, defaults                             |
+| **validations.py**         | 02, 06                 | DN, filter validation                                  |
+| **authentication.py**      | 03                     | User authentication flows                              |
+| **search.py**              | 02                     | Search operations                                      |
+| **entry_adapter.py**       | 04, 05                 | Entry conversion, format conversion, normalization     |
+| **servers/**               | 05                     | Server-specific operations                             |
+| **servers_integration.py** | 05, 09                 | Server servers handling, ACL/paging/timeout servers    |
+| **exceptions.py**          | 07                     | Error handling                                         |
+| **schema.py**              | 09                     | Schema discovery, server detection                     |
+| **acl/manager.py**         | 08                     | ACL management                                         |
+| **acl/converters.py**      | 08                     | ACL format conversion                                  |
+| **acl/parsers.py**         | 08                     | Multi-format ACL parsing                               |
+| **repositories.py**        | 11                     | Repository pattern, DDD                                |
+| **domain.py**              | 12                     | Domain services, Specification Pattern                 |
+| **connection_manager.py**  | 10                     | Connection lifecycle (conceptual)                      |
 
 **Coverage Summary:**
 

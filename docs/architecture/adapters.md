@@ -1,6 +1,7 @@
 # Adapter Layer
 
 <!-- TOC START -->
+
 - [Ldap3Adapter](#ldap3adapter)
 - [FlextLdapEntryAdapter](#flextldapentryadapter)
 - [Why Adapters Matter](#why-adapters-matter)

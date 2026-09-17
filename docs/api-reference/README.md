@@ -1,6 +1,7 @@
 # flext-ldap API Reference
 
 <!-- TOC START -->
+
 - [Source of Truth](#source-of-truth)
 - [Generated Pages](#generated-pages)
 - [Surface Summary](#surface-summary)

@@ -1,6 +1,7 @@
 # API Reference
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [🚀 Main API](#main-api)
   - [`flext_ldap.api.ldap`](#flextldapapildap)
@@ -128,7 +129,7 @@ This document provides comprehensive API reference for all public interfaces in 
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## 🚀 Main API
 
@@ -138,7 +139,7 @@ Default LDAP API instance (FlextLdapClients).
 
 **Example:**
 
-```python
+````python
 from flext_ldap.api import ldap
 
 api = ldap```
@@ -999,7 +1000,8 @@ RFC-compliant fallback for unknown servers.
 **Import:**
 
 ```python
-```
+````
+
 **Features:**
 
 - aci ACL attribute (generic)
@@ -1007,13 +1009,13 @@ RFC-compliant fallback for unknown servers.
 - Basic paged results
 - Standard LDAP operations
 
-______________________________________________________________________
+---
 
 ## 📝 Type Annotations
 
 All public APIs include comprehensive type annotations for IDE support and static analysis:
 
-```python
+````python
 from __future__ import annotations
 
 
@@ -1140,3 +1142,4 @@ For more examples and advanced usage patterns, see:
 ______________________________________________________________________
 
 **Next:** Configuration Guide →
+````

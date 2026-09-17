@@ -1,6 +1,7 @@
 # Data Architecture: Storage
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 
@@ -10,7 +11,7 @@ This document describes how data is stored, persisted, and managed within the FL
 
 [Storage architecture content would go here]
 
-______________________________________________________________________
+---
 
 **Storage Architecture**
 _Data persistence and management strategies_

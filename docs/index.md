@@ -1,6 +1,7 @@
 # flext-ldap Documentation
 
 <!-- TOC START -->
+
 - [Start Here](#start-here)
 - [Public Surface Summary](#public-surface-summary)
 - [Collection Rules](#collection-rules)
@@ -28,11 +29,11 @@ real docstrings.
 ## Public Surface Summary
 
 ::: flext_ldap
-    options:
-      members: false
-      show_root_heading: false
-      show_root_toc_entry: false
-      show_source: false
+options:
+members: false
+show_root_heading: false
+show_root_toc_entry: false
+show_source: false
 
 ## Collection Rules
 

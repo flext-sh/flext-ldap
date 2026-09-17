@@ -1,6 +1,7 @@
 # Development Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Development Environment Setup](#development-environment-setup)
   - [Prerequisites](#prerequisites)
@@ -34,7 +35,7 @@
 - [Contribution Guidelines](#contribution-guidelines)
   - [Pull Request Process](#pull-request-process)
   - [Code Review Checklist](#code-review-checklist)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 ## Table of Contents
 
@@ -124,7 +125,7 @@ This guide covers development setup, coding standards, and contribution guidelin
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## Development Environment Setup
 
@@ -166,7 +167,7 @@ poetry install --with dev,test,docs
 python -c "from flext_ldap.api import ldap; u.Cli.print('✅ Development setup complete')"
 ```
 
-______________________________________________________________________
+---
 
 ## Development Workflow
 
@@ -209,7 +210,7 @@ PYTHONPATH=src mypy src/flext_ldap --strict
 PYTHONPATH=src pyright src/flext_ldap --level error
 ```
 
-______________________________________________________________________
+---
 
 ## Testing Strategy
 
@@ -265,7 +266,7 @@ open htmlcov/index.html
 pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|services\.py|adapters\.py"
 ```
 
-______________________________________________________________________
+---
 
 ## Architecture Guidelines
 
@@ -273,7 +274,7 @@ ______________________________________________________________________
 
 **Domain Layer** (Business logic):
 
-```python
+````python
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
 # src/flext_ldap/value_objects.py
@@ -710,7 +711,7 @@ ______________________________________________________________________
 
    ```bash
    git checkout -b feature/ldap-group-management
-   ```
+````
 
 1. **Implement Changes**
 
@@ -746,7 +747,7 @@ ______________________________________________________________________
 - [ ] Parameter objects used for complex operations
 - [ ] Integration tests pass with Docker LDAP server
 
-______________________________________________________________________
+---
 
 For more development resources:
 
@@ -754,6 +755,6 @@ For more development resources:
 - API Reference - Complete API documentation
 - Examples - Working code examples
 
-______________________________________________________________________
+---
 
 **Next:** Integration Guide →

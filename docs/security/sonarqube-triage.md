@@ -9,16 +9,16 @@ Bead: `mro-2wjm.9`
 **11 issues** — BLOCKER 0, CRITICAL 3, MAJOR 6, MINOR 2
 Tipos: VULNERABILITY 4, BUG 0, CODE_SMELL 7 · **Debt total: 65min**
 
-| regra | issues |
-|---|---|
-| `python:S3776` | 2 |
-| `githubactions:S8233` | 2 |
-| `python:S5778` | 2 |
-| `python:S1192` | 1 |
-| `githubactions:S8264` | 1 |
-| `text:S8565` | 1 |
-| `python:S7504` | 1 |
-| `python:S116` | 1 |
+| regra                 | issues |
+| --------------------- | ------ |
+| `python:S3776`        | 2      |
+| `githubactions:S8233` | 2      |
+| `python:S5778`        | 2      |
+| `python:S1192`        | 1      |
+| `githubactions:S8264` | 1      |
+| `text:S8565`          | 1      |
+| `python:S7504`        | 1      |
+| `python:S116`         | 1      |
 
 ## Como usar
 
@@ -28,6 +28,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 ## Issues
 
 ### 1 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
+
 **Local**: `src/flext_ldap/services/operations.py:151` · **Effort**: 13min
 
 > Refactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed.
@@ -36,17 +37,18 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       147              if changetype == c.Ldif.LdifChangeType.MODIFY:
       148                  return self.handle_schema_modify(entry)
       149              return self.handle_regular_add(entry)
-      150  
+      150
 >>>   151          def handle_existing_entry(
       152              self, entry: p.Ldif.Entry
       153          ) -> p.Result[m.Ldap.LdapOperationResult]:
       154              """Handle an upsert when the entry already exists in LDAP.
-      155  
+      155
 ```
 
 **Decisão**: pendente
 
 ### 2 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
+
 **Local**: `src/flext_ldap/services/operations.py:265` · **Effort**: 9min
 
 > Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed.
@@ -55,17 +57,18 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       261                      )
       262                  )
       263              )
-      264  
+      264
 >>>   265          def handle_schema_modify(
       266              self, entry: p.Ldif.Entry
       267          ) -> p.Result[m.Ldap.LdapOperationResult]:
       268              """Apply a schema modification entry (supports multiple add operations).
-      269  
+      269
 ```
 
 **Decisão**: pendente
 
 ### 3 · 🟠 CRITICAL · CODE_SMELL · `python:S1192`
+
 **Local**: `src/flext_ldap/services/operations.py:579` · **Effort**: 6min
 
 > Define a constant instead of duplicating this literal "Unknown error" 3 times.
@@ -85,6 +88,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 **Decisão**: pendente
 
 ### 4 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8264`
+
 **Local**: `.github/workflows/docs.yml:18` · **Effort**: 5min
 
 > Move this read permission from workflow level to job level.
@@ -92,30 +96,31 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 ```yaml
        14        - ".github/workflows/docs.yml"
        15    workflow_dispatch:
-       16  
+       16
        17  permissions:
 >>>    18    contents: read
        19    pages: write
        20    id-token: write
-       21  
+       21
        22  concurrency:
 ```
 
 **Decisão**: pendente
 
 ### 5 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8233`
+
 **Local**: `.github/workflows/docs.yml:19` · **Effort**: 5min
 
 > Move this write permission from workflow level to job level.
 
 ```yaml
        15    workflow_dispatch:
-       16  
+       16
        17  permissions:
        18    contents: read
 >>>    19    pages: write
        20    id-token: write
-       21  
+       21
        22  concurrency:
        23    group: pages
 ```
@@ -123,17 +128,18 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 **Decisão**: pendente
 
 ### 6 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8233`
+
 **Local**: `.github/workflows/docs.yml:20` · **Effort**: 5min
 
 > Move this write permission from workflow level to job level.
 
 ```yaml
-       16  
+       16
        17  permissions:
        18    contents: read
        19    pages: write
 >>>    20    id-token: write
-       21  
+       21
        22  concurrency:
        23    group: pages
        24    cancel-in-progress: false
@@ -142,6 +148,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 **Decisão**: pendente
 
 ### 7 · 🟡 MAJOR · VULNERABILITY · `text:S8565`
+
 **Local**: `pyproject.toml:-` · **Effort**: 5min
 
 > Dependency versions are not predictable if the lock file (uv.lock, poetry.lock, pdm.lock or pylock.toml) is missing.
@@ -149,25 +156,27 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 **Decisão**: pendente
 
 ### 8 · 🟡 MAJOR · CODE_SMELL · `python:S5778`
+
 **Local**: `tests/unit/test_config.py:77` · **Effort**: 5min
 
 > Refactor this exception test to have only one invocation possibly throwing an exception.
 
 ```python
-       73  
+       73
        74      @pytest.mark.parametrize("port", [0, -1, 65536, 70000, 999999])
        75      def test_out_of_range_port_is_rejected(self, port: int) -> None:
        76          """Verify out of range port is rejected."""
 >>>    77          with pytest.raises(c.ValidationError):
        78              LdapTestSettings(Ldap=_LdapSettings(port=port))
-       79  
+       79
        80      # ── Host values ────────────────────────────────────────────────────
-       81  
+       81
 ```
 
 **Decisão**: pendente
 
 ### 9 · 🟡 MAJOR · CODE_SMELL · `python:S5778`
+
 **Local**: `tests/unit/test_sync.py:147` · **Effort**: 5min
 
 > Refactor this exception test to have only one invocation possibly throwing an exception.
@@ -187,6 +196,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 **Decisão**: pendente
 
 ### 10 · ⚪ MINOR · CODE_SMELL · `python:S7504`
+
 **Local**: `conftest.py:20` · **Effort**: 5min
 
 > Remove this unnecessary `list()` call on an already iterable object.
@@ -206,17 +216,18 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 **Decisão**: pendente
 
 ### 11 · ⚪ MINOR · CODE_SMELL · `python:S116`
+
 **Local**: `src/flext_ldap/typings.py:18` · **Effort**: 2min
 
-> Rename this field "LDAPException" to match the regular expression ^[_a-z][_a-z0-9]*$.
+> Rename this field "LDAPException" to match the regular expression ^[\_a-z][_a-z0-9]\*$.
 
 ```python
-       14  
+       14
        15      class Ldap:
        16          """LDAP type aliases."""
-       17  
+       17
 >>>    18          LDAPException: type[Exception] = _Ldap3LDAPException
-       19  
+       19
        20          type Ldap3AttributeScalar = str | bytes
        21          type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
        22          type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]

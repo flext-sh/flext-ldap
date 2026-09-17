@@ -1,6 +1,7 @@
 # Configuration Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Configuration Overview](#configuration-overview)
   - [Configuration Hierarchy](#configuration-hierarchy)
@@ -26,7 +27,7 @@
 - [Performance Tuning](#performance-tuning)
   - [Connection Pool Optimization](#connection-pool-optimization)
   - [Search Optimization](#search-optimization)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 ## Table of Contents
 
@@ -80,7 +81,7 @@ This guide covers all configuration aspects for integrating flext-ldap in your F
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## Configuration Overview
 
@@ -88,7 +89,7 @@ FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic Bas
 
 ### Configuration Hierarchy
 
-```python
+````python
 from flext_ldap import FlextLdapSettings
 
 # 1. Default configuration
@@ -145,9 +146,9 @@ export FLEXT_LDAP_MAX_RETRIES=3
 export FLEXT_LDAP_RETRY_DELAY=1.0
 export FLEXT_LDAP_CONNECTION_TIMEOUT=10
 export FLEXT_LDAP_RECEIVE_TIMEOUT=30
-```
+````
 
-______________________________________________________________________
+---
 
 ## Configuration File
 
@@ -155,7 +156,7 @@ ______________________________________________________________________
 
 Create `ldap_config.py`:
 
-```python
+````python
 from Flext_ldap import FlextLdapSettings
 
 # Production configuration
@@ -253,11 +254,11 @@ docker run -d \
   -e LDAP_ORGANISATION="FLEXT Test" \
   -e LDAP_DOMAIN="internal.invalid" \
   osixia/openldap:1.5.0
-```
+````
 
 ### Test Configuration
 
-```python
+````python
 from Flext_ldap import FlextLdapSettings
 
 TEST_CONFIG = FlextLdapSettings(
@@ -374,3 +375,4 @@ For more configuration examples, see the examples/ directory.
 ______________________________________________________________________
 
 **Next:** Development Guide →
+````

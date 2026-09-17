@@ -1,6 +1,7 @@
 # Documentation Maintenance System - User Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
   - [Key Features](#key-features)
@@ -32,7 +33,7 @@
   - [Content Standards](#content-standards)
   - [Team Collaboration](#team-collaboration)
   - [Performance Considerations](#performance-considerations)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 **Complete guide for using the Documentation Maintenance System**
 
@@ -401,7 +402,7 @@ sync:
 
 Create custom validation rules:
 
-```python
+````python
 from __future__ import annotations
 
 
@@ -447,7 +448,7 @@ rm -rf docs/maintenance/backups/
 
 # Reset configuration
 cp docs/maintenance/settings.yaml.backup docs/maintenance/settings.yaml
-```
+````
 
 #### Git Integration Issues
 
@@ -518,7 +519,7 @@ python maintenance/maintain.py --comprehensive
 1. **Monitor resources**: Track memory and CPU usage
 1. **Scale appropriately**: Adjust worker counts for your environment
 
-______________________________________________________________________
+---
 
 **Documentation Maintenance System User Guide**
 _Automated Quality Assurance for Technical Documentation_

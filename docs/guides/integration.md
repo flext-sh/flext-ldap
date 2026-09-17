@@ -1,6 +1,7 @@
 # Integration Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
@@ -26,7 +27,7 @@
 - [Monitoring and Observability](#monitoring-and-observability)
   - [Prometheus Metrics](#prometheus-metrics)
   - [Health Check Endpoints](#health-check-endpoints)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 ## Table of Contents
 
@@ -78,7 +79,7 @@ This guide covers integration patterns, FLEXT ecosystem usage, and third-party s
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## FLEXT Ecosystem Integration
 
@@ -86,7 +87,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP builds on established FLEXT foundation patterns:
 
-```python
+````python
 from __future__ import annotations
 
 # FLEXT-Core integration
@@ -702,9 +703,9 @@ data:
   base_dn: "dc=example,dc=com"
   port: "636"
   use_ssl: "true"
-```
+````
 
-______________________________________________________________________
+---
 
 ## ldif Integration
 
@@ -712,7 +713,7 @@ ______________________________________________________________________
 
 FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers detection:
 
-```python
+````python
 from flext_ldap import FlextLdapEntryAdapter
 import ldap3
 
@@ -1118,3 +1119,4 @@ For more integration examples and patterns, see the examples/ directory.
 ______________________________________________________________________
 
 **Next:** Troubleshooting Guide →
+````

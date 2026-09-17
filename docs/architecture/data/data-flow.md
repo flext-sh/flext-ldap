@@ -1,6 +1,7 @@
 # Data Architecture: Data Flow
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 
@@ -10,7 +11,7 @@ This document describes how data flows through the system and key processing pip
 
 [Data flow content would go here]
 
-______________________________________________________________________
+---
 
 **Data Flow Architecture**
 _Data processing and transformation pipelines_

@@ -9,10 +9,10 @@ Bead: `mro-p57t.13`
 **4 findings** — high 0, medium 4, low 0
 Confiança: high 4, medium 0, low 0
 
-| regra | achados |
-|---|---|
-| `package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown` | 3 |
-| `package_managers.uv.uv-missing-dependency-cooldown.uv-missing-dependency-cooldown` | 1 |
+| regra                                                                                 | achados |
+| ------------------------------------------------------------------------------------- | ------- |
+| `package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown` | 3       |
+| `package_managers.uv.uv-missing-dependency-cooldown.uv-missing-dependency-cooldown`   | 1       |
 
 ## Como usar
 
@@ -22,6 +22,7 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
 ## Findings
 
 ### 1 · 🟡 MEDIUM · conf high · `package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown`
+
 **Classe**: Insecure Configuration · **Local**: `.github/dependabot.yml:4`
 
 > This Dependabot configuration does not set a cooldown period. Newly published packages can be malicious or unstable. Add a `cooldown` block with `default-days: 7` to each `package-ecosystem` entry under `updates` to wait 7 days before proposing updates to newly published package versions. Reference: <https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-option>
@@ -40,6 +41,7 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
 **Decisão**: pendente
 
 ### 2 · 🟡 MEDIUM · conf high · `package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown`
+
 **Classe**: Insecure Configuration · **Local**: `.github/dependabot.yml:11`
 
 > This Dependabot configuration does not set a cooldown period. Newly published packages can be malicious or unstable. Add a `cooldown` block with `default-days: 7` to each `package-ecosystem` entry under `updates` to wait 7 days before proposing updates to newly published package versions. Reference: <https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-option>
@@ -48,7 +50,7 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
         7        interval: weekly
         8      open-pull-requests-limit: 5
         9      labels: [dependencies, github-actions]
-       10  
+       10
 >>>    11    - package-ecosystem: devcontainers
        12      directory: /
        13      schedule:
@@ -59,6 +61,7 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
 **Decisão**: pendente
 
 ### 3 · 🟡 MEDIUM · conf high · `package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown`
+
 **Classe**: Insecure Configuration · **Local**: `.github/dependabot.yml:18`
 
 > This Dependabot configuration does not set a cooldown period. Newly published packages can be malicious or unstable. Add a `cooldown` block with `default-days: 7` to each `package-ecosystem` entry under `updates` to wait 7 days before proposing updates to newly published package versions. Reference: <https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-option>
@@ -67,7 +70,7 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
        14        interval: weekly
        15      open-pull-requests-limit: 5
        16      labels: [dependencies, devcontainers]
-       17  
+       17
 >>>    18    - package-ecosystem: pip
        19      directory: /
        20      schedule:
@@ -78,6 +81,7 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
 **Decisão**: pendente
 
 ### 4 · 🟡 MEDIUM · conf high · `package_managers.uv.uv-missing-dependency-cooldown.uv-missing-dependency-cooldown`
+
 **Classe**: Insecure Configuration · **Local**: `pyproject.toml:616`
 
 > This pyproject.toml configures uv but does not set a dependency cooldown. Newly published packages can be malicious or unstable. Add `exclude-newer = "7 days"` under `[tool.uv]` to wait 7 days before resolving newly published package versions. Added in: 0.9.17 Reference: <https://docs.astral.sh/uv/concepts/resolution/#dependency-cooldowns>
@@ -86,10 +90,10 @@ Cada finding traz a **mensagem completa da regra** (o Semgrep descreve o problem
       612  all = true
       613  in_place = true
       614  sort_first = ["build-system", "dependency-groups", "project", "tool"]
-      615  
+      615
 >>>   616  [tool.uv]
       617  link-mode = "copy"
-      618  
+      618
       619  [tool.vulture]
       620  exclude = ["*/_protocols/*"]
 ```

@@ -1,6 +1,7 @@
 # ACL Management System
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -113,7 +114,7 @@ The ACL system follows Clean Architecture principles with:
 
 ### Basic Usage
 
-```python
+````python
 from flext_ldap import ldap
 from flext_ldap import FlextLdapConstants
 
@@ -397,3 +398,4 @@ write_openldap_acls(converted_acls)```
 - [FLEXT LDAP API Documentation](README.md)
 - [Server Operations Guide](server-operations.md)
 - [Clean Architecture Patterns](../architecture.md)
+````

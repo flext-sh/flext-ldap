@@ -1,6 +1,7 @@
 # Troubleshooting Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Connection Issues](#connection-issues)
   - [Connection Refused Errors](#connection-refused-errors)
@@ -30,7 +31,7 @@
 - [Getting Help](#getting-help)
   - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
   - [Diagnostic Information Collection](#diagnostic-information-collection)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 ## Table of Contents
 
@@ -72,7 +73,7 @@ This guide helps diagnose and resolve common problems with FLEXT-LDAP integratio
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## Connection Issues
 
@@ -133,7 +134,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 1. **Ensure CA certificate is installed**
 1. **Configure certificate verification settings**
 
-```python
+````python
 from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
@@ -556,9 +557,9 @@ services:
       - ldap_data:/var/lib/ldap
       - ldap_config:/etc/ldap/slapd.d
     # Ensure data persists between restarts
-```
+````
 
-______________________________________________________________________
+---
 
 ## Development and Testing Issues
 
@@ -566,7 +567,7 @@ ______________________________________________________________________
 
 **Symptom:**
 
-```python
+````python
 ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'```
 **Diagnosis:**
 
@@ -822,3 +823,4 @@ For additional support and community resources:
 ______________________________________________________________________
 
 **Previous:** Integration Guide ←
+````

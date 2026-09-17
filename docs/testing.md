@@ -1,6 +1,7 @@
 # FLEXT-LDAP Testing Plan & Status
 
 <!-- TOC START -->
+
 - [Testing Overview](#testing-overview)
 - [Test Environment](#test-environment)
   - [Docker LDAP Test Server](#docker-ldap-test-server)
@@ -16,14 +17,14 @@
 
 ## Testing Overview
 
-| Metric | Current value |
-| ------ | ------------- |
-| Unit tests | 245 passed |
-| Unit-test command | `uv run pytest flext-ldap/tests/unit -q --tb=short -o addopts="--cov=flext_ldap --cov-report=term-missing:skip-covered"` |
-| `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed) |
-| Integration tests | 1 smoke test (`tests/integration/test_smoke.py`) |
-| Current failures | 0 unit failures |
-| Skipped tests | Integration tests gated by the `docker`/`integration` markers when no LDAP server is available |
+| Metric                     | Current value                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Unit tests                 | 245 passed                                                                                                               |
+| Unit-test command          | `uv run pytest flext-ldap/tests/unit -q --tb=short -o addopts="--cov=flext_ldap --cov-report=term-missing:skip-covered"` |
+| `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed)                                                                                |
+| Integration tests          | 1 smoke test (`tests/integration/test_smoke.py`)                                                                         |
+| Current failures           | 0 unit failures                                                                                                          |
+| Skipped tests              | Integration tests gated by the `docker`/`integration` markers when no LDAP server is available                           |
 
 > Historical claims of 35% coverage, 1,079 tests, and 51 test files are stale.
 > The numbers above reflect the current repository state.
@@ -75,24 +76,24 @@ docker exec -it flext-ldap-test-server ldapsearch \
 
 Coverage measured for `flext_ldap` only, from the unit-test run:
 
-| Module | Statements | Missed | Coverage | Status |
-| ------ | ---------- | ------ | -------- | ------ |
-| `base.py` | 25 | 1 | 96.00% | ✅ |
-| `utilities.py` | 289 | 12 | 95.85% | ✅ |
-| `_models/ldap.py` | 160 | 17 | 89.38% | ✅ |
-| `services/api_runtime.py` | 12 | 2 | 83.33% | ✅ |
-| `services/sync.py` | 117 | 30 | 74.36% | ✅ |
-| `services/detection.py` | 24 | 7 | 70.83% | ✅ |
-| `adapters/ldap3.py` | 86 | 29 | 66.28% | ⚠️ |
-| `adapters/_ldap3/connection_manager.py` | 29 | 11 | 62.07% | ⚠️ |
-| `services/connection.py` | 44 | 21 | 52.27% | ⚠️ |
-| `services/operations.py` | 204 | 97 | 52.45% | ⚠️ |
-| `adapters/entry.py` | 73 | 40 | 45.21% | ⚠️ |
-| `adapters/_ldap3/operation_executor.py` | 39 | 22 | 43.59% | 🚧 |
-| `adapters/_ldap3/wrappers.py` | 59 | 36 | 38.98% | 🚧 |
-| `adapters/_ldap3/result_converter.py` | 30 | 20 | 33.33% | 🚧 |
-| `adapters/_ldap3/search_executor.py` | 33 | 24 | 27.27% | 🚧 |
-| `adapters/_ldap3/result_extract.py` | 92 | 73 | 20.65% | 🚧 |
+| Module                                  | Statements | Missed | Coverage | Status |
+| --------------------------------------- | ---------- | ------ | -------- | ------ |
+| `base.py`                               | 25         | 1      | 96.00%   | ✅     |
+| `utilities.py`                          | 289        | 12     | 95.85%   | ✅     |
+| `_models/ldap.py`                       | 160        | 17     | 89.38%   | ✅     |
+| `services/api_runtime.py`               | 12         | 2      | 83.33%   | ✅     |
+| `services/sync.py`                      | 117        | 30     | 74.36%   | ✅     |
+| `services/detection.py`                 | 24         | 7      | 70.83%   | ✅     |
+| `adapters/ldap3.py`                     | 86         | 29     | 66.28%   | ⚠️     |
+| `adapters/_ldap3/connection_manager.py` | 29         | 11     | 62.07%   | ⚠️     |
+| `services/connection.py`                | 44         | 21     | 52.27%   | ⚠️     |
+| `services/operations.py`                | 204        | 97     | 52.45%   | ⚠️     |
+| `adapters/entry.py`                     | 73         | 40     | 45.21%   | ⚠️     |
+| `adapters/_ldap3/operation_executor.py` | 39         | 22     | 43.59%   | 🚧     |
+| `adapters/_ldap3/wrappers.py`           | 59         | 36     | 38.98%   | 🚧     |
+| `adapters/_ldap3/result_converter.py`   | 30         | 20     | 33.33%   | 🚧     |
+| `adapters/_ldap3/search_executor.py`    | 33         | 24     | 27.27%   | 🚧     |
+| `adapters/_ldap3/result_extract.py`     | 92         | 73     | 20.65%   | 🚧     |
 
 Full module coverage (constants, models, protocols, settings, typings) is 100% and omitted from the table.
 

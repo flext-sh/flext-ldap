@@ -1,6 +1,7 @@
 # Architecture Decision Record (ADR) 003-railway-pattern: Railway Pattern Implementation
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Status](#status)
 - [Context](#context)
@@ -81,7 +82,7 @@
 
 - [Links to related ADRs and documentation]
 
-______________________________________________________________________
+---
 
 **ADR 003-railway-pattern: Railway Pattern Implementation**
 _Accepted on 2026-04-14_

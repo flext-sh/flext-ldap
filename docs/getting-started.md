@@ -1,6 +1,7 @@
 # Getting Started with FLEXT-LDAP
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Prerequisites](#prerequisites)
   - [**System Requirements**](#system-requirements)
@@ -83,7 +84,7 @@ This guide covers installation, basic configuration, and first steps with flext-
 **Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
 **Architecture**: Clean Architecture + DDD + Railway-oriented programming
 
-______________________________________________________________________
+---
 
 ## Prerequisites
 
@@ -107,7 +108,7 @@ ______________________________________________________________________
 - Docker for running test LDAP server
 - osixia/openldap:1.5.0 container (automatic setup available)
 
-______________________________________________________________________
+---
 
 ## Installation
 
@@ -140,7 +141,7 @@ Test your installation:
 python -c "from flext_ldap.api import ldap; u.Cli.print('Installation successful')"
 ```
 
-______________________________________________________________________
+---
 
 ## Configuration
 
@@ -168,7 +169,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 
 Create `flext_ldap.settings.py`:
 
-```python
+````python
 from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings(
@@ -509,9 +510,9 @@ make lint       # Check code style
 make type-check # Verify type annotations
 make test       # Run tests
 make val   # Complete quality pipeline
-```
+````
 
-______________________________________________________________________
+---
 
 ## Next Steps
 
@@ -524,7 +525,7 @@ Once you have flext-ldap installed and working:
 1. **Examples** - Working code examples
 1. **Development Guide** - Contributing to the project
 
-______________________________________________________________________
+---
 
 ## Troubleshooting
 
@@ -571,6 +572,6 @@ For more troubleshooting help, see Troubleshooting Guide.
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
-______________________________________________________________________
+---
 
 **Next:** Architecture Overview →

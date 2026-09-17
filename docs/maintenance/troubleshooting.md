@@ -1,6 +1,7 @@
 # Documentation Maintenance System - Troubleshooting Guide
 
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Quick Diagnosis](#quick-diagnosis)
   - [System Health Check](#system-health-check)
@@ -42,7 +43,7 @@
 - [Advanced Troubleshooting](#advanced-troubleshooting)
   - [Custom Diagnostic Scripts](#custom-diagnostic-scripts)
   - [Automated Health Checks](#automated-health-checks)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 **Common issues, diagnostics, and solutions for the Documentation Maintenance System**
 
@@ -237,7 +238,7 @@ audit:
 
 **Solutions:**
 
-```python
+````python
 # Process files individually
 for file_path in file_list:
     result = auditor.audit_file(file_path)
@@ -288,7 +289,7 @@ export REQUESTS_CA_BUNDLE=/path/to/ca-bundle.crt
 # Or add to skip domains
 skip_domains:
   - "self-signed-domain.com"
-```
+````
 
 ### Style Validation Errors
 
@@ -342,13 +343,13 @@ cp docs/maintenance/backups/example.md.backup docs/example.md
 
 # Or rollback
 python maintenance/sync.py --rollback docs/example.md
-````
+```
 
 #### Over-Aggressive Fixes
 
 **Solutions:**
 
-```yaml
+````yaml
 # settings.yaml - Be more conservative
 optimization:
   auto_fix: false # Manual review required
@@ -389,7 +390,7 @@ python maintenance/sync.py --status
 # Manual git check
 git status
 git remote -v
-```
+````
 
 **Solutions:**
 
@@ -406,7 +407,7 @@ git remote -v
 
 **Solutions:**
 
-```python
+````python
 # Process files in batches
 batch_size = 10
 for i in range(0, len(file_list), batch_size):
@@ -552,7 +553,7 @@ cp docs/maintenance/settings.yaml.backup docs/maintenance/settings.yaml
 
 # Reinitialize
 python docs/maintenance/audit.py --rebuild-db
-```
+````
 
 ### Component-Specific Recovery
 
@@ -611,7 +612,7 @@ python docs/maintenance/report.py --generate-dashboard --weekly-summary
 
 ### Enable Debug Logging
 
-```python
+````python
 # Add to scripts
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -742,3 +743,4 @@ ______________________________________________________________________
 - Comprehensive testing before deployments
 - Backup strategies and recovery procedures
 - Documentation of troubleshooting procedures
+````

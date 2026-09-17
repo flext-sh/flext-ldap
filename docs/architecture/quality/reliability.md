@@ -1,6 +1,7 @@
 # Quality Attributes: Reliability and Availability
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 
@@ -10,7 +11,7 @@ This document describes the reliability characteristics and requirements for fle
 
 [Reliability content would go here]
 
-______________________________________________________________________
+---
 
 **Reliability and Availability**
 _Reliability characteristics and requirements_

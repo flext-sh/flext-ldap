@@ -1,6 +1,7 @@
 # 07-deployment: Deployment View
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 
@@ -8,7 +9,7 @@
 
 [Content for Deployment View would go here]
 
-______________________________________________________________________
+---
 
 **Arc42 Section 07-deployment: Deployment View**
 _Part of the comprehensive Arc42 architecture documentation_
