@@ -4,19 +4,6 @@
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
-  - [Configuration Management](#configuration-management)
-- [FastAPI Integration](#fastapi-integration)
-  - [API Endpoints with LDAP Authentication](#api-endpoints-with-ldap-authentication)
-- [Django Integration](#django-integration)
-  - [Django Authentication Backend](#django-authentication-backend)
-  - [Django User Sync Management Command](#django-user-sync-management-command)
-- [Flask Integration](#flask-integration)
-  - [Flask Application with LDAP Authentication](#flask-application-with-ldap-authentication)
-- [Docker Integration](#docker-integration)
-  - [Docker Compose Setup](#docker-compose-setup)
-  - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
-- [Kubernetes Integration](#kubernetes-integration)
-  - [Kubernetes Deployment](#kubernetes-deployment)
 - [ldif Integration](#ldif-integration)
   - [Entry Format Conversion](#entry-format-conversion)
   - [LDIF File Processing](#ldif-file-processing)
@@ -100,7 +87,7 @@ class UserService:
     def __init__(self) -> None:
         self.logger = u.fetch_logger(__name__)
         self._ldap_api = ldap
-        self._container = FlextContainer.get_global()
+        self._container = FlextContainer()
 
     def process_user_authentication(
         self, username: str, password: str
@@ -598,14 +585,9 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY pyproject.toml uv.lock ./
-RUN pip install poetry && \
-    poetry settings virtualenvs.create false && \
-    make setup --no-dev
-
-# Copy application
+# Copy the project-owned Make/config sources, then provision through Make
 COPY . .
+RUN make setup
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

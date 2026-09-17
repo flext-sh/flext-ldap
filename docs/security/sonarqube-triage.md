@@ -1,5 +1,22 @@
 # Triagem SonarCloud — flext-sh/flext-ldap
 
+<!-- TOC START -->
+- [Resumo](#resumo)
+- [Como usar](#como-usar)
+- [Issues](#issues)
+  - [1 · 🟠 CRITICAL · CODE_SMELL · python:S3776](#1-critical-code_smell-pythons3776)
+  - [2 · 🟠 CRITICAL · CODE_SMELL · python:S3776](#2-critical-code_smell-pythons3776)
+  - [3 · 🟠 CRITICAL · CODE_SMELL · python:S1192](#3-critical-code_smell-pythons1192)
+  - [4 · 🟡 MAJOR · VULNERABILITY · githubactions:S8264](#4-major-vulnerability-githubactionss8264)
+  - [5 · 🟡 MAJOR · VULNERABILITY · githubactions:S8233](#5-major-vulnerability-githubactionss8233)
+  - [6 · 🟡 MAJOR · VULNERABILITY · githubactions:S8233](#6-major-vulnerability-githubactionss8233)
+  - [7 · 🟡 MAJOR · VULNERABILITY · text:S8565](#7-major-vulnerability-texts8565)
+  - [8 · 🟡 MAJOR · CODE_SMELL · python:S5778](#8-major-code_smell-pythons5778)
+  - [9 · 🟡 MAJOR · CODE_SMELL · python:S5778](#9-major-code_smell-pythons5778)
+  - [10 · ⚪ MINOR · CODE_SMELL · python:S7504](#10-minor-code_smell-pythons7504)
+  - [11 · ⚪ MINOR · CODE_SMELL · python:S116](#11-minor-code_smell-pythons116)
+<!-- TOC END -->
+
 Gerado do dump da plataforma SonarCloud (2026-08-06).
 
 Bead: `mro-2wjm.9`
@@ -32,7 +49,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Refactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed.
 
-```python
+```text
       147              if changetype == c.Ldif.LdifChangeType.MODIFY:
       148                  return self.handle_schema_modify(entry)
       149              return self.handle_regular_add(entry)
@@ -51,7 +68,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed.
 
-```python
+```text
       261                      )
       262                  )
       263              )
@@ -70,7 +87,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Define a constant instead of duplicating this literal "Unknown error" 3 times.
 
-```python
+```text
       575          dn_model: m.Ldif.DN = dn_build.unwrap()
       576          result = self._ensure_adapter().delete(dn_model)
       577          folded: p.Result[m.Ldap.OperationResult] = result.fold(
@@ -153,7 +170,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Refactor this exception test to have only one invocation possibly throwing an exception.
 
-```python
+```text
        73  
        74      @pytest.mark.parametrize("port", [0, -1, 65536, 70000, 999999])
        75      def test_out_of_range_port_is_rejected(self, port: int) -> None:
@@ -172,7 +189,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Refactor this exception test to have only one invocation possibly throwing an exception.
 
-```python
+```text
       143          ldif_file.write_text(
       144              c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
       145          )
@@ -191,7 +208,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Remove this unnecessary `list()` call on an already iterable object.
 
-```python
+```text
        16      if (
        17          existing_package is None
        18          or Path(getattr(existing_package, "__file__", "")).resolve() != init_file
@@ -210,7 +227,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 > Rename this field "LDAPException" to match the regular expression ^[_a-z][_a-z0-9]*$.
 
-```python
+```text
        14  
        15      class Ldap:
        16          """LDAP type aliases."""
