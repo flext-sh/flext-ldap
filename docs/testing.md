@@ -13,6 +13,7 @@
 - [Coverage Targets](#coverage-targets)
 - [Next Steps](#next-steps)
 - [Current Status Summary](#current-status-summary)
+
 <!-- TOC END -->
 
 ## Testing Overview

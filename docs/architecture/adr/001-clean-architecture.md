@@ -13,6 +13,7 @@
 - [Implementation Status](#implementation-status)
 - [References](#references)
 - [ADR Maintenance](#adr-maintenance)
+
 <!-- TOC END -->
 
 ## Table of Contents

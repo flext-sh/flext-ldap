@@ -15,6 +15,7 @@
   - [Internal (Subject to Change)](#internal-subject-to-change)
 - [Return Types](#return-types)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 1.0 (v0.12.0-dev)

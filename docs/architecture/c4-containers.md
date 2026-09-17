@@ -11,6 +11,7 @@
 - [📊 Performance Characteristics](#performance-characteristics)
 - [🔒 Security Considerations](#security-considerations)
 - [🔗 Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Table of Contents

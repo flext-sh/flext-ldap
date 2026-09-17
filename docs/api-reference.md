@@ -34,6 +34,7 @@
 - [📝 Type Annotations](#type-annotations)
 - [🔗 Complete Usage Example](#complete-usage-example)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Table of Contents

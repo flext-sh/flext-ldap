@@ -35,6 +35,7 @@
   - [Conversion Failures](#conversion-failures)
   - [ACL Translation Issues](#acl-translation-issues)
 - [Contributing](#contributing)
+
 <!-- TOC END -->
 
 **flext-ldap** now provides complete universal LDAP support,

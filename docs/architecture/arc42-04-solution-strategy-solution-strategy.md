@@ -3,6 +3,7 @@
 <!-- TOC START -->
 
 - No sections found
+
 <!-- TOC END -->
 
 **Arc42 Section 04-solution-strategy**

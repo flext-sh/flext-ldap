@@ -32,6 +32,7 @@
   - [DO ✅](#do)
   - [DON'T ❌](#dont)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 1.0

@@ -52,6 +52,7 @@
   - [**Common Issues**](#common-issues)
 - [## 📚 Additional Resources](#additional-resources)
 - [**Last Updated**: 2025-01-08](#last-updated-2025-01-08)
+
 <!-- TOC END -->
 
 ## Table of Contents

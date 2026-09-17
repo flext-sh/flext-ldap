@@ -15,7 +15,9 @@
     "cn": "REDACTED_LDAP_BIND_PASSWORDs",
     "gid_number": 1001,
     "description": "System Administrators",
-    "member_dns": ["uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=flext,dc=local"],
+    "member_dns": [
+      "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=flext,dc=local"
+    ],
     "object_classes": ["groupOfNames", "top"]
   },
   {
