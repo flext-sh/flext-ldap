@@ -150,7 +150,7 @@ cd flext-ldap
 make setup
 
 # Verify installation
-make val
+make check
 ```
 
 ### Development Tools Installation
@@ -160,7 +160,7 @@ make val
 pre-commit install
 
 # Install development dependencies
-poetry install --with dev,test,docs
+make setup --with dev,test,docs
 
 # Verify development setup
 python -c "from flext_ldap.api import ldap; u.Cli.print('✅ Development setup complete')"
@@ -181,7 +181,7 @@ make type-check         # Validate type annotations
 make test               # Run test suite
 
 # Complete validation
-make val           # Run all quality gates
+make check           # Run all quality gates
 ```
 
 ### Code Formatting
@@ -725,7 +725,7 @@ ______________________________________________________________________
 1. **Validate Quality**
 
    ```bash
-   make val  # Must pass all gates
+   make check  # Must pass all gates
    ```
 
 1. **Submit Pull Request**

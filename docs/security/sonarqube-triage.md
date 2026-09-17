@@ -144,7 +144,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 ### 7 · 🟡 MAJOR · VULNERABILITY · `text:S8565`
 **Local**: `pyproject.toml:-` · **Effort**: 5min
 
-> Dependency versions are not predictable if the lock file (uv.lock, poetry.lock, pdm.lock or pylock.toml) is missing.
+> Dependency versions are not predictable if the lock file (uv.lock, uv.lock, pdm.lock or pylock.toml) is missing.
 
 **Decisão**: pendente
 

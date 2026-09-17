@@ -599,10 +599,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml uv.lock ./
 RUN pip install poetry && \
     poetry settings virtualenvs.create false && \
-    poetry install --no-dev
+    make setup --no-dev
 
 # Copy application
 COPY . .

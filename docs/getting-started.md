@@ -117,8 +117,8 @@ Install from PyPI:
 
 ```bash
 pip install flext-ldap
-# or with poetry
-poetry add flext-ldap
+# or with make deps
+make deps flext-ldap
 ```
 
 ### **Development Installation**
@@ -129,7 +129,7 @@ Clone and setup development environment:
 git clone <repository-url>
 cd flext-ldap
 make setup      # Install dependencies, pre-commit hooks, dev tools
-make val   # Run quality checks to verify installation
+make check   # Run quality checks to verify installation
 ```
 
 ### **Verify Installation**
@@ -508,7 +508,7 @@ make format     # Auto-format code
 make lint       # Check code style
 make type-check # Verify type annotations
 make test       # Run tests
-make val   # Complete quality pipeline
+make check   # Complete quality pipeline
 ```
 
 ______________________________________________________________________

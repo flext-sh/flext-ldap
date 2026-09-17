@@ -19,7 +19,7 @@
 | Metric | Current value |
 | ------ | ------------- |
 | Unit tests | 245 passed |
-| Unit-test command | `uv run pytest flext-ldap/tests/unit -q --tb=short -o addopts="--cov=flext_ldap --cov-report=term-missing:skip-covered"` |
+| Unit-test command | `make test flext-ldap/tests/unit -q --tb=short -o addopts="--cov=flext_ldap --cov-report=term-missing:skip-covered"` |
 | `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed) |
 | Integration tests | 1 smoke test (`tests/integration/test_smoke.py`) |
 | Current failures | 0 unit failures |

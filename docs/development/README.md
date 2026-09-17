@@ -74,7 +74,7 @@ cd flext-ldap
 make setup
 
 # Verify installation
-make val
+make check
 ```
 
 ### Development Cycle
@@ -87,7 +87,7 @@ git checkout -b feature/my-feature
 # ... edit files ...
 
 # 3. Run quality gates (MANDATORY)
-make val
+make check
 
 # 4. Run tests
 make test
@@ -107,7 +107,7 @@ git push origin feature/my-feature
 **Required before EVERY commit**:
 
 ```bash
-make val  # Must pass: lint + type + security + test
+make check  # Must pass: lint + type + security + test
 ```
 
 **Standards**:
@@ -153,7 +153,7 @@ make lint          # Ruff linting
 make type-check    # Pyrefly type checking
 make security      # Bandit security scan
 make test          # Run all tests
-make val      # Complete validation
+make check      # Complete validation
 
 # Auto-fix
 make format        # Format code
@@ -233,7 +233,7 @@ test: add integration tests for OID```
 ## Pull Request Checklist
 
 - [ ] Code follows FLEXT patterns
-- [ ] All quality gates pass (`make val`)
+- [ ] All quality gates pass (`make check`)
 - [ ] Tests pass (`make test`)
 - [ ] Test coverage maintained (75%+)
 - [ ] Documentation updated
@@ -264,7 +264,7 @@ test: add integration tests for OID```
 - Follow Clean Architecture
 - Write tests for new features
 - Document public APIs
-- Run `make val` before commits
+- Run `make check` before commits
 
 ### DON'T ❌
 
