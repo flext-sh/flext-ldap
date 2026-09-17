@@ -10,7 +10,7 @@ This allows protocols to remain independent of model implementations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, Self, override, runtime_checkable
 
 from flext_ldif import p as _ldif_p
 
@@ -418,23 +418,29 @@ class FlextLdapProtocols(_ldif_p):
         # ── LDAP runtime object contracts ────────────────────────
         # These names are intentionally structural so downstream projects type
         # against stable protocol-owned contracts rather than ldap3 classes.
+        # The base structural contracts live in flext-ldif (Ldif namespace)
+        # as the single source of truth; this package extends only what it needs.
+
+        Ldap3ServerInfo: ClassVar = _ldif_p.Ldif.Ldap3ServerInfo
+        Ldap3Server: ClassVar = _ldif_p.Ldif.Ldap3Server
+        Ldap3Entry: ClassVar = _ldif_p.Ldif.Ldap3Entry
+        Ldap3Attribute: ClassVar = _ldif_p.Ldif.Ldap3Attribute
+        Ldap3ParseResponse: ClassVar = _ldif_p.Ldif.Ldap3ParseResponse
+        RootDseEntry: ClassVar = _ldif_p.Ldif.RootDseEntry
+        RootDseConnection: ClassVar = _ldif_p.Ldif.RootDseConnection
 
         @runtime_checkable
-        class Ldap3Connection(Protocol):
-            """Structural contract for ldap3-compatible connection objects."""
+        class Ldap3Connection(_ldif_p.Ldif.Ldap3Connection, Protocol):
+            """Structural contract for ldap3-compatible connection objects.
+
+            Extends the base contract from ``flext-ldif`` with LDAP-specific
+            additional members (``server``, ``result``, ``start_tls``) required
+            by the connection manager and operation executor adapters.
+            """
 
             @property
             def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
                 """The ldap3 server bound to this connection."""
-                ...
-
-            @property
-            def bound(self) -> bool:
-                """Whether the connection is currently bound."""
-                ...
-
-            def bind(self) -> bool:
-                """Bind the connection using the configured credentials."""
                 ...
 
             @property
@@ -443,159 +449,8 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             @property
-            def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """The entries produced by the last LDAP operation."""
-                ...
-
-            @property
-            def add(self) -> Callable[..., bool]:
-                """The callable implementing the add operation."""
-                ...
-
-            @property
-            def delete(self) -> Callable[..., bool]:
-                """The callable implementing the delete operation."""
-                ...
-
-            @property
-            def modify(self) -> Callable[..., bool]:
-                """The callable implementing the modify operation."""
-                ...
-
-            @property
-            def search(self) -> Callable[..., bool | t.JsonValue | None]:
-                """The callable implementing the search operation."""
-                ...
-
-            @property
             def start_tls(self) -> Callable[..., bool]:
                 """The callable implementing STARTTLS negotiation."""
-                ...
-
-            @property
-            def unbind(
-                self,
-            ) -> Callable[
-                ..., bool | tuple[bool, t.JsonValue, t.JsonValue, t.JsonValue]
-            ]:
-                """The callable implementing connection teardown.
-
-                Thread-safe ldap3 strategies return a
-                ``(status, result, response, request)`` tuple instead of a bare
-                bool; the wrapper only ever consumes truthiness (see
-                ``FlextLdapLdap3Wrappers.unbind``), so both real shapes must be
-                declared here for structural conformance with ``ldap3.Connection``.
-                """
-                ...
-
-        class Ldap3ServerInfo(Protocol):
-            """Structural marker for ldap3-compatible server info payloads."""
-
-            @property
-            def naming_contexts(self) -> t.StrSequence | None:
-                """The advertised naming contexts when available."""
-                ...
-
-            @property
-            def other(self) -> t.MappingKV[str, t.JsonValue]:
-                """The auxiliary ldap3 server info fields."""
-                ...
-
-        class Ldap3Server(Protocol):
-            """Structural contract for ldap3-compatible server objects."""
-
-            @property
-            def info(self) -> FlextLdapProtocols.Ldap.Ldap3ServerInfo | None:
-                """The ldap3 server-info payload when populated."""
-                ...
-
-            @override
-            def __str__(self) -> str:
-                """Return the server URL-style representation."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Entry(Protocol):
-            """Structural contract for ldap3-compatible entry objects."""
-
-            @property
-            def entry_dn(self) -> str | None:
-                """The entry distinguished name."""
-                ...
-
-            @property
-            def entry_attributes(self) -> t.StrSequence:
-                """The attribute names present in this entry."""
-                ...
-
-            @property
-            def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
-                """The entry attributes as an LDAP attribute mapping."""
-                ...
-
-            def __getitem__(
-                self, attribute_name: str
-            ) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
-                """Return one ldap3 attribute object by attribute name."""
-                ...
-
-        class Ldap3Attribute(Protocol):
-            """Structural contract for ldap3-compatible attribute objects."""
-
-            @property
-            def values(self) -> t.Ldap.Ldap3AttributeValues:
-                """The raw LDAP values for this attribute."""
-                ...
-
-            @property
-            def value(self) -> t.Ldap.Ldap3EntryValue:
-                """The resolved attribute value."""
-                ...
-
-        @runtime_checkable
-        class Ldap3ParseResponse(Protocol):
-            """Protocol for ldap3.ParseResponse objects (structural type).
-
-            ldap3.ParseResponse has an entries property containing list of Entry.
-            """
-
-            @property
-            def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """The list of entries."""
-                ...
-
-        @runtime_checkable
-        class RootDseEntry(Protocol):
-            """Structural protocol for entries exposing rootDSE attributes."""
-
-            @property
-            def entry_attributes_as_dict(
-                self,
-            ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """The raw ldap3-style attribute payloads."""
-                ...
-
-        @runtime_checkable
-        class RootDseConnection(Protocol):
-            """Structural protocol for connections that can query rootDSE."""
-
-            @property
-            def search(self) -> Callable[..., bool | t.JsonValue | None] | None:
-                """The ldap3-compatible search callable when available."""
-                ...
-
-            @property
-            def result(self) -> t.JsonMapping | None:
-                """The raw ldap3 result payload for the last operation."""
-                ...
-
-            @property
-            def entries(
-                self,
-            ) -> t.SequenceOf[
-                FlextLdapProtocols.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue
-            ]:
-                """The entry payloads produced by the last search."""
                 ...
 
         # ── Structural Duck-Typing Protocols ─────────────────────
