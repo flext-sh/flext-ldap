@@ -95,7 +95,8 @@
 
 ## Overview
 
-The FLEXT LDAP ACL Management system provides comprehensive ACL (Access Control List) management capabilities across different LDAP server types including:
+The FLEXT LDAP ACL Management system provides comprehensive ACL (Access Control List)
+management capabilities across different LDAP server types including:
 
 - **OpenLDAP** - `access to` syntax
 - **Oracle Directory** - `orclaci` format

@@ -12,5 +12,5 @@
 
 ---
 
-**Arc42 Section 08-cross-cutting: Cross-cutting Concepts**
-_Part of the comprehensive Arc42 architecture documentation_
+**Arc42 Section 08-cross-cutting: Cross-cutting Concepts** _Part of the comprehensive
+Arc42 architecture documentation_

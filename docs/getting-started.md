@@ -82,8 +82,8 @@
 
 This guide covers installation, basic configuration, and first steps with flext-ldap.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ---
 
@@ -565,8 +565,10 @@ For more troubleshooting help, see Troubleshooting Guide.
 
 **Across Projects**:
 
-- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/guides/railway-oriented-programming.md) - Railway-oriented programming patterns
-- [flext-ldif Integration](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldif/docs/guides/integration.md) - LDIF processing integration
+- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/guides/railway-oriented-programming.md) -
+  Railway-oriented programming patterns
+- [flext-ldif Integration](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldif/docs/guides/integration.md) -
+  LDIF processing integration
 
 **External Resources**:
 

@@ -18,13 +18,12 @@
 
 <!-- TOC END -->
 
-**Version**: 1.0 (v0.12.0-dev)
-**Date**: 2025-01-24
-**Python**: 3.13+
+**Version**: 1.0 (v0.12.0-dev) **Date**: 2025-01-24 **Python**: 3.13+
 
 ## Overview
 
-Complete API reference for flext-ldap v0.12.0-dev, covering all public interfaces, classes, and methods.
+Complete API reference for flext-ldap v0.12.0-dev, covering all public interfaces,
+classes, and methods.
 
 ## Public API
 

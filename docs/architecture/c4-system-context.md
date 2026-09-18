@@ -64,7 +64,9 @@ This diagram shows FLEXT-LDAP in relation to its users and external systems.
 
 ## 🎯 System Context Overview
 
-FLEXT-LDAP is an enterprise-grade LDAP operations library that provides universal LDAP server support within the FLEXT ecosystem. It serves as the authoritative LDAP abstraction layer for all enterprise directory service needs.
+FLEXT-LDAP is an enterprise-grade LDAP operations library that provides universal LDAP
+server support within the FLEXT ecosystem. It serves as the authoritative LDAP
+abstraction layer for all enterprise directory service needs.
 
 ```plantuml
 @startuml FLEXT-LDAP System Context
@@ -294,5 +296,5 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 
 ---
 
-**C4 Model - Level 1: System Context**
-_Understanding FLEXT-LDAP's role in the enterprise ecosystem_
+**C4 Model - Level 1: System Context** _Understanding FLEXT-LDAP's role in the
+enterprise ecosystem_

@@ -12,5 +12,5 @@
 
 ---
 
-**Arc42 Section 01-introduction: Introduction and Goals**
-_Part of the comprehensive Arc42 architecture documentation_
+**Arc42 Section 01-introduction: Introduction and Goals** _Part of the comprehensive
+Arc42 architecture documentation_

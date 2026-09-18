@@ -120,10 +120,11 @@
 
 **Contributing to flext-ldap - Clean Architecture and FLEXT standards**
 
-This guide covers development setup, coding standards, and contribution guidelines for flext-ldap.
+This guide covers development setup, coding standards, and contribution guidelines for
+flext-ldap.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ---
 
@@ -175,14 +176,14 @@ python -c "from flext_ldap.api import ldap; u.Cli.print('✅ Development setup c
 
 ```bash
 # Start development session
-make setup              # Ensure environment is ready
-make format             # Auto-format code (ruff + black)
-make lint               # Check code style and issues
-make type-check         # Validate type annotations
-make test               # Run test suite
+make setup      # Ensure environment is ready
+make format     # Auto-format code (ruff + black)
+make lint       # Check code style and issues
+make type-check # Validate type annotations
+make test       # Run test suite
 
 # Complete validation
-make val           # Run all quality gates
+make val # Run all quality gates
 ```
 
 ### Code Formatting
@@ -726,7 +727,7 @@ ______________________________________________________________________
 1. **Validate Quality**
 
    ```bash
-   make val  # Must pass all gates
+   make val # Must pass all gates
    ```
 
 1. **Submit Pull Request**

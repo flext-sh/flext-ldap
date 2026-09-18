@@ -49,8 +49,9 @@
 
 ## Overview
 
-The Documentation Maintenance System provides automated tools for maintaining documentation quality, validating content,
-and ensuring consistency across all documentation files.
+The Documentation Maintenance System provides automated tools for maintaining
+documentation quality, validating content, and ensuring consistency across all
+documentation files.
 
 ### Key Features
 
@@ -521,13 +522,14 @@ python maintenance/maintain.py --comprehensive
 
 ---
 
-**Documentation Maintenance System User Guide**
-_Automated Quality Assurance for Technical Documentation_
+**Documentation Maintenance System User Guide** _Automated Quality Assurance for
+Technical Documentation_
 
 **Key Benefits:**
 
 - 🔍 **Comprehensive Quality Audits**: Automated content analysis and scoring
-- 🔗 **Link Health Monitoring**: Continuous validation of internal and external references
+- 🔗 **Link Health Monitoring**: Continuous validation of internal and external
+  references
 - 📊 **Quality Dashboards**: Visual reports and trend analysis
 - 🤖 **Automated Optimization**: Content enhancement and formatting fixes
 - 🔄 **Version Control Integration**: Seamless Git workflow integration

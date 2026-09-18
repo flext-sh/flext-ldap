@@ -160,26 +160,31 @@
 
 **Complete guide to using server-specific LDAP operations in flext-ldap**
 
-This document provides detailed information about server-specific implementations, their capabilities, and usage patterns.
+This document provides detailed information about server-specific implementations, their
+capabilities, and usage patterns.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ##
 
 ## 🎯 Overview
 
-FLEXT-LDAP provides complete,
-server-specific implementations for major LDAP servers with automatic servers handling and ldif integration.
+FLEXT-LDAP provides complete, server-specific implementations for major LDAP servers
+with automatic servers handling and ldif integration.
 
 ### **Available Implementations**
 
-Server: **OpenLDAP 2.x** - Status: 🟢 Complete - ACL Attribute: olcAccess - Schema DN: cn=subschema - Lines: 525 - Version Support: 2.4+
-Server: **OpenLDAP 1.x** - Status: 🟢 Complete - ACL Attribute: access - Schema DN: cn=subschema - Lines: 102 - Version Support: 1.x (legacy)
-Server: **Oracle OID** - Status: 🟢 Complete - ACL Attribute: orclaci - Schema DN: cn=subschemasubentry - Lines: 361 - Version Support: 11g+
-Server: **Oracle OUD** - Status: 🟢 Complete - ACL Attribute: ds-privilege-name - Schema DN: cn=schema - Lines: 373 - Version Support: 11g+
-Server: **Active Directory** - Status: 🟡 Stub - ACL Attribute: nTSecurityDescriptor - Schema DN: cn=schema,cn=configuration - Lines: 250 - Version Support: Future
-Server: **Generic** - Status: 🟢 Complete - ACL Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 4510
+Server: **OpenLDAP 2.x** - Status: 🟢 Complete - ACL Attribute: olcAccess - Schema DN:
+cn=subschema - Lines: 525 - Version Support: 2.4+ Server: **OpenLDAP 1.x** - Status: 🟢
+Complete - ACL Attribute: access - Schema DN: cn=subschema - Lines: 102 - Version
+Support: 1.x (legacy) Server: **Oracle OID** - Status: 🟢 Complete - ACL Attribute:
+orclaci - Schema DN: cn=subschemasubentry - Lines: 361 - Version Support: 11g+ Server:
+**Oracle OUD** - Status: 🟢 Complete - ACL Attribute: ds-privilege-name - Schema DN:
+cn=schema - Lines: 373 - Version Support: 11g+ Server: **Active Directory** - Status: 🟡
+Stub - ACL Attribute: nTSecurityDescriptor - Schema DN: cn=schema,cn=configuration -
+Lines: 250 - Version Support: Future Server: **Generic** - Status: 🟢 Complete - ACL
+Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 4510
 
 ##
 

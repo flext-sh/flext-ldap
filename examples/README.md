@@ -43,16 +43,20 @@
 
 <!-- TOC END -->
 
-**12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **ldap API** (api.py) as the primary interface.
+**12 comprehensive examples** demonstrating all functionality of the **flext-ldap**
+library using the **ldap API** (api.py) as the primary interface.
 
 ## 📚 Overview
 
-These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with r error handling, proper type hints, and zero CLI code.
+These examples showcase enterprise-grade LDAP operations using clean, maintainable
+patterns with **100% module coverage**. All examples follow FLEXT standards with r error
+handling, proper type hints, and zero CLI code.
 
 **Key Principles:**
 
 - ✅ **ALWAYS use api.py (ldap)** as the primary interface
-- ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
+- ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants,
+  FlextLdapValidations
 - ✅ **r patterns** for explicit error handling (NO try/except fallbacks)
 - ✅ **Type-safe** with Python 3.13+ patterns
 - ✅ **Library usage only** - NO CLI tools
@@ -588,7 +592,8 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 
 - Docker Container: flext-openldap-test (port 3390)
 - Base DN: dc=flext,dc=local
-- Admin: cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local / REDACTED_LDAP_BIND_PASSWORD123
+- Admin: cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local /
+  REDACTED_LDAP_BIND_PASSWORD123
 
 **Prerequisites:**
 
@@ -628,7 +633,8 @@ python examples/99_comprehensive_openldap_validation.py
 
 ### 99. Comprehensive OUD Validation (`99_comprehensive_oud_validation.py`)
 
-**Purpose**: Extensive testing of flext-ldap API against Oracle Unified Directory with ~1000 entries
+**Purpose**: Extensive testing of flext-ldap API against Oracle Unified Directory with
+~1000 entries
 
 **Validates Same 4 Requirements as OpenLDAP:**
 
@@ -653,7 +659,7 @@ python examples/test_data_generator.py --server oud
 docker-compose -f docker/docker-compose.flext-oud-test.yml up -d
 
 # 3. Wait for OUD to be ready (check health)
-docker ps  # Wait for healthy status
+docker ps # Wait for healthy status
 
 # 4. Load test data
 ldapadd -x -H ldap://localhost:3489 \
@@ -907,5 +913,4 @@ After exploring these examples:
 
 ## 📝 License
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Copyright (c) 2025 FLEXT Team. All rights reserved. SPDX-License-Identifier: MIT

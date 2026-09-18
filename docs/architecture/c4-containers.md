@@ -34,7 +34,8 @@ This diagram shows the high-level technology choices and how containers communic
 ## 🏗️ Container Architecture Overview
 
 FLEXT-LDAP is implemented as a Python library with Clean Architecture patterns,
-providing LDAP operations through a unified interface while supporting multiple LDAP server implementations.
+providing LDAP operations through a unified interface while supporting multiple LDAP
+server implementations.
 
 [Container diagram content would go here]
 
@@ -68,5 +69,5 @@ providing LDAP operations through a unified interface while supporting multiple 
 
 ---
 
-**C4 Model - Level 2: Container Architecture**
-_Technology choices and high-level system structure_
+**C4 Model - Level 2: Container Architecture** _Technology choices and high-level system
+structure_

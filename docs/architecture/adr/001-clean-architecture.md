@@ -32,20 +32,18 @@
 
 ## Status
 
-**Status**: accepted
-**Date**: 2024-01-15
-**Deciders**: FLEXT Architecture Committee (Core Team)
-**Consulted**: Development Team, DevOps Team
-**Informed**: Product Stakeholders, External Contributors
+**Status**: accepted **Date**: 2024-01-15 **Deciders**: FLEXT Architecture Committee
+(Core Team) **Consulted**: Development Team, DevOps Team **Informed**: Product
+Stakeholders, External Contributors
 
 ## Context
 
-**Problem Statement**
-FLEXT-LDAP needs a maintainable, testable,
-and scalable architecture that can evolve with changing business requirements while maintaining high code quality and enabling efficient development workflows.
+**Problem Statement** FLEXT-LDAP needs a maintainable, testable, and scalable
+architecture that can evolve with changing business requirements while maintaining high
+code quality and enabling efficient development workflows.
 
-**Current Situation**
-The initial implementation used a traditional layered architecture with tight coupling between components. This led to:
+**Current Situation** The initial implementation used a traditional layered architecture
+with tight coupling between components. This led to:
 
 - Difficult unit testing due to infrastructure dependencies
 - Tight coupling between business logic and LDAP protocol details
@@ -78,8 +76,8 @@ The initial implementation used a traditional layered architecture with tight co
 
 ## Decision
 
-**Chosen Solution**
-Adopt Clean Architecture (as described by Robert C. Martin) with the following structure:
+**Chosen Solution** Adopt Clean Architecture (as described by Robert C. Martin) with the
+following structure:
 
 ```
 src/flext_ldap/
@@ -108,8 +106,7 @@ src/flext_ldap/
 1. **Railway Pattern**: Explicit error handling throughout
 1. **Protocol-Based Design**: Type-safe interfaces with runtime checking
 
-**Rationale**
-Clean Architecture provides the best foundation for:
+**Rationale** Clean Architecture provides the best foundation for:
 
 - **Testability**: Domain logic can be tested in isolation
 - **Maintainability**: Clear boundaries prevent coupling issues
@@ -119,8 +116,8 @@ Clean Architecture provides the best foundation for:
 
 ## Alternatives Considered
 
-**Option 1: Traditional Layered Architecture**
-Keep the existing layered approach with some refactoring.
+**Option 1: Traditional Layered Architecture** Keep the existing layered approach with
+some refactoring.
 
 **Pros:**
 
@@ -135,8 +132,8 @@ Keep the existing layered approach with some refactoring.
 - Hard to add new server types
 - Technical debt accumulation
 
-**Option 2: Hexagonal Architecture**
-Use ports and adapters pattern with explicit interfaces.
+**Option 2: Hexagonal Architecture** Use ports and adapters pattern with explicit
+interfaces.
 
 **Pros:**
 
@@ -150,8 +147,8 @@ Use ports and adapters pattern with explicit interfaces.
 - Additional abstraction overhead
 - Learning curve for team
 
-**Option 3: Microkernel Architecture**
-Plugin-based architecture with core and extensions.
+**Option 3: Microkernel Architecture** Plugin-based architecture with core and
+extensions.
 
 **Pros:**
 
@@ -244,9 +241,8 @@ Plugin-based architecture with core and extensions.
 
 ## Implementation Status
 
-**Status**: ✅ **COMPLETED**
-**Completion Date**: 2024-03-15
-**Quality Metrics Achieved**:
+**Status**: ✅ **COMPLETED** **Completion Date**: 2024-03-15 **Quality Metrics
+Achieved**:
 
 - Test Coverage: 35% (Target: 90% - in progress)
 - Code Quality: ✅ Zero lint violations
@@ -257,14 +253,17 @@ Plugin-based architecture with core and extensions.
 
 **Related Documents**
 
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) - Robert C. Martin
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) -
+  Robert C. Martin
 - [Domain-Driven Design](https://domainlanguage.com/ddd/) - Eric Evans
 - FLEXT Architecture Guidelines - FLEXT ecosystem patterns
 
 **Research**
 
-- [Architecture Patterns](https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/) - Mark Richards
-- [Clean Architecture in Python](https://github.com/lyz-code/CleanArchitecture) - Examples and implementations
+- [Architecture Patterns](https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/) -
+  Mark Richards
+- [Clean Architecture in Python](https://github.com/lyz-code/CleanArchitecture) -
+  Examples and implementations
 
 **Discussions**
 
@@ -275,14 +274,14 @@ Plugin-based architecture with core and extensions.
 
 ## ADR Maintenance
 
-**Review Date**: 2025-01-15 (annually)
-**Last Reviewed**: 2024-12-01
-**Reviewers**: FLEXT Architecture Committee
+**Review Date**: 2025-01-15 (annually) **Last Reviewed**: 2024-12-01 **Reviewers**:
+FLEXT Architecture Committee
 
 **Changes Made**:
 
 - 2024-03-15: Implementation completed successfully
-- 2024-12-01: Annual review - decision still valid, progressing toward test coverage goals
+- 2024-12-01: Annual review - decision still valid, progressing toward test coverage
+  goals
 
 **Superseded by**: None
 

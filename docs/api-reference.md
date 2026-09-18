@@ -80,9 +80,13 @@
   - 🔄 Universal LDAP Interface
     - FlextLdapEntryAdapter
       - [`ldap3_to_ldif_entry(ldap3_entry) -> p.Result[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
-- Search with ldap3 - [`ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) - [`ldif_entry_to_ldap3_attributes(ldif_entry) -> p.Result[Mapping[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
+- Search with ldap3 -
+  [`ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) -
+  [`ldif_entry_to_ldap3_attributes(ldif_entry) -> p.Result[Mapping[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
 - Create ldif entry
-- Convert to ldap3 attributes - [`convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) - [`write_entries_to_ldif_file(entries, output_path) -> p.Result[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
+- Convert to ldap3 attributes -
+  [`convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) -
+  [`write_entries_to_ldif_file(entries, output_path) -> p.Result[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
   - FlextLdapServersAdapter
     - [`detect_server_type_from_entries(entries) -> p.Result[str]`](#detect_server_type_from_entriesentries---flextresultstr)
 - Detect from entries
@@ -109,11 +113,14 @@
 - Get ACLs from cn=settings entry
 - [`set_acls(connection, dn, acls) -> p.Result[bool]`](#set_aclsconnection-dn-acls---flextresultbool)
 - [`parse(acl_string) -> p.Result[m.Dict]`](#parseacl_string---flextresultflexttypesdict)
-- [`format_acl(acl_dict) -> p.Result[str]`](#format_aclacl_dict---flextresultstr) - Entry Operations
+- [`format_acl(acl_dict) -> p.Result[str]`](#format_aclacl_dict---flextresultstr) -
+  Entry Operations
 - [`add_entry(connection, entry) -> p.Result[bool]`](#add_entryconnection-entry---flextresultbool)
 - [`modify_entry(connection, dn, modifications) -> p.Result[bool]`](#modify_entryconnection-dn-modifications---flextresultbool)
 - [`delete_entry(connection, dn) -> p.Result[bool]`](#delete_entryconnection-dn---flextresultbool)
-- [`normalize_entry(entry) -> p.Result[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) - Search Operations - `get_max_page_size() -> int` - `supports_paged_results() -> bool` - `supports_vlv() -> bool`
+- [`normalize_entry(entry) -> p.Result[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) -
+  Search Operations - `get_max_page_size() -> int` -
+  `supports_paged_results() -> bool` - `supports_vlv() -> bool`
 - [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> p.Result[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
   - Server-Specific Implementations
     - OpenLDAP2Operations
@@ -125,10 +132,11 @@
 
 **Complete API documentation for flext-ldap**
 
-This document provides comprehensive API reference for all public interfaces in flext-ldap.
+This document provides comprehensive API reference for all public interfaces in
+flext-ldap.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ---
 
@@ -1014,7 +1022,8 @@ RFC-compliant fallback for unknown servers.
 
 ## 📝 Type Annotations
 
-All public APIs include comprehensive type annotations for IDE support and static analysis:
+All public APIs include comprehensive type annotations for IDE support and static
+analysis:
 
 ````python
 from __future__ import annotations

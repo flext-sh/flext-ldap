@@ -12,5 +12,5 @@
 
 ---
 
-**Arc42 Section 02-constraints: Architecture Constraints**
-_Part of the comprehensive Arc42 architecture documentation_
+**Arc42 Section 02-constraints: Architecture Constraints** _Part of the comprehensive
+Arc42 architecture documentation_

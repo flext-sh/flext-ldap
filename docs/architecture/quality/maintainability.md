@@ -8,11 +8,11 @@
 
 **Code Quality and Evolution for FLEXT-LDAP**
 
-This document describes the maintainability characteristics and requirements for flext-ldap.
+This document describes the maintainability characteristics and requirements for
+flext-ldap.
 
 [Maintainability content would go here]
 
 ---
 
-**Code Quality and Evolution**
-_Maintainability characteristics and requirements_
+**Code Quality and Evolution** _Maintainability characteristics and requirements_

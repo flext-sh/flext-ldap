@@ -68,10 +68,11 @@
 
 **Common issues, diagnostics, and solutions for flext-ldap**
 
-This guide helps diagnose and resolve common problems with FLEXT-LDAP integration and LDAP operations.
+This guide helps diagnose and resolve common problems with FLEXT-LDAP integration and
+LDAP operations.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ---
 
@@ -89,8 +90,8 @@ ConnectionError: Connection failed: [Errno 111] Connection refused
 
 ```bash
 # Test LDAP server connectivity
-telnet ldap.example.com 389     # Standard LDAP port
-telnet ldap.example.com 636     # LDAPS port
+telnet ldap.example.com 389 # Standard LDAP port
+telnet ldap.example.com 636 # LDAPS port
 
 # Check if server is listening
 nmap -p 389,636 ldap.example.com

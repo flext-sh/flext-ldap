@@ -35,13 +35,12 @@
 
 <!-- TOC END -->
 
-**Version**: 1.0
-**Date**: 2025-01-24
-**Target**: v0.12.0-dev+
+**Version**: 1.0 **Date**: 2025-01-24 **Target**: v0.12.0-dev+
 
 ## Overview
 
-Comprehensive development guides for contributing to flext-ldap, including setup, workflow, testing, and quality standards.
+Comprehensive development guides for contributing to flext-ldap, including setup,
+workflow, testing, and quality standards.
 
 ## Table of Contents
 
@@ -109,7 +108,7 @@ git push origin feature/my-feature
 **Required before EVERY commit**:
 
 ```bash
-make val  # Must pass: lint + type + security + test
+make val # Must pass: lint + type + security + test
 ```
 
 **Standards**:
@@ -133,41 +132,41 @@ make val  # Must pass: lint + type + security + test
 ### Test Categories
 
 ```bash
-pytest -m unit              # Fast unit tests
-pytest -m integration       # Integration tests (Docker)
-pytest -m ldap              # LDAP-specific tests
-pytest -m "not slow"        # Fast tests only
+pytest -m unit        # Fast unit tests
+pytest -m integration # Integration tests (Docker)
+pytest -m ldap        # LDAP-specific tests
+pytest -m "not slow"  # Fast tests only
 ```
 
 ### Docker Test Server
 
 ```bash
-make ldap-start    # Start OpenLDAP test container
-make ldap-health   # Check health
-make ldap-stop     # Stop container
+make ldap-start  # Start OpenLDAP test container
+make ldap-health # Check health
+make ldap-stop   # Stop container
 ```
 
 ## Essential Commands
 
 ```bash
 # Quality gates
-make lint          # Ruff linting
-make type-check    # Pyrefly type checking
-make security      # Bandit security scan
-make test          # Run all tests
-make val      # Complete validation
+make lint       # Ruff linting
+make type-check # Pyrefly type checking
+make security   # Bandit security scan
+make test       # Run all tests
+make val        # Complete validation
 
 # Auto-fix
-make format        # Format code
-make fix           # Auto-fix linting issues
+make format # Format code
+make fix    # Auto-fix linting issues
 
 # Docker
-make ldap-start    # Start test LDAP server
-make ldap-stop     # Stop test LDAP server
+make ldap-start # Start test LDAP server
+make ldap-stop  # Stop test LDAP server
 
 # Cleanup
-make clean         # Clean build artifacts
-make clean-all     # Deep clean including venvs
+make clean     # Clean build artifacts
+make clean-all # Deep clean including venvs
 ```
 
 ## FLEXT Patterns

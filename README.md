@@ -16,9 +16,9 @@
 
 **Version**: `0.12.0` | **Python**: 3.13+ | **Project class**: `domain`
 
-> **Alpha (0.12.0).** This package is alpha quality. Every package in the
-> workspace must be re-checked and re-validated at 0.12.0 before any promotion
-> beyond alpha; treat interfaces as unstable.
+> **Alpha (0.12.0).** This package is alpha quality. Every package in the workspace must
+> be re-checked and re-validated at 0.12.0 before any promotion beyond alpha; treat
+> interfaces as unstable.
 
 ## Purpose
 
@@ -26,20 +26,15 @@ Enterprise LDAP Operations Library for FLEXT Framework
 
 ## Module Map
 
-::: flext_ldap
-options:
-members: false
-show_root_heading: false
-show_root_toc_entry: false
-show_source: false
+::: flext_ldap options: members: false show_root_heading: false show_root_toc_entry:
+false show_source: false
 
 ## Collection Rules
 
-Read
-[`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist
-(parent FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline,
-slot registry verification).
+Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent
+FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry
+verification).
 
 ## Operation Flow
 
@@ -47,23 +42,23 @@ slot registry verification).
   [`docs/api-reference/README.md`](docs/api-reference/README.md).
 - Generated module overview:
   [`docs/api-reference/generated/overview.md`](docs/api-reference/generated/overview.md).
-- Settings env prefix: see project `pyproject.toml` `[tool.flext]` and
-  `FlextSettings` ConfigDict.
+- Settings env prefix: see project `pyproject.toml` `[tool.flext]` and `FlextSettings`
+  ConfigDict.
 
 ## Integration Points
 
-- Parent FLEXT chain: read this project's `pyproject.toml` `dependencies` array
-  filtered by `flext-*`. The FLEXT cascade is encoded in the inheritance lists
-  of the facade classes listed under Module Map above.
+- Parent FLEXT chain: read this project's `pyproject.toml` `dependencies` array filtered
+  by `flext-*`. The FLEXT cascade is encoded in the inheritance lists of the facade
+  classes listed under Module Map above.
 - Public extensions exposed by this project: `FlextLdap`, `FlextLdapApiRuntime`,
-  `FlextLdapConfig`, `FlextLdapConstants`, `FlextLdapModels`,
-  `FlextLdapProtocols` (+5 more).
+  `FlextLdapConfig`, `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols` (+5
+  more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates
 
-Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their
-declared operations directly — see
+Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their declared
+operations directly — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`.
 

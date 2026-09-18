@@ -20,11 +20,11 @@
 
 ## Overview
 
-This directory houses the living architecture documentation for flext-ldap. The
-current codebase centers on a lightweight service layer that orchestrates
-`ldap3` operations and `flext-ldif` parsing through a small set of composable
-services and adapters. Documentation here reflects the runtime architecture
-shipped in the source tree rather than legacy server-specific stacks.
+This directory houses the living architecture documentation for flext-ldap. The current
+codebase centers on a lightweight service layer that orchestrates `ldap3` operations and
+`flext-ldif` parsing through a small set of composable services and adapters.
+Documentation here reflects the runtime architecture shipped in the source tree rather
+than legacy server-specific stacks.
 
 ## Table of Contents
 

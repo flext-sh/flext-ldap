@@ -14,5 +14,4 @@ This document describes the security architecture implemented in flext-ldap.
 
 ---
 
-**Security Architecture**
-_Enterprise-grade security with multi-layered protection_
+**Security Architecture** _Enterprise-grade security with multi-layered protection_

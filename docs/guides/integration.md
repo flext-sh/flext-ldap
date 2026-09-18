@@ -74,10 +74,11 @@
 
 **Integrating flext-ldap with FLEXT ecosystem and external systems**
 
-This guide covers integration patterns, FLEXT ecosystem usage, and third-party system integration.
+This guide covers integration patterns, FLEXT ecosystem usage, and third-party system
+integration.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ---
 
@@ -711,7 +712,8 @@ data:
 
 ### Entry Format Conversion
 
-FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers detection:
+FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers
+detection:
 
 ````python
 from flext_ldap import FlextLdapEntryAdapter

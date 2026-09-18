@@ -8,8 +8,8 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-Curated operational guides live here. Keep API behavior in generated reference
-pages sourced from code and docstrings.
+Curated operational guides live here. Keep API behavior in generated reference pages
+sourced from code and docstrings.
 
 - [Acl management](acl-management.md)
 - [Configuration](configuration.md)

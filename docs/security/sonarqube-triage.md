@@ -6,8 +6,8 @@ Bead: `mro-2wjm.9`
 
 ## Resumo
 
-**11 issues** — BLOCKER 0, CRITICAL 3, MAJOR 6, MINOR 2
-Tipos: VULNERABILITY 4, BUG 0, CODE_SMELL 7 · **Debt total: 65min**
+**11 issues** — BLOCKER 0, CRITICAL 3, MAJOR 6, MINOR 2 Tipos: VULNERABILITY 4, BUG 0,
+CODE_SMELL 7 · **Debt total: 65min**
 
 | regra                 | issues |
 | --------------------- | ------ |
@@ -22,8 +22,11 @@ Tipos: VULNERABILITY 4, BUG 0, CODE_SMELL 7 · **Debt total: 65min**
 
 ## Como usar
 
-Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o **código real** (linha `>>>`), o tipo e o effort estimado.
-**Decisão**: `corrigir` / `falso-positivo` (marcar na plataforma com justificativa) / `risco-aceito`. Ordem: BLOCKER → CRITICAL → VULNERABILITY → MAJOR. CODE_SMELL em volume pede correção de padrão.
+Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
+**código real** (linha `>>>`), o tipo e o effort estimado. **Decisão**: `corrigir` /
+`falso-positivo` (marcar na plataforma com justificativa) / `risco-aceito`. Ordem:
+BLOCKER → CRITICAL → VULNERABILITY → MAJOR. CODE_SMELL em volume pede correção de
+padrão.
 
 ## Issues
 
@@ -151,7 +154,8 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 **Local**: `pyproject.toml:-` · **Effort**: 5min
 
-> Dependency versions are not predictable if the lock file (uv.lock, poetry.lock, pdm.lock or pylock.toml) is missing.
+> Dependency versions are not predictable if the lock file (uv.lock, poetry.lock,
+> pdm.lock or pylock.toml) is missing.
 
 **Decisão**: pendente
 
@@ -159,7 +163,8 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 **Local**: `tests/unit/test_config.py:77` · **Effort**: 5min
 
-> Refactor this exception test to have only one invocation possibly throwing an exception.
+> Refactor this exception test to have only one invocation possibly throwing an
+> exception.
 
 ```python
        73
@@ -179,7 +184,8 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 **Local**: `tests/unit/test_sync.py:147` · **Effort**: 5min
 
-> Refactor this exception test to have only one invocation possibly throwing an exception.
+> Refactor this exception test to have only one invocation possibly throwing an
+> exception.
 
 ```python
       143          ldif_file.write_text(
@@ -219,7 +225,8 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 
 **Local**: `src/flext_ldap/typings.py:18` · **Effort**: 2min
 
-> Rename this field "LDAPException" to match the regular expression ^[\_a-z][_a-z0-9]\*$.
+> Rename this field "LDAPException" to match the regular expression
+> ^[\_a-z][_a-z0-9]\*$.
 
 ```python
        14

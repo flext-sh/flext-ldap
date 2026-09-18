@@ -30,44 +30,38 @@
 
 ## Status
 
-**Status**: {proposed|accepted|rejected|deprecated|superseded}
-**Date**: {YYYY-MM-DD}
-**Deciders**: {list of people who made the decision}
-**Consulted**: {list of people consulted}
-**Informed**: {list of people informed}
+**Status**: {proposed|accepted|rejected|deprecated|superseded} **Date**: {YYYY-MM-DD}
+**Deciders**: {list of people who made the decision} **Consulted**: {list of people
+consulted} **Informed**: {list of people informed}
 
 ## Context
 
-**Problem Statement**
-{Describe the problem that needs to be solved. What is the business or technical challenge?}
+**Problem Statement** {Describe the problem that needs to be solved. What is the
+business or technical challenge?}
 
-**Current Situation**
-{Describe how things work today, if applicable. What are the limitations of the current approach?}
+**Current Situation** {Describe how things work today, if applicable. What are the
+limitations of the current approach?}
 
-**Requirements**
-{List the functional and non-functional requirements that must be met by any solution.}
+**Requirements** {List the functional and non-functional requirements that must be met
+by any solution.}
 
-**Constraints**
-{List any constraints or limitations that affect the solution space.}
+**Constraints** {List any constraints or limitations that affect the solution space.}
 
-**Assumptions**
-{List any assumptions that underlie the decision.}
+**Assumptions** {List any assumptions that underlie the decision.}
 
 ## Decision
 
-**Chosen Solution**
-{Describe the chosen solution in detail. Include architecture diagrams if helpful.}
+**Chosen Solution** {Describe the chosen solution in detail. Include architecture
+diagrams if helpful.}
 
-**Rationale**
-{Explain why this solution was chosen over alternatives. Reference requirements and constraints.}
+**Rationale** {Explain why this solution was chosen over alternatives. Reference
+requirements and constraints.}
 
-**Consequences**
-{Describe the positive and negative consequences of this decision.}
+**Consequences** {Describe the positive and negative consequences of this decision.}
 
 ## Alternatives Considered
 
-**Option 1: {Alternative Name}**
-{Description of alternative solution}
+**Option 1: {Alternative Name}** {Description of alternative solution}
 
 **Pros:**
 
@@ -77,8 +71,7 @@
 
 - {List disadvantages}
 
-**Option 2: {Alternative Name}**
-{Description of alternative solution}
+**Option 2: {Alternative Name}** {Description of alternative solution}
 
 **Pros:**
 
@@ -88,8 +81,7 @@
 
 - {List disadvantages}
 
-**Option N: {Alternative Name}**
-{Description of alternative solution}
+**Option N: {Alternative Name}** {Description of alternative solution}
 
 **Pros:**
 
@@ -149,9 +141,8 @@
 
 ## ADR Maintenance
 
-**Review Date**: {YYYY-MM-DD} (annually or when significant changes occur)
-**Last Reviewed**: {YYYY-MM-DD}
-**Reviewers**: {list of people who reviewed}
+**Review Date**: {YYYY-MM-DD} (annually or when significant changes occur) **Last
+Reviewed**: {YYYY-MM-DD} **Reviewers**: {list of people who reviewed}
 
 **Changes Made**:
 
@@ -161,5 +152,5 @@
 
 ---
 
-**Template Version**: 1.0
-**Based on**: Michael Nygard's ADR format with FLEXT enhancements
+**Template Version**: 1.0 **Based on**: Michael Nygard's ADR format with FLEXT
+enhancements

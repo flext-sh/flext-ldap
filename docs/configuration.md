@@ -76,16 +76,18 @@
 
 **Environment setup and configuration options for flext-ldap**
 
-This guide covers all configuration aspects for integrating flext-ldap in your FLEXT ecosystem applications.
+This guide covers all configuration aspects for integrating flext-ldap in your FLEXT
+ecosystem applications.
 
-**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete
-**Architecture**: Clean Architecture + DDD + Railway-oriented programming
+**Version**: 0.9.9 | **Test Coverage**: 35% | **Phase 2**: ✅ Complete **Architecture**:
+Clean Architecture + DDD + Railway-oriented programming
 
 ---
 
 ## Configuration Overview
 
-FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic BaseSettings with environment variable support.
+FLEXT-LDAP follows the FLEXT framework configuration patterns using Pydantic
+BaseSettings with environment variable support.
 
 ### Configuration Hierarchy
 

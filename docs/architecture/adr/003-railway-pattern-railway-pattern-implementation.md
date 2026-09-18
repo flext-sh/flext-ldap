@@ -28,35 +28,26 @@
 
 ## Status
 
-**Status**: accepted
-**Date**: 2026-04-14
-**Deciders**: FLEXT Architecture Committee
-**Consulted**: Development Team
-**Informed**: Stakeholders
+**Status**: accepted **Date**: 2026-04-14 **Deciders**: FLEXT Architecture Committee
+**Consulted**: Development Team **Informed**: Stakeholders
 
 ## Context
 
-**Problem Statement**
-[Description of the problem this ADR addresses]
+**Problem Statement** [Description of the problem this ADR addresses]
 
-**Current Situation**
-[Current state and limitations]
+**Current Situation** [Current state and limitations]
 
-**Requirements**
-[Requirements that must be met]
+**Requirements** [Requirements that must be met]
 
 ## Decision
 
-**Chosen Solution**
-[Description of the chosen solution]
+**Chosen Solution** [Description of the chosen solution]
 
-**Rationale**
-[Why this solution was chosen]
+**Rationale** [Why this solution was chosen]
 
 ## Alternatives Considered
 
-**Option 1: [Alternative Name]**
-[Description and trade-offs]
+**Option 1: [Alternative Name]** [Description and trade-offs]
 
 ## Implementation Plan
 
@@ -66,16 +57,13 @@
 
 ## Validation
 
-**Success Metrics**
-[How success will be measured]
+**Success Metrics** [How success will be measured]
 
 ## Consequences
 
-**Positive Consequences**
-[Benefits of this decision]
+**Positive Consequences** [Benefits of this decision]
 
-**Negative Consequences**
-[Drawbacks and mitigations]
+**Negative Consequences** [Drawbacks and mitigations]
 
 ## References
 
@@ -85,5 +73,4 @@
 
 ---
 
-**ADR 003-railway-pattern: Railway Pattern Implementation**
-_Accepted on 2026-04-14_
+**ADR 003-railway-pattern: Railway Pattern Implementation** _Accepted on 2026-04-14_
