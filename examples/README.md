@@ -606,7 +606,7 @@ docker-compose -f docker/docker-compose.openldap.yml up -d
 
 # 3. Load test data
 ldapadd -x -H ldap://localhost:3390 \
-  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" -w REDACTED_LDAP_BIND_PASSWORD123 \
+  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" -w REDACTED_LDAP_BIND_PASSWO ...
   -f test_data_openldap.ldif
 ```
 
@@ -750,8 +750,7 @@ python examples/99_comprehensive_oud_validation.py
 ### Pattern 1: Basic ldap Usage
 
 ```python
-from flext_ldap import ldap
-from flext_ldap import FlextLdapSettings
+from flext_ldap import FlextLdapSettings, ldap
 
 # Create and configure
 settings = FlextLdapSettings(
@@ -772,7 +771,7 @@ search_result = api.search(...)
 
 # Disconnect
 api.unbind()
-```
+
 
 ### Pattern 2: Context Manager
 
@@ -780,6 +779,7 @@ api.unbind()
 from __future__ import annotations
 
 from contextlib import contextmanager
+
 from flext_ldap import ldap
 
 
@@ -798,7 +798,7 @@ def ldap_connection():
 # Usage
 with ldap_connection() as api:
     result = api.search(...)
-```
+
 
 ### Pattern 3: r Error Handling
 
@@ -854,7 +854,9 @@ result = api.search(base_dn=user_dn, filter_str=filter_str)
 docker ps | grep ldap
 
 # Test connection
-ldapsearch -x -H ldap://localhost:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w REDACTED_LDAP_BIND_PASSWORD -b "dc=example,dc=com"
+ldapsearch -x -H ldap://localhost:389 -D \
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w REDACTED_LDAP_BIND_PASSWORD \
+        -b "dc=example,dc=com"
 
 # Check environment variables
 echo $LDAP_SERVER_URI

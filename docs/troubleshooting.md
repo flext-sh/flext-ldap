@@ -97,7 +97,8 @@ telnet ldap.example.com 636 # LDAPS port
 nmap -p 389,636 ldap.example.com
 
 # Test with ldapsearch (if available)
-ldapsearch -x -H ldap://ldap.example.com:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password -b "dc=example,dc=com"
+ldapsearch -x -H ldap://ldap.example.com:389 -D \
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password -b "dc=example,dc=com"
 ```
 
 **Solutions:**
@@ -125,7 +126,8 @@ openssl s_client -connect ldap.example.com:636 -verify 5
 openssl x509 -in /path/to/cert.pem -text -noout
 
 # Test LDAP with StartTLS
-ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
+ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D \
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
 ```
 
 **Solutions:**
@@ -135,7 +137,7 @@ ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D "cn=REDACTED_LDAP_BIND_PASSW
 1. **Ensure CA certificate is installed**
 1. **Configure certificate verification settings**
 
-````python
+```python
 from Flext_ldap import FlextLdapSettings
 
 # Disable certificate verification (development only)
@@ -153,8 +155,10 @@ settings = FlextLdapSettings(
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
     verify_certs=True,
-)```
-______________________________________________________________________
+)
+```
+
+---
 
 ## Authentication Issues
 
@@ -163,7 +167,9 @@ ______________________________________________________________________
 **Symptom:**
 
 ```yaml
-AuthenticationError: Authentication failed: Invalid credentials```
+AuthenticationError: Authentication failed: Invalid credentials
+```
+
 **Diagnosis:**
 
 ```python
@@ -188,7 +194,9 @@ def diagnose_auth():
         print(f"Error: {auth_result.error}")
 
 
-run(diagnose_auth())```
+run(diagnose_auth())
+```
+
 **Solutions:**
 
 1. **Verify bind DN format** - must be RFC 4514 compliant
@@ -201,7 +209,9 @@ run(diagnose_auth())```
 **Symptom:**
 
 ```yaml
-SearchError: Invalid DN format```
+SearchError: Invalid DN format
+```
+
 **Common DN Format Mistakes:**
 
 ```python
@@ -215,11 +225,14 @@ dn = "name=John Doe,unit=users,domain=example"
 dn = "cn=John Doe,ou=users,dc=example,dc=com"
 
 # ✅ CORRECT - Escaped special characters
-dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"```
+dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
+```
+
 **Validation:**
 
 ```python
 from __future__ import annotations
+
 from flext_ldap import m
 
 
@@ -242,8 +255,10 @@ test_dns = [
 
 for test_dn in test_dns:
     result = validate_dn(test_dn)
-    print(f"{test_dn}: {'✅' if result else '❌'}")```
-______________________________________________________________________
+    print(f"{test_dn}: {'✅' if result else '❌'}")
+
+
+---
 
 ## Search and Query Issues
 
@@ -252,7 +267,9 @@ ______________________________________________________________________
 **Symptom:**
 
 ```yaml
-SearchError: Bad search filter```
+SearchError: Bad search filter
+```
+
 **Common Filter Mistakes:**
 
 ```python
@@ -272,7 +289,9 @@ filter_str = "(cn=John \\28Doe\\29)"  # Escaped parentheses
 
 # ✅ CORRECT - Complex filters
 filter_str = "(&(objectClass=person)(uid=j*))"
-filter_str = "(|(cn=John*)(mail=*@example.com))"```
+filter_str = "(|(cn=John*)(mail=*@example.com))"
+```
+
 **Filter Validation:**
 
 ```python
@@ -299,13 +318,17 @@ test_filters = [
 
 for test_filter in test_filters:
     result = validate_filter(test_filter)
-    print(f"{test_filter}: {'✅' if result else '❌'}")```
+    print(f"{test_filter}: {'✅' if result else '❌'}")
+```
+
 ### Search Base DN Not Found
 
 **Symptom:**
 
 ```yaml
-SearchError: No such t.JsonValue: ou=users,dc=example,dc=com```
+SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
+```
+
 **Diagnosis:**
 
 ```python
@@ -336,8 +359,10 @@ def diagnose_base_dn():
         print(f"Root search failed: {result.error}")
 
 
-run(diagnose_base_dn())```
-______________________________________________________________________
+run(diagnose_base_dn())
+```
+
+---
 
 ## Performance Issues
 
@@ -354,6 +379,7 @@ ______________________________________________________________________
 from __future__ import annotations
 
 import time
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -404,7 +430,9 @@ def diagnose_performance():
             print(f"{test_case['name']}: Failed - {result.error}")
 
 
-run(diagnose_performance())```
+run(diagnose_performance())
+
+
 **Optimization Solutions:**
 
 1. **Use specific base DNs:**
@@ -418,7 +446,9 @@ search_request = FlextLdapEntities.SearchRequest(
 # ✅ Efficient - searches specific branch
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com", filter_str="(uid=john.doe)", scope="onelevel"
-)```
+)
+```
+
 1. **Optimize search filters:**
 
 ```python
@@ -429,7 +459,9 @@ filter_str = "(cn=*john*)"
 filter_str = "(uid=john.doe)"
 
 # ✅ Efficient - compound filter with indexed attributes
-filter_str = "(&(objectClass=person)(uid=john.doe))"```
+filter_str = "(&(objectClass=person)(uid=john.doe))"
+```
+
 1. **Limit result sets:**
 
 ```python
@@ -440,13 +472,17 @@ search_request = FlextLdapEntities.SearchRequest(
     attributes=["uid", "cn"],  # Only needed attributes
     size_limit=100,  # Reasonable limit
     time_limit=10,  # Prevent long-running queries
-)```
+)
+```
+
 ### Connection Pool Exhaustion
 
 **Symptoms:**
 
 ```yaml
-ConnectionError: Connection pool exhausted```
+ConnectionError: Connection pool exhausted
+```
+
 **Diagnosis:**
 
 ```python
@@ -455,7 +491,9 @@ from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings.from_env()
 print(f"Pool size: {settings.pool_size}")
-print(f"Connection timeout: {settings.connection_timeout}")```
+print(f"Connection timeout: {settings.connection_timeout}")
+```
+
 **Solutions:**
 
 1. **Increase pool size:**
@@ -466,7 +504,9 @@ settings = FlextLdapSettings(
     pool_size=20,  # Increase from default 5
     connection_timeout=10,
     receive_timeout=30,
-)```
+)
+```
+
 1. **Implement connection reuse:**
 
 ```python
@@ -483,8 +523,10 @@ class LDAPService:
         for user in users:
             result = self._api.authenticate_user(user.username, user.password)
             results.append(result)
-        return results```
-______________________________________________________________________
+        return results
+```
+
+---
 
 ## Configuration Issues
 
@@ -496,6 +538,7 @@ ______________________________________________________________________
 from __future__ import annotations
 
 import os
+
 from Flext_ldap import FlextLdapSettings
 
 
@@ -527,7 +570,9 @@ def diagnose_config():
         print(f"  {var}: {value}")
 
 
-diagnose_config()```
+diagnose_config()
+
+
 ### Docker Environment Issues
 
 **Common Docker Problems:**
@@ -542,13 +587,17 @@ services:
       - FLEXT_LDAP_HOST=ldap-server # Use service name, not localhost
 
   ldap-server:
-    image: osixia/openldap:1.5.0```
+    image: osixia/openldap:1.5.0
+```
+
 1. **Network connectivity:**
 
 ```bash
 # Test from within container
 docker exec -it app-container ping ldap-server
-docker exec -it app-container telnet ldap-server 389```
+docker exec -it app-container telnet ldap-server 389
+```
+
 1. **Volume persistence:**
 
 ```yaml
@@ -558,7 +607,7 @@ services:
       - ldap_data:/var/lib/ldap
       - ldap_config:/etc/ldap/slapd.d
     # Ensure data persists between restarts
-````
+```
 
 ---
 
@@ -568,8 +617,10 @@ services:
 
 **Symptom:**
 
-````python
-ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'```
+```python
+ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
+```
+
 **Diagnosis:**
 
 ```python
@@ -595,7 +646,9 @@ try:
 
     print("✅ FlextLdapEntities available")
 except ImportError as e:
-    print(f"❌ Import error: {e}")```
+    print(f"❌ Import error: {e}")
+```
+
 ### Test Environment Setup
 
 **Docker LDAP Server Issues:**
@@ -617,23 +670,25 @@ docker exec -it flext-ldap-test-server ldapsearch \
 # Restart test server
 docker stop flext-ldap-test-server
 docker rm flext-ldap-test-server
-make ldap-test-server```
-______________________________________________________________________
+make ldap-test-server
+```
+
+---
 
 ## Error Message Reference
 
 ### Common Error Patterns
 
-| Error Type     | Pattern                        | Common Cause                    |
-| -------------- | ------------------------------ | ------------------------------- |
-| Connection     | `Connection refused`           | Server down or port blocked     |
-| Authentication | `Invalid credentials`          | Wrong username/password         |
-| Authorization  | `Insufficient access`          | User lacks required permissions |
-| Search         | `Bad search filter`            | Invalid LDAP filter syntax      |
-| Search         | `No such t.JsonValue` | Base DN doesn't exist           |
-| Search         | `Size limit exceeded`          | Result set too large            |
-| Timeout        | `Operation timed out`          | Slow server or network issues   |
-| SSL/TLS        | `Certificate verify failed`    | Invalid or expired certificate  |
+| Error Type     | Pattern                     | Common Cause                    |
+| -------------- | --------------------------- | ------------------------------- |
+| Connection     | `Connection refused`        | Server down or port blocked     |
+| Authentication | `Invalid credentials`       | Wrong username/password         |
+| Authorization  | `Insufficient access`       | User lacks required permissions |
+| Search         | `Bad search filter`         | Invalid LDAP filter syntax      |
+| Search         | `No such t.JsonValue`       | Base DN doesn't exist           |
+| Search         | `Size limit exceeded`       | Result set too large            |
+| Timeout        | `Operation timed out`       | Slow server or network issues   |
+| SSL/TLS        | `Certificate verify failed` | Invalid or expired certificate  |
 
 ### r Error Handling
 
@@ -667,8 +722,10 @@ def handle_errors_properly():
             print("Suggestion: Verify user exists in directory")
 
 
-run(handle_errors_properly())```
-______________________________________________________________________
+run(handle_errors_properly())
+```
+
+---
 
 ## Debugging Tools and Techniques
 
@@ -682,7 +739,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 # FLEXT logger with debug level
 logger = u.fetch_logger(__name__)
-logger.setLevel(logging.DEBUG)```
+logger.setLevel(logging.DEBUG)
+```
+
 ### Network Debugging
 
 ```bash
@@ -693,8 +752,12 @@ sudo tcpdump -i any -s 0 -w ldap.pcap port 389 or port 636
 wireshark ldap.pcap
 
 # Test with different LDAP tools
-ldapsearch -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
-ldapwhoami -v -x -H ldap://server:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password```
+ldapsearch -v -x -H ldap://server:389 -D \
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
+ldapwhoami -v -x -H ldap://server:389 -D \
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
+```
+
 ### Performance Profiling
 
 ```python
@@ -702,6 +765,7 @@ from __future__ import annotations
 
 import cProfile
 import pstats
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -739,8 +803,10 @@ def run_profiling():
 
 
 # Run profiling
-run_profiling()```
-______________________________________________________________________
+run_profiling()
+
+
+---
 
 ## Getting Help
 
@@ -779,6 +845,7 @@ When reporting issues, include:
 from __future__ import annotations
 
 import sys
+
 import pkg_resources
 from Flext_ldap import FlextLdapSettings
 
@@ -812,16 +879,18 @@ def collect_diagnostic_info():
         print(f"Configuration error: {e}")
 
 
-collect_diagnostic_info()```
-______________________________________________________________________
+collect_diagnostic_info()
+
+
+---
 
 For additional support and community resources:
 
-- [GitHub Issues](https://github.com/flext-sh/flext-ldap/issues) - Bug reports and feature requests
+- [GitHub Issues](https://github.com/flext-sh/flext-ldap/issues) - Bug reports and
+  feature requests
 - [FLEXT Documentation](https://docs.flext.dev) - Framework documentation
 - Examples - Working code examples
 
-______________________________________________________________________
+---
 
 **Previous:** Integration Guide ←
-````

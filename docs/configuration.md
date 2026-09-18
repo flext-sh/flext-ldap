@@ -91,7 +91,7 @@ BaseSettings with environment variable support.
 
 ### Configuration Hierarchy
 
-````python
+```python
 from flext_ldap import FlextLdapSettings
 
 # 1. Default configuration
@@ -108,8 +108,10 @@ settings = FlextLdapSettings(
     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
     bind_password="REDACTED_LDAP_BIND_PASSWORD-password",
     base_dn="dc=example,dc=com",
-)```
-______________________________________________________________________
+)
+```
+
+---
 
 ## Environment Variables
 
@@ -126,7 +128,9 @@ export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 export FLEXT_LDAP_PORT=${FlextConstants.LDAPS_DEFAULT_PORT}
 export FLEXT_LDAP_USE_SSL=true
 export FLEXT_LDAP_TIMEOUT=${FlextLdapConstants.DEFAULT_TIMEOUT}
-export FLEXT_LDAP_POOL_SIZE=5```
+export FLEXT_LDAP_POOL_SIZE=5
+```
+
 ### Security Configuration
 
 ```bash
@@ -138,7 +142,9 @@ export FLEXT_LDAP_CA_CERT_FILE="/path/to/ca.pem"
 
 # Authentication
 export FLEXT_LDAP_AUTH_METHOD="simple"  # simple, sasl
-export FLEXT_LDAP_SASL_MECHANISM="GSSAPI"  # For SASL auth```
+export FLEXT_LDAP_SASL_MECHANISM="GSSAPI"  # For SASL auth
+```
+
 ### Connection Pool Settings
 
 ```bash
@@ -148,7 +154,7 @@ export FLEXT_LDAP_MAX_RETRIES=3
 export FLEXT_LDAP_RETRY_DELAY=1.0
 export FLEXT_LDAP_CONNECTION_TIMEOUT=10
 export FLEXT_LDAP_RECEIVE_TIMEOUT=30
-````
+```
 
 ---
 
@@ -158,7 +164,7 @@ export FLEXT_LDAP_RECEIVE_TIMEOUT=30
 
 Create `ldap_config.py`:
 
-````python
+```python
 from Flext_ldap import FlextLdapSettings
 
 # Production configuration
@@ -183,13 +189,16 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
     base_dn="dc=dev,dc=example,dc=com",
     timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=3,
-)```
+)
+```
+
 ### Environment-Specific Configuration
 
 ```python
 from __future__ import annotations
 
 import os
+
 from Flext_ldap import FlextLdapSettings
 
 
@@ -205,8 +214,10 @@ def get_config() -> FlextLdapSettings:
 
 
 # Usage
-settings = get_config()```
-______________________________________________________________________
+settings = get_config()
+
+
+---
 
 ## Docker Configuration
 
@@ -225,7 +236,9 @@ FLEXT_LDAP_BASE_DN=dc=example,dc=com
 
 # Connection settings
 FLEXT_LDAP_TIMEOUT=30
-FLEXT_LDAP_POOL_SIZE=5```
+FLEXT_LDAP_POOL_SIZE=5
+```
+
 ### Docker Compose
 
 ```yaml
@@ -238,8 +251,10 @@ services:
     environment:
       - FLEXT_ENV=production
     depends_on:
-      - ldap-server```
-______________________________________________________________________
+      - ldap-server
+```
+
+---
 
 ## Testing Configuration
 
@@ -256,11 +271,11 @@ docker run -d \
   -e LDAP_ORGANISATION="FLEXT Test" \
   -e LDAP_DOMAIN="internal.invalid" \
   osixia/openldap:1.5.0
-````
+```
 
 ### Test Configuration
 
-````python
+```python
 from Flext_ldap import FlextLdapSettings
 
 TEST_CONFIG = FlextLdapSettings(
@@ -272,8 +287,10 @@ TEST_CONFIG = FlextLdapSettings(
     base_dn="dc=test,dc=flext,dc=local",
     timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=2,
-)```
-______________________________________________________________________
+)
+```
+
+---
 
 ## Configuration Validation
 
@@ -296,7 +313,9 @@ def validate_config():
         print(f"❌ Configuration invalid: {result.error}")
 
 
-run(validate_config())```
+run(validate_config())
+```
+
 ### Common Configuration Issues
 
 **Connection Refused:**
@@ -317,7 +336,7 @@ run(validate_config())```
 - Check CA certificate file path
 - Confirm SSL port (usually 636)
 
-______________________________________________________________________
+---
 
 ## Security Best Practices
 
@@ -331,7 +350,9 @@ settings = FlextLdapSettings(
     host=os.getenv("FLEXT_LDAP_HOST"),
     bind_password=os.getenv("FLEXT_LDAP_BIND_PASSWORD"),
     # ... other settings
-)```
+)
+```
+
 ### SSL/TLS Configuration
 
 ```python
@@ -341,8 +362,10 @@ settings = FlextLdapSettings(
     use_ssl=True,
     ca_cert_file="/etc/ssl/certs/ca-bundle.pem",
     verify_certs=True,
-)```
-______________________________________________________________________
+)
+```
+
+---
 
 ## Performance Tuning
 
@@ -352,10 +375,12 @@ ______________________________________________________________________
 # High-traffic configuration
 settings = FlextLdapSettings(
     pool_size=20,  # Adjust based on concurrent users
-    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,  # Fast connection timeout
+    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,  # Fast ...
     receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,  # Operation timeout
     max_retries=2,  # Retry failed operations
-)```
+)
+```
+
 ### Search Optimization
 
 ```python
@@ -369,12 +394,13 @@ search_request = FlextLdapEntities.SearchRequest(
     attributes=["uid", "cn"],  # Request only needed attributes
     size_limit=100,  # Limit result size
     time_limit=10,  # Set search timeout
-)```
-______________________________________________________________________
+)
+```
+
+---
 
 For more configuration examples, see the examples/ directory.
 
-______________________________________________________________________
+---
 
 **Next:** Development Guide →
-````

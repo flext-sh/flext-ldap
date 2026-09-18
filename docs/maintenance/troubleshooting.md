@@ -238,12 +238,14 @@ audit:
 
 **Solutions:**
 
-````python
+```python
 # Process files individually
 for file_path in file_list:
     result = auditor.audit_file(file_path)
     # Process result immediately
-    del result```
+    del result
+```
+
 ### Link Validation Problems
 
 #### False Positives
@@ -257,7 +259,9 @@ for file_path in file_list:
 python maintenance/validate_links.py --debug-link "https://example.com"
 
 # Check network connectivity
-curl -I https://example.com```
+curl -I https://example.com
+```
+
 **Solutions:**
 
 - Add domains to skip list in settings
@@ -275,7 +279,9 @@ curl -I https://example.com```
 validation:
   timeout: 15
   retries: 2
-  max_workers: 2```
+  max_workers: 2
+```
+
 #### SSL Certificate Issues
 
 **Symptom:** SSL verification errors
@@ -289,7 +295,7 @@ export REQUESTS_CA_BUNDLE=/path/to/ca-bundle.crt
 # Or add to skip domains
 skip_domains:
   - "self-signed-domain.com"
-````
+```
 
 ### Style Validation Errors
 
@@ -323,7 +329,9 @@ from __future__ import annotations
 
 
 def example():
-    pass```
+    pass
+````
+
 ````
 
 ### Content Optimization Issues
@@ -343,18 +351,20 @@ cp docs/maintenance/backups/example.md.backup docs/example.md
 
 # Or rollback
 python maintenance/sync.py --rollback docs/example.md
-```
+````
 
 #### Over-Aggressive Fixes
 
 **Solutions:**
 
-````yaml
+```yaml
 # settings.yaml - Be more conservative
 optimization:
   auto_fix: false # Manual review required
   fix_common_typos: true
-  enhance_code_blocks: false # Skip complex changes```
+  enhance_code_blocks: false # Skip complex changes
+```
+
 ### Reporting System Problems
 
 #### Missing Charts/Data
@@ -368,7 +378,9 @@ optimization:
 python -c "import matplotlib, seaborn; u.Cli.print('✅ Chart libraries available')"
 
 # Check data availability
-ls -la docs/maintenance/reports/```
+ls -la docs/maintenance/reports/
+```
+
 **Solutions:**
 
 - Install visualization dependencies
@@ -390,7 +402,7 @@ python maintenance/sync.py --status
 # Manual git check
 git status
 git remote -v
-````
+```
 
 **Solutions:**
 
@@ -407,16 +419,20 @@ git remote -v
 
 **Solutions:**
 
-````python
+```python
 # Process files in batches
 batch_size = 10
 for i in range(0, len(file_list), batch_size):
     batch = file_list[i : i + batch_size]
-    # Process batch```
+    # Process batch
+```
+
 ```yaml
 # settings.yaml - Limit concurrent operations
 validation:
-  max_workers: 2```
+  max_workers: 2
+```
+
 ### Slow Execution
 
 **Symptom:** Operations take too long to complete
@@ -442,7 +458,9 @@ find docs/maintenance/backups/ -type f -mtime +30 -delete
 gzip docs/maintenance/reports/*.json
 
 # Limit log file size
-logrotate -f /etc/logrotate.d/docs-maintenance```
+logrotate -f /etc/logrotate.d/docs-maintenance
+```
+
 ## Configuration Problems
 
 ### Invalid Configuration Values
@@ -476,7 +494,9 @@ if v.validate(settings):
     print('✅ Configuration is valid')
 else:
     print('❌ Configuration errors:', v.errors)
-"```
+"
+```
+
 ### Environment-Specific Settings
 
 **Symptom:** Configuration works in development but fails in production
@@ -492,7 +512,9 @@ else:
 extends: settings.yaml
 sync:
   auto_commit: true
-  push_after_commit: true```
+  push_after_commit: true
+```
+
 ## Integration Issues
 
 ### CI/CD Pipeline Failures
@@ -505,7 +527,10 @@ sync:
 # Test in isolated environment
 docker run --rm -v $(pwd):/workspace \
   python:3.9-slim \
-  bash -c "cd /workspace && pip install -r docs/maintenance/requirements.txt && python docs/maintenance/audit.py --quick"```
+  bash -c "cd /workspace && pip install -r docs/maintenance/requirements.txt && python \
+      docs/maintenance/audit.py --quick"
+```
+
 **Solutions:**
 
 - Use specific Python versions in pipelines
@@ -553,7 +578,7 @@ cp docs/maintenance/settings.yaml.backup docs/maintenance/settings.yaml
 
 # Reinitialize
 python docs/maintenance/audit.py --rebuild-db
-````
+```
 
 ### Component-Specific Recovery
 
@@ -612,13 +637,15 @@ python docs/maintenance/report.py --generate-dashboard --weekly-summary
 
 ### Enable Debug Logging
 
-````python
+```python
 # Add to scripts
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Or set environment variable
-export DOCS_MAINTENANCE_DEBUG=1```
+export DOCS_MAINTENANCE_DEBUG=1
+```
+
 ### Performance Profiling
 
 ```python
@@ -630,16 +657,21 @@ python -c "
 import pstats
 p = pstats.Stats('audit_profile.txt')
 p.sort_stats('cumulative').print_stats(20)
-"```
+"
+```
+
 ### Memory Monitoring
 
 ```python
 # Monitor memory usage
-import psutil
 import os
 
+import psutil
+
 process = psutil.Process(os.getpid())
-print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")```
+print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")
+
+
 ### Network Debugging
 
 ```bash
@@ -650,7 +682,9 @@ curl -v https://example.com
 nslookup example.com
 
 # Test with different user agents
-curl -H "User-Agent: Mozilla/5.0" https://example.com```
+curl -H "User-Agent: Mozilla/5.0" https://example.com
+```
+
 ### File System Debugging
 
 ```python
@@ -660,7 +694,9 @@ import pathlib
 
 print(f"Current directory: {os.getcwd()}")
 print(f"Docs directory exists: {pathlib.Path('docs').exists()}")
-print(f"Docs directory contents: {os.listdir('docs')}")```
+print(f"Docs directory contents: {os.listdir('docs')}")
+```
+
 ## Advanced Troubleshooting
 
 ### Custom Diagnostic Scripts
@@ -687,7 +723,9 @@ def diagnose_performance_issues():
     # Monitor resource usage
     # Identify slow components
     # Suggest optimizations
-    pass```
+    pass
+```
+
 ### Automated Health Checks
 
 ```bash
@@ -698,15 +736,18 @@ echo "=== Documentation Maintenance System Health Check ==="
 
 # Check dependencies
 echo "Checking dependencies..."
-python -c "import yaml, requests, bs4; u.Cli.print('✅ Dependencies OK')" 2>/dev/null || echo "❌ Dependencies missing"
+python -c "import yaml, requests, bs4; u.Cli.print('✅ Dependencies OK')" 2>/dev/null \
+    || echo "❌ Dependencies missing"
 
 # Check configuration
 echo "Checking configuration..."
-python -c "import yaml; yaml.safe_load(open('docs/maintenance/settings.yaml')); u.Cli.print('✅ Config OK')" 2>/dev/null || echo "❌ Config invalid"
+python -c "import yaml; yaml.safe_load(open('docs/maintenance/settings.yaml')); \
+    u.Cli.print('✅ Config OK')" 2>/dev/null || echo "❌ Config invalid"
 
 # Check file permissions
 echo "Checking permissions..."
-[ -r docs/maintenance/settings.yaml ] && echo "✅ Config readable" || echo "❌ Config not readable"
+[ -r docs/maintenance/settings.yaml ] && echo "✅ Config readable" || echo "❌ Config \
+    not readable"
 [ -w docs/ ] && echo "✅ Docs writable" || echo "❌ Docs not writable"
 
 # Check disk space
@@ -716,8 +757,10 @@ df -h docs/ | tail -1
 echo "Health check complete."
 EOF
 
-chmod +x docs/maintenance/health_check.sh```
-______________________________________________________________________
+chmod +x docs/maintenance/health_check.sh
+```
+
+---
 
 **Documentation Maintenance System Troubleshooting Guide**
 
@@ -743,4 +786,3 @@ ______________________________________________________________________
 - Comprehensive testing before deployments
 - Backup strategies and recovery procedures
 - Documentation of troubleshooting procedures
-````

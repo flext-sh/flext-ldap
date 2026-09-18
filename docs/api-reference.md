@@ -148,11 +148,13 @@ Default LDAP API instance (FlextLdapClients).
 
 **Example:**
 
-````python
+```python
 from flext_ldap.api import ldap
 
-api = ldap```
-______________________________________________________________________
+api = ldap
+```
+
+---
 
 ## 🏗️ FlextLdapClients
 
@@ -180,7 +182,9 @@ search_request = FlextLdapEntities.SearchRequest(
 
 result = api.search_entries(search_request)
 if result.success:
-    entries = result.unwrap()```
+    entries = result.unwrap()
+```
+
 ### `authenticate_user(username: str, password: str) -> p.Result[FlextLdapUser]`
 
 Authenticate user credentials against LDAP directory.
@@ -198,7 +202,9 @@ Authenticate user credentials against LDAP directory.
 result = api.authenticate_user("john.doe", "password123")
 if result.success:
     user = result.unwrap()
-    print(f"Authenticated: {user.cn}")```
+    print(f"Authenticated: {user.cn}")
+```
+
 ### `create_user(request: CreateUserRequest) -> p.Result[FlextLdapUser]`
 
 Create a new user in LDAP directory.
@@ -220,7 +226,9 @@ user_request = FlextLdapEntities.CreateUserRequest(
     mail="jane.doe@example.com",
 )
 
-result = api.create_user(user_request)```
+result = api.create_user(user_request)
+```
+
 ### `test_connection() -> p.Result[str]`
 
 Test LDAP server connectivity.
@@ -232,8 +240,10 @@ Test LDAP server connectivity.
 ```python
 result = api.test_connection()
 if result.success:
-    print("Connection successful")```
-______________________________________________________________________
+    print("Connection successful")
+```
+
+---
 
 ## 📊 Domain Entities
 
@@ -302,7 +312,7 @@ LDAP group entity.
 - `add_member(member_dn: str) -> None`: Add group member
 - `remove_member(member_dn: str) -> None`: Remove group member
 
-______________________________________________________________________
+---
 
 ## 🎯 Value Objects
 
@@ -328,7 +338,9 @@ RFC 4514 compliant distinguished name.
 ```python
 dn = FlextLdapModels.Values.DN("cn=user,ou=people,dc=example,dc=com")
 print(dn.rdn)  # "cn=user"
-print(dn.parent_dn)  # "ou=people,dc=example,dc=com"```
+print(dn.parent_dn)  # "ou=people,dc=example,dc=com"
+```
+
 #### LdapFilter
 
 LDAP search filter with validation.
@@ -352,7 +364,9 @@ user_filter = FlextLdapModels.Values.LdapFilter.equals("uid", "john.doe")
 person_filter = FlextLdapModels.Values.LdapFilter.object_class("person")
 
 # Combine filters
-combined = FlextLdapModels.Values.LdapFilter.and_filters(user_filter, person_filter)```
+combined = FlextLdapModels.Values.LdapFilter.and_filters(user_filter, person_filter)
+```
+
 #### LdapScope
 
 Search scope enumeration.
@@ -363,7 +377,7 @@ Search scope enumeration.
 - `ONELEVEL`: Search immediate children
 - `SUBTREE`: Search entire subtree
 
-______________________________________________________________________
+---
 
 ## ⚙️ Configuration
 
@@ -396,8 +410,10 @@ settings = FlextLdapSettings(
     base_dn="dc=example,dc=com"
 )
 
-set_flext_ldap.settings(settings)```
-______________________________________________________________________
+set_flext_ldap.settings(settings)
+```
+
+---
 
 ## 🔧 Utilities
 
@@ -415,7 +431,9 @@ Check if string is a valid distinguished name.
 from flext_ldap import FlextLdapTypeGuards
 
 if FlextLdapTypeGuards.is_valid_dn("cn=user,dc=example,dc=com"):
-    print("Valid DN")```
+    print("Valid DN")
+```
+
 #### `is_ldap_entry(obj) -> bool`
 
 Check if t.JsonValue is a valid LDAP entry.
@@ -432,7 +450,7 @@ LDAP protocol constants.
 - `SCOPE_ONELEVEL`: One-level search scope
 - `SCOPE_SUBTREE`: Subtree search scope
 
-______________________________________________________________________
+---
 
 ## 🚨 Exceptions
 
@@ -479,8 +497,10 @@ try:
         # Handle r error
         print(f"Search failed: {result.error}")
 except e.ConnectionError as e:
-    print(f"Connection error: {e.message}")```
-______________________________________________________________________
+    print(f"Connection error: {e.message}")
+```
+
+---
 
 ## 🔄 r Usage
 
@@ -499,7 +519,9 @@ if result.success:
 try:
     data = result.unwrap()
 except rError:
-    print("Operation failed")```
+    print("Operation failed")
+```
+
 ### Error Handling
 
 ```python
@@ -507,7 +529,9 @@ result = api.authenticate_user(username, password)
 
 if result.failure:
     error_message = result.error
-    print(f"Authentication failed: {error_message}")```
+    print(f"Authentication failed: {error_message}")
+```
+
 ### Chaining Operations
 
 ```python
@@ -517,8 +541,10 @@ if search_result.success:
     # Process entries...
 else:
     # Handle search failure
-    return r.fail(f"Search failed: {search_result.error}")```
-______________________________________________________________________
+    return r.fail(f"Search failed: {search_result.error}")
+```
+
+---
 
 ## 🔄 Universal LDAP Interface
 
@@ -528,7 +554,10 @@ Bidirectional converter between ldap3 entries and ldif entries.
 
 **Import:**
 
-```python```
+```python
+
+```
+
 #### `ldap3_to_ldif_entry(ldap3_entry) -> p.Result[FlextLdifModels.Entry]`
 
 Convert ldap3.Entry to ldif entry.
@@ -554,7 +583,9 @@ for ldap3_entry in connection.entries:
     result = adapter.ldap3_to_ldif_entry(ldap3_entry)
     if result.success:
         ldif_entry = result.unwrap()
-        print(f"DN: {ldif_entry.dn}")```
+        print(f"DN: {ldif_entry.dn}")
+```
+
 #### `ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`
 
 Batch convert multiple ldap3 entries to ldif entries.
@@ -578,8 +609,8 @@ Convert ldif entry to ldap3 attributes dictionary.
 **Example:**
 
 ```python
-from flext_ldif import FlextLdifModels
 from flext_ldap import FlextLdapEntryAdapter
+from flext_ldif import FlextLdifModels
 
 adapter = FlextLdapEntryAdapter()
 
@@ -599,7 +630,9 @@ ldif_entry = FlextLdifModels.Entry(
 result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 if result.success:
     attributes = result.unwrap()
-    connection.add(str(ldif_entry.dn), attributes=attributes)```
+    connection.add(str(ldif_entry.dn), attributes=attributes)
+
+
 #### `convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]`
 
 Load and convert LDIF file to ldif entries.
@@ -621,7 +654,7 @@ Write ldif entries to LDIF file.
 
 **Returns:** r indicating success
 
-______________________________________________________________________
+---
 
 ### FlextLdapServersAdapter
 
@@ -629,7 +662,10 @@ Server detection and servers system integration using ldif.
 
 **Import:**
 
-```python```
+```python
+
+```
+
 #### `detect_server_type_from_entries(entries) -> p.Result[str]`
 
 Detect LDAP server type from entry analysis.
@@ -652,8 +688,12 @@ Detect LDAP server type from entry analysis.
 **Example:**
 
 ```python
-from flext_ldap import FlextLdapServersAdapter
-from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
+from flext_ldap import (
+    FlextLdapServersAdapter,
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+    OracleOUDOperations,
+)
 
 servers = FlextLdapServersAdapter()
 
@@ -670,7 +710,9 @@ if result.success:
     elif server_type == "oid":
         ops = OracleOIDOperations()
     elif server_type == "oud":
-        ops = OracleOUDOperations()```
+        ops = OracleOUDOperations()
+
+
 #### `get_acl_attribute_name(server_type=None) -> p.Result[str]`
 
 Get server-specific ACL attribute name.
@@ -713,7 +755,7 @@ Get server-specific maximum page size for paged searches.
 
 Normalize entry for server-specific requirements.
 
-______________________________________________________________________
+---
 
 ## 🏗️ Server Operations
 
@@ -723,7 +765,10 @@ Abstract base class defining complete server operations interface.
 
 **Import:**
 
-```python```
+```python
+
+```
+
 **Server Implementations:**
 
 - `OpenLDAP2Operations` - OpenLDAP 2.x (cn=settings, olcAccess ACLs)
@@ -772,8 +817,8 @@ Discover schema from server.
 **Example:**
 
 ```python
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
 
@@ -788,7 +833,9 @@ schema_result = ops.discover_schema(connection)
 if schema_result.success:
     schema = schema_result.unwrap()
     print(f"Object classes: {len(schema['object_classes'])}")
-    print(f"Attribute types: {len(schema['attribute_types'])}")```
+    print(f"Attribute types: {len(schema['attribute_types'])}")
+
+
 ##### `parse_object_class(object_class_def) -> p.Result[m.Dict]`
 
 Parse objectClass definition string.
@@ -824,7 +871,9 @@ result = ops.get_acls(connection, dn="olcDatabase={1}mdb,cn=settings")
 if result.success:
     acls = result.unwrap()
     for acl in acls:
-        print(f"ACL: {acl.get('raw')}")```
+        print(f"ACL: {acl.get('raw')}")
+```
+
 ##### `set_acls(connection, dn, acls) -> p.Result[bool]`
 
 Set ACLs on entry.
@@ -837,7 +886,9 @@ new_acls = [
     {"raw": "{1}to * by self write by anonymous auth"},
 ]
 
-result = ops.set_acls(connection, dn, acls=new_acls)```
+result = ops.set_acls(connection, dn, acls=new_acls)
+```
+
 ##### `parse(acl_string) -> p.Result[m.Dict]`
 
 Parse server-specific ACL string to dictionary.
@@ -855,8 +906,8 @@ Add ldif entry to directory.
 **Example:**
 
 ```python
-from flext_ldif import FlextLdifModels
 from flext_ldap import OpenLDAP2Operations
+from flext_ldif import FlextLdifModels
 
 ops = OpenLDAP2Operations()
 
@@ -874,7 +925,9 @@ entry = FlextLdifModels.Entry(
 
 result = ops.add_entry(connection, entry)
 if result.success:
-    print("Entry added successfully")```
+    print("Entry added successfully")
+
+
 ##### `modify_entry(connection, dn, modifications) -> p.Result[bool]`
 
 Modify entry attributes.
@@ -886,7 +939,9 @@ modifications = {"mail": ["newemail@example.com"], "telephoneNumber": ["+1-555-0
 
 result = ops.modify_entry(
     connection, dn="cn=test,dc=example,dc=com", modifications=modifications
-)```
+)
+```
+
 ##### `delete_entry(connection, dn) -> p.Result[bool]`
 
 Delete entry from directory.
@@ -932,8 +987,10 @@ if result.success:
     entries = result.unwrap()
     print(f"Found {len(entries)} entries")
     for entry in entries:
-        print(f"DN: {entry.dn}")```
-______________________________________________________________________
+        print(f"DN: {entry.dn}")
+```
+
+---
 
 ### Server-Specific Implementations
 
@@ -943,7 +1000,10 @@ Complete implementation for OpenLDAP 2.x (cn=settings style).
 
 **Import:**
 
-```python```
+```python
+
+```
+
 **Features:**
 
 - olcAccess ACL format
@@ -955,8 +1015,8 @@ Complete implementation for OpenLDAP 2.x (cn=settings style).
 **Example:**
 
 ```python
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+from flext_ldap import OpenLDAP2Operations
 
 ops = OpenLDAP2Operations()
 
@@ -971,14 +1031,19 @@ connection = ldap3.Connection(
 schema = ops.discover_schema(connection)
 
 # ACL management
-acls = ops.get_acls(connection, "olcDatabase={1}mdb,cn=settings")```
+acls = ops.get_acls(connection, "olcDatabase={1}mdb,cn=settings")
+
+
 #### OracleOIDOperations
 
 Complete implementation for Oracle Internet Directory.
 
 **Import:**
 
-```python```
+```python
+
+```
+
 **Features:**
 
 - orclaci ACL format
@@ -993,7 +1058,10 @@ Complete implementation for Oracle Unified Directory.
 
 **Import:**
 
-```python```
+```python
+
+```
+
 **Features:**
 
 - ds-privilege-name ACL format
@@ -1009,7 +1077,8 @@ RFC-compliant fallback for unknown servers.
 **Import:**
 
 ```python
-````
+
+```
 
 **Features:**
 
@@ -1025,7 +1094,7 @@ RFC-compliant fallback for unknown servers.
 All public APIs include comprehensive type annotations for IDE support and static
 analysis:
 
-````python
+```python
 from __future__ import annotations
 
 
@@ -1037,12 +1106,16 @@ def search_entries(
 
 # Server operations with ldif integration
 def add_entry(self, connection, entry: FlextLdifModels.Entry) -> p.Result[bool]:
-    """Add entry with type safety."""```
+    """Add entry with type safety."""
+```
+
 Use mypy or similar tools for static type checking:
 
 ```bash
-mypy --strict your_code.py```
-______________________________________________________________________
+mypy --strict your_code.py
+```
+
+---
 
 ## 🔗 Complete Usage Example
 
@@ -1050,9 +1123,13 @@ ______________________________________________________________________
 from __future__ import annotations
 
 import ldap3
-from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapServersAdapter
-from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
+from flext_ldap import (
+    FlextLdapEntryAdapter,
+    FlextLdapServersAdapter,
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+    OracleOUDOperations,
+)
 
 
 def universal_ldap_example():
@@ -1119,8 +1196,10 @@ def universal_ldap_example():
             print(f"Paged search: {len(paged_entries)} entries")
 
 
-run(universal_ldap_example())```
-______________________________________________________________________
+run(universal_ldap_example())
+
+
+---
 
 For more examples and advanced usage patterns, see:
 
@@ -1140,16 +1219,18 @@ For more examples and advanced usage patterns, see:
 
 **Across Projects**:
 
-- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/api-reference/foundation.md) - Core APIs and patterns
-- [flext-ldif Processing](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldif/docs/api-reference.md) - LDIF processing API
-- [flext-meltano Pipelines](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-meltano/AGENTS.md) - Data integration and ELT orchestration
+- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/api-reference/foundation.md) -
+  Core APIs and patterns
+- [flext-ldif Processing](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldif/docs/api-reference.md) -
+  LDIF processing API
+- [flext-meltano Pipelines](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-meltano/AGENTS.md) -
+  Data integration and ELT orchestration
 
 **External Resources**:
 
 - [RFC 4511 - LDAP: The Protocol](https://www.rfc-editor.org/rfc/rfc4511.html)
 - [RFC 4512 - LDAP: Technical Specification Road Map](https://www.rfc-editor.org/rfc/rfc4512.html)
 
-______________________________________________________________________
+---
 
 **Next:** Configuration Guide →
-````

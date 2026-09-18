@@ -74,11 +74,11 @@ abstraction layer for all enterprise directory service needs.
 
 title System Context diagram for FLEXT-LDAP
 
-Person(REDACTED_LDAP_BIND_PASSWORD, "System Administrator", "Manages LDAP directories and user access")
+Person(REDACTED_LDAP_BIND_PASSWORD, "System Administrator", "Manages LDAP directorie ...
 Person(developer, "Application Developer", "Builds applications requiring LDAP integration")
 Person(operator, "DevOps Engineer", "Deploys and monitors LDAP-integrated systems")
 
-System(flext_ldap, "FLEXT-LDAP", "Universal LDAP operations library with server-specific implementations")
+System(flext_ldap, "FLEXT-LDAP", "Universal LDAP operations library with server-spec ...
 
 System_Ext(flext_core, "FLEXT-Core", "Foundation library providing r, DI, and domain patterns")
 System_Ext(flext_ldif, "FLEXT-LDIF", "LDIF processing and LDAP entry model management")
@@ -94,7 +94,7 @@ System_Ext(flext_auth, "FLEXT-Auth", "Authentication service using flext-ldap")
 System_Ext(flext_migration, "FLEXT OUD Migration", "Oracle directory migration tool")
 System_Ext(flext_meltano, "FLEXT-Meltano", "Data integration platform with LDAP taps/targets")
 
-Rel(REDACTED_LDAP_BIND_PASSWORD, flext_ldap, "Manages LDAP operations", "LDAP REDACTED_LDAP_BIND_PASSWORD tools")
+Rel(REDACTED_LDAP_BIND_PASSWORD, flext_ldap, "Manages LDAP operations", "LDAP REDACT ...
 Rel(developer, flext_ldap, "Integrates LDAP functionality", "Python API")
 Rel(operator, flext_ldap, "Monitors LDAP operations", "Observability")
 

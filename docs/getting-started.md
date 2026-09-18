@@ -170,7 +170,7 @@ export FLEXT_LDAP_POOL_SIZE=5
 
 Create `flext_ldap.settings.py`:
 
-````python
+```python
 from Flext_ldap import FlextLdapSettings
 
 settings = FlextLdapSettings(
@@ -182,8 +182,10 @@ settings = FlextLdapSettings(
     bind_password="your-password",
     timeout=30,
     pool_size=5,
-)```
-______________________________________________________________________
+)
+```
+
+---
 
 ## First Steps
 
@@ -206,7 +208,9 @@ def test_connection():
         print(f"❌ Connection failed: {result.error}")
 
 
-run(test_connection())```
+run(test_connection())
+```
+
 ### **Simple Directory Search**
 
 ```python
@@ -237,7 +241,9 @@ def basic_search():
         print(f"Search failed: {result.error}")
 
 
-run(basic_search())```
+run(basic_search())
+```
+
 ### **User Authentication**
 
 ```python
@@ -261,8 +267,10 @@ def authenticate_user():
         print(f"❌ Authentication failed: {result.error}")
 
 
-run(authenticate_user())```
-______________________________________________________________________
+run(authenticate_user())
+```
+
+---
 
 ## Universal LDAP Interface
 
@@ -274,9 +282,12 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 from __future__ import annotations
 
 import ldap3
-from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapServersAdapter
-from flext_ldap import OpenLDAP2Operations, OracleOIDOperations
+from flext_ldap import (
+    FlextLdapEntryAdapter,
+    FlextLdapServersAdapter,
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+)
 
 
 def server_specific_operations():
@@ -326,7 +337,9 @@ def server_specific_operations():
             print(f"Object classes: {len(schema['object_classes'])}")
 
 
-run(server_specific_operations())```
+run(server_specific_operations())
+
+
 ### **Entry Conversion (ldap3 ↔ ldif)**
 
 Convert between ldap3 and ldif entry formats:
@@ -356,7 +369,9 @@ ldif_entry = FlextLdifModels.Entry(
 attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 if attrs_result.success:
     attributes = attrs_result.unwrap()
-    connection.add(str(ldif_entry.dn), attributes=attributes)```
+    connection.add(str(ldif_entry.dn), attributes=attributes)
+```
+
 ### **Schema Discovery**
 
 Discover schema from different LDAP server types:
@@ -364,8 +379,8 @@ Discover schema from different LDAP server types:
 ```python
 from __future__ import annotations
 
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+from flext_ldap import OpenLDAP2Operations
 
 
 def discover_schema():
@@ -389,7 +404,9 @@ def discover_schema():
         print(f"Server Type: {schema['server_type']}")
 
 
-run(discover_schema())```
+run(discover_schema())
+
+
 ### **ACL Management**
 
 Manage server-specific ACLs:
@@ -423,7 +440,7 @@ def manage_acls():
         # Set new ACLs
         new_acls = [
             {
-                "raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'
+                "raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc= ...
             },
             {"raw": "{1}to * by self write by anonymous auth"},
         ]
@@ -433,7 +450,9 @@ def manage_acls():
             print("ACLs updated successfully")
 
 
-run(manage_acls())```
+run(manage_acls())
+```
+
 ### **Paged Search**
 
 Execute paged searches with automatic pagination:
@@ -441,8 +460,8 @@ Execute paged searches with automatic pagination:
 ```python
 from __future__ import annotations
 
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+from flext_ldap import OpenLDAP2Operations
 
 
 def paged_search():
@@ -471,8 +490,10 @@ def paged_search():
             print(f"  DN: {entry.dn}")
 
 
-run(paged_search())```
-______________________________________________________________________
+run(paged_search())
+
+
+---
 
 ## Development Environment
 
@@ -488,7 +509,9 @@ make ldap-test-server
 docker ps | grep flext-ldap-test-server
 
 # Stop test server
-make ldap-test-server-stop```
+make ldap-test-server-stop
+```
+
 ### **Run Tests**
 
 ```bash
@@ -501,7 +524,9 @@ pytest tests/integration/   # Integration tests (requires LDAP server)
 pytest tests/e2e/          # End-to-end tests
 
 # Run with coverage
-pytest --cov=src/flext_ldap```
+pytest --cov=src/flext_ldap
+```
+
 ### **Development Workflow**
 
 ```bash
@@ -511,7 +536,7 @@ make lint       # Check code style
 make type-check # Verify type annotations
 make test       # Run tests
 make val   # Complete quality pipeline
-````
+```
 
 ---
 
