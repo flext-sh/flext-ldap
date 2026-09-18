@@ -398,6 +398,7 @@ for acl in oracle_acls:
 write_openldap_acls(converted_acls)
 
 
+```
 ## Best Practices
 
 1. **Always validate ACL syntax** before applying to production directory

@@ -1199,6 +1199,7 @@ def universal_ldap_example():
 run(universal_ldap_example())
 
 
+```
 ---
 
 For more examples and advanced usage patterns, see:

@@ -806,6 +806,7 @@ def run_profiling():
 run_profiling()
 
 
+```
 ---
 
 ## Getting Help
@@ -882,6 +883,7 @@ def collect_diagnostic_info():
 collect_diagnostic_info()
 
 
+```
 ---
 
 For additional support and community resources:
