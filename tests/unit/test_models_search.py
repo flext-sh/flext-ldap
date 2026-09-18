@@ -255,7 +255,8 @@ class TestsFlextLdapModelsSearch:
     ) -> None:
         """Verify extract objectclass category maps expected."""
         attrs: dict[str, list[str] | str]
-        match case:
+        case_obj: object = case
+        match case_obj:
             case c.Ldap.Tests.SearchCategoryCase.EMPTY:
                 attrs = {}
             case c.Ldap.Tests.SearchCategoryCase.PERSON:
@@ -263,6 +264,9 @@ class TestsFlextLdapModelsSearch:
                     key: list(value)
                     for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
                 }
+            case _:
+                msg = f"Unsupported search category case: {case}"
+                raise ValueError(msg)
         category = u.Ldap.extract_objectclass_category(attrs)
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 

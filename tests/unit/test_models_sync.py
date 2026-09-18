@@ -264,7 +264,7 @@ class TestsFlextLdapModelsSync:
 
     def test_operation_result_factory_builds_from_operation(self) -> None:
         """Verify operation result factory builds from operation."""
-        result = m.Ldap.LdapOperationResult(c.Ldap.UpsertOperation.ADDED)
+        result = m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.ADDED)
         u.Ldap.Tests.that(result, is_=m.Ldap.LdapOperationResult)
         u.Ldap.Tests.that(result.operation, eq=c.Ldap.UpsertOperation.ADDED)
 

@@ -64,7 +64,11 @@ class TestsFlextLdapDetection:
         def __init__(
             self,
             *,
-            entries: t.SequenceOf[p.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue],
+            entries: t.SequenceOf[
+                p.Ldap.RootDseEntry
+                | t.Ldap.Ldap3EntryValue
+                | TestsFlextLdapDetection._RootDseEntryDouble
+            ],
             searchable: bool = True,
             search_succeeds: bool = True,
         ) -> None:

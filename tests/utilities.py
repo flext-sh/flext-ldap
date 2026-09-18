@@ -30,15 +30,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
 
             @staticmethod
-            def that(
-                value: t.Tests.Testobject, **kwargs: t.Tests.MatcherKwargValue
-            ) -> None:
+            def that(value: t.Tests.Testobject, **kwargs: object) -> None:
                 """Provide that."""
                 tm.that(value, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherKwargValue
+                result: p.Result[TResult], **kwargs: object
             ) -> str:
                 """Provide fail."""
                 failure_message: str = tm.fail(result, **kwargs)
@@ -53,13 +51,27 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             @overload
             def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherKwargValue
-            ) -> TResult | t.Tests.TestobjectSerializable: ...
+                result: p.Result[TResult], **kwargs: object
+            ) -> (
+                TResult
+                | t.Tests.PayloadAtom
+                | p.Model
+                | p.Tests.NativeSequence
+                | p.Tests.NativeMapping
+                | None
+            ): ...
 
             @staticmethod
             def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherKwargValue
-            ) -> TResult | t.Tests.TestobjectSerializable:
+                result: p.Result[TResult], **kwargs: object
+            ) -> (
+                TResult
+                | t.Tests.PayloadAtom
+                | p.Model
+                | p.Tests.NativeSequence
+                | p.Tests.NativeMapping
+                | None
+            ):
                 """Provide ok."""
                 return tm.ok(result, **kwargs)
 

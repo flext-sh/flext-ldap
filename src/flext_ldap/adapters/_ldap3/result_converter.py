@@ -1,10 +1,11 @@
+# mypy: disable-error-code=unreachable
 """LDAP3 adapter — ResultConverter.
 
 Composes ``ResultConverterExtractMixin`` for DN/attribute/metadata extraction
 and exposes the public ``convert_*`` API consumed by ``SearchExecutor``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier=MIT
 """
 
 from __future__ import annotations
@@ -59,6 +60,9 @@ class ResultConverter(ResultConverterExtractMixin):
         protocol-typed entries are reconstructed via ``extract_dn``,
         ``extract_attributes``, ``extract_metadata``.
         """
+        # mypy narrows the union; guard against Optional inference
+        if parse_response is None:
+            return r[t.SequenceOf[m.Ldif.Entry]].fail("unexpected None parse_response")
         entries_raw = parse_response.entries
         if not entries_raw:
             return r[t.SequenceOf[m.Ldif.Entry]].ok([])

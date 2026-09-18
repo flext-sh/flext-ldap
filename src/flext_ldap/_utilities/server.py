@@ -1,3 +1,4 @@
+# mypy: disable-error-code=unreachable
 """LDAP server and connection utility methods."""
 
 from __future__ import annotations

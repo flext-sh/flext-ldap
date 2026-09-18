@@ -123,7 +123,9 @@ class FlextLdapUpsertHandler:
                 retry_result = self._ops.add(entry)
                 if retry_result.success:
                     result = r[m.Ldap.LdapOperationResult].ok(
-                        m.Ldap.LdapOperationResult(c.Ldap.UpsertOperation.ADDED)
+                        m.Ldap.LdapOperationResult(
+                            operation=c.Ldap.UpsertOperation.ADDED
+                        )
                     )
                 else:
                     result = r[m.Ldap.LdapOperationResult].fail(
@@ -141,7 +143,9 @@ class FlextLdapUpsertHandler:
                     changes = changes_result.unwrap_or(empty_changes)
                     if not changes:
                         result = r[m.Ldap.LdapOperationResult].ok(
-                            m.Ldap.LdapOperationResult(c.Ldap.UpsertOperation.SKIPPED)
+                            m.Ldap.LdapOperationResult(
+                                operation=c.Ldap.UpsertOperation.SKIPPED
+                            )
                         )
                     else:
                         modify_result = self._ops.modify(entry_dn, changes)
@@ -151,7 +155,7 @@ class FlextLdapUpsertHandler:
                             ),
                             on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
                                 m.Ldap.LdapOperationResult(
-                                    c.Ldap.UpsertOperation.MODIFIED
+                                    operation=c.Ldap.UpsertOperation.MODIFIED
                                 )
                             ),
                         )
@@ -180,7 +184,11 @@ class FlextLdapUpsertHandler:
         return (
             self._ops
             .add(entry_for_add)
-            .map(lambda _: m.Ldap.LdapOperationResult(c.Ldap.UpsertOperation.ADDED))
+            .map(
+                lambda _: m.Ldap.LdapOperationResult(
+                    operation=c.Ldap.UpsertOperation.ADDED
+                )
+            )
             .lash(
                 lambda e: (
                     self.handle_existing_entry(entry)
@@ -248,7 +256,7 @@ class FlextLdapUpsertHandler:
                 .modify(dn_str, changes)
                 .map(
                     lambda _: m.Ldap.LdapOperationResult(
-                        c.Ldap.UpsertOperation.MODIFIED
+                        operation=c.Ldap.UpsertOperation.MODIFIED
                     )
                 )
                 .lash(

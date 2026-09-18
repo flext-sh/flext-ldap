@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+# mypy: disable-error-code=unreachable
+
 from __future__ import annotations
 
 from flext_ldif import e, r

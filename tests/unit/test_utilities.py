@@ -180,7 +180,8 @@ class TestsFlextLdapUtilitiesUnit:
     ) -> None:
         """Verify attr to str list scenarios."""
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
-        match case:
+        case_obj: object = case
+        match case_obj:
             case c.Ldap.Tests.AttrToStrListCase.EMPTY:
                 result = u.Ldap.attr_to_str_list({})
             case c.Ldap.Tests.AttrToStrListCase.BYTES:
@@ -194,6 +195,9 @@ class TestsFlextLdapUtilitiesUnit:
                 result = u.Ldap.attr_to_str_list(list_bytes)
             case c.Ldap.Tests.AttrToStrListCase.INT:
                 result = u.Ldap.attr_to_str_list({"num": 42})
+            case _:
+                msg = f"Unsupported attr to str list case: {case}"
+                raise ValueError(msg)
         normalized = {key: tuple(value) for key, value in result.items()}
         u.Ldap.Tests.that(normalized, eq=dict(expected))
 
