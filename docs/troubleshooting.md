@@ -230,7 +230,7 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 
 **Validation:**
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldap import m
@@ -268,7 +268,7 @@ for test_dn in test_dns:
 
 ```yaml
 SearchError: Bad search filter
-```
+````
 
 **Common Filter Mistakes:**
 
@@ -375,7 +375,7 @@ run(diagnose_base_dn())
 
 **Diagnosis:**
 
-```python
+````python
 from __future__ import annotations
 
 import time
@@ -447,7 +447,7 @@ search_request = FlextLdapEntities.SearchRequest(
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com", filter_str="(uid=john.doe)", scope="onelevel"
 )
-```
+````
 
 1. **Optimize search filters:**
 
@@ -534,7 +534,7 @@ class LDAPService:
 
 **Diagnosis:**
 
-```python
+````python
 from __future__ import annotations
 
 import os
@@ -588,7 +588,7 @@ services:
 
   ldap-server:
     image: osixia/openldap:1.5.0
-```
+````
 
 1. **Network connectivity:**
 
@@ -807,6 +807,7 @@ run_profiling()
 
 
 ```
+
 ---
 
 ## Getting Help
@@ -884,6 +885,7 @@ collect_diagnostic_info()
 
 
 ```
+
 ---
 
 For additional support and community resources:

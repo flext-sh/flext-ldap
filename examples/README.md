@@ -749,7 +749,7 @@ python examples/99_comprehensive_oud_validation.py
 
 ### Pattern 1: Basic ldap Usage
 
-```python
+````python
 from flext_ldap import FlextLdapSettings, ldap
 
 # Create and configure
@@ -822,7 +822,7 @@ def process():
 
     entries = result.unwrap()
     return r.ok(entries)
-```
+````
 
 ### Pattern 4: Validation Before Operations
 

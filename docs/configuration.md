@@ -194,7 +194,7 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
 
 ### Environment-Specific Configuration
 
-```python
+````python
 from __future__ import annotations
 
 import os
@@ -237,7 +237,7 @@ FLEXT_LDAP_BASE_DN=dc=example,dc=com
 # Connection settings
 FLEXT_LDAP_TIMEOUT=30
 FLEXT_LDAP_POOL_SIZE=5
-```
+````
 
 ### Docker Compose
 

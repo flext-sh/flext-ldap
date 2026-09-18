@@ -6,7 +6,11 @@ from typing import TYPE_CHECKING
 
 from flext_ldif import r
 
-from flext_ldap import c, m, p, t
+from flext_ldap import c, m, t
+
+if TYPE_CHECKING:
+    # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
+    from flext_ldap import p
 
 from .normalization import FlextLdapUtilitiesNormalization
 

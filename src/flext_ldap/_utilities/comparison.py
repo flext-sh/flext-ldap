@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_ldif import r
 
-from flext_ldap import c, p, t
+from flext_ldap import c, t
+
+if TYPE_CHECKING:
+    # Reverse import: protocols are annotation-only here. A runtime import
+    # re-enters the lazy ``p`` resolution (p -> utilities -> p) and breaks
+    # every import of the api facade.
+    from flext_ldap import p
 
 from .normalization import FlextLdapUtilitiesNormalization
 

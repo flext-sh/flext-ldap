@@ -662,7 +662,7 @@ p.sort_stats('cumulative').print_stats(20)
 
 ### Memory Monitoring
 
-```python
+````python
 # Monitor memory usage
 import os
 
@@ -683,7 +683,7 @@ nslookup example.com
 
 # Test with different user agents
 curl -H "User-Agent: Mozilla/5.0" https://example.com
-```
+````
 
 ### File System Debugging
 

@@ -116,7 +116,7 @@ The ACL system follows Clean Architecture principles with:
 
 ### Basic Usage
 
-```python
+````python
 from flext_ldap import FlextLdapConstants, ldap
 
 # Initialize API
@@ -147,7 +147,7 @@ if conversion_result.success:
     conv = conversion_result.unwrap()
     print(f"Oracle ACL: {conv.converted_acl}")
     # Output: access to attr=(mail) by group="*" (read)
-```
+````
 
 ### Batch Conversion
 
@@ -216,7 +216,7 @@ if batch_result.success:
 
 ### Using the Unified Model
 
-```python
+````python
 from flext_ldap import FlextLdapConstants, FlextLdapModels
 
 # Create ACL components
@@ -263,7 +263,7 @@ if validation_result.success:
     print("ACL syntax is valid")
 else:
     print(f"Invalid ACL: {validation_result.error}")
-```
+````
 
 ## Migration Scenarios
 
@@ -399,6 +399,7 @@ write_openldap_acls(converted_acls)
 
 
 ```
+
 ## Best Practices
 
 1. **Always validate ACL syntax** before applying to production directory

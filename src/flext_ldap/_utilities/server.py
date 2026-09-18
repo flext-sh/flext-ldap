@@ -3,11 +3,15 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import ldap3
 
-from flext_ldap import c, p
+from flext_ldap import c
+
+if TYPE_CHECKING:
+    # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
+    from flext_ldap import p
 
 
 class FlextLdapUtilitiesServer:

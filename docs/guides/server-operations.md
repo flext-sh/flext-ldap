@@ -210,7 +210,7 @@ Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 451
 
 ### **Basic Usage**
 
-```python
+````python
 import ldap3
 from flext_ldap import OpenLDAP2Operations
 
@@ -255,7 +255,7 @@ new_acls = [
 set_result = ops.set_acls(
     connection, dn="olcDatabase={1}mdb,cn=settings", acls=new_acls
 )
-```
+````
 
 ### **Entry Operations**
 
@@ -587,7 +587,7 @@ search_result = ops.search_with_paging(
 
 All server operations integrate with the Entry Adapter for ldap3 ↔ ldif conversion:
 
-```python
+````python
 from flext_ldap import FlextLdapEntryAdapter, OpenLDAP2Operations
 
 adapter = FlextLdapEntryAdapter()
@@ -651,7 +651,7 @@ elif server_type == "oud":
     ops = OracleOUDOperations()
 else:
     ops = GenericServerOperations()
-```
+````
 
 ##
 

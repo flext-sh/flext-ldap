@@ -81,11 +81,11 @@
     - FlextLdapEntryAdapter
       - [`ldap3_to_ldif_entry(ldap3_entry) -> p.Result[FlextLdifModels.Entry]`](#ldap3_to_ldif_entryldap3_entry---flextresultflextldifmodelsentry)
 - Search with ldap3 -
-  [`ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`](#ldap3_entries_to_ldif_entriesldap3_entries---flextresultlistflextldifmodelsentry) -
+  [`ldap3_entries_to_ldif_entries`](#ldap3_entries_to_ldif_entries) -
   [`ldif_entry_to_ldap3_attributes(ldif_entry) -> p.Result[Mapping[str, t.List]]`](#ldif_entry_to_ldap3_attributesldif_entry---flextresultdictstr-flexttypeslist)
 - Create ldif entry
 - Convert to ldap3 attributes -
-  [`convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]`](#convert_ldif_file_to_entriesldif_file_path---flextresultlistflextldifmodelsentry) -
+  [`convert_ldif_file_to_entries`](#convert_ldif_file_to_entries) -
   [`write_entries_to_ldif_file(entries, output_path) -> p.Result[bool]`](#write_entries_to_ldif_fileentries-output_path---flextresultbool)
   - FlextLdapServersAdapter
     - [`detect_server_type_from_entries(entries) -> p.Result[str]`](#detect_server_type_from_entriesentries---flextresultstr)
@@ -121,7 +121,7 @@
 - [`normalize_entry(entry) -> p.Result[FlextLdifModels.Entry]`](#normalize_entryentry---flextresultflextldifmodelsentry) -
   Search Operations - `get_max_page_size() -> int` -
   `supports_paged_results() -> bool` - `supports_vlv() -> bool`
-- [`search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> p.Result[Sequence[FlextLdifModels.Entry]]`](#search_with_pagingconnection-base_dn-search_filter-attributesnone-page_size100---flextresultlistflextldifmodelsentry)
+- [`search_with_paging`](#search_with_paging)
   - Server-Specific Implementations
     - OpenLDAP2Operations
 - Schema discovery
@@ -586,7 +586,11 @@ for ldap3_entry in connection.entries:
         print(f"DN: {ldif_entry.dn}")
 ```
 
-#### `ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]`
+#### `ldap3_entries_to_ldif_entries`
+
+```text
+ldap3_entries_to_ldif_entries(ldap3_entries) -> p.Result[List[FlextLdifModels.Entry]]
+```
 
 Batch convert multiple ldap3 entries to ldif entries.
 
@@ -608,7 +612,7 @@ Convert ldif entry to ldap3 attributes dictionary.
 
 **Example:**
 
-```python
+````python
 from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
 
@@ -633,7 +637,11 @@ if result.success:
     connection.add(str(ldif_entry.dn), attributes=attributes)
 
 
-#### `convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]`
+#### `convert_ldif_file_to_entries`
+
+```text
+convert_ldif_file_to_entries(ldif_file_path) -> p.Result[List[FlextLdifModels.Entry]]
+```
 
 Load and convert LDIF file to ldif entries.
 
@@ -664,7 +672,7 @@ Server detection and servers system integration using ldif.
 
 ```python
 
-```
+````
 
 #### `detect_server_type_from_entries(entries) -> p.Result[str]`
 
@@ -687,7 +695,7 @@ Detect LDAP server type from entry analysis.
 
 **Example:**
 
-```python
+````python
 from flext_ldap import (
     FlextLdapServersAdapter,
     OpenLDAP2Operations,
@@ -767,7 +775,7 @@ Abstract base class defining complete server operations interface.
 
 ```python
 
-```
+````
 
 **Server Implementations:**
 
@@ -816,7 +824,7 @@ Discover schema from server.
 
 **Example:**
 
-```python
+````python
 import ldap3
 from flext_ldap import OpenLDAP2Operations
 
@@ -872,7 +880,7 @@ if result.success:
     acls = result.unwrap()
     for acl in acls:
         print(f"ACL: {acl.get('raw')}")
-```
+````
 
 ##### `set_acls(connection, dn, acls) -> p.Result[bool]`
 
@@ -905,7 +913,7 @@ Add ldif entry to directory.
 
 **Example:**
 
-```python
+````python
 from flext_ldap import OpenLDAP2Operations
 from flext_ldif import FlextLdifModels
 
@@ -940,7 +948,7 @@ modifications = {"mail": ["newemail@example.com"], "telephoneNumber": ["+1-555-0
 result = ops.modify_entry(
     connection, dn="cn=test,dc=example,dc=com", modifications=modifications
 )
-```
+````
 
 ##### `delete_entry(connection, dn) -> p.Result[bool]`
 
@@ -964,7 +972,12 @@ Check if server supports paged results control.
 
 Check if server supports Virtual List View (VLV).
 
-##### `search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100) -> p.Result[Sequence[FlextLdifModels.Entry]]`
+##### `search_with_paging`
+
+```text
+search_with_paging(connection, base_dn, search_filter, attributes=None, page_size=100)
+  -> p.Result[Sequence[FlextLdifModels.Entry]]
+```
 
 Execute paged search with automatic pagination.
 
@@ -1014,7 +1027,7 @@ Complete implementation for OpenLDAP 2.x (cn=settings style).
 
 **Example:**
 
-```python
+````python
 import ldap3
 from flext_ldap import OpenLDAP2Operations
 
@@ -1042,7 +1055,7 @@ Complete implementation for Oracle Internet Directory.
 
 ```python
 
-```
+````
 
 **Features:**
 
@@ -1200,6 +1213,7 @@ run(universal_ldap_example())
 
 
 ```
+
 ---
 
 For more examples and advanced usage patterns, see:
