@@ -804,8 +804,6 @@ def run_profiling():
 
 # Run profiling
 run_profiling()
-
-
 ```
 
 ---
@@ -882,8 +880,6 @@ def collect_diagnostic_info():
 
 
 collect_diagnostic_info()
-
-
 ```
 
 ---

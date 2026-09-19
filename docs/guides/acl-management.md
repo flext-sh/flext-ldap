@@ -396,8 +396,6 @@ for acl in oracle_acls:
 
 # Write to OpenLDAP configuration
 write_openldap_acls(converted_acls)
-
-
 ```
 
 ## Best Practices
