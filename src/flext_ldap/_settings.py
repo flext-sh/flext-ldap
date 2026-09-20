@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_ldif import FlextLdifSettings
-from pydantic_settings import SettingsConfigDict
 
 from flext_ldap import m
 
@@ -25,7 +24,7 @@ from flext_ldap import m
 class FlextLdapSettings(FlextLdifSettings):
     """LDAP runtime settings."""
 
-    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
+    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
         env_prefix="FLEXT_LDAP_", extra="ignore"
     )
 
