@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, ClassVar, Final
 from flext_ldif import c
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
+from ._constants.base import FlextLdapConstantsBase
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
@@ -35,10 +37,14 @@ class FlextLdapConstants(c):
     NOTE: Ldif namespace is inherited from parent - do NOT override.
     """
 
-    class Ldap:
-        """LDAP-related constants."""
+    class Ldap(FlextLdapConstantsBase):
+        """LDAP-related constants.
 
-        NAME: Final[str] = "FLEXT_LDAP"
+        Scalar literal constants are owned by ``FlextLdapConstantsBase`` in
+        ``_constants/base.py`` (ENFORCE-079) and re-exported here via
+        inheritance; ``c.Ldap.NAME`` resolves through the MRO.
+        """
+
         VERSION: Final[str] = "0.10.0"
         VENDOR_STRING_MAX_TOKENS: Final[int] = 2
         DEFAULT_MAX_RETRIES: Final[int] = 5

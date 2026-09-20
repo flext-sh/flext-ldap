@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import ClassVar, TypeVar, overload
+from typing import ClassVar, TypeVar
 
-from flext_tests import FlextTestsUtilities, tk, tm
+from flext_tests import FlextTestsUtilities, r, tk, tm
 
 from flext_ldap import u
 from tests import c, m, p, t
@@ -43,37 +43,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 return failure_message
 
             @staticmethod
-            @overload
             def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], *, _unused: TResult | None = None
-            ) -> TResult: ...
-
-            @staticmethod
-            @overload
-            def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: object
-            ) -> (
-                TResult
-                | t.Tests.PayloadAtom
-                | p.Model
-                | p.Tests.NativeSequence
-                | p.Tests.NativeMapping
-                | None
-            ): ...
-
-            @staticmethod
-            def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: object
-            ) -> (
-                TResult
-                | t.Tests.PayloadAtom
-                | p.Model
-                | p.Tests.NativeSequence
-                | p.Tests.NativeMapping
-                | None
-            ):
+                result: p.Result[TResult],
+            ) -> TResult:
                 """Provide ok."""
-                return tm.ok(result, **kwargs)
+                return tm.ok(result)
 
             @staticmethod
             def check[TResult: t.Tests.TestResultValue](
@@ -202,7 +176,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def _admin_credentials_from_candidate(
                 candidate_dn: str, candidate_password: str
-            ) -> tuple[str, str] | None:
+            ) -> p.Result[tuple[str, str]]:
                 try:
                     server = u.Ldap.create_server_from_url(
                         f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
@@ -216,12 +190,19 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                         receive_timeout=1,
                     )
                     if not connection.bound:
-                        return None
+                        return r[tuple[str, str]].fail(
+                            f"candidate bind failed for {candidate_dn}"
+                        )
                     connection.unbind()
-                except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
-                    return None
+                except (
+                    ConnectionError,
+                    OSError,
+                    ValueError,
+                    t.Ldap.LDAPException,
+                ) as exc:
+                    return r[tuple[str, str]].fail(str(exc), exception=exc)
                 else:
-                    return candidate_dn, candidate_password
+                    return r[tuple[str, str]].ok((candidate_dn, candidate_password))
 
             @classmethod
             def get_admin_credentials(cls) -> tuple[str, str]:
@@ -245,10 +226,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     resolved = cls._admin_credentials_from_candidate(
                         candidate_dn, candidate_password
                     )
-                    if resolved is None:
+                    if resolved.failure:
                         continue
-                    cache[0] = resolved
-                    return resolved
+                    resolved_credentials = resolved.unwrap()
+                    cache[0] = resolved_credentials
+                    return resolved_credentials
                 error_message = (
                     "Failed to resolve a valid LDAP admin credential for test "
                     "LDAP container. Check that the LDAP container is running "
