@@ -17,13 +17,8 @@ if TYPE_CHECKING:
     from ._ldap3.search_executor import SearchExecutor
     from ._ldap3.wrappers import FlextLdapLdap3Wrappers
 __all__: tuple[str, ...] = (
-    "ConnectionManager",
-    "FlextLdapLdap3Wrappers",
-    "OperationExecutor",
-    "ResultConverter",
-    "ResultConverterExtractMixin",
-    "SearchExecutor",
-    "_ldap3",
+    "ConnectionManager", "FlextLdapLdap3Wrappers", "OperationExecutor", "ResultConverter",
+    "ResultConverterExtractMixin", "SearchExecutor", "_ldap3",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

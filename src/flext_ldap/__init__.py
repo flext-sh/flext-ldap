@@ -9,14 +9,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 from .__version__ import (
-    __author__ as __author__,
-    __author_email__ as __author_email__,
-    __description__ as __description__,
-    __license__ as __license__,
-    __title__ as __title__,
-    __url__ as __url__,
-    __version__ as __version__,
-    __version_info__ as __version_info__,
+    __author__ as __author__, __author_email__ as __author_email__, __description__ as __description__, __license__ as __license__,
+    __title__ as __title__, __url__ as __url__, __version__ as __version__, __version_info__ as __version_info__,
 )
 
 if TYPE_CHECKING:
@@ -35,41 +29,15 @@ if TYPE_CHECKING:
     from .typings import FlextLdapTypes, FlextLdapTypes as t
     from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
 __all__: tuple[str, ...] = (
-    "FlextLdap",
-    "FlextLdapApiRuntime",
-    "FlextLdapConfig",
-    "FlextLdapConstants",
-    "FlextLdapModels",
-    "FlextLdapProtocols",
-    "FlextLdapService",
-    "FlextLdapSettings",
-    "FlextLdapSync",
-    "FlextLdapTypes",
-    "FlextLdapUtilities",
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
-    "adapters",
-    "c",
-    "config",
-    "d",
-    "e",
-    "h",
-    "ldap",
-    "m",
-    "p",
-    "r",
-    "s",
-    "services",
-    "settings",
-    "t",
-    "u",
-    "x",
+    "FlextLdap", "FlextLdapApiRuntime", "FlextLdapConfig", "FlextLdapConstants",
+    "FlextLdapModels", "FlextLdapProtocols", "FlextLdapService", "FlextLdapSettings",
+    "FlextLdapSync", "FlextLdapTypes", "FlextLdapUtilities", "__author__",
+    "__author_email__", "__description__", "__license__", "__title__",
+    "__url__", "__version__", "__version_info__", "adapters",
+    "c", "config", "d", "e",
+    "h", "ldap", "m", "p",
+    "r", "s", "services", "settings",
+    "t", "u", "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
