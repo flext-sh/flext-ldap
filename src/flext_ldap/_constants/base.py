@@ -11,13 +11,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 
 class FlextLdapConstantsBase:
     """Private constants owner for LDAP scalar defaults."""
 
-    NAME: Final[str] = "FLEXT_LDAP"
+    NAME: ClassVar[str] = "FLEXT_LDAP"
 
 
 __all__: list[str] = ["FlextLdapConstantsBase"]
