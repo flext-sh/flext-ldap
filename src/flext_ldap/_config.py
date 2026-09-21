@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from flext_ldif import m
 
 from flext_core import FlextConfig
@@ -24,7 +26,10 @@ class _LdapNamespace(m.BaseModel):
 class FlextLdapConfig(FlextConfig):
     """Ldap config auto-loaded model-less from ``config/*.yaml``."""
 
-    Ldap: _LdapNamespace = _LdapNamespace()
+    Ldap: Annotated[
+        _LdapNamespace,
+        m.Field(description="Open namespace exposing ``config/*.yaml`` under ``Ldap``."),
+    ] = _LdapNamespace()
 
 
 config: FlextLdapConfig = FlextLdapConfig.fetch_global()
