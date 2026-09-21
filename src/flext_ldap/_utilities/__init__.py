@@ -17,8 +17,13 @@ if TYPE_CHECKING:
     from .server import FlextLdapUtilitiesServer
     from .validation import FlextLdapUtilitiesValidation
 __all__: tuple[str, ...] = (
-    "FlextLdapUtilitiesComparison", "FlextLdapUtilitiesConversion", "FlextLdapUtilitiesDetection", "FlextLdapUtilitiesNormalization",
-    "FlextLdapUtilitiesRootDse", "FlextLdapUtilitiesServer", "FlextLdapUtilitiesValidation",
+    "FlextLdapUtilitiesComparison",
+    "FlextLdapUtilitiesConversion",
+    "FlextLdapUtilitiesDetection",
+    "FlextLdapUtilitiesNormalization",
+    "FlextLdapUtilitiesRootDse",
+    "FlextLdapUtilitiesServer",
+    "FlextLdapUtilitiesValidation",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

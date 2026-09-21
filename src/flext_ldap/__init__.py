@@ -20,7 +20,7 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldif import d, e, h, r, x
+    from flext_core import d, e, h, r, x
 
     from . import adapters, services
     from .__version__ import FlextLdapVersion
@@ -36,15 +36,42 @@ if TYPE_CHECKING:
     from .typings import FlextLdapTypes, FlextLdapTypes as t
     from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
 __all__: tuple[str, ...] = (
-    "FlextLdap", "FlextLdapApiRuntime", "FlextLdapConfig", "FlextLdapConstants",
-    "FlextLdapModels", "FlextLdapProtocols", "FlextLdapService", "FlextLdapSettings",
-    "FlextLdapSync", "FlextLdapTypes", "FlextLdapUtilities", "FlextLdapVersion",
-    "__author__", "__author_email__", "__description__", "__license__",
-    "__title__", "__url__", "__version__", "__version_info__",
-    "adapters", "c", "config", "d",
-    "e", "h", "ldap", "m",
-    "p", "r", "s", "services",
-    "settings", "t", "u", "x",
+    "FlextLdap",
+    "FlextLdapApiRuntime",
+    "FlextLdapConfig",
+    "FlextLdapConstants",
+    "FlextLdapModels",
+    "FlextLdapProtocols",
+    "FlextLdapService",
+    "FlextLdapSettings",
+    "FlextLdapSync",
+    "FlextLdapTypes",
+    "FlextLdapUtilities",
+    "FlextLdapVersion",
+    "__author__",
+    "__author_email__",
+    "__description__",
+    "__license__",
+    "__title__",
+    "__url__",
+    "__version__",
+    "__version_info__",
+    "adapters",
+    "c",
+    "config",
+    "d",
+    "e",
+    "h",
+    "ldap",
+    "m",
+    "p",
+    "r",
+    "s",
+    "services",
+    "settings",
+    "t",
+    "u",
+    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -64,7 +91,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".services.sync": ("FlextLdapSync",),
             ".typings": ("FlextLdapTypes", "t"),
             ".utilities": ("FlextLdapUtilities", "u"),
-            "flext_ldif": ("d", "e", "h", "r", "x"),
+            "flext_core": ("d", "e", "h", "r", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
