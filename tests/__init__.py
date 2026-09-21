@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
     from . import integration, unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
-    from .conftest import WorkerInputConfig
     from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
     from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
@@ -29,7 +28,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdapSettings",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
-    "WorkerInputConfig",
     "c",
     "d",
     "e",
@@ -54,7 +52,6 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".base": ("TestsFlextLdapServiceBase", "s"),
-            ".conftest": ("WorkerInputConfig",),
             ".constants": ("TestsFlextLdapConstants", "c"),
             ".integration": ("integration",),
             ".models": ("TestsFlextLdapModels", "m"),
