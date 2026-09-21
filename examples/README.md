@@ -886,7 +886,7 @@ pip install flext-ldif
 ## 📚 Additional Resources
 
 - **[FLEXT-LDAP Documentation](../README.md)** - Main project documentation
-- **[API Reference](../docs/api-reference.md)** - Complete API documentation
+- **[API Reference](../docs/api-reference/README.md)** - Generated API documentation entry point
 - **[Architecture Guide](../docs/architecture.md)** - System design and patterns
 - **[FLEXT Standards](../../AGENTS.md)** - Ecosystem-wide standards
 

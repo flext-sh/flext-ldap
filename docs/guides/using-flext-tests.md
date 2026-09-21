@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
-<!-- Source of truth: `docs/guides/using-flext-tests.md`; adjust that source, never this projection. -->
+<!-- Source of truth: `<workspace-root>/docs/guides/using-flext-tests.md`; adjust that workspace source, never this member projection. -->
 
 # flext-ldap - Using flext-tests
 
@@ -158,7 +158,6 @@ def test_settings_override() -> None:
 
 ## Related
 
-- `.agents/skills/using-flext-tests/SKILL.md`
-- `.agents/skills/coding-standards/SKILL.md`
 - `flext-tests/src/flext_tests/_fixtures/settings.py`
-- `docs/architecture/adr/004-generic-make-framework-in-flext-tests.md`
+- Architecture ADR 004
+- Testing standards
