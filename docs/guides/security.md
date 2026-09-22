@@ -28,4 +28,5 @@ Primary references:
   - inventory alerts by severity and package,
   - group remediations into waves (critical/high first),
   - expand Dependabot to track Python modules with `pyproject.toml` in the monorepo.
-- Security execution must record evidence per action (alert, fix commit, and closure status) in the bead tracker, without closing without a trail.
+- Security execution must record evidence per action (alert, fix commit, and closure
+  status) in the bead tracker, without closing without a trail.
