@@ -162,11 +162,8 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/flext_ldap"]
 
-[tool.hatch.build.targets.wheel.force-include]
-config = "flext_ldap/config"
-
 [tool.hatch.build.targets.sdist]
-only-include = ["src/flext_ldap", "config"]
+only-include = ["src/flext_ldap"]
 
 [tool.mypy]
 disable_error_code = [
