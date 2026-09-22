@@ -150,7 +150,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 (False, True),
                 (True, True),
             )
-            CONFIG_VALID_PORTS: Final[tuple[int, ...]] = (
+            CONFIG_VALID_PORTS: Final[t.VariadicTuple[int]] = (
                 CONFIG_PORT_MIN,
                 c.Ldap.PORT,
                 CONFIG_LDAPS_PORT,
@@ -359,7 +359,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ConnectionSecurityCase.SSL_ONLY: (True, False),
                 ConnectionSecurityCase.TLS_ONLY: (False, True),
             })
-            MODELS_INVALID_PORTS: Final[tuple[int, ...]] = (0, 65536)
+            MODELS_INVALID_PORTS: Final[t.VariadicTuple[int]] = (0, 65536)
 
             SEARCH_SCOPE_BASE: Final[str] = "BASE"
             SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
@@ -426,7 +426,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 Path(gettempdir()) / "flext-ldap-sync-missing.ldif"
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
-            SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
+            SYNC_FACADE_MISSING_FILE_PHASES: Final[t.VariadicTuple[PhaseName]] = (
                 PhaseName.USERS,
                 PhaseName.GROUPS,
             )
