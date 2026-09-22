@@ -1,5 +1,16 @@
 # Triagem Semgrep — flext-sh/flext-ldap
 
+<!-- TOC START -->
+
+- [Resumo](#resumo)
+- [Como usar](#como-usar)
+- [Findings](#findings)
+  - [1 · 🟡 MEDIUM · conf high · package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown](#1-medium-conf-high-package_managersdependabotdependabot-missing-cooldowndependabot-missing-cooldown)
+  - [2 · 🟡 MEDIUM · conf high · package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown](#2-medium-conf-high-package_managersdependabotdependabot-missing-cooldowndependabot-missing-cooldown)
+  - [3 · 🟡 MEDIUM · conf high · package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown](#3-medium-conf-high-package_managersdependabotdependabot-missing-cooldowndependabot-missing-cooldown)
+  - [4 · 🟡 MEDIUM · conf high · package_managers.uv.uv-missing-dependency-cooldown.uv-missing-dependency-cooldown](#4-medium-conf-high-package_managersuvuv-missing-dependency-cooldownuv-missing-dependency-cooldown)
+  <!-- TOC END -->
+
 Gerado do dump da plataforma Semgrep (deployment `datacosmos`, 2026-08-06).
 
 Bead: `mro-p57t.13`

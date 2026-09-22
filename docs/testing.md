@@ -18,17 +18,17 @@
 
 ## Testing Overview
 
-| Metric                     | Current value                                                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Unit tests                 | 245 passed                                                                                                               |
-| Unit-test command          | `uv run pytest flext-ldap/tests/unit -q --tb=short -o addopts="--cov=flext_ldap --cov-report=term-missing:skip-covered"` |
-| `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed)                                                                                |
-| Integration tests          | 1 smoke test (`tests/integration/test_smoke.py`)                                                                         |
-| Current failures           | 0 unit failures                                                                                                          |
-| Skipped tests              | Integration tests gated by the `docker`/`integration` markers when no LDAP server is available                           |
+| Metric                     | Recorded value                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Unit tests                 | 245 passed                                                                                     |
+| Unit-test command          | `make test`                                                                                    |
+| `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed)                                                      |
+| Integration tests          | 1 smoke test (`tests/integration/test_smoke.py`)                                               |
+| Current failures           | 0 unit failures                                                                                |
+| Skipped tests              | Integration tests gated by the `docker`/`integration` markers when no LDAP server is available |
 
-> Historical claims of 35% coverage, 1,079 tests, and 51 test files are stale. The
-> numbers above reflect the current repository state.
+> These figures are a historical report, not validation of the current checkout. Run
+> `make test` from the workspace root for current test and coverage evidence.
 
 ## Test Environment
 
