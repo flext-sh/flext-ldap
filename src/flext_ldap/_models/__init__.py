@@ -10,6 +10,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from .ldap import FlextLdapModelsLdap
+
+
 __all__: tuple[str, ...] = ("FlextLdapModelsLdap",)
 
 _LAZY_IMPORTS = MappingProxyType(

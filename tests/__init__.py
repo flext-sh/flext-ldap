@@ -9,32 +9,25 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif import ldif, servers
+    from flext_cli import cli
+    from flext_ldif import ldif
     from flext_tests import (
+        active_rules,
         api,
-        cli,
         config,
-        core,
-        d,
-        e,
-        from_json,
-        h,
+        discover_repository_root,
         install_local_packages,
-        lazy_attribute,
         load_infra_report,
-        r,
-        services,
         settings,
+        split_csv,
         td,
         tf,
         tk,
         tm,
-        to_json,
-        to_jsonable_python,
         tv,
-        x,
     )
 
+    from flext_core import core, d, e, h, lazy_attribute, r, x
     from flext_ldap import ldap, main
 
     from . import integration, unit
@@ -45,6 +38,8 @@ if TYPE_CHECKING:
     from .settings import TestsFlextLdapSettings
     from .typings import TestsFlextLdapTypes, t
     from .utilities import TestsFlextLdapUtilities, u
+
+
 __all__: tuple[str, ...] = (
     "TestsFlextLdapConstants",
     "TestsFlextLdapModels",
@@ -53,14 +48,15 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdapSettings",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "active_rules",
     "api",
     "c",
     "cli",
     "config",
     "core",
     "d",
+    "discover_repository_root",
     "e",
-    "from_json",
     "h",
     "install_local_packages",
     "integration",
@@ -73,16 +69,13 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
-    "servers",
-    "services",
     "settings",
+    "split_csv",
     "t",
     "td",
     "tf",
     "tk",
     "tm",
-    "to_json",
-    "to_jsonable_python",
     "tv",
     "u",
     "unit",
@@ -101,31 +94,24 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextLdapTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextLdapUtilities", "u"),
+            "flext_cli": ("cli",),
+            "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
             "flext_ldap": ("ldap", "main"),
-            "flext_ldif": ("ldif", "servers"),
+            "flext_ldif": ("ldif",),
             "flext_tests": (
+                "active_rules",
                 "api",
-                "cli",
                 "config",
-                "core",
-                "d",
-                "e",
-                "from_json",
-                "h",
+                "discover_repository_root",
                 "install_local_packages",
-                "lazy_attribute",
                 "load_infra_report",
-                "r",
-                "services",
                 "settings",
+                "split_csv",
                 "td",
                 "tf",
                 "tk",
                 "tm",
-                "to_json",
-                "to_jsonable_python",
                 "tv",
-                "x",
             ),
         }),
         alias_groups=MappingProxyType({}),

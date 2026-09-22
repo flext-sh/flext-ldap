@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from .test_models_search import TestsFlextLdapModelsSearch
     from .test_sync import TestsFlextLdapSync
     from .test_utilities import TestsFlextLdapUtilitiesUnit
+
+
 __all__: tuple[str, ...] = (
     "TestsFlextLdapConnection",
     "TestsFlextLdapEntryAdapter",
