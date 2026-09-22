@@ -28,7 +28,9 @@ class FlextLdapConfig(FlextConfig):
 
     Ldap: Annotated[
         _LdapNamespace,
-        m.Field(description="Open namespace exposing ``config/*.yaml`` under ``Ldap``."),
+        m.Field(
+            description="Open namespace exposing ``config/*.yaml`` under ``Ldap``."
+        ),
     ] = _LdapNamespace()
 
 
