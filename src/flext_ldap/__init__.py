@@ -20,7 +20,11 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldif import d, e, h, r, x
+    from flext_cli import cli
+    from flext_ldif import ldif
+    from pydantic_core import from_json, to_json, to_jsonable_python
+
+    from flext_core import core, d, e, h, lazy_attribute, r, x
 
     from . import adapters, services
     from .__version__ import FlextLdapVersion
@@ -91,7 +95,10 @@ _LAZY_IMPORTS = MappingProxyType(
             ".services.sync": ("FlextLdapSync",),
             ".typings": ("FlextLdapTypes", "t"),
             ".utilities": ("FlextLdapUtilities", "u"),
-            "flext_ldif": ("d", "e", "h", "r", "x"),
+            "flext_cli": ("cli",),
+            "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
+            "flext_ldif": ("ldif",),
+            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
