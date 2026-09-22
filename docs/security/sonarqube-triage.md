@@ -1,6 +1,7 @@
 # Triagem SonarCloud — flext-sh/flext-ldap
 
 <!-- TOC START -->
+
 - [Resumo](#resumo)
 - [Como usar](#como-usar)
 - [Issues](#issues)
@@ -15,7 +16,7 @@
   - [9 · 🟡 MAJOR · CODE_SMELL · python:S5778](#9-major-code_smell-pythons5778)
   - [10 · ⚪ MINOR · CODE_SMELL · python:S7504](#10-minor-code_smell-pythons7504)
   - [11 · ⚪ MINOR · CODE_SMELL · python:S116](#11-minor-code_smell-pythons116)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 Gerado do dump da plataforma SonarCloud (2026-08-06).
 
