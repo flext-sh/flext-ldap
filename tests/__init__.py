@@ -9,18 +9,43 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
+    from flext_ldif import ldif, servers
+    from flext_tests import (
+        api,
+        cli,
+        config,
+        core,
+        d,
+        e,
+        from_json,
+        h,
+        install_local_packages,
+        lazy_attribute,
+        load_infra_report,
+        r,
+        services,
+        settings,
+        td,
+        tf,
+        tk,
+        tm,
+        to_json,
+        to_jsonable_python,
+        tv,
+        x,
+    )
+
+    from flext_ldap import ldap, main
 
     from . import integration, unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
-    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
-    from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
+    from .constants import TestsFlextLdapConstants, c
+    from .models import TestsFlextLdapModels, m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
     from .settings import TestsFlextLdapSettings
-    from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
-    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
+    from .typings import TestsFlextLdapTypes, t
+    from .utilities import TestsFlextLdapUtilities, u
 __all__: tuple[str, ...] = (
-    "FlextTestsConstants",
     "TestsFlextLdapConstants",
     "TestsFlextLdapModels",
     "TestsFlextLdapProtocols",
@@ -28,20 +53,36 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdapSettings",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
+    "api",
     "c",
+    "cli",
+    "config",
+    "core",
     "d",
     "e",
+    "from_json",
     "h",
+    "install_local_packages",
     "integration",
+    "lazy_attribute",
+    "ldap",
+    "ldif",
+    "load_infra_report",
     "m",
+    "main",
     "p",
     "r",
     "s",
+    "servers",
+    "services",
+    "settings",
     "t",
     "td",
     "tf",
     "tk",
     "tm",
+    "to_json",
+    "to_jsonable_python",
     "tv",
     "u",
     "unit",
@@ -60,16 +101,29 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextLdapTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextLdapUtilities", "u"),
+            "flext_ldap": ("ldap", "main"),
+            "flext_ldif": ("ldif", "servers"),
             "flext_tests": (
-                "FlextTestsConstants",
+                "api",
+                "cli",
+                "config",
+                "core",
                 "d",
                 "e",
+                "from_json",
                 "h",
+                "install_local_packages",
+                "lazy_attribute",
+                "load_infra_report",
                 "r",
+                "services",
+                "settings",
                 "td",
                 "tf",
                 "tk",
                 "tm",
+                "to_json",
+                "to_jsonable_python",
                 "tv",
                 "x",
             ),
