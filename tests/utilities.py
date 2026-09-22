@@ -171,8 +171,6 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     repository_root=TestsFlextLdapUtilities.Ldap.Tests.repository_root(),
                 )
 
-            FileLock = FlextTestsUtilities.Tests.FileLock
-
             @staticmethod
             def _admin_credentials_from_candidate(
                 candidate_dn: str, candidate_password: str
