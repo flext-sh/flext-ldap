@@ -101,6 +101,7 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
         waited: float = 0.0
         admin_dn = ""
         admin_password = ""
+        last_bind_error: Exception | None = None
         while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:
             try:
                 admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
@@ -121,8 +122,8 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                 ConnectionError,
                 TimeoutError,
                 OSError,
-            ):
-                pass
+            ) as exc:
+                last_bind_error = exc
             else:
                 try:
                     if conn.bound:
@@ -134,14 +135,15 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                     ConnectionError,
                     TimeoutError,
                     OSError,
-                ):
-                    pass
+                ) as exc:
+                    last_bind_error = exc
             time.sleep(1.0)
             waited += 1.0
         else:
+            detail = f"; last bind error: {last_bind_error}" if last_bind_error else ""
             msg = (
                 f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} LDAP not ready "
-                f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s "
+                f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s{detail}"
                 f"(LDAP server unavailable)"
             )
             pytest.skip(msg)
