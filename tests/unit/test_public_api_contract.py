@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
@@ -26,6 +28,8 @@ from flext_ldap import (
     FlextLdapUtilities,
 )
 
+if TYPE_CHECKING:
+    from flext_ldap import t
 pytestmark = pytest.mark.unit
 
 # Why: the lazy-init generator (flext-1wjg1.16) now declares the public ABI
@@ -86,7 +90,7 @@ _ALIAS_FACADE_CASES: tuple[tuple[str, type], ...] = (
 # Operations the public ``FlextLdap`` facade promises to expose to callers.
 # Composition strategy (which mixin supplies each) is an internal detail; that
 # the facade *offers* these callables is the observable contract.
-_FACADE_OPERATIONS: tuple[str, ...] = (
+_FACADE_OPERATIONS: t.VariadicTuple[str] = (
     "connect",
     "disconnect",
     "execute",
@@ -120,7 +124,7 @@ class TestsFlextLdapPublicApiContract:
 
     def test_declared_exports_are_unique(self) -> None:
         """Verify declared exports are unique."""
-        names: tuple[str, ...] = flext_ldap.__all__
+        names: t.VariadicTuple[str] = flext_ldap.__all__
         tm.that(len(names), eq=len(set(names)))
 
     @pytest.mark.parametrize(("alias", "facade"), _ALIAS_FACADE_CASES)
