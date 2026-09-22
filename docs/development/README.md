@@ -19,19 +19,6 @@
 - [Essential Commands](#essential-commands)
 - [FLEXT Patterns](#flext-patterns)
   - [Railway-Oriented Programming](#railway-oriented-programming)
-  - [Use x](#use-x)
-  - [Pydantic v2 Models](#pydantic-v2-models)
-- [Git Workflow](#git-workflow)
-  - [Branch Naming](#branch-naming)
-  - [Commit Messages](#commit-messages)
-- [Pull Request Checklist](#pull-request-checklist)
-- [Getting Help](#getting-help)
-  - [Resources](#resources)
-  - [Communication](#communication)
-- [Best Practices](#best-practices)
-  - [DO ✅](#do)
-  - [DON'T ❌](#dont)
-- [Related Documentation](#related-documentation)
 
 <!-- TOC END -->
 
@@ -182,7 +169,8 @@ def my_operation(data: dict) -> p.Result[ProcessedData]:
     if not data:
         return r[ProcessedData].fail("Data required")
 
-    return validate(data).flat_map(transform).map(enrich)```
+    return validate(data).flat_map(transform).map(enrich)
+    ```
 ### Use x
 
 ```python
@@ -197,7 +185,8 @@ class MyService(s[None]):
         # ✅ Use inherited properties
         self.logger.info("message")  # From x
         timeout = self.settings.timeout  # From x
-        service = self.container.resolve("service")  # From x```
+        service = self.container.resolve("service")  # From x
+        ```
 ### Pydantic v2 Models
 
 ```python
@@ -210,7 +199,8 @@ class Config(m.BaseModel):
     """Use Pydantic v2 native types."""
 
     timeout: PositiveInt  # Built-in validation
-    host: str```
+    host: str
+    ```
 ## Git Workflow
 
 ### Branch Naming
@@ -223,12 +213,14 @@ class Config(m.BaseModel):
 
 ### Commit Messages
 
-Follow Conventional Commits:```
+Follow Conventional Commits:
+```
 feat: add new LDAP operation
 fix: resolve connection timeout issue
 refactor: simplify authentication logic
 docs: update API documentation
-test: add integration tests for OID```
+test: add integration tests for OID
+```
 ## Pull Request Checklist
 
 - [ ] Code follows FLEXT patterns

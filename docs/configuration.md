@@ -5,8 +5,16 @@
 - [Table of Contents](#table-of-contents)
 - [Configuration Overview](#configuration-overview)
   - [Configuration Hierarchy](#configuration-hierarchy)
+- [Environment Variables](#environment-variables)
+  - [LDAP Server Configuration](#ldap-server-configuration)
+  - [Security Configuration](#security-configuration)
+  - [Connection Pool Settings](#connection-pool-settings)
 - [Configuration File](#configuration-file)
   - [Python Configuration](#python-configuration)
+  - [Environment-Specific Configuration](#environment-specific-configuration)
+  - [Docker Compose](#docker-compose)
+- [Testing Configuration](#testing-configuration)
+  - [Test LDAP Server](#test-ldap-server)
   - [Test Configuration](#test-configuration)
 - [Configuration Validation](#configuration-validation)
   - [Validating Configuration](#validating-configuration)
@@ -17,7 +25,8 @@
 - [Performance Tuning](#performance-tuning)
   - [Connection Pool Optimization](#connection-pool-optimization)
   - [Search Optimization](#search-optimization)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 ## Table of Contents
 

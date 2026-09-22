@@ -6,6 +6,15 @@
 - [Connection Issues](#connection-issues)
   - [Connection Refused Errors](#connection-refused-errors)
   - [SSL/TLS Connection Errors](#ssltls-connection-errors)
+- [Authentication Issues](#authentication-issues)
+  - [Invalid Credentials](#invalid-credentials)
+  - [DN Format Issues](#dn-format-issues)
+  - [Search Base DN Not Found](#search-base-dn-not-found)
+- [Performance Issues](#performance-issues)
+  - [Slow Search Operations](#slow-search-operations)
+  - [Connection Pool Exhaustion](#connection-pool-exhaustion)
+- [Configuration Issues](#configuration-issues)
+  - [Environment Variable Problems](#environment-variable-problems)
 - [Development and Testing Issues](#development-and-testing-issues)
   - [Import Errors](#import-errors)
   - [Test Environment Setup](#test-environment-setup)
@@ -19,7 +28,8 @@
 - [Getting Help](#getting-help)
   - [Information to Include in Bug Reports](#information-to-include-in-bug-reports)
   - [Diagnostic Information Collection](#diagnostic-information-collection)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 ## Table of Contents
 

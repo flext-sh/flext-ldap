@@ -17,25 +17,9 @@
   - [Coverage Analysis](#coverage-analysis)
 - [Architecture Guidelines](#architecture-guidelines)
   - [Clean Architecture Layers](#clean-architecture-layers)
-  - [Coding Standards](#coding-standards)
-- [Code Quality Standards](#code-quality-standards)
-  - [Type Safety Requirements](#type-safety-requirements)
-  - [Import Organization](#import-organization)
-- [Testing Guidelines](#testing-guidelines)
-  - [Unit Test Structure](#unit-test-structure)
-  - [Integration Test Structure](#integration-test-structure)
-  - [Test Fixtures](#test-fixtures)
-- [Documentation Standards](#documentation-standards)
-  - [Code Documentation](#code-documentation)
-  - [API Documentation](#api-documentation)
-- [Performance Guidelines](#performance-guidelines)
-  - [Connection Management](#connection-management)
-  - [Search Optimization](#search-optimization)
-  - [Best Practices](#best-practices)
-- [Contribution Guidelines](#contribution-guidelines)
-  - [Pull Request Process](#pull-request-process)
   - [Code Review Checklist](#code-review-checklist)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 ## Table of Contents
 
@@ -279,19 +263,22 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
 # src/flext_ldap/value_objects.py
-# src/flext_core.py```
+# src/flext_core.py
+```
 **Application Layer** (Use cases):
 
 ```python
 # src/flext_ldap/api.py
-# src/flext_ldap/services.py```
+# src/flext_ldap/services.py
+```
 **Infrastructure Layer** (External concerns):
 
 ```python
 # src/flext_ldap/clients.py
 # src/flext_ldap/adapters.py
 # src/flext_ldap/operations.py
-# src/flext_ldap/repositories.py```
+# src/flext_ldap/repositories.py
+```
 ### Coding Standards
 
 **1. Single Responsibility Classes**
@@ -311,7 +298,8 @@ class FlextLdapUserService:
         self, username: str, password: str
     ) -> p.Result[FlextLdapUser]:
         """Authenticate user with proper error handling."""
-        # Implementation...```
+        # Implementation...
+        ```
 **2. r Pattern**
 
 ```python
@@ -336,7 +324,8 @@ def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
         # Implementation...
         return user
     except Exception:
-        return None  # FORBIDDEN```
+        return None  # FORBIDDEN
+        ```
 **3. Parameter Object Pattern**
 
 ```python
@@ -358,7 +347,8 @@ def search_entries(self, request: SearchRequest) -> p.Result[List[LdapEntry]]:
 # ❌ WRONG - Multiple parameters
 def search_entries(self, base_dn: str, filter_str: str, scope: str,
                         attributes: t.StringList, size_limit: int, time_limit: int):
-    # FORBIDDEN - use parameter objects```
+    # FORBIDDEN - use parameter objects
+    ```
 **4. Value Object Validation**
 
 ```python
@@ -377,7 +367,8 @@ class DN:
 
     def _is_valid_dn(self) -> bool:
         # DN validation logic
-        return bool(self.value and "=" in self.value and "," in self.value)```
+        return bool(self.value and "=" in self.value and "," in self.value)
+        ```
 ______________________________________________________________________
 
 ## Code Quality Standards
@@ -398,13 +389,15 @@ T = TypeVar("T")
 
 
 class FlextLdapService(Generic[T]):
-    """Generic service with type constraints."""```
+    """Generic service with type constraints."""
+    ```
 ### Import Organization
 
 ```python
 # Standard library imports
 
-# Third-party imports```
+# Third-party imports
+```
 ______________________________________________________________________
 
 ## Testing Guidelines
@@ -458,7 +451,8 @@ class TestFlextLdapUser:
             dn="cn=test,dc=example,dc=com", uid=uid, cn="Test User", sn="User"
         )
 
-        assert user.is_valid() == expected```
+        assert user.is_valid() == expected
+        ```
 ### Integration Test Structure
 
 ```python
@@ -513,7 +507,8 @@ class TestLdapOperations:
         assert result.success
 
         entries = result.unwrap()
-        assert isinstance(entries, list)```
+        assert isinstance(entries, list)
+        ```
 ### Test Fixtures
 
 ```python
@@ -595,7 +590,8 @@ def authenticated_user():
     yield create_result.unwrap()
 
     # Cleanup user
-    api.delete_user("cn=auth.test,ou=users,dc=flext,dc=local")```
+    api.delete_user("cn=auth.test,ou=users,dc=flext,dc=local")
+    ```
 ______________________________________________________________________
 
 ## Documentation Standards
@@ -651,7 +647,8 @@ class FlextLdapClients:
             >>> else:
             ...     print(f"Authentication failed: {result.error}")
 
-        """```
+        """
+        ```
 ### API Documentation
 
 All public APIs require comprehensive documentation including:
@@ -678,7 +675,8 @@ settings = FlextLdapSettings(
     pool_size=10,  # Adjust based on load
     connection_timeout=5,
     receive_timeout=15,
-)```
+)
+```
 ### Search Optimization
 
 ```python
@@ -690,7 +688,8 @@ search_request = FlextLdapEntities.SearchRequest(
     attributes=["uid", "cn"],  # Only required attributes
     size_limit=50,  # Reasonable page size
     time_limit=10,  # Prevent long-running searches
-)```
+)
+```
 ### Best Practices
 
 ```python
@@ -701,7 +700,8 @@ with get_ldap_client() as client:
 
 # Batch operations for efficiency
 users_to_create = [user1, user2, user3]
-results = gather(*[api.create_user(user) for user in users_to_create])```
+results = gather(*[api.create_user(user) for user in users_to_create])
+```
 ______________________________________________________________________
 
 ## Contribution Guidelines
