@@ -22,23 +22,22 @@ from .__version__ import (
 if TYPE_CHECKING:
     from flext_cli import cli
     from flext_ldif import ldif
-    from pydantic_core import from_json, to_json, to_jsonable_python
 
     from flext_core import core, d, e, h, lazy_attribute, r, x
 
     from . import adapters, services
-    from .__version__ import FlextLdapVersion
     from ._config import FlextLdapConfig, config
     from ._settings import FlextLdapSettings, settings
     from .api import FlextLdap, ldap
     from .base import FlextLdapService, s
-    from .constants import FlextLdapConstants, FlextLdapConstants as c
-    from .models import FlextLdapModels, FlextLdapModels as m
+    from .cli import main
+    from .constants import FlextLdapConstants, c
+    from .models import FlextLdapModels, m
     from .protocols import FlextLdapProtocols, FlextLdapProtocols as p
     from .services.api_runtime import FlextLdapApiRuntime
     from .services.sync import FlextLdapSync
-    from .typings import FlextLdapTypes, FlextLdapTypes as t
-    from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
+    from .typings import FlextLdapTypes, t
+    from .utilities import FlextLdapUtilities, u
 __all__: tuple[str, ...] = (
     "FlextLdap",
     "FlextLdapApiRuntime",
@@ -51,7 +50,6 @@ __all__: tuple[str, ...] = (
     "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
-    "FlextLdapVersion",
     "__author__",
     "__author_email__",
     "__description__",
@@ -62,12 +60,17 @@ __all__: tuple[str, ...] = (
     "__version_info__",
     "adapters",
     "c",
+    "cli",
     "config",
+    "core",
     "d",
     "e",
     "h",
+    "lazy_attribute",
     "ldap",
+    "ldif",
     "m",
+    "main",
     "p",
     "r",
     "s",
@@ -81,12 +84,12 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".__version__": ("FlextLdapVersion",),
             "._config": ("FlextLdapConfig", "config"),
             "._settings": ("FlextLdapSettings", "settings"),
             ".adapters": ("adapters",),
             ".api": ("FlextLdap", "ldap"),
             ".base": ("FlextLdapService", "s"),
+            ".cli": ("main",),
             ".constants": ("FlextLdapConstants", "c"),
             ".models": ("FlextLdapModels", "m"),
             ".protocols": ("FlextLdapProtocols", "p"),
@@ -98,7 +101,6 @@ _LAZY_IMPORTS = MappingProxyType(
             "flext_cli": ("cli",),
             "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
             "flext_ldif": ("ldif",),
-            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
