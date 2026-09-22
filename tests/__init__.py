@@ -9,36 +9,18 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import cli, main
-    from flext_ldif import ldif
-    from flext_tests import (
-        active_rules,
-        api,
-        config,
-        discover_repository_root,
-        install_local_packages,
-        load_infra_report,
-        settings,
-        split_csv,
-        td,
-        tf,
-        tk,
-        tm,
-        tv,
-    )
-
-    from flext_core import core, d, e, h, lazy_attribute, r, x
-    from flext_ldap import ldap
+    from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
 
     from . import integration, unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
-    from .constants import TestsFlextLdapConstants, c
-    from .models import TestsFlextLdapModels, m
+    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
+    from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
     from .settings import TestsFlextLdapSettings
-    from .typings import TestsFlextLdapTypes, t
-    from .utilities import TestsFlextLdapUtilities, u
+    from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
+    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 __all__: tuple[str, ...] = (
+    "FlextTestsConstants",
     "TestsFlextLdapConstants",
     "TestsFlextLdapModels",
     "TestsFlextLdapProtocols",
@@ -46,29 +28,15 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdapSettings",
     "TestsFlextLdapTypes",
     "TestsFlextLdapUtilities",
-    "active_rules",
-    "api",
     "c",
-    "cli",
-    "config",
-    "core",
     "d",
-    "discover_repository_root",
     "e",
     "h",
-    "install_local_packages",
     "integration",
-    "lazy_attribute",
-    "ldap",
-    "ldif",
-    "load_infra_report",
     "m",
-    "main",
     "p",
     "r",
     "s",
-    "settings",
-    "split_csv",
     "t",
     "td",
     "tf",
@@ -92,24 +60,18 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextLdapTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextLdapUtilities", "u"),
-            "flext_cli": ("cli", "main"),
-            "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
-            "flext_ldap": ("ldap",),
-            "flext_ldif": ("ldif",),
             "flext_tests": (
-                "active_rules",
-                "api",
-                "config",
-                "discover_repository_root",
-                "install_local_packages",
-                "load_infra_report",
-                "settings",
-                "split_csv",
+                "FlextTestsConstants",
+                "d",
+                "e",
+                "h",
+                "r",
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
+                "x",
             ),
         }),
         alias_groups=MappingProxyType({}),
