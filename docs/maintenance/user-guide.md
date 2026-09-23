@@ -31,7 +31,8 @@
   - [Content Standards](#content-standards)
   - [Team Collaboration](#team-collaboration)
   - [Performance Considerations](#performance-considerations)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 **Complete guide for using the Documentation Maintenance System**
 
@@ -417,7 +418,8 @@ def custom_audit_rule(content, file_path):
             "message": "Found deprecated content that should be updated",
         })
 
-    return issues```
+    return issues
+    ```
 ## Troubleshooting
 
 ### Common Issues
@@ -429,7 +431,8 @@ def custom_audit_rule(content, file_path):
 pip install -r docs/maintenance/requirements.txt
 
 # Check Python path
-export PYTHONPATH=/path/to/project:$PYTHONPATH```
+export PYTHONPATH=/path/to/project:$PYTHONPATH
+```
 #### Permission Errors
 
 ```bash
@@ -437,7 +440,8 @@ export PYTHONPATH=/path/to/project:$PYTHONPATH```
 chmod +x docs/maintenance/*.py
 
 # Run with sudo if needed for system paths
-sudo python maintenance/audit.py```
+sudo python maintenance/audit.py
+```
 #### Cache Issues
 
 ```bash

@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from .result_extract import ResultConverterExtractMixin
     from .search_executor import SearchExecutor
     from .wrappers import FlextLdapLdap3Wrappers
+
+
 __all__: tuple[str, ...] = (
     "ConnectionManager",
     "FlextLdapLdap3Wrappers",

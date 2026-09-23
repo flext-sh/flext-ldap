@@ -22,13 +22,13 @@
   `integration`, `ldap`, `typed`
 - Main facades: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
   `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
-  `FlextLdapSettings` (+4 more)
+  `FlextLdapSettings` (+3 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
   `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
   `FlextLdapSettings`, `FlextLdapSync`, `FlextLdapTypes` (+5 more)
 - Exported module shortcuts: `adapters`, `services`
-- Generated module pages: `11`
+- Generated module pages: `12`
 
 ## Next Pages
 

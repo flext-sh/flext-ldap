@@ -7,14 +7,8 @@
   - [Core FLEXT Dependencies](#core-flext-dependencies)
 - [ldif Integration](#ldif-integration)
   - [Entry Format Conversion](#entry-format-conversion)
-  - [LDIF File Processing](#ldif-file-processing)
-  - [Export to LDIF](#export-to-ldif)
-  - [Server Servers Detection](#server-servers-detection)
-  - [Universal LDAP Processor](#universal-ldap-processor)
-- [Monitoring and Observability](#monitoring-and-observability)
-  - [Prometheus Metrics](#prometheus-metrics)
-  - [Health Check Endpoints](#health-check-endpoints)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 ## Table of Contents
 
@@ -112,7 +106,8 @@ class UserService:
             "cn": user.cn,
             "email": user.mail,
             "groups": user.member_of,
-        })```
+        })
+        ```
 ### Configuration Management
 
 ```python
@@ -152,7 +147,8 @@ class AppSettings(BaseSettings):
 
 # Usage in FLEXT applications
 settings = AppSettings()
-ldap_config = settings.get_ldap_config()```
+ldap_config = settings.get_ldap_config()
+```
 ______________________________________________________________________
 
 ## FastAPI Integration
@@ -255,7 +251,8 @@ def create_user(
     return {
         "message": "User created successfully",
         "user": {"uid": user.uid, "dn": user.dn, "name": user.cn},
-    }```
+    }
+    ```
 ______________________________________________________________________
 
 ## Django Integration
@@ -331,7 +328,8 @@ class FlextLdapBackend(BaseBackend):
 AUTHENTICATION_BACKENDS = [
     "myapp.auth.FlextLdapBackend",
     "django.contrib.auth.backends.ModelBackend",
-]```
+]
+```
 ### Django User Sync Management Command
 
 ```python
@@ -429,7 +427,8 @@ class Command(BaseCommand):
                 self.style.SUCCESS(
                     f"Synced {synced_count} users ({created_count} created)"
                 )
-            )```
+            )
+            ```
 ______________________________________________________________________
 
 ## Flask Integration
@@ -522,7 +521,8 @@ def search_users():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)```
+    app.run(debug=True)
+    ```
 ______________________________________________________________________
 
 ## Docker Integration
@@ -571,7 +571,8 @@ services:
 
 volumes:
   ldap_data:
-  ldap_config:```
+  ldap_config:
+  ```
 ### Dockerfile with FLEXT-LDAP
 
 ```dockerfile
@@ -597,7 +598,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 EXPOSE 8000
 
-CMD ["python", "-m", "myapp"]```
+CMD ["python", "-m", "myapp"]
+```
 ______________________________________________________________________
 
 ## Kubernetes Integration
@@ -721,7 +723,8 @@ for ldap3_entry in connection.entries:
         ldif_entry = result.unwrap()
         flextldif_entries.append(ldif_entry)
         print(f"DN: {ldif_entry.dn}")
-        print(f"Attributes: {ldif_entry.attributes.attributes}")```
+        print(f"Attributes: {ldif_entry.attributes.attributes}")
+        ```
 ### LDIF File Processing
 
 Process LDIF files with ldif integration:
@@ -729,8 +732,7 @@ Process LDIF files with ldif integration:
 ```python
 from __future__ import annotations
 
-from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import OpenLDAP2Operations
+from flext_ldap import FlextLdapEntryAdapter, OpenLDAP2Operations
 
 
 def process_ldif_file():
@@ -764,7 +766,8 @@ def process_ldif_file():
             print(f"Failed to add {entry.dn}: {add_result.error}")
 
 
-run(process_ldif_file())```
+run(process_ldif_file())
+```
 ### Export to LDIF
 
 Export LDAP entries to LDIF format:
@@ -772,9 +775,9 @@ Export LDAP entries to LDIF format:
 ```python
 from __future__ import annotations
 
-from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+
+from flext_ldap import FlextLdapEntryAdapter, OpenLDAP2Operations
 
 
 def export_to_ldif():
@@ -811,7 +814,8 @@ def export_to_ldif():
             print(f"Export failed: {write_result.error}")
 
 
-run(export_to_ldif())```
+run(export_to_ldif())
+```
 ### Server Servers Detection
 
 Use ldif servers system for automatic server detection:
@@ -819,10 +823,15 @@ Use ldif servers system for automatic server detection:
 ```python
 from __future__ import annotations
 
-from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapServersAdapter
-from flext_ldap import OpenLDAP2Operations, OracleOIDOperations, OracleOUDOperations
 import ldap3
+
+from flext_ldap import (
+    FlextLdapEntryAdapter,
+    FlextLdapServersAdapter,
+    OpenLDAP2Operations,
+    OracleOIDOperations,
+    OracleOUDOperations,
+)
 
 
 def detect_and_configure():
@@ -881,7 +890,8 @@ def detect_and_configure():
         return ops
 
 
-run(detect_and_configure())```
+run(detect_and_configure())
+```
 ### Universal LDAP Processor
 
 Complete example combining ldif with server operations:
@@ -889,15 +899,16 @@ Complete example combining ldif with server operations:
 ```python
 from __future__ import annotations
 
-from flext_ldap import FlextLdapEntryAdapter
-from flext_ldap import FlextLdapServersAdapter
+import ldap3
+
 from flext_ldap import (
+    FlextLdapEntryAdapter,
+    FlextLdapServersAdapter,
+    GenericServerOperations,
     OpenLDAP2Operations,
     OracleOIDOperations,
     OracleOUDOperations,
-    GenericServerOperations,
 )
-import ldap3
 
 
 class UniversalLdapProcessor:
@@ -1019,7 +1030,8 @@ def main():
     print(f"Imported {imported} entries")
 
 
-run(main())```
+run(main())
+```
 ______________________________________________________________________
 
 ## Monitoring and Observability
@@ -1028,9 +1040,12 @@ ______________________________________________________________________
 
 ```python
 from __future__ import annotations
-from prometheus_client import Counter, Histogram, start_http_server
-from flext_ldap.api import ldap
+
 import time
+
+from prometheus_client import Counter, Histogram, start_http_server
+
+from flext_ldap.api import ldap
 
 # Metrics
 ldap_operations_total = Counter(
@@ -1065,7 +1080,8 @@ class MetricsWrapper:
 
 
 # Start metrics server
-start_http_server(8001)```
+start_http_server(8001)
+```
 ### Health Check Endpoints
 
 ```python
@@ -1095,7 +1111,8 @@ def readiness_check():
         "status": "not ready",
         "ldap": "disconnected",
         "error": connection_result.error,
-    }, 503```
+    }, 503
+    ```
 ______________________________________________________________________
 
 For more integration examples and patterns, see the examples/ directory.

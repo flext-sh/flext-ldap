@@ -36,20 +36,8 @@
   - [Recovery Procedures](#recovery-procedures)
 - [📚 Advanced Usage](#advanced-usage)
   - [Custom Validation Rules](#custom-validation-rules)
-  - [Integration with External Tools](#integration-with-external-tools)
-- [🤝 Contributing](#contributing)
-  - [Adding New Validators](#adding-new-validators)
-  - [Improving Performance](#improving-performance)
-  - [Extending Reporting](#extending-reporting)
-- [📋 Maintenance Checklist](#maintenance-checklist)
-  - [Pre-Maintenance](#pre-maintenance)
-  - [During Maintenance](#during-maintenance)
-  - [Post-Maintenance](#post-maintenance)
-- [📞 Support & Resources](#support-resources)
-  - [Documentation](#documentation)
-  - [Community](#community)
-  - [Professional Services](#professional-services)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 ## Table of Contents
 
@@ -573,7 +561,8 @@ class CustomValidator(BaseValidator):
     def validate_compliance(self, content, metadata):
         """Validate regulatory compliance."""
         # Implementation
-        pass```
+        pass
+        ```
 ### Integration with External Tools
 
 Connect with documentation platforms:
@@ -592,7 +581,8 @@ class GitBookIntegration:
 class ReadMeIntegration:
     def update_api_docs(self):
         """Update ReadMe.com documentation."""
-        pass```
+        pass
+        ```
 ## 🤝 Contributing
 
 ### Adding New Validators

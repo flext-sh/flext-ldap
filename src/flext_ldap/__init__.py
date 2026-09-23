@@ -38,6 +38,8 @@ if TYPE_CHECKING:
     from .services.sync import FlextLdapSync
     from .typings import FlextLdapTypes, t
     from .utilities import FlextLdapUtilities, u
+
+
 __all__: tuple[str, ...] = (
     "FlextLdap",
     "FlextLdapApiRuntime",
