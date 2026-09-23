@@ -20,7 +20,10 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldif import cli, core, d, e, h, lazy_attribute, ldif, r, servers, x
+    from flext_cli import cli
+    from flext_ldif import ldif
+
+    from flext_core import core, d, e, h, lazy_attribute, r, x
 
     from . import adapters, services
     from ._config import FlextLdapConfig, config
@@ -73,7 +76,6 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
-    "servers",
     "services",
     "settings",
     "t",
@@ -98,18 +100,9 @@ _LAZY_IMPORTS = MappingProxyType(
             ".services.sync": ("FlextLdapSync",),
             ".typings": ("FlextLdapTypes", "t"),
             ".utilities": ("FlextLdapUtilities", "u"),
-            "flext_ldif": (
-                "cli",
-                "core",
-                "d",
-                "e",
-                "h",
-                "lazy_attribute",
-                "ldif",
-                "r",
-                "servers",
-                "x",
-            ),
+            "flext_cli": ("cli",),
+            "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
+            "flext_ldif": ("ldif",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
