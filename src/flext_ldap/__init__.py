@@ -28,13 +28,13 @@ if TYPE_CHECKING:
     from .api import FlextLdap, ldap
     from .base import FlextLdapService, s
     from .cli import main
-    from .constants import FlextLdapConstants, c
-    from .models import FlextLdapModels, m
+    from .constants import FlextLdapConstants, FlextLdapConstants as c
+    from .models import FlextLdapModels, FlextLdapModels as m
     from .protocols import FlextLdapProtocols, FlextLdapProtocols as p
     from .services.api_runtime import FlextLdapApiRuntime
     from .services.sync import FlextLdapSync
-    from .typings import FlextLdapTypes, t
-    from .utilities import FlextLdapUtilities, u
+    from .typings import FlextLdapTypes, FlextLdapTypes as t
+    from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
 
 
 __all__: tuple[str, ...] = (

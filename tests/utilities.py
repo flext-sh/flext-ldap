@@ -12,16 +12,16 @@ from typing import ClassVar, TypeVar
 
 from flext_tests import FlextTestsUtilities, r, tk, tm
 
-from flext_ldap import u
+from flext_ldap import FlextLdapUtilities
 from tests import c, m, p, t
 
 TResult = TypeVar("TResult", bound=t.Tests.TestResultValue)
 
 
-class TestsFlextLdapUtilities(FlextTestsUtilities, u):
+class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
     """Utilities for flext-ldap tests."""
 
-    class Ldap(u.Ldap):
+    class Ldap(FlextLdapUtilities.Ldap):
         """Provide the test double for ldap."""
 
         class Tests(FlextTestsUtilities.Tests):

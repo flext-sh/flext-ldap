@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Protocol, Self, override, runtime_checkable
 
-from flext_ldif import p as _ldif_p
+from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
     import types
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from flext_ldap import FlextLdapTypes as t, m as lm
 
 
-class FlextLdapProtocols(_ldif_p):
+class FlextLdapProtocols(FlextLdifProtocols):
     """LDAP-specific protocol definitions.
 
     Domain-specific protocol interfaces for LDAP operations.
@@ -52,7 +52,7 @@ class FlextLdapProtocols(_ldif_p):
         """
 
         @runtime_checkable
-        class LdapSettings(_ldif_p.Model, Protocol):
+        class LdapSettings(FlextLdifProtocols.Model, Protocol):
             """Namespaced LDAP runtime settings branch."""
 
             host: str
@@ -66,7 +66,7 @@ class FlextLdapProtocols(_ldif_p):
             auto_range: bool
 
         @runtime_checkable
-        class Settings(_ldif_p.Ldif.Settings, Protocol):
+        class Settings(FlextLdifProtocols.Ldif.Settings, Protocol):
             """MRO-composed settings contract with the LDAP namespace."""
 
             @property
@@ -159,7 +159,7 @@ class FlextLdapProtocols(_ldif_p):
         class SearchResult(Protocol):
             """Protocol for LDAP search result (structural type)."""
 
-            entries: t.SequenceOf[_ldif_p.Ldif.Entry]
+            entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry]
             search_options: FlextLdapProtocols.Ldap.SearchOptions
 
         @runtime_checkable
@@ -191,8 +191,8 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def add(
-                self, entry: _ldif_p.Ldif.Entry
-            ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
+                self, entry: FlextLdifProtocols.Ldif.Entry
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Args:
@@ -206,13 +206,13 @@ class FlextLdapProtocols(_ldif_p):
 
             def batch_upsert(
                 self,
-                entries: t.SequenceOf[_ldif_p.Ldif.Entry],
+                entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
                 *,
                 progress_callback: t.Ldap.LdapProgressCallback | None = None,
                 retry_on_errors: t.StrSequence | None = None,
                 max_retries: int = 1,
                 stop_on_error: bool = False,
-            ) -> _ldif_p.Result[lm.Ldap.LdapBatchStats]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.LdapBatchStats]:
                 """Upsert multiple entries and report canonical batch statistics."""
                 ...
 
@@ -224,7 +224,7 @@ class FlextLdapProtocols(_ldif_p):
                 max_retries: int = 1,
                 retry_delay: float = 0.0,
                 **kwargs: t.Scalar,
-            ) -> _ldif_p.Result[bool]:
+            ) -> FlextLdifProtocols.Result[bool]:
                 """Connect to LDAP server.
 
                 Args:
@@ -261,8 +261,8 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def delete(
-                self, dn: str | _ldif_p.Ldif.DN
-            ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
+                self, dn: str | FlextLdifProtocols.Ldif.DN
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Args:
@@ -274,7 +274,9 @@ class FlextLdapProtocols(_ldif_p):
                 """
                 ...
 
-            def execute(self, **kwargs: t.Scalar) -> _ldif_p.Result[lm.Ldap.Response]:
+            def execute(
+                self, **kwargs: t.Scalar
+            ) -> FlextLdifProtocols.Result[lm.Ldap.Response]:
                 """Execute health check or default operation.
 
                 Args:
@@ -288,8 +290,10 @@ class FlextLdapProtocols(_ldif_p):
                 ...
 
             def modify(
-                self, dn: str | _ldif_p.Ldif.DN, changes: t.Ldap.LdapModifyChanges
-            ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
+                self,
+                dn: str | FlextLdifProtocols.Ldif.DN,
+                changes: t.Ldap.LdapModifyChanges,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Args:
@@ -306,7 +310,7 @@ class FlextLdapProtocols(_ldif_p):
                 self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> _ldif_p.Result[lm.Ldap.SearchResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -340,7 +344,7 @@ class FlextLdapProtocols(_ldif_p):
 
             def connect(
                 self, settings: lm.Ldap.ConnectionConfig
-            ) -> _ldif_p.Result[bool]:
+            ) -> FlextLdifProtocols.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
 
@@ -350,25 +354,25 @@ class FlextLdapProtocols(_ldif_p):
 
             def add(
                 self, entry: lm.Ldif.Entry
-            ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry, returning the operation result."""
                 ...
 
             def delete(
                 self, dn: str | lm.Ldif.DN
-            ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry, returning the operation result."""
                 ...
 
             def modify(
                 self, dn: str | lm.Ldif.DN, changes: t.Ldap.OperationChanges
-            ) -> _ldif_p.Result[lm.Ldap.OperationResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry, returning the operation result."""
                 ...
 
             def search(
                 self, search_options: lm.Ldap.SearchOptions, server_type: str = "rfc"
-            ) -> _ldif_p.Result[lm.Ldap.SearchResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
                 """Perform LDAP search, returning the search result."""
                 ...
 
@@ -398,7 +402,7 @@ class FlextLdapProtocols(_ldif_p):
                 auto_retry: bool = False,
                 max_retries: int = 3,
                 retry_delay: float = 1.0,
-            ) -> _ldif_p.Result[bool]:
+            ) -> FlextLdifProtocols.Result[bool]:
                 """Connect using the public LDAP connection service contract."""
                 ...
 
@@ -411,7 +415,9 @@ class FlextLdapProtocols(_ldif_p):
                 """
                 ...
 
-            def execute(self) -> _ldif_p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+            def execute(
+                self,
+            ) -> FlextLdifProtocols.Result[FlextLdapProtocols.Ldap.SearchResult]:
                 """Run the connection service health check/default operation."""
                 ...
 
@@ -421,16 +427,16 @@ class FlextLdapProtocols(_ldif_p):
         # The base structural contracts live in flext-ldif (Ldif namespace)
         # as the single source of truth; this package extends only what it needs.
 
-        Ldap3ServerInfo: ClassVar = _ldif_p.Ldif.Ldap3ServerInfo
-        Ldap3Server: ClassVar = _ldif_p.Ldif.Ldap3Server
-        Ldap3Entry: ClassVar = _ldif_p.Ldif.Ldap3Entry
-        Ldap3Attribute: ClassVar = _ldif_p.Ldif.Ldap3Attribute
-        Ldap3ParseResponse: ClassVar = _ldif_p.Ldif.Ldap3ParseResponse
-        RootDseEntry: ClassVar = _ldif_p.Ldif.RootDseEntry
-        RootDseConnection: ClassVar = _ldif_p.Ldif.RootDseConnection
+        Ldap3ServerInfo: ClassVar = FlextLdifProtocols.Ldif.Ldap3ServerInfo
+        Ldap3Server: ClassVar = FlextLdifProtocols.Ldif.Ldap3Server
+        Ldap3Entry: ClassVar = FlextLdifProtocols.Ldif.Ldap3Entry
+        Ldap3Attribute: ClassVar = FlextLdifProtocols.Ldif.Ldap3Attribute
+        Ldap3ParseResponse: ClassVar = FlextLdifProtocols.Ldif.Ldap3ParseResponse
+        RootDseEntry: ClassVar = FlextLdifProtocols.Ldif.RootDseEntry
+        RootDseConnection: ClassVar = FlextLdifProtocols.Ldif.RootDseConnection
 
         @runtime_checkable
-        class Ldap3Connection(_ldif_p.Ldif.Ldap3Connection, Protocol):
+        class Ldap3Connection(FlextLdifProtocols.Ldif.Ldap3Connection, Protocol):
             """Structural contract for ldap3-compatible connection objects.
 
             Extends the base contract from ``flext-ldif`` with LDAP-specific

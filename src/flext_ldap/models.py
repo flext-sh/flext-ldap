@@ -6,12 +6,12 @@ All model implementations are in models/*.py - this is a pure facade.
 
 from __future__ import annotations
 
-from flext_ldif import m
+from flext_ldif import FlextLdifModels
 
 from ._models.ldap import FlextLdapModelsLdap
 
 
-class FlextLdapModels(m):
+class FlextLdapModels(FlextLdifModels):
     """LDAP domain models extending m.
 
     Hierarchy:

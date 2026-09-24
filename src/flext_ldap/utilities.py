@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import u
+from flext_ldif import FlextLdifUtilities
 
 from ._utilities.comparison import FlextLdapUtilitiesComparison
 from ._utilities.conversion import FlextLdapUtilitiesConversion
@@ -11,7 +11,7 @@ from ._utilities.server import FlextLdapUtilitiesServer
 from ._utilities.validation import FlextLdapUtilitiesValidation
 
 
-class FlextLdapUtilities(u):
+class FlextLdapUtilities(FlextLdifUtilities):
     """LDAP-specific utility facade."""
 
     class Ldap(

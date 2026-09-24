@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import c
+from flext_ldap import FlextLdapConstants
 
 if TYPE_CHECKING:
     from flext_cli import t
@@ -43,10 +43,10 @@ def _bind_admin_password() -> str:
     return os.getenv("FLEXT_LDAP_TEST_BIND_ADMIN_PASSWORD", "") or "secret"
 
 
-class TestsFlextLdapConstants(FlextTestsConstants, c):
+class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     """Flat test constants for flext-ldap."""
 
-    class Ldap(c.Ldap):
+    class Ldap(FlextLdapConstants.Ldap):
         """LDAP test constants."""
 
         class Tests:
@@ -152,12 +152,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             CONFIG_VALID_PORTS: Final[t.VariadicTuple[int]] = (
                 CONFIG_PORT_MIN,
-                c.Ldap.PORT,
+                FlextLdapConstants.Ldap.PORT,
                 CONFIG_LDAPS_PORT,
                 CONFIG_PORT_MAX,
             )
             CONFIG_HOST_CASES: Final[t.StrSequence] = (
-                c.LOCALHOST,
+                FlextLdapConstants.LOCALHOST,
                 CONFIG_EXAMPLE_HOST,
                 "192.168.1.1",
                 "",
@@ -317,9 +317,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             LDAP3_SERVER_SCENARIOS: Final[
                 t.MappingKV[Ldap3ServerCase, tuple[int, bool, bool]]
             ] = MappingProxyType({
-                Ldap3ServerCase.PLAIN: (c.Ldap.PORT, False, False),
+                Ldap3ServerCase.PLAIN: (FlextLdapConstants.Ldap.PORT, False, False),
                 Ldap3ServerCase.SSL: (CONFIG_LDAPS_PORT, True, False),
-                Ldap3ServerCase.TLS: (c.Ldap.PORT, False, True),
+                Ldap3ServerCase.TLS: (FlextLdapConstants.Ldap.PORT, False, True),
             })
             ATTR_TO_STR_LIST_SCENARIOS: Final[
                 t.MappingKV[AttrToStrListCase, t.MappingKV[str, t.StrSequence]]
@@ -376,7 +376,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             SEARCH_CATEGORY_EXPECTED: Final[t.MappingKV[SearchCategoryCase, str]] = (
                 MappingProxyType({
-                    SearchCategoryCase.EMPTY: c.Ldap.UNKNOWN_CATEGORY,
+                    SearchCategoryCase.EMPTY: FlextLdapConstants.Ldap.UNKNOWN_CATEGORY,
                     SearchCategoryCase.PERSON: "person",
                 })
             )

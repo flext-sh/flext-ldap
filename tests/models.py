@@ -14,17 +14,17 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import FlextTestsModels, r
 
-from flext_ldap import m
+from flext_ldap import FlextLdapModels
 from tests.base import TestsFlextLdapServiceBase
 
 if TYPE_CHECKING:
     from tests import p
 
 
-class TestsFlextLdapModels(m, FlextTestsModels):
+class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
     """Test models - composição de TestsFlextModels + m."""
 
-    class Ldap(m.Ldap):
+    class Ldap(FlextLdapModels.Ldap):
         """LDAP test models."""
 
         class Tests:

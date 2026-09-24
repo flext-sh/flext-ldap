@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 
     from . import integration, unit
     from .base import TestsFlextLdapServiceBase, TestsFlextLdapServiceBase as s
-    from .constants import TestsFlextLdapConstants, c
-    from .models import TestsFlextLdapModels, m
+    from .constants import TestsFlextLdapConstants, TestsFlextLdapConstants as c
+    from .models import TestsFlextLdapModels, TestsFlextLdapModels as m
     from .protocols import TestsFlextLdapProtocols, TestsFlextLdapProtocols as p
     from .settings import TestsFlextLdapSettings
-    from .typings import TestsFlextLdapTypes, t
-    from .utilities import TestsFlextLdapUtilities, u
+    from .typings import TestsFlextLdapTypes, TestsFlextLdapTypes as t
+    from .utilities import TestsFlextLdapUtilities, TestsFlextLdapUtilities as u
 
 
 __all__: tuple[str, ...] = (
