@@ -1,4 +1,3 @@
-# mypy: disable-error-code=unreachable
 """LDAP server and connection utility methods."""
 
 from __future__ import annotations
@@ -39,10 +38,10 @@ class FlextLdapUtilitiesServer:
         *,
         use_ssl: bool = False,
         get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
-    ) -> p.Ldap.Ldap3Server:
+    ) -> p.Ldif.Ldap3Server:
         """Create an ldap3 Server instance."""
         scheme = "ldaps" if use_ssl else "ldap"
-        server: p.Ldap.Ldap3Server = ldap3.Server(
+        server: p.Ldif.Ldap3Server = ldap3.Server(
             f"{scheme}://{host}:{port}",
             get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info),
         )
@@ -51,16 +50,16 @@ class FlextLdapUtilitiesServer:
     @staticmethod
     def create_server_from_url(
         server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL
-    ) -> p.Ldap.Ldap3Server:
+    ) -> p.Ldif.Ldap3Server:
         """Create an ldap3 Server instance from a URL string."""
-        server: p.Ldap.Ldap3Server = ldap3.Server(
+        server: p.Ldif.Ldap3Server = ldap3.Server(
             server_url, get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info)
         )
         return server
 
     @staticmethod
     def create_connection(
-        server: p.Ldap.Ldap3Server,
+        server: p.Ldif.Ldap3Server,
         *,
         user: str,
         password: str,
@@ -85,9 +84,9 @@ class FlextLdapUtilitiesServer:
         *,
         port: int = c.Ldap.PORT,
         get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
-    ) -> p.Ldap.Ldap3Server:
+    ) -> p.Ldif.Ldap3Server:
         """Create an ldap3 Server with minimal info retrieval."""
-        server: p.Ldap.Ldap3Server = ldap3.Server(
+        server: p.Ldif.Ldap3Server = ldap3.Server(
             host,
             port=port,
             get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info),

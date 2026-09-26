@@ -45,7 +45,7 @@ class TestsFlextLdapEntryAdapter:
     class _Ldap3Entry:
         """Structural stand-in for the external ldap3 Entry boundary.
 
-        Implements the ``p.Ldap.Ldap3Entry`` structural contract. Not a mock of
+        Implements the ``p.Ldif.Ldap3Entry`` structural contract. Not a mock of
         the unit under test.
         """
 

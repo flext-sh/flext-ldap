@@ -1,4 +1,3 @@
-# mypy: disable-error-code=unreachable
 """LDAP3 adapter — ResultConverter.
 
 Composes ``ResultConverterExtractMixin`` for DN/attribute/metadata extraction
@@ -41,7 +40,7 @@ class ResultConverter(ResultConverterExtractMixin):
         multi-values stay as lists. Type information is normalized to strings.
         """
         results: t.MutableSequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]] = []
-        entries: t.SequenceOf[p.Ldap.Ldap3Entry] = getattr(connection, "entries", [])
+        entries: t.SequenceOf[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
         for entry in entries:
             dn = entry.entry_dn or ""
             attrs_dict = ResultConverter.extract_attrs_dict(
@@ -52,7 +51,7 @@ class ResultConverter(ResultConverterExtractMixin):
 
     @staticmethod
     def convert_parsed_entries(
-        parse_response: m.Ldif.ParseResponse | p.Ldap.Ldap3ParseResponse,
+        parse_response: m.Ldif.ParseResponse | p.Ldif.Ldap3ParseResponse,
     ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
         """Translate ``ParseResponse`` from ``FlextLdifParser`` into typed entries.
 
@@ -60,9 +59,6 @@ class ResultConverter(ResultConverterExtractMixin):
         protocol-typed entries are reconstructed via ``extract_dn``,
         ``extract_attributes``, ``extract_metadata``.
         """
-        # mypy narrows the union; guard against Optional inference
-        if parse_response is None:
-            return r[t.SequenceOf[m.Ldif.Entry]].fail("unexpected None parse_response")
         entries_raw = parse_response.entries
         if not entries_raw:
             return r[t.SequenceOf[m.Ldif.Entry]].ok([])

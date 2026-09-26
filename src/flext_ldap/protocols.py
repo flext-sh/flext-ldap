@@ -10,7 +10,7 @@ This allows protocols to remain independent of model implementations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Protocol, Self, override, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
@@ -422,18 +422,9 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
         # ── LDAP runtime object contracts ────────────────────────
-        # These names are intentionally structural so downstream projects type
-        # against stable protocol-owned contracts rather than ldap3 classes.
-        # The base structural contracts live in flext-ldif (Ldif namespace)
-        # as the single source of truth; this package extends only what it needs.
-
-        Ldap3ServerInfo: ClassVar = FlextLdifProtocols.Ldif.Ldap3ServerInfo
-        Ldap3Server: ClassVar = FlextLdifProtocols.Ldif.Ldap3Server
-        Ldap3Entry: ClassVar = FlextLdifProtocols.Ldif.Ldap3Entry
-        Ldap3Attribute: ClassVar = FlextLdifProtocols.Ldif.Ldap3Attribute
-        Ldap3ParseResponse: ClassVar = FlextLdifProtocols.Ldif.Ldap3ParseResponse
-        RootDseEntry: ClassVar = FlextLdifProtocols.Ldif.RootDseEntry
-        RootDseConnection: ClassVar = FlextLdifProtocols.Ldif.RootDseConnection
+        # The base structural ldap3 contracts live in flext-ldif (``p.Ldif``)
+        # as the single source of truth and are reached through MRO; this
+        # package extends only what it needs.
 
         @runtime_checkable
         class Ldap3Connection(FlextLdifProtocols.Ldif.Ldap3Connection, Protocol):
@@ -445,7 +436,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """
 
             @property
-            def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
+            def server(self) -> FlextLdifProtocols.Ldif.Ldap3Server:
                 """The ldap3 server bound to this connection."""
                 ...
 

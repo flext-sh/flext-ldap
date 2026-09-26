@@ -65,7 +65,7 @@ class TestsFlextLdapDetection:
             self,
             *,
             entries: t.SequenceOf[
-                p.Ldap.RootDseEntry
+                p.Ldif.RootDseEntry
                 | t.Ldap.Ldap3EntryValue
                 | TestsFlextLdapDetection._RootDseEntryDouble
             ],
@@ -92,13 +92,13 @@ class TestsFlextLdapDetection:
             return {"description": "operation failed"}
 
         @property
-        def entries(self) -> t.SequenceOf[p.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue]:
+        def entries(self) -> t.SequenceOf[p.Ldif.RootDseEntry | t.Ldap.Ldap3EntryValue]:
             return self._entries
 
     @staticmethod
     def _connection_for(
         vendor_name: str | None, vendor_version: str | None
-    ) -> p.Ldap.RootDseConnection:
+    ) -> p.Ldif.RootDseConnection:
         """Build a bound connection double advertising the given vendor metadata."""
         attributes: dict[str, t.Ldap.Ldap3EntryValue] = {}
         if vendor_name is not None:
@@ -208,7 +208,7 @@ class TestsFlextLdapDetection:
         *,
         searchable: bool,
         search_succeeds: bool,
-        entries: list[p.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue],
+        entries: list[p.Ldif.RootDseEntry | t.Ldap.Ldap3EntryValue],
         error_substring: str,
     ) -> None:
         """A failed rootDSE read surfaces as a failed detection result."""

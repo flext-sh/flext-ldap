@@ -150,7 +150,7 @@ class FlextLdapEntryAdapter(s[bool]):
         return r[bool].ok(value=True)
 
     def ldap3_to_ldif_entry(
-        self, ldap3_entry: p.Ldap.Ldap3Entry
+        self, ldap3_entry: p.Ldif.Ldap3Entry
     ) -> p.Result[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Ldif.Entry.
 
@@ -198,7 +198,7 @@ class FlextLdapEntryAdapter(s[bool]):
             return e.fail_operation("create Entry", exc)
 
     def _build_ldif_entry_from_ldap3(
-        self, ldap3_entry: p.Ldap.Ldap3Entry
+        self, ldap3_entry: p.Ldif.Ldap3Entry
     ) -> p.Result[m.Ldif.Entry]:
         """Build an LDIF entry from an ldap3 entry without exception handling."""
         dn_str = str(ldap3_entry.entry_dn)

@@ -24,7 +24,7 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
     @classmethod
     def query_root_dse(
-        cls, connection: p.Ldap.RootDseConnection
+        cls, connection: p.Ldif.RootDseConnection
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Read rootDSE data from a bound ldap3-compatible connection."""
         result: p.Result[t.Ldap.OperationAttributes]
@@ -61,7 +61,7 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
                     result = r[t.Ldap.OperationAttributes].fail(
                         "rootDSE query returned no entries"
                     )
-                elif not isinstance(connection.entries[0], p.Ldap.RootDseEntry):
+                elif not isinstance(connection.entries[0], p.Ldif.RootDseEntry):
                     result = r[t.Ldap.OperationAttributes].fail(
                         "rootDSE query returned invalid entry payload"
                     )
@@ -75,7 +75,7 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
     @classmethod
     def detect_from_connection(
-        cls, connection: p.Ldap.RootDseConnection
+        cls, connection: p.Ldif.RootDseConnection
     ) -> p.Result[str]:
         """Detect LDAP server type from rootDSE on an active connection."""
         root_dse_result = cls.query_root_dse(connection)

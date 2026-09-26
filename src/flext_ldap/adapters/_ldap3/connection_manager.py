@@ -4,8 +4,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-# mypy: disable-error-code=unreachable
-
 from __future__ import annotations
 
 from flext_ldif import e, r
@@ -21,7 +19,7 @@ class ConnectionManager:
 
     @staticmethod
     def create_connection(
-        server: p.Ldap.Ldap3Server, settings: m.Ldap.ConnectionConfig
+        server: p.Ldif.Ldap3Server, settings: m.Ldap.ConnectionConfig
     ) -> p.Ldap.Ldap3Connection:
         """Create ldap3 p.Ldap.Ldap3Connection t.JsonValue.
 
@@ -59,7 +57,7 @@ class ConnectionManager:
         )
 
     @staticmethod
-    def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldap.Ldap3Server:
+    def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldif.Ldap3Server:
         """Create ldap3 Server t.JsonValue.
 
         Business Rules:
