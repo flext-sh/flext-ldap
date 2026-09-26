@@ -259,18 +259,20 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 
 **Domain Layer** (Business logic):
 
-````python
+```python
 # src/flext_ldap/domain.py
 # src/flext_ldap/entities.py
 # src/flext_ldap/value_objects.py
 # src/flext_core.py
 ```
+
 **Application Layer** (Use cases):
 
 ```python
 # src/flext_ldap/api.py
 # src/flext_ldap/services.py
 ```
+
 **Infrastructure Layer** (External concerns):
 
 ```python
@@ -279,6 +281,7 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 # src/flext_ldap/operations.py
 # src/flext_ldap/repositories.py
 ```
+
 ### Coding Standards
 
 **1. Single Responsibility Classes**
@@ -299,7 +302,8 @@ class FlextLdapUserService:
     ) -> p.Result[FlextLdapUser]:
         """Authenticate user with proper error handling."""
         # Implementation...
-        ```
+```
+
 **2. r Pattern**
 
 ```python
@@ -325,11 +329,13 @@ def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
         return user
     except Exception:
         return None  # FORBIDDEN
-        ```
+```
+
 **3. Parameter Object Pattern**
 
 ```python
 from __future__ import annotations
+
 
 # ✅ CORRECT - Parameter objects for complex operations
 @dataclass
@@ -341,14 +347,26 @@ class SearchRequest:
     size_limit: int = 100
     time_limit: int = 30
 
+
 def search_entries(self, request: SearchRequest) -> p.Result[List[LdapEntry]]:
     # Implementation using parameter object
+    ...
+
 
 # ❌ WRONG - Multiple parameters
-def search_entries(self, base_dn: str, filter_str: str, scope: str,
-                        attributes: t.StringList, size_limit: int, time_limit: int):
+def search_entries(
+    self,
+    base_dn: str,
+    filter_str: str,
+    scope: str,
+    attributes: t.StringList,
+    size_limit: int,
+    time_limit: int,
+):
     # FORBIDDEN - use parameter objects
-    ```
+    ...
+```
+
 **4. Value Object Validation**
 
 ```python
@@ -368,8 +386,9 @@ class DN:
     def _is_valid_dn(self) -> bool:
         # DN validation logic
         return bool(self.value and "=" in self.value and "," in self.value)
-        ```
-______________________________________________________________________
+```
+
+---
 
 ## Code Quality Standards
 
@@ -390,7 +409,8 @@ T = TypeVar("T")
 
 class FlextLdapService(Generic[T]):
     """Generic service with type constraints."""
-    ```
+```
+
 ### Import Organization
 
 ```python
@@ -398,7 +418,8 @@ class FlextLdapService(Generic[T]):
 
 # Third-party imports
 ```
-______________________________________________________________________
+
+---
 
 ## Testing Guidelines
 
@@ -452,7 +473,8 @@ class TestFlextLdapUser:
         )
 
         assert user.is_valid() == expected
-        ```
+```
+
 ### Integration Test Structure
 
 ```python
@@ -508,7 +530,8 @@ class TestLdapOperations:
 
         entries = result.unwrap()
         assert isinstance(entries, list)
-        ```
+```
+
 ### Test Fixtures
 
 ```python
@@ -519,7 +542,8 @@ import pytest
 from flext_tests import tk
 from flext_cli import u
 from flext_core import FlextSettings
-from Flext_ldap import FlextLdapSettings, set_flext_ldap.settings
+from flext_ldap import FlextLdapSettings, set_flext_ldap_settings
+
 
 @pytest.fixture(scope="session")
 def ldap_server():
@@ -549,7 +573,7 @@ def ldap_server():
     health_result = docker_manager.wait_for_container_health(
         container_name="flext-ldap-test-server",
         health_command="ldapsearch -x -H ldap://localhost:389 -b '' -s base",
-        timeout=30
+        timeout=30,
     )
 
     if health_result.failure:
@@ -561,14 +585,15 @@ def ldap_server():
         port=3390,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
         bind_password="REDACTED_LDAP_BIND_PASSWORD123",
-        base_dn="dc=flext,dc=local"
+        base_dn="dc=flext,dc=local",
     )
-    set_flext_ldap.settings(test_config)
+    set_flext_ldap_settings(test_config)
 
     yield container_id
 
     # Cleanup using tk
     docker_manager.stop_container("flext-ldap-test-server", remove=True)
+
 
 @pytest.fixture
 def authenticated_user():
@@ -581,7 +606,7 @@ def authenticated_user():
         uid="auth.test",
         cn="Auth Test",
         sn="Test",
-        password="auth123"
+        password="auth123",
     )
 
     create_result = api.create_user(create_request)
@@ -591,8 +616,9 @@ def authenticated_user():
 
     # Cleanup user
     api.delete_user("cn=auth.test,ou=users,dc=flext,dc=local")
-    ```
-______________________________________________________________________
+```
+
+---
 
 ## Documentation Standards
 
@@ -648,7 +674,8 @@ class FlextLdapClients:
             ...     print(f"Authentication failed: {result.error}")
 
         """
-        ```
+```
+
 ### API Documentation
 
 All public APIs require comprehensive documentation including:
@@ -660,7 +687,7 @@ All public APIs require comprehensive documentation including:
 - Complete working examples
 - Integration with Clean Architecture layers
 
-______________________________________________________________________
+---
 
 ## Performance Guidelines
 
@@ -677,6 +704,7 @@ settings = FlextLdapSettings(
     receive_timeout=15,
 )
 ```
+
 ### Search Optimization
 
 ```python
@@ -690,6 +718,7 @@ search_request = FlextLdapEntities.SearchRequest(
     time_limit=10,  # Prevent long-running searches
 )
 ```
+
 ### Best Practices
 
 ```python
@@ -702,7 +731,8 @@ with get_ldap_client() as client:
 users_to_create = [user1, user2, user3]
 results = gather(*[api.create_user(user) for user in users_to_create])
 ```
-______________________________________________________________________
+
+---
 
 ## Contribution Guidelines
 
@@ -712,7 +742,7 @@ ______________________________________________________________________
 
    ```bash
    git checkout -b feature/ldap-group-management
-````
+   ```
 
 1. **Implement Changes**
 

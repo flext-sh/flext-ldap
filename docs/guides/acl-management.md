@@ -114,7 +114,7 @@ The ACL system follows Clean Architecture principles with:
 
 ### Basic Usage
 
-````python
+```python
 from flext_ldap import FlextLdapConstants, ldap
 
 # Initialize API
@@ -127,7 +127,7 @@ result = api.parse(openldap_acl, FlextLdapConstants.AclFormat.OPENLDAP)
 if result.success:
     unified_acl = result.unwrap()
     print(f"Parsed ACL: {unified_acl.name}")
-
+```
 
 ### Converting ACL Formats
 
@@ -145,7 +145,7 @@ if conversion_result.success:
     conv = conversion_result.unwrap()
     print(f"Oracle ACL: {conv.converted_acl}")
     # Output: access to attr=(mail) by group="*" (read)
-````
+```
 
 ### Batch Conversion
 
@@ -200,21 +200,24 @@ if batch_result.success:
 
 ```python
 # Simple ACI
-'(target="ldap:///ou=users,dc=example,dc=com")(version 3.0; acl "User Read"; allow ( ...
+'(target="ldap:///ou=users,dc=example,dc=com")'
+
+'(version 3.0; acl "User Read"; allow (read) userdn="ldap:///anyone";)'
 
 # Deny ACL
 '(target="ldap:///dc=example,dc=com")(version 3.0; acl "Deny Delete"; deny (delete) userdn="ldap:///anyone";)'
 
 # Group-based ACI
-'(target="ldap:///ou=data,dc=example,dc=com")(version 3.0; acl "Admin Access"; allow (read,
-    write) groupdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)'
+'(target="ldap:///ou=data,dc=example,dc=com")'
+'(version 3.0; acl "Admin Access"; allow (read, write)'
+'groupdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)'
 ```
 
 ## Creating Custom ACLs
 
 ### Using the Unified Model
 
-````python
+```python
 from flext_ldap import FlextLdapConstants, FlextLdapModels
 
 # Create ACL components
@@ -245,7 +248,7 @@ unified_result = FlextLdapModels.Acl.create(
 api.convert_to_openldap(unified_result.unwrap())
 api.convert_to_oracle(unified_result.unwrap())
 api.convert_to_aci(unified_result.unwrap())
-
+```
 
 ## ACL Validation
 
@@ -261,7 +264,7 @@ if validation_result.success:
     print("ACL syntax is valid")
 else:
     print(f"Invalid ACL: {validation_result.error}")
-````
+```
 
 ## Migration Scenarios
 

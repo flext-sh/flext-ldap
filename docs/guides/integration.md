@@ -69,7 +69,7 @@ Clean Architecture + DDD + Railway-oriented programming
 
 FLEXT-LDAP builds on established FLEXT foundation patterns:
 
-````python
+```python
 from __future__ import annotations
 
 # FLEXT-Core integration
@@ -107,7 +107,8 @@ class UserService:
             "email": user.mail,
             "groups": user.member_of,
         })
-        ```
+```
+
 ### Configuration Management
 
 ```python
@@ -149,7 +150,8 @@ class AppSettings(BaseSettings):
 settings = AppSettings()
 ldap_config = settings.get_ldap_config()
 ```
-______________________________________________________________________
+
+---
 
 ## FastAPI Integration
 
@@ -252,8 +254,9 @@ def create_user(
         "message": "User created successfully",
         "user": {"uid": user.uid, "dn": user.dn, "name": user.cn},
     }
-    ```
-______________________________________________________________________
+```
+
+---
 
 ## Django Integration
 
@@ -330,6 +333,7 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 ```
+
 ### Django User Sync Management Command
 
 ```python
@@ -428,8 +432,9 @@ class Command(BaseCommand):
                     f"Synced {synced_count} users ({created_count} created)"
                 )
             )
-            ```
-______________________________________________________________________
+```
+
+---
 
 ## Flask Integration
 
@@ -522,8 +527,9 @@ def search_users():
 
 if __name__ == "__main__":
     app.run(debug=True)
-    ```
-______________________________________________________________________
+```
+
+---
 
 ## Docker Integration
 
@@ -572,7 +578,8 @@ services:
 volumes:
   ldap_data:
   ldap_config:
-  ```
+```
+
 ### Dockerfile with FLEXT-LDAP
 
 ```dockerfile
@@ -600,7 +607,8 @@ EXPOSE 8000
 
 CMD ["python", "-m", "myapp"]
 ```
-______________________________________________________________________
+
+---
 
 ## Kubernetes Integration
 
@@ -688,7 +696,7 @@ data:
   base_dn: "dc=example,dc=com"
   port: "636"
   use_ssl: "true"
-````
+```
 
 ---
 
@@ -699,7 +707,7 @@ data:
 FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server servers
 detection:
 
-````python
+```python
 from flext_ldap import FlextLdapEntryAdapter
 import ldap3
 
@@ -724,7 +732,8 @@ for ldap3_entry in connection.entries:
         flextldif_entries.append(ldif_entry)
         print(f"DN: {ldif_entry.dn}")
         print(f"Attributes: {ldif_entry.attributes.attributes}")
-        ```
+```
+
 ### LDIF File Processing
 
 Process LDIF files with ldif integration:
@@ -768,6 +777,7 @@ def process_ldif_file():
 
 run(process_ldif_file())
 ```
+
 ### Export to LDIF
 
 Export LDAP entries to LDIF format:
@@ -816,6 +826,7 @@ def export_to_ldif():
 
 run(export_to_ldif())
 ```
+
 ### Server Servers Detection
 
 Use ldif servers system for automatic server detection:
@@ -892,6 +903,7 @@ def detect_and_configure():
 
 run(detect_and_configure())
 ```
+
 ### Universal LDAP Processor
 
 Complete example combining ldif with server operations:
@@ -1032,7 +1044,8 @@ def main():
 
 run(main())
 ```
-______________________________________________________________________
+
+---
 
 ## Monitoring and Observability
 
@@ -1082,6 +1095,7 @@ class MetricsWrapper:
 # Start metrics server
 start_http_server(8001)
 ```
+
 ### Health Check Endpoints
 
 ```python
@@ -1112,12 +1126,12 @@ def readiness_check():
         "ldap": "disconnected",
         "error": connection_result.error,
     }, 503
-    ```
-______________________________________________________________________
+```
+
+---
 
 For more integration examples and patterns, see the examples/ directory.
 
-______________________________________________________________________
+---
 
 **Next:** Troubleshooting Guide →
-````

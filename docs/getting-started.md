@@ -274,7 +274,7 @@ run(authenticate_user())
 
 FLEXT-LDAP provides server-specific implementations with automatic server detection:
 
-````python
+```python
 from __future__ import annotations
 
 import ldap3
@@ -334,7 +334,7 @@ def server_specific_operations():
 
 
 run(server_specific_operations())
-
+```
 
 ### **Entry Conversion (ldap3 ↔ ldif)**
 
@@ -366,13 +366,13 @@ attrs_result = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 if attrs_result.success:
     attributes = attrs_result.unwrap()
     connection.add(str(ldif_entry.dn), attributes=attributes)
-````
+```
 
 ### **Schema Discovery**
 
 Discover schema from different LDAP server types:
 
-````python
+```python
 from __future__ import annotations
 
 import ldap3
@@ -401,7 +401,7 @@ def discover_schema():
 
 
 run(discover_schema())
-
+```
 
 ### **ACL Management**
 
@@ -435,9 +435,7 @@ def manage_acls():
 
         # Set new ACLs
         new_acls = [
-            {
-                "raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc= ...
-            },
+            {"raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD" write'},
             {"raw": "{1}to * by self write by anonymous auth"},
         ]
 
@@ -447,13 +445,13 @@ def manage_acls():
 
 
 run(manage_acls())
-````
+```
 
 ### **Paged Search**
 
 Execute paged searches with automatic pagination:
 
-````python
+```python
 from __future__ import annotations
 
 import ldap3
@@ -487,7 +485,7 @@ def paged_search():
 
 
 run(paged_search())
-
+```
 
 ---
 
@@ -506,7 +504,7 @@ docker ps | grep flext-ldap-test-server
 
 # Stop test server
 make ldap-test-server-stop
-````
+```
 
 ### **Run Tests**
 

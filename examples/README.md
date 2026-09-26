@@ -749,29 +749,31 @@ python examples/99_comprehensive_oud_validation.py
 
 ### Pattern 1: Basic ldap Usage
 
-````python
+```python
 from flext_ldap import FlextLdapSettings, ldap
 
-# Create and configure
-settings = FlextLdapSettings(
-    ldap_server_uri="ldap://localhost:389",
-    ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-    ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
-)
-api = ldap()
 
-# Connect
-result = api.connect()
-if result.is_failure:
-    print(f"Connection failed: {result.error}")
-    return
+def basic_usage():
+    # Create and configure
+    settings = FlextLdapSettings(
+        ldap_server_uri="ldap://localhost:389",
+        ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
+    )
+    api = ldap()
 
-# Use API
-search_result = api.search(...)
+    # Connect
+    result = api.connect()
+    if result.is_failure:
+        print(f"Connection failed: {result.error}")
+        return
 
-# Disconnect
-api.unbind()
+    # Use API
+    search_result = api.search(...)
 
+    # Disconnect
+    api.unbind()
+```
 
 ### Pattern 2: Context Manager
 
@@ -798,20 +800,23 @@ def ldap_connection():
 # Usage
 with ldap_connection() as api:
     result = api.search(...)
-
+```
 
 ### Pattern 3: r Error Handling
 
 ```python
 from __future__ import annotations
 
-# Pattern 1: Check before unwrap
-result = api.search(...)
-if result.is_failure:
-    logger.error(f"Failed: {result.error}")
-    return
 
-entries = result.unwrap()
+# Pattern 1: Check before unwrap
+def check_before_unwrap():
+    result = api.search(...)
+    if result.is_failure:
+        logger.error(f"Failed: {result.error}")
+        return
+
+    entries = result.unwrap()
+    return entries
 
 
 # Pattern 2: Early return
@@ -822,27 +827,30 @@ def process():
 
     entries = result.unwrap()
     return r.ok(entries)
-````
+```
 
 ### Pattern 4: Validation Before Operations
 
 ```python
 from flext_ldap import FlextLdapValidations
 
-# Validate DN
-dn_result = FlextLdapValidations.validate_dn(user_dn)
-if dn_result.is_failure:
-    logger.error(f"Invalid DN: {dn_result.error}")
-    return
 
-# Validate filter
-filter_result = FlextLdapValidations.validate_filter(filter_str)
-if filter_result.is_failure:
-    logger.error(f"Invalid filter: {filter_result.error}")
-    return
+def validate_before_operations(user_dn, filter_str, api):
+    # Validate DN
+    dn_result = FlextLdapValidations.validate_dn(user_dn)
+    if dn_result.is_failure:
+        logger.error(f"Invalid DN: {dn_result.error}")
+        return
 
-# Proceed with operation
-result = api.search(base_dn=user_dn, filter_str=filter_str)
+    # Validate filter
+    filter_result = FlextLdapValidations.validate_filter(filter_str)
+    if filter_result.is_failure:
+        logger.error(f"Invalid filter: {filter_result.error}")
+        return
+
+    # Proceed with operation
+    result = api.search(base_dn=user_dn, filter_str=filter_str)
+    return result
 ```
 
 ## 🐛 Troubleshooting
