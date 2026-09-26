@@ -18,7 +18,7 @@ class ResultConverterExtractMixin:
     """Extraction helpers for DN, attributes, and metadata from LDAP entries."""
 
     @staticmethod
-    def extract_dn(parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
+    def extract_dn(parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.get_dn_value()`` for normalization. Returns
@@ -28,7 +28,7 @@ class ResultConverterExtractMixin:
             return m.Ldif.DN.empty()
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.dn if parsed.dn is not None else m.Ldif.DN.empty()
-        if isinstance(parsed, p.Ldap.Ldap3Entry):
+        if isinstance(parsed, p.Ldif.Ldap3Entry):
             entry_dn = parsed.entry_dn
             if entry_dn is None:
                 return m.Ldif.DN.empty()
@@ -40,7 +40,7 @@ class ResultConverterExtractMixin:
 
     @staticmethod
     def extract_attributes(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
+        parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model."""
         empty = m.Ldif.Attributes(attributes={}, attribute_metadata={}, metadata=None)
@@ -48,7 +48,7 @@ class ResultConverterExtractMixin:
             return empty
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.attributes if parsed.attributes is not None else empty
-        if isinstance(parsed, p.Ldap.Ldap3Entry):
+        if isinstance(parsed, p.Ldif.Ldap3Entry):
             attrs_dict = ResultConverterExtractMixin.extract_attrs_dict(
                 parsed.entry_attributes_as_dict
             )
@@ -82,7 +82,7 @@ class ResultConverterExtractMixin:
 
     @staticmethod
     def extract_metadata(
-        parsed: m.Ldif.Entry | p.Ldap.Ldap3Entry | t.JsonValue,
+        parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.ServerMetadata | None:
         """Extract server metadata from LDAP entry, returning ``None`` when absent."""
         match parsed:

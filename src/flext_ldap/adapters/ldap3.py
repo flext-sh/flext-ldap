@@ -45,7 +45,7 @@ class FlextLdapLdap3Adapter(s[bool]):
     SearchExecutor: ClassVar[type[_SearchExecutor]] = _SearchExecutor
 
     _connection: p.Ldap.Ldap3Connection | None
-    _server: p.Ldap.Ldap3Server | None
+    _server: p.Ldif.Ldap3Server | None
     _entry_adapter: FlextLdapEntryAdapter
 
     def __init__(self) -> None:
