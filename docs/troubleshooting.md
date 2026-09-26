@@ -228,7 +228,7 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 
 **Validation:**
 
-````python
+```python
 from __future__ import annotations
 
 from flext_ldap import m
@@ -254,7 +254,7 @@ test_dns = [
 for test_dn in test_dns:
     result = validate_dn(test_dn)
     print(f"{test_dn}: {'✅' if result else '❌'}")
-
+```
 
 ---
 
@@ -266,7 +266,7 @@ for test_dn in test_dns:
 
 ```yaml
 SearchError: Bad search filter
-````
+```
 
 **Common Filter Mistakes:**
 
@@ -373,7 +373,7 @@ run(diagnose_base_dn())
 
 **Diagnosis:**
 
-````python
+```python
 from __future__ import annotations
 
 import time
@@ -429,7 +429,7 @@ def diagnose_performance():
 
 
 run(diagnose_performance())
-
+```
 
 **Optimization Solutions:**
 
@@ -445,7 +445,7 @@ search_request = FlextLdapEntities.SearchRequest(
 search_request = FlextLdapEntities.SearchRequest(
     base_dn="ou=users,dc=example,dc=com", filter_str="(uid=john.doe)", scope="onelevel"
 )
-````
+```
 
 1. **Optimize search filters:**
 
@@ -532,7 +532,7 @@ class LDAPService:
 
 **Diagnosis:**
 
-````python
+```python
 from __future__ import annotations
 
 import os
@@ -569,7 +569,7 @@ def diagnose_config():
 
 
 diagnose_config()
-
+```
 
 ### Docker Environment Issues
 
@@ -586,7 +586,7 @@ services:
 
   ldap-server:
     image: osixia/openldap:1.5.0
-````
+```
 
 1. **Network connectivity:**
 
@@ -615,7 +615,7 @@ services:
 
 **Symptom:**
 
-```python
+```text
 ImportError: cannot import name 'FlextLdapClients' from 'flext_ldap'
 ```
 

@@ -158,7 +158,7 @@ make clean-all # Deep clean including venvs
 
 ### Railway-Oriented Programming
 
-````python
+```python
 from __future__ import annotations
 
 from flext_core import r, p
@@ -170,11 +170,13 @@ def my_operation(data: dict) -> p.Result[ProcessedData]:
         return r[ProcessedData].fail("Data required")
 
     return validate(data).flat_map(transform).map(enrich)
-    ```
+```
+
 ### Use x
 
 ```python
 from __future__ import annotations
+
 from flext_core import s
 
 
@@ -182,11 +184,12 @@ class MyService(s[None]):
     """Inherit from s to get mixins."""
 
     def operation(self):
-        # ✅ Use inherited properties
+        # Use inherited properties
         self.logger.info("message")  # From x
         timeout = self.settings.timeout  # From x
         service = self.container.resolve("service")  # From x
-        ```
+```
+
 ### Pydantic v2 Models
 
 ```python
@@ -200,7 +203,8 @@ class Config(m.BaseModel):
 
     timeout: PositiveInt  # Built-in validation
     host: str
-    ```
+```
+
 ## Git Workflow
 
 ### Branch Naming
@@ -214,6 +218,7 @@ class Config(m.BaseModel):
 ### Commit Messages
 
 Follow Conventional Commits:
+
 ```
 feat: add new LDAP operation
 fix: resolve connection timeout issue
@@ -221,6 +226,7 @@ refactor: simplify authentication logic
 docs: update API documentation
 test: add integration tests for OID
 ```
+
 ## Pull Request Checklist
 
 - [ ] Code follows FLEXT patterns
@@ -272,8 +278,6 @@ test: add integration tests for OID
 - API Reference - Complete API docs
 - Migration Guide - v0.9.0 → v0.12.0-dev
 
-______________________________________________________________________
+---
 
-**Last Updated**: 2025-01-24
-**Maintainer**: FLEXT Team
-````
+**Last Updated**: 2025-01-24 **Maintainer**: FLEXT Team

@@ -323,14 +323,12 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 ````text
 # Manually specify language
-```python
+```python notest
 from __future__ import annotations
 
 
 def example():
     pass
-````
-
 ````
 
 ### Content Optimization Issues
@@ -350,7 +348,7 @@ cp docs/maintenance/backups/example.md.backup docs/example.md
 
 # Or rollback
 python maintenance/sync.py --rollback docs/example.md
-````
+```
 
 #### Over-Aggressive Fixes
 
@@ -468,9 +466,7 @@ logrotate -f /etc/logrotate.d/docs-maintenance
 
 **Validation:**
 
-```python
-from __future__ import annotations
-
+```bash
 # Validate configuration
 python -c "
 import yaml
@@ -636,7 +632,7 @@ python docs/maintenance/report.py --generate-dashboard --weekly-summary
 
 ### Enable Debug Logging
 
-```python
+```bash
 # Add to scripts
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -647,7 +643,7 @@ export DOCS_MAINTENANCE_DEBUG=1
 
 ### Performance Profiling
 
-```python
+```bash
 # Profile script execution
 python -m cProfile docs/maintenance/audit.py --comprehensive > audit_profile.txt
 
@@ -661,7 +657,7 @@ p.sort_stats('cumulative').print_stats(20)
 
 ### Memory Monitoring
 
-````python
+```python
 # Monitor memory usage
 import os
 
@@ -669,7 +665,7 @@ import psutil
 
 process = psutil.Process(os.getpid())
 print(f"Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB")
-
+```
 
 ### Network Debugging
 
@@ -682,7 +678,7 @@ nslookup example.com
 
 # Test with different user agents
 curl -H "User-Agent: Mozilla/5.0" https://example.com
-````
+```
 
 ### File System Debugging
 

@@ -60,7 +60,7 @@ The universal LDAP system consists of:
 
 ### Creating Server Operations
 
-````python
+```python
 from __future__ import annotations
 
 from flext_ldap import ServerOperationsFactory
@@ -89,6 +89,7 @@ from flext_ldif import FlextLdifModels
 entries: t.SequenceOf[FlextLdifModels.Entry] = [...]  # Your entries
 ops_result = factory.create_from_entries(entries)
 ```
+
 ### Server-Specific Operations
 
 ```python
@@ -105,6 +106,7 @@ oud = OracleOUDOperations()
 print(f"Privileges: {oud.get_oud_privileges()}")
 print(f"Replication: {oud.get_replication_mechanism()}")
 ```
+
 ## Universal API Methods
 
 ### 1. Get Detected Server Type
@@ -121,7 +123,8 @@ if server_type_result.success:
     server_type = server_type_result.unwrap()
     print(f"Connected to: {server_type}")
     # Output: "Connected to: openldap2" or "oud", "oid", etc.
-    ```
+```
+
 ### 2. Get Server Capabilities
 
 ```python
@@ -141,7 +144,8 @@ if caps_result.success:
     print(f"Max page size: {caps['max_page_size']}")
     print(f"Paged results: {caps['supports_paged_results']}")
     print(f"VLV support: {caps['supports_vlv']}")
-    ```
+```
+
 ### 3. Universal Search with Optimization
 
 ```python
@@ -158,7 +162,8 @@ if result.success:
     print(f"Found {len(entries)} entries")
     for entry in entries:
         print(f"DN: {entry.dn}")
-        ```
+```
+
 ### 4. Entry Normalization
 
 ```python
@@ -177,6 +182,7 @@ if normalized_result.success:
 # Normalize for specific target server
 normalized_result = api.normalize_entry_for_server(entry, target_server_type="oud")
 ```
+
 ### 5. Entry Conversion Between Servers
 
 ```python
@@ -197,7 +203,8 @@ if convert_result.success:
     # - olcAccess instead of access
     # - Converted objectClasses
     # - Adjusted ACL format
-    ```
+```
+
 ### 6. Server Type Detection
 
 ```python
@@ -211,7 +218,8 @@ if detection_result.success:
     detected_type = detection_result.unwrap()
     print(f"Entry originated from: {detected_type}")
     # Output: "openldap2", "oud", "oid", etc.
-    ```
+```
+
 ### 7. Entry Validation
 
 ```python
@@ -225,7 +233,8 @@ if validation_result.success and validation_result.unwrap():
     print("Entry is compatible with Oracle OUD")
 else:
     print(f"Validation failed: {validation_result.error}")
-    ```
+```
+
 ### 8. Server-Specific Attributes
 
 ```python
@@ -235,7 +244,8 @@ if attrs_result.success:
     attrs = attrs_result.unwrap()
     print(f"Required attributes: {attrs.get('required_attributes', [])}")
     print(f"Optional attributes: {attrs.get('optional_attributes', [])}")
-    ```
+```
+
 ## Entry Conversion Examples
 
 ### OpenLDAP 1.x → OpenLDAP 2.x Migration
@@ -249,7 +259,7 @@ from flext_ldif import ldif
 
 def migrate_openldap1_to_openldap2():
     # Parse OpenLDAP 1.x LDIF file
-        parse_result = ldif.parse_file("openldap1_backup.ldif")
+    parse_result = ldif.parse_file("openldap1_backup.ldif")
 
     if parse_result.failure:
         print(f"Parse failed: {parse_result.error}")
@@ -275,7 +285,8 @@ def migrate_openldap1_to_openldap2():
     write_result = ldif.write_file(openldap2_entries, "openldap2_converted.ldif")
     if write_result.success:
         print(f"Successfully converted {len(openldap2_entries)} entries")
-        ```
+```
+
 ### Oracle OID → Oracle OUD Migration
 
 ```python
@@ -308,7 +319,8 @@ def migrate_oid_to_oud():
 
     # Export to OUD-compatible LDIF
     ldif.write_file(oud_entries, "oud_import.ldif")
-    ```
+```
+
 ## Migration Scenarios
 
 ### Scenario 1: Multi-Server Environment
@@ -358,7 +370,8 @@ def sync_across_servers():
                 target_api.add_entry(
                     str(converted_entry.dn), converted_entry.attributes.attributes
                 )
-                ```
+```
+
 ### Scenario 2: Progressive Migration
 
 ```python
@@ -414,7 +427,8 @@ def progressive_migration():
             validation_result = api.validate_entry_for_server(entry, target_type)
             if validation_result.failure or not validation_result.unwrap():
                 print(f"Validation failed for {entry.dn}")
-                ```
+```
+
 ## Best Practices
 
 ### 1. Always Detect Server Type
@@ -425,7 +439,8 @@ server_type_result = api.get_detected_server_type()
 if server_type_result.success:
     server_type = server_type_result.unwrap()
     # Use server_type for operations
-    ```
+```
+
 ### 2. Validate After Conversion
 
 ```python
@@ -438,7 +453,8 @@ if convert_result.success:
     if validation_result.success and validation_result.unwrap():
         # Proceed with entry
         pass
-        ```
+```
+
 ### 3. Use Server Capabilities
 
 ```python
@@ -450,7 +466,8 @@ if caps_result.success:
     if caps["supports_paged_results"]:
         # Use paged search
         api.search_universal(..., use_paging=True)
-        ```
+```
+
 ### 4. Handle Servers Gracefully
 
 ```python
@@ -462,6 +479,7 @@ adapter = FlextLdapEntryAdapter(server_type="oud")
 # Adapter handles Oracle OUD servers automatically
 normalized = adapter.normalize_entry_for_server(entry, "oud")
 ```
+
 ## Troubleshooting
 
 ### Server Detection Issues
@@ -475,6 +493,7 @@ from flext_ldap import ServerOperationsFactory
 factory = ServerOperationsFactory()
 ops_result = factory.create_from_server_type("openldap2")
 ```
+
 ### Conversion Failures
 
 If conversion fails, check entry compatibility:
@@ -484,7 +503,8 @@ If conversion fails, check entry compatibility:
 validation_result = api.validate_entry_for_server(entry, source_type)
 if validation_result.failure:
     print(f"Source entry invalid: {validation_result.error}")
-    ```
+```
+
 ### ACL Translation Issues
 
 Different servers have different ACL formats. Check server capabilities:
@@ -495,7 +515,8 @@ if caps_result.success:
     caps = caps_result.unwrap()
     print(f"ACL format: {caps['acl_format']}")
     print(f"ACL attribute: {caps['acl_attribute']}")
-    ```
+```
+
 ## Contributing
 
 To add support for additional LDAP servers:
@@ -508,8 +529,6 @@ To add support for additional LDAP servers:
 
 See `src/flext_ldap/servers/ad_operations.py` for stub template.
 
-______________________________________________________________________
+---
 
-**Copyright (c) 2025 FLEXT Team. All rights reserved.**
-**SPDX-License-Identifier: MIT**
-````
+**Copyright (c) 2025 FLEXT Team. All rights reserved.** **SPDX-License-Identifier: MIT**
